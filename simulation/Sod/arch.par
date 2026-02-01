@@ -1,0 +1,59 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Sod Shock Tube
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# Maps to config.grid.*
+# ------------------------------------------------------------------------------
+nx       = 400
+x_min    = 0.0
+x_max    = 1.0
+geometry = cartesian
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# Maps to config.numerics.*
+# ------------------------------------------------------------------------------
+solver      = LF       # Options: SW, LF, LW, VL, HLLC
+reconstruct = plm      # Options: pcm (1st), plm (2nd)
+limiter     = minmod   # Options: minmod, superbee
+cfl         = 0.8      # Keep < 0.5 for VL/HLLC
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# Maps to config.io.*
+# ------------------------------------------------------------------------------
+tmax         = 0.2
+plt_interval = 0.05
+out_dir      = output
+plt_variables = all
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# Maps to config.physics.*
+# ------------------------------------------------------------------------------
+eos   = ideal
+gamma = 1.4    # Default global gamma (will be overridden by species)
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters]
+# These are read into config.custom_params and used by Sod.cpp
+# ------------------------------------------------------------------------------
+
+shock_position = 0.5 
+
+# -- Left State --
+rho_left   = 1.0
+p_left     = 1.0
+u_left     = 0.0
+name_left  = Helium
+gamma_left = 1.67
+
+# -- Right State --
+rho_right   = 0.125
+p_right     = 0.1
+u_right     = 0.0
+name_right  = Air
+gamma_right = 1.4

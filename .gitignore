@@ -1,0 +1,14 @@
+# 编译输出
+build/
+bin/
+*.o
+*.out
+
+# 模拟数据 (一定要屏蔽，否则传不上去)
+output/
+*.dat
+*.h5
+
+# 系统与编辑器文件
+.vscode/
+.DS_Store
