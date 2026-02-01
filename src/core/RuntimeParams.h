@@ -41,7 +41,7 @@ public:
 
         // 2. 搬运数值参数 (Numerics)
         cfg.numerics.solver_name = parser.GetString("solver", "SW");
-        cfg.numerics.cfl = parser.GetDouble("cfl", 0.4);
+        cfg.numerics.cfl = parser.GetDouble("cfl", 0.8);
         cfg.numerics.limiter = parser.GetString("limiter", "minmod");
         cfg.numerics.reconstruction = parser.GetString("reconstruct", "pcm");
 
