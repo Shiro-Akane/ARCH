@@ -10,6 +10,8 @@
 
 #include "../data/FluidState.h"
 
+#include "../core/RuntimeParams.h"
+
 #include "../grid/Grid.h"
 
 /**
@@ -20,7 +22,7 @@
  * @param state The fluid state container (conservative variables).
  * @param grid  The grid topology information.
  */
-void apply_boundary_conditions(FluidState &state, const Grid &grid)
+void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimConfig &cfg)
 {
     // Define the indices of the first and last active physical cells
     int i_start = grid.Is();
@@ -39,18 +41,68 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid)
         }
     };
 
+    auto reflect_cell = [&](int src, int dst)
+    {
+        state.rho[dst] = state.rho[src];
+        state.mom[dst] = -state.mom[src]; // <--- 关键：动量反向
+        state.eng[dst] = state.eng[src];
+        for (int k = 0; k < n_species; ++k)
+        {
+            state.Y(k, dst) = state.Y(k, src);
+        }
+    };
+
     // Left Boundary: Outflow Condition.
     // We iterate through the ghost cells (1 to ng) and copy data from the first active cell (i_start).
-    for (int g = 1; g <= grid.ng; g++)
-    {
-        copy_cell(i_start, i_start - g);
-    }
+    std::string bc_type_L = cfg.grid.xr_boundary_type;
 
+    if (bc_type_L == "periodic")
+    {
+        // periodic: Ghost(i_start - g) <--- Active(i_end - g + 1)
+        for (int g = 1; g <= grid.ng; g++)
+        {
+            copy_cell(i_end - g + 1, i_start - g);
+        }
+    }
+    else if (bc_type_L == "reflect")
+    {
+        // Ghost(i_start - g) <--- Active(i_start + g - 1)
+        for (int g = 1; g <= grid.ng; g++)
+        {
+            reflect_cell(i_start + g - 1, i_start - g);
+        }
+    }
+    else // Default: Outflow / Zero Gradient
+    {
+        for (int g = 1; g <= grid.ng; g++)
+        {
+            copy_cell(i_start, i_start - g);
+        }
+    }
     // Right Boundary: Outflow Condition.
     // We iterate through the ghost cells and copy data from the last active cell (i_end).
-    for (int g = 1; g <= grid.ng; g++)
+    std::string bc_type_R = cfg.grid.xl_boundary_type;
+    if (bc_type_R == "periodic")
     {
-        copy_cell(i_end, i_end + g);
+        // Ghost(i_end + g) <--- Active(i_start + g - 1)
+        for (int g = 1; g <= grid.ng; g++)
+        {
+            copy_cell(i_start + g - 1, i_end + g);
+        }
+    }
+    else if (bc_type_R == "reflect")
+    { // Ghost(i_end + g) <--- Active(i_end - g + 1)
+        for (int g = 1; g <= grid.ng; g++)
+        {
+            reflect_cell(i_end - g + 1, i_end + g);
+        }
+    }
+    else // Default: Outflow
+    {
+        for (int g = 1; g <= grid.ng; g++)
+        {
+            copy_cell(i_end, i_end + g);
+        }
     }
 }
 

@@ -32,6 +32,9 @@ struct GridConfig
     // Geometry: "cartesian", "spherical", "cylindrical"
     // This allows you to implement source terms later without changing the struct
     std::string geometry = "cartesian";
+
+    std::string xl_boundary_type = "outflow";
+    std::string xr_boundary_type = "outflow";
 };
 
 // ----------------------------------------------------------------------

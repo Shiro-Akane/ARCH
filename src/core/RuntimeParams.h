@@ -38,6 +38,8 @@ public:
         cfg.grid.x_min = parser.GetDouble("x_min", 0.0);
         cfg.grid.x_max = parser.GetDouble("x_max", 1.0);
         cfg.grid.geometry = parser.GetString("geometry", "cartesian");
+        cfg.grid.xl_boundary_type = parser.GetString("xl_boundary_type", "outflow");
+        cfg.grid.xr_boundary_type = parser.GetString("xr_boundary_type", "outflow");
 
         // 2. 搬运数值参数 (Numerics)
         cfg.numerics.solver_name = parser.GetString("solver", "SW");

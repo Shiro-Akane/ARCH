@@ -4,7 +4,7 @@ import glob
 import sys
 
 # --- 1. 寻找文件 ---
-files = sorted(glob.glob("output/sod_output_LF_*.csv"))
+files = sorted(glob.glob("output/plt_LF_*.csv"))
 if not files:
     print("Error: No csv files found!")
     sys.exit(1)
@@ -53,6 +53,6 @@ ax3.set_title("Species Distribution (Contact Discontinuity)")
 
 # --- 4. 保存 ---
 plt.tight_layout()
-plt.savefig("sod_LF.png", dpi=300)
-print("Saved: sod_LF.png")
+plt.savefig("sod_LF_re.png", dpi=300)
+print("Saved: sod_LF_re.png")
 plt.show()

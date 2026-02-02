@@ -103,7 +103,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // Step D: Numerical Update
         // -----------------------------------------------------
         // 1. Fill Ghost Zones (Periodic/Outflow/Reflective)
-        apply_boundary_conditions(u_current, grid);
+        apply_boundary_conditions(u_current, grid, config);
 
         // 2. Evolve System: U(n+1) = U(n) + dt * Flux(U(n))
         SolverPolicy::solver(u_current, u_next, eos, grid, dt);
@@ -121,7 +121,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     // =========================================================
     // Final Output (Force output at t_max)
     // =========================================================
-    if (t_current > (next_io_time - io_interval) + 1e-9)
+    if (std::abs(t_current - t_max) < 1e-9 || t_current > next_io_time - io_interval)
     {
         std::cout << "Final Step Reached. Forcing output..." << std::endl;
         save_data(u_current, eos, grid, file_index, config, specs);

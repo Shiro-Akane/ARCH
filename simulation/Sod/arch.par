@@ -11,6 +11,8 @@ nx       = 400
 x_min    = 0.0
 x_max    = 1.0
 geometry = cartesian
+xr_boundary_type = reflect
+xl_boundary_type = reflect
 
 # ------------------------------------------------------------------------------
 # [Numerics]
@@ -25,7 +27,7 @@ cfl         = 0.8      # Keep < 0.5 for VL/HLLC
 # [Time & IO]
 # Maps to config.io.*
 # ------------------------------------------------------------------------------
-tmax         = 0.2
+tmax         = 0.4
 plt_interval = 0.05
 out_dir      = output
 plt_variables = all
