@@ -4,7 +4,7 @@ import glob
 import sys
 
 # --- 1. 寻找文件 ---
-files = sorted(glob.glob("output/plt_LF_*.csv"))
+files = sorted(glob.glob("output/plt_SW_*.csv"))
 if not files:
     print("Error: No csv files found!")
     sys.exit(1)
@@ -25,7 +25,7 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
 # === Subplot 1: 密度 ===
 ax1.plot(df['x'], df['rho'], 'k-', label='Density', linewidth=2)
 ax1.set_ylabel("Density")
-ax1.set_title(f"Sod Shock Tube Result (Solver: LF)")
+ax1.set_title(f"Sod Shock Tube Result (Solver: SW)")
 ax1.grid(True, linestyle='--', alpha=0.6)
 ax1.legend(loc='upper right')
 
@@ -53,6 +53,6 @@ ax3.set_title("Species Distribution (Contact Discontinuity)")
 
 # --- 4. 保存 ---
 plt.tight_layout()
-plt.savefig("sod_LF_re.png", dpi=300)
-print("Saved: sod_LF_re.png")
+plt.savefig("sod_SW_rare_1.png", dpi=300)
+print("Saved: sod_SW_rare_1.png")
 plt.show()

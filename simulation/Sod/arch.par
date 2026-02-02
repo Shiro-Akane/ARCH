@@ -7,18 +7,18 @@
 # [Grid Configuration]
 # Maps to config.grid.*
 # ------------------------------------------------------------------------------
-nx       = 400
+nx       = 4000
 x_min    = 0.0
 x_max    = 1.0
 geometry = cartesian
-xr_boundary_type = reflect
-xl_boundary_type = reflect
+xr_boundary_type = outflow # Options: reflect, outflow, periodic
+xl_boundary_type = outflow
 
 # ------------------------------------------------------------------------------
 # [Numerics]
 # Maps to config.numerics.*
 # ------------------------------------------------------------------------------
-solver      = LF       # Options: SW, LF, LW, VL, HLLC
+solver      = SW       # Options: SW, LF, LW, VL, HLLC
 reconstruct = plm      # Options: pcm (1st), plm (2nd)
 limiter     = minmod   # Options: minmod, superbee
 cfl         = 0.8      # Keep < 0.5 for VL/HLLC
@@ -49,13 +49,13 @@ shock_position = 0.5
 # -- Left State --
 rho_left   = 1.0
 p_left     = 1.0
-u_left     = 0.0
-name_left  = Helium
-gamma_left = 1.67
+u_left     = -2.0
+name_left  = Air
+gamma_left = 1.4
 
 # -- Right State --
-rho_right   = 0.125
-p_right     = 0.1
-u_right     = 0.0
+rho_right   = 1.0
+p_right     = 1.0
+u_right     = 2.0
 name_right  = Air
 gamma_right = 1.4

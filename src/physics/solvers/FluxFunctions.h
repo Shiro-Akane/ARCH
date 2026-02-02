@@ -122,9 +122,12 @@ FluidVector3 calc_split_flux(const FluidVector3 &U, const double *Yi,
     // Lambda helper:
     // If sign > 0, returns max(lambda, 0) -> Positive Eigenvalues
     // If sign < 0, returns min(lambda, 0) -> Negative Eigenvalues
+    double eps = 0.1 * c;
+
     auto split_lambda = [&](double l)
     {
-        return (sign > 0) ? 0.5 * (l + std::abs(l)) : 0.5 * (l - std::abs(l));
+        double l_abs_smoothed = (std::abs(l) < eps) ? (l * l + eps * eps) / (2.0 * eps) : std::abs(l);
+        return (sign > 0) ? 0.5 * (l + l_abs_smoothed) : 0.5 * (l - l_abs_smoothed);
     };
 
     // 1. Eigenvalues of the Jacobian matrix
