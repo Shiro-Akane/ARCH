@@ -27,6 +27,7 @@
 #include "SolverSW.h" // Steger-Warming
 #include "SolverLF.h" // Lax-Friedrichs
 #include "SolverLW.h" // Lax-Wendroff
+#include "SolverVL.h" //Vinokur-Von Leer
 
 // ------------------------------------------------------------------
 //  Template Launcher
@@ -100,6 +101,11 @@ void DispatchSolver(const std::string &solver_name,
     {
         // Lax-Wendroff (Central, 2nd Order, Dispersive)
         StartSimulation<SolverLW>(problem, cfg, specs);
+    }
+    else if (solver_name == "VL")
+    {
+        // Vonokur-Von Leer Flux Vector Splitting (Upwind, 1st Order)
+        StartSimulation<SolverVL>(problem, cfg, specs);
     }
     // Future expansion:
     // else if (solver_name == "Roe") { ... }

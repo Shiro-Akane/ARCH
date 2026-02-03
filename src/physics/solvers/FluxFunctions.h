@@ -160,3 +160,123 @@ FluidVector3 calc_split_flux(const FluidVector3 &U, const double *Yi,
 
     return F_split;
 }
+
+// ------------------------------------------------------------------
+// 4. Vinokur-Von Leer Flux Vector Splitting
+// ------------------------------------------------------------------
+
+/**
+ * @brief Vinokur-Van Leer Flux Vector Splitting for General EOS
+ * * @param U      Conserved variables (rho, mom, eng)
+ * @param Yi     Species mass fractions array
+ * @param eos    Equation of State object
+ * @param sign   Direction indicator:
+ * > 0: Calculate F+ (Forward/Positive flux component)
+ * < 0: Calculate F- (Backward/Negative flux component)
+ */
+template <typename EosType>
+FluidVector3 calc_vinokur_flux(const FluidVector3 &U, const double *Yi,
+                               const EosType &eos, int sign)
+{
+    // 1. Pre-calculation & Protection
+    double rho = std::max(U.rho, 1e-12);
+    double u = U.mom / rho;
+
+    // Get thermodynamics from EOS
+    // Note: ensure your eos.get_pressure can handle small rho
+    double p = eos.get_pressure(rho, U.mom, U.eng, Yi);
+    double c = eos.get_sound_speed(rho, p, Yi);
+
+    // Calculate Equivalent Gamma (Vinokur's Gamma)
+    // Protection for vacuum/zero pressure is crucial here
+    double gamma_eff = (p > 1e-12) ? (rho * c * c / p) : 1.4;
+
+    // Calculate Mach Number
+    double M = u / c;
+    // 2. Supersonic Branching (Optimization & Validity)
+    // If we want F+ (sign>0) and flow is supersonic backward (M <= -1), F+ is 0.
+    // If we want F- (sign<0) and flow is supersonic forward (M >= 1), F- is 0.
+
+    if (sign > 0)
+    { // Calculating F+
+        if (M >= 1.0)
+        {
+            // Full Flux F
+            double E_total = U.eng;
+            return FluidVector3{
+                U.mom,            // rho * u
+                U.mom * u + p,    // rho * u^2 + p
+                (E_total + p) * u // (E + p) * u
+            };
+        }
+        if (M <= -1.0)
+        {
+            return FluidVector3{0.0, 0.0, 0.0};
+        }
+    }
+    else
+    { // Calculating F- (sign < 0)
+        if (M >= 1.0)
+        {
+            return FluidVector3{0.0, 0.0, 0.0};
+        }
+        if (M <= -1.0)
+        {
+            // Full Flux F
+            double E_total = U.eng;
+            return FluidVector3{
+                U.mom,            // rho * u
+                U.mom * u + p,    // rho * u^2 + p
+                (E_total + p) * u // (E + p) * u
+            };
+        }
+    }
+
+    // 3. Subsonic Branching (|M| < 1) - The Vinokur Polynomials
+
+    // Common factor term: (M +/- 1)
+    // If sign > 0 (F+), we use (M + 1)
+    // If sign < 0 (F-), we use (M - 1)
+    double factor = (sign > 0) ? (M + 1.0) : (M - 1.0);
+
+    // Mass Flux (The split mass term)
+    // f_mass = +/- rho * c * (M +/- 1)^2 / 4
+    double term_sign = (sign > 0) ? 1.0 : -1.0;
+    double f_mass = term_sign * 0.25 * rho * c * factor * factor;
+
+    // 4. Construct Split Flux Vector
+    FluidVector3 F_split;
+
+    // --- Mass Equation ---
+    F_split.rho = f_mass;
+
+    // --- Momentum Equation ---
+    // Vinokur Momentum Term using Equivalent Gamma
+    // D +/- = [ (gamma_eff - 1)*u +/- 2*c ] / gamma_eff
+    double term_2c = (sign > 0) ? (2.0 * c) : (-2.0 * c);
+    double D_split = ((gamma_eff - 1.0) * u + term_2c) / gamma_eff;
+
+    F_split.mom = f_mass * D_split;
+
+    // --- Energy Equation (Crucial Vinokur Correction) ---
+
+    // Part A: Ideal Gas Energy Term (using gamma_eff)
+    // H_ideal = D_split^2 * gamma_eff^2 / (2 * (gamma_eff^2 - 1))
+    // Simplifies to the form below:
+    double numerator = ((gamma_eff - 1.0) * u + term_2c);
+    double E_ideal_term = (numerator * numerator) / (2.0 * (gamma_eff * gamma_eff - 1.0));
+
+    // Part B: The Correction Term for General EOS
+    // We need real specific enthalpy h = e + p/rho
+    // Note: U.eng is rho * E_total -> specific internal energy e = (U.eng/rho) - 0.5*u*u
+    double e_internal = (U.eng / rho) - 0.5 * u * u;
+    double h_real = e_internal + p / rho;
+
+    // Ideal enthalpy based on sound speed
+    double h_ideal = (c * c) / (gamma_eff - 1.0);
+
+    // Combine: F_energy = f_mass * ( E_ideal_term + (h_real - h_ideal) )
+    F_split.eng = f_mass * (E_ideal_term + (h_real - h_ideal));
+
+    return F_split;
+}
