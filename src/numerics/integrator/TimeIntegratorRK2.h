@@ -1,5 +1,5 @@
 /**
- * @file SolverRK2.h
+ * @file TimeIntegratorRK2.h
  * @brief 2nd Order Strong Stability Preserving Runge-Kutta (SSPRK2) Time Integrator.
  */
 

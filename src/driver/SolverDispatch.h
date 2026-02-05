@@ -25,8 +25,11 @@
 #include "../physics/eos/IdealGas.h"
 
 #include "../numerics/flux/FluxVL.h"
+
 #include "../numerics/reconstruction/Reconstruction.h"
 #include "../numerics/reconstruction/Limiters.h"
+
+#include "../numerics/integrator/TimeIntegratorEuler.h"
 #include "../numerics/integrator/TimeIntegratorRK2.h"
 
 // 3. The Main Loop
@@ -251,9 +254,12 @@ void DispatchSolver(const std::string &solver_name,
         std::cerr << "[Warning] RK3 not linked, using RK2." << std::endl;
         select_flux<SolverRK2>(state, eos, grid, config, specs);
     }
+    else if (time_int == "Euler" || time_int == "RK1")
+    {
+        select_flux<SolverEuler>(state, eos, grid, config, specs);
+    }
     else
     {
-        // 如果是简单的 "Euler"，可以用 RK2 的 1 个 stage，或者专门写 SolverEuler
         std::cerr << "[Warning] Unknown time integrator '" << time_int << "', defaulting to SSPRK2." << std::endl;
         select_flux<SolverRK2>(state, eos, grid, config, specs);
     }
