@@ -48,8 +48,9 @@ struct NumericsConfig
 
     // Reconstruction & Limiting
     // These are strings now. The Factory will interpret "minmod" or "weno5"
-    std::string reconstruction = "pcm"; ///< "pcm" (1st), "plm" (2nd), "ppm" (3rd)
-    std::string limiter = "minmod";     ///< "minmod", "mc", "superbee"
+    std::string reconstruction = "pcm";  ///< "pcm" (1st), "plm" (2nd), "ppm" (3rd)
+    std::string limiter = "minmod";      ///< "minmod", "mc", "superbee"
+    std::string time_integrator = "RK2"; ///< "RK2","RK3"
 
     double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
 };

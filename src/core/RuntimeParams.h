@@ -46,6 +46,7 @@ public:
         cfg.numerics.cfl = parser.GetDouble("cfl", 0.8);
         cfg.numerics.limiter = parser.GetString("limiter", "minmod");
         cfg.numerics.reconstruction = parser.GetString("reconstruct", "pcm");
+        cfg.numerics.time_integrator = parser.GetString("timeintegrator", "RK2");
 
         // 3. 搬运物理参数 (Physics)
         cfg.physics.eos_type = parser.GetString("eos", "ideal");

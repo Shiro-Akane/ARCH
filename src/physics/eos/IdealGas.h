@@ -17,12 +17,22 @@ struct IdealGas
     // The manager holds species properties (gamma, molar mass, etc.)
     const SpeciesManager manager;
 
+    // Fallback gamma for single-species/simple problems (when manager is empty)
+    double global_gamma;
+
     /**
      * @brief Constructor.
      * @param m SpeciesManager containing component properties.
      */
-    IdealGas(const SpeciesManager &m) : manager(m) {}
+    IdealGas(const SpeciesManager &m) : manager(m), global_gamma(1.4) {}
 
+    /**
+     * @brief Constructor 2: Hybrid (Compatible with SolverDispatch)
+     * * This fixes the "No matching constructor" error.
+     * * It allows passing a global gamma (from Config) AND the species manager.
+     */
+    IdealGas(double default_gamma, const SpeciesManager &m)
+        : manager(m), global_gamma(default_gamma) {}
     /**
      * @brief Computes the mixture's specific heat ratio (Gamma).
      * Based on the mass-fraction weighted average of internal energies.
@@ -31,8 +41,16 @@ struct IdealGas
      * * @param Yi Array of mass fractions for each species.
      * @return The effective gamma for the mixture.
      */
+
     double get_gamma(const double *Yi) const
     {
+        // Safety / Fallback:
+        // If no species are registered (e.g., simple Sod test), use the global gamma.
+        if (manager.count() == 0)
+        {
+            return global_gamma;
+        }
+
         double sum_inv_gamma_minus_1 = 0.0;
 
         for (int k = 0; k < manager.count(); ++k)
@@ -44,6 +62,10 @@ struct IdealGas
                 sum_inv_gamma_minus_1 += Yi[k] / (gamma_i - 1.0);
             }
         }
+        // Safety: If mass fractions are all zero (vacuum) or math fails
+        if (sum_inv_gamma_minus_1 < 1e-9)
+            return global_gamma;
+
         // Invert back to get gamma_mix
         return 1.0 / sum_inv_gamma_minus_1 + 1.0;
     }
@@ -62,6 +84,10 @@ struct IdealGas
     double get_pressure(double rho, double mom, double eng, const double *Yi) const
     {
         double gamma_mix = get_gamma(Yi);
+
+        // Prevent division by zero in vacuum
+        if (rho < 1e-12)
+            return 0.0;
 
         // kinetic energy = 0.5 * (rho * u)^2 / rho = 0.5 * mom^2 / rho
         double v = mom / rho;
@@ -82,6 +108,8 @@ struct IdealGas
      */
     double get_sound_speed(double rho, double p, const double *Yi) const
     {
+        if (rho < 1e-12)
+            return 0.0; // Vacuum safety
         return std::sqrt(get_gamma(Yi) * p / rho);
     }
 

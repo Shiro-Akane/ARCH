@@ -21,7 +21,7 @@
 #include "../src/data/GlobalDefs.h"
 
 #include "../src/physics/species/Species.h"
-#include "../src/physics/solvers/SolverFactory.h"
+#include "../src/driver/SolverDispatch.h"
 // =========================================================
 // =================== main function =======================
 // =========================================================

@@ -9,6 +9,8 @@
 
 #include <cmath>
 
+#include "../data/GlobalDefs.h"
+
 // Grid Setup
 struct Grid
 {
@@ -26,6 +28,12 @@ struct Grid
      */
     Grid(int nx_in, int ng_in, double x_min_in, double x_max_in)
         : nx(nx_in), ng(ng_in), x_min(x_min_in), x_max(x_max_in)
+    {
+        dx = (x_max - x_min) / nx;
+    }
+
+    Grid(const GridConfig &cfg, int ng_required)
+        : nx(cfg.nx), ng(ng_required), x_min(cfg.x_min), x_max(cfg.x_max)
     {
         dx = (x_max - x_min) / nx;
     }

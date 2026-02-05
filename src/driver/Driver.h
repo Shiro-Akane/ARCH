@@ -9,17 +9,34 @@
 
 #include <iostream>
 #include <algorithm>
+#include <iomanip>
 
 #include "DriverUtils.h"
 
 #include "../io/IO.h"
 
 /**
+ * @brief Local Helper Class to wrap Boundary Condition logic.
+ * * This allows the RK solver to call bc.apply() inside its stages
+ * * without needing to know about SimConfig details.
+ */
+struct BCHandler
+{
+    const SimConfig &config;
+
+    // 这是 SolverRK2 调用的接口
+    void apply(FluidState &state, const Grid &grid) const
+    {
+        apply_boundary_conditions(state, grid, config);
+    }
+};
+
+/**
  * @brief Executes the main simulation loop.
  * @tparam SolverPolicy The numerical scheme (e.g., Lax-Friedrichs, HLLC).
  * @tparam EosPolicy The equation of state (e.g., Ideal Gas).
  */
-template <typename SolverPolicy, typename EosPolicy>
+template <typename TimeIntegratorPolicy, typename EosPolicy>
 void run_simulation(FluidState &state, const EosPolicy &eos,
                     const Grid &grid, const SimConfig &config,
                     const SpeciesManager &specs)
@@ -44,13 +61,17 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     // =========================================================
     // 3. State Management (Double Buffering)
     // =========================================================
-    FluidState u_current = state; ///< State at time n (Current).
-    FluidState u_next;            ///< State at time n+1 (Next).
+    FluidState u_current = state;              ///< State at time n (Current).
+    FluidState u_next(grid, specs.count());    ///< State at time n+1 (Next).
+    FluidState u_scratch(grid, specs.count()); ///< RK Scratch state
+
+    // update Bounday during Scratch state
+    BCHandler bc_handler{config};
 
     // Allocate memory for the next state buffer
     u_next.Resize(grid, state.GetNumSpecies());
 
-    std::cout << ">>> Simulation Started | Solver: " << SolverPolicy::name() << std::endl;
+    std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name() << std::endl;
 
     // =========================================================
     // Main Time Loop
@@ -103,10 +124,10 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // Step D: Numerical Update
         // -----------------------------------------------------
         // 1. Fill Ghost Zones (Periodic/Outflow/Reflective)
-        apply_boundary_conditions(u_current, grid, config);
+        bc_handler.apply(u_current, grid);
 
         // 2. Evolve System: U(n+1) = U(n) + dt * Flux(U(n))
-        SolverPolicy::solver(u_current, u_next, eos, grid, dt);
+        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler);
 
         // 3. Ping-Pong Buffering (Swap pointers/references)
         std::swap(u_current, u_next);

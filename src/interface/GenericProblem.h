@@ -61,8 +61,9 @@ public:
      * @param grid  Input: Grid topology.
      * @param eos   Input: Equation of State for variable conversion.
      */
-    void InitializeData(FluidState &state, const Grid &grid, const IdealGas &eos) override
+    void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) override
     {
+        IdealGas eos(config.physics.gamma, specs);
         int n_species = state.GetNumSpecies();
         // System handles the loop iteration and parallelization (OpenMP).
         // The user only needs to worry about the physics at a single point (x).

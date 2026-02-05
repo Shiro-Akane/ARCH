@@ -45,7 +45,7 @@ public:
      * * usually do NOT pass 'config' here. Instead, they use static/member variables
      * * cached during the Setup() phase.
      */
-    virtual void InitializeData(FluidState &state, const Grid &grid, const IdealGas &eos) = 0;
+    virtual void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) = 0;
 
     /**
      * @brief Returns the name of the problem for logging.

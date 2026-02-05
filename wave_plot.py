@@ -25,7 +25,7 @@ fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 12), sharex=True)
 # === Subplot 1: 密度 ===
 ax1.plot(df['x'], df['rho'], 'k-', label='Density', linewidth=2)
 ax1.set_ylabel("Density")
-ax1.set_title(f"Sod Shock Tube Result (Solver: VL)")
+ax1.set_title(f"Sod Shock Tube Result (Solver: VL_2nd)")
 ax1.grid(True, linestyle='--', alpha=0.6)
 ax1.legend(loc='upper right')
 
@@ -53,6 +53,6 @@ ax3.set_title("Species Distribution (Contact Discontinuity)")
 
 # --- 4. 保存 ---
 plt.tight_layout()
-plt.savefig("sod_VL.png", dpi=300)
-print("Saved: sod_VL.png")
+plt.savefig("sod_VL_2nd.png", dpi=300)
+print("Saved: sod_VL_2nd.png")
 plt.show()
