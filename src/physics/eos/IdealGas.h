@@ -135,4 +135,40 @@ struct IdealGas
 
         return e_internal + e_kinetic;
     }
+
+    /**
+     * @brief Computes Pressure from (rho, e).
+     * * Necessary for Roe-Glaister average state calculation.
+     * * Relation: p = (gamma - 1) * rho * e
+     * * @param rho Density
+     * @param e   Specific Internal Energy (J/kg)
+     * @param Yi  Mass Fractions
+     */
+    double get_pressure_from_rho_e(double rho, double e, const double *Yi) const
+    {
+        // 理想气体状态方程: p = rho * R * T = rho * (gamma-1) * e
+        return (get_gamma(Yi) - 1.0) * rho * e;
+    }
+
+    /**
+     * @brief Partial derivative: dp / drho | constant e
+     * * Used for Roe-Glaister and Implicit Jacobians.
+     * * For Ideal Gas: p = (gamma - 1) * rho * e
+     * * dp/drho = (gamma - 1) * e
+     */
+    double get_dp_drho_e(double rho, double e, const double *Yi) const
+    {
+        return (get_gamma(Yi) - 1.0) * e;
+    }
+
+    /**
+     * @brief Partial derivative: dp / de | constant rho
+     * * Used for Roe-Glaister and Implicit Jacobians.
+     * * For Ideal Gas: p = (gamma - 1) * rho * e
+     * * dp/de = (gamma - 1) * rho
+     */
+    double get_dp_de_rho(double rho, double e, const double *Yi) const
+    {
+        return (get_gamma(Yi) - 1.0) * rho;
+    }
 };

@@ -7,22 +7,25 @@
 # [Grid Configuration]
 # Maps to config.grid.*
 # ------------------------------------------------------------------------------
-nx       = 400
+nx       = 50
 x_min    = 0.0
 x_max    = 1.0
 geometry = cartesian
 xr_boundary_type = outflow # Options: reflect, outflow, periodic
-xl_boundary_type = outflow
+xl_boundary_type = outflow # Options: reflect, outflow, periodic
 
 # ------------------------------------------------------------------------------
 # [Numerics]
 # Maps to config.numerics.*
 # ------------------------------------------------------------------------------
-solver      = VL       # Options: SW, VL, HLLC
-reconstruct = MUSCL      # Options: pcm (1st), plm (2nd)
-timeintegrator = RK2   # Options: RK2, RK3, Euler
-limiter     = minmod   # Options: minmod, superbee
-cfl         = 0.8      # Keep < 0.5 for VL/HLLC
+solver      = VL       # Options: SW, VL, Roe, HLLC
+reconstruct = MUSCL     # Options: pcm (1st), MUSCL (2nd)
+time_integrator = RK2    # Options: RK2, RK3, Euler/RK1
+limiter     = superbee    # Options: minmod, superbee, vanleer, mc, none
+cfl         = 0.8       # Keep < 0.5 for VL/HLLC
+
+EntropyFix = Off
+EntropyFixCoefficient = 0.1 # share same control logic for SW smoothing coeff.
 
 # ------------------------------------------------------------------------------
 # [Time & IO]

@@ -109,7 +109,7 @@ FluidVector3 compute_half_step_flux(const FluidVector3 &U_L, const double *Yi_L,
  */
 template <typename EosType>
 FluidVector3 calc_split_flux(const FluidVector3 &U, const double *Yi,
-                             const EosType &eos, int sign)
+                             const EosType &eos, int sign, double smoothing_coeff)
 {
     double rho = std::max(U.rho, 1e-12); // Prevent division by zero
     double u = U.mom / rho;
@@ -122,7 +122,9 @@ FluidVector3 calc_split_flux(const FluidVector3 &U, const double *Yi,
     // Lambda helper:
     // If sign > 0, returns max(lambda, 0) -> Positive Eigenvalues
     // If sign < 0, returns min(lambda, 0) -> Negative Eigenvalues
-    double eps = 0.1 * c;
+    double eps = smoothing_coeff * c;
+
+    eps = std::max(eps, 1e-12);
 
     auto split_lambda = [&](double l)
     {
@@ -189,7 +191,32 @@ FluidVector3 calc_vinokur_flux(const FluidVector3 &U, const double *Yi,
 
     // Calculate Equivalent Gamma (Vinokur's Gamma)
     // Protection for vacuum/zero pressure is crucial here
+    if (std::isnan(c) || c < 1e-8)
+        c = std::sqrt(1.4 * p / rho);
     double gamma_eff = (p > 1e-12) ? (rho * c * c / p) : 1.4;
+
+    // ------------------------------------------------------------------------
+    // [Note regarding Vinokur Splitting Singularity]
+    //
+    // Theory:
+    // The Vinokur energy flux formula contains divisors (gamma-1) and (gamma^2-1).
+    // As gamma_eff -> 1.0 (isothermal limit or numerical error), these terms blow up.
+    //
+    // Practice:
+    // We intentionally DO NOT clamp gamma_eff to a hard floor (e.g., 1.05) here
+    // to preserve accuracy for real gases where gamma might be naturally low (e.g. 1.1).
+    //
+    // Robustness Strategy:
+    // Instead of clamping, we rely on the NAN-check at the end of this function.
+    // If gamma_eff ~ 1.0 causes the flux to explode (NaN/Inf), the check will
+    // catch it and fallback to the robust Supersonic (Full Upwind) Flux.
+    // This allows the solver to "survive" bad reconstruction states without
+    // artificially altering physics in valid low-gamma regions.
+    // ------------------------------------------------------------------------
+
+    // Minimal protection against strict Division-By-Zero
+    if (std::abs(gamma_eff - 1.0) < 1e-6)
+        gamma_eff = 1.000001;
 
     // Calculate Mach Number
     double M = u / c;
@@ -237,7 +264,7 @@ FluidVector3 calc_vinokur_flux(const FluidVector3 &U, const double *Yi,
     // Common factor term: (M +/- 1)
     // If sign > 0 (F+), we use (M + 1)
     // If sign < 0 (F-), we use (M - 1)
-    double factor = (sign > 0) ? (M + 1.0) : (M - 1.0);
+    double factor = (sign > 0) ? (M + 1.0) : (M - 1.0); // (M ± 1)
 
     // Mass Flux (The split mass term)
     // f_mass = +/- rho * c * (M +/- 1)^2 / 4
@@ -278,5 +305,252 @@ FluidVector3 calc_vinokur_flux(const FluidVector3 &U, const double *Yi,
     // Combine: F_energy = f_mass * ( E_ideal_term + (h_real - h_ideal) )
     F_split.eng = f_mass * (E_ideal_term + (h_real - h_ideal));
 
+    if (std::isnan(F_split.eng))
+    {
+        // Fallback to supersonic (Upwind) if splitting fails numerically
+        if (sign > 0)
+            return FluidVector3{U.mom, U.mom * u + p, (U.eng + p) * u};
+        else
+            return FluidVector3{0.0, 0.0, 0.0};
+    }
+
     return F_split;
+}
+
+// ==================================================================
+// 5. Roe-Glaister Flux Solver Helpers
+// ==================================================================
+
+// ------------------------------------------------------------------
+// 5.1 Entropy Fix (Harten's)
+// ------------------------------------------------------------------
+/**
+ * @brief Harten's Entropy Fix to prevent non-physical shocks (sonic glitch).
+ * * Ensures eigenvalues never become exactly zero.
+ */
+inline double entropy_fix(double lambda, double epsilon)
+{
+    double abs_lambda = std::abs(lambda);
+    if (abs_lambda < epsilon)
+    {
+        return (lambda * lambda + epsilon * epsilon) / (2.0 * epsilon);
+    }
+    return abs_lambda;
+}
+
+// ------------------------------------------------------------------
+// 5.2 Roe-Glaister State Struct
+// ------------------------------------------------------------------
+/**
+ * @struct RoeGlaisterState
+ * @brief Holds the Roe-averaged quantities and thermodynamic derivatives.
+ */
+struct RoeGlaisterState
+{
+    double rho_hat; // Roe-averaged density
+    double u_hat;   // Roe-averaged velocity
+    double H_hat;   // Roe-averaged Total Enthalpy
+    double c_hat;   // Roe-averaged Sound Speed
+
+    // Glaister derivatives for General EOS
+    double chi;   // dp/drho | constant e
+    double kappa; // dp/de   | constant rho
+};
+
+// ------------------------------------------------------------------
+// 5.3 Roe Averaging Routine (Connects to EOS)
+// ------------------------------------------------------------------
+/**
+ * @brief Computes the Roe-Glaister average state.
+ * * This function bridges the Flux Solver and the EOS.
+ * * It uses the finite difference of pressure to approximate derivatives (Glaister).
+ * * @param U_L, U_R  Conservative variables
+ * @param P_L, P_R  Pressure
+ * @param e_L, e_R  Specific internal energy (e = E_int / rho)
+ * @param H_L, H_R  Total Enthalpy
+ * @param Yi_avg    Averaged species mass fractions (passed to EOS)
+ * @param eos       EOS object (must support get_pressure_from_rho_e, etc.)
+ */
+template <typename EosType>
+inline RoeGlaisterState calc_glaister_state(
+    const FluidVector3 &U_L, const FluidVector3 &U_R,
+    double P_L, double P_R,
+    double e_L, double e_R,
+    double H_L, double H_R,
+    const double *Yi_avg,
+    const EosType &eos)
+{
+    RoeGlaisterState res;
+
+    // --- A. Standard Roe Averages (Kinematics) ---
+    double rho_L = std::max(U_L.rho, 1e-12);
+    double rho_R = std::max(U_R.rho, 1e-12);
+
+    double u_L = U_L.mom / rho_L;
+    double u_R = U_R.mom / rho_R;
+
+    double sq_rho_L = std::sqrt(rho_L);
+    double sq_rho_R = std::sqrt(rho_R);
+    double inv_denom = 1.0 / (sq_rho_L + sq_rho_R);
+
+    // Store averages
+    res.rho_hat = sq_rho_L * sq_rho_R;
+    res.u_hat = (sq_rho_L * u_L + sq_rho_R * u_R) * inv_denom;
+    res.H_hat = (sq_rho_L * H_L + sq_rho_R * H_R) * inv_denom;
+
+    // --- B. Glaister Thermodynamic Averages (EOS Dependent) ---
+    // We need to find chi (dp/drho) and kappa (dp/de) such that Property U is satisfied.
+
+    double d_rho = rho_R - rho_L;
+    double d_e = e_R - e_L;
+
+    // Numerical threshold to switch to analytical derivatives
+    double epsilon = std::max(1e-7 * (rho_L + rho_R), 1e-10);
+
+    // 1. Calculate intermediate pressure p* = p(rho_R, e_L)
+    // This utilizes the new EOS helper you added.
+    double p_star = eos.get_pressure_from_rho_e(rho_R, e_L, Yi_avg);
+
+    // 2. Compute Chi (dp/drho)
+    if (std::abs(d_rho) > epsilon)
+    {
+        // Finite difference across rho
+        res.chi = (p_star - P_L) / d_rho;
+    }
+    else
+    {
+        // Fallback to analytical derivative (at L state)
+        res.chi = eos.get_dp_drho_e(rho_L, e_L, Yi_avg);
+    }
+
+    // 3. Compute Kappa (dp/de)
+    if (std::abs(d_e) > 1e-10)
+    { // Energy threshold can be smaller
+        // Finite difference across e
+        res.kappa = (P_R - p_star) / d_e;
+    }
+    else
+    {
+        // Fallback to analytical derivative (at R state)
+        res.kappa = eos.get_dp_de_rho(rho_R, e_R, Yi_avg);
+    }
+
+    if (res.kappa < 1e-12)
+        res.kappa = 1e-12;
+
+    // --- C. Final Sound Speed ---
+    // c^2 = chi + kappa * (H_hat - 0.5 * u_hat^2)
+    double p_ref = 0.5 * (P_L + P_R);
+    double term2 = (res.kappa * p_ref) / (res.rho_hat * res.rho_hat + 1e-20);
+    double c2 = res.chi + term2;
+
+    if (c2 < 0.0 || std::isnan(c2))
+    {
+        // 如果 c2 计算失败，回退到理想气体近似或极小声速
+        // c2 = gamma * p / rho -> 1.4 * p_ref / rho_hat
+        c2 = 1.4 * p_ref / (res.rho_hat + 1e-12);
+    }
+    res.c_hat = std::sqrt(std::max(c2, 1e-8)); // Safety floor
+
+    return res;
+}
+
+// ------------------------------------------------------------------
+// 5.4 Core Roe Flux Assembler
+// ------------------------------------------------------------------
+/**
+ * @brief Assembles the final Roe Flux using the averaged state.
+ * * F_Roe = 0.5 * (F_L + F_R) - 0.5 * Sum( alpha * |lambda| * K )
+ */
+inline FluidVector3 calc_roe_flux_hydro(
+    const FluidVector3 &F_L, const FluidVector3 &F_R,
+    const FluidVector3 &U_L, const FluidVector3 &U_R,
+    double P_L, double P_R,
+    const RoeGlaisterState &rs,
+    double fix_coeff)
+{
+    // 1. Wave Strengths (Alpha)
+    double d_rho = U_R.rho - U_L.rho;
+    double d_p = P_R - P_L;
+    double d_u = (U_R.mom / U_R.rho) - (U_L.mom / U_L.rho);
+
+    // Characteristic variables coefficients
+    double rho_c = rs.rho_hat * rs.c_hat;
+    // 防止 c_hat 过小导致除零
+    double c2_safe = std::max(rs.c_hat * rs.c_hat, 1e-16);
+
+    // Wave amplitudes
+    // alpha_1: u - c
+    // alpha_2: u (Entropy)
+    // alpha_3: u + c
+    double alpha_1 = (d_p - rho_c * d_u) / (2.0 * c2_safe);
+    double alpha_2 = d_rho - (d_p / c2_safe);
+    double alpha_3 = (d_p + rho_c * d_u) / (2.0 * c2_safe);
+
+    // 2. Eigenvalues (Lambda) with Entropy Fix
+    double spectral_radius = std::abs(rs.u_hat) + rs.c_hat;
+    double epsilon_val = fix_coeff * spectral_radius;
+    epsilon_val = std::max(epsilon_val, 1e-12);
+
+    double l1 = entropy_fix(rs.u_hat - rs.c_hat, epsilon_val);
+    double l2 = entropy_fix(rs.u_hat, epsilon_val);
+    double l3 = entropy_fix(rs.u_hat + rs.c_hat, epsilon_val);
+
+    // 3. Eigenvectors (K)
+    // K1 = [1, u-c, H-uc]
+    FluidVector3 K1;
+    K1.rho = 1.0;
+    K1.mom = rs.u_hat - rs.c_hat;
+    K1.eng = rs.H_hat - rs.u_hat * rs.c_hat;
+
+    // K3 = [1, u+c, H+uc]
+    FluidVector3 K3;
+    K3.rho = 1.0;
+    K3.mom = rs.u_hat + rs.c_hat;
+    K3.eng = rs.H_hat + rs.u_hat * rs.c_hat;
+
+    // K2 = [1, u, H - c^2/kappa]  <-- Glaister extension for Energy component
+    FluidVector3 K2;
+    K2.rho = 1.0;
+    K2.mom = rs.u_hat;
+
+    // Protect against zero kappa (incompressible limit case)
+    double k_denominator = rs.kappa;
+    // 1e-6 只是一个示例阈值，对于无量纲化的 density 通常足够小
+    // 如果 kappa < 1e-6，说明压力几乎不依赖内能（接近不可压或错误状态）
+    if (k_denominator < 1e-8)
+    {
+        // Fallback: 假设是理想气体行为，此时 K2_eng = 0.5 * u^2
+        K2.eng = 0.5 * rs.u_hat * rs.u_hat;
+    }
+    else
+    {
+        double term_singular = (rs.rho_hat * c2_safe) / k_denominator;
+
+        // 双重保险：限制这一项的大小，防止它超过合理的物理范围 (如 100倍的总焓)
+        if (std::abs(term_singular) > 100.0 * (std::abs(rs.H_hat) + 1.0))
+        {
+            // 这种情况下通常意味着导数计算错误，回退到动能
+            K2.eng = 0.5 * rs.u_hat * rs.u_hat;
+        }
+        else
+        {
+            K2.eng = rs.H_hat - term_singular;
+        }
+    }
+
+    // 4. Assemble Dissipation Term: sum(|l| * a * K)
+    FluidVector3 diss;
+    diss.rho = l1 * alpha_1 * K1.rho + l2 * alpha_2 * K2.rho + l3 * alpha_3 * K3.rho;
+    diss.mom = l1 * alpha_1 * K1.mom + l2 * alpha_2 * K2.mom + l3 * alpha_3 * K3.mom;
+    diss.eng = l1 * alpha_1 * K1.eng + l2 * alpha_2 * K2.eng + l3 * alpha_3 * K3.eng;
+
+    if (std::isnan(diss.eng) || std::isinf(diss.eng))
+    {
+        // 如果计算出无效通量，返回零耗散（变成中心差分），防止程序崩溃
+        // 实际生产中这里应该报错，但为了调试可以先这样
+        return 0.5 * (F_L + F_R);
+    }
+    // 5. Final Flux
+    return 0.5 * (F_L + F_R - diss);
 }

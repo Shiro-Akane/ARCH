@@ -38,7 +38,7 @@ struct FluxSW
     template <typename EosType>
     static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
                                std::vector<FluidVector3> &flux_out,
-                               std::vector<double> &spec_flux_out)
+                               std::vector<double> &spec_flux_out, double smoothing_coeff = 0.1)
     {
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
@@ -66,9 +66,9 @@ struct FluxSW
 
             // 2. Flux Splitting (Vinokur)
             // F+ (Forward moving waves)
-            FluidVector3 F_plus = calc_split_flux(U_L, Yi_L.data(), eos);
+            FluidVector3 F_plus = calc_split_flux(U_L, Yi_L.data(), eos, +1, smoothing_coeff);
             // F- (Backward moving waves)
-            FluidVector3 F_minus = calc_split_flux(U_R, Yi_R.data(), eos);
+            FluidVector3 F_minus = calc_split_flux(U_R, Yi_R.data(), eos, -1, smoothing_coeff);
 
             // 3. Store Total Interface Flux
             flux_out[i + 1] = F_plus + F_minus;

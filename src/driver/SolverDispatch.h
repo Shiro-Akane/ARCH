@@ -25,6 +25,8 @@
 #include "../physics/eos/IdealGas.h"
 
 #include "../numerics/flux/FluxVL.h"
+#include "../numerics/flux/FluxSW.h"
+#include "../numerics/flux/FluxRoe.h"
 
 #include "../numerics/reconstruction/Reconstruction.h"
 #include "../numerics/reconstruction/Limiters.h"
@@ -178,10 +180,13 @@ void select_flux(FluidState &state, const EosPolicy &eos, const Grid &grid,
     }
     else if (flux == "SW" || flux == "StegerWarming")
     {
-        // 假设 FluxSW 和 FluxVL 接口一致
         // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
-        std::cerr << "[Error] Steger-Warming not implemented yet. Using VL." << std::endl;
-        select_reconstruction<TimeIntegrator, FluxVL>(state, eos, grid, config, specs);
+        select_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
+    }
+    else if (flux == "Roe" || flux == "roe")
+    {
+        // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
+        select_reconstruction<TimeIntegrator, FluxRoe>(state, eos, grid, config, specs);
     }
     else if (flux == "HLLC")
     {

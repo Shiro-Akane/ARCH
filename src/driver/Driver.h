@@ -65,6 +65,12 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     FluidState u_next(grid, specs.count());    ///< State at time n+1 (Next).
     FluidState u_scratch(grid, specs.count()); ///< RK Scratch state
 
+    // Entropy_fix_coeff for SW and Roe flux scheme
+    double entropy_fix_coeff = config.numerics.entropy_fix_coeff;
+
+    std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name()
+              << " | Entropy Fix Coeff: " << entropy_fix_coeff << std::endl;
+
     // update Bounday during Scratch state
     BCHandler bc_handler{config};
 
@@ -127,7 +133,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         bc_handler.apply(u_current, grid);
 
         // 2. Evolve System: U(n+1) = U(n) + dt * Flux(U(n))
-        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler);
+        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, entropy_fix_coeff);
 
         // 3. Ping-Pong Buffering (Swap pointers/references)
         std::swap(u_current, u_next);

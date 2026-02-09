@@ -74,7 +74,8 @@ struct SolverRK2
     static void solve(const FluidState &state_n, FluidState &state_np1,
                       FluidState &state_star, // Intermediate buffer provided by driver
                       const EosType &eos, const Grid &grid, double dt,
-                      BCPolicy &boundary_condition) // Need BCs for intermediate step
+                      BCPolicy &boundary_condition,
+                      double entropy_fix_coeff = 0.1) // Need BCs for intermediate step
     {
         double dx = grid.dx;
         double coeff = dt / dx;
@@ -95,7 +96,7 @@ struct SolverRK2
         // =========================================================
 
         // 1.1 Compute Fluxes based on U^n
-        FluxSchemePolicy::compute_fluxes(state_n, eos, grid, fluxes, spec_fluxes);
+        FluxSchemePolicy::compute_fluxes(state_n, eos, grid, fluxes, spec_fluxes, entropy_fix_coeff);
 
         // 1.2 Update to obtain U* (Euler Step)
         // state_star = state_n - coeff * (F_R - F_L)

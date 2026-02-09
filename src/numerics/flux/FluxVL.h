@@ -38,7 +38,8 @@ struct FluxVL
     template <typename EosType>
     static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
                                std::vector<FluidVector3> &flux_out,
-                               std::vector<double> &spec_flux_out)
+                               std::vector<double> &spec_flux_out,
+                               double /* unused_entropy_coeff */ = 0.0)
     {
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();

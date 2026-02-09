@@ -53,6 +53,8 @@ struct NumericsConfig
     std::string time_integrator = "RK2"; ///< "RK2","RK3"
 
     double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
+
+    double entropy_fix_coeff = 0.1;
 };
 
 // ----------------------------------------------------------------------

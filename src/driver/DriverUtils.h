@@ -54,7 +54,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
 
     // Left Boundary: Outflow Condition.
     // We iterate through the ghost cells (1 to ng) and copy data from the first active cell (i_start).
-    std::string bc_type_L = cfg.grid.xr_boundary_type;
+    std::string bc_type_L = cfg.grid.xl_boundary_type;
 
     if (bc_type_L == "periodic")
     {
@@ -81,7 +81,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
     }
     // Right Boundary: Outflow Condition.
     // We iterate through the ghost cells and copy data from the last active cell (i_end).
-    std::string bc_type_R = cfg.grid.xl_boundary_type;
+    std::string bc_type_R = cfg.grid.xr_boundary_type;
     if (bc_type_R == "periodic")
     {
         // Ghost(i_end + g) <--- Active(i_start + g - 1)
@@ -130,6 +130,9 @@ double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid
     for (int i = grid.Is(); i < grid.Ie(); i++)
     {
         double rho = state.rho[i];
+        if (rho < 1e-12)
+            continue;
+
         double mom = state.mom[i];
         double eng = state.eng[i];
 
@@ -155,5 +158,8 @@ double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid
     }
 
     // Return the stable time step
+    if (umax < 1e-9)
+        umax = 1e-9;
+
     return cfl_number * grid.dx / umax;
 }

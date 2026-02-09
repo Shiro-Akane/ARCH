@@ -74,7 +74,8 @@ struct SolverEuler
     static void solve(const FluidState &state_n, FluidState &state_np1,
                       FluidState &state_scratch, // [Unused] 占位符，Euler 不需要中间缓存
                       const EosType &eos, const Grid &grid, double dt,
-                      BCPolicy &boundary_condition) // [Unused] Euler 一步到位，中间不需要刷边界
+                      BCPolicy &boundary_condition,
+                      double entropy_fix_coeff = 0.1) // [Unused] Euler 一步到位，中间不需要刷边界
     {
         double dx = grid.dx;
         double coeff = dt / dx;
@@ -96,7 +97,7 @@ struct SolverEuler
         // =========================================================
 
         // 1. Compute Fluxes based on U^n
-        FluxSchemePolicy::compute_fluxes(state_n, eos, grid, fluxes, spec_fluxes);
+        FluxSchemePolicy::compute_fluxes(state_n, eos, grid, fluxes, spec_fluxes, entropy_fix_coeff);
 
         // 2. Update directly to U^{n+1}
         update_finite_volume(state_n, state_np1, fluxes, spec_fluxes, grid, coeff);

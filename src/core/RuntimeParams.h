@@ -47,6 +47,16 @@ public:
         cfg.numerics.limiter = parser.GetString("limiter", "minmod");
         cfg.numerics.reconstruction = parser.GetString("reconstruct", "pcm");
         cfg.numerics.time_integrator = parser.GetString("timeintegrator", "RK2");
+        std::string fix_switch = parser.GetString("EntropyFix", "On"); // 默认开启
+        if (fix_switch == "Off" || fix_switch == "False")
+        {
+            cfg.numerics.entropy_fix_coeff = 0.0; // 0.0 代表关闭
+        }
+        else
+        {
+            // 如果开启，读取系数，默认为 0.1
+            cfg.numerics.entropy_fix_coeff = parser.GetDouble("EntropyFixCoefficient", 0.1);
+        }
 
         // 3. 搬运物理参数 (Physics)
         cfg.physics.eos_type = parser.GetString("eos", "ideal");
