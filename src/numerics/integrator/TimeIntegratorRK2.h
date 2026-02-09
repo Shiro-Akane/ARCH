@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "../../data/FluidState.h"
 
 /**
@@ -81,8 +82,8 @@ struct SolverRK2
         int n_spec = state_n.GetNumSpecies();
 
         // Reuse buffers to save allocation (could be member variables if class was instantiated)
-        static std::vector<FluidVector3> fluxes(total_size);
-        static std::vector<double> spec_fluxes(n_spec * total_size);
+        std::vector<FluidVector3> fluxes(total_size);
+        std::vector<double> spec_fluxes(n_spec * total_size);
         if (fluxes.size() != total_size)
             fluxes.resize(total_size);
         if (spec_fluxes.size() != n_spec * total_size)

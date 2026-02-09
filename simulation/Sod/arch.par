@@ -18,7 +18,7 @@ xl_boundary_type = outflow
 # [Numerics]
 # Maps to config.numerics.*
 # ------------------------------------------------------------------------------
-solver      = VL       # Options: SW, LF, LW, VL, HLLC
+solver      = VL       # Options: SW, VL, HLLC
 reconstruct = MUSCL      # Options: pcm (1st), plm (2nd)
 timeintegrator = RK2   # Options: RK2, RK3, Euler
 limiter     = minmod   # Options: minmod, superbee

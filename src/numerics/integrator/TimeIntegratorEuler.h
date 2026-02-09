@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "../../data/FluidState.h"
 
 /**
@@ -57,8 +58,10 @@ struct SolverEuler
                 double rhoY_old = u_base.rho[i] * u_base.Y(k, i);
                 double rhoY_new = rhoY_old + d_rhoY;
 
+                double Y_val = rhoY_new / rho_new;
+
                 // Clamp to [0, 1]
-                u_dest.Y(k, i) = std::max(0.0, std::min(1.0, rhoY_new / rho_new));
+                u_dest.Y(k, i) = std::max(0.0, std::min(1.0, Y_val));
             }
         }
     }
@@ -78,9 +81,9 @@ struct SolverEuler
         int total_size = grid.GetTotalSize();
         int n_spec = state_n.GetNumSpecies();
 
-        // Memory Management (Static to avoid realloc)
-        static std::vector<FluidVector3> fluxes(total_size);
-        static std::vector<double> spec_fluxes(n_spec * total_size);
+        // Memory Management
+        std::vector<FluidVector3> fluxes(total_size);
+        std::vector<double> spec_fluxes(n_spec * total_size);
 
         // Ensure size is correct (in case grid changes or first run)
         if (fluxes.size() != total_size)
