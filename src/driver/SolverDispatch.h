@@ -28,6 +28,7 @@
 #include "../numerics/flux/FluxSW.h"
 #include "../numerics/flux/FluxRoe.h"
 #include "../numerics/flux/FluxHLL.h"
+#include "../numerics/flux/FluxHLLC.h"
 
 #include "../numerics/reconstruction/Reconstruction.h"
 #include "../numerics/reconstruction/Limiters.h"
@@ -197,8 +198,7 @@ void select_flux(FluidState &state, const EosPolicy &eos, const Grid &grid,
     else if (flux == "HLLC")
     {
         // dispatch_reconstruction<TimeIntegrator, FluxHLLC>(state, eos, grid, config, specs);
-        std::cerr << "[Error] HLLC not implemented yet. Using VL." << std::endl;
-        select_reconstruction<TimeIntegrator, FluxVL>(state, eos, grid, config, specs);
+        select_reconstruction<TimeIntegrator, FluxHLLC>(state, eos, grid, config, specs);
     }
     else
     {

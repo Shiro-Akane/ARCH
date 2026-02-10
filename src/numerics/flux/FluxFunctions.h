@@ -680,3 +680,36 @@ inline FluidVector3 calc_hll_flux_hydro(
         return F_HLL;
     }
 }
+
+// ------------------------------------------------------------------
+// 6.4 HLLC Star Speed Helper (新增，为HLLC做准备)
+// ------------------------------------------------------------------
+/**
+ * @brief Computes the contact wave speed S_star for HLLC.
+ * Formula:
+ * S_* = (rho_R*u_R*(S_R - u_R) - rho_L*u_L*(S_L - u_L) + (p_L - p_R))
+ * -------------------------------------------------------------
+ * (rho_R*(S_R - u_R) - rho_L*(S_L - u_L))
+ */
+inline double calc_hllc_star_speed(
+    double u_L, double rho_L, double p_L, double S_L,
+    double u_R, double rho_R, double p_R, double S_R)
+{
+    // 简化项
+    double term_L = rho_L * (S_L - u_L);
+    double term_R = rho_R * (S_R - u_R);
+
+    // 分母
+    double denom = term_R - term_L;
+
+    // 防止除零（极少数情况 S_L, S_R 对称且 rho 相等）
+    if (std::abs(denom) < 1e-10)
+    {
+        return 0.5 * (u_L + u_R);
+    }
+
+    // 分子
+    double numer = term_R * u_R - term_L * u_L + (p_L - p_R);
+
+    return numer / denom;
+}
