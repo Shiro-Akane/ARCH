@@ -20,8 +20,8 @@ xl_boundary_type = outflow # Options: reflect, outflow, periodic
 # ------------------------------------------------------------------------------
 solver      = HLL       # Options: SW, VL, Roe, HLL, HLLC
 reconstruct = MUSCL     # Options: pcm (1st), MUSCL (2nd)
-time_integrator = RK2    # Options: RK2, RK3, Euler/RK1
-limiter     = vanleer    # Options: minmod, superbee, vanleer, mc, none
+time_integrator = RK2   # Options: RK2, RK3, Euler/RK1
+limiter     = vanleer   # Options: minmod, superbee, vanleer, mc, none
 cfl         = 0.8       # Keep < 0.5 for VL/HLLC
 
 EntropyFix = Off

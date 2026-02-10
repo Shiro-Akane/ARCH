@@ -42,7 +42,7 @@ struct FluxHLL
             double rho_L = std::max(U_L.rho, 1e-12);
             double u_L = U_L.mom / rho_L;
             double e_L = std::max((U_L.eng / rho_L) - 0.5 * u_L * u_L, 1e-8);
-            // [昂贵操作] 只算一次压力
+            // Pressure
             double P_L = eos.get_pressure(rho_L, U_L.mom, U_L.eng, Yi_L.data());
             double H_L = (U_L.eng + P_L) / rho_L;
 
@@ -50,7 +50,7 @@ struct FluxHLL
             double rho_R = std::max(U_R.rho, 1e-12);
             double u_R = U_R.mom / rho_R;
             double e_R = std::max((U_R.eng / rho_R) - 0.5 * u_R * u_R, 1e-8);
-            // [昂贵操作] 只算一次压力
+            // Pressure
             double P_R = eos.get_pressure(rho_R, U_R.mom, U_R.eng, Yi_R.data());
             double H_R = (U_R.eng + P_R) / rho_R;
 
@@ -67,7 +67,7 @@ struct FluxHLL
             double c_L = calc_sound_speed_thermo(rho_L, P_L, e_L, Yi_L.data(), eos);
             double c_R = calc_sound_speed_thermo(rho_R, P_R, e_R, Yi_R.data(), eos);
 
-            // 复用 Roe 平均状态 (HLL 需要 Roe 平均速度来估算波速)
+            // 复用 Roe 平均状态
             RoeGlaisterState roe_state = calc_glaister_state(
                 U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Yi_L.data(), eos);
 
