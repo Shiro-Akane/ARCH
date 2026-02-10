@@ -46,6 +46,19 @@ FluidVector3 get_flux(const FluidVector3 &U, const double *Yi, const EosType &eo
     return F;
 }
 
+// for known pressure situation to save calculation
+inline FluidVector3 get_flux(const FluidVector3 &U, double p)
+{
+    double rho = U.rho;
+    double u = (std::abs(rho) > 1e-12) ? U.mom / rho : 0.0;
+
+    FluidVector3 F;
+    F.rho = U.mom;
+    F.mom = U.mom * u + p;
+    F.eng = (U.eng + p) * u;
+    return F;
+}
+
 // ------------------------------------------------------------------
 // 2. Richtmyer Scheme Helper (Predictor Step)
 // ------------------------------------------------------------------
@@ -553,4 +566,117 @@ inline FluidVector3 calc_roe_flux_hydro(
     }
     // 5. Final Flux
     return 0.5 * (F_L + F_R - diss);
+}
+
+// ==================================================================
+// 6. HLL Flux Solver Helpers
+// ==================================================================
+
+// ------------------------------------------------------------------
+// 6.1 Sound speed Calculation
+// ------------------------------------------------------------------
+/**
+/**
+ * @brief Computes sound speed for a single state based on Note Step 2.
+ * c^2 = chi + (p / rho^2) * kappa
+ */
+template <typename EosType>
+inline double calc_sound_speed_thermo(
+    double rho, double p, double e, const double *Yi,
+    const EosType &eos)
+{
+    // 防止除零
+    if (rho < 1e-12)
+        return 0.0;
+
+    // 1. 获取热力学导数
+    // chi = dp/drho | e
+    double chi = eos.get_dp_drho_e(rho, e, Yi);
+    // kappa = dp/de | rho
+    double kappa = eos.get_dp_de_rho(rho, e, Yi);
+
+    // 2. 根据笔记公式计算 c^2
+    double term2 = (kappa * p) / (rho * rho);
+    double c2 = chi + term2;
+
+    // 3. 安全保护
+    if (c2 < 0.0 || std::isnan(c2))
+    {
+        // 回退策略：假设 Gamma=1.4
+        return std::sqrt(1.4 * p / rho);
+    }
+    return std::sqrt(c2);
+}
+
+// ------------------------------------------------------------------
+// 6.2 Einfeldt Speed Estimate
+// ------------------------------------------------------------------
+/**
+/**
+ * @brief Estimates HLL wave speeds S_L and S_R.
+ * Ref: Note Step 2 (Roe Average based Einfeldt speeds)
+ */
+inline void calc_hll_wave_speeds(
+    double u_L, double c_L,
+    double u_R, double c_R,
+    const RoeGlaisterState &rs, // <--- 复用你的 Roe 状态
+    double &S_L, double &S_R)
+{
+    // 笔记公式:
+    // S_L = min(u_L - c_L, u_hat - c_hat)
+    // S_R = max(u_R + c_R, u_hat + c_hat)
+
+    double lam_L_left = u_L - c_L;
+    double lam_L_roe = rs.u_hat - rs.c_hat;
+
+    double lam_R_right = u_R + c_R;
+    double lam_R_roe = rs.u_hat + rs.c_hat;
+
+    S_L = std::min(lam_L_left, lam_L_roe);
+    S_R = std::max(lam_R_right, lam_R_roe);
+}
+
+// ------------------------------------------------------------------
+// 6.3 HLL Flux Calculation
+// ------------------------------------------------------------------
+/**
+ * @brief Computes the HLL Flux.
+ * Ref: Note Step 3 (a, b, c branches)
+ */
+inline FluidVector3 calc_hll_flux_hydro(
+    const FluidVector3 &F_L, const FluidVector3 &F_R,
+    const FluidVector3 &U_L, const FluidVector3 &U_R,
+    double S_L, double S_R)
+{
+    // Branch b: Supersonic Flow to Right (S_L >= 0)
+    if (S_L >= 0.0)
+    {
+        return F_L;
+    }
+    // Branch c: Supersonic Flow to Left (S_R <= 0)
+    else if (S_R <= 0.0)
+    {
+        return F_R;
+    }
+    // Branch a: Subsonic / Transonic (S_L < 0 < S_R)
+    else
+    {
+        // F_HLL = (S_R * F_L - S_L * F_R + S_L * S_R * (U_R - U_L)) / (S_R - S_L)
+        double inv_delta_S = 1.0 / (S_R - S_L);
+        double term_diff = S_L * S_R;
+
+        FluidVector3 F_HLL;
+
+        // 笔记中将 Mass/Mom/Eng 分开写了，这里用向量形式等价合并
+        // Mass Flux
+        F_HLL.rho = inv_delta_S * (S_R * F_L.rho - S_L * F_R.rho + term_diff * (U_R.rho - U_L.rho));
+
+        // Momentum Flux
+        F_HLL.mom = inv_delta_S * (S_R * F_L.mom - S_L * F_R.mom + term_diff * (U_R.mom - U_L.mom));
+
+        // Energy Flux
+        F_HLL.eng = inv_delta_S * (S_R * F_L.eng - S_L * F_R.eng + term_diff * (U_R.eng - U_L.eng));
+
+        return F_HLL;
+    }
 }

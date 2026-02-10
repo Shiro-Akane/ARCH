@@ -27,6 +27,7 @@
 #include "../numerics/flux/FluxVL.h"
 #include "../numerics/flux/FluxSW.h"
 #include "../numerics/flux/FluxRoe.h"
+#include "../numerics/flux/FluxHLL.h"
 
 #include "../numerics/reconstruction/Reconstruction.h"
 #include "../numerics/reconstruction/Limiters.h"
@@ -187,6 +188,11 @@ void select_flux(FluidState &state, const EosPolicy &eos, const Grid &grid,
     {
         // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
         select_reconstruction<TimeIntegrator, FluxRoe>(state, eos, grid, config, specs);
+    }
+    else if (flux == "HLL" || flux == "hll")
+    {
+        // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
+        select_reconstruction<TimeIntegrator, FluxHLL>(state, eos, grid, config, specs);
     }
     else if (flux == "HLLC")
     {
