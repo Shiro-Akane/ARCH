@@ -35,6 +35,7 @@
 
 #include "../numerics/integrator/TimeIntegratorEuler.h"
 #include "../numerics/integrator/TimeIntegratorRK2.h"
+#include "../numerics/integrator/TimeIntegratorRK3.h"
 
 // 3. The Main Loop
 #include "Driver.h"
@@ -156,9 +157,7 @@ void select_reconstruction(FluidState &state, const EosPolicy &eos, const Grid &
     else if (recon == "ppm" || recon == "PPM")
     {
         // PPM (三阶) 通常自带逻辑，或者有单独的限制参数
-        // 假设暂未实现，回退到 MUSCL
-        std::cerr << "[Warning] PPM not linked yet, falling back to MUSCL-SuperBee." << std::endl;
-        using MyRecon = MusclReconstruction<SuperBee>;
+        using MyRecon = PPMReconstruction;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
         launch_run<MySolver>(state, eos, grid, config, specs);
     }
@@ -261,9 +260,7 @@ void DispatchSolver(const std::string &solver_name,
     }
     else if (time_int == "RK3" || time_int == "SSPRK3")
     {
-        // dispatch_flux<SolverRK3>(state, eos, grid, config, specs);
-        std::cerr << "[Warning] RK3 not linked, using RK2." << std::endl;
-        select_flux<SolverRK2>(state, eos, grid, config, specs);
+        select_flux<SolverRK3>(state, eos, grid, config, specs);
     }
     else if (time_int == "Euler" || time_int == "RK1")
     {

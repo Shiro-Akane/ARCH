@@ -19,9 +19,9 @@ xl_boundary_type = outflow # Options: reflect, outflow, periodic
 # Maps to config.numerics.*
 # ------------------------------------------------------------------------------
 solver      = HLLC       # Options: SW, VL, Roe, HLL, HLLC
-reconstruct = MUSCL     # Options: pcm (1st), MUSCL (2nd)
-time_integrator = RK2   # Options: RK2, RK3, Euler/RK1
-limiter     = vanleer   # Options: minmod, superbee, vanleer, mc, none
+reconstruct = ppm     # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
+time_integrator = RK3   # Options: RK2, RK3, Euler/RK1
+limiter     = none   # Options: minmod, superbee, vanleer, mc, none
 cfl         = 0.8       # Keep < 0.5 for VL/HLLC
 
 EntropyFix = Off
