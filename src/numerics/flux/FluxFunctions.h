@@ -60,54 +60,7 @@ inline FluidVector3 get_flux(const FluidVector3 &U, double p)
 }
 
 // ------------------------------------------------------------------
-// 2. Richtmyer Scheme Helper (Predictor Step)
-// ------------------------------------------------------------------
-
-/**
- * @brief Computes the flux at the half-step state (Richtmyer predictor).
- * * Used in the Two-Step Lax-Wendroff method.
- * * Step 1: Compute intermediate state U_{i+1/2}^{n+1/2} using Lax-Friedrichs average.
- * * Step 2: Compute Flux F(U_{half}).
- * * @param U_L  State at index i.
- * @param Yi_L Species at index i.
- * @param U_R  State at index i+1.
- * @param Yi_R Species at index i+1.
- * @param Yi_half_buffer Output buffer for averaged species.
- * @param n_species Number of species.
- * @param eos EOS object.
- * @param dt  Time step.
- * @param grid Grid info (for dx).
- * @return FluidVector3 Flux evaluated at the half-step state.
- */
-template <typename EosType>
-FluidVector3 compute_half_step_flux(const FluidVector3 &U_L, const double *Yi_L,
-                                    const FluidVector3 &U_R, const double *Yi_R,
-                                    double *Yi_half_buffer,
-                                    int n_species,
-                                    const EosType &eos, double dt, const Grid &grid)
-{
-    double dx = grid.dx;
-
-    // Calculate fluxes at the left and right states
-    FluidVector3 F_L = get_flux(U_L, Yi_L, eos); // flux of i-1/2
-    FluidVector3 F_R = get_flux(U_R, Yi_R, eos); // flux of i+1/2
-
-    // Evolution Formula (Taylor expansion approximation):
-    // U_half = Average(U) - (dt/2dx) * delta(F)
-    FluidVector3 U_half = 0.5 * (U_L + U_R) - 0.5 * (dt / dx) * (F_R - F_L);
-
-    // Simple arithmetic average for species
-    for (int k = 0; k < n_species; ++k)
-    {
-        Yi_half_buffer[k] = 0.5 * (Yi_L[k] + Yi_R[k]);
-    }
-
-    // Return the flux based on this updated half-state
-    return get_flux(U_half, Yi_half_buffer, eos);
-}
-
-// ------------------------------------------------------------------
-// 3. Steger-Warming Flux Vector Splitting
+// 2. Steger-Warming Flux Vector Splitting
 // ------------------------------------------------------------------
 
 /**
@@ -177,7 +130,7 @@ FluidVector3 calc_split_flux(const FluidVector3 &U, const double *Yi,
 }
 
 // ------------------------------------------------------------------
-// 4. Vinokur-Von Leer Flux Vector Splitting
+// 3. Vinokur-Von Leer Flux Vector Splitting
 // ------------------------------------------------------------------
 
 /**
@@ -331,11 +284,11 @@ FluidVector3 calc_vinokur_flux(const FluidVector3 &U, const double *Yi,
 }
 
 // ==================================================================
-// 5. Roe-Glaister Flux Solver Helpers
+// 4. Roe-Glaister Flux Solver Helpers
 // ==================================================================
 
 // ------------------------------------------------------------------
-// 5.1 Entropy Fix (Harten's)
+// 4.1 Entropy Fix (Harten's)
 // ------------------------------------------------------------------
 /**
  * @brief Harten's Entropy Fix to prevent non-physical shocks (sonic glitch).
@@ -352,7 +305,7 @@ inline double entropy_fix(double lambda, double epsilon)
 }
 
 // ------------------------------------------------------------------
-// 5.2 Roe-Glaister State Struct
+// 4.2 Roe-Glaister State Struct
 // ------------------------------------------------------------------
 /**
  * @struct RoeGlaisterState
@@ -371,7 +324,7 @@ struct RoeGlaisterState
 };
 
 // ------------------------------------------------------------------
-// 5.3 Roe Averaging Routine (Connects to EOS)
+// 4.3 Roe Averaging Routine (Connects to EOS)
 // ------------------------------------------------------------------
 /**
  * @brief Computes the Roe-Glaister average state.
@@ -469,7 +422,7 @@ inline RoeGlaisterState calc_glaister_state(
 }
 
 // ------------------------------------------------------------------
-// 5.4 Core Roe Flux Assembler
+// 4.4 Core Roe Flux Assembler
 // ------------------------------------------------------------------
 /**
  * @brief Assembles the final Roe Flux using the averaged state.
@@ -569,11 +522,11 @@ inline FluidVector3 calc_roe_flux_hydro(
 }
 
 // ==================================================================
-// 6. HLL Flux Solver Helpers
+// 5. HLL Flux Solver Helpers
 // ==================================================================
 
 // ------------------------------------------------------------------
-// 6.1 Sound speed Calculation
+// 5.1 Sound speed Calculation
 // ------------------------------------------------------------------
 /**
 /**
@@ -609,7 +562,7 @@ inline double calc_sound_speed_thermo(
 }
 
 // ------------------------------------------------------------------
-// 6.2 Einfeldt Speed Estimate
+// 5.2 Einfeldt Speed Estimate
 // ------------------------------------------------------------------
 /**
 /**
@@ -637,7 +590,7 @@ inline void calc_hll_wave_speeds(
 }
 
 // ------------------------------------------------------------------
-// 6.3 HLL Flux Calculation
+// 5.3 HLL Flux Calculation
 // ------------------------------------------------------------------
 /**
  * @brief Computes the HLL Flux.
@@ -682,7 +635,7 @@ inline FluidVector3 calc_hll_flux_hydro(
 }
 
 // ------------------------------------------------------------------
-// 6.4 HLLC Star Speed Helper (新增，为HLLC做准备)
+// 5.4 HLLC Star Speed Helper (新增，为HLLC做准备)
 // ------------------------------------------------------------------
 /**
  * @brief Computes the contact wave speed S_star for HLLC.
