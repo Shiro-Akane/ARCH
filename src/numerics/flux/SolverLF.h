@@ -51,7 +51,7 @@ struct SolverLF
         std::vector<double> species_fluxes(n_spec * total_size);
         std::vector<double> Yi_cache(n_spec);
 
-        std::vector<FluidVector3> node_fluxes(grid.GetTotalSize()); // All flux at interface
+        std::vector<FluidVector> node_fluxes(grid.GetTotalSize()); // All flux at interface
 
         // ---------------------------------------------------------
         // Step 1: Flux Calculation Loop
@@ -62,7 +62,7 @@ struct SolverLF
             // Load species at cell i
             state_old.get_species_to_buffer(i, Yi_cache.data());
 
-            FluidVector3 U = state_old.get(i);
+            FluidVector U = state_old.get(i);
 
             // Compute Physical Flux F(U)
             node_fluxes[i] = get_flux(U, Yi_cache.data(), eos);
@@ -89,12 +89,12 @@ struct SolverLF
         for (int i = grid.Is(); i < grid.Ie(); i++)
         {
             // Central Difference of Fluxes: F_{i+1} - F_{i-1}
-            FluidVector3 F_diff = node_fluxes[i + 1] - node_fluxes[i - 1];
+            FluidVector F_diff = node_fluxes[i + 1] - node_fluxes[i - 1];
 
             // Lax-Friedrichs Update:
             // Average State: U_avg = 0.5 * (U_{i-1} + U_{i+1})
             // U^{n+1} = U_avg - (dt / 2dx) * F_diff
-            FluidVector3 U_new_val = 0.5 * (state_old.get(i - 1) + state_old.get(i + 1)) - coeff * F_diff;
+            FluidVector U_new_val = 0.5 * (state_old.get(i - 1) + state_old.get(i + 1)) - coeff * F_diff;
 
             state_new.set(i, U_new_val);
 

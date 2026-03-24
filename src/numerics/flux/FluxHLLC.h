@@ -22,41 +22,46 @@ struct FluxHLLC
     // Ref: Toro, "Riemann Solvers and Numerical Methods for Fluid Dynamics"
     // U_K^* = rho_K * ((S_K - u_K) / (S_K - S_*)) * [1, S_*, E_K/rho_K + ...]
     // ----------------------------------------------------------------------
-    static inline FluidVector3 calc_star_state(
-        const FluidVector3 &U_K, double rho_K, double u_K, double p_K, double E_K,
-        double S_K, double S_star)
+    static inline FluidVector calc_star_state(
+        const FluidVector &U_K, double rho_K, double un_K, double ut1_K, double ut2_K,
+        double p_K, double E_K,
+        double S_K, double S_star, int dir)
     {
         // scaling factor: omega = (S_K - u_K) / (S_K - S_*)
         double denom = S_K - S_star;
         if (std::abs(denom) < 1e-12)
             return U_K; // 防除零保护
 
-        double omega = (S_K - u_K) / denom;
+        double omega = (S_K - un_K) / denom;
 
-        FluidVector3 U_star;
-
-        // 1. Density*: rho^* = rho * omega
+        // 1. Density*
         double rho_star = rho_K * omega;
-        U_star.rho = rho_star;
 
-        // 2. Momentum*: (rho * u)^* = rho^* * S_*
-        U_star.mom = rho_star * S_star;
+        // 2. Momentum*  法向速度变为 S_star，切向速度保持不变 (ut1_K, ut2_K)
+        double un_star = S_star;
 
-        // 3. Energy*: (rho * E)^*
-        // Formula: E^* = E + (S_* - u) * (S_* + p / (rho * (S - u)))
-        // Note: U_star.eng is total energy density (rho * E)
-        double term = (S_star - u_K) * (S_star + p_K / (rho_K * (S_K - u_K)));
-        double specific_E_K = E_K / rho_K; // E_total per unit mass
+        // 3. Energy*
+        double specific_E_K = E_K / rho_K;
 
-        U_star.eng = rho_star * (specific_E_K + term);
+        double sk_minus_u = S_K - un_K;
+        double p_term = 0.0;
+        if (std::abs(sk_minus_u) > 1e-12)
+        {
+            p_term = p_K / (rho_K * sk_minus_u);
+        }
+        double term = (S_star - un_K) * (S_star + p_K / (rho_K * (S_K - un_K)));
 
-        return U_star;
+        double eng_star = rho_star * (specific_E_K + term);
+
+        // 使用 FluxFunctions.h 中的工具函数组装 3D 向量
+        return set_flux_vector(rho_star, rho_star * un_star, rho_star * ut1_K, rho_star * ut2_K, eng_star, dir);
     }
 
     template <typename EosType>
     static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
-                               std::vector<FluidVector3> &flux_out,
+                               std::vector<FluidVector> &flux_out,
                                std::vector<double> &spec_flux_out,
+                               int dir, // 0=x, 1=y, 2=z
                                double /* unused_entropy_coeff */ = 0.0)
     {
         int n_spec = state.GetNumSpecies();
@@ -65,109 +70,148 @@ struct FluxHLLC
         std::vector<double> Yi_L(n_spec);
         std::vector<double> Yi_R(n_spec);
 
-        for (int i = grid.Is() - 1; i < grid.Ie(); i++)
+        int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
+
+        // 在计算通量之前，先确定循环的起止点
+        int i_start = grid.Is();
+        int i_end = grid.Ie();
+        int j_start = grid.Js();
+        int j_end = grid.Je();
+        int k_start = grid.Ks();
+        int k_end = grid.Ke();
+
+        // 根据扫掠维度，单独把该维度的起点向左退一格，以计算左侧界面通量
+        if (dir == 0)
         {
-            // 1. Reconstruction
-            auto [U_L, U_R] = ReconstructPolicy::run(state, i);
-            if (n_spec > 0)
-                ReconstructPolicy::run_species(state, i, n_spec, Yi_L.data(), Yi_R.data());
+            i_start -= 1;
+        }
+        else if (dir == 1)
+        {
+            j_start -= 1;
+        }
+        else if (dir == 2)
+        {
+            k_start -= 1;
+        }
 
-            // ======================================================
-            // 2. Thermodynamics Preparation
-            // ======================================================
-            // Left
-            double rho_L = std::max(U_L.rho, 1e-12);
-            double u_L = U_L.mom / rho_L;
-            double p_L = eos.get_pressure(rho_L, U_L.mom, U_L.eng, Yi_L.data());
-            double e_L = (U_L.eng / rho_L) - 0.5 * u_L * u_L;
-
-            // Right
-            double rho_R = std::max(U_R.rho, 1e-12);
-            double u_R = U_R.mom / rho_R;
-            double p_R = eos.get_pressure(rho_R, U_R.mom, U_R.eng, Yi_R.data());
-            double e_R = (U_R.eng / rho_R) - 0.5 * u_R * u_R;
-
-            // ======================================================
-            // 3. Physical Fluxes (F_L, F_R)
-            // ======================================================
-            FluidVector3 F_L = get_flux(U_L, p_L);
-            FluidVector3 F_R = get_flux(U_R, p_R);
-
-            // ======================================================
-            // 4. Wave Speed Estimates (S_L, S_R, S_*)
-            // ======================================================
-            double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Yi_L.data(), eos);
-            double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Yi_R.data(), eos);
-            double H_L = (U_L.eng + p_L) / rho_L;
-            double H_R = (U_R.eng + p_R) / rho_R;
-
-            // Roe Average (Used for S_L, S_R estimates)
-            RoeGlaisterState roe_state = calc_glaister_state(
-                U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Yi_L.data(), eos);
-
-            double S_L, S_R;
-            calc_hll_wave_speeds(u_L, c_L, u_R, c_R, roe_state, S_L, S_R);
-
-            // Contact Wave Speed (Star Speed) - NEW Helper call
-            double S_star = calc_hllc_star_speed(u_L, rho_L, p_L, S_L,
-                                                 u_R, rho_R, p_R, S_R);
-
-            // ======================================================
-            // 5. HLLC Flux Assembly & Species Logic
-            // ======================================================
-            FluidVector3 hllc_flux;
-            const double *chosen_Yi = nullptr; // 用于标记组分来源
-
-            // Branch 1: Supersonic L (Flow is all L)
-            if (S_L >= 0.0)
+        for (int k = k_start; k < k_end; ++k)
+        {
+            for (int j = j_start; j < j_end; ++j)
             {
-                hllc_flux = F_L;
-                chosen_Yi = Yi_L.data();
-            }
-            // Branch 4: Supersonic R (Flow is all R)
-            else if (S_R <= 0.0)
-            {
-                hllc_flux = F_R;
-                chosen_Yi = Yi_R.data();
-            }
-            // Subsonic Region (Need Star Fluxes)
-            else
-            {
-                // Branch 2: Left Star Region (S_L < 0 <= S_*)
-                if (S_star >= 0.0)
+                for (int i = i_start; i < i_end; ++i)
                 {
-                    FluidVector3 U_L_star = calc_star_state(U_L, rho_L, u_L, p_L, U_L.eng, S_L, S_star);
-                    // Formula: F_L* = F_L + S_L * (U_L* - U_L)
-                    hllc_flux = F_L + S_L * (U_L_star - U_L);
+                    int idx = grid.GetIndex(i, j, k);
+                    // 1. Reconstruction
+                    auto [U_L, U_R] = ReconstructPolicy::run(state, idx, stride);
+                    if (n_spec > 0)
+                        ReconstructPolicy::run_species(state, idx, n_spec, Yi_L.data(), Yi_R.data(), stride);
 
-                    // 核心逻辑：在 Left Star 区域，组分依然来自 Left
-                    chosen_Yi = Yi_L.data();
+                    // ======================================================
+                    // 2. Thermodynamics Preparation
+                    // ======================================================
+                    // Left
+                    double rho_L = std::max(U_L.rho, 1e-12);
+                    double un_L = get_un(U_L, dir);
+                    double ut1_L = get_ut1(U_L, dir);
+                    double ut2_L = get_ut2(U_L, dir);
+                    double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
+
+                    double p_L = eos.get_pressure(U_L, Yi_L.data()); // 假设你更新了 EOS 的签名
+                    double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+
+                    // Right
+                    double rho_R = std::max(U_R.rho, 1e-12);
+                    double un_R = get_un(U_R, dir);
+                    double ut1_R = get_ut1(U_R, dir);
+                    double ut2_R = get_ut2(U_R, dir);
+                    double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
+
+                    double p_R = eos.get_pressure(U_R, Yi_R.data());
+                    double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
+
+                    // ======================================================
+                    // 3. Physical Fluxes (F_L, F_R)
+                    // ======================================================
+                    FluidVector F_L = get_flux(U_L, p_L, dir);
+                    FluidVector F_R = get_flux(U_R, p_R, dir);
+
+                    // ======================================================
+                    // 4. Wave Speed Estimates (S_L, S_R, S_*)
+                    // ======================================================
+                    double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Yi_L.data(), eos);
+                    double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Yi_R.data(), eos);
+                    double H_L = (U_L.eng + p_L) / rho_L;
+                    double H_R = (U_R.eng + p_R) / rho_R;
+
+                    // Roe Average (Used for S_L, S_R estimates)
+                    RoeGlaisterState roe_state = calc_glaister_state(
+                        U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Yi_L.data(), eos);
+
+                    double S_L, S_R;
+                    calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
+
+                    // Contact Wave Speed (Star Speed) - NEW Helper call
+                    double S_star = calc_hllc_star_speed(un_L, rho_L, p_L, S_L,
+                                                         un_R, rho_R, p_R, S_R);
+
+                    // ======================================================
+                    // 5. HLLC Flux Assembly & Species Logic
+                    // ======================================================
+                    FluidVector hllc_flux;
+                    const double *chosen_Yi = nullptr; // 用于标记组分来源
+
+                    // Branch 1: Supersonic L (Flow is all L)
+                    if (S_L >= 0.0)
+                    {
+                        hllc_flux = F_L;
+                        chosen_Yi = Yi_L.data();
+                    }
+                    // Branch 4: Supersonic R (Flow is all R)
+                    else if (S_R <= 0.0)
+                    {
+                        hllc_flux = F_R;
+                        chosen_Yi = Yi_R.data();
+                    }
+                    // Subsonic Region (Need Star Fluxes)
+                    else
+                    {
+                        // Branch 2: Left Star Region (S_L < 0 <= S_*)
+                        if (S_star >= 0.0)
+                        {
+                            FluidVector U_L_star = calc_star_state(U_L, rho_L, un_L, ut1_L, ut2_L, p_L, U_L.eng, S_L, S_star, dir);
+                            // Formula: F_L* = F_L + S_L * (U_L* - U_L)
+                            hllc_flux = F_L + S_L * (U_L_star - U_L);
+
+                            // 核心逻辑：在 Left Star 区域，组分依然来自 Left
+                            chosen_Yi = Yi_L.data();
+                        }
+                        // Branch 3: Right Star Region (S_* < 0 < S_R)
+                        else
+                        {
+                            FluidVector U_R_star = calc_star_state(U_R, rho_R, un_R, ut1_R, ut2_R, p_R, U_R.eng, S_R, S_star, dir);
+                            // Formula: F_R* = F_R + S_R * (U_R* - U_R)
+                            hllc_flux = F_R + S_R * (U_R_star - U_R);
+
+                            // 核心逻辑：在 Right Star 区域，组分依然来自 Right
+                            chosen_Yi = Yi_R.data();
+                        }
+                    }
+
+                    // Output Hydro Flux
+                    flux_out[idx + stride] = hllc_flux;
+
+                    // 6. Species Flux (Upwind based on Star Region)
+                    // HLLC Mass Flux 已经包含了接触间断的修正
+                    double mass_flux = hllc_flux.rho;
+
+                    for (int s = 0; s < n_spec; ++s)
+                    {
+                        // 简单原则：如果我们在 S* 左边，用 Yi_L；如果在 S* 右边，用 Yi_R。
+                        // 这和上面的 chosen_Yi 逻辑是一致的。
+                        // 即使在 Star Region，质量通量发生了变化 (rho* u*)，但组分质量分数 Y 保持不变
+                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * chosen_Yi[s];
+                    }
                 }
-                // Branch 3: Right Star Region (S_* < 0 < S_R)
-                else
-                {
-                    FluidVector3 U_R_star = calc_star_state(U_R, rho_R, u_R, p_R, U_R.eng, S_R, S_star);
-                    // Formula: F_R* = F_R + S_R * (U_R* - U_R)
-                    hllc_flux = F_R + S_R * (U_R_star - U_R);
-
-                    // 核心逻辑：在 Right Star 区域，组分依然来自 Right
-                    chosen_Yi = Yi_R.data();
-                }
-            }
-
-            // Output Hydro Flux
-            flux_out[i + 1] = hllc_flux;
-
-            // 6. Species Flux (Upwind based on Star Region)
-            // HLLC Mass Flux 已经包含了接触间断的修正
-            double mass_flux = hllc_flux.rho;
-
-            for (int k = 0; k < n_spec; ++k)
-            {
-                // 简单原则：如果我们在 S* 左边，用 Yi_L；如果在 S* 右边，用 Yi_R。
-                // 这和上面的 chosen_Yi 逻辑是一致的。
-                // 即使在 Star Region，质量通量发生了变化 (rho* u*)，但组分质量分数 Y 保持不变
-                spec_flux_out[k * total_size + (i + 1)] = mass_flux * chosen_Yi[k];
             }
         }
     }

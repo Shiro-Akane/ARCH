@@ -38,21 +38,21 @@
  * @return FluidVector3 Flux evaluated at the half-step state.
  */
 template <typename EosType>
-FluidVector3 compute_half_step_flux(const FluidVector3 &U_L, const double *Yi_L,
-                                    const FluidVector3 &U_R, const double *Yi_R,
-                                    double *Yi_half_buffer,
-                                    int n_species,
-                                    const EosType &eos, double dt, const Grid &grid)
+FluidVector compute_half_step_flux(const FluidVector &U_L, const double *Yi_L,
+                                   const FluidVector &U_R, const double *Yi_R,
+                                   double *Yi_half_buffer,
+                                   int n_species,
+                                   const EosType &eos, double dt, const Grid &grid)
 {
     double dx = grid.dx;
 
     // Calculate fluxes at the left and right states
-    FluidVector3 F_L = get_flux(U_L, Yi_L, eos); // flux of i-1/2
-    FluidVector3 F_R = get_flux(U_R, Yi_R, eos); // flux of i+1/2
+    FluidVector F_L = get_flux(U_L, Yi_L, eos); // flux of i-1/2
+    FluidVector F_R = get_flux(U_R, Yi_R, eos); // flux of i+1/2
 
     // Evolution Formula (Taylor expansion approximation):
     // U_half = Average(U) - (dt/2dx) * delta(F)
-    FluidVector3 U_half = 0.5 * (U_L + U_R) - 0.5 * (dt / dx) * (F_R - F_L);
+    FluidVector U_half = 0.5 * (U_L + U_R) - 0.5 * (dt / dx) * (F_R - F_L);
 
     // Simple arithmetic average for species
     for (int k = 0; k < n_species; ++k)
@@ -88,7 +88,7 @@ struct SolverLW
 
         // Buffers to store fluxes at interfaces (i + 1/2)
         // inter_fluxes[i] stores the flux across the boundary between cell i and i+1
-        std::vector<FluidVector3> inter_fluxes(grid.GetTotalSize()); // all flux at interface
+        std::vector<FluidVector> inter_fluxes(grid.GetTotalSize()); // all flux at interface
         std::vector<double> inter_species_fluxes(n_spec * total_size);
 
         // Temp buffers for species reconstruction
@@ -103,8 +103,8 @@ struct SolverLW
         // ---------------------------------------------------------
         for (int i = grid.Is() - 1; i < grid.Ie(); i++)
         {
-            FluidVector3 U_i = state_old.get(i);
-            FluidVector3 U_ip1 = state_old.get(i + 1);
+            FluidVector U_i = state_old.get(i);
+            FluidVector U_ip1 = state_old.get(i + 1);
 
             state_old.get_species_to_buffer(i, Yi_curr.data());
             state_old.get_species_to_buffer(i + 1, Yi_next.data());
@@ -143,12 +143,12 @@ struct SolverLW
         {
             // Flux Difference: F_{right_interface} - F_{left_interface}
             // inter_fluxes[i] is at (i+1/2), inter_fluxes[i-1] is at (i-1/2)
-            FluidVector3 F_diff = inter_fluxes[i] - inter_fluxes[i - 1];
-            FluidVector3 U_old = state_old.get(i);
+            FluidVector F_diff = inter_fluxes[i] - inter_fluxes[i - 1];
+            FluidVector U_old = state_old.get(i);
 
             // Standard Update Formula:
             // U^{n+1} = U^n - (dt/dx) * (F_{i+1/2} - F_{i-1/2})
-            FluidVector3 U_new_val = U_old - coeff * F_diff;
+            FluidVector U_new_val = U_old - coeff * F_diff;
 
             state_new.set(i, U_new_val);
 

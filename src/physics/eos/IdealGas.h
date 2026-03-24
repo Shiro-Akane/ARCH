@@ -12,6 +12,8 @@
 
 #include "../species/Species.h"
 
+#include "../../data/FluidState.h"
+
 struct IdealGas
 {
     // The manager holds species properties (gamma, molar mass, etc.)
@@ -81,21 +83,21 @@ struct IdealGas
      * @param Yi  Mass Fractions
      * @return Pressure (Pa)
      */
-    double get_pressure(double rho, double mom, double eng, const double *Yi) const
+    double get_pressure(const FluidVector &U, const double *Yi) const
     {
         double gamma_mix = get_gamma(Yi);
 
         // Prevent division by zero in vacuum
-        if (rho < 1e-12)
+        if (U.rho < 1e-12)
             return 0.0;
 
         // kinetic energy = 0.5 * (rho * u)^2 / rho = 0.5 * mom^2 / rho
-        double v = mom / rho;
+        double e_kinetic = 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho;
 
         // internal energy density = total - kinetic
-        double e_int = eng - 0.5 * rho * v * v;
+        double e_int = U.eng - e_kinetic;
 
-        return (gamma_mix - 1.0) * e_int;
+        return std::max(0.0, (gamma_mix - 1.0) * e_int);
     }
 
     /**
@@ -106,11 +108,11 @@ struct IdealGas
      * @param Yi  Mass Fractions
      * @return Speed of sound (m/s)
      */
-    double get_sound_speed(double rho, double p, const double *Yi) const
+    double get_sound_speed(const FluidVector &U, double p, const double *Yi) const
     {
-        if (rho < 1e-12)
-            return 0.0; // Vacuum safety
-        return std::sqrt(get_gamma(Yi) * p / rho);
+        if (U.rho < 1e-12)
+            return 0.0;
+        return std::sqrt(get_gamma(Yi) * p / U.rho);
     }
 
     /**
@@ -123,7 +125,7 @@ struct IdealGas
      * @param Yi  Mass Fractions
      * @return Total Energy Density (J/m^3)
      */
-    double get_total_energy_primitive(double rho, double u, double p, const double *Yi) const
+    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Yi) const
     {
         double gamma_mix = get_gamma(Yi);
 
@@ -131,7 +133,7 @@ struct IdealGas
         double e_internal = p / (gamma_mix - 1.0);
 
         // Kinetic Energy Density: e_kin = 0.5 * rho * u^2
-        double e_kinetic = 0.5 * rho * u * u;
+        double e_kinetic = 0.5 * rho * (u * u + v * v + w * w);
 
         return e_internal + e_kinetic;
     }

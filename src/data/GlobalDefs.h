@@ -27,6 +27,10 @@ struct GridConfig
     // Physical Domain
     double x_min = 0.0;
     double x_max = 1.0;
+    double y_min = 0.0;
+    double y_max = 1.0;
+    double z_min = 0.0;
+    double z_max = 1.0;
     // Y/Z limits can be added later or kept here unused
 
     // Geometry: "cartesian", "spherical", "cylindrical"
@@ -35,6 +39,10 @@ struct GridConfig
 
     std::string xl_boundary_type = "outflow";
     std::string xr_boundary_type = "outflow";
+    std::string yl_boundary_type = "outflow";
+    std::string yr_boundary_type = "outflow";
+    std::string zl_boundary_type = "outflow";
+    std::string zr_boundary_type = "outflow";
 };
 
 // ----------------------------------------------------------------------
@@ -81,7 +89,9 @@ struct PhysicsConfig
 struct OutputVariables
 {
     bool rho = true; // 默认开启
-    bool u = true;
+    bool u = true;   // x-velocity
+    bool v = false;  // y-velocity (default false for 1D)
+    bool w = false;  // z-velocity (default false for 1D)
     bool p = true;
     bool eng = true;
     bool species = true; // 是否输出所有组分

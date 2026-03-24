@@ -65,41 +65,48 @@ public:
     {
         IdealGas eos(config.physics.gamma, specs);
         int n_species = state.GetNumSpecies();
+
+        int stride_y = grid.stride_y;
+        int stride_z = grid.stride_z;
+        int total_size = grid.GetTotalSize();
         // System handles the loop iteration and parallelization (OpenMP).
         // The user only needs to worry about the physics at a single point (x).
 
 #pragma omp parallel for
 
-        for (int i = 0; i < grid.GetTotalSize(); ++i)
+        for (int idx = 0; idx < total_size; ++idx)
         {
-            // 1. Get physical coordinate for the current cell
-            double x = grid.GetCellCenter(i);
+            // 1. Recover 3D indices (i, j, k) from the flat index
+            int k = idx / stride_z;
+            int rem = idx % stride_z;
+            int j = rem / stride_y;
+            int i = rem % stride_y;
 
-            // 2. Prepare a "Basket" (PrimitiveData) for the user to fill
-            PrimitiveData data;
+            // 2. Get physical coordinates for the current cell
+            double x = grid.GetCellCenterX(i);
+            double y = grid.GetCellCenterY(j);
+            double z = grid.GetCellCenterZ(k);
+
+            // 3. Prepare a "Basket" (PrimitiveData) for the user to fill
+            PrimitiveData data{};
             data.mass_fractions.resize(n_species, 0.0);
 
-            // 3. Invoke User Logic
-            // User fills 'data' based on coordinate 'x' (y, z are 0.0 for 1D)
-            user_init(x, 0.0, 0.0, data);
+            // 4. Invoke User Logic
+            user_init(x, y, z, data);
 
-            // 4. Post-Processing: Convert Primitive -> Conservative
-            // The solver works with Conservative vars (Momentum, Total Energy),
-            // but users think in Primitive vars (Velocity, Pressure).
+            // 5. Post-Processing: Convert Primitive -> Conservative 3D
+            state.rho[idx] = data.rho;
+            state.mom_x[idx] = data.rho * data.u;
+            state.mom_y[idx] = data.rho * data.v;
+            state.mom_z[idx] = data.rho * data.w;
 
-            // Mass Density
-            state.rho[i] = data.rho;
+            // Compute Total Energy Density via 3D EOS
+            state.eng[idx] = eos.get_total_energy_primitive(data.rho, data.u, data.v, data.w, data.p, data.mass_fractions.data());
 
-            // Momentum Density: rho * u
-            state.mom[i] = data.rho * data.u;
-
-            // Total Energy Density: Computed via EOS using P, rho, u
-            state.eng[i] = eos.get_total_energy_primitive(data.rho, data.u, data.p, data.mass_fractions.data());
-
-            // 5. Copy Species Mass Fractions
-            for (int k = 0; k < n_species; ++k)
+            // 6. Copy Species Mass Fractions
+            for (int s = 0; s < n_species; ++s)
             {
-                state.Y(k, i) = data.mass_fractions[k];
+                state.Y(s, idx) = data.mass_fractions[s];
             }
         }
     }

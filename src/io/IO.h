@@ -82,12 +82,23 @@ void save_data(const FluidState &state, const EosType &eos,
         return;
     }
 
-    // 2. Write Header (基于开关)
-    outFile << "x"; // x 坐标总是输出
+    // =========================================================
+    // 2. Write Header (动态适配维度)
+    // =========================================================
+    outFile << "x";
+    if (grid.dim >= 2)
+        outFile << ",y";
+    if (grid.dim == 3)
+        outFile << ",z";
+
     if (vars.rho)
         outFile << ",rho";
     if (vars.u)
         outFile << ",u";
+    if (vars.v && grid.dim >= 2)
+        outFile << ",v";
+    if (vars.w && grid.dim == 3)
+        outFile << ",w";
     if (vars.p)
         outFile << ",p";
     if (vars.eng)
@@ -96,61 +107,74 @@ void save_data(const FluidState &state, const EosType &eos,
     if (vars.species)
     {
         for (int k = 0; k < specs.count(); ++k)
-        {
             outFile << ",Y_" << specs.get_name(k);
-        }
     }
     outFile << "\n";
 
-    // 3. Iterate Domain
+    // =========================================================
+    // 3. Iterate Domain (3D 遍历)
+    // =========================================================
     std::vector<double> Yi_temp(state.GetNumSpecies());
 
-    for (int i = grid.Is(); i < grid.Ie(); ++i)
+    for (int k = grid.Ks(); k < grid.Ke(); ++k)
     {
-        // 只有当需要时才计算原始变量，节省一点点性能
-        // (虽然对于IO来说，瓶颈在磁盘写操作，计算几乎可忽略)
-        double rho = state.rho[i];
-        double mom = state.mom[i];
-        double eng = state.eng[i];
-
-        // 总是输出 x
-        outFile << grid.GetCellCenter(i);
-
-        // 按需输出
-        if (vars.rho)
-            outFile << "," << rho;
-
-        double u_local = 0.0;
-        if (vars.u || vars.p)
+        for (int j = grid.Js(); j < grid.Je(); ++j)
         {
-            u_local = (rho > 1e-12) ? mom / rho : 0.0;
-        }
-
-        if (vars.u)
-            outFile << "," << u_local;
-
-        if (vars.p)
-        {
-            for (int k = 0; k < state.GetNumSpecies(); ++k)
-                Yi_temp[k] = state.Y(k, i);
-
-            // 调用 EOS
-            double p = eos.get_pressure(rho, mom, eng, Yi_temp.data());
-            outFile << "," << p;
-        }
-
-        if (vars.eng)
-            outFile << "," << eng;
-
-        if (vars.species)
-        {
-            for (int k = 0; k < state.GetNumSpecies(); ++k)
+            for (int i = grid.Is(); i < grid.Ie(); ++i)
             {
-                outFile << "," << state.Y(k, i);
+
+                int idx = grid.GetIndex(i, j, k);
+                FluidVector U = state.get(idx);
+
+                // 坐标输出
+                outFile << grid.GetCellCenterX(i);
+                if (grid.dim >= 2)
+                    outFile << "," << grid.GetCellCenterY(j);
+                if (grid.dim == 3)
+                    outFile << "," << grid.GetCellCenterZ(k);
+
+                // 密度
+                if (vars.rho)
+                    outFile << "," << U.rho;
+
+                // 速度计算
+                double u_local = 0.0, v_local = 0.0, w_local = 0.0;
+                if (U.rho > 1e-12)
+                {
+                    u_local = U.mom_x / U.rho;
+                    v_local = U.mom_y / U.rho;
+                    w_local = U.mom_z / U.rho;
+                }
+
+                if (vars.u)
+                    outFile << "," << u_local;
+                if (vars.v && grid.dim >= 2)
+                    outFile << "," << v_local;
+                if (vars.w && grid.dim == 3)
+                    outFile << "," << w_local;
+
+                // 压力与 EOS
+                if (vars.p)
+                {
+                    for (int s = 0; s < state.GetNumSpecies(); ++s)
+                        Yi_temp[s] = state.Y(s, idx);
+                    // 使用更新后的 FluidVector 接口，内部自动扣除 3D 动能
+                    double p = eos.get_pressure(U, Yi_temp.data());
+                    outFile << "," << p;
+                }
+
+                // 能量与组分
+                if (vars.eng)
+                    outFile << "," << U.eng;
+                if (vars.species)
+                {
+                    for (int s = 0; s < state.GetNumSpecies(); ++s)
+                        outFile << "," << state.Y(s, idx);
+                }
+
+                outFile << "\n";
             }
         }
-
-        outFile << "\n";
     }
 
     outFile.close();

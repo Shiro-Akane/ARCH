@@ -37,12 +37,13 @@ struct FluxVL
      */
     template <typename EosType>
     static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
-                               std::vector<FluidVector3> &flux_out,
+                               std::vector<FluidVector> &flux_out,
                                std::vector<double> &spec_flux_out,
-                               double /* unused_entropy_coeff */ = 0.0)
+                               int dir, double /* unused_entropy_coeff */ = 0.0)
     {
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
+        int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
 
         // Temporary buffers for species reconstruction
         std::vector<double> Yi_L(n_spec);
@@ -53,32 +54,39 @@ struct FluxVL
         // We compute fluxes for physical domain + necessary ghosts
         // Range: typically from Is-1 to Ie
         // ---------------------------------------------------------
-        for (int i = grid.Is() - 1; i < grid.Ie(); i++)
+        for (int k = grid.Ks(); k < grid.Ke(); ++k)
         {
-            // 1. Reconstruction (Delegate to Policy)
-            // U_L is at left side of interface i+1/2
-            // U_R is at right side of interface i+1/2
-            auto [U_L, U_R] = ReconstructPolicy::run(state, i);
-
-            if (n_spec > 0)
+            for (int j = grid.Js(); j < grid.Je(); ++j)
             {
-                ReconstructPolicy::run_species(state, i, n_spec, Yi_L.data(), Yi_R.data());
-            }
+                for (int i = grid.Is() - 1; i < grid.Ie(); ++i)
+                {
+                    int idx = grid.GetIndex(i, j, k);
+                    // 1. Reconstruction (Delegate to Policy)
+                    // U_L is at left side of interface i+1/2
+                    // U_R is at right side of interface i+1/2
+                    auto [U_L, U_R] = ReconstructPolicy::run(state, idx, stride);
 
-            // 2. Flux Splitting (Vinokur)
-            // F+ (Forward moving waves)
-            FluidVector3 F_plus = calc_vinokur_flux(U_L, Yi_L.data(), eos, +1);
-            // F- (Backward moving waves)
-            FluidVector3 F_minus = calc_vinokur_flux(U_R, Yi_R.data(), eos, -1);
+                    if (n_spec > 0)
+                    {
+                        ReconstructPolicy::run_species(state, idx, n_spec, Yi_L.data(), Yi_R.data(), stride);
+                    }
 
-            // 3. Store Total Interface Flux
-            flux_out[i + 1] = F_plus + F_minus;
+                    // 2. Flux Splitting (Vinokur)
+                    // F+ (Forward moving waves)
+                    FluidVector F_plus = calc_vinokur_flux(U_L, Yi_L.data(), eos, +1, dir);
+                    // F- (Backward moving waves)
+                    FluidVector F_minus = calc_vinokur_flux(U_R, Yi_R.data(), eos, -1, dir);
 
-            // 4. Species Fluxes
-            for (int k = 0; k < n_spec; ++k)
-            {
-                double spec_flux = F_plus.rho * Yi_L[k] + F_minus.rho * Yi_R[k];
-                spec_flux_out[k * total_size + (i + 1)] = spec_flux;
+                    // 3. Store Total Interface Flux
+                    flux_out[idx + stride] = F_plus + F_minus;
+
+                    // 4. Species Fluxes
+                    for (int s = 0; s < n_spec; ++s)
+                    {
+                        double spec_flux = F_plus.rho * Yi_L[s] + F_minus.rho * Yi_R[s];
+                        spec_flux_out[s * total_size + (idx + stride)] = spec_flux;
+                    }
+                }
             }
         }
     }

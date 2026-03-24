@@ -231,6 +231,10 @@ void DispatchSolver(const std::string &solver_name,
     // 2. 使用计算出的 ng 创建 Grid
     Grid grid(config.grid, required_ng);
 
+    std::cout << "[Dispatch] Grid Topology: " << grid.dim << "D "
+              << config.grid.geometry << " ("
+              << grid.nx << " x " << grid.ny << " x " << grid.nz << ")" << std::endl;
+
     // 目前写死 IdealGas，未来可以根据 config.physics.eos_type 做工厂模式
     IdealGas eos(config.physics.gamma, specs);
 

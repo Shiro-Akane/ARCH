@@ -14,42 +14,44 @@
  * * Corresponds to the state vector \f$ U = (\rho, \rho u, E)^T \f$ in Euler equations.
  */
 
-struct FluidVector3
+struct FluidVector
 {
-    double rho; ///< Mass density (\f$ \rho \f$).
-    double mom; ///< Momentum density (\f$ \rho u \f$).
-    double eng; ///< Total energy density (\f$ E = \rho e + 0.5 \rho u^2 \f$).
+    double rho;   ///< Mass density (\f$ \rho \f$).
+    double mom_x; ///< Momentum density (\f$ \rho u \f$).
+    double mom_y; ///< y-Momentum density (\f$ \rho v \f$).
+    double mom_z; ///< z-Momentum density (\f$ \rho w \f$).
+    double eng;   ///< Total energy density (\f$ E = \rho e + 0.5 \rho u^2 \f$).
 
-    FluidVector3() : rho(0), mom(0), eng(0) {}
-    FluidVector3(double r, double m, double e) : rho(r), mom(m), eng(e) {}
+    FluidVector() : rho(0), mom_x(0), mom_y(0), mom_z(0), eng(0) {}
+    FluidVector(double r, double mx, double my, double mz, double e) : rho(r), mom_x(mx), mom_y(my), mom_z(mz), eng(e) {}
 
     /// Overload operator "+" for vector addition.
-    FluidVector3 operator+(const FluidVector3 &other) const
+    FluidVector operator+(const FluidVector &other) const
     {
-        return {rho + other.rho, mom + other.mom, eng + other.eng};
+        return {rho + other.rho, mom_x + other.mom_x, mom_y + other.mom_y, mom_z + other.mom_z, eng + other.eng};
     }
 
     /// Overload operator "-" for vector subtraction.
-    FluidVector3 operator-(const FluidVector3 &other) const
+    FluidVector operator-(const FluidVector &other) const
     {
-        return {rho - other.rho, mom - other.mom, eng - other.eng};
+        return {rho - other.rho, mom_x - other.mom_x, mom_y - other.mom_y, mom_z - other.mom_z, eng - other.eng};
     }
 
     /// Overload operator "*" for scalar multiplication.
-    FluidVector3 operator*(double s) const
+    FluidVector operator*(double s) const
     {
-        return {rho * s, mom * s, eng * s};
+        return {rho * s, mom_x * s, mom_y * s, mom_z * s, eng * s};
     }
 
     /// Overload operator "/" for scalar division.
-    FluidVector3 operator/(double s) const
+    FluidVector operator/(double s) const
     {
-        return {rho / s, mom / s, eng / s};
+        return {rho / s, mom_x / s, mom_y / s, mom_z / s, eng / s};
     }
 };
 
 /// Scalar multiplication (commutative): s * v
-inline FluidVector3 operator*(double s, const FluidVector3 &v)
+inline FluidVector operator*(double s, const FluidVector &v)
 {
     return v * s;
 }
@@ -65,9 +67,11 @@ inline FluidVector3 operator*(double s, const FluidVector3 &v)
 struct FluidState
 {
     // Conserved variables (SoA layout)
-    std::vector<double> rho; ///< Global array for density.
-    std::vector<double> mom; ///< Global array for momentum density.
-    std::vector<double> eng; ///< Global array for total energy density.
+    std::vector<double> rho;   ///< Global array for density.
+    std::vector<double> mom_x; ///< Global array for x-momentum density.
+    std::vector<double> mom_y; ///< Global array for y-momentum density.
+    std::vector<double> mom_z; ///< Global array for z-momentum density.
+    std::vector<double> eng;   ///< Global array for total energy density.
 
     // Species data
     std::vector<double> mass_fractions; ///< Flattened array for species mass fractions.
@@ -95,8 +99,11 @@ struct FluidState
         n_species_ = n_species;
 
         rho.assign(total_size_, 0.0);
-        mom.assign(total_size_, 0.0);
+        mom_x.assign(total_size_, 0.0);
+        mom_y.assign(total_size_, 0.0);
+        mom_z.assign(total_size_, 0.0);
         eng.assign(total_size_, 0.0);
+
         if (n_species_ > 0 && total_size_ > 0)
         {
             // Flattened 2D array: [Species_0... | Species_1... | ... ]
@@ -144,24 +151,28 @@ struct FluidState
     }
 
     /// Constructs a local FluidVector3 object from the global arrays (SoA to AoS).
-    FluidVector3 get(int i) const
+    FluidVector get(int i) const
     {
-        return FluidVector3(rho[i], mom[i], eng[i]);
+        return FluidVector(rho[i], mom_x[i], mom_y[i], mom_z[i], eng[i]);
     }
 
     /// Writes a local FluidVector3 object back to the global arrays (AoS to SoA).
-    void set(int i, const FluidVector3 &val)
+    void set(int i, const FluidVector &val)
     {
         rho[i] = val.rho;
-        mom[i] = val.mom;
+        mom_x[i] = val.mom_x;
+        mom_y[i] = val.mom_y;
+        mom_z[i] = val.mom_z;
         eng[i] = val.eng;
     }
 
     /// Atomically adds a local increment to the global state (useful for flux updates).
-    void add(int i, const FluidVector3 &val)
+    void add(int i, const FluidVector &val)
     {
         rho[i] += val.rho;
-        mom[i] += val.mom;
+        mom_x[i] += val.mom_x;
+        mom_y[i] += val.mom_y;
+        mom_z[i] += val.mom_z;
         eng[i] += val.eng;
     }
 };

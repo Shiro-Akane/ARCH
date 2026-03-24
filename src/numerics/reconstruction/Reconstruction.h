@@ -74,28 +74,28 @@ struct PCMReconstruction
      * the full 4-point stencil (im1, i, ip1, ip2), but we only use (i, ip1).
      * The compiler will optimize away the unused arguments.
      */
-    static std::pair<FluidVector3, FluidVector3> apply(
-        const FluidVector3 &U_i,
-        const FluidVector3 &U_ip1)
+    static std::pair<FluidVector, FluidVector> apply(
+        const FluidVector &U_i,
+        const FluidVector &U_ip1)
     {
         // 直接传递，不做任何修改
         return {U_i, U_ip1};
     }
 
-    static std::pair<FluidVector3, FluidVector3> run(const FluidState &state, int i)
+    static std::pair<FluidVector, FluidVector> run(const FluidState &state, int i, int stride = 1)
     {
-        return apply(state.get(i), state.get(i + 1));
+        return apply(state.get(i), state.get(i + stride));
     }
 
     /**
      * @brief Apply Species reconstruction.
      */
-    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R)
+    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R, int stride = 1)
     {
         for (int k = 0; k < n_spec; ++k)
         {
             Y_L[k] = state.Y(k, i);
-            Y_R[k] = state.Y(k, i + 1);
+            Y_R[k] = state.Y(k, i + stride);
         }
     }
 };
@@ -126,47 +126,51 @@ struct MusclReconstruction
      * @brief Reconstruct Conservative Variables.
      * Decoupled from FluidState for better unit testing and portability.
      */
-    static std::pair<FluidVector3, FluidVector3>
+    static std::pair<FluidVector, FluidVector>
     apply(
-        const FluidVector3 &U_im1,
-        const FluidVector3 &U_i,
-        const FluidVector3 &U_ip1,
-        const FluidVector3 &U_ip2)
+        const FluidVector &U_im1,
+        const FluidVector &U_i,
+        const FluidVector &U_ip1,
+        const FluidVector &U_ip2)
     {
-        FluidVector3 U_L, U_R;
+        FluidVector U_L, U_R;
 
         // --- Left State (at i+1/2) ---
         // Based on cell i, looking at i-1 and i+1
         U_L.rho = U_i.rho + compute_limited_slope<Limiter>(U_im1.rho, U_i.rho, U_ip1.rho);
-        U_L.mom = U_i.mom + compute_limited_slope<Limiter>(U_im1.mom, U_i.mom, U_ip1.mom);
+        U_L.mom_x = U_i.mom_x + compute_limited_slope<Limiter>(U_im1.mom_x, U_i.mom_x, U_ip1.mom_x);
+        U_L.mom_y = U_i.mom_y + compute_limited_slope<Limiter>(U_im1.mom_y, U_i.mom_y, U_ip1.mom_y);
+        U_L.mom_z = U_i.mom_z + compute_limited_slope<Limiter>(U_im1.mom_z, U_i.mom_z, U_ip1.mom_z);
         U_L.eng = U_i.eng + compute_limited_slope<Limiter>(U_im1.eng, U_i.eng, U_ip1.eng);
 
         // --- Right State (at i+1/2) ---
         // Based on cell i+1, looking at i and i+2
         // Note: Minus sign because we project backwards
         U_R.rho = U_ip1.rho - compute_limited_slope<Limiter>(U_i.rho, U_ip1.rho, U_ip2.rho);
-        U_R.mom = U_ip1.mom - compute_limited_slope<Limiter>(U_i.mom, U_ip1.mom, U_ip2.mom);
+        U_R.mom_x = U_ip1.mom_x - compute_limited_slope<Limiter>(U_i.mom_x, U_ip1.mom_x, U_ip2.mom_x);
+        U_R.mom_y = U_ip1.mom_y - compute_limited_slope<Limiter>(U_i.mom_y, U_ip1.mom_y, U_ip2.mom_y);
+        U_R.mom_z = U_ip1.mom_z - compute_limited_slope<Limiter>(U_i.mom_z, U_ip1.mom_z, U_ip2.mom_z);
         U_R.eng = U_ip1.eng - compute_limited_slope<Limiter>(U_i.eng, U_ip1.eng, U_ip2.eng);
 
         return {U_L, U_R};
     }
 
-    static std::pair<FluidVector3, FluidVector3> run(const FluidState &state, int i)
+    static std::pair<FluidVector, FluidVector> run(const FluidState &state, int i, int stride = 1)
     {
         // 这里的 i 代表界面 i+1/2 左侧单元的索引
         // Stencil: i-1, i, i+1, i+2
-        return apply(state.get(i - 1), state.get(i), state.get(i + 1), state.get(i + 2));
+        return apply(state.get(i - stride), state.get(i), state.get(i + stride), state.get(i + 2 * stride));
     }
 
     /**
      * @brief Reconstruct Species (Batch).
      * Pointers are used for efficiency since species count is dynamic.
      */
-    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R)
+    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R, int stride = 1)
     {
-        int im1 = i - 1;
-        int ip1 = i + 1;
-        int ip2 = i + 2;
+        int im1 = i - stride;
+        int ip1 = i + stride;
+        int ip2 = i + 2 * stride;
         for (int k = 0; k < n_spec; ++k)
         {
             double y_im1 = state.Y(k, im1);
@@ -276,35 +280,43 @@ public:
      * @brief Apply PPM to FluidVectors (Component-wise).
      * 接收完整 Stencil，逐个变量进行纯数学重构。
      */
-    static std::pair<FluidVector3, FluidVector3> apply(
-        const FluidVector3 &U_im2, const FluidVector3 &U_im1,
-        const FluidVector3 &U_i,
-        const FluidVector3 &U_ip1, const FluidVector3 &U_ip2, const FluidVector3 &U_ip3)
+    static std::pair<FluidVector, FluidVector> apply(
+        const FluidVector &U_im2, const FluidVector &U_im1,
+        const FluidVector &U_i,
+        const FluidVector &U_ip1, const FluidVector &U_ip2, const FluidVector &U_ip3)
     {
-        double r[6], u[6], e[6]; // e here is epsilon (internal energy per unit mass)
-        const FluidVector3 *U_stencil[6] = {&U_im2, &U_im1, &U_i, &U_ip1, &U_ip2, &U_ip3};
+        double r[6], u[6], v[6], w[6], e[6]; // e here is epsilon (internal energy per unit mass)
+        const FluidVector *U_stencil[6] = {&U_im2, &U_im1, &U_i, &U_ip1, &U_ip2, &U_ip3};
 
         for (int k = 0; k < 6; ++k)
         {
             double rho = std::max(1e-13, U_stencil[k]->rho);
-            double vel = U_stencil[k]->mom / rho;
-            double kin = 0.5 * vel * vel;
+
+            double vel_u = U_stencil[k]->mom_x / rho;
+            double vel_v = U_stencil[k]->mom_y / rho;
+            double vel_w = U_stencil[k]->mom_z / rho;
+
+            double kin = 0.5 * (vel_u * vel_u + vel_v * vel_v + vel_w * vel_w);
             double specific_total = U_stencil[k]->eng / rho;
 
             // 计算比内能 epsilon = E_total/rho - 0.5*u^2
-            double eps = specific_total - kin;
+            double eps = std::max(1e-13, specific_total - kin);
 
             // 强保护：防止原始数据本身就有问题
             eps = std::max(1e-13, eps);
 
             r[k] = rho;
-            u[k] = vel;
+            u[k] = vel_u;
+            v[k] = vel_v;
+            w[k] = vel_w;
             e[k] = eps;
         }
 
         // --- Step 2: 纯数学重构 ---
         auto res_rho = reconstruct_scalar_ppm(r);
         auto res_u = reconstruct_scalar_ppm(u);
+        auto res_v = reconstruct_scalar_ppm(v);
+        auto res_w = reconstruct_scalar_ppm(w);
         auto res_eps = reconstruct_scalar_ppm(e);
 
         // --- Step 3: 物理限制 (Positivity) ---
@@ -314,30 +326,34 @@ public:
         double eps_L = std::max(1e-13, res_eps.first);
         double eps_R = std::max(1e-13, res_eps.second);
 
-        double u_L = res_u.first;
-        double u_R = res_u.second;
+        double u_L = res_u.first, v_L = res_v.first, w_L = res_w.first;
+        double u_R = res_u.second, v_R = res_v.second, w_R = res_w.second;
 
         // --- Step 4: 转回守恒变量 (Re-assembly) ---
-        FluidVector3 UL, UR;
+        FluidVector UL, UR;
 
         // Left State
         UL.rho = rho_L;
-        UL.mom = rho_L * u_L;
+        UL.mom_x = rho_L * u_L;
+        UL.mom_y = rho_L * v_L;
+        UL.mom_z = rho_L * w_L;
         // Total Energy = rho * (epsilon + 0.5 * u^2)
         UL.eng = rho_L * (eps_L + 0.5 * u_L * u_L);
 
         // Right State
         UR.rho = rho_R;
-        UR.mom = rho_R * u_R;
-        UR.eng = rho_R * (eps_R + 0.5 * u_R * u_R);
+        UR.mom_x = rho_R * u_R;
+        UR.mom_y = rho_R * v_R;
+        UR.mom_z = rho_R * w_R;
+        UR.eng = rho_R * (eps_R + 0.5 * (u_R * u_R + v_R * v_R + w_R * w_R));
 
         return {UL, UR};
     }
 
-    static std::pair<FluidVector3, FluidVector3> run(const FluidState &state, int i)
+    static std::pair<FluidVector, FluidVector> run(const FluidState &state, int i, int stride = 1)
     {
-        return apply(state.get(i - 2), state.get(i - 1), state.get(i),
-                     state.get(i + 1), state.get(i + 2), state.get(i + 3));
+        return apply(state.get(i - 2 * stride), state.get(i - stride), state.get(i),
+                     state.get(i + stride), state.get(i + 2 * stride), state.get(i + 3 * stride));
     }
 
     /**
@@ -351,10 +367,11 @@ public:
      * 1. 局部极值钳位 (Local Bounds Clamping)
      * 2. 总和归一化 (Renormalization)
      */
-    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R)
+    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R,
+                            int stride = 1)
     {
         double stencil[6];
-        int indices[6] = {i - 2, i - 1, i, i + 1, i + 2, i + 3};
+        int indices[6] = {i - 2 * stride, i - stride, i, i + stride, i + 2 * stride, i + 3 * stride};
         double sum_Y_L = 0.0, sum_Y_R = 0.0;
 
         for (int k = 0; k < n_spec; ++k)

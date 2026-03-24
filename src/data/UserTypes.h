@@ -20,11 +20,11 @@ struct SpeciesManager;
  */
 struct PrimitiveData
 {
-    double rho; ///< Mass density (\f$ \rho \f$).
-    double u;   ///< Velocity X-component (\f$ v_x \f$).
-    double v;   ///< Velocity Y-component (\f$ v_y \f$).
-    double w;   ///< Velocity Z-component (\f$ v_z \f$).
-    double p;   ///< Thermal pressure (\f$ P \f$).
+    double rho = 0.0; ///< Mass density (\f$ \rho \f$).
+    double u = 0.0;   ///< Velocity X-component (\f$ v_x \f$).
+    double v = 0.0;   ///< Velocity Y-component (\f$ v_y \f$).
+    double w = 0.0;   ///< Velocity Z-component (\f$ v_z \f$).
+    double p = 0.0;   ///< Thermal pressure (\f$ P \f$).
 
     std::vector<double> mass_fractions; ///< Mass fractions of chemical species (\f$ X_i \f$).
 

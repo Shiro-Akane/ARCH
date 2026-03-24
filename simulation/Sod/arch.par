@@ -8,11 +8,24 @@
 # Maps to config.grid.*
 # ------------------------------------------------------------------------------
 nx       = 400
+ny       = 400
+nz       = 1
+
 x_min    = 0.0
 x_max    = 1.0
+y_min    = 0.0
+y_max    = 1.0
+z_min    = 0.0
+z_max    = 1.0
+
 geometry = cartesian
+
 xr_boundary_type = outflow # Options: reflect, outflow, periodic
 xl_boundary_type = outflow # Options: reflect, outflow, periodic
+yr_boundary_type = outflow
+yl_boundary_type = outflow
+zr_boundary_type = outflow
+zl_boundary_type = outflow
 
 # ------------------------------------------------------------------------------
 # [Numerics]
@@ -21,7 +34,7 @@ xl_boundary_type = outflow # Options: reflect, outflow, periodic
 solver      = HLLC       # Options: SW, VL, Roe, HLL, HLLC
 reconstruct = ppm     # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
 time_integrator = RK3   # Options: RK2, RK3, Euler/RK1
-limiter     = none   # Options: minmod, superbee, vanleer, mc, none
+limiter     = noned   # Options: minmod, superbee, vanleer, mc, none
 cfl         = 0.8       # Keep < 0.5 for VL/HLLC
 
 EntropyFix = Off
@@ -47,19 +60,30 @@ gamma = 1.4    # Default global gamma (will be overridden by species)
 # [User Custom Parameters]
 # These are read into config.custom_params and used by Sod.cpp
 # ------------------------------------------------------------------------------
+# --- Geometry & Shape Control ---
+# shape_type: 0 = Planar (1D Shock), 1 = Corner (2D Quadrant), 2 = Circle
+shape_type = 0
 
-shock_position = 0.5 
+# shock_dir is ONLY used if shape_type = 0 (0=X, 1=Y, 2=Z)
+shock_dir  = 0  
 
-# -- Left State --
+# Position of the interface (Corner vertex for shape_type=1)
+x_pos      = 0.5
+y_pos      = 0.5
+radius     = 0.2  # ONLY used if shape_type = 2
+
+# --- Left / Inner State (High Pressure Quadrant: x < 0.5 & y < 0.5) ---
 rho_left   = 1.0
 p_left     = 1.0
 u_left     = 0.0
+v_left     = 0.0
 name_left  = Air
 gamma_left = 1.4
 
-# -- Right State --
+# --- Right / Outer State (Low Pressure Background) ---
 rho_right   = 0.125
 p_right     = 0.1
 u_right     = 0.0
+v_right     = 0.0
 name_right  = Heuilm
 gamma_right = 1.67

@@ -35,11 +35,21 @@ public:
         cfg.grid.nx = parser.GetInt("nx", 100);
         cfg.grid.ny = parser.GetInt("ny", 1);
         cfg.grid.nz = parser.GetInt("nz", 1);
+
         cfg.grid.x_min = parser.GetDouble("x_min", 0.0);
         cfg.grid.x_max = parser.GetDouble("x_max", 1.0);
+        cfg.grid.y_min = parser.GetDouble("y_min", 0.0);
+        cfg.grid.y_max = parser.GetDouble("y_max", 1.0);
+        cfg.grid.z_min = parser.GetDouble("z_min", 0.0);
+        cfg.grid.z_max = parser.GetDouble("z_max", 1.0);
+
         cfg.grid.geometry = parser.GetString("geometry", "cartesian");
         cfg.grid.xl_boundary_type = parser.GetString("xl_boundary_type", "outflow");
         cfg.grid.xr_boundary_type = parser.GetString("xr_boundary_type", "outflow");
+        cfg.grid.yl_boundary_type = parser.GetString("yl_boundary_type", "outflow");
+        cfg.grid.yr_boundary_type = parser.GetString("yr_boundary_type", "outflow");
+        cfg.grid.zl_boundary_type = parser.GetString("zl_boundary_type", "outflow");
+        cfg.grid.zr_boundary_type = parser.GetString("zr_boundary_type", "outflow");
 
         // 2. 搬运数值参数 (Numerics)
         cfg.numerics.solver_name = parser.GetString("solver", "SW");
@@ -78,7 +88,7 @@ public:
         else
         {
             // 否则，先全部重置为 false
-            cfg.io.vars = {false, false, false, false, false};
+            cfg.io.vars = {false, false, false, false, false, false, false};
             std::stringstream ss(plt_vars);
             std::string token;
             while (std::getline(ss, token, ','))
@@ -96,6 +106,10 @@ public:
                     cfg.io.vars.rho = true;
                 else if (token == "u")
                     cfg.io.vars.u = true;
+                else if (token == "v")
+                    cfg.io.vars.v = true;
+                else if (token == "w")
+                    cfg.io.vars.w = true;
                 else if (token == "p")
                     cfg.io.vars.p = true;
                 else if (token == "eng")
