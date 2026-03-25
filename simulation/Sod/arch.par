@@ -34,7 +34,7 @@ zl_boundary_type = outflow
 solver      = HLLC       # Options: SW, VL, Roe, HLL, HLLC
 reconstruct = ppm     # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
 time_integrator = RK3   # Options: RK2, RK3, Euler/RK1
-limiter     = noned   # Options: minmod, superbee, vanleer, mc, none
+limiter     = none   # Options: minmod, superbee, vanleer, mc, none
 cfl         = 0.8       # Keep < 0.5 for VL/HLLC
 
 EntropyFix = Off
@@ -62,7 +62,7 @@ gamma = 1.4    # Default global gamma (will be overridden by species)
 # ------------------------------------------------------------------------------
 # --- Geometry & Shape Control ---
 # shape_type: 0 = Planar (1D Shock), 1 = Corner (2D Quadrant), 2 = Circle
-shape_type = 0
+shape_type = 2
 
 # shock_dir is ONLY used if shape_type = 0 (0=X, 1=Y, 2=Z)
 shock_dir  = 0  
@@ -79,6 +79,7 @@ u_left     = 0.0
 v_left     = 0.0
 name_left  = Air
 gamma_left = 1.4
+cv_left    = 717.5
 
 # --- Right / Outer State (Low Pressure Background) ---
 rho_right   = 0.125
@@ -87,3 +88,4 @@ u_right     = 0.0
 v_right     = 0.0
 name_right  = Heuilm
 gamma_right = 1.67
+cv_right    = 3113.9

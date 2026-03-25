@@ -18,6 +18,7 @@ struct GasProperty
 {
     std::string name; ///< String identifier (e.g., "H2", "O2") for IO.
     double gamma;     ///< Specific Heat Ratio (Cp/Cv), also known as Adiabatic Index.
+    double Cv;        ///< Heat capacity (J/kg.K)
 };
 
 /**
@@ -38,9 +39,9 @@ struct SpeciesManager
      * @param gamma The heat capacity ratio (Cp/Cv).
      * @return int The unique ID assigned to this species (used for array indexing).
      */
-    int add_species(std::string name, double gamma)
+    int add_species(std::string name, double gamma, double Cv)
     {
-        species_list.push_back({name, gamma});
+        species_list.push_back({name, gamma, Cv});
         // The index of the newly added element is size - 1
         return species_list.size() - 1;
     }
@@ -50,7 +51,7 @@ struct SpeciesManager
      * @param id The species index (0 to N-1).
      */
     double get_gamma(int id) const { return species_list[id].gamma; }
-
+    double get_Cv(int id) const { return species_list[id].Cv; }
     /**
      * @brief Returns the total number of registered species.
      * Used to size data arrays (e.g., FluidState::Y).

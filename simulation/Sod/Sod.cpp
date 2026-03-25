@@ -52,12 +52,14 @@ void Sod_Setup(SimConfig &config, SpeciesManager &specs)
     // [3. Setup Species]
     std::string name_L = config.Get<std::string>("name_left", "Air");
     double gamma_L = config.Get<double>("gamma_left", 1.4);
+    double Cv_L = config.Get<double>("cv_left", 717.5);
 
     std::string name_R = config.Get<std::string>("name_right", "Helium");
     double gamma_R = config.Get<double>("gamma_right", 1.67);
+    double Cv_R = config.Get<double>("cv_right", 3113.9);
 
-    g_species_id_L = specs.add_species(name_L, gamma_L);
-    g_species_id_R = specs.add_species(name_R, gamma_R);
+    g_species_id_L = specs.add_species(name_L, gamma_L, Cv_L);
+    g_species_id_R = specs.add_species(name_R, gamma_R, Cv_R);
 
     // Console Output for Validation
     std::cout << "[Problem] Setup complete. Type: ";

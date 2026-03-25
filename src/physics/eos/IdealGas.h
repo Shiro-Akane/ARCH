@@ -52,8 +52,8 @@ struct IdealGas
         {
             return global_gamma;
         }
-
-        double sum_inv_gamma_minus_1 = 0.0;
+        double sum_Yi_Cv = 0.0;
+        double sum_Yi_Cv_gm1 = 0.0;
 
         for (int k = 0; k < manager.count(); ++k)
         {
@@ -61,15 +61,17 @@ struct IdealGas
             if (Yi[k] > 1e-12)
             {
                 double gamma_i = manager.get_gamma(k);
-                sum_inv_gamma_minus_1 += Yi[k] / (gamma_i - 1.0);
+                double Cv_i = manager.get_Cv(k);
+                sum_Yi_Cv += Yi[k] * Cv_i;
+                sum_Yi_Cv_gm1 += Yi[k] * Cv_i * (gamma_i - 1.0);
             }
         }
         // Safety: If mass fractions are all zero (vacuum) or math fails
-        if (sum_inv_gamma_minus_1 < 1e-9)
+        if (sum_Yi_Cv < 1e-12)
             return global_gamma;
 
         // Invert back to get gamma_mix
-        return 1.0 / sum_inv_gamma_minus_1 + 1.0;
+        return (sum_Yi_Cv_gm1 / sum_Yi_Cv) + 1.0;
     }
 
     /**

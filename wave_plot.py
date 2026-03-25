@@ -49,21 +49,33 @@ ax1.set_ylabel("y")
 
 ax2 = fig.add_subplot(gs[0, 1])
 if 'v' in df.columns:
-    grid_v = df.pivot(index='y_round', columns='x_round', values='u')
+    grid_v = df.pivot(index='y_round', columns='x_round', values='v')
     v_max = max(abs(grid_v.values.max()), abs(grid_v.values.min()), 1e-10) 
     c2 = ax2.contourf(X, Y, grid_v.values, levels=50, cmap='RdBu_r', vmin=-v_max, vmax=v_max)
     fig.colorbar(c2, ax=ax2, label='V-Velocity')
     ax2.set_title(f"2D V-Velocity (Max: {grid_v.values.max():.2e})")
+
 ax2.set_xlabel("x")
 ax2.set_ylabel("y")
+
+# ==========================================
+# 独立的数据切片提取阶段 (不要放在画图逻辑里面)
+# ==========================================
+center_y = 0.5
+# 找到与 center_y 最接近的 y_round 值（防止浮点精度对不齐）
+closest_y = df['y_round'].iloc[(df['y_round'] - center_y).abs().argmin()]
+
+# 只筛选出这一条切片上的数据，并按 x 排序
+df_slice = df[df['y_round'] == closest_y].sort_values(by='x')
 
 # ==========================================
 # 下半部分：1D 平滑构图 (单轴、全计算域)
 # ==========================================
 # === 1. 密度 ===
 ax3 = fig.add_subplot(gs[1, :])
-ax3.plot(df_sorted['x'], df_sorted['rho'], 'k-', linewidth=2, label='Density')
-ax3.set_title("Sod Shock Tube Result (1D Projection of Full 2D Domain)")
+# 使用 df_slice 而不是 df_sorted
+ax3.plot(df_slice['x'], df_slice['rho'], 'k-', linewidth=2, label='Density (y=0.5 Slice)')
+ax3.set_title("Sod Shock Tube Result (1D Slice at Center)")
 ax3.set_ylabel("Density")
 ax3.grid(True, linestyle='--', alpha=0.6)
 ax3.legend(loc='upper right')
@@ -72,7 +84,7 @@ ax3.legend(loc='upper right')
 # 共享 X 轴，使得拖动或缩放时能对齐
 ax4 = fig.add_subplot(gs[2, :], sharex=ax3)
 if 'p' in df.columns:
-    ax4.plot(df_sorted['x'], df_sorted['p'], 'r-', linewidth=2, label='Pressure')
+    ax4.plot(df_slice['x'], df_slice['p'], 'r-', linewidth=2, label='Pressure (y=0.5 Slice)')
 ax4.set_ylabel("Pressure")
 ax4.grid(True, linestyle='--', alpha=0.6)
 ax4.legend(loc='upper right')
@@ -82,7 +94,7 @@ ax5 = fig.add_subplot(gs[3, :], sharex=ax3)
 colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple']
 for i, col in enumerate(species_cols):
     color = colors[i % len(colors)]
-    ax5.plot(df_sorted['x'], df_sorted[col], '-', linewidth=2, color=color, label=col, alpha=0.9)
+    ax5.plot(df_slice['x'], df_slice[col], '-', linewidth=2, color=color, label=col, alpha=0.9)
 
 ax5.set_title("Species Distribution (Contact Discontinuity)")
 ax5.set_ylabel("Mass Fraction")
@@ -97,7 +109,7 @@ plt.setp(ax4.get_xticklabels(), visible=False)
 
 # --- 4. 保存与展示 ---
 plt.tight_layout()
-out_name = "sod_HLLC_planed.png"
+out_name = "sod_HLLC_circle.png"
 plt.savefig(out_name, dpi=300)
 print(f"Saved: {out_name}")
 plt.show()

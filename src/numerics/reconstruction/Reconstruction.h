@@ -338,7 +338,7 @@ public:
         UL.mom_y = rho_L * v_L;
         UL.mom_z = rho_L * w_L;
         // Total Energy = rho * (epsilon + 0.5 * u^2)
-        UL.eng = rho_L * (eps_L + 0.5 * u_L * u_L);
+        UL.eng = rho_L * (eps_L + 0.5 * (u_L * u_L + v_L * v_L + w_L * w_L));
 
         // Right State
         UR.rho = rho_R;
