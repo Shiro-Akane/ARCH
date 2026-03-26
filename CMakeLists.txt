@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.10)
 # ==============================================================================
 project(ARCH)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
+
 # Set C++ Standard
 # We enforce C++17 to support modern template features.
 set(CMAKE_CXX_STANDARD 17)
