@@ -67,12 +67,8 @@ struct FluxHLLC
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
 
-        std::vector<double> Yi_L(n_spec);
-        std::vector<double> Yi_R(n_spec);
-
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
 
-        // 在计算通量之前，先确定循环的起止点
         int i_start = grid.Is();
         int i_end = grid.Ie();
         int j_start = grid.Js();
@@ -80,24 +76,23 @@ struct FluxHLLC
         int k_start = grid.Ks();
         int k_end = grid.Ke();
 
-        // 根据扫掠维度，单独把该维度的起点向左退一格，以计算左侧界面通量
-        if (dir == 0)
-        {
-            i_start -= 1;
-        }
-        else if (dir == 1)
-        {
-            j_start -= 1;
-        }
-        else if (dir == 2)
-        {
-            k_start -= 1;
-        }
+        if (dir == 0) i_start -= 1;
+        else if (dir == 1) j_start -= 1;
+        else if (dir == 2) k_start -= 1;
 
-        for (int k = k_start; k < k_end; ++k)
+        const int nk = k_end - k_start;
+        const int nj = j_end - j_start;
+
+        #pragma omp parallel
         {
-            for (int j = j_start; j < j_end; ++j)
+            std::vector<double> Yi_L(n_spec);
+            std::vector<double> Yi_R(n_spec);
+
+            #pragma omp for schedule(static)
+            for (int kj = 0; kj < nk * nj; ++kj)
             {
+                int k = k_start + kj / nj;
+                int j = j_start + kj % nj;
                 for (int i = i_start; i < i_end; ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
@@ -213,6 +208,6 @@ struct FluxHLLC
                     }
                 }
             }
-        }
+        } // end omp parallel
     }
 };

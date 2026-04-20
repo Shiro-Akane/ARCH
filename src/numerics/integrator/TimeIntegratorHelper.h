@@ -26,19 +26,26 @@ namespace TimeIntegration
         double dt_over_dx = dt / dx;
         int total_size = grid.GetTotalSize();
 
-        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+        const int ks = grid.Ks();
+        const int ke = grid.Ke();
+        const int js = grid.Js();
+        const int je = grid.Je();
+        const int nk = ke - ks;
+        const int nj = je - js;
+
+        #pragma omp parallel for schedule(static)
+        for (int kj = 0; kj < nk * nj; ++kj)
         {
-            for (int j = grid.Js(); j < grid.Je(); ++j)
+            int k = ks + kj / nj;
+            int j = js + kj % nj;
+            for (int i = grid.Is(); i < grid.Ie(); ++i)
             {
-                for (int i = grid.Is(); i < grid.Ie(); ++i)
+                int idx = grid.GetIndex(i, j, k);
+                dU[idx] = dU[idx] + (fluxes[idx] - fluxes[idx + stride]) * dt_over_dx;
+                for (int s = 0; s < n_spec; ++s)
                 {
-                    int idx = grid.GetIndex(i, j, k);
-                    dU[idx] = dU[idx] + (fluxes[idx] - fluxes[idx + stride]) * dt_over_dx;
-                    for (int s = 0; s < n_spec; ++s)
-                    {
-                        int off = s * total_size;
-                        d_spec[off + idx] += (spec_fluxes[off + idx] - spec_fluxes[off + idx + stride]) * dt_over_dx;
-                    }
+                    int off = s * total_size;
+                    d_spec[off + idx] += (spec_fluxes[off + idx] - spec_fluxes[off + idx + stride]) * dt_over_dx;
                 }
             }
         }
@@ -55,15 +62,23 @@ namespace TimeIntegration
         int n_spec = u_n.GetNumSpecies();
         int total_size = grid.GetTotalSize();
 
-        for (int k = grid.Ks(); k < grid.Ke(); ++k)
-        {
-            for (int j = grid.Js(); j < grid.Je(); ++j)
-            {
-                for (int i = grid.Is(); i < grid.Ie(); ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
+        const int ks = grid.Ks();
+        const int ke = grid.Ke();
+        const int js = grid.Js();
+        const int je = grid.Je();
+        const int nk = ke - ks;
+        const int nj = je - js;
 
-                    FluidVector U_old = u_n.get(idx);
+        #pragma omp parallel for schedule(static)
+        for (int kj = 0; kj < nk * nj; ++kj)
+        {
+            int k = ks + kj / nj;
+            int j = js + kj % nj;
+            for (int i = grid.Is(); i < grid.Ie(); ++i)
+            {
+                int idx = grid.GetIndex(i, j, k);
+
+                FluidVector U_old = u_n.get(idx);
                     FluidVector U_curr = u_current.get(idx);
                     FluidVector U_new = weight_n * U_old + weight_flux * (U_curr + dU[idx]);
 
@@ -103,7 +118,6 @@ namespace TimeIntegration
                     }
                 }
             }
-        }
     }
 
     // ---------------------------------------------------------

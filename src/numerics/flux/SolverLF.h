@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <omp.h>
 
 #include "FluxFunctions.h"
 
@@ -49,30 +50,32 @@ struct SolverLF
         // 2. Allocate Temporary Buffers for Fluxes
         // We pre-calculate fluxes at all relevant nodes to avoid re-computing them inside the update loop.
         std::vector<double> species_fluxes(n_spec * total_size);
-        std::vector<double> Yi_cache(n_spec);
-
         std::vector<FluidVector> node_fluxes(grid.GetTotalSize()); // All flux at interface
 
         // ---------------------------------------------------------
         // Step 1: Flux Calculation Loop
         // Compute F(U) for the entire stencil range (including ghost cells needed)
         // ---------------------------------------------------------
-        for (int i = grid.Is() - 1; i < grid.Ie(); i++) // Range covers i-1 and i+1
+        #pragma omp parallel
         {
-            // Load species at cell i
-            state_old.get_species_to_buffer(i, Yi_cache.data());
+            std::vector<double> Yi_local(n_spec);
 
-            FluidVector U = state_old.get(i);
-
-            // Compute Physical Flux F(U)
-            node_fluxes[i] = get_flux(U, Yi_cache.data(), eos);
-
-            // Compute Species Fluxes: F_k = (rho * u) * Y_k
-            // Note: node_fluxes[i].rho contains the Momentum (rho * u) which is the mass flux
-            double mass_flux = node_fluxes[i].rho;
-            for (int k = 0; k < n_spec; ++k)
+            #pragma omp for schedule(static)
+            for (int i = grid.Is() - 1; i < grid.Ie(); i++) // Range covers i-1 and i+1
             {
-                species_fluxes[k * total_size + i] = node_fluxes[i].rho * Yi_cache[k];
+                // Load species at cell i
+                state_old.get_species_to_buffer(i, Yi_local.data());
+
+                FluidVector U = state_old.get(i);
+
+                // Compute Physical Flux F(U)
+                node_fluxes[i] = get_flux(U, Yi_local.data(), eos);
+
+                // Compute Species Fluxes: F_k = (rho * u) * Y_k
+                for (int k = 0; k < n_spec; ++k)
+                {
+                    species_fluxes[k * total_size + i] = node_fluxes[i].rho * Yi_local[k];
+                }
             }
         }
 
@@ -86,6 +89,7 @@ struct SolverLF
         // Step 2: State Update Loop
         // Apply LF formula for physical domain
         // ---------------------------------------------------------
+        #pragma omp parallel for schedule(static)
         for (int i = grid.Is(); i < grid.Ie(); i++)
         {
             // Central Difference of Fluxes: F_{i+1} - F_{i-1}

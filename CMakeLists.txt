@@ -5,6 +5,8 @@ cmake_minimum_required(VERSION 3.10)
 # ==============================================================================
 project(ARCH)
 
+option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # Set C++ Standard
@@ -44,6 +46,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 # ==============================================================================
 # Create the executable named 'ARCH' linking all collected sources.
 add_executable(ARCH ${SOURCES} ${SIMULATION_CASES})
+
+if(ARCH_ENABLE_OPENMP)
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        target_link_libraries(ARCH PRIVATE OpenMP::OpenMP_CXX)
+        message(STATUS "OpenMP enabled for target ARCH")
+    else()
+        message(WARNING "ARCH_ENABLE_OPENMP=ON but OpenMP was not found. Building without OpenMP.")
+    endif()
+endif()
 
 # ==============================================================================
 # 5. Runtime Environment Setup

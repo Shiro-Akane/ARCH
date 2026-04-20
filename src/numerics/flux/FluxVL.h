@@ -45,19 +45,19 @@ struct FluxVL
         int total_size = grid.GetTotalSize();
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
 
-        // Temporary buffers for species reconstruction
-        std::vector<double> Yi_L(n_spec);
-        std::vector<double> Yi_R(n_spec);
+        const int nk = grid.Ke() - grid.Ks();
+        const int nj = grid.Je() - grid.Js();
 
-        // ---------------------------------------------------------
-        // Loop over interfaces i+1/2
-        // We compute fluxes for physical domain + necessary ghosts
-        // Range: typically from Is-1 to Ie
-        // ---------------------------------------------------------
-        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+        #pragma omp parallel
         {
-            for (int j = grid.Js(); j < grid.Je(); ++j)
+            std::vector<double> Yi_L(n_spec);
+            std::vector<double> Yi_R(n_spec);
+
+            #pragma omp for schedule(static)
+            for (int kj = 0; kj < nk * nj; ++kj)
             {
+                int k = grid.Ks() + kj / nj;
+                int j = grid.Js() + kj % nj;
                 for (int i = grid.Is() - 1; i < grid.Ie(); ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
@@ -88,6 +88,6 @@ struct FluxVL
                     }
                 }
             }
-        }
+        } // end omp parallel
     }
 };

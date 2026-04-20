@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <omp.h>
 
 #include "FluxFunctions.h"
 
@@ -91,41 +92,43 @@ struct SolverLW
         std::vector<FluidVector> inter_fluxes(grid.GetTotalSize()); // all flux at interface
         std::vector<double> inter_species_fluxes(n_spec * total_size);
 
-        // Temp buffers for species reconstruction
-        std::vector<double> Yi_curr(n_spec);
-        std::vector<double> Yi_next(n_spec);
-        std::vector<double> Yi_half_buffer(n_spec);
-
         // ---------------------------------------------------------
         // Step 1: Predictor Step (Flux Calculation)
         // Calculate fluxes at the cell interfaces (i + 1/2) at time (t + dt/2)
         // Loop range: Is-1 to Ie is sufficient to cover interfaces needed for physical cells
         // ---------------------------------------------------------
-        for (int i = grid.Is() - 1; i < grid.Ie(); i++)
+        #pragma omp parallel
         {
-            FluidVector U_i = state_old.get(i);
-            FluidVector U_ip1 = state_old.get(i + 1);
+            // Thread-local species buffers
+            std::vector<double> Yi_curr(n_spec);
+            std::vector<double> Yi_next(n_spec);
+            std::vector<double> Yi_half_buffer(n_spec);
 
-            state_old.get_species_to_buffer(i, Yi_curr.data());
-            state_old.get_species_to_buffer(i + 1, Yi_next.data());
-
-            // Compute Flux F_{i+1/2}^{n+1/2}
-            // This function (defined in FluxFunctions.h) performs the half-step evolution internally.
-            inter_fluxes[i] = compute_half_step_flux(
-                U_i, Yi_curr.data(),
-                U_ip1, Yi_next.data(),
-                Yi_half_buffer.data(),
-                n_spec,
-                eos, dt, grid);
-
-            // Compute Species Fluxes at Interface
-            // Approximation: F_{spec} = (Mass Flux)_{half} * (Y)_{avg}
-            double mass_flux_half = inter_fluxes[i].rho; // Momentum at half step represents mass flux
-
-            for (int k = 0; k < n_spec; ++k)
+            #pragma omp for schedule(static)
+            for (int i = grid.Is() - 1; i < grid.Ie(); i++)
             {
-                double Y_half = 0.5 * (Yi_curr[k] + Yi_next[k]);
-                inter_species_fluxes[k * total_size + i] = mass_flux_half * Y_half;
+                FluidVector U_i = state_old.get(i);
+                FluidVector U_ip1 = state_old.get(i + 1);
+
+                state_old.get_species_to_buffer(i, Yi_curr.data());
+                state_old.get_species_to_buffer(i + 1, Yi_next.data());
+
+                // Compute Flux F_{i+1/2}^{n+1/2}
+                inter_fluxes[i] = compute_half_step_flux(
+                    U_i, Yi_curr.data(),
+                    U_ip1, Yi_next.data(),
+                    Yi_half_buffer.data(),
+                    n_spec,
+                    eos, dt, grid);
+
+                // Compute Species Fluxes at Interface
+                double mass_flux_half = inter_fluxes[i].rho;
+
+                for (int k = 0; k < n_spec; ++k)
+                {
+                    double Y_half = 0.5 * (Yi_curr[k] + Yi_next[k]);
+                    inter_species_fluxes[k * total_size + i] = mass_flux_half * Y_half;
+                }
             }
         }
 
@@ -139,6 +142,7 @@ struct SolverLW
         // Step 2: Corrector Step (State Update)
         // Update cell centers using the divergence of the interface fluxes
         // ---------------------------------------------------------
+        #pragma omp parallel for schedule(static)
         for (int i = grid.Is(); i < grid.Ie(); i++)
         {
             // Flux Difference: F_{right_interface} - F_{left_interface}

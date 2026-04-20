@@ -57,9 +57,18 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
     // =========================================================
     // 1. X-Direction Boundaries
     // =========================================================
-    for (int k = grid.Ks(); k < grid.Ke(); ++k)
+    const int ks = grid.Ks();
+    const int ke = grid.Ke();
+    const int js = grid.Js();
+    const int je = grid.Je();
+    const int nk = ke - ks;
+    const int nj = je - js;
+
+    #pragma omp parallel for schedule(static)
+    for (int kj = 0; kj < nk * nj; ++kj)
     {
-        for (int j = grid.Js(); j < grid.Je(); ++j)
+        int k = ks + kj / nj;
+        int j = js + kj % nj;
         {
             int i_start = grid.Is();
             int i_end = grid.Ie() - 1;
@@ -95,10 +104,15 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
     // =========================================================
     if (grid.dim >= 2)
     {
-        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+        const int total_x = grid.nx + 2 * ng;
+        const int nk2 = ke - ks;
+
+        #pragma omp parallel for schedule(static)
+        for (int ki = 0; ki < nk2 * total_x; ++ki)
         {
-            for (int i = 0; i < grid.nx + 2 * ng; ++i)
-            { // Full X
+            int k = ks + ki / total_x;
+            int i = ki % total_x;
+            {
                 int j_start = grid.Js();
                 int j_end = grid.Je() - 1;
 
@@ -134,6 +148,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
     // =========================================================
     if (grid.dim == 3)
     {
+        #pragma omp parallel for schedule(static)
         for (int j = 0; j < grid.ny + 2 * ng; ++j)
         { // Full Y
             for (int i = 0; i < grid.nx + 2 * ng; ++i)
@@ -176,14 +191,25 @@ template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number)
 {
     int n_species = state.GetNumSpecies();
-    std::vector<double> Yi_cache(n_species);
-
     double min_dt = 1e10;
 
-    for (int k = grid.Ks(); k < grid.Ke(); ++k)
+    const int ks = grid.Ks();
+    const int ke = grid.Ke();
+    const int js = grid.Js();
+    const int je = grid.Je();
+    const int nk = ke - ks;
+    const int nj = je - js;
+
+    #pragma omp parallel
     {
-        for (int j = grid.Js(); j < grid.Je(); ++j)
+        std::vector<double> Yi_cache(n_species);
+        double local_min_dt = 1e10;
+
+        #pragma omp for schedule(static)
+        for (int kj = 0; kj < nk * nj; ++kj)
         {
+            int k = ks + kj / nj;
+            int j = js + kj % nj;
             for (int i = grid.Is(); i < grid.Ie(); ++i)
             {
                 int idx = grid.GetIndex(i, j, k);
@@ -202,20 +228,19 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
                 double inv_dt_sum = (std::abs(U.mom_x / rho) + c) / grid.dx;
 
                 if (grid.dim >= 2)
-                {
                     inv_dt_sum += (std::abs(U.mom_y / rho) + c) / grid.dy;
-                }
 
                 if (grid.dim == 3)
-                {
                     inv_dt_sum += (std::abs(U.mom_z / rho) + c) / grid.dz;
-                }
 
-                // 当前网格允许的最大安全时间步长
                 double cell_dt = 1.0 / std::max(inv_dt_sum, 1e-10);
-
-                min_dt = std::min(min_dt, cell_dt);
+                local_min_dt = std::min(local_min_dt, cell_dt);
             }
+        }
+
+        #pragma omp critical
+        {
+            min_dt = std::min(min_dt, local_min_dt);
         }
     }
 

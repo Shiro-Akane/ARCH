@@ -72,41 +72,37 @@ public:
         // System handles the loop iteration and parallelization (OpenMP).
         // The user only needs to worry about the physics at a single point (x).
 
-#pragma omp parallel for
-
-        for (int idx = 0; idx < total_size; ++idx)
+        #pragma omp parallel
         {
-            // 1. Recover 3D indices (i, j, k) from the flat index
-            int k = idx / stride_z;
-            int rem = idx % stride_z;
-            int j = rem / stride_y;
-            int i = rem % stride_y;
-
-            // 2. Get physical coordinates for the current cell
-            double x = grid.GetCellCenterX(i);
-            double y = grid.GetCellCenterY(j);
-            double z = grid.GetCellCenterZ(k);
-
-            // 3. Prepare a "Basket" (PrimitiveData) for the user to fill
+            // Per-thread buffer: allocated once per thread, reused across iterations
             PrimitiveData data{};
             data.mass_fractions.resize(n_species, 0.0);
 
-            // 4. Invoke User Logic
-            user_init(x, y, z, data);
-
-            // 5. Post-Processing: Convert Primitive -> Conservative 3D
-            state.rho[idx] = data.rho;
-            state.mom_x[idx] = data.rho * data.u;
-            state.mom_y[idx] = data.rho * data.v;
-            state.mom_z[idx] = data.rho * data.w;
-
-            // Compute Total Energy Density via 3D EOS
-            state.eng[idx] = eos.get_total_energy_primitive(data.rho, data.u, data.v, data.w, data.p, data.mass_fractions.data());
-
-            // 6. Copy Species Mass Fractions
-            for (int s = 0; s < n_species; ++s)
+            #pragma omp for schedule(static)
+            for (int idx = 0; idx < total_size; ++idx)
             {
-                state.Y(s, idx) = data.mass_fractions[s];
+                int k = idx / stride_z;
+                int rem = idx % stride_z;
+                int j = rem / stride_y;
+                int i = rem % stride_y;
+
+                double x = grid.GetCellCenterX(i);
+                double y = grid.GetCellCenterY(j);
+                double z = grid.GetCellCenterZ(k);
+
+                data.rho = 0.0; data.u = 0.0; data.v = 0.0; data.w = 0.0; data.p = 0.0;
+                std::fill(data.mass_fractions.begin(), data.mass_fractions.end(), 0.0);
+
+                user_init(x, y, z, data);
+
+                state.rho[idx] = data.rho;
+                state.mom_x[idx] = data.rho * data.u;
+                state.mom_y[idx] = data.rho * data.v;
+                state.mom_z[idx] = data.rho * data.w;
+                state.eng[idx] = eos.get_total_energy_primitive(data.rho, data.u, data.v, data.w, data.p, data.mass_fractions.data());
+
+                for (int s = 0; s < n_species; ++s)
+                    state.Y(s, idx) = data.mass_fractions[s];
             }
         }
     }
