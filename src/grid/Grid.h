@@ -37,6 +37,8 @@ struct Grid
     /**
      * @brief Constructor initializes grid parameters and computes cell width (dx).
      */
+    std::string geometry = "cartesian"; ///< "cartesian", "cylindrical", "spherical"
+
     Grid(int nx_in, int ny_in, int nz_in, int ng_in,
          double x_min_in, double x_max_in,
          double y_min_in = 0.0, double y_max_in = 0.0,
@@ -44,7 +46,8 @@ struct Grid
         : nx(nx_in), ny(ny_in), nz(nz_in), ng(ng_in),
           x_min(x_min_in), x_max(x_max_in),
           y_min(y_min_in), y_max(y_max_in),
-          z_min(z_min_in), z_max(z_max_in)
+          z_min(z_min_in), z_max(z_max_in),
+          geometry("cartesian")
     {
         InitializeTopology();
     }
@@ -53,7 +56,8 @@ struct Grid
         : nx(cfg.nx), ny(cfg.ny > 0 ? cfg.ny : 1), nz(cfg.nz > 0 ? cfg.nz : 1), ng(ng_required),
           x_min(cfg.x_min), x_max(cfg.x_max),
           y_min(cfg.y_min), y_max(cfg.y_max),
-          z_min(cfg.z_min), z_max(cfg.z_max)
+          z_min(cfg.z_min), z_max(cfg.z_max),
+          geometry(cfg.geometry)
     {
         InitializeTopology();
     }
@@ -123,6 +127,11 @@ public:
             return 0.0;
         return z_min + (k - ng) * dz + 0.5 * dz;
     }
+    /// Left face position of cell i in x-direction (r_{i-1/2})
+    double GetFacePosL(int i) const { return x_min + (i - ng) * dx; }
+    /// Right face position of cell i in x-direction (r_{i+1/2})
+    double GetFacePosR(int i) const { return x_min + (i - ng + 1) * dx; }
+
     // -- Loop Bounds for Physical Domain --
 
     // X-direction bounds

@@ -23,15 +23,15 @@ namespace TimeIntegration
     {
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
         double dx = (dir == 0) ? grid.dx : ((dir == 1) ? grid.dy : grid.dz);
-        double dt_over_dx = dt / dx;
         int total_size = grid.GetTotalSize();
 
-        const int ks = grid.Ks();
-        const int ke = grid.Ke();
-        const int js = grid.Js();
-        const int je = grid.Je();
-        const int nk = ke - ks;
-        const int nj = je - js;
+        // 非笛卡尔坐标仅对径向方向（dir==0）做面积/体积缩放
+        const bool is_radial = (dir == 0) && (grid.geometry != "cartesian");
+        const bool is_spherical = (grid.geometry == "spherical");
+
+        const int ks = grid.Ks(), ke = grid.Ke();
+        const int js = grid.Js(), je = grid.Je();
+        const int nk = ke - ks, nj = je - js;
 
         #pragma omp parallel for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
@@ -41,11 +41,88 @@ namespace TimeIntegration
             for (int i = grid.Is(); i < grid.Ie(); ++i)
             {
                 int idx = grid.GetIndex(i, j, k);
-                dU[idx] = dU[idx] + (fluxes[idx] - fluxes[idx + stride]) * dt_over_dx;
-                for (int s = 0; s < n_spec; ++s)
+
+                if (is_radial)
                 {
-                    int off = s * total_size;
-                    d_spec[off + idx] += (spec_fluxes[off + idx] - spec_fluxes[off + idx + stride]) * dt_over_dx;
+                    double r_l = grid.GetFacePosL(i);
+                    double r_r = grid.GetFacePosR(i);
+                    double r_c = grid.GetCellCenterX(i);
+
+                    double area_l, area_r, vol;
+                    if (is_spherical)
+                    {
+                        area_l = r_l * r_l;
+                        area_r = r_r * r_r;
+                        vol    = r_c * r_c * dx;
+                    }
+                    else // cylindrical
+                    {
+                        area_l = r_l;
+                        area_r = r_r;
+                        vol    = r_c * dx;
+                    }
+                    double dt_over_vol = dt / vol;
+
+                    dU[idx] = dU[idx] + (fluxes[idx] * area_l - fluxes[idx + stride] * area_r) * dt_over_vol;
+                    for (int s = 0; s < n_spec; ++s)
+                    {
+                        int off = s * total_size;
+                        d_spec[off + idx] += (spec_fluxes[off + idx] * area_l - spec_fluxes[off + idx + stride] * area_r) * dt_over_vol;
+                    }
+                }
+                else
+                {
+                    double dt_over_dx = dt / dx;
+                    dU[idx] = dU[idx] + (fluxes[idx] - fluxes[idx + stride]) * dt_over_dx;
+                    for (int s = 0; s < n_spec; ++s)
+                    {
+                        int off = s * total_size;
+                        d_spec[off + idx] += (spec_fluxes[off + idx] - spec_fluxes[off + idx + stride]) * dt_over_dx;
+                    }
+                }
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // Helper: Geometric Source Terms (cylindrical / spherical)
+    // ---------------------------------------------------------
+    // 柱坐标：径向动量方程源项 S = +p/r
+    // 球坐标：径向动量方程源项 S = +2p/r
+    template <typename EosType>
+    inline void add_geometric_sources(
+        std::vector<FluidVector> &dU,
+        const FluidState &state,
+        const EosType &eos,
+        const Grid &grid,
+        double dt)
+    {
+        if (grid.geometry == "cartesian") return;
+
+        const double geom_coeff = (grid.geometry == "spherical") ? 2.0 : 1.0;
+        int n_spec = state.GetNumSpecies();
+
+        const int ks = grid.Ks(), ke = grid.Ke();
+        const int js = grid.Js(), je = grid.Je();
+        const int nk = ke - ks, nj = je - js;
+
+        #pragma omp parallel
+        {
+            std::vector<double> Yi(n_spec);
+            #pragma omp for schedule(static)
+            for (int kj = 0; kj < nk * nj; ++kj)
+            {
+                int k = ks + kj / nj;
+                int j = js + kj % nj;
+                for (int i = grid.Is(); i < grid.Ie(); ++i)
+                {
+                    int idx = grid.GetIndex(i, j, k);
+                    double r = grid.GetCellCenterX(i);
+                    if (r < 1e-14) continue;
+
+                    state.get_species_to_buffer(idx, Yi.data());
+                    double p = eos.get_pressure(state.get(idx), Yi.data());
+                    dU[idx].mom_x += dt * geom_coeff * p / r;
                 }
             }
         }
@@ -139,9 +216,10 @@ namespace TimeIntegration
         {
             std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector());
             std::fill(spec_flux_buffer.begin(), spec_flux_buffer.end(), 0.0);
-            // 调用传入的 Policy 计算当前方向通量
             FluxSchemePolicy::compute_fluxes(state, eos, grid, flux_buffer, spec_flux_buffer, dir, entropy_fix_coeff);
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
         }
+
+        add_geometric_sources(dU, state, eos, grid, dt);
     }
 } // namespace TimeIntegration
