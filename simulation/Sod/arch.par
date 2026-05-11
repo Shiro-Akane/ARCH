@@ -14,11 +14,11 @@ nz       = 1
 x_min    = 0.0
 x_max    = 1.0
 y_min    = 0.0
-y_max    = 1.0
+y_max    = 2.0 * pi
 z_min    = 0.0
 z_max    = 1.0
 
-geometry = cartesian
+geometry = cylindrical # Options: cartesian, cylindrical, spherical
 
 xr_boundary_type = outflow # Options: reflect, outflow, periodic
 xl_boundary_type = outflow # Options: reflect, outflow, periodic
@@ -68,8 +68,8 @@ shape_type = 2
 shock_dir  = 0  
 
 # Position of the interface (Corner vertex for shape_type=1)
-x_pos      = 0.5
-y_pos      = 0.5
+x_pos      = 0.0
+y_pos      = 0.0
 radius     = 0.2  # ONLY used if shape_type = 2
 
 # --- Left / Inner State (High Pressure Quadrant: x < 0.5 & y < 0.5) ---

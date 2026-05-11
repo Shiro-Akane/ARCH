@@ -10,12 +10,82 @@
 #include <stdexcept>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 #include "../data/GlobalDefs.h"
 #include "../io/ConfigParser.h"
 
 class RuntimeParams
 {
+private:
+    /**
+     * @brief 轻量级表达式解析：支持 "3.14", "pi", "2.0*pi", "pi/2" 等基础输入
+     */
+    static double ParseMathExpr(std::string str, double default_val = 0.0)
+    {
+        if (str.empty())
+            return default_val;
+
+        // 1. 转小写并去除所有空格
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
+
+        // 2. 查找是否包含 "pi"
+        size_t pi_pos = str.find("pi");
+        if (pi_pos == std::string::npos)
+        {
+            // 不包含 pi，直接走常规 stod
+            try
+            {
+                return std::stod(str);
+            }
+            catch (...)
+            {
+                return default_val;
+            }
+        }
+
+        // 3. 包含 pi 的简单计算逻辑
+        double pi_val = M_PI; // 3.141592653589793...
+
+        if (str == "pi")
+            return pi_val;
+        if (str == "-pi")
+            return -pi_val;
+
+        // 处理 "系数 * pi" 或 "pi * 系数"
+        size_t star_pos = str.find('*');
+        if (star_pos != std::string::npos)
+        {
+            std::string coeff_str = (pi_pos > star_pos) ? str.substr(0, star_pos) : str.substr(star_pos + 1);
+            try
+            {
+                return std::stod(coeff_str) * pi_val;
+            }
+            catch (...)
+            {
+                return pi_val;
+            }
+        }
+
+        // 处理 "pi / 系数"
+        size_t slash_pos = str.find('/');
+        if (slash_pos != std::string::npos && pi_pos < slash_pos)
+        {
+            std::string coeff_str = str.substr(slash_pos + 1);
+            try
+            {
+                return pi_val / std::stod(coeff_str);
+            }
+            catch (...)
+            {
+                return pi_val;
+            }
+        }
+
+        return default_val; // 无法解析则返回默认值
+    }
+
 public:
     /**
      * @brief Parses the parameter file and populates the SimConfig struct.
@@ -31,19 +101,21 @@ public:
         }
 
         SimConfig cfg;
+
+        cfg.grid.geometry = parser.GetString("geometry", "cartesian");
+
         // 1. 搬运核心参数 (Grid)
         cfg.grid.nx = parser.GetInt("nx", 100);
         cfg.grid.ny = parser.GetInt("ny", 1);
         cfg.grid.nz = parser.GetInt("nz", 1);
 
-        cfg.grid.x_min = parser.GetDouble("x_min", 0.0);
-        cfg.grid.x_max = parser.GetDouble("x_max", 1.0);
-        cfg.grid.y_min = parser.GetDouble("y_min", 0.0);
-        cfg.grid.y_max = parser.GetDouble("y_max", 1.0);
-        cfg.grid.z_min = parser.GetDouble("z_min", 0.0);
-        cfg.grid.z_max = parser.GetDouble("z_max", 1.0);
+        cfg.grid.x_min = ParseMathExpr(parser.GetString("x_min", "0.0"));
+        cfg.grid.x_max = ParseMathExpr(parser.GetString("x_max", "1.0"));
+        cfg.grid.y_min = ParseMathExpr(parser.GetString("y_min", "0.0"));
+        cfg.grid.y_max = ParseMathExpr(parser.GetString("y_max", "1.0"));
+        cfg.grid.z_min = ParseMathExpr(parser.GetString("z_min", "0.0"));
+        cfg.grid.z_max = ParseMathExpr(parser.GetString("z_max", "1.0"));
 
-        cfg.grid.geometry = parser.GetString("geometry", "cartesian");
         cfg.grid.xl_boundary_type = parser.GetString("xl_boundary_type", "outflow");
         cfg.grid.xr_boundary_type = parser.GetString("xr_boundary_type", "outflow");
         cfg.grid.yl_boundary_type = parser.GetString("yl_boundary_type", "outflow");

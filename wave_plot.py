@@ -5,7 +5,7 @@ import glob
 import sys
 import matplotlib.gridspec as gridspec
 
-# --- 1. 寻找文件 ---
+# --- 1. 寻找并读取文件 ---
 files = sorted(glob.glob("output/plt_HLLC_*.csv"))
 if not files:
     print("Error: No csv files found!")
@@ -13,103 +13,78 @@ if not files:
 
 last_file = files[-1]
 print(f"Plotting file: {last_file}")
-
-# --- 2. 读取数据并排序 ---
 df = pd.read_csv(last_file)
-
-# 避免浮点数误差导致 pivot 失败，对坐标进行适度舍入 (保留5位小数)
-df['x_round'] = df['x'].round(5)
-df['y_round'] = df['y'].round(5)
 
 # 动态检测组分列
 species_cols = [col for col in df.columns if col.startswith('Y_')]
 
-# 【核心修改】为了画出全域的平滑线，直接对整个 DataFrame 按 x 排序
-df_sorted = df.sort_values(by='x')
+# ==========================================
+# 【核心逻辑】：从极坐标 (r, theta) 还原到笛卡尔 (x, y)
+# ==========================================
+# 假设输出文件中：
+# 'x' 列实际上是半径 r
+# 'y' 列实际上是极角 theta (弧度)
+r = df['x'].values
+theta = df['y'].values
 
-# --- 3. 设置排版布局 (GridSpec 混合布局) ---
-fig = plt.figure(figsize=(14, 14))
+# 进行物理坐标变换
+# 如果你模拟的是全圆，theta 范围是 [0, 2pi]；如果是象限，则是 [0, pi/2]
+x_phys = r * np.cos(theta)
+y_phys = r * np.sin(theta)
 
-# 将画布分为 4 行 2 列：
-# 第 0 行 (2列): 放 2D 云图
-# 第 1, 2, 3 行 (横跨2列): 分别放密度、压力、组分的 1D 平滑曲线
-gs = gridspec.GridSpec(4, 2, height_ratios=[1.5, 1, 1, 1], hspace=0.3)
+# 将变换后的坐标存回 df 用于后续 1D 投影
+df['r_phys'] = r  
+df_sorted = df.sort_values(by='r_phys')
 
 # ==========================================
-# 上半部分：2D 云图 (用于验证多维对称性)
+# --- 3. 设置排版布局 ---
 # ==========================================
+fig = plt.figure(figsize=(16, 12))
+gs = gridspec.GridSpec(3, 2, height_ratios=[2, 1, 1], hspace=0.3)
+
+# ------------------------------------------
+# 左上：还原后的 2D 物理空间云图 (Density)
+# ------------------------------------------
 ax1 = fig.add_subplot(gs[0, 0])
-grid_rho = df.pivot(index='y_round', columns='x_round', values='rho')
-X, Y = np.meshgrid(grid_rho.columns, grid_rho.index)
-c1 = ax1.contourf(X, Y, grid_rho.values, levels=50, cmap='viridis')
-fig.colorbar(c1, ax=ax1, label='Density')
-ax1.set_title("2D Density Contour")
-ax1.set_xlabel("x")
-ax1.set_ylabel("y")
+# 使用 tripcolor 处理非规则网格
+tp1 = ax1.tripcolor(x_phys, y_phys, df['rho'], cmap='viridis', shading='gouraud')
+fig.colorbar(tp1, ax=ax1, label='Density')
+ax1.set_aspect('equal')
+ax1.set_title("Physical Space: Cartesian Reconstruction (Density)")
+ax1.set_xlabel("Physical X")
+ax1.set_ylabel("Physical Y")
 
+# ------------------------------------------
+# 右上：还原后的 2D 速度矢量图 (Radial Velocity)
+# ------------------------------------------
 ax2 = fig.add_subplot(gs[0, 1])
-if 'v' in df.columns:
-    grid_v = df.pivot(index='y_round', columns='x_round', values='v')
-    v_max = max(abs(grid_v.values.max()), abs(grid_v.values.min()), 1e-10) 
-    c2 = ax2.contourf(X, Y, grid_v.values, levels=50, cmap='RdBu_r', vmin=-v_max, vmax=v_max)
-    fig.colorbar(c2, ax=ax2, label='V-Velocity')
-    ax2.set_title(f"2D V-Velocity (Max: {grid_v.values.max():.2e})")
+# 注意：在球坐标下，u 是径向速度。还原到 2D 后，我们可以看它的强度。
+tp2 = ax2.tripcolor(x_phys, y_phys, df['u'], cmap='magma', shading='gouraud')
+fig.colorbar(tp2, ax=ax2, label='Radial Velocity (Ur)')
+ax2.set_aspect('equal')
+ax2.set_title("Physical Space: Radial Velocity Field")
+ax2.set_xlabel("Physical X")
+ax2.set_ylabel("Physical Y")
 
-ax2.set_xlabel("x")
-ax2.set_ylabel("y")
-
-# ==========================================
-# 独立的数据切片提取阶段 (不要放在画图逻辑里面)
-# ==========================================
-center_y = 0.5
-# 找到与 center_y 最接近的 y_round 值（防止浮点精度对不齐）
-closest_y = df['y_round'].iloc[(df['y_round'] - center_y).abs().argmin()]
-
-# 只筛选出这一条切片上的数据，并按 x 排序
-df_slice = df[df['y_round'] == closest_y].sort_values(by='x')
-
-# ==========================================
-# 下半部分：1D 平滑构图 (单轴、全计算域)
-# ==========================================
-# === 1. 密度 ===
+# ------------------------------------------
+# 下半部分：1D 径向分布 (用来判断物理准确度)
+# ------------------------------------------
+# 密度 1D
 ax3 = fig.add_subplot(gs[1, :])
-# 使用 df_slice 而不是 df_sorted
-ax3.plot(df_slice['x'], df_slice['rho'], 'k-', linewidth=2, label='Density (y=0.5 Slice)')
-ax3.set_title("Sod Shock Tube Result (1D Slice at Center)")
+ax3.plot(df_sorted['r_phys'], df_sorted['rho'], 'k-', linewidth=2, label='Spherical 1D Result')
 ax3.set_ylabel("Density")
+ax3.set_title("Radial Profile (Consistency Check)")
 ax3.grid(True, linestyle='--', alpha=0.6)
-ax3.legend(loc='upper right')
 
-# === 2. 压力 ===
-# 共享 X 轴，使得拖动或缩放时能对齐
+# 压力 1D
 ax4 = fig.add_subplot(gs[2, :], sharex=ax3)
-if 'p' in df.columns:
-    ax4.plot(df_slice['x'], df_slice['p'], 'r-', linewidth=2, label='Pressure (y=0.5 Slice)')
+ax4.plot(df_sorted['r_phys'], df_sorted['p'], 'r-', linewidth=2, label='Spherical 1D Result')
 ax4.set_ylabel("Pressure")
+ax4.set_xlabel("Radius (r)")
 ax4.grid(True, linestyle='--', alpha=0.6)
-ax4.legend(loc='upper right')
 
-# === 3. 组分分布 ===
-ax5 = fig.add_subplot(gs[3, :], sharex=ax3)
-colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:purple']
-for i, col in enumerate(species_cols):
-    color = colors[i % len(colors)]
-    ax5.plot(df_slice['x'], df_slice[col], '-', linewidth=2, color=color, label=col, alpha=0.9)
-
-ax5.set_title("Species Distribution (Contact Discontinuity)")
-ax5.set_ylabel("Mass Fraction")
-ax5.set_xlabel("Position (x)")
-ax5.set_ylim(-0.05, 1.05)
-ax5.grid(True, linestyle='--', alpha=0.6)
-ax5.legend(loc='center right')
-
-# --- 隐藏中间图表的 X 轴标签，使得堆叠更紧凑 ---
-plt.setp(ax3.get_xticklabels(), visible=False)
-plt.setp(ax4.get_xticklabels(), visible=False)
-
-# --- 4. 保存与展示 ---
+# --- 保存与展示 ---
 plt.tight_layout()
-out_name = "sod_HLLC_circle.png"
-plt.savefig(out_name, dpi=300)
-print(f"Saved: {out_name}")
+plt.savefig("spherical_to_cartesian_check.png", dpi=300)
+print("Saved: spherical_to_cartesian_check.png")
 plt.show()

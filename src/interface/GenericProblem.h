@@ -72,13 +72,13 @@ public:
         // System handles the loop iteration and parallelization (OpenMP).
         // The user only needs to worry about the physics at a single point (x).
 
-        #pragma omp parallel
+#pragma omp parallel
         {
             // Per-thread buffer: allocated once per thread, reused across iterations
             PrimitiveData data{};
             data.mass_fractions.resize(n_species, 0.0);
 
-            #pragma omp for schedule(static)
+#pragma omp for schedule(static)
             for (int idx = 0; idx < total_size; ++idx)
             {
                 int k = idx / stride_z;
@@ -86,14 +86,16 @@ public:
                 int j = rem / stride_y;
                 int i = rem % stride_y;
 
-                double x = grid.GetCellCenterX(i);
-                double y = grid.GetCellCenterY(j);
-                double z = grid.GetCellCenterZ(k);
+                PointCoords p = grid.GetPhysicalCoords(i, j, k);
 
-                data.rho = 0.0; data.u = 0.0; data.v = 0.0; data.w = 0.0; data.p = 0.0;
+                data.rho = 0.0;
+                data.u = 0.0;
+                data.v = 0.0;
+                data.w = 0.0;
+                data.p = 0.0;
                 std::fill(data.mass_fractions.begin(), data.mass_fractions.end(), 0.0);
 
-                user_init(x, y, z, data);
+                user_init(p, data);
 
                 state.rho[idx] = data.rho;
                 state.mom_x[idx] = data.rho * data.u;

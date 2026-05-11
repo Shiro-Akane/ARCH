@@ -54,4 +54,4 @@ using SetupFunc = void (*)(SimConfig &, SpeciesManager &);
  * * Defines the spatial distribution of primitive variables at t=0.
  * * Mapping: \f$ (x, y, z) \to (\rho, \vec{v}, P, X_i) \f$.
  */
-using InitFunc = void (*)(double x, double y, double z, PrimitiveData &);
+using InitFunc = void (*)(const PointCoords &p, PrimitiveData &);

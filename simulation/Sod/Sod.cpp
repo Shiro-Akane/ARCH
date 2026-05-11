@@ -6,17 +6,20 @@
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
 #include <cmath>
+#include <iostream>
 
 namespace
 {
     // ========================================================================
     // Geometry & Shape Control
-    // shape_type: 0 = Planar (1D Shock), 1 = Corner (2D Quadrant), 2 = Circle
+    // shape_type: 0 = Planar (1D Shock), 1 = Corner (2D Quadrant),
+    //             2 = Cartesian Circle, 3 = True Cylindrical/Radial Explosion
     // ========================================================================
     int g_shape_type;
-    int g_shock_dir;   // Used only if shape_type == 0
-    double g_x0, g_y0; // Center or corner coordinates
-    double g_radius;   // Used only if shape_type == 2
+    int g_shock_dir;
+    double g_x0, g_y0;
+    double g_radius;
+    double g_angle_min, g_angle_max; // 新增：用于扇形/柱坐标角度控制
 
     // Left/Inner State (High Pressure)
     double g_rho_L, g_p_L, g_u_L, g_v_L;
@@ -30,20 +33,22 @@ namespace
 void Sod_Setup(SimConfig &config, SpeciesManager &specs)
 {
     // [1. Read Geometry Configuration]
-    g_shape_type = config.Get<int>("shape_type", 0); // Default to 1D Planar
+    g_shape_type = config.Get<int>("shape_type", 0);
     g_shock_dir = config.Get<int>("shock_dir", 0);
     g_x0 = config.Get<double>("x_pos", 0.5);
     g_y0 = config.Get<double>("y_pos", 0.5);
     g_radius = config.Get<double>("radius", 0.2);
 
-    // [2. Read Thermodynamics & Kinematics]
-    // 默认高压区
+    // 新增：允许用户在 .par 中输入扇形爆炸的角度范围 (默认 0 到 2*pi)
+    g_angle_min = config.Get<double>("angle_min", 0.0);
+    g_angle_max = config.Get<double>("angle_max", 6.2831853);
+
+    // [2. Read Thermodynamics & Kinematics] (被找回来的代码)
     g_rho_L = config.Get<double>("rho_left", 1.0);
     g_p_L = config.Get<double>("p_left", 1.0);
     g_u_L = config.Get<double>("u_left", 0.0);
     g_v_L = config.Get<double>("v_left", 0.0); // 增加 Y 方向初速度扩展性
 
-    // 默认低压区
     g_rho_R = config.Get<double>("rho_right", 0.125);
     g_p_R = config.Get<double>("p_right", 0.1);
     g_u_R = config.Get<double>("u_right", 0.0);
@@ -65,31 +70,44 @@ void Sod_Setup(SimConfig &config, SpeciesManager &specs)
     std::cout << "[Problem] Setup complete. Type: ";
     if (g_shape_type == 0)
         std::cout << "1D Planar (Dir " << g_shock_dir << ", pos=" << g_x0 << ")\n";
-    if (g_shape_type == 1)
+    else if (g_shape_type == 1)
         std::cout << "2D Corner (x<" << g_x0 << " & y<" << g_y0 << ")\n";
-    if (g_shape_type == 2)
-        std::cout << "2D Circular (r<" << g_radius << " at " << g_x0 << "," << g_y0 << ")\n";
+    else if (g_shape_type == 2)
+        std::cout << "2D Circular (shifted to " << g_x0 << "," << g_y0 << ")\n";
+    else if (g_shape_type == 3)
+        std::cout << "Cylindrical Sector (r_cy < " << g_radius << ", angle in [" << g_angle_min << "," << g_angle_max << "])\n";
 }
 
-void Sod_Init(double x, double y, double z, PrimitiveData &out)
+// [核心修改点] 接收 PointCoords 字典
+void Sod_Init(const PointCoords &p, PrimitiveData &out)
 {
     // Determine which state this geometric coordinate belongs to
     bool is_high_pressure = false;
 
     if (g_shape_type == 0) // 1D Planar
     {
-        double coord = (g_shock_dir == 0) ? x : ((g_shock_dir == 1) ? y : z);
+        // 依然可以使用笛卡尔坐标系的 x, y, z
+        double coord = (g_shock_dir == 0) ? p.x : ((g_shock_dir == 1) ? p.y : p.z);
         is_high_pressure = (coord < g_x0);
     }
     else if (g_shape_type == 1) // 2D Corner (Quadrant)
     {
-        // 只有当 x 和 y 都小于设定阈值时，才处于角落高压区
-        is_high_pressure = (x <= g_x0 && y <= g_y0);
+        is_high_pressure = (p.x <= g_x0 && p.y <= g_y0);
     }
-    else if (g_shape_type == 2) // 2D Circular Explosion
+    else if (g_shape_type == 2) // 2D Shifted Circle (笛卡尔位移圆)
     {
-        double r2 = (x - g_x0) * (x - g_x0) + (y - g_y0) * (y - g_y0);
-        is_high_pressure = (r2 <= g_radius * g_radius); // 避免使用 std::sqrt 提升性能
+        double dx = p.x - g_x0;
+        double dy = p.y - g_y0;
+        is_high_pressure = (dx * dx + dy * dy <= g_radius * g_radius);
+    }
+    else if (g_shape_type == 3) // [新增] 原点柱坐标爆炸 / 扇形激波管
+    {
+        // 直接爽快地调用字典中的柱坐标分量 r_cy 和 phi_cy！
+        // 无需再做 sqrt 或 atan2 运算，因为底层的 GetPhysicalCoords 已经全算好了
+        if (p.r_cy <= g_radius && p.phi_cy >= g_angle_min && p.phi_cy <= g_angle_max)
+        {
+            is_high_pressure = true;
+        }
     }
 
     // Apply the chosen state
