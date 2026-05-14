@@ -1,5 +1,5 @@
 /**
- * @file DeriverUtils.h
+ * @file DriverUtils.h
  * @brief Utility functions for boundary enforcement and time-step control.
  * * Provides essential support for the main driver loop, specifically:
  * * 1. Populating ghost cells to enforce boundary conditions (e.g., Outflow).
@@ -64,7 +64,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
     const int nk = ke - ks;
     const int nj = je - js;
 
-    #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
     for (int kj = 0; kj < nk * nj; ++kj)
     {
         int k = ks + kj / nj;
@@ -107,7 +107,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
         const int total_x = grid.nx + 2 * ng;
         const int nk2 = ke - ks;
 
-        #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
         for (int ki = 0; ki < nk2 * total_x; ++ki)
         {
             int k = ks + ki / total_x;
@@ -148,7 +148,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
     // =========================================================
     if (grid.dim == 3)
     {
-        #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
         for (int j = 0; j < grid.ny + 2 * ng; ++j)
         { // Full Y
             for (int i = 0; i < grid.nx + 2 * ng; ++i)
@@ -200,12 +200,12 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
     const int nk = ke - ks;
     const int nj = je - js;
 
-    #pragma omp parallel
+#pragma omp parallel
     {
         std::vector<double> Yi_cache(n_species);
         double local_min_dt = 1e10;
 
-        #pragma omp for schedule(static)
+#pragma omp for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
         {
             int k = ks + kj / nj;
@@ -238,7 +238,7 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
             }
         }
 
-        #pragma omp critical
+#pragma omp critical
         {
             min_dt = std::min(min_dt, local_min_dt);
         }

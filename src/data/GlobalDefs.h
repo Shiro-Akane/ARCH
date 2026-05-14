@@ -100,15 +100,32 @@ struct OutputVariables
 
 struct IOConfig
 {
-    double tmax;         ///< Simulation end time
-    double plt_interval; ///< Output interval
+    double tmax = 0.0;  ///< Simulation end time
+    int max_steps = -1; ///< Maximum number of steps (-1 for no limit)
+
+    // --- Plot Files Controls ---
+    double plt_dt = -1.0; ///< Output interval (-1.0 for no output)
+    int plt_dstep = -1;   ///< Output every N steps (-1 for no output)
+
+    // --- Output File Controls ---
+    double chk_dt = -1.0; ///< Checkpoint interval (-1.0 for no checkpoints)
+    int chk_dstep = -1;   ///< Checkpoint every N steps (-1 for no checkpoints)
+
     std::string out_dir = "output";
-    std::string base_name = "plt";
+    std::string base_name = "arch";
 
     bool restart = false; ///< Is this a restart run?
     std::string restart_file = "";
 
     OutputVariables vars;
+};
+
+struct RunState
+{
+    double time = 0.0; ///< Current physical time
+    int step = 0;      ///< Current iteration step count
+    int plt_idx = 0;   ///< Current plot file index
+    int chk_idx = 0;   ///< Current checkpoint file index
 };
 
 // ----------------------------------------------------------------------

@@ -63,6 +63,19 @@ if(HDF5_FOUND)
     message(STATUS "HDF5 C++ libraries linked successfully")
 endif()
 
+include(FetchContent)
+FetchContent_Declare(
+    highfive
+    GIT_REPOSITORY https://github.com/BlueBrain/HighFive.git
+    GIT_TAG v2.9.0
+)
+#  拉取 HighFive
+FetchContent_Populate(highfive)
+
+# 将 HighFive 的 include 目录添加到 ARCH 的包含路径中
+target_include_directories(ARCH PRIVATE ${highfive_SOURCE_DIR}/include)
+message(STATUS "HighFive headers configured via FetchContent")
+
 # ==============================================================================
 # Runtime Environment Setup & Final Status
 # ==============================================================================

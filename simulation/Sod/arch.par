@@ -44,10 +44,20 @@ EntropyFixCoefficient = 0.1 # share same control logic for SW smoothing coeff.
 # [Time & IO]
 # Maps to config.io.*
 # ------------------------------------------------------------------------------
-tmax         = 0.2
-plt_interval = 0.05
+tmax         = 0.6
+max_steps    = 10000        # Maximum number of iterations (-1 for infinite)
+restart      = true         # Options: false, true
+restart_file  = output/SodTube_chk_0005.h5
+
 out_dir      = output
-plt_variables = all
+base_name    = SodTube      # Base name for output files (e.g., SodTube_HLLC_plt_0001.h5)
+
+plt_dt       = 0.10         # Output PLT based on physical time interval (-1.0 to disable)
+plt_dstep    = 100          # Output PLT based on iteration steps (-1 to disable)
+plt_variables= all          # Options: all, conserved, or specific e.g., "rho,p,u,species"
+
+chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 to disable)
+chk_dstep    = -1           # Output CHK based on iteration steps (-1 to disable)
 
 # ------------------------------------------------------------------------------
 # [Physics Core]

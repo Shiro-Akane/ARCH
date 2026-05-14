@@ -9,6 +9,8 @@
 
 #include <cmath>
 #include <stdexcept>
+#include <vector>
+#include <string>
 
 #include "../data/GlobalDefs.h"
 
@@ -156,6 +158,36 @@ private:
     }
 
 public:
+    /**
+     * @brief 为 HDF5/XDMF 后处理提供当前网格的物理坐标轴名称
+     */
+    std::vector<std::string> GetAxisNames() const
+    {
+        if (geometry == "spherical")
+        {
+            if (dim == 1)
+                return {"r"};
+            if (dim == 2)
+                return {"r", "phi"}; // 根据你的逻辑，2D退化为极坐标面
+            return {"r", "theta", "phi"};
+        }
+        else if (geometry == "cylindrical")
+        {
+            if (dim == 1)
+                return {"r_cy"};
+            if (dim == 2)
+                return {"r_cy", "phi_cy"}; // 根据你的逻辑，2D退化为极坐标面
+            return {"r_cy", "z_cy", "phi_cy"};
+        }
+
+        // 默认 Cartesian 坐标系
+        if (dim == 1)
+            return {"x"};
+        if (dim == 2)
+            return {"x", "y"};
+        return {"x", "y", "z"};
+    }
+
     /**
      * @brief  获取指定网格单元的全息物理坐标 {x,y,z,r,theta,phi}
      * 无论底层网格是笛卡尔还是球坐标，该函数均提供一致的物理映射。

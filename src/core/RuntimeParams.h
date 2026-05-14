@@ -147,15 +147,50 @@ public:
 
         // 4. 搬运IO参数 (IO)
         cfg.io.tmax = parser.GetDouble("tmax", 0.1);
-        cfg.io.plt_interval = parser.GetDouble("plt_interval", 0.01);
+        cfg.io.max_steps = parser.GetInt("max_steps", -1);
+
         cfg.io.out_dir = parser.GetString("out_dir", "data");
+        cfg.io.base_name = parser.GetString("base_name", "arch");
+
+        cfg.io.plt_dt = parser.GetDouble("plt_dt", -1.0);
+        cfg.io.plt_dstep = parser.GetInt("plt_dstep", -1);
+
+        cfg.io.chk_dt = parser.GetDouble("chk_dt", -1.0);
+        cfg.io.chk_dstep = parser.GetInt("chk_dstep", -1);
+
+        std::string restart_str = parser.GetString("restart", "false");
+        std::transform(restart_str.begin(), restart_str.end(), restart_str.begin(), ::tolower);
+
+        cfg.io.restart = (restart_str.find("true") != std::string::npos ||
+                          restart_str.find("1") != std::string::npos ||
+                          restart_str.find("yes") != std::string::npos ||
+                          restart_str.find("on") != std::string::npos);
+
+        std::string r_file = parser.GetString("restart_file", "");
+        r_file.erase(0, r_file.find_first_not_of(" \t\r\n"));
+        r_file.erase(r_file.find_last_not_of(" \t\r\n") + 1);
+        cfg.io.restart_file = r_file;
+
+        if (cfg.io.restart)
+        {
+            std::cout << "[RuntimeParams] Restart Enabled. Target file: '"
+                      << cfg.io.restart_file << "'" << std::endl;
+        }
 
         std::string plt_vars = parser.GetString("plt_variables", "all");
 
-        if (plt_vars == "all")
+        std::string plt_vars_lower = plt_vars;
+
+        if (plt_vars_lower == "all" || plt_vars_lower == "conserved")
         {
             // 如果是 all，全部开启
-            cfg.io.vars = {true, true, true, true, true};
+            cfg.io.vars = {true, true, true, true, true, true, true};
+
+            // 如果是 conserved，开启 rho, u, p, eng，关闭 v, w
+            if (plt_vars_lower == "conserved")
+            {
+                cfg.io.vars.p = false;
+            }
         }
         else
         {
