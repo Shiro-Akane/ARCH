@@ -26,11 +26,12 @@ struct SolverRK2
     /**
      * @brief Performs one full RK2 time step.
      */
-    template <typename EosType, typename BCPolicy>
+    template <typename EosType, typename BCPolicy, typename GravityPolicy>
     static void solve(const FluidState &state_n, FluidState &state_np1,
                       FluidState &state_star, // Intermediate buffer provided by driver
                       const EosType &eos, const Grid &grid, double dt,
                       BCPolicy &boundary_condition,
+                      GravityPolicy &gravity,
                       double entropy_fix_coeff = 0.1) // Need BCs for intermediate step
     {
         int total_size = grid.GetTotalSize();
@@ -46,7 +47,7 @@ struct SolverRK2
         // U* = U^n + dt * L(U^n)
         // =========================================================
         TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(
-            state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, entropy_fix_coeff);
+            state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, entropy_fix_coeff);
 
         TimeIntegration::perform_stage_update(
             state_n, state_n, state_star, dU, d_spec, grid, 0.0, 1.0);
@@ -59,7 +60,7 @@ struct SolverRK2
         // U^{n+1} = 0.5 * U^n + 0.5 * (U* + dt * L(U*))
         // =========================================================
         TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(
-            state_star, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, entropy_fix_coeff);
+            state_star, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, entropy_fix_coeff);
 
         TimeIntegration::perform_stage_update(
             state_n, state_star, state_np1, dU, d_spec, grid, 0.5, 0.5);

@@ -144,6 +144,20 @@ public:
         cfg.physics.eos_type = parser.GetString("eos", "ideal");
         cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
         cfg.physics.use_burn = (parser.GetInt("use_burn", 0) != 0);
+        std::string grav_type = parser.GetString("gravity_type", "none");
+        std::transform(grav_type.begin(), grav_type.end(), grav_type.begin(), ::tolower);
+        cfg.physics.gravity.type = grav_type;
+
+        if (grav_type == "external")
+        {
+            cfg.physics.gravity.g_x = ParseMathExpr(parser.GetString("gravity_g_x", "0.0"));
+            cfg.physics.gravity.g_y = ParseMathExpr(parser.GetString("gravity_g_y", "0.0"));
+            cfg.physics.gravity.g_z = ParseMathExpr(parser.GetString("gravity_g_z", "0.0"));
+        }
+        else if (grav_type == "self")
+        {
+            cfg.physics.gravity.G_const = ParseMathExpr(parser.GetString("gravity_G", "6.6743e-8"));
+        }
 
         // 4. 搬运IO参数 (IO)
         cfg.io.tmax = parser.GetDouble("tmax", 0.1);

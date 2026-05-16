@@ -68,6 +68,21 @@ struct NumericsConfig
 // ----------------------------------------------------------------------
 // 3. Physics Configuration (EOS, Burn, Gravity)
 // ----------------------------------------------------------------------
+// Gravity Configuration
+struct GravityConfig
+{
+    std::string type = "none"; // "none", "external", "self"
+
+    // External Gravity Components (Logical Dimensions)
+    // - Cartesian:   g_x = X-gravity, g_y = Y-gravity
+    // - Cylindrical: g_x = Radial (r), g_y = Axial (z)
+    // - Spherical:   g_x = Radial (r), g_y = Polar (theta)
+    double g_x = 0.0;
+    double g_y = 0.0;
+    double g_z = 0.0;
+    double G_const = 6.6743e-8; // for self-gravity, in cgs units (cm^3 g^-1 s^-2)
+};
+
 struct PhysicsConfig
 {
     // Equation of State
@@ -80,7 +95,7 @@ struct PhysicsConfig
     std::string network_name = ""; ///< "alpha_chain", "c12_o16", "7isotope"
 
     // Gravity (Placeholder)
-    bool use_gravity = false;
+    GravityConfig gravity;
 };
 
 // ----------------------------------------------------------------------

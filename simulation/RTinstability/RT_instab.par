@@ -1,0 +1,79 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Rayleigh-Taylor Instability (2D/3D Benchmark)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# Standard domain: 0.25 x 1.0 (for 2D)
+# ------------------------------------------------------------------------------
+nx       = 256
+ny       = 1024
+nz       = 1       # Change to 64 for full 3D simulation
+
+x_min    = 0.0
+x_max    = 0.25
+y_min    = 0.0
+y_max    = 1.0
+z_min    = 0.0
+z_max    = 0.25    # Only effectively used if nz > 1
+
+geometry = cartesian 
+
+# Standard RT boundary conditions: 
+# Reflecting (solid walls) on top/bottom, Reflecting/Periodic on sides.
+xr_boundary_type = reflect
+xl_boundary_type = reflect
+yr_boundary_type = reflect
+yl_boundary_type = reflect
+zr_boundary_type = reflect
+zl_boundary_type = reflect
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# ------------------------------------------------------------------------------
+solver          = HLLC       # Options: SW, VL, Roe, HLL, HLLC
+reconstruct     = ppm        # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
+time_integrator = RK3        # Options: RK2, RK3, Euler/RK1
+limiter         = none       # Options: minmod, superbee, vanleer, mc, none
+cfl             = 0.4        # Keep lower (<0.5) for multi-D instability tracking
+
+EntropyFix = On
+EntropyFixCoefficient = 0.1
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# Typical RT timescale sees full mushroom development around t = 8.5
+# ------------------------------------------------------------------------------
+tmax         = 8.5
+max_steps    = -1        
+restart      = true
+restart_file = output/RT_instab_chk_0007.h5     
+
+out_dir      = output
+base_name    = RT_instab 
+
+plt_dt       = 0.5      # Frequent output to render animations
+plt_dstep    = -1        
+plt_variables= all       # Ensures we output the "species" variable to see mixing
+
+chk_dt       = 1.0      
+chk_dstep    = -1        
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# ------------------------------------------------------------------------------
+eos   = ideal
+gamma = 1.4    
+
+gravity_type = external  
+gravity_g_y  = -0.1      # Standard RT dimensionless gravity
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters (Read by RT_instab.cpp)]
+# ------------------------------------------------------------------------------
+rho_heavy = 2.0
+rho_light = 1.0
+y_int     = 0.5
+p_int     = 2.5
+amplitude = 0.025        # Perturbation velocity amplitude

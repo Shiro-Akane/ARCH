@@ -33,7 +33,7 @@ namespace TimeIntegration
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
 
-        #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
         {
             int k = ks + kj / nj;
@@ -53,13 +53,13 @@ namespace TimeIntegration
                     {
                         area_l = r_l * r_l;
                         area_r = r_r * r_r;
-                        vol    = r_c * r_c * dx;
+                        vol = r_c * r_c * dx;
                     }
                     else // cylindrical
                     {
                         area_l = r_l;
                         area_r = r_r;
-                        vol    = r_c * dx;
+                        vol = r_c * dx;
                     }
                     double dt_over_vol = dt / vol;
 
@@ -97,7 +97,8 @@ namespace TimeIntegration
         const Grid &grid,
         double dt)
     {
-        if (grid.geometry == "cartesian") return;
+        if (grid.geometry == "cartesian")
+            return;
 
         const double geom_coeff = (grid.geometry == "spherical") ? 2.0 : 1.0;
         int n_spec = state.GetNumSpecies();
@@ -106,10 +107,10 @@ namespace TimeIntegration
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
 
-        #pragma omp parallel
+#pragma omp parallel
         {
             std::vector<double> Yi(n_spec);
-            #pragma omp for schedule(static)
+#pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
                 int k = ks + kj / nj;
@@ -118,7 +119,8 @@ namespace TimeIntegration
                 {
                     int idx = grid.GetIndex(i, j, k);
                     double r = grid.GetCellCenterX(i);
-                    if (r < 1e-14) continue;
+                    if (r < 1e-14)
+                        continue;
 
                     state.get_species_to_buffer(idx, Yi.data());
                     double p = eos.get_pressure(state.get(idx), Yi.data());
@@ -128,6 +130,50 @@ namespace TimeIntegration
         }
     }
 
+    // ---------------------------------------------------------
+    // Helper: Physical Source Terms (Gravity)
+    // ---------------------------------------------------------
+    template <typename GravityPolicy>
+    inline void add_gravity_sources(
+        std::vector<FluidVector> &dU,
+        const FluidState &state,
+        const Grid &grid,
+        double dt,
+        GravityPolicy &gravity)
+    {
+        gravity.update_field(state, grid);
+
+        const int ks = grid.Ks(), ke = grid.Ke();
+        const int js = grid.Js(), je = grid.Je();
+        const int nk = ke - ks, nj = je - js;
+
+#pragma omp parallel for schedule(static)
+        for (int kj = 0; kj < nk * nj; ++kj)
+        {
+            int k = ks + kj / nj;
+            int j = js + kj % nj;
+            for (int i = grid.Is(); i < grid.Ie(); ++i)
+            {
+                int idx = grid.GetIndex(i, j, k);
+                double rho = state.rho[idx];
+
+                if (rho < 1e-12)
+                    continue;
+
+                double vx = state.mom_x[idx] / rho;
+                double vy = state.mom_y[idx] / rho;
+                double vz = state.mom_z[idx] / rho;
+
+                double gx = 0.0, gy = 0.0, gz = 0.0;
+                gravity.get_gravity(i, j, k, gx, gy, gz);
+
+                dU[idx].mom_x += dt * rho * gx;
+                dU[idx].mom_y += dt * rho * gy;
+                dU[idx].mom_z += dt * rho * gz;
+                dU[idx].eng += dt * rho * (vx * gx + vy * gy + vz * gz);
+            }
+        }
+    }
     // ---------------------------------------------------------
     // Helper 2: Generalized Weighted RK Update
     // ---------------------------------------------------------
@@ -146,7 +192,7 @@ namespace TimeIntegration
         const int nk = ke - ks;
         const int nj = je - js;
 
-        #pragma omp parallel for schedule(static)
+#pragma omp parallel for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
         {
             int k = ks + kj / nj;
@@ -156,56 +202,57 @@ namespace TimeIntegration
                 int idx = grid.GetIndex(i, j, k);
 
                 FluidVector U_old = u_n.get(idx);
-                    FluidVector U_curr = u_current.get(idx);
-                    FluidVector U_new = weight_n * U_old + weight_flux * (U_curr + dU[idx]);
+                FluidVector U_curr = u_current.get(idx);
+                FluidVector U_new = weight_n * U_old + weight_flux * (U_curr + dU[idx]);
 
-                    if (U_new.rho < 1e-12)
-                    {
-                        U_new.rho = 1e-12;
-                        U_new.mom_x = 0.0;
-                        U_new.mom_y = 0.0;
-                        U_new.mom_z = 0.0;
-                    }
+                if (U_new.rho < 1e-12)
+                {
+                    U_new.rho = 1e-12;
+                    U_new.mom_x = 0.0;
+                    U_new.mom_y = 0.0;
+                    U_new.mom_z = 0.0;
+                }
 
-                    u_dest.set(idx, U_new);
+                u_dest.set(idx, U_new);
 
-                    double rho_new = std::max(U_new.rho, 1e-13);
-                    double sum_Y = 0.0;
+                double rho_new = std::max(U_new.rho, 1e-13);
+                double sum_Y = 0.0;
+                for (int s = 0; s < n_spec; ++s)
+                {
+                    int off = s * total_size;
+                    double rhoY_old = u_n.rho[idx] * u_n.Y(s, idx);
+                    double rhoY_curr = u_current.rho[idx] * u_current.Y(s, idx);
+                    double rhoY_comb = weight_n * rhoY_old + weight_flux * (rhoY_curr + d_spec[off + idx]);
+
+                    double Y_k = std::max(0.0, rhoY_comb / rho_new);
+                    u_dest.Y(s, idx) = Y_k;
+                    sum_Y += Y_k;
+                }
+
+                if (sum_Y > 1e-13)
+                {
+                    double inv_sum = 1.0 / sum_Y;
                     for (int s = 0; s < n_spec; ++s)
-                    {
-                        int off = s * total_size;
-                        double rhoY_old = u_n.rho[idx] * u_n.Y(s, idx);
-                        double rhoY_curr = u_current.rho[idx] * u_current.Y(s, idx);
-                        double rhoY_comb = weight_n * rhoY_old + weight_flux * (rhoY_curr + d_spec[off + idx]);
-
-                        double Y_k = std::max(0.0, rhoY_comb / rho_new);
-                        u_dest.Y(s, idx) = Y_k;
-                        sum_Y += Y_k;
-                    }
-
-                    if (sum_Y > 1e-13)
-                    {
-                        double inv_sum = 1.0 / sum_Y;
-                        for (int s = 0; s < n_spec; ++s)
-                            u_dest.Y(s, idx) *= inv_sum;
-                    }
-                    else
-                    {
-                        u_dest.Y(0, idx) = 1.0;
-                    }
+                        u_dest.Y(s, idx) *= inv_sum;
+                }
+                else
+                {
+                    u_dest.Y(0, idx) = 1.0;
                 }
             }
+        }
     }
 
     // ---------------------------------------------------------
     // Helper 3: Evaluate Fluxes for all Dimensions
     // Note: Template requires FluxSchemePolicy to call compute_fluxes
     // ---------------------------------------------------------
-    template <typename FluxSchemePolicy, typename EosType>
+    template <typename FluxSchemePolicy, typename EosType, typename GravityPolicy>
     inline void evaluate_all_dimensions(
         const FluidState &state, const EosType &eos, const Grid &grid, double dt,
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         std::vector<FluidVector> &flux_buffer, std::vector<double> &spec_flux_buffer,
+        GravityPolicy &gravity,
         double entropy_fix_coeff)
     {
         int n_spec = state.GetNumSpecies();
@@ -221,5 +268,6 @@ namespace TimeIntegration
         }
 
         add_geometric_sources(dU, state, eos, grid, dt);
+        add_gravity_sources(dU, state, grid, dt, gravity);
     }
 } // namespace TimeIntegration

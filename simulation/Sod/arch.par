@@ -44,9 +44,9 @@ EntropyFixCoefficient = 0.1 # share same control logic for SW smoothing coeff.
 # [Time & IO]
 # Maps to config.io.*
 # ------------------------------------------------------------------------------
-tmax         = 0.6
+tmax         = 0.3
 max_steps    = 10000        # Maximum number of iterations (-1 for infinite)
-restart      = true         # Options: false, true
+restart      = false         # Options: false, true
 restart_file  = output/SodTube_chk_0005.h5
 
 out_dir      = output
@@ -65,6 +65,9 @@ chk_dstep    = -1           # Output CHK based on iteration steps (-1 to disable
 # ------------------------------------------------------------------------------
 eos   = ideal
 gamma = 1.4    # Default global gamma (will be overridden by species)
+
+gravity_type = external     #Options: none, enternal, self
+gravity_g_y  = -981
 
 # ------------------------------------------------------------------------------
 # [User Custom Parameters]

@@ -35,9 +35,11 @@ struct BCHandler
  * @brief Executes the main simulation loop.
  * @tparam SolverPolicy The numerical scheme (e.g., Lax-Friedrichs, HLLC).
  * @tparam EosPolicy The equation of state (e.g., Ideal Gas).
+ * @tparam GravityPolicy The gravity policy.
  */
-template <typename TimeIntegratorPolicy, typename EosPolicy>
+template <typename TimeIntegratorPolicy, typename EosPolicy, typename GravityPolicy>
 void run_simulation(FluidState &state, const EosPolicy &eos,
+                    GravityPolicy &gravity,
                     const Grid &grid, const SimConfig &config,
                     const SpeciesManager &specs,
                     const RunState &start_state)
@@ -198,7 +200,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         bc_handler.apply(u_current, grid);
 
         // 2. Evolve System: U(n+1) = U(n) + dt * Flux(U(n))
-        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, entropy_fix_coeff);
+        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, gravity, entropy_fix_coeff);
 
         // 3. Ping-Pong Buffering (Swap pointers/references)
         std::swap(u_current, u_next);
