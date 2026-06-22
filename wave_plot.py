@@ -9,7 +9,7 @@ import os
 # ==============================================================================
 # 1. 配置与文件寻找
 # ==============================================================================
-FILE_PATTERN = "output/*_plt_*.h5"  
+FILE_PATTERN = "output/*SodTube_HLLC_plt_*.h5"  
 # FILE_PATTERN = "output/*_chk_*.h5" 
 
 files = sorted(glob.glob(FILE_PATTERN))
@@ -166,7 +166,7 @@ if (dim >= 2 or (dim == 3)) and x_phys is not None and y_phys is not None:
         ax4.legend(loc="upper right")
 
 # --- 保存与展示 ---
-output_png = "arch_visualize.png"
+output_png = "table_check.png"
 plt.tight_layout()
 plt.savefig(output_png, dpi=300)
 print(f"Saved: {output_png}")

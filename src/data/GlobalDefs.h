@@ -87,8 +87,9 @@ struct PhysicsConfig
 {
     // Equation of State
     // Future-proof: Factory switches based on this string.
-    std::string eos_type = "ideal"; ///< "ideal", "stiffened", "helmholtz"
-    double gamma = 1.4;             ///< Default adiabatic index
+    std::string eos_type = "ideal";  ///< "ideal", “tabular”, "stiffened_gas", etc.
+    std::string eos_table_path = ""; ///< For tabular EOS, the path to the HDF5 file
+    double gamma = 1.4;              ///< Default adiabatic index
 
     // Nuclear Burning (Placeholder)
     bool use_burn = false;         ///< Master switch for the burn module

@@ -63,7 +63,8 @@ chk_dstep    = -1
 # ------------------------------------------------------------------------------
 # [Physics Core]
 # ------------------------------------------------------------------------------
-eos   = ideal
+eos_type   = ideal # Options: ideal, tabular
+eos_table_path = ""
 gamma = 1.4    
 
 gravity_type = external  

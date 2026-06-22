@@ -141,7 +141,8 @@ public:
         }
 
         // 3. 搬运物理参数 (Physics)
-        cfg.physics.eos_type = parser.GetString("eos", "ideal");
+        cfg.physics.eos_type = parser.GetString("eos_type", "ideal");
+        cfg.physics.eos_table_path = parser.GetString("eos_table_path", "");
         cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
         cfg.physics.use_burn = (parser.GetInt("use_burn", 0) != 0);
         std::string grav_type = parser.GetString("gravity_type", "none");

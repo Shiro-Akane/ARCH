@@ -53,17 +53,18 @@ out_dir      = output
 base_name    = SodTube      # Base name for output files (e.g., SodTube_HLLC_plt_0001.h5)
 
 plt_dt       = 0.10         # Output PLT based on physical time interval (-1.0 to disable)
-plt_dstep    = 100          # Output PLT based on iteration steps (-1 to disable)
+plt_dstep    = -1           # Output PLT based on iteration steps (-1 to disable)
 plt_variables= all          # Options: all, conserved, or specific e.g., "rho,p,u,species"
 
-chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 to disable)
+chk_dt       = 0.10         # Output CHK based on physical time interval (-1.0 to disable)
 chk_dstep    = -1           # Output CHK based on iteration steps (-1 to disable)
 
 # ------------------------------------------------------------------------------
 # [Physics Core]
 # Maps to config.physics.*
 # ------------------------------------------------------------------------------
-eos   = ideal
+eos_type   = tabular                       # Options: ideal, tabular
+eos_table_path =/home/shiroakane/ARCH/src/physics/eos/eos_table/ideal_gas_3d.h5
 gamma = 1.4    # Default global gamma (will be overridden by species)
 
 gravity_type = external     #Options: none, enternal, self

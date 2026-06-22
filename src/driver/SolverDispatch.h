@@ -23,7 +23,7 @@
 #include "../io/IO.h"
 
 // 2. Physics & Solvers
-#include "../physics/eos/IdealGas.h"
+#include "../physics/eos/eosdispatch.h"
 #include "../physics/gravity/GravityDispatch.h"
 
 #include "../numerics/flux/FluxVL.h"
@@ -279,9 +279,12 @@ void DispatchSolver(const std::string &solver_name,
     }
     std::cout << std::endl;
 
-    // 6. 分发到重力模块，最后进入时间积分器和数值格式的选择
-    Physical::Gravity::dispatch_gravity(config, [&](auto &&gravity)
-                                        {
+    // 6. 分发到EOS和重力模块，最后进入时间积分器和数值格式的选择
+    std::cout << "[Dispatch] Resolving Physics Policies..." << std::endl;
+    EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos)
+                                {
+                                    Physical::Gravity::dispatch_gravity(config, [&](auto &&gravity)
+                                                                        {
     std::string time_int = config.Get<std::string>("time_integrator", "SSPRK2");
 
     std::cout << "[Dispatch] Strategy: "
@@ -306,5 +309,6 @@ void DispatchSolver(const std::string &solver_name,
     {
         std::cerr << "[Warning] Unknown time integrator '" << time_int << "', defaulting to SSPRK2." << std::endl;
         select_flux<SolverRK2>(state, eos, gravity, grid, config, specs, run_state);
-    } }); // <--- Lambda end
+    } }); // <--- Gravity Lambda end
+                                });                                           // <--- EOS Lambda end
 }

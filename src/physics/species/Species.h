@@ -11,14 +11,20 @@
 #include <string>
 #include <vector>
 
+#ifndef EOS_INLINE
+#define EOS_INLINE inline
+#endif
+
 /**
  * @brief Simple container for a single species' constant properties.
  */
 struct GasProperty
 {
     std::string name; ///< String identifier (e.g., "H2", "O2") for IO.
-    double gamma;     ///< Specific Heat Ratio (Cp/Cv), also known as Adiabatic Index.
-    double Cv;        ///< Heat capacity (J/kg.K)
+    double A;         ///< Mass number
+    double Z;         ///< Atomic number
+    double gamma_ref; ///< Specific Heat Ratio (Cp/Cv), also known as Adiabatic Index.
+    double Cv_ref;    ///< Heat capacity (J/kg.K)
 };
 
 /**
@@ -37,6 +43,7 @@ struct SpeciesManager
      * @brief Registers a new species into the simulation.
      * @param name Name of the species (for logging/output).
      * @param gamma The heat capacity ratio (Cp/Cv).
+     * @param Cv The heat capacity at constant volume.
      * @return int The unique ID assigned to this species (used for array indexing).
      */
     int add_species(std::string name, double gamma, double Cv)
@@ -46,18 +53,50 @@ struct SpeciesManager
         return species_list.size() - 1;
     }
 
-    /**
-     * @brief Retrieves the Gamma value for a specific species ID.
-     * @param id The species index (0 to N-1).
-     */
-    double get_gamma(int id) const { return species_list[id].gamma; }
-    double get_Cv(int id) const { return species_list[id].Cv; }
-    /**
-     * @brief Returns the total number of registered species.
-     * Used to size data arrays (e.g., FluidState::Y).
-     */
+    EOS_INLINE double get_A(int id) const { return species_list[id].A; }
+    EOS_INLINE double get_Z(int id) const { return species_list[id].Z; }
+    EOS_INLINE double get_gamma_ref(int id) const { return species_list[id].gamma_ref; }
+    EOS_INLINE double get_Cv_ref(int id) const { return species_list[id].Cv_ref; }
     int count() const { return species_list.size(); }
 
+    /**
+     * @brief 计算电子丰度 Ye (Electron Fraction)
+     * Ye = Sum( (Z_i / A_i) * Y_i )
+     */
+    EOS_INLINE double calc_Ye(const double *Yi) const
+    {
+        double Ye = 0.0;
+        int n_spec = count();
+        for (int k = 0; k < n_spec; ++k)
+        {
+            Ye += (get_Z(k) / get_A(k)) * Yi[k];
+        }
+        return Ye;
+    }
+
+    /**
+     * @brief 计算平均原子量 \bar{A}
+     */
+    EOS_INLINE double calc_Abar(const double *Yi) const
+    {
+        double sum_Y_over_A = 0.0;
+        int n_spec = count();
+        for (int k = 0; k < n_spec; ++k)
+        {
+            sum_Y_over_A += Yi[k] / get_A(k);
+        }
+        return (sum_Y_over_A > 1e-16) ? (1.0 / sum_Y_over_A) : 1.0; // 防除零
+    }
+
+    /**
+     * @brief 计算平均原子序数 \bar{Z}
+     */
+    EOS_INLINE double calc_Zbar(const double *Yi) const
+    {
+        double A_bar = calc_Abar(Yi);
+        double Y_e = calc_Ye(Yi);
+        return A_bar * Y_e;
+    }
     /**
      * @brief Retrieves the name string for I/O purposes.
      */
