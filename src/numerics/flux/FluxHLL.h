@@ -30,12 +30,12 @@ struct FluxHLL
         const int nk = grid.Ke() - grid.Ks();
         const int nj = grid.Je() - grid.Js();
 
-        #pragma omp parallel
+#pragma omp parallel
         {
-            std::vector<double> Yi_L(n_spec);
-            std::vector<double> Yi_R(n_spec);
+            std::vector<double> Xi_L(n_spec);
+            std::vector<double> Xi_R(n_spec);
 
-            #pragma omp for schedule(static)
+#pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
                 int k = grid.Ks() + kj / nj;
@@ -46,7 +46,7 @@ struct FluxHLL
                     // 1. Reconstruction
                     auto [U_L, U_R] = ReconstructPolicy::run(state, idx, stride);
                     if (n_spec > 0)
-                        ReconstructPolicy::run_species(state, idx, n_spec, Yi_L.data(), Yi_R.data(), stride);
+                        ReconstructPolicy::run_species(state, idx, n_spec, Xi_L.data(), Xi_R.data(), stride);
 
                     // ======================================================
                     // 2. 准备热力学变量 (Thermodynamics First)
@@ -59,7 +59,7 @@ struct FluxHLL
                     double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L;
                     double e_L = std::max((U_L.eng / rho_L) - 0.5 * v2_L, 1e-8);
                     // Pressure
-                    double P_L = eos.get_pressure(U_L, Yi_L.data());
+                    double P_L = eos.get_pressure(U_L, Xi_L.data());
                     double H_L = (U_L.eng + P_L) / rho_L;
 
                     // Right State
@@ -70,7 +70,7 @@ struct FluxHLL
                     double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
                     double e_R = std::max((U_R.eng / rho_R) - 0.5 * v2_R, 1e-8);
                     // Pressure
-                    double P_R = eos.get_pressure(U_R, Yi_R.data());
+                    double P_R = eos.get_pressure(U_R, Xi_R.data());
                     double H_R = (U_R.eng + P_R) / rho_R;
 
                     // ======================================================
@@ -83,12 +83,12 @@ struct FluxHLL
                     // ======================================================
                     // 4. HLL 波速估算
                     // ======================================================
-                    double c_L = calc_sound_speed_thermo(rho_L, P_L, e_L, Yi_L.data(), eos);
-                    double c_R = calc_sound_speed_thermo(rho_R, P_R, e_R, Yi_R.data(), eos);
+                    double c_L = calc_sound_speed_thermo(rho_L, P_L, e_L, Xi_L.data(), eos);
+                    double c_R = calc_sound_speed_thermo(rho_R, P_R, e_R, Xi_R.data(), eos);
 
                     // 复用 Roe 平均状态
                     RoeGlaisterState roe_state = calc_glaister_state(
-                        U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Yi_L.data(), eos);
+                        U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Xi_L.data(), eos);
 
                     double S_L, S_R;
                     calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
@@ -103,8 +103,8 @@ struct FluxHLL
                     double mass_flux = hll_flux.rho;
                     for (int s = 0; s < n_spec; ++s)
                     {
-                        double transported_Y = (mass_flux >= 0.0) ? Yi_L[s] : Yi_R[s];
-                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * transported_Y;
+                        double transported_X = (mass_flux >= 0.0) ? Xi_L[s] : Xi_R[s];
+                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * transported_X;
                     }
                 }
             }

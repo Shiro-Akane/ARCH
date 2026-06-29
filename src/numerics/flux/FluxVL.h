@@ -48,12 +48,12 @@ struct FluxVL
         const int nk = grid.Ke() - grid.Ks();
         const int nj = grid.Je() - grid.Js();
 
-        #pragma omp parallel
+#pragma omp parallel
         {
-            std::vector<double> Yi_L(n_spec);
-            std::vector<double> Yi_R(n_spec);
+            std::vector<double> Xi_L(n_spec);
+            std::vector<double> Xi_R(n_spec);
 
-            #pragma omp for schedule(static)
+#pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
                 int k = grid.Ks() + kj / nj;
@@ -68,14 +68,14 @@ struct FluxVL
 
                     if (n_spec > 0)
                     {
-                        ReconstructPolicy::run_species(state, idx, n_spec, Yi_L.data(), Yi_R.data(), stride);
+                        ReconstructPolicy::run_species(state, idx, n_spec, Xi_L.data(), Xi_R.data(), stride);
                     }
 
                     // 2. Flux Splitting (Vinokur)
                     // F+ (Forward moving waves)
-                    FluidVector F_plus = calc_vinokur_flux(U_L, Yi_L.data(), eos, +1, dir);
+                    FluidVector F_plus = calc_vinokur_flux(U_L, Xi_L.data(), eos, +1, dir);
                     // F- (Backward moving waves)
-                    FluidVector F_minus = calc_vinokur_flux(U_R, Yi_R.data(), eos, -1, dir);
+                    FluidVector F_minus = calc_vinokur_flux(U_R, Xi_R.data(), eos, -1, dir);
 
                     // 3. Store Total Interface Flux
                     flux_out[idx + stride] = F_plus + F_minus;
@@ -83,7 +83,7 @@ struct FluxVL
                     // 4. Species Fluxes
                     for (int s = 0; s < n_spec; ++s)
                     {
-                        double spec_flux = F_plus.rho * Yi_L[s] + F_minus.rho * Yi_R[s];
+                        double spec_flux = F_plus.rho * Xi_L[s] + F_minus.rho * Xi_R[s];
                         spec_flux_out[s * total_size + (idx + stride)] = spec_flux;
                     }
                 }

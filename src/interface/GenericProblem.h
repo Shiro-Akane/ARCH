@@ -104,7 +104,7 @@ public:
                 state.eng[idx] = eos.get_total_energy_primitive(data.rho, data.u, data.v, data.w, data.p, data.mass_fractions.data());
 
                 for (int s = 0; s < n_species; ++s)
-                    state.Y(s, idx) = data.mass_fractions[s];
+                    state.X(s, idx) = data.mass_fractions[s];
             }
         }
     }

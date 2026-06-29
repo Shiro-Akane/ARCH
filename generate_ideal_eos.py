@@ -18,25 +18,25 @@ cv_he     = 3113.9
 # ==========================================
 n_rho = 150
 n_e   = 150
-n_Y   = 50   # 质量分数维度，50个点对线性混合足够了
+n_X   = 50   # 质量分数维度，50个点对线性混合足够了
 
 # 对数坐标范围 (覆盖 Sod 激波管的极端工况)
 log_rho_min = -3.0   # 0.001 kg/m^3
 log_rho_max =  1.0   # 10.0 kg/m^3
 log_e_min   = -1.0   # 100 J/kg
 log_e_max   =  2.0   # 1e7 J/kg
-Y_min       =  0.0   # 纯空气
-Y_max       =  1.0   # 纯氦气
+X_min       =  0.0   # 纯空气
+X_max       =  1.0   # 纯氦气
 
 # 生成 1D 坐标轴
 log_rho_arr = np.linspace(log_rho_min, log_rho_max, n_rho)
 log_e_arr   = np.linspace(log_e_min, log_e_max, n_e)
-Y_arr       = np.linspace(Y_min, Y_max, n_Y)
+X_arr       = np.linspace(X_min, X_max, n_X)
 
 # ==========================================
 # 3. 初始化展平的 1D 数据数组 (C++ 兼容)
 # ==========================================
-total_size = n_rho * n_e * n_Y
+total_size = n_rho * n_e * n_X
 pressure    = np.zeros(total_size, dtype=np.float64)
 temperature = np.zeros(total_size, dtype=np.float64)
 sound_speed = np.zeros(total_size, dtype=np.float64)
@@ -52,16 +52,16 @@ for i in range(n_rho):
     rho = 10.0**log_rho_arr[i]
     for j in range(n_e):
         e = 10.0**log_e_arr[j]
-        for k in range(n_Y):
-            Y_he = Y_arr[k]
-            Y_air = 1.0 - Y_he
+        for k in range(n_X):
+            X_he = X_arr[k]
+            X_air = 1.0 - X_he
             
             # --- 多组分混合热力学法则 (等价于 IdealGas.h) ---
             # 1. 混合定容比热 Cv_mix
-            cv_mix = Y_air * cv_air + Y_he * cv_he
+            cv_mix = X_air * cv_air + X_he * cv_he
             
             # 2. 混合绝热指数 Gamma_mix
-            num = Y_air * cv_air * (gamma_air - 1.0) + Y_he * cv_he * (gamma_he - 1.0)
+            num = X_air * cv_air * (gamma_air - 1.0) + X_he * cv_he * (gamma_he - 1.0)
             gamma_mix = 1.0 + (num / cv_mix)
             
             # 3. 状态计算
@@ -70,8 +70,8 @@ for i in range(n_rho):
             cs = np.sqrt(gamma_mix * p / rho)
             
             # --- C++ 宏对应的 1D 展平索引 ---
-            # IDX(i, j, k) -> i * (n_e * n_Y) + j * n_Y + k
-            idx = i * (n_e * n_Y) + j * n_Y + k
+            # IDX(i, j, k) -> i * (n_e * n_X) + j * n_X + k
+            idx = i * (n_e * n_X) + j * n_X + k
             
             pressure[idx]    = p
             temperature[idx] = t
@@ -90,15 +90,15 @@ with h5py.File(output_file, "w") as f:
     # 维度元数据
     f.create_dataset("n_rho", data=n_rho)
     f.create_dataset("n_e",   data=n_e)
-    f.create_dataset("n_Y",   data=n_Y)
+    f.create_dataset("n_X",   data=n_X)
     
     # 边界元数据
     f.create_dataset("log_rho_min", data=log_rho_min)
     f.create_dataset("log_rho_max", data=log_rho_max)
     f.create_dataset("log_e_min",   data=log_e_min)
     f.create_dataset("log_e_max",   data=log_e_max)
-    f.create_dataset("Y_min",       data=Y_min)
-    f.create_dataset("Y_max",       data=Y_max)
+    f.create_dataset("X_min",       data=X_min)
+    f.create_dataset("X_max",       data=X_max)
     
     # 核心物理场
     f.create_dataset("pressure",    data=pressure)

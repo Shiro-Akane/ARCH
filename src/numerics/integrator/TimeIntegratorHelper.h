@@ -109,7 +109,7 @@ namespace TimeIntegration
 
 #pragma omp parallel
         {
-            std::vector<double> Yi(n_spec);
+            std::vector<double> Xi(n_spec);
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
@@ -122,8 +122,8 @@ namespace TimeIntegration
                     if (r < 1e-14)
                         continue;
 
-                    state.get_species_to_buffer(idx, Yi.data());
-                    double p = eos.get_pressure(state.get(idx), Yi.data());
+                    state.get_species_to_buffer(idx, Xi.data());
+                    double p = eos.get_pressure(state.get(idx), Xi.data());
                     dU[idx].mom_x += dt * geom_coeff * p / r;
                 }
             }
@@ -216,28 +216,28 @@ namespace TimeIntegration
                 u_dest.set(idx, U_new);
 
                 double rho_new = std::max(U_new.rho, 1e-13);
-                double sum_Y = 0.0;
+                double sum_X = 0.0;
                 for (int s = 0; s < n_spec; ++s)
                 {
                     int off = s * total_size;
-                    double rhoY_old = u_n.rho[idx] * u_n.Y(s, idx);
-                    double rhoY_curr = u_current.rho[idx] * u_current.Y(s, idx);
-                    double rhoY_comb = weight_n * rhoY_old + weight_flux * (rhoY_curr + d_spec[off + idx]);
+                    double rhoX_old = u_n.rho[idx] * u_n.X(s, idx);
+                    double rhoX_curr = u_current.rho[idx] * u_current.X(s, idx);
+                    double rhoX_comb = weight_n * rhoX_old + weight_flux * (rhoX_curr + d_spec[off + idx]);
 
-                    double Y_k = std::max(0.0, rhoY_comb / rho_new);
-                    u_dest.Y(s, idx) = Y_k;
-                    sum_Y += Y_k;
+                    double X_k = std::max(0.0, rhoX_comb / rho_new);
+                    u_dest.X(s, idx) = X_k;
+                    sum_X += X_k;
                 }
 
-                if (sum_Y > 1e-13)
+                if (sum_X > 1e-13)
                 {
-                    double inv_sum = 1.0 / sum_Y;
+                    double inv_sum = 1.0 / sum_X;
                     for (int s = 0; s < n_spec; ++s)
-                        u_dest.Y(s, idx) *= inv_sum;
+                        u_dest.X(s, idx) *= inv_sum;
                 }
                 else
                 {
-                    u_dest.Y(0, idx) = 1.0;
+                    u_dest.X(0, idx) = 1.0;
                 }
             }
         }

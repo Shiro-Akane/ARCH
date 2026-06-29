@@ -90,12 +90,12 @@ struct PCMReconstruction
     /**
      * @brief Apply Species reconstruction.
      */
-    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R, int stride = 1)
+    static void run_species(const FluidState &state, int i, int n_spec, double *X_L, double *X_R, int stride = 1)
     {
         for (int k = 0; k < n_spec; ++k)
         {
-            Y_L[k] = state.Y(k, i);
-            Y_R[k] = state.Y(k, i + stride);
+            X_L[k] = state.X(k, i);
+            X_R[k] = state.X(k, i + stride);
         }
     }
 };
@@ -166,20 +166,20 @@ struct MusclReconstruction
      * @brief Reconstruct Species (Batch).
      * Pointers are used for efficiency since species count is dynamic.
      */
-    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R, int stride = 1)
+    static void run_species(const FluidState &state, int i, int n_spec, double *X_L, double *X_R, int stride = 1)
     {
         int im1 = i - stride;
         int ip1 = i + stride;
         int ip2 = i + 2 * stride;
         for (int k = 0; k < n_spec; ++k)
         {
-            double y_im1 = state.Y(k, im1);
-            double y_i = state.Y(k, i);
-            double y_ip1 = state.Y(k, ip1);
-            double y_ip2 = state.Y(k, ip2);
+            double x_im1 = state.X(k, im1);
+            double x_i = state.X(k, i);
+            double x_ip1 = state.X(k, ip1);
+            double x_ip2 = state.X(k, ip2);
 
-            Y_L[k] = y_i + compute_limited_slope<Limiter>(y_im1, y_i, y_ip1);
-            Y_R[k] = y_ip1 - compute_limited_slope<Limiter>(y_i, y_ip1, y_ip2);
+            X_L[k] = x_i + compute_limited_slope<Limiter>(x_im1, x_i, x_ip1);
+            X_R[k] = x_ip1 - compute_limited_slope<Limiter>(x_i, x_ip1, x_ip2);
         }
     }
 };
@@ -367,17 +367,17 @@ public:
      * 1. 局部极值钳位 (Local Bounds Clamping)
      * 2. 总和归一化 (Renormalization)
      */
-    static void run_species(const FluidState &state, int i, int n_spec, double *Y_L, double *Y_R,
+    static void run_species(const FluidState &state, int i, int n_spec, double *X_L, double *X_R,
                             int stride = 1)
     {
         double stencil[6];
         int indices[6] = {i - 2 * stride, i - stride, i, i + stride, i + 2 * stride, i + 3 * stride};
-        double sum_Y_L = 0.0, sum_Y_R = 0.0;
+        double sum_X_L = 0.0, sum_X_R = 0.0;
 
         for (int k = 0; k < n_spec; ++k)
         {
             for (int s = 0; s < 6; ++s)
-                stencil[s] = state.Y(k, indices[s]);
+                stencil[s] = state.X(k, indices[s]);
 
             auto res = reconstruct_scalar_ppm(stencil);
             double yl = res.first;
@@ -387,24 +387,24 @@ public:
             yl = std::max(0.0, std::min(1.0, yl));
             yr = std::max(0.0, std::min(1.0, yr));
 
-            Y_L[k] = yl;
-            Y_R[k] = yr;
-            sum_Y_L += yl;
-            sum_Y_R += yr;
+            X_L[k] = yl;
+            X_R[k] = yr;
+            sum_X_L += yl;
+            sum_X_R += yr;
         }
 
         // 归一化 (Renormalization) - 必须要有，否则 EOS 会炸
-        if (sum_Y_L > 1e-12)
+        if (sum_X_L > 1e-12)
         {
-            double inv = 1.0 / sum_Y_L;
+            double inv = 1.0 / sum_X_L;
             for (int k = 0; k < n_spec; ++k)
-                Y_L[k] *= inv;
+                X_L[k] *= inv;
         }
-        if (sum_Y_R > 1e-12)
+        if (sum_X_R > 1e-12)
         {
-            double inv = 1.0 / sum_Y_R;
+            double inv = 1.0 / sum_X_R;
             for (int k = 0; k < n_spec; ++k)
-                Y_R[k] *= inv;
+                X_R[k] *= inv;
         }
     }
 };

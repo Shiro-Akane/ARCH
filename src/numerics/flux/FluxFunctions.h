@@ -87,12 +87,12 @@ inline FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, doub
  * * (E + p) * u ]
  * * @tparam EosType Equation of State class.
  * @param U  Conservative state vector (rho, mom, eng).
- * @param Yi Species mass fractions.
+ * @param Xi Species mass fractions.
  * @param eos EOS object for pressure calculation.
  * @return FluidVector3 The flux vector F.
  */
 template <typename EosType>
-FluidVector get_flux(const FluidVector &U, const double *Yi, const EosType &eos, int dir)
+FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos, int dir)
 {
     double rho = U.rho;
     if (rho < 1e-12)
@@ -103,7 +103,7 @@ FluidVector get_flux(const FluidVector &U, const double *Yi, const EosType &eos,
     double ut2 = get_ut2(U, dir);
 
     // Compute pressure using EOS
-    double p = eos.get_pressure(U, Yi);
+    double p = eos.get_pressure(U, Xi);
 
     double f_rho = rho * un;
     double f_un = rho * un * un + p;
@@ -142,13 +142,13 @@ inline FluidVector get_flux(const FluidVector &U, double p, int dir)
  * * Decomposes the flux based on the signs of the eigenvalues (u, u+c, u-c).
  * * Used for upwind discretization to capture shocks effectively.
  * * @param U    Conservative state.
- * @param Yi   Species mass fractions.
+ * @param Xi   Species mass fractions.
  * @param eos  EOS object.
  * @param sign Direction indicator (+1 for F_plus, -1 for F_minus).
  * @return FluidVector3 The split flux vector.
  */
 template <typename EosType>
-FluidVector calc_split_flux(const FluidVector &U, const double *Yi,
+FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
                             const EosType &eos, int sign, double smoothing_coeff, int dir)
 {
     double rho = std::max(U.rho, 1e-12); // Prevent division by zero
@@ -157,10 +157,10 @@ FluidVector calc_split_flux(const FluidVector &U, const double *Yi,
     double ut2 = get_ut2(U, dir);
     double V2 = un * un + ut1 * ut1 + ut2 * ut2; // Full kinetic energy
 
-    double p = eos.get_pressure(U, Yi);
-    double c = eos.get_sound_speed(U, p, Yi);
+    double p = eos.get_pressure(U, Xi);
+    double c = eos.get_sound_speed(U, p, Xi);
     double H = (U.eng + p) / rho;
-    double gamma = eos.get_gamma(Yi);
+    double gamma = eos.get_gamma(Xi);
 
     // Lambda helper:
     // If sign > 0, returns max(lambda, 0) -> Positive Eigenvalues
@@ -212,14 +212,14 @@ FluidVector calc_split_flux(const FluidVector &U, const double *Yi,
 /**
  * @brief Vinokur-Van Leer Flux Vector Splitting for General EOS
  * * @param U      Conserved variables (rho, mom, eng)
- * @param Yi     Species mass fractions array
+ * @param Xi     Species mass fractions array
  * @param eos    Equation of State object
  * @param sign   Direction indicator:
  * > 0: Calculate F+ (Forward/Positive flux component)
  * < 0: Calculate F- (Backward/Negative flux component)
  */
 template <typename EosType>
-FluidVector calc_vinokur_flux(const FluidVector &U, const double *Yi,
+FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
                               const EosType &eos, int sign, int dir)
 {
     // 1. Pre-calculation & Protection
@@ -230,8 +230,8 @@ FluidVector calc_vinokur_flux(const FluidVector &U, const double *Yi,
 
     // Get thermodynamics from EOS
     // Note: ensure your eos.get_pressure can handle small rho
-    double p = eos.get_pressure(U, Yi);
-    double c = eos.get_sound_speed(U, p, Yi);
+    double p = eos.get_pressure(U, Xi);
+    double c = eos.get_sound_speed(U, p, Xi);
 
     // Calculate Equivalent Gamma (Vinokur's Gamma)
     // Protection for vacuum/zero pressure is crucial here
@@ -389,7 +389,7 @@ struct RoeGlaisterState
  * @param P_L, P_R  Pressure
  * @param e_L, e_R  Specific internal energy (e = E_int / rho)
  * @param H_L, H_R  Total Enthalpy
- * @param Yi_avg    Averaged species mass fractions (passed to EOS)
+ * @param Xi_avg    Averaged species mass fractions (passed to EOS)
  * @param eos       EOS object (must support get_pressure_from_rho_e, etc.)
  */
 template <typename EosType>
@@ -398,7 +398,7 @@ inline RoeGlaisterState calc_glaister_state(
     double P_L, double P_R,
     double e_L, double e_R,
     double H_L, double H_R,
-    const double *Yi_avg,
+    const double *Xi_avg,
     const EosType &eos)
 {
     RoeGlaisterState res;
@@ -429,7 +429,7 @@ inline RoeGlaisterState calc_glaister_state(
 
     // 1. Calculate intermediate pressure p* = p(rho_R, e_L)
     // This utilizes the new EOS helper you added.
-    double p_star = eos.get_pressure_from_rho_e(rho_R, e_L, Yi_avg);
+    double p_star = eos.get_pressure_from_rho_e(rho_R, e_L, Xi_avg);
 
     // 2. Compute Chi (dp/drho)
     if (std::abs(d_rho) > epsilon)
@@ -440,7 +440,7 @@ inline RoeGlaisterState calc_glaister_state(
     else
     {
         // Fallback to analytical derivative (at L state)
-        res.chi = eos.get_dp_drho_e(rho_L, e_L, Yi_avg);
+        res.chi = eos.get_dp_drho_e(rho_L, e_L, Xi_avg);
     }
 
     // 3. Compute Kappa (dp/de)
@@ -452,7 +452,7 @@ inline RoeGlaisterState calc_glaister_state(
     else
     {
         // Fallback to analytical derivative (at R state)
-        res.kappa = eos.get_dp_de_rho(rho_R, e_R, Yi_avg);
+        res.kappa = eos.get_dp_de_rho(rho_R, e_R, Xi_avg);
     }
 
     if (res.kappa < 1e-12)
@@ -589,7 +589,7 @@ inline FluidVector calc_roe_flux_hydro(
  */
 template <typename EosType>
 inline double calc_sound_speed_thermo(
-    double rho, double p, double e, const double *Yi,
+    double rho, double p, double e, const double *Xi,
     const EosType &eos)
 {
     // 防止除零
@@ -598,9 +598,9 @@ inline double calc_sound_speed_thermo(
 
     // 1. 获取热力学导数
     // chi = dp/drho | e
-    double chi = eos.get_dp_drho_e(rho, e, Yi);
+    double chi = eos.get_dp_drho_e(rho, e, Xi);
     // kappa = dp/de | rho
-    double kappa = eos.get_dp_de_rho(rho, e, Yi);
+    double kappa = eos.get_dp_de_rho(rho, e, Xi);
 
     // 2. 根据笔记公式计算 c^2
     double term2 = (kappa * p) / (rho * rho);

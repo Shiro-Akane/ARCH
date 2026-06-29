@@ -148,11 +148,11 @@ void write_plt(const FluidState &state, const EosType &eos,
         }
         if (vars.p)
         {
-            std::vector<double> Yi_temp(state.GetNumSpecies());
+            std::vector<double> Xi_temp(state.GetNumSpecies());
             write_var("p", [&](const FluidState &s, int idx)
                       {
-                for(int k=0; k<s.GetNumSpecies(); ++k) Yi_temp[k] = s.Y(k, idx);
-                return eos.get_pressure(s.get(idx), Yi_temp.data()); });
+                for(int k=0; k<s.GetNumSpecies(); ++k) Xi_temp[k] = s.X(k, idx);
+                return eos.get_pressure(s.get(idx), Xi_temp.data()); });
         }
         if (vars.eng)
         {
@@ -182,11 +182,14 @@ void write_plt(const FluidState &state, const EosType &eos,
         }
         if (vars.species)
         {
+            std::vector<double> Xi_temp(state.GetNumSpecies());
             for (int k = 0; k < specs.count(); ++k)
             {
-                std::string var_name = "Y_" + specs.get_name(k);
-                write_var(var_name, [k](const FluidState &s, int idx)
-                          { return s.Y(k, idx); });
+                std::string var_name = "X_" + specs.get_name(k);
+                write_var(var_name, [k, &Xi_temp](const FluidState &s, int idx)
+                          {
+                    Xi_temp[k] = s.X(k, idx);
+                    return Xi_temp[k]; });
             }
         }
 

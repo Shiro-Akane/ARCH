@@ -37,7 +37,7 @@ void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimCon
         state.eng[dst] = state.eng[src];
         for (int k = 0; k < n_species; ++k)
         {
-            state.Y(k, dst) = state.Y(k, src);
+            state.X(k, dst) = state.X(k, src);
         }
     };
 
@@ -202,7 +202,7 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
 
 #pragma omp parallel
     {
-        std::vector<double> Yi_cache(n_species);
+        std::vector<double> Xi_cache(n_species);
         double local_min_dt = 1e10;
 
 #pragma omp for schedule(static)
@@ -220,10 +220,10 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
                     continue;
 
                 for (int s = 0; s < n_species; ++s)
-                    Yi_cache[s] = state.Y(s, idx);
+                    Xi_cache[s] = state.X(s, idx);
 
-                double p = eos.get_pressure(U, Yi_cache.data());
-                double c = eos.get_sound_speed(U, p, Yi_cache.data());
+                double p = eos.get_pressure(U, Xi_cache.data());
+                double c = eos.get_sound_speed(U, p, Xi_cache.data());
 
                 double inv_dt_sum = (std::abs(U.mom_x / rho) + c) / grid.dx;
 

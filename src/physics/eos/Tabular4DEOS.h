@@ -103,86 +103,86 @@ struct Tabular4DEOSView
     // 状态查询接口 (提取 A_bar 和 Z_bar)
     // ========================================================
 
-    EOS_INLINE double get_Abar(const double *Yi) const
+    EOS_INLINE double get_Abar(const double *Xi) const
     {
         if (specs && specs->count() > 0)
-            return specs->calc_Abar(Yi);
+            return specs->calc_Abar(Xi);
         return 14.0; // 兜底：假设纯氮
     }
 
-    EOS_INLINE double get_Zbar(const double *Yi) const
+    EOS_INLINE double get_Zbar(const double *Xi) const
     {
         if (specs && specs->count() > 0)
-            return specs->calc_Zbar(Yi);
+            return specs->calc_Zbar(Xi);
         return 7.0; // 兜底：假设纯氮
     }
 
-    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
-        return interpolate_4d(table_P, rho, e, get_Abar(Yi), get_Zbar(Yi));
+        return interpolate_4d(table_P, rho, e, get_Abar(Xi), get_Zbar(Xi));
     }
 
-    EOS_INLINE double get_temperature(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_temperature(double rho, double e, const double *Xi) const
     {
-        return interpolate_4d(table_T, rho, e, get_Abar(Yi), get_Zbar(Yi));
+        return interpolate_4d(table_T, rho, e, get_Abar(Xi), get_Zbar(Xi));
     }
 
-    EOS_INLINE double get_pressure(const FluidVector &U, const double *Yi) const
-    {
-        if (U.rho < 1e-12)
-            return 0.0;
-        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
-        return get_pressure_from_rho_e(U.rho, e_int, Yi);
-    }
-
-    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Yi) const
+    EOS_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
     {
         if (U.rho < 1e-12)
             return 0.0;
         double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
-        return interpolate_4d(table_cs, U.rho, e_int, get_Abar(Yi), get_Zbar(Yi));
+        return get_pressure_from_rho_e(U.rho, e_int, Xi);
     }
 
-    EOS_INLINE double get_gamma(const double *Yi, double rho = 0.0, double e = 0.0) const
+    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    {
+        if (U.rho < 1e-12)
+            return 0.0;
+        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
+        return interpolate_4d(table_cs, U.rho, e_int, get_Abar(Xi), get_Zbar(Xi));
+    }
+
+    EOS_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
         if (rho < 1e-12 || e < 1e-12)
             return 1.4;
-        double p = interpolate_4d(table_P, rho, e, get_Abar(Yi), get_Zbar(Yi));
-        double cs = interpolate_4d(table_cs, rho, e, get_Abar(Yi), get_Zbar(Yi));
+        double p = interpolate_4d(table_P, rho, e, get_Abar(Xi), get_Zbar(Xi));
+        double cs = interpolate_4d(table_cs, rho, e, get_Abar(Xi), get_Zbar(Xi));
         if (p < 1e-12)
             return 1.4;
         return (rho * cs * cs) / p;
     }
 
-    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         if (table_dP_drho)
-            return interpolate_4d(table_dP_drho, rho, e, get_Abar(Yi), get_Zbar(Yi));
+            return interpolate_4d(table_dP_drho, rho, e, get_Abar(Xi), get_Zbar(Xi));
 
         double drho = rho * 0.001;
-        return (interpolate_4d(table_P, rho + drho, e, get_Abar(Yi), get_Zbar(Yi)) -
-                interpolate_4d(table_P, rho - drho, e, get_Abar(Yi), get_Zbar(Yi))) /
+        return (interpolate_4d(table_P, rho + drho, e, get_Abar(Xi), get_Zbar(Xi)) -
+                interpolate_4d(table_P, rho - drho, e, get_Abar(Xi), get_Zbar(Xi))) /
                (2.0 * drho);
     }
 
-    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         if (table_dP_de)
-            return interpolate_4d(table_dP_de, rho, e, get_Abar(Yi), get_Zbar(Yi));
+            return interpolate_4d(table_dP_de, rho, e, get_Abar(Xi), get_Zbar(Xi));
 
         double de = e * 0.001;
-        return (interpolate_4d(table_P, rho, e + de, get_Abar(Yi), get_Zbar(Yi)) -
-                interpolate_4d(table_P, rho, e - de, get_Abar(Yi), get_Zbar(Yi))) /
+        return (interpolate_4d(table_P, rho, e + de, get_Abar(Xi), get_Zbar(Xi)) -
+                interpolate_4d(table_P, rho, e - de, get_Abar(Xi), get_Zbar(Xi))) /
                (2.0 * de);
     }
 
-    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Yi) const
+    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
         double e_guess = p / ((1.4 - 1.0) * rho);
         for (int iter = 0; iter < 20; ++iter)
         {
-            double p_guess = interpolate_4d(table_P, rho, e_guess, get_Abar(Yi), get_Zbar(Yi));
-            double dp_de = get_dp_de_rho(rho, e_guess, Yi);
+            double p_guess = interpolate_4d(table_P, rho, e_guess, get_Abar(Xi), get_Zbar(Xi));
+            double dp_de = get_dp_de_rho(rho, e_guess, Xi);
 
             if (fabs(dp_de) < 1e-12)
                 break;

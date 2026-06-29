@@ -52,29 +52,29 @@ struct SolverLF
         std::vector<double> species_fluxes(n_spec * total_size);
         std::vector<FluidVector> node_fluxes(grid.GetTotalSize()); // All flux at interface
 
-        // ---------------------------------------------------------
-        // Step 1: Flux Calculation Loop
-        // Compute F(U) for the entire stencil range (including ghost cells needed)
-        // ---------------------------------------------------------
-        #pragma omp parallel
+// ---------------------------------------------------------
+// Step 1: Flux Calculation Loop
+// Compute F(U) for the entire stencil range (including ghost cells needed)
+// ---------------------------------------------------------
+#pragma omp parallel
         {
-            std::vector<double> Yi_local(n_spec);
+            std::vector<double> Xi_local(n_spec);
 
-            #pragma omp for schedule(static)
+#pragma omp for schedule(static)
             for (int i = grid.Is() - 1; i < grid.Ie(); i++) // Range covers i-1 and i+1
             {
                 // Load species at cell i
-                state_old.get_species_to_buffer(i, Yi_local.data());
+                state_old.get_species_to_buffer(i, Xi_local.data());
 
                 FluidVector U = state_old.get(i);
 
                 // Compute Physical Flux F(U)
-                node_fluxes[i] = get_flux(U, Yi_local.data(), eos);
+                node_fluxes[i] = get_flux(U, Xi_local.data(), eos);
 
-                // Compute Species Fluxes: F_k = (rho * u) * Y_k
+                // Compute Species Fluxes: F_k = (rho * u) * X_k
                 for (int k = 0; k < n_spec; ++k)
                 {
-                    species_fluxes[k * total_size + i] = node_fluxes[i].rho * Yi_local[k];
+                    species_fluxes[k * total_size + i] = node_fluxes[i].rho * Xi_local[k];
                 }
             }
         }
@@ -85,11 +85,11 @@ struct SolverLF
             state_new.Resize(grid, n_spec);
         }
 
-        // ---------------------------------------------------------
-        // Step 2: State Update Loop
-        // Apply LF formula for physical domain
-        // ---------------------------------------------------------
-        #pragma omp parallel for schedule(static)
+// ---------------------------------------------------------
+// Step 2: State Update Loop
+// Apply LF formula for physical domain
+// ---------------------------------------------------------
+#pragma omp parallel for schedule(static)
         for (int i = grid.Is(); i < grid.Ie(); i++)
         {
             // Central Difference of Fluxes: F_{i+1} - F_{i-1}
@@ -114,25 +114,25 @@ struct SolverLF
                 // 1. Flux Difference for Species k
                 double F_spec_diff = species_fluxes[offset + i + 1] - species_fluxes[offset + i - 1];
 
-                // 2. Spatial Average of Partial Density (rho * Y)
-                double rhoY_L = state_old.rho[i - 1] * state_old.Y(k, i - 1);
-                double rhoY_R = state_old.rho[i + 1] * state_old.Y(k, i + 1);
-                double rhoY_avg = 0.5 * (rhoY_L + rhoY_R);
+                // 2. Spatial Average of Partial Density (rho * X)
+                double rhoX_L = state_old.rho[i - 1] * state_old.X(k, i - 1);
+                double rhoX_R = state_old.rho[i + 1] * state_old.X(k, i + 1);
+                double rhoX_avg = 0.5 * (rhoX_L + rhoX_R);
 
                 // 3. Update Partial Density
-                // (rho * Y)^{n+1} = (rho * Y)_avg - coeff * delta(F_species)
-                double rhoY_new = rhoY_avg - coeff * F_spec_diff;
+                // (rho * X)^{n+1} = (rho * X)_avg - coeff * delta(F_species)
+                double rhoX_new = rhoX_avg - coeff * F_spec_diff;
 
-                // 4. Recover Mass Fraction Y = (rho * Y) / rho
-                double Y_final = rhoY_new / rho_new;
+                // 4. Recover Mass Fraction X = (rho * X) / rho
+                double X_final = rhoX_new / rho_new;
 
                 // Clamp values to physical range [0, 1]
-                if (Y_final < 0.0)
-                    Y_final = 0.0;
-                if (Y_final > 1.0)
-                    Y_final = 1.0;
+                if (X_final < 0.0)
+                    X_final = 0.0;
+                if (X_final > 1.0)
+                    X_final = 1.0;
 
-                state_new.Y(k, i) = Y_final;
+                state_new.X(k, i) = X_final;
             }
         }
     }

@@ -27,10 +27,10 @@
 struct Tabular3DEOSView
 {
     // --- 表格维度与边界 ---
-    int n_rho, n_e, n_Y;
+    int n_rho, n_e, n_X;
     double log_rho_min, log_rho_max, dlog_rho;
     double log_e_min, log_e_max, dlog_e;
-    double Y_min, Y_max, dY; // Range of Mass fraction Y
+    double X_min, X_max, dX; // Range of Mass fraction X
 
     // --- 数据裸指针 (GPU 可见内存) ---
     const double *table_P;
@@ -44,32 +44,32 @@ struct Tabular3DEOSView
 
     int target_species_id;
 
-    EOS_INLINE double interpolate_3d(const double *table, double rho, double e, double Y) const
+    EOS_INLINE double interpolate_3d(const double *table, double rho, double e, double X) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
 
         double x = log10(rho);
         double y = log10(e);
-        double z = Y;
+        double z = X;
 
         // 边界截断 (Clamping)
         x = fmax(log_rho_min, fmin(x, log_rho_max - 1e-6));
         y = fmax(log_e_min, fmin(y, log_e_max - 1e-6));
-        z = fmax(Y_min, fmin(z, Y_max - 1e-6));
+        z = fmax(X_min, fmin(z, X_max - 1e-6));
 
         // 计算索引
         int i = static_cast<int>((x - log_rho_min) / dlog_rho);
         int j = static_cast<int>((y - log_e_min) / dlog_e);
-        int k = static_cast<int>((z - Y_min) / dY);
+        int k = static_cast<int>((z - X_min) / dX);
 
         // 计算局部偏移 [0, 1)
         double tx = (x - (log_rho_min + i * dlog_rho)) / dlog_rho;
         double ty = (y - (log_e_min + j * dlog_e)) / dlog_e;
-        double tz = (z - (Y_min + k * dY)) / dY;
+        double tz = (z - (X_min + k * dX)) / dX;
 
-// 辅助宏：计算 1D 展平数组的索引 (i, j, k) -> i * (n_e * n_Y) + j * n_Y + k
-#define IDX(ii, jj, kk) ((ii) * n_e * n_Y + (jj) * n_Y + (kk))
+// 辅助宏：计算 1D 展平数组的索引 (i, j, k) -> i * (n_e * n_X) + j * n_X + k
+#define IDX(ii, jj, kk) ((ii) * n_e * n_X + (jj) * n_X + (kk))
 
         // 获取 8 个顶点的函数值
         double c000 = table[IDX(i, j, k)];
@@ -97,61 +97,61 @@ struct Tabular3DEOSView
     }
 
     // ========================================================
-    // 状态查询接口 (含 pynucastro 预留的 Yi)
+    // 状态查询接口 (含 pynucastro 预留的 Xi)
     // ========================================================
 
-    EOS_INLINE double get_target_Y(const double *Yi) const
+    EOS_INLINE double get_target_X(const double *Xi) const
     {
         // 1. 最高优先级：如果是普通的双组分测试，直接提取目标质量分数
         if (target_species_id >= 0)
         {
-            return Yi[target_species_id];
+            return Xi[target_species_id];
         }
 
         // 2. 次优先级：如果没指定特定组分，且挂载了 specs，则计算天体物理的 Ye
         if (specs && specs->count() > 0)
         {
-            return specs->calc_Ye(Yi);
+            return specs->calc_Ye(Xi);
         }
 
         // 3. 兜底
         return 0.5;
     }
 
-    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
         // 直接从表格插值压力，确保与 get_pressure() 和 get_sound_speed() 的一致性
-        return interpolate_3d(table_P, rho, e, get_target_Y(Yi));
+        return interpolate_3d(table_P, rho, e, get_target_X(Xi));
     }
 
     // 提取温度，用于驱动 Alpha-chain 等核反应网络
-    EOS_INLINE double get_temperature(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_temperature(double rho, double e, const double *Xi) const
     {
-        return interpolate_3d(table_T, rho, e, get_target_Y(Yi));
+        return interpolate_3d(table_T, rho, e, get_target_X(Xi));
     }
 
-    EOS_INLINE double get_pressure(const FluidVector &U, const double *Yi) const
-    {
-        if (U.rho < 1e-12)
-            return 0.0;
-        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
-        return get_pressure_from_rho_e(U.rho, e_int, Yi);
-    }
-
-    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Yi) const
+    EOS_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
     {
         if (U.rho < 1e-12)
             return 0.0;
         double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
-        return interpolate_3d(table_cs, U.rho, e_int, get_target_Y(Yi));
+        return get_pressure_from_rho_e(U.rho, e_int, Xi);
     }
 
-    EOS_INLINE double get_gamma(const double *Yi, double rho = 0.0, double e = 0.0) const
+    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    {
+        if (U.rho < 1e-12)
+            return 0.0;
+        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
+        return interpolate_3d(table_cs, U.rho, e_int, get_target_X(Xi));
+    }
+
+    EOS_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
         if (rho < 1e-12 || e < 1e-12)
             return 1.4;
-        double p = interpolate_3d(table_P, rho, e, get_target_Y(Yi));
-        double cs = interpolate_3d(table_cs, rho, e, get_target_Y(Yi));
+        double p = interpolate_3d(table_P, rho, e, get_target_X(Xi));
+        double cs = interpolate_3d(table_cs, rho, e, get_target_X(Xi));
         if (p < 1e-12)
             return 1.4;
         return (rho * cs * cs) / p;
@@ -160,37 +160,37 @@ struct Tabular3DEOSView
     // ========================================================
     // 导数接口 (支持读取真实导数表或回退有限差分)
     // ========================================================
-    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         if (table_dP_drho)
         {
-            return interpolate_3d(table_dP_drho, rho, e, get_target_Y(Yi));
+            return interpolate_3d(table_dP_drho, rho, e, get_target_X(Xi));
         }
         double drho = rho * 0.001;
-        return (interpolate_3d(table_P, rho + drho, e, get_target_Y(Yi)) - interpolate_3d(table_P, rho - drho, e, get_target_Y(Yi))) / (2.0 * drho);
+        return (interpolate_3d(table_P, rho + drho, e, get_target_X(Xi)) - interpolate_3d(table_P, rho - drho, e, get_target_X(Xi))) / (2.0 * drho);
     }
 
-    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Yi) const
+    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         if (table_dP_de)
         {
-            return interpolate_3d(table_dP_de, rho, e, get_target_Y(Yi));
+            return interpolate_3d(table_dP_de, rho, e, get_target_X(Xi));
         }
         double de = e * 0.001;
-        return (interpolate_3d(table_P, rho, e + de, get_target_Y(Yi)) - interpolate_3d(table_P, rho, e - de, get_target_Y(Yi))) / (2.0 * de);
+        return (interpolate_3d(table_P, rho, e + de, get_target_X(Xi)) - interpolate_3d(table_P, rho, e - de, get_target_X(Xi))) / (2.0 * de);
     }
 
     // ========================================================
     // 鲁棒的阻尼牛顿法反推总能
     // ========================================================
-    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Yi) const
+    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
         double e_guess = p / ((1.4 - 1.0) * rho);
 
         for (int iter = 0; iter < 20; ++iter)
         {
-            double p_guess = interpolate_3d(table_P, rho, e_guess, get_target_Y(Yi));
-            double dp_de = get_dp_de_rho(rho, e_guess, Yi);
+            double p_guess = interpolate_3d(table_P, rho, e_guess, get_target_X(Xi));
+            double dp_de = get_dp_de_rho(rho, e_guess, Xi);
 
             if (fabs(dp_de) < 1e-12)
                 break;
@@ -240,18 +240,18 @@ public:
 
         file.getDataSet("n_rho").read(view.n_rho);
         file.getDataSet("n_e").read(view.n_e);
-        file.getDataSet("n_Y").read(view.n_Y);
+        file.getDataSet("n_X").read(view.n_X);
 
         file.getDataSet("log_rho_min").read(view.log_rho_min);
         file.getDataSet("log_rho_max").read(view.log_rho_max);
         file.getDataSet("log_e_min").read(view.log_e_min);
         file.getDataSet("log_e_max").read(view.log_e_max);
-        file.getDataSet("Y_min").read(view.Y_min);
-        file.getDataSet("Y_max").read(view.Y_max);
+        file.getDataSet("X_min").read(view.X_min);
+        file.getDataSet("X_max").read(view.X_max);
 
         view.dlog_rho = (view.log_rho_max - view.log_rho_min) / (view.n_rho - 1);
         view.dlog_e = (view.log_e_max - view.log_e_min) / (view.n_e - 1);
-        view.dY = (view.Y_max - view.Y_min) / (view.n_Y - 1);
+        view.dX = (view.X_max - view.X_min) / (view.n_X - 1);
 
         file.getDataSet("pressure").read(h_table_P);
         file.getDataSet("temperature").read(h_table_T);

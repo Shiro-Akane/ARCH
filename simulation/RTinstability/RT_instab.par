@@ -47,7 +47,7 @@ EntropyFixCoefficient = 0.1
 # ------------------------------------------------------------------------------
 tmax         = 8.5
 max_steps    = -1        
-restart      = true
+restart      = false
 restart_file = output/RT_instab_chk_0007.h5     
 
 out_dir      = output

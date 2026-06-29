@@ -42,6 +42,8 @@ struct SpeciesManager
     /**
      * @brief Registers a new species into the simulation.
      * @param name Name of the species (for logging/output).
+     * @param A The mass number.
+     * @param Z The atomic number.
      * @param gamma The heat capacity ratio (Cp/Cv).
      * @param Cv The heat capacity at constant volume.
      * @return int The unique ID assigned to this species (used for array indexing).
@@ -61,15 +63,15 @@ struct SpeciesManager
 
     /**
      * @brief 计算电子丰度 Ye (Electron Fraction)
-     * Ye = Sum( (Z_i / A_i) * Y_i )
+     * Ye = Sum( (Z_i / A_i) * X_i )
      */
-    EOS_INLINE double calc_Ye(const double *Yi) const
+    EOS_INLINE double calc_Ye(const double *Xi) const
     {
         double Ye = 0.0;
         int n_spec = count();
         for (int k = 0; k < n_spec; ++k)
         {
-            Ye += (get_Z(k) / get_A(k)) * Yi[k];
+            Ye += (get_Z(k) / get_A(k)) * Xi[k];
         }
         return Ye;
     }
@@ -77,24 +79,24 @@ struct SpeciesManager
     /**
      * @brief 计算平均原子量 \bar{A}
      */
-    EOS_INLINE double calc_Abar(const double *Yi) const
+    EOS_INLINE double calc_Abar(const double *Xi) const
     {
-        double sum_Y_over_A = 0.0;
+        double sum_X_over_A = 0.0;
         int n_spec = count();
         for (int k = 0; k < n_spec; ++k)
         {
-            sum_Y_over_A += Yi[k] / get_A(k);
+            sum_X_over_A += Xi[k] / get_A(k);
         }
-        return (sum_Y_over_A > 1e-16) ? (1.0 / sum_Y_over_A) : 1.0; // 防除零
+        return (sum_X_over_A > 1e-16) ? (1.0 / sum_X_over_A) : 1.0; // 防除零
     }
 
     /**
      * @brief 计算平均原子序数 \bar{Z}
      */
-    EOS_INLINE double calc_Zbar(const double *Yi) const
+    EOS_INLINE double calc_Zbar(const double *Xi) const
     {
-        double A_bar = calc_Abar(Yi);
-        double Y_e = calc_Ye(Yi);
+        double A_bar = calc_Abar(Xi);
+        double Y_e = calc_Ye(Xi);
         return A_bar * Y_e;
     }
     /**

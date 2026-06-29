@@ -112,17 +112,17 @@ struct FluidState
     }
 
     /**
-     * @brief Access reference to mass fraction of species k at cell i.
+     * @brief Access reference to mass fraction X_k of species k at cell i.
      * Memory layout: Species-major order (blocks of grid size).
      */
-    double &Y(int k, int i)
+    double &X(int k, int i)
     {
         // index：k * stride + i
         return mass_fractions[k * total_size_ + i];
     }
 
-    /// Read-only access to mass fraction.
-    double Y(int k, int i) const
+    /// Read-only access to mass fraction X_k of species k at cell i.
+    double X(int k, int i) const
     {
         return mass_fractions[k * total_size_ + i];
     }

@@ -76,19 +76,22 @@ struct FluxHLLC
         int k_start = grid.Ks();
         int k_end = grid.Ke();
 
-        if (dir == 0) i_start -= 1;
-        else if (dir == 1) j_start -= 1;
-        else if (dir == 2) k_start -= 1;
+        if (dir == 0)
+            i_start -= 1;
+        else if (dir == 1)
+            j_start -= 1;
+        else if (dir == 2)
+            k_start -= 1;
 
         const int nk = k_end - k_start;
         const int nj = j_end - j_start;
 
-        #pragma omp parallel
+#pragma omp parallel
         {
-            std::vector<double> Yi_L(n_spec);
-            std::vector<double> Yi_R(n_spec);
+            std::vector<double> Xi_L(n_spec);
+            std::vector<double> Xi_R(n_spec);
 
-            #pragma omp for schedule(static)
+#pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
                 int k = k_start + kj / nj;
@@ -99,7 +102,7 @@ struct FluxHLLC
                     // 1. Reconstruction
                     auto [U_L, U_R] = ReconstructPolicy::run(state, idx, stride);
                     if (n_spec > 0)
-                        ReconstructPolicy::run_species(state, idx, n_spec, Yi_L.data(), Yi_R.data(), stride);
+                        ReconstructPolicy::run_species(state, idx, n_spec, Xi_L.data(), Xi_R.data(), stride);
 
                     // ======================================================
                     // 2. Thermodynamics Preparation
@@ -111,7 +114,7 @@ struct FluxHLLC
                     double ut2_L = get_ut2(U_L, dir);
                     double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
 
-                    double p_L = eos.get_pressure(U_L, Yi_L.data()); // 假设你更新了 EOS 的签名
+                    double p_L = eos.get_pressure(U_L, Xi_L.data()); // 假设你更新了 EOS 的签名
                     double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
 
                     // Right
@@ -121,7 +124,7 @@ struct FluxHLLC
                     double ut2_R = get_ut2(U_R, dir);
                     double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
 
-                    double p_R = eos.get_pressure(U_R, Yi_R.data());
+                    double p_R = eos.get_pressure(U_R, Xi_R.data());
                     double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
 
                     // ======================================================
@@ -133,14 +136,14 @@ struct FluxHLLC
                     // ======================================================
                     // 4. Wave Speed Estimates (S_L, S_R, S_*)
                     // ======================================================
-                    double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Yi_L.data(), eos);
-                    double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Yi_R.data(), eos);
+                    double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Xi_L.data(), eos);
+                    double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Xi_R.data(), eos);
                     double H_L = (U_L.eng + p_L) / rho_L;
                     double H_R = (U_R.eng + p_R) / rho_R;
 
                     // Roe Average (Used for S_L, S_R estimates)
                     RoeGlaisterState roe_state = calc_glaister_state(
-                        U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Yi_L.data(), eos);
+                        U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Xi_L.data(), eos);
 
                     double S_L, S_R;
                     calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
@@ -153,19 +156,19 @@ struct FluxHLLC
                     // 5. HLLC Flux Assembly & Species Logic
                     // ======================================================
                     FluidVector hllc_flux;
-                    const double *chosen_Yi = nullptr; // 用于标记组分来源
+                    const double *chosen_Xi = nullptr; // 用于标记组分来源
 
                     // Branch 1: Supersonic L (Flow is all L)
                     if (S_L >= 0.0)
                     {
                         hllc_flux = F_L;
-                        chosen_Yi = Yi_L.data();
+                        chosen_Xi = Xi_L.data();
                     }
                     // Branch 4: Supersonic R (Flow is all R)
                     else if (S_R <= 0.0)
                     {
                         hllc_flux = F_R;
-                        chosen_Yi = Yi_R.data();
+                        chosen_Xi = Xi_R.data();
                     }
                     // Subsonic Region (Need Star Fluxes)
                     else
@@ -178,7 +181,7 @@ struct FluxHLLC
                             hllc_flux = F_L + S_L * (U_L_star - U_L);
 
                             // 核心逻辑：在 Left Star 区域，组分依然来自 Left
-                            chosen_Yi = Yi_L.data();
+                            chosen_Xi = Xi_L.data();
                         }
                         // Branch 3: Right Star Region (S_* < 0 < S_R)
                         else
@@ -188,7 +191,7 @@ struct FluxHLLC
                             hllc_flux = F_R + S_R * (U_R_star - U_R);
 
                             // 核心逻辑：在 Right Star 区域，组分依然来自 Right
-                            chosen_Yi = Yi_R.data();
+                            chosen_Xi = Xi_R.data();
                         }
                     }
 
@@ -201,10 +204,10 @@ struct FluxHLLC
 
                     for (int s = 0; s < n_spec; ++s)
                     {
-                        // 简单原则：如果我们在 S* 左边，用 Yi_L；如果在 S* 右边，用 Yi_R。
-                        // 这和上面的 chosen_Yi 逻辑是一致的。
-                        // 即使在 Star Region，质量通量发生了变化 (rho* u*)，但组分质量分数 Y 保持不变
-                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * chosen_Yi[s];
+                        // 简单原则：如果我们在 S* 左边，用 Xi_L；如果在 S* 右边，用 Xi_R。
+                        // 这和上面的 chosen_Xi 逻辑是一致的。
+                        // 即使在 Star Region，质量通量发生了变化 (rho* u*)，但组分质量分数 X 保持不变
+                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * chosen_Xi[s];
                     }
                 }
             }
