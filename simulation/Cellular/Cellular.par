@@ -1,0 +1,101 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Pure Carbon Detonation (1D ZND)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# ------------------------------------------------------------------------------
+nx       = 1000       # 1D 高分辨率以解析反应区 (Reaction Zone)
+ny       = 1
+nz       = 1
+
+x_min    = 0.0
+x_max    = 100.0       # 长度需足够长以容纳 ZND 结构
+y_min    = 0.0
+y_max    = 1.0
+z_min    = 0.0
+z_max    = 1.0
+
+geometry = cartesian
+
+# 边界条件：左侧通常设置为反射边界以充当"刚性墙壁"支撑起爆，右侧自由流出
+xl_boundary_type = reflect
+xr_boundary_type = outflow
+yl_boundary_type = outflow
+yr_boundary_type = outflow
+zl_boundary_type = outflow
+zr_boundary_type = outflow
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# ------------------------------------------------------------------------------
+solver      = HLLC       # 激波捕捉推荐 HLLC 或 Roe
+reconstruct = ppm        # 燃烧问题对数值耗散敏感，建议使用三阶 PPM
+time_integrator = RK3
+limiter     = mc
+cfl         = 0.4        # 包含刚性源项时，CFL 尽量压低
+
+EntropyFix = On
+EntropyFixCoefficient = 0.1
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# ------------------------------------------------------------------------------
+tmax         = 1.0e-5    # 物理时间极短 (根据爆轰波速调整)
+max_steps    = 50000
+restart      = false
+
+out_dir      = output
+base_name    = CDet_1D
+
+plt_dstep    = 1000       # 每 100 步输出一次文件
+plt_variables= all
+chk_dstep    = 1000
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# ------------------------------------------------------------------------------
+eos_type = tabular         # Ideal，tabular (Helmholtz)
+eos_table_path = src/physics/eos/eos_table/white_dwarf_eos_4d.h5
+
+gravity_type = none
+
+# ------------------------------------------------------------------------------
+# [Nuclear Burn & ODE]
+# ------------------------------------------------------------------------------
+use_burn         = 1
+network_name     = aprox19
+burn_verbose_level = 1
+
+burn_temp_min    = 1e6   # C12 燃烧点很高
+burn_rho_min     = 1e6
+small_temp       = 1e6
+small_x          = 1e-20
+enforce_mass_conservation = 1
+
+ode_solver       = BE_NR
+linear_solver    = DenseLU
+ode_rtol         = 1e-4
+ode_atol         = 1e-12
+ode_max_newton_iter = 100
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters: CellularDet]
+# ------------------------------------------------------------------------------
+shock_dir = 0        # 0=X, 1=Y, 2=Z
+distance  = 0.5      # 起爆区 (VN Spike) 的初始厚度，占 x_max 的极小部分
+
+# --- Ambient State (未燃环境) ---
+rho_ambient = 1.0e5
+T_ambient   = 2.0e8
+
+# --- Von Neumann Spike State (手动估算的 CJ 后激波状态) ---
+# 注意：以下参数需要你运行一维 CJ/ZND 计算脚本得出精确值
+# 这里填入数量级仅供参考
+rho_vn = 1.0e7       # 强激波压缩，rho 提升约 2 倍 (Gamma=5/3)
+T_vn   = 1.0e9       # 激波加热
+u_vn   = 1.0e9       # 初始活塞/物质速度 (cm/s)
+
+# --- 胞格微扰 ---
+noiseAmplitude = 0.0 # 1D 必须为 0。如果是 2D 测试，可以改为 0.05 (5%)

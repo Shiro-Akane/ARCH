@@ -7,13 +7,11 @@
 
 #include <cmath>
 #include <algorithm> // for std::max
-#include "eos.h"
-#include "../species/Species.h"
 
-// 预留跨平台宏
-#ifndef EOS_INLINE
-#define EOS_INLINE inline
-#endif
+#include "eos.h"
+#include "eos_Utils.h"
+
+#include "../species/Species.h"
 
 struct IdealGas : public EOSBase
 {
@@ -28,7 +26,7 @@ struct IdealGas : public EOSBase
     // 1. 混合物属性计算
     // ========================================================
 
-    EOS_INLINE double get_gamma(const double *Xi) const
+    double get_gamma(const double *Xi) const
     {
         if (manager.count() == 0)
             return global_gamma;
@@ -54,7 +52,7 @@ struct IdealGas : public EOSBase
         return (sum_Xi_Cv_gm1 / sum_Xi_Cv) + 1.0;
     }
 
-    EOS_INLINE double get_mixture_Cv(const double *Xi) const
+    double get_mixture_Cv(const double *Xi) const
     {
         if (manager.count() == 0)
             return 718.0; // 默认空气 Cv 兜底
@@ -70,14 +68,18 @@ struct IdealGas : public EOSBase
     // ========================================================
     // 2. 鸭子类型必须满足的接口规范 (同 TabularEOSView)
     // ========================================================
+    const IdealGas &get_view() const
+    {
+        return *this;
+    }
 
-    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
+    double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
         return (get_gamma(Xi) - 1.0) * rho * e;
     }
 
-    // --- 新增：温度接口 (核反应网络统一要求) ---
-    EOS_INLINE double get_temperature(double rho, double e, const double *Xi) const
+    // --- 温度接口 (核反应网络统一要求) ---
+    double get_temperature(double rho, double e, const double *Xi) const
     {
         // 理想气体：e = Cv * T  =>  T = e / Cv
         double cv_mix = get_mixture_Cv(Xi);
@@ -86,41 +88,45 @@ struct IdealGas : public EOSBase
         return e / cv_mix;
     }
 
-    EOS_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
+    double get_eint_from_T(double rho, double T, const double *Xi) const
+    {
+        // 理想气体解析公式：e = Cv * T
+        double cv_mix = get_mixture_Cv(Xi);
+        return cv_mix * T;
+    }
+
+    double get_pressure(const FluidVector &U, const double *Xi) const
     {
         if (U.rho < 1e-12)
             return 0.0;
-        double e_kinetic = 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho;
-        double e_int = U.eng - e_kinetic;
-
-        return std::max(0.0, (get_gamma(Xi) - 1.0) * e_int);
+        double e_int = eos_utils::extract_specific_internal_energy(U);
+        return std::max(0.0, get_pressure_from_rho_e(U.rho, e_int, Xi));
     }
 
-    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
     {
         if (U.rho < 1e-12)
             return 0.0;
         return std::sqrt(get_gamma(Xi) * p / U.rho);
     }
 
-    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
+    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
         double gamma_mix = get_gamma(Xi);
-        double e_internal = p / (gamma_mix - 1.0);
-        double e_kinetic = 0.5 * rho * (u * u + v * v + w * w);
-        return e_internal + e_kinetic;
+        double e_internal_vol = p / (gamma_mix - 1.0);
+        return e_internal_vol + eos_utils::calc_kinetic_energy(rho, u, v, w);
     }
 
     // ========================================================
     // 3. 偏导数 (Implicit Jacobian)
     // ========================================================
 
-    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
+    double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         return (get_gamma(Xi) - 1.0) * e;
     }
 
-    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
+    double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         return (get_gamma(Xi) - 1.0) * rho;
     }

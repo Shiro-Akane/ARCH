@@ -9,7 +9,7 @@ import os
 # ==============================================================================
 # 1. 配置与文件寻找
 # ==============================================================================
-FILE_PATTERN = "output/*SodTube_HLLC_plt_*.h5"  
+FILE_PATTERN = "output/*CDet_1D_chk_*.h5"  
 # FILE_PATTERN = "output/*_chk_*.h5" 
 
 files = sorted(glob.glob(FILE_PATTERN))

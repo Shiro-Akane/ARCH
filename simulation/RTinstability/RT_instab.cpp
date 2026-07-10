@@ -47,8 +47,8 @@ void RT_Setup(SimConfig &config, SpeciesManager &specs)
 
     // 4. Setup pseudo-species to track the mixing interfaces
     // Using the global gamma (e.g., 1.4). CV is arbitrary for ideal gas tracking.
-    g_sp_light = specs.add_species("LightFluid", config.physics.gamma, 717.5);
-    g_sp_heavy = specs.add_species("HeavyFluid", config.physics.gamma, 717.5);
+    g_sp_light = specs.add_species("LightFluid", 1.0, 1.0, config.physics.gamma, 717.5);
+    g_sp_heavy = specs.add_species("HeavyFluid", 4.0, 2.0, config.physics.gamma, 717.5);
 
     std::cout << "[Problem] Rayleigh-Taylor Instability Setup Complete.\n"
               << "          Interface at y=" << g_y_int << "\n"

@@ -48,9 +48,9 @@ struct SpeciesManager
      * @param Cv The heat capacity at constant volume.
      * @return int The unique ID assigned to this species (used for array indexing).
      */
-    int add_species(std::string name, double gamma, double Cv)
+    int add_species(std::string name, double A, double Z, double gamma, double Cv)
     {
-        species_list.push_back({name, gamma, Cv});
+        species_list.push_back({name, A, Z, gamma, Cv});
         // The index of the newly added element is size - 1
         return species_list.size() - 1;
     }
@@ -103,4 +103,21 @@ struct SpeciesManager
      * @brief Retrieves the name string for I/O purposes.
      */
     std::string get_name(int id) const { return species_list[id].name; }
+
+    /**
+     * @brief Retrieves the integer ID of a species by its string name.
+     * @param target_name The name to search for (e.g., "c12").
+     * @return int The ID of the species, or -1 if not found.
+     */
+    int GetSpeciesID(const std::string &target_name) const
+    {
+        for (int i = 0; i < species_list.size(); ++i)
+        {
+            if (species_list[i].name == target_name)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
 };

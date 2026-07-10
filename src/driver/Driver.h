@@ -10,6 +10,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iomanip>
+#include <cmath>
 
 #include "DriverUtils.h"
 
@@ -36,10 +37,11 @@ struct BCHandler
  * @tparam SolverPolicy The numerical scheme (e.g., Lax-Friedrichs, HLLC).
  * @tparam EosPolicy The equation of state (e.g., Ideal Gas).
  * @tparam GravityPolicy The gravity policy.
+ * @tparam BurnerPolicy The burning policy.
  */
-template <typename TimeIntegratorPolicy, typename EosPolicy, typename GravityPolicy>
+template <typename TimeIntegratorPolicy, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
 void run_simulation(FluidState &state, const EosPolicy &eos,
-                    GravityPolicy &gravity,
+                    GravityPolicy &gravity, BurnerPolicy &burn,
                     const Grid &grid, const SimConfig &config,
                     const SpeciesManager &specs,
                     const RunState &start_state)
@@ -117,6 +119,72 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
     std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name() << std::endl;
 
+    // 提取组分数量
+    const int n_spec = state.GetNumSpecies();
+
+    // =========================================================
+    // 局部辅助 Lambda 函数：执行网格遍历燃烧
+    // =========================================================
+    auto do_burn_step = [&](FluidState &current_state, double burn_dt)
+    {
+        if (!config.physics.burn.use_burn)
+            return; // 如果没开燃烧，直接跳过
+
+        int total_cells = grid.GetTotalSize();
+// 在 GPU 上，这个 for 循环就是我们要并行化的内核
+#pragma omp parallel for
+        for (int i = 0; i < total_cells; ++i)
+        {
+            double rho = current_state.rho[i];
+
+            // 跳过低密度真空区（保护机制）
+            if (rho < config.physics.burn.burn_rho_min)
+                continue;
+
+            // 1. 提取当前单元的组分到 Y_ODE
+            double Y_ODE[BurnLimits::MAX_ODE_NEQ];
+            current_state.get_species_to_buffer(i, Y_ODE);
+
+            // 2. 计算内能并从 EOS 获取当前温度
+            double mx = current_state.mom_x[i];
+            double my = current_state.mom_y[i];
+            double mz = current_state.mom_z[i];
+            double e_kin = 0.5 * (mx * mx + my * my + mz * mz) / rho;
+            double e_int = (current_state.eng[i] - e_kin) / rho; // 比内能
+
+            // 假设你的 EOS 提供了这个接口：根据 rho, e_int, X_k 求 T
+            double T = eos.get_temperature(rho, e_int, Y_ODE);
+            Y_ODE[n_spec] = T; // 将温度放在数组末尾
+
+            // 3. 呼叫底层的 ODE 求解器执行燃烧
+            bool success = burn.integrate(Y_ODE, rho, burn_dt, eos, config.physics.burn);
+
+            if (!success && config.physics.burn.verbose_level > 0)
+            {
+                // 注意：在多线程下 cout 会竞争，实际可以用一个 atomic flag 标记然后统一报错
+                std::cerr << "[Warning] Burn failed at cell " << i << " at time " << t_current << std::endl;
+            }
+
+            // 4. 将燃烧后的新组分和新温度写回流体状态
+            current_state.set_species_from_buffer(i, Y_ODE);
+            double T_new = Y_ODE[n_spec];
+
+            // 5. 根据新温度和新组分，重新计算内能并更新总能量
+            double e_int_new = eos.get_eint_from_T(rho, T_new, Y_ODE);
+            current_state.eng[i] = rho * e_int_new + e_kin;
+        }
+    };
+
+    std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name() << std::endl;
+    // 打印表头
+    std::cout << std::left << std::setw(8) << "Step"
+              << std::left << std::setw(15) << "Time"
+              << std::left << std::setw(15) << "dt"
+              << std::left << std::setw(15) << "dt_hydro"
+              << std::left << std::setw(15) << "dt_burn"
+              << std::endl;
+    std::cout << std::string(68, '-') << std::endl;
+
     // =========================================================
     // Main Time Loop
     // =========================================================
@@ -170,7 +238,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         double dt_computed = adaptive_dt(u_current, eos, grid, cfl);
 
         // Safety check for numerical degeneracy
-        if (dt_computed < 1e-13)
+        if (dt_computed < 1e-25)
         {
             std::cerr << "[Error] dt too small (" << dt_computed << "). Simulation aborted." << std::endl;
             break;
@@ -196,13 +264,19 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // -----------------------------------------------------
         // Step D: Numerical Update
         // -----------------------------------------------------
-        // 1. Fill Ghost Zones (Periodic/Outflow/Reflective)
-        bc_handler.apply(u_current, grid);
+        // D1. Burn Step (if enabled)
+        bc_handler.apply(u_current, grid); // 确保幽灵区也有物理意义
+        do_burn_step(u_current, 0.5 * dt);
 
-        // 2. Evolve System: U(n+1) = U(n) + dt * Flux(U(n))
+        // D2. Hydrodynamics Step
+        bc_handler.apply(u_current, grid);
         TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, gravity, entropy_fix_coeff);
 
-        // 3. Ping-Pong Buffering (Swap pointers/references)
+        // D3. Burn Step (if enabled)
+        bc_handler.apply(u_next, grid);
+        do_burn_step(u_next, 0.5 * dt);
+
+        // D4. Ping-Pong Buffering (Swap pointers/references)
         std::swap(u_current, u_next);
 
         // -----------------------------------------------------
@@ -210,6 +284,14 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // -----------------------------------------------------
         t_current += dt;
         step_count++;
+
+        std::cout << std::left << std::setw(8) << step_count
+                  << std::scientific << std::setprecision(5)
+                  << std::left << std::setw(15) << t_current
+                  << std::left << std::setw(15) << dt
+                  << std::left << std::setw(15) << dt       // 目前 hydro dt 就是全局 dt
+                  << std::left << std::setw(15) << dt / 2.0 // 算子分裂每次走 dt/2
+                  << std::endl;
     }
 
     // =========================================================

@@ -25,6 +25,7 @@
 // 2. Physics & Solvers
 #include "../physics/eos/eosdispatch.h"
 #include "../physics/gravity/GravityDispatch.h"
+#include "../numerics/burnsolver/BurnDispatch.h"
 
 #include "../numerics/flux/FluxVL.h"
 #include "../numerics/flux/FluxSW.h"
@@ -88,18 +89,18 @@ int determine_required_ng(const SimConfig &config)
 // =========================================================
 
 // Level 4: Execute the simulation with the fully assembled type
-template <typename SolverType, typename EosPolicy, typename GravityPolicy>
-void launch_run(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity,
+template <typename SolverType, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
+void launch_run(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn,
                 const Grid &grid, const SimConfig &config,
                 const SpeciesManager &specs, const RunState &run_state)
 {
     // 调用 Driver.h 中的主循环
-    run_simulation<SolverType>(state, eos, gravity, grid, config, specs, run_state);
+    run_simulation<SolverType>(state, eos, gravity, burn, grid, config, specs, run_state);
 }
 
 // Level 3: Select Limiter (For MUSCL)
-template <template <typename> class TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy, typename GravityPolicy>
-void select_limiter(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, const Grid &grid,
+template <template <typename> class TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
+void select_limiter(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn, const Grid &grid,
                     const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
     std::string lim = config.numerics.limiter;
@@ -108,25 +109,25 @@ void select_limiter(FluidState &state, const EosPolicy &eos, GravityPolicy &grav
     {
         using MyRecon = MusclReconstruction<MinMod>;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (lim == "superbee" || lim == "SuperBee")
     {
         using MyRecon = MusclReconstruction<SuperBee>;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (lim == "vanleer" || lim == "VanLeer")
     {
         using MyRecon = MusclReconstruction<VanLeer>;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (lim == "mc" || lim == "MC")
     {
         using MyRecon = MusclReconstruction<McLimiter>;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else
     {
@@ -134,13 +135,13 @@ void select_limiter(FluidState &state, const EosPolicy &eos, GravityPolicy &grav
         std::cerr << "[Warning] Unknown limiter '" << lim << "', defaulting to MinMod." << std::endl;
         using MyRecon = MusclReconstruction<MinMod>;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
 }
 
 // Level 2: Select Reconstruction Scheme
-template <template <typename> class TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy, typename GravityPolicy>
-void select_reconstruction(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, const Grid &grid,
+template <template <typename> class TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
+void select_reconstruction(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn, const Grid &grid,
                            const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
     std::string recon = config.numerics.reconstruction;
@@ -149,19 +150,19 @@ void select_reconstruction(FluidState &state, const EosPolicy &eos, GravityPolic
         // PCM (一阶) 不需要限制器，直接组装
         using MyRecon = PCMReconstruction;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (recon == "muscl" || recon == "MUSCL")
     {
         // MUSCL (二阶) 需要进一步选择限制器 -> 进入 Level 4
-        select_limiter<TimeIntegrator, FluxScheme>(state, eos, gravity, grid, config, specs, run_state);
+        select_limiter<TimeIntegrator, FluxScheme>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (recon == "ppm" || recon == "PPM")
     {
         // PPM (三阶) 通常自带逻辑，或者有单独的限制参数
         using MyRecon = PPMReconstruction;
         using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, grid, config, specs, run_state);
+        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else
     {
@@ -170,8 +171,8 @@ void select_reconstruction(FluidState &state, const EosPolicy &eos, GravityPolic
 }
 
 // Level 1: Select Flux Scheme
-template <template <typename> class TimeIntegrator, typename EosPolicy, typename GravityPolicy>
-void select_flux(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, const Grid &grid,
+template <template <typename> class TimeIntegrator, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
+void select_flux(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn, const Grid &grid,
                  const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
     std::string flux = config.numerics.solver_name; // e.g., "VL", "HLLC"
@@ -179,27 +180,27 @@ void select_flux(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity
     if (flux == "VL" || flux == "VanLeer")
     {
         // 选定 FluxVL，进入 Level 3 选择重构
-        select_reconstruction<TimeIntegrator, FluxVL>(state, eos, gravity, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxVL>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (flux == "SW" || flux == "StegerWarming")
     {
         // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
-        select_reconstruction<TimeIntegrator, FluxSW>(state, eos, gravity, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxSW>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (flux == "Roe" || flux == "roe")
     {
         // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
-        select_reconstruction<TimeIntegrator, FluxRoe>(state, eos, gravity, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxRoe>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (flux == "HLL" || flux == "hll")
     {
         // dispatch_reconstruction<TimeIntegrator, FluxSW>(state, eos, grid, config, specs);
-        select_reconstruction<TimeIntegrator, FluxHLL>(state, eos, gravity, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxHLL>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (flux == "HLLC")
     {
         // dispatch_reconstruction<TimeIntegrator, FluxHLLC>(state, eos, grid, config, specs);
-        select_reconstruction<TimeIntegrator, FluxHLLC>(state, eos, gravity, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxHLLC>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else
     {
@@ -285,6 +286,8 @@ void DispatchSolver(const std::string &solver_name,
                                 {
                                     Physical::Gravity::dispatch_gravity(config, [&](auto &&gravity)
                                                                         {
+                                                                            BurnDispatcher::dispatch(config, [&](auto &&burn)
+                                                                                                     {
     std::string time_int = config.Get<std::string>("time_integrator", "SSPRK2");
 
     std::cout << "[Dispatch] Strategy: "
@@ -295,20 +298,21 @@ void DispatchSolver(const std::string &solver_name,
 
     if (time_int == "RK2" || time_int == "SSPRK2")
     {
-        select_flux<SolverRK2>(state, eos, gravity, grid, config, specs, run_state);
+        select_flux<SolverRK2>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (time_int == "RK3" || time_int == "SSPRK3")
     {
-        select_flux<SolverRK3>(state, eos, gravity, grid, config, specs, run_state);
+        select_flux<SolverRK3>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else if (time_int == "Euler" || time_int == "RK1")
     {
-        select_flux<SolverEuler>(state, eos, gravity, grid, config, specs, run_state);
+        select_flux<SolverEuler>(state, eos, gravity, burn, grid, config, specs, run_state);
     }
     else
     {
         std::cerr << "[Warning] Unknown time integrator '" << time_int << "', defaulting to SSPRK2." << std::endl;
-        select_flux<SolverRK2>(state, eos, gravity, grid, config, specs, run_state);
-    } }); // <--- Gravity Lambda end
-                                });                                           // <--- EOS Lambda end
+        select_flux<SolverRK2>(state, eos, gravity, burn, grid, config, specs, run_state);
+    } }); // <--- Burn Lambda end
+                                                                        });                                // <--- Gravity Lambda end
+                                });                                                                        // <--- EOS Lambda end
 }

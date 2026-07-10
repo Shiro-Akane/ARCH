@@ -6,20 +6,18 @@
  */
 #pragma once
 
-#include "eos.h"
 #include <string>
 #include <vector>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-#include "highfive/H5File.hpp"
-#include "../species/Species.h"
 
-// 跨平台宏定义：在纯 CPU 环境下展开为 inline
-// 未来引入 CUDA 时，在 CMake 中注入 #define EOS_INLINE __host__ __device__ inline
-#ifndef EOS_INLINE
-#define EOS_INLINE inline
-#endif
+#include "highfive/H5File.hpp"
+
+#include "eos_Utils.h"
+#include "eos.h"
+
+#include "../species/Species.h"
 
 // ====================================================================
 // 1. Device View: 零拷贝、纯裸指针计算核心 (天然支持 GPU 核函数)
@@ -44,7 +42,46 @@ struct Tabular3DEOSView
 
     int target_species_id;
 
-    EOS_INLINE double interpolate_3d(const double *table, double rho, double e, double X) const
+    // 物理常数 (CGS 单位制)
+    static constexpr double k_B_cgs = 1.380649e-16; // erg/K
+    static constexpr double m_u_cgs = 1.660539e-24; // g
+
+    // ========================================================
+    // 边界检测与解析回退 (Ideal Gas Fallback)
+    // ========================================================
+
+    bool is_out_of_bounds(double log_rho, double log_e, double X) const
+    {
+        return (log_rho < log_rho_min || log_rho >= log_rho_max - 1e-6 ||
+                log_e < log_e_min || log_e >= log_e_max - 1e-6 ||
+                X < X_min || X >= X_max - 1e-6);
+    }
+
+    double fallback_gamma() const { return 5.0 / 3.0; } // 假设单原子理想气体
+
+    double fallback_pressure(double rho, double e) const
+    {
+        return rho * e * (fallback_gamma() - 1.0);
+    }
+
+    double fallback_temperature(double e, const double *Xi) const
+    {
+        // 尝试获取 Abar，如果失败则给一个合理的默认值 (例如 1.0 代表纯氢)
+        double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
+        double R_spec = k_B_cgs / (Abar * m_u_cgs);
+        return e * (fallback_gamma() - 1.0) / R_spec;
+    }
+
+    double fallback_sound_speed(double rho, double e) const
+    {
+        double p = fallback_pressure(rho, e);
+        return std::sqrt(fallback_gamma() * p / rho);
+    }
+
+    // ========================================================
+    // 核心：三线性插值 (Trilinear Interpolation)
+    // ========================================================
+    double interpolate_3d(const double *table, double rho, double e, double X) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -54,14 +91,14 @@ struct Tabular3DEOSView
         double z = X;
 
         // 边界截断 (Clamping)
-        x = fmax(log_rho_min, fmin(x, log_rho_max - 1e-6));
-        y = fmax(log_e_min, fmin(y, log_e_max - 1e-6));
-        z = fmax(X_min, fmin(z, X_max - 1e-6));
-
-        // 计算索引
         int i = static_cast<int>((x - log_rho_min) / dlog_rho);
         int j = static_cast<int>((y - log_e_min) / dlog_e);
         int k = static_cast<int>((z - X_min) / dX);
+
+        // 计算索引
+        i = std::max(0, std::min(i, n_rho - 2));
+        j = std::max(0, std::min(j, n_e - 2));
+        k = std::max(0, std::min(k, n_X - 2));
 
         // 计算局部偏移 [0, 1)
         double tx = (x - (log_rho_min + i * dlog_rho)) / dlog_rho;
@@ -100,7 +137,7 @@ struct Tabular3DEOSView
     // 状态查询接口 (含 pynucastro 预留的 Xi)
     // ========================================================
 
-    EOS_INLINE double get_target_X(const double *Xi) const
+    double get_target_X(const double *Xi) const
     {
         // 1. 最高优先级：如果是普通的双组分测试，直接提取目标质量分数
         if (target_species_id >= 0)
@@ -118,99 +155,158 @@ struct Tabular3DEOSView
         return 0.5;
     }
 
-    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
+    double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
-        // 直接从表格插值压力，确保与 get_pressure() 和 get_sound_speed() 的一致性
-        return interpolate_3d(table_P, rho, e, get_target_X(Xi));
+        if (rho <= 1e-12 || e <= 1e-12)
+            return 0.0;
+        double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
+        {
+            return fallback_pressure(rho, e);
+        }
+        return interpolate_3d(table_P, rho, e, X);
     }
 
     // 提取温度，用于驱动 Alpha-chain 等核反应网络
-    EOS_INLINE double get_temperature(double rho, double e, const double *Xi) const
+    double get_temperature(double rho, double e, const double *Xi) const
     {
-        return interpolate_3d(table_T, rho, e, get_target_X(Xi));
+        if (rho <= 1e-12 || e <= 1e-12)
+            return 0.0;
+        double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
+        {
+            return fallback_temperature(e, Xi);
+        }
+        return interpolate_3d(table_T, rho, e, X);
     }
 
-    EOS_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
+    double get_eint_from_T(double rho, double T_target, const double *Xi) const
     {
-        if (U.rho < 1e-12)
+        // 如果极低温度/密度，回退到理想气体解析解
+        if (rho <= 1e-12 || T_target <= 1e-12)
             return 0.0;
-        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
+
+        double X = get_target_X(Xi);
+
+        // 边界保护：使用理想气体公式快速反推
+        if (rho < std::pow(10, log_rho_min) || rho > std::pow(10, log_rho_max))
+        {
+            double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
+            double R_spec = k_B_cgs / (Abar * m_u_cgs);
+            return T_target * R_spec / (fallback_gamma() - 1.0);
+        }
+
+        // --- 简单的二分法求根寻找 e (最稳健，适合 GPU) ---
+        double e_left = std::pow(10, log_e_min);
+        double e_right = std::pow(10, log_e_max);
+        double e_mid = 0.5 * (e_left + e_right);
+
+        // 如果你的表比较大，可以先基于理想气体给一个初始猜测值缩小区间
+
+        const int max_iters = 50;
+        const double tol = 1e-6; // 温度容差
+
+        for (int i = 0; i < max_iters; ++i)
+        {
+            e_mid = 0.5 * (e_left + e_right);
+            double T_mid = get_temperature(rho, e_mid, Xi);
+
+            if (std::abs(T_mid - T_target) / T_target < tol)
+            {
+                break;
+            }
+
+            // 假设温度随内能单调递增
+            if (T_mid < T_target)
+            {
+                e_left = e_mid;
+            }
+            else
+            {
+                e_right = e_mid;
+            }
+        }
+
+        return e_mid;
+    }
+
+    double get_pressure(const FluidVector &U, const double *Xi) const
+    {
+        double e_int = eos_utils::extract_specific_internal_energy(U);
         return get_pressure_from_rho_e(U.rho, e_int, Xi);
     }
 
-    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
     {
-        if (U.rho < 1e-12)
+        double e_int = eos_utils::extract_specific_internal_energy(U);
+        if (U.rho <= 1e-12 || e_int <= 1e-12)
             return 0.0;
-        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
-        return interpolate_3d(table_cs, U.rho, e_int, get_target_X(Xi));
+
+        double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(U.rho), std::log10(e_int), X))
+        {
+            return fallback_sound_speed(U.rho, e_int);
+        }
+        return interpolate_3d(table_cs, U.rho, e_int, X);
     }
 
-    EOS_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
+    double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
         if (rho < 1e-12 || e < 1e-12)
-            return 1.4;
-        double p = interpolate_3d(table_P, rho, e, get_target_X(Xi));
-        double cs = interpolate_3d(table_cs, rho, e, get_target_X(Xi));
+            return fallback_gamma();
+        double p = get_pressure_from_rho_e(rho, e, Xi);
         if (p < 1e-12)
-            return 1.4;
+            return fallback_gamma();
+
+        double X = get_target_X(Xi);
+        double cs = is_out_of_bounds(std::log10(rho), std::log10(e), X) ? fallback_sound_speed(rho, e) : interpolate_3d(table_cs, rho, e, X);
+
         return (rho * cs * cs) / p;
     }
 
     // ========================================================
     // 导数接口 (支持读取真实导数表或回退有限差分)
     // ========================================================
-    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
+    double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
-        if (table_dP_drho)
+        double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
         {
-            return interpolate_3d(table_dP_drho, rho, e, get_target_X(Xi));
+            return e * (fallback_gamma() - 1.0); // 理想气体 dP/drho
         }
+
+        if (table_dP_drho)
+            return interpolate_3d(table_dP_drho, rho, e, X);
+
         double drho = rho * 0.001;
-        return (interpolate_3d(table_P, rho + drho, e, get_target_X(Xi)) - interpolate_3d(table_P, rho - drho, e, get_target_X(Xi))) / (2.0 * drho);
+        return (interpolate_3d(table_P, rho + drho, e, X) -
+                interpolate_3d(table_P, rho - drho, e, X)) /
+               (2.0 * drho);
     }
 
-    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
+    double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
-        if (table_dP_de)
+        double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
         {
-            return interpolate_3d(table_dP_de, rho, e, get_target_X(Xi));
+            return rho * (fallback_gamma() - 1.0); // 理想气体 dP/de
         }
+
+        if (table_dP_de)
+            return interpolate_3d(table_dP_de, rho, e, X);
+
         double de = e * 0.001;
-        return (interpolate_3d(table_P, rho, e + de, get_target_X(Xi)) - interpolate_3d(table_P, rho, e - de, get_target_X(Xi))) / (2.0 * de);
+        return (interpolate_3d(table_P, rho, e + de, X) -
+                interpolate_3d(table_P, rho, e - de, X)) /
+               (2.0 * de);
     }
 
     // ========================================================
     // 鲁棒的阻尼牛顿法反推总能
     // ========================================================
-    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
+    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
-        double e_guess = p / ((1.4 - 1.0) * rho);
-
-        for (int iter = 0; iter < 20; ++iter)
-        {
-            double p_guess = interpolate_3d(table_P, rho, e_guess, get_target_X(Xi));
-            double dp_de = get_dp_de_rho(rho, e_guess, Xi);
-
-            if (fabs(dp_de) < 1e-12)
-                break;
-
-            double delta_e = (p - p_guess) / dp_de;
-
-            // 阻尼处理：防止极端压力梯度导致内能变为非物理的负数
-            while (e_guess + delta_e <= 1e-12)
-            {
-                delta_e *= 0.5;
-            }
-
-            e_guess += delta_e;
-
-            if (fabs(delta_e) < 1e-6 * e_guess)
-                break;
-        }
-
-        double e_kinetic = 0.5 * rho * (u * u + v * v + w * w);
-        return rho * e_guess + e_kinetic;
+        return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
     }
 };
 

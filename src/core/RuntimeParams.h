@@ -144,7 +144,35 @@ public:
         cfg.physics.eos_type = parser.GetString("eos_type", "ideal");
         cfg.physics.eos_table_path = parser.GetString("eos_table_path", "");
         cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
-        cfg.physics.use_burn = (parser.GetInt("use_burn", 0) != 0);
+
+        // --- 核反应燃烧模块 (Burn) ---
+        cfg.physics.burn.use_burn = (parser.GetInt("use_burn", 0) != 0);
+        cfg.physics.burn.network_name = parser.GetString("network_name", "aprox19");
+        cfg.physics.burn.burn_temp_min = parser.GetDouble("burn_temp_min", 1e7);
+        cfg.physics.burn.burn_rho_min = parser.GetDouble("burn_rho_min", 1e1);
+        cfg.physics.burn.small_temp = parser.GetDouble("small_temp", 1e5);
+        cfg.physics.burn.small_x = parser.GetDouble("small_x", 1e-20);
+        cfg.physics.burn.enforce_mass_conservation = (parser.GetInt("enforce_mass_conservation", 1) != 0); // 默认开启
+        cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", 0);
+
+        // --- ODE 求解器配置 (ODE) ---
+        cfg.physics.burn.odeconfig.ode_solver = parser.GetString("ode_solver", "BE_NR");
+        cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", "DenseLU");
+
+        cfg.physics.burn.odeconfig.rtol = parser.GetDouble("ode_rtol", 1e-4);
+        cfg.physics.burn.odeconfig.atol = parser.GetDouble("ode_atol", 1e-8);
+        cfg.physics.burn.odeconfig.max_newton_iter = parser.GetInt("ode_max_newton_iter", 50);
+        cfg.physics.burn.odeconfig.max_substeps = parser.GetInt("ode_max_substeps", 10000);
+
+        cfg.physics.burn.odeconfig.dt_safe_factor = parser.GetDouble("ode_dt_safe_fac", 0.9);
+        cfg.physics.burn.odeconfig.dt_fac_max = parser.GetDouble("ode_dt_fac_max", 2.0);
+        cfg.physics.burn.odeconfig.dt_fac_min = parser.GetDouble("ode_dt_fac_min", 0.1);
+        cfg.physics.burn.odeconfig.initial_dt_frac = parser.GetDouble("ode_initial_dt_frac", 1e-3);
+
+        cfg.physics.burn.odeconfig.use_numerical_jacobian = (parser.GetInt("ode_use_numerical_jac", 0) != 0);
+        cfg.physics.burn.odeconfig.freeze_jacobian = (parser.GetInt("ode_freeze_jacobian", 0) != 0);
+
+        // --- 引力模块 (Gravity) ---
         std::string grav_type = parser.GetString("gravity_type", "none");
         std::transform(grav_type.begin(), grav_type.end(), grav_type.begin(), ::tolower);
         cfg.physics.gravity.type = grav_type;

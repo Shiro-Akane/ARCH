@@ -64,11 +64,45 @@ chk_dstep    = -1           # Output CHK based on iteration steps (-1 to disable
 # Maps to config.physics.*
 # ------------------------------------------------------------------------------
 eos_type   = tabular                       # Options: ideal, tabular
-eos_table_path =/home/shiroakane/ARCH/src/physics/eos/eos_table/ideal_gas_3d.h5
+eos_table_path =../../src/physics/eos/eos_table/ideal_gas_3d.h5
 gamma = 1.4    # Default global gamma (will be overridden by species)
 
 gravity_type = external     #Options: none, enternal, self
 gravity_g_y  = -981
+
+# ------------------------------------------------------------------------------
+# [Nuclear Burn & ODE]
+# Maps to config.physics.burn.*
+# ------------------------------------------------------------------------------
+use_burn        = 0              # 0 = Off, 1 = On (Master switch for burning)
+network_name    = aprox19        # Options: aprox19, custom, c12_o16
+burn_verbose_level = 0           # 0 = Silent, 1 = Divergence Warnings, 2 = Full Step Info
+
+# --- Physical Thresholds & Enforcers ---
+burn_temp_min   = 1e7            # Minimum temperature (K) to ignite burning ODE
+burn_rho_min    = 1e1            # Minimum density (g/cm^3) to ignite burning ODE
+small_temp      = 1e5            # Temperature floor for safety clipping
+small_x         = 1e-20          # Mass fraction floor to prevent negative abundances
+enforce_mass_conservation = 1    # 1 = Force sum(X_i) = 1.0 after each NR iteration
+
+# --- ODE Integrator Settings ---
+ode_solver      = BE_NR          # Options: BE_NR, ROS4, VODE
+linear_solver   = DenseLU        # Options: DenseLU, SparseWrap
+
+ode_rtol        = 1e-4           # Relative tolerance for WRMS error
+ode_atol        = 1e-8           # Absolute tolerance for WRMS error
+ode_max_newton_iter = 50         # Max NR iterations per sub-step
+ode_max_substeps    = 10000      # Max sub-steps to reach dt_hydro (prevents infinite loops)
+
+# --- PI Step Size Controller ---
+ode_initial_dt_frac = 1e-3       # Initial trial dt as a fraction of dt_hydro
+ode_dt_safe_fac     = 0.9        # Safety multiplier for proposed PI step size
+ode_dt_fac_max      = 2.0        # Maximum allowed step size growth factor
+ode_dt_fac_min      = 0.1        # Maximum allowed step size shrink factor
+
+# --- Advanced / Debug Options ---
+ode_use_numerical_jac = 0        # 1 = Force finite-difference Jacobian (Debug only)
+ode_freeze_jacobian   = 0        # 1 = Re-use Jacobian for multiple NR iterations
 
 # ------------------------------------------------------------------------------
 # [User Custom Parameters]

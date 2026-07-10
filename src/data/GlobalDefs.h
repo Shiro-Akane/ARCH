@@ -68,6 +68,56 @@ struct NumericsConfig
 // ----------------------------------------------------------------------
 // 3. Physics Configuration (EOS, Burn, Gravity)
 // ----------------------------------------------------------------------
+
+// --- 编译期静态内存常量 ---
+struct OdeConfig
+{
+    std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
+    std::string linear_solver = "DenseLU"; ///< Default linear solver for the Jacobian system
+
+    double rtol = 1e-4; ///< Relative tolerance for ODE integration
+    double atol = 1e-8; ///< Absolute tolerance for ODE integration
+
+    int max_newton_iter = 50; ///< Maximum Newton-Raphson iterations per ODE step
+    int max_substeps = 100;   ///< Maximum adaptive sub-steps for stiff ODEs
+
+    double dt_safe_factor = 0.9;    ///< Safety factor for adaptive time-stepping
+    double dt_fac_max = 2.0;        ///< Maximum factor to increase dt
+    double dt_fac_min = 0.1;        ///< Minimum factor to decrease dt
+    double initial_dt_frac = 1e-14; ///< Initial fraction of the global time step for the first ODE sub-step
+
+    bool use_numerical_jacobian = false; ///< Whether to compute Jacobian numerically (default: false, use analytical)
+    bool freeze_jacobian = false;        ///< Whether to freeze the Jacobian for multiple Newton iterations (default: false)
+};
+
+struct BurnLimits
+{
+    static constexpr int MAX_SPECIES = 30;              ///< Maximum number of species supported by dense matrix network
+    static constexpr int MAX_ODE_NEQ = MAX_SPECIES + 1; ///< Maximum ODE system size (species + temperature)
+};
+
+struct BurnConfig
+{
+    double ignition_temp = 1e9; ///< Ignition temperature threshold for burning (in Kelvin)
+    double burn_tol = 1e-6;     ///< Tolerance for burn convergence
+
+    // Nuclear Burning (Placeholder)
+    bool use_burn = false;                ///< Master switch for the burn module
+    std::string network_name = "aprox19"; ///< "alpha_chain", "c12_o16", "7isotope"
+
+    double burn_temp_min = 1e6; ///< Minimum temperature for burning (in Kelvin)
+    double burn_rho_min = 1e1;  ///< Minimum density for burning (in g/cm^3)
+
+    double small_temp = 1e5; ///< Minimum temperature for burning (in Kelvin)
+    double small_x = 1e-20;  ///< Minimum mass fraction for species (to avoid negative or zero)
+
+    bool enforce_mass_conservation = true; ///< Whether to enforce mass fraction conservation after each burn step
+
+    int verbose_level = 0; ///< Verbosity level for burn diagnostics (0: silent, 1: basic, 2: detailed)
+
+    OdeConfig odeconfig; ///< ODE solver configuration for the burn module
+};
+
 // Gravity Configuration
 struct GravityConfig
 {
@@ -91,12 +141,9 @@ struct PhysicsConfig
     std::string eos_table_path = ""; ///< For tabular EOS, the path to the HDF5 file
     double gamma = 1.4;              ///< Default adiabatic index
 
-    // Nuclear Burning (Placeholder)
-    bool use_burn = false;         ///< Master switch for the burn module
-    std::string network_name = ""; ///< "alpha_chain", "c12_o16", "7isotope"
-
     // Gravity (Placeholder)
     GravityConfig gravity;
+    BurnConfig burn;
 };
 
 // ----------------------------------------------------------------------

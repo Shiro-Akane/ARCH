@@ -5,6 +5,9 @@ cmake_minimum_required(VERSION 3.15)
 # ==============================================================================
 project(ARCH LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
 
 # 1. 打印详细编译细节
@@ -20,10 +23,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cpp")
 file(GLOB_RECURSE SIMULATION_CASES CONFIGURE_DEPENDS "simulation/*.cpp")
 
+# 排除 network 子目录下的 main.cpp 文件
+list(FILTER SOURCES EXCLUDE REGEX ".*/network/.*/main\\.cpp$")
+
 # ==============================================================================
 # Target Definition & Properties
 # ==============================================================================
 add_executable(ARCH ${SOURCES} ${SIMULATION_CASES})
+
+target_include_directories(ARCH PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/aprox19
+)
 
 # 设置 C++17 标准
 target_compile_features(ARCH PRIVATE cxx_std_17)

@@ -5,18 +5,18 @@
  */
 #pragma once
 
-#include "eos.h"
 #include <string>
 #include <vector>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-#include "highfive/H5File.hpp"
-#include "../species/Species.h"
 
-#ifndef EOS_INLINE
-#define EOS_INLINE inline
-#endif
+#include "highfive/H5File.hpp"
+
+#include "eos_Utils.h"
+#include "eos.h"
+
+#include "../species/Species.h"
 
 // ====================================================================
 // 1. Device View: 16 顶点四线性插值核心
@@ -40,10 +40,47 @@ struct Tabular4DEOSView
 
     const SpeciesManager *specs;
 
+    static constexpr double k_B_cgs = 1.380649e-16; // erg/K
+    static constexpr double m_u_cgs = 1.660539e-24; // g
+
+    // ========================================================
+    // 边界检测与解析回退 (Ideal Gas Fallback)
+    // ========================================================
+
+    // 检查是否超出插值表范围
+    bool is_out_of_bounds(double log_rho, double log_e, double A, double Z) const
+    {
+        // 允许边界内极小误差 (1e-6)
+        return (log_rho < log_rho_min || log_rho >= log_rho_max - 1e-6 ||
+                log_e < log_e_min || log_e >= log_e_max - 1e-6 ||
+                A < A_min || A >= A_max - 1e-6 ||
+                Z < Z_min || Z >= Z_max - 1e-6);
+    }
+
+    // 解析推导: 获取等效 Gamma (单原子理想气体通常为 5/3)
+    double fallback_gamma() const { return 5.0 / 3.0; }
+
+    double fallback_pressure(double rho, double e) const
+    {
+        return rho * e * (fallback_gamma() - 1.0);
+    }
+
+    double fallback_temperature(double e, double Abar) const
+    {
+        double R_spec = k_B_cgs / (Abar * m_u_cgs);
+        return e * (fallback_gamma() - 1.0) / R_spec;
+    }
+
+    double fallback_sound_speed(double rho, double e) const
+    {
+        double p = fallback_pressure(rho, e);
+        return std::sqrt(fallback_gamma() * p / rho);
+    }
+
     // ========================================================
     // 核心：四线性插值 (Quadrilinear Interpolation)
     // ========================================================
-    EOS_INLINE double interpolate_4d(const double *table, double rho, double e, double A, double Z) const
+    double interpolate_4d(const double *table, double rho, double e, double A, double Z) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -53,17 +90,18 @@ struct Tabular4DEOSView
         double u = A;
         double v = Z;
 
-        // 边界截断 (Clamping)
-        x = fmax(log_rho_min, fmin(x, log_rho_max - 1e-6));
-        y = fmax(log_e_min, fmin(y, log_e_max - 1e-6));
-        u = fmax(A_min, fmin(u, A_max - 1e-6));
-        v = fmax(Z_min, fmin(v, Z_max - 1e-6));
-
-        // 计算基准索引
+        // 边界检查交给上层调用函数处理
+        // 此处严格要求传入的 (x, y, u, v) 已在界内
         int i = static_cast<int>((x - log_rho_min) / dlog_rho);
         int j = static_cast<int>((y - log_e_min) / dlog_e);
         int k = static_cast<int>((u - A_min) / dA);
         int l = static_cast<int>((v - Z_min) / dZ);
+
+        // 防御性越界保护 (防止浮点精度导致的下标溢出)
+        i = std::max(0, std::min(i, n_rho - 2));
+        j = std::max(0, std::min(j, n_e - 2));
+        k = std::max(0, std::min(k, n_A - 2));
+        l = std::max(0, std::min(l, n_Z - 2));
 
         // 计算局部偏移 [0, 1)
         double tx = (x - (log_rho_min + i * dlog_rho)) / dlog_rho;
@@ -103,101 +141,165 @@ struct Tabular4DEOSView
     // 状态查询接口 (提取 A_bar 和 Z_bar)
     // ========================================================
 
-    EOS_INLINE double get_Abar(const double *Xi) const
+    double get_Abar(const double *Xi) const
     {
         if (specs && specs->count() > 0)
             return specs->calc_Abar(Xi);
         return 14.0; // 兜底：假设纯氮
     }
 
-    EOS_INLINE double get_Zbar(const double *Xi) const
+    double get_Zbar(const double *Xi) const
     {
         if (specs && specs->count() > 0)
             return specs->calc_Zbar(Xi);
         return 7.0; // 兜底：假设纯氮
     }
 
-    EOS_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
+    double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
-        return interpolate_4d(table_P, rho, e, get_Abar(Xi), get_Zbar(Xi));
-    }
-
-    EOS_INLINE double get_temperature(double rho, double e, const double *Xi) const
-    {
-        return interpolate_4d(table_T, rho, e, get_Abar(Xi), get_Zbar(Xi));
-    }
-
-    EOS_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
-    {
-        if (U.rho < 1e-12)
+        if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
-        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), A, Z))
+        {
+            return fallback_pressure(rho, e);
+        }
+        return interpolate_4d(table_P, rho, e, A, Z);
+    }
+
+    double get_eint_from_T(double rho, double T_target, const double *Xi) const
+    {
+        if (rho <= 1e-12 || T_target <= 1e-12)
+            return 0.0;
+
+        double A = get_Abar(Xi);
+        double Z = get_Zbar(Xi);
+
+        // 边界保护：如果超出了表的范围，回退到解析推导
+        if (rho < std::pow(10, log_rho_min) || rho > std::pow(10, log_rho_max) ||
+            A < A_min || A > A_max ||
+            Z < Z_min || Z > Z_max)
+        {
+            double R_spec = k_B_cgs / (A * m_u_cgs);
+            return T_target * R_spec / (fallback_gamma() - 1.0);
+        }
+
+        // --- 二分法求根寻找 e (保持 rho, A, Z 固定) ---
+        double e_left = std::pow(10, log_e_min);
+        double e_right = std::pow(10, log_e_max);
+        double e_mid = 0.5 * (e_left + e_right);
+
+        const int max_iters = 50;
+        const double tol = 1e-6; // 温度容差
+
+        for (int i = 0; i < max_iters; ++i)
+        {
+            e_mid = 0.5 * (e_left + e_right);
+            // 调用现有的 4D 正向温度计算接口
+            double T_mid = get_temperature(rho, e_mid, Xi);
+
+            if (std::abs(T_mid - T_target) / T_target < tol)
+            {
+                break;
+            }
+
+            // 假设物理上温度随内能单调递增
+            if (T_mid < T_target)
+            {
+                e_left = e_mid;
+            }
+            else
+            {
+                e_right = e_mid;
+            }
+        }
+
+        return e_mid;
+    }
+
+    double get_temperature(double rho, double e, const double *Xi) const
+    {
+        if (rho <= 1e-12 || e <= 1e-12)
+            return 0.0;
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), A, Z))
+        {
+            return fallback_temperature(e, A);
+        }
+        return interpolate_4d(table_T, rho, e, A, Z);
+    }
+
+    double get_pressure(const FluidVector &U, const double *Xi) const
+    {
+        double e_int = eos_utils::extract_specific_internal_energy(U);
         return get_pressure_from_rho_e(U.rho, e_int, Xi);
     }
 
-    EOS_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
     {
-        if (U.rho < 1e-12)
+        double e_int = eos_utils::extract_specific_internal_energy(U);
+        if (U.rho <= 1e-12 || e_int <= 1e-12)
             return 0.0;
-        double e_int = (U.eng - 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho) / U.rho;
-        return interpolate_4d(table_cs, U.rho, e_int, get_Abar(Xi), get_Zbar(Xi));
+
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        if (is_out_of_bounds(std::log10(U.rho), std::log10(e_int), A, Z))
+        {
+            return fallback_sound_speed(U.rho, e_int);
+        }
+        return interpolate_4d(table_cs, U.rho, e_int, A, Z);
     }
 
-    EOS_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
+    double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
         if (rho < 1e-12 || e < 1e-12)
-            return 1.4;
-        double p = interpolate_4d(table_P, rho, e, get_Abar(Xi), get_Zbar(Xi));
-        double cs = interpolate_4d(table_cs, rho, e, get_Abar(Xi), get_Zbar(Xi));
+            return fallback_gamma();
+        double p = get_pressure_from_rho_e(rho, e, Xi);
         if (p < 1e-12)
-            return 1.4;
+            return fallback_gamma();
+
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        double cs = is_out_of_bounds(std::log10(rho), std::log10(e), A, Z) ? fallback_sound_speed(rho, e) : interpolate_4d(table_cs, rho, e, A, Z);
+
         return (rho * cs * cs) / p;
     }
 
-    EOS_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
+    double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), A, Z))
+        {
+            return e * (fallback_gamma() - 1.0); // 解析偏导数 dP/drho
+        }
+
         if (table_dP_drho)
-            return interpolate_4d(table_dP_drho, rho, e, get_Abar(Xi), get_Zbar(Xi));
+            return interpolate_4d(table_dP_drho, rho, e, A, Z);
 
         double drho = rho * 0.001;
-        return (interpolate_4d(table_P, rho + drho, e, get_Abar(Xi), get_Zbar(Xi)) -
-                interpolate_4d(table_P, rho - drho, e, get_Abar(Xi), get_Zbar(Xi))) /
+        return (interpolate_4d(table_P, rho + drho, e, A, Z) -
+                interpolate_4d(table_P, rho - drho, e, A, Z)) /
                (2.0 * drho);
     }
 
-    EOS_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
+    double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(e), A, Z))
+        {
+            return rho * (fallback_gamma() - 1.0); // 解析偏导数 dP/de
+        }
+
         if (table_dP_de)
-            return interpolate_4d(table_dP_de, rho, e, get_Abar(Xi), get_Zbar(Xi));
+            return interpolate_4d(table_dP_de, rho, e, A, Z);
 
         double de = e * 0.001;
-        return (interpolate_4d(table_P, rho, e + de, get_Abar(Xi), get_Zbar(Xi)) -
-                interpolate_4d(table_P, rho, e - de, get_Abar(Xi), get_Zbar(Xi))) /
+        return (interpolate_4d(table_P, rho, e + de, A, Z) -
+                interpolate_4d(table_P, rho, e - de, A, Z)) /
                (2.0 * de);
     }
 
-    EOS_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
+    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
-        double e_guess = p / ((1.4 - 1.0) * rho);
-        for (int iter = 0; iter < 20; ++iter)
-        {
-            double p_guess = interpolate_4d(table_P, rho, e_guess, get_Abar(Xi), get_Zbar(Xi));
-            double dp_de = get_dp_de_rho(rho, e_guess, Xi);
-
-            if (fabs(dp_de) < 1e-12)
-                break;
-            double delta_e = (p - p_guess) / dp_de;
-
-            while (e_guess + delta_e <= 1e-12)
-            {
-                delta_e *= 0.5;
-            }
-            e_guess += delta_e;
-
-            if (fabs(delta_e) < 1e-6 * e_guess)
-                break;
-        }
-        return rho * e_guess + 0.5 * rho * (u * u + v * v + w * w);
+        return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
     }
 };
 

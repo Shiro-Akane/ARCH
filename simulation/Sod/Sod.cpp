@@ -63,8 +63,8 @@ void Sod_Setup(SimConfig &config, SpeciesManager &specs)
     double gamma_R = config.Get<double>("gamma_right", 1.67);
     double Cv_R = config.Get<double>("cv_right", 3113.9);
 
-    g_species_id_L = specs.add_species(name_L, gamma_L, Cv_L);
-    g_species_id_R = specs.add_species(name_R, gamma_R, Cv_R);
+    g_species_id_L = specs.add_species(name_L, 2.0, 1.0, gamma_L, Cv_L);
+    g_species_id_R = specs.add_species(name_R, 4.0, 2.0, gamma_R, Cv_R);
 
     // Console Output for Validation
     std::cout << "[Problem] Setup complete. Type: ";
