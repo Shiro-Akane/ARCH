@@ -5,6 +5,38 @@
 
 ---
 
+## v2 — 2026-07-12 · GPU 变温燃烧内核 · 对齐作者完整 Burner
+
+### 目标
+作者在 main 补全了变温燃烧（温度随核能演化 `dT/dt = enuc/cv` + Helmholtz EOS 查表算 cv，
+17 维系统 = 16 组分 + 温度），并修复了我方 v1 报告的全部 4 个 bug。
+把我方 GPU 燃烧内核从 v1 的**等温**升级到**变温**，与作者的完整 Burner 逻辑逐位对齐后做 CPU/GPU 对比。
+
+### 结果
+- **正确性**：262,144 格点，CPU/GPU 同源同初值，最大相对误差——组分 1.6e-6、**温度 9.2e-12**，
+  自适应子步数逐格点完全一致（115.7）。
+- **性能**：CPU 16 线程 46.7 s vs GPU H100 15.3 s = **3.1× 加速**。
+- 加速比 v1 等温版（6.8×）低有物理原因：变温版每个牛顿迭代多 ~36 次 Helmholtz 表插值
+  （大量 pow/log 超越函数，GPU SFU 吞吐受限）+ 17×17 雅可比占 2.3KB/线程 shared memory，压低 occupancy。
+
+### 本版新增/更新文件
+| 文件 | 说明 |
+|---|---|
+| `cuda/burnbench_v2.cu` | 变温版 GPU 燃烧基准。相比 v1：NEQ 16→17（加温度）、温度方程 `RHS[16]=enuc/cv`、17×17 雅可比温度行列有限差分、`HelmEos` 的 `calc_thermo/get_cv`（f[9] 表 7.8MB 上传 device + 五次 Hermite 插值）全部 `__host__ __device__`。照抄作者新 `ode_be-nr.h` / `HelmEos.h`。 |
+| `cuda/RESULTS.md` | 追加变温对比结果。 |
+
+### 已知问题 / 说明
+- `cuda/burnbench_v2.cu` 依赖 device 标注版 aprox19 头文件（用 sed 从原网络自动生成，方法见 `cuda/RESULTS.md`）；
+  另需把 `network::mion`（host-only `inline Array1D`）改为 device 可访问——基准里用镜像常量 + 自实现 `compute_enuc` 绕过，不改原码。
+- 跑基准需 `helm_table.dat`（60MB，见 v1 说明的下载方法）。
+
+### 下一步
+- 内核优化：Helmholtz 表用 texture/`__ldg`、缩小雅可比 shared 占用提高 occupancy、warp 协作，冲更高加速；
+- 把 GPU burner 真正接入主程序 Driver（替换 `do_burn_step` 的 OpenMP 循环），端到端跑 Cellular 爆轰；
+- 之后进入 block-structured AMR。
+
+---
+
 ## v1 — 2026-07-12 · CUDA 燃烧内核可行性与正确性验证
 
 ### 目标
