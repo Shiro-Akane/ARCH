@@ -63,7 +63,7 @@ chk_dstep    = -1           # Output CHK based on iteration steps (-1 to disable
 # [Physics Core]
 # Maps to config.physics.*
 # ------------------------------------------------------------------------------
-eos_type   = tabular                       # Options: ideal, tabular
+eos_type   = ideal                       # Options: ideal, tabular
 eos_table_path =../../src/physics/eos/eos_table/ideal_gas_3d.h5
 gamma = 1.4    # Default global gamma (will be overridden by species)
 

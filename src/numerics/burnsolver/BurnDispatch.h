@@ -26,7 +26,7 @@ struct DummyBurner
 {
     template <typename EOSViewType>
     bool integrate(double * /*Y_ODE*/, double /*rho*/, double /*dt_target*/,
-                   const EOSViewType & /*eos*/, const BurnConfig & /*burn_cfg*/) const
+                   const EOSViewType & /*eos*/, const BurnConfig & /*burn_cfg*/, double & /*dt_rec*/) const
     {
         return true; // 什么都不做。编译器会将其完全优化剔除。
     }
@@ -63,21 +63,8 @@ struct BurnDispatcher
                   << " | ODE Solver: " << ode_type << " | Linear Solver: " << lin_type << std::endl;
 
         // 2. 将字符串转换为编译期的强类型 Network
-        if (net_type == "aprox19" || net_type == "Aprox19")
-        {
-            dispatch_ode<NetAprox19>(ode_type, lin_type, std::forward<Func>(func));
-        }
-        /* else if (net_type == "aprox21" || net_type == "Aprox21") {
-            dispatch_ode<NetAprox21>(ode_type, lin_type, std::forward<Func>(func));
-        }
-        else if (net_type == "custom" || net_type == "Custom") {
-            dispatch_ode<NetCustom>(ode_type, lin_type, std::forward<Func>(func));
-        }
-        */
-        else
-        {
-            throw std::runtime_error("Unknown Nuclear Network Type: " + net_type);
-        }
+        // NetPynucastro 作为一个统一的壳，会自动读取并适应底层链接的 Pynucastro 网络，因此无需根据名字重新分发了。
+        dispatch_ode<NetPynucastro>(ode_type, lin_type, std::forward<Func>(func));
     }
 
 private:

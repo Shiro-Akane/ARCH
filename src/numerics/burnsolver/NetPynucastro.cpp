@@ -1,8 +1,4 @@
-#include "NetAprox19.h"
-
-#include "data/GlobalDefs.h"
-#include "../../numerics/linalg/DenseWrap.h"
-#include "../../numerics/linalg/SparseWrap.h"
+#include "NetPynucastro.h"
 
 #include <cmath>
 #include <cstdint>
@@ -19,7 +15,7 @@
 #include "actual_network.H"
 #include "actual_rhs.H"
 
-void NetAprox19::eval_rhs(const double *Y, double rho, double *RHS, double &enuc)
+void NetPynucastro::eval_rhs(const double *Y, double rho, double *RHS, double &enuc)
 {
     burn_t state;
     state.rho = rho;
@@ -48,7 +44,7 @@ void NetAprox19::eval_rhs(const double *Y, double rho, double *RHS, double &enuc
     enuc = static_cast<double>(enuc_local);
 }
 
-void NetAprox19::eval_jacobian(const double *Y, double rho, DenseMatrixData &J_dense)
+void NetPynucastro::eval_jacobian(const double *Y, double rho, DenseMatrixData &J_dense)
 {
     burn_t state;
     state.rho = rho;
@@ -69,7 +65,7 @@ void NetAprox19::eval_jacobian(const double *Y, double rho, DenseMatrixData &J_d
     }
 }
 
-void NetAprox19::eval_jacobian(const double *Y, double rho, SparseMatrixData &J_sparse)
+void NetPynucastro::eval_jacobian(const double *Y, double rho, SparseMatrixData &J_sparse)
 {
     burn_t state;
     state.rho = rho;

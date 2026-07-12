@@ -22,9 +22,13 @@
 #include "../data/GlobalDefs.h"
 
 #include "../grid/Grid.h"
-
 #include "../physics/species/Species.h"
-#include "../physics/eos/IdealGas.h"
+#include <functional>
+
+namespace ProblemHelper {
+    void PopulateState(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs,
+                       std::function<void(const PointCoords&, PrimitiveData&)> init_callback);
+}
 
 class GenericProblemGenerator : public ProblemGenerator
 {
@@ -63,49 +67,35 @@ public:
      */
     void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) override
     {
-        IdealGas eos(config.physics.gamma, specs);
-        int n_species = state.GetNumSpecies();
+        ProblemHelper::PopulateState(state, grid, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
+            user_init(p, data);
+        });
+    }
+};
 
-        int stride_y = grid.stride_y;
-        int stride_z = grid.stride_z;
-        int total_size = grid.GetTotalSize();
-        // System handles the loop iteration and parallelization (OpenMP).
-        // The user only needs to worry about the physics at a single point (x).
+/**
+ * @brief A generic bridge between Object-Oriented problem logic and the solver core.
+ * @tparam T The user-defined Problem Class, which should implement Setup() and Init() const.
+ */
+template <typename T>
+class TypedProblemGenerator : public ProblemGenerator
+{
+    T user_model;
 
-#pragma omp parallel
-        {
-            // Per-thread buffer: allocated once per thread, reused across iterations
-            PrimitiveData data{};
-            data.mass_fractions.resize(n_species, 0.0);
+public:
+    TypedProblemGenerator() = default;
 
-#pragma omp for schedule(static)
-            for (int idx = 0; idx < total_size; ++idx)
-            {
-                int k = idx / stride_z;
-                int rem = idx % stride_z;
-                int j = rem / stride_y;
-                int i = rem % stride_y;
+    std::string GetSolverName() override { return ""; }
 
-                PointCoords p = grid.GetPhysicalCoords(i, j, k);
+    void Setup(SimConfig &config, SpeciesManager &specs) override
+    {
+        user_model.Setup(config, specs);
+    }
 
-                data.rho = 0.0;
-                data.u = 0.0;
-                data.v = 0.0;
-                data.w = 0.0;
-                data.p = 0.0;
-                std::fill(data.mass_fractions.begin(), data.mass_fractions.end(), 0.0);
-
-                user_init(p, data);
-
-                state.rho[idx] = data.rho;
-                state.mom_x[idx] = data.rho * data.u;
-                state.mom_y[idx] = data.rho * data.v;
-                state.mom_z[idx] = data.rho * data.w;
-                state.eng[idx] = eos.get_total_energy_primitive(data.rho, data.u, data.v, data.w, data.p, data.mass_fractions.data());
-
-                for (int s = 0; s < n_species; ++s)
-                    state.X(s, idx) = data.mass_fractions[s];
-            }
-        }
+    void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) override
+    {
+        ProblemHelper::PopulateState(state, grid, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
+            user_model.Init(p, data);
+        });
     }
 };

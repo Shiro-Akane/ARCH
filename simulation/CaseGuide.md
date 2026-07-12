@@ -1,124 +1,235 @@
 # ARCH Simulation Case Development Guide
 
-Welcome to the simulation directory! This is where you define your physics problems.
-ARCH uses a **plugin-style architecture**, meaning you can add new simulation cases simply by creating a new `.cpp` file here. CMake will automatically compile it.
+Welcome to the `simulation` directory! This is where you define your custom physics problems.
+ARCH uses a **plugin-style, object-oriented architecture**, meaning you can add new simulation cases simply by creating a new `.cpp` file containing your problem class. CMake will automatically discover and compile it.
 
 ---
 
 ## 🚀 How to Add a New Problem
 
-1. **Copy the Template**: Copy `_Template.cpp` to a new file, e.g., `MySupernova.cpp`.
-2. **Implement Logic**: Fill in the `Setup` and `Init` functions (details below).
-3. **Register**: Use the `REGISTER_PROBLEM` macro at the bottom of your file.
-4. **Compile**: Re-run `cmake --build .` or `make`.
-5. **Run**: `./ARCH MyProblemName my_config.par`.
+1. **Create your Case File**: Create a new `.cpp` file in a sub-folder (e.g., `simulation/MySupernova/MySupernova.cpp`).
+2. **Implement the Class**: Create a class and fill in the `Setup` and `Init` methods.
+3. **Register**: Use the `REGISTER_PROBLEM_CLASS` macro at the bottom of your file.
+4. **Compile**: Run `make` inside your `build/` directory.
+5. **Run**: `./bin/ARCH MyProblemName path/to/my_config.par`.
 
 ---
 
 ## 📚 Interface Reference
 
-To create a problem, you need to implement two callback functions and register them.
+To create a problem, you define a class that implements two core methods: `Setup` and `Init`. By encapsulating your problem into a class, you avoid polluting the global namespace and can cleanly store parameters as class member variables.
 
-### 1. Setup Function (`SetupFunc`)
-**Signature:** `void MySetup(SimConfig &config, SpeciesManager &specs)`
+### 1. Headers
 
-This function runs **once** at the beginning. Use it to:
-* Read global parameters from the `.par` file using `RuntimeParams::Get<T>()`.
-* Configure the Grid (`nx`, `domain_len`).
-* Configure Time Integration (`cfl`, `tmax`).
-* Define Material Species (`specs.add_species(...)`).
+You **only** need to include two headers to interact with the core engine. You DO NOT need to include complex underlying physical headers (like EOS or Reaction Networks).
 
-**Example:**
+```cpp
+#include "../../src/core/UserInterface.h"
+#include "../../src/data/GlobalDefs.h"
+```
 
-void MySetup(SimConfig &cfg, SpeciesManager &specs) {
-    cfg.nx = RuntimeParams::Get<int>("nx", 100);
-    // Add Carbon-12
-    specs.add_species("C12", 1.4, 12.0, 6.0); 
-}
+### 2. Setup Function (`Setup`)
+**Signature:** `void Setup(SimConfig &config, SpeciesManager &specs)`
 
-2. Initialization Function (InitFunc)
-Signature: void MyInit(double x, double y, double z, PrimitiveData &out)
+This function runs **once** during system initialization. Use it to:
+* Read custom parameters from the `.par` file.
+* Save these parameters to your class member variables.
+* Register chemical/nuclear species.
 
-This function runs for every cell. The system gives you the coordinates (x, y, z), and you fill the out structure.
+### 3. Initialization Function (`Init`)
+**Signature:** `void Init(const PointCoords &p, PrimitiveData &out) const`
 
-PrimitiveData Structure Members:
+This function runs **for every cell** during grid initialization. The system passes you the cell's spatial coordinates `p.x, p.y, p.z`. Your task is to populate the `out` struct with the initial fluid state.
 
-out.rho (double): Density
+---
 
-out.u (double): Velocity (x-direction)
+## 🛠 User-Callable API & Functions
 
-out.p (double): Pressure
+Below are all the standard functions and data structures you will interact with when writing a case.
 
-out.SetMassFraction(int id, double value): Helper to set species composition.
+### ⚙️ SimConfig (Reading Parameters)
+Passed into `Setup`. Used to read custom variables defined in your `.par` file.
 
-Example:
-void MyInit(double x, double y, double z, PrimitiveData &out) {
-    out.rho = 1.0 + 0.1 * sin(2 * M_PI * x); // Perturbation
-    out.u   = 0.0;
-    out.p   = 1.0;
-    out.SetMassFraction(0, 1.0); // 100% Species 0
-}
+* `config.Get<T>(const std::string &key, T default_val)`
+  * **Description**: Reads a variable from the `.par` file. If the variable doesn't exist, it returns the `default_val`.
+  * **Example**: `double radius = config.Get<double>("bubble_radius", 1.5);`
+  * **Example**: `int mode = config.Get<int>("perturbation_mode", 2);`
 
-🔗 Registration Macro
-At the end of your .cpp file, you must call this macro to register your problem into the system kernel.
-// Arguments: "ProblemName", SetupFunction, InitFunction
-REGISTER_PROBLEM("CCSN", MySetup, MyInit);
+### 🧪 SpeciesManager (Managing Isotopes/Materials)
+Passed into `Setup`. Used to define or look up the fluids/isotopes in your simulation.
 
-💡 Tips for Complex Cases (e.g., CCSNE)
-RuntimeParams: You can add any custom parameter in your .par file (e.g., core_radius = 1.5). Just access it via RuntimeParams::Get<double>("core_radius", 1.0) in your Setup or Init function.
+* `int specs.add_species(std::string name, double A, double Z, double gamma, double Cv)`
+  * **Description**: Manually registers a new fluid or isotope into the system and returns its unique ID.
+  * **Parameters**:
+    * `name`: The string identifier (e.g., `"Hydrogen"`, `"DriverGas"`). This name will appear in the output `.h5` files.
+    * `A`: **Mass Number** (Atomic Weight). For a macroscopic ideal gas, you can usually set this to 1.0. For real isotopes (e.g., C12), it is 12.0.
+    * `Z`: **Atomic Number** (Proton Number). Defines the charge. For ideal gases, typically 1.0. For C12, it is 6.0.
+    * `gamma`: **Specific Heat Ratio** ($\gamma = C_p / C_v$). For example, 1.4 for air, 5.0/3.0 for monatomic gas.
+    * `Cv`: **Heat Capacity at Constant Volume** ($C_v$). Units are J/(kg·K) or erg/(g·K) depending on your unit system.
+  * **Example**: `int air_id = specs.add_species("Air", 1.0, 1.0, 1.4, 717.5);`
 
-Math Library: <cmath> is available. Feel free to use std::exp, std::sin, etc.
+* `int specs.GetSpeciesID(const std::string &target_name)`
+  * **Description**: Looks up the ID of a species that has already been loaded. This is **highly useful** when you have activated a nuclear network (like `aprox19`) in your `.par` file, as the system will automatically pre-load all the network isotopes for you.
+  * **Example**: `int c12_id = specs.GetSpeciesID("c12");` (Case-insensitive)
 
-External Data: If your initialization requires reading a table (e.g., an existing stellar profile), you can implement a standard file reader inside the Setup function, store the data in a global or static variable, and interpolate it in Init.
+### 🌊 PrimitiveData (Setting Fluid States)
+Passed into `Init`. Used to assign the physical values to a specific grid cell.
 
-### 2. Blank `simulation/_Template.cpp`
+* `out.rho` *(double)*: The fluid mass density ($\rho$).
+* `out.p` *(double)*: The fluid thermal pressure ($P$).
+* `out.u`, `out.v`, `out.w` *(double)*: The fluid velocity in the X, Y, and Z directions respectively.
+* `out.SetMassFraction(int id, double value)`
+  * **Description**: Sets the mass fraction ($X_i$) of a specific species in this cell. The `id` must be the integer returned by `add_species` or `GetSpeciesID`. The sum of all mass fractions in a cell should ideally equal 1.0.
+  * **Example**: `out.SetMassFraction(air_id, 1.0);`
+
+---
+
+## 💻 Template Example
+
+Here is a minimal, complete example of a new simulation case:
+
 ```cpp
 /**
- * @file _Template.cpp
- * @brief A blank template for creating new simulation problems.
- * * Usage:
- * 1. Copy this file to "MyProblem.cpp".
- * 2. Rename the functions (optional, but recommended for clarity).
- * 3. Implement Setup and Init logic.
- * 4. Register the problem at the bottom.
+ * @file MyCase.cpp
+ * @brief Template for creating a new simulation problem.
  */
 
 #include "../../src/core/UserInterface.h"
-#include "../../src/core/RuntimeParams.h"
+#include "../../src/data/GlobalDefs.h"
 #include <cmath>
+#include <iostream>
 
-// ============================================================================
-// 1. Setup Phase
-// Read config (Grid, Time) and define Species.
-// ============================================================================
-void Template_Setup(SimConfig &config, SpeciesManager &specs)
+class MyCustomProblem 
 {
-    // -- Grid & Time --
-    // config.nx   = RuntimeParams::Get<int>("nx", 100);
-    // config.tmax = ...
+    // ----------------------------------------------------
+    // Member variables to hold parameters read from .par
+    // ----------------------------------------------------
+    double m_density;
+    double m_pressure;
+    int m_spec_id;
 
-    // -- Species --
-    // specs.add_species("Hydrogen", 1.4);
-}
+public:
+    // ========================================================================
+    // 1. Setup Phase
+    // Read config and define Species.
+    // ========================================================================
+    void Setup(SimConfig &config, SpeciesManager &specs)
+    {
+        // Read custom parameters from the parameter file
+        m_density  = config.Get<double>("my_custom_density", 1.0);
+        m_pressure = config.Get<double>("my_custom_pressure", 1.0);
 
-// ============================================================================
-// 2. Initialization Phase
-// Set initial primitive variables (rho, u, p, species) at coordinate x.
-// ============================================================================
-void Template_Init(double x, double y, double z, PrimitiveData &out)
-{
-    // -- Physics Logic --
-    // out.rho = ...
-    // out.u   = ...
-    // out.p   = ...
+        // Register a species: Name="Air", A=1, Z=1, Gamma=1.4, Cv=717.5
+        // NOTE: You ONLY need to manually add species here if you are NOT using a nuclear network.
+        // If a network (e.g. aprox19) is enabled in the .par file, its isotopes are auto-loaded!
+        m_spec_id = specs.add_species("Air", 1.0, 1.0, 1.4, 717.5);
 
-    // -- Species Composition --
-    // out.SetMassFraction(0, 1.0);
-}
+        std::cout << "[MyCase] Setup Complete. Target Density: " << m_density << "\n";
+    }
+
+    // ========================================================================
+    // 2. Initialization Phase
+    // Set initial primitive variables (rho, u, p, species) at coordinate (x,y,z).
+    // ========================================================================
+    void Init(const PointCoords &p, PrimitiveData &out) const
+    {
+        // Add a simple density perturbation using math functions
+        double perturbation = 0.1 * std::sin(2.0 * M_PI * p.x);
+
+        out.rho = m_density + perturbation;
+        out.p   = m_pressure;
+        out.u   = 0.0;
+        out.v   = 0.0;
+        out.w   = 0.0;
+
+        // Set species composition (100% of the species we registered)
+        out.SetMassFraction(m_spec_id, 1.0);
+    }
+};
 
 // ============================================================================
 // Registration
 // Name your problem here (e.g., "MyCase"). 
-// This name is used in the command line: ./ARCH MyCase ...
+// This name is used in the command line: ./bin/ARCH MyCase ...
 // ============================================================================
-REGISTER_PROBLEM("Template", Template_Setup, Template_Init);
+REGISTER_PROBLEM_CLASS("MyCase", MyCustomProblem);
+```
+
+---
+
+## 💡 Tips for Complex Cases
+
+1. **No EOS Includes Required**: Notice that you don't need to manually invoke the EOS inside `Init`. You only define the raw physical properties (`rho` and `p`), and the underlying engine automatically calculates internal energy and populates the conservative vectors (`eng`, `mom_x`, etc.) based on the active `eos_type`.
+2. **Standard C++ Math**: You can use `<cmath>` functions like `std::sin`, `std::exp`, `std::sqrt` directly in the `Init` function to create shapes and perturbations.
+
+---
+
+## 📄 Parameter File (`.par`) Template
+
+Here is a comprehensive template for configuring your `.par` parameter file. Parameters are grouped by function.
+
+```ini
+# ==============================================================================
+# ARCH Simulation Configuration File Template
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Mandatory Parameters (Must exist in every run)
+# ------------------------------------------------------------------------------
+# Grid setup
+nx       = 100       # Number of cells in X
+ny       = 1         # Number of cells in Y
+nz       = 1         # Number of cells in Z
+
+x_min    = 0.0       # Domain physical boundaries
+x_max    = 1.0
+y_min    = 0.0
+y_max    = 1.0
+
+# Boundary conditions (Options: outflow, reflect, periodic)
+xl_boundary_type = outflow
+xr_boundary_type = outflow
+yl_boundary_type = outflow
+yr_boundary_type = outflow
+
+# Numerics
+solver          = HLLC       # Riemann Solver (Options: SW, VL, HLLC, Roe)
+reconstruct     = ppm        # Reconstruction (Options: pcm, plm, ppm)
+timeintegrator  = RK3        # Time Integrator (Options: RK2, RK3)
+cfl             = 0.4        # Courant-Friedrichs-Lewy stability condition
+
+# Physics Core
+eos_type = ideal             # Options: ideal, tabular, helmholtz
+gamma    = 1.4               # Default adiabatic index (used if eos=ideal)
+
+# ------------------------------------------------------------------------------
+# 2. Optional / Advanced Parameters (Can be omitted; defaults apply)
+# ------------------------------------------------------------------------------
+# Time & I/O
+tmax         = 1.0           # Physical end time (Default: 0.1)
+max_steps    = -1            # Stop after N steps (-1 to disable)
+out_dir      = output        # Folder for output data
+base_name    = MyCase        # Prefix for generated HDF5 files
+
+# IO Frequency
+plt_dt       = 0.1           # Output plot files every 0.1 physical seconds
+plt_dstep    = -1            # Output plot files every N steps (-1 to disable)
+chk_dt       = 0.5           # Checkpoint files for restarts
+
+# Gravity
+gravity_type = external      # Options: none, external, self
+gravity_g_y  = -9.81         # Constant external gravity in Y direction
+
+# Nuclear Burning
+use_burn     = 0             # 1 = Enable burning, 0 = Disable
+network_name = aprox19       # Reaction network to auto-load
+
+# ------------------------------------------------------------------------------
+# 3. User Custom Parameters (Read by config.Get<T> in your Setup function)
+# ------------------------------------------------------------------------------
+# You can define anything here without touching the core framework!
+my_custom_density  = 2.0
+my_custom_pressure = 5.0
+perturbation_mode  = 3
+bubble_radius      = 0.15
+```

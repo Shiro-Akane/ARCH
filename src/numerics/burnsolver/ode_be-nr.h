@@ -21,7 +21,7 @@ struct Solver_BE_NR
 
     template <typename EOSType>
     static bool integrate(double *Y_ODE, double rho, double dt_target, const EOSType &eos,
-                          const BurnConfig &burn_cfg)
+                          const BurnConfig &burn_cfg, double &dt_rec)
     {
         if (Y_ODE[NEQ - 1] < burn_cfg.burn_temp_min || rho < burn_cfg.burn_rho_min)
         {
@@ -45,6 +45,13 @@ struct Solver_BE_NR
         // ================= 外层循环：时间子步进推进 =================
         while (t_current < dt_target)
         {
+            substep_count++;
+            if (substep_count > max_substeps)
+            {
+                std::cerr << "[BE-NR] Fatal Error: Exceeded max substeps (" << max_substeps << ")" << std::endl;
+                return false;
+            }
+
             // 确保最后一步正好到达目标时间
             if (t_current + dt > dt_target)
             {
@@ -218,6 +225,7 @@ struct Solver_BE_NR
         }
         // ==================================================
 
+        dt_rec = dt; // 将最后一次成功并且被 PI 控制器计算出的稳定步长返回
         return true; // 成功跨越了宏观的 dt_target
     }
 };

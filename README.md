@@ -138,7 +138,7 @@ EntropyFixCoefficient = 0.1
 # ==========================================
 # Physics (EOS & Gravity)
 # ==========================================
-eos_type = ideal       # ideal, helmholtz, etc.
+eos_type = ideal       # ideal, helmholtz, tabular, etc.
 gamma = 1.4            # Ratio of specific heats for ideal gas
 gravity_type = none    # none, external, self
 # gravity_g_x = -9.81  # For external gravity

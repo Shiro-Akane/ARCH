@@ -13,7 +13,7 @@
 #include <cmath>
 
 #include "DriverUtils.h"
-#include "../numerics/burnsolver/NetAprox19.h"
+#include "../numerics/burnsolver/NetPynucastro.h"
 
 #include "../io/IO.h"
 
@@ -71,32 +71,17 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     }
 
     // 如果是重启，t_current 可能=0.1，plt_dt=0.05，我们要让它下次在 0.15 触发
-    // 如果是全新开始(t_current=0)，则强制为 0.0 以便输出初始场
     double next_plt_time = 1e99; // Next physical time to write a plot file.
     if (config.io.plt_dt > 0)
     {
-        if (t_current == 0.0 && step_count == 0)
-        {
-            next_plt_time = 0.0; // 初始场强制输出
-        }
-        else
-        {
-            // 计算大于当前时间的下一个输出时间点
-            next_plt_time = std::floor(t_current / config.io.plt_dt + 1e-6) * config.io.plt_dt + config.io.plt_dt;
-        }
+        // 计算大于当前时间的下一个输出时间点
+        next_plt_time = std::floor(t_current / config.io.plt_dt + 1e-6) * config.io.plt_dt + config.io.plt_dt;
     }
 
     double next_chk_time = 1e99; // Next physical time to write a checkpoint file.
     if (config.io.chk_dt > 0)
     {
-        if (t_current == 0.0 && step_count == 0)
-        {
-            next_chk_time = 0.0;
-        }
-        else
-        {
-            next_chk_time = std::floor(t_current / config.io.chk_dt + 1e-6) * config.io.chk_dt + config.io.chk_dt;
-        }
+        next_chk_time = std::floor(t_current / config.io.chk_dt + 1e-6) * config.io.chk_dt + config.io.chk_dt;
     }
 
     // =========================================================
@@ -121,6 +106,8 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     // 提取组分数量
     const int n_spec = state.GetNumSpecies();
 
+    double dt_burn_global = 1e99;
+
     // =========================================================
     // 局部辅助 Lambda 函数：执行网格遍历燃烧
     // =========================================================
@@ -129,9 +116,11 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         if (!config.physics.burn.use_burn)
             return; // 如果没开燃烧，直接跳过
 
+        double local_dt_burn_min = 1e99;
+
         int total_cells = grid.GetTotalSize();
 // 在 GPU 上，这个 for 循环就是我们要并行化的内核
-#pragma omp parallel for
+#pragma omp parallel for reduction(min:local_dt_burn_min)
         for (int i = 0; i < total_cells; ++i)
         {
             double rho = current_state.rho[i];
@@ -158,12 +147,17 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             Y_ODE[n_spec] = T; // 将温度放在数组末尾
 
             // 3. 呼叫底层的 ODE 求解器执行燃烧
-            bool success = burn.integrate(Y_ODE, rho, burn_dt, eos, config.physics.burn);
+            double dt_rec = burn_dt;
+            bool success = burn.integrate(Y_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
 
-            if (!success && config.physics.burn.verbose_level > 0)
+            if (success) {
+                local_dt_burn_min = std::min(local_dt_burn_min, dt_rec);
+            }
+
+            if (!success)
             {
-                // 注意：在多线程下 cout 会竞争，实际可以用一个 atomic flag 标记然后统一报错
-                std::cerr << "[Warning] Burn failed at cell " << i << " at time " << t_current << std::endl;
+                std::cerr << "[Fatal Error] Burn failed at cell " << i << " at time " << t_current << std::endl;
+                exit(EXIT_FAILURE);
             }
 
             // 4. 将燃烧后的新组分和新温度写回流体状态
@@ -174,25 +168,28 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             double e_int_new = eos.get_eint_from_T(rho, T_new, Y_ODE);
             current_state.eng[i] = rho * e_int_new + e_kin;
         }
+        
+        // 汇总全局最新的燃烧建议步长
+        dt_burn_global = std::min(dt_burn_global, local_dt_burn_min);
     };
+
+    bool has_burn = config.physics.burn.use_burn;
+
+    // 初始状态强制输出 (Step 0)
+    if (step_count == 0) {
+        write_plt(u_current, eos, grid, plt_file_index++, t_current, config, specs);
+        write_chk(u_current, grid, chk_file_index++, plt_file_index, step_count, t_current, config);
+    }
 
     // 打印表头
     std::cout << std::left << std::setw(8) << "Step"
               << std::left << std::setw(15) << "Time"
               << std::left << std::setw(15) << "dt"
-              << std::left << std::setw(15) << "dt_hydro"
-              << std::left << std::setw(15) << "dt_burn"
-              << std::endl;
-    std::cout << std::string(68, '-') << std::endl;
-
-    // 打印第0步初始状态
-    std::cout << std::left << std::setw(8) << step_count
-              << std::scientific << std::setprecision(5)
-              << std::left << std::setw(15) << t_current
-              << std::left << std::setw(15) << dt
-              << std::left << std::setw(15) << dt
-              << std::left << std::setw(15) << dt / 2.0
-              << std::endl;
+              << std::left << std::setw(15) << "dt_hydro";
+    if (has_burn)
+        std::cout << std::left << std::setw(15) << "dt_burn";
+    std::cout << std::endl;
+    std::cout << std::string(has_burn ? 68 : 53, '-') << std::endl;
 
     // =========================================================
     // Main Time Loop
@@ -221,7 +218,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             next_chk_time += config.io.chk_dt;
         }
 
-        // 强制输出（如果接近 t_max）
+        // 强制输出（按步数）
         if (step_count > 0)
         {
             if (config.io.plt_dstep > 0 && step_count % config.io.plt_dstep == 0)
@@ -245,6 +242,23 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // -----------------------------------------------------
         // Compute stable dt based on wave speeds
         double dt_computed = adaptive_dt(u_current, eos, grid, cfl);
+
+        if (config.physics.burn.use_burn)
+        {
+            double dt_hydro_fac = config.Get<double>("ode_dt_hydro_fac", 100.0);
+            
+            if (step_count == 0) {
+                // For the very first step, force a tiny dt so the ODE solver can safely evaluate 
+                // the initial extreme stiffness and feedback a reasonable dt_burn_global.
+                dt_computed = std::min(dt_computed, 1e-13);
+            } else {
+                double dt_burn_limit = dt_burn_global * dt_hydro_fac;
+                dt_computed = std::min(dt_computed, dt_burn_limit);
+            }
+        }
+
+        // 重置 global burn limit 供这一步内部重新计算
+        dt_burn_global = 1e99;
 
         // Safety check for numerical degeneracy
         if (dt_computed < 1e-25)
@@ -298,9 +312,10 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
                   << std::scientific << std::setprecision(5)
                   << std::left << std::setw(15) << t_current
                   << std::left << std::setw(15) << dt
-                  << std::left << std::setw(15) << dt       // 目前 hydro dt 就是全局 dt
-                  << std::left << std::setw(15) << dt / 2.0 // 算子分裂每次走 dt/2
-                  << std::endl;
+                  << std::left << std::setw(15) << dt_computed;
+        if (has_burn)
+            std::cout << std::left << std::setw(15) << dt / 2.0;
+        std::cout << std::endl;
     }
 
     // =========================================================
