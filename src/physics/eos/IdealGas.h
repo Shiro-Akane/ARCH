@@ -73,6 +73,12 @@ struct IdealGas : public EOSBase
         return *this;
     }
 
+    double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
+    {
+        double cv_mix = get_mixture_Cv(Xi);
+        return (get_gamma(Xi) - 1.0) * rho * cv_mix * T;
+    }
+
     double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
         return (get_gamma(Xi) - 1.0) * rho * e;
@@ -93,6 +99,11 @@ struct IdealGas : public EOSBase
         // 理想气体解析公式：e = Cv * T
         double cv_mix = get_mixture_Cv(Xi);
         return cv_mix * T;
+    }
+
+    double get_cv(double rho, double T, const double *Xi) const
+    {
+        return get_mixture_Cv(Xi);
     }
 
     double get_pressure(const FluidVector &U, const double *Xi) const

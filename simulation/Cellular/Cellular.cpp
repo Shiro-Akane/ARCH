@@ -5,7 +5,7 @@
 
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
-#include "../../src/physics/eos/Tabular4DEOS.h" // 确保路径对应你的 4D 亥姆霍兹表
+#include "../../src/physics/eos/HelmEos.h"
 
 #include <cmath>
 #include <iostream>
@@ -51,14 +51,13 @@ void Cellular_Setup(SimConfig &config, SpeciesManager &specs)
     // 【核心修复】如果检测到当前 Species Count 为 0，主动注册 Aprox19 的 19 种组分！
     if (specs.count() == 0)
     {
-        std::cout << "[CellularSetup] Registering Aprox19 isotopes to SpeciesManager...\n";
-        // Aprox19 标准组分及其对应的 A (原子量) 和 Z (质子数)
-        // 注意：由于使用 Tabular EOS，gamma 和 Cv 并不重要，可以随便传 (例如 5/3, 0.0)
+        std::cout << "[CellularSetup] Registering pynucastro Aprox19 isotopes to SpeciesManager...\n";
+        // 严格按照 network_properties.H 定义的顺序与成分注册 16 种组分
+        specs.add_species("n", 1.0, 0.0, 1.6667, 0.0);
         specs.add_species("h1", 1.0, 1.0, 1.6667, 0.0);
         specs.add_species("he3", 3.0, 2.0, 1.6667, 0.0);
         specs.add_species("he4", 4.0, 2.0, 1.6667, 0.0);
         specs.add_species("c12", 12.0, 6.0, 1.6667, 0.0);
-        specs.add_species("n14", 14.0, 7.0, 1.6667, 0.0);
         specs.add_species("o16", 16.0, 8.0, 1.6667, 0.0);
         specs.add_species("ne20", 20.0, 10.0, 1.6667, 0.0);
         specs.add_species("mg24", 24.0, 12.0, 1.6667, 0.0);
@@ -69,12 +68,7 @@ void Cellular_Setup(SimConfig &config, SpeciesManager &specs)
         specs.add_species("ti44", 44.0, 22.0, 1.6667, 0.0);
         specs.add_species("cr48", 48.0, 24.0, 1.6667, 0.0);
         specs.add_species("fe52", 52.0, 26.0, 1.6667, 0.0);
-        specs.add_species("fe54", 54.0, 26.0, 1.6667, 0.0);
         specs.add_species("ni56", 56.0, 28.0, 1.6667, 0.0);
-        // Aprox19 通常还包含质子和中子的特定追踪（如果需要精确对应，请核对 pynucastro 的定义）
-        // 这里为了防崩溃先补齐 19 个槽位
-        specs.add_species("n", 1.0, 0.0, 1.6667, 0.0);
-        specs.add_species("p", 1.0, 1.0, 1.6667, 0.0);
     }
 
     g_sp_fuel = specs.GetSpeciesID("c12");
@@ -102,14 +96,13 @@ void Cellular_Setup(SimConfig &config, SpeciesManager &specs)
     }
 
     // 临时挂载 EOS 获取 View 以计算准确初压
-    Tabular4DEOS init_eos(table_path, &specs);
-    auto eos_view = init_eos.get_view();
+    HelmEos init_eos(table_path, &specs);
 
-    double e_amb = eos_view.get_eint_from_T(g_rho_amb, g_T_amb, g_X_init.data());
-    g_p_amb = eos_view.get_pressure_from_rho_e(g_rho_amb, e_amb, g_X_init.data());
+    double e_amb = init_eos.get_eint_from_T(g_rho_amb, g_T_amb, g_X_init.data());
+    g_p_amb = init_eos.get_pressure_from_rho_T(g_rho_amb, g_T_amb, g_X_init.data());
 
-    double e_vn = eos_view.get_eint_from_T(g_rho_vn, g_T_vn, g_X_init.data());
-    g_p_vn = eos_view.get_pressure_from_rho_e(g_rho_vn, e_vn, g_X_init.data());
+    double e_vn = init_eos.get_eint_from_T(g_rho_vn, g_T_vn, g_X_init.data());
+    g_p_vn = init_eos.get_pressure_from_rho_T(g_rho_vn, g_T_vn, g_X_init.data());
 
     // [5. Console Output]
     std::cout << "[Problem] Cellular Detonation Setup Complete.\n"

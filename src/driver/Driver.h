@@ -13,6 +13,7 @@
 #include <cmath>
 
 #include "DriverUtils.h"
+#include "../numerics/burnsolver/NetAprox19.h"
 
 #include "../io/IO.h"
 
@@ -117,8 +118,6 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     // Allocate memory for the next state buffer
     u_next.Resize(grid, state.GetNumSpecies());
 
-    std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name() << std::endl;
-
     // 提取组分数量
     const int n_spec = state.GetNumSpecies();
 
@@ -154,6 +153,8 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
             // 假设你的 EOS 提供了这个接口：根据 rho, e_int, X_k 求 T
             double T = eos.get_temperature(rho, e_int, Y_ODE);
+            if (T < 1e7)
+                continue; // 温度太低（< 1e7 K），核反应速率在物理上可忽略，且极低温会引起严重数值溢出
             Y_ODE[n_spec] = T; // 将温度放在数组末尾
 
             // 3. 呼叫底层的 ODE 求解器执行燃烧
@@ -175,7 +176,6 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         }
     };
 
-    std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name() << std::endl;
     // 打印表头
     std::cout << std::left << std::setw(8) << "Step"
               << std::left << std::setw(15) << "Time"
@@ -184,6 +184,15 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
               << std::left << std::setw(15) << "dt_burn"
               << std::endl;
     std::cout << std::string(68, '-') << std::endl;
+
+    // 打印第0步初始状态
+    std::cout << std::left << std::setw(8) << step_count
+              << std::scientific << std::setprecision(5)
+              << std::left << std::setw(15) << t_current
+              << std::left << std::setw(15) << dt
+              << std::left << std::setw(15) << dt
+              << std::left << std::setw(15) << dt / 2.0
+              << std::endl;
 
     // =========================================================
     // Main Time Loop

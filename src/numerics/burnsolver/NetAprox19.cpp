@@ -39,7 +39,7 @@ void NetAprox19::eval_rhs(const double *Y, double rho, double *RHS, double &enuc
 
     for (int i = 0; i < NUM_SPECIES; ++i)
     {
-        RHS[i] = ydot_arr(i + 1);
+        RHS[i] = ydot_arr(i + 1) * aion[i];
     }
 
     // 能量生成率评估
@@ -59,6 +59,14 @@ void NetAprox19::eval_jacobian(const double *Y, double rho, DenseMatrixData &J_d
     compute_ye(state);
 
     actual_jac(state, J_dense);
+
+    for (int i = 0; i < NUM_SPECIES; ++i) {
+        for (int j = 0; j < NUM_SPECIES; ++j) {
+            double val = J_dense(i + 1, j + 1);
+            val = val * (aion[i] / aion[j]);
+            J_dense.set(i + 1, j + 1, val);
+        }
+    }
 }
 
 void NetAprox19::eval_jacobian(const double *Y, double rho, SparseMatrixData &J_sparse)
@@ -72,4 +80,10 @@ void NetAprox19::eval_jacobian(const double *Y, double rho, SparseMatrixData &J_
     compute_ye(state);
 
     actual_jac(state, J_sparse);
+
+    for (int k = 0; k < J_sparse.nnz; ++k) {
+        int i = J_sparse.rows[k];
+        int j = J_sparse.cols[k];
+        J_sparse.values[k] *= (aion[i] / aion[j]);
+    }
 }

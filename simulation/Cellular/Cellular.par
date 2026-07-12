@@ -56,8 +56,8 @@ chk_dstep    = 1000
 # ------------------------------------------------------------------------------
 # [Physics Core]
 # ------------------------------------------------------------------------------
-eos_type = tabular         # Ideal，tabular (Helmholtz)
-eos_table_path = src/physics/eos/eos_table/white_dwarf_eos_4d.h5
+eos_type = helmholtz         # Ideal, tabular, helmholtz
+eos_table_path = EOS_toolkit/helm_table.dat
 
 gravity_type = none
 
@@ -77,8 +77,8 @@ enforce_mass_conservation = 1
 ode_solver       = BE_NR
 linear_solver    = DenseLU
 ode_rtol         = 1e-4
-ode_atol         = 1e-12
-ode_max_newton_iter = 100
+ode_atol         = 1e-10
+ode_max_newton_iter = 150
 
 # ------------------------------------------------------------------------------
 # [User Custom Parameters: CellularDet]
@@ -87,13 +87,13 @@ shock_dir = 0        # 0=X, 1=Y, 2=Z
 distance  = 0.5      # 起爆区 (VN Spike) 的初始厚度，占 x_max 的极小部分
 
 # --- Ambient State (未燃环境) ---
-rho_ambient = 1.0e5
+rho_ambient = 1.0e7
 T_ambient   = 2.0e8
 
 # --- Von Neumann Spike State (手动估算的 CJ 后激波状态) ---
 # 注意：以下参数需要你运行一维 CJ/ZND 计算脚本得出精确值
 # 这里填入数量级仅供参考
-rho_vn = 1.0e7       # 强激波压缩，rho 提升约 2 倍 (Gamma=5/3)
+rho_vn = 1.5e7       # 强激波压缩，rho 提升约 2 倍 (Gamma=5/3)
 T_vn   = 1.0e9       # 激波加热
 u_vn   = 1.0e9       # 初始活塞/物质速度 (cm/s)
 
