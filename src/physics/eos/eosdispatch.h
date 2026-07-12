@@ -8,6 +8,7 @@
 #include "IdealGas.h"
 #include "Tabular3DEOS.h"
 #include "Tabular4DEOS.h"
+#include "HelmEos.h"
 
 #include "../../core/RuntimeParams.h"
 #include "../species/Species.h"
@@ -65,6 +66,18 @@ struct EOSDispatcher
                 Tabular3DEOS eos_manager(path, &specs);
                 func(eos_manager.get_view());
             }
+        }
+        else if (eos_type == "helmholtz" || eos_type == "Helmholtz")
+        {
+            std::string path = config.physics.eos_table_path;
+            path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());
+            path.erase(std::remove(path.begin(), path.end(), '\''), path.end());
+            if (path.empty())
+            {
+                throw std::runtime_error("Helmholtz EOS requires 'eos_table_path' in .par file!");
+            }
+            HelmEos eos_manager(path, &specs);
+            func(eos_manager);
         }
         else
         {

@@ -69,9 +69,59 @@ struct Solver_BE_NR
 
                 // 1. 调用物理策略求导
                 NetType::eval_rhs(Y_k, rho, RHS, enuc);
+
+                // 计算当前温度下的比热容 C_v 并填充 RHS 的最后一维 (dT/dt)
+                double T_current = Y_k[NEQ - 1];
+                double cv = eos.get_cv(rho, T_current, Y_k);
+                cv = std::max(cv, 1e-10); // 防止除 0
+                RHS[NEQ - 1] = enuc / cv;
+
+                // 2. 获取关于组分的 Jacobian (不含温度列)
                 NetType::eval_jacobian(Y_k, rho, A);
 
-                // 2. 数学拼装：A = I - dt*J, b = Y_old - Y_k + dt*RHS
+                // 3. 用有限差分法补充 Jacobian 的最后一列 (关于温度的偏导)
+                double dT_fd = std::max(T_current * 1e-3, 1.0);
+                Y_k[NEQ - 1] += dT_fd;
+                
+                double RHS_fd[MAX_N];
+                double enuc_fd = 0.0;
+                NetType::eval_rhs(Y_k, rho, RHS_fd, enuc_fd);
+                
+                double cv_fd = eos.get_cv(rho, Y_k[NEQ - 1], Y_k);
+                cv_fd = std::max(cv_fd, 1e-10);
+                RHS_fd[NEQ - 1] = enuc_fd / cv_fd;
+                
+                Y_k[NEQ - 1] = T_current; // 恢复温度
+                
+                double inv_dT = 1.0 / dT_fd;
+                for (int i = 0; i < NEQ; ++i)
+                {
+                    double dRHS_dT = (RHS_fd[i] - RHS[i]) * inv_dT;
+                    A.set(i + 1, NEQ, dRHS_dT);
+                }
+
+                // 计算最后一行 (关于各个组分 Y_j 的偏导)
+                for (int j = 0; j < NUM_SPEC; ++j)
+                {
+                    double Y_old_val = Y_k[j];
+                    double dY_fd = std::max(Y_old_val * 1e-6, 1e-8);
+                    Y_k[j] += dY_fd;
+                    
+                    double RHS_fd_Y[MAX_N];
+                    double enuc_fd_Y = 0.0;
+                    NetType::eval_rhs(Y_k, rho, RHS_fd_Y, enuc_fd_Y);
+                    
+                    double cv_fd_Y = eos.get_cv(rho, T_current, Y_k);
+                    cv_fd_Y = std::max(cv_fd_Y, 1e-10);
+                    RHS_fd_Y[NEQ - 1] = enuc_fd_Y / cv_fd_Y;
+                    
+                    Y_k[j] = Y_old_val; // 恢复
+                    
+                    double inv_dY = 1.0 / dY_fd;
+                    A.set(NEQ, j + 1, (RHS_fd_Y[NEQ - 1] - RHS[NEQ - 1]) * inv_dY);
+                }
+
+                // 4. 数学拼装：A = I - dt*J, b = Y_old - Y_k + dt*RHS
                 for (int i = 0; i < NEQ; ++i)
                 {
                     b[i] = Y_old[i] - Y_k[i] + dt * RHS[i];
@@ -88,6 +138,22 @@ struct Solver_BE_NR
                 if (!success)
                 {
                     break; // 矩阵奇异，直接跳出内循环，要求外循环缩小 dt
+                }
+
+                // [核心修复]：检查解出的更新量 b 是否包含 NaN！
+                // 如果包含 NaN 或 Inf，说明虽然矩阵分解成功了，但数值已经爆炸，必须立刻中断并缩小步长
+                bool has_nan = false;
+                for (int i = 0; i < NEQ; ++i)
+                {
+                    if (!std::isfinite(b[i]))
+                    {
+                        has_nan = true;
+                        break;
+                    }
+                }
+                if (has_nan)
+                {
+                    break;
                 }
 
                 // 4. 计算当前状态的权重 (用于评估 b 也就是 dY 的误差)

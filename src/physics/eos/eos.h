@@ -26,6 +26,9 @@ struct EOSBase
  * double get_sound_speed(const FluidVector &U, double p, const double *Xi) const;
  * double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const;
  * double get_pressure_from_rho_e(double rho, double e, const double *Xi) const;
+ * double get_pressure_from_rho_T(double rho, double T, const double *Xi) const;
+ * double get_eint_from_T(double rho, double T_target, const double *Xi) const;
+ * double get_cv(double rho, double T, const double *Xi) const;
  * double get_dp_drho_e(double rho, double e, const double *Xi) const;
  * double get_dp_de_rho(double rho, double e, const double *Xi) const;
  * ====================================================================

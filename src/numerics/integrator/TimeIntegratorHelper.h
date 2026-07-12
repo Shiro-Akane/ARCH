@@ -237,7 +237,9 @@ namespace TimeIntegration
                 }
                 else
                 {
-                    u_dest.X(0, idx) = 1.0;
+                    double inv_n = 1.0 / n_spec;
+                    for (int s = 0; s < n_spec; ++s)
+                        u_dest.X(s, idx) = inv_n;
                 }
             }
         }

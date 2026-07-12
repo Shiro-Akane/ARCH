@@ -25,18 +25,19 @@
 struct Tabular3DEOSView
 {
     // --- 表格维度与边界 ---
-    int n_rho, n_e, n_X;
+    int n_rho, n_T, n_X;
     double log_rho_min, log_rho_max, dlog_rho;
-    double log_e_min, log_e_max, dlog_e;
+    double log_T_min, log_T_max, dlog_T;
     double X_min, X_max, dX; // Range of Mass fraction X
 
     // --- 数据裸指针 (GPU 可见内存) ---
     const double *table_P;
-    const double *table_T;
+    const double *table_E;
     const double *table_cs;
+    const double *table_cv;
 
     double *table_dP_drho; // 可选的预计算偏导数表
-    double *table_dP_de;   // 可选的预计算偏导数表
+    double *table_dP_dT;   // 可选的预计算偏导数表
 
     const SpeciesManager *specs;
 
@@ -50,10 +51,10 @@ struct Tabular3DEOSView
     // 边界检测与解析回退 (Ideal Gas Fallback)
     // ========================================================
 
-    bool is_out_of_bounds(double log_rho, double log_e, double X) const
+    bool is_out_of_bounds(double log_rho, double log_T, double X) const
     {
         return (log_rho < log_rho_min || log_rho >= log_rho_max - 1e-6 ||
-                log_e < log_e_min || log_e >= log_e_max - 1e-6 ||
+                log_T < log_T_min || log_T >= log_T_max - 1e-6 ||
                 X < X_min || X >= X_max - 1e-6);
     }
 
@@ -81,32 +82,32 @@ struct Tabular3DEOSView
     // ========================================================
     // 核心：三线性插值 (Trilinear Interpolation)
     // ========================================================
-    double interpolate_3d(const double *table, double rho, double e, double X) const
+    double interpolate_3d(const double *table, double rho, double T, double X) const
     {
-        if (rho <= 1e-12 || e <= 1e-12)
+        if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
 
         double x = log10(rho);
-        double y = log10(e);
+        double y = log10(T);
         double z = X;
 
         // 边界截断 (Clamping)
         int i = static_cast<int>((x - log_rho_min) / dlog_rho);
-        int j = static_cast<int>((y - log_e_min) / dlog_e);
+        int j = static_cast<int>((y - log_T_min) / dlog_T);
         int k = static_cast<int>((z - X_min) / dX);
 
         // 计算索引
         i = std::max(0, std::min(i, n_rho - 2));
-        j = std::max(0, std::min(j, n_e - 2));
+        j = std::max(0, std::min(j, n_T - 2));
         k = std::max(0, std::min(k, n_X - 2));
 
         // 计算局部偏移 [0, 1)
         double tx = (x - (log_rho_min + i * dlog_rho)) / dlog_rho;
-        double ty = (y - (log_e_min + j * dlog_e)) / dlog_e;
+        double ty = (y - (log_T_min + j * dlog_T)) / dlog_T;
         double tz = (z - (X_min + k * dX)) / dX;
 
-// 辅助宏：计算 1D 展平数组的索引 (i, j, k) -> i * (n_e * n_X) + j * n_X + k
-#define IDX(ii, jj, kk) ((ii) * n_e * n_X + (jj) * n_X + (kk))
+// 辅助宏：计算 1D 展平数组的索引 (i, j, k) -> i * (n_T * n_X) + j * n_X + k
+#define IDX(ii, jj, kk) ((ii) * n_T * n_X + (jj) * n_X + (kk))
 
         // 获取 8 个顶点的函数值
         double c000 = table[IDX(i, j, k)];
@@ -155,79 +156,115 @@ struct Tabular3DEOSView
         return 0.5;
     }
 
+    double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
+    {
+        if (rho <= 1e-12 || T <= 1e-12)
+            return 0.0;
+        double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
+        {
+            double e = get_eint_from_T(rho, T, Xi);
+            return fallback_pressure(rho, e);
+        }
+        return interpolate_3d(table_P, rho, T, X);
+    }
+
     double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
-        double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
-        {
-            return fallback_pressure(rho, e);
-        }
-        return interpolate_3d(table_P, rho, e, X);
-    }
-
-    // 提取温度，用于驱动 Alpha-chain 等核反应网络
-    double get_temperature(double rho, double e, const double *Xi) const
-    {
-        if (rho <= 1e-12 || e <= 1e-12)
-            return 0.0;
-        double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
-        {
-            return fallback_temperature(e, Xi);
-        }
-        return interpolate_3d(table_T, rho, e, X);
+        double T = get_temperature(rho, e, Xi);
+        return get_pressure_from_rho_T(rho, T, Xi);
     }
 
     double get_eint_from_T(double rho, double T_target, const double *Xi) const
     {
-        // 如果极低温度/密度，回退到理想气体解析解
         if (rho <= 1e-12 || T_target <= 1e-12)
             return 0.0;
 
         double X = get_target_X(Xi);
 
-        // 边界保护：使用理想气体公式快速反推
-        if (rho < std::pow(10, log_rho_min) || rho > std::pow(10, log_rho_max))
+        if (is_out_of_bounds(std::log10(rho), std::log10(T_target), X))
         {
             double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
             double R_spec = k_B_cgs / (Abar * m_u_cgs);
             return T_target * R_spec / (fallback_gamma() - 1.0);
         }
 
-        // --- 简单的二分法求根寻找 e (最稳健，适合 GPU) ---
-        double e_left = std::pow(10, log_e_min);
-        double e_right = std::pow(10, log_e_max);
-        double e_mid = 0.5 * (e_left + e_right);
+        return interpolate_3d(table_E, rho, T_target, X);
+    }
 
-        // 如果你的表比较大，可以先基于理想气体给一个初始猜测值缩小区间
+    double get_cv(double rho, double T_target, const double *Xi) const
+    {
+        if (rho <= 1e-12 || T_target <= 1e-12)
+            return 0.0;
 
-        const int max_iters = 50;
-        const double tol = 1e-6; // 温度容差
+        double X = get_target_X(Xi);
 
-        for (int i = 0; i < max_iters; ++i)
+        if (is_out_of_bounds(std::log10(rho), std::log10(T_target), X))
         {
-            e_mid = 0.5 * (e_left + e_right);
-            double T_mid = get_temperature(rho, e_mid, Xi);
-
-            if (std::abs(T_mid - T_target) / T_target < tol)
-            {
-                break;
-            }
-
-            // 假设温度随内能单调递增
-            if (T_mid < T_target)
-            {
-                e_left = e_mid;
-            }
-            else
-            {
-                e_right = e_mid;
-            }
+            double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
+            double R_spec = k_B_cgs / (Abar * m_u_cgs);
+            return R_spec / (fallback_gamma() - 1.0);
         }
 
-        return e_mid;
+        return interpolate_3d(table_cv, rho, T_target, X);
+    }
+
+    double get_temperature(double rho, double e, const double *Xi) const
+    {
+        if (rho <= 1e-12 || e <= 1e-12)
+            return 0.0;
+            
+        double X = get_target_X(Xi);
+        double T_min = std::pow(10, log_T_min);
+        double T_max = std::pow(10, log_T_max);
+        
+        // Out of bounds check for density or composition
+        if (std::log10(rho) < log_rho_min || std::log10(rho) >= log_rho_max ||
+            X < X_min || X >= X_max)
+        {
+            return fallback_temperature(e, Xi);
+        }
+        
+        // Fast boundary check: if e is below the minimum table energy, return T_min
+        double e_min_table = interpolate_3d(table_E, rho, T_min, X);
+        if (e <= e_min_table) {
+            return T_min;
+        }
+        
+        // Newton-Raphson iteration
+        double T_guess = 1e8; // reasonable astrophysics start
+        const int max_iters = 20;
+        const double tol = 1e-6;
+        
+        for (int i = 0; i < max_iters; ++i) {
+            T_guess = std::max(T_min, std::min(T_guess, T_max));
+            
+            double e_eval = interpolate_3d(table_E, rho, T_guess, X);
+            double cv_eval = interpolate_3d(table_cv, rho, T_guess, X);
+            
+            if (cv_eval <= 0.0) {
+                // Finite difference fallback
+                double dT_fd = T_guess * 0.01;
+                double e_plus = interpolate_3d(table_E, rho, T_guess + dT_fd, X);
+                cv_eval = (e_plus - e_eval) / dT_fd;
+                if (cv_eval <= 0.0) cv_eval = e_eval / T_guess;
+            }
+            
+            double f = e_eval - e;
+            double dT = -f / cv_eval;
+            
+            // Limit step size to avoid divergence (max 50% change)
+            if (dT > 0.5 * T_guess) dT = 0.5 * T_guess;
+            if (dT < -0.5 * T_guess) dT = -0.5 * T_guess;
+            
+            T_guess += dT;
+            
+            if (std::abs(dT) / T_guess < tol) break;
+        }
+        
+        return T_guess;
     }
 
     double get_pressure(const FluidVector &U, const double *Xi) const
@@ -243,11 +280,12 @@ struct Tabular3DEOSView
             return 0.0;
 
         double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(U.rho), std::log10(e_int), X))
+        double T = get_temperature(U.rho, e_int, Xi);
+        if (is_out_of_bounds(std::log10(U.rho), std::log10(T), X))
         {
             return fallback_sound_speed(U.rho, e_int);
         }
-        return interpolate_3d(table_cs, U.rho, e_int, X);
+        return interpolate_3d(table_cs, U.rho, T, X);
     }
 
     double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
@@ -259,7 +297,8 @@ struct Tabular3DEOSView
             return fallback_gamma();
 
         double X = get_target_X(Xi);
-        double cs = is_out_of_bounds(std::log10(rho), std::log10(e), X) ? fallback_sound_speed(rho, e) : interpolate_3d(table_cs, rho, e, X);
+        double T = get_temperature(rho, e, Xi);
+        double cs = is_out_of_bounds(std::log10(rho), std::log10(T), X) ? fallback_sound_speed(rho, e) : interpolate_3d(table_cs, rho, T, X);
 
         return (rho * cs * cs) / p;
     }
@@ -270,17 +309,18 @@ struct Tabular3DEOSView
     double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
+        double T = get_temperature(rho, e, Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
         {
             return e * (fallback_gamma() - 1.0); // 理想气体 dP/drho
         }
 
         if (table_dP_drho)
-            return interpolate_3d(table_dP_drho, rho, e, X);
+            return interpolate_3d(table_dP_drho, rho, T, X);
 
         double drho = rho * 0.001;
-        return (interpolate_3d(table_P, rho + drho, e, X) -
-                interpolate_3d(table_P, rho - drho, e, X)) /
+        return (interpolate_3d(table_P, rho + drho, T, X) -
+                interpolate_3d(table_P, rho - drho, T, X)) /
                (2.0 * drho);
     }
 
@@ -292,12 +332,18 @@ struct Tabular3DEOSView
             return rho * (fallback_gamma() - 1.0); // 理想气体 dP/de
         }
 
-        if (table_dP_de)
-            return interpolate_3d(table_dP_de, rho, e, X);
+        double T = get_temperature(rho, e, Xi);
+        if (table_dP_dT && table_cv) {
+            double dp_dT = interpolate_3d(table_dP_dT, rho, T, X);
+            double cv = interpolate_3d(table_cv, rho, T, X);
+            if (cv > 0.0) return dp_dT / cv;
+        }
 
         double de = e * 0.001;
-        return (interpolate_3d(table_P, rho, e + de, X) -
-                interpolate_3d(table_P, rho, e - de, X)) /
+        double T_plus = get_temperature(rho, e + de, Xi);
+        double T_minus = get_temperature(rho, e - de, Xi);
+        return (interpolate_3d(table_P, rho, T_plus, X) -
+                interpolate_3d(table_P, rho, T_minus, X)) /
                (2.0 * de);
     }
 
@@ -318,12 +364,13 @@ struct Tabular3DEOS : public EOSBase
 private:
     std::string table_path;
     std::vector<double> h_table_P;
-    std::vector<double> h_table_T;
+    std::vector<double> h_table_E;
     std::vector<double> h_table_cs;
+    std::vector<double> h_table_cv;
 
     // 预留
     std::vector<double> h_table_dP_drho;
-    std::vector<double> h_table_dP_de;
+    std::vector<double> h_table_dP_dT;
 
     Tabular3DEOSView view;
 
@@ -335,44 +382,46 @@ public:
         HighFive::File file(h5_filename, HighFive::File::ReadOnly);
 
         file.getDataSet("n_rho").read(view.n_rho);
-        file.getDataSet("n_e").read(view.n_e);
+        file.getDataSet("n_T").read(view.n_T);
         file.getDataSet("n_X").read(view.n_X);
 
         file.getDataSet("log_rho_min").read(view.log_rho_min);
         file.getDataSet("log_rho_max").read(view.log_rho_max);
-        file.getDataSet("log_e_min").read(view.log_e_min);
-        file.getDataSet("log_e_max").read(view.log_e_max);
+        file.getDataSet("log_T_min").read(view.log_T_min);
+        file.getDataSet("log_T_max").read(view.log_T_max);
         file.getDataSet("X_min").read(view.X_min);
         file.getDataSet("X_max").read(view.X_max);
 
         view.dlog_rho = (view.log_rho_max - view.log_rho_min) / (view.n_rho - 1);
-        view.dlog_e = (view.log_e_max - view.log_e_min) / (view.n_e - 1);
+        view.dlog_T = (view.log_T_max - view.log_T_min) / (view.n_T - 1);
         view.dX = (view.X_max - view.X_min) / (view.n_X - 1);
 
         file.getDataSet("pressure").read(h_table_P);
-        file.getDataSet("temperature").read(h_table_T);
+        file.getDataSet("energy").read(h_table_E);
         file.getDataSet("sound_speed").read(h_table_cs);
+        file.getDataSet("cv").read(h_table_cv);
 
         // 尝试加载偏导数表（如果不存在则捕获异常，保持为 nullptr 回退到有限差分）
         try
         {
             file.getDataSet("dp_drho").read(h_table_dP_drho);
             view.table_dP_drho = h_table_dP_drho.data();
-            file.getDataSet("dp_de").read(h_table_dP_de);
-            view.table_dP_de = h_table_dP_de.data();
+            file.getDataSet("dp_dT").read(h_table_dP_dT);
+            view.table_dP_dT = h_table_dP_dT.data();
             std::cout << "[Tabular3DEOS] Loaded EOS tables." << std::endl;
         }
         catch (...)
         {
             view.table_dP_drho = nullptr;
-            view.table_dP_de = nullptr;
+            view.table_dP_dT = nullptr;
             std::cout << "[Tabular3DEOS] No tables found. Falling back to finite difference." << std::endl;
         }
 
         // 挂载指针到底层 Vector
         view.table_P = h_table_P.data();
-        view.table_T = h_table_T.data();
+        view.table_E = h_table_E.data();
         view.table_cs = h_table_cs.data();
+        view.table_cv = h_table_cv.data();
 
         view.specs = specs_ptr;
         view.target_species_id = 1;
