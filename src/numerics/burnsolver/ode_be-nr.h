@@ -23,7 +23,7 @@ struct Solver_BE_NR
     static bool integrate(double *Y_ODE, double rho, double dt_target, const EOSType &eos,
                           const BurnConfig &burn_cfg, double &dt_rec)
     {
-        if (Y_ODE[NEQ - 1] < burn_cfg.burn_temp_min || rho < burn_cfg.burn_rho_min)
+        if (Y_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin)
         {
             return true;
         }
@@ -45,6 +45,13 @@ struct Solver_BE_NR
         // ================= 外层循环：时间子步进推进 =================
         while (t_current < dt_target)
         {
+            // NSE Bypass: If the system has reached the NSE threshold, skip the stiff integration
+            if (Y_ODE[NEQ - 1] > burn_cfg.nseTempThreshold && rho > burn_cfg.nseDensThreshold)
+            {
+                dt_rec = dt_target; // Recommend keeping the macroscopic target step
+                return true;
+            }
+
             substep_count++;
             if (substep_count > max_substeps)
             {
@@ -170,8 +177,8 @@ struct Solver_BE_NR
                 OdeMath::vec_axpy<NEQ>(Y_k, 1.0, b, Y_k);
 
                 // 6. 物理边界截断器兜底！(防止迭代中途出现负质量或绝对零度)
-                OdeMath::enforce_mass_conservation<NUM_SPEC>(Y_k, 1e-20);
-                OdeMath::enforce_temperature_bounds<NEQ>(Y_k, 1e6, 1e10);
+                OdeMath::enforce_mass_conservation<NUM_SPEC>(Y_k, burn_cfg.smallx);
+                OdeMath::enforce_temperature_bounds<NEQ>(Y_k, burn_cfg.smallt, 1e11);
 
                 // 7. 使用 WRMS 范数计算更新量 dY 的加权误差
                 current_err = OdeMath::wrms_norm<NEQ>(b, W);

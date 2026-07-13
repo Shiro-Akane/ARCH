@@ -105,11 +105,15 @@ struct BurnConfig
     bool use_burn = false;                ///< Master switch for the burn module
     std::string network_name = "aprox19"; ///< "alpha_chain", "c12_o16", "7isotope"
 
-    double burn_temp_min = 1e6; ///< Minimum temperature for burning (in Kelvin)
-    double burn_rho_min = 1e1;  ///< Minimum density for burning (in g/cm^3)
+    double nuclearTempMin = 1e9; ///< Minimum temperature for burning (in Kelvin)
+    double nuclearDensMin = 1e-10;  ///< Minimum density for burning (in g/cm^3)
 
-    double small_temp = 1e5; ///< Minimum temperature for burning (in Kelvin)
-    double small_x = 1e-20;  ///< Minimum mass fraction for species (to avoid negative or zero)
+    double smallt = 1e5; ///< Minimum temperature for burning (in Kelvin)
+    double smallx = 1e-20;  ///< Minimum mass fraction for species (to avoid negative or zero)
+
+    double enucDtFactor = 0.1; ///< Maximum fractional change in internal energy per burn step
+    double nseTempThreshold = 4.5e9; ///< Temperature threshold to trigger NSE bypass
+    double nseDensThreshold = 1.0e6; ///< Density threshold to trigger NSE bypass
 
     bool enforce_mass_conservation = true; ///< Whether to enforce mass fraction conservation after each burn step
 

@@ -67,14 +67,14 @@ namespace OdeMath
      * 只对前 NUM_SPECIES 个元素操作，忽略温度 T
      */
     template <int NUM_SPECIES>
-    void enforce_mass_conservation(double *Y, double small_x)
+    void enforce_mass_conservation(double *Y, double smallx)
     {
         double sum_X = 0.0;
         // 1. 修正极小负值（由于数值截断误差产生）
         for (int i = 0; i < NUM_SPECIES; ++i)
         {
-            if (Y[i] < small_x)
-                Y[i] = small_x;
+            if (Y[i] < smallx)
+                Y[i] = smallx;
             sum_X += Y[i];
         }
 

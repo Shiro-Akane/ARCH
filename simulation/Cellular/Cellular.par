@@ -7,13 +7,13 @@
 # [Grid Configuration]
 # ------------------------------------------------------------------------------
 nx       = 1000       # 1D 高分辨率以解析反应区 (Reaction Zone)
-ny       = 1
+ny       = 100
 nz       = 1
 
 x_min    = 0.0
 x_max    = 256.0       # 从 100 扩展至 256 (参考 flash.par)
 y_min    = 0.0
-y_max    = 1.0
+y_max    = 25.6
 z_min    = 0.0
 z_max    = 1.0
 
@@ -34,7 +34,7 @@ solver      = HLLC       # 激波捕捉推荐 HLLC 或 Roe
 reconstruct = ppm        # 燃烧问题对数值耗散敏感，建议使用三阶 PPM
 time_integrator = RK3
 limiter     = mc
-cfl         = 0.4        # 包含刚性源项时，CFL 尽量压低
+cfl         = 0.8        # 包含刚性源项时，CFL 尽量压低
 
 EntropyFix = On
 EntropyFixCoefficient = 0.1
@@ -68,41 +68,41 @@ use_burn         = 1
 network_name     = aprox19
 burn_verbose_level = 1
 
-burn_temp_min    = 1e6   # C12 燃烧点很高
-burn_rho_min     = 1e6
-small_temp       = 1e6
-small_x          = 1e-20
-enforce_mass_conservation = 1
+nuclearTempMin   = 1e9       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
+nuclearDensMin   = 1e-10     # 触发核燃烧的最小密度阈值 (g/cm^3)
 
-ode_solver       = BE_NR
+dt_init          = 1e-16     # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
+dt_min           = 1e-20     # 隐式 ODE 求解器允许切分的最小物理步长 (推荐: 1e-22 ~ 1e-20)
+tstep_change_factor = 1.2    # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
+enucDtFactor     = 0.1       # 核能限制器：限制单步释放的核能占总内能的比例 (推荐: 0.1)
+
+ode_solver       = BE_NR     # 推荐处理极端刚性核网络的求解器 (Backward Euler + Newton Raphson)
 linear_solver    = DenseLU
-ode_rtol         = 1e-4
-ode_atol         = 1e-10
-ode_max_newton_iter = 150
 
 # ------------------------------------------------------------------------------
 # [User Custom Parameters: CellularDet]
 # ------------------------------------------------------------------------------
-shock_dir = 0        # 0=X, 1=Y, 2=Z
-distance  = 12.8     # (对应 flash.par 的 radiusPerturb = 12.8)
+shock_dir = 0            # 激波传播方向 (0=X, 1=Y, 2=Z)
+radiusPerturb = 25.6     # 初始施加 Von Neumann 扰动（跳跃条件）的区域长度 (推荐: ~12.8-25.6，包围几个胞格尺度)
 
 # --- Ambient State (未燃环境) ---
-rho_ambient = 1.0e7
-T_ambient   = 2.0e8
+# 代表激波前方的未反应流体状态
+rhoAmbient = 1.0e7       # 环境密度 (g/cm^3)
+tempAmbient   = 2.0e8    # 环境温度 (K) (不能过高以防提前自燃)
 
-# --- Von Neumann Spike State (手动估算的 CJ 后激波状态) ---
-rho_vn = 4.0e7
-T_vn   = 3.5e9
-u_vn   = 9.5e8
+# --- Von Neumann Spike State (冯·诺依曼尖峰态) ---
+# 激波阵面扫过但核反应还未大量发生时的“冻结”热力学状态 (根据 CJ 爆轰理论计算得出)
+rhoPerturb = 4.322e7     # 激波后极值密度 (g/cm^3)
+tempPerturb   = 4.670e9  # 激波后极值温度 (K)
+velxPerturb   = 1.011e9  # 激波波速或活塞驱动速度 (cm/s)
 
-# --- 胞格微扰 ---
-noiseAmplitude = 0.2
+# --- 胞格微扰 (Cellular Perturbation) ---
+# 用于在 2D/3D 下打破对称性从而激发真实的胞格爆轰结构
+noiseAmplitude = 0.2     # 密度和压力的横向正弦微扰幅度，0 表示一维平面对称爆轰 (推荐: 0.1 ~ 0.2)
 
-# --- Initial Composition ---
+# --- Initial Composition (初始同位素组分) ---
 # Pynucastro aprox19 默认顺序：
 # N, H1, He3, He4, C12, N14, O16, Ne20, Mg24, Si28, S32, Ar36, Ca40, Ti44, Cr48, Fe52, Fe54, Ni56
-x_c12 = 0.5
-x_o16 = 0.5
-
-# --- PI Controller Feedback ---
-ode_dt_hydro_fac = 10.0
+xhe4 = 0.4               # 质量分数 (和需为 1.0)
+xc12 = 0.6
+xo16 = 0.0

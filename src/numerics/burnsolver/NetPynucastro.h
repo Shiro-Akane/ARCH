@@ -60,8 +60,8 @@ struct NetPynucastro
         {
             std::string name = specs.get_name(i);
             
-            // Construct target lowercase key, e.g. "x_he4"
-            std::string target = "x_" + name;
+            // Construct target lowercase key, e.g. "xhe4"
+            std::string target = "x" + name;
             std::transform(target.begin(), target.end(), target.begin(), ::tolower);
 
             double val = 0.0;

@@ -31,15 +31,15 @@ public:
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         // [1. Read Thermodynamics & Kinematics (Temperature-based)]
-        rho_amb = config.Get<double>("rho_ambient", 1.0e7);
-        T_amb = config.Get<double>("T_ambient", 2.0e8);
+        rho_amb = config.Get<double>("rhoAmbient", 1.0e7);
+        T_amb = config.Get<double>("tempAmbient", 2.0e8);
 
-        rho_vn = config.Get<double>("rho_vn", 4.0e7);
-        T_vn = config.Get<double>("T_vn", 3.0e9);
-        u_vn = config.Get<double>("u_vn", 1.0e9);
+        rho_vn = config.Get<double>("rhoPerturb", 4.0e7);
+        T_vn = config.Get<double>("tempPerturb", 3.0e9);
+        u_vn = config.Get<double>("velxPerturb", 1.0e9);
 
         // [2. Read Geometry Configuration]
-        distance = config.Get<double>("distance", 0.5);
+        distance = config.Get<double>("radiusPerturb", 0.5);
         noise_amp = config.Get<double>("noiseAmplitude", 0.0);
         shock_dir = config.Get<int>("shock_dir", 0);
 
@@ -70,9 +70,17 @@ public:
         double noise = 0.0;
         if (noise_amp > 0.0)
         {
-            double pseudo_rand = std::sin(p.x * 12.9898 + p.y * 78.233 + p.z * 37.719) * 43758.5453;
-            pseudo_rand = pseudo_rand - std::floor(pseudo_rand);
-            noise = noise_amp * (2.0 * pseudo_rand - 1.0);
+            // Use a macroscopic transverse perturbation to avoid numerical dissipation.
+            // Assumes a domain transverse length of ~25.6 to fit 4 wavelengths.
+            double k_trans = 2.0 * M_PI / (25.6 / 4.0);
+            
+            if (shock_dir == 0) {
+                noise = noise_amp * std::sin(k_trans * p.y) * std::cos(k_trans * p.z);
+            } else if (shock_dir == 1) {
+                noise = noise_amp * std::sin(k_trans * p.x) * std::cos(k_trans * p.z);
+            } else {
+                noise = noise_amp * std::sin(k_trans * p.x) * std::cos(k_trans * p.y);
+            }
         }
 
         // [2. Assign Hydrodynamic State]

@@ -148,10 +148,15 @@ public:
         // --- 核反应燃烧模块 (Burn) ---
         cfg.physics.burn.use_burn = (parser.GetInt("use_burn", 0) != 0);
         cfg.physics.burn.network_name = parser.GetString("network_name", "aprox19");
-        cfg.physics.burn.burn_temp_min = parser.GetDouble("burn_temp_min", 1e7);
-        cfg.physics.burn.burn_rho_min = parser.GetDouble("burn_rho_min", 1e1);
-        cfg.physics.burn.small_temp = parser.GetDouble("small_temp", 1e5);
-        cfg.physics.burn.small_x = parser.GetDouble("small_x", 1e-20);
+        cfg.physics.burn.nuclearTempMin = parser.GetDouble("nuclearTempMin", 1e9);
+        cfg.physics.burn.nuclearDensMin = parser.GetDouble("nuclearDensMin", 1e-10);
+        cfg.physics.burn.smallt = parser.GetDouble("smallt", 1e5);
+        cfg.physics.burn.smallx = parser.GetDouble("smallx", 1e-20);
+        
+        cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", 0.1);
+        cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", 4.5e9);
+        cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", 1.0e6);
+        
         cfg.physics.burn.enforce_mass_conservation = (parser.GetInt("enforce_mass_conservation", 1) != 0); // 默认开启
         cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", 0);
 

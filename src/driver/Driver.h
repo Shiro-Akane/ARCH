@@ -107,6 +107,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     const int n_spec = state.GetNumSpecies();
 
     double dt_burn_global = 1e99;
+    double dt_old = config.GetCustomParam("dt_init", 1e-16);
 
     // =========================================================
     // 局部辅助 Lambda 函数：执行网格遍历燃烧
@@ -126,7 +127,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             double rho = current_state.rho[i];
 
             // 跳过低密度真空区（保护机制）
-            if (rho < config.physics.burn.burn_rho_min)
+            if (rho < config.physics.burn.nuclearDensMin)
                 continue;
 
             // 1. 提取当前单元的组分到 Y_ODE
@@ -150,10 +151,6 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             double dt_rec = burn_dt;
             bool success = burn.integrate(Y_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
 
-            if (success) {
-                local_dt_burn_min = std::min(local_dt_burn_min, dt_rec);
-            }
-
             if (!success)
             {
                 std::cerr << "[Fatal Error] Burn failed at cell " << i << " at time " << t_current << std::endl;
@@ -167,6 +164,14 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             // 5. 根据新温度和新组分，重新计算内能并更新总能量
             double e_int_new = eos.get_eint_from_T(rho, T_new, Y_ODE);
             current_state.eng[i] = rho * e_int_new + e_kin;
+
+            // 6. 核能限制器 (Enuc Limiter)
+            double delta_e = std::abs(e_int_new - e_int);
+            if (burn_dt > 0.0 && delta_e > 1e-10 * e_int) {
+                double enuc_rate = delta_e / burn_dt;
+                double dt_enuc_limit = config.physics.burn.enucDtFactor * e_int_new / enuc_rate;
+                local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
+            }
         }
         
         // 汇总全局最新的燃烧建议步长
@@ -240,28 +245,34 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // -----------------------------------------------------
         // Step B: Calculate Time Step (CFL Condition)
         // -----------------------------------------------------
-        // Compute stable dt based on wave speeds
+        // Computed stable dt based on wave speeds
         double dt_computed = adaptive_dt(u_current, eos, grid, cfl);
+        
+        // Restrict timestep growth to avoid hydro instabilities from sudden energy release
+        if (step_count > 0) {
+            double dt_grow = config.GetCustomParam("tstep_change_factor", 1.2);
+            dt_computed = std::min(dt_computed, dt_old * dt_grow);
+        }
 
         if (config.physics.burn.use_burn)
         {
-            double dt_hydro_fac = config.Get<double>("ode_dt_hydro_fac", 100.0);
-            
             if (step_count == 0) {
-                // For the very first step, force a tiny dt so the ODE solver can safely evaluate 
-                // the initial extreme stiffness and feedback a reasonable dt_burn_global.
-                dt_computed = std::min(dt_computed, 1e-13);
+                // For the very first step, force a tiny dt (e.g., dt_init)
+                double dt_init = config.GetCustomParam("dt_init", 1e-16);
+                dt_computed = std::min(dt_computed, dt_init);
             } else {
-                double dt_burn_limit = dt_burn_global * dt_hydro_fac;
-                dt_computed = std::min(dt_computed, dt_burn_limit);
+                dt_computed = std::min(dt_computed, dt_burn_global);
             }
         }
+        
+        dt_old = dt_computed;
 
         // 重置 global burn limit 供这一步内部重新计算
         dt_burn_global = 1e99;
 
         // Safety check for numerical degeneracy
-        if (dt_computed < 1e-25)
+        double dt_min = config.GetCustomParam("dt_min", 1e-20);
+        if (dt_computed < dt_min)
         {
             std::cerr << "[Error] dt too small (" << dt_computed << "). Simulation aborted." << std::endl;
             break;
