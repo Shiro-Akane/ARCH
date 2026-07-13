@@ -220,9 +220,27 @@ chk_dt       = 0.5           # Checkpoint files for restarts
 gravity_type = external      # Options: none, external, self
 gravity_g_y  = -9.81         # Constant external gravity in Y direction
 
-# Nuclear Burning
-use_burn     = 0             # 1 = Enable burning, 0 = Disable
-network_name = aprox19       # Reaction network to auto-load
+# Nuclear Burning & Time Stepping
+use_burn         = 0             # 1 = Enable burning, 0 = Disable
+network_name     = aprox19       # Reaction network to auto-load
+
+# --- Advanced ODE & Burning Parameters (Hidden by Default) ---
+# These parameters have robust defaults in RuntimeParams.h. 
+# Only override them if your nuclear network fails to converge.
+# 
+# nuclearTempMin   = 1e9         # Minimum temperature to ignite burning (K)
+# nuclearDensMin   = 1e-10       # Minimum density to ignite burning (g/cm^3)
+# dt_init          = 1e-16       # Forced initial physical timestep for extreme stiff problems
+# dt_min           = 1e-20       # Minimum allowed physical timestep
+# tstep_change_factor = 1.2      # Maximum growth factor for macro-fluid timestep
+# enucDtFactor     = 0.1         # Limits step size based on nuclear energy release rate
+# 
+# ode_solver       = BE_NR       # Underlying ODE solver (BE_NR, ROS4, VODE)
+# ode_rtol         = 1e-4        # Relative tolerance for Newton-Raphson
+# ode_atol         = 1e-8        # Absolute tolerance
+# ode_max_newton_iter = 50       # Max NR iterations per sub-step before reducing dt
+# ode_dt_fac_max   = 2.0         # Max step growth factor for the internal PI controller
+# ode_dt_fac_min   = 0.1         # Max step shrink factor for the internal PI controller
 
 # ------------------------------------------------------------------------------
 # 3. User Custom Parameters (Read by config.Get<T> in your Setup function)
