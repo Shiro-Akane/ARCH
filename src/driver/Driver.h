@@ -166,21 +166,21 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             current_state.eng[i] = rho * e_int_new + e_kin;
 
             // 6. 核能限制器 (Enuc Limiter)
-            // 仅当 enucDtFactor > 0 时才启用限制器。在欠分辨网格下的爆轰（Sub-grid Burning），通常将其设为 0 关闭。
+            // 仅当 enucDtFactor > 0 时才启用限制器。
             if (config.physics.burn.enucDtFactor > 0.0) {
                 double delta_e = std::abs(e_int_new - e_int);
-                if (burn_dt > 0.0 && delta_e > 1e-10 * e_int) {
+                if (burn_dt > 0.0) {
                     double enuc_rate = delta_e / burn_dt;
-                    double dt_enuc_limit = config.physics.burn.enucDtFactor * e_int_new / enuc_rate;
                     
-                    // 自动控制机制 (Adaptive Limiter Cap):
-                    // 为了兼顾“平缓燃烧下的高分辨率解析”与“欠分辨激波下的防锁死”，
-                    // 无论单步释放的核能有多么剧烈，我们最多只允许核能限制器将时间步长缩小到当前流体步长 (burn_dt) 的 1%。
-                    // 这等同于在剧烈爆轰波扫过时，自动将其转化为耗时约 ~100 步的亚网格平滑燃烧，而不会陷入无穷小的锁死陷阱。
-                    double min_allowed_dt = std::max(0.01 * burn_dt, config.GetCustomParam("dt_min", 1e-20));
-                    dt_enuc_limit = std::max(dt_enuc_limit, min_allowed_dt);
+                    // 【防除 0 保护】模仿 FLASH: 计算倒数 (enuc / eint)
+                    double energyRatioInv = enuc_rate / std::max(e_int_new, 1e-20);
                     
-                    local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
+                    // 仅当能量变化率显著时，才将其纳入时间步限制
+                    if (energyRatioInv > 1e-30) {
+                        // 相当于 dt = enucDtFactor * (eint / enuc)
+                        double dt_enuc_limit = config.physics.burn.enucDtFactor / energyRatioInv;
+                        local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
+                    }
                 }
             }
         }

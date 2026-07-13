@@ -156,7 +156,7 @@ public:
         cfg.physics.burn.smallt = parser.GetDouble("smallt", 1e5);
         cfg.physics.burn.smallx = parser.GetDouble("smallx", 1e-20);
         
-        cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", 0.1);
+        cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", 1e30);
         cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", 4.5e9);
         cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", 1.0e6);
         

@@ -114,7 +114,7 @@ struct BurnConfig
     double smallt = 1e5; ///< Minimum temperature for burning (in Kelvin)
     double smallx = 1e-20;  ///< Minimum mass fraction for species (to avoid negative or zero)
 
-    double enucDtFactor = 0.1; ///< Maximum fractional change in internal energy per burn step
+    double enucDtFactor = 1e30; ///< Maximum fractional change in internal energy per burn step (1e30 = practically off)
     double nseTempThreshold = 4.5e9; ///< Temperature threshold to trigger NSE bypass
     double nseDensThreshold = 1.0e6; ///< Density threshold to trigger NSE bypass
 
