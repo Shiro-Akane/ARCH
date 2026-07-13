@@ -211,6 +211,7 @@ namespace TimeIntegration
                     U_new.mom_x = 0.0;
                     U_new.mom_y = 0.0;
                     U_new.mom_z = 0.0;
+                    U_new.eng = 1e-12; // 同步重置能量，防止比内能 (eng/rho) 变成极小的负数引发垃圾数据
                 }
 
                 u_dest.set(idx, U_new);
