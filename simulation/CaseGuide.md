@@ -233,7 +233,7 @@ network_name     = aprox19       # Reaction network to auto-load
 # dt_init          = 1e-16       # Forced initial physical timestep for extreme stiff problems
 # dt_min           = 1e-20       # Minimum allowed physical timestep
 # tstep_change_factor = 1.2      # Maximum growth factor for macro-fluid timestep
-# enucDtFactor     = 0.1         # Limits step size based on nuclear energy release rate. The code automatically detects under-resolved sub-grid detonations and caps the shrinkage to prevent dt lock-up.
+# enucDtFactor     = 1e30        # Limits step size based on nuclear energy release rate (dt = enucDtFactor * eint/enuc). Default 1e30 (effectively off). Set to 0.1 to enable.
 # 
 # ode_solver       = BE_NR       # Underlying ODE solver (BE_NR, ROS4, VODE)
 # ode_rtol         = 1e-4        # Relative tolerance for Newton-Raphson

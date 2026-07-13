@@ -70,30 +70,7 @@ gamma = 1.4    # Default global gamma (will be overridden by species)
 gravity_type = external     #Options: none, enternal, self
 gravity_g_y  = -981
 
-# ------------------------------------------------------------------------------
-# [Nuclear Burn & ODE]
-# Maps to config.physics.burn.*
-# ------------------------------------------------------------------------------
-use_burn         = 0             # 0 = Off, 1 = On (Master switch for burning)
-network_name     = aprox19       # Options: aprox19, custom, c12_o16
-burn_verbose_level = 0           # 0 = Silent, 1 = Divergence Warnings, 2 = Full Step Info
 
-# --- Physical Thresholds & Enforcers ---
-nuclearTempMin   = 1e9           # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
-nuclearDensMin   = 1e-10         # 触发核燃烧的最小密度阈值 (g/cm^3)
-small_temp       = 1e5           # Temperature floor for safety clipping
-small_x          = 1e-20         # Mass fraction floor to prevent negative abundances
-enforce_mass_conservation = 1    # 1 = Force sum(X_i) = 1.0 after each NR iteration
-
-# --- Time Step Controls ---
-dt_init          = 1e-16         # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
-dt_min           = 1e-20         # 隐式 ODE 求解器允许切分的最小物理步长 (推荐: 1e-22 ~ 1e-20)
-tstep_change_factor = 1.2        # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
-enucDtFactor     = 0.1           # 核能限制器：限制单步释放的核能比例 (推荐: 0.1)。代码内部具备自动探测机制：当处于粗网格(Sub-grid)欠分辨激波爆轰时，会自动限制缩步下限以防止锁死。
-
-# --- ODE Integrator Settings ---
-ode_solver       = BE_NR         # Options: BE_NR, ROS4, VODE (推荐极端刚性网络用 BE_NR)
-linear_solver    = DenseLU       # Options: DenseLU, SparseWrap
 
 # ------------------------------------------------------------------------------
 # [User Custom Parameters]
