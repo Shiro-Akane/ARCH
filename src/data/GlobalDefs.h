@@ -63,6 +63,9 @@ struct NumericsConfig
     double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
 
     double entropy_fix_coeff = 0.1;
+
+    double sml_rho = 1e-12; ///< Density floor
+    double max_eint = 1e21; ///< Maximum specific internal energy allowed
 };
 
 // ----------------------------------------------------------------------

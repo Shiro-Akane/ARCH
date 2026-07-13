@@ -180,7 +180,7 @@ namespace TimeIntegration
     inline void perform_stage_update(
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
         const std::vector<FluidVector> &dU, const std::vector<double> &d_spec,
-        const Grid &grid, double weight_n, double weight_flux)
+        const Grid &grid, double weight_n, double weight_flux, double sml_rho, double max_eint)
     {
         int n_spec = u_n.GetNumSpecies();
         int total_size = grid.GetTotalSize();
@@ -205,18 +205,48 @@ namespace TimeIntegration
                 FluidVector U_curr = u_current.get(idx);
                 FluidVector U_new = weight_n * U_old + weight_flux * (U_curr + dU[idx]);
 
-                if (U_new.rho < 1e-12)
+                if (U_new.rho < sml_rho)
                 {
-                    U_new.rho = 1e-12;
+                    U_new.rho = sml_rho;
                     U_new.mom_x = 0.0;
                     U_new.mom_y = 0.0;
                     U_new.mom_z = 0.0;
-                    U_new.eng = 1e-12; // 同步重置能量，防止比内能 (eng/rho) 变成极小的负数引发垃圾数据
+                    // Reset energy such that e_int is small, e.g., 1e-10
+                    U_new.eng = sml_rho * 1e-10; 
+                }
+                else
+                {
+                    // 动能
+                    double e_kin = 0.5 * (U_new.mom_x * U_new.mom_x + U_new.mom_y * U_new.mom_y + U_new.mom_z * U_new.mom_z) / U_new.rho;
+                    
+                    // 速度上限截断 (Velocity Ceiling)
+                    // 防止近真空区被注入动量后产生超光速(如 1e24 cm/s)，导致 CFL 直接崩溃
+                    double max_vel = 1e10; // 10,000 km/s，远大于正常流体速度，不影响真实物理
+                    double v_sq = 2.0 * e_kin / U_new.rho;
+                    if (v_sq > max_vel * max_vel) {
+                        double scale = max_vel / std::sqrt(v_sq);
+                        U_new.mom_x *= scale;
+                        U_new.mom_y *= scale;
+                        U_new.mom_z *= scale;
+                        e_kin = 0.5 * (U_new.mom_x * U_new.mom_x + U_new.mom_y * U_new.mom_y + U_new.mom_z * U_new.mom_z) / U_new.rho;
+                    }
+
+                    // 物理合理性截断 (Specific Internal Energy Floor & Ceiling)：
+                    // 防止因数值波动（如下冲或真空加热）导致比内能出现极小负数或爆增到 1e38 导致声速崩溃。
+                    // 上限 1e21 erg/g 对应 T ~ 10^12 K，远高于天体爆轰真实温度，安全且不会影响真实物理。
+                    double current_eint = (U_new.eng - e_kin) / U_new.rho;
+                    double min_eint = 1e-10;
+                    
+                    if (current_eint < min_eint || current_eint > max_eint)
+                    {
+                        current_eint = std::max(min_eint, std::min(current_eint, max_eint));
+                        U_new.eng = U_new.rho * current_eint + e_kin;
+                    }
                 }
 
                 u_dest.set(idx, U_new);
 
-                double rho_new = std::max(U_new.rho, 1e-13);
+                double rho_new = std::max(U_new.rho, sml_rho);
                 double sum_X = 0.0;
                 for (int s = 0; s < n_spec; ++s)
                 {

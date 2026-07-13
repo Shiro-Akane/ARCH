@@ -39,6 +39,9 @@ cfl         = 0.8        # 包含刚性源项时，CFL 尽量压低
 EntropyFix = On
 EntropyFixCoefficient = 0.1
 
+sml_rho = 1e-2       # Density floor to prevent vacuum crashing (similar to FLASH's smlrho)
+max_eint = 1e19      # Cap maximum specific internal energy to prevent sound speed / CFL crashes
+
 # ------------------------------------------------------------------------------
 # [Time & IO]
 # ------------------------------------------------------------------------------

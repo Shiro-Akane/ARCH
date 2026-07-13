@@ -91,11 +91,11 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     FluidState u_next(grid, specs.count());    ///< State at time n+1 (Next).
     FluidState u_scratch(grid, specs.count()); ///< RK Scratch state
 
-    // Entropy_fix_coeff for SW and Roe flux scheme
-    double entropy_fix_coeff = config.numerics.entropy_fix_coeff;
+    // Pass NumericsConfig directly instead of just entropy_fix_coeff
+    const NumericsConfig &num_cfg = config.numerics;
 
     std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name()
-              << " | Entropy Fix Coeff: " << entropy_fix_coeff << std::endl;
+              << " | Entropy Fix Coeff: " << num_cfg.entropy_fix_coeff << std::endl;
 
     // update Bounday during Scratch state
     BCHandler bc_handler{config};
@@ -315,7 +315,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
         // D2. Hydrodynamics Step
         bc_handler.apply(u_current, grid);
-        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, gravity, entropy_fix_coeff);
+        TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, gravity, num_cfg);
 
         // D3. Burn Step (if enabled)
         bc_handler.apply(u_next, grid);

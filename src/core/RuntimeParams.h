@@ -140,6 +140,9 @@ public:
             cfg.numerics.entropy_fix_coeff = parser.GetDouble("EntropyFixCoefficient", 0.1);
         }
 
+        cfg.numerics.sml_rho = parser.GetDouble("sml_rho", 1e-12);
+        cfg.numerics.max_eint = parser.GetDouble("max_eint", 1e21);
+
         // 3. 搬运物理参数 (Physics)
         cfg.physics.eos_type = parser.GetString("eos_type", "ideal");
         cfg.physics.eos_table_path = parser.GetString("eos_table_path", "");

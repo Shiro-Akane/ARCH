@@ -36,7 +36,7 @@ struct SolverRK3
                       const EosType &eos, const Grid &grid, double dt,
                       BCPolicy &boundary_condition,
                       GravityPolicy &gravity,
-                      double entropy_fix_coeff = 0.1)
+                      const NumericsConfig &num_cfg)
     {
 
         int total_size = grid.GetTotalSize();
@@ -53,8 +53,8 @@ struct SolverRK3
         // Store in: state_star
         // =========================================================
 
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, entropy_fix_coeff);
-        TimeIntegration::perform_stage_update(state_n, state_n, state_star, dU, d_spec, grid, 0.0, 1.0);
+        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
+        TimeIntegration::perform_stage_update(state_n, state_n, state_star, dU, d_spec, grid, 0.0, 1.0, num_cfg.sml_rho, num_cfg.max_eint);
         boundary_condition.apply(state_star, grid);
 
         // =========================================================
@@ -62,8 +62,8 @@ struct SolverRK3
         // Store in: state_np1 (Using np1 as the second buffer)
         // =========================================================
 
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(state_star, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, entropy_fix_coeff);
-        TimeIntegration::perform_stage_update(state_n, state_star, state_np1, dU, d_spec, grid, 3.0 / 4.0, 1.0 / 4.0);
+        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(state_star, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
+        TimeIntegration::perform_stage_update(state_n, state_star, state_np1, dU, d_spec, grid, 3.0 / 4.0, 1.0 / 4.0, num_cfg.sml_rho, num_cfg.max_eint);
         boundary_condition.apply(state_np1, grid);
 
         // =========================================================
@@ -71,7 +71,7 @@ struct SolverRK3
         // Store in: state_np1 (Overwrite result)
         // =========================================================
 
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(state_np1, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, entropy_fix_coeff);
-        TimeIntegration::perform_stage_update(state_n, state_np1, state_np1, dU, d_spec, grid, 1.0 / 3.0, 2.0 / 3.0);
+        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(state_np1, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
+        TimeIntegration::perform_stage_update(state_n, state_np1, state_np1, dU, d_spec, grid, 1.0 / 3.0, 2.0 / 3.0, num_cfg.sml_rho, num_cfg.max_eint);
     }
 };

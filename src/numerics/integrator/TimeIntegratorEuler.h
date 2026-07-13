@@ -36,7 +36,7 @@ struct SolverEuler
                       const EosType &eos, const Grid &grid, double dt,
                       BCPolicy &boundary_condition,
                       GravityPolicy &gravity,
-                      double entropy_fix_coeff = 0.1) // [Unused] Euler 一步到位，中间不需要刷边界
+                      const NumericsConfig &num_cfg) // [Unused] Euler 一步到位，中间不需要刷边界
     {
 
         int total_size = grid.GetTotalSize();
@@ -52,11 +52,10 @@ struct SolverEuler
         // Single Euler Step: U^{n+1} = U^n + dt * L(U^n)
         // =========================================================
         TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(
-            state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, entropy_fix_coeff);
+            state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
 
-        // Update directly to state_np1 (w_n = 0.0, w_flux = 1.0)
-        TimeIntegration::perform_stage_update(
-            state_n, state_n, state_np1, dU, d_spec, grid, 0.0, 1.0);
+        // Update step
+        TimeIntegration::perform_stage_update(state_n, state_n, state_np1, dU, d_spec, grid, 0.0, 1.0, num_cfg.sml_rho, num_cfg.max_eint);
 
         // Suppress unused variables
         (void)state_scratch;
