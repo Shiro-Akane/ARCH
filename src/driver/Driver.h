@@ -173,8 +173,12 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
                     double enuc_rate = delta_e / burn_dt;
                     double dt_enuc_limit = config.physics.burn.enucDtFactor * e_int_new / enuc_rate;
                     
-                    // 加入硬底板保护：即使限制器要求极小步长，也不允许低于隐式求解器的极限物理底线 dt_min
-                    dt_enuc_limit = std::max(dt_enuc_limit, config.GetCustomParam("dt_min", 1e-20));
+                    // 自动控制机制 (Adaptive Limiter Cap):
+                    // 为了兼顾“平缓燃烧下的高分辨率解析”与“欠分辨激波下的防锁死”，
+                    // 无论单步释放的核能有多么剧烈，我们最多只允许核能限制器将时间步长缩小到当前流体步长 (burn_dt) 的 1%。
+                    // 这等同于在剧烈爆轰波扫过时，自动将其转化为耗时约 ~100 步的亚网格平滑燃烧，而不会陷入无穷小的锁死陷阱。
+                    double min_allowed_dt = std::max(0.01 * burn_dt, config.GetCustomParam("dt_min", 1e-20));
+                    dt_enuc_limit = std::max(dt_enuc_limit, min_allowed_dt);
                     
                     local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
                 }
