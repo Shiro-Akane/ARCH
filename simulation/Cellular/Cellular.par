@@ -74,7 +74,7 @@ nuclearDensMin   = 1e-10     # 触发核燃烧的最小密度阈值 (g/cm^3)
 dt_init          = 1e-16     # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
 dt_min           = 1e-20     # 隐式 ODE 求解器允许切分的最小物理步长 (推荐: 1e-22 ~ 1e-20)
 tstep_change_factor = 1.2    # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
-enucDtFactor     = 0.1       # 核能限制器：限制单步释放的核能占总内能的比例 (推荐: 0.1)
+enucDtFactor     = 0.0       # 核能限制器：限制单步释放核能的比例。在粗网格(Sub-grid)欠分辨爆轰时必须设为 0 关闭，否则会锁死 dt。仅在高分辨率或平缓燃烧时有意义。
 
 ode_solver       = BE_NR     # 推荐处理极端刚性核网络的求解器 (Backward Euler + Newton Raphson)
 linear_solver    = DenseLU

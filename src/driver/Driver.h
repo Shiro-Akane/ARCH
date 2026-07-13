@@ -166,11 +166,18 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             current_state.eng[i] = rho * e_int_new + e_kin;
 
             // 6. 核能限制器 (Enuc Limiter)
-            double delta_e = std::abs(e_int_new - e_int);
-            if (burn_dt > 0.0 && delta_e > 1e-10 * e_int) {
-                double enuc_rate = delta_e / burn_dt;
-                double dt_enuc_limit = config.physics.burn.enucDtFactor * e_int_new / enuc_rate;
-                local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
+            // 仅当 enucDtFactor > 0 时才启用限制器。在欠分辨网格下的爆轰（Sub-grid Burning），通常将其设为 0 关闭。
+            if (config.physics.burn.enucDtFactor > 0.0) {
+                double delta_e = std::abs(e_int_new - e_int);
+                if (burn_dt > 0.0 && delta_e > 1e-10 * e_int) {
+                    double enuc_rate = delta_e / burn_dt;
+                    double dt_enuc_limit = config.physics.burn.enucDtFactor * e_int_new / enuc_rate;
+                    
+                    // 加入硬底板保护：即使限制器要求极小步长，也不允许低于隐式求解器的极限物理底线 dt_min
+                    dt_enuc_limit = std::max(dt_enuc_limit, config.GetCustomParam("dt_min", 1e-20));
+                    
+                    local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
+                }
             }
         }
         
