@@ -63,8 +63,17 @@ struct BurnDispatcher
                   << " | ODE Solver: " << ode_type << " | Linear Solver: " << lin_type << std::endl;
 
         // 2. 将字符串转换为编译期的强类型 Network
-        // NetPynucastro 作为一个统一的壳，会自动读取并适应底层链接的 Pynucastro 网络，因此无需根据名字重新分发了。
-        dispatch_ode<NetPynucastro>(ode_type, lin_type, std::forward<Func>(func));
+        if (net_type == "aprox19") {
+            dispatch_ode<NetAprox19>(ode_type, lin_type, std::forward<Func>(func));
+        } else if (net_type == "aprox21") {
+            dispatch_ode<NetAprox21>(ode_type, lin_type, std::forward<Func>(func));
+        } else if (net_type == "aprox13") {
+            dispatch_ode<NetAprox13>(ode_type, lin_type, std::forward<Func>(func));
+        } else if (net_type == "iso7") {
+            dispatch_ode<NetIso7>(ode_type, lin_type, std::forward<Func>(func));
+        } else {
+            throw std::runtime_error("Unknown network_name in par file: " + net_type);
+        }
     }
 
 private:

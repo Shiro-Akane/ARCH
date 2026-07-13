@@ -257,7 +257,11 @@ void DispatchSolver(const std::string &solver_name,
     {
         std::cout << "[Dispatch] Initializing Data via Problem Generator..." << std::endl;
         problem.InitializeData(state, grid, config, specs);
+        
+        int center_idx = grid.GetIndex(grid.Is(), grid.Js(), grid.Ks());
+        std::cout << "[Dispatch Debug] After InitializeData, state.X(0, center_idx) = " << state.X(0, center_idx) << std::endl;
     }
+
 
     // 4. [Level 1] 选择时间积分器 (Time Integrator)
     // 利用 Custom Params 功能！如果在 par 文件里写了 time_integrator = "RK3"，就能读到。

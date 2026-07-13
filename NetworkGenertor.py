@@ -11,7 +11,7 @@ aprox19_nuclei = [
 rl = pyna.ReacLibLibrary()
 aprox19_lib = rl.linking_nuclei(aprox19_nuclei)
 
-# 3. 重点：使用 AMReX CXX 后端
+# 3. 重点：CXX 后端
 net = pyna.networks.SimpleCxxNetwork(libraries=[aprox19_lib])
 
 # 4. 导出

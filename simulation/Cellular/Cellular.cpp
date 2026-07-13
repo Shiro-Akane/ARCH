@@ -102,7 +102,7 @@ public:
         }
 
         if (p.x < 1e-5)
-            std::cout << "Init checking cell 0..." << std::endl;
+            // std::cout << "Init checking cell 0..." << std::endl;
 
         // [3. Apply Pre-calculated Mass Fractions]
         out.mass_fractions = default_X;

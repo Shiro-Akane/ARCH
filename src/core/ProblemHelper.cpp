@@ -1,17 +1,29 @@
 #include "UserInterface.h"
 #include "../physics/eos/eosdispatch.h"
-#include "../numerics/burnsolver/NetPynucastro.h"
+#include "../numerics/burnsolver/Networks.h"
+#include <stdexcept>
 #include <functional>
 
 namespace ProblemHelper
 {
     void SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X)
     {
-        if (specs.count() == 0)
-        {
-            NetPynucastro::RegisterSpecies(specs);
+        std::string net_type = config.physics.burn.network_name;
+        if (net_type == "aprox19") {
+            if (specs.count() == 0) NetAprox19::RegisterSpecies(specs);
+            NetAprox19::SetupInitialFractions(config, specs, default_X);
+        } else if (net_type == "aprox21") {
+            if (specs.count() == 0) NetAprox21::RegisterSpecies(specs);
+            NetAprox21::SetupInitialFractions(config, specs, default_X);
+        } else if (net_type == "aprox13") {
+            if (specs.count() == 0) NetAprox13::RegisterSpecies(specs);
+            NetAprox13::SetupInitialFractions(config, specs, default_X);
+        } else if (net_type == "iso7") {
+            if (specs.count() == 0) NetIso7::RegisterSpecies(specs);
+            NetIso7::SetupInitialFractions(config, specs, default_X);
+        } else {
+            throw std::runtime_error("Unknown network_name in SetupNetworkAndFractions: " + net_type);
         }
-        NetPynucastro::SetupInitialFractions(config, specs, default_X);
     }
 
     double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)

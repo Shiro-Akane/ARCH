@@ -11,9 +11,9 @@
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
-
+#include <fstream>
 #include "DriverUtils.h"
-#include "../numerics/burnsolver/NetPynucastro.h"
+#include "../numerics/burnsolver/Networks.h"
 
 #include "../io/IO.h"
 
@@ -149,6 +149,9 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
             // 3. 呼叫底层的 ODE 求解器执行燃烧
             double dt_rec = burn_dt;
+            if (Y_ODE[0] == 0.0 && Y_ODE[1] == 0.0) {
+                std::cout << "[Driver] WARNING: Y_ODE is empty before integrate at cell " << i << "! T = " << T << std::endl;
+            }
             bool success = burn.integrate(Y_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
 
             if (!success)
@@ -197,15 +200,27 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         write_chk(u_current, grid, chk_file_index++, plt_file_index, step_count, t_current, config);
     }
 
+    std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
+    std::ofstream log_file(log_filename, (step_count == 0) ? std::ios::trunc : std::ios::app);
+    if (!log_file.is_open()) {
+        std::cerr << "[Warning] Could not open log file: " << log_filename << std::endl;
+    }
+
     // 打印表头
-    std::cout << std::left << std::setw(8) << "Step"
-              << std::left << std::setw(15) << "Time"
-              << std::left << std::setw(15) << "dt"
-              << std::left << std::setw(15) << "dt_hydro";
-    if (has_burn)
-        std::cout << std::left << std::setw(15) << "dt_burn";
-    std::cout << std::endl;
-    std::cout << std::string(has_burn ? 68 : 53, '-') << std::endl;
+    if (step_count == 0) {
+        auto print_header = [&](std::ostream& os) {
+            os << std::left << std::setw(8) << "Step"
+               << std::left << std::setw(15) << "Time"
+               << std::left << std::setw(15) << "dt"
+               << std::left << std::setw(15) << "dt_hydro";
+            if (has_burn)
+                os << std::left << std::setw(15) << "dt_burn";
+            os << std::endl;
+            os << std::string(has_burn ? 68 : 53, '-') << std::endl;
+        };
+        print_header(std::cout);
+        if (log_file.is_open()) print_header(log_file);
+    }
 
     // =========================================================
     // Main Time Loop
@@ -330,14 +345,18 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         t_current += dt;
         step_count++;
 
-        std::cout << std::left << std::setw(8) << step_count
-                  << std::scientific << std::setprecision(5)
-                  << std::left << std::setw(15) << t_current
-                  << std::left << std::setw(15) << dt
-                  << std::left << std::setw(15) << dt_computed;
-        if (has_burn)
-            std::cout << std::left << std::setw(15) << dt / 2.0;
-        std::cout << std::endl;
+        auto print_step = [&](std::ostream& os) {
+            os << std::left << std::setw(8) << step_count
+               << std::scientific << std::setprecision(5)
+               << std::left << std::setw(15) << t_current
+               << std::left << std::setw(15) << dt
+               << std::left << std::setw(15) << dt_computed;
+            if (has_burn)
+                os << std::left << std::setw(15) << dt / 2.0;
+            os << std::endl;
+        };
+        print_step(std::cout);
+        if (log_file.is_open()) print_step(log_file);
     }
 
     // =========================================================

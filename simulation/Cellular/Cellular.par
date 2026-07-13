@@ -68,7 +68,8 @@ gravity_type = none
 # [Nuclear Burn & ODE]
 # ------------------------------------------------------------------------------
 use_burn         = 1
-network_name     = aprox19
+# 支持在无需重新编译的情况下热切换网络，可选值: aprox13, aprox19, aprox21, iso7
+network_name     = aprox13
 burn_verbose_level = 1
 
 nuclearTempMin   = 1e9       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)

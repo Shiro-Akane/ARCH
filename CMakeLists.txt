@@ -31,9 +31,11 @@ list(FILTER SOURCES EXCLUDE REGEX ".*/network/.*/main\\.cpp$")
 # ==============================================================================
 add_executable(ARCH ${SOURCES} ${SIMULATION_CASES})
 
-target_include_directories(ARCH PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/aprox19
-)
+# Assign specific network directories to their respective wrappers
+set_source_files_properties(src/numerics/burnsolver/NetAprox13.cpp PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/aprox13)
+set_source_files_properties(src/numerics/burnsolver/NetAprox19.cpp PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/aprox19)
+set_source_files_properties(src/numerics/burnsolver/NetAprox21.cpp PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/aprox21)
+set_source_files_properties(src/numerics/burnsolver/NetIso7.cpp PROPERTIES INCLUDE_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/iso7)
 
 # 设置 C++17 标准
 target_compile_features(ARCH PRIVATE cxx_std_17)

@@ -222,7 +222,7 @@ gravity_g_y  = -9.81         # Constant external gravity in Y direction
 
 # Nuclear Burning & Time Stepping
 use_burn         = 0             # 1 = Enable burning, 0 = Disable
-network_name     = aprox19       # Reaction network to auto-load
+network_name     = aprox19       # Reaction network to auto-load. Supports dynamic hot-switching without recompilation. Valid options: aprox13, aprox19, aprox21, iso7.
 
 # --- Advanced ODE & Burning Parameters (Hidden by Default) ---
 # These parameters have robust defaults in RuntimeParams.h. 
