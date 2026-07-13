@@ -21,11 +21,15 @@ class SodProblem
     double g_radius;
     double g_angle_min, g_angle_max;
 
-    // Left/Inner State (High Pressure)
+    // ========================================================================
+    // Fluid States (Left/Inner: High Pressure)
+    // ========================================================================
     double g_rho_L, g_p_L, g_u_L, g_v_L;
     int g_species_id_L;
 
-    // Right/Outer State (Low Pressure)
+    // ========================================================================
+    // Fluid States (Right/Outer: Low Pressure Background)
+    // ========================================================================
     double g_rho_R, g_p_R, g_u_R, g_v_R;
     int g_species_id_R;
 

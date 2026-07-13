@@ -11,20 +11,28 @@
 
 class RTInstability
 {
-    // Fluid properties
+    // ========================================================================
+    // Fluid Properties (Density and Pressure stratification)
+    // ========================================================================
     double g_rho_heavy, g_rho_light;
     double g_y_int; // Interface y-coordinate
     double g_P_int; // Pressure at the interface
 
-    // Perturbation
+    // ========================================================================
+    // Perturbation Control (Triggering the instability)
+    // ========================================================================
     double g_amp; // Velocity perturbation amplitude
     double g_Lx;  // Domain length in X
     double g_Lz;  // Domain length in Z (for 3D)
 
-    // Physics
+    // ========================================================================
+    // Physics Environment
+    // ========================================================================
     double g_gy; // Global gravity acceleration
 
-    // Species tracking (to visualize the fluid mixing)
+    // ========================================================================
+    // Species Tracking (Used to visualize fluid mixing)
+    // ========================================================================
     int g_sp_heavy, g_sp_light;
 
 public:
