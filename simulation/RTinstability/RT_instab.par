@@ -95,21 +95,6 @@ enucDtFactor     = 0.1           # 核能限制器：限制单步释放的核能
 ode_solver       = BE_NR         # Options: BE_NR, ROS4, VODE (推荐极端刚性网络用 BE_NR)
 linear_solver    = DenseLU       # Options: DenseLU, SparseWrap
 
-ode_rtol         = 1e-4          # Relative tolerance for WRMS error
-ode_atol         = 1e-8          # Absolute tolerance for WRMS error
-ode_max_newton_iter = 50         # Max NR iterations per sub-step
-ode_max_substeps    = 10000      # Max sub-steps to reach dt_hydro (prevents infinite loops)
-
-# --- PI Step Size Controller ---
-ode_initial_dt_frac = 1e-3       # Initial trial dt as a fraction of dt_hydro
-ode_dt_safe_fac     = 0.9        # Safety multiplier for proposed PI step size
-ode_dt_fac_max      = 2.0        # Maximum allowed step size growth factor
-ode_dt_fac_min      = 0.1        # Maximum allowed step size shrink factor
-
-# --- Advanced / Debug Options ---
-ode_use_numerical_jac = 0        # 1 = Force finite-difference Jacobian (Debug only)
-ode_freeze_jacobian   = 0        # 1 = Re-use Jacobian for multiple NR iterations
-
 # ------------------------------------------------------------------------------
 # [User Custom Parameters (Read by RT_instab.cpp)]
 # ------------------------------------------------------------------------------
