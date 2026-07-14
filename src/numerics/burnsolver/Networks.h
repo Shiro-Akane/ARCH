@@ -10,10 +10,10 @@
 #include "../../numerics/linalg/SparseWrap.h"
 
 // 聚合所有可用的网络模块
-#include "NetAprox13.h"
-#include "NetAprox19.h"
-#include "NetAprox21.h"
-#include "NetIso7.h"
+#include "../../physics/network/aprox13/NetAprox13.h"
+#include "../../physics/network/aprox19/NetAprox19.h"
+#include "../../physics/network/aprox21/NetAprox21.h"
+#include "../../physics/network/iso7/NetIso7.h"
 
 // 如果你使用的是 C++20，可以在这里写一个 Concept 来约束所有的 NetType 必须实现特定接口。
 // 但在 C++11/14/17 下，由于模板的鸭子类型特性（不用提前声明，只要接口名字对得上就能编译），
