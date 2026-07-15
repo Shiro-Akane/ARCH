@@ -38,7 +38,7 @@ struct TfactorsData {
     double t9i18, t9i38, t9i58;
 };
 
-inline TfactorsData compute_tfactors(double temperature)
+TIMMES_HD inline TfactorsData compute_tfactors(double temperature)
 {
     TfactorsData f{};
     f.t9 = temperature * 1.0e-9;

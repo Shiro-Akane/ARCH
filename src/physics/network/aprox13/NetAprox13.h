@@ -47,6 +47,7 @@ inline constexpr std::array<const char*, nrat> RATE_NAMES{
 inline constexpr double sixth = 1.0 / 6.0;
 
 #include "TimmesRhs.inc"
+#include "TimmesJacobian.inc"
 
 #undef TIMMES_APROX13_RATES
 
@@ -72,24 +73,91 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
         271.78250, 306.72020, 342.05680, 375.47720, 411.46900, 447.70800, 484.00300
     };
     inline static constexpr auto MION = timmes::isotope_masses(AION, ZION, BION);
+    inline static constexpr auto ENERGY_WEIGHTS = MION;
+    static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv2;
 
-    template <typename Scalar>
-    static inline void molar_rhs(const Scalar* y, double rho, double temperature, Scalar* dydt)
+    // Device-safe scalar accessors.  Namespace-scope std::array storage is
+    // host-only under NVCC when the index is dynamic, while these aprox13
+    // alpha-chain values have an exact closed form.
+    TIMMES_HD static constexpr double aion(int i)
+    {
+        return i == 0 ? 4.0 : 4.0 * (i + 2);
+    }
+    TIMMES_HD static constexpr double zion(int i)
+    {
+        return i == 0 ? 2.0 : 2.0 * (i + 2);
+    }
+
+    template <typename Scalar, typename RateAccessor>
+    TIMMES_HD static inline void fill_screened_rates(const Scalar* y, double rho,
+                                           double temperature_value,
+                                           const Scalar& temperature,
+                                           std::array<Scalar,
+                                               timmes_aprox13_detail::nrat>& rate)
     {
         using namespace timmes_aprox13_detail;
-        std::array<Scalar, nrat> rate{};
-        if (temperature >= 1.0e6) {
-            const timmes::TfactorsData tf = timmes::compute_tfactors(temperature);
-            timmes::fill_heavy_rates<RateIds, timmes::Aprox13RateLibrary>(
-                rate, temperature, rho, tf);
+        if (temperature_value >= 1.0e6) {
+            const timmes::TfactorsData tf = timmes::compute_tfactors(temperature_value);
+            timmes::fill_heavy_rates<RateIds, timmes::Aprox13RateLibrary, RateAccessor>(
+                rate, temperature_value, rho, tf);
 
+            double zion_values[NUM_SPECIES];
+            for (int i = 0; i < NUM_SPECIES; ++i) zion_values[i] = zion(i);
             Scalar abar, zbar, z2bar, ye;
             timmes::composition_moments<Scalar, NUM_SPECIES>(
-                y, ZION.data(), abar, zbar, z2bar, ye);
+                y, zion_values, abar, zbar, z2bar, ye);
             timmes::screen_heavy_rates<RateIds>(
                 rate, temperature, rho, zbar, abar, z2bar);
             timmes::form_alpha_branch_ratios<true, RateIds, Scalar>(rate);
         }
+    }
+
+    template <typename Scalar, typename RateAccessor>
+    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho,
+                                      double temperature_value,
+                                      const Scalar& temperature, Scalar* dydt)
+    {
+        using namespace timmes_aprox13_detail;
+        std::array<Scalar, nrat> rate{};
+        fill_screened_rates<Scalar, RateAccessor>(
+            y, rho, temperature_value, temperature, rate);
         rhs_aprox13(y, rate.data(), dydt);
+    }
+
+    template <typename Scalar>
+    TIMMES_HD static inline void molar_rhs_frozen_screening(
+        const Scalar* y, double rho, double temperature, Scalar* dydt)
+    {
+        using namespace timmes_aprox13_detail;
+        std::array<double, NUM_SPECIES> y_value{};
+        for (int i = 0; i < NUM_SPECIES; ++i) {
+            y_value[i] = timmes::value_of(y[i]);
+        }
+        std::array<double, nrat> rate_value{};
+        fill_screened_rates<double, timmes::RateValueAccessor>(
+            y_value.data(), rho, temperature, temperature, rate_value);
+        std::array<Scalar, nrat> rate{};
+        for (int i = 0; i < nrat; ++i) rate[i] = Scalar(rate_value[i]);
+        rhs_aprox13(y, rate.data(), dydt);
+    }
+
+    TIMMES_HD static inline void molar_rhs_jacobian_frozen_screening(
+        const double* y, double rho, double temperature,
+        double* dydt, double* jacobian)
+    {
+        using namespace timmes_aprox13_detail;
+        std::array<double, nrat> rate{};
+        fill_screened_rates<double, timmes::RateValueAccessor>(
+            y, rho, temperature, temperature, rate);
+        rhs_aprox13(y, rate.data(), dydt);
+        jacobian_aprox13_molar(y, rate.data(), jacobian);
+    }
+
+    template <typename Scalar>
+    TIMMES_HD static inline void molar_rhs(const Scalar* y, double rho, double temperature,
+                                 Scalar* dydt)
+    {
+        molar_rhs_impl<Scalar, timmes::RateValueAccessor>(
+            y, rho, temperature, Scalar(temperature), dydt);
     }
 };

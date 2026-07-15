@@ -76,18 +76,23 @@ struct NetAprox19 : timmes::TimmesNetworkSupport<NetAprox19> {
         411.46900, 447.70800, 471.7696, 484.00300, 0.0, 0.0
     };
     inline static constexpr auto MION = timmes::isotope_masses(AION, ZION, BION);
+    inline static constexpr auto ENERGY_WEIGHTS = MION;
+    static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv2;
 
-    template <typename Scalar>
-    static inline void molar_rhs(const Scalar* y, double rho, double temperature, Scalar* dydt)
+    template <typename Scalar, typename RateAccessor>
+    static inline void fill_screened_rates(const Scalar* y, double rho,
+                                           double temperature_value,
+                                           const Scalar& temperature,
+                                           std::array<Scalar,
+                                               timmes_aprox19_detail::nrat>& rate)
     {
         using namespace timmes_aprox19_detail;
-        std::array<Scalar, nrat> rate{};
-        if (temperature >= 1.0e6) {
-            const timmes::TfactorsData tf = timmes::compute_tfactors(temperature);
-            timmes::fill_heavy_rates<RateIds, timmes::Aprox19RateLibrary>(
-                rate, temperature, rho, tf);
-            timmes::fill_extended_rates<RateIds, timmes::Aprox19RateLibrary>(
-                rate, temperature, rho, tf);
+        if (temperature_value >= 1.0e6) {
+            const timmes::TfactorsData tf = timmes::compute_tfactors(temperature_value);
+            timmes::fill_heavy_rates<RateIds, timmes::Aprox19RateLibrary, RateAccessor>(
+                rate, temperature_value, rho, tf);
+            timmes::fill_extended_rates<RateIds, timmes::Aprox19RateLibrary, RateAccessor>(
+                rate, temperature_value, rho, tf);
 
             Scalar abar, zbar, z2bar, ye;
             timmes::composition_moments<Scalar, NUM_SPECIES>(
@@ -96,14 +101,52 @@ struct NetAprox19 : timmes::TimmesNetworkSupport<NetAprox19> {
                 rate, temperature, rho, zbar, abar, z2bar);
             timmes::screen_extended_rates<RateIds>(
                 rate, temperature, rho, zbar, abar, z2bar);
-            timmes::form_extended_equilibrium<false, RateIds, Scalar>(
-                rate, y, ihe4, ih1, ineut, iprot, temperature);
 
             // irpen, irnep and irn56ec intentionally remain zero.  The
             // uploaded weak_aprox19 path requires eta_e from the Helmholtz
             // EOS, which is not part of ARCH's network interface.  This is
             // the explicit weak-rate stub allowed by implementation_plan.md.
         }
+    }
+
+    template <typename Scalar, typename RateAccessor>
+    static inline void molar_rhs_impl(const Scalar* y, double rho,
+                                      double temperature_value,
+                                      const Scalar& temperature, Scalar* dydt)
+    {
+        using namespace timmes_aprox19_detail;
+        std::array<Scalar, nrat> rate{};
+        fill_screened_rates<Scalar, RateAccessor>(
+            y, rho, temperature_value, temperature, rate);
+        timmes::form_extended_equilibrium<false, RateIds, Scalar>(
+            rate, y, ihe4, ih1, ineut, iprot, temperature_value);
         rhs_aprox19(y, rate.data(), dydt);
+    }
+
+    template <typename Scalar>
+    static inline void molar_rhs_frozen_screening(
+        const Scalar* y, double rho, double temperature, Scalar* dydt)
+    {
+        using namespace timmes_aprox19_detail;
+        std::array<double, NUM_SPECIES> y_value{};
+        for (int i = 0; i < NUM_SPECIES; ++i) {
+            y_value[i] = timmes::value_of(y[i]);
+        }
+        std::array<double, nrat> rate_value{};
+        fill_screened_rates<double, timmes::RateValueAccessor>(
+            y_value.data(), rho, temperature, temperature, rate_value);
+        std::array<Scalar, nrat> rate{};
+        for (int i = 0; i < nrat; ++i) rate[i] = Scalar(rate_value[i]);
+        timmes::form_extended_equilibrium<false, RateIds, Scalar>(
+            rate, y, ihe4, ih1, ineut, iprot, temperature);
+        rhs_aprox19(y, rate.data(), dydt);
+    }
+
+    template <typename Scalar>
+    static inline void molar_rhs(const Scalar* y, double rho, double temperature,
+                                 Scalar* dydt)
+    {
+        molar_rhs_impl<Scalar, timmes::RateValueAccessor>(
+            y, rho, temperature, Scalar(temperature), dydt);
     }
 };

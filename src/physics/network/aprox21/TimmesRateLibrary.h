@@ -60,7 +60,7 @@ static inline RatePair rate_tripalf(double temp, double den, const TfactorsData&
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:20950
@@ -104,7 +104,7 @@ static inline RatePair rate_c12ag(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21134
@@ -130,7 +130,7 @@ static inline RatePair rate_c12c12(double temp, double den, const TfactorsData& 
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21331
@@ -170,7 +170,7 @@ static inline RatePair rate_c12o16(double temp, double den, const TfactorsData& 
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21533
@@ -187,7 +187,7 @@ static inline RatePair rate_o16o16(double temp, double den, const TfactorsData& 
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21762
@@ -217,7 +217,7 @@ static inline RatePair rate_o16ag(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21815
@@ -261,7 +261,7 @@ static inline RatePair rate_ne20ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21895
@@ -297,7 +297,7 @@ static inline RatePair rate_mg24ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:21958
@@ -340,7 +340,7 @@ static inline RatePair rate_mg24ap(double temp, double den, const TfactorsData& 
     rr = (den * term);
     drrdt = ((den * dtermdt) * 1.0e-9);
     drrdd = term;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22035
@@ -373,7 +373,7 @@ static inline RatePair rate_al27pg(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22175
@@ -401,7 +401,7 @@ static inline RatePair rate_si28ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22220
@@ -429,7 +429,7 @@ static inline RatePair rate_si28ap(double temp, double den, const TfactorsData& 
     rr = (den * term);
     drrdt = ((den * dtermdt) * 1.0e-9);
     drrdd = term;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22266
@@ -457,7 +457,7 @@ static inline RatePair rate_p31pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22312
@@ -485,7 +485,7 @@ static inline RatePair rate_s32ag(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22358
@@ -513,7 +513,7 @@ static inline RatePair rate_s32ap(double temp, double den, const TfactorsData& t
     rr = (den * term);
     drrdt = ((den * dtermdt) * 1.0e-9);
     drrdd = term;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22404
@@ -534,7 +534,7 @@ static inline RatePair rate_cl35pg(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22445
@@ -562,7 +562,7 @@ static inline RatePair rate_ar36ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22491
@@ -590,7 +590,7 @@ static inline RatePair rate_ar36ap(double temp, double den, const TfactorsData& 
     rr = (den * term);
     drrdt = ((den * dtermdt) * 1.0e-9);
     drrdd = term;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22537
@@ -618,7 +618,7 @@ static inline RatePair rate_k39pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22583
@@ -646,7 +646,7 @@ static inline RatePair rate_ca40ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22629
@@ -674,7 +674,7 @@ static inline RatePair rate_ca40ap(double temp, double den, const TfactorsData& 
     rr = (den * term);
     drrdt = ((den * dtermdt) * 1.0e-9);
     drrdd = term;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22675
@@ -702,7 +702,7 @@ static inline RatePair rate_sc43pg(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22722
@@ -730,7 +730,7 @@ static inline RatePair rate_ti44ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22768
@@ -758,7 +758,7 @@ static inline RatePair rate_ti44ap(double temp, double den, const TfactorsData& 
     rr = (den * term);
     drrdt = ((den * dtermdt) * 1.0e-9);
     drrdd = term;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22818
@@ -786,7 +786,7 @@ static inline RatePair rate_v47pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22869
@@ -814,7 +814,7 @@ static inline RatePair rate_cr48ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22919
@@ -842,7 +842,7 @@ static inline RatePair rate_cr48ap(double temp, double den, const TfactorsData& 
     rr = ((den * rev) * term);
     drrdt = ((den * (((drevdt * term) + (rev * dtermdt)))) * 1.0e-9);
     drrdd = (rev * term);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:22969
@@ -870,7 +870,7 @@ static inline RatePair rate_mn51pg(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23020
@@ -898,7 +898,7 @@ static inline RatePair rate_fe52ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23070
@@ -926,7 +926,7 @@ static inline RatePair rate_fe52ap(double temp, double den, const TfactorsData& 
     rr = ((den * rev) * term);
     drrdt = ((den * (((drevdt * term) + (rev * dtermdt)))) * 1.0e-9);
     drrdd = (rev * term);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23120
@@ -954,7 +954,7 @@ static inline RatePair rate_co55pg(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:18964
@@ -980,7 +980,7 @@ static inline RatePair rate_pp(double temp, double den, const TfactorsData& tf)
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19095
@@ -1001,7 +1001,7 @@ static inline RatePair rate_png(double temp, double den, const TfactorsData& tf)
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19150
@@ -1024,7 +1024,7 @@ static inline RatePair rate_dpg(double temp, double den, const TfactorsData& tf)
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19190
@@ -1043,7 +1043,7 @@ static inline RatePair rate_he3ng(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19224
@@ -1066,7 +1066,7 @@ static inline RatePair rate_he3he3(double temp, double den, const TfactorsData& 
     rr = (((den * den) * rev) * term);
     drrdt = (((den * den) * (((drevdt * term) + (rev * dtermdt)))) * 1.0e-9);
     drrdd = (((2.0e0 * den) * rev) * term);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19266
@@ -1095,7 +1095,7 @@ static inline RatePair rate_he3he4(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19523
@@ -1125,7 +1125,7 @@ static inline RatePair rate_c12pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19656
@@ -1155,7 +1155,7 @@ static inline RatePair rate_n14pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19793
@@ -1187,7 +1187,7 @@ static inline RatePair rate_n15pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19849
@@ -1222,7 +1222,7 @@ static inline RatePair rate_n15pa(double temp, double den, const TfactorsData& t
     rr = ((den * rev) * term);
     drrdt = ((den * (((drevdt * term) + (rev * dtermdt)))) * 1.0e-9);
     drrdd = (rev * term);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19909
@@ -1252,7 +1252,7 @@ static inline RatePair rate_o16pg(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:19737
@@ -1284,7 +1284,7 @@ static inline RatePair rate_n14ag(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23170
@@ -1304,7 +1304,7 @@ static inline RatePair rate_fe52ng(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23209
@@ -1327,7 +1327,7 @@ static inline RatePair rate_fe53ng(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23302
@@ -1355,7 +1355,7 @@ static inline RatePair rate_fe54pg(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23251
@@ -1381,7 +1381,7 @@ static inline RatePair rate_fe54ng(double temp, double den, const TfactorsData& 
     dfrdd = term;
     fr = (term * den);
     dfrdt = (dtermdt * den);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23350
@@ -1407,7 +1407,7 @@ static inline RatePair rate_fe54ap(double temp, double den, const TfactorsData& 
     fr = (rr * bb);
     dfrdt = ((drrdt * bb) + ((rr * dbb) * 1.0e-9));
     dfrdd = (drrdd * bb);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23405
@@ -1433,7 +1433,7 @@ static inline RatePair rate_fe55ng(double temp, double den, const TfactorsData& 
     dfrdd = term;
     fr = (term * den);
     dfrdt = (dtermdt * den);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_aprox21.f90:23457
@@ -1459,7 +1459,7 @@ static inline RatePair rate_fe56pg(double temp, double den, const TfactorsData& 
     dfrdd = term;
     fr = (term * den);
     dfrdt = (dtermdt * den);
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 }; // struct Aprox21RateLibrary

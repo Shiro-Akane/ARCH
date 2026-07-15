@@ -28,7 +28,8 @@ struct Solver_BE_NR
             return true;
         }
 
-        double Y_old[MAX_N], Y_k[MAX_N], RHS[MAX_N], b[MAX_N], W[MAX_N];
+        double Y_old[MAX_N], Y_k[MAX_N], Y_trial[MAX_N];
+        double RHS[MAX_N], b[MAX_N], W[MAX_N];
         MatrixType A;
 
         // 求解器控制参数
@@ -85,57 +86,32 @@ struct Solver_BE_NR
                 // 1. 调用物理策略求导
                 NetType::eval_rhs(Y_k, rho, RHS, enuc);
 
-                // 计算当前温度下的比热容 C_v 并填充 RHS 的最后一维 (dT/dt)
+                // Timmes network derivatives: composition block, nuclear-energy
+                // derivatives, and the full analytic temperature column.
                 double T_current = Y_k[NEQ - 1];
-                double cv = eos.get_cv(rho, T_current, Y_k);
-                cv = std::max(cv, 1e-10); // 防止除 0
-                RHS[NEQ - 1] = enuc / cv;
+                double denuc_dX[MAX_N]{};
+                double dRHS_dT[MAX_N]{};
+                double denuc_dT = 0.0;
+                NetType::eval_jacobian(Y_k, rho, A, denuc_dX);
+                NetType::eval_temperature_derivative(Y_k, rho, dRHS_dT, denuc_dT);
 
-                // 2. 获取关于组分的 Jacobian (不含温度列)
-                NetType::eval_jacobian(Y_k, rho, A);
+                // Match the original Timmes self-heating Jacobian exactly:
+                // dT/dt = enuc/cv and J_T,* = J_enuc,*/cv.  Timmes obtains cv
+                // analytically from Helmholtz but does not differentiate cv in
+                // the ODE Jacobian.  Temperature itself is never perturbed here.
+                const double cv = std::max(eos.get_cv(rho, T_current, Y_k),
+                                           1.0e-10);
+                const double inv_cv = 1.0 / cv;
+                RHS[NEQ - 1] = enuc * inv_cv;
 
-                // 3. 用有限差分法补充 Jacobian 的最后一列 (关于温度的偏导)
-                double dT_fd = std::max(T_current * 1e-3, 1.0);
-                Y_k[NEQ - 1] += dT_fd;
-                
-                double RHS_fd[MAX_N];
-                double enuc_fd = 0.0;
-                NetType::eval_rhs(Y_k, rho, RHS_fd, enuc_fd);
-                
-                double cv_fd = eos.get_cv(rho, Y_k[NEQ - 1], Y_k);
-                cv_fd = std::max(cv_fd, 1e-10);
-                RHS_fd[NEQ - 1] = enuc_fd / cv_fd;
-                
-                Y_k[NEQ - 1] = T_current; // 恢复温度
-                
-                double inv_dT = 1.0 / dT_fd;
 #pragma omp simd
-                for (int i = 0; i < NEQ; ++i)
-                {
-                    double dRHS_dT = (RHS_fd[i] - RHS[i]) * inv_dT;
-                    A.set(i + 1, NEQ, dRHS_dT);
+                for (int i = 0; i < NUM_SPEC; ++i) {
+                    A.set(i + 1, NEQ, dRHS_dT[i]);
                 }
-
-                // 计算最后一行 (关于各个组分 Y_j 的偏导)
-                for (int j = 0; j < NUM_SPEC; ++j)
-                {
-                    double Y_old_val = Y_k[j];
-                    double dY_fd = std::max(Y_old_val * 1e-6, 1e-8);
-                    Y_k[j] += dY_fd;
-                    
-                    double RHS_fd_Y[MAX_N];
-                    double enuc_fd_Y = 0.0;
-                    NetType::eval_rhs(Y_k, rho, RHS_fd_Y, enuc_fd_Y);
-                    
-                    double cv_fd_Y = eos.get_cv(rho, T_current, Y_k);
-                    cv_fd_Y = std::max(cv_fd_Y, 1e-10);
-                    RHS_fd_Y[NEQ - 1] = enuc_fd_Y / cv_fd_Y;
-                    
-                    Y_k[j] = Y_old_val; // 恢复
-                    
-                    double inv_dY = 1.0 / dY_fd;
-                    A.set(NEQ, j + 1, (RHS_fd_Y[NEQ - 1] - RHS[NEQ - 1]) * inv_dY);
+                for (int j = 0; j < NUM_SPEC; ++j) {
+                    A.set(NEQ, j + 1, denuc_dX[j] * inv_cv);
                 }
+                A.set(NEQ, NEQ, denuc_dT * inv_cv);
 
                 // 4. 数学拼装：A = I - dt*J, b = Y_old - Y_k + dt*RHS
                 for (int i = 0; i < NEQ; ++i)
@@ -177,21 +153,73 @@ struct Solver_BE_NR
                 OdeMath::calc_weights<NEQ>(Y_k, rtol, atol, W);
 
                 // 5. 向量更新：Y_{k+1} = Y_k + b
-                OdeMath::vec_axpy<NEQ>(Y_k, 1.0, b, Y_k);
+                bool admissible = true;
+                double mass_sum = 0.0;
+                const double negative_tolerance = 10.0 * atol;
+                for (int i = 0; i < NUM_SPEC; ++i) {
+                    Y_trial[i] = Y_k[i] + b[i];
+                    if (!std::isfinite(Y_trial[i])
+                        || Y_trial[i] < -negative_tolerance
+                        || Y_trial[i] > 1.0 + negative_tolerance) {
+                        admissible = false;
+                    }
+                    mass_sum += Y_trial[i];
+                }
+                Y_trial[NEQ - 1] = Y_k[NEQ - 1] + b[NEQ - 1];
+                if (!std::isfinite(Y_trial[NEQ - 1])
+                    || Y_trial[NEQ - 1] < burn_cfg.smallt
+                    || Y_trial[NEQ - 1] > 1.0e11
+                    || !std::isfinite(mass_sum) || mass_sum <= 0.0
+                    || std::abs(mass_sum - 1.0) > 100.0 * rtol) {
+                    admissible = false;
+                }
+                if (!admissible) break;
 
                 // 6. 物理边界截断器兜底！(防止迭代中途出现负质量或绝对零度)
-                OdeMath::enforce_mass_conservation<NUM_SPEC>(Y_k, burn_cfg.smallx);
-                OdeMath::enforce_temperature_bounds<NEQ>(Y_k, burn_cfg.smallt, 1e11);
-
                 // 7. 使用 WRMS 范数计算更新量 dY 的加权误差
                 current_err = OdeMath::wrms_norm<NEQ>(b, W);
 
                 // 根据 WRMS 规范，误差 < 1.0 即可认为收敛（有时用更严的 0.1）
                 if (current_err < 1.0)
                 {
+                    double projected_sum = 0.0;
+                    for (int i = 0; i < NUM_SPEC; ++i) {
+                        Y_trial[i] = std::max(Y_trial[i], burn_cfg.smallx);
+                        projected_sum += Y_trial[i];
+                    }
+                    const double inv_projected_sum = 1.0 / projected_sum;
+                    for (int i = 0; i < NUM_SPEC; ++i) {
+                        Y_trial[i] *= inv_projected_sum;
+                    }
+
+                    long double nuclear_mass_delta = 0.0L;
+                    for (int i = 0; i < NUM_SPEC; ++i) {
+                        nuclear_mass_delta +=
+                            static_cast<long double>(Y_trial[i] - Y_old[i])
+                            / NetType::AION[i] * NetType::ENERGY_WEIGHTS[i];
+                    }
+                    const double integrated_enuc = NetType::ENERGY_CONVERSION
+                        * static_cast<double>(nuclear_mass_delta);
+                    const double old_eint = eos.get_eint_from_T(
+                        rho, Y_old[NEQ - 1], Y_old);
+                    const double new_eint = eos.get_eint_from_T(
+                        rho, Y_trial[NEQ - 1], Y_trial);
+                    const double thermal_delta = new_eint - old_eint;
+                    const double closure_scale = std::max(
+                        {std::abs(integrated_enuc), std::abs(thermal_delta),
+                         rtol * std::abs(old_eint), 1.0});
+                    const double closure_error =
+                        std::abs(thermal_delta - integrated_enuc) / closure_scale;
+                    if (!std::isfinite(closure_error) || closure_error > 5.0e-2) {
+                        break;
+                    }
+
+                    for (int i = 0; i < NEQ; ++i) Y_k[i] = Y_trial[i];
                     step_converged = true;
                     break;
                 }
+
+                for (int i = 0; i < NEQ; ++i) Y_k[i] = Y_trial[i];
             }
             // ==================================================
 

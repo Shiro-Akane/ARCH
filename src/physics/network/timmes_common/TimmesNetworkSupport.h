@@ -14,6 +14,7 @@
 
 #include "Dual.h"
 #include "NuclearConstants.h"
+#include "RatePair.h"
 
 namespace timmes {
 
@@ -72,13 +73,15 @@ struct TimmesNetworkSupport {
 
         long double mass_sum = 0.0L;
         for (int i = 0; i < N; ++i) {
-            mass_sum += static_cast<long double>(dydt[i]) * Derived::MION[i];
+            mass_sum += static_cast<long double>(dydt[i])
+                      * Derived::ENERGY_WEIGHTS[i];
         }
-        enuc = constants::enuc_conv2 * static_cast<double>(mass_sum);
+        enuc = Derived::ENERGY_CONVERSION * static_cast<double>(mass_sum);
     }
 
     template <typename MatrixType>
-    static void eval_jacobian(const double* state, double rho, MatrixType& jac)
+    static void eval_jacobian(const double* state, double rho, MatrixType& jac,
+                              double* denuc_dX = nullptr)
     {
         constexpr int N = Derived::NUM_SPECIES;
         using AD = Dual<N>;
@@ -88,7 +91,12 @@ struct TimmesNetworkSupport {
             AD x = AD::variable(state[i], i);
             y[i] = clamp_by_value(x / Derived::AION[i], 1.0e-30, 1.0);
         }
-        Derived::template molar_rhs<AD>(y, rho, state[N], dydt);
+        // Timmes' dfdy_isotopes_* differentiates the abundance algebra and
+        // explicit equilibrium closures while holding screened base rates
+        // fixed.  In particular, it does not differentiate the screening
+        // factor through abar/zbar/z2bar.
+        Derived::template molar_rhs_frozen_screening<AD>(
+            y, rho, state[N], dydt);
         for (int i = 0; i < N; ++i) {
             const AD dXdt = dydt[i] * Derived::AION[i];
 #pragma omp simd
@@ -96,6 +104,42 @@ struct TimmesNetworkSupport {
                 jac.set(i + 1, j + 1, dXdt.deriv[j]);
             }
         }
+
+        if (denuc_dX != nullptr) {
+            for (int j = 0; j < N; ++j) {
+                long double mass_sum = 0.0L;
+                for (int i = 0; i < N; ++i) {
+                    mass_sum += static_cast<long double>(dydt[i].deriv[j])
+                              * Derived::ENERGY_WEIGHTS[i];
+                }
+                denuc_dX[j] = Derived::ENERGY_CONVERSION
+                            * static_cast<double>(mass_sum);
+            }
+        }
+    }
+
+    static void eval_temperature_derivative(const double* state, double rho,
+                                            double* drhs_dT, double& denuc_dT)
+    {
+        constexpr int N = Derived::NUM_SPECIES;
+        using AD = Dual<1>;
+        AD y[N];
+        AD dydt[N];
+        for (int i = 0; i < N; ++i) {
+            y[i] = clamp_by_value(AD(state[i] / Derived::AION[i]), 1.0e-30, 1.0);
+        }
+
+        const AD temperature = AD::variable(state[N], 0);
+        Derived::template molar_rhs_impl<AD, RateTemperatureAccessor>(
+            y, rho, state[N], temperature, dydt);
+
+        long double mass_sum = 0.0L;
+        for (int i = 0; i < N; ++i) {
+            drhs_dT[i] = dydt[i].deriv[0] * Derived::AION[i];
+            mass_sum += static_cast<long double>(dydt[i].deriv[0])
+                      * Derived::ENERGY_WEIGHTS[i];
+        }
+        denuc_dT = Derived::ENERGY_CONVERSION * static_cast<double>(mass_sum);
     }
 };
 

@@ -50,7 +50,7 @@ static inline RatePair rate_c12ag(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:17653
@@ -104,7 +104,7 @@ static inline RatePair rate_tripalf(double temp, double den, const TfactorsData&
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:17763
@@ -130,7 +130,7 @@ static inline RatePair rate_c12c12(double temp, double den, const TfactorsData& 
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:17960
@@ -170,7 +170,7 @@ static inline RatePair rate_c12o16(double temp, double den, const TfactorsData& 
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:18162
@@ -187,7 +187,7 @@ static inline RatePair rate_o16o16(double temp, double den, const TfactorsData& 
     rr = 0.0e0;
     drrdt = 0.0e0;
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:18391
@@ -217,7 +217,7 @@ static inline RatePair rate_o16ag(double temp, double den, const TfactorsData& t
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:18444
@@ -261,7 +261,7 @@ static inline RatePair rate_ne20ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:18524
@@ -297,7 +297,7 @@ static inline RatePair rate_mg24ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 // public_iso7.f90:19212
@@ -325,7 +325,7 @@ static inline RatePair rate_ca40ag(double temp, double den, const TfactorsData& 
     rr = (rev * term);
     drrdt = ((((drevdt * term) + (rev * dtermdt))) * 1.0e-9);
     drrdd = 0.0e0;
-    return {fr, rr};
+    return {fr, rr, dfrdt, drrdt};
 }
 
 }; // struct Iso7RateLibrary

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <array>
 #include <vector>
 #include <cmath>
 #include <stdexcept>
@@ -38,12 +39,15 @@ private:
     // Quintic Hermite polynomials
     double psi0(double z) const { return z * z * z * (z * (-6.0 * z + 15.0) - 10.0) + 1.0; }
     double dpsi0(double z) const { return z * z * (z * (-30.0 * z + 60.0) - 30.0); }
+    double ddpsi0(double z) const { return z * (z * (-120.0 * z + 180.0) - 60.0); }
     
     double psi1(double z) const { return z * (z * z * (z * (-3.0 * z + 8.0) - 6.0) + 1.0); }
     double dpsi1(double z) const { return z * z * (z * (-15.0 * z + 32.0) - 18.0) + 1.0; }
+    double ddpsi1(double z) const { return z * (z * (-60.0 * z + 96.0) - 36.0); }
     
     double psi2(double z) const { return 0.5 * z * z * (z * (z * (-z + 3.0) - 3.0) + 1.0); }
     double dpsi2(double z) const { return 0.5 * z * (z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0); }
+    double ddpsi2(double z) const { return 1.0 + z * (-9.0 + z * (18.0 - 10.0 * z)); }
 
     // Physical Constants (matching helmholtz.f90)
     static constexpr double kerg = 1.380650424e-16;
@@ -77,7 +81,9 @@ public:
         std::cout << "[HelmEos] 2D Helmholtz Electron/Positron table loaded successfully." << std::endl;
     }
 
-    void interpolate_ele_pos(double rho, double T, double ye, double& P_ele, double& E_ele) const {
+    void interpolate_ele_pos(double rho, double T, double ye,
+                             double& P_ele, double& E_ele,
+                             double* cv_ele = nullptr) const {
         double din = rho * ye;
         double d_val = std::log10(din);
         double t_val = std::log10(T);
@@ -169,24 +175,54 @@ public:
         P_ele = din * din * df_d;
         double sele = -df_t * ye;
         E_ele = ye * free_energy + T * sele;
+
+        if (cv_ele != nullptr) {
+            const double dti2 = dti * dti;
+            const std::array<double, 6> wd{
+                w0d, w0md, w1d, w1md, w2d, w2md};
+            const std::array<double, 6> wt{
+                ddpsi0(xt) * dti2,
+                ddpsi0(1.0 - xt) * dti2,
+                ddpsi1(xt) * dti,
+                -ddpsi1(1.0 - xt) * dti,
+                ddpsi2(xt),
+                ddpsi2(1.0 - xt)};
+            static constexpr int d_order[9]{0, 1, 0, 2, 0, 1, 2, 1, 2};
+            static constexpr int t_order[9]{0, 0, 1, 0, 2, 1, 1, 2, 2};
+            double df_tt = 0.0;
+            for (int k = 0; k < 9; ++k) {
+                for (int jd = 0; jd < 2; ++jd) {
+                    for (int jt = 0; jt < 2; ++jt) {
+                        const int idx = (j + jt) * imax + i + jd;
+                        df_tt += f[k][idx] * wd[2 * d_order[k] + jd]
+                                             * wt[2 * t_order[k] + jt];
+                    }
+                }
+            }
+            *cv_ele = -ye * T * df_tt;
+        }
     }
 
-    void calc_thermo(double rho, double T, const double* X, double& P, double& E) const {
-        double abar = 0.0;
-        double zbar = 0.0;
+    void calc_thermo_with_cv(double rho, double T, const double* X,
+                             double& P, double& E, double* cv) const {
+        // Timmes variables: ytot = sum(X/A), Abar = 1/ytot,
+        // Zbar = sum(X Z/A)/ytot, and Ye = Zbar/Abar = sum(X Z/A).
+        double ytot = 0.0;
+        double ye = 0.0;
         for (int k = 0; k < specs->count(); ++k) {
-            abar += X[k] / specs->get_A(k);
-            zbar += X[k] * specs->get_Z(k) / specs->get_A(k);
+            const double inv_A = 1.0 / specs->get_A(k);
+            ytot += X[k] * inv_A;
+            ye += X[k] * specs->get_Z(k) * inv_A;
         }
-        double ye = zbar / abar;
-        double abar_inv = 1.0 / abar; // sum(X_i / A_i)
+        ye = std::max(1.0e-16, ye);
 
         // 1. Electron/Positron from table
-        double P_ele, E_ele;
-        interpolate_ele_pos(rho, T, ye, P_ele, E_ele);
+        double P_ele, E_ele, cv_ele = 0.0;
+        interpolate_ele_pos(rho, T, ye, P_ele, E_ele,
+                            cv != nullptr ? &cv_ele : nullptr);
 
         // 2. Ions (Ideal Gas)
-        double n_ion = rho * abar_inv * avo;
+        double n_ion = rho * ytot * avo;
         double P_ion = n_ion * kerg * T;
         double E_ion = 1.5 * P_ion / rho; // Specific internal energy
 
@@ -194,8 +230,75 @@ public:
         double P_rad = asol / 3.0 * T * T * T * T;
         double E_rad = 3.0 * P_rad / rho;
 
-        P = P_ele + P_ion + P_rad;
-        E = E_ele + E_ion + E_rad;
+        // 4. Timmes uniform-background Coulomb correction (Yakovlev &
+        // Shalybkov 1989).  This is part of the original Helmholtz support
+        // system and contributes to pressure, energy, and cv.
+        constexpr double pi = 3.141592653589793238462643383279502884;
+        constexpr double qe = 4.8032042712e-10;
+        constexpr double a1 = -0.898004;
+        constexpr double b1 = 0.96786;
+        constexpr double c1 = 0.220703;
+        constexpr double d1 = -0.86097;
+        constexpr double a2 = 0.29561;
+        constexpr double b2 = 1.9885;
+        constexpr double c2 = 0.288675;
+        constexpr double third = 1.0 / 3.0;
+
+        const double zbar = ye / ytot;
+        const double mean_ion_spacing =
+            1.0 / std::cbrt((4.0 / 3.0) * pi * n_ion);
+        const double coupling = zbar * zbar * qe * qe
+                              / (kerg * T * mean_ion_spacing);
+        const double dcoupling_dT = -coupling / T;
+
+        double P_coul = 0.0;
+        double E_coul = 0.0;
+        double dE_coul_dT = 0.0;
+        if (coupling >= 1.0) {
+            const double g14 = std::pow(coupling, 0.25);
+            const double coefficient = avo * ytot * kerg;
+            E_coul = coefficient * T
+                   * (a1 * coupling + b1 * g14 + c1 / g14 + d1);
+            P_coul = third * rho * E_coul;
+            const double dE_dg = coefficient * T
+                * (a1 + 0.25 / coupling * (b1 * g14 - c1 / g14));
+            dE_coul_dT = dE_dg * dcoupling_dT + E_coul / T;
+        } else {
+            const double g32 = coupling * std::sqrt(coupling);
+            const double gb2 = std::pow(coupling, b2);
+            const double correction = c2 * g32 - third * a2 * gb2;
+            P_coul = -P_ion * correction;
+            E_coul = 3.0 * P_coul / rho;
+            const double dcorrection_dg =
+                1.5 * c2 * g32 / coupling
+                - third * a2 * b2 * gb2 / coupling;
+            const double dP_coul_dT =
+                -(P_ion / T) * correction
+                - P_ion * dcorrection_dg * dcoupling_dT;
+            dE_coul_dT = 3.0 * dP_coul_dT / rho;
+        }
+
+        // Match Timmes' bomb-proofing: disable the correction if it would
+        // make pressure or internal energy non-positive.
+        if (P_ele + P_ion + P_rad + P_coul <= 0.0
+            || E_ele + E_ion + E_rad + E_coul <= 0.0) {
+            P_coul = 0.0;
+            E_coul = 0.0;
+            dE_coul_dT = 0.0;
+        }
+
+        P = P_ele + P_ion + P_rad + P_coul;
+        E = E_ele + E_ion + E_rad + E_coul;
+
+        if (cv != nullptr) {
+            *cv = cv_ele + 1.5 * avo * kerg * ytot
+                + 4.0 * asol * T * T * T / rho + dE_coul_dT;
+        }
+    }
+
+    void calc_thermo(double rho, double T, const double* X,
+                     double& P, double& E) const {
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr);
     }
 
     // --- EOS Interface Implementation ---
@@ -220,11 +323,7 @@ public:
             double P, E;
             calc_thermo(rho, T_guess, Xi, P, E);
             
-            // Numerical derivative
-            double P2, E2;
-            double dT = T_guess * 1e-4;
-            calc_thermo(rho, T_guess + dT, Xi, P2, E2);
-            double cv = (E2 - E) / dT;
+            const double cv = get_cv(rho, T_guess, Xi);
             
             if (std::abs(cv) < 1e-12) break;
             
@@ -246,10 +345,7 @@ public:
             double P, E;
             calc_thermo(rho, T_guess, Xi, P, E);
             
-            double P2, E2;
-            double dT = T_guess * 1e-4;
-            calc_thermo(rho, T_guess + dT, Xi, P2, E2);
-            double cv = (E2 - E) / dT;
+            const double cv = get_cv(rho, T_guess, Xi);
             
             if (std::abs(cv) < 1e-12) break;
             
@@ -282,7 +378,7 @@ public:
         double P_T, E_T;
         calc_thermo(rho, T + dT, Xi, P_T, E_T);
         double dp_dT = (P_T - P) / dT;
-        double cv = (E_T - E) / dT;
+        double cv = get_cv(rho, T, Xi);
         
         double cs2 = dp_drho + dp_dT * dp_dT * T / (rho * rho * cv);
         return std::sqrt(std::max(1e-10, cs2));
@@ -299,10 +395,7 @@ public:
             double P, E;
             calc_thermo(rho, T_guess, Xi, P, E);
             
-            double dT = T_guess * 1e-4;
-            double P2, E2;
-            calc_thermo(rho, T_guess + dT, Xi, P2, E2);
-            double cv = (E2 - E) / dT;
+            const double cv = get_cv(rho, T_guess, Xi);
             
             if (std::abs(cv) < 1e-12) break;
             
@@ -333,12 +426,9 @@ public:
     }
 
     double get_cv(double rho, double T, const double* Xi) const {
-        double P, E;
-        calc_thermo(rho, T, Xi, P, E);
-        double dT = T * 1e-4;
-        double P2, E2;
-        calc_thermo(rho, T + dT, Xi, P2, E2);
-        return (E2 - E) / dT;
+        double P, E, cv;
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv);
+        return cv;
     }
 
     double get_dp_drho_e(double rho, double e, const double* Xi) const {

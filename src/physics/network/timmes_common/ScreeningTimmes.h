@@ -7,12 +7,12 @@
 
 namespace timmes {
 
-// Value path of Timmes screen5, public_aprox21.f90:7602.  Temperature and
-// density derivatives are intentionally omitted: ARCH obtains the temperature
-// column by finite differences, while composition derivatives flow through
-// Scalar (double or Dual) exactly.
+// Timmes screen5, public_aprox21.f90:7602.  Scalar can carry either
+// composition derivatives or the analytic temperature derivative.  Keeping
+// temperature in the same scalar path restores the original screening
+// contribution to drate/dT instead of recovering it with a finite difference.
 template <typename Scalar>
-inline Scalar screen5(double temp, double den,
+TIMMES_HD inline Scalar screen5(const Scalar& temp, double den,
                       const Scalar& zbar, const Scalar& abar, const Scalar& z2bar,
                       double z1, double a1, double z2, double a2)
 {
@@ -36,17 +36,17 @@ inline Scalar screen5(double temp, double den,
 
     const Scalar ytot = 1.0 / abar;
     const Scalar rr_density = den * ytot;
-    const double tempi = 1.0 / temp;
+    const Scalar tempi = 1.0 / temp;
     const Scalar pp = sqrt_value(rr_density * tempi * (z2bar + zbar));
     const Scalar qlam0z = 1.88e8 * tempi * pp;
-    const double taufac = co2 * std::pow(tempi, x13);
+    const Scalar taufac = co2 * pow_value(tempi, x13);
     const Scalar xni = pow_value(rr_density * zbar, x13);
     Scalar gamp = 2.27493e5 * tempi * xni;
 
     const double bb = z1 * z2;
     const double qq = fact * bb * zs13inv;
     Scalar gamef = qq * gamp;
-    const double tau12 = taufac * aznut;
+    const Scalar tau12 = taufac * aznut;
     Scalar alph12 = gamef / tau12;
 
     if (value_of(alph12) > 1.6) {
@@ -89,7 +89,7 @@ inline Scalar screen5(double temp, double den,
 }
 
 template <typename Scalar, std::size_t N>
-inline void composition_moments(const Scalar* y, const double* z,
+TIMMES_HD inline void composition_moments(const Scalar* y, const double* z,
                                 Scalar& abar, Scalar& zbar, Scalar& z2bar, Scalar& ye)
 {
     Scalar ytot = 0.0;

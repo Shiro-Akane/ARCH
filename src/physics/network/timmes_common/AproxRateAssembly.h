@@ -9,95 +9,98 @@
 
 namespace timmes {
 
-template <typename Array>
-inline void store_pair(Array& rates, int forward, int reverse, const RatePair& pair)
+template <typename Accessor = RateValueAccessor, typename Array>
+TIMMES_HD inline void store_pair(Array& rates, int forward, int reverse, const RatePair& pair)
 {
-    rates[forward] = pair.forward;
-    rates[reverse] = pair.reverse;
+    rates[forward] = Accessor::forward(pair);
+    rates[reverse] = Accessor::reverse(pair);
 }
 
-template <typename Ids, typename Library, typename Array>
-inline void fill_heavy_rates(Array& r, double temperature, double density,
+template <typename Ids, typename Library, typename Accessor = RateValueAccessor,
+          typename Array>
+TIMMES_HD inline void fill_heavy_rates(Array& r, double temperature, double density,
                              const TfactorsData& tf)
 {
-    store_pair(r, Ids::ir3a, Ids::irg3a, Library::rate_tripalf(temperature, density, tf));
-    store_pair(r, Ids::ircag, Ids::iroga, Library::rate_c12ag(temperature, density, tf));
-    r[Ids::ir1212] = Library::rate_c12c12(temperature, density, tf).forward;
-    r[Ids::ir1216] = Library::rate_c12o16(temperature, density, tf).forward;
-    r[Ids::ir1616] = Library::rate_o16o16(temperature, density, tf).forward;
-    store_pair(r, Ids::iroag, Ids::irnega, Library::rate_o16ag(temperature, density, tf));
-    store_pair(r, Ids::irneag, Ids::irmgga, Library::rate_ne20ag(temperature, density, tf));
-    store_pair(r, Ids::irmgag, Ids::irsiga, Library::rate_mg24ag(temperature, density, tf));
-    store_pair(r, Ids::irmgap, Ids::iralpa, Library::rate_mg24ap(temperature, density, tf));
-    store_pair(r, Ids::iralpg, Ids::irsigp, Library::rate_al27pg(temperature, density, tf));
-    store_pair(r, Ids::irsiag, Ids::irsga, Library::rate_si28ag(temperature, density, tf));
-    store_pair(r, Ids::irsiap, Ids::irppa, Library::rate_si28ap(temperature, density, tf));
-    store_pair(r, Ids::irppg, Ids::irsgp, Library::rate_p31pg(temperature, density, tf));
-    store_pair(r, Ids::irsag, Ids::irarga, Library::rate_s32ag(temperature, density, tf));
-    store_pair(r, Ids::irsap, Ids::irclpa, Library::rate_s32ap(temperature, density, tf));
-    store_pair(r, Ids::irclpg, Ids::irargp, Library::rate_cl35pg(temperature, density, tf));
-    store_pair(r, Ids::irarag, Ids::ircaga, Library::rate_ar36ag(temperature, density, tf));
-    store_pair(r, Ids::irarap, Ids::irkpa, Library::rate_ar36ap(temperature, density, tf));
-    store_pair(r, Ids::irkpg, Ids::ircagp, Library::rate_k39pg(temperature, density, tf));
-    store_pair(r, Ids::ircaag, Ids::irtiga, Library::rate_ca40ag(temperature, density, tf));
-    store_pair(r, Ids::ircaap, Ids::irscpa, Library::rate_ca40ap(temperature, density, tf));
-    store_pair(r, Ids::irscpg, Ids::irtigp, Library::rate_sc43pg(temperature, density, tf));
-    store_pair(r, Ids::irtiag, Ids::ircrga, Library::rate_ti44ag(temperature, density, tf));
-    store_pair(r, Ids::irtiap, Ids::irvpa, Library::rate_ti44ap(temperature, density, tf));
-    store_pair(r, Ids::irvpg, Ids::ircrgp, Library::rate_v47pg(temperature, density, tf));
-    store_pair(r, Ids::ircrag, Ids::irfega, Library::rate_cr48ag(temperature, density, tf));
-    store_pair(r, Ids::ircrap, Ids::irmnpa, Library::rate_cr48ap(temperature, density, tf));
-    store_pair(r, Ids::irmnpg, Ids::irfegp, Library::rate_mn51pg(temperature, density, tf));
-    store_pair(r, Ids::irfeag, Ids::irniga, Library::rate_fe52ag(temperature, density, tf));
-    store_pair(r, Ids::irfeap, Ids::ircopa, Library::rate_fe52ap(temperature, density, tf));
-    store_pair(r, Ids::ircopg, Ids::irnigp, Library::rate_co55pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ir3a, Ids::irg3a, Library::rate_tripalf(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ircag, Ids::iroga, Library::rate_c12ag(temperature, density, tf));
+    r[Ids::ir1212] = Accessor::forward(Library::rate_c12c12(temperature, density, tf));
+    r[Ids::ir1216] = Accessor::forward(Library::rate_c12o16(temperature, density, tf));
+    r[Ids::ir1616] = Accessor::forward(Library::rate_o16o16(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::iroag, Ids::irnega, Library::rate_o16ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irneag, Ids::irmgga, Library::rate_ne20ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irmgag, Ids::irsiga, Library::rate_mg24ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irmgap, Ids::iralpa, Library::rate_mg24ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::iralpg, Ids::irsigp, Library::rate_al27pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irsiag, Ids::irsga, Library::rate_si28ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irsiap, Ids::irppa, Library::rate_si28ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irppg, Ids::irsgp, Library::rate_p31pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irsag, Ids::irarga, Library::rate_s32ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irsap, Ids::irclpa, Library::rate_s32ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irclpg, Ids::irargp, Library::rate_cl35pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irarag, Ids::ircaga, Library::rate_ar36ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irarap, Ids::irkpa, Library::rate_ar36ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irkpg, Ids::ircagp, Library::rate_k39pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ircaag, Ids::irtiga, Library::rate_ca40ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ircaap, Ids::irscpa, Library::rate_ca40ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irscpg, Ids::irtigp, Library::rate_sc43pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irtiag, Ids::ircrga, Library::rate_ti44ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irtiap, Ids::irvpa, Library::rate_ti44ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irvpg, Ids::ircrgp, Library::rate_v47pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ircrag, Ids::irfega, Library::rate_cr48ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ircrap, Ids::irmnpa, Library::rate_cr48ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irmnpg, Ids::irfegp, Library::rate_mn51pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irfeag, Ids::irniga, Library::rate_fe52ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irfeap, Ids::ircopa, Library::rate_fe52ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ircopg, Ids::irnigp, Library::rate_co55pg(temperature, density, tf));
 }
 
-template <typename Ids, typename Library, typename Array>
-inline void fill_extended_rates(Array& r, double temperature, double density,
+template <typename Ids, typename Library, typename Accessor = RateValueAccessor,
+          typename Array>
+TIMMES_HD inline void fill_extended_rates(Array& r, double temperature, double density,
                                 const TfactorsData& tf)
 {
-    r[Ids::irpp] = Library::rate_pp(temperature, density, tf).forward;
-    store_pair(r, Ids::irhng, Ids::irdgn, Library::rate_png(temperature, density, tf));
-    store_pair(r, Ids::irdpg, Ids::irhegp, Library::rate_dpg(temperature, density, tf));
-    store_pair(r, Ids::irheng, Ids::irhegn, Library::rate_he3ng(temperature, density, tf));
-    r[Ids::ir33] = Library::rate_he3he3(temperature, density, tf).forward;
-    r[Ids::irhe3ag] = Library::rate_he3he4(temperature, density, tf).forward;
-    r[Ids::ircpg] = Library::rate_c12pg(temperature, density, tf).forward;
-    r[Ids::irnpg] = Library::rate_n14pg(temperature, density, tf).forward;
+    r[Ids::irpp] = Accessor::forward(Library::rate_pp(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irhng, Ids::irdgn, Library::rate_png(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irdpg, Ids::irhegp, Library::rate_dpg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irheng, Ids::irhegn, Library::rate_he3ng(temperature, density, tf));
+    r[Ids::ir33] = Accessor::forward(Library::rate_he3he3(temperature, density, tf));
+    r[Ids::irhe3ag] = Accessor::forward(Library::rate_he3he4(temperature, density, tf));
+    r[Ids::ircpg] = Accessor::forward(Library::rate_c12pg(temperature, density, tf));
+    r[Ids::irnpg] = Accessor::forward(Library::rate_n14pg(temperature, density, tf));
 
-    const double n15pg = Library::rate_n15pg(temperature, density, tf).forward;
-    const double n15pa = Library::rate_n15pa(temperature, density, tf).forward;
-    const double total = n15pg + n15pa;
+    const auto n15pg = Accessor::forward(Library::rate_n15pg(temperature, density, tf));
+    const auto n15pa = Accessor::forward(Library::rate_n15pa(temperature, density, tf));
+    const auto total = n15pg + n15pa;
     r[Ids::ifa] = n15pa / total;
     r[Ids::ifg] = 1.0 - r[Ids::ifa];
 
-    r[Ids::iropg] = Library::rate_o16pg(temperature, density, tf).forward;
-    r[Ids::irnag] = Library::rate_n14ag(temperature, density, tf).forward;
-    store_pair(r, Ids::ir52ng, Ids::ir53gn, Library::rate_fe52ng(temperature, density, tf));
-    store_pair(r, Ids::ir53ng, Ids::ir54gn, Library::rate_fe53ng(temperature, density, tf));
-    store_pair(r, Ids::irfepg, Ids::ircogp, Library::rate_fe54pg(temperature, density, tf));
+    r[Ids::iropg] = Accessor::forward(Library::rate_o16pg(temperature, density, tf));
+    r[Ids::irnag] = Accessor::forward(Library::rate_n14ag(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ir52ng, Ids::ir53gn, Library::rate_fe52ng(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ir53ng, Ids::ir54gn, Library::rate_fe53ng(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irfepg, Ids::ircogp, Library::rate_fe54pg(temperature, density, tf));
 }
 
-template <typename Ids, typename Library, typename Array>
-inline void fill_aprox21_extra_rates(Array& r, double temperature, double density,
+template <typename Ids, typename Library, typename Accessor = RateValueAccessor,
+          typename Array>
+TIMMES_HD inline void fill_aprox21_extra_rates(Array& r, double temperature, double density,
                                      const TfactorsData& tf)
 {
-    store_pair(r, Ids::ir54ng, Ids::ir55gn, Library::rate_fe54ng(temperature, density, tf));
-    store_pair(r, Ids::irfe54ap, Ids::irco57pa, Library::rate_fe54ap(temperature, density, tf));
-    store_pair(r, Ids::ir55ng, Ids::ir56gn, Library::rate_fe55ng(temperature, density, tf));
-    store_pair(r, Ids::irfe56pg, Ids::irco57gp, Library::rate_fe56pg(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ir54ng, Ids::ir55gn, Library::rate_fe54ng(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irfe54ap, Ids::irco57pa, Library::rate_fe54ap(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::ir55ng, Ids::ir56gn, Library::rate_fe55ng(temperature, density, tf));
+    store_pair<Accessor>(r, Ids::irfe56pg, Ids::irco57gp, Library::rate_fe56pg(temperature, density, tf));
 }
 
 template <typename Scalar, typename Array>
-inline void multiply_rates(Array& rates, const Scalar& factor,
+TIMMES_HD inline void multiply_rates(Array& rates, const Scalar& factor,
                            std::initializer_list<int> indices)
 {
     for (int index : indices) rates[index] *= factor;
 }
 
 template <typename Ids, typename Scalar, typename Array>
-inline void screen_heavy_rates(Array& r, double temperature, double density,
+TIMMES_HD inline void screen_heavy_rates(Array& r, const Scalar& temperature, double density,
                                const Scalar& zbar, const Scalar& abar, const Scalar& z2bar)
 {
     auto factor = [&](double z1, double a1, double z2, double a2) {
@@ -141,7 +144,7 @@ inline void screen_heavy_rates(Array& r, double temperature, double density,
 }
 
 template <typename Ids, typename Scalar, typename Array>
-inline void screen_extended_rates(Array& r, double temperature, double density,
+TIMMES_HD inline void screen_extended_rates(Array& r, const Scalar& temperature, double density,
                                   const Scalar& zbar, const Scalar& abar, const Scalar& z2bar)
 {
     auto factor = [&](double z1, double a1, double z2, double a2) {
@@ -159,7 +162,7 @@ inline void screen_extended_rates(Array& r, double temperature, double density,
 }
 
 template <typename Ids, typename Scalar, typename Array>
-inline void screen_aprox21_extra_rates(Array& r, double temperature, double density,
+TIMMES_HD inline void screen_aprox21_extra_rates(Array& r, const Scalar& temperature, double density,
                                        const Scalar& zbar, const Scalar& abar, const Scalar& z2bar)
 {
     auto factor = [&](double z1, double a1, double z2, double a2) {
@@ -170,7 +173,7 @@ inline void screen_aprox21_extra_rates(Array& r, double temperature, double dens
 }
 
 template <typename Scalar, typename Array>
-inline void set_branch_ratio(Array& rates, int output, int numerator, int other)
+TIMMES_HD inline void set_branch_ratio(Array& rates, int output, int numerator, int other)
 {
     rates[output] = Scalar(0.0);
     const Scalar denominator = rates[numerator] + rates[other];
@@ -178,7 +181,7 @@ inline void set_branch_ratio(Array& rates, int output, int numerator, int other)
 }
 
 template <bool IncludeFe52, typename Ids, typename Scalar, typename Array>
-inline void form_alpha_branch_ratios(Array& r)
+TIMMES_HD inline void form_alpha_branch_ratios(Array& r)
 {
     set_branch_ratio<Scalar>(r, Ids::irr1, Ids::iralpa, Ids::iralpg);
     set_branch_ratio<Scalar>(r, Ids::irs1, Ids::irppa, Ids::irppg);
@@ -193,13 +196,13 @@ inline void form_alpha_branch_ratios(Array& r)
 }
 
 template <typename Scalar>
-inline Scalar scalar_min(const Scalar& a, const Scalar& b)
+TIMMES_HD inline Scalar scalar_min(const Scalar& a, const Scalar& b)
 {
     return value_of(a) < value_of(b) ? a : b;
 }
 
 template <bool Aprox21, typename Ids, typename Scalar, typename Array>
-inline void form_extended_equilibrium(Array& r, const Scalar* y,
+TIMMES_HD inline void form_extended_equilibrium(Array& r, const Scalar* y,
                                       int ihe4, int ih1, int ineut, int iprot,
                                       double temperature)
 {
