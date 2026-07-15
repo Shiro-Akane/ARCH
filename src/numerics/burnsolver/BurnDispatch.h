@@ -62,6 +62,14 @@ struct BurnDispatcher
         std::cout << "[Burn Dispatch] Resolving Network: " << net_type
                   << " | ODE Solver: " << ode_type << " | Linear Solver: " << lin_type << std::endl;
 
+        if (config.physics.burn.use_nse)
+        {
+            std::cout << "[Burn Dispatch] Online Timmes NSE solver enabled above T="
+                      << config.physics.burn.nseTempThreshold << " K and rho="
+                      << config.physics.burn.nseDensThreshold
+                      << " g/cm^3." << std::endl;
+        }
+
         // 2. 将字符串转换为编译期的强类型 Network
         if (net_type == "aprox19") {
             dispatch_ode<NetAprox19>(ode_type, lin_type, std::forward<Func>(func));

@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <cmath>
 #include <fstream>
+#include <stdexcept>
 #include "DriverUtils.h"
 #include "../numerics/burnsolver/Networks.h"
 
@@ -129,6 +130,12 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
         double local_dt_burn_min = 1e99;
 
+        int invalid_composition_count = 0;
+        int first_invalid_cell = -1;
+        double first_invalid_sum = 0.0;
+        double first_invalid_min = 0.0;
+        double first_invalid_max = 0.0;
+
         int total_cells = grid.GetTotalSize();
         // Each cell owns its ODE state, network evaluation and LU factorization.
         // Dynamic scheduling is important because stiff substep counts vary strongly
@@ -143,8 +150,49 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
                 continue;
 
             // 1. 提取当前单元的组分到 Y_ODE
-            double Y_ODE[BurnLimits::MAX_ODE_NEQ];
+            double Y_ODE[BurnLimits::MAX_ODE_NEQ]{};
             current_state.get_species_to_buffer(i, Y_ODE);
+
+            // A network state is empty only when the complete composition is
+            // invalid.  Testing Y_ODE[0] and Y_ODE[1] is incorrect: H1/He3
+            // are normally zero in aprox19/21 helium/carbon fuel, and He4/C12
+            // can both be depleted in an evolved alpha-chain state.
+            double composition_sum = 0.0;
+            double composition_min = Y_ODE[0];
+            double composition_max = Y_ODE[0];
+            bool composition_is_finite = true;
+            bool composition_has_negative = false;
+            for (int k = 0; k < n_spec; ++k)
+            {
+                const double xk = Y_ODE[k];
+                composition_is_finite = composition_is_finite && std::isfinite(xk);
+                composition_has_negative = composition_has_negative
+                                         || xk < -10.0 * config.physics.burn.smallx;
+                composition_sum += xk;
+                composition_min = std::min(composition_min, xk);
+                composition_max = std::max(composition_max, xk);
+            }
+
+            const bool composition_is_valid = composition_is_finite
+                                           && !composition_has_negative
+                                           && std::isfinite(composition_sum)
+                                           && composition_sum > 1.0e-13
+                                           && std::abs(composition_sum - 1.0) <= 1.0e-6;
+            if (!composition_is_valid)
+            {
+#pragma omp critical(burn_invalid_composition)
+                {
+                    ++invalid_composition_count;
+                    if (first_invalid_cell < 0)
+                    {
+                        first_invalid_cell = i;
+                        first_invalid_sum = composition_sum;
+                        first_invalid_min = composition_min;
+                        first_invalid_max = composition_max;
+                    }
+                }
+                continue;
+            }
 
             // 2. 计算内能并从 EOS 获取当前温度
             double mx = current_state.mom_x[i];
@@ -161,9 +209,6 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
             // 3. 呼叫底层的 ODE 求解器执行燃烧
             double dt_rec = burn_dt;
-            if (Y_ODE[0] == 0.0 && Y_ODE[1] == 0.0) {
-                std::cout << "[Driver] WARNING: Y_ODE is empty before integrate at cell " << i << "! T = " << T << std::endl;
-            }
             bool success = burn.integrate(Y_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
 
             if (!success)
@@ -198,6 +243,18 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
                     }
                 }
             }
+        }
+
+        if (invalid_composition_count > 0)
+        {
+            std::cerr << "[Fatal Error] Invalid complete composition before burn: "
+                      << invalid_composition_count << " cell(s); first cell="
+                      << first_invalid_cell << ", sum(X)=" << first_invalid_sum
+                      << ", min(X)=" << first_invalid_min
+                      << ", max(X)=" << first_invalid_max
+                      << ", network=" << config.physics.burn.network_name
+                      << std::endl;
+            throw std::runtime_error("Invalid complete composition before burn");
         }
         
         // 汇总全局最新的燃烧建议步长

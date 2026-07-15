@@ -72,9 +72,15 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
         28.29603, 92.16294, 127.62093, 160.64788, 198.25790, 236.53790,
         271.78250, 306.72020, 342.05680, 375.47720, 411.46900, 447.70800, 484.00300
     };
+    inline static constexpr auto BINDING_E = BION;
+    inline static constexpr std::array<double, NUM_SPECIES> SPIN{
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+    };
     inline static constexpr auto MION = timmes::isotope_masses(AION, ZION, BION);
     inline static constexpr auto ENERGY_WEIGHTS = MION;
     static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv2;
+    static constexpr double NSE_ENERGY_CONVERSION = timmes::constants::enuc_conv;
 
     // Device-safe scalar accessors.  Namespace-scope std::array storage is
     // host-only under NVCC when the index is dynamic, while these aprox13

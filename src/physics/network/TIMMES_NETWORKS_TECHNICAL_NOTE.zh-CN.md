@@ -97,7 +97,51 @@ rho = 1e6, 1e8 g cm^-3
 
 最差项为 `aprox13` LHS 的 `2.850309327978e-13`，仍低于要求约 3.5 倍。误差主要来自 Fortran/C++ 浮点求值顺序差异，不能据此推断任意更长时间积分都保持同样的轨迹误差；长期物理结果仍需做守恒量、收敛性和分辨率研究。
 
-## 6. OpenMP 并行特征
+## 6. 在线 NSE 求解器
+
+高温高密度路径使用 `src/physics/nse/nse_solver.h` 中的 `NSESolver<NetType>`。其来源是 Frank Timmes 的 `public_nse.tbz`：该归档实际包含 47 核素 Fortran 在线求解程序，而不是预先生成的 NSE 二进制表。C++ 实现转写了其中的 Saha 方程、质量/电荷守恒残差和 2 x 2 Newton-Raphson Jacobian，并剔除了固定 47 核素数组。
+
+求解器只从 `NetType` 读取编译期核数据：`NUM_SPECIES`、`AION`、`ZION`、`BINDING_E`、`SPIN` 和能量转换系数。`BINDING_E` 在这里必须是单个原子核的总结合能（MeV），不能把质量超额未经转换直接代入。接口变量沿用历史名称 `Y_old/Y_out`，实际输入输出均为质量分数 `X_i`；能量闭包内部使用摩尔丰度 `X_i/A_i`。
+
+固定温度和密度下的方程为：
+
+```text
+X_i = A_i/(N_A rho) * G_i * (2 pi A_i m_u kT / h^2)^(3/2)
+      * exp(((A_i-Z_i) mu_n + Z_i mu_p + B_i) / kT)
+
+sum_i X_i = 1
+sum_i (Z_i/A_i) X_i = Ye
+```
+
+实现中的数值保护包括：
+
+- 用无量纲化学势和 log-sum-exp 求值，避免 Saha 指数上溢/下溢；
+- 用解析 2 x 2 Jacobian 和克莱姆法则求 Newton 步，并配合步长限制和回溯线搜索；
+- 若质子丰/中子丰边界使 2 x 2 Jacobian 条件数过差，则固定 `eta_p-eta_n` 先解质量归一化，再对电荷化学势做有界一维求根；该路径只作 Newton 失败后的泛型保底；
+- 最多 100 次 Newton 迭代，残差目标 `1e-12`，返回前再次检查质量与电荷守恒；
+- 组分循环使用 `omp simd`，求解器没有共享可变状态，可安全放在外层单元 OpenMP 并行区内；
+- `iso7` 和 `aprox13` 的全部核素均满足 `Z/A=0.5`，两条守恒方程线性相关。代码会检测该退化情形，固定 `mu_n=mu_p` 后解一维归一化方程；这两个网络只在 `Ye=0.5` 时存在受限 NSE 解；
+- `aprox19`/`aprox21` 同时含有物理量子态相同的 `h1` 和 `prot` 记账条目。NSE 统计和中排除重复的 `h1`，平衡自由质子写入 `prot`，避免重复计算质子简并度。
+
+这里得到的是当前网络核素集合上的“网络受限 NSE”。`iso7`/`aprox13` 没有自由核子和中子丰核素，因此不能替代原 47 核素完整 NSE；它们在高温低密度下尤其可能偏离完整 NSE。需要完整物理 NSE 时，应使用独立、覆盖充分的 NSE 核素集合并设计守恒映射，不能把缺失核素的丰度强行塞入现有小网络。
+
+进入 NSE 后，燃烧驱动不再原样冻结组分。它联立求解：
+
+```text
+e_EOS(rho, T_new, X_NSE(T_new)) - e_old - enuc(X_old -> X_NSE) = 0
+```
+
+快速路径使用 EOS `cv` 和后续割线斜率，失败时退回有界二分；只有组分守恒与相对能量闭包都达到 `1e-12` 才接受状态。NSE 投影失败时状态保持不变并回退到正常 ODE；绝不会把未更新组分伪装为 NSE 成功。
+
+数值验证结果：
+
+- 以 47 核素 `public_nse.f90` 严格残差副本为基准，在 `T=2.5e9--1e10 K`、`rho=1e6--1e9 g cm^-3`、`Ye=0.47--0.55` 的 8 个状态逐核素比较，最大质量分数绝对误差为 `4.897193761622e-13`；
+- 四网络在 `T=4.5e9、5e9、7e9、1e10 K` 与 `rho=1e6、1e7、1e9 g cm^-3` 的 48 个组合全部收敛，`sum(X)` 与 `Ye` 均通过 `1e-12` 检查；
+- `aprox19`/`aprox21` 另在 `Ye=0.40--0.60`、`T=4.5e9--1e10 K`、`rho=1e6--1e10 g cm^-3` 各扫描 84 个状态；最坏质量归一化误差 `6.49e-16`，最坏电荷守恒误差 `6.98e-13`；
+- `aprox19` + 真实 Helmholtz EOS 在 `rho=4.322e7 g cm^-3`、`T_old=4.67e9 K` 的 He4/C12 初态得到 `T_new=6.7610109665e9 K`，相对能量闭包残差 `7.5678598227e-14`；
+- 实际 64 x 16 Cellular Driver 高温路径的四个 species count 分别为 7、13、19、21，均完成一步；`aprox19` 的 OpenMP 1/16 线程最终 HDF5 共 26 个数据集且逐位一致。
+
+## 7. OpenMP 并行特征
 
 CPU 目标默认要求 OpenMP：
 
@@ -113,15 +157,18 @@ OpenMP_CXX_FLAGS=-fopenmp
 - 网络、ODE、Jacobian 装配和稠密 LU 的适合循环使用 `omp simd`；
 - 不在单个 8--22 阶小矩阵上再创建嵌套 OpenMP 团队，避免调度开销大于计算量。
 
-在 64 x 16、`aprox13`、关闭 NSE bypass、热点温度 `3e9 K` 的 3 步燃烧测试中，1 线程和 16 线程在步骤 0--3 的每份输出上均有 20 个同名 HDF5 数据集，且全部逐位一致。测试中生成了初始为零的 Ne20，因此确实经过网络/ODE/LU 燃烧路径，而非纯流体或 NSE bypass。
+在 64 x 16、`aprox13`、关闭 NSE、热点温度 `3e9 K` 的 3 步燃烧测试中，1 线程和 16 线程在步骤 0--3 的每份输出上均有 20 个同名 HDF5 数据集，且全部逐位一致。测试中生成了初始为零的 Ne20，因此确实经过网络/ODE/LU 燃烧路径，而非纯流体或 NSE 投影。高温 NSE 路径另以 `aprox19` 完成 1/16 线程逐位一致验证。
 
-## 7. 使用方法
+## 8. 使用方法
 
 在参数文件中选择网络：
 
 ```text
 use_burn = 1
 network_name = iso7       # 或 aprox13 / aprox19 / aprox21
+use_nse = 1               # 默认开启在线网络受限 NSE；设为 0 可禁用
+nseTempThreshold = 4.5e9
+nseDensThreshold = 1.0e6
 ode_solver = BE_NR
 linear_solver = DenseLU
 eos_type = helmholtz
@@ -136,21 +183,22 @@ OMP_NUM_THREADS=16 ./bin/ARCH CellularDet case.par
 
 程序启动信息会显示实际的 `Species Count` 和 `OpenMP: ON (max threads=...)`。应检查它们是否与参数文件一致。
 
-## 8. 当前限制与禁止事项
+## 9. 当前限制与禁止事项
 
 1. `aprox19`/`aprox21` 中依赖 Helmholtz 电子化学势 `eta_e` 的弱反应入口当前保持显式零值；现有 ARCH 网络接口没有把 `eta_e` 传入网络。这一限制来自实现边界，不能用任意常数或未经验证的拟合悄悄替代。
-2. 高温高密度下的 NSE bypass 是积分策略，不是网络正确性的证明。网络验收测试应明确关闭 bypass。
+2. 当前实现是基于所选小网络的在线 Saha NSE，并非 47 核素预制表。`iso7`/`aprox13` 仅支持 `Ye=0.5` 的退化受限解；`aprox19`/`aprox21` 的弱反应仍为零，因此 NSE 入口使用进入前的守恒 `Ye`，不会自行演化电子分数。
 3. 通过局部 RHS/Jacobian/LHS 对照不等于已经得到分辨充分的二维胞状爆轰。冲击波、诱导区和反应区仍需 ZND/CJ 初始剖面或足够的网格/AMR 收敛性验证。
 4. 不得重新接入旧 pynucastro 网络来替代这里的实现，也不得把旧网络生成的图与本验证表混合。
 5. 若修改反应率、核素顺序、能量权重、筛选、EOS `cv`、温度行/列或 ODE 投影逻辑，必须重新运行四网络的原 Fortran RHS/Jacobian/LHS 验证。
 
-## 9. 后续维护验收清单
+## 10. 后续维护验收清单
 
 - [ ] 四个网络报告的 species count 分别为 7、13、19、21；
 - [ ] 6 状态原 Fortran RHS/Jacobian/LHS 最大相对误差均小于 `1e-12`；
 - [ ] 温度导数路径中没有有限差分温度扰动；
 - [ ] 使用与基准一致的真实 Helmholtz 表；
 - [ ] OpenMP 1/多线程结果通过确定性比较；
+- [ ] NSE 的 `sum(X)`、`Ye` 和 EOS/结合能闭包均小于规定误差，且未重新引入直接返回的组分冻结旁路；
 - [ ] 长时间流体-燃烧耦合运行没有 NaN、密度 floor、能量 cap 或组分和漂移；
 - [ ] 二维爆轰结论附带分辨率/收敛性证据，而不仅是视觉图像。
 

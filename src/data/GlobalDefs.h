@@ -115,8 +115,9 @@ struct BurnConfig
     double smallx = 1e-20;  ///< Minimum mass fraction for species (to avoid negative or zero)
 
     double enucDtFactor = 1e30; ///< Maximum fractional change in internal energy per burn step (1e30 = practically off)
-    double nseTempThreshold = 4.5e9; ///< Temperature threshold to trigger NSE bypass
-    double nseDensThreshold = 1.0e6; ///< Density threshold to trigger NSE bypass
+    bool use_nse = true; ///< Use the online Timmes Saha NSE solver at high T/rho
+    double nseTempThreshold = 4.5e9; ///< Temperature threshold for NSE projection
+    double nseDensThreshold = 1.0e6; ///< Density threshold for NSE projection
 
     bool enforce_mass_conservation = true; ///< Whether to enforce mass fraction conservation after each burn step
 

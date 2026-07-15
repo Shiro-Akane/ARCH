@@ -75,9 +75,18 @@ struct NetAprox19 : timmes::TimmesNetworkSupport<NetAprox19> {
         198.25790, 236.53790, 271.78250, 306.72020, 342.05680, 375.47720,
         411.46900, 447.70800, 471.7696, 484.00300, 0.0, 0.0
     };
+    inline static constexpr auto BINDING_E = BION;
+    // h1 duplicates the free-proton quantum state in this approximate
+    // network.  A zero NSE weight keeps the bookkeeping species out of the
+    // statistical sum; equilibrium free protons are stored in "prot".
+    inline static constexpr std::array<double, NUM_SPECIES> SPIN{
+        0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0
+    };
     inline static constexpr auto MION = timmes::isotope_masses(AION, ZION, BION);
     inline static constexpr auto ENERGY_WEIGHTS = MION;
     static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv2;
+    static constexpr double NSE_ENERGY_CONVERSION = timmes::constants::enuc_conv;
 
     template <typename Scalar, typename RateAccessor>
     static inline void fill_screened_rates(const Scalar* y, double rho,

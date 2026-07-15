@@ -40,9 +40,14 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     inline static constexpr std::array<double, NUM_SPECIES> BION{
         28.29603, 92.16294, 127.62093, 160.64788, 198.25790, 236.53790, 484.00300
     };
+    inline static constexpr auto BINDING_E = BION;
+    inline static constexpr std::array<double, NUM_SPECIES> SPIN{
+        1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
+    };
     inline static constexpr auto MION = timmes::isotope_masses(AION, ZION, BION);
     inline static constexpr auto ENERGY_WEIGHTS = BION;
     static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv;
+    static constexpr double NSE_ENERGY_CONVERSION = timmes::constants::enuc_conv;
 
     template <typename Scalar, typename RateAccessor>
     static inline void fill_screened_rates(const Scalar* y, double rho,
