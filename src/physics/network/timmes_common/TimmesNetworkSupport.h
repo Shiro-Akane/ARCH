@@ -59,14 +59,19 @@ struct TimmesNetworkSupport {
         constexpr int N = Derived::NUM_SPECIES;
         double y[N];
         double dydt[N];
+#pragma omp simd
         for (int i = 0; i < N; ++i) {
             y[i] = std::clamp(state[i] / Derived::AION[i], 1.0e-30, 1.0);
         }
         Derived::template molar_rhs<double>(y, rho, state[N], dydt);
 
-        long double mass_sum = 0.0L;
+#pragma omp simd
         for (int i = 0; i < N; ++i) {
             rhs[i] = dydt[i] * Derived::AION[i];
+        }
+
+        long double mass_sum = 0.0L;
+        for (int i = 0; i < N; ++i) {
             mass_sum += static_cast<long double>(dydt[i]) * Derived::MION[i];
         }
         enuc = constants::enuc_conv2 * static_cast<double>(mass_sum);
@@ -86,6 +91,7 @@ struct TimmesNetworkSupport {
         Derived::template molar_rhs<AD>(y, rho, state[N], dydt);
         for (int i = 0; i < N; ++i) {
             const AD dXdt = dydt[i] * Derived::AION[i];
+#pragma omp simd
             for (int j = 0; j < N; ++j) {
                 jac.set(i + 1, j + 1, dXdt.deriv[j]);
             }

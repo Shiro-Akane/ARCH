@@ -66,6 +66,7 @@ struct Solver_BE_NR
             }
 
             // 保存这一小步的起点状态
+#pragma omp simd
             for (int i = 0; i < NEQ; ++i)
             {
                 Y_old[i] = Y_ODE[i];
@@ -108,6 +109,7 @@ struct Solver_BE_NR
                 Y_k[NEQ - 1] = T_current; // 恢复温度
                 
                 double inv_dT = 1.0 / dT_fd;
+#pragma omp simd
                 for (int i = 0; i < NEQ; ++i)
                 {
                     double dRHS_dT = (RHS_fd[i] - RHS[i]) * inv_dT;
@@ -139,6 +141,7 @@ struct Solver_BE_NR
                 for (int i = 0; i < NEQ; ++i)
                 {
                     b[i] = Y_old[i] - Y_k[i] + dt * RHS[i];
+#pragma omp simd
                     for (int j = 0; j < NEQ; ++j)
                     {
                         double jac_val = A(i + 1, j + 1);
@@ -197,6 +200,7 @@ struct Solver_BE_NR
             {
                 // 迭代成功：接受更新，时间向前推进
                 t_current += dt;
+#pragma omp simd
                 for (int i = 0; i < NEQ; ++i)
                 {
                     Y_ODE[i] = Y_k[i];

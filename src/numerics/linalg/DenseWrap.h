@@ -32,6 +32,7 @@ struct DenseMatrixData
     {
         // 实际开发中可以通过 ACTIVE_N 来优化清零范围
         for (int i = 0; i < BurnLimits::MAX_ODE_NEQ; ++i)
+#pragma omp simd
             for (int j = 0; j < BurnLimits::MAX_ODE_NEQ; ++j)
                 data[i][j] = 0.0;
     }
@@ -54,6 +55,7 @@ struct DenseLUSolver
     static bool solve(DenseMatrixData &A, double b[MAX_N])
     {
         int p[ACTIVE_N]; // 行置换记录数组 (栈上分配，极快)
+#pragma omp simd
         for (int i = 0; i < ACTIVE_N; ++i)
             p[i] = i;
 
@@ -84,6 +86,7 @@ struct DenseLUSolver
             for (int j = i + 1; j < ACTIVE_N; ++j)
             {
                 A.data[p[j]][i] *= pivot_inv; // 存储 L 的乘子
+#pragma omp simd
                 for (int k = i + 1; k < ACTIVE_N; ++k)
                 {
                     A.data[p[j]][k] -= A.data[p[j]][i] * A.data[p[i]][k]; // 更新 U

@@ -25,12 +25,14 @@ struct Dual {
     Dual& operator+=(const Dual& rhs)
     {
         value += rhs.value;
+#pragma omp simd
         for (std::size_t i = 0; i < N; ++i) deriv[i] += rhs.deriv[i];
         return *this;
     }
     Dual& operator-=(const Dual& rhs)
     {
         value -= rhs.value;
+#pragma omp simd
         for (std::size_t i = 0; i < N; ++i) deriv[i] -= rhs.deriv[i];
         return *this;
     }
@@ -38,6 +40,7 @@ struct Dual {
     {
         const double lhs_value = value;
         value *= rhs.value;
+#pragma omp simd
         for (std::size_t i = 0; i < N; ++i) {
             deriv[i] = deriv[i] * rhs.value + lhs_value * rhs.deriv[i];
         }
@@ -48,6 +51,7 @@ struct Dual {
         const double lhs_value = value;
         const double inv = 1.0 / rhs.value;
         value *= inv;
+#pragma omp simd
         for (std::size_t i = 0; i < N; ++i) {
             deriv[i] = (deriv[i] - value * rhs.deriv[i]) * inv;
         }
@@ -70,7 +74,8 @@ template <std::size_t N> inline Dual<N> operator/(Dual<N> a, double b) { return 
 template <std::size_t N> inline Dual<N> operator/(double a, const Dual<N>& b) { return Dual<N>(a) /= b; }
 template <std::size_t N> inline Dual<N> operator-(Dual<N> a) {
     a.value = -a.value;
-    for (double& d : a.deriv) d = -d;
+#pragma omp simd
+    for (std::size_t i = 0; i < N; ++i) a.deriv[i] = -a.deriv[i];
     return a;
 }
 
@@ -86,6 +91,7 @@ inline double exp_value(double x) { return std::exp(x); }
 template <std::size_t N> inline Dual<N> exp_value(const Dual<N>& x)
 {
     Dual<N> result(std::exp(x.value));
+#pragma omp simd
     for (std::size_t i = 0; i < N; ++i) result.deriv[i] = result.value * x.deriv[i];
     return result;
 }
@@ -95,6 +101,7 @@ template <std::size_t N> inline Dual<N> log_value(const Dual<N>& x)
 {
     Dual<N> result(std::log(x.value));
     const double inv = 1.0 / x.value;
+#pragma omp simd
     for (std::size_t i = 0; i < N; ++i) result.deriv[i] = x.deriv[i] * inv;
     return result;
 }
@@ -104,6 +111,7 @@ template <std::size_t N> inline Dual<N> sqrt_value(const Dual<N>& x)
 {
     Dual<N> result(std::sqrt(x.value));
     const double scale = 0.5 / result.value;
+#pragma omp simd
     for (std::size_t i = 0; i < N; ++i) result.deriv[i] = x.deriv[i] * scale;
     return result;
 }
@@ -113,6 +121,7 @@ template <std::size_t N> inline Dual<N> pow_value(const Dual<N>& x, double expon
 {
     Dual<N> result(std::pow(x.value, exponent));
     const double scale = exponent * std::pow(x.value, exponent - 1.0);
+#pragma omp simd
     for (std::size_t i = 0; i < N; ++i) result.deriv[i] = scale * x.deriv[i];
     return result;
 }

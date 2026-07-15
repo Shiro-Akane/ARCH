@@ -15,6 +15,10 @@
 #include "DriverUtils.h"
 #include "../numerics/burnsolver/Networks.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 #include "../io/IO.h"
 
 /**
@@ -95,7 +99,13 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     const NumericsConfig &num_cfg = config.numerics;
 
     std::cout << ">>> Simulation Started | Solver: " << TimeIntegratorPolicy::name()
-              << " | Entropy Fix Coeff: " << num_cfg.entropy_fix_coeff << std::endl;
+              << " | Entropy Fix Coeff: " << num_cfg.entropy_fix_coeff;
+#ifdef _OPENMP
+    std::cout << " | OpenMP: ON (max threads=" << omp_get_max_threads() << ")";
+#else
+    std::cout << " | OpenMP: OFF";
+#endif
+    std::cout << std::endl;
 
     // update Bounday during Scratch state
     BCHandler bc_handler{config};
@@ -120,8 +130,10 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         double local_dt_burn_min = 1e99;
 
         int total_cells = grid.GetTotalSize();
-// 在 GPU 上，这个 for 循环就是我们要并行化的内核
-#pragma omp parallel for reduction(min:local_dt_burn_min)
+        // Each cell owns its ODE state, network evaluation and LU factorization.
+        // Dynamic scheduling is important because stiff substep counts vary strongly
+        // across the reaction front; nested teams inside a 22x22 LU are counterproductive.
+#pragma omp parallel for schedule(dynamic, 1) reduction(min:local_dt_burn_min)
         for (int i = 0; i < total_cells; ++i)
         {
             double rho = current_state.rho[i];

@@ -49,13 +49,14 @@ set_target_properties(ARCH PROPERTIES
 # Dependencies: OpenMP
 # ==============================================================================
 if(ARCH_ENABLE_OPENMP)
-    find_package(OpenMP)
-    if(OpenMP_CXX_FOUND)
-        target_link_libraries(ARCH PRIVATE OpenMP::OpenMP_CXX)
-        message(STATUS "OpenMP enabled for target ARCH")
-    else()
-        message(WARNING "ARCH_ENABLE_OPENMP=ON but OpenMP was not found. Building without OpenMP.")
-    endif()
+    # A requested OpenMP build must never silently fall back to a serial binary.
+    find_package(OpenMP REQUIRED COMPONENTS CXX)
+    target_link_libraries(ARCH PRIVATE OpenMP::OpenMP_CXX)
+    target_compile_definitions(ARCH PRIVATE ARCH_OPENMP_ENABLED=1)
+    message(STATUS "OpenMP enabled for target ARCH")
+else()
+    target_compile_definitions(ARCH PRIVATE ARCH_OPENMP_ENABLED=0)
+    message(STATUS "OpenMP disabled for target ARCH")
 endif()
 
 # ==============================================================================

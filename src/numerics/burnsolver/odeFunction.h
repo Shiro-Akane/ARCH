@@ -21,6 +21,7 @@ namespace OdeMath
     void vec_axpy(const double *Y_old, double alpha, const double *dY, double *Y_new)
     {
         // 因为 ODE_NEQ 是模板参数(编译期常量)，编译器会在此处进行激进的循环展开
+#pragma omp simd
         for (int i = 0; i < ODE_NEQ; ++i)
         {
             Y_new[i] = Y_old[i] + alpha * dY[i];
@@ -37,6 +38,7 @@ namespace OdeMath
     template <int ODE_NEQ>
     void calc_weights(const double *Y, double rtol, double atol, double *W)
     {
+#pragma omp simd
         for (int i = 0; i < ODE_NEQ; ++i)
         {
             W[i] = rtol * std::abs(Y[i]) + atol;
@@ -80,6 +82,7 @@ namespace OdeMath
 
         // 2. 归一化
         double inv_sum = 1.0 / sum_X;
+#pragma omp simd
         for (int i = 0; i < NUM_SPECIES; ++i)
         {
             Y[i] *= inv_sum;
