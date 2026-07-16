@@ -32,7 +32,8 @@ private:
     static constexpr double tstpi = 1.0 / tstp;
 
     // Table data
-    std::vector<double> f[9]; 
+    inline static std::vector<double> f[9]; 
+    inline static bool is_loaded = false;
 
     const SpeciesManager* specs;
 
@@ -60,6 +61,7 @@ private:
 
 public:
     HelmEos(const std::string& table_path, const SpeciesManager* specs_) : specs(specs_) {
+        if (!is_loaded) {
         std::cout << "[HelmEos] Loading 2D Helmholtz table from " << table_path << "..." << std::endl;
         std::ifstream file(table_path);
         if (!file.is_open()) {
@@ -79,6 +81,8 @@ public:
             }
         }
         std::cout << "[HelmEos] 2D Helmholtz Electron/Positron table loaded successfully." << std::endl;
+        is_loaded = true;
+    }
     }
 
     void interpolate_ele_pos(double rho, double T, double ye,

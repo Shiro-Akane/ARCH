@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ComputeBackend.h"
-
 #include <cstddef>
 #include <string>
 #include <string_view>
@@ -69,14 +67,9 @@ enum class IntegratorKind
 
 /**
  * @brief Fully resolved runtime selection used to locate one compiled launcher.
- *
- * ComputeBackend::Auto is a user request, not a resolved backend, and is
- * therefore rejected by registration and require(). The caller must resolve
- * Auto to Cpu or Cuda before querying this registry.
  */
 struct DispatchKey
 {
-    ComputeBackend backend{ComputeBackend::Cpu};
     EosKind eos{EosKind::Ideal};
     NetworkKind network{NetworkKind::Disabled};
     OdeKind ode{OdeKind::Disabled};

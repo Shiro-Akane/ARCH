@@ -86,15 +86,6 @@ std::string_view integrator_name(IntegratorKind value) noexcept
     return "invalid";
 }
 
-void validate_resolved_key(const DispatchKey &key, std::string_view operation)
-{
-    if (key.backend == ComputeBackend::Auto) {
-        throw std::invalid_argument(
-            std::string(operation)
-            + " requires a resolved backend; resolve 'auto' to 'cpu' or 'cuda' first");
-    }
-}
-
 std::size_t mix_hash(std::size_t seed, std::size_t value) noexcept
 {
     constexpr std::size_t golden_ratio = static_cast<std::size_t>(0x9e3779b9U);
@@ -106,8 +97,7 @@ std::size_t mix_hash(std::size_t seed, std::size_t value) noexcept
 std::string describe_dispatch_key(const DispatchKey &key)
 {
     std::ostringstream out;
-    out << "backend=" << compute_backend_name(key.backend)
-        << ",eos=" << eos_name(key.eos)
+    out << "eos=" << eos_name(key.eos)
         << ",network=" << network_name(key.network)
         << ",ode=" << ode_name(key.ode)
         << ",linear=" << linear_solver_name(key.linear_solver)
@@ -121,7 +111,7 @@ std::size_t RuntimeDispatchRegistry::DispatchKeyHash::operator()(
     const DispatchKey &key) const noexcept
 {
     std::size_t seed = 0;
-    seed = mix_hash(seed, static_cast<std::size_t>(key.backend));
+    // 移除 backend 的哈希计算
     seed = mix_hash(seed, static_cast<std::size_t>(key.eos));
     seed = mix_hash(seed, static_cast<std::size_t>(key.network));
     seed = mix_hash(seed, static_cast<std::size_t>(key.ode));
@@ -136,7 +126,7 @@ void RuntimeDispatchRegistry::register_launcher(const DispatchKey &key,
                                                 DispatchLauncher launcher,
                                                 std::string_view label)
 {
-    validate_resolved_key(key, "RuntimeDispatchRegistry::register_launcher");
+    // 移除 validate_resolved_key 调用（如果它的原实现仅用于校验 backend != Auto）
     if (launcher == nullptr) {
         throw std::invalid_argument(
             "Cannot register a null runtime dispatch launcher for "
@@ -161,16 +151,12 @@ void RuntimeDispatchRegistry::register_launcher(const DispatchKey &key,
 
 const DispatchEntry *RuntimeDispatchRegistry::find(const DispatchKey &key) const noexcept
 {
-    if (key.backend == ComputeBackend::Auto) {
-        return nullptr;
-    }
     const auto entry = entries_.find(key);
     return entry == entries_.end() ? nullptr : &entry->second;
 }
 
 const DispatchEntry &RuntimeDispatchRegistry::require(const DispatchKey &key) const
 {
-    validate_resolved_key(key, "RuntimeDispatchRegistry::require");
     if (const DispatchEntry *entry = find(key)) {
         return *entry;
     }
@@ -178,8 +164,7 @@ const DispatchEntry &RuntimeDispatchRegistry::require(const DispatchKey &key) co
     throw std::runtime_error(
         "No runtime dispatch launcher is registered for "
         + describe_dispatch_key(key)
-        + ". This binary does not support the exact requested combination; "
-          "no implicit CPU, solver, EOS, or network fallback was applied.");
+        + ". This binary does not support the exact requested combination.");
 }
 
 } // namespace arch::runtime

@@ -12,6 +12,7 @@
 #include "Networks.h"
 #include "ode_be-nr.h"
 #include "ode_bd.h"
+#include "ode_ros4.h"
 #include "BurnerHandle.h"
 
 #include "../../data/GlobalDefs.h" // 包含 SimConfig
@@ -116,11 +117,7 @@ private:
         }
         else if (ode_type == "ROS4" || ode_type == "ros4")
         {
-            throw std::runtime_error(
-                "ROS4 is disabled: the current implementation under-reacts "
-                "relative to BE_NR/BD in the Helmholtz Cellular regression. "
-                "Use BE_NR or BD until the Rosenbrock tableau and error "
-                "estimator are revalidated.");
+            dispatch_linsolver<Solver_ROS4, NetType>(lin_type, std::forward<Func>(func));
         }
         else if (ode_type == "BD" || ode_type == "bd")
         {
@@ -128,7 +125,7 @@ private:
         }
         else
         {
-            throw std::runtime_error("Unknown ODE Solver Type: " + ode_type);
+            throw std::runtime_error("Unknown ODE Solver Type: [" + ode_type + "]");
         }
     }
 

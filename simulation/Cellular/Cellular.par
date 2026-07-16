@@ -84,7 +84,7 @@ dt_min           = 1e-20     # 隐式 ODE 求解器允许切分的最小物理�
 tstep_change_factor = 1.2    # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
 enucDtFactor     = 1e30      # 核能限制器：限制单步释放的核能比例。设置为 1e30 相当于关闭燃烧对时间步的限制。
 
-ode_solver       = BD     # BE_NR, ROS4, BD
+ode_solver       = BD      # BE_NR, ROS4, BD
 linear_solver    = DenseLU
 
 # ------------------------------------------------------------------------------
