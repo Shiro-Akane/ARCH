@@ -1,9 +1,15 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.16)
 
 # ==============================================================================
 # Project Configuration
 # ==============================================================================
 project(ARCH LANGUAGES CXX)
+# 启用 ccache 进行编译加速
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -31,8 +37,18 @@ list(FILTER SOURCES EXCLUDE REGEX ".*/network/.*/main\\.cpp$")
 # ==============================================================================
 add_executable(ARCH ${SOURCES} ${SIMULATION_CASES})
 
-# 设置 C++17 标准
-target_compile_features(ARCH PRIVATE cxx_std_17)
+target_precompile_headers(ARCH PRIVATE
+    <omp.h>
+    <vector>
+    <string>
+    <iostream>
+    <memory>
+    <cmath>
+    <omp.h>
+    <highfive/H5File.hpp> 
+    <highfive/H5DataSet.hpp>
+    <highfive/H5DataSpace.hpp>
+)
 
 # 设置头文件包含路径
 target_include_directories(ARCH PRIVATE

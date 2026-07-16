@@ -69,4 +69,34 @@ struct SparseSolverWrap
         throw std::runtime_error("Real Sparse Solver Not Yet Integrated!");
         return true;
     }
+
+    // 2. 符号与数值分解
+    // 注意：这里的 p 数组对于 Dense 是行主元记录，对于 Sparse 未来可以变成记录内部 CSR 结构或句柄的指针数组
+    template <int ACTIVE_N, int MAX_N>
+    static bool factorize(SparseMatrixData &A, int p[MAX_N])
+    {
+        std::cout << "[SparseWrap] Triggered sparse factorize for " << ACTIVE_N << "x" << ACTIVE_N << std::endl;
+        // ======================================================
+        // 【未来的接口对接区】
+        // 1. 转换 COO -> CSR
+        // 2. 调用 KLU / SuperLU / cuSPARSE 的 Symbolic + Numeric Factorization
+        // 3. 将返回的 Handle 或内部状态存放到某种全局结构或借助 p 传递
+        // ======================================================
+        throw std::runtime_error("Real Sparse Factorize Not Yet Integrated!");
+        return true;
+    }
+
+    // 3.  使用已分解的因子极速求解
+    template <int ACTIVE_N, int MAX_N>
+    static void solve_with_factors(const SparseMatrixData &A, const int p[MAX_N], double b[MAX_N])
+    {
+        std::cout << "[SparseWrap] Triggered sparse solve_with_factors" << std::endl;
+        // ======================================================
+        // 【未来的接口对接区】
+        // 1. 传入上一步保存的 Handle
+        // 2. 调用稀疏三角求解接口 (SpSV: Sparse Triangular Solve) 做前向/后向代入
+        // 3. 将结果写回 b
+        // ======================================================
+        throw std::runtime_error("Real Sparse Solve_with_factors Not Yet Integrated!");
+    }
 };

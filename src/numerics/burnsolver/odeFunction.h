@@ -7,6 +7,9 @@
 #include <cmath>
 #include <algorithm>
 
+#include "../../data/GlobalDefs.h"
+#include "../../physics/nse/nse_solver.h"
+
 namespace OdeMath
 {
 
@@ -127,6 +130,166 @@ namespace OdeMath
         double fac = safe * std::pow(err_n, -k1) * std::pow(err_n_1, k2);
         fac = std::max(min_fac, std::min(max_fac, fac));
         return dt_n * fac;
+    }
+
+    // =================================================================
+    // 5. NSE 自洽循环 (NSE Self-Consistency Loop)
+    // =================================================================
+    template <typename NetType, typename EOSType>
+    bool integrate_nse_state(double* state, double rho,
+                             double dt_target, const EOSType& eos,
+                             const BurnConfig& burn_cfg,
+                             double& dt_rec)
+    {
+        // 从 NetType 动态提取维度信息
+        constexpr int NEQ = NetType::ODE_NEQ;
+        constexpr int NUM_SPEC = NetType::NUM_SPECIES;
+        constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
+
+        struct Candidate {
+            double temperature = 0.0;
+            double x[MAX_N]{};
+            double enuc = 0.0;
+            double residual = 0.0;
+            double scale = 1.0;
+        };
+
+        double old_x[MAX_N]{};
+        long double ye_sum = 0.0L;
+#pragma omp simd reduction(+:ye_sum)
+        for (int i = 0; i < NUM_SPEC; ++i) {
+            old_x[i] = state[i];
+            ye_sum += static_cast<long double>(state[i])
+                    * static_cast<long double>(NetType::ZION[i] / NetType::AION[i]);
+        }
+        const double ye = static_cast<double>(ye_sum);
+        const double old_temperature = state[NEQ - 1];
+        const double old_eint = eos.get_eint_from_T(rho, old_temperature, old_x);
+        if (!std::isfinite(ye) || !std::isfinite(old_eint)) return false;
+
+        auto evaluate = [&](double temperature, Candidate& candidate) {
+            candidate.temperature = temperature;
+            if (!NSESolver<NetType>::solve(temperature, rho, ye, old_x,
+                                           candidate.x, candidate.enuc)) {
+                return false;
+            }
+            const double new_eint = eos.get_eint_from_T(rho, temperature, candidate.x);
+            candidate.residual = new_eint - old_eint - candidate.enuc;
+            candidate.scale = std::max({std::abs(new_eint), std::abs(old_eint), std::abs(candidate.enuc), 1.0});
+            return std::isfinite(new_eint) && std::isfinite(candidate.residual) && std::isfinite(candidate.scale);
+        };
+
+        auto closed = [](const Candidate& candidate) {
+            constexpr double closure_rtol = 1.0e-12;
+            return std::abs(candidate.residual) <= closure_rtol * candidate.scale;
+        };
+
+        auto accept = [&](const Candidate& candidate) {
+#pragma omp simd
+            for (int i = 0; i < NUM_SPEC; ++i) state[i] = candidate.x[i];
+            state[NEQ - 1] = candidate.temperature;
+            dt_rec = dt_target;
+            return true;
+        };
+
+        const double minimum_temperature = std::max(burn_cfg.nseTempThreshold, burn_cfg.smallt);
+        constexpr double maximum_temperature = 1.0e11;
+        if (old_temperature < minimum_temperature || old_temperature > maximum_temperature) {
+            return false;
+        }
+
+        Candidate current;
+        if (!evaluate(old_temperature, current)) return false;
+        if (closed(current)) return accept(current);
+
+        Candidate previous;
+        bool have_previous = false;
+        for (int iter = 0; iter < 20; ++iter) {
+            double derivative = eos.get_cv(rho, current.temperature, current.x);
+            if (have_previous && current.temperature != previous.temperature) {
+                const double secant = (current.residual - previous.residual) / (current.temperature - previous.temperature);
+                if (std::isfinite(secant) && secant > 0.0) derivative = secant;
+            }
+            if (!std::isfinite(derivative) || derivative <= 0.0) break;
+
+            double delta_temperature = -current.residual / derivative;
+            const double step_limit = 0.5 * current.temperature;
+            delta_temperature = std::clamp(delta_temperature, -step_limit, step_limit);
+
+            bool improved = false;
+            double alpha = 1.0;
+            Candidate trial;
+            for (int line_search = 0; line_search < 16; ++line_search) {
+                const double trial_temperature = std::clamp(current.temperature + alpha * delta_temperature, minimum_temperature, maximum_temperature);
+                if (trial_temperature == current.temperature) break;
+                if (evaluate(trial_temperature, trial) && std::abs(trial.residual) < std::abs(current.residual)) {
+                    improved = true;
+                    break;
+                }
+                alpha *= 0.5;
+            }
+            if (!improved) break;
+            previous = current;
+            have_previous = true;
+            current = trial;
+            if (closed(current)) return accept(current);
+        }
+
+        Candidate lower;
+        Candidate upper;
+        if (!evaluate(minimum_temperature, lower) || !evaluate(maximum_temperature, upper) || std::signbit(lower.residual) == std::signbit(upper.residual)) {
+            return false;
+        }
+        if (lower.residual > 0.0) std::swap(lower, upper);
+
+        for (int iter = 0; iter < 64; ++iter) {
+            Candidate midpoint;
+            const double midpoint_temperature = 0.5 * (lower.temperature + upper.temperature);
+            if (!evaluate(midpoint_temperature, midpoint)) return false;
+            if (closed(midpoint)) return accept(midpoint);
+            if (midpoint.residual < 0.0) lower = midpoint;
+            else upper = midpoint;
+        }
+        return false;
+    }
+
+    // =================================================================
+    // 6. Bader-Deuflhard 多项式外推与控制 (Extrapolation & Control)
+    // =================================================================
+
+    /**
+     * @brief 执行多项式外推 (Polynomial Extrapolation)
+     * @param k 当前的外推层级 (0 to MAX_K-1)
+     * @param n_seq BD 序列 (如 2, 6, 10, 14...)
+     * @param T 外推表 T[k][j][NEQ]
+     * @param y_err 输出的截断误差估计
+     */
+    template <int ODE_NEQ, int MAX_K>
+    void bd_extrapolate(int k, const int* n_seq,
+                        double T[MAX_K][MAX_K][ODE_NEQ],
+                        double* y_err)
+    {
+        // 从 j=1 开始，利用低阶的解外推高阶
+        for (int j = 1; j <= k; ++j)
+        {
+            double fac = static_cast<double>(n_seq[k] * n_seq[k]) /
+                         static_cast<double>(n_seq[k - j] * n_seq[k - j]) - 1.0;
+            const double inv_fac = 1.0 / fac;
+
+#pragma omp simd
+            for (int i = 0; i < ODE_NEQ; ++i)
+            {
+                T[k][j][i] = T[k][j - 1][i] + (T[k][j - 1][i] - T[k - 1][j - 1][i]) * inv_fac;
+            }
+        }
+
+        // 误差估计：最高阶与其上一阶的差值 (Deuflhard 标准截断误差)
+        if (k > 0) {
+#pragma omp simd
+            for (int i = 0; i < ODE_NEQ; ++i) {
+                y_err[i] = T[k][k][i] - T[k][k - 1][i];
+            }
+        }
     }
 
 } // namespace OdeMath

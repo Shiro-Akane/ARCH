@@ -118,4 +118,75 @@ struct DenseLUSolver
 
         return true;
     }
+
+    /**
+     * @brief  仅执行 LU 分解 (O(N^3))
+     */
+    template <int ACTIVE_N, int MAX_N>
+    static bool factorize(DenseMatrixData &A, int p[MAX_N])
+    {
+#pragma omp simd
+        for (int i = 0; i < ACTIVE_N; ++i)
+            p[i] = i;
+
+        for (int i = 0; i < ACTIVE_N; ++i)
+        {
+            double max_val = 0.0;
+            int pivot_row = i;
+            for (int j = i; j < ACTIVE_N; ++j)
+            {
+                double val = std::abs(A.data[p[j]][i]);
+                if (val > max_val)
+                {
+                    max_val = val;
+                    pivot_row = j;
+                }
+            }
+
+            if (max_val < 1e-20) return false;
+
+            std::swap(p[i], p[pivot_row]);
+
+            double pivot_inv = 1.0 / A.data[p[i]][i];
+            for (int j = i + 1; j < ACTIVE_N; ++j)
+            {
+                A.data[p[j]][i] *= pivot_inv;
+#pragma omp simd
+                for (int k = i + 1; k < ACTIVE_N; ++k)
+                {
+                    A.data[p[j]][k] -= A.data[p[j]][i] * A.data[p[i]][k];
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @brief 使用已分解的 LU 矩阵进行极速回代求解 (O(N^2))
+     */
+    template <int ACTIVE_N, int MAX_N>
+    static void solve_with_factors(const DenseMatrixData &A, const int p[MAX_N], double b[MAX_N])
+    {
+        double y[ACTIVE_N];
+        for (int i = 0; i < ACTIVE_N; ++i)
+        {
+            y[i] = b[p[i]];
+#pragma omp simd
+            for (int j = 0; j < i; ++j)
+            {
+                y[i] -= A.data[p[i]][j] * y[j];
+            }
+        }
+
+        for (int i = ACTIVE_N - 1; i >= 0; --i)
+        {
+            b[i] = y[i];
+#pragma omp simd
+            for (int j = i + 1; j < ACTIVE_N; ++j)
+            {
+                b[i] -= A.data[p[i]][j] * b[j];
+            }
+            b[i] /= A.data[p[i]][i];
+        }
+    }
 };

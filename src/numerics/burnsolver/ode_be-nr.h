@@ -10,8 +10,6 @@
 #include "Networks.h"
 #include "odeFunction.h"
 
-#include "../../data/GlobalDefs.h"
-#include "../../physics/nse/nse_solver.h"
 
 template <typename NetType, typename MatrixType, typename LinearSolver>
 struct Solver_BE_NR
@@ -58,7 +56,7 @@ struct Solver_BE_NR
                 && rho > burn_cfg.nseDensThreshold)
             {
                 nse_attempted = true;
-                if (integrate_nse_state(Y_ODE, rho, dt_target, eos,
+                if (OdeMath::integrate_nse_state<NetType, EOSType>(Y_ODE, rho, dt_target, eos,
                                         burn_cfg, dt_rec)) {
                     return true;
                 }
@@ -277,151 +275,5 @@ struct Solver_BE_NR
 
         dt_rec = dt; // 将最后一次成功并且被 PI 控制器计算出的稳定步长返回
         return true; // 成功跨越了宏观的 dt_target
-    }
-
-private:
-    template <typename EOSType>
-    static bool integrate_nse_state(double* state, double rho,
-                                    double dt_target, const EOSType& eos,
-                                    const BurnConfig& burn_cfg,
-                                    double& dt_rec)
-    {
-        struct Candidate {
-            double temperature = 0.0;
-            double x[MAX_N]{};
-            double enuc = 0.0;
-            double residual = 0.0;
-            double scale = 1.0;
-        };
-
-        double old_x[MAX_N]{};
-        long double ye_sum = 0.0L;
-#pragma omp simd reduction(+:ye_sum)
-        for (int i = 0; i < NUM_SPEC; ++i) {
-            old_x[i] = state[i];
-            ye_sum += static_cast<long double>(state[i])
-                    * static_cast<long double>(NetType::ZION[i]
-                                               / NetType::AION[i]);
-        }
-        const double ye = static_cast<double>(ye_sum);
-        const double old_temperature = state[NEQ - 1];
-        const double old_eint = eos.get_eint_from_T(
-            rho, old_temperature, old_x);
-        if (!std::isfinite(ye) || !std::isfinite(old_eint)) return false;
-
-        auto evaluate = [&](double temperature, Candidate& candidate) {
-            candidate.temperature = temperature;
-            if (!NSESolver<NetType>::solve(temperature, rho, ye, old_x,
-                                           candidate.x, candidate.enuc)) {
-                return false;
-            }
-            const double new_eint = eos.get_eint_from_T(
-                rho, temperature, candidate.x);
-            candidate.residual = new_eint - old_eint - candidate.enuc;
-            candidate.scale = std::max(
-                {std::abs(new_eint), std::abs(old_eint),
-                 std::abs(candidate.enuc), 1.0});
-            return std::isfinite(new_eint)
-                && std::isfinite(candidate.residual)
-                && std::isfinite(candidate.scale);
-        };
-
-        auto closed = [](const Candidate& candidate) {
-            constexpr double closure_rtol = 1.0e-12;
-            return std::abs(candidate.residual)
-                <= closure_rtol * candidate.scale;
-        };
-
-        auto accept = [&](const Candidate& candidate) {
-#pragma omp simd
-            for (int i = 0; i < NUM_SPEC; ++i) state[i] = candidate.x[i];
-            state[NEQ - 1] = candidate.temperature;
-            dt_rec = dt_target;
-            return true;
-        };
-
-        const double minimum_temperature =
-            std::max(burn_cfg.nseTempThreshold, burn_cfg.smallt);
-        constexpr double maximum_temperature = 1.0e11;
-        if (old_temperature < minimum_temperature
-            || old_temperature > maximum_temperature) {
-            return false;
-        }
-
-        Candidate current;
-        if (!evaluate(old_temperature, current)) return false;
-        if (closed(current)) return accept(current);
-
-        // Fast safeguarded secant/Newton phase.  cv is the exact EOS
-        // derivative at fixed composition; after the first accepted step a
-        // secant slope also captures the NSE composition response to T.
-        Candidate previous;
-        bool have_previous = false;
-        for (int iter = 0; iter < 20; ++iter) {
-            double derivative = eos.get_cv(
-                rho, current.temperature, current.x);
-            if (have_previous
-                && current.temperature != previous.temperature) {
-                const double secant =
-                    (current.residual - previous.residual)
-                    / (current.temperature - previous.temperature);
-                if (std::isfinite(secant) && secant > 0.0) derivative = secant;
-            }
-            if (!std::isfinite(derivative) || derivative <= 0.0) break;
-
-            double delta_temperature = -current.residual / derivative;
-            const double step_limit = 0.5 * current.temperature;
-            delta_temperature = std::clamp(delta_temperature,
-                                           -step_limit, step_limit);
-
-            bool improved = false;
-            double alpha = 1.0;
-            Candidate trial;
-            for (int line_search = 0; line_search < 16; ++line_search) {
-                const double trial_temperature = std::clamp(
-                    current.temperature + alpha * delta_temperature,
-                    minimum_temperature, maximum_temperature);
-                if (trial_temperature == current.temperature) break;
-                if (evaluate(trial_temperature, trial)
-                    && std::abs(trial.residual)
-                       < std::abs(current.residual)) {
-                    improved = true;
-                    break;
-                }
-                alpha *= 0.5;
-            }
-            if (!improved) break;
-            previous = current;
-            have_previous = true;
-            current = trial;
-            if (closed(current)) return accept(current);
-        }
-
-        // Globally safe fallback: bracket the conservative root across the
-        // configured NSE temperature domain and bisect.  This path is rare,
-        // but it prevents an unconverged temperature update from being
-        // reported as successful.
-        Candidate lower;
-        Candidate upper;
-        if (!evaluate(minimum_temperature, lower)
-            || !evaluate(maximum_temperature, upper)
-            || std::signbit(lower.residual) == std::signbit(upper.residual)) {
-            return false;
-        }
-        if (lower.residual > 0.0) std::swap(lower, upper);
-
-        for (int iter = 0; iter < 64; ++iter) {
-            Candidate midpoint;
-            const double midpoint_temperature =
-                0.5 * (lower.temperature + upper.temperature);
-            if (!evaluate(midpoint_temperature, midpoint)) return false;
-            if (closed(midpoint)) return accept(midpoint);
-            if (midpoint.residual < 0.0) {
-                lower = midpoint;
-            } else {
-                upper = midpoint;
-            }
-        }
-        return false;
     }
 };

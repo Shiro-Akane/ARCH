@@ -11,7 +11,8 @@
 
 #include "Networks.h"
 #include "ode_be-nr.h"
-// #include "ode_ros4.h"
+#include "ode_ros4.h"
+#include "ode_bd.h"
 
 #include "../../data/GlobalDefs.h" // 包含 SimConfig
 
@@ -99,7 +100,11 @@ private:
         }
         else if (ode_type == "ROS4" || ode_type == "ros4")
         {
-            throw std::runtime_error("ROS4 not implemented yet.");
+            dispatch_linsolver<Solver_ROS4, NetType>(lin_type, std::forward<Func>(func));   
+        }
+        else if (ode_type == "BD" || ode_type == "bd")
+        {
+            dispatch_linsolver<Solver_BD, NetType>(lin_type, std::forward<Func>(func));   
         }
         else
         {

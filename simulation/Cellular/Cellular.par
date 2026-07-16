@@ -7,7 +7,7 @@
 # [Grid Configuration]
 # ------------------------------------------------------------------------------
 nx       = 1000       # 1D 高分辨率以解析反应区 (Reaction Zone)
-ny       = 100
+ny       = 1
 nz       = 1
 
 x_min    = 0.0
@@ -76,7 +76,7 @@ network_name     = aprox19
 # 2 = 详细调试模式（可能会输出每个刚性积分器子步的具体迭代信息，适用于排错）
 burn_verbose_level = 1
 
-nuclearTempMin   = 1e9       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
+nuclearTempMin   = 1e7       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
 nuclearDensMin   = 1e-10     # 触发核燃烧的最小密度阈值 (g/cm^3)
 
 dt_init          = 1e-16     # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
@@ -84,7 +84,7 @@ dt_min           = 1e-20     # 隐式 ODE 求解器允许切分的最小物理�
 tstep_change_factor = 1.2    # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
 enucDtFactor     = 1e30      # 核能限制器：限制单步释放的核能比例。设置为 1e30 相当于关闭燃烧对时间步的限制。
 
-ode_solver       = BE_NR     # 推荐处理极端刚性核网络的求解器 (Backward Euler + Newton Raphson)
+ode_solver       = BD     # BE_NR, ROS4, BD
 linear_solver    = DenseLU
 
 # ------------------------------------------------------------------------------
