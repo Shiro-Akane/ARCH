@@ -159,7 +159,83 @@ OpenMP_CXX_FLAGS=-fopenmp
 
 在 64 x 16、`aprox13`、关闭 NSE、热点温度 `3e9 K` 的 3 步燃烧测试中，1 线程和 16 线程在步骤 0--3 的每份输出上均有 20 个同名 HDF5 数据集，且全部逐位一致。测试中生成了初始为零的 Ne20，因此确实经过网络/ODE/LU 燃烧路径，而非纯流体或 NSE 投影。高温 NSE 路径另以 `aprox19` 完成 1/16 线程逐位一致验证。
 
-## 8. 使用方法
+## 8. CUDA 设备正确性与当前边界
+
+构建系统提供两层开关：
+
+```text
+ARCH_ENABLE_CUDA=OFF          # 纯 CPU 构建，不查找或链接 CUDA
+ARCH_ENABLE_CUDA=ON           # 同一二进制具备 CPU 与 CUDA runtime 能力
+compute_backend=cpu|cuda|auto # .par 运行时请求
+cuda_device=0
+```
+
+编译期 `OFF` 的二进制不能靠 `.par` 打开 CUDA。`ON` 只表示 CUDA runtime
+和已注册的 device target 被编进二进制；若所选完整物理组合尚未注册 production
+launcher，显式 `compute_backend=cuda` 会报错退出，绝不静默退回 CPU。当前里程碑
+已经完成四个新 Timmes 网络的 device 数学正确性与一个 BE/Newton/LU 基线，但完整
+Helmholtz/NSE/流体 2D launcher 尚未注册。
+
+H100、关闭 FMA 的 CPU/GPU 全系统相对误差如下：
+
+| 网络 | RHS | 完整 Jacobian | LHS | 温度列 | 温度/能量行 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| iso7 | 2.1793e-15 | 3.2230e-15 | 3.3222e-15 | 1.8993e-15 | 3.2230e-15 |
+| aprox13 | 6.4300e-13 | 5.2188e-13 | 5.2189e-13 | 3.7522e-13 | 5.2188e-13 |
+| aprox19 | 3.7957e-14 | 9.2546e-14 | 9.2640e-14 | 5.0480e-14 | 9.2546e-14 |
+| aprox21 | 1.2590e-13 | 2.3197e-13 | 2.3202e-13 | 5.3652e-14 | 2.3197e-13 |
+
+`aprox19/21` 的高温近抵消列若单列独立归一，诊断值分别为
+`2.5691e-12` 和 `6.6134e-12`；对应绝对差为 `2.5670e4` 和 `4.39536e5`，
+列尺度为 `9.9919e15` 和 `6.6461e16`。因此全矩阵规范满足 `<1e-12`，但不能
+宣称每个近零抵消列各自归一也全部 `<1e-12`。
+
+aprox19/21 的 composition Jacobian 已改成生成的 fixed-rate 显式项，仅对
+He4/H1/neutron/proton 四个平衡闭包列追加 `Dual<1>` 链式修正。它与旧逐列 Dual 设备
+结果的全矩阵相对差分别为 `2.96e-18` 和 `5.21e-17`。H100 上 8,192 cells、40 次重复的
+单次中位量级从约 `1.866 ms→0.3085 ms`（aprox19，`6.05x`）和
+`2.473 ms→0.3473 ms`（aprox21，`7.12x`）。该优化仍为 composition-Jacobian 局部
+基准，不代表完整 ODE 或 2D 加速。
+
+`aprox13` 的独立 Backward-Euler/Newton/DenseLU CPU/GPU 基线覆盖 7 个 stiff
+成功态和 1 个预期失败态：X 相对误差 `1.44e-21`、T 误差 0、BE 残差
+`3.31e-20`、核能相对差 `1.71e-12`，标志全部一致。该 one-thread-per-cell
+基线使用 255 registers/thread、约 10,064 bytes stack/thread，理论 occupancy
+仅 12.5%；它用于正确性验收，不是生产性能实现。
+
+one-warp-per-cell 协作 LU/Newton 原型与 one-thread 基线数值逐位一致，并把寄存器从
+255 降到 128、stack 从 10,064 B 降到 7,208 B、理论 occupancy 从 12.5% 提高到
+25%。但 8,192 cells 的实测吞吐只有基线的 `0.156x`（慢约 6.41 倍）：rate/Jacobian
+仍由 lane 0 独占，其他 31 lanes 空转，而且 launch bound 引入更多 spill。因此该原型
+只保留作资源与正确性实验，禁止注册到 production。下一步必须把 rate/Jacobian 项并行
+分发到 warp，或拆成 rate/Jacobian kernel 与 cooperative-LU kernel 后再重新基准。
+
+当前还提供 validation-only 的 aprox13 批量燃烧 ABI：设备端 SoA 输入/输出、异步 stream、
+无内部分配/传输/同步、每单元状态位以及失败事务回滚。8-cell、stride=11 的 H100 接口测试
+通过，最大 `|sum(X)-1|=3.33e-16`。它使用固定 `cv` 和固定子步，不等价于 Helmholtz、NSE
+或生产自适应 ODE，因此没有加入完整 2D runtime registry。
+
+current aprox13 数学算子的正式微基准位于
+`docs/benchmarks/APROX13_CUDA_MICROBENCHMARK_2026-07-16.md`。256K cells 时，
+H100 相对 16 线程 CPU 的 kernel-only 加速为 `66.982x`，含该批次
+H2D+kernel+D2H 为 `47.239x`。这不是 ODE、NSE、流体或 2D 端到端加速比。
+
+### 8.1 BD 与 ROS4 的 CPU 验证状态
+
+2026-07-16 使用真实 Helmholtz 表、当前四个 Timmes 网络和 8 × 2 Cellular 单步进行了
+ODE 分发回归。BD 在 `dt=1e-14 s` 下完成 iso7、aprox13、aprox19、aprox21 四种矩阵
+维度，所有输出有限，species count 分别为 7、13、19、21，最终
+`max|sum(X)-1| <= 2.2204e-16`。aprox13 的 BD 与 BE_NR 对照中，能量相对差约
+`3.51e-15`、压力相对差约 `7.34e-15`，C12/He4 等主组分绝对差不超过
+`1.23e-15`。接近零的 trace species 应同时看绝对误差，不能只引用被极小分母放大的相对值。
+
+BD 的最高阶提前退出条件原来可能在 `k=MAX_K-1` 时访问 `n_seq[k+1]`；现已增加
+`k + 1 < MAX_K` 边界条件。ROS4 在相同 Helmholtz/aprox13 回归中虽然返回成功，但明显
+欠反应：C12/Ne20/O16 的反应进度仅为 BE_NR 的一小部分。当前 runtime 因此对
+`ode_solver=ROS4` 明确报错，保留源码供后续重新核对 Rosenbrock tableau 与误差估计器，
+但不把它注册为生产能力。可用的 CPU ODE 选择为 `BE_NR` 和 `BD`。
+
+## 9. 使用方法
 
 在参数文件中选择网络：
 
@@ -178,12 +254,12 @@ eos_table_path = /absolute/path/to/helm_table.dat
 构建时不要允许 OpenMP 请求静默退化为串行版本；CMake 已使用 `find_package(OpenMP REQUIRED)`。运行时可用环境变量控制线程数，例如：
 
 ```bash
-OMP_NUM_THREADS=16 ./bin/ARCH CellularDet case.par
+OMP_NUM_THREADS=16 <build-dir>/bin/ARCH CellularDet case.par
 ```
 
 程序启动信息会显示实际的 `Species Count` 和 `OpenMP: ON (max threads=...)`。应检查它们是否与参数文件一致。
 
-## 9. 当前限制与禁止事项
+## 10. 当前限制与禁止事项
 
 1. `aprox19`/`aprox21` 中依赖 Helmholtz 电子化学势 `eta_e` 的弱反应入口当前保持显式零值；现有 ARCH 网络接口没有把 `eta_e` 传入网络。这一限制来自实现边界，不能用任意常数或未经验证的拟合悄悄替代。
 2. 当前实现是基于所选小网络的在线 Saha NSE，并非 47 核素预制表。`iso7`/`aprox13` 仅支持 `Ye=0.5` 的退化受限解；`aprox19`/`aprox21` 的弱反应仍为零，因此 NSE 入口使用进入前的守恒 `Ye`，不会自行演化电子分数。
@@ -191,15 +267,17 @@ OMP_NUM_THREADS=16 ./bin/ARCH CellularDet case.par
 4. 不得重新接入旧 pynucastro 网络来替代这里的实现，也不得把旧网络生成的图与本验证表混合。
 5. 若修改反应率、核素顺序、能量权重、筛选、EOS `cv`、温度行/列或 ODE 投影逻辑，必须重新运行四网络的原 Fortran RHS/Jacobian/LHS 验证。
 
-## 10. 后续维护验收清单
+## 11. 后续维护验收清单
 
 - [ ] 四个网络报告的 species count 分别为 7、13、19、21；
 - [ ] 6 状态原 Fortran RHS/Jacobian/LHS 最大相对误差均小于 `1e-12`；
 - [ ] 温度导数路径中没有有限差分温度扰动；
+- [ ] CUDA 验证使用当前四网络，并分别报告 RHS/Jacobian/LHS/温度行列；
+- [ ] 显式 CUDA 请求在未注册组合上 fail-loud，没有静默 CPU fallback；
 - [ ] 使用与基准一致的真实 Helmholtz 表；
 - [ ] OpenMP 1/多线程结果通过确定性比较；
 - [ ] NSE 的 `sum(X)`、`Ye` 和 EOS/结合能闭包均小于规定误差，且未重新引入直接返回的组分冻结旁路；
 - [ ] 长时间流体-燃烧耦合运行没有 NaN、密度 floor、能量 cap 或组分和漂移；
 - [ ] 二维爆轰结论附带分辨率/收敛性证据，而不仅是视觉图像。
 
-最后更新：2026-07-15。
+最后更新：2026-07-16。

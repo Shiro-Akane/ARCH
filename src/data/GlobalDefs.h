@@ -69,6 +69,18 @@ struct NumericsConfig
 };
 
 // ----------------------------------------------------------------------
+// 2b. Execution backend configuration
+// ----------------------------------------------------------------------
+struct ExecutionConfig
+{
+    // "cpu" always selects the host implementation.  "cuda" is strict and
+    // must fail when the binary/device/selected physics combination cannot
+    // provide a CUDA launcher.  "auto" may choose either, but must log it.
+    std::string compute_backend = "cpu";
+    int cuda_device = 0;
+};
+
+// ----------------------------------------------------------------------
 // 3. Physics Configuration (EOS, Burn, Gravity)
 // ----------------------------------------------------------------------
 
@@ -206,6 +218,7 @@ struct SimConfig
 {
     GridConfig grid;
     NumericsConfig numerics;
+    ExecutionConfig execution;
     PhysicsConfig physics;
     IOConfig io;
 

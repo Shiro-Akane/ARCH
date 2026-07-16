@@ -1,7 +1,7 @@
 // Generated only from the uploaded Timmes source.
 // public_aprox21.f90:410
 template <typename Scalar>
-inline void rhs_aprox21(const Scalar* y, const Scalar* rate, Scalar* dydt)
+TIMMES_HD inline void rhs_aprox21(const Scalar* y, const Scalar* rate, Scalar* dydt)
 {
     for (int i = 0; i < 21; ++i) dydt[i] = Scalar(0.0);
     Scalar qray[21]{};

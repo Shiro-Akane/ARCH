@@ -128,7 +128,10 @@ public:
         cfg.numerics.cfl = parser.GetDouble("cfl", 0.8);
         cfg.numerics.limiter = parser.GetString("limiter", "minmod");
         cfg.numerics.reconstruction = parser.GetString("reconstruct", "pcm");
-        cfg.numerics.time_integrator = parser.GetString("timeintegrator", "RK2");
+        // Prefer the canonical snake_case key while preserving compatibility
+        // with existing parameter files that use the legacy spelling.
+        cfg.numerics.time_integrator = parser.GetString(
+            "time_integrator", parser.GetString("timeintegrator", "RK2"));
         std::string fix_switch = parser.GetString("EntropyFix", "On"); // 默认开启
         if (fix_switch == "Off" || fix_switch == "False")
         {
@@ -142,6 +145,14 @@ public:
 
         cfg.numerics.sml_rho = parser.GetDouble("sml_rho", 1e-12);
         cfg.numerics.max_eint = parser.GetDouble("max_eint", 1e21);
+
+        // Execution backend.  This is independent of the time integrator:
+        // a CUDA-enabled fat binary can still execute the CPU path at runtime.
+        cfg.execution.compute_backend = parser.GetString("compute_backend", "cpu");
+        std::transform(cfg.execution.compute_backend.begin(),
+                       cfg.execution.compute_backend.end(),
+                       cfg.execution.compute_backend.begin(), ::tolower);
+        cfg.execution.cuda_device = parser.GetInt("cuda_device", 0);
 
         // 3. 搬运物理参数 (Physics)
         cfg.physics.eos_type = parser.GetString("eos_type", "ideal");

@@ -11,8 +11,8 @@
 
 #include "Networks.h"
 #include "ode_be-nr.h"
-#include "ode_ros4.h"
 #include "ode_bd.h"
+#include "BurnerHandle.h"
 
 #include "../../data/GlobalDefs.h" // 包含 SimConfig
 
@@ -38,6 +38,22 @@ struct DummyBurner
 // =======================================================
 struct BurnDispatcher
 {
+
+    /**
+     * @brief Resolve the burner once without instantiating the hydro matrix for
+     * every network/ODE combination.
+     */
+    template <typename EosPolicy>
+    static BurnerHandle<EosPolicy> make_handle(const SimConfig &config)
+    {
+        BurnerHandle<EosPolicy> result;
+        dispatch(config, [&](auto &&burner)
+                 {
+                     using BurnerPolicy = std::remove_cvref_t<decltype(burner)>;
+                     result = BurnerHandle<EosPolicy>::template bind<BurnerPolicy>();
+                 });
+        return result;
+    }
 
     /**
      * @brief 第一层分发：解析并锁定网络类型
@@ -100,7 +116,11 @@ private:
         }
         else if (ode_type == "ROS4" || ode_type == "ros4")
         {
-            dispatch_linsolver<Solver_ROS4, NetType>(lin_type, std::forward<Func>(func));   
+            throw std::runtime_error(
+                "ROS4 is disabled: the current implementation under-reacts "
+                "relative to BE_NR/BD in the Helmholtz Cellular regression. "
+                "Use BE_NR or BD until the Rosenbrock tableau and error "
+                "estimator are revalidated.");
         }
         else if (ode_type == "BD" || ode_type == "bd")
         {

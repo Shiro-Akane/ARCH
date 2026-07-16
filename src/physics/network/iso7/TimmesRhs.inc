@@ -1,7 +1,7 @@
 // Generated only from the uploaded Timmes source.
 // public_iso7.f90:422
 template <typename Scalar>
-inline void rhs_iso7(const Scalar* y, const Scalar* rate, Scalar* dydt)
+TIMMES_HD inline void rhs_iso7(const Scalar* y, const Scalar* rate, Scalar* dydt)
 {
     for (int i = 0; i < 7; ++i) dydt[i] = Scalar(0.0);
     Scalar qray[7]{};

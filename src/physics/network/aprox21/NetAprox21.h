@@ -48,6 +48,7 @@ struct RateIds {
 inline constexpr double sixth = 1.0 / 6.0;
 
 #include "TimmesRhs.inc"
+#include "TimmesJacobian.inc"
 
 #undef TIMMES_APROX21_RATES
 
@@ -89,8 +90,66 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
     static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv2;
     static constexpr double NSE_ENERGY_CONVERSION = timmes::constants::enuc_conv;
 
+    // Device-safe scalar accessors. Namespace-scope std::array storage is
+    // host-only under NVCC when addressed with a runtime index.
+    TIMMES_HD static constexpr double aion(int i)
+    {
+        switch (i) {
+        case 0:  return 1.0;
+        case 1:  return 3.0;
+        case 2:  return 4.0;
+        case 3:  return 12.0;
+        case 4:  return 14.0;
+        case 5:  return 16.0;
+        case 6:  return 20.0;
+        case 7:  return 24.0;
+        case 8:  return 28.0;
+        case 9:  return 32.0;
+        case 10: return 36.0;
+        case 11: return 40.0;
+        case 12: return 44.0;
+        case 13: return 48.0;
+        case 14: return 56.0;
+        case 15: return 52.0;
+        case 16: return 54.0;
+        case 17: return 56.0;
+        case 18: return 56.0;
+        case 19: return 1.0;
+        case 20: return 1.0;
+        default: return 0.0;
+        }
+    }
+
+    TIMMES_HD static constexpr double zion(int i)
+    {
+        switch (i) {
+        case 0:  return 1.0;
+        case 1:  return 2.0;
+        case 2:  return 2.0;
+        case 3:  return 6.0;
+        case 4:  return 7.0;
+        case 5:  return 8.0;
+        case 6:  return 10.0;
+        case 7:  return 12.0;
+        case 8:  return 14.0;
+        case 9:  return 16.0;
+        case 10: return 18.0;
+        case 11: return 20.0;
+        case 12: return 22.0;
+        case 13: return 24.0;
+        case 14: return 24.0;
+        case 15: return 26.0;
+        case 16: return 26.0;
+        case 17: return 26.0;
+        case 18: return 28.0;
+        case 19: return 0.0;
+        case 20: return 1.0;
+        default: return 0.0;
+        }
+    }
+
     template <typename Scalar, typename RateAccessor>
-    static inline void fill_screened_rates(const Scalar* y, double rho,
+    TIMMES_HD static inline void fill_screened_rates(const Scalar* y, double rho,
                                            double temperature_value,
                                            const Scalar& temperature,
                                            std::array<Scalar,
@@ -106,9 +165,16 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
             timmes::fill_aprox21_extra_rates<RateIds, timmes::Aprox21RateLibrary, RateAccessor>(
                 rate, temperature_value, rho, tf);
 
+#if defined(__CUDA_ARCH__)
+            double zion_values[NUM_SPECIES];
+            for (int i = 0; i < NUM_SPECIES; ++i) zion_values[i] = zion(i);
+            const double* zion_data = zion_values;
+#else
+            const double* zion_data = ZION.data();
+#endif
             Scalar abar, zbar, z2bar, ye;
             timmes::composition_moments<Scalar, NUM_SPECIES>(
-                y, ZION.data(), abar, zbar, z2bar, ye);
+                y, zion_data, abar, zbar, z2bar, ye);
             timmes::screen_heavy_rates<RateIds>(
                 rate, temperature, rho, zbar, abar, z2bar);
             timmes::screen_extended_rates<RateIds>(
@@ -124,7 +190,7 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
     }
 
     template <typename Scalar, typename RateAccessor>
-    static inline void molar_rhs_impl(const Scalar* y, double rho,
+    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho,
                                       double temperature_value,
                                       const Scalar& temperature, Scalar* dydt)
     {
@@ -138,7 +204,7 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
     }
 
     template <typename Scalar>
-    static inline void molar_rhs_frozen_screening(
+    TIMMES_HD static inline void molar_rhs_frozen_screening(
         const Scalar* y, double rho, double temperature, Scalar* dydt)
     {
         using namespace timmes_aprox21_detail;
@@ -156,8 +222,65 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
         rhs_aprox21(y, rate.data(), dydt);
     }
 
+    /**
+     * Analytic molar RHS/Jacobian with Timmes frozen base screening.
+     *
+     * The generated fixed-rate block covers every direct abundance term.
+     * Only four columns can also enter form_extended_equilibrium(); those
+     * columns receive a bounded Dual<1> closure chain-rule correction using
+     * the already computed frozen base rates. This preserves Timmes closure
+     * semantics without carrying Dual<21> through the complete rate library.
+     */
+#if defined(__CUDACC__)
+#  define TIMMES_NETWORK_JAC_NOINLINE __noinline__
+#else
+#  define TIMMES_NETWORK_JAC_NOINLINE
+#endif
+    TIMMES_HD TIMMES_NETWORK_JAC_NOINLINE static inline void
+    molar_rhs_jacobian_frozen_screening(
+        const double* y, double rho, double temperature,
+        double* dydt, double* jacobian)
+    {
+        using namespace timmes_aprox21_detail;
+        std::array<double, nrat> rate{};
+        fill_screened_rates<double, timmes::RateValueAccessor>(
+            y, rho, temperature, temperature, rate);
+        const double uncapped_he3ag = rate[irhe3ag];
+        const double uncapped_npg = rate[irnpg];
+        const double uncapped_iropg = rate[iropg];
+        timmes::form_extended_equilibrium<true, RateIds, double>(
+            rate, y, ihe4, ih1, ineut, iprot, temperature);
+        rhs_aprox21(y, rate.data(), dydt);
+        jacobian_aprox21_molar_fixed_rates(
+            y, rate.data(), jacobian);
+
+        constexpr int closure_columns[4]{ihe4, ih1, ineut, iprot};
+        using AD = timmes::Dual<1>;
+        for (int active = 0; active < 4; ++active) {
+            const int column = closure_columns[active];
+            AD y_ad[NUM_SPECIES];
+            std::array<AD, nrat> rate_ad{};
+            for (int i = 0; i < NUM_SPECIES; ++i) {
+                y_ad[i] = i == column
+                        ? AD::variable(y[i], 0) : AD(y[i]);
+            }
+            // Auxiliary equilibrium entries are reset by the closure, so its
+            // final values can be reused. Restore the three pre-cap rates to
+            // preserve scalar_min's original branch and derivative exactly.
+            for (int i = 0; i < nrat; ++i) rate_ad[i] = AD(rate[i]);
+            rate_ad[irhe3ag] = AD(uncapped_he3ag);
+            rate_ad[irnpg] = AD(uncapped_npg);
+            rate_ad[iropg] = AD(uncapped_iropg);
+            timmes::form_extended_equilibrium<true, RateIds, AD>(
+                rate_ad, y_ad, ihe4, ih1, ineut, iprot, temperature);
+            add_aprox21_rate_derivative_column(
+                y, rate.data(), rate_ad.data(), column, jacobian);
+        }
+    }
+#undef TIMMES_NETWORK_JAC_NOINLINE
+
     template <typename Scalar>
-    static inline void molar_rhs(const Scalar* y, double rho, double temperature,
+    TIMMES_HD static inline void molar_rhs(const Scalar* y, double rho, double temperature,
                                  Scalar* dydt)
     {
         molar_rhs_impl<Scalar, timmes::RateValueAccessor>(

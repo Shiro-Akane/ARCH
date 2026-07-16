@@ -10,7 +10,7 @@ namespace timmes {
 struct Iso7RateLibrary {
 
 // public_iso7.f90:17579
-static inline RatePair rate_c12ag(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_c12ag(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -54,7 +54,7 @@ static inline RatePair rate_c12ag(double temp, double den, const TfactorsData& t
 }
 
 // public_iso7.f90:17653
-static inline RatePair rate_tripalf(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_tripalf(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -108,7 +108,7 @@ static inline RatePair rate_tripalf(double temp, double den, const TfactorsData&
 }
 
 // public_iso7.f90:17763
-static inline RatePair rate_c12c12(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_c12c12(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -134,7 +134,7 @@ static inline RatePair rate_c12c12(double temp, double den, const TfactorsData& 
 }
 
 // public_iso7.f90:17960
-static inline RatePair rate_c12o16(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_c12o16(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -174,7 +174,7 @@ static inline RatePair rate_c12o16(double temp, double den, const TfactorsData& 
 }
 
 // public_iso7.f90:18162
-static inline RatePair rate_o16o16(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_o16o16(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -191,7 +191,7 @@ static inline RatePair rate_o16o16(double temp, double den, const TfactorsData& 
 }
 
 // public_iso7.f90:18391
-static inline RatePair rate_o16ag(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_o16ag(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -221,7 +221,7 @@ static inline RatePair rate_o16ag(double temp, double den, const TfactorsData& t
 }
 
 // public_iso7.f90:18444
-static inline RatePair rate_ne20ag(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_ne20ag(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -265,7 +265,7 @@ static inline RatePair rate_ne20ag(double temp, double den, const TfactorsData& 
 }
 
 // public_iso7.f90:18524
-static inline RatePair rate_mg24ag(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_mg24ag(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
@@ -301,7 +301,7 @@ static inline RatePair rate_mg24ag(double temp, double den, const TfactorsData& 
 }
 
 // public_iso7.f90:19212
-static inline RatePair rate_ca40ag(double temp, double den, const TfactorsData& tf)
+TIMMES_HD static inline RatePair rate_ca40ag(double temp, double den, const TfactorsData& tf)
 {
     double fr = 0.0, rr = 0.0;
     double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;

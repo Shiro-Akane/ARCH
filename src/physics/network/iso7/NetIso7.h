@@ -49,8 +49,20 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv;
     static constexpr double NSE_ENERGY_CONVERSION = timmes::constants::enuc_conv;
 
+    // NVCC cannot dynamically index the host-side std::array objects above
+    // from device code.  Keep the source-of-truth arrays for host code and
+    // expose their exact iso7 values through device-safe accessors.
+    TIMMES_HD static constexpr double aion(int i)
+    {
+        return i == 0 ? 4.0 : (i < 6 ? 4.0 * (i + 2) : 56.0);
+    }
+    TIMMES_HD static constexpr double zion(int i)
+    {
+        return 0.5 * aion(i);
+    }
+
     template <typename Scalar, typename RateAccessor>
-    static inline void fill_screened_rates(const Scalar* y, double rho,
+    TIMMES_HD static inline void fill_screened_rates(const Scalar* y, double rho,
                                            double temperature_value,
                                            const Scalar& temperature,
                                            std::array<Scalar,
@@ -87,8 +99,10 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
         rate[irtiga] = RateAccessor::reverse(pair);
 
         Scalar abar, zbar, z2bar, ye;
+        double zion_values[NUM_SPECIES];
+        for (int i = 0; i < NUM_SPECIES; ++i) zion_values[i] = zion(i);
         timmes::composition_moments<Scalar, NUM_SPECIES>(
-            y, ZION.data(), abar, zbar, z2bar, ye);
+            y, zion_values, abar, zbar, z2bar, ye);
         auto screen = [&](double z1, double a1, double z2, double a2) {
             return timmes::screen5(temperature, rho, zbar, abar, z2bar, z1, a1, z2, a2);
         };
@@ -123,7 +137,7 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     }
 
     template <typename Scalar, typename RateAccessor>
-    static inline void apply_equilibrium_rates(
+    TIMMES_HD static inline void apply_equilibrium_rates(
         const Scalar* y, double rho, double temperature_value,
         const Scalar& temperature,
         std::array<Scalar, timmes_iso7_detail::nrat>& rate)
@@ -155,7 +169,7 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     }
 
     template <typename Scalar, typename RateAccessor>
-    static inline void molar_rhs_impl(const Scalar* y, double rho,
+    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho,
                                       double temperature_value,
                                       const Scalar& temperature, Scalar* dydt)
     {
@@ -169,7 +183,7 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     }
 
     template <typename Scalar>
-    static inline void molar_rhs_frozen_screening(
+    TIMMES_HD static inline void molar_rhs_frozen_screening(
         const Scalar* y, double rho, double temperature, Scalar* dydt)
     {
         using namespace timmes_iso7_detail;
@@ -188,7 +202,7 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     }
 
     template <typename Scalar>
-    static inline void molar_rhs(const Scalar* y, double rho, double temperature,
+    TIMMES_HD static inline void molar_rhs(const Scalar* y, double rho, double temperature,
                                  Scalar* dydt)
     {
         molar_rhs_impl<Scalar, timmes::RateValueAccessor>(

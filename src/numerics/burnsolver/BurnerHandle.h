@@ -1,0 +1,62 @@
+#pragma once
+
+#include "../../data/GlobalDefs.h"
+
+#include <type_traits>
+
+/**
+ * @brief Coarse-grained, host-only type erasure for one configured CPU burner.
+ *
+ * The indirect call occurs once per burning cell, outside the individual
+ * network-rate and dense-LU loops.  This keeps the hot implementation fully
+ * templated while preventing every network/ODE/linear-solver choice from
+ * multiplying every hydro/integrator/reconstruction instantiation.
+ */
+template <typename EosPolicy>
+class BurnerHandle
+{
+public:
+    using IntegrateFn = bool (*)(double *, double, double,
+                                 const EosPolicy &, const BurnConfig &, double &);
+
+    BurnerHandle() noexcept = default;
+
+    template <typename BurnerPolicy>
+    static BurnerHandle bind()
+    {
+        static_assert(std::is_empty_v<BurnerPolicy>,
+                      "BurnerHandle currently requires a stateless burner policy");
+        static_assert(std::is_default_constructible_v<BurnerPolicy>,
+                      "BurnerHandle requires a default-constructible burner policy");
+
+        BurnerHandle handle;
+        handle.integrate_ = &integrate_thunk<BurnerPolicy>;
+        return handle;
+    }
+
+    bool integrate(double *state, double rho, double dt_target,
+                   const EosPolicy &eos, const BurnConfig &config,
+                   double &dt_recommended) const
+    {
+        return integrate_(state, rho, dt_target, eos, config, dt_recommended);
+    }
+
+private:
+    template <typename BurnerPolicy>
+    static bool integrate_thunk(double *state, double rho, double dt_target,
+                                const EosPolicy &eos, const BurnConfig &config,
+                                double &dt_recommended)
+    {
+        const BurnerPolicy burner{};
+        return burner.integrate(state, rho, dt_target, eos, config,
+                                dt_recommended);
+    }
+
+    static bool unbound(double *, double, double, const EosPolicy &,
+                        const BurnConfig &, double &) noexcept
+    {
+        return false;
+    }
+
+    IntegrateFn integrate_ = &unbound;
+};

@@ -244,7 +244,9 @@ struct Solver_BD
                         optimal_k = k;
                         break; // 只要收敛了，立刻退出内层循环
                     }
-                    else if (k > 1 && current_err > std::pow(n_seq[k+1]/n_seq[0], 2)) {
+                    else if (k > 1 && k + 1 < MAX_K
+                             && current_err > std::pow(
+                                    static_cast<double>(n_seq[k + 1]) / n_seq[0], 2)) {
                         // 启示式规则：如果误差大得离谱，继续提高阶数也无救，尽早退出并砍步长
                         break;
                     }

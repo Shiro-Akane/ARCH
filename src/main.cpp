@@ -22,6 +22,8 @@
 
 #include "../src/physics/species/Species.h"
 #include "../src/driver/SolverDispatch.h"
+#include "../src/runtime/ComputeBackend.h"
+#include "../src/cuda/CudaRuntime.h"
 // =========================================================
 // =================== main function =======================
 // =========================================================
@@ -97,13 +99,69 @@ int main(int argc, char **argv)
     std::cout << "       Solver: " << solver_name << std::endl;
     std::cout << "       Species Count: " << specs.count() << std::endl;
 
+    // Resolve the independently configured execution backend.  The current
+    // dispatch registry exposes the verified CPU implementation; CUDA physics
+    // launchers are registered incrementally and an explicit request must
+    // never be turned into an unnoticed CPU run.
+    arch::runtime::ComputeBackend requested_backend;
+    try
+    {
+        requested_backend = arch::runtime::parse_compute_backend(
+            config.execution.compute_backend);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[Fatal Error] " << e.what() << std::endl;
+        return 1;
+    }
+
+    arch::cuda::CudaRuntimeInfo cuda_info;
+    if (requested_backend != arch::runtime::ComputeBackend::Cpu)
+    {
+        cuda_info = arch::cuda::probe_cuda_runtime(
+            config.execution.cuda_device);
+    }
+    if (requested_backend == arch::runtime::ComputeBackend::Cuda)
+    {
+        if (!cuda_info.compiled || !cuda_info.available)
+        {
+            std::cerr << "[Fatal Error] compute_backend=cuda requested, but "
+                      << cuda_info.message() << std::endl;
+            return 1;
+        }
+        std::cerr
+            << "[Fatal Error] CUDA device " << cuda_info.device_index << " ("
+            << cuda_info.name() << ") is available, but no production CUDA "
+            << "simulation launcher is registered for this solver/network "
+            << "combination yet. Refusing a silent CPU fallback." << std::endl;
+        return 1;
+    }
+
+    if (requested_backend == arch::runtime::ComputeBackend::Auto)
+    {
+        std::cout << "[Backend] auto selected cpu: the production CUDA "
+                     "simulation launcher is not registered yet" << std::endl;
+    }
+    else
+    {
+        std::cout << "[Backend] selected cpu" << std::endl;
+    }
+
     // =========================================================
     // 4. Execution (Dispatch to Core Loop)
     // =========================================================
 
     // Hand over control to the Solver Factory.
     // This function instantiates the correct Solver Template and starts the time loop.
-    DispatchSolver(solver_name, *problem_ptr, config, specs);
+    try
+    {
+        DispatchSolver(solver_name, *problem_ptr, config, specs);
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "[Fatal Error] " << e.what() << std::endl;
+        return 1;
+    }
 
     return 0;
 }
