@@ -6,14 +6,14 @@
 # ------------------------------------------------------------------------------
 # [Grid Configuration]
 # ------------------------------------------------------------------------------
-nx       = 1000       # 1D 高分辨率以解析反应区 (Reaction Zone)
+nx       = 1280       # 1D 高分辨率以解析反应区 (Reaction Zone)
 ny       = 1
 nz       = 1
 
 x_min    = 0.0
-x_max    = 256.0       # 从 100 扩展至 256 (参考 flash.par)
+x_max    = 128.0       # 从 100 扩展至 256 (参考 flash.par)
 y_min    = 0.0
-y_max    = 25.6
+y_max    = 12.8
 z_min    = 0.0
 z_max    = 1.0
 
@@ -31,8 +31,8 @@ zr_boundary_type = outflow
 # [Numerics]
 # ------------------------------------------------------------------------------
 solver      = HLLC       # 激波捕捉推荐 HLLC 或 Roe
-reconstruct = ppm        # 燃烧问题对数值耗散敏感，建议使用三阶 PPM
-time_integrator = RK3
+reconstruct = muscl        # 燃烧问题对数值耗散敏感，建议使用三阶 PPM
+time_integrator = RK2
 limiter     = mc
 cfl         = 0.8        # 包含刚性源项时，CFL 尽量压低
 
@@ -45,16 +45,18 @@ max_eint = 1e19      # Cap maximum specific internal energy to prevent sound spe
 # ------------------------------------------------------------------------------
 # [Time & IO]
 # ------------------------------------------------------------------------------
-tmax         = 1.0e-5    # 物理时间极短 (根据爆轰波速调整)
-max_steps    = 150
+tmax         = 5.0e-8    # 物理时间极短 (根据爆轰波速调整)
+max_steps    = 200000
 restart      = false
 
 out_dir      = output
 base_name    = CDet_1D
 
-plt_dstep    = 1000       # 每 100 步输出一次文件
+plt_dstep    = -1       
+plt_dt       = 5.0e-9         # Output PLT based on physical time interval (-1.0 to disable)
 plt_variables= all
-chk_dstep    = 1000
+chk_dstep    = -1
+chk_dt       = 5.0e-9         # Output CHK based on physical time interval (-1.0 to disable)
 
 # ------------------------------------------------------------------------------
 # [Physics Core]
@@ -82,7 +84,7 @@ nuclearDensMin   = 1e-10     # 触发核燃烧的最小密度阈值 (g/cm^3)
 dt_init          = 1e-16     # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
 dt_min           = 1e-20     # 隐式 ODE 求解器允许切分的最小物理步长 (推荐: 1e-22 ~ 1e-20)
 tstep_change_factor = 1.2    # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
-enucDtFactor     = 1e30      # 核能限制器：限制单步释放的核能比例。设置为 1e30 相当于关闭燃烧对时间步的限制。
+enucDtFactor     = 0.05      # 核能限制器：限制单步释放的核能比例。设置为 1e30 相当于关闭燃烧对时间步的限制。
 
 ode_solver       = BD      # BE_NR, ROS4, BD
 linear_solver    = DenseLU
@@ -106,7 +108,7 @@ velxPerturb   = 1.011e9  # 激波波速或活塞驱动速度 (cm/s)
 
 # --- 胞格微扰 (Cellular Perturbation) ---
 # 用于在 2D/3D 下打破对称性从而激发真实的胞格爆轰结构
-noiseAmplitude = 0.2     # 密度和压力的横向正弦微扰幅度，0 表示一维平面对称爆轰 (推荐: 0.1 ~ 0.2)
+noiseAmplitude = 0.0     # 密度和压力的横向正弦微扰幅度，0 表示一维平面对称爆轰 (推荐: 0.1 ~ 0.2)
 
 # --- Initial Composition (初始同位素组分) ---
 # Pynucastro aprox19 默认顺序：

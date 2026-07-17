@@ -140,7 +140,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // Each cell owns its ODE state, network evaluation and LU factorization.
         // Dynamic scheduling is important because stiff substep counts vary strongly
         // across the reaction front; nested teams inside a 22x22 LU are counterproductive.
-#pragma omp parallel for schedule(dynamic, 1) reduction(min:local_dt_burn_min)
+#pragma omp parallel for schedule(dynamic, 1) reduction(min : local_dt_burn_min)
         for (int i = 0; i < total_cells; ++i)
         {
             double rho = current_state.rho[i];
@@ -166,18 +166,13 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             {
                 const double xk = Y_ODE[k];
                 composition_is_finite = composition_is_finite && std::isfinite(xk);
-                composition_has_negative = composition_has_negative
-                                         || xk < -10.0 * config.physics.burn.smallx;
+                composition_has_negative = composition_has_negative || xk < -10.0 * config.physics.burn.smallx;
                 composition_sum += xk;
                 composition_min = std::min(composition_min, xk);
                 composition_max = std::max(composition_max, xk);
             }
 
-            const bool composition_is_valid = composition_is_finite
-                                           && !composition_has_negative
-                                           && std::isfinite(composition_sum)
-                                           && composition_sum > 1.0e-13
-                                           && std::abs(composition_sum - 1.0) <= 1.0e-6;
+            const bool composition_is_valid = composition_is_finite && !composition_has_negative && std::isfinite(composition_sum) && composition_sum > 1.0e-13 && std::abs(composition_sum - 1.0) <= 1.0e-6;
             if (!composition_is_valid)
             {
 #pragma omp critical(burn_invalid_composition)
@@ -204,7 +199,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             // 假设你的 EOS 提供了这个接口：根据 rho, e_int, X_k 求 T
             double T = eos.get_temperature(rho, e_int, Y_ODE);
             if (T < 1e7)
-                continue; // 温度太低（< 1e7 K），核反应速率在物理上可忽略，且极低温会引起严重数值溢出
+                continue;      // 温度太低（< 1e7 K），核反应速率在物理上可忽略，且极低温会引起严重数值溢出
             Y_ODE[n_spec] = T; // 将温度放在数组末尾
 
             // 3. 呼叫底层的 ODE 求解器执行燃烧
@@ -227,16 +222,19 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
             // 6. 核能限制器 (Enuc Limiter)
             // 仅当 enucDtFactor > 0 时才启用限制器。
-            if (config.physics.burn.enucDtFactor > 0.0) {
+            if (config.physics.burn.enucDtFactor > 0.0)
+            {
                 double delta_e = std::abs(e_int_new - e_int);
-                if (burn_dt > 0.0) {
+                if (burn_dt > 0.0)
+                {
                     double enuc_rate = delta_e / burn_dt;
-                    
+
                     // 【防除 0 保护】模仿 FLASH: 计算倒数 (enuc / eint)
                     double energyRatioInv = enuc_rate / std::max(e_int_new, 1e-20);
-                    
+
                     // 仅当能量变化率显著时，才将其纳入时间步限制
-                    if (energyRatioInv > 1e-30) {
+                    if (energyRatioInv > 1e-30)
+                    {
                         // 相当于 dt = enucDtFactor * (eint / enuc)
                         double dt_enuc_limit = config.physics.burn.enucDtFactor / energyRatioInv;
                         local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
@@ -256,7 +254,7 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
                       << std::endl;
             throw std::runtime_error("Invalid complete composition before burn");
         }
-        
+
         // 汇总全局最新的燃烧建议步长
         dt_burn_global = std::min(dt_burn_global, local_dt_burn_min);
     };
@@ -264,20 +262,24 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
 
     // 初始状态强制输出 (Step 0)
-    if (step_count == 0) {
+    if (step_count == 0)
+    {
         write_plt(u_current, eos, grid, plt_file_index++, t_current, config, specs);
         write_chk(u_current, grid, chk_file_index++, plt_file_index, step_count, t_current, config);
     }
 
     std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
     std::ofstream log_file(log_filename, (step_count == 0) ? std::ios::trunc : std::ios::app);
-    if (!log_file.is_open()) {
+    if (!log_file.is_open())
+    {
         std::cerr << "[Warning] Could not open log file: " << log_filename << std::endl;
     }
 
     // 打印表头
-    if (step_count == 0) {
-        auto print_header = [&](std::ostream& os) {
+    if (step_count == 0)
+    {
+        auto print_header = [&](std::ostream &os)
+        {
             os << std::left << std::setw(8) << "Step"
                << std::left << std::setw(15) << "Time"
                << std::left << std::setw(15) << "dt"
@@ -288,7 +290,8 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             os << std::string(has_burn ? 68 : 53, '-') << std::endl;
         };
         print_header(std::cout);
-        if (log_file.is_open()) print_header(log_file);
+        if (log_file.is_open())
+            print_header(log_file);
     }
 
     // =========================================================
@@ -342,24 +345,28 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         // -----------------------------------------------------
         // Computed stable dt based on wave speeds
         double dt_computed = adaptive_dt(u_current, eos, grid, cfl);
-        
+
         // Restrict timestep growth to avoid hydro instabilities from sudden energy release
-        if (step_count > 0) {
+        if (step_count > 0)
+        {
             double dt_grow = config.GetCustomParam("tstep_change_factor", 1.2);
             dt_computed = std::min(dt_computed, dt_old * dt_grow);
         }
 
         if (config.physics.burn.use_burn)
         {
-            if (step_count == 0) {
+            if (step_count == 0)
+            {
                 // For the very first step, force a tiny dt (e.g., dt_init)
                 double dt_init = config.GetCustomParam("dt_init", 1e-16);
                 dt_computed = std::min(dt_computed, dt_init);
-            } else {
+            }
+            else
+            {
                 dt_computed = std::min(dt_computed, dt_burn_global);
             }
         }
-        
+
         dt_old = dt_computed;
 
         // 重置 global burn limit 供这一步内部重新计算
@@ -414,7 +421,8 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         t_current += dt;
         step_count++;
 
-        auto print_step = [&](std::ostream& os) {
+        auto print_step = [&](std::ostream &os)
+        {
             os << std::left << std::setw(8) << step_count
                << std::scientific << std::setprecision(5)
                << std::left << std::setw(15) << t_current
@@ -425,7 +433,8 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
             os << std::endl;
         };
         print_step(std::cout);
-        if (log_file.is_open()) print_step(log_file);
+        if (log_file.is_open())
+            print_step(log_file);
     }
 
     // =========================================================
