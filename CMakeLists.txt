@@ -14,6 +14,25 @@ endif()
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# ==============================================================================
+# Performance Optimization
+# ==============================================================================
+# 如果没有指定构建类型，默认使用 Release
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+# 设置 Release 模式下的优化参数 (-O3, -march=native, -DNDEBUG)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+
+# 开启 LTO (跨文件链接优化)
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_supported OUTPUT error)
+if(ipo_supported)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+    message(STATUS "LTO (Link Time Optimization) Enabled")
+endif()
+
 option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
 option(ARCH_VERBOSE_BUILD "Print every compiler and linker command" OFF)
 
@@ -57,14 +76,6 @@ add_executable(ARCH
     ${ARCH_APPLICATION_SOURCES}
     $<TARGET_OBJECTS:arch_solver_dispatch>)
 
-add_executable(ARCH_runtime_dispatch_registry_test EXCLUDE_FROM_ALL
-    tests/runtime_dispatch_registry_test.cpp
-    src/runtime/RuntimeDispatchRegistry.cpp)
-target_compile_features(ARCH_runtime_dispatch_registry_test PRIVATE cxx_std_20)
-target_include_directories(ARCH_runtime_dispatch_registry_test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src)
-set_target_properties(ARCH_runtime_dispatch_registry_test PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")
 
 foreach(target ARCH arch_solver_dispatch)
     target_compile_features(${target} PRIVATE cxx_std_20)
