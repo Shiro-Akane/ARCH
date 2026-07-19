@@ -46,7 +46,7 @@ max_eint = 1e19      # Cap maximum specific internal energy to prevent sound spe
 # [Time & IO]
 # ------------------------------------------------------------------------------
 tmax         = 5.0e-8    # 物理时间极短 (根据爆轰波速调整)
-max_steps    = 200000
+max_steps    = 150
 restart      = false
 
 out_dir      = output
@@ -76,9 +76,9 @@ network_name     = aprox19
 # 0 = 静默模式（仅输出致命错误）
 # 1 = 基础信息模式（输出网络加载和初始化成功的信息，适合常规运行监控）
 # 2 = 详细调试模式（可能会输出每个刚性积分器子步的具体迭代信息，适用于排错）
-burn_verbose_level = 1
+burn_verbose_level = 2
 
-nuclearTempMin   = 1e7       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
+nuclearTempMin   = 1e9       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
 nuclearDensMin   = 1e-10     # 触发核燃烧的最小密度阈值 (g/cm^3)
 
 dt_init          = 1e-16     # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
@@ -93,7 +93,7 @@ linear_solver    = DenseLU
 # [User Custom Parameters: CellularDet]
 # ------------------------------------------------------------------------------
 shock_dir = 0            # 激波传播方向 (0=X, 1=Y, 2=Z)
-radiusPerturb = 25.6     # 初始施加 Von Neumann 扰动（跳跃条件）的区域长度 (推荐: ~12.8-25.6，包围几个胞格尺度)
+radiusPerturb = 12.8     # 初始施加 Von Neumann 扰动（跳跃条件）的区域长度 (推荐: ~12.8-25.6，包围几个胞格尺度)
 
 # --- Ambient State (未燃环境) ---
 # 代表激波前方的未反应流体状态
