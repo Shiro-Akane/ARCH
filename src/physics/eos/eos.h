@@ -10,6 +10,7 @@
 #include <vector>
 #include "../species/Species.h"
 #include "../../data/FluidState.h"
+#include "eos_state.h"
 
 // 仅仅是一个空基类，用于标记这是一个 EOS 策略
 struct EOSBase
@@ -21,6 +22,7 @@ struct EOSBase
  * ====================================================================
  * Any concrete EOS (Ideal, Tabular, etc.) must implement:
  * * double get_gamma(const double *Xi) const;
+ * double get_eta(double rho, double T, const double *Xi) const;
  * double get_pressure(const FluidVector &U, const double *Xi) const;
  * double get_temperature(const FluidVector &U, const double *Xi) const;
  * double get_sound_speed(const FluidVector &U, double p, const double *Xi) const;
@@ -31,5 +33,7 @@ struct EOSBase
  * double get_cv(double rho, double T, const double *Xi) const;
  * double get_dp_drho_e(double rho, double e, const double *Xi) const;
  * double get_dp_de_rho(double rho, double e, const double *Xi) const;
+ * void evaluate_state(eos_state_t& state) const;
+ * const SpeciesManager* get_species_manager() const;
  * ====================================================================
  */

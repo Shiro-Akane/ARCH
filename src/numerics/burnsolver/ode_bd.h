@@ -77,15 +77,17 @@ struct Solver_BD
 
             // 1. 宏观步长开始，只计算【唯一一次】全局 Jacobian
             double enuc = 0.0;
-            NetType::eval_rhs(Y_ODE, rho, RHS, enuc);
+            double T_current = Y_ODE[NEQ - 1];
+            double eta = eos.get_eta(rho, T_current, Y_ODE);
+            NetType::eval_rhs(Y_ODE, rho, eta, RHS, enuc);
 
             J_mat.zero();
-            double T_current = Y_ODE[NEQ - 1];
             double denuc_dX[MAX_N]{};
             double dRHS_dT[MAX_N]{};
             double denuc_dT = 0.0;
-            NetType::eval_jacobian(Y_ODE, rho, J_mat, denuc_dX);
-            NetType::eval_temperature_derivative(Y_ODE, rho, dRHS_dT, denuc_dT);
+            double eta_jac = eos.get_eta(rho, T_current, Y_ODE);
+            NetType::eval_jacobian(Y_ODE, rho, eta_jac, J_mat, denuc_dX);
+            NetType::eval_temperature_derivative(Y_ODE, rho, eta_jac, dRHS_dT, denuc_dT);
 
             const double cv = std::max(eos.get_cv(rho, T_current, Y_ODE), 1.0e-10);
             const double inv_cv = 1.0 / cv;
@@ -144,7 +146,8 @@ struct Solver_BD
                 {
                     double stage_enuc = 0.0;
                     double stage_RHS[MAX_N];
-                    NetType::eval_rhs(Y_j, rho, stage_RHS, stage_enuc);
+                    double eta = eos.get_eta(rho, Y_j[NEQ - 1], Y_j);
+                    NetType::eval_rhs(Y_j, rho, eta, stage_RHS, stage_enuc);
                     double stage_cv = std::max(eos.get_cv(rho, Y_j[NEQ - 1], Y_j), 1.0e-10);
                     stage_RHS[NEQ - 1] = stage_enuc / stage_cv;
 
@@ -169,7 +172,8 @@ struct Solver_BD
                 // 终点平滑
                 double end_enuc = 0.0;
                 double end_RHS[MAX_N];
-                NetType::eval_rhs(Y_j, rho, end_RHS, end_enuc);
+                double eta = eos.get_eta(rho, Y_j[NEQ - 1], Y_j);
+                NetType::eval_rhs(Y_j, rho, eta, end_RHS, end_enuc);
                 double end_cv = std::max(eos.get_cv(rho, Y_j[NEQ - 1], Y_j), 1.0e-10);
                 end_RHS[NEQ - 1] = end_enuc / end_cv;
 

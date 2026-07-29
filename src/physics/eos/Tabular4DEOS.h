@@ -298,9 +298,18 @@ struct Tabular4DEOSView
 
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         double T = get_temperature(rho, e, Xi);
-        double cs = is_out_of_bounds(std::log10(rho), std::log10(T), A, Z) ? fallback_sound_speed(rho, e) : interpolate_4d(table_cs, rho, T, A, Z);
-
-        return (rho * cs * cs) / p;
+        return get_sound_speed_from_rho_T(rho, T, Xi);
+    }
+    
+    double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
+    {
+        double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), A, Z))
+        {
+            double e = get_eint_from_T(rho, T, Xi);
+            return fallback_sound_speed(rho, e);
+        }
+        return interpolate_4d(table_cs, rho, T, A, Z);
     }
 
     double get_dp_drho_e(double rho, double e, const double *Xi) const
@@ -348,6 +357,40 @@ struct Tabular4DEOSView
     {
         return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
     }
+
+    double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
+
+    // =========================================================
+    // Pipeline: evaluate_state
+    // =========================================================
+    void evaluate_state(eos_state_t& state) const {
+        // =========================================================
+        // 1. Core Thermodynamics (P, E, cv)
+        // =========================================================
+        state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
+        state.E = get_eint_from_T(state.rho, state.T, state.Xi);
+        state.cv = get_cv(state.rho, state.T, state.Xi);
+        
+        // =========================================================
+        // 2. Derivatives and Sound Speed
+        // =========================================================
+        state.sound_speed = get_sound_speed_from_rho_T(state.rho, state.T, state.Xi);
+        state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
+        state.dp_dT = 0.0; 
+        if (table_dP_dT) {
+            double A = get_Abar(state.Xi), Z = get_Zbar(state.Xi);
+            state.dp_dT = interpolate_4d(table_dP_dT, state.rho, state.T, A, Z);
+        }
+        
+        // =========================================================
+        // 3. Deep Physical Variables (Unused in Tabular)
+        // =========================================================
+        state.pele = 0.0;
+        state.xne = 0.0;
+        state.eta = 0.0;
+    }
+
+    const SpeciesManager* get_species_manager() const { return specs; }
 };
 
 // ====================================================================
@@ -423,4 +466,5 @@ public:
     }
 
     Tabular4DEOSView get_view() const { return view; }
+    const SpeciesManager* get_species_manager() const { return view.specs; }
 };

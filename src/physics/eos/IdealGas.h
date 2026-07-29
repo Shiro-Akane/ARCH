@@ -22,6 +22,8 @@ struct IdealGas : public EOSBase
     IdealGas(double default_gamma, const SpeciesManager &m)
         : manager(m), global_gamma(default_gamma) {}
 
+    const SpeciesManager* get_species_manager() const { return &manager; }
+
     // ========================================================
     // 1. 混合物属性计算
     // ========================================================
@@ -103,8 +105,12 @@ struct IdealGas : public EOSBase
 
     double get_cv(double rho, double T, const double *Xi) const
     {
-        return get_mixture_Cv(Xi);
+        return get_eint_from_T(rho, T, Xi) / T;
     }
+
+    double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
+
+    ~IdealGas() = default;
 
     double get_pressure(const FluidVector &U, const double *Xi) const
     {
@@ -140,5 +146,18 @@ struct IdealGas : public EOSBase
     double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         return (get_gamma(Xi) - 1.0) * rho;
+    }
+
+    void evaluate_state(eos_state_t& state) const {
+        state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
+        state.E = get_eint_from_T(state.rho, state.T, state.Xi);
+        state.cv = get_cv(state.rho, state.T, state.Xi);
+        state.sound_speed = std::sqrt(get_gamma(state.Xi) * state.P / state.rho);
+        state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
+        state.dp_dT = state.rho * state.cv * (get_gamma(state.Xi) - 1.0); // simple ideal gas dp/dT
+        
+        state.pele = 0.0;
+        state.xne = 0.0;
+        state.eta = 0.0;
     }
 };

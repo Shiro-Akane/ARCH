@@ -55,7 +55,7 @@ struct TimmesNetworkSupport {
         }
     }
 
-    static void eval_rhs(const double* state, double rho, double* rhs, double& enuc)
+    static void eval_rhs(const double* state, double rho, double eta, double* rhs, double& enuc)
     {
         constexpr int N = Derived::NUM_SPECIES;
         double y[N];
@@ -64,7 +64,7 @@ struct TimmesNetworkSupport {
         for (int i = 0; i < N; ++i) {
             y[i] = std::clamp(state[i] / Derived::AION[i], 1.0e-30, 1.0);
         }
-        Derived::template molar_rhs<double>(y, rho, state[N], dydt);
+        Derived::template molar_rhs<double>(y, rho, eta, state[N], dydt);
 
 #pragma omp simd
         for (int i = 0; i < N; ++i) {
@@ -80,7 +80,7 @@ struct TimmesNetworkSupport {
     }
 
     template <typename MatrixType>
-    static void eval_jacobian(const double* state, double rho, MatrixType& jac,
+    static void eval_jacobian(const double* state, double rho, double eta, MatrixType& jac,
                               double* denuc_dX = nullptr)
     {
         constexpr int N = Derived::NUM_SPECIES;
@@ -96,7 +96,7 @@ struct TimmesNetworkSupport {
         // fixed.  In particular, it does not differentiate the screening
         // factor through abar/zbar/z2bar.
         Derived::template molar_rhs_frozen_screening<AD>(
-            y, rho, state[N], dydt);
+            y, rho, eta, state[N], dydt);
         for (int i = 0; i < N; ++i) {
             const AD dXdt = dydt[i] * Derived::AION[i];
 #pragma omp simd
@@ -118,7 +118,7 @@ struct TimmesNetworkSupport {
         }
     }
 
-    static void eval_temperature_derivative(const double* state, double rho,
+    static void eval_temperature_derivative(const double* state, double rho, double eta,
                                             double* drhs_dT, double& denuc_dT)
     {
         constexpr int N = Derived::NUM_SPECIES;
@@ -131,7 +131,7 @@ struct TimmesNetworkSupport {
 
         const AD temperature = AD::variable(state[N], 0);
         Derived::template molar_rhs_impl<AD, RateTemperatureAccessor>(
-            y, rho, state[N], temperature, dydt);
+            y, rho, eta, state[N], temperature, dydt);
 
         long double mass_sum = 0.0L;
         for (int i = 0; i < N; ++i) {

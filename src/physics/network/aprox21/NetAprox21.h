@@ -3,6 +3,7 @@
 #include <array>
 
 #include "../timmes_common/AproxRateAssembly.h"
+#include "../timmes_common/Ecapnuc.h"
 #include "../timmes_common/TimmesNetworkSupport.h"
 #include "TimmesRateLibrary.h"
 
@@ -150,7 +151,7 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
 
     template <typename Scalar, typename RateAccessor>
     TIMMES_HD static inline void fill_screened_rates(const Scalar* y, double rho,
-                                           double temperature_value,
+                                           double eta, double temperature_value,
                                            const Scalar& temperature,
                                            std::array<Scalar,
                                                timmes_aprox21_detail::nrat>& rate)
@@ -182,22 +183,26 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
             timmes::screen_aprox21_extra_rates<RateIds>(
                 rate, temperature, rho, zbar, abar, z2bar);
 
-            // irpen, irnep and irn56ec intentionally remain zero.  The
-            // uploaded weak_aprox21 path requires eta_e from the Helmholtz
-            // EOS, which is not part of ARCH's network interface.  This is
-            // the explicit weak-rate stub allowed by implementation_plan.md.
+            // Unblock ecapnuc for irpen, irnep, irn56ec
+            Scalar rpen, rnep, spenc, snepc;
+            timmes::ecapnuc(eta, temperature, rpen, rnep, spenc, snepc);
+            rate[RateIds::irpen] = rpen;
+            rate[RateIds::irnep] = rnep;
+            
+            // aprox21 has irn56ec but Timmes original tabular uses constant. 
+            // We just unblock irpen and irnep here.
         }
     }
 
     template <typename Scalar, typename RateAccessor>
-    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho,
+    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho, double eta,
                                       double temperature_value,
                                       const Scalar& temperature, Scalar* dydt)
     {
         using namespace timmes_aprox21_detail;
         std::array<Scalar, nrat> rate{};
         fill_screened_rates<Scalar, RateAccessor>(
-            y, rho, temperature_value, temperature, rate);
+            y, rho, eta, temperature_value, temperature, rate);
         timmes::form_extended_equilibrium<true, RateIds, Scalar>(
             rate, y, ihe4, ih1, ineut, iprot, temperature_value);
         rhs_aprox21(y, rate.data(), dydt);
@@ -205,7 +210,7 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
 
     template <typename Scalar>
     TIMMES_HD static inline void molar_rhs_frozen_screening(
-        const Scalar* y, double rho, double temperature, Scalar* dydt)
+        const Scalar* y, double rho, double eta, double temperature, Scalar* dydt)
     {
         using namespace timmes_aprox21_detail;
         std::array<double, NUM_SPECIES> y_value{};
@@ -214,7 +219,7 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
         }
         std::array<double, nrat> rate_value{};
         fill_screened_rates<double, timmes::RateValueAccessor>(
-            y_value.data(), rho, temperature, temperature, rate_value);
+            y_value.data(), rho, eta, temperature, temperature, rate_value);
         std::array<Scalar, nrat> rate{};
         for (int i = 0; i < nrat; ++i) rate[i] = Scalar(rate_value[i]);
         timmes::form_extended_equilibrium<true, RateIds, Scalar>(
@@ -238,13 +243,13 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
 #endif
     TIMMES_HD TIMMES_NETWORK_JAC_NOINLINE static inline void
     molar_rhs_jacobian_frozen_screening(
-        const double* y, double rho, double temperature,
+        const double* y, double rho, double eta, double temperature,
         double* dydt, double* jacobian)
     {
         using namespace timmes_aprox21_detail;
         std::array<double, nrat> rate{};
         fill_screened_rates<double, timmes::RateValueAccessor>(
-            y, rho, temperature, temperature, rate);
+            y, rho, eta, temperature, temperature, rate);
         const double uncapped_he3ag = rate[irhe3ag];
         const double uncapped_npg = rate[irnpg];
         const double uncapped_iropg = rate[iropg];
@@ -280,10 +285,10 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
 #undef TIMMES_NETWORK_JAC_NOINLINE
 
     template <typename Scalar>
-    TIMMES_HD static inline void molar_rhs(const Scalar* y, double rho, double temperature,
-                                 Scalar* dydt)
+    TIMMES_HD static inline void molar_rhs(
+        const Scalar* y, double rho, double eta, double temperature, Scalar* dydt)
     {
         molar_rhs_impl<Scalar, timmes::RateValueAccessor>(
-            y, rho, temperature, Scalar(temperature), dydt);
+            y, rho, eta, temperature, temperature, dydt);
     }
 };

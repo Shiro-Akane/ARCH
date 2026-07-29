@@ -119,7 +119,7 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
     }
 
     template <typename Scalar, typename RateAccessor>
-    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho,
+    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho, double eta,
                                       double temperature_value,
                                       const Scalar& temperature, Scalar* dydt)
     {
@@ -132,7 +132,7 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
 
     template <typename Scalar>
     TIMMES_HD static inline void molar_rhs_frozen_screening(
-        const Scalar* y, double rho, double temperature, Scalar* dydt)
+        const Scalar* y, double rho, double eta, double temperature, Scalar* dydt)
     {
         using namespace timmes_aprox13_detail;
         std::array<double, NUM_SPECIES> y_value{};
@@ -147,8 +147,14 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
         rhs_aprox13(y, rate.data(), dydt);
     }
 
-    TIMMES_HD static inline void molar_rhs_jacobian_frozen_screening(
-        const double* y, double rho, double temperature,
+#if defined(__CUDACC__)
+#  define TIMMES_NETWORK_JAC_NOINLINE __noinline__
+#else
+#  define TIMMES_NETWORK_JAC_NOINLINE
+#endif
+    TIMMES_HD TIMMES_NETWORK_JAC_NOINLINE static inline void
+    molar_rhs_jacobian_frozen_screening(
+        const double* y, double rho, double eta, double temperature,
         double* dydt, double* jacobian)
     {
         using namespace timmes_aprox13_detail;
@@ -158,12 +164,13 @@ struct NetAprox13 : timmes::TimmesNetworkSupport<NetAprox13> {
         rhs_aprox13(y, rate.data(), dydt);
         jacobian_aprox13_molar(y, rate.data(), jacobian);
     }
+#undef TIMMES_NETWORK_JAC_NOINLINE
 
     template <typename Scalar>
-    TIMMES_HD static inline void molar_rhs(const Scalar* y, double rho, double temperature,
-                                 Scalar* dydt)
+    TIMMES_HD static inline void molar_rhs(
+        const Scalar* y, double rho, double eta, double temperature, Scalar* dydt)
     {
         molar_rhs_impl<Scalar, timmes::RateValueAccessor>(
-            y, rho, temperature, Scalar(temperature), dydt);
+            y, rho, eta, temperature, Scalar(temperature), dydt);
     }
 };

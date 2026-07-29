@@ -11,9 +11,11 @@
 #include <iomanip>
 
 #include "eos.h"
+#include "eos.h"
 #include "eos_Utils.h"
 #include "../../data/FluidState.h"
 #include "../species/Species.h"
+
 
 // Timmes Helmholtz EOS (Electron/Positron table + Analytic Ion/Rad)
 class HelmEos : public EOSBase {
@@ -33,6 +35,7 @@ private:
 
     // Table data
     inline static std::vector<double> f[9]; 
+    inline static std::vector<double> ef_table[4];
     inline static bool is_loaded = false;
 
     const SpeciesManager* specs;
@@ -69,6 +72,7 @@ public:
         }
 
         for (int k = 0; k < 9; ++k) f[k].resize(imax * jmax);
+        for (int k = 0; k < 4; ++k) ef_table[k].resize(imax * jmax);
 
         // helm_table.dat has 4 blocks. The first block is the free energy f (108741 lines)
         // Each line has 9 values. Fortran outputs column-major: do j=1,jmax; do i=1,imax
@@ -77,6 +81,24 @@ public:
                 int idx = j * imax + i;
                 for (int k = 0; k < 9; ++k) {
                     file >> f[k][idx];
+                }
+            }
+        }
+        
+        // Block 2: dpdf (4 values)
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                double dummy;
+                for (int k = 0; k < 4; ++k) file >> dummy;
+            }
+        }
+
+        // Block 3: ef (4 values)
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                int idx = j * imax + i;
+                for (int k = 0; k < 4; ++k) {
+                    file >> ef_table[k][idx];
                 }
             }
         }
@@ -307,6 +329,77 @@ public:
 
     // --- EOS Interface Implementation ---
 
+    double get_eta(double rho, double T, const double* Xi) const {
+        double ytot = 0.0;
+        double ye = 0.0;
+        for (int k = 0; k < specs->count(); ++k) {
+            const double inv_A = 1.0 / specs->get_A(k);
+            ytot += Xi[k] * inv_A;
+            ye += Xi[k] * specs->get_Z(k) * inv_A;
+        }
+        ye = std::max(1.0e-16, ye);
+
+        double din = rho * ye;
+        double d_val = std::log10(din);
+        double t_val = std::log10(T);
+
+        // clamp
+        d_val = std::max(dlo, std::min(d_val, dhi));
+        t_val = std::max(tlo, std::min(t_val, thi));
+
+        int i = static_cast<int>((d_val - dlo) * dstpi);
+        int j = static_cast<int>((t_val - tlo) * tstpi);
+
+        i = std::max(0, std::min(i, imax - 2));
+        j = std::max(0, std::min(j, jmax - 2));
+
+        double d_node = std::pow(10.0, dlo + i * dstp);
+        double d_next = std::pow(10.0, dlo + (i + 1) * dstp);
+        double dd = d_next - d_node;
+
+        double t_node = std::pow(10.0, tlo + j * tstp);
+        double t_next = std::pow(10.0, tlo + (j + 1) * tstp);
+        double dth = t_next - t_node;
+
+        double xd = std::max( (din - d_node) / dd, 0.0 );
+        double xt = std::max( (T - t_node) / dth, 0.0 );
+
+        // Bicubic Hermite interpolation basis functions
+        auto h00 = [](double z) { return (2.0 * z * z * z - 3.0 * z * z + 1.0); };
+        auto h10 = [](double z) { return (z * z * z - 2.0 * z * z + z); };
+        auto h01 = [](double z) { return (-2.0 * z * z * z + 3.0 * z * z); };
+        auto h11 = [](double z) { return (z * z * z - z * z); };
+
+        double w0d = h00(xd), w1d = h10(xd) * dd;
+        double w2d = h01(xd), w3d = h11(xd) * dd;
+
+        double w0t = h00(xt), w1t = h10(xt) * dth;
+        double w2t = h01(xt), w3t = h11(xt) * dth;
+
+        int idx00 = j * imax + i;
+        int idx10 = j * imax + i + 1;
+        int idx01 = (j + 1) * imax + i;
+        int idx11 = (j + 1) * imax + i + 1;
+
+        double efi[16];
+        int offset[4] = {0, 4, 8, 12};
+        for (int k = 0; k < 4; ++k) {
+            int off = offset[k];
+            efi[off + 0] = ef_table[k][idx00];
+            efi[off + 1] = ef_table[k][idx10];
+            efi[off + 2] = ef_table[k][idx01];
+            efi[off + 3] = ef_table[k][idx11];
+        }
+
+        double etaele = 
+              efi[0]*w0d*w0t  + efi[1]*w2d*w0t  + efi[2]*w0d*w2t  + efi[3]*w2d*w2t
+            + efi[4]*w1d*w0t  + efi[5]*w3d*w0t  + efi[6]*w1d*w2t  + efi[7]*w3d*w2t
+            + efi[8]*w0d*w1t  + efi[9]*w2d*w1t  + efi[10]*w0d*w3t + efi[11]*w2d*w3t
+            + efi[12]*w1d*w1t + efi[13]*w3d*w1t + efi[14]*w1d*w3t + efi[15]*w3d*w3t;
+
+        return etaele;
+    }
+
     double get_gamma(const double* Xi) const {
         return 1.4; // Not strictly used for full real EOS formulation, but provided for interface
     }
@@ -320,32 +413,12 @@ public:
     double get_temperature(const FluidVector& U, const double* Xi) const {
         double rho = U.rho;
         double e = eos_utils::extract_specific_internal_energy(U);
-        
-        // Newton-Raphson to find T from (rho, e)
-        double T_guess = 1e8; 
-        for (int i = 0; i < 20; ++i) {
-            double P, E;
-            calc_thermo(rho, T_guess, Xi, P, E);
-            
-            const double cv = get_cv(rho, T_guess, Xi);
-            
-            if (std::abs(cv) < 1e-12) break;
-            
-            double dT_update = (e - E) / cv;
-            T_guess += dT_update;
-            
-            // Limit update
-            if (T_guess < 1e3) T_guess = 1e3;
-            if (T_guess > 1e11) T_guess = 1e11;
-            
-            if (std::abs(dT_update) / T_guess < 1e-6) break;
-        }
-        return T_guess;
+        return get_temperature(rho, e, Xi);
     }
 
     double get_temperature(double rho, double e, const double* Xi) const {
         double T_guess = 1e8; 
-        for (int i = 0; i < 20; ++i) {
+        for (int i = 0; i < 50; ++i) {
             double P, E;
             calc_thermo(rho, T_guess, Xi, P, E);
             
@@ -354,12 +427,15 @@ public:
             if (std::abs(cv) < 1e-12) break;
             
             double dT_update = (e - E) / cv;
-            T_guess += dT_update;
+            
+            // Limit the temperature update to prevent overshoot and divergence
+            double dT_limited = std::max(-0.5 * T_guess, std::min(dT_update, 0.5 * T_guess));
+            T_guess += dT_limited;
             
             if (T_guess < 1e3) T_guess = 1e3;
             if (T_guess > 1e11) T_guess = 1e11;
             
-            if (std::abs(dT_update) / T_guess < 1e-6) break;
+            if (std::abs(dT_limited) / T_guess < 1e-6) break;
         }
         return T_guess;
     }
@@ -393,28 +469,10 @@ public:
     }
 
     double get_pressure_from_rho_e(double rho, double e, const double* Xi) const {
-        // First find T
-        double T_guess = 1e8; 
-        for (int i = 0; i < 20; ++i) {
-            double P, E;
-            calc_thermo(rho, T_guess, Xi, P, E);
-            
-            const double cv = get_cv(rho, T_guess, Xi);
-            
-            if (std::abs(cv) < 1e-12) break;
-            
-            double dT_update = (e - E) / cv;
-            T_guess += dT_update;
-            
-            if (T_guess < 1e3) T_guess = 1e3;
-            if (T_guess > 1e11) T_guess = 1e11;
-            
-            if (std::abs(dT_update) / T_guess < 1e-6) break;
-        }
-        
-        double P_final, E_final;
-        calc_thermo(rho, T_guess, Xi, P_final, E_final);
-        return P_final;
+        double T = get_temperature(rho, e, Xi);
+        double P, E;
+        calc_thermo(rho, T, Xi, P, E);
+        return P;
     }
 
     double get_pressure_from_rho_T(double rho, double T, const double* Xi) const {
@@ -450,6 +508,57 @@ public:
         double P2 = get_pressure_from_rho_e(rho, e + de, Xi);
         return (P2 - P1) / de;
     }
+
+    // =========================================================
+    // Pipeline: evaluate_state
+    // =========================================================
+    void evaluate_state(eos_state_t& state) const {
+        // =========================================================
+        // 1. Core Thermodynamics (P, E, cv)
+        // =========================================================
+        double P, E, cv;
+        calc_thermo_with_cv(state.rho, state.T, state.Xi, P, E, &cv);
+        state.P = P;
+        state.E = E;
+        state.cv = cv;
+
+        // =========================================================
+        // 2. Derivatives and Sound Speed
+        // =========================================================
+        double drho = state.rho * 1e-4;
+        double P_rho, E_rho;
+        calc_thermo(state.rho + drho, state.T, state.Xi, P_rho, E_rho);
+        state.dp_drho = (P_rho - P) / drho;
+
+        double dT_val = state.T * 1e-4;
+        double P_T, E_T;
+        calc_thermo(state.rho, state.T + dT_val, state.Xi, P_T, E_T);
+        state.dp_dT = (P_T - P) / dT_val;
+
+        double cv_val = std::max(cv, 1e-12);
+        state.sound_speed = std::sqrt(std::max(0.0, state.dp_drho + state.dp_dT * state.dp_dT * state.T / (state.rho * state.rho * cv_val)));
+
+        // =========================================================
+        // 3. Deep Physical Variables (eta, pele, xne)
+        // =========================================================
+        state.eta = get_eta(state.rho, state.T, state.Xi);
+        
+        double ytot = 0.0;
+        double ye = 0.0;
+        for (int k = 0; k < specs->count(); ++k) {
+            const double inv_A = 1.0 / specs->get_A(k);
+            ytot += state.Xi[k] * inv_A;
+            ye += state.Xi[k] * specs->get_Z(k) * inv_A;
+        }
+        ye = std::max(1.0e-16, ye);
+        
+        double pele, E_ele;
+        interpolate_ele_pos(state.rho, state.T, ye, pele, E_ele, nullptr);
+        state.pele = pele;
+        state.xne = state.rho * ye * 6.0221417930e23; // n_A from Timmes
+    }
+
+    const SpeciesManager* get_species_manager() const { return specs; }
 
     ~HelmEos() = default;
 };

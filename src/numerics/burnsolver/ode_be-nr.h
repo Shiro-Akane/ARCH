@@ -92,17 +92,19 @@ struct Solver_BE_NR
                 double enuc = 0.0;
                 A.zero();
 
+                double T_current = Y_k[NEQ - 1];
+                double eta = eos.get_eta(rho, T_current, Y_k);
+
                 // 1. 调用物理策略求导
-                NetType::eval_rhs(Y_k, rho, RHS, enuc);
+                NetType::eval_rhs(Y_k, rho, eta, RHS, enuc);
 
                 // Timmes network derivatives: composition block, nuclear-energy
                 // derivatives, and the full analytic temperature column.
-                double T_current = Y_k[NEQ - 1];
                 double denuc_dX[MAX_N]{};
                 double dRHS_dT[MAX_N]{};
                 double denuc_dT = 0.0;
-                NetType::eval_jacobian(Y_k, rho, A, denuc_dX);
-                NetType::eval_temperature_derivative(Y_k, rho, dRHS_dT, denuc_dT);
+                NetType::eval_jacobian(Y_k, rho, eta, A, denuc_dX);
+                NetType::eval_temperature_derivative(Y_k, rho, eta, dRHS_dT, denuc_dT);
 
                 // Match the original Timmes self-heating Jacobian exactly:
                 // dT/dt = enuc/cv and J_T,* = J_enuc,*/cv.  Timmes obtains cv

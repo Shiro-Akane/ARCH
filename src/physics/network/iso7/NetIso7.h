@@ -169,7 +169,7 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     }
 
     template <typename Scalar, typename RateAccessor>
-    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho,
+    TIMMES_HD static inline void molar_rhs_impl(const Scalar* y, double rho, double eta,
                                       double temperature_value,
                                       const Scalar& temperature, Scalar* dydt)
     {
@@ -184,7 +184,7 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
 
     template <typename Scalar>
     TIMMES_HD static inline void molar_rhs_frozen_screening(
-        const Scalar* y, double rho, double temperature, Scalar* dydt)
+        const Scalar* y, double rho, double eta, double temperature, Scalar* dydt)
     {
         using namespace timmes_iso7_detail;
         std::array<double, NUM_SPECIES> y_value{};
@@ -202,10 +202,10 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
     }
 
     template <typename Scalar>
-    TIMMES_HD static inline void molar_rhs(const Scalar* y, double rho, double temperature,
-                                 Scalar* dydt)
+    TIMMES_HD static inline void molar_rhs(
+        const Scalar* y, double rho, double eta, double temperature, Scalar* dydt)
     {
         molar_rhs_impl<Scalar, timmes::RateValueAccessor>(
-            y, rho, temperature, Scalar(temperature), dydt);
+            y, rho, eta, temperature, Scalar(temperature), dydt);
     }
 };

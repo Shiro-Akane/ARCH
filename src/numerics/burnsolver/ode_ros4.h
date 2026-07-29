@@ -57,7 +57,8 @@ struct Solver_ROS4
         // 统一的 RHS 评估 Lambda
         auto eval_full_rhs = [&](const double* Y, double* out_RHS) {
             double enuc = 0.0;
-            NetType::eval_rhs(Y, rho, out_RHS, enuc);
+            double eta = eos.get_eta(rho, Y[NEQ - 1], Y);
+            NetType::eval_rhs(Y, rho, eta, out_RHS, enuc);
             double cv = std::max(eos.get_cv(rho, Y[NEQ - 1], Y), 1e-10);
             out_RHS[NEQ - 1] = enuc / cv;
         };
@@ -110,8 +111,9 @@ struct Solver_ROS4
             double denuc_dX[MAX_N]{};
             double dRHS_dT[MAX_N]{};
             double denuc_dT = 0.0;
-            NetType::eval_jacobian(Y_old, rho, J_mat, denuc_dX);
-            NetType::eval_temperature_derivative(Y_old, rho, dRHS_dT, denuc_dT);
+            double eta_jac = eos.get_eta(rho, T_current, Y_old);
+            NetType::eval_jacobian(Y_old, rho, eta_jac, J_mat, denuc_dX);
+            NetType::eval_temperature_derivative(Y_old, rho, eta_jac, dRHS_dT, denuc_dT);
 
             const double cv = std::max(eos.get_cv(rho, T_current, Y_old), 1.0e-10);
             const double inv_cv = 1.0 / cv;
