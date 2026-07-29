@@ -26,6 +26,7 @@ class GaussianPulse
     double m_xc;
     int m_bg_id;
     int m_ps_id;
+    std::vector<double> default_X;
 
 public:
     // =========================================================
@@ -38,10 +39,16 @@ public:
         m_amp = config.Get<double>("amp", 0.5);
         m_width = config.Get<double>("width", 0.1);
         m_xc = config.Get<double>("xc", 0.5);
+        ProblemHelper::SetupNetworkAndFractions(config, specs, default_X);
 
-        // Register two identical dummy gases to prevent pressure gradients during mixing
-        m_bg_id = specs.add_species("BgGas", 1.0, 1.0, 1.4, 717.5);
-        m_ps_id = specs.add_species("PassiveGas", 1.0, 1.0, 1.4, 717.5);
+        if (specs.count() >= 2) {
+            m_bg_id = 0; 
+            m_ps_id = 1; 
+        } else {
+            m_bg_id = specs.add_species("BgGas", 1.0, 1.0, 1.4, 717.5);
+            m_ps_id = specs.add_species("PassiveGas", 1.0, 1.0, 1.4, 717.5);
+            default_X.resize(specs.count(), 0.0);
+        }
     }
 
     // =========================================================
@@ -70,6 +77,9 @@ public:
         if (x_passive < 0.0) x_passive = 0.0;
 
         // 3. Set Mass Fractions
+        for (size_t i = 0; i < default_X.size(); ++i) {
+            out.SetMassFraction(i, default_X[i]);
+        }
         out.SetMassFraction(m_ps_id, x_passive);
         out.SetMassFraction(m_bg_id, 1.0 - x_passive);
     }

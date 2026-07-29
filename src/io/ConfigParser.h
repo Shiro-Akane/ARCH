@@ -133,4 +133,14 @@ public:
     {
         return parameters;
     }
+
+    /**
+     * @brief Checks if a parameter key exists in the configuration file.
+     * @param key The parameter name.
+     * @return true if the key exists, false otherwise.
+     */
+    bool HasKey(const std::string &key) const
+    {
+        return parameters.find(key) != parameters.end();
+    }
 };

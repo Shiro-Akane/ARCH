@@ -56,9 +56,9 @@ chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 t
 # ------------------------------------------------------------------------------
 # [Physics Core]
 # Maps to config.physics.*
-# ------------------------------------------------------------------------------
-eos_type = ideal            # Options: ideal, tabular
-gamma    = 1.4              # Default global gamma (will be overridden by species)
+eos_type = helmholtz            # Options: ideal, tabular, helmholtz
+eos_table_path = EOS_toolkit/helm_table.dat
+network_name = aprox19
 
 # ------------------------------------------------------------------------------
 # [Diffusion Configuration]
@@ -73,14 +73,14 @@ use_thermal_diff = 1        # 1 to enable heat conduction
 use_viscous_diff = 1        # 1 to enable viscous diffusion
 use_species_diff = 1        # 1 to enable species concentration diffusion
 
-D_spec = 0.1
-nu_visc = 0.1
-alpha_therm = 0.1
+# D_spec = 0.1
+# nu_visc = 0.1
+# alpha_therm = 0.1
 
 # ------------------------------------------------------------------------------
 # [User Custom Parameters: GaussianPulse]
 # ------------------------------------------------------------------------------
-rho0 = 1.0
-p0 = 1.0
+rho0 = 1e6
+p0 = 1e23
 amp = 0.5
 width = 0.1

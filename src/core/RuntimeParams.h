@@ -205,6 +205,13 @@ public:
         cfg.physics.diffusion.alpha_therm = parser.GetDouble("alpha_therm", 0.0);
         cfg.physics.diffusion.D_spec = parser.GetDouble("D_spec", 0.0);
 
+        if (cfg.physics.eos_type == "helm" && cfg.physics.diffusion.use_diffusion) {
+            if (parser.HasKey("alpha_therm") || parser.HasKey("nu_visc") || parser.HasKey("D_spec")) {
+                std::cerr << "[Fatal Error] When using HelmEos with diffusion, diffusion coefficients are computed physically. Do not set alpha_therm, nu_visc, or D_spec in the .par file." << std::endl;
+                std::exit(EXIT_FAILURE);
+            }
+        }
+
         // --- 引力模块 (Gravity) ---
         std::string grav_type = parser.GetString("gravity_type", "none");
         std::transform(grav_type.begin(), grav_type.end(), grav_type.begin(), ::tolower);

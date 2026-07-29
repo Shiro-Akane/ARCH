@@ -19,6 +19,8 @@
 #include <cmath>
 #include <vector>
 #include <algorithm>
+#include "../../physics/eos/eos_state.h"
+#include "../../physics/diffusionCoe/diffusion_math.hpp"
 
 // =========================================================
 // ==================== DiffFlux Namespace =================
@@ -29,23 +31,62 @@ namespace DiffFlux
     // =========================================================
     // 1. SFINAE Checks and Coefficient Extraction
     // =========================================================
-    template <typename T, typename = void>
-    struct has_transport_coeffs : std::false_type {};
-
-    template <typename T>
-    struct has_transport_coeffs<T, std::void_t<decltype(std::declval<T>().get_transport_coeffs(
-        0.0, 0.0, nullptr, std::declval<double&>(), std::declval<double&>(), std::declval<double&>()))>> : std::true_type {};
-
     /**
-     * @brief Retrieves diffusion coefficients. Uses EOS if available, otherwise falls back to config.
+     * @brief Retrieves diffusion coefficients. Uses eos_state_t and diffusion_math directly.
      */
     template <typename EosType>
     inline void get_coeffs(const EosType& eos, const SimConfig& config,
                            double rho, double T, const double* Xi,
                            double& nu_visc, double& alpha_therm, double& D_spec)
     {
-        if constexpr (has_transport_coeffs<EosType>::value) {
-            eos.get_transport_coeffs(rho, T, Xi, nu_visc, alpha_therm, D_spec);
+        // =========================================================
+        // 1. Initialize and Evaluate State
+        // =========================================================
+        eos_state_t state;
+        state.rho = rho;
+        state.T = T;
+        state.Xi = Xi;
+        
+        eos.evaluate_state(state);
+
+        const SpeciesManager* specs = eos.get_species_manager();
+        bool is_stellar_eos = (specs && specs->count() > 0 && state.xne > 0.0);
+
+        // =========================================================
+        // 2. Process Override Config Parameters
+        // =========================================================
+        if (config.physics.diffusion.nu_visc > 0 || config.physics.diffusion.alpha_therm > 0) {
+            if (is_stellar_eos) {
+                std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
+                std::abort();
+            }
+            nu_visc = config.physics.diffusion.nu_visc;
+            alpha_therm = config.physics.diffusion.alpha_therm;
+            D_spec = config.physics.diffusion.D_spec;
+            return;
+        }
+
+        // =========================================================
+        // 3. Compute Stellar Transport Coefficients
+        // =========================================================
+        if (is_stellar_eos) {
+            std::vector<double> zion(specs->count());
+            std::vector<double> aion_inv(specs->count());
+            for (int k = 0; k < specs->count(); ++k) {
+                zion[k] = specs->get_Z(k);
+                aion_inv[k] = 1.0 / specs->get_A(k);
+            }
+
+            double cond = ConductivityMath::compute_stellar_conductivity(
+                state.T, state.rho, state.pele, state.xne, state.eta, 
+                state.Xi, specs->count(),
+                zion.data(), aion_inv.data()
+            );
+
+            double cv_val = std::max(state.cv, 1e-12);
+            alpha_therm = cond / (state.rho * cv_val);
+            nu_visc = 0.0;
+            D_spec = 0.0;
         } else {
             nu_visc = config.physics.diffusion.nu_visc;
             alpha_therm = config.physics.diffusion.alpha_therm;
@@ -140,7 +181,7 @@ namespace DiffFlux
 
                         // Gradient calculations
                         double dT_dx = (T_R - T_L) / dx;
-                        double q_therm = do_thermal ? (-alpha * rho_f * eos.get_cv(rho_f, T_f, Xi_face.data()) * dT_dx) : 0.0;
+                        double q_therm = do_thermal ? (-alpha * rho_f * std::max(eos.get_cv(rho_f, T_f, Xi_face.data()), 1e-12) * dT_dx) : 0.0;
                         
                         FluidVector F_diff;
                         F_diff.rho = 0.0;
