@@ -15,6 +15,7 @@
 #include <stdexcept>
 #include "DriverUtils.h"
 #include "../numerics/burnsolver/Networks.h"
+#include "../numerics/diffusion/DiffDispatch.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -268,30 +269,22 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         write_chk(u_current, grid, chk_file_index++, plt_file_index, step_count, t_current, config);
     }
 
-    std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
-    std::ofstream log_file(log_filename, (step_count == 0) ? std::ios::trunc : std::ios::app);
-    if (!log_file.is_open())
-    {
-        std::cerr << "[Warning] Could not open log file: " << log_filename << std::endl;
-    }
-
     // 打印表头
     if (step_count == 0)
     {
-        auto print_header = [&](std::ostream &os)
-        {
-            os << std::left << std::setw(8) << "Step"
-               << std::left << std::setw(15) << "Time"
-               << std::left << std::setw(15) << "dt"
-               << std::left << std::setw(15) << "dt_hydro";
-            if (has_burn)
-                os << std::left << std::setw(15) << "dt_burn";
-            os << std::endl;
-            os << std::string(has_burn ? 68 : 53, '-') << std::endl;
-        };
-        print_header(std::cout);
-        if (log_file.is_open())
-            print_header(log_file);
+        std::cout << std::left << std::setw(8) << "Step"
+                  << std::left << std::setw(15) << "Time"
+                  << std::left << std::setw(15) << "dt"
+                  << std::left << std::setw(15) << "dt_hydro";
+        if (has_burn)
+            std::cout << std::left << std::setw(15) << "dt_burn";
+        if (config.physics.diffusion.use_diffusion)
+            std::cout << std::left << std::setw(15) << "dt_diff";
+        std::cout << std::endl;
+        std::cout << "-----------------------------------------------------";
+        if (has_burn) std::cout << "---------------";
+        if (config.physics.diffusion.use_diffusion) std::cout << "---------------";
+        std::cout << std::endl;
     }
 
     // =========================================================
@@ -371,6 +364,9 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
 
         // 重置 global burn limit 供这一步内部重新计算
         dt_burn_global = 1e99;
+        
+        // Compute explicit diffusion stability limit (parabolic CFL limit = 0.5)
+        double dt_diff_limit = DiffFlux::adaptive_dt_diff(u_current, eos, grid, config, 0.5);
 
         // Safety check for numerical degeneracy
         double dt_min = config.GetCustomParam("dt_min", 1e-20);
@@ -408,6 +404,14 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
         bc_handler.apply(u_current, grid);
         TimeIntegratorPolicy::solve(u_current, u_next, u_scratch, eos, grid, dt, bc_handler, gravity, num_cfg);
 
+        // D2.5. Diffusion Step (if enabled)
+        if (config.physics.diffusion.use_diffusion) {
+            bc_handler.apply(u_next, grid);
+            Numerics::Diffusion::dispatch_diffusion(config, [&](auto& integrator) {
+                integrator.integrate(u_next, eos, grid, config, dt, dt_diff_limit, bc_handler);
+            });
+        }
+
         // D3. Burn Step (if enabled)
         bc_handler.apply(u_next, grid);
         do_burn_step(u_next, 0.5 * dt);
@@ -430,11 +434,11 @@ void run_simulation(FluidState &state, const EosPolicy &eos,
                << std::left << std::setw(15) << dt_computed;
             if (has_burn)
                 os << std::left << std::setw(15) << dt / 2.0;
+            if (config.physics.diffusion.use_diffusion)
+                os << std::left << std::setw(15) << dt_diff_limit;
             os << std::endl;
         };
         print_step(std::cout);
-        if (log_file.is_open())
-            print_step(log_file);
     }
 
     // =========================================================

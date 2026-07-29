@@ -6,8 +6,8 @@
 # ------------------------------------------------------------------------------
 # [Grid Configuration]
 # ------------------------------------------------------------------------------
-nx       = 1280       # 1D 高分辨率以解析反应区 (Reaction Zone)
-ny       = 1
+nx       = 2560       # 1D 高分辨率以解析反应区 (Reaction Zone)
+ny       = 256
 nz       = 1
 
 x_min    = 0.0
@@ -46,7 +46,7 @@ max_eint = 1e19      # Cap maximum specific internal energy to prevent sound spe
 # [Time & IO]
 # ------------------------------------------------------------------------------
 tmax         = 5.0e-8    # 物理时间极短 (根据爆轰波速调整)
-max_steps    = 150
+max_steps    = 200
 restart      = false
 
 out_dir      = output

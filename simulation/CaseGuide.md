@@ -224,6 +224,15 @@ gravity_g_y  = -9.81         # Constant external gravity in Y direction
 use_burn         = 0             # 1 = Enable burning, 0 = Disable
 network_name     = aprox19       # Reaction network to auto-load. Supports dynamic hot-switching without recompilation. Valid options: aprox13, aprox19, aprox21, iso7.
 
+# Diffusion
+use_diffusion    = 0             # 1 = Enable diffusion, 0 = Disable
+diff_integrator  = RKL2          # Diffusion Time Integrator (Options: RKL1, RKL2)
+diff_cfl         = 0.8           # CFL condition for explicit diffusion integrator
+diff_max_stages  = 256           # Maximum number of stages (s) allowed for RKL integrators
+use_thermal_diff = 0             # 1 = Enable thermal diffusion
+use_viscous_diff = 0             # 1 = Enable viscous diffusion
+use_species_diff = 0             # 1 = Enable species diffusion
+
 # --- Advanced ODE & Burning Parameters (Hidden by Default) ---
 # These parameters have robust defaults in RuntimeParams.h. 
 # Only override them if your nuclear network fails to converge.

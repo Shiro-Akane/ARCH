@@ -1,0 +1,86 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Gaussian Pulse Pure Diffusion Test (2D Spherical)
+# 
+# Workflow:
+# 1. Configures a 2D spherical/polar domain (nx=200, ny=200) with reflecting/periodic boundaries.
+# 2. Sets up standard hydro solvers (HLLC, muscl, RK2) but configures uniform initial conditions.
+# 3. Enables the explicit RKL2 diffusion solver with species diffusion active.
+# 4. Sets a Gaussian initial profile for the species scalar.
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# Maps to config.grid.*
+# ------------------------------------------------------------------------------
+nx       = 200
+ny       = 200
+nz       = 1
+
+x_min    = 0.0
+x_max    = 1.1
+y_min    = 0.0
+y_max    = 2*pi
+xc       = 0.0
+geometry = spherical # Options: cartesian, cylindrical, spherical
+
+xl_boundary_type = reflect # Options: reflect, outflow, periodic
+xr_boundary_type = outflow # Options: reflect, outflow, periodic
+yl_boundary_type = periodic # Options: reflect, outflow, periodic
+yr_boundary_type = periodic # Options: reflect, outflow, periodic
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# Maps to config.numerics.*
+# ------------------------------------------------------------------------------
+solver      = HLLC       # Options: SW, VL, Roe, HLL, HLLC
+reconstruct = muscl      # Options: pcm (1st), MUSCL (2nd), ppm(3rd)
+time_integrator = RK2    # Options: RK2, RK3, Euler/RK1
+limiter     = mc         # Options: minmod, superbee, vanleer, mc, none
+cfl         = 0.4        # Keep < 0.5 for VL/HLLC
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# Maps to config.io.*
+# ------------------------------------------------------------------------------
+tmax         = 0.02
+max_steps    = -1           # Maximum number of iterations (-1 for infinite)
+restart      = false        # Options: false, true
+
+out_dir      = output
+base_name    = GaussianDiff2D # Base name for output files (e.g., GaussianDiff2D_HLLC_plt_0001.h5)
+
+plt_dt       = 0.02         # Output PLT based on physical time interval (-1.0 to disable)
+chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 to disable)
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# Maps to config.physics.*
+# ------------------------------------------------------------------------------
+eos_type = ideal            # Options: ideal, tabular
+gamma    = 1.4              # Default global gamma (will be overridden by species)
+
+# ------------------------------------------------------------------------------
+# [Diffusion Configuration]
+# Maps to config.physics.diffusion.*
+# ------------------------------------------------------------------------------
+use_diffusion = 1           # 0 to disable, 1 to enable diffusion
+diff_integrator = RKL2      # Options: RKL1, RKL2
+diff_cfl = 0.8              # Explicit CFL limit for diffusion steps
+diff_max_stages = 1024      # Maximum number of RKL super-time-stepping stages
+
+use_thermal_diff = 1        # 1 to enable heat conduction
+use_viscous_diff = 1        # 1 to enable viscous diffusion
+use_species_diff = 1        # 1 to enable species concentration diffusion
+
+D_spec = 0.1
+nu_visc = 0.1
+alpha_therm = 0.1
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters: GaussianPulse]
+# ------------------------------------------------------------------------------
+rho0 = 1.0
+p0 = 1.0
+amp = 0.5
+width = 0.1

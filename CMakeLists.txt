@@ -23,7 +23,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # 设置 Release 模式下的优化参数 (-O3, -march=native, -DNDEBUG)
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ffast-math -DNDEBUG")
 
 # 开启 LTO (跨文件链接优化)
 include(CheckIPOSupported)
@@ -53,6 +53,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # entire target and its PCH. SolverDispatch is isolated in its own object
 # target because it currently owns the large runtime-selectable template
 # matrix. P2 will split that matrix further into explicit hydro/burn objects.
+file(GLOB_RECURSE SIMULATION_SOURCES "simulation/*.cpp")
+
 set(ARCH_APPLICATION_SOURCES
     src/main.cpp
     src/core/ProblemHelper.cpp
@@ -61,9 +63,8 @@ set(ARCH_APPLICATION_SOURCES
     src/physics/network/aprox21/NetAprox21.cpp
     src/physics/network/iso7/NetIso7.cpp
     src/runtime/RuntimeDispatchRegistry.cpp
-    simulation/Cellular/Cellular.cpp
-    simulation/RTinstability/RT_instab.cpp
-    simulation/Sod/Sod.cpp
+    src/numerics/diffusion/DiffFunction.cpp
+    ${SIMULATION_SOURCES}
 )
 
 # ==============================================================================

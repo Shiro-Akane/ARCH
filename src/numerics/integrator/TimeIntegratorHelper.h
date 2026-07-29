@@ -22,12 +22,7 @@ namespace TimeIntegration
         const Grid &grid, double dt, int dir, int n_spec)
     {
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
-        double dx = (dir == 0) ? grid.dx : ((dir == 1) ? grid.dy : grid.dz);
         int total_size = grid.GetTotalSize();
-
-        // 非笛卡尔坐标仅对径向方向（dir==0）做面积/体积缩放
-        const bool is_radial = (dir == 0) && (grid.geometry != "cartesian");
-        const bool is_spherical = (grid.geometry == "spherical");
 
         const int ks = grid.Ks(), ke = grid.Ke();
         const int js = grid.Js(), je = grid.Je();
@@ -42,43 +37,89 @@ namespace TimeIntegration
             {
                 int idx = grid.GetIndex(i, j, k);
 
-                if (is_radial)
+                double area_l = 1.0, area_r = 1.0, vol = 1.0;
+
+                if (grid.geometry == "cartesian")
+                {
+                    vol = (dir == 0) ? grid.dx : ((dir == 1) ? grid.dy : grid.dz);
+                }
+                else if (grid.geometry == "cylindrical")
                 {
                     double r_l = grid.GetFacePosL(i);
                     double r_r = grid.GetFacePosR(i);
                     double r_c = grid.GetCellCenterX(i);
-
-                    double area_l, area_r, vol;
-                    if (is_spherical)
-                    {
-                        area_l = r_l * r_l;
-                        area_r = r_r * r_r;
-                        vol = r_c * r_c * dx;
-                    }
-                    else // cylindrical
+                    if (dir == 0) // r
                     {
                         area_l = r_l;
                         area_r = r_r;
-                        vol = r_c * dx;
+                        vol = r_c * grid.dx;
                     }
-                    double dt_over_vol = dt / vol;
-
-                    dU[idx] = dU[idx] + (fluxes[idx] * area_l - fluxes[idx + stride] * area_r) * dt_over_vol;
-                    for (int s = 0; s < n_spec; ++s)
+                    else if (dir == 1) // 3D: z, 2D: phi
                     {
-                        int off = s * total_size;
-                        d_spec[off + idx] += (spec_fluxes[off + idx] * area_l - spec_fluxes[off + idx + stride] * area_r) * dt_over_vol;
+                        if (grid.dim == 2) { // phi
+                            area_l = 1.0;
+                            area_r = 1.0;
+                            vol = r_c * grid.dy;
+                        } else { // z
+                            area_l = 1.0;
+                            area_r = 1.0;
+                            vol = grid.dy;
+                        }
+                    }
+                    else if (dir == 2) // phi
+                    {
+                        area_l = 1.0;
+                        area_r = 1.0;
+                        vol = r_c * grid.dz;
                     }
                 }
-                else
+                else if (grid.geometry == "spherical")
                 {
-                    double dt_over_dx = dt / dx;
-                    dU[idx] = dU[idx] + (fluxes[idx] - fluxes[idx + stride]) * dt_over_dx;
-                    for (int s = 0; s < n_spec; ++s)
+                    double r_l = grid.GetFacePosL(i);
+                    double r_r = grid.GetFacePosR(i);
+                    double r_c = grid.GetCellCenterX(i);
+                    double theta_c = grid.GetCellCenterY(j);
+                    
+                    if (dir == 0) // r
                     {
-                        int off = s * total_size;
-                        d_spec[off + idx] += (spec_fluxes[off + idx] - spec_fluxes[off + idx + stride]) * dt_over_dx;
+                        if (grid.dim == 2) { // 2D polar fallback
+                            area_l = r_l;
+                            area_r = r_r;
+                            vol = r_c * grid.dx;
+                        } else {
+                            area_l = r_l * r_l;
+                            area_r = r_r * r_r;
+                            vol = r_c * r_c * grid.dx;
+                        }
                     }
+                    else if (dir == 1) // theta (3D) or phi (2D)
+                    {
+                        if (grid.dim == 2) { // 2D polar fallback
+                            area_l = 1.0;
+                            area_r = 1.0;
+                            vol = r_c * grid.dy;
+                        } else {
+                            double theta_l = grid.y_min + (j - grid.ng) * grid.dy;
+                            double theta_r = grid.y_min + (j - grid.ng + 1) * grid.dy;
+                            area_l = std::sin(theta_l);
+                            area_r = std::sin(theta_r);
+                            vol = r_c * std::sin(theta_c) * grid.dy;
+                        }
+                    }
+                    else if (dir == 2) // phi (3D only)
+                    {
+                        area_l = 1.0;
+                        area_r = 1.0;
+                        vol = r_c * std::sin(theta_c) * grid.dz;
+                    }
+                }
+
+                double dt_over_vol = dt / vol;
+                dU[idx] = dU[idx] + (fluxes[idx] * area_l - fluxes[idx + stride] * area_r) * dt_over_vol;
+                for (int s = 0; s < n_spec; ++s)
+                {
+                    int off = s * total_size;
+                    d_spec[off + idx] += (spec_fluxes[off + idx] * area_l - spec_fluxes[off + idx + stride] * area_r) * dt_over_vol;
                 }
             }
         }
@@ -100,9 +141,7 @@ namespace TimeIntegration
         if (grid.geometry == "cartesian")
             return;
 
-        const double geom_coeff = (grid.geometry == "spherical") ? 2.0 : 1.0;
         int n_spec = state.GetNumSpecies();
-
         const int ks = grid.Ks(), ke = grid.Ke();
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
@@ -118,13 +157,59 @@ namespace TimeIntegration
                 for (int i = grid.Is(); i < grid.Ie(); ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
-                    double r = grid.GetCellCenterX(i);
+                    PointCoords coords = grid.GetPhysicalCoords(i, j, k);
+                    double r = coords.r;
+                    if (grid.geometry == "cylindrical") r = coords.r_cy;
+                    
                     if (r < 1e-14)
                         continue;
 
                     state.get_species_to_buffer(idx, Xi.data());
-                    double p = eos.get_pressure(state.get(idx), Xi.data());
-                    dU[idx].mom_x += dt * geom_coeff * p / r;
+                    FluidVector U = state.get(idx);
+                    double p = eos.get_pressure(U, Xi.data());
+                    
+                    double rho = std::max(U.rho, 1e-12);
+                    double v_x = U.mom_x / rho;
+                    double v_y = U.mom_y / rho;
+                    double v_z = U.mom_z / rho;
+
+                    if (grid.geometry == "cylindrical")
+                    {
+                        // mom_x = v_r. 2D mom_y = v_phi. 3D mom_z = v_phi
+                        double v_phi = (grid.dim == 2) ? v_y : ((grid.dim == 3) ? v_z : 0.0);
+                        
+                        dU[idx].mom_x += dt * (rho * v_phi * v_phi + p) / r;
+                        
+                        if (grid.dim == 2) {
+                            dU[idx].mom_y += dt * (-rho * v_x * v_y) / r;
+                        } else if (grid.dim == 3) {
+                            dU[idx].mom_z += dt * (-rho * v_x * v_z) / r;
+                        }
+                    }
+                    else if (grid.geometry == "spherical")
+                    {
+                        // mom_x = v_r. 2D mom_y = v_phi. 
+                        // 3D mom_y = v_theta, mom_z = v_phi.
+                        if (grid.dim == 1) {
+                            dU[idx].mom_x += dt * 2.0 * p / r;
+                        } 
+                        else if (grid.dim == 2) {
+                            // 2D Spherical falls back to Polar (r, phi)
+                            double v_phi = v_y;
+                            dU[idx].mom_x += dt * (rho * v_phi * v_phi + p) / r;
+                            dU[idx].mom_y += dt * (-rho * v_x * v_y) / r;
+                        } 
+                        else if (grid.dim == 3) {
+                            double v_theta = v_y;
+                            double v_phi = v_z;
+                            double theta = coords.theta;
+                            double cot_theta = std::cos(theta) / std::max(std::sin(theta), 1e-14); // Avoid div zero at poles
+                            
+                            dU[idx].mom_x += dt * (rho * (v_theta * v_theta + v_phi * v_phi) + 2.0 * p) / r;
+                            dU[idx].mom_y += dt * (rho * v_phi * v_phi * cot_theta + p * cot_theta - rho * v_x * v_theta) / r;
+                            dU[idx].mom_z += dt * (-rho * v_x * v_phi - rho * v_theta * v_phi * cot_theta) / r;
+                        }
+                    }
                 }
             }
         }

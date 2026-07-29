@@ -285,6 +285,11 @@ void DispatchSolver(const std::string &solver_name,
 
     // 6. 分发到EOS和重力模块，最后进入时间积分器和数值格式的选择
     std::cout << "[Dispatch] Resolving Physics Policies..." << std::endl;
+    if (config.physics.diffusion.use_diffusion)
+    {
+        std::cout << "           -> Diffusion Solver Initialized: " << config.physics.diffusion.integrator 
+                  << " (CFL_diff = " << config.physics.diffusion.diff_cfl << ")" << std::endl;
+    }
     EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos)
                                 {
                                     using EosPolicy = std::remove_cvref_t<decltype(eos)>;

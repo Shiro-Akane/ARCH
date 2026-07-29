@@ -192,6 +192,19 @@ public:
         cfg.physics.burn.odeconfig.use_numerical_jacobian = (parser.GetInt("ode_use_numerical_jac", 0) != 0);
         cfg.physics.burn.odeconfig.freeze_jacobian = (parser.GetInt("ode_freeze_jacobian", 0) != 0);
 
+        // --- 扩散模块 (Diffusion) ---
+        cfg.physics.diffusion.use_diffusion = (parser.GetInt("use_diffusion", 0) != 0);
+        cfg.physics.diffusion.integrator = parser.GetString("diff_integrator", "RKL2");
+        cfg.physics.diffusion.diff_cfl = parser.GetDouble("diff_cfl", 0.8);
+        cfg.physics.diffusion.max_stages = parser.GetInt("diff_max_stages", 256);
+
+        cfg.physics.diffusion.use_thermal_diffusion = (parser.GetInt("use_thermal_diff", 0) != 0);
+        cfg.physics.diffusion.use_viscous_diffusion = (parser.GetInt("use_viscous_diff", 0) != 0);
+        cfg.physics.diffusion.use_species_diffusion = (parser.GetInt("use_species_diff", 0) != 0);
+        cfg.physics.diffusion.nu_visc = parser.GetDouble("nu_visc", 0.0);
+        cfg.physics.diffusion.alpha_therm = parser.GetDouble("alpha_therm", 0.0);
+        cfg.physics.diffusion.D_spec = parser.GetDouble("D_spec", 0.0);
+
         // --- 引力模块 (Gravity) ---
         std::string grav_type = parser.GetString("gravity_type", "none");
         std::transform(grav_type.begin(), grav_type.end(), grav_type.begin(), ::tolower);

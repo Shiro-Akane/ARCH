@@ -153,6 +153,26 @@ struct GravityConfig
     double G_const = 6.6743e-8; // for self-gravity, in cgs units (cm^3 g^-1 s^-2)
 };
 
+// Diffusion Configuration
+struct DiffusionConfig
+{
+    bool use_diffusion = false;          ///< Master switch for the diffusion module
+    std::string integrator = "RKL2";     ///< Time integrator: "RKL1", "RKL2"
+    double diff_cfl = 0.8;                    ///< CFL condition for explicit diffusion integrator
+    int max_stages = 256;                ///< Maximum number of stages (s) allowed for RKL integrators
+    
+    // Toggles for different types of diffusion
+    bool use_thermal_diffusion = false;
+    bool use_viscous_diffusion = false;
+    bool use_species_diffusion = false;
+
+    // Constant coefficients for IdealGas / manual overrides
+    // (If 0 or not set, should try to read from EOS transport interface if available)
+    double nu_visc = 0.0;     ///< Constant kinematic viscosity (nu)
+    double alpha_therm = 0.0; ///< Constant thermal diffusivity (alpha = k / (rho * cp))
+    double D_spec = 0.0;      ///< Constant species diffusivity
+};
+
 struct PhysicsConfig
 {
     // Equation of State
@@ -164,6 +184,7 @@ struct PhysicsConfig
     // Gravity (Placeholder)
     GravityConfig gravity;
     BurnConfig burn;
+    DiffusionConfig diffusion;
 };
 
 // ----------------------------------------------------------------------
