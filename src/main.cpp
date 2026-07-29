@@ -22,6 +22,7 @@
 
 #include "../src/physics/species/Species.h"
 #include "../src/driver/SolverDispatch.h"
+#include "../src/io/Logger.h"
 
 // =========================================================
 // =================== main function =======================
@@ -51,6 +52,11 @@ int main(int argc, char **argv)
     try
     {
         config = RuntimeParams::Load(par_file);
+        
+        std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
+        Logger::Init(log_filename, config.io.restart);
+        std::cout << "[Main] Console output is being recorded to log file: " << log_filename << std::endl;
+        
         std::cout << "[Main] Parameters loaded from: " << par_file << std::endl;
     }
     catch (const std::exception &e)
