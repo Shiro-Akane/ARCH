@@ -37,152 +37,122 @@ ARCH/
 │   ├── io/                     # I/O handling (HDF5 integration & logging)
 │   ├── numerics/               # Core numerical methods
 │   │   ├── burnsolver/         # ODE solvers for nuclear burning (BE_NR, etc.)
+│   │   ├── diffusion/          # Diffusion time integrators (RKL1, RKL2)
 │   │   ├── flux/               # Riemann solvers and flux calculation (SW, LF, HLLC)
 │   │   ├── integrator/         # Time integration schemes (Euler, RK2, RK3)
 │   │   ├── linalg/             # Linear algebra solvers (DenseLU, etc.)
 │   │   └── reconstruction/     # Spatial reconstruction & limiters (PCM, PLM)
-│   └── physics/                # Physical models
-│       ├── eos/                # Equations of State (IdealGas, Helmholtz)
-│       ├── gravity/            # Gravity module (Self-gravity, External)
-│       ├── network/            # Nuclear reaction networks (aprox19)
-│       └── species/            # Fluid species and reaction management
-├── EOS_toolkit/                # Equation of State generation & analysis tools
-├── Validation_file/            # Reference data & validation scripts
+│   ├── physics/                # Physical models
+│   │   ├── diffusionCoe/       # Diffusion coefficients calculation
+│   │   ├── eos/                # Equations of State (IdealGas, Helmholtz, Tabular)
+│   │   ├── gravity/            # Gravity module (Self-gravity, External)
+│   │   ├── network/            # Nuclear reaction networks (aprox19, etc.)
+│   │   ├── nse/                # Nuclear Statistical Equilibrium (NSE) solver
+│   │   └── species/            # Fluid species and reaction management
+│   ├── runtime/                # Runtime static dispatch and factory registry
+│   └── main.cpp                # Simulation entry point
 └── CMakeLists.txt              # CMake build configuration
 ```
 
 ---
 
-##   Dependencies & Prerequisites
-*    **To build and run ARCH, you need the following environment:
+## Dependencies & Prerequisites
 
-C++ Compiler: GCC 9+ / Clang 10+ (Must support C++17)
+To build and run ARCH, you need the following environment:
 
-CMake: Version 3.15 or higher
+- **C++ Compiler**: GCC 9+ / Clang 10+ (Must support C++17)
+- **CMake**: Version 3.15 or higher
+- **OpenMP**: For multi-threading parallelization
+- **HDF5**: C++ High-Level (HL) libraries for data output
 
-OpenMP: For multi-threading parallelization
+> [!TIP]
+> We recommend using Conda to manage dependencies. A provided `environment.yml` (if available) can be used to set up the toolchain.
 
-HDF5: C++ High-Level (HL) libraries for data output
+---
 
-Note: We recommend using Conda to manage dependencies. A provided environment.yml (if available) can be used to set up the toolchain.
+## Build Instructions
 
------------------------------- Build Instructions -------------------------------
+ARCH uses CMake for compilation. Ensure you have a C++17 compatible compiler.
 
-ARCH uses CMake for compilation. Ensure you have a C++17 compatible compiler (GCC, Clang, or MSVC).
-
-# 1. Create build directory
+1. **Create build directory**
+```bash
 mkdir build && cd build
+```
 
-# 2. Configure (Release mode recommended for performance)
+2. **Configure CMake**
+```bash
+# Release mode is highly recommended for performance.
 # OpenMP is enabled by default. To explicitly set it, use -DARCH_ENABLE_OPENMP=ON|OFF
 cmake -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON ..
+```
 
-# 3. Compile using all available CPU cores
+3. **Compile**
+```bash
+# Compile using all available CPU cores
 cmake --build . -j$(nproc)
+```
 
-The executable ARCH will be generated in the bin/ directory.
+The executable `ARCH` will be generated in the `bin/` directory.
 
------------------------------------- Usage -------------------------------------
-ARCH adopts a "Workspace" workflow. Do not run simulations inside the source directories.
+---
 
-# OpenMP Configuration
-# Set the number of threads for OpenMP parallelization before running
-export OMP_NUM_THREADS=4 
+## Simulation Setup & Usage
 
-./bin/ARCH <ProblemType> <PathToParFile>
+ARCH adopts a "Workspace" workflow. **Do not run simulations inside the source directories.**
 
-Step-by-Step Example (Sod Shock Tube)
-1. Create a run directory:
+For detailed instructions on how to set up a new problem case, run a simulation (such as the Sod Shock Tube), and configure the `.par` parameter file, please refer to:
+👉 **[Simulation Case & Configuration Guide](simulation/CaseGuide.md)**
 
-mkdir -p runs/test_sod
+---
 
-2. Copy the template configuration:
+## Extending ARCH (Developer Guide)
 
-cp simulation/Sod/default.par runs/test_sod/arch.par
+ARCH is designed with a plugin-style architecture using zero-overhead static dispatch. 
+To add new physical modules or solvers, follow these guidelines:
 
-3. Run the simulation:
+### 1. Hydro Solver (Riemann Solver / Flux)
+- **Location**: `src/numerics/flux/`
+- **Interface**: Implement a flux function or Riemann solver class (e.g., `FluxSW.h`, `FluxHLLC.h`).
+- **Registration**: Add the solver enum identifier to `FluxKind` in `src/runtime/RuntimeDispatchRegistry.h`. Register the implementation macro/dispatch key in `src/driver/SolverDispatch.cpp` and `RuntimeDispatchRegistry.cpp`.
 
-# Set OpenMP threads and run from the root directory or the run directory
-export OMP_NUM_THREADS=4
-./bin/ARCH Sod runs/test_sod/arch.par
+### 2. Equation of State (EOS)
+- **Location**: `src/physics/eos/`
+- **Interface**: Create a class (e.g., `MyNewEOS`) that implements the state evaluation methods. 
+- **Tabular EOS**: If adding a new tabular format, you must implement a Host Manager and a device-compatible View (refer to `Tabular3DEOS.h`).
+- **Registration**: Register the new EOS parser logic in `dispatch_eos()` within `src/physics/eos/eosdispatch.h`.
 
------------------------------------- Configuration -------------------------------------------
+### 3. Nuclear Reaction Network
+- **Location**: `src/physics/network/`
+- **Interface**: Provide a Struct/Class that satisfies the `NetType` interface, defining isotope lists and rate computations (e.g., `NetAprox19`).
+- **Registration**: Register the network inside `dispatch()` in `src/numerics/burnsolver/BurnDispatch.h`.
 
-Configuration (.par File)
-The behavior of the simulation is controlled by the .par file. 
-Below is a comprehensive list of available parameters based on `RuntimeParams.h`:
+### 4. ODE Solver (for Nuclear Burning)
+- **Location**: `src/numerics/burnsolver/`
+- **Interface**: Create a solver wrapper template `Solver_NEW<NetType, MatrixType, LinearSolver>` that implements the `integrate(...)` method.
+- **Registration**: Add the new solver string matching to `dispatch_ode()` in `src/numerics/burnsolver/BurnDispatch.h`.
 
-# ==========================================
-# Grid
-# ==========================================
-geometry = cartesian   # cartesian, cylindrical, spherical
-nx = 400               # Number of cells in X direction
-ny = 1                 # Number of cells in Y direction
-nz = 1                 # Number of cells in Z direction
-x_min = 0.0            # Min X (supports expressions like "pi", "2.0*pi")
-x_max = 1.0            # Max X
-xl_boundary_type = outflow # outflow, periodic, reflecting, etc.
-xr_boundary_type = outflow
+### 5. Linear Algebra Solver (Linalg)
+- **Location**: `src/numerics/linalg/`
+- **Interface**: Provide a matrix and solver wrapper (e.g., `DenseLUSolver`) that implements the required linear solver interfaces for stiff ODE integration.
+- **Registration**: Register it in `dispatch_linsolver()` within `src/numerics/burnsolver/BurnDispatch.h`.
 
-# ==========================================
-# Numerical Scheme
-# ==========================================
-solver = SW            # SW, LF, Roe, HLLC, etc.
-cfl = 0.8              # Courant factor
-limiter = minmod       # minmod, superbee, mc
-reconstruct = pcm      # pcm, plm, ppm
-timeintegrator = RK2   # Euler, RK2, RK3
-EntropyFix = On        # Entropy fix (On/Off)
-EntropyFixCoefficient = 0.1 
+### 6. Diffusion Solver
+- **Location**: `src/numerics/diffusion/`
+- **Interface**: Provide a class with a static `integrate` method matching:
+  `void integrate(FluidState&, const auto&, const Grid&, const SimConfig&, double, double, const auto&)`
+- **Registration**: Add your solver to the conditional dispatch in `dispatch_diffusion()` within `src/numerics/diffusion/DiffDispatch.h`.
 
-# ==========================================
-# Physics (EOS & Gravity)
-# ==========================================
-eos_type = ideal       # ideal, helmholtz, tabular, etc.
-gamma = 1.4            # Ratio of specific heats for ideal gas
-gravity_type = none    # none, external, self
-# gravity_g_x = -9.81  # For external gravity
-# gravity_G = 6.67e-8  # For self gravity
+### 7. Gravity Solver
+- **Location**: `src/physics/gravity/`
+- **Interface**: Create a class implementing the gravity calculation logic (e.g., `ExternalGravity.h`).
+- **Registration**: Register it in `dispatch_gravity()` within `src/physics/gravity/GravityDispatch.h`.
 
-# ==========================================
-# Nuclear Burn & ODE Solver
-# ==========================================
-use_burn = 0           # 1 to enable nuclear burning
-network_name = aprox19 # Nuclear network name
-ode_solver = BE_NR     # ODE solver: BE_NR, etc.
-ode_rtol = 1e-4        # Relative tolerance for ODE
-ode_atol = 1e-8        # Absolute tolerance for ODE
+### 8. Add a New Problem Case
+- **Location**: `simulation/MyNewCase/`
+- **Interface**: Inherit from `ProblemGenerator`. Implement `Setup(SimConfig&, SpeciesManager&)` and `Init(const PointCoords&, PrimitiveData&) const`.
+- **Registration**: Use the `REGISTER_PROBLEM_CLASS("MyNewCase", MyNewCaseClass)` macro at the bottom of your file. See `simulation/CaseGuide.md` for a full template.
 
-# ==========================================
-# I/O & Output
-# ==========================================
-tmax = 0.25            # Max simulation time
-max_steps = -1         # Max steps (-1 for unlimited)
-out_dir = data         # Output directory
-base_name = arch       # Output base name
-plt_dt = 0.01          # Time interval for plot files
-chk_dt = 0.1           # Time interval for checkpoint files
-restart = false        # Set to true to resume from restart_file
-plt_variables = all    # all, conserved, or comma-separated (rho,u,p,eng)
+---
 
---------------------------------------------------------------------------------------
-
-How to add a new Solver?
-Create src/physics/solvers/SolverNew.h.
-
-Implement the solver class (must satisfy the template interface).
-
-Register it in src/physics/solvers/SolverFactory.h inside the DispatchSolver function.
-
---------------------------------------------------------------------------------------
-How to add a new Problem Case?
-Create a folder simulation/MyNewCase/.
-
-Create MyNewCase.h and inherit from ProblemGenerator.
-
-Implement InitializeData(), GetConfig(), and GetProblemID().
-
-Register it in src/simulation/ProblemFactory.h.
-
-License
+## License
 This project is licensed under the MIT License

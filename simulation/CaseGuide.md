@@ -260,3 +260,27 @@ my_custom_pressure = 5.0
 perturbation_mode  = 3
 bubble_radius      = 0.15
 ```
+
+---
+
+## 🏃 Step-by-Step Example (Sod Shock Tube)
+
+This example demonstrates how to run a built-in simulation case using the Workspace workflow.
+ARCH adopts a "Workspace" workflow. **Do not run simulations inside the source directories.**
+
+1. **Create a run directory:**
+```bash
+mkdir -p runs/test_sod
+```
+
+2. **Copy the template configuration:**
+```bash
+cp simulation/Sod/default.par runs/test_sod/arch.par
+```
+
+3. **Run the simulation:**
+```bash
+# Set OpenMP threads and run from the root directory or the run directory
+export OMP_NUM_THREADS=4
+./bin/ARCH Sod runs/test_sod/arch.par
+```
