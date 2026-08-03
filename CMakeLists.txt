@@ -62,7 +62,6 @@ set(ARCH_APPLICATION_SOURCES
     src/physics/network/aprox19/NetAprox19.cpp
     src/physics/network/aprox21/NetAprox21.cpp
     src/physics/network/iso7/NetIso7.cpp
-    src/runtime/RuntimeDispatchRegistry.cpp
     src/numerics/diffusion/DiffFunction.cpp
     ${SIMULATION_SOURCES}
 )

@@ -72,6 +72,29 @@ Passed into `Setup`. Used to define or look up the fluids/isotopes in your simul
   * **Description**: Looks up the ID of a species that has already been loaded. This is **highly useful** when you have activated a nuclear network (like `aprox19`) in your `.par` file, as the system will automatically pre-load all the network isotopes for you.
   * **Example**: `int c12_id = specs.GetSpeciesID("c12");` (Case-insensitive)
 
+### 📐 PointCoords (Coordinate System Independence)
+Passed into `Init`. An extremely powerful feature of ARCH is its **Geometry Decoupling Design** (see `src/grid/Grid.h`). When setting initial conditions in your `case.cpp`, you can completely **ignore** the `geometry` parameter set in the `.par` file (which only dictates how the solver computes fluxes and volumes). 
+
+The `Grid` module automatically projects every cell into **all three coordinate systems simultaneously**, assuming the physical origin $(0,0,0)$ is always aligned at $x=0, y=0, z=0$. You can initialize a symmetric shape using the easiest coordinate system, while running the actual simulation on a completely different mesh!
+
+* `p.x`, `p.y`, `p.z` *(double)*: Cartesian coordinates.
+* `p.r`, `p.theta`, `p.phi` *(double)*: Spherical coordinates. (e.g., $r=\sqrt{x^2+y^2+z^2}$)
+* `p.r_cy`, `p.phi_cy`, `p.z_cy` *(double)*: Cylindrical coordinates. (e.g., $r_{cy}=\sqrt{x^2+y^2}$)
+
+*(Note: In 1D or 2D setups, the missing dimensions are safely handled. For instance, in 2D spherical/cylindrical geometry, it perfectly degenerates to polar coordinates on the plane.)*
+
+**Equivalent Representation Examples:**
+Imagine you want to place a high-density spherical bubble of radius `0.5` at the origin. 
+* **Hard way (using computational Cartesian coordinates):**
+  ```cpp
+  if (std::sqrt(p.x*p.x + p.y*p.y + p.z*p.z) < 0.5) { ... }
+  ```
+* **Smart way (using the unified spherical representation):**
+  ```cpp
+  if (p.r < 0.5) { ... }
+  ```
+This works flawlessly **even if your `.par` file sets `geometry = cartesian`**. ARCH handles the underlying mapping, allowing your initial condition code to remain clean and mathematically intuitive.
+
 ### 🌊 PrimitiveData (Setting Fluid States)
 Passed into `Init`. Used to assign the physical values to a specific grid cell.
 
@@ -81,6 +104,19 @@ Passed into `Init`. Used to assign the physical values to a specific grid cell.
 * `out.SetMassFraction(int id, double value)`
   * **Description**: Sets the mass fraction ($X_i$) of a specific species in this cell. The `id` must be the integer returned by `add_species` or `GetSpeciesID`. The sum of all mass fractions in a cell should ideally equal 1.0.
   * **Example**: `out.SetMassFraction(air_id, 1.0);`
+
+### 🧰 ProblemHelper (EOS & Network Utilities)
+Provides high-level wrapper functions to assist with setting up initial conditions, particularly when you need to calculate thermodynamic quantities. You can use these by calling them directly in your `Setup` or `Init` functions (requires `#include "../../src/core/ProblemHelper.h"`).
+
+* `ProblemHelper::GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)`
+  * **Description**: Computes the thermal pressure $P$ given density ($\rho$), temperature ($T$), and an array of species mass fractions ($X$). This is incredibly useful when you want to define your initial conditions based on Temperature rather than Pressure, as it automatically queries the underlying EOS (Ideal, Helmholtz, or Tabular) for you.
+  * **Example**: 
+    ```cpp
+    // Assuming you have previously populated out.mass_fractions (e.g. from default_X)
+    out.p = ProblemHelper::GetPressureFromRhoT(config, specs, out.rho, 1e9, out.mass_fractions.data());
+    ```
+* `ProblemHelper::SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X)`
+  * **Description**: Automatically registers all isotopes and computes the default ambient mass fractions based on the chosen nuclear network in your `.par` file (e.g., `aprox19`). Call this in `Setup` to populate your `default_X` array safely.
 
 ---
 
@@ -177,52 +213,76 @@ Here is a comprehensive template for configuring your `.par` parameter file. Par
 # 1. Mandatory Parameters (Must exist in every run)
 # ------------------------------------------------------------------------------
 # Grid setup
-nx       = 100       # Number of cells in X
-ny       = 1         # Number of cells in Y
-nz       = 1         # Number of cells in Z
+geometry = cartesian # Geometry of the computational domain (Options: cartesian, spherical, cylindrical)
 
-x_min    = 0.0       # Domain physical boundaries
+nx       = 100       # Number of cells in the 1st dimension
+ny       = 1         # Number of cells in the 2nd dimension
+nz       = 1         # Number of cells in the 3rd dimension
+
+# Domain physical boundaries
+# IMPORTANT: x, y, z here simply mean the 1st, 2nd, and 3rd axes of your chosen geometry!
+# For example, if geometry = spherical, x is r, y is theta, z is phi.
+# You can use mathematical expressions like "2.0 * pi" directly instead of 6.28318!
+x_min    = 0.0       
 x_max    = 1.0
 y_min    = 0.0
-y_max    = 1.0
+y_max    = 2.0 * pi
 
 # Boundary conditions (Options: outflow, reflect, periodic)
 xl_boundary_type = outflow
 xr_boundary_type = outflow
 yl_boundary_type = outflow
 yr_boundary_type = outflow
+zl_boundary_type = outflow
+zr_boundary_type = outflow
+
+# Execution & Hardware
+compute_backend = cpu        # Options: cpu, cuda
+cuda_device     = 0          # CUDA device ID (if using cuda backend)
 
 # Numerics
 solver          = HLLC       # Riemann Solver (Options: SW, VL, HLLC, Roe)
 reconstruct     = ppm        # Reconstruction (Options: pcm, plm, ppm)
+limiter         = minmod     # Limiter for reconstruction (Options: minmod, superbee, mc)
 timeintegrator  = RK3        # Time Integrator (Options: RK2, RK3)
 cfl             = 0.4        # Courant-Friedrichs-Lewy stability condition
 
 # Physics Core
-eos_type = ideal             # Options: ideal, tabular, helmholtz
-gamma    = 1.4               # Default adiabatic index (used if eos=ideal)
+eos_type       = ideal       # Options: ideal, tabular, helmholtz
+eos_table_path = ""          # Path to HDF5 table (Required for tabular/helmholtz)
+gamma          = 1.4         # Default adiabatic index (used if eos=ideal)
 
 # ------------------------------------------------------------------------------
-# 2. Optional / Advanced Parameters (Can be omitted; defaults apply)
+# 2. Optional Parameters (Can be omitted; defaults apply)
 # ------------------------------------------------------------------------------
 # Time & I/O
 tmax         = 1.0           # Physical end time (Default: 0.1)
 max_steps    = -1            # Stop after N steps (-1 to disable)
 out_dir      = output        # Folder for output data
 base_name    = MyCase        # Prefix for generated HDF5 files
+restart      = false         # Set to true/yes to resume from a checkpoint
+restart_file = ""            # Path to the .h5 checkpoint file
 
 # IO Frequency
 plt_dt       = 0.1           # Output plot files every 0.1 physical seconds
 plt_dstep    = -1            # Output plot files every N steps (-1 to disable)
 chk_dt       = 0.5           # Checkpoint files for restarts
+chk_dstep    = -1            # Checkpoint frequency by steps (-1 to disable)
+plt_variables = all          # Output vars: all, conserved, or comma-separated list (rho,u,p,eng,species)
 
 # Gravity
 gravity_type = external      # Options: none, external, self
+gravity_g_x  = 0.0
 gravity_g_y  = -9.81         # Constant external gravity in Y direction
+gravity_g_z  = 0.0
+# gravity_G  = 6.6743e-8     # For self gravity
 
-# Nuclear Burning & Time Stepping
+# Nuclear Burning
 use_burn         = 0             # 1 = Enable burning, 0 = Disable
-network_name     = aprox19       # Reaction network to auto-load. Supports dynamic hot-switching without recompilation. Valid options: aprox13, aprox19, aprox21, iso7.
+network_name     = aprox19       # Options: aprox13, aprox19, aprox21, iso7.
+use_nse          = 1             # 1 = Enable online Timmes NSE solver
+ode_solver       = BE_NR         # Underlying ODE solver (BE_NR, ROS4, BD)
+linear_solver    = DenseLU       # Linear Algebra solver (DenseLU, SparseKLU)
 
 # Diffusion
 use_diffusion    = 0             # 1 = Enable diffusion, 0 = Disable
@@ -232,27 +292,49 @@ diff_max_stages  = 256           # Maximum number of stages (s) allowed for RKL 
 use_thermal_diff = 0             # 1 = Enable thermal diffusion
 use_viscous_diff = 0             # 1 = Enable viscous diffusion
 use_species_diff = 0             # 1 = Enable species diffusion
+# nu_visc        = 0.0           # Constant kinematic viscosity (Do not set if using HelmEOS)
+# alpha_therm    = 0.0           # Constant thermal diffusivity (Do not set if using HelmEOS)
+# D_spec         = 0.0           # Constant species diffusivity (Do not set if using HelmEOS)
 
-# --- Advanced ODE & Burning Parameters (Hidden by Default) ---
-# These parameters have robust defaults in RuntimeParams.h. 
-# Only override them if your nuclear network fails to converge.
+# ------------------------------------------------------------------------------
+# 3. Advanced Tuning & Internal Controls (Hidden by Default)
+# ------------------------------------------------------------------------------
+# Only override these mathematical and internal solver parameters if necessary!
+
+# --- Numerics & Grid Controls ---
+# EntropyFix      = On       # Apply entropy fix (On/Off)
+# EntropyFixCoefficient = 0.1
+# sml_rho         = 1e-12    # Floor density
+# max_eint        = 1e21     # Maximum specific internal energy allowed
+
+# --- Advanced ODE & Burning Parameters ---
+# nseTempThreshold = 4.5e9       # Temperature threshold for NSE (K)
+# nseDensThreshold = 1.0e6       # Density threshold for NSE (g/cm^3)
+# enforce_mass_conservation = 1  # Re-normalize mass fractions after burning step
+# burn_verbose_level = 0         # Print debug information during burning
 # 
 # nuclearTempMin   = 1e9         # Minimum temperature to ignite burning (K)
 # nuclearDensMin   = 1e-10       # Minimum density to ignite burning (g/cm^3)
+# smallt           = 1e5         # Temperature floor for burning module (K)
+# smallx           = 1e-20       # Mass fraction floor for burning module
 # dt_init          = 1e-16       # Forced initial physical timestep for extreme stiff problems
 # dt_min           = 1e-20       # Minimum allowed physical timestep
 # tstep_change_factor = 1.2      # Maximum growth factor for macro-fluid timestep
-# enucDtFactor     = 1e30        # Limits step size based on nuclear energy release rate (dt = enucDtFactor * eint/enuc). Default 1e30 (effectively off). Set to 0.1 to enable.
+# enucDtFactor     = 1e30        # Limits step size based on nuclear energy release rate (set to 0.1 to enable)
 # 
-# ode_solver       = BE_NR       # Underlying ODE solver (BE_NR, ROS4, VODE)
 # ode_rtol         = 1e-4        # Relative tolerance for Newton-Raphson
 # ode_atol         = 1e-8        # Absolute tolerance
 # ode_max_newton_iter = 50       # Max NR iterations per sub-step before reducing dt
+# ode_max_substeps = 10000       # Max ODE sub-steps per macro-step
 # ode_dt_fac_max   = 2.0         # Max step growth factor for the internal PI controller
 # ode_dt_fac_min   = 0.1         # Max step shrink factor for the internal PI controller
+# ode_dt_safe_fac  = 0.9         # Safety factor for step size selection
+# ode_initial_dt_frac = 1e-3     # Initial sub-step fraction of macro-step
+# ode_use_numerical_jac = 0      # 1 = Force numerical Jacobian even if analytical exists
+# ode_freeze_jacobian = 0        # 1 = Freeze Jacobian for multiple Newton iterations
 
 # ------------------------------------------------------------------------------
-# 3. User Custom Parameters (Read by config.Get<T> in your Setup function)
+# 4. User Custom Parameters (Read by config.Get<T> in your Setup function)
 # ------------------------------------------------------------------------------
 # You can define anything here without touching the core framework!
 my_custom_density  = 2.0

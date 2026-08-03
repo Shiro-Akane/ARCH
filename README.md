@@ -49,7 +49,6 @@ ARCH/
 │   │   ├── network/            # Nuclear reaction networks (aprox19, etc.)
 │   │   ├── nse/                # Nuclear Statistical Equilibrium (NSE) solver
 │   │   └── species/            # Fluid species and reaction management
-│   ├── runtime/                # Runtime static dispatch and factory registry
 │   └── main.cpp                # Simulation entry point
 └── CMakeLists.txt              # CMake build configuration
 ```
@@ -113,7 +112,7 @@ To add new physical modules or solvers, follow these guidelines:
 ### 1. Hydro Solver (Riemann Solver / Flux)
 - **Location**: `src/numerics/flux/`
 - **Interface**: Implement a flux function or Riemann solver class (e.g., `FluxSW.h`, `FluxHLLC.h`).
-- **Registration**: Add the solver enum identifier to `FluxKind` in `src/runtime/RuntimeDispatchRegistry.h`. Register the implementation macro/dispatch key in `src/driver/SolverDispatch.cpp` and `RuntimeDispatchRegistry.cpp`.
+- **Registration**: Register the implementation in `src/driver/SolverDispatch.cpp`.
 
 ### 2. Equation of State (EOS)
 - **Location**: `src/physics/eos/`
