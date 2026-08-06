@@ -92,6 +92,12 @@ struct SolverLW
         std::vector<FluidVector> inter_fluxes(grid.GetTotalSize()); // all flux at interface
         std::vector<double> inter_species_fluxes(n_spec * total_size);
 
+        // Ensure output memory is ready before parallel region
+        if (state_new.GetNumSpecies() != n_spec)
+        {
+            state_new.Resize(grid, n_spec);
+        }
+
 // ---------------------------------------------------------
 // Step 1: Predictor Step (Flux Calculation)
 // Calculate fluxes at the cell interfaces (i + 1/2) at time (t + dt/2)
@@ -131,18 +137,11 @@ struct SolverLW
                 }
             }
         }
-
-        // Ensure output memory is ready
-        if (state_new.GetNumSpecies() != n_spec)
-        {
-            state_new.Resize(grid, n_spec);
-        }
-
 // ---------------------------------------------------------
 // Step 2: Corrector Step (State Update)
 // Update cell centers using the divergence of the interface fluxes
 // ---------------------------------------------------------
-#pragma omp parallel for schedule(static)
+#pragma omp for schedule(static)
         for (int i = grid.Is(); i < grid.Ie(); i++)
         {
             // Flux Difference: F_{right_interface} - F_{left_interface}

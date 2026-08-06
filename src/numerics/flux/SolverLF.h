@@ -52,44 +52,46 @@ struct SolverLF
         std::vector<double> species_fluxes(n_spec * total_size);
         std::vector<FluidVector> node_fluxes(grid.GetTotalSize()); // All flux at interface
 
-// ---------------------------------------------------------
-// Step 1: Flux Calculation Loop
-// Compute F(U) for the entire stencil range (including ghost cells needed)
-// ---------------------------------------------------------
-#pragma omp parallel
-        {
-            std::vector<double> Xi_local(n_spec);
-
-#pragma omp for schedule(static)
-            for (int i = grid.Is() - 1; i < grid.Ie(); i++) // Range covers i-1 and i+1
-            {
-                // Load species at cell i
-                state_old.get_species_to_buffer(i, Xi_local.data());
-
-                FluidVector U = state_old.get(i);
-
-                // Compute Physical Flux F(U)
-                node_fluxes[i] = get_flux(U, Xi_local.data(), eos);
-
-                // Compute Species Fluxes: F_k = (rho * u) * X_k
-                for (int k = 0; k < n_spec; ++k)
-                {
-                    species_fluxes[k * total_size + i] = node_fluxes[i].rho * Xi_local[k];
-                }
-            }
-        }
-
-        // Ensure output state memory is allocated
+        // Ensure output state memory is allocated before parallel regions
         if (state_new.GetNumSpecies() != n_spec)
         {
             state_new.Resize(grid, n_spec);
         }
 
 // ---------------------------------------------------------
+// Step 1: Flux Calculation Loop
+// Compute F(U) for the entire stencil range (including ghost cells needed)
+// ---------------------------------------------------------
+#pragma omp parallel
+        {
+            // Thread-local species buffers
+            std::vector<double> Xi_L(n_spec);
+            std::vector<double> Xi_R(n_spec);
+            std::vector<double> Xi_flux(n_spec);
+
+#pragma omp for schedule(static)
+            for (int i = grid.Is() - 1; i < grid.Ie(); i++) // Range covers i-1 and i+1
+            {
+                // Load species at cell i
+                state_old.get_species_to_buffer(i, Xi_flux.data());
+
+                FluidVector U = state_old.get(i);
+
+                // Compute Physical Flux F(U)
+                node_fluxes[i] = get_flux(U, Xi_flux.data(), eos);
+
+                // Compute Species Fluxes: F_k = (rho * u) * X_k
+                for (int k = 0; k < n_spec; ++k)
+                {
+                    species_fluxes[k * total_size + i] = node_fluxes[i].rho * Xi_flux[k];
+                }
+            }
+
+// ---------------------------------------------------------
 // Step 2: State Update Loop
 // Apply LF formula for physical domain
 // ---------------------------------------------------------
-#pragma omp parallel for schedule(static)
+#pragma omp for schedule(static)
         for (int i = grid.Is(); i < grid.Ie(); i++)
         {
             // Central Difference of Fluxes: F_{i+1} - F_{i-1}

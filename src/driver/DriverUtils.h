@@ -64,8 +64,10 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     const int nk = ke - ks;
     const int nj = je - js;
 
-#pragma omp parallel for schedule(static)
-    for (int kj = 0; kj < nk * nj; ++kj)
+#pragma omp parallel
+    {
+#pragma omp for schedule(static)
+        for (int kj = 0; kj < nk * nj; ++kj)
     {
         int k = ks + kj / nj;
         int j = js + kj % nj;
@@ -107,7 +109,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
         const int total_x = grid.n1 + 2 * ng;
         const int nk2 = ke - ks;
 
-#pragma omp parallel for schedule(static)
+#pragma omp for schedule(static)
         for (int ki = 0; ki < nk2 * total_x; ++ki)
         {
             int k = ks + ki / total_x;
@@ -148,7 +150,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     // =========================================================
     if (grid.dim == 3)
     {
-#pragma omp parallel for schedule(static)
+#pragma omp for schedule(static)
         for (int j = 0; j < grid.n2 + 2 * ng; ++j)
         { // Full Y
             for (int i = 0; i < grid.n1 + 2 * ng; ++i)
@@ -181,7 +183,23 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
             }
         }
     }
+    }
 }
+
+/**
+ * @brief Local Helper Class to wrap Boundary Condition logic.
+ * * This allows the RK solver to call bc.apply() inside its stages
+ * * without needing to know about SimConfig details.
+ */
+struct BCHandler
+{
+    const SimConfig &config;
+
+    void apply(FluidState &state, const Grid &grid) const
+    {
+        apply_boundary_conditions(state, grid, config);
+    }
+};
 
 /**
  * @brief Computes adaptive time step (dt) strictly evaluating 3D wave speeds.
@@ -246,18 +264,3 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
 
     return cfl_number * min_dt;
 }
-
-/**
- * @brief Local Helper Class to wrap Boundary Condition logic.
- * * This allows the RK solver to call bc.apply() inside its stages
- * * without needing to know about SimConfig details.
- */
-struct BCHandler
-{
-    const SimConfig &config;
-
-    void apply(FluidState &state, const Grid &grid) const
-    {
-        apply_boundary_conditions(state, grid, config);
-    }
-};
