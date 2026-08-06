@@ -31,9 +31,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     auto copy_cell = [&](int src, int dst)
     {
         state.rho[dst] = state.rho[src];
-        state.mom_x[dst] = state.mom_x[src];
-        state.mom_y[dst] = state.mom_y[src];
-        state.mom_z[dst] = state.mom_z[src];
+        state.mom_u[dst] = state.mom_u[src];
+        state.mom_v[dst] = state.mom_v[src];
+        state.mom_w[dst] = state.mom_w[src];
         state.eng[dst] = state.eng[src];
         for (int k = 0; k < n_species; ++k)
         {
@@ -45,11 +45,11 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     {
         copy_cell(src, dst);
         if (dir == 0)
-            state.mom_x[dst] = -state.mom_x[dst]; // X-reflect
+            state.mom_u[dst] = -state.mom_u[dst]; // X-reflect
         if (dir == 1)
-            state.mom_y[dst] = -state.mom_y[dst]; // Y-reflect
+            state.mom_v[dst] = -state.mom_v[dst]; // Y-reflect
         if (dir == 2)
-            state.mom_z[dst] = -state.mom_z[dst]; // Z-reflect
+            state.mom_w[dst] = -state.mom_w[dst]; // Z-reflect
     };
 
     int ng = grid.ng;
@@ -77,9 +77,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
             for (int g = 1; g <= ng; g++)
             {
                 int dst = grid.GetIndex(i_start - g, j, k);
-                if (cfg.grid.xl_boundary_type == "periodic")
+                if (cfg.grid.x1l_boundary_type == "periodic")
                     copy_cell(grid.GetIndex(i_end - g + 1, j, k), dst);
-                else if (cfg.grid.xl_boundary_type == "reflect")
+                else if (cfg.grid.x1l_boundary_type == "reflect")
                     reflect_cell(grid.GetIndex(i_start + g - 1, j, k), dst, 0);
                 else
                     copy_cell(grid.GetIndex(i_start, j, k), dst); // outflow
@@ -88,9 +88,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
             for (int g = 1; g <= ng; g++)
             {
                 int dst = grid.GetIndex(i_end + g, j, k);
-                if (cfg.grid.xr_boundary_type == "periodic")
+                if (cfg.grid.x1r_boundary_type == "periodic")
                     copy_cell(grid.GetIndex(i_start + g - 1, j, k), dst);
-                else if (cfg.grid.xr_boundary_type == "reflect")
+                else if (cfg.grid.x1r_boundary_type == "reflect")
                     reflect_cell(grid.GetIndex(i_end - g + 1, j, k), dst, 0);
                 else
                     copy_cell(grid.GetIndex(i_end, j, k), dst); // outflow
@@ -100,11 +100,11 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
 
     // =========================================================
     // 2. Y-Direction Boundaries (Skips if 1D)
-    // Note: Loop over full X range (0 to nx+2ng) to fill corners!
+    // Note: Loop over full X range (0 to n1+2ng) to fill corners!
     // =========================================================
     if (grid.dim >= 2)
     {
-        const int total_x = grid.nx + 2 * ng;
+        const int total_x = grid.n1 + 2 * ng;
         const int nk2 = ke - ks;
 
 #pragma omp parallel for schedule(static)
@@ -120,9 +120,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
                 for (int g = 1; g <= ng; g++)
                 {
                     int dst = grid.GetIndex(i, j_start - g, k);
-                    if (cfg.grid.yl_boundary_type == "periodic")
+                    if (cfg.grid.x2l_boundary_type == "periodic")
                         copy_cell(grid.GetIndex(i, j_end - g + 1, k), dst);
-                    else if (cfg.grid.yl_boundary_type == "reflect")
+                    else if (cfg.grid.x2l_boundary_type == "reflect")
                         reflect_cell(grid.GetIndex(i, j_start + g - 1, k), dst, 1);
                     else
                         copy_cell(grid.GetIndex(i, j_start, k), dst);
@@ -131,9 +131,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
                 for (int g = 1; g <= ng; g++)
                 {
                     int dst = grid.GetIndex(i, j_end + g, k);
-                    if (cfg.grid.yr_boundary_type == "periodic")
+                    if (cfg.grid.x2r_boundary_type == "periodic")
                         copy_cell(grid.GetIndex(i, j_start + g - 1, k), dst);
-                    else if (cfg.grid.yr_boundary_type == "reflect")
+                    else if (cfg.grid.x2r_boundary_type == "reflect")
                         reflect_cell(grid.GetIndex(i, j_end - g + 1, k), dst, 1);
                     else
                         copy_cell(grid.GetIndex(i, j_end, k), dst);
@@ -149,9 +149,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     if (grid.dim == 3)
     {
 #pragma omp parallel for schedule(static)
-        for (int j = 0; j < grid.ny + 2 * ng; ++j)
+        for (int j = 0; j < grid.n2 + 2 * ng; ++j)
         { // Full Y
-            for (int i = 0; i < grid.nx + 2 * ng; ++i)
+            for (int i = 0; i < grid.n1 + 2 * ng; ++i)
             { // Full X
                 int k_start = grid.Ks();
                 int k_end = grid.Ke() - 1;
@@ -160,9 +160,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
                 for (int g = 1; g <= ng; g++)
                 {
                     int dst = grid.GetIndex(i, j, k_start - g);
-                    if (cfg.grid.zl_boundary_type == "periodic")
+                    if (cfg.grid.x3l_boundary_type == "periodic")
                         copy_cell(grid.GetIndex(i, j, k_end - g + 1), dst);
-                    else if (cfg.grid.zl_boundary_type == "reflect")
+                    else if (cfg.grid.x3l_boundary_type == "reflect")
                         reflect_cell(grid.GetIndex(i, j, k_start + g - 1), dst, 2);
                     else
                         copy_cell(grid.GetIndex(i, j, k_start), dst);
@@ -171,9 +171,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
                 for (int g = 1; g <= ng; g++)
                 {
                     int dst = grid.GetIndex(i, j, k_end + g);
-                    if (cfg.grid.zr_boundary_type == "periodic")
+                    if (cfg.grid.x3r_boundary_type == "periodic")
                         copy_cell(grid.GetIndex(i, j, k_start + g - 1), dst);
-                    else if (cfg.grid.zr_boundary_type == "reflect")
+                    else if (cfg.grid.x3r_boundary_type == "reflect")
                         reflect_cell(grid.GetIndex(i, j, k_end - g + 1), dst, 2);
                     else
                         copy_cell(grid.GetIndex(i, j, k_end), dst);
@@ -185,7 +185,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
 
 /**
  * @brief Computes adaptive time step (dt) strictly evaluating 3D wave speeds.
- * Uses dt = CFL * min( dx/(|u|+c), dy/(|v|+c), dz/(|w|+c) )
+ * Uses dt = CFL * min( dx1/(|u|+c), dx2/(|v|+c), dx3/(|w|+c) )
  */
 template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number)
@@ -225,13 +225,13 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
                 double p = eos.get_pressure(U, Xi_cache.data());
                 double c = eos.get_sound_speed(U, p, Xi_cache.data());
 
-                double inv_dt_sum = (std::abs(U.mom_x / rho) + c) / grid.dx;
+                double inv_dt_sum = (std::abs(U.mom_u / rho) + c) / grid.dx1;
 
                 if (grid.dim >= 2)
-                    inv_dt_sum += (std::abs(U.mom_y / rho) + c) / grid.dy;
+                    inv_dt_sum += (std::abs(U.mom_v / rho) + c) / grid.dx2;
 
                 if (grid.dim == 3)
-                    inv_dt_sum += (std::abs(U.mom_z / rho) + c) / grid.dz;
+                    inv_dt_sum += (std::abs(U.mom_w / rho) + c) / grid.dx3;
 
                 double cell_dt = 1.0 / std::max(inv_dt_sum, 1e-10);
                 local_min_dt = std::min(local_min_dt, cell_dt);
@@ -246,3 +246,18 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
 
     return cfl_number * min_dt;
 }
+
+/**
+ * @brief Local Helper Class to wrap Boundary Condition logic.
+ * * This allows the RK solver to call bc.apply() inside its stages
+ * * without needing to know about SimConfig details.
+ */
+struct BCHandler
+{
+    const SimConfig &config;
+
+    void apply(FluidState &state, const Grid &grid) const
+    {
+        apply_boundary_conditions(state, grid, config);
+    }
+};

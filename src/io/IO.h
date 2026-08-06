@@ -46,14 +46,14 @@ using namespace HighFive;
 // ======================================================================
 inline std::vector<size_t> get_hdf5_dims(const Grid &grid)
 {
-    size_t nx = grid.nx;
-    size_t ny = grid.dim >= 2 ? grid.ny : 1;
-    size_t nz = grid.dim == 3 ? grid.nz : 1;
+    size_t n1 = grid.n1;
+    size_t n2 = grid.dim >= 2 ? grid.n2 : 1;
+    size_t n3 = grid.dim == 3 ? grid.n3 : 1;
     if (grid.dim == 1)
-        return {nx};
+        return {n1};
     if (grid.dim == 2)
-        return {ny, nx};
-    return {nz, ny, nx};
+        return {n2, n1};
+    return {n3, n2, n1};
 }
 
 // ======================================================================
@@ -99,16 +99,16 @@ void write_plt(const FluidState &state, const EosType &eos,
         std::vector<std::string> axis_names = grid.GetAxisNames(); // 例如 {"x"} 或 {"y", "x"} 或 {"z", "y", "x"}
 
         // 输出坐标轴数据
-        std::vector<double> coord_x(grid.nx);
-        for (int i = 0; i < grid.nx; ++i)
+        std::vector<double> coord_x(grid.n1);
+        for (int i = 0; i < grid.n1; ++i)
             coord_x[i] = grid.GetCellCenterX(grid.Is() + i);
         grid_group.createDataSet(axis_names[0], coord_x); // x 坐标
 
         // 只有在二维或三维时才输出 y 坐标
         if (grid.dim >= 2)
         {
-            std::vector<double> coord_y(grid.ny);
-            for (int j = 0; j < grid.ny; ++j)
+            std::vector<double> coord_y(grid.n2);
+            for (int j = 0; j < grid.n2; ++j)
                 coord_y[j] = grid.GetCellCenterY(grid.Js() + j);
             grid_group.createDataSet(axis_names[1], coord_y); // y 坐标
         }
@@ -116,8 +116,8 @@ void write_plt(const FluidState &state, const EosType &eos,
         // 只有在三维时才输出 z 坐标
         if (grid.dim == 3)
         {
-            std::vector<double> coord_z(grid.nz);
-            for (int k = 0; k < grid.nz; ++k)
+            std::vector<double> coord_z(grid.n3);
+            for (int k = 0; k < grid.n3; ++k)
                 coord_z[k] = grid.GetCellCenterZ(grid.Ks() + k);
             grid_group.createDataSet(axis_names[2], coord_z); // z 坐标
         }
@@ -164,21 +164,21 @@ void write_plt(const FluidState &state, const EosType &eos,
             write_var("u", [](const FluidState &s, int idx)
                       {
                 auto U = s.get(idx);
-                return U.rho > 1e-12 ? U.mom_x / U.rho : 0.0; });
+                return U.rho > 1e-12 ? U.mom_u / U.rho : 0.0; });
         }
         if (vars.v && grid.dim >= 2)
         {
             write_var("v", [](const FluidState &s, int idx)
                       {
                 auto U = s.get(idx);
-                return U.rho > 1e-12 ? U.mom_y / U.rho : 0.0; });
+                return U.rho > 1e-12 ? U.mom_v / U.rho : 0.0; });
         }
         if (vars.w && grid.dim == 3)
         {
             write_var("w", [](const FluidState &s, int idx)
                       {
                 auto U = s.get(idx);
-                return U.rho > 1e-12 ? U.mom_z / U.rho : 0.0; });
+                return U.rho > 1e-12 ? U.mom_w / U.rho : 0.0; });
         }
         if (vars.species)
         {
@@ -228,9 +228,9 @@ inline void write_chk(const FluidState &state, const Grid &grid,
 
         // 2. 极速写入 SoA 数组 (直接传入 std::vector，HighFive 会自动处理)
         file.createDataSet("rho", state.rho);
-        file.createDataSet("mom_x", state.mom_x);
-        file.createDataSet("mom_y", state.mom_y);
-        file.createDataSet("mom_z", state.mom_z);
+        file.createDataSet("mom_u", state.mom_u);
+        file.createDataSet("mom_v", state.mom_v);
+        file.createDataSet("mom_w", state.mom_w);
         file.createDataSet("eng", state.eng);
 
         if (state.GetNumSpecies() > 0)
@@ -272,9 +272,9 @@ inline void read_chk(const std::string &filepath, FluidState &state, const Grid 
 
         // 3. 恢复 SoA 数组数据
         file.getDataSet("rho").read(state.rho);
-        file.getDataSet("mom_x").read(state.mom_x);
-        file.getDataSet("mom_y").read(state.mom_y);
-        file.getDataSet("mom_z").read(state.mom_z);
+        file.getDataSet("mom_u").read(state.mom_u);
+        file.getDataSet("mom_v").read(state.mom_v);
+        file.getDataSet("mom_w").read(state.mom_w);
         file.getDataSet("eng").read(state.eng);
 
         if (state.GetNumSpecies() > 0 && file.exist("mass_fractions"))

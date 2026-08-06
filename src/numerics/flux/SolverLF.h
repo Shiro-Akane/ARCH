@@ -5,7 +5,7 @@
  * * Known for being very stable but highly dissipative (smears shocks).
  * *
  * * Update Formula:
- * * U^{n+1}_i = 0.5 * (U_{i-1} + U_{i+1}) - 0.5 * (dt/dx) * (F_{i+1} - F_{i-1})
+ * * U^{n+1}_i = 0.5 * (U_{i-1} + U_{i+1}) - 0.5 * (dt/dx1) * (F_{i+1} - F_{i-1})
  */
 
 #pragma once
@@ -40,9 +40,9 @@ struct SolverLF
                        const Grid &grid, double dt)
     {
         // 1. Pre-compute Coefficients
-        double dx = grid.dx;
-        // Coefficient C = 0.5 * dt / dx
-        double coeff = 0.5 * dt / dx;
+        double dx1 = grid.dx1;
+        // Coefficient C = 0.5 * dt / dx1
+        double coeff = 0.5 * dt / dx1;
 
         int n_spec = state_old.GetNumSpecies();
         int total_size = grid.GetTotalSize();

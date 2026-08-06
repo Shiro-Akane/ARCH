@@ -41,7 +41,7 @@ namespace TimeIntegration
 
                 if (grid.geometry == "cartesian")
                 {
-                    vol = (dir == 0) ? grid.dx : ((dir == 1) ? grid.dy : grid.dz);
+                    vol = (dir == 0) ? grid.dx1 : ((dir == 1) ? grid.dx2 : grid.dx3);
                 }
                 else if (grid.geometry == "cylindrical")
                 {
@@ -52,25 +52,25 @@ namespace TimeIntegration
                     {
                         area_l = r_l;
                         area_r = r_r;
-                        vol = r_c * grid.dx;
+                        vol = r_c * grid.dx1;
                     }
                     else if (dir == 1) // 3D: z, 2D: phi
                     {
                         if (grid.dim == 2) { // phi
                             area_l = 1.0;
                             area_r = 1.0;
-                            vol = r_c * grid.dy;
+                            vol = r_c * grid.dx2;
                         } else { // z
                             area_l = 1.0;
                             area_r = 1.0;
-                            vol = grid.dy;
+                            vol = grid.dx2;
                         }
                     }
                     else if (dir == 2) // phi
                     {
                         area_l = 1.0;
                         area_r = 1.0;
-                        vol = r_c * grid.dz;
+                        vol = r_c * grid.dx3;
                     }
                 }
                 else if (grid.geometry == "spherical")
@@ -85,11 +85,11 @@ namespace TimeIntegration
                         if (grid.dim == 2) { // 2D polar fallback
                             area_l = r_l;
                             area_r = r_r;
-                            vol = r_c * grid.dx;
+                            vol = r_c * grid.dx1;
                         } else {
                             area_l = r_l * r_l;
                             area_r = r_r * r_r;
-                            vol = r_c * r_c * grid.dx;
+                            vol = r_c * r_c * grid.dx1;
                         }
                     }
                     else if (dir == 1) // theta (3D) or phi (2D)
@@ -97,20 +97,20 @@ namespace TimeIntegration
                         if (grid.dim == 2) { // 2D polar fallback
                             area_l = 1.0;
                             area_r = 1.0;
-                            vol = r_c * grid.dy;
+                            vol = r_c * grid.dx2;
                         } else {
-                            double theta_l = grid.y_min + (j - grid.ng) * grid.dy;
-                            double theta_r = grid.y_min + (j - grid.ng + 1) * grid.dy;
+                            double theta_l = grid.x2_min + (j - grid.ng) * grid.dx2;
+                            double theta_r = grid.x2_min + (j - grid.ng + 1) * grid.dx2;
                             area_l = std::sin(theta_l);
                             area_r = std::sin(theta_r);
-                            vol = r_c * std::sin(theta_c) * grid.dy;
+                            vol = r_c * std::sin(theta_c) * grid.dx2;
                         }
                     }
                     else if (dir == 2) // phi (3D only)
                     {
                         area_l = 1.0;
                         area_r = 1.0;
-                        vol = r_c * std::sin(theta_c) * grid.dz;
+                        vol = r_c * std::sin(theta_c) * grid.dx3;
                     }
                 }
 
@@ -169,35 +169,35 @@ namespace TimeIntegration
                     double p = eos.get_pressure(U, Xi.data());
                     
                     double rho = std::max(U.rho, 1e-12);
-                    double v_x = U.mom_x / rho;
-                    double v_y = U.mom_y / rho;
-                    double v_z = U.mom_z / rho;
+                    double v_x = U.mom_u / rho;
+                    double v_y = U.mom_v / rho;
+                    double v_z = U.mom_w / rho;
 
                     if (grid.geometry == "cylindrical")
                     {
-                        // mom_x = v_r. 2D mom_y = v_phi. 3D mom_z = v_phi
+                        // mom_u = v_r. 2D mom_v = v_phi. 3D mom_w = v_phi
                         double v_phi = (grid.dim == 2) ? v_y : ((grid.dim == 3) ? v_z : 0.0);
                         
-                        dU[idx].mom_x += dt * (rho * v_phi * v_phi + p) / r;
+                        dU[idx].mom_u += dt * (rho * v_phi * v_phi + p) / r;
                         
                         if (grid.dim == 2) {
-                            dU[idx].mom_y += dt * (-rho * v_x * v_y) / r;
+                            dU[idx].mom_v += dt * (-rho * v_x * v_y) / r;
                         } else if (grid.dim == 3) {
-                            dU[idx].mom_z += dt * (-rho * v_x * v_z) / r;
+                            dU[idx].mom_w += dt * (-rho * v_x * v_z) / r;
                         }
                     }
                     else if (grid.geometry == "spherical")
                     {
-                        // mom_x = v_r. 2D mom_y = v_phi. 
-                        // 3D mom_y = v_theta, mom_z = v_phi.
+                        // mom_u = v_r. 2D mom_v = v_phi. 
+                        // 3D mom_v = v_theta, mom_w = v_phi.
                         if (grid.dim == 1) {
-                            dU[idx].mom_x += dt * 2.0 * p / r;
+                            dU[idx].mom_u += dt * 2.0 * p / r;
                         } 
                         else if (grid.dim == 2) {
                             // 2D Spherical falls back to Polar (r, phi)
                             double v_phi = v_y;
-                            dU[idx].mom_x += dt * (rho * v_phi * v_phi + p) / r;
-                            dU[idx].mom_y += dt * (-rho * v_x * v_y) / r;
+                            dU[idx].mom_u += dt * (rho * v_phi * v_phi + p) / r;
+                            dU[idx].mom_v += dt * (-rho * v_x * v_y) / r;
                         } 
                         else if (grid.dim == 3) {
                             double v_theta = v_y;
@@ -205,9 +205,9 @@ namespace TimeIntegration
                             double theta = coords.theta;
                             double cot_theta = std::cos(theta) / std::max(std::sin(theta), 1e-14); // Avoid div zero at poles
                             
-                            dU[idx].mom_x += dt * (rho * (v_theta * v_theta + v_phi * v_phi) + 2.0 * p) / r;
-                            dU[idx].mom_y += dt * (rho * v_phi * v_phi * cot_theta + p * cot_theta - rho * v_x * v_theta) / r;
-                            dU[idx].mom_z += dt * (-rho * v_x * v_phi - rho * v_theta * v_phi * cot_theta) / r;
+                            dU[idx].mom_u += dt * (rho * (v_theta * v_theta + v_phi * v_phi) + 2.0 * p) / r;
+                            dU[idx].mom_v += dt * (rho * v_phi * v_phi * cot_theta + p * cot_theta - rho * v_x * v_theta) / r;
+                            dU[idx].mom_w += dt * (-rho * v_x * v_phi - rho * v_theta * v_phi * cot_theta) / r;
                         }
                     }
                 }
@@ -245,16 +245,16 @@ namespace TimeIntegration
                 if (rho < 1e-12)
                     continue;
 
-                double vx = state.mom_x[idx] / rho;
-                double vy = state.mom_y[idx] / rho;
-                double vz = state.mom_z[idx] / rho;
+                double vx = state.mom_u[idx] / rho;
+                double vy = state.mom_v[idx] / rho;
+                double vz = state.mom_w[idx] / rho;
 
                 double gx = 0.0, gy = 0.0, gz = 0.0;
                 gravity.get_gravity(i, j, k, gx, gy, gz);
 
-                dU[idx].mom_x += dt * rho * gx;
-                dU[idx].mom_y += dt * rho * gy;
-                dU[idx].mom_z += dt * rho * gz;
+                dU[idx].mom_u += dt * rho * gx;
+                dU[idx].mom_v += dt * rho * gy;
+                dU[idx].mom_w += dt * rho * gz;
                 dU[idx].eng += dt * rho * (vx * gx + vy * gy + vz * gz);
             }
         }
@@ -293,16 +293,16 @@ namespace TimeIntegration
                 if (U_new.rho < sml_rho)
                 {
                     U_new.rho = sml_rho;
-                    U_new.mom_x = 0.0;
-                    U_new.mom_y = 0.0;
-                    U_new.mom_z = 0.0;
+                    U_new.mom_u = 0.0;
+                    U_new.mom_v = 0.0;
+                    U_new.mom_w = 0.0;
                     // Reset energy such that e_int is small, e.g., 1e-10
                     U_new.eng = sml_rho * 1e-10; 
                 }
                 else
                 {
                     // 动能
-                    double e_kin = 0.5 * (U_new.mom_x * U_new.mom_x + U_new.mom_y * U_new.mom_y + U_new.mom_z * U_new.mom_z) / U_new.rho;
+                    double e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
                     
                     // 速度上限截断 (Velocity Ceiling)
                     // 防止近真空区被注入动量后产生超光速(如 1e24 cm/s)，导致 CFL 直接崩溃
@@ -310,10 +310,10 @@ namespace TimeIntegration
                     double v_sq = 2.0 * e_kin / U_new.rho;
                     if (v_sq > max_vel * max_vel) {
                         double scale = max_vel / std::sqrt(v_sq);
-                        U_new.mom_x *= scale;
-                        U_new.mom_y *= scale;
-                        U_new.mom_z *= scale;
-                        e_kin = 0.5 * (U_new.mom_x * U_new.mom_x + U_new.mom_y * U_new.mom_y + U_new.mom_z * U_new.mom_z) / U_new.rho;
+                        U_new.mom_u *= scale;
+                        U_new.mom_v *= scale;
+                        U_new.mom_w *= scale;
+                        e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
                     }
 
                     // 物理合理性截断 (Specific Internal Energy Floor & Ceiling)：

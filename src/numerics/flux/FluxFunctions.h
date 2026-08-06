@@ -22,30 +22,30 @@
 inline double get_un(const FluidVector &U, int dir)
 {
     if (dir == 0)
-        return U.mom_x / U.rho;
+        return U.mom_u / U.rho;
     if (dir == 1)
-        return U.mom_y / U.rho;
-    return U.mom_z / U.rho;
+        return U.mom_v / U.rho;
+    return U.mom_w / U.rho;
 }
 
 /// Gets the first tangential velocity component
 inline double get_ut1(const FluidVector &U, int dir)
 {
     if (dir == 0)
-        return U.mom_y / U.rho;
+        return U.mom_v / U.rho;
     if (dir == 1)
-        return U.mom_z / U.rho;
-    return U.mom_x / U.rho;
+        return U.mom_w / U.rho;
+    return U.mom_u / U.rho;
 }
 
 /// Gets the second tangential velocity component
 inline double get_ut2(const FluidVector &U, int dir)
 {
     if (dir == 0)
-        return U.mom_z / U.rho;
+        return U.mom_w / U.rho;
     if (dir == 1)
-        return U.mom_x / U.rho;
-    return U.mom_y / U.rho;
+        return U.mom_u / U.rho;
+    return U.mom_v / U.rho;
 }
 
 /// Constructs a FluidVector from normal and tangential flux components
@@ -56,21 +56,21 @@ inline FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, doub
     F.eng = f_eng;
     if (dir == 0)
     {
-        F.mom_x = f_un;
-        F.mom_y = f_ut1;
-        F.mom_z = f_ut2;
+        F.mom_u = f_un;
+        F.mom_v = f_ut1;
+        F.mom_w = f_ut2;
     }
     else if (dir == 1)
     {
-        F.mom_y = f_un;
-        F.mom_z = f_ut1;
-        F.mom_x = f_ut2;
+        F.mom_v = f_un;
+        F.mom_w = f_ut1;
+        F.mom_u = f_ut2;
     }
     else
     {
-        F.mom_z = f_un;
-        F.mom_x = f_ut1;
-        F.mom_y = f_ut2;
+        F.mom_w = f_un;
+        F.mom_u = f_ut1;
+        F.mom_v = f_ut2;
     }
     return F;
 }
@@ -413,9 +413,9 @@ inline RoeGlaisterState calc_glaister_state(
 
     // Store averages
     res.rho_hat = sq_rho_L * sq_rho_R;
-    res.u_hat = (sq_rho_L * (U_L.mom_x / rho_L) + sq_rho_R * (U_R.mom_x / rho_R)) * inv_denom;
-    res.v_hat = (sq_rho_L * (U_L.mom_y / rho_L) + sq_rho_R * (U_R.mom_y / rho_R)) * inv_denom;
-    res.w_hat = (sq_rho_L * (U_L.mom_z / rho_L) + sq_rho_R * (U_R.mom_z / rho_R)) * inv_denom;
+    res.u_hat = (sq_rho_L * (U_L.mom_u / rho_L) + sq_rho_R * (U_R.mom_u / rho_R)) * inv_denom;
+    res.v_hat = (sq_rho_L * (U_L.mom_v / rho_L) + sq_rho_R * (U_R.mom_v / rho_R)) * inv_denom;
+    res.w_hat = (sq_rho_L * (U_L.mom_w / rho_L) + sq_rho_R * (U_R.mom_w / rho_R)) * inv_denom;
     res.H_hat = (sq_rho_L * H_L + sq_rho_R * H_R) * inv_denom;
 
     // --- B. Glaister Thermodynamic Averages (EOS Dependent) ---

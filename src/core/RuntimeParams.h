@@ -104,24 +104,24 @@ public:
 
         cfg.grid.geometry = parser.GetString("geometry", "cartesian");
 
-        // 1. 搬运核心参数 (Grid)
-        cfg.grid.nx = parser.GetInt("nx", 100);
-        cfg.grid.ny = parser.GetInt("ny", 1);
-        cfg.grid.nz = parser.GetInt("nz", 1);
+        // 1. 搬运核心参数 (Grid) - 强制 x1/x2/x3 命名法
+        cfg.grid.n1 = parser.GetInt("n1", 100);
+        cfg.grid.n2 = parser.GetInt("n2", 1);
+        cfg.grid.n3 = parser.GetInt("n3", 1);
 
-        cfg.grid.x_min = ParseMathExpr(parser.GetString("x_min", "0.0"));
-        cfg.grid.x_max = ParseMathExpr(parser.GetString("x_max", "1.0"));
-        cfg.grid.y_min = ParseMathExpr(parser.GetString("y_min", "0.0"));
-        cfg.grid.y_max = ParseMathExpr(parser.GetString("y_max", "1.0"));
-        cfg.grid.z_min = ParseMathExpr(parser.GetString("z_min", "0.0"));
-        cfg.grid.z_max = ParseMathExpr(parser.GetString("z_max", "1.0"));
+        cfg.grid.x1_min = ParseMathExpr(parser.GetString("x1_min", "0.0"));
+        cfg.grid.x1_max = ParseMathExpr(parser.GetString("x1_max", "1.0"));
+        cfg.grid.x2_min = ParseMathExpr(parser.GetString("x2_min", "0.0"));
+        cfg.grid.x2_max = ParseMathExpr(parser.GetString("x2_max", "1.0"));
+        cfg.grid.x3_min = ParseMathExpr(parser.GetString("x3_min", "0.0"));
+        cfg.grid.x3_max = ParseMathExpr(parser.GetString("x3_max", "1.0"));
 
-        cfg.grid.xl_boundary_type = parser.GetString("xl_boundary_type", "outflow");
-        cfg.grid.xr_boundary_type = parser.GetString("xr_boundary_type", "outflow");
-        cfg.grid.yl_boundary_type = parser.GetString("yl_boundary_type", "outflow");
-        cfg.grid.yr_boundary_type = parser.GetString("yr_boundary_type", "outflow");
-        cfg.grid.zl_boundary_type = parser.GetString("zl_boundary_type", "outflow");
-        cfg.grid.zr_boundary_type = parser.GetString("zr_boundary_type", "outflow");
+        cfg.grid.x1l_boundary_type = parser.GetString("x1l_boundary_type", "outflow");
+        cfg.grid.x1r_boundary_type = parser.GetString("x1r_boundary_type", "outflow");
+        cfg.grid.x2l_boundary_type = parser.GetString("x2l_boundary_type", "outflow");
+        cfg.grid.x2r_boundary_type = parser.GetString("x2r_boundary_type", "outflow");
+        cfg.grid.x3l_boundary_type = parser.GetString("x3l_boundary_type", "outflow");
+        cfg.grid.x3r_boundary_type = parser.GetString("x3r_boundary_type", "outflow");
 
         // 2. 搬运数值参数 (Numerics)
         cfg.numerics.solver_name = parser.GetString("solver", "SW");

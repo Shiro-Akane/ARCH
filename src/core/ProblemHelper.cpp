@@ -69,9 +69,9 @@ namespace ProblemHelper
                     init_callback(p, data);
 
                     state.rho[idx] = data.rho;
-                    state.mom_x[idx] = data.rho * data.u;
-                    state.mom_y[idx] = data.rho * data.v;
-                    state.mom_z[idx] = data.rho * data.w;
+                    state.mom_u[idx] = data.rho * data.u;
+                    state.mom_v[idx] = data.rho * data.v;
+                    state.mom_w[idx] = data.rho * data.w;
                     state.eng[idx] = eos.get_total_energy_primitive(data.rho, data.u, data.v, data.w, data.p, data.mass_fractions.data());
 
                     for (int s = 0; s < n_species; ++s)

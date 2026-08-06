@@ -100,7 +100,7 @@ int main(int argc, char **argv)
 
     // Print summary to console
     std::cout << "[Main] Configuration:" << std::endl;
-    std::cout << "       Grid: " << config.grid.nx << " cells, CFL: " << config.numerics.cfl << std::endl;
+    std::cout << "       Grid: " << config.grid.n1 << " cells, CFL: " << config.numerics.cfl << std::endl;
     std::cout << "       Solver: " << solver_name << std::endl;
     std::cout << "       Species Count: " << specs.count() << std::endl;
 

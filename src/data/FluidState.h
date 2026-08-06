@@ -17,36 +17,36 @@
 struct FluidVector
 {
     double rho;   ///< Mass density (\f$ \rho \f$).
-    double mom_x; ///< Momentum density (\f$ \rho u \f$).
-    double mom_y; ///< y-Momentum density (\f$ \rho v \f$).
-    double mom_z; ///< z-Momentum density (\f$ \rho w \f$).
+    double mom_u; ///< Momentum density (\f$ \rho u \f$).
+    double mom_v; ///< Momentum density (\f$ \rho v \f$).
+    double mom_w; ///< Momentum density (\f$ \rho w \f$).
     double eng;   ///< Total energy density (\f$ E = \rho e + 0.5 \rho u^2 \f$).
 
-    FluidVector() : rho(0), mom_x(0), mom_y(0), mom_z(0), eng(0) {}
-    FluidVector(double r, double mx, double my, double mz, double e) : rho(r), mom_x(mx), mom_y(my), mom_z(mz), eng(e) {}
+    FluidVector() : rho(0), mom_u(0), mom_v(0), mom_w(0), eng(0) {}
+    FluidVector(double r, double mx, double my, double mz, double e) : rho(r), mom_u(mx), mom_v(my), mom_w(mz), eng(e) {}
 
     /// Overload operator "+" for vector addition.
     FluidVector operator+(const FluidVector &other) const
     {
-        return {rho + other.rho, mom_x + other.mom_x, mom_y + other.mom_y, mom_z + other.mom_z, eng + other.eng};
+        return {rho + other.rho, mom_u + other.mom_u, mom_v + other.mom_v, mom_w + other.mom_w, eng + other.eng};
     }
 
     /// Overload operator "-" for vector subtraction.
     FluidVector operator-(const FluidVector &other) const
     {
-        return {rho - other.rho, mom_x - other.mom_x, mom_y - other.mom_y, mom_z - other.mom_z, eng - other.eng};
+        return {rho - other.rho, mom_u - other.mom_u, mom_v - other.mom_v, mom_w - other.mom_w, eng - other.eng};
     }
 
     /// Overload operator "*" for scalar multiplication.
     FluidVector operator*(double s) const
     {
-        return {rho * s, mom_x * s, mom_y * s, mom_z * s, eng * s};
+        return {rho * s, mom_u * s, mom_v * s, mom_w * s, eng * s};
     }
 
     /// Overload operator "/" for scalar division.
     FluidVector operator/(double s) const
     {
-        return {rho / s, mom_x / s, mom_y / s, mom_z / s, eng / s};
+        return {rho / s, mom_u / s, mom_v / s, mom_w / s, eng / s};
     }
 };
 
@@ -68,9 +68,9 @@ struct FluidState
 {
     // Conserved variables (SoA layout)
     std::vector<double> rho;   ///< Global array for density.
-    std::vector<double> mom_x; ///< Global array for x-momentum density.
-    std::vector<double> mom_y; ///< Global array for y-momentum density.
-    std::vector<double> mom_z; ///< Global array for z-momentum density.
+    std::vector<double> mom_u; ///< Global array for x-momentum density.
+    std::vector<double> mom_v; ///< Global array for y-momentum density.
+    std::vector<double> mom_w; ///< Global array for z-momentum density.
     std::vector<double> eng;   ///< Global array for total energy density.
 
     // Species data
@@ -99,9 +99,9 @@ struct FluidState
         n_species_ = n_species;
 
         rho.assign(total_size_, 0.0);
-        mom_x.assign(total_size_, 0.0);
-        mom_y.assign(total_size_, 0.0);
-        mom_z.assign(total_size_, 0.0);
+        mom_u.assign(total_size_, 0.0);
+        mom_v.assign(total_size_, 0.0);
+        mom_w.assign(total_size_, 0.0);
         eng.assign(total_size_, 0.0);
 
         if (n_species_ > 0 && total_size_ > 0)
@@ -153,16 +153,16 @@ struct FluidState
     /// Constructs a local FluidVector3 object from the global arrays (SoA to AoS).
     FluidVector get(int i) const
     {
-        return FluidVector(rho[i], mom_x[i], mom_y[i], mom_z[i], eng[i]);
+        return FluidVector(rho[i], mom_u[i], mom_v[i], mom_w[i], eng[i]);
     }
 
     /// Writes a local FluidVector3 object back to the global arrays (AoS to SoA).
     void set(int i, const FluidVector &val)
     {
         rho[i] = val.rho;
-        mom_x[i] = val.mom_x;
-        mom_y[i] = val.mom_y;
-        mom_z[i] = val.mom_z;
+        mom_u[i] = val.mom_u;
+        mom_v[i] = val.mom_v;
+        mom_w[i] = val.mom_w;
         eng[i] = val.eng;
     }
 
@@ -170,9 +170,9 @@ struct FluidState
     void add(int i, const FluidVector &val)
     {
         rho[i] += val.rho;
-        mom_x[i] += val.mom_x;
-        mom_y[i] += val.mom_y;
-        mom_z[i] += val.mom_z;
+        mom_u[i] += val.mom_u;
+        mom_v[i] += val.mom_v;
+        mom_w[i] += val.mom_w;
         eng[i] += val.eng;
     }
 };

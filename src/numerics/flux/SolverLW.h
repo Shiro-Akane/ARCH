@@ -35,7 +35,7 @@
  * @param n_species Number of species.
  * @param eos EOS object.
  * @param dt  Time step.
- * @param grid Grid info (for dx).
+ * @param grid Grid info (for dx1).
  * @return FluidVector3 Flux evaluated at the half-step state.
  */
 template <typename EosType>
@@ -45,7 +45,7 @@ FluidVector compute_half_step_flux(const FluidVector &U_L, const double *Xi_L,
                                    int n_species,
                                    const EosType &eos, double dt, const Grid &grid)
 {
-    double dx = grid.dx;
+    double dx1 = grid.dx1;
 
     // Calculate fluxes at the left and right states
     FluidVector F_L = get_flux(U_L, Xi_L, eos); // flux of i-1/2
@@ -53,7 +53,7 @@ FluidVector compute_half_step_flux(const FluidVector &U_L, const double *Xi_L,
 
     // Evolution Formula (Taylor expansion approximation):
     // U_half = Average(U) - (dt/2dx) * delta(F)
-    FluidVector U_half = 0.5 * (U_L + U_R) - 0.5 * (dt / dx) * (F_R - F_L);
+    FluidVector U_half = 0.5 * (U_L + U_R) - 0.5 * (dt / dx1) * (F_R - F_L);
 
     // Simple arithmetic average for species
     for (int k = 0; k < n_species; ++k)
@@ -81,8 +81,8 @@ struct SolverLW
                        FluidState &state_new, const EosType &eos,
                        const Grid &grid, double dt)
     {
-        double dx = grid.dx;
-        double coeff = dt / dx; // Note: Full step coefficient (unlike 0.5*dt/dx in LF)
+        double dx1 = grid.dx1;
+        double coeff = dt / dx1; // Note: Full step coefficient (unlike 0.5*dt/dx1 in LF)
 
         int n_spec = state_old.GetNumSpecies();
         int total_size = grid.GetTotalSize();
@@ -151,7 +151,7 @@ struct SolverLW
             FluidVector U_old = state_old.get(i);
 
             // Standard Update Formula:
-            // U^{n+1} = U^n - (dt/dx) * (F_{i+1/2} - F_{i-1/2})
+            // U^{n+1} = U^n - (dt/dx1) * (F_{i+1/2} - F_{i-1/2})
             FluidVector U_new_val = U_old - coeff * F_diff;
 
             state_new.set(i, U_new_val);

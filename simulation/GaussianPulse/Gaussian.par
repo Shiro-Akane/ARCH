@@ -3,7 +3,7 @@
 # Case: Gaussian Pulse Pure Diffusion Test (2D Spherical)
 # 
 # Workflow:
-# 1. Configures a 2D spherical/polar domain (nx=200, ny=200) with reflecting/periodic boundaries.
+# 1. Configures a 2D spherical/polar domain (n1=200, n2=200) with reflecting/periodic boundaries.
 # 2. Sets up standard hydro solvers (HLLC, muscl, RK2) but configures uniform initial conditions.
 # 3. Enables the explicit RKL2 diffusion solver with species diffusion active.
 # 4. Sets a Gaussian initial profile for the species scalar.
@@ -13,21 +13,21 @@
 # [Grid Configuration]
 # Maps to config.grid.*
 # ------------------------------------------------------------------------------
-nx       = 200
-ny       = 200
-nz       = 1
+n1       = 200
+n2       = 200
+n3       = 1
 
-x_min    = 0.0
-x_max    = 1.1
-y_min    = 0.0
-y_max    = 2*pi
+x1_min    = 0.0
+x1_max    = 1.1
+x2_min    = 0.0
+x2_max    = 2*pi
 xc       = 0.0
 geometry = spherical # Options: cartesian, cylindrical, spherical
 
-xl_boundary_type = reflect # Options: reflect, outflow, periodic
-xr_boundary_type = outflow # Options: reflect, outflow, periodic
-yl_boundary_type = periodic # Options: reflect, outflow, periodic
-yr_boundary_type = periodic # Options: reflect, outflow, periodic
+x1l_boundary_type = reflect # Options: reflect, outflow, periodic
+x1r_boundary_type = outflow # Options: reflect, outflow, periodic
+x2l_boundary_type = periodic # Options: reflect, outflow, periodic
+x2r_boundary_type = periodic # Options: reflect, outflow, periodic
 
 # ------------------------------------------------------------------------------
 # [Numerics]

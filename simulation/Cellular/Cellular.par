@@ -6,26 +6,26 @@
 # ------------------------------------------------------------------------------
 # [Grid Configuration]
 # ------------------------------------------------------------------------------
-nx       = 2560       # 1D 高分辨率以解析反应区 (Reaction Zone)
-ny       = 256
-nz       = 1
+n1       = 2560       # 1D 高分辨率以解析反应区 (Reaction Zone)
+n2       = 256
+n3       = 1
 
-x_min    = 0.0
-x_max    = 128.0       # 从 100 扩展至 256 (参考 flash.par)
-y_min    = 0.0
-y_max    = 12.8
-z_min    = 0.0
-z_max    = 1.0
+x1_min    = 0.0
+x1_max    = 128.0       # 从 100 扩展至 256 (参考 flash.par)
+x2_min    = 0.0
+x2_max    = 12.8
+x3_min    = 0.0
+x3_max    = 1.0
 
 geometry = cartesian
 
 # 边界条件：左侧通常设置为反射边界以充当"刚性墙壁"支撑起爆，右侧自由流出
-xl_boundary_type = reflect
-xr_boundary_type = outflow
-yl_boundary_type = outflow
-yr_boundary_type = outflow
-zl_boundary_type = outflow
-zr_boundary_type = outflow
+x1l_boundary_type = reflect
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
 
 # ------------------------------------------------------------------------------
 # [Numerics]

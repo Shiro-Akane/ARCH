@@ -29,9 +29,9 @@ struct Grid
     int dim; ///< Number of spatial dimensions (1, 2 or 3)
 
     // -- Grid Dimensions --
-    int nx; ///< Number of active physical cells in x
-    int ny; ///< Number of active physical cells in y
-    int nz; ///< Number of active physical cells in z
+    int n1; ///< Number of active physical cells in x1
+    int n2; ///< Number of active physical cells in x2
+    int n3; ///< Number of active physical cells in x3
     int ng; ///< Number of ghost cells (guard cells) on each side
 
     // -- Memory Layout Strides --
@@ -39,35 +39,41 @@ struct Grid
     int stride_z;   ///< Stride for moving 1 index in z-direction
     int total_size; ///< Total number of cells allocated in memory
 
-    double dx, dy, dz; ///< Spatial step size (cell width)
+    double dx1; ///< Spatial step size (cell width in x1)
+    double dx2; ///< Spatial step size (cell width in x2)
+    double dx3; ///< Spatial step size (cell width in x3)
 
     // -- Physical Domain Boundaries --
-    double x_min, y_min, z_min; ///< Coordinate of the left physical boundary
-    double x_max, y_max, z_max; ///< Coordinate of the right physical boundary
+    double x1_min; ///< Coordinate of the left physical boundary (x1)
+    double x2_min; ///< Coordinate of the left physical boundary (x2)
+    double x3_min; ///< Coordinate of the left physical boundary (x3)
+    double x1_max; ///< Coordinate of the right physical boundary (x1)
+    double x2_max; ///< Coordinate of the right physical boundary (x2)
+    double x3_max; ///< Coordinate of the right physical boundary (x3)
 
     /**
-     * @brief Constructor initializes grid parameters and computes cell width (dx).
+     * @brief Constructor initializes grid parameters and computes cell width (dx1).
      */
     std::string geometry = "cartesian"; ///< "cartesian", "cylindrical", "spherical"
 
-    Grid(int nx_in, int ny_in, int nz_in, int ng_in,
-         double x_min_in, double x_max_in,
-         double y_min_in = 0.0, double y_max_in = 0.0,
-         double z_min_in = 0.0, double z_max_in = 0.0)
-        : nx(nx_in), ny(ny_in), nz(nz_in), ng(ng_in),
-          x_min(x_min_in), x_max(x_max_in),
-          y_min(y_min_in), y_max(y_max_in),
-          z_min(z_min_in), z_max(z_max_in),
+    Grid(int n1_in, int n2_in, int n3_in, int ng_in,
+         double x1_min_in, double x1_max_in,
+         double x2_min_in = 0.0, double x2_max_in = 0.0,
+         double x3_min_in = 0.0, double x3_max_in = 0.0)
+        : n1(n1_in), n2(n2_in), n3(n3_in), ng(ng_in),
+          x1_min(x1_min_in), x1_max(x1_max_in),
+          x2_min(x2_min_in), x2_max(x2_max_in),
+          x3_min(x3_min_in), x3_max(x3_max_in),
           geometry("cartesian")
     {
         InitializeTopology();
     }
 
     Grid(const GridConfig &cfg, int ng_required)
-        : nx(cfg.nx), ny(cfg.ny > 0 ? cfg.ny : 1), nz(cfg.nz > 0 ? cfg.nz : 1), ng(ng_required),
-          x_min(cfg.x_min), x_max(cfg.x_max),
-          y_min(cfg.y_min), y_max(cfg.y_max),
-          z_min(cfg.z_min), z_max(cfg.z_max),
+        : n1(cfg.n1), n2(cfg.n2), n3(cfg.n3), ng(ng_required),
+          x1_min(cfg.x1_min), x1_max(cfg.x1_max),
+          x2_min(cfg.x2_min), x2_max(cfg.x2_max),
+          x3_min(cfg.x3_min), x3_max(cfg.x3_max),
           geometry(cfg.geometry)
     {
         InitializeTopology();
@@ -79,13 +85,19 @@ private:
      */
     void ValidateDomain() const
     {
+        // 0. Dimensionality and topology checks
+        if (n1 < 1 || n2 < 1 || n3 < 1)
+            throw std::invalid_argument("Grid Error: n1, n2, and n3 must be >= 1. Dimensionality is controlled by setting n_i = 1.");
+        if (n2 == 1 && n3 > 1)
+            throw std::invalid_argument("Grid Error: Cross-dimensional topology anomaly. n2 == 1 but n3 > 1 is not allowed.");
+
         // 1. 通用基础校验：Max 必须大于 Min (针对激活的维度)
-        if (nx > 0 && x_max <= x_min)
-            throw std::invalid_argument("Grid Error: x_max must be strictly greater than x_min.");
-        if (ny > 1 && y_max <= y_min)
-            throw std::invalid_argument("Grid Error: y_max must be strictly greater than y_min.");
-        if (nz > 1 && z_max <= z_min)
-            throw std::invalid_argument("Grid Error: z_max must be strictly greater than z_min.");
+        if (n1 > 0 && x1_max <= x1_min)
+            throw std::invalid_argument("Grid Error: x1_max must be strictly greater than x1_min.");
+        if (n2 > 1 && x2_max <= x2_min)
+            throw std::invalid_argument("Grid Error: x2_max must be strictly greater than x2_min.");
+        if (n3 > 1 && x3_max <= x3_min)
+            throw std::invalid_argument("Grid Error: x3_max must be strictly greater than x3_min.");
 
         // 容差值，防止浮点数精度导致误判 (例如 3.141592653589793 vs M_PI)
         const double eps = 1e-10;
@@ -93,38 +105,38 @@ private:
         // 2. 针对特定坐标系的物理域校验
         if (geometry == "spherical")
         {
-            if (x_min < 0.0)
+            if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: r_min cannot be negative.");
 
             if (dim == 2)
             {
                 // 【核心修改】：2D下，回退为极坐标 (r, phi)，允许 2pi
-                if ((y_max - y_min) > 2.0 * M_PI + eps)
+                if ((x2_max - x2_min) > 2.0 * M_PI + eps)
                     throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
             }
             else if (dim == 3)
             {
                 // 3D下，y是theta (0到pi)，z是phi (0到2pi)
-                if (y_min < -eps || y_max > M_PI + eps)
+                if (x2_min < -eps || x2_max > M_PI + eps)
                     throw std::invalid_argument("Domain Error (Spherical): Polar angle theta (y bounds) must be within [0, pi].");
-                if ((z_max - z_min) > 2.0 * M_PI + eps)
+                if ((x3_max - x3_min) > 2.0 * M_PI + eps)
                     throw std::invalid_argument("Domain Error (Spherical): Azimuthal angle phi range cannot exceed 2*pi.");
             }
         }
         else if (geometry == "cylindrical")
         {
-            if (x_min < 0.0)
+            if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: R_min cannot be negative.");
 
             // 同样，2D下 y 变为 phi，允许 2pi
             if (dim == 2)
             {
-                if ((y_max - y_min) > 2.0 * M_PI + eps)
+                if ((x2_max - x2_min) > 2.0 * M_PI + eps)
                     throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
             }
             else if (dim == 3)
             {
-                if ((z_max - z_min) > 2.0 * M_PI + eps)
+                if ((x3_max - x3_min) > 2.0 * M_PI + eps)
                     throw std::invalid_argument("Domain Error (Cylindrical): Azimuthal angle phi (z bounds) cannot exceed 2*pi.");
             }
         }
@@ -136,17 +148,17 @@ private:
     void InitializeTopology()
     {
         // dimension cerirital
-        dim = (nz > 1) ? 3 : ((ny > 1) ? 2 : 1);
+        dim = (n3 > 1) ? 3 : ((n2 > 1) ? 2 : 1);
 
         // Step Length
-        dx = (nx > 0) ? (x_max - x_min) / nx : 0.0;
-        dy = (ny > 1) ? (y_max - y_min) / ny : 0.0;
-        dz = (nz > 1) ? (z_max - z_min) / nz : 0.0;
+        dx1 = (n1 > 0) ? (x1_max - x1_min) / n1 : 0.0;
+        dx2 = (n2 > 1) ? (x2_max - x2_min) / n2 : 0.0;
+        dx3 = (n3 > 1) ? (x3_max - x3_min) / n3 : 0.0;
 
         // Total length including NG cells
-        int total_x = nx + 2 * ng;
-        int total_y = (dim >= 2) ? ny + 2 * ng : 1;
-        int total_z = (dim == 3) ? nz + 2 * ng : 1;
+        int total_x = n1 + 2 * ng;
+        int total_y = (dim >= 2) ? n2 + 2 * ng : 1;
+        int total_z = (dim == 3) ? n3 + 2 * ng : 1;
 
         // Calculate strides
         stride_y = total_x;
@@ -300,38 +312,38 @@ public:
      */
     double GetCellCenterX(int i) const
     {
-        // Formula: x_min + (local_index * dx) + half_cell
-        return x_min + (i - ng) * dx + 0.5 * dx;
+        // Formula: x1_min + (local_index * dx1) + half_cell
+        return x1_min + (i - ng) * dx1 + 0.5 * dx1;
     }
     double GetCellCenterY(int j) const
     {
         if (dim < 2)
             return 0.0;
-        return y_min + (j - ng) * dy + 0.5 * dy;
+        return x2_min + (j - ng) * dx2 + 0.5 * dx2;
     }
 
     double GetCellCenterZ(int k) const
     {
         if (dim < 3)
             return 0.0;
-        return z_min + (k - ng) * dz + 0.5 * dz;
+        return x3_min + (k - ng) * dx3 + 0.5 * dx3;
     }
     /// Left face position of cell i in x-direction (r_{i-1/2})
-    double GetFacePosL(int i) const { return x_min + (i - ng) * dx; }
+    double GetFacePosL(int i) const { return x1_min + (i - ng) * dx1; }
     /// Right face position of cell i in x-direction (r_{i+1/2})
-    double GetFacePosR(int i) const { return x_min + (i - ng + 1) * dx; }
+    double GetFacePosR(int i) const { return x1_min + (i - ng + 1) * dx1; }
 
     // -- Loop Bounds for Physical Domain --
 
     // X-direction bounds
     int Is() const { return ng; }
-    int Ie() const { return nx + ng; }
+    int Ie() const { return n1 + ng; }
 
     // Y-direction bounds (if 1D, loop will run exactly once: from 0 to 1)
     int Js() const { return (dim >= 2) ? ng : 0; }
-    int Je() const { return (dim >= 2) ? ny + ng : 1; }
+    int Je() const { return (dim >= 2) ? n2 + ng : 1; }
 
     // Z-direction bounds
     int Ks() const { return (dim == 3) ? ng : 0; }
-    int Ke() const { return (dim == 3) ? nz + ng : 1; }
+    int Ke() const { return (dim == 3) ? n3 + ng : 1; }
 };

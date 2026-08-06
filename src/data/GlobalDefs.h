@@ -20,29 +20,29 @@
 struct GridConfig
 {
     // Basic Dimensions
-    int nx;     ///< Cells in X
-    int ny = 1; ///< Cells in Y (Default to 1 for 1D)
-    int nz = 1; ///< Cells in Z (Default to 1 for 1D)
+    int n1; ///< Cells in X1
+    int n2 = 1; ///< Cells in X2 (Default to 1 for 1D)
+    int n3 = 1; ///< Cells in X3 (Default to 1 for 1D)
 
     // Physical Domain
-    double x_min = 0.0;
-    double x_max = 1.0;
-    double y_min = 0.0;
-    double y_max = 1.0;
-    double z_min = 0.0;
-    double z_max = 1.0;
+    double x1_min = 0.0;
+    double x1_max = 1.0;
+    double x2_min = 0.0;
+    double x2_max = 1.0;
+    double x3_min = 0.0;
+    double x3_max = 1.0;
     // Y/Z limits can be added later or kept here unused
 
     // Geometry: "cartesian", "spherical", "cylindrical"
     // This allows you to implement source terms later without changing the struct
     std::string geometry = "cartesian";
 
-    std::string xl_boundary_type = "outflow";
-    std::string xr_boundary_type = "outflow";
-    std::string yl_boundary_type = "outflow";
-    std::string yr_boundary_type = "outflow";
-    std::string zl_boundary_type = "outflow";
-    std::string zr_boundary_type = "outflow";
+    std::string x1l_boundary_type = "outflow";
+    std::string x1r_boundary_type = "outflow";
+    std::string x2l_boundary_type = "outflow";
+    std::string x2r_boundary_type = "outflow";
+    std::string x3l_boundary_type = "outflow";
+    std::string x3r_boundary_type = "outflow";
 };
 
 // ----------------------------------------------------------------------

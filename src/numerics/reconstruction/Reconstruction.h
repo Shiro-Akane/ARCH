@@ -138,18 +138,18 @@ struct MusclReconstruction
         // --- Left State (at i+1/2) ---
         // Based on cell i, looking at i-1 and i+1
         U_L.rho = U_i.rho + compute_limited_slope<Limiter>(U_im1.rho, U_i.rho, U_ip1.rho);
-        U_L.mom_x = U_i.mom_x + compute_limited_slope<Limiter>(U_im1.mom_x, U_i.mom_x, U_ip1.mom_x);
-        U_L.mom_y = U_i.mom_y + compute_limited_slope<Limiter>(U_im1.mom_y, U_i.mom_y, U_ip1.mom_y);
-        U_L.mom_z = U_i.mom_z + compute_limited_slope<Limiter>(U_im1.mom_z, U_i.mom_z, U_ip1.mom_z);
+        U_L.mom_u = U_i.mom_u + compute_limited_slope<Limiter>(U_im1.mom_u, U_i.mom_u, U_ip1.mom_u);
+        U_L.mom_v = U_i.mom_v + compute_limited_slope<Limiter>(U_im1.mom_v, U_i.mom_v, U_ip1.mom_v);
+        U_L.mom_w = U_i.mom_w + compute_limited_slope<Limiter>(U_im1.mom_w, U_i.mom_w, U_ip1.mom_w);
         U_L.eng = U_i.eng + compute_limited_slope<Limiter>(U_im1.eng, U_i.eng, U_ip1.eng);
 
         // --- Right State (at i+1/2) ---
         // Based on cell i+1, looking at i and i+2
         // Note: Minus sign because we project backwards
         U_R.rho = U_ip1.rho - compute_limited_slope<Limiter>(U_i.rho, U_ip1.rho, U_ip2.rho);
-        U_R.mom_x = U_ip1.mom_x - compute_limited_slope<Limiter>(U_i.mom_x, U_ip1.mom_x, U_ip2.mom_x);
-        U_R.mom_y = U_ip1.mom_y - compute_limited_slope<Limiter>(U_i.mom_y, U_ip1.mom_y, U_ip2.mom_y);
-        U_R.mom_z = U_ip1.mom_z - compute_limited_slope<Limiter>(U_i.mom_z, U_ip1.mom_z, U_ip2.mom_z);
+        U_R.mom_u = U_ip1.mom_u - compute_limited_slope<Limiter>(U_i.mom_u, U_ip1.mom_u, U_ip2.mom_u);
+        U_R.mom_v = U_ip1.mom_v - compute_limited_slope<Limiter>(U_i.mom_v, U_ip1.mom_v, U_ip2.mom_v);
+        U_R.mom_w = U_ip1.mom_w - compute_limited_slope<Limiter>(U_i.mom_w, U_ip1.mom_w, U_ip2.mom_w);
         U_R.eng = U_ip1.eng - compute_limited_slope<Limiter>(U_i.eng, U_ip1.eng, U_ip2.eng);
 
         return {U_L, U_R};
@@ -292,9 +292,9 @@ public:
         {
             double rho = std::max(1e-13, U_stencil[k]->rho);
 
-            double vel_u = U_stencil[k]->mom_x / rho;
-            double vel_v = U_stencil[k]->mom_y / rho;
-            double vel_w = U_stencil[k]->mom_z / rho;
+            double vel_u = U_stencil[k]->mom_u / rho;
+            double vel_v = U_stencil[k]->mom_v / rho;
+            double vel_w = U_stencil[k]->mom_w / rho;
 
             double kin = 0.5 * (vel_u * vel_u + vel_v * vel_v + vel_w * vel_w);
             double specific_total = U_stencil[k]->eng / rho;
@@ -334,17 +334,17 @@ public:
 
         // Left State
         UL.rho = rho_L;
-        UL.mom_x = rho_L * u_L;
-        UL.mom_y = rho_L * v_L;
-        UL.mom_z = rho_L * w_L;
+        UL.mom_u = rho_L * u_L;
+        UL.mom_v = rho_L * v_L;
+        UL.mom_w = rho_L * w_L;
         // Total Energy = rho * (epsilon + 0.5 * u^2)
         UL.eng = rho_L * (eps_L + 0.5 * (u_L * u_L + v_L * v_L + w_L * w_L));
 
         // Right State
         UR.rho = rho_R;
-        UR.mom_x = rho_R * u_R;
-        UR.mom_y = rho_R * v_R;
-        UR.mom_z = rho_R * w_R;
+        UR.mom_u = rho_R * u_R;
+        UR.mom_v = rho_R * v_R;
+        UR.mom_w = rho_R * w_R;
         UR.eng = rho_R * (eps_R + 0.5 * (u_R * u_R + v_R * v_R + w_R * w_R));
 
         return {UL, UR};

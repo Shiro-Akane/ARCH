@@ -50,9 +50,9 @@ struct RKL1TimeIntegrator
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
             Y_jm1.rho[i]   = Y0.rho[i]   + c1.tilde_mu * dt_hydro * L_U.rho[i];
-            Y_jm1.mom_x[i] = Y0.mom_x[i] + c1.tilde_mu * dt_hydro * L_U.mom_x[i];
-            Y_jm1.mom_y[i] = Y0.mom_y[i] + c1.tilde_mu * dt_hydro * L_U.mom_y[i];
-            Y_jm1.mom_z[i] = Y0.mom_z[i] + c1.tilde_mu * dt_hydro * L_U.mom_z[i];
+            Y_jm1.mom_u[i] = Y0.mom_u[i] + c1.tilde_mu * dt_hydro * L_U.mom_u[i];
+            Y_jm1.mom_v[i] = Y0.mom_v[i] + c1.tilde_mu * dt_hydro * L_U.mom_v[i];
+            Y_jm1.mom_w[i] = Y0.mom_w[i] + c1.tilde_mu * dt_hydro * L_U.mom_w[i];
             Y_jm1.eng[i]   = Y0.eng[i]   + c1.tilde_mu * dt_hydro * L_U.eng[i];
             for (int k = 0; k < state.GetNumSpecies(); ++k) {
                 double rhoX_new = Y0.rho[i] * Y0.X(k, i) + c1.tilde_mu * dt_hydro * L_U.X(k, i);
@@ -72,9 +72,9 @@ struct RKL1TimeIntegrator
             #pragma omp parallel for schedule(static)
             for (int i = 0; i < grid.GetTotalSize(); ++i) {
                 Y_j.rho[i]   = cj.mu * Y_jm1.rho[i]   + cj.nu * Y_jm2.rho[i]   + cj.tilde_mu * dt_hydro * L_U.rho[i];
-                Y_j.mom_x[i] = cj.mu * Y_jm1.mom_x[i] + cj.nu * Y_jm2.mom_x[i] + cj.tilde_mu * dt_hydro * L_U.mom_x[i];
-                Y_j.mom_y[i] = cj.mu * Y_jm1.mom_y[i] + cj.nu * Y_jm2.mom_y[i] + cj.tilde_mu * dt_hydro * L_U.mom_y[i];
-                Y_j.mom_z[i] = cj.mu * Y_jm1.mom_z[i] + cj.nu * Y_jm2.mom_z[i] + cj.tilde_mu * dt_hydro * L_U.mom_z[i];
+                Y_j.mom_u[i] = cj.mu * Y_jm1.mom_u[i] + cj.nu * Y_jm2.mom_u[i] + cj.tilde_mu * dt_hydro * L_U.mom_u[i];
+                Y_j.mom_v[i] = cj.mu * Y_jm1.mom_v[i] + cj.nu * Y_jm2.mom_v[i] + cj.tilde_mu * dt_hydro * L_U.mom_v[i];
+                Y_j.mom_w[i] = cj.mu * Y_jm1.mom_w[i] + cj.nu * Y_jm2.mom_w[i] + cj.tilde_mu * dt_hydro * L_U.mom_w[i];
                 Y_j.eng[i]   = cj.mu * Y_jm1.eng[i]   + cj.nu * Y_jm2.eng[i]   + cj.tilde_mu * dt_hydro * L_U.eng[i];
                 for (int k = 0; k < state.GetNumSpecies(); ++k) {
                     double rhoX_new = cj.mu * Y_jm1.rho[i] * Y_jm1.X(k, i) + cj.nu * Y_jm2.rho[i] * Y_jm2.X(k, i) + cj.tilde_mu * dt_hydro * L_U.X(k, i);

@@ -39,8 +39,8 @@ public:
     void Setup(SimConfig &config, SpeciesManager &specs)
     {
         // 1. Grid bounds for wave number calculation
-        g_Lx = config.grid.x_max - config.grid.x_min;
-        g_Lz = config.grid.z_max - config.grid.z_min;
+        g_Lx = config.grid.x1_max - config.grid.x1_min;
+        g_Lz = config.grid.x3_max - config.grid.x3_min;
 
         // 2. Sync gravity with the global physics configuration!
         // This guarantees the Hydrostatic Equilibrium matches the solver's source terms.
@@ -61,7 +61,7 @@ public:
         std::cout << "[Problem] Rayleigh-Taylor Instability Setup Complete.\n"
                   << "          Interface at y=" << g_y_int << "\n"
                   << "          Gravity g_y=" << g_gy << " (Matched with PhysicsConfig)\n"
-                  << "          Mode: " << (config.grid.nz > 1 ? "3D Box" : "2D Planar") << "\n";
+                  << "          Mode: " << (config.grid.n3 > 1 ? "3D Box" : "2D Planar") << "\n";
     }
 
     void Init(const PointCoords &p, PrimitiveData &out) const

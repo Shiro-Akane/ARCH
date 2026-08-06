@@ -138,8 +138,8 @@ namespace DiffFlux
                         FluidVector U_L = state.get(idx_L);
                         FluidVector U_R = state.get(idx_R);
                         
-                        double uL_sq = (U_L.mom_x * U_L.mom_x + U_L.mom_y * U_L.mom_y + U_L.mom_z * U_L.mom_z) / (rho_L * rho_L);
-                        double uR_sq = (U_R.mom_x * U_R.mom_x + U_R.mom_y * U_R.mom_y + U_R.mom_z * U_R.mom_z) / (rho_R * rho_R);
+                        double uL_sq = (U_L.mom_u * U_L.mom_u + U_L.mom_v * U_L.mom_v + U_L.mom_w * U_L.mom_w) / (rho_L * rho_L);
+                        double uR_sq = (U_R.mom_u * U_R.mom_u + U_R.mom_v * U_R.mom_v + U_R.mom_w * U_R.mom_w) / (rho_R * rho_R);
                         
                         double e_int_L = (U_L.eng - 0.5 * rho_L * uL_sq) / rho_L;
                         double e_int_R = (U_R.eng - 0.5 * rho_R * uR_sq) / rho_R;
@@ -158,56 +158,56 @@ namespace DiffFlux
                         get_coeffs(eos, config, rho_f, T_f, Xi_face.data(), nu, alpha, D);
 
                         // Calculate physical distance between cell centers
-                        double dx = 1.0;
+                        double dx1 = 1.0;
                         if (grid.geometry == "cartesian") {
-                            dx = (dir == 0) ? grid.dx : ((dir == 1) ? grid.dy : grid.dz);
+                            dx1 = (dir == 0) ? grid.dx1 : ((dir == 1) ? grid.dx2 : grid.dx3);
                         } else if (grid.geometry == "cylindrical") {
-                            if (dir == 0) dx = grid.dx;
+                            if (dir == 0) dx1 = grid.dx1;
                             else if (dir == 1) {
-                                if (grid.dim == 2) dx = grid.GetCellCenterX(i) * grid.dy;
-                                else dx = grid.dy;
+                                if (grid.dim == 2) dx1 = grid.GetCellCenterX(i) * grid.dx2;
+                                else dx1 = grid.dx2;
                             }
-                            else if (dir == 2) dx = grid.GetCellCenterX(i) * grid.dz;
+                            else if (dir == 2) dx1 = grid.GetCellCenterX(i) * grid.dx3;
                         } else if (grid.geometry == "spherical") {
-                            if (dir == 0) dx = grid.dx;
+                            if (dir == 0) dx1 = grid.dx1;
                             else if (dir == 1) {
-                                dx = grid.GetCellCenterX(i) * grid.dy; // theta direction uses cell radius
+                                dx1 = grid.GetCellCenterX(i) * grid.dx2; // theta direction uses cell radius
                             }
                             else if (dir == 2) {
                                 double theta_c = grid.GetCellCenterY(j);
-                                dx = grid.GetCellCenterX(i) * std::sin(theta_c) * grid.dz;
+                                dx1 = grid.GetCellCenterX(i) * std::sin(theta_c) * grid.dx3;
                             }
                         }
 
                         // Gradient calculations
-                        double dT_dx = (T_R - T_L) / dx;
+                        double dT_dx = (T_R - T_L) / dx1;
                         double q_therm = do_thermal ? (-alpha * rho_f * std::max(eos.get_cv(rho_f, T_f, Xi_face.data()), 1e-12) * dT_dx) : 0.0;
                         
                         FluidVector F_diff;
                         F_diff.rho = 0.0;
                         
-                        double v_face_x = 0.5 * (U_L.mom_x / rho_L + U_R.mom_x / rho_R);
-                        double v_face_y = 0.5 * (U_L.mom_y / rho_L + U_R.mom_y / rho_R);
-                        double v_face_z = 0.5 * (U_L.mom_z / rho_L + U_R.mom_z / rho_R);
+                        double v_face_x = 0.5 * (U_L.mom_u / rho_L + U_R.mom_u / rho_R);
+                        double v_face_y = 0.5 * (U_L.mom_v / rho_L + U_R.mom_v / rho_R);
+                        double v_face_z = 0.5 * (U_L.mom_w / rho_L + U_R.mom_w / rho_R);
                         
                         if (do_viscous) {
-                            double dvx_dx = (U_R.mom_x / rho_R - U_L.mom_x / rho_L) / dx;
-                            double dvy_dx = (U_R.mom_y / rho_R - U_L.mom_y / rho_L) / dx;
-                            double dvz_dx = (U_R.mom_z / rho_R - U_L.mom_z / rho_L) / dx;
+                            double dvx_dx = (U_R.mom_u / rho_R - U_L.mom_u / rho_L) / dx1;
+                            double dvy_dx = (U_R.mom_v / rho_R - U_L.mom_v / rho_L) / dx1;
+                            double dvz_dx = (U_R.mom_w / rho_R - U_L.mom_w / rho_L) / dx1;
                             
-                            F_diff.mom_x = -nu * rho_f * dvx_dx;
-                            F_diff.mom_y = -nu * rho_f * dvy_dx;
-                            F_diff.mom_z = -nu * rho_f * dvz_dx;
+                            F_diff.mom_u = -nu * rho_f * dvx_dx;
+                            F_diff.mom_v = -nu * rho_f * dvy_dx;
+                            F_diff.mom_w = -nu * rho_f * dvz_dx;
                         }
 
                         // Energy flux = thermal conduction + viscous dissipation work
-                        F_diff.eng = q_therm + (F_diff.mom_x * v_face_x + F_diff.mom_y * v_face_y + F_diff.mom_z * v_face_z);
+                        F_diff.eng = q_therm + (F_diff.mom_u * v_face_x + F_diff.mom_v * v_face_y + F_diff.mom_w * v_face_z);
                         
                         flux_out[idx_R] = F_diff;
                         
                         if (do_species) {
                             for (int s = 0; s < n_species; ++s) {
-                                double dX_dx = (Xi_R[s] - Xi_L[s]) / dx;
+                                double dX_dx = (Xi_R[s] - Xi_L[s]) / dx1;
                                 spec_flux_out[s * grid.GetTotalSize() + idx_R] = -rho_f * D * dX_dx;
                             }
                         }
@@ -253,33 +253,33 @@ namespace DiffFlux
                         state.get_species_to_buffer(idx, Xi.data());
                         FluidVector U = state.get(idx);
                         
-                        double u_sq = (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / (rho * rho);
+                        double u_sq = (U.mom_u * U.mom_u + U.mom_v * U.mom_v + U.mom_w * U.mom_w) / (rho * rho);
                         double e_int = (U.eng - 0.5 * rho * u_sq) / rho;
                         double T = eos.get_temperature(rho, e_int, Xi.data());
                         
                         double nu, alpha, D;
                         get_coeffs(eos, config, rho, T, Xi.data(), nu, alpha, D);
                         
-                        double v_r = U.mom_x / rho;
+                        double v_r = U.mom_u / rho;
                         
                         if (grid.geometry == "cylindrical") {
-                            dU[idx].mom_x += dt * (-nu * rho * v_r) / (r * r);
+                            dU[idx].mom_u += dt * (-nu * rho * v_r) / (r * r);
                             if (grid.dim >= 2) {
-                                double v_phi = (grid.dim == 2) ? (U.mom_y / rho) : (U.mom_z / rho);
+                                double v_phi = (grid.dim == 2) ? (U.mom_v / rho) : (U.mom_w / rho);
                                 double dU_phi = dt * (-nu * rho * v_phi) / (r * r);
-                                if (grid.dim == 2) dU[idx].mom_y += dU_phi;
-                                else dU[idx].mom_z += dU_phi;
+                                if (grid.dim == 2) dU[idx].mom_v += dU_phi;
+                                else dU[idx].mom_w += dU_phi;
                             }
                         } else if (grid.geometry == "spherical") {
-                            dU[idx].mom_x += dt * (-2.0 * nu * rho * v_r) / (r * r);
+                            dU[idx].mom_u += dt * (-2.0 * nu * rho * v_r) / (r * r);
                             if (grid.dim >= 2) {
-                                double v_theta = U.mom_y / rho;
+                                double v_theta = U.mom_v / rho;
                                 double sin_theta = std::max(std::sin(coords.theta), 1e-14);
-                                dU[idx].mom_y += dt * (-nu * rho * v_theta) / (r * r * sin_theta * sin_theta);
+                                dU[idx].mom_v += dt * (-nu * rho * v_theta) / (r * r * sin_theta * sin_theta);
                                 
                                 if (grid.dim == 3) {
-                                    double v_phi = U.mom_z / rho;
-                                    dU[idx].mom_z += dt * (-nu * rho * v_phi) / (r * r * sin_theta * sin_theta);
+                                    double v_phi = U.mom_w / rho;
+                                    dU[idx].mom_w += dt * (-nu * rho * v_phi) / (r * r * sin_theta * sin_theta);
                                 }
                             }
                         }
@@ -305,9 +305,9 @@ namespace DiffFlux
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
             L_U.rho[i] = 0.0;
-            L_U.mom_x[i] = 0.0;
-            L_U.mom_y[i] = 0.0;
-            L_U.mom_z[i] = 0.0;
+            L_U.mom_u[i] = 0.0;
+            L_U.mom_v[i] = 0.0;
+            L_U.mom_w[i] = 0.0;
             L_U.eng[i] = 0.0;
             for (int k = 0; k < n_spec; ++k) {
                 L_U.X(k, i) = 0.0;
@@ -338,9 +338,9 @@ namespace DiffFlux
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
             L_U.rho[i] = dU[i].rho;
-            L_U.mom_x[i] = dU[i].mom_x;
-            L_U.mom_y[i] = dU[i].mom_y;
-            L_U.mom_z[i] = dU[i].mom_z;
+            L_U.mom_u[i] = dU[i].mom_u;
+            L_U.mom_v[i] = dU[i].mom_v;
+            L_U.mom_w[i] = dU[i].mom_w;
             L_U.eng[i] = dU[i].eng;
             for (int k = 0; k < n_spec; ++k) {
                 L_U.X(k, i) = d_spec[k * grid.GetTotalSize() + i];
@@ -353,7 +353,7 @@ namespace DiffFlux
     // =========================================================
 
     /**
-     * @brief Computes explicit time step limit for diffusion (dt = dx^2 / (2 * max_coeff))
+     * @brief Computes explicit time step limit for diffusion (dt = dx1^2 / (2 * max_coeff))
      */
     template <typename EosType>
     inline double adaptive_dt_diff(const FluidState &state, const EosType &eos, const Grid &grid, const SimConfig &config, double cfl_number)
@@ -396,7 +396,7 @@ namespace DiffFlux
                     for (int s = 0; s < n_species; ++s)
                         Xi_cache[s] = state.X(s, idx);
 
-                    double e_int = (U.eng - 0.5 * rho * (std::pow(U.mom_x/rho, 2) + std::pow(U.mom_y/rho, 2) + std::pow(U.mom_z/rho, 2))) / rho;
+                    double e_int = (U.eng - 0.5 * rho * (std::pow(U.mom_u/rho, 2) + std::pow(U.mom_v/rho, 2) + std::pow(U.mom_w/rho, 2))) / rho;
                     double T = eos.get_temperature(rho, e_int, Xi_cache.data());
 
                     double nu = 0.0, alpha = 0.0, D = 0.0;
@@ -410,22 +410,22 @@ namespace DiffFlux
                     if (max_coeff > 1e-12) {
                         double inv_dt_sum = 0.0;
                         for (int dir = 0; dir < grid.dim; ++dir) {
-                            double dx = 1.0;
+                            double dx1 = 1.0;
                             if (grid.geometry == "cartesian") {
-                                dx = (dir == 0) ? grid.dx : ((dir == 1) ? grid.dy : grid.dz);
+                                dx1 = (dir == 0) ? grid.dx1 : ((dir == 1) ? grid.dx2 : grid.dx3);
                             } else if (grid.geometry == "cylindrical") {
-                                if (dir == 0) dx = grid.dx;
-                                else if (dir == 1) dx = (grid.dim == 2) ? grid.GetCellCenterX(i) * grid.dy : grid.dy;
-                                else if (dir == 2) dx = grid.GetCellCenterX(i) * grid.dz;
+                                if (dir == 0) dx1 = grid.dx1;
+                                else if (dir == 1) dx1 = (grid.dim == 2) ? grid.GetCellCenterX(i) * grid.dx2 : grid.dx2;
+                                else if (dir == 2) dx1 = grid.GetCellCenterX(i) * grid.dx3;
                             } else if (grid.geometry == "spherical") {
-                                if (dir == 0) dx = grid.dx;
-                                else if (dir == 1) dx = grid.GetCellCenterX(i) * grid.dy;
+                                if (dir == 0) dx1 = grid.dx1;
+                                else if (dir == 1) dx1 = grid.GetCellCenterX(i) * grid.dx2;
                                 else if (dir == 2) {
                                     double theta_c = grid.GetCellCenterY(j);
-                                    dx = grid.GetCellCenterX(i) * std::sin(theta_c) * grid.dz;
+                                    dx1 = grid.GetCellCenterX(i) * std::sin(theta_c) * grid.dx3;
                                 }
                             }
-                            inv_dt_sum += 2.0 * max_coeff / (dx * dx);
+                            inv_dt_sum += 2.0 * max_coeff / (dx1 * dx1);
                         }
                         
                         double cell_dt = 1.0 / std::max(inv_dt_sum, 1e-20);

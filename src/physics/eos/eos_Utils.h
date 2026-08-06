@@ -29,7 +29,7 @@ namespace eos_utils
     {
         if (U.rho < 1e-12)
             return 0.0;
-        double kinetic_density = 0.5 * (U.mom_x * U.mom_x + U.mom_y * U.mom_y + U.mom_z * U.mom_z) / U.rho;
+        double kinetic_density = 0.5 * (U.mom_u * U.mom_u + U.mom_v * U.mom_v + U.mom_w * U.mom_w) / U.rho;
         return (U.eng - kinetic_density) / U.rho;
     }
 
