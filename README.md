@@ -1,7 +1,7 @@
 #  ARCH: Adaptive Reactive CUDA Hydrodynamics
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![C++17](https://img.shields.io/badge/Standard-C%2B%2B17-blue.svg)]()
+[![C++20](https://img.shields.io/badge/Standard-C%2B%2B20-blue.svg)]()
 [![Build System](https://img.shields.io/badge/Build-CMake-orange.svg)]()
 
 **ARCH** is a lightweight, modular C++ framework for Compressible Fluid Dynamics (CFD). It is designed with a focus on runtime flexibility and extensibility, allowing researchers to switch solvers, equations of state, and physical problems without recompiling the source code.
@@ -59,8 +59,8 @@ ARCH/
 
 To build and run ARCH, you need the following environment:
 
-- **C++ Compiler**: GCC 9+ / Clang 10+ (Must support C++17)
-- **CMake**: Version 3.15 or higher
+- **C++ Compiler**: GCC 10+ / Clang 10+ (Must support C++20)
+- **CMake**: Version 3.18 or higher
 - **OpenMP**: For multi-threading parallelization
 - **HDF5**: C++ High-Level (HL) libraries for data output
 
@@ -71,7 +71,7 @@ To build and run ARCH, you need the following environment:
 
 ## Build Instructions
 
-ARCH uses CMake for compilation. Ensure you have a C++17 compatible compiler.
+ARCH uses CMake for compilation. Ensure you have a C++20 compatible compiler.
 
 1. **Create build directory**
 ```bash

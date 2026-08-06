@@ -22,7 +22,7 @@
  * @param state The fluid state container (conservative variables).
  * @param grid  The grid topology information.
  */
-void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimConfig &cfg)
+inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimConfig &cfg)
 {
     // Define the indices of the first and last active physical cells
     int n_species = state.GetNumSpecies();

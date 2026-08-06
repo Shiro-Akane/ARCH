@@ -117,7 +117,7 @@ namespace OdeMath
      * @param dt_n     当前步长
      * @return         新步长 dt_next
      */
-    double pi_controller(double err_n, double err_n_1, double dt_n,
+    inline double pi_controller(double err_n, double err_n_1, double dt_n,
                          int order_q, double safe, double min_fac, double max_fac)
     {
         // 动态计算基于阶数的控制参数 (Hairer & Wanner 标准设定)
