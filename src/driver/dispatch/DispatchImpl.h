@@ -1,3 +1,14 @@
+/**
+ * @file DispatchImpl.h
+ * @brief Template matrix factory for dispatching physical and numerical solver policies.
+ * *
+ * * Workflow:
+ * * 1. Instantiates the physics models (EOS, Gravity, Reaction Networks).
+ * * 2. Instantiates the hydrodynamics components (Flux solvers, Limiters).
+ * * 3. Binds them into a concrete template sequence to call run_simulation().
+ * * 4. Used heavily to avoid bloated compilation objects by keeping template instantiations segregated.
+ */
+
 #pragma once
 
 #include <string>

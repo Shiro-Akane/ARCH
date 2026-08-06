@@ -1,3 +1,13 @@
+/**
+ * @file Dispatch_RK2.cpp
+ * @brief Dispatcher component for the Runge-Kutta 2 (Heun's method) time integrator.
+ * *
+ * * Workflow:
+ * * 1. Acts as a standalone translation unit specifically for the RK2 scheme.
+ * * 2. Instantiates all possible template combinations of Flux, EOS, and Burner solvers.
+ * * 3. Keeps compiler memory footprints low by isolating RK2 instantiations away from Euler/RK3.
+ */
+
 #include "DispatchImpl.h"
 
 // Physics & Solvers Dispatchers

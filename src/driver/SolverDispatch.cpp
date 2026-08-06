@@ -74,7 +74,7 @@ void DispatchSolver(const std::string &solver_name,
 
     std::cout << "[Dispatch] Grid Topology: " << grid.dim << "D "
               << config.grid.geometry << " ("
-              << grid.nx << " x " << grid.ny << " x " << grid.nz << ")" << std::endl;
+              << grid.n1 << " x " << grid.n2 << " x " << grid.n3 << ")" << std::endl;
 
     FluidState state(grid, specs.count());
 

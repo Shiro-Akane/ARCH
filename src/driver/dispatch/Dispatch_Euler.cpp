@@ -1,3 +1,13 @@
+/**
+ * @file Dispatch_Euler.cpp
+ * @brief Dispatcher component for the Forward Euler time integrator.
+ * *
+ * * Workflow:
+ * * 1. Acts as a standalone translation unit specifically for the Euler scheme.
+ * * 2. Instantiates all possible template combinations of Flux, EOS, and Burner solvers.
+ * * 3. Keeps compiler memory footprints low by isolating Euler instantiations away from RK2/RK3.
+ */
+
 #include "DispatchImpl.h"
 
 // Physics & Solvers Dispatchers

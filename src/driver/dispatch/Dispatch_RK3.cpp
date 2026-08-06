@@ -1,3 +1,13 @@
+/**
+ * @file Dispatch_RK3.cpp
+ * @brief Dispatcher component for the Runge-Kutta 3 (SSP-RK3) time integrator.
+ * *
+ * * Workflow:
+ * * 1. Acts as a standalone translation unit specifically for the RK3 scheme.
+ * * 2. Instantiates all possible template combinations of Flux, EOS, and Burner solvers.
+ * * 3. Keeps compiler memory footprints low by isolating RK3 instantiations away from Euler/RK2.
+ */
+
 #include "DispatchImpl.h"
 
 // Physics & Solvers Dispatchers
