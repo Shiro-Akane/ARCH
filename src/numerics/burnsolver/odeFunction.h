@@ -18,16 +18,16 @@ namespace OdeMath
     // =================================================================
 
     /**
-     * @brief Y_new = Y_old + alpha * dY (通用向量更新)
+     * @brief X_new = X_old + alpha * dX (通用向量更新)
      */
     template <int ODE_NEQ>
-    void vec_axpy(const double *Y_old, double alpha, const double *dY, double *Y_new)
+    void vec_axpy(const double *X_old, double alpha, const double *dX, double *X_new)
     {
         // 因为 ODE_NEQ 是模板参数(编译期常量)，编译器会在此处进行激进的循环展开
 #pragma omp simd
         for (int i = 0; i < ODE_NEQ; ++i)
         {
-            Y_new[i] = Y_old[i] + alpha * dY[i];
+            X_new[i] = X_old[i] + alpha * dX[i];
         }
     }
 

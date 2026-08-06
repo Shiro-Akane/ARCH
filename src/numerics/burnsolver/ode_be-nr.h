@@ -19,15 +19,15 @@ struct Solver_BE_NR
     static constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
 
     template <typename EOSType>
-    static bool integrate(double *Y_ODE, double rho, double dt_target, const EOSType &eos,
+    static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
                           const BurnConfig &burn_cfg, double &dt_rec)
     {
-        if (Y_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin)
+        if (X_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin)
         {
             return true;
         }
 
-        double Y_old[MAX_N], Y_k[MAX_N], Y_trial[MAX_N];
+        double X_old[MAX_N], X_k[MAX_N], X_trial[MAX_N];
         double RHS[MAX_N], b[MAX_N], W[MAX_N];
         MatrixType A;
 
@@ -49,14 +49,14 @@ struct Solver_BE_NR
             // Replace the old composition-freeze bypass with an actual
             // network-constrained Timmes NSE projection.  The projection is
             // coupled to the EOS so binding-energy release/absorption changes
-            // temperature conservatively.  A failed projection leaves Y_ODE
+            // temperature conservatively.  A failed projection leaves X_ODE
             // untouched and falls back to the ordinary stiff ODE path.
             if (!nse_attempted && burn_cfg.use_nse
-                && Y_ODE[NEQ - 1] > burn_cfg.nseTempThreshold
+                && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold
                 && rho > burn_cfg.nseDensThreshold)
             {
                 nse_attempted = true;
-                if (OdeMath::integrate_nse_state<NetType, EOSType>(Y_ODE, rho, dt_target, eos,
+                if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos,
                                         burn_cfg, dt_rec)) {
                     return true;
                 }
@@ -79,8 +79,8 @@ struct Solver_BE_NR
 #pragma omp simd
             for (int i = 0; i < NEQ; ++i)
             {
-                Y_old[i] = Y_ODE[i];
-                Y_k[i] = Y_ODE[i];
+                X_old[i] = X_ODE[i];
+                X_k[i] = X_ODE[i];
             }
 
             bool step_converged = false;
@@ -92,25 +92,25 @@ struct Solver_BE_NR
                 double enuc = 0.0;
                 A.zero();
 
-                double T_current = Y_k[NEQ - 1];
-                double eta = eos.get_eta(rho, T_current, Y_k);
+                double T_current = X_k[NEQ - 1];
+                double eta = eos.get_eta(rho, T_current, X_k);
 
                 // 1. 调用物理策略求导
-                NetType::eval_rhs(Y_k, rho, eta, RHS, enuc);
+                NetType::eval_rhs(X_k, rho, eta, RHS, enuc);
 
                 // Timmes network derivatives: composition block, nuclear-energy
                 // derivatives, and the full analytic temperature column.
                 double denuc_dX[MAX_N]{};
                 double dRHS_dT[MAX_N]{};
                 double denuc_dT = 0.0;
-                NetType::eval_jacobian(Y_k, rho, eta, A, denuc_dX);
-                NetType::eval_temperature_derivative(Y_k, rho, eta, dRHS_dT, denuc_dT);
+                NetType::eval_jacobian(X_k, rho, eta, A, denuc_dX);
+                NetType::eval_temperature_derivative(X_k, rho, eta, dRHS_dT, denuc_dT);
 
                 // Match the original Timmes self-heating Jacobian exactly:
                 // dT/dt = enuc/cv and J_T,* = J_enuc,*/cv.  Timmes obtains cv
                 // analytically from Helmholtz but does not differentiate cv in
                 // the ODE Jacobian.  Temperature itself is never perturbed here.
-                const double cv = std::max(eos.get_cv(rho, T_current, Y_k),
+                const double cv = std::max(eos.get_cv(rho, T_current, X_k),
                                            1.0e-10);
                 const double inv_cv = 1.0 / cv;
                 RHS[NEQ - 1] = enuc * inv_cv;
@@ -124,10 +124,10 @@ struct Solver_BE_NR
                 }
                 A.set(NEQ, NEQ, denuc_dT * inv_cv);
 
-                // 4. 数学拼装：A = I - dt*J, b = Y_old - Y_k + dt*RHS
+                // 4. 数学拼装：A = I - dt*J, b = X_old - X_k + dt*RHS
                 for (int i = 0; i < NEQ; ++i)
                 {
-                    b[i] = Y_old[i] - Y_k[i] + dt * RHS[i];
+                    b[i] = X_old[i] - X_k[i] + dt * RHS[i];
 #pragma omp simd
                     for (int j = 0; j < NEQ; ++j)
                     {
@@ -160,26 +160,26 @@ struct Solver_BE_NR
                     break;
                 }
 
-                // 4. 计算当前状态的权重 (用于评估 b 也就是 dY 的误差)
-                OdeMath::calc_weights<NEQ>(Y_k, rtol, atol, W);
+                // 4. 计算当前状态的权重 (用于评估 b 也就是 dX 的误差)
+                OdeMath::calc_weights<NEQ>(X_k, rtol, atol, W);
 
-                // 5. 向量更新：Y_{k+1} = Y_k + b
+                // 5. 向量更新：Y_{k+1} = X_k + b
                 bool admissible = true;
                 double mass_sum = 0.0;
                 const double negative_tolerance = 10.0 * atol;
                 for (int i = 0; i < NUM_SPEC; ++i) {
-                    Y_trial[i] = Y_k[i] + b[i];
-                    if (!std::isfinite(Y_trial[i])
-                        || Y_trial[i] < -negative_tolerance
-                        || Y_trial[i] > 1.0 + negative_tolerance) {
+                    X_trial[i] = X_k[i] + b[i];
+                    if (!std::isfinite(X_trial[i])
+                        || X_trial[i] < -negative_tolerance
+                        || X_trial[i] > 1.0 + negative_tolerance) {
                         admissible = false;
                     }
-                    mass_sum += Y_trial[i];
+                    mass_sum += X_trial[i];
                 }
-                Y_trial[NEQ - 1] = Y_k[NEQ - 1] + b[NEQ - 1];
-                if (!std::isfinite(Y_trial[NEQ - 1])
-                    || Y_trial[NEQ - 1] < burn_cfg.smallt
-                    || Y_trial[NEQ - 1] > 1.0e11
+                X_trial[NEQ - 1] = X_k[NEQ - 1] + b[NEQ - 1];
+                if (!std::isfinite(X_trial[NEQ - 1])
+                    || X_trial[NEQ - 1] < burn_cfg.smallt
+                    || X_trial[NEQ - 1] > 1.0e11
                     || !std::isfinite(mass_sum) || mass_sum <= 0.0
                     || std::abs(mass_sum - 1.0) > 100.0 * rtol) {
                     admissible = false;
@@ -187,7 +187,7 @@ struct Solver_BE_NR
                 if (!admissible) break;
 
                 // 6. 物理边界截断器兜底！(防止迭代中途出现负质量或绝对零度)
-                // 7. 使用 WRMS 范数计算更新量 dY 的加权误差
+                // 7. 使用 WRMS 范数计算更新量 dX 的加权误差
                 current_err = OdeMath::wrms_norm<NEQ>(b, W);
 
                 // 根据 WRMS 规范，误差 < 1.0 即可认为收敛（有时用更严的 0.1）
@@ -195,26 +195,26 @@ struct Solver_BE_NR
                 {
                     double projected_sum = 0.0;
                     for (int i = 0; i < NUM_SPEC; ++i) {
-                        Y_trial[i] = std::max(Y_trial[i], burn_cfg.smallx);
-                        projected_sum += Y_trial[i];
+                        X_trial[i] = std::max(X_trial[i], burn_cfg.smallx);
+                        projected_sum += X_trial[i];
                     }
                     const double inv_projected_sum = 1.0 / projected_sum;
                     for (int i = 0; i < NUM_SPEC; ++i) {
-                        Y_trial[i] *= inv_projected_sum;
+                        X_trial[i] *= inv_projected_sum;
                     }
 
                     long double nuclear_mass_delta = 0.0L;
                     for (int i = 0; i < NUM_SPEC; ++i) {
                         nuclear_mass_delta +=
-                            static_cast<long double>(Y_trial[i] - Y_old[i])
+                            static_cast<long double>(X_trial[i] - X_old[i])
                             / NetType::AION[i] * NetType::ENERGY_WEIGHTS[i];
                     }
                     const double integrated_enuc = NetType::ENERGY_CONVERSION
                         * static_cast<double>(nuclear_mass_delta);
                     const double old_eint = eos.get_eint_from_T(
-                        rho, Y_old[NEQ - 1], Y_old);
+                        rho, X_old[NEQ - 1], X_old);
                     const double new_eint = eos.get_eint_from_T(
-                        rho, Y_trial[NEQ - 1], Y_trial);
+                        rho, X_trial[NEQ - 1], X_trial);
                     const double thermal_delta = new_eint - old_eint;
                     const double closure_scale = std::max(
                         {std::abs(integrated_enuc), std::abs(thermal_delta),
@@ -225,12 +225,12 @@ struct Solver_BE_NR
                         break;
                     }
 
-                    for (int i = 0; i < NEQ; ++i) Y_k[i] = Y_trial[i];
+                    for (int i = 0; i < NEQ; ++i) X_k[i] = X_trial[i];
                     step_converged = true;
                     break;
                 }
 
-                for (int i = 0; i < NEQ; ++i) Y_k[i] = Y_trial[i];
+                for (int i = 0; i < NEQ; ++i) X_k[i] = X_trial[i];
             }
             // ==================================================
 
@@ -242,7 +242,7 @@ struct Solver_BE_NR
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i)
                 {
-                    Y_ODE[i] = Y_k[i];
+                    X_ODE[i] = X_k[i];
                 }
 
                 // 1. 使用 PI 控制器计算初步的理想步长

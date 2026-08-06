@@ -101,7 +101,7 @@ rho = 1e6, 1e8 g cm^-3
 
 高温高密度路径使用 `src/physics/nse/nse_solver.h` 中的 `NSESolver<NetType>`。其来源是 Frank Timmes 的 `public_nse.tbz`：该归档实际包含 47 核素 Fortran 在线求解程序，而不是预先生成的 NSE 二进制表。C++ 实现转写了其中的 Saha 方程、质量/电荷守恒残差和 2 x 2 Newton-Raphson Jacobian，并剔除了固定 47 核素数组。
 
-求解器只从 `NetType` 读取编译期核数据：`NUM_SPECIES`、`AION`、`ZION`、`BINDING_E`、`SPIN` 和能量转换系数。`BINDING_E` 在这里必须是单个原子核的总结合能（MeV），不能把质量超额未经转换直接代入。接口变量沿用历史名称 `Y_old/Y_out`，实际输入输出均为质量分数 `X_i`；能量闭包内部使用摩尔丰度 `X_i/A_i`。
+求解器只从 `NetType` 读取编译期核数据：`NUM_SPECIES`、`AION`、`ZION`、`BINDING_E`、`SPIN` 和能量转换系数。`BINDING_E` 在这里必须是单个原子核的总结合能（MeV），不能把质量超额未经转换直接代入。接口变量名为 `X_old/X_out`，实际输入输出均为质量分数 `X_i`；能量闭包内部使用摩尔丰度 `Y_i = X_i/A_i`。
 
 固定温度和密度下的方程为：
 

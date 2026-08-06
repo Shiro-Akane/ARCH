@@ -36,17 +36,17 @@ struct NSESolver
      * @param T       temperature [K]
      * @param rho     mass density [g cm^-3]
      * @param Ye      electron fraction, sum_i (Z_i/A_i) X_i
-     * @param Y_old   input mass fractions (kept unchanged)
-     * @param Y_out   output NSE mass fractions
-     * @param enuc    binding-energy change from Y_old to Y_out [erg g^-1]
+     * @param X_old   input mass fractions (kept unchanged)
+     * @param X_out   output NSE mass fractions
+     * @param enuc    binding-energy change from X_old to X_out [erg g^-1]
      * @return true only after Newton convergence and an independent
      *         mass/charge-conservation check
      */
     static bool solve(double T, double rho, double Ye,
-                      const double* Y_old, double* Y_out, double& enuc)
+                      const double* X_old, double* X_out, double& enuc)
     {
         enuc = 0.0;
-        if (Y_old == nullptr || Y_out == nullptr || !std::isfinite(T)
+        if (X_old == nullptr || X_out == nullptr || !std::isfinite(T)
             || !std::isfinite(rho) || !std::isfinite(Ye)
             || T <= 0.0 || rho <= 0.0 || Ye < 0.0 || Ye > 1.0) {
             return false;
@@ -62,7 +62,7 @@ struct NSESolver
         if (!std::isfinite(kT_mev) || kT_mev <= 0.0) return false;
 
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (!std::isfinite(Y_old[i]) || Y_old[i] < -conservation_tol) {
+            if (!std::isfinite(X_old[i]) || X_old[i] < -conservation_tol) {
                 return false;
             }
 
@@ -125,7 +125,7 @@ struct NSESolver
 #pragma omp simd reduction(+:delta_binding)
         for (int i = 0; i < NUM_SPEC; ++i) {
             delta_binding +=
-                static_cast<long double>(solution[i] - Y_old[i])
+                static_cast<long double>(solution[i] - X_old[i])
                 * static_cast<long double>(NetType::BINDING_E[i]
                                            / NetType::AION[i]);
         }
@@ -135,7 +135,7 @@ struct NSESolver
         if (!std::isfinite(energy)) return false;
 
 #pragma omp simd
-        for (int i = 0; i < NUM_SPEC; ++i) Y_out[i] = solution[i];
+        for (int i = 0; i < NUM_SPEC; ++i) X_out[i] = solution[i];
         enuc = energy;
         return true;
     }

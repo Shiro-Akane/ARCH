@@ -27,7 +27,7 @@
 struct DummyBurner
 {
     template <typename EOSViewType>
-    bool integrate(double * /*Y_ODE*/, double /*rho*/, double /*dt_target*/,
+    bool integrate(double * /*X_ODE*/, double /*rho*/, double /*dt_target*/,
                    const EOSViewType & /*eos*/, const BurnConfig & /*burn_cfg*/, double & /*dt_rec*/) const
     {
         return true; // 什么都不做。编译器会将其完全优化剔除。
