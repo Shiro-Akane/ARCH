@@ -11,8 +11,8 @@
  */
 
 #include "SolverDispatch.h"
-#include "DriverStartup.h"
 
+#include <cmath>
 #include <string>
 #include <iostream>
 #include <stdexcept>
@@ -31,6 +31,66 @@ void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const Sp
 void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
 void Dispatch_RK3(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
 
+namespace
+{
+
+/**
+ * @brief Returns the physical label for one logical coordinate axis.
+ *
+ * Startup reporting exposes logical coordinate widths. Curvilinear arc lengths
+ * remain the responsibility of GridMetrics in finite-volume operators.
+ */
+const char* axis_label(const SimConfig& config, int axis)
+{
+    if (config.grid.geometry == "cartesian") {
+        static constexpr const char* cartesian[] = {"x", "y", "z"};
+        return cartesian[axis];
+    }
+    if (axis == 0) return "r";
+    if (config.grid.dim == 2) return "theta";
+    if (config.grid.geometry == "cylindrical") {
+        static constexpr const char* cylindrical[] = {"r", "z", "phi"};
+        return cylindrical[axis];
+    }
+    static constexpr const char* spherical[] = {"r", "theta", "phi"};
+    return spherical[axis];
+}
+
+/**
+ * @brief Prints the Level 0..lrefinemax logical-resolution table before regridding.
+ *
+ * This presentation helper belongs to the dispatch translation unit because it
+ * describes dispatch-time topology, not the time-evolution contract in Driver.h.
+ */
+void print_amr_resolution_summary(const SimConfig& config)
+{
+    const double dx1 = (config.grid.x1_max - config.grid.x1_min) /
+                       (config.grid.nblockx1 * amr::BLOCK_NX);
+    const double dx2 = config.grid.dim >= 2
+        ? (config.grid.x2_max - config.grid.x2_min) / (config.grid.nblockx2 * amr::BLOCK_NY)
+        : 0.0;
+    const double dx3 = config.grid.dim == 3
+        ? (config.grid.x3_max - config.grid.x3_min) / (config.grid.nblockx3 * amr::BLOCK_NZ)
+        : 0.0;
+
+    std::cout << ">>> AMR Levels  | Max Blocks: " << config.grid.amr_max_blocks
+              << " | Finest Level: " << config.amr.lrefinemax << std::endl;
+    for (int level = 0; level <= config.amr.lrefinemax; ++level) {
+        const double refinement = std::ldexp(1.0, level);
+        std::cout << "    Level " << level << "   | dx1(" << axis_label(config, 0)
+                  << "): " << dx1 / refinement;
+        if (config.grid.dim >= 2) {
+            std::cout << ", dx2(" << axis_label(config, 1) << "): "
+                      << dx2 / refinement;
+        }
+        if (config.grid.dim == 3) {
+            std::cout << ", dx3(" << axis_label(config, 2) << "): "
+                      << dx3 / refinement;
+        }
+        std::cout << std::endl;
+    }
+}
+
 // =========================================================
 // Helper: Determine Ghost Cells based on Config
 // =========================================================
@@ -38,7 +98,7 @@ int determine_required_ng(const SimConfig &config)
 {
     std::string recon = config.numerics.reconstruction;
 
-    int ng_recon = 1; // 默认 PCM
+    int ng_recon = 1; // default PCM
 
     if (recon == "pcm" || recon == "PCM")
     {
@@ -50,7 +110,7 @@ int determine_required_ng(const SimConfig &config)
     }
     else if (recon == "ppm" || recon == "PPM" || recon == "weno5")
     {
-        ng_recon = 3; // PPM/WENO 通常需要更宽的模板
+        ng_recon = 3; // PPM/WENO uses a wider stencil.
     }
     else
     {
@@ -65,6 +125,8 @@ int determine_required_ng(const SimConfig &config)
 
     return std::max(ng_recon, ng_flux);
 }
+
+} // namespace
 
 // =========================================================
 // The Public Dispatch Function
@@ -96,7 +158,7 @@ void DispatchSolver(const std::string &solver_name,
         read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs.count());
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
-        DriverStartup::print_amr_resolution_summary(config);
+        print_amr_resolution_summary(config);
     }
     else
     {
@@ -106,7 +168,7 @@ void DispatchSolver(const std::string &solver_name,
         problem.InitializeData(amr_ctrl, config, specs);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
-        DriverStartup::print_amr_resolution_summary(config);
+        print_amr_resolution_summary(config);
 
         if (config.amr.lrefinemax > 0) {
             const bool eos_indicator = config.amr.refine_on_p || config.amr.refine_on_temp ||
