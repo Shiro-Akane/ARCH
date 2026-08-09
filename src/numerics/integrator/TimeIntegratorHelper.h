@@ -4,12 +4,23 @@
  * Centralizes the core loops for all explicit time integrators.
  */
 
+/**
+ * Workflow:
+ * 1. Evaluate block-local flux divergence and physical source terms.
+ * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
+ * 3. Leave AMR communication and reflux ownership with the common driver services.
+ */
+
 #pragma once
 
 #include <vector>
 #include <algorithm>
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
+#include "../../grid/GridMetrics.h"
+#include "../../amr/AMRControl.h"
+#include "../../physics/gravity/IGravityPolicy.h"
+#include "../../amr/AMRFluxRegistering.h"
 
 namespace TimeIntegration
 {
@@ -37,84 +48,11 @@ namespace TimeIntegration
             {
                 int idx = grid.GetIndex(i, j, k);
 
-                double area_l = 1.0, area_r = 1.0, vol = 1.0;
+                const double volume = GridMetrics::CellVolume(grid, i, j, k);
+                const double area_l = GridMetrics::FaceArea(grid, dir, i, j, k, false);
+                const double area_r = GridMetrics::FaceArea(grid, dir, i, j, k, true);
 
-                if (grid.geometry == "cartesian")
-                {
-                    vol = (dir == 0) ? grid.dx1 : ((dir == 1) ? grid.dx2 : grid.dx3);
-                }
-                else if (grid.geometry == "cylindrical")
-                {
-                    double r_l = grid.GetFacePosL(i);
-                    double r_r = grid.GetFacePosR(i);
-                    double r_c = grid.GetCellCenterX(i);
-                    if (dir == 0) // r
-                    {
-                        area_l = r_l;
-                        area_r = r_r;
-                        vol = r_c * grid.dx1;
-                    }
-                    else if (dir == 1) // 3D: z, 2D: phi
-                    {
-                        if (grid.dim == 2) { // phi
-                            area_l = 1.0;
-                            area_r = 1.0;
-                            vol = r_c * grid.dx2;
-                        } else { // z
-                            area_l = 1.0;
-                            area_r = 1.0;
-                            vol = grid.dx2;
-                        }
-                    }
-                    else if (dir == 2) // phi
-                    {
-                        area_l = 1.0;
-                        area_r = 1.0;
-                        vol = r_c * grid.dx3;
-                    }
-                }
-                else if (grid.geometry == "spherical")
-                {
-                    double r_l = grid.GetFacePosL(i);
-                    double r_r = grid.GetFacePosR(i);
-                    double r_c = grid.GetCellCenterX(i);
-                    double theta_c = grid.GetCellCenterY(j);
-                    
-                    if (dir == 0) // r
-                    {
-                        if (grid.dim == 2) { // 2D polar fallback
-                            area_l = r_l;
-                            area_r = r_r;
-                            vol = r_c * grid.dx1;
-                        } else {
-                            area_l = r_l * r_l;
-                            area_r = r_r * r_r;
-                            vol = r_c * r_c * grid.dx1;
-                        }
-                    }
-                    else if (dir == 1) // theta (3D) or phi (2D)
-                    {
-                        if (grid.dim == 2) { // 2D polar fallback
-                            area_l = 1.0;
-                            area_r = 1.0;
-                            vol = r_c * grid.dx2;
-                        } else {
-                            double theta_l = grid.x2_min + (j - grid.ng) * grid.dx2;
-                            double theta_r = grid.x2_min + (j - grid.ng + 1) * grid.dx2;
-                            area_l = std::sin(theta_l);
-                            area_r = std::sin(theta_r);
-                            vol = r_c * std::sin(theta_c) * grid.dx2;
-                        }
-                    }
-                    else if (dir == 2) // phi (3D only)
-                    {
-                        area_l = 1.0;
-                        area_r = 1.0;
-                        vol = r_c * std::sin(theta_c) * grid.dx3;
-                    }
-                }
-
-                double dt_over_vol = dt / vol;
+                double dt_over_vol = dt / volume;
                 dU[idx] = dU[idx] + (fluxes[idx] * area_l - fluxes[idx + stride] * area_r) * dt_over_vol;
                 for (int s = 0; s < n_spec; ++s)
                 {
@@ -160,14 +98,14 @@ namespace TimeIntegration
                     PointCoords coords = grid.GetPhysicalCoords(i, j, k);
                     double r = coords.r;
                     if (grid.geometry == "cylindrical") r = coords.r_cy;
-                    
+
                     if (r < 1e-14)
                         continue;
 
                     state.get_species_to_buffer(idx, Xi.data());
                     FluidVector U = state.get(idx);
                     double p = eos.get_pressure(U, Xi.data());
-                    
+
                     double rho = std::max(U.rho, 1e-12);
                     double v_x = U.mom_u / rho;
                     double v_y = U.mom_v / rho;
@@ -177,9 +115,9 @@ namespace TimeIntegration
                     {
                         // mom_u = v_r. 2D mom_v = v_phi. 3D mom_w = v_phi
                         double v_phi = (grid.dim == 2) ? v_y : ((grid.dim == 3) ? v_z : 0.0);
-                        
+
                         dU[idx].mom_u += dt * (rho * v_phi * v_phi + p) / r;
-                        
+
                         if (grid.dim == 2) {
                             dU[idx].mom_v += dt * (-rho * v_x * v_y) / r;
                         } else if (grid.dim == 3) {
@@ -188,23 +126,23 @@ namespace TimeIntegration
                     }
                     else if (grid.geometry == "spherical")
                     {
-                        // mom_u = v_r. 2D mom_v = v_phi. 
+                        // mom_u = v_r. 2D mom_v = v_phi.
                         // 3D mom_v = v_theta, mom_w = v_phi.
                         if (grid.dim == 1) {
                             dU[idx].mom_u += dt * 2.0 * p / r;
-                        } 
+                        }
                         else if (grid.dim == 2) {
                             // 2D Spherical falls back to Polar (r, phi)
                             double v_phi = v_y;
                             dU[idx].mom_u += dt * (rho * v_phi * v_phi + p) / r;
                             dU[idx].mom_v += dt * (-rho * v_x * v_y) / r;
-                        } 
+                        }
                         else if (grid.dim == 3) {
                             double v_theta = v_y;
                             double v_phi = v_z;
                             double theta = coords.theta;
                             double cot_theta = std::cos(theta) / std::max(std::sin(theta), 1e-14); // Avoid div zero at poles
-                            
+
                             dU[idx].mom_u += dt * (rho * (v_theta * v_theta + v_phi * v_phi) + 2.0 * p) / r;
                             dU[idx].mom_v += dt * (rho * v_phi * v_phi * cot_theta + p * cot_theta - rho * v_x * v_theta) / r;
                             dU[idx].mom_w += dt * (-rho * v_x * v_phi - rho * v_theta * v_phi * cot_theta) / r;
@@ -218,48 +156,19 @@ namespace TimeIntegration
     // ---------------------------------------------------------
     // Helper: Physical Source Terms (Gravity)
     // ---------------------------------------------------------
-    template <typename GravityPolicy>
     inline void add_gravity_sources(
         std::vector<FluidVector> &dU,
         const FluidState &state,
         const Grid &grid,
         double dt,
-        GravityPolicy &gravity)
+        const Physical::Gravity::IGravityPolicy* gravity)
     {
-        gravity.update_field(state, grid);
-
-        const int ks = grid.Ks(), ke = grid.Ke();
-        const int js = grid.Js(), je = grid.Je();
-        const int nk = ke - ks, nj = je - js;
-
-#pragma omp parallel for schedule(static)
-        for (int kj = 0; kj < nk * nj; ++kj)
-        {
-            int k = ks + kj / nj;
-            int j = js + kj % nj;
-            for (int i = grid.Is(); i < grid.Ie(); ++i)
-            {
-                int idx = grid.GetIndex(i, j, k);
-                double rho = state.rho[idx];
-
-                if (rho < 1e-12)
-                    continue;
-
-                double vx = state.mom_u[idx] / rho;
-                double vy = state.mom_v[idx] / rho;
-                double vz = state.mom_w[idx] / rho;
-
-                double gx = 0.0, gy = 0.0, gz = 0.0;
-                gravity.get_gravity(i, j, k, gx, gy, gz);
-
-                dU[idx].mom_u += dt * rho * gx;
-                dU[idx].mom_v += dt * rho * gy;
-                dU[idx].mom_w += dt * rho * gz;
-                dU[idx].eng += dt * rho * (vx * gx + vy * gy + vz * gz);
-            }
+        // For purely CPU implementations, we can still use the grid loop if the interface delegates back, or the interface implements the loop directly!
+        // Based on our IGravityPolicy design, we call add_sources_on_patch!
+        if (gravity) {
+            gravity->add_sources_on_patch(dU, state, grid, dt, nullptr);
         }
-    }
-    // ---------------------------------------------------------
+    }    // ---------------------------------------------------------
     // Helper 2: Generalized Weighted RK Update
     // ---------------------------------------------------------
     inline void perform_stage_update(
@@ -297,13 +206,13 @@ namespace TimeIntegration
                     U_new.mom_v = 0.0;
                     U_new.mom_w = 0.0;
                     // Reset energy such that e_int is small, e.g., 1e-10
-                    U_new.eng = sml_rho * 1e-10; 
+                    U_new.eng = sml_rho * 1e-10;
                 }
                 else
                 {
                     // 动能
                     double e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
-                    
+
                     // 速度上限截断 (Velocity Ceiling)
                     // 防止近真空区被注入动量后产生超光速(如 1e24 cm/s)，导致 CFL 直接崩溃
                     double max_vel = 1e10; // 10,000 km/s，远大于正常流体速度，不影响真实物理
@@ -321,7 +230,7 @@ namespace TimeIntegration
                     // 上限 1e21 erg/g 对应 T ~ 10^12 K，远高于天体爆轰真实温度，安全且不会影响真实物理。
                     double current_eint = (U_new.eng - e_kin) / U_new.rho;
                     double min_eint = 1e-10;
-                    
+
                     if (current_eint < min_eint || current_eint > max_eint)
                     {
                         current_eint = std::max(min_eint, std::min(current_eint, max_eint));
@@ -365,13 +274,14 @@ namespace TimeIntegration
     // Helper 3: Evaluate Fluxes for all Dimensions
     // Note: Template requires FluxSchemePolicy to call compute_fluxes
     // ---------------------------------------------------------
-    template <typename FluxSchemePolicy, typename EosType, typename GravityPolicy>
+    template <typename FluxSchemePolicy, typename EosType>
     inline void evaluate_all_dimensions(
+        amr::AMRControl* amr_ctrl, int block_id,
         const FluidState &state, const EosType &eos, const Grid &grid, double dt,
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         std::vector<FluidVector> &flux_buffer, std::vector<double> &spec_flux_buffer,
-        GravityPolicy &gravity,
-        double entropy_fix_coeff)
+        const Physical::Gravity::IGravityPolicy* gravity,
+        double entropy_fix_coeff, double flux_weight = 1.0)
     {
         int n_spec = state.GetNumSpecies();
         std::fill(dU.begin(), dU.end(), FluidVector());
@@ -382,7 +292,14 @@ namespace TimeIntegration
             std::fill(flux_buffer.begin(), flux_buffer.end(), FluidVector());
             std::fill(spec_flux_buffer.begin(), spec_flux_buffer.end(), 0.0);
             FluxSchemePolicy::compute_fluxes(state, eos, grid, flux_buffer, spec_flux_buffer, dir, entropy_fix_coeff);
+
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
+
+            // Flux registration has one shared face-index convention for all AMR operators.
+            if (amr_ctrl && block_id >= 0) {
+                amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,
+                                               flux_buffer, spec_flux_buffer, n_spec, flux_weight);
+            }
         }
 
         add_geometric_sources(dU, state, eos, grid, dt);

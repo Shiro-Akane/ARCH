@@ -1,9 +1,14 @@
 /**
  * @file TimeIntegratorEuler.h
  * @brief 1st Order Forward Euler Time Integrator.
- * * Use mainly for debugging or steady-state convergence.
  */
 
+/**
+ * Workflow:
+ * 1. Evaluate block-local flux divergence and physical source terms.
+ * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
+ * 3. Leave AMR communication and reflux ownership with the common driver services.
+ */
 #pragma once
 
 #include <vector>
@@ -11,55 +16,52 @@
 #include <algorithm>
 
 #include "TimeIntegratorHelper.h"
+#include "IHydroSolver.h"
 
 #include "../../data/FluidState.h"
+#include "../../amr/AMRControl.h"
 
-/**
- * @struct SolverEuler
- * @tparam FluxSchemePolicy The flux calculation scheme (e.g., FluxVL<Muscl...>)
- */
-template <typename FluxSchemePolicy>
 struct SolverEuler
 {
-    static std::string name() { return "Euler (1st Order) + " + FluxSchemePolicy::name(); }
+    static std::string name() { return "Euler (1st Order)"; }
 
-    // Euler 只需要 1 层 Ghost Cell 即可进行通量计算（取决于重构），但保持一致即可
-    static constexpr int NG = FluxSchemePolicy::NG;
-
-    /**
-     * @brief Performs one full Euler time step.
-     * * Interface matches SolverRK2 exactly for compatibility with Driver.h
-     */
-    template <typename EosType, typename BCPolicy, typename GravityPolicy>
-    static void solve(const FluidState &state_n, FluidState &state_np1,
-                      FluidState &state_scratch, // [Unused] 占位符，Euler 不需要中间缓存
-                      const EosType &eos, const Grid &grid, double dt,
+    template <typename BCPolicy>
+    static void solve(amr::AMRControl &amr_ctrl,
+                      double dt,
                       BCPolicy &boundary_condition,
-                      GravityPolicy &gravity,
-                      const NumericsConfig &num_cfg) // [Unused] Euler 一步到位，中间不需要刷边界
+                      const Physical::Gravity::IGravityPolicy* gravity,
+                      const Numerics::IHydroSolver* hydro,
+                      const NumericsConfig &num_cfg)
     {
+        amr_ctrl.flux_register.Clear();
+        const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+        if (!active_blocks.empty()) {
+            amr_ctrl.flux_register.EnsureSpecies(amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
+        }
+        int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
+        int dim = amr_ctrl.tree->GetRootGridDim();
 
-        int total_size = grid.GetTotalSize();
-        int n_spec = state_n.GetNumSpecies();
+        // Stage 1
+        #pragma omp parallel
+        {
+            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
+            std::vector<FluidVector> dU(total_size);
+            std::vector<double> d_spec(n_spec * total_size);
 
-        // Memory Management
-        std::vector<FluidVector> dU(total_size);
-        std::vector<double> d_spec(n_spec * total_size);
-        std::vector<FluidVector> fluxes(total_size);
-        std::vector<double> spec_fluxes(n_spec * total_size);
+            #pragma omp for schedule(dynamic)
+            for (size_t i = 0; i < active_blocks.size(); ++i) {
+                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.fluid_state, b.grid, dt, dU, d_spec, gravity, num_cfg, 1.0, nullptr);
+                hydro->update_patch(b.fluid_state, b.fluid_state, b.state_next, dU, d_spec, b.grid, 0.0, 1.0, num_cfg, nullptr);
+            }
+        }
 
-        // =========================================================
-        // Single Euler Step: U^{n+1} = U^n + dt * L(U^n)
-        // =========================================================
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(
-            state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
+        #pragma omp parallel for schedule(dynamic)
+        for (size_t i = 0; i < active_blocks.size(); ++i) {
+            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+            std::swap(b.fluid_state, b.state_next);
+        }
 
-        // Update step
-        TimeIntegration::perform_stage_update(state_n, state_n, state_np1, dU, d_spec, grid, 0.0, 1.0, num_cfg.sml_rho, num_cfg.max_eint);
-
-        // Suppress unused variables
-        (void)state_scratch;
-        (void)boundary_condition;
-        (void)gravity;
+        amr_ctrl.ApplyReflux(dt);
     }
 };

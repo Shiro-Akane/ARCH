@@ -3,12 +3,19 @@
  * @brief HLL Flux Scheme (Refactored to use get_flux)
  */
 
+/**
+ * Workflow:
+ * 1. Reconstruct left and right face states using the configured limiter policy.
+ * 2. Evaluate the named Riemann flux consistently in every active dimension.
+ * 3. Register interface fluxes through the shared AMR path when a coarse-fine face is present.
+ */
+
 #pragma once
 
 #include <vector>
 #include <algorithm>
 #include "FluxFunctions.h"
-#include "../reconstruction/Reconstruction.h"
+#include "../reconstruction/AMRInterfaceReconstruction.h"
 
 template <typename ReconstructPolicy>
 struct FluxHLL
@@ -27,8 +34,22 @@ struct FluxHLL
         int total_size = grid.GetTotalSize();
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
 
-        const int nk = grid.Ke() - grid.Ks();
-        const int nj = grid.Je() - grid.Js();
+        int i_start = grid.Is();
+        int i_end = grid.Ie();
+        int j_start = grid.Js();
+        int j_end = grid.Je();
+        int k_start = grid.Ks();
+        int k_end = grid.Ke();
+
+        if (dir == 0)
+            i_start -= 1;
+        else if (dir == 1)
+            j_start -= 1;
+        else if (dir == 2)
+            k_start -= 1;
+
+        const int nk = k_end - k_start;
+        const int nj = j_end - j_start;
 
 #pragma omp parallel
         {
@@ -38,15 +59,13 @@ struct FluxHLL
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
-                int k = grid.Ks() + kj / nj;
-                int j = grid.Js() + kj % nj;
-                for (int i = grid.Is() - 1; i < grid.Ie(); ++i)
+                int k = k_start + kj / nj;
+                int j = j_start + kj % nj;
+                for (int i = i_start; i < i_end; ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
-                    // 1. Reconstruction
-                    auto [U_L, U_R] = ReconstructPolicy::run(state, idx, stride);
-                    if (n_spec > 0)
-                        ReconstructPolicy::run_species(state, idx, n_spec, Xi_L.data(), Xi_R.data(), stride);
+                    FluidVector U_L, U_R;
+                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), U_L, U_R);
 
                     // ======================================================
                     // 2. 准备热力学变量 (Thermodynamics First)

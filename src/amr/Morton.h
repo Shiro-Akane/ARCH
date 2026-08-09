@@ -1,0 +1,69 @@
+/**
+ * @file Morton.h
+ * @brief 64-bit Morton encoding (Z-curve) for 3D AMR blocks.
+ */
+
+/**
+ * Workflow:
+ * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
+ * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
+ * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ */
+
+#pragma once
+
+#include <cstdint>
+
+namespace amr {
+
+inline constexpr int kMortonLevelBits = 4;
+inline constexpr int kMaxRefinementLevel = (1 << kMortonLevelBits) - 1;
+inline constexpr uint32_t kMortonCoordinateMask = (1u << 20) - 1u;
+
+/**
+ * @brief Interleaves three 20-bit integers into the low 60 bits.
+ */
+inline uint64_t splitBy3(uint64_t a) {
+    a &= kMortonCoordinateMask;
+    a = (a | (a << 32)) & 0x1f00000000ffff;
+    a = (a | (a << 16)) & 0x1f0000ff0000ff;
+    a = (a | (a << 8))  & 0x100f00f00f00f00f;
+    a = (a | (a << 4))  & 0x10c30c30c30c30c3;
+    a = (a | (a << 2))  & 0x1249249249249249;
+    return a;
+}
+
+/**
+ * @brief Extracts every third bit from the low 60 Morton-coordinate bits.
+ */
+inline uint64_t getThirdBits(uint64_t a) {
+    a &= 0x1249249249249249;
+    a = (a ^ (a >> 2))  & 0x10c30c30c30c30c3;
+    a = (a ^ (a >> 4))  & 0x100f00f00f00f00f;
+    a = (a ^ (a >> 8))  & 0x1f0000ff0000ff;
+    a = (a ^ (a >> 16)) & 0x1f00000000ffff;
+    a = (a ^ (a >> 32)) & kMortonCoordinateMask;
+    return a;
+}
+
+/**
+ * @brief Computes a Morton code with four level bits and 20 bits per coordinate.
+ */
+inline uint64_t encodeMorton(int level, uint32_t x, uint32_t y, uint32_t z) {
+    uint64_t code = 0;
+    code |= (static_cast<uint64_t>(level) & kMaxRefinementLevel) << 60;
+    code |= (splitBy3(z) << 2) | (splitBy3(y) << 1) | splitBy3(x);
+    return code;
+}
+
+/**
+ * @brief Decodes a Morton code into its level and logical coordinates.
+ */
+inline void decodeMorton(uint64_t code, int& level, uint32_t& x, uint32_t& y, uint32_t& z) {
+    level = static_cast<int>((code >> 60) & kMaxRefinementLevel);
+    x = static_cast<uint32_t>(getThirdBits(code));
+    y = static_cast<uint32_t>(getThirdBits(code >> 1));
+    z = static_cast<uint32_t>(getThirdBits(code >> 2));
+}
+
+} // namespace amr

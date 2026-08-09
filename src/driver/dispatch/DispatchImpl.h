@@ -31,28 +31,46 @@
 #include "../../numerics/reconstruction/Reconstruction.h"
 #include "../../numerics/reconstruction/Limiters.h"
 
-#include "../../numerics/integrator/TimeIntegratorEuler.h"
-#include "../../numerics/integrator/TimeIntegratorRK2.h"
-#include "../../numerics/integrator/TimeIntegratorRK3.h"
+// NOTE: TimeIntegrator headers are intentionally NOT included here.
+// Each Dispatch_*.cpp must include only the integrator it needs (e.g.,
+// Dispatch_Euler.cpp includes TimeIntegratorEuler.h) to avoid instantiating
+// the entire template matrix in every translation unit simultaneously.
+// Including all three here caused ~3.8GB peak RSS per TU with -j8 OOM.
 
 // 3. The Main Loop
 #include "../Driver.h"
 
+// 4. The Integrator Implementations
+#include "../../numerics/integrator/HydroSolverImpl.h"
+#include "../../physics/gravity/IGravityPolicy.h"
+#include "../../numerics/burnsolver/BurnerHandle.h"
+
 namespace DispatchImpl {
 
 // Level 4: Execute the simulation with the fully assembled type
-template <typename SolverType, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
-void launch_run(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn,
-                const Grid &grid, const SimConfig &config,
+template <typename TimeIntegrator, typename FluxSchemePolicy, typename EosPolicy>
+void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                const Physical::Gravity::IGravityPolicy* gravity,
+                const BurnerHandle<EosPolicy> &burn,
+                const SimConfig &config,
                 const SpeciesManager &specs, const RunState &run_state)
 {
-    // 调用 Driver.h 中的主循环
-    run_simulation<SolverType>(state, eos, gravity, burn, grid, config, specs, run_state);
+    // Instantiate the concrete HydroSolver for this Eos and Flux combo
+    Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
+
+    std::string integrator_name = TimeIntegrator::name() + " + " + FluxSchemePolicy::name();
+
+    // Call Driver.h main loop, passing the integrator's solve static method as a function pointer!
+    run_simulation<EosPolicy>(amr_ctrl, eos, gravity, burn, &hydro_solver,
+                              &TimeIntegrator::template solve<BCHandler>,
+                              integrator_name, config, specs, run_state);
 }
 
 // Level 3: Select Limiter (For MUSCL)
-template <template <typename> class TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
-void select_limiter(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn, const Grid &grid,
+template <typename TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy>
+void select_limiter(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                    const Physical::Gravity::IGravityPolicy* gravity,
+                    const BurnerHandle<EosPolicy> &burn,
                     const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
     std::string lim = config.numerics.limiter;
@@ -60,100 +78,108 @@ void select_limiter(FluidState &state, const EosPolicy &eos, GravityPolicy &grav
     if (lim == "minmod" || lim == "MinMod")
     {
         using MyRecon = MusclReconstruction<MinMod>;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (lim == "superbee" || lim == "SuperBee")
     {
         using MyRecon = MusclReconstruction<SuperBee>;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (lim == "vanleer" || lim == "VanLeer")
     {
         using MyRecon = MusclReconstruction<VanLeer>;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (lim == "mc" || lim == "MC")
     {
         using MyRecon = MusclReconstruction<McLimiter>;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else
     {
         std::cerr << "[Warning] Unknown limiter '" << lim << "', defaulting to MinMod." << std::endl;
         using MyRecon = MusclReconstruction<MinMod>;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
 }
 
 // Level 2: Select Reconstruction Scheme
-template <template <typename> class TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
-void select_reconstruction(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn, const Grid &grid,
+template <typename TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy>
+void select_reconstruction(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                           const Physical::Gravity::IGravityPolicy* gravity,
+                           const BurnerHandle<EosPolicy> &burn,
                            const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
     std::string recon = config.numerics.reconstruction;
-    if (recon == "pcm" || recon == "PCM")
+
+    if (recon == "pcm" || recon == "PCM" || recon == "donor_cell")
     {
         using MyRecon = PCMReconstruction;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
-    else if (recon == "muscl" || recon == "MUSCL")
+    else if (recon == "plm" || recon == "PLM" || recon == "muscl" || recon == "MUSCL")
     {
-        select_limiter<TimeIntegrator, FluxScheme>(state, eos, gravity, burn, grid, config, specs, run_state);
+        select_limiter<TimeIntegrator, FluxScheme>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (recon == "ppm" || recon == "PPM")
     {
         using MyRecon = PPMReconstruction;
-        using MySolver = TimeIntegrator<FluxScheme<MyRecon>>;
-        launch_run<MySolver>(state, eos, gravity, burn, grid, config, specs, run_state);
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else
     {
-        throw std::runtime_error("Unknown Reconstruction method: " + recon);
+        std::cerr << "[Warning] Unknown reconstruction '" << recon << "', defaulting to PCM." << std::endl;
+        using MyRecon = PCMReconstruction;
+        using MyFlux = FluxScheme<MyRecon>;
+        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
 }
 
 // Level 1: Select Flux Scheme
-template <template <typename> class TimeIntegrator, typename EosPolicy, typename GravityPolicy, typename BurnerPolicy>
-void select_flux(FluidState &state, const EosPolicy &eos, GravityPolicy &gravity, BurnerPolicy &burn, const Grid &grid,
+template <typename TimeIntegrator, typename EosPolicy>
+void select_flux(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                 const Physical::Gravity::IGravityPolicy* gravity,
+                 const BurnerHandle<EosPolicy> &burn,
                  const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
     std::string flux = config.numerics.solver_name;
 
     if (flux == "VL" || flux == "VanLeer")
     {
-        select_reconstruction<TimeIntegrator, FluxVL>(state, eos, gravity, burn, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxVL>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (flux == "SW" || flux == "StegerWarming")
     {
-        select_reconstruction<TimeIntegrator, FluxSW>(state, eos, gravity, burn, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxSW>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (flux == "Roe" || flux == "roe")
     {
-        select_reconstruction<TimeIntegrator, FluxRoe>(state, eos, gravity, burn, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxRoe>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else if (flux == "HLL" || flux == "hll")
     {
-        select_reconstruction<TimeIntegrator, FluxHLL>(state, eos, gravity, burn, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxHLL>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
-    else if (flux == "HLLC")
+    else if (flux == "HLLC" || flux == "hllc")
     {
-        select_reconstruction<TimeIntegrator, FluxHLLC>(state, eos, gravity, burn, grid, config, specs, run_state);
+        select_reconstruction<TimeIntegrator, FluxHLLC>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
     else
     {
-        throw std::runtime_error("Unknown Flux Solver: " + flux);
+        std::cerr << "[Warning] Unknown solver '" << flux << "', defaulting to HLLC." << std::endl;
+        select_reconstruction<TimeIntegrator, FluxHLLC>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
     }
 }
 
 } // namespace DispatchImpl
 
-void Dispatch_Euler(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK2(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK3(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-
+void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
+void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
+void Dispatch_RK3(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);

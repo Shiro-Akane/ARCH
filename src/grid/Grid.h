@@ -5,6 +5,13 @@
  * * to map between array indices and physical coordinates.
  */
 
+/**
+ * Workflow:
+ * 1. Derive active logical extents and physical coordinates from RuntimeParams.
+ * 2. Expose consistent cell, face, and metric information to numerical operators.
+ * 3. Preserve compact 1D/2D storage while retaining the common contiguous pool layout.
+ */
+
 #pragma once
 
 #include <cmath>
@@ -13,6 +20,7 @@
 #include <string>
 
 #include "../data/GlobalDefs.h"
+#include "../amr/AmrDefines.h"
 
 // -- Global Coord. Sturcture
 struct PointCoords
@@ -28,16 +36,21 @@ struct Grid
     // -- Dimensionality --
     int dim; ///< Number of spatial dimensions (1, 2 or 3)
 
-    // -- Grid Dimensions --
-    int n1; ///< Number of active physical cells in x1
-    int n2; ///< Number of active physical cells in x2
-    int n3; ///< Number of active physical cells in x3
+    // -- Global Domain Block Count (Root level) --
+    int nblockx1;
+    int nblockx2;
+    int nblockx3;
+
     int ng; ///< Number of ghost cells (guard cells) on each side
 
     // -- Memory Layout Strides --
     int stride_y;   ///< Stride for moving 1 index in y-direction
     int stride_z;   ///< Stride for moving 1 index in z-direction
     int total_size; ///< Total number of cells allocated in memory
+
+    // Set by AmrTree::UpdateNeighbors.  Flux reconstruction uses this to
+    // distinguish true coarse-fine interfaces from ordinary patch faces.
+    bool amr_coarse_fine_face[6] = {false, false, false, false, false, false};
 
     double dx1; ///< Spatial step size (cell width in x1)
     double dx2; ///< Spatial step size (cell width in x2)
@@ -56,28 +69,24 @@ struct Grid
      */
     std::string geometry = "cartesian"; ///< "cartesian", "cylindrical", "spherical"
 
-    Grid(int n1_in, int n2_in, int n3_in, int ng_in,
+    Grid() : dim(3), nblockx1(1), nblockx2(1), nblockx3(1), ng(0), x1_min(0), x2_min(0), x3_min(0), x1_max(0), x2_max(0), x3_max(0), geometry("cartesian") {}
+
+    Grid(int ng_in,
          double x1_min_in, double x1_max_in,
          double x2_min_in = 0.0, double x2_max_in = 0.0,
-         double x3_min_in = 0.0, double x3_max_in = 0.0)
-        : n1(n1_in), n2(n2_in), n3(n3_in), ng(ng_in),
+         double x3_min_in = 0.0, double x3_max_in = 0.0,
+         int nb1 = 1, int nb2 = 1, int nb3 = 1)
+        : ng(ng_in),
           x1_min(x1_min_in), x1_max(x1_max_in),
           x2_min(x2_min_in), x2_max(x2_max_in),
           x3_min(x3_min_in), x3_max(x3_max_in),
+          nblockx1(nb1), nblockx2(nb2), nblockx3(nb3),
           geometry("cartesian")
     {
-        InitializeTopology();
+        // dim is expected to be explicitly set before InitializeTopology() is called manually
+        // Or InitializeTopology() uses the externally set dim.
     }
 
-    Grid(const GridConfig &cfg, int ng_required)
-        : n1(cfg.n1), n2(cfg.n2), n3(cfg.n3), ng(ng_required),
-          x1_min(cfg.x1_min), x1_max(cfg.x1_max),
-          x2_min(cfg.x2_min), x2_max(cfg.x2_max),
-          x3_min(cfg.x3_min), x3_max(cfg.x3_max),
-          geometry(cfg.geometry)
-    {
-        InitializeTopology();
-    }
 
 private:
     /**
@@ -86,17 +95,17 @@ private:
     void ValidateDomain() const
     {
         // 0. Dimensionality and topology checks
-        if (n1 < 1 || n2 < 1 || n3 < 1)
-            throw std::invalid_argument("Grid Error: n1, n2, and n3 must be >= 1. Dimensionality is controlled by setting n_i = 1.");
-        if (n2 == 1 && n3 > 1)
-            throw std::invalid_argument("Grid Error: Cross-dimensional topology anomaly. n2 == 1 but n3 > 1 is not allowed.");
+        if (amr::BLOCK_NX < 1 || amr::BLOCK_NY < 1 || amr::BLOCK_NZ < 1)
+            throw std::invalid_argument("Grid Error: BLOCK dimensions must be >= 1.");
+        if (amr::BLOCK_NY == 1 && amr::BLOCK_NZ > 1)
+            throw std::invalid_argument("Grid Error: Cross-dimensional topology anomaly. NY == 1 but NZ > 1 is not allowed.");
 
         // 1. 通用基础校验：Max 必须大于 Min (针对激活的维度)
-        if (n1 > 0 && x1_max <= x1_min)
+        if (amr::BLOCK_NX > 0 && x1_max <= x1_min)
             throw std::invalid_argument("Grid Error: x1_max must be strictly greater than x1_min.");
-        if (n2 > 1 && x2_max <= x2_min)
+        if (dim >= 2 && amr::BLOCK_NY > 1 && x2_max <= x2_min)
             throw std::invalid_argument("Grid Error: x2_max must be strictly greater than x2_min.");
-        if (n3 > 1 && x3_max <= x3_min)
+        if (dim == 3 && amr::BLOCK_NZ > 1 && x3_max <= x3_min)
             throw std::invalid_argument("Grid Error: x3_max must be strictly greater than x3_min.");
 
         // 容差值，防止浮点数精度导致误判 (例如 3.141592653589793 vs M_PI)
@@ -141,34 +150,38 @@ private:
             }
         }
     }
+public:
     /**
      * @brief Computes dimensions, steps, and memory strides.
      * Centralized to avoid duplicated code in constructors.
      */
     void InitializeTopology()
     {
-        // dimension cerirital
-        dim = (n3 > 1) ? 3 : ((n2 > 1) ? 2 : 1);
-
         // Step Length
-        dx1 = (n1 > 0) ? (x1_max - x1_min) / n1 : 0.0;
-        dx2 = (n2 > 1) ? (x2_max - x2_min) / n2 : 0.0;
-        dx3 = (n3 > 1) ? (x3_max - x3_min) / n3 : 0.0;
+        dx1 = (amr::BLOCK_NX > 0) ? (x1_max - x1_min) / amr::BLOCK_NX : 0.0;
+        dx2 = (amr::BLOCK_NY > 1 && dim >= 2) ? (x2_max - x2_min) / amr::BLOCK_NY : 0.0;
+        dx3 = (amr::BLOCK_NZ > 1 && dim == 3) ? (x3_max - x3_min) / amr::BLOCK_NZ : 0.0;
 
-        // Total length including NG cells
-        int total_x = n1 + 2 * ng;
-        int total_y = (dim >= 2) ? n2 + 2 * ng : 1;
-        int total_z = (dim == 3) ? n3 + 2 * ng : 1;
+        // Total length including NG cells (only for logical info if needed, memory is fixed)
+        total_x_ = amr::BLOCK_NX + 2 * ng;
+        total_y_ = (dim >= 2) ? amr::BLOCK_NY + 2 * ng : 1;
+        total_z_ = (dim == 3) ? amr::BLOCK_NZ + 2 * ng : 1;
 
-        // Calculate strides
-        stride_y = total_x;
-        stride_z = total_x * total_y;
-        total_size = total_x * total_y * total_z;
+        // Calculate strides (USING AMR CONSTANTS)
+        stride_y = amr::PAD_NX;
+        stride_z = amr::PAD_NX * total_y_;
+        total_size = amr::PAD_NX * total_y_ * total_z_;
 
         // Check Domain
         ValidateDomain();
     }
 
+    int GetTotalX() const { return total_x_; }
+    int GetTotalY() const { return total_y_; }
+    int GetTotalZ() const { return total_z_; }
+
+private:
+    int total_x_, total_y_, total_z_;
 public:
     /**
      * @brief 为 HDF5/XDMF 后处理提供当前网格的物理坐标轴名称
@@ -337,13 +350,13 @@ public:
 
     // X-direction bounds
     int Is() const { return ng; }
-    int Ie() const { return n1 + ng; }
+    int Ie() const { return amr::BLOCK_NX + ng; }
 
     // Y-direction bounds (if 1D, loop will run exactly once: from 0 to 1)
     int Js() const { return (dim >= 2) ? ng : 0; }
-    int Je() const { return (dim >= 2) ? n2 + ng : 1; }
+    int Je() const { return (dim >= 2) ? amr::BLOCK_NY + ng : 1; }
 
     // Z-direction bounds
     int Ks() const { return (dim == 3) ? ng : 0; }
-    int Ke() const { return (dim == 3) ? n3 + ng : 1; }
+    int Ke() const { return (dim == 3) ? amr::BLOCK_NZ + ng : 1; }
 };

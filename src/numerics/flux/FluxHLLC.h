@@ -4,12 +4,19 @@
  * * Restores the contact discontinuity (Star Wave S*).
  */
 
+/**
+ * Workflow:
+ * 1. Reconstruct left and right face states using the configured limiter policy.
+ * 2. Evaluate the named Riemann flux consistently in every active dimension.
+ * 3. Register interface fluxes through the shared AMR path when a coarse-fine face is present.
+ */
+
 #pragma once
 
 #include <vector>
 #include <algorithm>
 #include "FluxFunctions.h"
-#include "../reconstruction/Reconstruction.h"
+#include "../reconstruction/AMRInterfaceReconstruction.h"
 
 template <typename ReconstructPolicy>
 struct FluxHLLC
@@ -49,7 +56,7 @@ struct FluxHLLC
         {
             p_term = p_K / (rho_K * sk_minus_u);
         }
-        double term = (S_star - un_K) * (S_star + p_K / (rho_K * (S_K - un_K)));
+        double term = (S_star - un_K) * (S_star + p_term);
 
         double eng_star = rho_star * (specific_E_K + term);
 
@@ -100,9 +107,8 @@ struct FluxHLLC
                 {
                     int idx = grid.GetIndex(i, j, k);
                     // 1. Reconstruction
-                    auto [U_L, U_R] = ReconstructPolicy::run(state, idx, stride);
-                    if (n_spec > 0)
-                        ReconstructPolicy::run_species(state, idx, n_spec, Xi_L.data(), Xi_R.data(), stride);
+                    FluidVector U_L, U_R;
+                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), U_L, U_R);
 
                     // ======================================================
                     // 2. Thermodynamics Preparation

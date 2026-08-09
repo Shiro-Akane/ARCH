@@ -3,10 +3,18 @@
  * @brief Global configuration parameters parsed from input files.
  */
 
+/**
+ * Workflow:
+ * 1. Allocate or address state through the active-dimension layout contract.
+ * 2. Read and write conservative variables and species with one shared indexing rule.
+ * 3. Expose the result to numerical operators without hidden storage conversions.
+ */
+
 #pragma once
 #include <string>
 #include <map>
 #include <iostream>
+#include <vector>
 
 /**
  * @file GlobalDefs.h
@@ -19,10 +27,12 @@
 // ----------------------------------------------------------------------
 struct GridConfig
 {
-    // Basic Dimensions
-    int n1; ///< Cells in X1
-    int n2 = 1; ///< Cells in X2 (Default to 1 for 1D)
-    int n3 = 1; ///< Cells in X3 (Default to 1 for 1D)
+    // Basic Dimensions (Moved from amr to grid)
+    int nblockx1 = 1; ///< Number of root blocks in X
+    int nblockx2 = 1; ///< Number of root blocks in Y
+    int nblockx3 = 1; ///< Number of root blocks in Z
+    int dim = 3;      ///< Dimensionality (1, 2, or 3)
+    int amr_max_blocks = 2000; ///< Maximum number of AMR blocks
 
     // Physical Domain
     double x1_min = 0.0;
@@ -84,7 +94,7 @@ struct ExecutionConfig
 // 3. Physics Configuration (EOS, Burn, Gravity)
 // ----------------------------------------------------------------------
 
-// --- 编译期静态内存常量 ---
+// --- 编译期静态内存常�?---
 struct OdeConfig
 {
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
@@ -160,7 +170,7 @@ struct DiffusionConfig
     std::string integrator = "RKL2";     ///< Time integrator: "RKL1", "RKL2"
     double diff_cfl = 0.8;                    ///< CFL condition for explicit diffusion integrator
     int max_stages = 256;                ///< Maximum number of stages (s) allowed for RKL integrators
-    
+
     // Toggles for different types of diffusion
     bool use_thermal_diffusion = false;
     bool use_viscous_diffusion = false;
@@ -177,7 +187,7 @@ struct PhysicsConfig
 {
     // Equation of State
     // Future-proof: Factory switches based on this string.
-    std::string eos_type = "ideal";  ///< "ideal", “tabular”, "stiffened_gas", etc.
+    std::string eos_type = "ideal";  ///< "ideal", “tabular�? "stiffened_gas", etc.
     std::string eos_table_path = ""; ///< For tabular EOS, the path to the HDF5 file
     double gamma = 1.4;              ///< Default adiabatic index
 
@@ -188,18 +198,51 @@ struct PhysicsConfig
 };
 
 // ----------------------------------------------------------------------
+// 3.5 AMR Configuration
+// ----------------------------------------------------------------------
+struct AmrConfig
+{
+    int lrefinemin = 0;            ///< Minimum refinement level
+    int lrefinemax = 0;            ///< Maximum refinement level (0 = AMR disabled)
+    int regrid_interval = 2;       ///< Number of steps between regridding
+    std::string refine_var = "DENS"; ///< Canonical comma-separated AMR indicator list
+    bool refine_on_rho = true;       ///< DENS: density gradient
+    bool refine_on_p = false;        ///< PRES: pressure gradient
+    bool refine_on_temp = false;     ///< TEMP: EOS temperature gradient
+    bool refine_on_velx = false;     ///< VELX: x-velocity gradient
+    bool refine_on_vely = false;     ///< VELY: y-velocity gradient
+    bool refine_on_velz = false;     ///< VELZ: z-velocity gradient
+    bool refine_on_eng = false;      ///< ENER: total-energy density gradient
+    bool refine_on_vorticity = false; ///< VORT: magnitude of curl(v)
+    bool refine_on_div_v = false;     ///< DIVV: velocity divergence
+    bool refine_on_entropy = false;   ///< ENTR: EOS-local Gamma1 entropy proxy
+    bool refine_on_enuc = false;      ///< ENUC: nuclear specific-energy source rate
+    bool refine_on_jeans = false;     ///< JENS: reserved for a self-gravity Jeans criterion
+    bool refine_on_species = false;  ///< SPECIES or named network-tracer gradient
+    bool refine_all_species = false; ///< SPECIES selects every registered species
+    std::vector<std::string> refine_species_names; ///< Case-insensitive species tracer names
+    double refine_threshold = 0.8;   ///< Dimensionless Lohner error threshold for refinement
+    double derefine_threshold = 0.2; ///< Dimensionless Lohner error threshold for derefinement
+};
+
+// ----------------------------------------------------------------------
 // 4. I/O Configuration
 // ----------------------------------------------------------------------
 struct OutputVariables
 {
-    bool rho = true; // 默认开启
-    bool u = true;   // x-velocity
-    bool v = false;  // y-velocity (default false for 1D)
-    bool w = false;  // z-velocity (default false for 1D)
-    bool p = true;
-    bool eng = true;
-    bool species = true; // 是否输出所有组分
-    // bool temp = false; // 未来可以加温度等
+    bool rho = true;     ///< DENS
+    bool temp = false;   ///< TEMP
+    bool u = true;       ///< VELX
+    bool v = false;      ///< VELY
+    bool w = false;      ///< VELZ
+    bool p = true;       ///< PRES
+    bool eng = true;     ///< ENER
+    bool species = true; ///< SPECIES or all named tracers
+    bool vort = false;    ///< VORT: metric-aware magnitude of curl(v)
+    bool divv = false;    ///< DIVV: metric-aware velocity divergence
+    bool entr = false;    ///< ENTR: EOS-local Gamma1 entropy proxy
+    bool enuc = false;    ///< ENUC: signed nuclear specific-energy source rate
+    bool jens = false;    ///< JENS: reserved until self gravity is available
 };
 
 struct IOConfig
@@ -222,6 +265,7 @@ struct IOConfig
     std::string restart_file = "";
 
     OutputVariables vars;
+    std::vector<std::string> plot_species_names; ///< Individual case-insensitive species fields selected for PLT
 };
 
 struct RunState
@@ -241,6 +285,7 @@ struct SimConfig
     NumericsConfig numerics;
     ExecutionConfig execution;
     PhysicsConfig physics;
+    AmrConfig amr;
     IOConfig io;
 
     // =========================================================

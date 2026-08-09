@@ -6,6 +6,13 @@
  * * 2. Computing the adaptive time step (dt) based on the CFL stability criterion.
  */
 
+/**
+ * Workflow:
+ * 1. Select the configured policy and determine a stable macro step.
+ * 2. Apply hydro, diffusion, gravity, and burn operators in the documented order.
+ * 3. Synchronize AMR leaves and emit diagnostics before continuing the evolution.
+ */
+
 #pragma once
 
 #include "../data/FluidState.h"
@@ -106,7 +113,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     // =========================================================
     if (grid.dim >= 2)
     {
-        const int total_x = grid.n1 + 2 * ng;
+        const int total_x = amr::BLOCK_NX + 2 * ng;
         const int nk2 = ke - ks;
 
 #pragma omp for schedule(static)
@@ -151,9 +158,9 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
     if (grid.dim == 3)
     {
 #pragma omp for schedule(static)
-        for (int j = 0; j < grid.n2 + 2 * ng; ++j)
+        for (int j = 0; j < amr::BLOCK_NY + 2 * ng; ++j)
         { // Full Y
-            for (int i = 0; i < grid.n1 + 2 * ng; ++i)
+            for (int i = 0; i < amr::BLOCK_NX + 2 * ng; ++i)
             { // Full X
                 int k_start = grid.Ks();
                 int k_end = grid.Ke() - 1;

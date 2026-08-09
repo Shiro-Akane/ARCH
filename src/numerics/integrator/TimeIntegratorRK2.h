@@ -3,6 +3,12 @@
  * @brief 2nd Order Strong Stability Preserving Runge-Kutta (SSPRK2) Time Integrator.
  */
 
+/**
+ * Workflow:
+ * 1. Evaluate block-local flux divergence and physical source terms.
+ * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
+ * 3. Leave AMR communication and reflux ownership with the common driver services.
+ */
 #pragma once
 
 #include <vector>
@@ -10,59 +16,74 @@
 #include <algorithm>
 
 #include "TimeIntegratorHelper.h"
+#include "IHydroSolver.h"
 
 #include "../../data/FluidState.h"
+#include "../../amr/AMRControl.h"
 
-/**
- * @struct SolverRK2
- * @tparam FluxSchemePolicy The flux calculation scheme (e.g., FluxVL<Muscl...>)
- */
-template <typename FluxSchemePolicy>
 struct SolverRK2
 {
-    static std::string name() { return "SSPRK2 + " + FluxSchemePolicy::name(); }
-    static constexpr int NG = FluxSchemePolicy::NG; // Forward ghost cell requirement
+    static std::string name() { return "SSPRK2"; }
 
-    /**
-     * @brief Performs one full RK2 time step.
-     */
-    template <typename EosType, typename BCPolicy, typename GravityPolicy>
-    static void solve(const FluidState &state_n, FluidState &state_np1,
-                      FluidState &state_star, // Intermediate buffer provided by driver
-                      const EosType &eos, const Grid &grid, double dt,
+    template <typename BCPolicy>
+    static void solve(amr::AMRControl &amr_ctrl,
+                      double dt,
                       BCPolicy &boundary_condition,
-                      GravityPolicy &gravity,
-                      const NumericsConfig &num_cfg) // Need BCs for intermediate step
+                      const Physical::Gravity::IGravityPolicy* gravity,
+                      const Numerics::IHydroSolver* hydro,
+                      const NumericsConfig &num_cfg)
     {
-        int total_size = grid.GetTotalSize();
-        int n_spec = state_n.GetNumSpecies();
+        amr_ctrl.flux_register.Clear();
+        const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+        if (!active_blocks.empty()) {
+            amr_ctrl.flux_register.EnsureSpecies(amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies());
+        }
+        int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
+        int dim = amr_ctrl.tree->GetRootGridDim();
 
-        std::vector<FluidVector> dU(total_size);
-        std::vector<double> d_spec(n_spec * total_size);
-        std::vector<FluidVector> fluxes(total_size);
-        std::vector<double> spec_fluxes(n_spec * total_size);
+        // Stage 1
+        #pragma omp parallel
+        {
+            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
+            std::vector<FluidVector> dU(total_size);
+            std::vector<double> d_spec(n_spec * total_size);
 
-        // =========================================================
-        // Stage 1: Predictor
-        // U* = U^n + dt * L(U^n)
-        // =========================================================
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(
-            state_n, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
+            #pragma omp for schedule(dynamic)
+            for (size_t i = 0; i < active_blocks.size(); ++i) {
+                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.fluid_state, b.grid, dt, dU, d_spec, gravity, num_cfg, 0.5, nullptr);
+                hydro->update_patch(b.fluid_state, b.fluid_state, b.state_scratch, dU, d_spec, b.grid, 0.0, 1.0, num_cfg, nullptr);
+            }
+        }
 
-        TimeIntegration::perform_stage_update(state_n, state_n, state_star, dU, d_spec, grid, 0.0, 1.0, num_cfg.sml_rho, num_cfg.max_eint);
+        #pragma omp parallel for schedule(dynamic)
+        for (size_t i = 0; i < active_blocks.size(); ++i) {
+            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+            boundary_condition.apply(b.state_scratch, b.grid);
+        }
+        amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, dim, &amr::Block::state_scratch);
 
-        // 必须在中间态应用边界条件，以便 Stage 2 正确计算边界通量
-        boundary_condition.apply(state_star, grid);
+        // Stage 2
+        #pragma omp parallel
+        {
+            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
+            std::vector<FluidVector> dU(total_size);
+            std::vector<double> d_spec(n_spec * total_size);
 
-        // =========================================================
-        // Stage 2: Corrector
-        // U^{n+1} = 0.5 * U^n + 0.5 * (U* + dt * L(U*))
-        // =========================================================
-        TimeIntegration::evaluate_all_dimensions<FluxSchemePolicy>(
-            state_star, eos, grid, dt, dU, d_spec, fluxes, spec_fluxes, gravity, num_cfg.entropy_fix_coeff);
+            #pragma omp for schedule(dynamic)
+            for (size_t i = 0; i < active_blocks.size(); ++i) {
+                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.state_scratch, b.grid, dt, dU, d_spec, gravity, num_cfg, 0.5, nullptr);
+                hydro->update_patch(b.fluid_state, b.state_scratch, b.state_next, dU, d_spec, b.grid, 0.5, 0.5, num_cfg, nullptr);
+            }
+        }
 
-        TimeIntegration::perform_stage_update(state_n, state_star, state_np1, dU, d_spec, grid, 0.5, 0.5, num_cfg.sml_rho, num_cfg.max_eint);
+        #pragma omp parallel for schedule(dynamic)
+        for (size_t i = 0; i < active_blocks.size(); ++i) {
+            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+            std::swap(b.fluid_state, b.state_next);
+        }
 
-        // Final BC is usually handled by the Driver loop after return
+        amr_ctrl.ApplyReflux(dt);
     }
 };

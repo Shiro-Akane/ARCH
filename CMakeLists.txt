@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.18)
 
 # ==============================================================================
 # Project Configuration
+# Workflow:
+# 1. Select language, compiler, and optional acceleration dependencies.
+# 2. Collect source modules into the ARCH executable with a single build contract.
+# 3. Keep feature toggles consistent with the runtime policies documented in src/.
 # ==============================================================================
 project(ARCH LANGUAGES CXX)
 
@@ -39,6 +43,17 @@ check_ipo_supported(RESULT ipo_supported OUTPUT error)
 if(ipo_supported)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
     message(STATUS "[OPT] LTO (Link Time Optimization) Enabled")
+
+    # Use lld or mold for memory-efficient linking, critical for LTO memory safety
+    find_program(MOLD_LINKER mold)
+    find_program(LLD_LINKER lld)
+    if(MOLD_LINKER)
+        add_link_options("-fuse-ld=mold")
+        message(STATUS "[OPT] Using mold linker for LTO")
+    elseif(LLD_LINKER)
+        add_link_options("-fuse-ld=lld")
+        message(STATUS "[OPT] Using lld linker for LTO")
+    endif()
 endif()
 
 option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
@@ -51,10 +66,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # ==============================================================================
 # Source File Collection
 # ==============================================================================
-set(APP_SRC_DIRS 
+set(APP_SRC_DIRS
     "src/core"
     "src/physics"
     "src/numerics"
+    "src/io"
     "simulation"
 )
 
@@ -79,8 +95,8 @@ endforeach()
 # ==============================================================================
 add_library(arch_solver_dispatch OBJECT ${ARCH_DISPATCH_SOURCES})
 
-add_executable(ARCH 
-    ${ARCH_APPLICATION_SOURCES} 
+add_executable(ARCH
+    ${ARCH_APPLICATION_SOURCES}
     $<TARGET_OBJECTS:arch_solver_dispatch>
 )
 
@@ -92,17 +108,29 @@ foreach(target ARCH arch_solver_dispatch)
     )
 endforeach()
 
-# Precompile headers for the heavy template translation unit
+# PCH covers heavy STL/OpenMP headers shared by every dispatch TU
 target_precompile_headers(arch_solver_dispatch PRIVATE
-    <omp.h>
-    <vector>
-    <string>
-    <iostream>
-    <memory>
-    <cmath>
-    <highfive/H5File.hpp> 
-    <highfive/H5DataSet.hpp>
-    <highfive/H5DataSpace.hpp>
+    <vector> <string> <memory> <map> <iostream> <cmath> <omp.h>
+    <sstream> <stdexcept> <algorithm> <iomanip> <array>
+)
+
+# ==============================================================================
+# Dispatch Target: Memory-aware compile flags
+# ==============================================================================
+# Each Dispatch_*.cpp TU expands to ~120k preprocessed lines and instantiates
+# a large template matrix (TimeIntegrator × Flux × Recon × EOS × Burner).
+# At -O3, each TU can consume >4 GB of RAM; with -j8 this causes WSL OOM.
+# Using -O1 here drops per-TU RSS to ~1 GB while keeping correctness.
+# The hot inner loops in these TUs are inlined at call sites anyway.
+# LTO is also disabled for this target to avoid the linker memory spike.
+target_compile_options(arch_solver_dispatch PRIVATE
+    $<$<CONFIG:Release>:-O1>           # Intentionally lower than main -O3 flags
+    -fno-inline-functions-called-once  # Prevents explosive inline expansion
+)
+# Disable LTO for this target at the CMake level (overrides CMAKE_INTERPROCEDURAL_OPTIMIZATION)
+# LTO would force the linker to process huge bitcode files for the entire template matrix.
+set_target_properties(arch_solver_dispatch PROPERTIES
+    INTERPROCEDURAL_OPTIMIZATION FALSE
 )
 
 set_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")

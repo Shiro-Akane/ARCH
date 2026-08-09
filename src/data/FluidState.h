@@ -1,162 +1,159 @@
 /**
  * @file FluidState.h
  * @brief Definitions for local fluid state vectors and global data containers.
+ * Refactored for Block-Structured AMR (Static Memory Layout).
+ */
+
+/**
+ * Workflow:
+ * 1. Allocate or address state through the active-dimension layout contract.
+ * 2. Read and write conservative variables and species with one shared indexing rule.
+ * 3. Expose the result to numerical operators without hidden storage conversions.
  */
 
 #pragma once
 
 #include <vector>
-
-#include "../grid/Grid.h"
+#include "../amr/AmrDefines.h"
+#include <array>
 
 /**
- * @brief Represents the conserved variables at a single point in 1D space.
- * * Corresponds to the state vector \f$ U = (\rho, \rho u, E)^T \f$ in Euler equations.
+ * @brief Represents the conserved variables at a single point.
  */
-
 struct FluidVector
 {
-    double rho;   ///< Mass density (\f$ \rho \f$).
-    double mom_u; ///< Momentum density (\f$ \rho u \f$).
-    double mom_v; ///< Momentum density (\f$ \rho v \f$).
-    double mom_w; ///< Momentum density (\f$ \rho w \f$).
-    double eng;   ///< Total energy density (\f$ E = \rho e + 0.5 \rho u^2 \f$).
+    double rho;
+    double mom_u;
+    double mom_v;
+    double mom_w;
+    double eng;
 
     FluidVector() : rho(0), mom_u(0), mom_v(0), mom_w(0), eng(0) {}
     FluidVector(double r, double mx, double my, double mz, double e) : rho(r), mom_u(mx), mom_v(my), mom_w(mz), eng(e) {}
 
-    /// Overload operator "+" for vector addition.
     FluidVector operator+(const FluidVector &other) const
     {
         return {rho + other.rho, mom_u + other.mom_u, mom_v + other.mom_v, mom_w + other.mom_w, eng + other.eng};
     }
 
-    /// Overload operator "-" for vector subtraction.
     FluidVector operator-(const FluidVector &other) const
     {
         return {rho - other.rho, mom_u - other.mom_u, mom_v - other.mom_v, mom_w - other.mom_w, eng - other.eng};
     }
 
-    /// Overload operator "*" for scalar multiplication.
     FluidVector operator*(double s) const
     {
         return {rho * s, mom_u * s, mom_v * s, mom_w * s, eng * s};
     }
 
-    /// Overload operator "/" for scalar division.
     FluidVector operator/(double s) const
     {
         return {rho / s, mom_u / s, mom_v / s, mom_w / s, eng / s};
     }
 };
 
-/// Scalar multiplication (commutative): s * v
 inline FluidVector operator*(double s, const FluidVector &v)
 {
     return v * s;
 }
 
-// =========================================================
-
 /**
  * @struct FluidState
- * @brief Global container for fluid variables using Structure-of-Arrays (SoA) layout.
- * * Stores the entire computational domain's data. SoA layout is preferred
- * for better vectorization and cache locality during independent field updates.
+ * @brief Local block container for fluid variables using Structure-of-Arrays (SoA) layout.
+ * Fixed static size for GPU Memory Pool compatibility.
  */
 struct FluidState
 {
-    // Conserved variables (SoA layout)
-    std::vector<double> rho;   ///< Global array for density.
-    std::vector<double> mom_u; ///< Global array for x-momentum density.
-    std::vector<double> mom_v; ///< Global array for y-momentum density.
-    std::vector<double> mom_w; ///< Global array for z-momentum density.
-    std::vector<double> eng;   ///< Global array for total energy density.
+    // Dynamically allocated for dimensional degradation
+    std::vector<double> rho;
+    std::vector<double> mom_u;
+    std::vector<double> mom_v;
+    std::vector<double> mom_w;
+    std::vector<double> eng;
+    // Specific nuclear energy source rate (erg g^-1 s^-1); diagnostic only.
+    std::vector<double> enuc_rate;
 
-    // Species data
-    std::vector<double> mass_fractions; ///< Flattened array for species mass fractions.
-    int n_species_ = 0;                 ///< Number of chemical species.
-    int total_size_ = 0;                ///< Total number of grid cells (including ghosts).
+    // Dynamic species data (could also be flattened static if MAX_SPECIES is known,
+    // but we use std::vector dynamically allocated ONCE per block if needed on CPU.
+    // For pure GPU, this would also need to be a fixed-size array).
+    // For now, we'll keep std::vector but allocate it with fixed size based on block.
+    std::vector<double> mass_fractions;
+    int n_species_ = 0;
+
+    int block_total_size_ = 0;
 
     FluidState() = default;
-    FluidState(const Grid &grid, int n_species)
+
+    // Preallocate all vectors to dynamic degraded size
+    void Preallocate(int size)
     {
-        Resize(grid, n_species);
+        block_total_size_ = size;
+        rho.assign(size, 0.0);
+        mom_u.assign(size, 0.0);
+        mom_v.assign(size, 0.0);
+        mom_w.assign(size, 0.0);
+        eng.assign(size, 0.0);
+        enuc_rate.assign(size, 0.0);
+    }
+
+    // Reset to zero without reallocating
+    void Reset()
+    {
+        std::fill(rho.begin(), rho.end(), 0.0);
+        std::fill(mom_u.begin(), mom_u.end(), 0.0);
+        std::fill(mom_v.begin(), mom_v.end(), 0.0);
+        std::fill(mom_w.begin(), mom_w.end(), 0.0);
+        std::fill(eng.begin(), eng.end(), 0.0);
+        std::fill(enuc_rate.begin(), enuc_rate.end(), 0.0);
+        std::fill(mass_fractions.begin(), mass_fractions.end(), 0.0);
+    }
+
+    // Explicit initialization for species
+    void InitSpecies(int n_species)
+    {
+        n_species_ = n_species;
+        if (n_species_ > 0 && block_total_size_ > 0)
+        {
+            mass_fractions.assign(n_species_ * block_total_size_, 0.0);
+        }
     }
 
     int GetNumSpecies() const
     {
         return n_species_;
     }
-    /**
-     * @brief Allocates memory for the state arrays based on grid size.
-     * @param grid The computational grid object.
-     * @param n_species Number of species to track.
-     */
-    void Resize(const Grid &grid, int n_species)
-    {
-        total_size_ = grid.GetTotalSize();
-        n_species_ = n_species;
 
-        rho.assign(total_size_, 0.0);
-        mom_u.assign(total_size_, 0.0);
-        mom_v.assign(total_size_, 0.0);
-        mom_w.assign(total_size_, 0.0);
-        eng.assign(total_size_, 0.0);
-
-        if (n_species_ > 0 && total_size_ > 0)
-        {
-            // Flattened 2D array: [Species_0... | Species_1... | ... ]
-            mass_fractions.assign(n_species_ * total_size_, 0.0);
-        }
-    }
-
-    /**
-     * @brief Access reference to mass fraction X_k of species k at cell i.
-     * Memory layout: Species-major order (blocks of grid size).
-     */
     double &X(int k, int i)
     {
-        // index：k * stride + i
-        return mass_fractions[k * total_size_ + i];
+        return mass_fractions[k * block_total_size_ + i];
     }
 
-    /// Read-only access to mass fraction X_k of species k at cell i.
     double X(int k, int i) const
     {
-        return mass_fractions[k * total_size_ + i];
+        return mass_fractions[k * block_total_size_ + i];
     }
 
-    /**
-     * @brief Gathers all species fractions at cell i into a local buffer.
-     * Useful for EOS calculations or reaction networks at a single point.
-     * @param i Grid cell index.
-     * @param buffer Pointer to an array of size n_species_.
-     */
     void get_species_to_buffer(int i, double *buffer) const
     {
         for (int k = 0; k < n_species_; ++k)
         {
-            buffer[k] = mass_fractions[k * total_size_ + i];
+            buffer[k] = mass_fractions[k * block_total_size_ + i];
         }
     }
 
-    /// Scatters species fractions from a local buffer back to the global state at cell i.
     void set_species_from_buffer(int i, const double *buffer)
     {
         for (int k = 0; k < n_species_; ++k)
         {
-            mass_fractions[k * total_size_ + i] = buffer[k];
+            mass_fractions[k * block_total_size_ + i] = buffer[k];
         }
     }
 
-    /// Constructs a local FluidVector3 object from the global arrays (SoA to AoS).
     FluidVector get(int i) const
     {
         return FluidVector(rho[i], mom_u[i], mom_v[i], mom_w[i], eng[i]);
     }
 
-    /// Writes a local FluidVector3 object back to the global arrays (AoS to SoA).
     void set(int i, const FluidVector &val)
     {
         rho[i] = val.rho;
@@ -166,7 +163,6 @@ struct FluidState
         eng[i] = val.eng;
     }
 
-    /// Atomically adds a local increment to the global state (useful for flux updates).
     void add(int i, const FluidVector &val)
     {
         rho[i] += val.rho;
