@@ -154,6 +154,14 @@ else()
 endif()
 
 # 2. HDF5
+# ARCH uses the C++/HL API and OpenMP; it does not issue MPI-HDF5 calls.
+# FindHDF5 caches the wrapper-reported parallel flag. A failed wrapper probe can
+# change that flag between configure runs and cause a false parallel-mismatch
+# warning even when the selected C++ shared libraries are unchanged. Reset only
+# this stale cross-configure state; a mismatch found within one search remains
+# visible to CMake.
+unset(HDF5_IS_PARALLEL)
+unset(HDF5_IS_PARALLEL CACHE)
 find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 if(HDF5_FOUND)
     foreach(target ARCH arch_solver_dispatch)
