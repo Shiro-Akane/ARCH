@@ -3,6 +3,13 @@
  * @brief Equation of State (EOS) solver for an Ideal Gas.
  */
 
+/**
+ * Workflow:
+ * 1. Construct or query the configured thermodynamic closure from canonical state variables.
+ * 2. Return pressure, temperature, and transport quantities with validated bounds.
+ * 3. Keep host and future device views consistent through one dispatch contract.
+ */
+
 #pragma once
 
 #include <cmath>
@@ -105,7 +112,8 @@ struct IdealGas : public EOSBase
 
     double get_cv(double rho, double T, const double *Xi) const
     {
-        return get_eint_from_T(rho, T, Xi) / T;
+        // Cv is composition-dependent but temperature-independent for an ideal gas.
+        return get_mixture_Cv(Xi);
     }
 
     double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
@@ -155,7 +163,7 @@ struct IdealGas : public EOSBase
         state.sound_speed = std::sqrt(get_gamma(state.Xi) * state.P / state.rho);
         state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
         state.dp_dT = state.rho * state.cv * (get_gamma(state.Xi) - 1.0); // simple ideal gas dp/dT
-        
+
         state.pele = 0.0;
         state.xne = 0.0;
         state.eta = 0.0;

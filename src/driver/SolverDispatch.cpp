@@ -3,7 +3,15 @@
  * @brief The "Switchboard" for the simulation.
  */
 
+/**
+ * Workflow:
+ * 1. Select the configured policy and determine a stable macro step.
+ * 2. Apply hydro, diffusion, gravity, and burn operators in the documented order.
+ * 3. Synchronize AMR leaves and emit diagnostics before continuing the evolution.
+ */
+
 #include "SolverDispatch.h"
+#include "DriverStartup.h"
 
 #include <string>
 #include <iostream>
@@ -16,10 +24,12 @@
 #include "../interface/ProblemGenerator.h"
 #include "../io/IO.h"
 
+#include "../amr/AMRControl.h"
+
 // 2. Dispatch declarations
-void Dispatch_Euler(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK2(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK3(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
+void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
+void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
+void Dispatch_RK3(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
 
 // =========================================================
 // Helper: Determine Ghost Cells based on Config
@@ -36,7 +46,7 @@ int determine_required_ng(const SimConfig &config)
     }
     else if (recon == "muscl" || recon == "MUSCL")
     {
-        ng_recon = 2; // MUSCL 需要 i-1, i, i+1, i+2，所以单侧需要 2 层
+        ng_recon = 2;
     }
     else if (recon == "ppm" || recon == "PPM" || recon == "weno5")
     {
@@ -68,30 +78,58 @@ void DispatchSolver(const std::string &solver_name,
     std::cout << "[Dispatch] Initializing System..." << std::endl;
 
     int required_ng = determine_required_ng(config);
-    std::cout << "[Dispatch] Determined Ghost Cell count: " << required_ng << std::endl;
+    if (required_ng > amr::MAX_NG) {
+        throw std::runtime_error("Required ghost cells exceed AMR static MAX_NG!");
+    }
+    std::cout << "[Dispatch] Required Ghost Cell count: " << required_ng << " (Static MAX_NG: " << amr::MAX_NG << ")" << std::endl;
 
-    Grid grid(config.grid, required_ng);
+    // --- AMR Initialization ---
+    int max_blocks = config.grid.amr_max_blocks > 0 ? config.grid.amr_max_blocks : 10000;
+    amr::AMRControl amr_ctrl(max_blocks, config.grid.dim);
 
-    std::cout << "[Dispatch] Grid Topology: " << grid.dim << "D "
-              << config.grid.geometry << " ("
-              << grid.n1 << " x " << grid.n2 << " x " << grid.n3 << ")" << std::endl;
-
-    FluidState state(grid, specs.count());
-
+    amr_ctrl.tree->ConfigureRefinementSpecies(config.amr, specs);
     RunState run_state;
 
     if (config.io.restart && !config.io.restart_file.empty())
     {
         std::cout << "[Dispatch] Restarting from checkpoint: " << config.io.restart_file << std::endl;
-        read_chk(config.io.restart_file, state, grid, run_state);
+        read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs.count());
+        std::cout << ">>> Grid Config | Dim: " << config.grid.dim
+                  << " | Geometry: " << config.grid.geometry << std::endl;
+        DriverStartup::print_amr_resolution_summary(config);
     }
     else
     {
+        std::cout << "[Dispatch] Initializing Root Grid (Level 0)..." << std::endl;
+        amr_ctrl.tree->InitRootGrid(config, specs.count());
         std::cout << "[Dispatch] Initializing Data via Problem Generator..." << std::endl;
-        problem.InitializeData(state, grid, config, specs);
+        problem.InitializeData(amr_ctrl, config, specs);
+        std::cout << ">>> Grid Config | Dim: " << config.grid.dim
+                  << " | Geometry: " << config.grid.geometry << std::endl;
+        DriverStartup::print_amr_resolution_summary(config);
 
-        int center_idx = grid.GetIndex(grid.Is(), grid.Js(), grid.Ks());
-        std::cout << "[Dispatch Debug] After InitializeData, state.X(0, center_idx) = " << state.X(0, center_idx) << std::endl;
+        if (config.amr.lrefinemax > 0) {
+            const bool eos_indicator = config.amr.refine_on_p || config.amr.refine_on_temp ||
+                config.amr.refine_on_entropy;
+            if (eos_indicator) {
+                // EOS policies are selected by the later template dispatch.  Do not
+                // approximate pressure or temperature here: initial refinement is
+                // deferred until Driver has installed the actual EOS callback.
+                amr_ctrl.tree->DeferInitialRefinement(config.amr.lrefinemax);
+            } else {
+                std::cout << "[Dispatch] Performing initial AMR refinement loop..." << std::endl;
+                for (int l = 0; l < config.amr.lrefinemax; ++l) {
+                    bool changed = amr_ctrl.tree->Regrid(config);
+                    if (changed) {
+                        std::cout << "           -> Refining initial condition (Pass " << l + 1 << ")..." << std::endl;
+                        // Re-initialize exact data on newly created fine blocks.
+                        problem.InitializeData(amr_ctrl, config, specs);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     std::cout << "[Dispatch] Resolving Gravity Policy..." << std::endl;
@@ -112,26 +150,26 @@ void DispatchSolver(const std::string &solver_name,
 
     if (config.physics.diffusion.use_diffusion)
     {
-        std::cout << "           -> Diffusion Solver Initialized: " << config.physics.diffusion.integrator 
+        std::cout << "           -> Diffusion Solver Initialized: " << config.physics.diffusion.integrator
                   << " (CFL_diff = " << config.physics.diffusion.diff_cfl << ")" << std::endl;
     }
 
     const std::string &time_int = config.numerics.time_integrator;
     if (time_int == "RK2" || time_int == "SSPRK2")
     {
-        Dispatch_RK2(state, grid, config, specs, run_state);
+        Dispatch_RK2(amr_ctrl, config, specs, run_state);
     }
     else if (time_int == "RK3" || time_int == "SSPRK3")
     {
-        Dispatch_RK3(state, grid, config, specs, run_state);
+        Dispatch_RK3(amr_ctrl, config, specs, run_state);
     }
     else if (time_int == "Euler" || time_int == "RK1")
     {
-        Dispatch_Euler(state, grid, config, specs, run_state);
+        Dispatch_Euler(amr_ctrl, config, specs, run_state);
     }
     else
     {
         std::cerr << "[Warning] Unknown time integrator '" << time_int << "', defaulting to SSPRK2." << std::endl;
-        Dispatch_RK2(state, grid, config, specs, run_state);
+        Dispatch_RK2(amr_ctrl, config, specs, run_state);
     }
 }

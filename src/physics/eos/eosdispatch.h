@@ -1,3 +1,13 @@
+/**
+ * @file eosdispatch.h
+ * @brief Selects and constructs the requested equation-of-state policy.
+ *
+ * Workflow:
+ * 1. Construct or query the configured thermodynamic closure from canonical state variables.
+ * 2. Return pressure, temperature, and transport quantities with validated bounds.
+ * 3. Keep host and future device views consistent through one dispatch contract.
+ */
+
 #pragma once
 
 #include <string>
@@ -15,7 +25,7 @@
 #include "../../core/RuntimeParams.h"
 #include "../species/Species.h"
 
-#include "highfive/H5File.hpp"
+bool check_eos_is_4d(const std::string& path);
 
 struct EOSDispatcher
 {
@@ -58,9 +68,7 @@ struct EOSDispatcher
             {
                 std::cout << "[EOS Dispatch] Inspecting HDF5 Metadata..." << std::endl;
 
-                HighFive::File file(path, HighFive::File::ReadOnly);
-
-                bool is_4d = file.exist("n_A") && file.exist("n_Z");
+                bool is_4d = check_eos_is_4d(path);
 
                 if (is_4d)
                 {

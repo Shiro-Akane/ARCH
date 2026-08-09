@@ -10,6 +10,8 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <cctype>
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline
@@ -111,12 +113,15 @@ struct SpeciesManager
      */
     int GetSpeciesID(const std::string &target_name) const
     {
+        std::string target = target_name;
+        std::transform(target.begin(), target.end(), target.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
         for (int i = 0; i < species_list.size(); ++i)
         {
-            if (species_list[i].name == target_name)
-            {
-                return i;
-            }
+            std::string candidate = species_list[i].name;
+            std::transform(candidate.begin(), candidate.end(), candidate.begin(),
+                           [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+            if (candidate == target) return i;
         }
         return -1;
     }

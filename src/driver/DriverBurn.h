@@ -24,13 +24,15 @@
 #endif
 
 template <typename EosPolicy, typename BurnerPolicy>
-void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolicy &eos, 
-                       BurnerPolicy &burn, const Grid &grid, const SimConfig &config, 
+void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolicy &eos,
+                       BurnerPolicy &burn, const Grid &grid, const SimConfig &config,
                        double &dt_burn_global)
 {
+    if (current_state.enuc_rate.size() != current_state.rho.size())
+        throw std::runtime_error("Burn diagnostic storage is not initialized.");
+    std::fill(current_state.enuc_rate.begin(), current_state.enuc_rate.end(), 0.0);
     if (!config.physics.burn.use_burn)
-        return; // 如果没开燃烧，直接跳过
-
+        return; // 如果没开燃烧，直接跳�?
     double local_dt_burn_min = 1e99;
     const int n_spec = current_state.GetNumSpecies();
 
@@ -40,13 +42,17 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
     double first_invalid_min = 0.0;
     double first_invalid_max = 0.0;
 
-    int total_cells = grid.GetTotalSize();
     // Each cell owns its ODE state, network evaluation and LU factorization.
     // Dynamic scheduling is important because stiff substep counts vary strongly
     // across the reaction front; nested teams inside a 22x22 LU are counterproductive.
-#pragma omp parallel for schedule(dynamic, 1) reduction(min : local_dt_burn_min)
-    for (int i = 0; i < total_cells; ++i)
+#pragma omp parallel for collapse(3) schedule(dynamic, 1) reduction(min : local_dt_burn_min)
+    for (int k = grid.Ks(); k < grid.Ke(); ++k)
     {
+        for (int j = grid.Js(); j < grid.Je(); ++j)
+        {
+            for (int i_idx = grid.Is(); i_idx < grid.Ie(); ++i_idx)
+            {
+                int i = grid.GetIndex(i_idx, j, k);
         double rho = current_state.rho[i];
 
         // 跳过低密度真空区（保护机制）
@@ -98,15 +104,13 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         double my = current_state.mom_v[i];
         double mz = current_state.mom_w[i];
         double e_kin = 0.5 * (mx * mx + my * my + mz * mz) / rho;
-        double e_int = (current_state.eng[i] - e_kin) / rho; // 比内能
-
-        // 假设你的 EOS 提供了这个接口：根据 rho, e_int, X_k 求 T
+        double e_int = (current_state.eng[i] - e_kin) / rho; // 比内�?
+        // 假设你的 EOS 提供了这个接口：根据 rho, e_int, X_k �?T
         double T = eos.get_temperature(rho, e_int, X_ODE);
-        if (T < 1e7)
-            continue;      // 温度太低（< 1e7 K），核反应速率在物理上可忽略，且极低温会引起严重数值溢出
-        X_ODE[n_spec] = T; // 将温度放在数组末尾
-
-        // 3. 呼叫底层的 ODE 求解器执行燃烧
+        if (T < config.physics.burn.nuclearTempMin)
+            continue;
+        X_ODE[n_spec] = T; // 将温度放在数组末�?
+        // Integrate the local network state.
         double dt_rec = burn_dt;
         bool success = burn.integrate(X_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
 
@@ -117,17 +121,17 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
             std::cerr << "[Fatal Error] Burn failed at cell " << i << std::endl;
             exit(EXIT_FAILURE);
         }
-
-        // 4. 将燃烧后的新组分和新温度写回流体状态
+        // Commit the updated composition and temperature.
         current_state.set_species_from_buffer(i, X_ODE);
         double T_new = X_ODE[n_spec];
-
-        // 5. 根据新温度和新组分，重新计算内能并更新总能量
+        // Reconstruct total energy from the EOS state.
         double e_int_new = eos.get_eint_from_T(rho, T_new, X_ODE);
         current_state.eng[i] = rho * e_int_new + e_kin;
+        if (burn_dt > 0.0)
+            current_state.enuc_rate[i] = (e_int_new - e_int) / burn_dt;
 
-        // 6. 核能限制器 (Enuc Limiter)
-        // 仅当 enucDtFactor > 0 时才启用限制器。
+        // 6. 核能限制�?(Enuc Limiter)
+        // Apply the nuclear energy timestep limiter when requested.
         if (config.physics.burn.enucDtFactor > 0.0)
         {
             double delta_e = std::abs(e_int_new - e_int);
@@ -135,17 +139,18 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
             {
                 double enuc_rate = delta_e / burn_dt;
 
-                // 【防除 0 保护】模仿 FLASH: 计算倒数 (enuc / eint)
+                // 【防�?0 保护】模�?FLASH: 计算倒数 (enuc / eint)
                 double energyRatioInv = enuc_rate / std::max(e_int_new, 1e-20);
-
-                // 仅当能量变化率显著时，才将其纳入时间步限制
+                // Limit the next macro step only for a non-negligible source.
                 if (energyRatioInv > 1e-30)
                 {
-                    // 相当于 dt = enucDtFactor * (eint / enuc)
+                    // 相当�?dt = enucDtFactor * (eint / enuc)
                     double dt_enuc_limit = config.physics.burn.enucDtFactor / energyRatioInv;
                     local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
                 }
             }
+        }
+    }
         }
     }
 

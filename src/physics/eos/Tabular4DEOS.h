@@ -3,6 +3,13 @@
  * @brief 4D Tabular Equation of State reading from HDF5 (rho, e, A_bar, Z_bar).
  * Designed specifically for Non-NSE astrophysical environments (e.g., Helmholtz EOS).
  */
+
+/**
+ * Workflow:
+ * 1. Construct or query the configured thermodynamic closure from canonical state variables.
+ * 2. Return pressure, temperature, and transport quantities with validated bounds.
+ * 3. Keep host and future device views consistent through one dispatch contract.
+ */
 #pragma once
 
 #include <string>
@@ -11,7 +18,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "highfive/H5File.hpp"
 
 #include "eos_Utils.h"
 #include "eos.h"
@@ -215,35 +221,35 @@ struct Tabular4DEOSView
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
-            
+
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         double T_min = std::pow(10, log_T_min);
         double T_max = std::pow(10, log_T_max);
-        
+
         // Out of bounds check for density or composition
         if (std::log10(rho) < log_rho_min || std::log10(rho) >= log_rho_max ||
             A < A_min || A >= A_max || Z < Z_min || Z >= Z_max)
         {
             return fallback_temperature(e, A);
         }
-        
+
         // Fast boundary check: if e is below the minimum table energy, return T_min
         double e_min_table = interpolate_4d(table_E, rho, T_min, A, Z);
         if (e <= e_min_table) {
             return T_min;
         }
-        
+
         // Newton-Raphson iteration
         double T_guess = 1e8; // reasonable astrophysics start
         const int max_iters = 20;
         const double tol = 1e-6;
-        
+
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
-            
+
             double e_eval = interpolate_4d(table_E, rho, T_guess, A, Z);
             double cv_eval = interpolate_4d(table_cv, rho, T_guess, A, Z);
-            
+
             if (cv_eval <= 0.0) {
                 // Finite difference fallback
                 double dT_fd = T_guess * 0.01;
@@ -251,19 +257,19 @@ struct Tabular4DEOSView
                 cv_eval = (e_plus - e_eval) / dT_fd;
                 if (cv_eval <= 0.0) cv_eval = e_eval / T_guess;
             }
-            
+
             double f = e_eval - e;
             double dT = -f / cv_eval;
-            
+
             // Limit step size to avoid divergence (max 50% change)
             if (dT > 0.5 * T_guess) dT = 0.5 * T_guess;
             if (dT < -0.5 * T_guess) dT = -0.5 * T_guess;
-            
+
             T_guess += dT;
-            
+
             if (std::abs(dT) / T_guess < tol) break;
         }
-        
+
         return T_guess;
     }
 
@@ -300,7 +306,7 @@ struct Tabular4DEOSView
         double T = get_temperature(rho, e, Xi);
         return get_sound_speed_from_rho_T(rho, T, Xi);
     }
-    
+
     double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
     {
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
@@ -370,18 +376,18 @@ struct Tabular4DEOSView
         state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
         state.E = get_eint_from_T(state.rho, state.T, state.Xi);
         state.cv = get_cv(state.rho, state.T, state.Xi);
-        
+
         // =========================================================
         // 2. Derivatives and Sound Speed
         // =========================================================
         state.sound_speed = get_sound_speed_from_rho_T(state.rho, state.T, state.Xi);
         state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
-        state.dp_dT = 0.0; 
+        state.dp_dT = 0.0;
         if (table_dP_dT) {
             double A = get_Abar(state.Xi), Z = get_Zbar(state.Xi);
             state.dp_dT = interpolate_4d(table_dP_dT, state.rho, state.T, A, Z);
         }
-        
+
         // =========================================================
         // 3. Deep Physical Variables (Unused in Tabular)
         // =========================================================
@@ -410,60 +416,7 @@ private:
     Tabular4DEOSView view;
 
 public:
-    Tabular4DEOS(const std::string &h5_filename, const SpeciesManager *specs_ptr = nullptr)
-        : table_path(h5_filename)
-    {
-        std::cout << "[Tabular4DEOS] Loading 4D HDF5 table: " << h5_filename << std::endl;
-        HighFive::File file(h5_filename, HighFive::File::ReadOnly);
-
-        file.getDataSet("n_rho").read(view.n_rho);
-        file.getDataSet("n_T").read(view.n_T);
-        file.getDataSet("n_A").read(view.n_A);
-        file.getDataSet("n_Z").read(view.n_Z);
-
-        file.getDataSet("log_rho_min").read(view.log_rho_min);
-        file.getDataSet("log_rho_max").read(view.log_rho_max);
-        file.getDataSet("log_T_min").read(view.log_T_min);
-        file.getDataSet("log_T_max").read(view.log_T_max);
-        file.getDataSet("A_min").read(view.A_min);
-        file.getDataSet("A_max").read(view.A_max);
-        file.getDataSet("Z_min").read(view.Z_min);
-        file.getDataSet("Z_max").read(view.Z_max);
-
-        view.dlog_rho = (view.log_rho_max - view.log_rho_min) / (view.n_rho - 1);
-        view.dlog_T = (view.log_T_max - view.log_T_min) / (view.n_T - 1);
-        view.dA = (view.A_max - view.A_min) / (view.n_A - 1);
-        view.dZ = (view.Z_max - view.Z_min) / (view.n_Z - 1);
-
-        file.getDataSet("pressure").read(h_table_P);
-        file.getDataSet("energy").read(h_table_E);
-        file.getDataSet("sound_speed").read(h_table_cs);
-        file.getDataSet("cv").read(h_table_cv);
-
-        try
-        {
-            file.getDataSet("dp_drho").read(h_table_dP_drho);
-            view.table_dP_drho = h_table_dP_drho.data();
-            file.getDataSet("dp_dT").read(h_table_dP_dT);
-            view.table_dP_dT = h_table_dP_dT.data();
-            std::cout << "[Tabular4DEOS] Loaded 4D analytical derivative tables." << std::endl;
-        }
-        catch (...)
-        {
-            view.table_dP_drho = nullptr;
-            view.table_dP_dT = nullptr;
-            std::cout << "[Tabular4DEOS] No derivative tables found. Falling back to finite difference." << std::endl;
-        }
-
-        view.table_P = h_table_P.data();
-        view.table_E = h_table_E.data();
-        view.table_cs = h_table_cs.data();
-        view.table_cv = h_table_cv.data();
-
-        view.specs = specs_ptr;
-
-        std::cout << "[Tabular4DEOS] 4D Table loaded successfully." << std::endl;
-    }
+    Tabular4DEOS(const std::string &h5_filename, const SpeciesManager *specs_ptr = nullptr);
 
     Tabular4DEOSView get_view() const { return view; }
     const SpeciesManager* get_species_manager() const { return view.specs; }

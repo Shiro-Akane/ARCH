@@ -16,6 +16,7 @@
 #include "../../data/GlobalDefs.h"
 #include "DiffFlux.h"
 #include "DiffFunction.h"
+#include "DiffusionAMRStages.h"
 
 // =========================================================
 // ================= RKL2TimeIntegrator ====================
@@ -27,26 +28,27 @@ struct RKL2TimeIntegrator
     {
         double cfl = config.physics.diffusion.diff_cfl;
         int max_stages = config.physics.diffusion.max_stages;
-        int s = DiffFunction::compute_stages_rkl2(dt_hydro, dt_diff, cfl, max_stages);
+        int s = DiffFunction::compute_stages(DiffFunction::RKLOrder::Second, dt_hydro, dt_diff, cfl, max_stages);
         if (s == 0) return;
 
+        // Static buffers
         static FluidState Y0, Y_jm1, Y_jm2, L_U0, L_U;
-        if (Y0.total_size_ != state.total_size_) {
-            Y0.Resize(grid, state.GetNumSpecies());
-            Y_jm1.Resize(grid, state.GetNumSpecies());
-            Y_jm2.Resize(grid, state.GetNumSpecies());
-            L_U0.Resize(grid, state.GetNumSpecies());
-            L_U.Resize(grid, state.GetNumSpecies());
+        if (Y0.GetNumSpecies() != state.GetNumSpecies()) {
+            Y0.InitSpecies(state.GetNumSpecies());
+            Y_jm1.InitSpecies(state.GetNumSpecies());
+            Y_jm2.InitSpecies(state.GetNumSpecies());
+            L_U0.InitSpecies(state.GetNumSpecies());
+            L_U.InitSpecies(state.GetNumSpecies());
         }
 
         Y0 = state;
-        Y_jm2 = state; 
+        Y_jm2 = state;
 
         // Initial evaluation L(Y_0) is used in every step for RKL2
         DiffFlux::compute_diffusion_operator(Y0, L_U0, eos, grid, config);
-        
-        auto c1 = DiffFunction::get_rkl2_coeffs(1, s);
-        
+
+        auto c1 = DiffFunction::get_rkl_coeffs(DiffFunction::RKLOrder::Second, 1, s);
+
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
             Y_jm1.rho[i]   = Y0.rho[i]   + c1.tilde_mu * dt_hydro * L_U0.rho[i];
@@ -56,7 +58,7 @@ struct RKL2TimeIntegrator
             Y_jm1.eng[i]   = Y0.eng[i]   + c1.tilde_mu * dt_hydro * L_U0.eng[i];
             for (int k = 0; k < state.GetNumSpecies(); ++k) {
                 double rhoX_new = Y0.rho[i] * Y0.X(k, i) + c1.tilde_mu * dt_hydro * L_U0.X(k, i);
-                Y_jm1.X(k, i) = std::max(0.0, rhoX_new / std::max(Y_jm1.rho[i], 1e-12));
+                Y_jm1.X(k, i) = rhoX_new / Y_jm1.rho[i];
             }
         }
 
@@ -64,14 +66,14 @@ struct RKL2TimeIntegrator
 
         for (int j = 2; j <= s; ++j) {
             DiffFlux::compute_diffusion_operator(Y_jm1, L_U, eos, grid, config);
-            auto cj = DiffFunction::get_rkl2_coeffs(j, s);
+            auto cj = DiffFunction::get_rkl_coeffs(DiffFunction::RKLOrder::Second, j, s);
 
-            FluidState Y_j = Y0; 
-            
+            FluidState Y_j = Y0;
+
             #pragma omp parallel for schedule(static)
             for (int i = 0; i < grid.GetTotalSize(); ++i) {
                 double w0 = (1.0 - cj.mu - cj.nu);
-                
+
                 Y_j.rho[i]   = cj.mu * Y_jm1.rho[i]   + cj.nu * Y_jm2.rho[i]   + w0 * Y0.rho[i]   + dt_hydro * (cj.tilde_mu * L_U.rho[i]   + cj.gamma * L_U0.rho[i]);
                 Y_j.mom_u[i] = cj.mu * Y_jm1.mom_u[i] + cj.nu * Y_jm2.mom_u[i] + w0 * Y0.mom_u[i] + dt_hydro * (cj.tilde_mu * L_U.mom_u[i] + cj.gamma * L_U0.mom_u[i]);
                 Y_j.mom_v[i] = cj.mu * Y_jm1.mom_v[i] + cj.nu * Y_jm2.mom_v[i] + w0 * Y0.mom_v[i] + dt_hydro * (cj.tilde_mu * L_U.mom_v[i] + cj.gamma * L_U0.mom_v[i]);
@@ -79,7 +81,7 @@ struct RKL2TimeIntegrator
                 Y_j.eng[i]   = cj.mu * Y_jm1.eng[i]   + cj.nu * Y_jm2.eng[i]   + w0 * Y0.eng[i]   + dt_hydro * (cj.tilde_mu * L_U.eng[i]   + cj.gamma * L_U0.eng[i]);
                 for (int k = 0; k < state.GetNumSpecies(); ++k) {
                     double rhoX_new = cj.mu * Y_jm1.rho[i] * Y_jm1.X(k, i) + cj.nu * Y_jm2.rho[i] * Y_jm2.X(k, i) + w0 * Y0.rho[i] * Y0.X(k, i) + dt_hydro * (cj.tilde_mu * L_U.X(k, i) + cj.gamma * L_U0.X(k, i));
-                    Y_j.X(k, i) = std::max(0.0, rhoX_new / std::max(Y_j.rho[i], 1e-12));
+                    Y_j.X(k, i) = rhoX_new / Y_j.rho[i];
                 }
             }
 
@@ -92,3 +94,19 @@ struct RKL2TimeIntegrator
         state = Y_jm1;
     }
 };
+
+namespace Numerics::Diffusion {
+
+/**
+ * @brief Advances all AMR leaves with the conservative composite RKL2 polynomial.
+ */
+template <typename EosType, typename BCPolicy>
+inline void advance_amr_rkl2(amr::AMRControl& amr_ctrl, double dt, double dt_diff_fe,
+                             BCPolicy& boundary_condition, const EosType& eos,
+                             const SimConfig& config)
+{
+    advance_amr_rkl(amr_ctrl, dt, dt_diff_fe, boundary_condition, eos, config,
+                            DiffFunction::RKLOrder::Second);
+}
+
+} // namespace Numerics::Diffusion
