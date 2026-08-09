@@ -3,6 +3,13 @@
  * @brief User-defined Problem: Multi-dimensional Sod Shock Tube & Riemann Problems.
  */
 
+/**
+ * Workflow:
+ * 1. Read the selected runtime mode and problem parameters.
+ * 2. Construct physically consistent cell states and refinement indicators.
+ * 3. Hand the initialized problem to the common AMR driver without solver-specific shortcuts.
+ */
+
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
 #include <cmath>
@@ -47,16 +54,16 @@ public:
         g_angle_max = config.Get<double>("angle_max", 90.0);
 
         // [2. Read Fluid States (Left/Inner)]
-        g_rho_L = config.Get<double>("prob_rho_L", 1.0);
-        g_p_L = config.Get<double>("prob_p_L", 1.0);
-        g_u_L = config.Get<double>("prob_u_L", 0.0);
-        g_v_L = config.Get<double>("prob_v_L", 0.0);
+        g_rho_L = config.Get<double>("rho_left", 1.0);
+        g_p_L = config.Get<double>("p_left", 1.0);
+        g_u_L = config.Get<double>("u_left", 0.0);
+        g_v_L = config.Get<double>("v_left", 0.0);
 
         // [3. Read Fluid States (Right/Outer)]
-        g_rho_R = config.Get<double>("prob_rho_R", 0.125);
-        g_p_R = config.Get<double>("prob_p_R", 0.1);
-        g_u_R = config.Get<double>("prob_u_R", 0.0);
-        g_v_R = config.Get<double>("prob_v_R", 0.0);
+        g_rho_R = config.Get<double>("rho_right", 0.125);
+        g_p_R = config.Get<double>("p_right", 0.1);
+        g_u_R = config.Get<double>("u_right", 0.0);
+        g_v_R = config.Get<double>("v_right", 0.0);
 
         // [4. Register Multi-Species (Using Ideal Gas with arbitrary properties)]
         // Using cv = 717.5 J/kgK for air (gamma = 1.4)

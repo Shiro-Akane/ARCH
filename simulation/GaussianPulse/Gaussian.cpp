@@ -47,8 +47,9 @@ public:
         } else {
             m_bg_id = specs.add_species("BgGas", 1.0, 1.0, 1.4, 717.5);
             m_ps_id = specs.add_species("PassiveGas", 1.0, 1.0, 1.4, 717.5);
-            default_X.resize(specs.count(), 0.0);
         }
+
+        default_X.assign(specs.count(), 0.0);
     }
 
     // =========================================================

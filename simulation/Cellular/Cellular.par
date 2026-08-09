@@ -6,21 +6,21 @@
 # ------------------------------------------------------------------------------
 # [Grid Configuration]
 # ------------------------------------------------------------------------------
-n1       = 2560       # 1D 高分辨率以解析反应区 (Reaction Zone)
-n2       = 256
-n3       = 1
+geometry = cartesian
+
+nblockx1 = 32
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 20000
 
 x1_min    = 0.0
-x1_max    = 128.0       # 从 100 扩展至 256 (参考 flash.par)
+x1_max    = 128.0
 x2_min    = 0.0
 x2_max    = 12.8
 x3_min    = 0.0
 x3_max    = 1.0
 
-geometry = cartesian
-
-# 边界条件：左侧通常设置为反射边界以充当"刚性墙壁"支撑起爆，右侧自由流出
-x1l_boundary_type = reflect
+# 边界条件：左侧通常设置为反射边界以充当"刚性墙�?支撑起爆，右侧自由流�?x1l_boundary_type = reflect
 x1r_boundary_type = outflow
 x2l_boundary_type = outflow
 x2r_boundary_type = outflow
@@ -30,8 +30,8 @@ x3r_boundary_type = outflow
 # ------------------------------------------------------------------------------
 # [Numerics]
 # ------------------------------------------------------------------------------
-solver      = HLLC       # 激波捕捉推荐 HLLC 或 Roe
-reconstruct = muscl        # 燃烧问题对数值耗散敏感，建议使用三阶 PPM
+solver      = HLLC       # 激波捕捉推�?HLLC �?Roe
+reconstruct = muscl        # 燃烧问题对数值耗散敏感，建议使用三�?PPM
 time_integrator = RK2
 limiter     = mc
 cfl         = 0.8        # 包含刚性源项时，CFL 尽量压低
@@ -43,18 +43,29 @@ sml_rho = 1e-2       # Density floor to prevent vacuum crashing (similar to FLAS
 max_eint = 1e19      # Cap maximum specific internal energy to prevent sound speed / CFL crashes
 
 # ------------------------------------------------------------------------------
+# [AMR]
+# Use density only for the stiff detonation front; avoid over-refining smooth ash.
+# ------------------------------------------------------------------------------
+lrefinemin = 0
+lrefinemax = 5
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.80
+derefine_threshold = 0.20
+
+# ------------------------------------------------------------------------------
 # [Time & IO]
 # ------------------------------------------------------------------------------
-tmax         = 5.0e-8    # 物理时间极短 (根据爆轰波速调整)
+tmax         = 5.0e-8    # 物理时间极短
 max_steps    = 200
 restart      = false
 
 out_dir      = output
 base_name    = CDet_1D
 
-plt_dstep    = -1       
+plt_dstep    = -1
 plt_dt       = 5.0e-9         # Output PLT based on physical time interval (-1.0 to disable)
-plt_variables= all
+plt_variables= ALL
 chk_dstep    = -1
 chk_dt       = 5.0e-9         # Output CHK based on physical time interval (-1.0 to disable)
 

@@ -8,11 +8,15 @@
 
 ##  Key Features
 
-*   **Runtime Polymorphism:** Switch numerical schemes (e.g., SW, LF, Roe, HLLC) and parameters via configuration files (`.par`).
-*   **Modular Architecture:** Strict separation between Core (Driver, Grid), Physics (Solvers, EoS), and User Problems (Sod, Sedov, CCSNe).
-*   **Factory Pattern:** Automatic registration and dispatching of Solvers and Problem types.
-*   **Safety Mechanisms:** Built-in "Problem ID" checks to prevent using the wrong parameter file for a simulation case.
-*   **High Performance:** Header-only template-based solver implementations with OpenMP parallelization support.
+*   **Conservative block AMR:** Same-level ghost exchange, coarse-fine prolongation/restriction, flux-register reflux, and per-thread flux reduction preserve finite-volume evolution across arbitrary refinement levels.
+*   **Dimension-aware memory layout:** nblockx3 = 0 creates true 2D tiles; nblockx2 = nblockx3 = 0 creates true 1D tiles while retaining a contiguous block pool.
+*   **Shock-capturing hydrodynamics:** PCM, MUSCL, and PPM reconstruction combine with Euler, SSPRK2, or SSPRK3 integration and SW, VL, Roe, HLL, or HLLC fluxes.
+*   **AMR-aware diffusion:** RKL2 super-time-stepping advances the composite hierarchy with stage-wise halo synchronization and reflux; RKL1 is available for controlled first-order studies.
+*   **Composable physics:** External gravity, nuclear burning, ideal/tabular/Helmholtz EOS policies, and Helmholtz diffusionCoe transport participate in AMR evolution.
+*   **Canonical diagnostics:** AMR and HDF5 output share DENS, PRES, TEMP, velocity, VORT, DIVV, ENTR, ENUC, and registered-species fields.
+*   **Restartable HDF5 IO:** Plot and checkpoint files preserve AMR hierarchy state for restart; fresh output directories are created before logging.
+*   **Case-facing interface:** A problem case includes UserInterface.h and GlobalDefs.h; public setup helpers cover built-in networks and EOS pressure initialization.
+
 
 ---
 
@@ -23,18 +27,20 @@ ARCH/
 ├── bin/                        # Compiled executables (generated)
 ├── build/                      # CMake build directory (generated)
 ├── runs/                       # [Workspace] Production run directories (Git ignored)
-├── output/                     # Simulation outputs (HDF5/plot files)
+├── output/                     # Generated simulation outputs (Git ignored)
+├── Validation_file/            # Reproducible AMR validation archive
 ├── simulation/                 # [User Space] Problem definitions & template .par files
 │   ├── Cellular/               # Cellular detonation problem
 │   ├── RTinstability/          # Rayleigh-Taylor instability problem
 │   └── Sod/                    # Sod shock tube problem
 ├── src/                        # [Developer Space] Core source code
+├── amr/                    # Tree, block pool, ghost exchange, and reflux
 │   ├── core/                   # Runtime parameters & configuration (SimConfig)
 │   ├── data/                   # Data structures (FluidState, UserTypes)
 │   ├── driver/                 # Time integration and main simulation driver
-│   ├── grid/                   # Grid management and parallelization logic
+│   ├── grid/                   # Active-dimension grids and geometric metrics
 │   ├── interface/              # Abstract interfaces for physics & numerical methods
-│   ├── io/                     # I/O handling (HDF5 integration & logging)
+│   ├── io/                     # Logging, HDF5 plot, and checkpoint restart IO
 │   ├── numerics/               # Core numerical methods
 │   │   ├── burnsolver/         # ODE solvers for nuclear burning (BE_NR, etc.)
 │   │   ├── diffusion/          # Diffusion time integrators (RKL1, RKL2)
@@ -43,9 +49,10 @@ ARCH/
 │   │   ├── linalg/             # Linear algebra solvers (DenseLU, etc.)
 │   │   └── reconstruction/     # Spatial reconstruction & limiters (PCM, PLM)
 │   ├── physics/                # Physical models
+│   ├── diagnostics/        # Metric-aware derived fluid diagnostics
 │   │   ├── diffusionCoe/       # Diffusion coefficients calculation
 │   │   ├── eos/                # Equations of State (IdealGas, Helmholtz, Tabular)
-│   │   ├── gravity/            # Gravity module (Self-gravity, External)
+│   │   ├── gravity/            # Gravity policies (none and external)
 │   │   ├── network/            # Nuclear reaction networks (aprox19, etc.)
 │   │   ├── nse/                # Nuclear Statistical Equilibrium (NSE) solver
 │   │   └── species/            # Fluid species and reaction management
@@ -102,11 +109,15 @@ ARCH adopts a "Workspace" workflow. **Do not run simulations inside the source d
 For detailed instructions on how to set up a new problem case, run a simulation (such as the Sod Shock Tube), and configure the `.par` parameter file, please refer to:
 👉 **[Simulation Case & Configuration Guide](simulation/CaseGuide.md)**
 
+AMR validation figures, stored-plot inputs, and the reproducible renderer are kept
+together in [AMR visual validation archive](Validation_file/AMR_Visual_Archive/README.md).
+
+
 ---
 
 ## Extending ARCH (Developer Guide)
 
-ARCH is designed with a plugin-style architecture using zero-overhead static dispatch. 
+ARCH is designed with a plugin-style architecture using zero-overhead static dispatch.
 To add new physical modules or solvers, follow these guidelines:
 
 ### 1. Hydro Solver (Riemann Solver / Flux)
@@ -116,7 +127,7 @@ To add new physical modules or solvers, follow these guidelines:
 
 ### 2. Equation of State (EOS)
 - **Location**: `src/physics/eos/`
-- **Interface**: Create a class (e.g., `MyNewEOS`) that implements the state evaluation methods. 
+- **Interface**: Create a class (e.g., `MyNewEOS`) that implements the state evaluation methods.
 - **Tabular EOS**: If adding a new tabular format, you must implement a Host Manager and a device-compatible View (refer to `Tabular3DEOS.h`).
 - **Registration**: Register the new EOS parser logic in `dispatch_eos()` within `src/physics/eos/eosdispatch.h`.
 

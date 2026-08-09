@@ -7,9 +7,10 @@
 # [Grid Configuration]
 # Standard domain: 0.25 x 1.0 (for 2D)
 # ------------------------------------------------------------------------------
-n1       = 256
-n2       = 1024
-n3       = 1       # Change to 64 for full 3D simulation
+nblockx1 = 4
+nblockx2 = 16
+nblockx3 = 0       # Set positive only for a true 3D case
+max_blocks = 768
 
 x1_min    = 0.0
 x1_max    = 0.25
@@ -42,6 +43,17 @@ EntropyFix = On
 EntropyFixCoefficient = 0.1
 
 # ------------------------------------------------------------------------------
+# [AMR]
+# Follow the density inversion and heavy-fluid tracer through the RT interface.
+# ------------------------------------------------------------------------------
+lrefinemin = 0
+lrefinemax = 2
+regrid_interval = 2
+refine_var = DENS, HeavyFluid
+refine_threshold = 0.40
+derefine_threshold = 0.10
+
+# ------------------------------------------------------------------------------
 # [Time & IO]
 # Typical RT timescale sees full mushroom development around t = 8.5
 # ------------------------------------------------------------------------------
@@ -55,7 +67,7 @@ base_name    = RT_instab
 
 plt_dt       = 0.5      # Frequent output to render animations
 plt_dstep    = -1        
-plt_variables= all       # Ensures we output the "species" variable to see mixing
+plt_variables= ALL       # Ensures we output the "species" variable to see mixing
 
 chk_dt       = 1.0      
 chk_dstep    = -1        

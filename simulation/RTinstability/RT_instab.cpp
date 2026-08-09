@@ -4,6 +4,13 @@
  *        Standard benchmark from Liska & Wendroff (2003).
  */
 
+/**
+ * Workflow:
+ * 1. Read the selected runtime mode and problem parameters.
+ * 2. Construct physically consistent cell states and refinement indicators.
+ * 3. Hand the initialized problem to the common AMR driver without solver-specific shortcuts.
+ */
+
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
 #include <cmath>
@@ -24,6 +31,7 @@ class RTInstability
     double g_amp; // Velocity perturbation amplitude
     double g_Lx;  // Domain length in X
     double g_Lz;  // Domain length in Z (for 3D)
+    bool g_is_3d;
 
     // ========================================================================
     // Physics Environment
@@ -40,7 +48,8 @@ public:
     {
         // 1. Grid bounds for wave number calculation
         g_Lx = config.grid.x1_max - config.grid.x1_min;
-        g_Lz = config.grid.x3_max - config.grid.x3_min;
+        g_is_3d = config.grid.dim == 3;
+        g_Lz = g_is_3d ? config.grid.x3_max - config.grid.x3_min : 0.0;
 
         // 2. Sync gravity with the global physics configuration!
         // This guarantees the Hydrostatic Equilibrium matches the solver's source terms.
@@ -61,7 +70,7 @@ public:
         std::cout << "[Problem] Rayleigh-Taylor Instability Setup Complete.\n"
                   << "          Interface at y=" << g_y_int << "\n"
                   << "          Gravity g_y=" << g_gy << " (Matched with PhysicsConfig)\n"
-                  << "          Mode: " << (config.grid.n3 > 1 ? "3D Box" : "2D Planar") << "\n";
+                  << "          Mode: " << (g_is_3d ? "3D Box" : "2D Planar") << "\n";
     }
 
     void Init(const PointCoords &p, PrimitiveData &out) const
@@ -84,7 +93,7 @@ public:
         double decay = std::exp(-15.0 * std::abs(p.y - g_y_int));
         double pert_x = std::cos(2.0 * M_PI * p.x / g_Lx);
 
-        if (g_Lz > 1e-8) // If 3D box
+        if (g_is_3d)
         {
             double pert_z = std::cos(2.0 * M_PI * p.z / g_Lz);
             out.v = g_amp * pert_x * pert_z * decay;
