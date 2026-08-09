@@ -6,11 +6,18 @@
  * * It decouples the core solver engine from the specific problem setup logic.
  */
 
+/**
+ * Workflow:
+ * 1. Receive the problem-specific setup request from the application boundary.
+ * 2. Expose only the stable data and initialization contract needed by the driver.
+ * 3. Keep problem registration independent of numerical implementation details.
+ */
+
 #pragma once
 
 #include "../src/grid/Grid.h"
+#include "../src/amr/AMRControl.h"
 
-#include "../src/data/FluidState.h"
 #include "../src/data/GlobalDefs.h"
 
 #include "../src/physics/species/Species.h"
@@ -45,7 +52,7 @@ public:
      * * usually do NOT pass 'config' here. Instead, they use static/member variables
      * * cached during the Setup() phase.
      */
-    virtual void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) = 0;
+    virtual void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs) = 0;
 
     /**
      * @brief Returns the name of the problem for logging.

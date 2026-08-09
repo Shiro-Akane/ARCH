@@ -13,6 +13,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <filesystem>
 
 #include "../src/core/RuntimeParams.h"
 #include "../src/core/ProblemRegistry.h"
@@ -52,11 +53,14 @@ int main(int argc, char **argv)
     try
     {
         config = RuntimeParams::Load(par_file);
-        
+
+        // Initialize the requested output directory before Logger, plot, or
+        // checkpoint IO opens a file. This makes a fresh out_dir self-contained.
+        std::filesystem::create_directories(config.io.out_dir);
         std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
         Logger::Init(log_filename, config.io.restart);
         std::cout << "[Main] Console output is being recorded to log file: " << log_filename << std::endl;
-        
+
         std::cout << "[Main] Parameters loaded from: " << par_file << std::endl;
     }
     catch (const std::exception &e)
@@ -100,7 +104,7 @@ int main(int argc, char **argv)
 
     // Print summary to console
     std::cout << "[Main] Configuration:" << std::endl;
-    std::cout << "       Grid: " << config.grid.n1 << " cells, CFL: " << config.numerics.cfl << std::endl;
+    std::cout << "       Grid: " << config.grid.nblockx1 * amr::BLOCK_NX << " cells, CFL: " << config.numerics.cfl << std::endl;
     std::cout << "       Solver: " << solver_name << std::endl;
     std::cout << "       Species Count: " << specs.count() << std::endl;
 

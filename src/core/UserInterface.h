@@ -1,8 +1,11 @@
 /**
  * @file UserInterface.h
- * @brief Macro definitions for auto-registering simulation problems.
- * * Enables "Plugin-style" development where new problems are added
- * * simply by compiling their source files, without modifying main.cpp.
+ * @brief Case-facing registration macros and public initialization helpers.
+ *
+ * Workflow:
+ * 1. A case includes this header and GlobalDefs.h as its complete ARCH surface.
+ * 2. Registration macros publish class- or function-based cases before main().
+ * 3. ProblemHelper exposes network/EOS Setup helpers without leaking internals.
  */
 
 #pragma once
@@ -10,25 +13,10 @@
 #include <memory>
 
 #include "ProblemRegistry.h"
+#include "ProblemHelper.h"
 
 #include "../interface/GenericProblem.h"
 #include "../data/UserTypes.h"
-
-#include <vector>
-#include <functional>
-
-/**
- * @brief ProblemHelper provides high-level physics wrappers to hide internal modules (EOS, Networks) from the user.
- */
-namespace ProblemHelper
-{
-    void SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X);
-    double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X);
-    
-    // Hidden initialization dispatcher
-    void PopulateState(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs,
-                       std::function<void(const PointCoords&, PrimitiveData&)> init_callback);
-}
 
 /**
  * @brief Macro to register a problem setup automatically.

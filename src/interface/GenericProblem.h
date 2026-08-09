@@ -11,6 +11,13 @@
  * * Solver-friendly Conservative Variables (rho, mom, eng).
  */
 
+/**
+ * Workflow:
+ * 1. Receive the problem-specific setup request from the application boundary.
+ * 2. Expose only the stable data and initialization contract needed by the driver.
+ * 3. Keep problem registration independent of numerical implementation details.
+ */
+
 #pragma once
 
 #include <vector>
@@ -23,12 +30,9 @@
 
 #include "../grid/Grid.h"
 #include "../physics/species/Species.h"
+#include "../amr/AMRControl.h"
+#include "../core/ProblemHelper.h"
 #include <functional>
-
-namespace ProblemHelper {
-    void PopulateState(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs,
-                       std::function<void(const PointCoords&, PrimitiveData&)> init_callback);
-}
 
 class GenericProblemGenerator : public ProblemGenerator
 {
@@ -65,9 +69,9 @@ public:
      * @param grid  Input: Grid topology.
      * @param eos   Input: Equation of State for variable conversion.
      */
-    void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) override
+    void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs) override
     {
-        ProblemHelper::PopulateState(state, grid, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
+        ProblemHelper::detail::PopulateState(amr_ctrl, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
             user_init(p, data);
         });
     }
@@ -92,9 +96,9 @@ public:
         user_model.Setup(config, specs);
     }
 
-    void InitializeData(FluidState &state, const Grid &grid, const SimConfig &config, const SpeciesManager &specs) override
+    void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs) override
     {
-        ProblemHelper::PopulateState(state, grid, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
+        ProblemHelper::detail::PopulateState(amr_ctrl, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
             user_model.Init(p, data);
         });
     }
