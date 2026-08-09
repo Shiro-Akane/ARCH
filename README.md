@@ -34,7 +34,7 @@ ARCH/
 │   ├── RTinstability/          # Rayleigh-Taylor instability problem
 │   └── Sod/                    # Sod shock tube problem
 ├── src/                        # [Developer Space] Core source code
-├── amr/                    # Tree, block pool, ghost exchange, and reflux
+|   ├── amr/                    # Tree, block pool, ghost exchange, and reflux
 │   ├── core/                   # Runtime parameters & configuration (SimConfig)
 │   ├── data/                   # Data structures (FluidState, UserTypes)
 │   ├── driver/                 # Time integration and main simulation driver
