@@ -49,7 +49,7 @@ ARCH/
 │   │   ├── linalg/             # Linear algebra solvers (DenseLU, etc.)
 │   │   └── reconstruction/     # Spatial reconstruction & limiters (PCM, PLM)
 │   ├── physics/                # Physical models
-│   ├── diagnostics/        # Metric-aware derived fluid diagnostics
+│   │   ├── diagnostics/        # Metric-aware derived fluid diagnostics
 │   │   ├── diffusionCoe/       # Diffusion coefficients calculation
 │   │   ├── eos/                # Equations of State (IdealGas, Helmholtz, Tabular)
 │   │   ├── gravity/            # Gravity policies (none and external)
