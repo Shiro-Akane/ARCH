@@ -1,26 +1,24 @@
 /**
  * @file Logger.h
  * @brief Global IO interceptor to duplicate std::cout output to a log file.
- * 
+ *
  * Workflow:
  * 1. Initialize the Logger singleton with the target output filename.
  * 2. It redirects the std::cout stream buffer into a custom TeeBuffer.
- * 3. TeeBuffer overrides the sync() and overflow() methods to write character data 
+ * 3. TeeBuffer overrides the sync() and overflow() methods to write character data
  *    simultaneously to the console and to an std::ofstream.
  * 4. At program exit, the Logger destructor restores the original std::cout buffer.
  */
 
 #pragma once
 
-#include <iostream>
 #include <fstream>
-#include <streambuf>
+#include <iostream>
 #include <memory>
+#include <streambuf>
 #include <string>
 
-// =========================================================
-// ================== TeeBuffer Class ======================
-// =========================================================
+// Stream buffer that mirrors output to the terminal and log file.
 
 /**
  * @class TeeBuffer
@@ -49,9 +47,7 @@ private:
     std::streambuf* sb2_;
 };
 
-// =========================================================
-// ==================== Logger Class =======================
-// =========================================================
+// Process-wide log owner.
 
 /**
  * @class Logger

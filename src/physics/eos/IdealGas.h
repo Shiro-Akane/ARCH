@@ -12,8 +12,8 @@
 
 #pragma once
 
-#include <cmath>
 #include <algorithm> // for std::max
+#include <cmath>
 
 #include "eos.h"
 #include "eos_Utils.h"
@@ -31,9 +31,7 @@ struct IdealGas : public EOSBase
 
     const SpeciesManager* get_species_manager() const { return &manager; }
 
-    // ========================================================
-    // 1. 混合物属性计算
-    // ========================================================
+    // Mixture thermodynamic properties.
 
     double get_gamma(const double *Xi) const
     {
@@ -47,7 +45,7 @@ struct IdealGas : public EOSBase
         {
             if (Xi[k] > 1e-12)
             {
-                // 使用修改后的 _ref 接口
+                // SpeciesManager supplies immutable per-species gamma values.
                 double gamma_i = manager.get_gamma_ref(k);
                 double Cv_i = manager.get_Cv_ref(k);
 
@@ -64,7 +62,7 @@ struct IdealGas : public EOSBase
     double get_mixture_Cv(const double *Xi) const
     {
         if (manager.count() == 0)
-            return 718.0; // 默认空气 Cv 兜底
+            return 718.0; // Air-like Cv fallback in J/(kg K) when no species exist.
 
         double cv_mix = 0.0;
         for (int k = 0; k < manager.count(); ++k)
@@ -74,9 +72,7 @@ struct IdealGas : public EOSBase
         return cv_mix;
     }
 
-    // ========================================================
-    // 2. 鸭子类型必须满足的接口规范 (同 TabularEOSView)
-    // ========================================================
+    // Policy interface shared with tabular EOS views.
     const IdealGas &get_view() const
     {
         return *this;
@@ -93,10 +89,10 @@ struct IdealGas : public EOSBase
         return (get_gamma(Xi) - 1.0) * rho * e;
     }
 
-    // --- 温度接口 (核反应网络统一要求) ---
+    // Temperature interface required by all reaction-network solvers.
     double get_temperature(double rho, double e, const double *Xi) const
     {
-        // 理想气体：e = Cv * T  =>  T = e / Cv
+        // Ideal-gas relation e=Cv*T, hence T=e/Cv.
         double cv_mix = get_mixture_Cv(Xi);
         if (cv_mix < 1e-12)
             return 0.0;
@@ -105,7 +101,7 @@ struct IdealGas : public EOSBase
 
     double get_eint_from_T(double rho, double T, const double *Xi) const
     {
-        // 理想气体解析公式：e = Cv * T
+        // Analytic ideal-gas relation e=Cv*T.
         double cv_mix = get_mixture_Cv(Xi);
         return cv_mix * T;
     }
@@ -142,9 +138,7 @@ struct IdealGas : public EOSBase
         return e_internal_vol + eos_utils::calc_kinetic_energy(rho, u, v, w);
     }
 
-    // ========================================================
-    // 3. 偏导数 (Implicit Jacobian)
-    // ========================================================
+    // Analytic derivatives used by implicit Jacobians.
 
     double get_dp_drho_e(double rho, double e, const double *Xi) const
     {

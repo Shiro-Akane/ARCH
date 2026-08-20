@@ -1,3 +1,5 @@
+// C++ translation of Frank Timmes's screen5 Coulomb-screening routine.
+// Upstream index: https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <algorithm>

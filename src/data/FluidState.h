@@ -13,9 +13,10 @@
 
 #pragma once
 
-#include <vector>
-#include "../amr/AmrDefines.h"
 #include <array>
+#include <vector>
+
+#include "../amr/AmrDefines.h"
 
 /**
  * @brief Represents the conserved variables at a single point.
@@ -73,10 +74,9 @@ struct FluidState
     // Specific nuclear energy source rate (erg g^-1 s^-1); diagnostic only.
     std::vector<double> enuc_rate;
 
-    // Dynamic species data (could also be flattened static if MAX_SPECIES is known,
-    // but we use std::vector dynamically allocated ONCE per block if needed on CPU.
-    // For pure GPU, this would also need to be a fixed-size array).
-    // For now, we'll keep std::vector but allocate it with fixed size based on block.
+    // Species mass fractions use a contiguous species-major array sized once per
+    // block. Backend adapters must preserve this layout or provide an equivalent
+    // device view without changing the numerical indexing contract.
     std::vector<double> mass_fractions;
     int n_species_ = 0;
 

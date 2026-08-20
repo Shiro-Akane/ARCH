@@ -10,34 +10,28 @@
  * 5. Optionally attempt to load analytical derivative tables.
  */
 
-#include "Tabular4DEOS.h"
-#include "highfive/H5File.hpp"
 #include <iostream>
 
-// =========================================================
-// =================== Constructor =========================
-// =========================================================
+#include "Tabular4DEOS.h"
+
+#include <highfive/H5File.hpp>
+
+// Table construction and host/device view binding.
 
 Tabular4DEOS::Tabular4DEOS(const std::string &h5_filename, const SpeciesManager *specs_ptr)
     : table_path(h5_filename)
 {
-    // =========================================================
     // 1. Initialize & Open File
-    // =========================================================
     std::cout << "[Tabular4DEOS] Loading 4D HDF5 table: " << h5_filename << std::endl;
     HighFive::File file(h5_filename, HighFive::File::ReadOnly);
 
-    // =========================================================
     // 2. Load Grid Dimensions
-    // =========================================================
     file.getDataSet("n_rho").read(view.n_rho);
     file.getDataSet("n_T").read(view.n_T);
     file.getDataSet("n_A").read(view.n_A);
     file.getDataSet("n_Z").read(view.n_Z);
 
-    // =========================================================
     // 3. Load Grid Boundaries
-    // =========================================================
     file.getDataSet("log_rho_min").read(view.log_rho_min);
     file.getDataSet("log_rho_max").read(view.log_rho_max);
     file.getDataSet("log_T_min").read(view.log_T_min);
@@ -52,17 +46,13 @@ Tabular4DEOS::Tabular4DEOS(const std::string &h5_filename, const SpeciesManager 
     view.dA = (view.A_max - view.A_min) / (view.n_A - 1);
     view.dZ = (view.Z_max - view.Z_min) / (view.n_Z - 1);
 
-    // =========================================================
     // 4. Load Thermodynamic Tables
-    // =========================================================
     file.getDataSet("pressure").read(h_table_P);
     file.getDataSet("energy").read(h_table_E);
     file.getDataSet("sound_speed").read(h_table_cs);
     file.getDataSet("cv").read(h_table_cv);
 
-    // =========================================================
     // 5. Load Derivative Tables (Optional)
-    // =========================================================
     try
     {
         file.getDataSet("dp_drho").read(h_table_dP_drho);
@@ -78,9 +68,7 @@ Tabular4DEOS::Tabular4DEOS(const std::string &h5_filename, const SpeciesManager 
         std::cout << "[Tabular4DEOS] No derivative tables found. Falling back to finite difference." << std::endl;
     }
 
-    // =========================================================
     // 6. Bind Pointers for Device View
-    // =========================================================
     view.table_P = h_table_P.data();
     view.table_E = h_table_E.data();
     view.table_cs = h_table_cs.data();

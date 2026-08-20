@@ -8,31 +8,29 @@
  * 3. Write restart- or analysis-ready output without changing simulation state.
  */
 
+#include <algorithm>
+#include <cmath>
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <vector>
+
+#include "../../amr/AMRControl.h"
+#include "../../core/RuntimeParams.h" // For SimConfig
+#include "../../data/FluidState.h"
+#include "../../data/GlobalDefs.h"
+#include "../../grid/Grid.h"
+#include "../../physics/diagnostics/VelocityDiagnostics.h"
+#include "../../physics/species/Species.h"
+
 #include "../IO.h"
 #include "../hdf5/HDF5Writer.h"
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <filesystem>
-#include <vector>
-#include <algorithm>
-#include <map>
-#include <cmath>
-
-#include "../../data/GlobalDefs.h"
-#include "../../data/FluidState.h"
-#include "../../physics/species/Species.h"
-#include "../../grid/Grid.h"
-#include "../../physics/diagnostics/VelocityDiagnostics.h"
-#include "../../amr/AMRControl.h"
-#include "../../core/RuntimeParams.h" // For SimConfig
-
 namespace fs = std::filesystem;
 
-// ======================================================================
-// 辅助函数：获取计算域�?HDF5 维度 (Row-major: Z, Y, X)
-// ======================================================================
+// Return computational-domain HDF5 dimensions in row-major Z, Y, X order.
 inline std::vector<size_t> get_hdf5_dims(const Grid &grid)
 {
     size_t n1 = amr::BLOCK_NX;

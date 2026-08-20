@@ -1,7 +1,7 @@
 /**
  * @file RuntimeParams.h
  * @brief Global static interface for accessing runtime parameters via type deduction.
- * * Wraps the ConfigParser in a Singleton to provide seamless access across the codebase.
+ * Wraps the ConfigParser in a Singleton to provide seamless access across the codebase.
  */
 
 /**
@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include <string>
-#include <stdexcept>
-#include <sstream>
-#include <vector>
 #include <cmath>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "../data/GlobalDefs.h"
 #include "../io/ConfigParser.h"
@@ -26,21 +26,23 @@ class RuntimeParams
 {
 private:
     /**
-     * @brief 轻量级表达式解析：支�?"3.14", "pi", "2.0*pi", "pi/2" 等基础输入
+     * @brief Parse a restricted numeric expression containing an optional pi.
+     * Supported forms are a plain number, pi, -pi, coefficient*pi,
+     * pi*coefficient, and pi/coefficient. This is not a general parser.
      */
     static double ParseMathExpr(std::string str, double default_val = 0.0)
     {
         if (str.empty())
             return default_val;
 
-        // 1. 转小写并去除所有空�?        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        // Remove whitespace before matching the supported literal forms.
         str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
 
-        // 2. 查找是否包含 "pi"
+        // Separate ordinary numeric input from the supported pi forms.
         size_t pi_pos = str.find("pi");
         if (pi_pos == std::string::npos)
         {
-            // 不包�?pi，直接走常规 stod
+            // Plain numeric input uses the standard conversion path.
             try
             {
                 return std::stod(str);
@@ -51,15 +53,15 @@ private:
             }
         }
 
-        // 3. 包含 pi 的简单计算逻辑
-        double pi_val = M_PI; // 3.141592653589793...
+        // M_PI supplies the platform's double-precision value of pi.
+        double pi_val = M_PI;
 
         if (str == "pi")
             return pi_val;
         if (str == "-pi")
             return -pi_val;
 
-        // 处理 "系数 * pi" �?"pi * 系数"
+        // Handle coefficient*pi and pi*coefficient.
         size_t star_pos = str.find('*');
         if (star_pos != std::string::npos)
         {
@@ -74,7 +76,7 @@ private:
             }
         }
 
-        // 处理 "pi / 系数"
+        // Handle pi/coefficient.
         size_t slash_pos = str.find('/');
         if (slash_pos != std::string::npos && pi_pos < slash_pos)
         {
@@ -140,7 +142,7 @@ public:
         cfg.grid.x3l_boundary_type = parser.GetString("x3l_boundary_type", "outflow");
         cfg.grid.x3r_boundary_type = parser.GetString("x3r_boundary_type", "outflow");
 
-        // 2. 搬运数值参�?(Numerics)
+        // Numerical-method configuration.
         cfg.numerics.solver_name = parser.GetString("solver", "SW");
         cfg.numerics.cfl = parser.GetDouble("cfl", 0.8);
         cfg.numerics.limiter = parser.GetString("limiter", "minmod");
@@ -149,14 +151,15 @@ public:
         // with existing parameter files that use the legacy spelling.
         cfg.numerics.time_integrator = parser.GetString(
             "time_integrator", parser.GetString("timeintegrator", "RK2"));
-        std::string fix_switch = parser.GetString("EntropyFix", "On"); // 默认开�?
+        std::string fix_switch = parser.GetString("EntropyFix", "On"); // Enabled by default.
         if (fix_switch == "Off" || fix_switch == "False")
         {
-            cfg.numerics.entropy_fix_coeff = 0.0; // 0.0 代表关闭
+            cfg.numerics.entropy_fix_coeff = 0.0; // Zero disables eigenvalue smoothing.
         }
         else
         {
-            // 如果开启，读取系数，默认为 0.1
+            // 0.1 is the default fraction of local spectral radius used as the
+            // entropy-fix smoothing width.
             cfg.numerics.entropy_fix_coeff = parser.GetDouble("EntropyFixCoefficient", 0.1);
         }
 
@@ -171,12 +174,12 @@ public:
                        cfg.execution.compute_backend.begin(), ::tolower);
         cfg.execution.cuda_device = parser.GetInt("cuda_device", 0);
 
-        // 3. 搬运物理参数 (Physics)
+        // Equation-of-state and physical-module configuration.
         cfg.physics.eos_type = parser.GetString("eos_type", "ideal");
         cfg.physics.eos_table_path = parser.GetString("eos_table_path", "");
         cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
 
-        // --- 核反应燃烧模�?(Burn) ---
+        // Nuclear reaction and NSE configuration.
         cfg.physics.burn.use_burn = (parser.GetInt("use_burn", 0) != 0);
         cfg.physics.burn.network_name = parser.GetString("network_name", "aprox19");
         cfg.physics.burn.nuclearTempMin = parser.GetDouble("nuclearTempMin", 1e9);
@@ -189,10 +192,10 @@ public:
         cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", 4.5e9);
         cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", 1.0e6);
 
-        cfg.physics.burn.enforce_mass_conservation = (parser.GetInt("enforce_mass_conservation", 1) != 0); // 默认开�?
+        cfg.physics.burn.enforce_mass_conservation = (parser.GetInt("enforce_mass_conservation", 1) != 0); // Enabled by default.
         cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", 0);
 
-        // --- ODE 求解器配�?(ODE) ---
+        // Stiff ODE solver configuration.
         cfg.physics.burn.odeconfig.ode_solver = parser.GetString("ode_solver", "BE_NR");
         cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", "DenseLU");
 
@@ -209,7 +212,7 @@ public:
         cfg.physics.burn.odeconfig.use_numerical_jacobian = (parser.GetInt("ode_use_numerical_jac", 0) != 0);
         cfg.physics.burn.odeconfig.freeze_jacobian = (parser.GetInt("ode_freeze_jacobian", 0) != 0);
 
-        // --- 扩散模块 (Diffusion) ---
+        // Diffusion configuration.
         cfg.physics.diffusion.use_diffusion = (parser.GetInt("use_diffusion", 0) != 0);
         cfg.physics.diffusion.integrator = parser.GetString("diff_integrator", "RKL2");
         cfg.physics.diffusion.diff_cfl = parser.GetDouble("diff_cfl", 0.8);
@@ -237,7 +240,7 @@ public:
             }
         }
 
-        // --- 引力模块 (Gravity) ---
+        // Gravity configuration.
         std::string grav_type = parser.GetString("gravity_type", "none");
         std::transform(grav_type.begin(), grav_type.end(), grav_type.begin(), ::tolower);
         cfg.physics.gravity.type = grav_type;
@@ -329,7 +332,7 @@ public:
         if (cfg.amr.refine_threshold < 0.0 || cfg.amr.refine_threshold > 1.0 || cfg.amr.derefine_threshold < 0.0 ||
             cfg.amr.derefine_threshold >= cfg.amr.refine_threshold)
             throw std::invalid_argument("AMR Lohner thresholds require ordered values in [0, 1].");
-        // 4. 搬运IO参数 (IO)
+        // Time limits and output configuration.
         cfg.io.tmax = parser.GetDouble("tmax", 0.1);
         cfg.io.max_steps = parser.GetInt("max_steps", -1);
 
@@ -416,7 +419,6 @@ public:
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
         if (cfg.io.vars.jens) { warn_plot_disabled("JENS", "the self-gravity potential solver is not implemented"); cfg.io.vars.jens = false; }
-        // 5. 自动搬运剩余参数�?Custom Params
         // Preserve untyped parameters for problem-specific setup.
         for (const auto &[key, val_str] : parser.GetAllParams())
         {
@@ -428,8 +430,7 @@ public:
             }
             catch (...)
             {
-                // 如果转不�?double (比如 "solver=VL")，忽略即可，
-                // Retain non-numeric custom parameters as strings.
+                // Retain values such as solver names that are not valid doubles.
                 cfg.custom_string_params[key] = val_str;
             }
         }

@@ -1,8 +1,8 @@
 /**
  * @file Driver.h
  * @brief Main time-integration loop (Driver) for the simulation.
- * * Implements the "Method of Lines" approach, decoupling the spatial discretization
- * * (SolverPolicy) from the time stepping logic.
+ * Implements the "Method of Lines" approach, decoupling the spatial discretization
+ * (SolverPolicy) from the time stepping logic.
  */
 
 /**
@@ -14,28 +14,31 @@
 
 #pragma once
 
-#include <iostream>
 #include <algorithm>
-#include <iomanip>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 #include <stdexcept>
 #include <vector>
 
-// Utilities and physics/numerics definitions
-#include "DriverUtils.h"
+// Driver-local orchestration.
 #include "DriverBurn.h"
 #include "DriverControl.h"
+#include "DriverUtils.h"
+
+// AMR and I/O services.
+#include "../amr/AMRControl.h"
+#include "../io/IO.h"
+
+// Numerical and physical policy interfaces.
+#include "../numerics/burnsolver/BurnerHandle.h"
 #include "../numerics/burnsolver/Networks.h"
 #include "../numerics/diffusion/DiffDispatch.h"
 #include "../numerics/diffusion/DiffFunction.h"
-#include "../io/IO.h"
-
-#include "../amr/AMRControl.h"
-#include "../numerics/burnsolver/BurnerHandle.h"
-#include "../physics/gravity/IGravityPolicy.h"
 #include "../numerics/integrator/IHydroSolver.h"
+#include "../physics/gravity/IGravityPolicy.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -43,7 +46,7 @@
 
 /**
  * @brief Executes the main simulation loop.
- * @tparam SolverPolicy The numerical scheme (e.g., Lax-Friedrichs, HLLC).
+ * @tparam SolverPolicy Numerical flux policy, for example HLLC.
  * @tparam EosPolicy The equation of state (e.g., Ideal Gas).
  * @tparam GravityPolicy The gravity policy.
  * @tparam BurnerPolicy The burning policy.
@@ -59,10 +62,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const SpeciesManager &specs,
                     const RunState &start_state)
 {
-    // 1. Initialize simulation controller (handles IO timing, dt logic, and step counting)
+    // Initialize output scheduling, time-step control, and run counters.
     SimulationController ctrl(config, start_state);
-
-    // GhostExchange and FluxRegister are now in amr_ctrl
 
     const NumericsConfig &num_cfg = config.numerics;
     BCHandler bc_handler{config};
@@ -130,9 +131,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
                                                 config.grid.dim, &amr::Block::fluid_state);
     };
-    // The initialization dispatcher cannot safely instantiate a runtime EOS.
-    // Complete deferred thermodynamic regrids with valid ghost zones and
-    // conservative prolongation before the first output or hydro step.
+    // Complete deferred thermodynamic regrids with synchronized ghost zones
+    // and conservative prolongation before the first output or hydro step.
     const int deferred_initial_passes = amr_ctrl.tree->ConsumeDeferredInitialRefinement();
     if (deferred_initial_passes > 0) {
         std::cout << "[Dispatch] Performing initial AMR refinement loop..." << std::endl;
@@ -172,7 +172,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     double cfl = config.numerics.cfl;
     bool reported_composite_diffusion = false;
 
-    // Output initial state if we are at step 0
+    // Emit the initial state only for a fresh run.
     if (ctrl.should_print_header())
     {
         synchronize_plot_ghosts();
@@ -181,14 +181,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         ctrl.print_header(has_burn, has_diff);
     }
 
-    // =========================================================
     // Main Time Loop (Method of Lines)
-    // =========================================================
     while (!ctrl.is_finished())
     {
-        // -----------------------------------------------------
         // Step A: IO Routine & AMR Regrid
-        // -----------------------------------------------------
         if (ctrl.step_count % config.amr.regrid_interval == 0) {
             // Apply physical boundary conditions first.  Exchange then replaces
             // the ghost layers of internal AMR faces with neighboring data.
@@ -225,9 +221,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index, ctrl.step_count, ctrl.t_current, config);
         }
 
-        // -----------------------------------------------------
         // Step B: Calculate Time Step (CFL Condition)
-        // -----------------------------------------------------
         double dt_hydro = 1e99;
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
         for (int block_id : active_blocks) {
@@ -265,9 +259,41 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         dt_burn_global = 1e99; // Reset for internal computation
         double dt = ctrl.sync_dt(dt_computed);
 
-        // -----------------------------------------------------
-        // Step C: Numerical Update (Operator Splitting)
-        // -----------------------------------------------------
+        // Step C: Symmetric Strang update
+        // B(dt/2) D(dt/2) H(dt) D(dt/2) B(dt/2)
+
+        const auto advance_diffusion = [&](double diffusion_dt) {
+            if (!has_diff || diffusion_dt <= 0.0) return;
+
+            if (active_blocks.size() > 1) {
+                const std::string& diff_integrator = config.physics.diffusion.integrator;
+                const bool rkl1 = diff_integrator == "RKL1" || diff_integrator == "rkl1";
+                const bool rkl2 = diff_integrator == "RKL2" || diff_integrator == "rkl2";
+                if (!rkl1 && !rkl2) {
+                    throw std::runtime_error("Unknown diffusion integrator: " + diff_integrator);
+                }
+                if (!reported_composite_diffusion) {
+                    std::cout << "[Diffusion] multi-block AMR uses composite "
+                              << (rkl1 ? "RKL1" : "RKL2")
+                              << " STS with stage ghost synchronization and reflux."
+                              << std::endl;
+                    reported_composite_diffusion = true;
+                }
+                if (rkl1) {
+                    Numerics::Diffusion::advance_amr_rkl1(
+                        amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+                } else {
+                    Numerics::Diffusion::advance_amr_rkl2(
+                        amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
+                }
+            } else {
+                Numerics::Diffusion::dispatch_diffusion(config, [&](auto& integrator) {
+                    amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
+                    integrator.integrate(block.fluid_state, eos, block.grid, config,
+                                         diffusion_dt, dt_diff_fe, bc_handler);
+                });
+            }
+        };
 
         // C1. Burn Step (1/2 dt)
         if (has_burn) {
@@ -283,45 +309,23 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             }
         }
 
-        // C2. Hydrodynamics Step (dt)
+        // C2. Diffusion Step (1/2 dt)
+        advance_diffusion(0.5 * dt);
+
+        // C3. Hydrodynamics Step (dt)
         #pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < active_blocks.size(); ++i) {
             amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[i]);
             bc_handler.apply(b.fluid_state, b.grid);
         }
-        // C2. Hydro Step (dt)
         amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, &amr::Block::fluid_state);
 
         integrator_solve(amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
 
-        // C3. Diffusion Step (dt)
-        if (has_diff) {
-            if (active_blocks.size() > 1) {
-                const std::string& diff_integrator = config.physics.diffusion.integrator;
-                const bool rkl1 = diff_integrator == "RKL1" || diff_integrator == "rkl1";
-                const bool rkl2 = diff_integrator == "RKL2" || diff_integrator == "rkl2";
-                if (!rkl1 && !rkl2) {
-                    throw std::runtime_error("Unknown diffusion integrator: " + diff_integrator);
-                }
-                if (!reported_composite_diffusion) {
-                    std::cout << "[Diffusion] multi-block AMR uses composite "
-                              << (rkl1 ? "RKL1" : "RKL2")
-                              << " STS with stage ghost synchronization and reflux." << std::endl;
-                    reported_composite_diffusion = true;
-                }
-                if (rkl1) {
-                    Numerics::Diffusion::advance_amr_rkl1(amr_ctrl, dt, dt_diff_fe, bc_handler, eos, config);
-                } else {
-                    Numerics::Diffusion::advance_amr_rkl2(amr_ctrl, dt, dt_diff_fe, bc_handler, eos, config);
-                }
-            } else {
-                Numerics::Diffusion::dispatch_diffusion(config, [&](auto& integrator) {
-                    amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
-                    integrator.integrate(block.fluid_state, eos, block.grid, config, dt, dt_diff_fe, bc_handler);
-                });
-            }
-        }
-        // C4. Burn Step (1/2 dt)
+        // C4. Diffusion Step (1/2 dt)
+        advance_diffusion(0.5 * dt);
+
+        // C5. Burn Step (1/2 dt)
         if (has_burn) {
             std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
             #pragma omp parallel for schedule(dynamic, 1)
@@ -335,16 +339,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             }
         }
 
-        // -----------------------------------------------------
         // Step D: Advance Counters
-        // -----------------------------------------------------
         ctrl.advance(dt);
         ctrl.print_step(dt, dt_hydro, has_burn ? dt / 2.0 : 0.0, dt_diff_fe, has_burn, has_diff);
     }
 
-    // =========================================================
     // Final Output (Force output at t_max)
-    // =========================================================
     if (std::abs(ctrl.t_current - ctrl.t_max) < 1e-9)
     {
         std::cout << ">>> Target Time Reached. Forcing final output..." << std::endl;

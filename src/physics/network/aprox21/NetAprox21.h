@@ -1,11 +1,15 @@
+// C++ adaptation of Frank Timmes's public_aprox21.f90 network.
+// ARCH supplies the policy interface; the rate equations and nuclear data
+// trace to https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <array>
 
+#include "TimmesRateLibrary.h"
+
 #include "../timmes_common/AproxRateAssembly.h"
 #include "../timmes_common/Ecapnuc.h"
 #include "../timmes_common/TimmesNetworkSupport.h"
-#include "TimmesRateLibrary.h"
 
 namespace timmes_aprox21_detail {
 
@@ -183,14 +187,12 @@ struct NetAprox21 : timmes::TimmesNetworkSupport<NetAprox21> {
             timmes::screen_aprox21_extra_rates<RateIds>(
                 rate, temperature, rho, zbar, abar, z2bar);
 
-            // Unblock ecapnuc for irpen, irnep, irn56ec
+            // ecapnuc supplies the proton-electron and neutron-positron weak rates.
             Scalar rpen, rnep, spenc, snepc;
             timmes::ecapnuc(eta, temperature, rpen, rnep, spenc, snepc);
             rate[RateIds::irpen] = rpen;
             rate[RateIds::irnep] = rnep;
-            
-            // aprox21 has irn56ec but Timmes original tabular uses constant. 
-            // We just unblock irpen and irnep here.
+            // Ni56 electron capture remains on the network's dedicated tabular path.
         }
     }
 

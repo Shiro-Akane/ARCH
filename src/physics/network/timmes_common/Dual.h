@@ -1,3 +1,5 @@
+// ARCH-owned dual-number utility used to differentiate Timmes-derived network
+// expressions; no upstream Timmes source is transcribed in this file.
 #pragma once
 
 #include <algorithm>

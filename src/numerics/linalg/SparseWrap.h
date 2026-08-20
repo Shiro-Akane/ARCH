@@ -1,18 +1,18 @@
 /**
  * @file linalg/SparseWrap.h
- * @brief 稀疏矩阵求解器的包装器占位符 (COO格式)
+ * @brief Non-operational COO sparse-matrix policy reserved for future solvers.
  */
 #pragma once
-#include <vector>
-#include <tuple>
 #include <iostream>
 #include <stdexcept>
+#include <tuple>
+#include <vector>
 
 namespace SparseLimits
 {
     static constexpr int MAX_NNZ = BurnLimits::MAX_ODE_NEQ * 10;
 }
-// 稀疏矩阵的数据容器占位
+// Fixed-capacity COO storage used only to preserve the planned policy interface.
 struct SparseMatrixData
 {
     int rows[SparseLimits::MAX_NNZ];
@@ -20,18 +20,19 @@ struct SparseMatrixData
     double values[SparseLimits::MAX_NNZ];
     int nnz = 0;
 
-    // 存储非零元素：<row, col, value>
+    // Store nonzero entries as row, column, and value triplets.
     void zero() { nnz = 0; }
 
     double &operator()(int i, int j)
     {
-        // 稀疏矩阵不推荐随机读，但 pynucastro 生成的代码如果是 J(i,j) = val
-        // 我们可以拦截。如果 nnz 溢出则忽略或报错
+        // Generated network code writes J(i,j) directly, so this accessor
+        // appends a COO entry. Production integration must replace silent
+        // capacity handling with an explicit overflow error.
         if (nnz < SparseLimits::MAX_NNZ)
         {
             rows[nnz] = i - 1;
             cols[nnz] = j - 1;
-            values[nnz] = 0.0; // 先给引用
+            values[nnz] = 0.0; // Initialize before returning a writable reference.
             return values[nnz++];
         }
         static double dummy = 0.0;
@@ -49,7 +50,7 @@ struct SparseMatrixData
     }
 };
 
-// 稀疏求解器包装器
+// Sparse-solver policy. Every solve path fails explicitly until integrated.
 struct SparseSolverWrap
 {
     template <int ACTIVE_N, int MAX_N>
@@ -58,45 +59,34 @@ struct SparseSolverWrap
         std::cout << "[SparseWrap] Triggered sparse solve for " << ACTIVE_N << "x" << ACTIVE_N << std::endl;
         std::cout << "[SparseWrap] Non-zero elements collected: " << A.nnz << std::endl;
 
-        // ======================================================
-        // 【未来的接口对接区】
-        // 1. 在这里，将 A.non_zeros 转换为 CSR 格式 (row_ptr, col_ind, values)
-        // 2. 调用 cuSPARSE 或者 SUNDIALS SUNMatrix 的接口
-        // 3. 将结果写回 b
-        // ======================================================
-
-        // 占位符：目前直接抛出异常，防止实际进行数学计算导致错误
+        // A future implementation must convert COO to CSR, invoke a selected
+        // sparse backend, and overwrite b with the solution. Throwing in this
+        // prevents the reserved policy from silently producing invalid results.
         throw std::runtime_error("Real Sparse Solver Not Yet Integrated!");
         return true;
     }
 
-    // 2. 符号与数值分解
-    // 注意：这里的 p 数组对于 Dense 是行主元记录，对于 Sparse 未来可以变成记录内部 CSR 结构或句柄的指针数组
+    // Symbolic and numeric factorization. The dense policy uses p for row
+    // pivots; a sparse implementation needs a separate typed factor handle
+    // rather than encoding ownership in this integer array.
     template <int ACTIVE_N, int MAX_N>
     static bool factorize(SparseMatrixData &A, int p[MAX_N])
     {
         std::cout << "[SparseWrap] Triggered sparse factorize for " << ACTIVE_N << "x" << ACTIVE_N << std::endl;
-        // ======================================================
-        // 【未来的接口对接区】
-        // 1. 转换 COO -> CSR
-        // 2. 调用 KLU / SuperLU / cuSPARSE 的 Symbolic + Numeric Factorization
-        // 3. 将返回的 Handle 或内部状态存放到某种全局结构或借助 p 传递
-        // ======================================================
+        // Required implementation steps are COO-to-CSR conversion, symbolic
+        // analysis, numeric factorization, and explicit factor ownership for
+        // a backend such as KLU, SuperLU, or cuSPARSE.
         throw std::runtime_error("Real Sparse Factorize Not Yet Integrated!");
         return true;
     }
 
-    // 3.  使用已分解的因子极速求解
+    // Triangular solve using previously constructed sparse factors.
     template <int ACTIVE_N, int MAX_N>
     static void solve_with_factors(const SparseMatrixData &A, const int p[MAX_N], double b[MAX_N])
     {
         std::cout << "[SparseWrap] Triggered sparse solve_with_factors" << std::endl;
-        // ======================================================
-        // 【未来的接口对接区】
-        // 1. 传入上一步保存的 Handle
-        // 2. 调用稀疏三角求解接口 (SpSV: Sparse Triangular Solve) 做前向/后向代入
-        // 3. 将结果写回 b
-        // ======================================================
+        // A future backend must receive the owned factor handle, perform both
+        // sparse triangular solves, and overwrite b with the solution.
         throw std::runtime_error("Real Sparse Solve_with_factors Not Yet Integrated!");
     }
 };

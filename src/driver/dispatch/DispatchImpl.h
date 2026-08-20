@@ -1,49 +1,44 @@
 /**
  * @file DispatchImpl.h
  * @brief Template matrix factory for dispatching physical and numerical solver policies.
- * *
- * * Workflow:
- * * 1. Instantiates the physics models (EOS, Gravity, Reaction Networks).
- * * 2. Instantiates the hydrodynamics components (Flux solvers, Limiters).
- * * 3. Binds them into a concrete template sequence to call run_simulation().
- * * 4. Used heavily to avoid bloated compilation objects by keeping template instantiations segregated.
+ *
+ * Workflow:
+ * 1. Instantiates the physics models (EOS, Gravity, Reaction Networks).
+ * 2. Instantiates the hydrodynamics components (Flux solvers, Limiters).
+ * 3. Binds them into a concrete template sequence to call run_simulation().
+ * 4. Used heavily to avoid bloated compilation objects by keeping template instantiations segregated.
  */
 
 #pragma once
 
-#include <string>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
-// 1. Core Data Structures
+// Core runtime types.
+#include "../../core/RuntimeParams.h"
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
-#include "../../core/RuntimeParams.h"
 #include "../../interface/ProblemGenerator.h"
 
-// 2. Physics & Solvers
-#include "../../numerics/flux/FluxVL.h"
-#include "../../numerics/flux/FluxSW.h"
-#include "../../numerics/flux/FluxRoe.h"
+// Flux and reconstruction policies.
 #include "../../numerics/flux/FluxHLL.h"
 #include "../../numerics/flux/FluxHLLC.h"
-
-#include "../../numerics/reconstruction/Reconstruction.h"
+#include "../../numerics/flux/FluxRoe.h"
+#include "../../numerics/flux/FluxSW.h"
+#include "../../numerics/flux/FluxVL.h"
 #include "../../numerics/reconstruction/Limiters.h"
+#include "../../numerics/reconstruction/Reconstruction.h"
 
-// NOTE: TimeIntegrator headers are intentionally NOT included here.
-// Each Dispatch_*.cpp must include only the integrator it needs (e.g.,
-// Dispatch_Euler.cpp includes TimeIntegratorEuler.h) to avoid instantiating
-// the entire template matrix in every translation unit simultaneously.
-// Including all three here caused ~3.8GB peak RSS per TU with -j8 OOM.
+// Each Dispatch_*.cpp includes only its selected time integrator. Keeping those
+// headers out of this shared template factory prevents all integrator variants
+// from being instantiated in every translation unit and limits compiler memory.
 
-// 3. The Main Loop
-#include "../Driver.h"
-
-// 4. The Integrator Implementations
+// Driver and erased policy interfaces.
+#include "../../numerics/burnsolver/BurnerHandle.h"
 #include "../../numerics/integrator/HydroSolverImpl.h"
 #include "../../physics/gravity/IGravityPolicy.h"
-#include "../../numerics/burnsolver/BurnerHandle.h"
+#include "../Driver.h"
 
 namespace DispatchImpl {
 
@@ -55,12 +50,12 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 const SimConfig &config,
                 const SpeciesManager &specs, const RunState &run_state)
 {
-    // Instantiate the concrete HydroSolver for this Eos and Flux combo
+    // Bind the selected EOS and flux policy behind the hydrodynamics interface.
     Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
 
     std::string integrator_name = TimeIntegrator::name() + " + " + FluxSchemePolicy::name();
 
-    // Call Driver.h main loop, passing the integrator's solve static method as a function pointer!
+    // Pass the integrator entry point to the non-templated driver loop.
     run_simulation<EosPolicy>(amr_ctrl, eos, gravity, burn, &hydro_solver,
                               &TimeIntegrator::template solve<BCHandler>,
                               integrator_name, config, specs, run_state);

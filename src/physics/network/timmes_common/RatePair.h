@@ -1,3 +1,5 @@
+// ARCH-owned value/derivative carriers for the Timmes-derived rate libraries;
+// no upstream reaction formula is defined in this file.
 #pragma once
 
 #include "Dual.h"

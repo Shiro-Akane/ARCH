@@ -1,32 +1,29 @@
 /**
  * @file DiffFunction.cpp
  * @brief Computes Runge-Kutta-Legendre (RKL) super-time-stepping stages and coefficients.
- * *
- * * Workflow:
- * * 1. Calculate the required number of stages (s) based on the ratio dt_hydro / dt_diff.
- * * 2. Generate the recurrence coefficients (mu, nu, tilde_mu, gamma) for each stage j=1..s.
+ *
+ * Workflow:
+ * 1. Calculate the required number of stages (s) based on the ratio dt_hydro / dt_diff.
+ * 2. Generate the recurrence coefficients (mu, nu, tilde_mu, gamma) for each stage j=1..s.
  */
 
-#include "DiffFunction.h"
-#include <cmath>
 #include <algorithm>
-#include <iostream>
+#include <cmath>
 
-// =========================================================
-// =================== DiffFunction Namespace ==============
-// =========================================================
+#include "DiffFunction.h"
+
+// RKL stage-count and recurrence-coefficient utilities.
 
 namespace DiffFunction
 {
-    // =========================================================
     // 1. Stage calculations
-    // =========================================================
     int compute_stages_rkl1(double dt_hydro, double dt_diff, double cfl, int max_stages)
     {
         const int stage_cap = usable_max_stages_rkl1(max_stages);
         if (dt_hydro <= cfl * dt_diff) return 1;
-        // For RKL1, dt_STS \approx s^2 dt_diff
-        int s = static_cast<int>(std::ceil(std::sqrt(dt_hydro / (cfl * dt_diff))));
+        // Shifted Legendre stability interval: dt_STS/dt_FE = s(s+1)/2.
+        const double ratio = dt_hydro / (cfl * dt_diff);
+        int s = static_cast<int>(std::ceil(0.5 * (std::sqrt(1.0 + 8.0 * ratio) - 1.0)));
         s = std::max(1, s);
         return std::min(s, stage_cap);
     }
@@ -41,10 +38,10 @@ namespace DiffFunction
         double ratio = dt_hydro / (cfl * dt_diff);
         int s = static_cast<int>(std::ceil(std::sqrt(4.0 * ratio + 2.25) - 0.5));
 
-        // RKL2 requires s >= 2. Meyer also often prefers odd number of stages,
-        // but even works. We just return max(2, s).
+        // RKL2 requires at least two stages. Odd stage counts are selected below
+        // to match the supported recurrence and stage-cap convention.
         if (s < 2) s = 2;
-        // Make it odd for symmetry properties, commonly recommended
+        // Use the next odd stage count when it remains within the configured cap.
         if (s % 2 == 0) s++;
 
         if (s > stage_cap) {
@@ -69,7 +66,7 @@ namespace DiffFunction
 
     double stable_step_rkl1(double dt_forward_euler, double cfl, int stages)
     {
-        return cfl * dt_forward_euler * stages * stages;
+        return cfl * dt_forward_euler * stages * (stages + 1.0) / 2.0;
     }
 
     double stable_step_rkl2(double dt_forward_euler, double cfl, int stages)
@@ -77,17 +74,16 @@ namespace DiffFunction
         return cfl * dt_forward_euler * (stages * stages + stages - 2.0) / 4.0;
     }
 
-    // =========================================================
     // 2. RKL Coefficients
-    // =========================================================
 
     RKLCoeffs get_rkl1_coeffs(int j, int s)
     {
         RKLCoeffs c;
+        const double w1 = 2.0 / (s * (s + 1.0));
         if (j == 1) {
             c.mu = 0.0;
             c.nu = 0.0;
-            c.tilde_mu = 1.0 / (s * s);
+            c.tilde_mu = w1;
             c.gamma = 0.0;
             return c;
         }
@@ -95,7 +91,7 @@ namespace DiffFunction
         // Meyer 2012 RKL1
         c.mu = (2.0 * j - 1.0) / j;
         c.nu = (1.0 - j) / j;
-        c.tilde_mu = c.mu / (s * s);
+        c.tilde_mu = c.mu * w1;
         c.gamma = 0.0; // Not used in RKL1
         return c;
     }

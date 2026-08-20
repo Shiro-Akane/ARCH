@@ -1,21 +1,23 @@
 /**
  * @file DiffDispatch.h
  * @brief Dispatcher for selecting the appropriate diffusion time integrator.
- * *
- * * Workflow:
- * * 1. Read the diffusion configuration from SimConfig.
- * * 2. If diffusion is disabled, use a NoDiffusionIntegrator (dummy).
- * * 3. Otherwise, instantiate the requested integrator (RKL1, RKL2, etc.).
- * * 4. Pass the selected integrator type to the next step via a callback.
+ *
+ * Workflow:
+ * 1. Read the diffusion configuration from SimConfig.
+ * 2. If diffusion is disabled, use a NoDiffusionIntegrator (dummy).
+ * 3. Otherwise, instantiate the requested integrator (RKL1, RKL2, etc.).
+ * 4. Pass the selected integrator type to the next step via a callback.
  */
 
 #pragma once
 
-#include <string>
 #include <iostream>
-#include "../../data/GlobalDefs.h"
+#include <string>
+
 #include "RKL1TimeIntegrator.h"
 #include "RKL2TimeIntegrator.h"
+
+#include "../../data/GlobalDefs.h"
 
 namespace Numerics
 {
@@ -59,7 +61,7 @@ namespace Numerics
 
             else
             {
-                std::cerr << "[Fatal Error] Unknown diffusion integrator: " << integrator_type 
+                std::cerr << "[Fatal Error] Unknown diffusion integrator: " << integrator_type
                           << ". Check your configuration file." << std::endl;
                 std::exit(EXIT_FAILURE);
             }

@@ -1,14 +1,14 @@
 /**
  * @file GenericProblem.h
  * @brief A generic bridge between user-defined initialization logic and the solver core.
- * * This class implements the `ProblemGenerator` interface. It abstracts away the
- * * complexities of memory management and parallel iteration.
- * *
- * * Key Responsibilities:
- * * 1. Invokes user callbacks to setup simulation parameters and species.
- * * 2. Manages the main initialization loop (parallelized).
- * * 3. Converts user-friendly Primitive Variables (rho, u, p) into
- * * Solver-friendly Conservative Variables (rho, mom, eng).
+ * This class implements the `ProblemGenerator` interface. It abstracts away the
+ * complexities of memory management and parallel iteration.
+ *
+ * Key Responsibilities:
+ * 1. Invokes user callbacks to setup simulation parameters and species.
+ * 2. Manages the main initialization loop (parallelized).
+ * 3. Converts user-friendly Primitive Variables (rho, u, p) into
+ * Solver-friendly Conservative Variables (rho, mom, eng).
  */
 
 /**
@@ -20,19 +20,18 @@
 
 #pragma once
 
+#include <functional>
 #include <vector>
 
 #include "ProblemGenerator.h"
 
-#include "../data/FluidState.h"
-#include "../data/UserTypes.h"
-#include "../data/GlobalDefs.h"
-
-#include "../grid/Grid.h"
-#include "../physics/species/Species.h"
 #include "../amr/AMRControl.h"
 #include "../core/ProblemHelper.h"
-#include <functional>
+#include "../data/FluidState.h"
+#include "../data/GlobalDefs.h"
+#include "../data/UserTypes.h"
+#include "../grid/Grid.h"
+#include "../physics/species/Species.h"
 
 class GenericProblemGenerator : public ProblemGenerator
 {
@@ -50,9 +49,7 @@ public:
     std::string GetSolverName() override { return ""; }
 
     /**
-     * @brief Retrieves simulation configuration (Grid, Time, etc.).
-     * Note: We pass a dummy SpeciesManager because the user's setup function
-     * defines both Config and Species, but here we only extract the Config.
+     * @brief Invokes the registered callback to configure the simulation and species.
      */
     void Setup(SimConfig &config, SpeciesManager &specs) override
     {
@@ -65,7 +62,7 @@ public:
     /**
      * @brief The core initialization routine.
      * Maps the user's "Point-wise" logic to the system's "Array-based" architecture.
-     * * @param state Output: The fluid state container to be populated.
+     * @param state Output: The fluid state container to be populated.
      * @param grid  Input: Grid topology.
      * @param eos   Input: Equation of State for variable conversion.
      */

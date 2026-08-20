@@ -1,19 +1,20 @@
 /**
  * @file DriverControl.h
  * @brief Handles simulation state tracking, I/O scheduling, and timestep alignment.
- * *
- * * Workflow:
- * * 1. Initializes timing and index tracking based on whether it is a restart.
- * * 2. Checks conditions for writing plot/checkpoint files (I/O).
- * * 3. Restricts dt growth based on user-defined limits and burn safety factors.
- * * 4. Ensures the final timestep perfectly aligns with the targeted maximum simulation time.
+ *
+ * Workflow:
+ * 1. Initializes timing and index tracking based on whether it is a restart.
+ * 2. Checks conditions for writing plot/checkpoint files (I/O).
+ * 3. Restricts dt growth based on user-defined limits and burn safety factors.
+ * 4. Ensures the final timestep perfectly aligns with the targeted maximum simulation time.
  */
 
 #pragma once
 
-#include <iostream>
-#include <iomanip>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
+
 #include "../core/RuntimeParams.h"
 
 struct SimulationController
@@ -22,10 +23,10 @@ struct SimulationController
     int step_count;
     double t_current;
     const double t_max;
-    
+
     int plt_file_index;
     int chk_file_index;
-    
+
     double next_plt_time;
     double next_chk_time;
 
@@ -42,7 +43,7 @@ struct SimulationController
           next_chk_time(1e99),
           dt_old(cfg.GetCustomParam("dt_init", 1e-16))
     {
-        if (config.io.restart) 
+        if (config.io.restart)
         {
             plt_file_index += 1;
             chk_file_index += 1;
@@ -174,15 +175,15 @@ struct SimulationController
     double sync_dt(double dt_computed) const
     {
         double dt = dt_computed;
-        if (config.io.plt_dt > 0 && t_current + dt > next_plt_time) 
+        if (config.io.plt_dt > 0 && t_current + dt > next_plt_time)
         {
             dt = std::max(1e-14, next_plt_time - t_current);
         }
-        if (config.io.chk_dt > 0 && t_current + dt > next_chk_time) 
+        if (config.io.chk_dt > 0 && t_current + dt > next_chk_time)
         {
             dt = std::max(1e-14, next_chk_time - t_current);
         }
-        if (t_current + dt > t_max) 
+        if (t_current + dt > t_max)
         {
             dt = std::max(1e-14, t_max - t_current);
         }

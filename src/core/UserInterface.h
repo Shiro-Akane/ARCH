@@ -12,16 +12,16 @@
 
 #include <memory>
 
-#include "ProblemRegistry.h"
 #include "ProblemHelper.h"
+#include "ProblemRegistry.h"
 
-#include "../interface/GenericProblem.h"
 #include "../data/UserTypes.h"
+#include "../interface/GenericProblem.h"
 
 /**
  * @brief Macro to register a problem setup automatically.
- * * Uses static initialization to register the problem before main() executes.
- * * @param NAME String literal for the problem ID (e.g., "Sod").
+ * Uses static initialization to register the problem before main() executes.
+ * @param NAME String literal for the problem ID (e.g., "Sod").
  * @param SETUP_FUNC Callback for global parameter setup (SetupFunc).
  * @param INIT_FUNC Callback for initial data generation (InitFunc).
  */

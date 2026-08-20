@@ -1,4 +1,5 @@
-// Generated directly from public_aprox13.f90:1048-1362.
+// Mechanically adapted from Frank Timmes's public_aprox13.f90:1048-1362.
+// Upstream index: https://cococubed.com/code_pages/burn.shtml.
 // The screened rates are held fixed, matching dfdy_isotopes_aprox13.
 TIMMES_HD inline void jacobian_aprox13_molar(
     const double* y, const double* rate, double* jac)

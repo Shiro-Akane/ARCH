@@ -1,11 +1,10 @@
 /**
  * @file ode_ros4.h
- * @brief Unified concept for ODE Integrators using 4-stage Rosenbrock W-method (ROS4).
- *        Updated with intermediate state sanitization and floating-point cancellation safeguards.
+ * @brief Four-stage L-stable ROS4 integrator with a shared diagonal matrix.
  */
 #pragma once
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 #include "Networks.h"
@@ -18,16 +17,29 @@ struct Solver_ROS4
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES;
     static constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
 
-    // ROS4 (W-method) Butcher Tableau (GRK4T / L-stable params)
-    static constexpr double gamma = 0.25; 
-    static constexpr double a21 = 0.5;
-    static constexpr double a31 = 0.5,   a32 = 0.5;
-    static constexpr double a41 = 0.25,  a42 = 0.25,  a43 = 0.5;
-    static constexpr double c21 = -1.0;
-    static constexpr double c31 = -1.5,  c32 = -1.0;
-    static constexpr double c41 = -2.0,  c42 = -1.5,  c43 = -1.0;
-    static constexpr double m1 = 0.166666667, m2 = 0.333333333, m3 = 0.333333333, m4 = 0.166666667;
-    static constexpr double e1 = 0.05,        e2 = -0.15,       e3 = 0.15,        e4 = -0.05;
+    // Four-stage, fourth-order, L-stable ROS4 tableau.  The coefficients are
+    // a matched set; changing gamma independently violates the order conditions.
+    static constexpr double gamma = 0.57282;
+    static constexpr double a21 = 2.0;
+    static constexpr double a31 = 1.867943637803922;
+    static constexpr double a32 = 0.2344449711399156;
+    static constexpr double a41 = a31;
+    static constexpr double a42 = a32;
+    static constexpr double a43 = 0.0;
+    static constexpr double c21 = -7.137615036412310;
+    static constexpr double c31 = 2.580708087951457;
+    static constexpr double c32 = 0.6515950076447975;
+    static constexpr double c41 = -2.137148994382534;
+    static constexpr double c42 = -0.3214669691237626;
+    static constexpr double c43 = -0.6949742501781779;
+    static constexpr double m1 = 2.255570073418735;
+    static constexpr double m2 = 0.2870493262186792;
+    static constexpr double m3 = 0.4353179431840180;
+    static constexpr double m4 = 1.093502252409163;
+    static constexpr double e1 = -0.2815431932141155;
+    static constexpr double e2 = -0.0727619912493892;
+    static constexpr double e3 = -0.1082196201495311;
+    static constexpr double e4 = -1.093502252409163;
 
     template <typename EOSType>
     static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
@@ -54,7 +66,7 @@ struct Solver_ROS4
 
         bool nse_attempted = false;
 
-        // 统一的 RHS 评估 Lambda
+        // Full RHS evaluation for each Rosenbrock stage.
         auto eval_full_rhs = [&](const double* Y, double* out_RHS) {
             double enuc = 0.0;
             double eta = eos.get_eta(rho, Y[NEQ - 1], Y);
@@ -63,8 +75,7 @@ struct Solver_ROS4
             out_RHS[NEQ - 1] = enuc / cv;
         };
 
-        // [FIX 1]: 中间态清洗器 - 防止数学构造阶段产生极端的非物理状态导致 RHS 崩溃
-        // 仅仅用于保护中间级的导数评估，最终步骤的严格性不受此影响。
+        // Bound intermediate stage states before RHS evaluation.
         auto sanitize_state = [&](double* Y_state) {
 #pragma omp simd
             for (int i = 0; i < NUM_SPEC; ++i) {
@@ -76,7 +87,7 @@ struct Solver_ROS4
             }
         };
 
-        // ================= 外层循环：时间子步进推进 =================
+        // Advance with adaptive internal substeps.
         while (t_current < dt_target)
         {
             if (!nse_attempted && burn_cfg.use_nse
@@ -85,7 +96,7 @@ struct Solver_ROS4
             {
                 nse_attempted = true;
                 if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos,
-                                                        burn_cfg, dt_rec)) {    
+                                                        burn_cfg, dt_rec)) {
                     return true;
                 }
             }
@@ -102,10 +113,10 @@ struct Solver_ROS4
 #pragma omp simd
             for (int i = 0; i < NEQ; ++i) X_old[i] = X_ODE[i];
 
-            // 1. 获取完整的右端项 f(y_0) 
+            // Evaluate f(y_0).
             eval_full_rhs(X_old, RHS);
 
-            // 2. 调用全解析 Jacobian 接口
+            // Assemble the analytic Jacobian, including temperature coupling.
             J_mat.zero();
             double T_current = X_old[NEQ - 1];
             double denuc_dX[MAX_N]{};
@@ -124,7 +135,8 @@ struct Solver_ROS4
             for (int j = 0; j < NUM_SPEC; ++j) J_mat.set(NEQ, j + 1, denuc_dX[j] * inv_cv);
             J_mat.set(NEQ, NEQ, denuc_dT * inv_cv);
 
-            // 3. 构造系统矩阵 A = I - gamma * dt * J
+            // The normalized form of (I / (gamma*dt) - J) uses
+            // A = I - gamma*dt*J and scales every stage right-hand side by gamma.
             for (int i = 0; i < NEQ; ++i) {
 #pragma omp simd
                 for (int j = 0; j < NEQ; ++j) {
@@ -133,66 +145,72 @@ struct Solver_ROS4
                 A.set(i + 1, i + 1, A(i + 1, i + 1) + 1.0);
             }
 
-            // 4. LU 分解
+            // Factor the shared stage matrix once for this substep.
             int p[MAX_N];
             bool step_converged = false;
             double current_err = 0.0;
-            
+
             if (!LinearSolver::template factorize<NEQ, MAX_N>(A, p))
             {
+                // A singular shared matrix rejects the trial stiffness scale;
+                // a factor-of-four reduction moves the retry well below it.
                 dt *= 0.25;
-                continue; 
+                continue;
             }
 
             bool solve_failed = false;
 
-            // ================= STAGE 1 =================
+            // Stage 1.
 #pragma omp simd
-            for (int i = 0; i < NEQ; ++i) b[i] = dt * RHS[i];
+            for (int i = 0; i < NEQ; ++i) b[i] = gamma * dt * RHS[i];
             LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
 #pragma omp simd
             for (int i = 0; i < NEQ; ++i) { u1[i] = b[i]; if (!std::isfinite(u1[i])) solve_failed = true; }
 
-            // ================= STAGE 2 =================
+            // Stage 2.
             if (!solve_failed) {
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) X_k[i] = X_old[i] + a21 * u1[i];
-                sanitize_state(X_k); // [FIX] 防止中间状态越界
+                sanitize_state(X_k);
                 eval_full_rhs(X_k, RHS);
 #pragma omp simd
-                for (int i = 0; i < NEQ; ++i) b[i] = dt * RHS[i] + c21 * u1[i];
+                for (int i = 0; i < NEQ; ++i)
+                    b[i] = gamma * (dt * RHS[i] + c21 * u1[i]);
                 LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) { u2[i] = b[i]; if (!std::isfinite(u2[i])) solve_failed = true; }
             }
 
-            // ================= STAGE 3 =================
+            // Stage 3.
             if (!solve_failed) {
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) X_k[i] = X_old[i] + a31 * u1[i] + a32 * u2[i];
-                sanitize_state(X_k); // [FIX] 防止中间状态越界
+                sanitize_state(X_k);
                 eval_full_rhs(X_k, RHS);
 #pragma omp simd
-                for (int i = 0; i < NEQ; ++i) b[i] = dt * RHS[i] + c31 * u1[i] + c32 * u2[i];
+                for (int i = 0; i < NEQ; ++i)
+                    b[i] = gamma * (dt * RHS[i] + c31 * u1[i] + c32 * u2[i]);
                 LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) { u3[i] = b[i]; if (!std::isfinite(u3[i])) solve_failed = true; }
             }
 
-            // ================= STAGE 4 =================
+            // Stage 4.
             if (!solve_failed) {
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) X_k[i] = X_old[i] + a41 * u1[i] + a42 * u2[i] + a43 * u3[i];
-                sanitize_state(X_k); // [FIX] 防止中间状态越界
+                sanitize_state(X_k);
                 eval_full_rhs(X_k, RHS);
 #pragma omp simd
-                for (int i = 0; i < NEQ; ++i) b[i] = dt * RHS[i] + c41 * u1[i] + c42 * u2[i] + c43 * u3[i];
+                for (int i = 0; i < NEQ; ++i)
+                    b[i] = gamma * (dt * RHS[i] + c41 * u1[i] + c42 * u2[i]
+                                               + c43 * u3[i]);
                 LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) { u4[i] = b[i]; if (!std::isfinite(u4[i])) solve_failed = true; }
             }
 
-           // ================= 状态拼装与物理校验 =================
+            // Assemble the trial state and enforce physical admissibility.
             if (!solve_failed)
             {
                 bool admissible = true;
@@ -202,15 +220,15 @@ struct Solver_ROS4
                 for (int i = 0; i < NUM_SPEC; ++i) {
                     X_trial[i] = X_old[i] + m1 * u1[i] + m2 * u2[i] + m3 * u3[i] + m4 * u4[i];
                     X_err[i]   = e1 * u1[i] + e2 * u2[i] + e3 * u3[i] + e4 * u4[i];
-                    
+
                     if (!std::isfinite(X_trial[i])) {
                         admissible = false;
-                    } 
+                    }
                     else {
                         if (X_trial[i] < burn_cfg.smallx) {
-                            X_trial[i] = burn_cfg.smallx; 
+                            X_trial[i] = burn_cfg.smallx;
                         } else if (X_trial[i] > 1.0) {
-                            X_trial[i] = 1.0; 
+                            X_trial[i] = 1.0;
                         }
                     }
                     mass_sum += X_trial[i];
@@ -219,6 +237,8 @@ struct Solver_ROS4
                 X_trial[NEQ - 1] = X_old[NEQ - 1] + m1 * u1[NEQ - 1] + m2 * u2[NEQ - 1] + m3 * u3[NEQ - 1] + m4 * u4[NEQ - 1];
                 X_err[NEQ - 1]   = e1 * u1[NEQ - 1] + e2 * u2[NEQ - 1] + e3 * u3[NEQ - 1] + e4 * u4[NEQ - 1];
 
+                // The 1e11 K upper guard bounds the Timmes EOS/network domain
+                // used by the burn solvers; smallt supplies the lower guard.
                 if (!std::isfinite(X_trial[NEQ - 1]) || X_trial[NEQ - 1] < burn_cfg.smallt || X_trial[NEQ - 1] > 1.0e11
                     || !std::isfinite(mass_sum) || mass_sum <= 0.0) {
                     admissible = false;
@@ -226,13 +246,13 @@ struct Solver_ROS4
 
                if (admissible)
                 {
-                    // 1. 【严苛数学】: 包含所有微量元素的全局截断误差评估
+                    // Evaluate the weighted truncation error over all components.
                     OdeMath::calc_weights<NEQ>(X_trial, rtol, atol, W);
                     current_err = OdeMath::wrms_norm<NEQ>(X_err, W);
 
                     if (current_err < 1.0)
                     {
-                        // 2. 【严苛物理】: 质量守恒绝对归一化投影
+                        // Project species onto unit total mass fraction.
                         double projected_sum = 0.0;
 #pragma omp simd
                         for (int i = 0; i < NUM_SPEC; ++i) {
@@ -243,7 +263,7 @@ struct Solver_ROS4
 #pragma omp simd
                         for (int i = 0; i < NUM_SPEC; ++i) X_trial[i] *= inv_projected_sum;
 
-                        // 3. 【严苛物理】: 能量严格闭包计算
+                        // Evaluate the nuclear/thermal energy closure.
                         long double nuclear_mass_delta = 0.0L;
                         for (int i = 0; i < NUM_SPEC; ++i) {
                             nuclear_mass_delta += static_cast<long double>(X_trial[i] - X_old[i]) / NetType::AION[i] * NetType::ENERGY_WEIGHTS[i];
@@ -252,29 +272,28 @@ struct Solver_ROS4
                         const double old_eint = eos.get_eint_from_T(rho, X_old[NEQ - 1], X_old);
                         const double new_eint = eos.get_eint_from_T(rho, X_trial[NEQ - 1], X_trial);
                         const double thermal_delta = new_eint - old_eint;
-                        
-                        // [FIX 2]: 引入机器精度的底层豁免，彻底解决灾难性相消 (Catastrophic Cancellation)
-                        // 当 dt 极小导致能量变化小于浮点截断误差时，不再盲目相除。
+
+                        // Resolve changes below the internal-energy comparison scale.
                         const double epsilon_eint = std::max(1.0e-12 * std::abs(old_eint), 1.0e-12);
 
                         if (std::abs(thermal_delta) < epsilon_eint && std::abs(integrated_enuc) < epsilon_eint) {
-                            // 变化量淹没在机器精度中，安全放行
                             step_converged = true;
-                        } 
+                        }
                         else {
                             const double closure_scale = std::max({std::abs(integrated_enuc), std::abs(thermal_delta), rtol * std::abs(old_eint), 1.0});
                             const double closure_error = std::abs(thermal_delta - integrated_enuc) / closure_scale;
 
-                            // 恢复 5% 的严苛物理标准
+                            // Five percent is the engineering energy-closure
+                            // tolerance shared by the production burn solvers.
                             if (std::isfinite(closure_error) && closure_error <= 5.0e-2) {
-                                step_converged = true; 
+                                step_converged = true;
                             }
                         }
                     }
                 }
             }
 
-            // ================= 步长控制与状态更新 =================
+            // Accept the state or reduce the internal step.
             if (step_converged)
             {
                 t_current += dt;
@@ -287,12 +306,15 @@ struct Solver_ROS4
                                                        burn_cfg.odeconfig.dt_fac_max);
                 dt_new = std::max(dt * burn_cfg.odeconfig.dt_fac_min, std::min(dt * burn_cfg.odeconfig.dt_fac_max, dt_new));
                 dt = dt_new * burn_cfg.odeconfig.dt_safe_factor;
-                err_prev = std::max(current_err, 1e-4); 
+                err_prev = std::max(current_err, 1e-4);
             }
             else
             {
+                // Quarter the rejected step before retrying the same interval.
                 dt *= 0.25;
                 nse_attempted = false;
+                // Below 1e-22 s, double-precision time accumulation no longer
+                // provides useful progress for the supported burn cases.
                 if (dt < 1e-22)
                 {
                     std::cerr << "[ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
@@ -301,7 +323,7 @@ struct Solver_ROS4
             }
         }
 
-        dt_rec = dt; 
-        return true; 
+        dt_rec = dt;
+        return true;
     }
 };

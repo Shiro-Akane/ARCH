@@ -1,26 +1,25 @@
 /**
  * @file RKL1TimeIntegrator.h
  * @brief First-order Runge-Kutta-Legendre (RKL1) Super-Time-Stepping scheme for parabolic terms.
- * *
- * * Workflow:
- * * 1. Compute the optimal number of RKL1 stages `s`.
- * * 2. Perform the first explicit Euler-like stage (Stage 1).
- * * 3. Iteratively evaluate Stages 2 to s, using recursive polynomial coefficients.
- * * 4. Ensure stable time integration of the diffusion term over a time step dt_hydro.
+ *
+ * Workflow:
+ * 1. Compute the optimal number of RKL1 stages `s`.
+ * 2. Perform the first explicit Euler-like stage (Stage 1).
+ * 3. Iteratively evaluate Stages 2 to s, using recursive polynomial coefficients.
+ * 4. Ensure stable time integration of the diffusion term over a time step dt_hydro.
  */
 
 #pragma once
 
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
-#include "../../data/GlobalDefs.h"
 #include "DiffFlux.h"
 #include "DiffFunction.h"
 #include "DiffusionAMRStages.h"
 
-// =========================================================
-// ================= RKL1TimeIntegrator ====================
-// =========================================================
+#include "../../data/FluidState.h"
+#include "../../data/GlobalDefs.h"
+#include "../../grid/Grid.h"
+
+// First-order RKL super-time-step integrator.
 
 struct RKL1TimeIntegrator
 {
@@ -33,11 +32,12 @@ struct RKL1TimeIntegrator
 
         // Static buffers to avoid reallocation overhead every time step
         static FluidState Y0, Y_jm1, Y_jm2, L_U;
-        if (Y0.GetNumSpecies() != state.GetNumSpecies()) {
-            Y0.InitSpecies(state.GetNumSpecies());
-            Y_jm1.InitSpecies(state.GetNumSpecies());
-            Y_jm2.InitSpecies(state.GetNumSpecies());
-            L_U.InitSpecies(state.GetNumSpecies());
+        if (Y0.rho.size() != static_cast<size_t>(grid.GetTotalSize())
+            || Y0.GetNumSpecies() != state.GetNumSpecies()) {
+            for (FluidState* buffer : {&Y0, &Y_jm1, &Y_jm2, &L_U}) {
+                buffer->Preallocate(grid.GetTotalSize());
+                buffer->InitSpecies(state.GetNumSpecies());
+            }
         }
 
         // Y0 = U^n
@@ -68,7 +68,7 @@ struct RKL1TimeIntegrator
             DiffFlux::compute_diffusion_operator(Y_jm1, L_U, eos, grid, config);
             auto cj = DiffFunction::get_rkl_coeffs(DiffFunction::RKLOrder::First, j, s);
 
-            FluidState Y_j = Y0; // Temp to hold next stage, reuse Y0's sizing structure though we manually assign
+            FluidState Y_j = Y0; // Reuse Y0's allocated shape for the next stage state.
 
             #pragma omp parallel for schedule(static)
             for (int i = 0; i < grid.GetTotalSize(); ++i) {
@@ -90,7 +90,7 @@ struct RKL1TimeIntegrator
             Y_jm1 = Y_j;
         }
 
-        state = (s == 1) ? Y_jm1 : Y_jm1; // Y_jm1 holds the final result
+        state = Y_jm1;
     }
 };
 

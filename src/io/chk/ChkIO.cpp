@@ -8,24 +8,22 @@
  * 3. Write restart- or analysis-ready output without changing simulation state.
  */
 
+#include <filesystem>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+
+#include "../../amr/AMRControl.h"
+#include "../../core/RuntimeParams.h" // For SimConfig
+#include "../../data/GlobalDefs.h"
+
 #include "../IO.h"
 #include "../hdf5/HDF5Writer.h"
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <filesystem>
-#include <stdexcept>
-
-#include "../../data/GlobalDefs.h"
-#include "../../amr/AMRControl.h"
-#include "../../core/RuntimeParams.h" // For SimConfig
-
 namespace fs = std::filesystem;
 
-// ======================================================================
-// 2. Checkpoint 文件输出 (断点重启)
-// ======================================================================
+// Checkpoint output for restart.
 namespace {
 
 size_t checkpoint_cells_per_block(int dim)
@@ -37,9 +35,7 @@ size_t checkpoint_cells_per_block(int dim)
 
 } // namespace
 
-// ======================================================================
 // 2. Checkpoint file output
-// ======================================================================
 void write_chk(amr::AMRControl &amr_ctrl,
                int chk_file_index, int plt_file_index,
                int step_count, double current_time,
@@ -107,9 +103,7 @@ void write_chk(amr::AMRControl &amr_ctrl,
     io::write_hdf5_chk_impl(filename.str(), checkpoint);
 }
 
-// ======================================================================
 // 3. Checkpoint file input
-// ======================================================================
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               RunState &run_state, const SimConfig &config, int expected_species)
 {

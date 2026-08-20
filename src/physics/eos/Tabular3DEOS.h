@@ -13,49 +13,44 @@
  */
 #pragma once
 
-#include <string>
-#include <vector>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
-
-#include "eos_Utils.h"
 #include "eos.h"
+#include "eos_Utils.h"
 
 #include "../species/Species.h"
 
-// ====================================================================
-// 1. Device View: 零拷贝、纯裸指针计算核心 (天然支持 GPU 核函数)
-// ====================================================================
+// Non-owning table view suitable for host/device numerical kernels.
 struct Tabular3DEOSView
 {
-    // --- 表格维度与边界 ---
+    // Table dimensions and logarithmic coordinate bounds.
     int n_rho, n_T, n_X;
     double log_rho_min, log_rho_max, dlog_rho;
     double log_T_min, log_T_max, dlog_T;
     double X_min, X_max, dX; // Range of Mass fraction X
 
-    // --- 数据裸指针 (GPU 可见内存) ---
+    // Non-owning pointers; a device backend must place the data in accessible memory.
     const double *table_P;
     const double *table_E;
     const double *table_cs;
     const double *table_cv;
 
-    double *table_dP_drho; // 可选的预计算偏导数表
-    double *table_dP_dT;   // 可选的预计算偏导数表
+    double *table_dP_drho; // Optional precomputed pressure-density derivative.
+    double *table_dP_dT;   // Optional precomputed pressure-temperature derivative.
 
     const SpeciesManager *specs;
 
     int target_species_id;
 
-    // 物理常数 (CGS 单位制)
+    // Boltzmann constant in CGS units, erg/K.
     static constexpr double k_B_cgs = 1.380649e-16; // erg/K
     static constexpr double m_u_cgs = 1.660539e-24; // g
 
-    // ========================================================
-    // 边界检测与解析回退 (Ideal Gas Fallback)
-    // ========================================================
+    // Domain checks and analytic ideal-gas fallback.
 
     bool is_out_of_bounds(double log_rho, double log_T, double X) const
     {
@@ -64,7 +59,7 @@ struct Tabular3DEOSView
                 X < X_min || X >= X_max - 1e-6);
     }
 
-    double fallback_gamma() const { return 5.0 / 3.0; } // 假设单原子理想气体
+    double fallback_gamma() const { return 5.0 / 3.0; } // Monatomic ideal-gas fallback.
 
     double fallback_pressure(double rho, double e) const
     {
@@ -73,7 +68,7 @@ struct Tabular3DEOSView
 
     double fallback_temperature(double e, const double *Xi) const
     {
-        // 尝试获取 Abar，如果失败则给一个合理的默认值 (例如 1.0 代表纯氢)
+        // Abar=1 represents pure hydrogen when no SpeciesManager is attached.
         double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
         double R_spec = k_B_cgs / (Abar * m_u_cgs);
         return e * (fallback_gamma() - 1.0) / R_spec;
@@ -85,9 +80,7 @@ struct Tabular3DEOSView
         return std::sqrt(fallback_gamma() * p / rho);
     }
 
-    // ========================================================
-    // 核心：三线性插值 (Trilinear Interpolation)
-    // ========================================================
+    // Trilinear interpolation in log(rho), log(T), and composition coordinate.
     double interpolate_3d(const double *table, double rho, double T, double X) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
@@ -97,25 +90,25 @@ struct Tabular3DEOSView
         double y = log10(T);
         double z = X;
 
-        // 边界截断 (Clamping)
+        // Compute the enclosing lower grid vertex.
         int i = static_cast<int>((x - log_rho_min) / dlog_rho);
         int j = static_cast<int>((y - log_T_min) / dlog_T);
         int k = static_cast<int>((z - X_min) / dX);
 
-        // 计算索引
+        // Clamp indices so every lower vertex has a valid upper neighbor.
         i = std::max(0, std::min(i, n_rho - 2));
         j = std::max(0, std::min(j, n_T - 2));
         k = std::max(0, std::min(k, n_X - 2));
 
-        // 计算局部偏移 [0, 1)
+        // Fractional offsets within the enclosing cell, nominally in [0,1).
         double tx = (x - (log_rho_min + i * dlog_rho)) / dlog_rho;
         double ty = (y - (log_T_min + j * dlog_T)) / dlog_T;
         double tz = (z - (X_min + k * dX)) / dX;
 
-// 辅助宏：计算 1D 展平数组的索引 (i, j, k) -> i * (n_T * n_X) + j * n_X + k
+// Flatten (i,j,k) as i*(n_T*n_X)+j*n_X+k.
 #define IDX(ii, jj, kk) ((ii) * n_T * n_X + (jj) * n_X + (kk))
 
-        // 获取 8 个顶点的函数值
+        // Load the eight cell vertices.
         double c000 = table[IDX(i, j, k)];
         double c100 = table[IDX(i + 1, j, k)];
         double c010 = table[IDX(i, j + 1, k)];
@@ -126,39 +119,37 @@ struct Tabular3DEOSView
         double c111 = table[IDX(i + 1, j + 1, k + 1)];
 #undef IDX
 
-        // 沿 X 轴插值
+        // Interpolate along log-density.
         double c00 = c000 * (1.0 - tx) + c100 * tx;
         double c01 = c001 * (1.0 - tx) + c101 * tx;
         double c10 = c010 * (1.0 - tx) + c110 * tx;
         double c11 = c011 * (1.0 - tx) + c111 * tx;
 
-        // 沿 Y 轴插值
+        // Interpolate along log-temperature.
         double c0 = c00 * (1.0 - ty) + c10 * ty;
         double c1 = c01 * (1.0 - ty) + c11 * ty;
 
-        // 沿 Z 轴插值，得到最终结果
+        // Interpolate along composition to obtain the final value.
         return c0 * (1.0 - tz) + c1 * tz;
     }
 
-    // ========================================================
-    // 状态查询接口 (含 pynucastro 预留的 Xi)
-    // ========================================================
+    // Composition-coordinate query used by generated network interfaces.
 
     double get_target_X(const double *Xi) const
     {
-        // 1. 最高优先级：如果是普通的双组分测试，直接提取目标质量分数
+        // An explicit target species selects its mass fraction directly.
         if (target_species_id >= 0)
         {
             return Xi[target_species_id];
         }
 
-        // 2. 次优先级：如果没指定特定组分，且挂载了 specs，则计算天体物理的 Ye
+        // Otherwise derive electron fraction Ye when species metadata is available.
         if (specs && specs->count() > 0)
         {
             return specs->calc_Ye(Xi);
         }
 
-        // 3. 兜底
+        // Ye=0.5 is the neutral symmetric-matter fallback without metadata.
         return 0.5;
     }
 
@@ -318,16 +309,14 @@ struct Tabular3DEOSView
         return interpolate_3d(table_cs, rho, T, X);
     }
 
-    // ========================================================
-    // 导数接口 (支持读取真实导数表或回退有限差分)
-    // ========================================================
+    // Derivative interface using table data when present and finite differences otherwise.
     double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         double X = get_target_X(Xi);
         double T = get_temperature(rho, e, Xi);
         if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
         {
-            return e * (fallback_gamma() - 1.0); // 理想气体 dP/drho
+            return e * (fallback_gamma() - 1.0); // Ideal-gas (dP/drho)_e.
         }
 
         if (table_dP_drho)
@@ -344,7 +333,7 @@ struct Tabular3DEOSView
         double X = get_target_X(Xi);
         if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
         {
-            return rho * (fallback_gamma() - 1.0); // 理想气体 dP/de
+            return rho * (fallback_gamma() - 1.0); // Ideal-gas (dP/de)_rho.
         }
 
         double T = get_temperature(rho, e, Xi);
@@ -361,9 +350,7 @@ struct Tabular3DEOSView
                 interpolate_3d(table_P, rho, T_minus, X)) /
                (2.0 * de);
     }
-    // ========================================================
-    // 鲁棒的阻尼牛顿法反推总能
-    // ========================================================
+    // Damped Newton inversion from pressure to total-energy density.
     double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
         return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
@@ -371,20 +358,14 @@ struct Tabular3DEOSView
 
     double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
 
-    // =========================================================
     // Pipeline: evaluate_state
-    // =========================================================
     void evaluate_state(eos_state_t& state) const {
-        // =========================================================
         // 1. Core Thermodynamics (P, E, cv)
-        // =========================================================
         state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
         state.E = get_eint_from_T(state.rho, state.T, state.Xi);
         state.cv = get_cv(state.rho, state.T, state.Xi);
 
-        // =========================================================
         // 2. Derivatives and Sound Speed
-        // =========================================================
         state.sound_speed = get_sound_speed_from_rho_T(state.rho, state.T, state.Xi);
         state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
         state.dp_dT = 0.0;
@@ -393,9 +374,7 @@ struct Tabular3DEOSView
             state.dp_dT = interpolate_3d(table_dP_dT, state.rho, state.T, X);
         }
 
-        // =========================================================
         // 3. Deep Physical Variables (Unused in Tabular)
-        // =========================================================
         state.pele = 0.0;
         state.xne = 0.0;
         state.eta = 0.0;
@@ -404,9 +383,7 @@ struct Tabular3DEOSView
     const SpeciesManager* get_species_manager() const { return specs; }
 };
 
-// ====================================================================
-// 2. Host Manager: 负责 HDF5 IO 和内存生命周期管理 (绝不进入内层循环)
-// ====================================================================
+// Host owner for HDF5 loading and table lifetime; never used in cell kernels.
 struct Tabular3DEOS : public EOSBase
 {
 private:
@@ -416,7 +393,7 @@ private:
     std::vector<double> h_table_cs;
     std::vector<double> h_table_cv;
 
-    // 预留
+    // Reserved host derivative arrays matching the view's optional pointers.
     std::vector<double> h_table_dP_drho;
     std::vector<double> h_table_dP_dT;
 
@@ -425,7 +402,7 @@ private:
 public:
     Tabular3DEOS(const std::string &h5_filename, const SpeciesManager *specs_ptr = nullptr);
 
-    // CFD 求解器分发时，只获取 View
+    // Solver dispatch receives only the lightweight non-owning view.
     Tabular3DEOSView get_view() const { return view; }
 
     const SpeciesManager* get_species_manager() const { return view.specs; }

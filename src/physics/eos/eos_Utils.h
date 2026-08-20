@@ -4,9 +4,10 @@
  */
 #pragma once
 
-#include <cmath>
 #include <algorithm>
-#include "eos.h" // 确保包含 FluidVector 定义
+#include <cmath>
+
+#include "eos.h" // Provides FluidVector through the EOS policy surface.
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline
@@ -14,17 +15,13 @@
 
 namespace eos_utils
 {
-    // ========================================================
-    // 1. 流体运动学能量剥离 (三者通用)
-    // ========================================================
-
-    // 计算宏观动能
+    // Shared kinetic/internal-energy conversions.
     EOS_INLINE double calc_kinetic_energy(double rho, double u, double v, double w)
     {
         return 0.5 * rho * (u * u + v * v + w * w);
     }
 
-    // 从守恒量提取比内能 e
+    // Extract specific internal energy from a conservative state.
     EOS_INLINE double extract_specific_internal_energy(const FluidVector &U)
     {
         if (U.rho < 1e-12)
@@ -33,17 +30,15 @@ namespace eos_utils
         return (U.eng - kinetic_density) / U.rho;
     }
 
-    // ========================================================
-    // 2. 泛型牛顿迭代器求总能 (专供 3D/4D 表格类使用)
-    // ========================================================
-
-    // 模板参数 TEOSView 鸭子类型匹配，要求提供 get_pressure_from_rho_e 和 get_dp_de_rho
+    // Generic Newton pressure inversion for three- and four-dimensional tables.
+    // TEOSView must provide get_pressure_from_rho_e and get_dp_de_rho.
     template <typename TEOSView>
     EOS_INLINE double solve_total_energy(const TEOSView &eos_view,
                                          double rho, double u, double v, double w,
                                          double target_p, const double *Xi)
     {
-        // 初始猜测：假设系统接近 gamma = 1.4 的理想气体
+        // Initialize with the gamma=1.4 ideal-gas estimate. This is a numerical
+        // seed only; all accepted iterates use the selected tabular EOS.
         double e_guess = target_p / ((1.4 - 1.0) * rho);
 
         for (int iter = 0; iter < 20; ++iter)
@@ -56,7 +51,8 @@ namespace eos_utils
 
             double delta_e = (target_p - p_guess) / dp_de;
 
-            // 阻尼处理
+            // Backtrack until the trial specific internal energy remains above
+            // the 1e-12 positivity floor.
             while (e_guess + delta_e <= 1e-12)
             {
                 delta_e *= 0.5;

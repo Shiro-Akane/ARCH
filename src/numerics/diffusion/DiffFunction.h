@@ -1,17 +1,15 @@
 /**
  * @file DiffFunction.h
  * @brief Computes Runge-Kutta-Legendre (RKL) super-time-stepping stages and coefficients.
- * *
- * * Workflow:
- * * 1. Calculate the required number of stages (s) based on the ratio dt_hydro / dt_diff.
- * * 2. Generate the recurrence coefficients (mu, nu, tilde_mu, gamma) for each stage j=1..s.
+ *
+ * Workflow:
+ * 1. Calculate the required number of stages (s) based on the ratio dt_hydro / dt_diff.
+ * 2. Generate the recurrence coefficients (mu, nu, tilde_mu, gamma) for each stage j=1..s.
  */
 
 #pragma once
 
-// =========================================================
-// =================== DiffFunction Namespace ==============
-// =========================================================
+// RKL stage-count and recurrence-coefficient utilities.
 
 namespace DiffFunction
 {

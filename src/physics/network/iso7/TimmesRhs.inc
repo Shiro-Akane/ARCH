@@ -1,4 +1,5 @@
-// Generated only from the uploaded Timmes source.
+// Mechanically translated from Frank Timmes's public_iso7.f90.
+// Upstream index: https://cococubed.com/code_pages/burn.shtml.
 // public_iso7.f90:422
 template <typename Scalar>
 TIMMES_HD inline void rhs_iso7(const Scalar* y, const Scalar* rate, Scalar* dydt)

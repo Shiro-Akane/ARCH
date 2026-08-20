@@ -1,7 +1,10 @@
+// C++ translation of the ecapnuc weak-rate helper distributed with Frank
+// Timmes's public networks: https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <cmath>
 #include <type_traits>
+
 #include "TimmesNetworkSupport.h"
 
 namespace timmes {
@@ -50,7 +53,7 @@ TIMMES_HD inline void ecapnuc(double etakep, const Scalar& temp,
         } else {
             eta_val = value_of(eta);
         }
-        
+
         const Scalar exeta = (eta_val <= 6.8e2) ? exp_value(eta) : Scalar(0.0);
         const Scalar etael2 = etael * etael;
         const Scalar etael3 = etael2 * etael;
@@ -96,7 +99,7 @@ TIMMES_HD inline void ecapnuc(double etakep, const Scalar& temp,
         const Scalar facv2 = 10.0 * etael3 + 18.0 * etael2 * zetan + 9.0 * etael * zetan2 + zetan2 * zetan;
         const Scalar facv1 = 5.0 * etael4 + 12.0 * etael3 * zetan + 9.0 * etael2 * zetan2 + 2.0 * etael * zetan2 * zetan;
         const Scalar facv0 = etael5 + 3.0 * etael4 * zetan + 3.0 * etael3 * zetan2 + etael2 * zetan2 * zetan;
-        
+
         rjv1  = f5l + facv4 * f4l + facv3 * f3l + facv2 * f2l + facv1 * f1l + facv0 * f0;
         rjv2  = f5g + facv4 * f4g + facv3 * f3g + facv2 * f2g + facv1 * f1g + facv0 * f0;
 

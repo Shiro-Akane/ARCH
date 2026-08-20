@@ -14,9 +14,10 @@
  */
 
 #pragma once
+#include "IGravityPolicy.h"
+
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
-#include "IGravityPolicy.h"
 
 namespace Physical {
 namespace Gravity {

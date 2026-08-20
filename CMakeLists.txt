@@ -185,6 +185,23 @@ endforeach()
 message(STATUS "[DEP] HighFive headers configured via FetchContent")
 
 # ==============================================================================
+# Focused numerical regression tests
+# ==============================================================================
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(arch_numerics_regression
+        tests/NumericsRegression.cpp
+        src/numerics/diffusion/DiffFunction.cpp
+    )
+    target_compile_features(arch_numerics_regression PRIVATE cxx_std_20)
+    target_include_directories(arch_numerics_regression PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    if(ARCH_ENABLE_OPENMP)
+        target_link_libraries(arch_numerics_regression PRIVATE OpenMP::OpenMP_CXX)
+    endif()
+    add_test(NAME numerics_regression COMMAND arch_numerics_regression)
+endif()
+
+# ==============================================================================
 # Runtime Environment Setup & Final Status
 # ==============================================================================
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/output)

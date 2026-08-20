@@ -1,26 +1,25 @@
 /**
  * @file RKL2TimeIntegrator.h
  * @brief Second-order Runge-Kutta-Legendre (RKL2) Super-Time-Stepping scheme for parabolic terms.
- * *
- * * Workflow:
- * * 1. Compute the optimal number of RKL2 stages `s`.
- * * 2. Evaluate the initial diffusion operator L(Y_0), which is reused in every stage.
- * * 3. Perform Stage 1 integration.
- * * 4. Iteratively evaluate Stages 2 to s, updating state using the Meyer (2014) formulation.
+ *
+ * Workflow:
+ * 1. Compute the optimal number of RKL2 stages `s`.
+ * 2. Evaluate the initial diffusion operator L(Y_0), which is reused in every stage.
+ * 3. Perform Stage 1 integration.
+ * 4. Iteratively evaluate Stages 2 to s, updating state using the Meyer (2014) formulation.
  */
 
 #pragma once
 
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
-#include "../../data/GlobalDefs.h"
 #include "DiffFlux.h"
 #include "DiffFunction.h"
 #include "DiffusionAMRStages.h"
 
-// =========================================================
-// ================= RKL2TimeIntegrator ====================
-// =========================================================
+#include "../../data/FluidState.h"
+#include "../../data/GlobalDefs.h"
+#include "../../grid/Grid.h"
+
+// Second-order RKL super-time-step integrator.
 
 struct RKL2TimeIntegrator
 {
@@ -33,12 +32,12 @@ struct RKL2TimeIntegrator
 
         // Static buffers
         static FluidState Y0, Y_jm1, Y_jm2, L_U0, L_U;
-        if (Y0.GetNumSpecies() != state.GetNumSpecies()) {
-            Y0.InitSpecies(state.GetNumSpecies());
-            Y_jm1.InitSpecies(state.GetNumSpecies());
-            Y_jm2.InitSpecies(state.GetNumSpecies());
-            L_U0.InitSpecies(state.GetNumSpecies());
-            L_U.InitSpecies(state.GetNumSpecies());
+        if (Y0.rho.size() != static_cast<size_t>(grid.GetTotalSize())
+            || Y0.GetNumSpecies() != state.GetNumSpecies()) {
+            for (FluidState* buffer : {&Y0, &Y_jm1, &Y_jm2, &L_U0, &L_U}) {
+                buffer->Preallocate(grid.GetTotalSize());
+                buffer->InitSpecies(state.GetNumSpecies());
+            }
         }
 
         Y0 = state;

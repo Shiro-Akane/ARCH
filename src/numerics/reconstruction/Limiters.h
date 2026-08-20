@@ -1,21 +1,21 @@
 /**
  * @file Limiters.h
  * @brief Slope limiters for MUSCL reconstruction.
- * * * Defines the slope limiter functions phi(r).
+ * Defines the slope limiter functions phi(r).
  * r is the ratio of successive gradients: r = (u_i - u_{i-1}) / (u_{i+1} - u_i)
  */
 
 #pragma once
 
 #include <algorithm>
-#include <string>
 #include <cmath>
+#include <string>
 
 /**
  * @struct NoLimiter
- * @brief 不使用限制器 (退化为一阶精度，或者无限制的二阶).
- * 通常如果不限制，二阶中心差分对应 phi(r) = 1 (Lax-Wendroff) 或 phi(r) = r (Beam-Warming).
- * 这里作为 "First Order" 的占位符，phi(r) = 0 表示完全丢弃梯度，只用均值。
+ * @brief Suppress the reconstructed gradient and recover first-order PCM.
+ * Despite the historical type name, phi(r)=0 is a first-order policy rather
+ * than an unlimited second-order reconstruction.
  */
 struct NoLimiter
 {
@@ -29,7 +29,7 @@ struct NoLimiter
 
 /**
  * @struct MinMod
- * @brief 最常用的耗散型限制器 (Diffusive but stable).
+ * @brief Diffusive total-variation-diminishing limiter.
  * phi(r) = max(0, min(1, r))
  */
 struct MinMod
@@ -44,9 +44,9 @@ struct MinMod
 
 /**
  * @struct SuperBee
- * @brief 压缩型限制器 (Compressive).
+ * @brief Compressive limiter with sharp contact resolution.
  * phi(r) = max(0, min(2r, 1), min(r, 2))
- * 特点：对接触间断（Contact Discontinuity）分辨最好，最锐利，但可能把正弦波变成方波。
+ * Its compression can distort smooth waves even while sharpening contacts.
  */
 struct SuperBee
 {
@@ -57,13 +57,13 @@ struct SuperBee
         if (r <= 0.0)
             return 0.0;
         if (r >= 2.0)
-            return 2.0; // max limit
+            return 2.0; // TVD upper bound for the SuperBee limiter.
         if (r <= 0.5)
             return 2.0 * r;
         if (r >= 1.0)
-            return r; // Between 1 and 2, choose r (wait, formula is complex)
+            return r; // min(r, 2) dominates for 1 <= r < 2.
 
-        // 标准公式: max(0, min(1, 2r), min(2, r))
+        // Standard form: max(0, min(1,2r), min(2,r)).
         double a = (2.0 * r < 1.0) ? 2.0 * r : 1.0;
         double b = (r < 2.0) ? r : 2.0;
         return (a > b) ? a : b;
@@ -72,9 +72,9 @@ struct SuperBee
 
 /**
  * @struct VanLeer
- * @brief 平滑限制器 (Smooth).
+ * @brief Smooth limiter between MinMod diffusion and SuperBee compression.
  * phi(r) = (r + |r|) / (1 + |r|)
- * 特点：通常被认为是 MinMod 和 SuperBee 之间的最佳折衷方案。
+ * It provides a conventional compromise between MinMod and SuperBee.
  */
 struct VanLeer
 {
@@ -82,7 +82,7 @@ struct VanLeer
 
     static double calc(double r)
     {
-        // 优化写法：如果 r<=0, phi=0
+        // Opposite-sign slopes require phi=0 to preserve monotonicity.
         if (r <= 0.0)
             return 0.0;
         return (2.0 * r) / (1.0 + r);
@@ -93,7 +93,7 @@ struct VanLeer
  * @struct McLimiter
  * @brief Monotonized Central (MC) Limiter.
  * phi(r) = max(0, min(2r, 0.5*(1+r), 2))
- * 特点：对于平滑区域，它近似于三阶精度。
+ * In smooth regions this limiter approaches its higher-order centered branch.
  */
 struct McLimiter
 {

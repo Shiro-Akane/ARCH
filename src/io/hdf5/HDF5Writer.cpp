@@ -8,12 +8,13 @@
  * 3. Write restart- or analysis-ready output without changing simulation state.
  */
 
+#include <iostream>
+
 #include "HDF5Writer.h"
 
-#include <iostream>
-#include <highfive/H5File.hpp>
 #include <highfive/H5DataSet.hpp>
 #include <highfive/H5DataSpace.hpp>
+#include <highfive/H5File.hpp>
 
 using namespace HighFive;
 

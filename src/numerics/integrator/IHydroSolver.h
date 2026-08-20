@@ -11,11 +11,12 @@
 #pragma once
 
 #include <vector>
+
+#include "../../amr/AMRControl.h"
+#include "../../core/RuntimeParams.h"
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
 #include "../../physics/gravity/IGravityPolicy.h"
-#include "../../core/RuntimeParams.h"
-#include "../../amr/AMRControl.h"
 
 namespace Numerics {
 

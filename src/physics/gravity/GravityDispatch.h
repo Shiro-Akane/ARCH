@@ -13,11 +13,13 @@
 
 #pragma once
 
-#include <string>
 #include <memory>
-#include "../../data/GlobalDefs.h"
-#include "GravityNone.h"
+#include <string>
+
 #include "ExternalGravity.h"
+#include "GravityNone.h"
+
+#include "../../data/GlobalDefs.h"
 
 namespace Physical
 {

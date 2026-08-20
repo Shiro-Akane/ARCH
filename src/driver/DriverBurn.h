@@ -1,22 +1,23 @@
 /**
  * @file DriverBurn.h
  * @brief Operator splitting integration of the nuclear reaction network.
- * *
- * * Workflow:
- * * 1. Filters cells by a minimum density threshold to skip vacuums.
- * * 2. Extracts cell composition and calculates cell temperature.
- * * 3. Calls the underlying ODE solver (e.g. BE_NR) to integrate species abundances.
- * * 4. Applies a nuclear energy (enuc) limiter to safely restrict the global CFL timestep.
+ *
+ * Workflow:
+ * 1. Filters cells by a minimum density threshold to skip vacuums.
+ * 2. Extracts cell composition and calculates cell temperature.
+ * 3. Calls the underlying ODE solver (e.g. BE_NR) to integrate species abundances.
+ * 4. Applies a nuclear energy (enuc) limiter to safely restrict the global CFL timestep.
  */
 
 #pragma once
 
-#include <iostream>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <iostream>
+
+#include "../core/RuntimeParams.h"
 #include "../data/FluidState.h"
 #include "../grid/Grid.h"
-#include "../core/RuntimeParams.h"
 #include "../numerics/burnsolver/Networks.h"
 
 #ifdef _OPENMP
@@ -32,7 +33,7 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         throw std::runtime_error("Burn diagnostic storage is not initialized.");
     std::fill(current_state.enuc_rate.begin(), current_state.enuc_rate.end(), 0.0);
     if (!config.physics.burn.use_burn)
-        return; // 如果没开燃烧，直接跳�?
+        return;
     double local_dt_burn_min = 1e99;
     const int n_spec = current_state.GetNumSpecies();
 
@@ -55,11 +56,11 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
                 int i = grid.GetIndex(i_idx, j, k);
         double rho = current_state.rho[i];
 
-        // 跳过低密度真空区（保护机制）
+        // Skip cells below the configured nuclear-density activation threshold.
         if (rho < config.physics.burn.nuclearDensMin)
             continue;
 
-        // 1. 提取当前单元的组分到 X_ODE
+        // Pack cell mass fractions into the network ODE state.
         double X_ODE[BurnLimits::MAX_ODE_NEQ]{};
         current_state.get_species_to_buffer(i, X_ODE);
 
@@ -99,25 +100,23 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
             continue;
         }
 
-        // 2. 计算内能并从 EOS 获取当前温度
+        // Remove kinetic energy and recover the current temperature through the EOS.
         double mx = current_state.mom_u[i];
         double my = current_state.mom_v[i];
         double mz = current_state.mom_w[i];
         double e_kin = 0.5 * (mx * mx + my * my + mz * mz) / rho;
-        double e_int = (current_state.eng[i] - e_kin) / rho; // 比内�?
-        // 假设你的 EOS 提供了这个接口：根据 rho, e_int, X_k �?T
+        double e_int = (current_state.eng[i] - e_kin) / rho;
+        // Recover temperature from density, specific internal energy, and composition.
         double T = eos.get_temperature(rho, e_int, X_ODE);
         if (T < config.physics.burn.nuclearTempMin)
             continue;
-        X_ODE[n_spec] = T; // 将温度放在数组末�?
+        X_ODE[n_spec] = T; // Temperature occupies the final ODE component.
         // Integrate the local network state.
         double dt_rec = burn_dt;
         bool success = burn.integrate(X_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
 
         if (!success)
         {
-            // Note: `t_current` was used in the error message, but we can just say "at current step" or pass it in.
-            // For simplicity, we omit the exact time to keep the signature clean, or just log cell failure.
             std::cerr << "[Fatal Error] Burn failed at cell " << i << std::endl;
             exit(EXIT_FAILURE);
         }
@@ -130,7 +129,6 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         if (burn_dt > 0.0)
             current_state.enuc_rate[i] = (e_int_new - e_int) / burn_dt;
 
-        // 6. 核能限制�?(Enuc Limiter)
         // Apply the nuclear energy timestep limiter when requested.
         if (config.physics.burn.enucDtFactor > 0.0)
         {
@@ -139,12 +137,11 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
             {
                 double enuc_rate = delta_e / burn_dt;
 
-                // 【防�?0 保护】模�?FLASH: 计算倒数 (enuc / eint)
+                // Ratio used by the FLASH-style nuclear energy timestep limit.
                 double energyRatioInv = enuc_rate / std::max(e_int_new, 1e-20);
                 // Limit the next macro step only for a non-negligible source.
                 if (energyRatioInv > 1e-30)
                 {
-                    // 相当�?dt = enucDtFactor * (eint / enuc)
                     double dt_enuc_limit = config.physics.burn.enucDtFactor / energyRatioInv;
                     local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
                 }
@@ -166,6 +163,6 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         throw std::runtime_error("Invalid complete composition before burn");
     }
 
-    // 汇总全局最新的燃烧建议步长
+    // Reduce the per-cell burn recommendation into the global candidate step.
     dt_burn_global = std::min(dt_burn_global, local_dt_burn_min);
 }

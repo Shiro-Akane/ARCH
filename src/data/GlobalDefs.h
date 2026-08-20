@@ -4,47 +4,34 @@
  */
 
 /**
- * Workflow:
- * 1. Allocate or address state through the active-dimension layout contract.
- * 2. Read and write conservative variables and species with one shared indexing rule.
- * 3. Expose the result to numerical operators without hidden storage conversions.
+ * Configuration is divided into typed core sections plus custom parameter maps
+ * for problem-specific values that do not belong to the solver-wide contract.
  */
 
 #pragma once
-#include <string>
 #include <map>
-#include <iostream>
+#include <string>
+#include <type_traits>
 #include <vector>
 
-/**
- * @file GlobalDefs.h
- * @brief Global configuration parameters.
- * Uses a hybrid approach: Explicit structs for core system params,
- * and a generic map for flexible module-specific params.
- */
-// ----------------------------------------------------------------------
-// 1. Grid Configuration (Future-proofed for Multi-dim)
-// ----------------------------------------------------------------------
+// Grid and domain configuration.
 struct GridConfig
 {
-    // Basic Dimensions (Moved from amr to grid)
+    // Root-block topology and active dimensionality.
     int nblockx1 = 1; ///< Number of root blocks in X
     int nblockx2 = 1; ///< Number of root blocks in Y
     int nblockx3 = 1; ///< Number of root blocks in Z
     int dim = 3;      ///< Dimensionality (1, 2, or 3)
     int amr_max_blocks = 2000; ///< Maximum number of AMR blocks
 
-    // Physical Domain
+    // Physical domain bounds in code units.
     double x1_min = 0.0;
     double x1_max = 1.0;
     double x2_min = 0.0;
     double x2_max = 1.0;
     double x3_min = 0.0;
     double x3_max = 1.0;
-    // Y/Z limits can be added later or kept here unused
-
-    // Geometry: "cartesian", "spherical", "cylindrical"
-    // This allows you to implement source terms later without changing the struct
+    // Coordinate system used by metric terms: cartesian, spherical, or cylindrical.
     std::string geometry = "cartesian";
 
     std::string x1l_boundary_type = "outflow";
@@ -55,32 +42,26 @@ struct GridConfig
     std::string x3r_boundary_type = "outflow";
 };
 
-// ----------------------------------------------------------------------
-// 2. Numerics Configuration (Solver, Limiter, Reconstruction)
-// ----------------------------------------------------------------------
+// Hydrodynamic discretization and stability controls.
 struct NumericsConfig
 {
-    // Solver Selection
-    std::string solver_name;    ///< "SW", "VL", "HLLC", "Roe"
-    std::string riemann_solver; ///< For future: separate Flux split vs Riemann?
+    std::string solver_name;    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
+    std::string riemann_solver; ///< Reserved compatibility field; dispatch uses solver_name.
 
-    // Reconstruction & Limiting
-    // These are strings now. The Factory will interpret "minmod" or "weno5"
+    // Runtime dispatch maps these names to compile-time reconstruction policies.
     std::string reconstruction = "pcm";  ///< "pcm" (1st), "plm" (2nd), "ppm" (3rd)
     std::string limiter = "minmod";      ///< "minmod", "mc", "superbee"
     std::string time_integrator = "RK2"; ///< "RK2","RK3"
 
     double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
 
-    double entropy_fix_coeff = 0.1;
+    double entropy_fix_coeff = 0.1; ///< Roe entropy-fix width relative to the local sound speed.
 
-    double sml_rho = 1e-12; ///< Density floor
-    double max_eint = 1e21; ///< Maximum specific internal energy allowed
+    double sml_rho = 1e-12; ///< Positive density floor in code units.
+    double max_eint = 1e21; ///< Specific internal-energy ceiling in code units.
 };
 
-// ----------------------------------------------------------------------
-// 2b. Execution backend configuration
-// ----------------------------------------------------------------------
+// Execution backend selection.
 struct ExecutionConfig
 {
     // "cpu" always selects the host implementation.  "cuda" is strict and
@@ -90,11 +71,7 @@ struct ExecutionConfig
     int cuda_device = 0;
 };
 
-// ----------------------------------------------------------------------
-// 3. Physics Configuration (EOS, Burn, Gravity)
-// ----------------------------------------------------------------------
-
-// --- 编译期静态内存常�?---
+// Stiff ODE integration controls.
 struct OdeConfig
 {
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
@@ -126,9 +103,8 @@ struct BurnConfig
     double ignition_temp = 1e9; ///< Ignition temperature threshold for burning (in Kelvin)
     double burn_tol = 1e-6;     ///< Tolerance for burn convergence
 
-    // Nuclear Burning (Placeholder)
     bool use_burn = false;                ///< Master switch for the burn module
-    std::string network_name = "aprox19"; ///< "alpha_chain", "c12_o16", "7isotope"
+    std::string network_name = "aprox19"; ///< Built-in network: aprox13, aprox19, aprox21, or iso7.
 
     double nuclearTempMin = 1e9; ///< Minimum temperature for burning (in Kelvin)
     double nuclearDensMin = 1e-10;  ///< Minimum density for burning (in g/cm^3)
@@ -148,7 +124,7 @@ struct BurnConfig
     OdeConfig odeconfig; ///< ODE solver configuration for the burn module
 };
 
-// Gravity Configuration
+// Gravity configuration.
 struct GravityConfig
 {
     std::string type = "none"; // "none", "external", "self"
@@ -163,7 +139,7 @@ struct GravityConfig
     double G_const = 6.6743e-8; // for self-gravity, in cgs units (cm^3 g^-1 s^-2)
 };
 
-// Diffusion Configuration
+// Diffusion configuration.
 struct DiffusionConfig
 {
     bool use_diffusion = false;          ///< Master switch for the diffusion module
@@ -171,13 +147,13 @@ struct DiffusionConfig
     double diff_cfl = 0.8;                    ///< CFL condition for explicit diffusion integrator
     int max_stages = 256;                ///< Maximum number of stages (s) allowed for RKL integrators
 
-    // Toggles for different types of diffusion
+    // Independently enabled diffusion operators.
     bool use_thermal_diffusion = false;
     bool use_viscous_diffusion = false;
     bool use_species_diffusion = false;
 
-    // Constant coefficients for IdealGas / manual overrides
-    // (If 0 or not set, should try to read from EOS transport interface if available)
+    // Constant IdealGas coefficients or explicit transport overrides. A zero
+    // value delegates to an EOS transport interface when one is available.
     double nu_visc = 0.0;     ///< Constant kinematic viscosity (nu)
     double alpha_therm = 0.0; ///< Constant thermal diffusivity (alpha = k / (rho * cp))
     double D_spec = 0.0;      ///< Constant species diffusivity
@@ -185,21 +161,16 @@ struct DiffusionConfig
 
 struct PhysicsConfig
 {
-    // Equation of State
-    // Future-proof: Factory switches based on this string.
-    std::string eos_type = "ideal";  ///< "ideal", “tabular�? "stiffened_gas", etc.
+    std::string eos_type = "ideal";  ///< Equation of state: ideal, tabular, or helmholtz.
     std::string eos_table_path = ""; ///< For tabular EOS, the path to the HDF5 file
     double gamma = 1.4;              ///< Default adiabatic index
 
-    // Gravity (Placeholder)
     GravityConfig gravity;
     BurnConfig burn;
     DiffusionConfig diffusion;
 };
 
-// ----------------------------------------------------------------------
-// 3.5 AMR Configuration
-// ----------------------------------------------------------------------
+// Adaptive mesh refinement controls.
 struct AmrConfig
 {
     int lrefinemin = 0;            ///< Minimum refinement level
@@ -225,9 +196,7 @@ struct AmrConfig
     double derefine_threshold = 0.2; ///< Dimensionless Lohner error threshold for derefinement
 };
 
-// ----------------------------------------------------------------------
-// 4. I/O Configuration
-// ----------------------------------------------------------------------
+// Plot-variable selection.
 struct OutputVariables
 {
     bool rho = true;     ///< DENS
@@ -250,11 +219,11 @@ struct IOConfig
     double tmax = 0.0;  ///< Simulation end time
     int max_steps = -1; ///< Maximum number of steps (-1 for no limit)
 
-    // --- Plot Files Controls ---
+    // Plot-file cadence.
     double plt_dt = -1.0; ///< Output interval (-1.0 for no output)
     int plt_dstep = -1;   ///< Output every N steps (-1 for no output)
 
-    // --- Output File Controls ---
+    // Checkpoint cadence.
     double chk_dt = -1.0; ///< Checkpoint interval (-1.0 for no checkpoints)
     int chk_dstep = -1;   ///< Checkpoint every N steps (-1 for no checkpoints)
 
@@ -276,9 +245,7 @@ struct RunState
     int chk_idx = 0;   ///< Current checkpoint file index
 };
 
-// ----------------------------------------------------------------------
-// MAIN CONFIGURATION STRUCTURE
-// ----------------------------------------------------------------------
+// Complete runtime configuration.
 struct SimConfig
 {
     GridConfig grid;
@@ -288,13 +255,9 @@ struct SimConfig
     AmrConfig amr;
     IOConfig io;
 
-    // =========================================================
-    // THE "CATCH-ALL" BUCKET
-    // =========================================================
     /**
-     * @brief Stores any parameter found in the .par file that doesn't
-     * match a core struct member.
-     * * Examples of what goes here:
+     * @brief Stores problem-specific parameters not represented by a core field.
+     * Typical keys include:
      * - "prob_rho_L" (Shock tube specific)
      * - "burn_ignition_temp" (Burn module specific)
      * - "stiff_p_inf" (Stiffened Gas EOS parameter)
@@ -303,11 +266,11 @@ struct SimConfig
 
     std::map<std::string, std::string> custom_string_params;
 
-    // Helper to get params safely
+    // Return a typed custom parameter or the caller-provided default.
     template <typename T>
     T Get(const std::string &key, T default_val) const
     {
-        // 如果请求的是 std::string
+        // Return the preserved string value when requested explicitly.
         if constexpr (std::is_same_v<T, std::string>)
         {
             auto it = custom_string_params.find(key);
@@ -315,7 +278,7 @@ struct SimConfig
                 return it->second;
             return default_val;
         }
-        // 如果请求的是数字 (double, int, float)
+        // Numeric requests use the typed custom-parameter map.
         else
         {
             auto it = custom_params.find(key);

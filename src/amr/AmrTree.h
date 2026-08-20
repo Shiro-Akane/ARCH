@@ -12,21 +12,23 @@
 
 #pragma once
 
-#include <array>
-#include <vector>
 #include <algorithm>
-#include <memory>
-#include <string>
-#include <functional>
+#include <array>
 #include <cmath>
+#include <functional>
 #include <limits>
-#include "../physics/species/Species.h"
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
+
 #include "MemoryPool.h"
 #include "Morton.h"
+
+#include "../data/GlobalDefs.h"
 #include "../grid/Grid.h"
 #include "../physics/diagnostics/VelocityDiagnostics.h"
-#include "../data/GlobalDefs.h"
+#include "../physics/species/Species.h"
 
 namespace amr {
 
@@ -50,9 +52,8 @@ public:
     /**
      * @brief Installs the EOS-backed pressure/temperature batch evaluator.
      *
-     * The tree deliberately receives a type-erased batch callback rather than
-     * depending on an EOS concrete type. Regridding therefore remains shared
-     * by ideal, tabular, and Helmholtz closures without duplicated indicators.
+     * A type-erased batch callback keeps regridding shared by ideal, tabular,
+     * and Helmholtz closures.
      */
     void SetThermodynamicEvaluator(ThermodynamicEvaluator evaluator)
     {
@@ -158,7 +159,7 @@ public:
         SortActiveBlocks();
 
         // The first initial-refinement pass also relies on face_neighbors in
-        // RippleCheck().  Populate the root-level cache here so that the
+        // RippleCheck(). Populate the root-level cache during initialization so the
         // 2:1 balance constraint is enforced from the very first pass.
         UpdateNeighbors(config);
     }
@@ -484,10 +485,10 @@ public:
                         }
                         int nb_future_L = nb.level + (nb.refine_flag == 1 ? 1 : 0);
 
-                        // If we are much finer than neighbor (future_L > nb_future_L + 1)
+                        // Refine the neighbor when the proposed levels would differ by more than one.
                         if (future_L > nb_future_L + 1) {
                             if (nb.refine_flag != 1) {
-                                nb.refine_flag = 1; // Force neighbor to refine
+                                nb.refine_flag = 1; // Enforce the 2:1 balance constraint.
                                 changed = true;
                             }
                         }
@@ -535,8 +536,7 @@ public:
                 blocks_to_free.push_back(b_id);
             }
             else if (b.refine_flag == -1) {
-                // Merge check
-                // Are we the 0-th child?
+                // Only the lowest-coordinate child initiates a sibling-group merge.
                 int num_children = 1 << root_grid.dim;
                 bool is_first = ((b.logical_x1 & 1) == 0) && ((root_grid.dim < 2) || ((b.logical_x2 & 1) == 0)) && ((root_grid.dim < 3) || ((b.logical_x3 & 1) == 0));
 

@@ -1,10 +1,10 @@
 /**
  * @file FluxVL.h
  * @brief Vinokur-Von Leer Flux Scheme (Pure Flux Calculator).
- * * Decoupled from time integration.
- * * Responsibilities:
- * * 1. Reconstruction (Cell -> Interface)
- * * 2. Flux Splitting (Interface State -> Interface Flux)
+ * Decoupled from time integration.
+ * Responsibilities:
+ * 1. Reconstruction (Cell -> Interface)
+ * 2. Flux Splitting (Interface State -> Interface Flux)
  */
 
 /**
@@ -36,7 +36,7 @@ struct FluxVL
 
     /**
      * @brief Computes fluxes at ALL cell interfaces.
-     * * @param state  Input fluid state (conservative variables).
+     * @param state  Input fluid state (conservative variables).
      * @param eos    Equation of state.
      * @param grid   Grid information.
      * @param flux_out         [Output] Buffer for momentum/energy fluxes (size = total_size).
@@ -73,6 +73,7 @@ struct FluxVL
         {
             std::vector<double> Xi_L(n_spec);
             std::vector<double> Xi_R(n_spec);
+            std::vector<double> Xi_cell(n_spec);
 
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -86,7 +87,7 @@ struct FluxVL
                     // U_L is at left side of interface i+1/2
                     // U_R is at right side of interface i+1/2
                     FluidVector U_L, U_R;
-                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), U_L, U_R);
+                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
                     // 2. Flux Splitting (Vinokur)
                     // F+ (Forward moving waves)

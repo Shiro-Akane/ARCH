@@ -1,12 +1,16 @@
+// C++ adaptation of Frank Timmes's public_iso7.f90 network.
+// ARCH supplies the policy interface; the rate equations and nuclear data
+// trace to https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <array>
 #include <cmath>
 
+#include "TimmesRateLibrary.h"
+
 #include "../timmes_common/AproxRateAssembly.h"
 #include "../timmes_common/TimmesNetworkSupport.h"
 #include "../timmes_common/TfactorsData.h"
-#include "TimmesRateLibrary.h"
 
 namespace timmes_iso7_detail {
 

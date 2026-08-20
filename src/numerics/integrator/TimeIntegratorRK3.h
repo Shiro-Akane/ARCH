@@ -12,15 +12,15 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <string>
+#include <vector>
 
-#include "TimeIntegratorHelper.h"
 #include "IHydroSolver.h"
+#include "TimeIntegratorHelper.h"
 
-#include "../../data/FluidState.h"
 #include "../../amr/AMRControl.h"
+#include "../../data/FluidState.h"
 
 struct SolverRK3
 {
@@ -45,9 +45,7 @@ struct SolverRK3
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
         int dim = amr_ctrl.tree->GetRootGridDim();
 
-        // =========================================================
         // Stage 1: U^(1) = U^n + dt * L(U^n)
-        // =========================================================
         #pragma omp parallel
         {
             int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -71,9 +69,7 @@ struct SolverRK3
         }
         amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, dim, &amr::Block::state_scratch);
 
-        // =========================================================
         // Stage 2: U^(2) = (3/4) * U^n + (1/4) * U^(1) + (1/4) * dt * L(U^(1))
-        // =========================================================
         #pragma omp parallel
         {
             int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -98,9 +94,7 @@ struct SolverRK3
         amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, dim, &amr::Block::state_next);
 
 
-        // =========================================================
         // Stage 3: U^{n+1} = (1/3) * U^n + (2/3) * U^(2) + (2/3) * dt * L(U^(2))
-        // =========================================================
         #pragma omp parallel
         {
             int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -113,12 +107,12 @@ struct SolverRK3
 
                 hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.state_next, b.grid, dt, dU, d_spec, gravity, num_cfg, 2.0/3.0, nullptr);
 
-                // Note: state_scratch is reused as destination for the final step to avoid 3 temp buffers
+                // Reuse state_scratch for U^{n+1} to avoid a third stage buffer.
                 hydro->update_patch(b.fluid_state, b.state_next, b.state_scratch, dU, d_spec, b.grid, 1.0/3.0, 2.0/3.0, num_cfg, nullptr);
             }
         }
 
-        // Final Swap: U^{n+1} is in state_scratch, so we swap it with fluid_state
+        // Publish U^{n+1}, which is stored in state_scratch after stage 3.
         #pragma omp parallel for schedule(dynamic)
         for (size_t i = 0; i < active_blocks.size(); ++i) {
             amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);

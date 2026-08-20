@@ -1,24 +1,24 @@
 /**
  * @file FluxFunctions.h
- * @brief Collection of flux calculation routines for Euler equations.
- * * This file provides the fundamental building blocks for finite volume schemes:
- * * 1. Analytic Physical Flux F(U).
- * * 2. Intermediate Flux for Richtmyer (Lax-Wendroff) scheme.
- * * 3. Steger-Warming Flux Vector Splitting (FVS) for upwind schemes.
+ * @brief Shared flux mathematics for the Euler equations.
+ *
+ * This file provides stateless kernels shared by finite-volume flux policies:
+ * 1. Physical flux F(U) for a conservative state.
+ * 2. Steger-Warming flux-vector splitting.
+ * 3. Vinokur-Van Leer flux-vector splitting.
  */
 
 #pragma once
 
-#include <vector>
 #include <cmath>
+#include <vector>
 
 #include "../../data/FluidState.h"
 
-// ==================================================================
-// 0. Directional Mapping Helpers (Crucial for 3D)
-// ==================================================================
+// Direction map: dir=0, 1, and 2 select x, y, and z. Flux formulas below use
+// local normal and tangential components and map the result back afterward.
 
-/// Gets the normal velocity component based on the direction (0=x, 1=y, 2=z)
+/// Return the velocity normal to the selected coordinate direction.
 inline double get_un(const FluidVector &U, int dir)
 {
     if (dir == 0)
@@ -28,7 +28,7 @@ inline double get_un(const FluidVector &U, int dir)
     return U.mom_w / U.rho;
 }
 
-/// Gets the first tangential velocity component
+/// Return the first tangential velocity for the selected normal direction.
 inline double get_ut1(const FluidVector &U, int dir)
 {
     if (dir == 0)
@@ -38,7 +38,7 @@ inline double get_ut1(const FluidVector &U, int dir)
     return U.mom_u / U.rho;
 }
 
-/// Gets the second tangential velocity component
+/// Return the second tangential velocity for the selected normal direction.
 inline double get_ut2(const FluidVector &U, int dir)
 {
     if (dir == 0)
@@ -48,7 +48,7 @@ inline double get_ut2(const FluidVector &U, int dir)
     return U.mom_v / U.rho;
 }
 
-/// Constructs a FluidVector from normal and tangential flux components
+/// Map normal and tangential flux components back to a global FluidVector.
 inline FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, double f_ut2, double f_eng, int dir)
 {
     FluidVector F;
@@ -75,34 +75,33 @@ inline FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, doub
     return F;
 }
 
-// ------------------------------------------------------------------
-// 1. Analytic Physical Flux
-// ------------------------------------------------------------------
+// Physical flux.
 
 /**
- * @brief Computes the physical flux vector F(U) for the 1D Euler equations.
- * * Vector Form:
- * * F = [ rho * u,
- * * rho * u^2 + p,
- * * (E + p) * u ]
- * * @tparam EosType Equation of State class.
- * @param U  Conservative state vector (rho, mom, eng).
+ * @brief Compute the Euler physical flux F(U) in one coordinate direction.
+ *
+ * In local normal coordinates:
+ * F = [rho*u, rho*u^2+p, rho*u*ut1, rho*u*ut2, (E+p)*u].
+ *
+ * @tparam EosType Equation-of-state policy.
+ * @param U Conservative state (rho, rho*u, rho*v, rho*w, E).
  * @param Xi Species mass fractions.
- * @param eos EOS object for pressure calculation.
- * @return FluidVector3 The flux vector F.
+ * @param eos EOS object used to recover pressure from the conservative state.
+ * @param dir Coordinate index normal to the flux face.
+ * @return Conservative flux in global coordinates.
  */
 template <typename EosType>
 FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos, int dir)
 {
     double rho = U.rho;
     if (rho < 1e-12)
-        return FluidVector(); // Return zeros for vacuum
-    // Safety: check against vacuum
+        return FluidVector(); // 1e-12 is the flux-layer near-vacuum density threshold.
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
     double ut2 = get_ut2(U, dir);
 
-    // Compute pressure using EOS
+    // Recover pressure through the selected EOS; the flux layer makes no
+    // ideal-gas assumption.
     double p = eos.get_pressure(U, Xi);
 
     double f_rho = rho * un;
@@ -113,7 +112,8 @@ FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos,
     return set_flux_vector(f_rho, f_un, f_ut1, f_ut2, f_eng, dir);
 }
 
-// for known pressure situation to save calculation
+// Use this overload when wave-speed estimation has already recovered pressure,
+// avoiding a duplicate EOS evaluation.
 inline FluidVector get_flux(const FluidVector &U, double p, int dir)
 {
     double rho = U.rho;
@@ -133,38 +133,35 @@ inline FluidVector get_flux(const FluidVector &U, double p, int dir)
     return set_flux_vector(f_rho, f_un, f_ut1, f_ut2, f_eng, dir);
 }
 
-// ------------------------------------------------------------------
-// 2. Steger-Warming Flux Vector Splitting
-// ------------------------------------------------------------------
+// Steger-Warming flux-vector splitting.
 
 /**
- * @brief Calculates the Split Flux F+ or F- using Steger-Warming method.
- * * Decomposes the flux based on the signs of the eigenvalues (u, u+c, u-c).
- * * Used for upwind discretization to capture shocks effectively.
- * * @param U    Conservative state.
- * @param Xi   Species mass fractions.
- * @param eos  EOS object.
- * @param sign Direction indicator (+1 for F_plus, -1 for F_minus).
- * @return FluidVector3 The split flux vector.
+ * @brief Split the flux according to the signs of u, u+c, and u-c.
+ * @param U Conservative state.
+ * @param Xi Species mass fractions.
+ * @param eos Equation-of-state object.
+ * @param sign Split direction: +1 selects F+ and -1 selects F-.
+ * @param smoothing_coeff Entropy-fix coefficient around zero eigenvalues.
+ * @param dir Flux-face normal direction.
+ * @return Flux component with the requested sign.
  */
 template <typename EosType>
 FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
                             const EosType &eos, int sign, double smoothing_coeff, int dir)
 {
-    double rho = std::max(U.rho, 1e-12); // Prevent division by zero
+    double rho = std::max(U.rho, 1e-12); // Match the physical-flux near-vacuum floor.
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
     double ut2 = get_ut2(U, dir);
-    double V2 = un * un + ut1 * ut1 + ut2 * ut2; // Full kinetic energy
+    double V2 = un * un + ut1 * ut1 + ut2 * ut2; // Three-dimensional |v|^2.
 
     double p = eos.get_pressure(U, Xi);
     double c = eos.get_sound_speed(U, p, Xi);
     double H = (U.eng + p) / rho;
     double gamma = eos.get_gamma(Xi);
 
-    // Lambda helper:
-    // If sign > 0, returns max(lambda, 0) -> Positive Eigenvalues
-    // If sign < 0, returns min(lambda, 0) -> Negative Eigenvalues
+    // eps scales the entropy-fix width with local sound speed. The 1e-12 floor
+    // keeps its denominator nonzero in stationary or low-sound-speed states.
     double eps = std::max(smoothing_coeff * c, 1e-12);
 
     auto split_lambda = [&](double l)
@@ -173,13 +170,12 @@ FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
         return (sign > 0) ? 0.5 * (l + l_abs_smoothed) : 0.5 * (l - l_abs_smoothed);
     };
 
-    // 1. Eigenvalues of the Jacobian matrix
+    // Split eigenvalues for the entropy wave and two acoustic waves.
     double l1 = split_lambda(un);
     double l2 = split_lambda(un + c);
     double l3 = split_lambda(un - c);
 
-    // 2. Steger-Warming weighting factors
-    // These derived from the homogeneity property of the Euler equations
+    // Steger-Warming weights derived from the homogeneity of the Euler system.
     double f1 = (gamma - 1.0) / gamma;
     double f2 = 0.5 / gamma;
 
@@ -188,146 +184,118 @@ FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
     double w3 = f2 * l3;
     double w_sum = w1 + w2 + w3;
 
-    // 3. Reconstruct Split Flux Vector F_split
-    // Mass Flux Component
+    // Mass flux.
     double f_rho = w_sum * rho;
 
-    // Momentum Flux Component
+    // Normal momentum contains the acoustic waves; tangential momentum is
+    // passively advected with mass flux.
     double f_un = w1 * (rho * un) + w2 * (rho * (un + c)) + w3 * (rho * (un - c));
-    double f_ut1 = f_rho * ut1; // Transverse momentum is purely advected
+    double f_ut1 = f_rho * ut1;
     double f_ut2 = f_rho * ut2;
 
-    // Energy Flux Component
-    // Term w1 corresponds to entropy wave (speed u)
-    // Terms w2, w3 correspond to acoustic waves (speed u +/- c)
+    // w1 represents the entropy wave at u; w2 and w3 represent the acoustic
+    // waves at u+c and u-c.
     double f_eng = w1 * (0.5 * rho * V2) + w2 * rho * (H + un * c) + w3 * rho * (H - un * c);
 
     return set_flux_vector(f_rho, f_un, f_ut1, f_ut2, f_eng, dir);
 }
 
-// ------------------------------------------------------------------
-// 3. Vinokur-Von Leer Flux Vector Splitting
-// ------------------------------------------------------------------
+// Vinokur-Van Leer flux-vector splitting for a general EOS.
 
 /**
- * @brief Vinokur-Van Leer Flux Vector Splitting for General EOS
- * * @param U      Conserved variables (rho, mom, eng)
- * @param Xi     Species mass fractions array
- * @param eos    Equation of State object
- * @param sign   Direction indicator:
- * > 0: Calculate F+ (Forward/Positive flux component)
- * < 0: Calculate F- (Backward/Negative flux component)
+ * @brief Construct a general-EOS split flux through an effective heat-capacity ratio.
+ * @param U Conservative state.
+ * @param Xi Species mass fractions.
+ * @param eos Equation-of-state object.
+ * @param sign Positive values compute F+; negative values compute F-.
+ * @param dir Flux-face normal direction.
  */
 template <typename EosType>
 FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
                               const EosType &eos, int sign, int dir)
 {
-    // 1. Pre-calculation & Protection
+    // Precompute local velocity. The 1e-12 density floor matches the other
+    // flux kernels' near-vacuum contract.
     double rho = std::max(U.rho, 1e-12);
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
     double ut2 = get_ut2(U, dir);
 
-    // Get thermodynamics from EOS
-    // Note: ensure your eos.get_pressure can handle small rho
+    // Thermodynamic values come from the EOS, which must accept states already
+    // protected by the density floor.
     double p = eos.get_pressure(U, Xi);
     double c = eos.get_sound_speed(U, p, Xi);
 
-    // Calculate Equivalent Gamma (Vinokur's Gamma)
-    // Protection for vacuum/zero pressure is crucial here
+    // Define the Vinokur effective ratio through c^2=gamma_eff*p/rho. If the
+    // EOS sound speed is invalid or below 1e-8, gamma=1.4 supplies a finite
+    // ideal-gas fallback rather than a physical claim about the material.
     if (std::isnan(c) || c < 1e-8)
         c = std::sqrt(1.4 * p / rho);
     double gamma_eff = (p > 1e-12) ? (rho * c * c / p) : 1.4;
 
-    // ------------------------------------------------------------------------
-    // [Note regarding Vinokur Splitting Singularity]
-    //
-    // Theory:
-    // The Vinokur energy flux formula contains divisors (gamma-1) and (gamma^2-1).
-    // As gamma_eff -> 1.0 (isothermal limit or numerical error), these terms blow up.
-    //
-    // Practice:
-    // We intentionally DO NOT clamp gamma_eff to a hard floor (e.g., 1.05) here
-    // to preserve accuracy for real gases where gamma might be naturally low (e.g. 1.1).
-    //
-    // Robustness Strategy:
-    // Instead of clamping, we rely on the NAN-check at the end of this function.
-    // If gamma_eff ~ 1.0 causes the flux to explode (NaN/Inf), the check will
-    // catch it and fallback to the robust Supersonic (Full Upwind) Flux.
-    // This allows the solver to "survive" bad reconstruction states without
-    // artificially altering physics in valid low-gamma regions.
-    // ------------------------------------------------------------------------
-
-    // Minimal protection against strict Division-By-Zero
+    // The Vinokur energy flux contains denominators gamma_eff-1 and
+    // gamma_eff^2-1, which become singular near one. A broad empirical clamp
+    // would corrupt valid low-gamma materials, so only values within 1e-6 of
+    // one move to 1+1e-6 to prevent exact division by zero. A remaining NaN
+    // triggers the full-upwind fallback at the end of the function.
     if (std::abs(gamma_eff - 1.0) < 1e-6)
         gamma_eff = 1.000001;
 
-    // Calculate Mach Number
+    // Normal Mach number.
     double M = un / c;
-    // 2. Supersonic Branching (Optimization & Validity)
-    // If we want F+ (sign>0) and flow is supersonic backward (M <= -1), F+ is 0.
-    // If we want F- (sign<0) and flow is supersonic forward (M >= 1), F- is 0.
+    // Supersonic information travels in one direction: F+ vanishes for M<=-1,
+    // while F- vanishes for M>=1.
 
     if (sign > 0)
     {
         if (M >= 1.0)
             return get_flux(U, p, dir);
         if (M <= -1.0)
-            return FluidVector(); // 返回全 0
+            return FluidVector(); // No positive-going characteristic contribution.
     }
     else
     {
         if (M >= 1.0)
-            return FluidVector(); // 返回全 0
+            return FluidVector(); // No negative-going characteristic contribution.
         if (M <= -1.0)
             return get_flux(U, p, dir);
     }
 
-    // 3. Subsonic Branching (|M| < 1) - The Vinokur Polynomials
-
-    // Common factor term: (M +/- 1)
-    // If sign > 0 (F+), we use (M + 1)
-    // If sign < 0 (F-), we use (M - 1)
+    // In the subsonic region |M|<1, the Vinokur polynomial uses M+1 for F+
+    // and M-1 for F-.
     double factor = (sign > 0) ? (M + 1.0) : (M - 1.0); // (M ± 1)
 
-    // Mass Flux (The split mass term)
-    // f_mass = +/- rho * c * (M +/- 1)^2 / 4
+    // Split mass flux: f_mass=±rho*c*(M±1)^2/4.
     double term_sign = (sign > 0) ? 1.0 : -1.0;
 
-    // 4. Construct Split Flux Vector
-    // --- Mass Equation ---
+    // The factor 1/4 is part of the Vinokur subsonic splitting polynomial.
     double f_rho = term_sign * 0.25 * rho * c * factor * factor;
 
-    // --- Momentum Equation ---
-    // Vinokur Momentum Term using Equivalent Gamma
-    // D +/- = [ (gamma_eff - 1)*u +/- 2*c ] / gamma_eff
+    // Momentum factor: D±=[(gamma_eff-1)u±2c]/gamma_eff.
     double term_2c = (sign > 0) ? (2.0 * c) : (-2.0 * c);
     double D_split = ((gamma_eff - 1.0) * un + term_2c) / gamma_eff;
 
     double f_un = f_rho * D_split;
 
-    // Transverse momentum is passively advected with the mass flux
+    // Tangential momentum is passively advected with mass flux.
     double f_ut1 = f_rho * ut1;
     double f_ut2 = f_rho * ut2;
 
-    // --- Energy Equation (Crucial Vinokur Correction) ---
-
-    // Part A: Ideal Gas Energy Term (using gamma_eff)
-    // H_ideal = D_split^2 * gamma_eff^2 / (2 * (gamma_eff^2 - 1))
-    // Simplifies to the form below:
+    // Ideal-gas part of the energy equation:
+    // H_ideal=D_split^2*gamma_eff^2/[2(gamma_eff^2-1)].
     double numerator = ((gamma_eff - 1.0) * un + term_2c);
     double E_ideal_term = (numerator * numerator) / (2.0 * (gamma_eff * gamma_eff - 1.0));
 
-    // Part B: The Correction Term for General EOS
-    // We need real specific enthalpy h = e + p/rho
-    // Note: U.eng is rho * E_total -> specific internal energy e = (U.eng/rho) - 0.5*u*u
+    // The general-EOS correction uses the actual specific enthalpy h=e+p/rho,
+    // where e=E/rho-|v|^2/2 and U.eng stores total-energy density.
     double e_internal = (U.eng / rho) - 0.5 * (un * un + ut1 * ut1 + ut2 * ut2);
     double h_real = e_internal + p / rho;
 
-    // Ideal enthalpy based on sound speed
+    // Ideal enthalpy expressed through sound speed and gamma_eff.
     double h_ideal = (c * c) / (gamma_eff - 1.0);
 
-    // Combine: F_energy = f_mass * ( E_ideal_term + (h_real - h_ideal) )
+    // Combine ideal energy, the real-EOS enthalpy correction, and tangential
+    // kinetic energy.
     double f_eng = f_rho * (E_ideal_term + (h_real - h_ideal) + 0.5 * (ut1 * ut1 + ut2 * ut2));
 
     if (std::isnan(f_eng))
@@ -338,16 +306,11 @@ FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
     return set_flux_vector(f_rho, f_un, f_ut1, f_ut2, f_eng, dir);
 }
 
-// ==================================================================
-// 4. Roe-Glaister Flux Solver Helpers
-// ==================================================================
-
-// ------------------------------------------------------------------
-// 4.1 Entropy Fix (Harten's)
-// ------------------------------------------------------------------
+// Shared Roe-Glaister flux functions.
 /**
- * @brief Harten's Entropy Fix to prevent non-physical shocks (sonic glitch).
- * * Ensures eigenvalues never become exactly zero.
+ * @brief Apply Harten's entropy fix at zero-crossing eigenvalues.
+ * For |lambda|<epsilon, a smooth parabola replaces the absolute value so the
+ * function and its first derivative remain continuous.
  */
 inline double entropy_fix(double lambda, double epsilon)
 {
@@ -359,38 +322,38 @@ inline double entropy_fix(double lambda, double epsilon)
     return abs_lambda;
 }
 
-// ------------------------------------------------------------------
-// 4.2 Roe-Glaister State Struct
-// ------------------------------------------------------------------
 /**
  * @struct RoeGlaisterState
- * @brief Holds the Roe-averaged quantities and thermodynamic derivatives.
+ * @brief Store Roe-averaged kinematics and Glaister thermodynamic derivatives.
  */
 struct RoeGlaisterState
 {
-    double rho_hat;             // Roe-averaged density
-    double u_hat, v_hat, w_hat; // Roe-averaged velocity
-    double H_hat;               // Roe-averaged Total Enthalpy
-    double c_hat;               // Roe-averaged Sound Speed
+    double rho_hat;             // Roe-averaged density.
+    double u_hat, v_hat, w_hat; // Roe-averaged velocity.
+    double H_hat;               // Roe-averaged total enthalpy.
+    double c_hat;               // Roe-averaged sound speed.
 
-    // Glaister derivatives for General EOS
-    double chi;   // dp/drho | constant e
-    double kappa; // dp/de   | constant rho
+    // Glaister derivatives for a general EOS.
+    double chi;   // (∂p/∂rho)_e.
+    double kappa; // (∂p/∂e)_rho.
 };
 
-// ------------------------------------------------------------------
-// 4.3 Roe Averaging Routine (Connects to EOS)
-// ------------------------------------------------------------------
 /**
- * @brief Computes the Roe-Glaister average state.
- * * This function bridges the Flux Solver and the EOS.
- * * It uses the finite difference of pressure to approximate derivatives (Glaister).
- * * @param U_L, U_R  Conservative variables
- * @param P_L, P_R  Pressure
- * @param e_L, e_R  Specific internal energy (e = E_int / rho)
- * @param H_L, H_R  Total Enthalpy
- * @param Xi_avg    Averaged species mass fractions (passed to EOS)
- * @param eos       EOS object (must support get_pressure_from_rho_e, etc.)
+ * @brief Compute the Roe-Glaister averaged state.
+ *
+ * Kinematic values use standard square-root-density weighting. Thermodynamic
+ * derivatives use pressure differences between states and fall back to EOS
+ * derivatives when the finite-difference interval is too small.
+ * @param U_L Left conservative state.
+ * @param U_R Right conservative state.
+ * @param P_L Left pressure.
+ * @param P_R Right pressure.
+ * @param e_L Left specific internal energy.
+ * @param e_R Right specific internal energy.
+ * @param H_L Left total enthalpy.
+ * @param H_R Right total enthalpy.
+ * @param Xi_avg Averaged mass fractions passed to the EOS.
+ * @param eos EOS object providing pressure inversion and both derivatives.
  */
 template <typename EosType>
 inline RoeGlaisterState calc_glaister_state(
@@ -403,7 +366,7 @@ inline RoeGlaisterState calc_glaister_state(
 {
     RoeGlaisterState res;
 
-    // --- A. Standard Roe Averages (Kinematics) ---
+    // Standard Roe kinematic average.
     double rho_L = std::max(U_L.rho, 1e-12);
     double rho_R = std::max(U_R.rho, 1e-12);
 
@@ -411,76 +374,74 @@ inline RoeGlaisterState calc_glaister_state(
     double sq_rho_R = std::sqrt(rho_R);
     double inv_denom = 1.0 / (sq_rho_L + sq_rho_R);
 
-    // Store averages
+    // rho_hat=sqrt(rho_L*rho_R); velocity and total enthalpy use sqrt(rho)
+    // weights.
     res.rho_hat = sq_rho_L * sq_rho_R;
     res.u_hat = (sq_rho_L * (U_L.mom_u / rho_L) + sq_rho_R * (U_R.mom_u / rho_R)) * inv_denom;
     res.v_hat = (sq_rho_L * (U_L.mom_v / rho_L) + sq_rho_R * (U_R.mom_v / rho_R)) * inv_denom;
     res.w_hat = (sq_rho_L * (U_L.mom_w / rho_L) + sq_rho_R * (U_R.mom_w / rho_R)) * inv_denom;
     res.H_hat = (sq_rho_L * H_L + sq_rho_R * H_R) * inv_denom;
 
-    // --- B. Glaister Thermodynamic Averages (EOS Dependent) ---
-    // We need to find chi (dp/drho) and kappa (dp/de) such that Property U is satisfied.
+    // Choose chi and kappa so the pressure difference matches the state jump.
 
     double d_rho = rho_R - rho_L;
     double d_e = e_R - e_L;
 
-    // Numerical threshold to switch to analytical derivatives
+    // The density-difference threshold is 1e-7 times the density sum with a
+    // 1e-10 absolute floor. Below it, subtraction amplifies roundoff, so the
+    // implementation switches to an EOS derivative.
     double epsilon = std::max(1e-7 * (rho_L + rho_R), 1e-10);
 
-    // 1. Calculate intermediate pressure p* = p(rho_R, e_L)
-    // This utilizes the new EOS helper you added.
+    // p*=p(rho_R,e_L) decomposes the pressure jump into density and internal-
+    // energy contributions.
     double p_star = eos.get_pressure_from_rho_e(rho_R, e_L, Xi_avg);
 
-    // 2. Compute Chi (dp/drho)
+    // chi=(∂p/∂rho)_e.
     if (std::abs(d_rho) > epsilon)
     {
-        // Finite difference across rho
+        // Finite difference across density.
         res.chi = (p_star - P_L) / d_rho;
     }
     else
     {
-        // Fallback to analytical derivative (at L state)
+        // Analytic derivative at the left state.
         res.chi = eos.get_dp_drho_e(rho_L, e_L, Xi_avg);
     }
 
-    // 3. Compute Kappa (dp/de)
+    // kappa=(∂p/∂e)_rho. The 1e-10 threshold protects subtraction of
+    // nearly equal specific internal energies.
     if (std::abs(d_e) > 1e-10)
-    { // Energy threshold can be smaller
-        // Finite difference across e
+    { // Use a finite difference only when the energy interval is resolvable.
         res.kappa = (P_R - p_star) / d_e;
     }
     else
     {
-        // Fallback to analytical derivative (at R state)
+        // Analytic derivative at the right state.
         res.kappa = eos.get_dp_de_rho(rho_R, e_R, Xi_avg);
     }
 
     if (res.kappa < 1e-12)
         res.kappa = 1e-12;
 
-    // --- C. Final Sound Speed ---
-    // c^2 = chi + kappa * (H_hat - 0.5 * u_hat^2)
+    // General-EOS sound speed: c^2=chi+kappa*p/rho^2.
     double p_ref = 0.5 * (P_L + P_R);
     double term2 = (res.kappa * p_ref) / (res.rho_hat * res.rho_hat + 1e-20);
     double c2 = res.chi + term2;
 
     if (c2 < 0.0 || std::isnan(c2))
     {
-        // 如果 c2 计算失败，回退到理想气体近似或极小声速
-        // c2 = gamma * p / rho -> 1.4 * p_ref / rho_hat
+        // If the derivative combination is invalid, gamma=1.4 supplies a
+        // finite ideal-gas fallback: c^2=gamma*p/rho.
         c2 = 1.4 * p_ref / (res.rho_hat + 1e-12);
     }
-    res.c_hat = std::sqrt(std::max(c2, 1e-8)); // Safety floor
+    res.c_hat = std::sqrt(std::max(c2, 1e-8)); // Keeps Roe amplitude denominators finite.
 
     return res;
 }
 
-// ------------------------------------------------------------------
-// 4.4 Core Roe Flux Assembler
-// ------------------------------------------------------------------
 /**
- * @brief Assembles the final Roe Flux using the averaged state.
- * * F_Roe = 0.5 * (F_L + F_R) - 0.5 * Sum( alpha * |lambda| * K )
+ * @brief Assemble the final flux from the Roe-averaged state.
+ * F_Roe=0.5(F_L+F_R)-0.5*sum(alpha*|lambda|*K).
  */
 inline FluidVector calc_roe_flux_hydro(
     const FluidVector &F_L, const FluidVector &F_R,
@@ -489,7 +450,7 @@ inline FluidVector calc_roe_flux_hydro(
     const RoeGlaisterState &rs,
     double fix_coeff, int dir)
 {
-    // 1. Extract directional components
+    // Transform left, right, and averaged velocity into local normal coordinates.
     double un_L = get_un(U_L, dir), ut1_L = get_ut1(U_L, dir), ut2_L = get_ut2(U_L, dir);
     double un_R = get_un(U_R, dir), ut1_R = get_ut1(U_R, dir), ut2_R = get_ut2(U_R, dir);
 
@@ -522,36 +483,36 @@ inline FluidVector calc_roe_flux_hydro(
     double rho_c = rs.rho_hat * rs.c_hat;
     double c2_safe = std::max(rs.c_hat * rs.c_hat, 1e-16);
 
-    // Wave amplitudes
-    // alpha_1: u - c
-    // alpha_2: u (Entropy)
-    // alpha_3: u + c
+    // Characteristic amplitudes: alpha_1 is u-c, alpha_2 is the entropy wave
+    // at u, and alpha_3 is u+c.
     double alpha_1 = (d_p - rho_c * d_un) / (2.0 * c2_safe);
     double alpha_2 = d_rho - (d_p / c2_safe);
     double alpha_3 = (d_p + rho_c * d_un) / (2.0 * c2_safe);
-    double alpha_4 = rs.rho_hat * d_ut1; // Transverse wave 1
-    double alpha_5 = rs.rho_hat * d_ut2; // Transverse wave 2
+    double alpha_4 = rs.rho_hat * d_ut1; // First tangential wave.
+    double alpha_5 = rs.rho_hat * d_ut2; // Second tangential wave.
 
-    // 2. Eigenvalues (Lambda) with Entropy Fix
+    // Scale the entropy-fix width by the local spectral radius. The 1e-12
+    // floor remains nonzero in a stationary state.
     double spectral_radius = std::abs(rs.u_hat) + rs.c_hat;
     double epsilon_val = fix_coeff * spectral_radius;
     epsilon_val = std::max(epsilon_val, 1e-12);
 
-    // 3. Eigenvalues
+    // Apply Harten's entropy fix to all three normal eigenvalues.
     double l1 = entropy_fix(un_hat - rs.c_hat, epsilon_val);
     double l2 = entropy_fix(un_hat, epsilon_val);
     double l3 = entropy_fix(un_hat + rs.c_hat, epsilon_val);
 
-    // 4. Assemble Dissipation Term Component by Component
+    // Accumulate the |A_hat|*Delta U dissipation by conservative component.
     double diss_rho = l1 * alpha_1 + l2 * alpha_2 + l3 * alpha_3;
 
     double diss_un = l1 * alpha_1 * (un_hat - rs.c_hat) + l2 * alpha_2 * un_hat + l3 * alpha_3 * (un_hat + rs.c_hat);
 
-    // Transverse momentum dissipation is coupled with mass dissipation
+    // Tangential momentum contains advected mass dissipation and its independent wave.
     double diss_ut1 = diss_rho * ut1_hat + l2 * alpha_4;
     double diss_ut2 = diss_rho * ut2_hat + l2 * alpha_5;
 
-    // Energy Dissipation
+    // When kappa<1e-8, the thermodynamic denominator lacks useful precision,
+    // so the entropy-wave energy component falls back to kinetic energy.
     double K1_eng = rs.H_hat - un_hat * rs.c_hat;
     double K3_eng = rs.H_hat + un_hat * rs.c_hat;
 
@@ -563,6 +524,8 @@ inline FluidVector calc_roe_flux_hydro(
     else
     {
         double term_singular = (rs.rho_hat * c2_safe) / rs.kappa;
+        // A correction larger than 100 enthalpy scales is treated as nearly
+        // singular so it cannot dominate energy dissipation.
         K2_eng = (std::abs(term_singular) > 100.0 * (std::abs(rs.H_hat) + 1.0))
                      ? 0.5 * (rs.u_hat * rs.u_hat + rs.v_hat * rs.v_hat + rs.w_hat * rs.w_hat)
                      : rs.H_hat - term_singular;
@@ -575,16 +538,10 @@ inline FluidVector calc_roe_flux_hydro(
     return 0.5 * (F_L + F_R - diss);
 }
 
-// ==================================================================
-// 5. HLL Flux Solver Helpers
-// ==================================================================
+// Shared HLL and HLLC flux functions.
 
-// ------------------------------------------------------------------
-// 5.1 Sound speed Calculation
-// ------------------------------------------------------------------
 /**
-/**
- * @brief Computes sound speed for a single state based on Note Step 2.
+ * @brief Compute one-state sound speed from general-EOS derivatives.
  * c^2 = chi + (p / rho^2) * kappa
  */
 template <typename EosType>
@@ -592,44 +549,39 @@ inline double calc_sound_speed_thermo(
     double rho, double p, double e, const double *Xi,
     const EosType &eos)
 {
-    // 防止除零
+    // 1e-12 matches the flux kernels' near-vacuum density threshold.
     if (rho < 1e-12)
         return 0.0;
 
-    // 1. 获取热力学导数
+    // Obtain derivatives at constant specific internal energy and density.
     // chi = dp/drho | e
     double chi = eos.get_dp_drho_e(rho, e, Xi);
     // kappa = dp/de | rho
     double kappa = eos.get_dp_de_rho(rho, e, Xi);
 
-    // 2. 根据笔记公式计算 c^2
+    // General-EOS sound-speed relation.
     double term2 = (kappa * p) / (rho * rho);
     double c2 = chi + term2;
 
-    // 3. 安全保护
+    // If the derivative combination is negative or NaN, gamma=1.4 supplies a
+    // finite ideal-gas fallback.
     if (c2 < 0.0 || std::isnan(c2))
     {
-        // 回退策略：假设 Gamma=1.4
         return std::sqrt(1.4 * p / rho);
     }
     return std::sqrt(c2);
 }
 
-// ------------------------------------------------------------------
-// 5.2 Einfeldt Speed Estimate
-// ------------------------------------------------------------------
 /**
-/**
- * @brief Estimates HLL wave speeds S_L and S_R.
- * Ref: Note Step 2 (Roe Average based Einfeldt speeds)
+ * @brief Estimate HLL wave speeds with Einfeldt bounds from both states and the Roe average.
  */
 inline void calc_hll_wave_speeds(
     double un_L, double c_L,
     double un_R, double c_R,
-    const RoeGlaisterState &rs, int dir, // <--- 复用你的 Roe 状态
+    const RoeGlaisterState &rs, int dir,
     double &S_L, double &S_R)
 {
-    // 笔记公式:
+    // Einfeldt wave-speed bounds:
     // S_L = min(u_L - c_L, u_hat - c_hat)
     // S_R = max(u_R + c_R, u_hat + c_hat)
 
@@ -639,12 +591,10 @@ inline void calc_hll_wave_speeds(
     S_R = std::max(un_R + c_R, un_hat + rs.c_hat);
 }
 
-// ------------------------------------------------------------------
-// 5.3 HLL Flux Calculation
-// ------------------------------------------------------------------
 /**
- * @brief Computes the HLL Flux.
- * Ref: Note Step 3 (a, b, c branches)
+ * @brief Compute HLL flux according to the signs of S_L and S_R.
+ * If the wave speeds straddle zero, use the two-wave intermediate state;
+ * otherwise return the physical flux from the upwind side.
  */
 inline FluidVector calc_hll_flux_hydro(
     const FluidVector &F_L, const FluidVector &F_R,
@@ -660,14 +610,10 @@ inline FluidVector calc_hll_flux_hydro(
     return (F_L * S_R - F_R * S_L + (U_R - U_L) * (S_L * S_R)) * inv_delta_S;
 }
 
-// ------------------------------------------------------------------
-// 5.4 HLLC Star Speed Helper (新增，为HLLC做准备)
-// ------------------------------------------------------------------
 /**
- * @brief Computes the contact wave speed S_star for HLLC.
+ * @brief Compute the HLLC contact speed S_star from Rankine-Hugoniot relations.
  * Formula:
  * S_* = (rho_R*u_R*(S_R - u_R) - rho_L*u_L*(S_L - u_L) + (p_L - p_R))
- * -------------------------------------------------------------
  * (rho_R*(S_R - u_R) - rho_L*(S_L - u_L))
  */
 inline double calc_hllc_star_speed(
@@ -678,6 +624,8 @@ inline double calc_hllc_star_speed(
     double term_R = rho_R * (S_R - un_R);
     double denom = term_R - term_L;
 
+    // 1e-10 is the absolute degeneracy threshold for the contact-speed
+    // denominator; the arithmetic mean is the finite fallback.
     if (std::abs(denom) < 1e-10)
         return 0.5 * (un_L + un_R);
     return (term_R * un_R - term_L * un_L + (p_L - p_R)) / denom;

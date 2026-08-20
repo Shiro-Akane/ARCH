@@ -3,8 +3,8 @@
  * @brief Unified concept for ODE Integrators using Backward Euler + Newton-Raphson with Adaptive Sub-stepping.
  */
 #pragma once
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 #include "Networks.h"
@@ -15,7 +15,7 @@ template <typename NetType, typename MatrixType, typename LinearSolver>
 struct Solver_BE_NR
 {
     static constexpr int NEQ = NetType::ODE_NEQ;
-    static constexpr int NUM_SPEC = NetType::NUM_SPECIES; // 需要知道多少个是组分，用于质量守恒
+    static constexpr int NUM_SPEC = NetType::NUM_SPECIES; // Excludes the final temperature equation.
     static constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
 
     template <typename EOSType>
@@ -31,26 +31,24 @@ struct Solver_BE_NR
         double RHS[MAX_N], b[MAX_N], W[MAX_N];
         MatrixType A;
 
-        // 求解器控制参数
+        // Runtime tolerances and iteration limits.
         const double rtol = burn_cfg.odeconfig.rtol;
         const double atol = burn_cfg.odeconfig.atol;
         const int max_newton_iter = burn_cfg.odeconfig.max_newton_iter;
         const int max_substeps = burn_cfg.odeconfig.max_substeps;
 
         double t_current = 0.0;
-        double dt = std::min(dt_target, dt_target * burn_cfg.odeconfig.initial_dt_frac); // 初始试探步长，通常设置得很小
+        double dt = std::min(dt_target, dt_target * burn_cfg.odeconfig.initial_dt_frac); // Conservative initial trial substep.
         double err_prev = 1.0;
-        int substep_count = 0; // 给 PI 控制器记录上一步误差
+        int substep_count = 0; // Counts internal attempts against max_substeps.
         bool nse_attempted = false;
 
-        // ================= 外层循环：时间子步进推进 =================
+        // Cover dt_target with adaptive implicit-Euler substeps.
         while (t_current < dt_target)
         {
-            // Replace the old composition-freeze bypass with an actual
-            // network-constrained Timmes NSE projection.  The projection is
-            // coupled to the EOS so binding-energy release/absorption changes
-            // temperature conservatively.  A failed projection leaves X_ODE
-            // untouched and falls back to the ordinary stiff ODE path.
+            // Network-constrained Timmes NSE projection coupled to the EOS.
+            // Binding-energy changes update temperature conservatively. A
+            // failed projection preserves X_ODE and selects the stiff ODE path.
             if (!nse_attempted && burn_cfg.use_nse
                 && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold
                 && rho > burn_cfg.nseDensThreshold)
@@ -69,13 +67,13 @@ struct Solver_BE_NR
                 return false;
             }
 
-            // 确保最后一步正好到达目标时间
+            // Shorten the final substep to land exactly on dt_target.
             if (t_current + dt > dt_target)
             {
                 dt = dt_target - t_current;
             }
 
-            // 保存这一小步的起点状态
+            // Preserve the accepted state at the start of this trial substep.
 #pragma omp simd
             for (int i = 0; i < NEQ; ++i)
             {
@@ -86,7 +84,7 @@ struct Solver_BE_NR
             bool step_converged = false;
             double current_err = 0.0;
 
-            // ================= 内层循环：牛顿迭代 =================
+            // Newton iteration for the backward-Euler residual.
             for (int iter = 0; iter < max_newton_iter; ++iter)
             {
                 double enuc = 0.0;
@@ -95,7 +93,7 @@ struct Solver_BE_NR
                 double T_current = X_k[NEQ - 1];
                 double eta = eos.get_eta(rho, T_current, X_k);
 
-                // 1. 调用物理策略求导
+                // Evaluate the network RHS and its analytic Jacobian data.
                 NetType::eval_rhs(X_k, rho, eta, RHS, enuc);
 
                 // Timmes network derivatives: composition block, nuclear-energy
@@ -109,7 +107,7 @@ struct Solver_BE_NR
                 // Match the original Timmes self-heating Jacobian exactly:
                 // dT/dt = enuc/cv and J_T,* = J_enuc,*/cv.  Timmes obtains cv
                 // analytically from Helmholtz but does not differentiate cv in
-                // the ODE Jacobian.  Temperature itself is never perturbed here.
+                // the ODE Jacobian. Temperature is not perturbed by this column.
                 const double cv = std::max(eos.get_cv(rho, T_current, X_k),
                                            1.0e-10);
                 const double inv_cv = 1.0 / cv;
@@ -124,7 +122,7 @@ struct Solver_BE_NR
                 }
                 A.set(NEQ, NEQ, denuc_dT * inv_cv);
 
-                // 4. 数学拼装：A = I - dt*J, b = X_old - X_k + dt*RHS
+                // Assemble A=I-dt*J and b=X_old-X_k+dt*RHS(X_k).
                 for (int i = 0; i < NEQ; ++i)
                 {
                     b[i] = X_old[i] - X_k[i] + dt * RHS[i];
@@ -137,15 +135,14 @@ struct Solver_BE_NR
                     A.set(i + 1, i + 1, A(i + 1, i + 1) + 1.0);
                 }
 
-                // 3. 求解线性方程组
+                // Solve the Newton correction A*dX=b.
                 bool success = LinearSolver::template solve<NEQ, MAX_N>(A, b);
                 if (!success)
                 {
-                    break; // 矩阵奇异，直接跳出内循环，要求外循环缩小 dt
+                    break; // A singular matrix rejects the substep; the outer loop reduces dt.
                 }
 
-                // [核心修复]：检查解出的更新量 b 是否包含 NaN！
-                // 如果包含 NaN 或 Inf，说明虽然矩阵分解成功了，但数值已经爆炸，必须立刻中断并缩小步长
+                // Reject non-finite Newton updates and retry with a smaller step.
                 bool has_nan = false;
                 for (int i = 0; i < NEQ; ++i)
                 {
@@ -160,10 +157,10 @@ struct Solver_BE_NR
                     break;
                 }
 
-                // 4. 计算当前状态的权重 (用于评估 b 也就是 dX 的误差)
+                // Weight the Newton correction b=dX at the current iterate.
                 OdeMath::calc_weights<NEQ>(X_k, rtol, atol, W);
 
-                // 5. 向量更新：Y_{k+1} = X_k + b
+                // Apply Y_{k+1}=X_k+b and check physical admissibility.
                 bool admissible = true;
                 double mass_sum = 0.0;
                 const double negative_tolerance = 10.0 * atol;
@@ -177,6 +174,9 @@ struct Solver_BE_NR
                     mass_sum += X_trial[i];
                 }
                 X_trial[NEQ - 1] = X_k[NEQ - 1] + b[NEQ - 1];
+                // Bound temperature to the supported burn/EOS range. The
+                // 100*rtol composition allowance avoids rejecting roundoff-
+                // scale Newton iterates before final normalization.
                 if (!std::isfinite(X_trial[NEQ - 1])
                     || X_trial[NEQ - 1] < burn_cfg.smallt
                     || X_trial[NEQ - 1] > 1.0e11
@@ -186,11 +186,10 @@ struct Solver_BE_NR
                 }
                 if (!admissible) break;
 
-                // 6. 物理边界截断器兜底！(防止迭代中途出现负质量或绝对零度)
-                // 7. 使用 WRMS 范数计算更新量 dX 的加权误差
+                // Evaluate the weighted Newton update over all ODE components.
                 current_err = OdeMath::wrms_norm<NEQ>(b, W);
 
-                // 根据 WRMS 规范，误差 < 1.0 即可认为收敛（有时用更严的 0.1）
+                // WRMS values below one satisfy the configured error scale.
                 if (current_err < 1.0)
                 {
                     double projected_sum = 0.0;
@@ -221,6 +220,7 @@ struct Solver_BE_NR
                          rtol * std::abs(old_eint), 1.0});
                     const double closure_error =
                         std::abs(thermal_delta - integrated_enuc) / closure_scale;
+                    // Reject thermal/nuclear energy disagreement above five percent.
                     if (!std::isfinite(closure_error) || closure_error > 5.0e-2) {
                         break;
                     }
@@ -232,12 +232,11 @@ struct Solver_BE_NR
 
                 for (int i = 0; i < NEQ; ++i) X_k[i] = X_trial[i];
             }
-            // ==================================================
 
-            // ================= 步长控制与状态更新 =================
+            // Accept the converged state or reject and reduce the substep.
             if (step_converged)
             {
-                // 迭代成功：接受更新，时间向前推进
+                // Commit a converged state and advance internal time.
                 t_current += dt;
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i)
@@ -245,27 +244,29 @@ struct Solver_BE_NR
                     X_ODE[i] = X_k[i];
                 }
 
-                // 1. 使用 PI 控制器计算初步的理想步长
+                // Obtain the unconstrained next substep from the PI controller.
                 double dt_new = OdeMath::pi_controller(current_err, err_prev, dt,
                                                        1,
                                                        burn_cfg.odeconfig.dt_safe_factor,
                                                        burn_cfg.odeconfig.dt_fac_min,
                                                        burn_cfg.odeconfig.dt_fac_max);
 
-                // 2. 强行截断放缩比例，防止步长剧烈震荡
+                // Limit growth and shrinkage to avoid large step-size oscillations.
                 dt_new = std::max(dt * burn_cfg.odeconfig.dt_fac_min,
                                   std::min(dt * burn_cfg.odeconfig.dt_fac_max, dt_new));
 
-                // 3. 乘以安全系数，保守推进
+                // Apply the configured safety factor after the growth bounds.
                 dt = dt_new * burn_cfg.odeconfig.dt_safe_factor;
                 err_prev = current_err;
             }
             else
             {
-                // 迭代失败 (发散或奇异)：拒绝更新，砍掉步长重新算这一步
+                // A divergent or singular Newton solve rejects the state and
+                // quarters dt before retrying the same internal interval.
                 dt *= 0.25;
 
-                // 如果 dt 已经小到物理极限依然发散，则报错退出防止死循环
+                // 1e-22 s is the hard stall guard; smaller substeps would not
+                // make meaningful time progress in double precision.
                 if (dt < 1e-22)
                 {
                     std::cerr << "[BE-NR] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
@@ -273,9 +274,8 @@ struct Solver_BE_NR
                 }
             }
         }
-        // ==================================================
 
-        dt_rec = dt; // 将最后一次成功并且被 PI 控制器计算出的稳定步长返回
-        return true; // 成功跨越了宏观的 dt_target
+        dt_rec = dt; // Return the PI controller's final stable substep recommendation.
+        return true; // The solver covered the complete requested interval.
     }
 };

@@ -1,8 +1,10 @@
 #pragma once
-// Generated only from the uploaded Timmes public_aprox21.f90.
-// Regenerate with scripts/translate_timmes_rates.py; do not hand-edit.
+// Mechanically translated from Frank Timmes's public_aprox21.f90.
+// Upstream index: https://cococubed.com/code_pages/burn.shtml.
+// Preserve the embedded source-line references when regenerating this file.
 #include <algorithm>
 #include <cmath>
+
 #include "../timmes_common/RatePair.h"
 #include "../timmes_common/TfactorsData.h"
 

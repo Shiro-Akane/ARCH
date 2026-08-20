@@ -12,31 +12,28 @@
  */
 #pragma once
 
-#include <string>
-#include <vector>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
-
-#include "eos_Utils.h"
 #include "eos.h"
+#include "eos_Utils.h"
 
 #include "../species/Species.h"
 
-// ====================================================================
-// 1. Device View: 16 顶点四线性插值核心
-// ====================================================================
+// Non-owning view for 16-vertex quadrilinear interpolation.
 struct Tabular4DEOSView
 {
-    // --- 表格维度与边界 (新增 A 和 Z) ---
+    // Table dimensions and coordinate bounds for rho, energy, Abar, and Zbar.
     int n_rho, n_T, n_A, n_Z;
     double log_rho_min, log_rho_max, dlog_rho;
     double log_T_min, log_T_max, dlog_T;
     double A_min, A_max, dA;
     double Z_min, Z_max, dZ;
 
-    // --- 数据裸指针 ---
+    // Non-owning table pointers.
     const double *table_P;
     const double *table_E;
     const double *table_cs;
@@ -50,21 +47,18 @@ struct Tabular4DEOSView
     static constexpr double k_B_cgs = 1.380649e-16; // erg/K
     static constexpr double m_u_cgs = 1.660539e-24; // g
 
-    // ========================================================
-    // 边界检测与解析回退 (Ideal Gas Fallback)
-    // ========================================================
-
-    // 检查是否超出插值表范围
+    // Domain check and analytic ideal-gas fallback.
     bool is_out_of_bounds(double log_rho, double log_T, double A, double Z) const
     {
-        // 允许边界内极小误差 (1e-6)
+        // The 1e-6 margin keeps a rounded upper-bound coordinate from selecting
+        // a cell whose +1 interpolation vertex lies outside the table.
         return (log_rho < log_rho_min || log_rho >= log_rho_max - 1e-6 ||
                 log_T < log_T_min || log_T >= log_T_max - 1e-6 ||
                 A < A_min || A >= A_max - 1e-6 ||
                 Z < Z_min || Z >= Z_max - 1e-6);
     }
 
-    // 解析推导: 获取等效 Gamma (单原子理想气体通常为 5/3)
+    // Monatomic ideal-gas ratio used only outside the tabulated domain.
     double fallback_gamma() const { return 5.0 / 3.0; }
 
     double fallback_pressure(double rho, double e) const
@@ -84,9 +78,7 @@ struct Tabular4DEOSView
         return std::sqrt(fallback_gamma() * p / rho);
     }
 
-    // ========================================================
-    // 核心：四线性插值 (Quadrilinear Interpolation)
-    // ========================================================
+    // Quadrilinear interpolation.
     double interpolate_4d(const double *table, double rho, double T, double A, double Z) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
@@ -97,29 +89,29 @@ struct Tabular4DEOSView
         double u = A;
         double v = Z;
 
-        // 边界检查交给上层调用函数处理
-        // 此处严格要求传入的 (x, y, u, v) 已在界内
+        // The public query checks bounds; this kernel requires x, y, u, and v
+        // to lie inside the table.
         int i = static_cast<int>((x - log_rho_min) / dlog_rho);
         int j = static_cast<int>((y - log_T_min) / dlog_T);
         int k = static_cast<int>((u - A_min) / dA);
         int l = static_cast<int>((v - Z_min) / dZ);
 
-        // 防御性越界保护 (防止浮点精度导致的下标溢出)
+        // Clamp lower vertices so roundoff cannot invalidate a +1 neighbor.
         i = std::max(0, std::min(i, n_rho - 2));
         j = std::max(0, std::min(j, n_T - 2));
         k = std::max(0, std::min(k, n_A - 2));
         l = std::max(0, std::min(l, n_Z - 2));
 
-        // 计算局部偏移 [0, 1)
+        // Fractional offsets within the enclosing four-dimensional cell.
         double tx = (x - (log_rho_min + i * dlog_rho)) / dlog_rho;
         double ty = (y - (log_T_min + j * dlog_T)) / dlog_T;
         double tu = (u - (A_min + k * dA)) / dA;
         double tv = (v - (Z_min + l * dZ)) / dZ;
 
-// 辅助宏：计算 4D 展平数组的 1D 索引 -> i*(NT*Na*Nz) + j*(Na*Nz) + k*Nz + l
+// Flatten (i,j,k,l) as i*(n_T*n_A*n_Z)+j*(n_A*n_Z)+k*n_Z+l.
 #define IDX(ii, jj, kk, ll) ((ii) * n_T * n_A * n_Z + (jj) * n_A * n_Z + (kk) * n_Z + (ll))
 
-        // 降维折叠法：第一步，沿着 Z 轴插值，将 16 个顶点折叠为 8 个顶点
+        // Collapse 16 vertices to 8 along Zbar.
         double c000 = table[IDX(i, j, k, l)] * (1.0 - tv) + table[IDX(i, j, k, l + 1)] * tv;
         double c100 = table[IDX(i + 1, j, k, l)] * (1.0 - tv) + table[IDX(i + 1, j, k, l + 1)] * tv;
         double c010 = table[IDX(i, j + 1, k, l)] * (1.0 - tv) + table[IDX(i, j + 1, k, l + 1)] * tv;
@@ -130,36 +122,34 @@ struct Tabular4DEOSView
         double c111 = table[IDX(i + 1, j + 1, k + 1, l)] * (1.0 - tv) + table[IDX(i + 1, j + 1, k + 1, l + 1)] * tv;
 #undef IDX
 
-        // 第二步：沿着 A 轴插值，将 8 个点折叠为 4 个点
+        // Collapse 8 values to 4 along Abar.
         double c00 = c000 * (1.0 - tu) + c001 * tu;
         double c10 = c100 * (1.0 - tu) + c101 * tu;
         double c01 = c010 * (1.0 - tu) + c011 * tu;
         double c11 = c110 * (1.0 - tu) + c111 * tu;
 
-        // 第三步：沿着 e 轴 (Y方向) 插值，将 4 个点折叠为 2 个点
+        // Collapse 4 values to 2 along specific internal energy.
         double c0 = c00 * (1.0 - ty) + c01 * ty;
         double c1 = c10 * (1.0 - ty) + c11 * ty;
 
-        // 第四步：沿着 rho 轴 (X方向) 插值，得到最终 1 个结果
+        // Collapse the final pair along density.
         return c0 * (1.0 - tx) + c1 * tx;
     }
 
-    // ========================================================
-    // 状态查询接口 (提取 A_bar 和 Z_bar)
-    // ========================================================
+    // Composition coordinates Abar and Zbar.
 
     double get_Abar(const double *Xi) const
     {
         if (specs && specs->count() > 0)
             return specs->calc_Abar(Xi);
-        return 14.0; // 兜底：假设纯氮
+        return 14.0; // Pure-nitrogen fallback when species metadata is absent.
     }
 
     double get_Zbar(const double *Xi) const
     {
         if (specs && specs->count() > 0)
             return specs->calc_Zbar(Xi);
-        return 7.0; // 兜底：假设纯氮
+        return 7.0; // Matches the pure-nitrogen Abar fallback above.
     }
 
     double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
@@ -324,7 +314,7 @@ struct Tabular4DEOSView
         double T = get_temperature(rho, e, Xi);
         if (is_out_of_bounds(std::log10(rho), std::log10(T), A, Z))
         {
-            return e * (fallback_gamma() - 1.0); // 解析偏导数 dP/drho
+            return e * (fallback_gamma() - 1.0); // Ideal-gas (dP/drho)_e.
         }
 
         if (table_dP_drho)
@@ -341,7 +331,7 @@ struct Tabular4DEOSView
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         if (is_out_of_bounds(std::log10(rho), std::log10(e), A, Z))
         {
-            return rho * (fallback_gamma() - 1.0); // 解析偏导数 dP/de
+            return rho * (fallback_gamma() - 1.0); // Ideal-gas (dP/de)_rho.
         }
 
         double T = get_temperature(rho, e, Xi);
@@ -366,20 +356,14 @@ struct Tabular4DEOSView
 
     double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
 
-    // =========================================================
     // Pipeline: evaluate_state
-    // =========================================================
     void evaluate_state(eos_state_t& state) const {
-        // =========================================================
         // 1. Core Thermodynamics (P, E, cv)
-        // =========================================================
         state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
         state.E = get_eint_from_T(state.rho, state.T, state.Xi);
         state.cv = get_cv(state.rho, state.T, state.Xi);
 
-        // =========================================================
         // 2. Derivatives and Sound Speed
-        // =========================================================
         state.sound_speed = get_sound_speed_from_rho_T(state.rho, state.T, state.Xi);
         state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
         state.dp_dT = 0.0;
@@ -388,9 +372,7 @@ struct Tabular4DEOSView
             state.dp_dT = interpolate_4d(table_dP_dT, state.rho, state.T, A, Z);
         }
 
-        // =========================================================
         // 3. Deep Physical Variables (Unused in Tabular)
-        // =========================================================
         state.pele = 0.0;
         state.xne = 0.0;
         state.eta = 0.0;
@@ -399,9 +381,7 @@ struct Tabular4DEOSView
     const SpeciesManager* get_species_manager() const { return specs; }
 };
 
-// ====================================================================
-// 2. Host Manager: HDF5 4D 数据加载
-// ====================================================================
+// Host owner for HDF5 loading and table lifetime.
 struct Tabular4DEOS : public EOSBase
 {
 private:

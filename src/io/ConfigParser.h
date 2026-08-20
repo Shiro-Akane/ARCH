@@ -1,19 +1,19 @@
 /**
  * @file ConfigParser.h
  * @brief A lightweight, text-based configuration file parser.
- * * Supports simple "key = value" syntax.
- * * Handles inline comments (starting with '#') and whitespace trimming.
- * * Provides type-safe accessors (Int, Double, String) with default fallbacks.
+ * Supports simple "key = value" syntax.
+ * Handles inline comments (starting with '#') and whitespace trimming.
+ * Provides type-safe accessors (Int, Double, String) with default fallbacks.
  */
 
 #pragma once
 
-#include <iostream>
+#include <algorithm>
 #include <fstream>
+#include <iostream>
+#include <map>
 #include <sstream>
 #include <string>
-#include <map>
-#include <algorithm>
 
 class ConfigParser
 {
@@ -38,12 +38,12 @@ private:
 public:
     /**
      * @brief Loads and parses the specified configuration file.
-     * * Parsing Rules:
+     * Parsing Rules:
      * 1. Ignores empty lines.
      * 2. Ignores text after '#' (comments).
      * 3. Splits lines by the first '=' character into Key and Value.
      * 4. Trims whitespace around Keys and Values.
-     * * @param filename Path to the configuration file.
+     * @param filename Path to the configuration file.
      * @return true if file opened and parsed successfully, false otherwise.
      */
     bool Load(const std::string &filename)

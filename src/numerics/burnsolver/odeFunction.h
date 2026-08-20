@@ -4,8 +4,8 @@
  */
 #pragma once
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 #include "../../data/GlobalDefs.h"
 #include "../../physics/nse/nse_solver.h"
@@ -13,17 +13,16 @@
 namespace OdeMath
 {
 
-    // =================================================================
-    // 1. 基础向量操作 (Vector Math)
-    // =================================================================
+    // Basic vector operations.
 
     /**
-     * @brief X_new = X_old + alpha * dX (通用向量更新)
+     * @brief Apply the generic vector update X_new = X_old + alpha*dX.
      */
     template <int ODE_NEQ>
     void vec_axpy(const double *X_old, double alpha, const double *dX, double *X_new)
     {
-        // 因为 ODE_NEQ 是模板参数(编译期常量)，编译器会在此处进行激进的循环展开
+        // ODE_NEQ is a compile-time constant, allowing vectorization and full
+        // unrolling for the compact supported network sizes.
 #pragma omp simd
         for (int i = 0; i < ODE_NEQ; ++i)
         {
@@ -31,12 +30,10 @@ namespace OdeMath
         }
     }
 
-    // =================================================================
-    // 2. 误差控制与权重计算 (Error Control)
-    // =================================================================
+    // Error weights and norms.
 
     /**
-     * @brief 计算每个变量的误差权重 W_i = RTOL * |Y_i| + ATOL
+     * @brief Compute component weights W_i = RTOL*|Y_i| + ATOL.
      */
     template <int ODE_NEQ>
     void calc_weights(const double *Y, double rtol, double atol, double *W)
@@ -49,7 +46,7 @@ namespace OdeMath
     }
 
     /**
-     * @brief 计算加权均方根误差 (WRMS Norm)
+     * @brief Compute the weighted root-mean-square error norm.
      */
     template <int ODE_NEQ>
     double wrms_norm(const double *err_vec, const double *weight_vec)
@@ -63,19 +60,18 @@ namespace OdeMath
         return std::sqrt(sum / ODE_NEQ);
     }
 
-    // =================================================================
-    // 3. 物理守恒与安全截断 (Physics Enforcers)
-    // =================================================================
+    // Physical admissibility helpers.
 
     /**
-     * @brief 质量分数守恒强加器 (Mass Conservation Enforcer)
-     * 只对前 NUM_SPECIES 个元素操作，忽略温度 T
+     * @brief Clip and normalize the species mass fractions.
+     * Only the first NUM_SPECIES entries are composition; the final temperature
+     * component is deliberately excluded.
      */
     template <int NUM_SPECIES>
     void enforce_mass_conservation(double *Y, double smallx)
     {
         double sum_X = 0.0;
-        // 1. 修正极小负值（由于数值截断误差产生）
+        // Remove small negative values introduced by truncation error.
         for (int i = 0; i < NUM_SPECIES; ++i)
         {
             if (Y[i] < smallx)
@@ -83,7 +79,7 @@ namespace OdeMath
             sum_X += Y[i];
         }
 
-        // 2. 归一化
+        // Normalize the surviving mass fractions to unit sum.
         double inv_sum = 1.0 / sum_X;
 #pragma omp simd
         for (int i = 0; i < NUM_SPECIES; ++i)
@@ -93,8 +89,7 @@ namespace OdeMath
     }
 
     /**
-     * @brief 温度安全截断器
-     * 假设温度固定在数组的最后一个位置 (ODE_NEQ - 1)
+     * @brief Clamp the temperature stored in the final ODE component.
      */
     template <int ODE_NEQ>
     void enforce_temperature_bounds(double *Y, double T_min, double T_max)
@@ -106,21 +101,19 @@ namespace OdeMath
             Y[T_INDEX] = T_max;
     }
 
-    // =================================================================
-    // 4. 自适应步长 PI 控制器 (PI Step Size Controller)
-    // =================================================================
+    // Adaptive PI step-size controller.
 
     /**
-     * @brief 根据当前误差和上一步误差，计算下一步的 dt 缩放因子
-     * @param err_n    当前步的 WRMS 误差
-     * @param err_n_1  上一步的 WRMS 误差
-     * @param dt_n     当前步长
-     * @return         新步长 dt_next
+     * @brief Compute the next step from current and previous WRMS errors.
+     * @param err_n Current-step WRMS error.
+     * @param err_n_1 Previous-step WRMS error.
+     * @param dt_n Current step size.
+     * @return Proposed step size dt_next.
      */
     inline double pi_controller(double err_n, double err_n_1, double dt_n,
                          int order_q, double safe, double min_fac, double max_fac)
     {
-        // 动态计算基于阶数的控制参数 (Hairer & Wanner 标准设定)
+        // Hairer-Wanner PI exponents scale with the formal method order.
         const double k1 = 0.7 / order_q;
         const double k2 = 0.2 / order_q;
 
@@ -132,16 +125,14 @@ namespace OdeMath
         return dt_n * fac;
     }
 
-    // =================================================================
-    // 5. NSE 自洽循环 (NSE Self-Consistency Loop)
-    // =================================================================
+    // Self-consistent NSE projection.
     template <typename NetType, typename EOSType>
     bool integrate_nse_state(double* state, double rho,
                              double dt_target, const EOSType& eos,
                              const BurnConfig& burn_cfg,
                              double& dt_rec)
     {
-        // 从 NetType 动态提取维度信息
+        // Network dimensions are compile-time properties of NetType.
         constexpr int NEQ = NetType::ODE_NEQ;
         constexpr int NUM_SPEC = NetType::NUM_SPECIES;
         constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
@@ -180,6 +171,8 @@ namespace OdeMath
         };
 
         auto closed = [](const Candidate& candidate) {
+            // A 1e-12 relative residual targets near-double-precision closure
+            // without requiring bitwise cancellation of EOS energies.
             constexpr double closure_rtol = 1.0e-12;
             return std::abs(candidate.residual) <= closure_rtol * candidate.scale;
         };
@@ -193,6 +186,7 @@ namespace OdeMath
         };
 
         const double minimum_temperature = std::max(burn_cfg.nseTempThreshold, burn_cfg.smallt);
+        // Timmes burn/NSE states above 1e11 K are outside the maintained range.
         constexpr double maximum_temperature = 1.0e11;
         if (old_temperature < minimum_temperature || old_temperature > maximum_temperature) {
             return false;
@@ -204,6 +198,7 @@ namespace OdeMath
 
         Candidate previous;
         bool have_previous = false;
+        // Twenty safeguarded Newton attempts bound work before bracketing fallback.
         for (int iter = 0; iter < 20; ++iter) {
             double derivative = eos.get_cv(rho, current.temperature, current.x);
             if (have_previous && current.temperature != previous.temperature) {
@@ -213,12 +208,15 @@ namespace OdeMath
             if (!std::isfinite(derivative) || derivative <= 0.0) break;
 
             double delta_temperature = -current.residual / derivative;
+            // Limit one Newton correction to half the current temperature so
+            // the undamped proposal cannot cross zero.
             const double step_limit = 0.5 * current.temperature;
             delta_temperature = std::clamp(delta_temperature, -step_limit, step_limit);
 
             bool improved = false;
             double alpha = 1.0;
             Candidate trial;
+            // Sixteen trial levels reach a minimum damping of 2^-15 before fallback.
             for (int line_search = 0; line_search < 16; ++line_search) {
                 const double trial_temperature = std::clamp(current.temperature + alpha * delta_temperature, minimum_temperature, maximum_temperature);
                 if (trial_temperature == current.temperature) break;
@@ -253,23 +251,21 @@ namespace OdeMath
         return false;
     }
 
-    // =================================================================
-    // 6. Bader-Deuflhard 多项式外推与控制 (Extrapolation & Control)
-    // =================================================================
+    // Bader-Deuflhard polynomial extrapolation.
 
     /**
-     * @brief 执行多项式外推 (Polynomial Extrapolation)
-     * @param k 当前的外推层级 (0 to MAX_K-1)
-     * @param n_seq BD 序列 (如 2, 6, 10, 14...)
-     * @param T 外推表 T[k][j][NEQ]
-     * @param y_err 输出的截断误差估计
+     * @brief Raise the semi-implicit midpoint solution through polynomial extrapolation.
+     * @param k Current extrapolation level in [0, MAX_K-1].
+     * @param n_seq Bader-Deuflhard substep sequence, such as 2, 6, 10, 14.
+     * @param T Extrapolation tableau T[k][j][NEQ].
+     * @param y_err Output truncation-error estimate.
      */
     template <int ODE_NEQ, int MAX_K>
     void bd_extrapolate(int k, const int* n_seq,
                         double T[MAX_K][MAX_K][ODE_NEQ],
                         double* y_err)
     {
-        // 从 j=1 开始，利用低阶的解外推高阶
+        // Starting at j=1, combine lower-order entries to obtain the next order.
         for (int j = 1; j <= k; ++j)
         {
             double fac = static_cast<double>(n_seq[k] * n_seq[k]) /
@@ -283,7 +279,8 @@ namespace OdeMath
             }
         }
 
-        // 误差估计：最高阶与其上一阶的差值 (Deuflhard 标准截断误差)
+        // Deuflhard's truncation estimate is the difference between the two
+        // highest available extrapolation orders.
         if (k > 0) {
 #pragma omp simd
             for (int i = 0; i < ODE_NEQ; ++i) {

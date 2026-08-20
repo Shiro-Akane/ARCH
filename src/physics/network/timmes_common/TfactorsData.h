@@ -1,3 +1,5 @@
+// Temperature factors translated from tfactors.dek in Frank Timmes's public
+// networks: https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <cmath>

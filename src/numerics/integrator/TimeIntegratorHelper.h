@@ -13,20 +13,19 @@
 
 #pragma once
 
-#include <vector>
 #include <algorithm>
+#include <vector>
+
+#include "../../amr/AMRControl.h"
+#include "../../amr/AMRFluxRegistering.h"
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
 #include "../../grid/GridMetrics.h"
-#include "../../amr/AMRControl.h"
 #include "../../physics/gravity/IGravityPolicy.h"
-#include "../../amr/AMRFluxRegistering.h"
 
 namespace TimeIntegration
 {
-    // ---------------------------------------------------------
     // Helper 1: Accumulate Flux Divergence
-    // ---------------------------------------------------------
     inline void accumulate_divergence(
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
         const std::vector<FluidVector> &fluxes, const std::vector<double> &spec_fluxes,
@@ -63,11 +62,9 @@ namespace TimeIntegration
         }
     }
 
-    // ---------------------------------------------------------
     // Helper: Geometric Source Terms (cylindrical / spherical)
-    // ---------------------------------------------------------
-    // 柱坐标：径向动量方程源项 S = +p/r
-    // 球坐标：径向动量方程源项 S = +2p/r
+    // Radial pressure source: S=+p/r in cylindrical coordinates and +2p/r
+    // in spherical coordinates.
     template <typename EosType>
     inline void add_geometric_sources(
         std::vector<FluidVector> &dU,
@@ -153,9 +150,7 @@ namespace TimeIntegration
         }
     }
 
-    // ---------------------------------------------------------
     // Helper: Physical Source Terms (Gravity)
-    // ---------------------------------------------------------
     inline void add_gravity_sources(
         std::vector<FluidVector> &dU,
         const FluidState &state,
@@ -163,14 +158,13 @@ namespace TimeIntegration
         double dt,
         const Physical::Gravity::IGravityPolicy* gravity)
     {
-        // For purely CPU implementations, we can still use the grid loop if the interface delegates back, or the interface implements the loop directly!
-        // Based on our IGravityPolicy design, we call add_sources_on_patch!
+        // Gravity policies own the patch loop; this call preserves the same
+        // source-term contract for host and backend-specific implementations.
         if (gravity) {
             gravity->add_sources_on_patch(dU, state, grid, dt, nullptr);
         }
     }    // ---------------------------------------------------------
     // Helper 2: Generalized Weighted RK Update
-    // ---------------------------------------------------------
     inline void perform_stage_update(
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
         const std::vector<FluidVector> &dU, const std::vector<double> &d_spec,
@@ -205,17 +199,17 @@ namespace TimeIntegration
                     U_new.mom_u = 0.0;
                     U_new.mom_v = 0.0;
                     U_new.mom_w = 0.0;
-                    // Reset energy such that e_int is small, e.g., 1e-10
+                    // Use the same positive specific-energy floor as the repair path below.
                     U_new.eng = sml_rho * 1e-10;
                 }
                 else
                 {
-                    // 动能
+                    // Kinetic-energy density removed before applying the internal-energy bounds.
                     double e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
 
-                    // 速度上限截断 (Velocity Ceiling)
-                    // 防止近真空区被注入动量后产生超光速(如 1e24 cm/s)，导致 CFL 直接崩溃
-                    double max_vel = 1e10; // 10,000 km/s，远大于正常流体速度，不影响真实物理
+                    // Limit repaired states to 1e10 cm/s so vanishing density
+                    // cannot inject an unbounded kinetic-energy density.
+                    double max_vel = 1e10;
                     double v_sq = 2.0 * e_kin / U_new.rho;
                     if (v_sq > max_vel * max_vel) {
                         double scale = max_vel / std::sqrt(v_sq);
@@ -225,9 +219,8 @@ namespace TimeIntegration
                         e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
                     }
 
-                    // 物理合理性截断 (Specific Internal Energy Floor & Ceiling)：
-                    // 防止因数值波动（如下冲或真空加热）导致比内能出现极小负数或爆增到 1e38 导致声速崩溃。
-                    // 上限 1e21 erg/g 对应 T ~ 10^12 K，远高于天体爆轰真实温度，安全且不会影响真实物理。
+                    // A positive 1e-10 erg/g floor prevents EOS calls at zero or
+                    // negative internal energy; max_eint is supplied by configuration.
                     double current_eint = (U_new.eng - e_kin) / U_new.rho;
                     double min_eint = 1e-10;
 
@@ -270,10 +263,8 @@ namespace TimeIntegration
         }
     }
 
-    // ---------------------------------------------------------
-    // Helper 3: Evaluate Fluxes for all Dimensions
-    // Note: Template requires FluxSchemePolicy to call compute_fluxes
-    // ---------------------------------------------------------
+    // Helper 3: Evaluate fluxes in every active dimension.
+    // FluxSchemePolicy supplies compute_fluxes for the selected reconstruction.
     template <typename FluxSchemePolicy, typename EosType>
     inline void evaluate_all_dimensions(
         amr::AMRControl* amr_ctrl, int block_id,

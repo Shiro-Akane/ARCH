@@ -1,20 +1,17 @@
 /**
  * @file Networks.h
- * @brief 统一网络聚合总线 (Static Duck Typing)
- * 不再需要虚基类和工厂，纯粹作为具体网络类型的引入点。
+ * @brief Compile-time network include surface for static duck typing.
  */
 #pragma once
 
-// 引入底层所需的矩阵类型定义
-#include "../../numerics/linalg/DenseWrap.h"
-#include "../../numerics/linalg/SparseWrap.h"
+// Linear algebra backends shared by all networks.
+#include "../linalg/DenseWrap.h"
+#include "../linalg/SparseWrap.h"
 
-// 聚合所有可用的网络模块
+// Nuclear reaction-network policies.
 #include "../../physics/network/aprox13/NetAprox13.h"
 #include "../../physics/network/aprox19/NetAprox19.h"
 #include "../../physics/network/aprox21/NetAprox21.h"
 #include "../../physics/network/iso7/NetIso7.h"
 
-// 如果你使用的是 C++20，可以在这里写一个 Concept 来约束所有的 NetType 必须实现特定接口。
-// 但在 C++11/14/17 下，由于模板的鸭子类型特性（不用提前声明，只要接口名字对得上就能编译），
-// 这个文件只需要包含上述 #include 即可。
+// NetType requirements are enforced by template instantiation.

@@ -1,3 +1,5 @@
+// ARCH assembly layer for the reaction-rate organization used by the
+// Timmes-derived aprox networks. Source details: ../TIMMES_NETWORKS_TECHNICAL_NOTE.md.
 #pragma once
 
 #include <array>

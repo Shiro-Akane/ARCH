@@ -1,26 +1,31 @@
 /**
  * @file diffusion_math.hpp
  * @brief Pure mathematical logic for stellar thermal conductivity.
- *        Decoupled from AMReX, Grid, and EOS frameworks.
- * *
- * * Workflow:
- * * 1. Intake pure thermodynamic states (T, rho, P_ele, n_ele, eta) and isotope arrays.
- * * 2. Calculate the average charge (zbar) and average atomic weight (abar).
- * * 3. Compute the opacities from different scattering mechanisms (e-i, e-e, radiative).
- * * 4. Combine the opacities using Matthiessen's rule.
- * * 5. Return the final stellar thermal conductivity.
+ *
+ * @note This framework-independent C++ adaptation follows
+ * AMReX-Astro/Microphysics conductivity/stellar/actual_conductivity.H at
+ * commit 6fb41b5f7475b42a06eb5b09ff0520c9f08aa7f0. ARCH supplies the public
+ * function interface and EOS/species coupling. The immediate upstream source
+ * and retained license are recorded in THIRD_PARTY_NOTICES.md and
+ * LICENSES/AMReX-Astro-Microphysics.txt.
+ *
+ * Workflow:
+ * 1. Intake pure thermodynamic states (T, rho, P_ele, n_ele, eta) and isotope arrays.
+ * 2. Calculate the average charge (zbar) and average atomic weight (abar).
+ * 3. Compute the opacities from different scattering mechanisms (e-i, e-e, radiative).
+ * 4. Combine the opacities using Matthiessen's rule.
+ * 5. Return the final stellar thermal conductivity.
  */
 #pragma once
 
-#include <vector>
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 namespace ConductivityMath {
 
-    // =========================================================
-    // =================== Physics Constants ===================
-    // =========================================================
+    // Transport-fit constants retained from the AMReX-Astro stellar
+    // conductivity implementation, expressed in cgs units.
     namespace Constants {
         constexpr double c_light = 29979245800.0;
         constexpr double sigma_SB = 5.670374419184432e-05;
@@ -43,13 +48,11 @@ namespace ConductivityMath {
         constexpr double PI = 3.14159265358979323846;
     }
 
-    // =========================================================
-    // =================== Core Computation ====================
-    // =========================================================
+    // Thermal-conductivity evaluation.
 
     /**
      * @brief Computes the thermal conductivity.
-     * 
+     *
      * @param T Temperature (K)
      * @param rho Density (g/cm^3)
      * @param pele Electron-positron pressure (erg/cm^3)
@@ -61,17 +64,15 @@ namespace ConductivityMath {
      * @return Computed thermal conductivity (erg/cm/K/sec)
      */
     inline double compute_stellar_conductivity(
-        double T, double rho, 
+        double T, double rho,
         double pele, double xne, double eta,
         const double* xn, int NumSpec,
-        const double* zion, 
-        const double* aion_inv) 
+        const double* zion,
+        const double* aion_inv)
     {
         using namespace Constants;
-        
-        // =========================================================
+
         // 4. Electron-Ion / Electron-Electron Opacities
-        // =========================================================
         double opac      = 0.0;
         double opac_ei   = 0.0, opac_ee = 0.0;
         double orad      = 0.0;
@@ -81,9 +82,7 @@ namespace ConductivityMath {
         double ochrs     = 0.0;
         double oh        = 0.0;
         double ov        = 0.0;
-        // =========================================================
         // 1. Abar and Zbar Setup
-        // =========================================================
         double abar = 0.0, zbar = 0.0;
         double ytot1     = 0.0;
 
@@ -178,9 +177,7 @@ namespace ConductivityMath {
         if (eta <= 500.0) {
             facetax = std::exp(0.522 * eta - 1.563);
         }
-        // =========================================================
         // 6. Matthiessen's Rule Combination
-        // =========================================================
         double opac_total = opac_ee + opac_ei + orad;
         double faceta  = 1.0 + facetax;
         double ocompt = 6.65205e-25 / (fact * faceta) * xne / rho;
@@ -201,9 +198,7 @@ namespace ConductivityMath {
 
         double dlog10 = std::log10(rho);
         double drel = 2.4e-7 * zbar/abar * T * std::sqrt(T);
-        // =========================================================
         // 2. Early Exit (Low T or Negative Zbar)
-        // =========================================================
         if (T < 1.0e2 || zbar <= 0.0) return 0.0;
         if (T <= 1.0e5) {
             drel = drel * 15.0;
@@ -294,9 +289,7 @@ namespace ConductivityMath {
             double wfac = weid * T / ymas * xne;
             double cint = 1.0;
 
-            // =========================================================
             // 3. Mathematical Intermediates
-            // =========================================================
             double con5 = iec / zbar;
             double vie = con5 * ymas * cint;
             double cie = wfac / vie;

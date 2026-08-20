@@ -14,9 +14,7 @@
 
 #include <cstdint>
 
-// ----------------------------------------------------------------------
 // Compile-time constants for Block Geometry
-// ----------------------------------------------------------------------
 namespace amr {
 
 // Number of ghost cells (guard cells) globally fixed for GPU static allocation.

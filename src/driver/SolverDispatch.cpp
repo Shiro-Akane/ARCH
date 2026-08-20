@@ -10,23 +10,21 @@
  * 3. Synchronize AMR leaves and emit diagnostics before continuing the evolution.
  */
 
-#include "SolverDispatch.h"
-
 #include <cmath>
-#include <string>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
-// 1. Core Data Structures
+#include "SolverDispatch.h"
+
+#include "../amr/AMRControl.h"
+#include "../core/RuntimeParams.h"
 #include "../data/FluidState.h"
 #include "../grid/Grid.h"
-#include "../core/RuntimeParams.h"
 #include "../interface/ProblemGenerator.h"
 #include "../io/IO.h"
 
-#include "../amr/AMRControl.h"
-
-// 2. Dispatch declarations
+// Integrator-specific translation units expose these narrow dispatch entries.
 void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
 void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
 void Dispatch_RK3(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
@@ -91,9 +89,7 @@ void print_amr_resolution_summary(const SimConfig& config)
     }
 }
 
-// =========================================================
 // Helper: Determine Ghost Cells based on Config
-// =========================================================
 int determine_required_ng(const SimConfig &config)
 {
     std::string recon = config.numerics.reconstruction;
@@ -128,9 +124,7 @@ int determine_required_ng(const SimConfig &config)
 
 } // namespace
 
-// =========================================================
 // The Public Dispatch Function
-// =========================================================
 
 void DispatchSolver(const std::string &solver_name,
                     ProblemGenerator &problem,
@@ -175,7 +169,7 @@ void DispatchSolver(const std::string &solver_name,
                 config.amr.refine_on_entropy;
             if (eos_indicator) {
                 // EOS policies are selected by the later template dispatch.  Do not
-                // approximate pressure or temperature here: initial refinement is
+                // approximate pressure or temperature in this phase: initial refinement is
                 // deferred until Driver has installed the actual EOS callback.
                 amr_ctrl.tree->DeferInitialRefinement(config.amr.lrefinemax);
             } else {

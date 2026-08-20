@@ -10,17 +10,17 @@
 
 #pragma once
 
-#include <string>
-#include <stdexcept>
+#include <algorithm>
 #include <iostream>
 #include <memory>
-#include <algorithm>
+#include <stdexcept>
+#include <string>
 
-#include "eos.h"
+#include "HelmEos.h"
 #include "IdealGas.h"
 #include "Tabular3DEOS.h"
 #include "Tabular4DEOS.h"
-#include "HelmEos.h"
+#include "eos.h"
 
 #include "../../core/RuntimeParams.h"
 #include "../species/Species.h"
@@ -30,12 +30,13 @@ bool check_eos_is_4d(const std::string& path);
 struct EOSDispatcher
 {
     inline static bool is_first_call = true;
-    inline static int table_dimension = 0; // 0: 未初始化, 3: 3D, 4: 4D
+    inline static int table_dimension = 0; // 0 is unloaded; 3 and 4 identify table rank.
     inline static std::unique_ptr<Tabular3DEOS> cached_3d = nullptr;
     inline static std::unique_ptr<Tabular4DEOS> cached_4d = nullptr;
     /**
-     * @brief 零开销静态分发器
-     * 通过泛型 Lambda 将具体的 EOS 类型在编译期注入到求解器模板中
+     * @brief Resolve a runtime EOS name and invoke a callback with its concrete policy.
+     * The generic callback preserves compile-time EOS specialization after this
+     * single runtime branch.
      */
     template <typename Func>
     static void dispatch_eos(const SimConfig &config, const SpeciesManager &specs, Func &&func)
@@ -49,13 +50,13 @@ struct EOSDispatcher
 
         if (eos_type == "ideal" || eos_type == "Ideal")
         {
-            // 对于 IdealGas，它本身既是 Manager 也是计算核心，直接传
+            // IdealGas owns no table, so the policy object is passed directly.
             IdealGas eos(config.physics.gamma, specs);
             func(eos);
         }
         else if (eos_type == "tabular" || eos_type == "Tabular")
         {
-            // 1. 获取路径
+            // Resolve the table path once before inspecting its dimensionality.
             std::string path = config.physics.eos_table_path;
             path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());
             path.erase(std::remove(path.begin(), path.end(), '\''), path.end());
@@ -74,7 +75,7 @@ struct EOSDispatcher
                 {
                     std::cout << "[EOS Dispatch] 4D Helmholtz EOS format." << std::endl;
 
-                    // 实例化 4D 管理器并分发其 View
+                    // Keep the four-dimensional owner alive while its view is in use.
                     Tabular4DEOS eos_manager(path, &specs);
                     func(eos_manager.get_view());
                 }
@@ -82,7 +83,7 @@ struct EOSDispatcher
                 {
                     std::cout << "[EOS Dispatch] 3D Tabular EOS format." << std::endl;
 
-                    // 实例化 3D 管理器并分发其 View
+                    // Keep the three-dimensional owner alive while its view is in use.
                     Tabular3DEOS eos_manager(path, &specs);
                     func(eos_manager.get_view());
                 }

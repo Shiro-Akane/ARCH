@@ -1,10 +1,14 @@
+// C++ adaptation of Frank Timmes's public_aprox13.f90 network.
+// ARCH supplies the policy interface; the rate equations and nuclear data
+// trace to https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <array>
 
+#include "TimmesRateLibrary.h"
+
 #include "../timmes_common/AproxRateAssembly.h"
 #include "../timmes_common/TimmesNetworkSupport.h"
-#include "TimmesRateLibrary.h"
 
 namespace timmes_aprox13_detail {
 

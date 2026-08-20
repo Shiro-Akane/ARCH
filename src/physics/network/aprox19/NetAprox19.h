@@ -1,11 +1,15 @@
+// C++ adaptation of Frank Timmes's public_aprox19.f90 network.
+// ARCH supplies the policy interface; the rate equations and nuclear data
+// trace to https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 #include <array>
 
+#include "TimmesRateLibrary.h"
+
 #include "../timmes_common/AproxRateAssembly.h"
 #include "../timmes_common/Ecapnuc.h"
 #include "../timmes_common/TimmesNetworkSupport.h"
-#include "TimmesRateLibrary.h"
 
 namespace timmes_aprox19_detail {
 
@@ -174,18 +178,13 @@ struct NetAprox19 : timmes::TimmesNetworkSupport<NetAprox19> {
             timmes::screen_extended_rates<RateIds>(
                 rate, temperature, rho, zbar, abar, z2bar);
 
-            // Unblock ecapnuc for irpen, irnep, irn56ec
+            // ecapnuc supplies the proton-electron and neutron-positron weak rates.
             Scalar rpen, rnep, spenc, snepc;
             timmes::ecapnuc(eta, temperature, rpen, rnep, spenc, snepc);
             rate[RateIds::irpen] = rpen;
             rate[RateIds::irnep] = rnep;
-            
-            // aprox19 actually uses irn56ec? Let's check aprox_rates.H for ni56ec
-            // Ni56 + e- -> Co56 + nu is tabulated in aprox_rates.H.
-            // Wait, aprox19 uses tabular rates for Ni56? Timmes original aprox19 does use tabular rates for Ni56 EC? 
-            // In Timmes, it's a fixed rate or tabulated. For now we only unblock irpen which uses ecapnuc.
-            // Wait, aprox19 doesn't even have irn56ec in its network, wait, it has irn56ec in RateIds!
-            // I should just unblock irpen and irnep for now since they use ecapnuc.
+            // Ni56 electron capture is represented by its dedicated tabular path;
+            // it must not be overwritten by the two ecapnuc outputs above.
         }
     }
 

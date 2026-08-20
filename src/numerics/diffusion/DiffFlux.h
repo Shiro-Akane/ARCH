@@ -1,36 +1,34 @@
 /**
  * @file DiffFlux.h
  * @brief Computes diffusion fluxes and operators for explicit time integration.
- * *
- * * Workflow:
- * * 1. Calculate diffusion coefficients (viscosity, thermal conductivity, species diffusivity).
- * * 2. Compute face-centered gradients for the requested diffusion dimension.
- * * 3. Generate diffusion fluxes and geometric source terms (for momentum).
- * * 4. Combine multi-dimensional fluxes into a generic L(U) operator.
+ *
+ * Workflow:
+ * 1. Calculate diffusion coefficients (viscosity, thermal conductivity, species diffusivity).
+ * 2. Compute face-centered gradients for the requested diffusion dimension.
+ * 3. Generate diffusion fluxes and geometric source terms (for momentum).
+ * 4. Combine multi-dimensional fluxes into a generic L(U) operator.
  */
 
 #pragma once
 
-#include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
-#include "../../data/GlobalDefs.h"
-#include "../integrator/TimeIntegratorHelper.h"
-#include <type_traits>
-#include <cmath>
-#include <vector>
 #include <algorithm>
-#include "../../physics/eos/eos_state.h"
-#include "../../physics/diffusionCoe/diffusion_math.hpp"
+#include <cmath>
+#include <type_traits>
+#include <vector>
 
-// =========================================================
-// ==================== DiffFlux Namespace =================
-// =========================================================
+#include "../integrator/TimeIntegratorHelper.h"
+
+#include "../../data/FluidState.h"
+#include "../../data/GlobalDefs.h"
+#include "../../grid/Grid.h"
+#include "../../physics/diffusionCoe/diffusion_math.hpp"
+#include "../../physics/eos/eos_state.h"
+
+// Diffusive flux and operator assembly.
 
 namespace DiffFlux
 {
-    // =========================================================
     // 1. SFINAE Checks and Coefficient Extraction
-    // =========================================================
     /**
      * @brief Retrieves diffusion coefficients. Uses eos_state_t and diffusion_math directly.
      */
@@ -39,22 +37,18 @@ namespace DiffFlux
                            double rho, double T, const double* Xi,
                            double& nu_visc, double& alpha_therm, double& D_spec)
     {
-        // =========================================================
         // 1. Initialize and Evaluate State
-        // =========================================================
         eos_state_t state;
         state.rho = rho;
         state.T = T;
         state.Xi = Xi;
-        
+
         eos.evaluate_state(state);
 
         const SpeciesManager* specs = eos.get_species_manager();
         bool is_stellar_eos = (specs && specs->count() > 0 && state.xne > 0.0);
 
-        // =========================================================
         // 2. Process Override Config Parameters
-        // =========================================================
         if (config.physics.diffusion.nu_visc > 0 || config.physics.diffusion.alpha_therm > 0) {
             if (is_stellar_eos) {
                 std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
@@ -66,9 +60,7 @@ namespace DiffFlux
             return;
         }
 
-        // =========================================================
         // 3. Compute Stellar Transport Coefficients
-        // =========================================================
         if (is_stellar_eos) {
             std::vector<double> zion(specs->count());
             std::vector<double> aion_inv(specs->count());
@@ -78,7 +70,7 @@ namespace DiffFlux
             }
 
             double cond = ConductivityMath::compute_stellar_conductivity(
-                state.T, state.rho, state.pele, state.xne, state.eta, 
+                state.T, state.rho, state.pele, state.xne, state.eta,
                 state.Xi, specs->count(),
                 zion.data(), aion_inv.data()
             );
@@ -94,9 +86,7 @@ namespace DiffFlux
         }
     }
 
-    // =========================================================
     // 2. Flux Computation
-    // =========================================================
 
     /**
      * @brief Computes physical flux density for 1D diffusion along 'dir'
@@ -109,7 +99,7 @@ namespace DiffFlux
     {
         int n_species = state.GetNumSpecies();
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
-        
+
         int k_end = (dir == 2) ? grid.Ke() + 1 : grid.Ke();
         int j_end = (dir == 1) ? grid.Je() + 1 : grid.Je();
         int i_end = (dir == 0) ? grid.Ie() + 1 : grid.Ie();
@@ -123,7 +113,7 @@ namespace DiffFlux
         #pragma omp parallel
         {
             std::vector<double> Xi_L(n_species), Xi_R(n_species), Xi_face(n_species);
-            
+
             #pragma omp for schedule(static)
             for (int k = grid.Ks(); k < k_end; ++k) {
                 for (int j = grid.Js(); j < j_end; ++j) {
@@ -137,10 +127,10 @@ namespace DiffFlux
 
                         FluidVector U_L = state.get(idx_L);
                         FluidVector U_R = state.get(idx_R);
-                        
+
                         double uL_sq = (U_L.mom_u * U_L.mom_u + U_L.mom_v * U_L.mom_v + U_L.mom_w * U_L.mom_w) / (rho_L * rho_L);
                         double uR_sq = (U_R.mom_u * U_R.mom_u + U_R.mom_v * U_R.mom_v + U_R.mom_w * U_R.mom_w) / (rho_R * rho_R);
-                        
+
                         double e_int_L = (U_L.eng - 0.5 * rho_L * uL_sq) / rho_L;
                         double e_int_R = (U_R.eng - 0.5 * rho_R * uR_sq) / rho_R;
 
@@ -182,19 +172,19 @@ namespace DiffFlux
                         // Gradient calculations
                         double dT_dx = (T_R - T_L) / dx1;
                         double q_therm = do_thermal ? (-alpha * rho_f * std::max(eos.get_cv(rho_f, T_f, Xi_face.data()), 1e-12) * dT_dx) : 0.0;
-                        
+
                         FluidVector F_diff;
                         F_diff.rho = 0.0;
-                        
+
                         double v_face_x = 0.5 * (U_L.mom_u / rho_L + U_R.mom_u / rho_R);
                         double v_face_y = 0.5 * (U_L.mom_v / rho_L + U_R.mom_v / rho_R);
                         double v_face_z = 0.5 * (U_L.mom_w / rho_L + U_R.mom_w / rho_R);
-                        
+
                         if (do_viscous) {
                             double dvx_dx = (U_R.mom_u / rho_R - U_L.mom_u / rho_L) / dx1;
                             double dvy_dx = (U_R.mom_v / rho_R - U_L.mom_v / rho_L) / dx1;
                             double dvz_dx = (U_R.mom_w / rho_R - U_L.mom_w / rho_L) / dx1;
-                            
+
                             F_diff.mom_u = -nu * rho_f * dvx_dx;
                             F_diff.mom_v = -nu * rho_f * dvy_dx;
                             F_diff.mom_w = -nu * rho_f * dvz_dx;
@@ -202,9 +192,9 @@ namespace DiffFlux
 
                         // Energy flux = thermal conduction + viscous dissipation work
                         F_diff.eng = q_therm + (F_diff.mom_u * v_face_x + F_diff.mom_v * v_face_y + F_diff.mom_w * v_face_z);
-                        
+
                         flux_out[idx_R] = F_diff;
-                        
+
                         if (do_species) {
                             for (int s = 0; s < n_species; ++s) {
                                 double dX_dx = (Xi_R[s] - Xi_L[s]) / dx1;
@@ -217,22 +207,20 @@ namespace DiffFlux
         }
     }
 
-    // =========================================================
     // 3. Geometric Source Terms
-    // =========================================================
 
     /**
      * @brief Adds vector-Laplacian geometric source terms for momentum diffusion.
      */
     template <typename EosType>
-    inline void add_geometric_sources(std::vector<FluidVector>& dU, const FluidState& state, 
+    inline void add_geometric_sources(std::vector<FluidVector>& dU, const FluidState& state,
                                       const EosType& eos, const Grid& grid, const SimConfig& config, double dt)
     {
         if (!config.physics.diffusion.use_viscous_diffusion) return;
         if (grid.geometry == "cartesian") return;
 
         int n_species = state.GetNumSpecies();
-        
+
         #pragma omp parallel
         {
             std::vector<double> Xi(n_species);
@@ -243,25 +231,25 @@ namespace DiffFlux
                         int idx = grid.GetIndex(i, j, k);
                         double rho = state.rho[idx];
                         if (rho < 1e-12) continue;
-                        
+
                         PointCoords coords = grid.GetPhysicalCoords(i, j, k);
                         double r = coords.r;
                         if (grid.geometry == "cylindrical") r = coords.r_cy;
-                        
+
                         if (r < 1e-14) continue;
-                        
+
                         state.get_species_to_buffer(idx, Xi.data());
                         FluidVector U = state.get(idx);
-                        
+
                         double u_sq = (U.mom_u * U.mom_u + U.mom_v * U.mom_v + U.mom_w * U.mom_w) / (rho * rho);
                         double e_int = (U.eng - 0.5 * rho * u_sq) / rho;
                         double T = eos.get_temperature(rho, e_int, Xi.data());
-                        
+
                         double nu, alpha, D;
                         get_coeffs(eos, config, rho, T, Xi.data(), nu, alpha, D);
-                        
+
                         double v_r = U.mom_u / rho;
-                        
+
                         if (grid.geometry == "cylindrical") {
                             dU[idx].mom_u += dt * (-nu * rho * v_r) / (r * r);
                             if (grid.dim >= 2) {
@@ -276,7 +264,7 @@ namespace DiffFlux
                                 double v_theta = U.mom_v / rho;
                                 double sin_theta = std::max(std::sin(coords.theta), 1e-14);
                                 dU[idx].mom_v += dt * (-nu * rho * v_theta) / (r * r * sin_theta * sin_theta);
-                                
+
                                 if (grid.dim == 3) {
                                     double v_phi = U.mom_w / rho;
                                     dU[idx].mom_w += dt * (-nu * rho * v_phi) / (r * r * sin_theta * sin_theta);
@@ -289,19 +277,17 @@ namespace DiffFlux
         }
     }
 
-    // =========================================================
     // 4. Operator Evaluation (L_U)
-    // =========================================================
 
     /**
      * @brief Computes L(U) = div( D grad U ) as a generic wrapper for time integrators
      */
     template <typename EosType>
-    void compute_diffusion_operator(const FluidState& state, FluidState& L_U, 
+    void compute_diffusion_operator(const FluidState& state, FluidState& L_U,
                                     const EosType& eos, const Grid& grid, const SimConfig& config)
     {
         int n_spec = state.GetNumSpecies();
-        
+
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
             L_U.rho[i] = 0.0;
@@ -348,9 +334,7 @@ namespace DiffFlux
         }
     }
 
-    // =========================================================
     // 5. Adaptive Time Stepping
-    // =========================================================
 
     /**
      * @brief Computes explicit time step limit for diffusion (dt = dx1^2 / (2 * max_coeff))
@@ -358,8 +342,8 @@ namespace DiffFlux
     template <typename EosType>
     inline double adaptive_dt_diff(const FluidState &state, const EosType &eos, const Grid &grid, const SimConfig &config, double cfl_number)
     {
-        if (!config.physics.diffusion.use_diffusion) return 1e10; 
-        
+        if (!config.physics.diffusion.use_diffusion) return 1e10;
+
         int n_species = state.GetNumSpecies();
         double min_dt = 1e10;
 
@@ -427,7 +411,7 @@ namespace DiffFlux
                             }
                             inv_dt_sum += 2.0 * max_coeff / (dx1 * dx1);
                         }
-                        
+
                         double cell_dt = 1.0 / std::max(inv_dt_sum, 1e-20);
                         local_min_dt = std::min(local_min_dt, cell_dt);
                     }

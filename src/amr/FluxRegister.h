@@ -16,6 +16,7 @@
 #include <array>
 #include <stdexcept>
 #include <vector>
+
 #include "Block.h"
 
 namespace amr {

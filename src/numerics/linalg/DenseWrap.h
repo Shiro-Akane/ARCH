@@ -1,18 +1,19 @@
 /*
  * @file DenseWrap.h
- * @brief 稠密矩阵 LU 分解求解器 (带有列主元消去)
+ * @brief Dense LU solver with partial row pivoting.
  */
 #pragma once
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
+
 #include "../../data/GlobalDefs.h"
 
 struct DenseMatrixData
 {
     double data[BurnLimits::MAX_ODE_NEQ][BurnLimits::MAX_ODE_NEQ];
 
-    // 提供给 Pynucastro 的 1-based 索引接口
+    // Preserve the one-based matrix interface used by generated network code.
     double &operator()(int i, int j)
     {
         return data[i - 1][j - 1];
@@ -30,7 +31,8 @@ struct DenseMatrixData
 
     void zero()
     {
-        // 实际开发中可以通过 ACTIVE_N 来优化清零范围
+        // Clear the fixed maximum extent because this storage type does not
+        // carry ACTIVE_N. Compact-network callers may specialize this later.
         for (int i = 0; i < BurnLimits::MAX_ODE_NEQ; ++i)
 #pragma omp simd
             for (int j = 0; j < BurnLimits::MAX_ODE_NEQ; ++j)
@@ -38,31 +40,29 @@ struct DenseMatrixData
     }
 };
 
-// =======================================================
-// 稠密矩阵 LU 分解求解器 (带有列主元消去)
-// =======================================================
+// Dense LU factorization and triangular solves.
 struct DenseLUSolver
 {
     /**
-     * @brief 求解 Ax = b
-     * @tparam ACTIVE_N 当前网络实际活跃的方程组维度 (如 Aprox19 为 20)
-     * @tparam MAX_N    内存中实际分配的最大维度 (BurnLimits::MAX_ODE_NEQ)
-     * @param A         输入矩阵 (会被原地修改为 LU 矩阵)
-     * @param b         输入右端项 (会被原地修改为解向量 x)
-     * @return bool     如果矩阵奇异则返回 false
+     * @brief Solve Ax=b in place.
+     * @tparam ACTIVE_N Active network dimension, including temperature.
+     * @tparam MAX_N Allocated storage extent, BurnLimits::MAX_ODE_NEQ.
+     * @param A Input matrix, overwritten by its combined LU factors.
+     * @param b Right-hand side, overwritten by the solution x.
+     * @return False when the matrix is numerically singular.
      */
     template <int ACTIVE_N, int MAX_N>
     static bool solve(DenseMatrixData &A, double b[MAX_N])
     {
-        int p[ACTIVE_N]; // 行置换记录数组 (栈上分配，极快)
+        int p[ACTIVE_N]; // Stack-resident logical row permutation.
 #pragma omp simd
         for (int i = 0; i < ACTIVE_N; ++i)
             p[i] = i;
 
-        // 1. LU 分解 (带有列主元选主)
+        // LU factorization with partial pivoting down each active column.
         for (int i = 0; i < ACTIVE_N; ++i)
         {
-            // 寻找当前列的最大主元
+            // Select the largest available pivot magnitude in this column.
             double max_val = 0.0;
             int pivot_row = i;
             for (int j = i; j < ACTIVE_N; ++j)
@@ -76,26 +76,26 @@ struct DenseLUSolver
             }
 
             if (max_val < 1e-20)
-                return false; // 矩阵接近奇异，直接返回失败让外层自适应缩减 dt
+                return false; // 1e-20 is the singular-pivot threshold; adaptive callers reduce dt.
 
-            // 虚拟交换行 (只交换索引，不移动内存数据)
+            // Swap logical row indices rather than moving matrix storage.
             std::swap(p[i], p[pivot_row]);
 
-            // 消元过程
+            // Eliminate entries below the pivot.
             double pivot_inv = 1.0 / A.data[p[i]][i];
             for (int j = i + 1; j < ACTIVE_N; ++j)
             {
-                A.data[p[j]][i] *= pivot_inv; // 存储 L 的乘子
+                A.data[p[j]][i] *= pivot_inv; // Store the L multiplier below the diagonal.
 #pragma omp simd
                 for (int k = i + 1; k < ACTIVE_N; ++k)
                 {
-                    A.data[p[j]][k] -= A.data[p[j]][i] * A.data[p[i]][k]; // 更新 U
+                    A.data[p[j]][k] -= A.data[p[j]][i] * A.data[p[i]][k]; // Update the U factor.
                 }
             }
         }
 
-        // 2. 前向代入 (Forward Substitution): 解 Ly = Pb
-        double y[ACTIVE_N]; // 栈上临时数组
+        // Forward substitution: solve Ly=Pb.
+        double y[ACTIVE_N]; // Compact stack workspace for the active dimension.
         for (int i = 0; i < ACTIVE_N; ++i)
         {
             y[i] = b[p[i]];
@@ -105,7 +105,7 @@ struct DenseLUSolver
             }
         }
 
-        // 3. 后向代入 (Backward Substitution): 解 Ux = y (结果直接写回 b)
+        // Back substitution: solve Ux=y and overwrite b with x.
         for (int i = ACTIVE_N - 1; i >= 0; --i)
         {
             b[i] = y[i];
@@ -120,7 +120,7 @@ struct DenseLUSolver
     }
 
     /**
-     * @brief  仅执行 LU 分解 (O(N^3))
+     * @brief Factor the matrix in O(N^3) without solving a right-hand side.
      */
     template <int ACTIVE_N, int MAX_N>
     static bool factorize(DenseMatrixData &A, int p[MAX_N])
@@ -162,7 +162,7 @@ struct DenseLUSolver
     }
 
     /**
-     * @brief 使用已分解的 LU 矩阵进行极速回代求解 (O(N^2))
+     * @brief Solve with existing LU factors in O(N^2).
      */
     template <int ACTIVE_N, int MAX_N>
     static void solve_with_factors(const DenseMatrixData &A, const int p[MAX_N], double b[MAX_N])

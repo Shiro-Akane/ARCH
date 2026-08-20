@@ -12,18 +12,16 @@
 
 #pragma once
 
+#include <type_traits>
+
 #include "Reconstruction.h"
 #include "../../grid/Grid.h"
 
 /**
- * A wide uniform-grid stencil is not valid across a 2:1 coarse-fine
- * interface: ghost samples represent prolonged/restricted cell averages with
- * a different physical width. For those few interface fluxes, use a
- * conservative second-order MUSCL reconstruction with MinMod limiting.
- *
- * This is an explicit TVD interface policy, not a failure fallback: it is
- * active only on faces marked coarse-fine by AmrTree and leaves all other
- * PPM or other wide-stencil fluxes untouched.
+ * Faces marked as 2:1 coarse-fine interfaces use conservative second-order
+ * MUSCL reconstruction with MinMod limiting. Their ghost samples represent
+ * prolonged or restricted cell averages with different physical widths.
+ * Other faces retain the configured reconstruction policy.
  */
 namespace AMRInterfaceReconstruction
 {
@@ -47,10 +45,10 @@ inline bool needs_tvd_interface_reconstruction(const Grid& grid, int dir, int i,
     return touches_lower_coarse_fine || touches_upper_coarse_fine;
 }
 
-template <typename ReconstructPolicy>
-inline void reconstruct_face(const FluidState& state, const Grid& grid,
+template <typename ReconstructPolicy, typename EosType>
+inline void reconstruct_face(const FluidState& state, const EosType& eos, const Grid& grid,
                              int dir, int i, int j, int k, int idx, int stride,
-                             int n_spec, double* Xi_L, double* Xi_R,
+                             int n_spec, double* Xi_L, double* Xi_R, double* Xi_cell,
                              FluidVector& U_L, FluidVector& U_R)
 {
     if (needs_tvd_interface_reconstruction<ReconstructPolicy>(grid, dir, i, j, k))
@@ -66,12 +64,23 @@ inline void reconstruct_face(const FluidState& state, const Grid& grid,
         return;
     }
 
-    auto reconstructed = ReconstructPolicy::run(state, idx, stride);
-    U_L = reconstructed.first;
-    U_R = reconstructed.second;
     if (n_spec > 0)
     {
         ReconstructPolicy::run_species(state, idx, n_spec, Xi_L, Xi_R, stride);
+    }
+
+    if constexpr (std::is_same_v<ReconstructPolicy, PPMReconstruction>)
+    {
+        auto reconstructed = PPMReconstruction::run_eos(
+            state, eos, idx, n_spec, Xi_L, Xi_R, Xi_cell, stride);
+        U_L = reconstructed.first;
+        U_R = reconstructed.second;
+    }
+    else
+    {
+        auto reconstructed = ReconstructPolicy::run(state, idx, stride);
+        U_L = reconstructed.first;
+        U_R = reconstructed.second;
     }
 }
 } // namespace AMRInterfaceReconstruction

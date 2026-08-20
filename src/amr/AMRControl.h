@@ -13,11 +13,13 @@
 #pragma once
 
 #include <memory>
+
 #include "AmrTree.h"
-#include "../grid/GridMetrics.h"
-#include "MemoryPool.h"
-#include "GhostExchange.h"
 #include "FluxRegister.h"
+#include "GhostExchange.h"
+#include "MemoryPool.h"
+
+#include "../grid/GridMetrics.h"
 
 namespace amr {
 
@@ -56,10 +58,10 @@ struct AMRControl {
                     for (int cell_idx = 0; cell_idx < face_ny; ++cell_idx) {
                         FluidVector delta_F = flux_register.GetSummedFlux(block_id, f, cell_idx);
 
-                        // Wait, flux_register GetSummedFlux is sum(F_fine) - F_coarse.
-                        // Or F_fine - F_coarse.
-                        // We need to ADD this divergence correction to the coarse cell!
-                        // The coarse cell index needs to be mapped back to 3D grid index!
+                        // The register stores the area-weighted mismatch
+                        // delta_F = sum(F_fine) - F_coarse for this coarse face cell.
+                        // Map the flattened face index to the adjacent active cell
+                        // before applying the conservative divergence correction.
                         int fi = 0, fj = 0, fk = 0;
                         if (c_dir == 0) {
                             fj = cell_idx % ny;
@@ -83,12 +85,9 @@ struct AMRControl {
                                                                   (f % 2) == 1);
                         const double volume = GridMetrics::CellVolume(b.grid, cell_i, cell_j, cell_k);
 
-                        // Sign convention: If f % 2 == 0 (left face), flux goes INTO the cell -> +
-                        // If f % 2 == 1 (right face), flux goes OUT OF the cell -> -
-                        // Wait, delta_F is (F_fine - F_coarse).
-                        // The coarse update was U += dt/dx (F_L - F_R).
-                        // So U += dt/dx * delta_F for Left face.
-                        // U -= dt/dx * delta_F for Right face.
+                        // The finite-volume update is U += dt/V (A_L F_L - A_R F_R).
+                        // Therefore a lower face contributes +delta_F and an upper
+                        // face contributes -delta_F.
 
                         double sign = (f % 2 == 0) ? 1.0 : -1.0;
 

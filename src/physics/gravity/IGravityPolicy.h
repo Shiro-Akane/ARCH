@@ -10,9 +10,10 @@
 
 #pragma once
 
+#include <vector>
+
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
-#include <vector>
 
 namespace Physical {
 namespace Gravity {

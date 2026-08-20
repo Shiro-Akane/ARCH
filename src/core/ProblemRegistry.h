@@ -1,22 +1,22 @@
 /**
  * @file ProblemRegistry.h
  * @brief Singleton factory for registering and creating simulation problems.
- * * Implements the Factory Design Pattern to decouple problem implementation
- * * from the main execution loop.
+ * Implements the Factory Design Pattern to decouple problem implementation
+ * from the main execution loop.
  */
 
 #pragma once
 
-#include <map>
-#include <string>
 #include <functional>
+#include <map>
 #include <memory>
+#include <string>
 
 #include "../interface/ProblemGenerator.h"
 
 /**
  * @brief Callback signature to instantiate a specific problem generator.
- * * Returns a unique_ptr to ensure ownership transfer to the caller.
+ * Returns a unique_ptr to ensure ownership transfer to the caller.
  */
 using ProblemCreator = std::function<std::unique_ptr<ProblemGenerator>()>;
 
@@ -25,7 +25,7 @@ class ProblemRegistry
 public:
     /**
      * @brief Access the global singleton instance (Meyers' Singleton).
-     * * Guaranteed to be thread-safe in C++11 and later.
+     * Guaranteed to be thread-safe in C++11 and later.
      */
     static ProblemRegistry &Get()
     {
@@ -35,7 +35,7 @@ public:
 
     /**
      * @brief Registers a new problem type with a unique string key.
-     * * Typically called by static initializers in problem-specific .cpp files.
+     * Typically called by static initializers in problem-specific .cpp files.
      * @param name The unique identifier for the problem (e.g., "Sod", "Sedov").
      * @param creator The lambda/function to create the object.
      */

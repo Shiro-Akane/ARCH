@@ -8,11 +8,10 @@
  */
 
 #include "eosdispatch.h"
-#include "highfive/H5File.hpp"
 
-// =========================================================
-// =================== Dimension Checker ===================
-// =========================================================
+#include <highfive/H5File.hpp>
+
+// Validate table dimensions before constructing an EOS policy.
 
 /**
  * @brief Checks if a given HDF5 EOS table contains 4D dataset attributes (n_A, n_Z).
@@ -21,9 +20,7 @@
  */
 bool check_eos_is_4d(const std::string& path)
 {
-    // =========================================================
     // 1. Inspect HDF5 Metadata
-    // =========================================================
     HighFive::File file(path, HighFive::File::ReadOnly);
 
     // Check for the existence of composition dimension variables (n_A and n_Z)

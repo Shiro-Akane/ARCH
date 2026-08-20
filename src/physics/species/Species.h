@@ -1,17 +1,17 @@
 /**
  * @file Species.h
  * @brief Manages the thermodynamic properties of chemical species.
- * * Defines a central registry to handle multi-species mixtures.
- * * Assumes a "Calorically Perfect Gas" model where properties like Gamma
- * * are constant constants for each species.
+ * Defines a central registry to handle multi-species mixtures.
+ * Assumes a "Calorically Perfect Gas" model where properties like Gamma
+ * are constant constants for each species.
  */
 
 #pragma once
 
-#include <string>
-#include <vector>
 #include <algorithm>
 #include <cctype>
+#include <string>
+#include <vector>
 
 #ifndef EOS_INLINE
 #define EOS_INLINE inline
@@ -31,10 +31,10 @@ struct GasProperty
 
 /**
  * @brief Central registry for all species involved in the simulation.
- * * Responsibilities:
- * * 1. Registers new species dynamically.
- * * 2. Assigns a unique integer ID (0, 1, 2...) to each species based on registration order.
- * * 3. Provides efficient O(1) access to properties via that ID.
+ * Responsibilities:
+ * 1. Registers new species dynamically.
+ * 2. Assigns a unique integer ID (0, 1, 2...) to each species based on registration order.
+ * 3. Provides efficient O(1) access to properties via that ID.
  */
 struct SpeciesManager
 {
@@ -64,7 +64,7 @@ struct SpeciesManager
     int count() const { return species_list.size(); }
 
     /**
-     * @brief 计算电子丰度 Ye (Electron Fraction)
+     * @brief Compute electron fraction Ye.
      * Ye = Sum( (Z_i / A_i) * X_i )
      */
     EOS_INLINE double calc_Ye(const double *Xi) const
@@ -79,7 +79,7 @@ struct SpeciesManager
     }
 
     /**
-     * @brief 计算平均原子量 \bar{A}
+     * @brief Compute mean atomic mass \bar{A}.
      */
     EOS_INLINE double calc_Abar(const double *Xi) const
     {
@@ -89,11 +89,11 @@ struct SpeciesManager
         {
             sum_X_over_A += Xi[k] / get_A(k);
         }
-        return (sum_X_over_A > 1e-16) ? (1.0 / sum_X_over_A) : 1.0; // 防除零
+        return (sum_X_over_A > 1e-16) ? (1.0 / sum_X_over_A) : 1.0; // Pure-hydrogen fallback for a degenerate sum.
     }
 
     /**
-     * @brief 计算平均原子序数 \bar{Z}
+     * @brief Compute mean atomic number \bar{Z}.
      */
     EOS_INLINE double calc_Zbar(const double *Xi) const
     {

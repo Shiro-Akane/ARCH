@@ -1,8 +1,10 @@
+// Nuclear constants translated from the const.dek files distributed with
+// Frank Timmes's public networks: https://cococubed.com/code_pages/burn.shtml.
 #pragma once
 
 namespace timmes::constants {
 
-// public Timmes const.dek values used by the four uploaded networks.
+// Timmes const.dek values used by the four translated networks.
 inline constexpr double avo = 6.0221417930e23;
 inline constexpr double clight = 2.99792458e10;
 inline constexpr double kerg = 1.380650424e-16;

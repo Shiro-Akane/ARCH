@@ -1,41 +1,43 @@
 /**
  * @file main.cpp
- * @brief Entry point for the ARCH Simulation Code.
- * *
- * * Workflow:
- * * 1. Parse command line arguments (Problem Type, Parameter File).
- * * 2. Load runtime parameters (Global Config).
- * * 3. Instantiate the specific Problem Generator via the Registry (Factory Pattern).
- * * 4. Configure Grid and Species based on the Problem definition.
- * * 5. Dispatch the simulation to the selected Numerical Solver (SW/LF/LW).
+ * @brief Command-line entry point for the ARCH simulation program.
+ *
+ * The entry point assembles the top-level workflow and contains no numerical
+ * method implementation:
+ * 1. Read the problem name and parameter-file path.
+ * 2. Parse runtime configuration and initialize output and logging.
+ * 3. Construct the requested problem through the registry.
+ * 4. Let the problem configure species and initial state.
+ * 5. Pass the resolved solver name to runtime dispatch and start integration.
+ *
+ * This boundary keeps command-line handling, problem definitions, and
+ * numerical policies independent so that future backends and solvers can be
+ * added without changing the application entry point.
  */
 
-#include <iostream>
-#include <string>
-#include <memory>
 #include <filesystem>
+#include <iostream>
+#include <memory>
+#include <string>
 
-#include "../src/core/RuntimeParams.h"
-#include "../src/core/ProblemRegistry.h"
+// Application control and public problem interface.
+#include "core/ProblemRegistry.h"
+#include "core/RuntimeParams.h"
+#include "interface/ProblemGenerator.h"
 
-#include "../src/interface/ProblemGenerator.h"
-#include "../src/data/GlobalDefs.h"
+// Runtime data required for startup reporting and dispatch.
+#include "amr/AmrDefines.h"
+#include "data/GlobalDefs.h"
+#include "physics/species/Species.h"
 
-#include "../src/physics/species/Species.h"
-#include "../src/driver/SolverDispatch.h"
-#include "../src/io/Logger.h"
-
-// =========================================================
-// =================== main function =======================
-// =========================================================
+// Execution and logging services.
+#include "driver/SolverDispatch.h"
+#include "io/Logger.h"
 
 int main(int argc, char **argv)
 {
-    // =========================================================
-    // 1. Input Validation & Parameter Loading
-    // =========================================================
-
-    // Check command line arguments
+    // The CLI contract has three entries: executable, problem name, and
+    // parameter file. Therefore argc must be at least three.
     if (argc < 3)
     {
         std::cerr << "Usage: ./ARCH <ProblemType> <ParFile>" << std::endl;
@@ -43,19 +45,21 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // Capture inputs
-    std::string problem_type = argv[1]; // e.g., "Sod", "BlastWave"
-    std::string par_file = argv[2];     // e.g., "arch.par"
+    // Preserve both arguments verbatim: the registry consumes the problem
+    // name, while the configuration parser consumes the path.
+    std::string problem_type = argv[1]; // For example, "Sod" or "Sedov".
+    std::string par_file = argv[2];     // For example, "simulation/Sod/Sod.par".
 
-    // Load global simulation parameters from file
-    // This initializes the singleton RuntimeParams so values can be accessed anywhere.
+    // Load configuration before constructing the problem so every downstream
+    // module observes the same SimConfig instance.
     SimConfig config;
     try
     {
         config = RuntimeParams::Load(par_file);
 
-        // Initialize the requested output directory before Logger, plot, or
-        // checkpoint IO opens a file. This makes a fresh out_dir self-contained.
+        // Logger, plot output, and checkpoints all depend on out_dir, so create
+        // it before any file is opened. create_directories also accepts an
+        // existing directory, which lets restart runs reuse the same path.
         std::filesystem::create_directories(config.io.out_dir);
         std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
         Logger::Init(log_filename, config.io.restart);
@@ -69,15 +73,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    // =========================================================
-    // 2. Problem Instantiation (Factory Pattern)
-    // =========================================================
-
-    // Create the specific problem instance dynamically based on the string name.
-    // Returns a pointer to the base class 'ProblemGenerator'.
+    // The registry maps a string to a ProblemGenerator, so main does not need
+    // to include or switch over concrete problem types.
     auto problem_ptr = ProblemRegistry::Get().Create(problem_type);
 
-    // Safety check: Ensure the problem was actually registered.
+    // A null pointer means that the corresponding translation unit did not
+    // register the problem through REGISTER_PROBLEM. Grid setup cannot proceed.
     if (!problem_ptr)
     {
         std::cerr << "[Error] Unknown problem type: " << problem_type << std::endl;
@@ -86,34 +87,27 @@ int main(int argc, char **argv)
     }
     std::cout << "[Main] Problem created: " << problem_type << std::endl;
 
-    // =========================================================
-    // 3. System Initialization & Configuration Extract
-    // =========================================================
-
-    // Ask the problem object for its specific grid/time configuration.
-    // (This calls the user's setup callback internally).
+    // Species order is shared by the EOS, reaction network, and HDF5 schema.
+    // The problem must establish it exactly once before solver dispatch.
     SpeciesManager specs;
 
-    // Initialize the Species Manager.
-    // The problem defines what materials (e.g., H2, He4) are in the simulation.
+    // Setup invokes the user problem's configuration callback and validates
+    // its species and case-specific parameters.
     problem_ptr->Setup(config, specs);
 
-    // Select the Numerical Solver.
-    // Defaults to "SW" (Steger-Warming) if not specified in the .par file.
+    // RuntimeParams has validated solver_name; DispatchSolver selects the
+    // concrete compile-time policy combination.
     std::string solver_name = config.numerics.solver_name;
 
-    // Print summary to console
+    // Emit the minimum auditable configuration summary before computation so
+    // a log can be matched to its parameter file.
     std::cout << "[Main] Configuration:" << std::endl;
     std::cout << "       Grid: " << config.grid.nblockx1 * amr::BLOCK_NX << " cells, CFL: " << config.numerics.cfl << std::endl;
     std::cout << "       Solver: " << solver_name << std::endl;
     std::cout << "       Species Count: " << specs.count() << std::endl;
 
-    // =========================================================
-    // 4. Execution (Dispatch to Core Loop)
-    // =========================================================
-
-    // Hand over control to the Solver Factory.
-    // This function instantiates the correct Solver Template and starts the time loop.
+    // Dispatch instantiates the EOS, flux, reconstruction, and time-integration
+    // policies, then owns the complete simulation loop.
     try
     {
         DispatchSolver(solver_name, *problem_ptr, config, specs);

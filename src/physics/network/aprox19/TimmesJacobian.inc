@@ -1,5 +1,5 @@
-// Generated mechanically from TimmesRhs.inc by
-// tools/generate_timmes_jacobian.py aprox19
+// Mechanically generated from the Timmes-derived TimmesRhs.inc.
+// Upstream index: https://cococubed.com/code_pages/burn.shtml.
 // All rate[] entries are held fixed in this partial Jacobian.
 // Keep the large sparse expression out of its caller's register set.
 #if defined(__CUDACC__)

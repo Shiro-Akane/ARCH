@@ -1,8 +1,8 @@
 /**
  * @file Grid.h
  * @brief Defines the 1D spatial grid topology and geometry.
- * * Manages mesh parameters (size, spacing, boundaries) and provides utilities
- * * to map between array indices and physical coordinates.
+ * Manages mesh parameters (size, spacing, boundaries) and provides utilities
+ * to map between array indices and physical coordinates.
  */
 
 /**
@@ -16,11 +16,11 @@
 
 #include <cmath>
 #include <stdexcept>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "../data/GlobalDefs.h"
 #include "../amr/AmrDefines.h"
+#include "../data/GlobalDefs.h"
 
 // -- Global Coord. Sturcture
 struct PointCoords
@@ -90,7 +90,7 @@ struct Grid
 
 private:
     /**
-     * @brief 严格校验物理域的合法性。违反几何定义的边界将直接导致程序抛出异常终止。
+     * @brief Validate physical-domain bounds and reject invalid geometry.
      */
     void ValidateDomain() const
     {
@@ -100,7 +100,7 @@ private:
         if (amr::BLOCK_NY == 1 && amr::BLOCK_NZ > 1)
             throw std::invalid_argument("Grid Error: Cross-dimensional topology anomaly. NY == 1 but NZ > 1 is not allowed.");
 
-        // 1. 通用基础校验：Max 必须大于 Min (针对激活的维度)
+        // Every active coordinate must have a strictly positive extent.
         if (amr::BLOCK_NX > 0 && x1_max <= x1_min)
             throw std::invalid_argument("Grid Error: x1_max must be strictly greater than x1_min.");
         if (dim >= 2 && amr::BLOCK_NY > 1 && x2_max <= x2_min)
@@ -108,10 +108,10 @@ private:
         if (dim == 3 && amr::BLOCK_NZ > 1 && x3_max <= x3_min)
             throw std::invalid_argument("Grid Error: x3_max must be strictly greater than x3_min.");
 
-        // 容差值，防止浮点数精度导致误判 (例如 3.141592653589793 vs M_PI)
+        // 1e-10 absorbs decimal-to-binary rounding at angular bounds such as pi.
         const double eps = 1e-10;
 
-        // 2. 针对特定坐标系的物理域校验
+        // Apply coordinate-system-specific physical bounds.
         if (geometry == "spherical")
         {
             if (x1_min < 0.0)
@@ -119,13 +119,13 @@ private:
 
             if (dim == 2)
             {
-                // 【核心修改】：2D下，回退为极坐标 (r, phi)，允许 2pi
+                // Two-dimensional spherical geometry uses the polar (r, phi) plane.
                 if ((x2_max - x2_min) > 2.0 * M_PI + eps)
                     throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
             }
             else if (dim == 3)
             {
-                // 3D下，y是theta (0到pi)，z是phi (0到2pi)
+                // In 3D spherical coordinates, x2 is theta in [0,pi] and x3 is phi in [0,2pi].
                 if (x2_min < -eps || x2_max > M_PI + eps)
                     throw std::invalid_argument("Domain Error (Spherical): Polar angle theta (y bounds) must be within [0, pi].");
                 if ((x3_max - x3_min) > 2.0 * M_PI + eps)
@@ -137,7 +137,7 @@ private:
             if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: R_min cannot be negative.");
 
-            // 同样，2D下 y 变为 phi，允许 2pi
+            // In 2D spherical coordinates, x2 represents phi and may span 2pi.
             if (dim == 2)
             {
                 if ((x2_max - x2_min) > 2.0 * M_PI + eps)
@@ -184,7 +184,7 @@ private:
     int total_x_, total_y_, total_z_;
 public:
     /**
-     * @brief 为 HDF5/XDMF 后处理提供当前网格的物理坐标轴名称
+     * @brief Return physical axis names for HDF5/XDMF post-processing.
      */
     std::vector<std::string> GetAxisNames() const
     {
@@ -193,7 +193,7 @@ public:
             if (dim == 1)
                 return {"r"};
             if (dim == 2)
-                return {"r", "phi"}; // 根据你的逻辑，2D退化为极坐标面
+                return {"r", "phi"}; // The 2D spherical case is a polar plane.
             return {"r", "theta", "phi"};
         }
         else if (geometry == "cylindrical")
@@ -201,11 +201,11 @@ public:
             if (dim == 1)
                 return {"r_cy"};
             if (dim == 2)
-                return {"r_cy", "phi_cy"}; // 根据你的逻辑，2D退化为极坐标面
+                return {"r_cy", "phi_cy"}; // The 2D cylindrical case is a polar plane.
             return {"r_cy", "z_cy", "phi_cy"};
         }
 
-        // 默认 Cartesian 坐标系
+        // Cartesian axis names are the default.
         if (dim == 1)
             return {"x"};
         if (dim == 2)
@@ -214,28 +214,29 @@ public:
     }
 
     /**
-     * @brief  获取指定网格单元的全息物理坐标 {x,y,z,r,theta,phi}
-     * 无论底层网格是笛卡尔还是球坐标，该函数均提供一致的物理映射。
+     * @brief Return {x,y,z,r,theta,phi} for one cell center.
+     * The result exposes a common physical-coordinate view independent of the
+     * grid's native Cartesian, cylindrical, or spherical coordinates.
      */
     PointCoords GetPhysicalCoords(int i, int j = 0, int k = 0) const
     {
         PointCoords coords;
-        // 1. 获取网格的逻辑计算坐标 (Logical Compute Coordinates)
+        // Start with coordinates in the grid's native computational system.
         double cx = GetCellCenterX(i);
         double cy = GetCellCenterY(j);
         double cz = GetCellCenterZ(k);
 
-        // 降维情况下的默认值处理 (非常重要：处理 1D 或 2D 模拟)
+        // Supply deterministic inactive-coordinate values for 1D and 2D grids.
         if (dim == 1)
         {
             cy = (geometry == "spherical") ? M_PI / 2.0 : 0.0;
-        } // 1D球坐标默认在赤道平面
+        } // A 1D spherical radial line is represented in the equatorial plane.
         if (dim <= 2)
         {
             cz = 0.0;
         }
 
-        // 2. 根据当前的计算网格拓扑，计算全息坐标
+        // Expand native coordinates into the complete physical-coordinate view.
         if (geometry == "cartesian")
         {
             coords.x = cx;
@@ -246,7 +247,7 @@ public:
             coords.theta = (coords.r > 1e-14) ? std::acos(cz / coords.r) : 0.0;
             coords.phi = std::atan2(cy, cx);
 
-            // 补全柱坐标
+            // Derive cylindrical coordinates from Cartesian coordinates.
             coords.r_cy = std::sqrt(cx * cx + cy * cy);
             coords.phi_cy = coords.phi;
             coords.z_cy = cz;
@@ -254,11 +255,11 @@ public:
         else if (geometry == "spherical")
         {
             coords.r = cx;
-            // 【核心适配】：当 dim==2 时，退化为极坐标面，cy 代表 phi！
+            // In two dimensions, cy is the azimuthal angle phi.
             if (dim == 2)
             {
-                coords.theta = M_PI / 2.0; // 锁定在赤道面
-                coords.phi = cy;           // 第二维变身为方位角 phi
+                coords.theta = M_PI / 2.0; // Two-dimensional spherical grids lie in the equatorial plane.
+                coords.phi = cy;           // The second native coordinate is azimuth phi.
             }
             else
             {
@@ -270,19 +271,19 @@ public:
             coords.y = coords.r * std::sin(coords.theta) * std::sin(coords.phi);
             coords.z = coords.r * std::cos(coords.theta);
 
-            // 补全柱坐标（为了让 Sod.cpp 中的 shape_type=3 能无缝调用）
+            // Derive cylindrical coordinates for geometry-independent case shapes.
             coords.r_cy = coords.r * std::sin(coords.theta);
             coords.phi_cy = coords.phi;
             coords.z_cy = coords.z;
         }
         else if (geometry == "cylindrical")
         {
-            // 【核心适配】：当 dim==2 时，退化为极坐标面，cy 代表 phi！
+            // In two dimensions, cy is the azimuthal angle phi.
             if (dim == 2)
             {
                 coords.r_cy = cx;
-                coords.phi_cy = cy; // 第二维变身为方位角
-                coords.z_cy = 0.0;  // Z平面锁定
+                coords.phi_cy = cy; // The second native coordinate is azimuth.
+                coords.z_cy = 0.0;  // A 2D cylindrical grid lies in the z=0 plane.
             }
             else
             {
@@ -295,7 +296,7 @@ public:
             coords.y = coords.r_cy * std::sin(coords.phi_cy);
             coords.z = coords.z_cy;
 
-            // 补全球坐标
+            // Derive spherical coordinates from cylindrical coordinates.
             coords.r = std::sqrt(coords.r_cy * coords.r_cy + coords.z_cy * coords.z_cy);
             coords.theta = (coords.r > 1e-14) ? std::acos(coords.z_cy / coords.r) : 0.0;
             coords.phi = coords.phi_cy;

@@ -1,3 +1,5 @@
+// ARCH-owned generic policy adapter for the Timmes-derived network equations.
+// Upstream/source boundaries: ../TIMMES_NETWORKS_TECHNICAL_NOTE.md.
 #pragma once
 
 #include <algorithm>
@@ -7,14 +9,14 @@
 #include <string>
 #include <vector>
 
-#include "../../../core/RuntimeParams.h"
-#include "../../species/Species.h"
-#include "../../../numerics/linalg/DenseWrap.h"
-#include "../../../numerics/linalg/SparseWrap.h"
-
 #include "Dual.h"
 #include "NuclearConstants.h"
 #include "RatePair.h"
+
+#include "../../../core/RuntimeParams.h"
+#include "../../../numerics/linalg/DenseWrap.h"
+#include "../../../numerics/linalg/SparseWrap.h"
+#include "../../species/Species.h"
 
 namespace timmes {
 

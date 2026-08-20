@@ -10,11 +10,14 @@
 
 #pragma once
 
-#include "Block.h"
-#include "AmrTree.h"
-#include "../data/GlobalDefs.h"
 #include <memory>
 #include <vector>
+
+#include "AmrTree.h"
+#include "Block.h"
+
+#include "../data/GlobalDefs.h"
+
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -41,7 +44,7 @@ public:
     GhostExchange() = default;
 
     void Resize(int max_blocks) {
-        // We defer full allocation until first run to know max species
+        // Buffer allocation is deferred until UpdateLayout supplies the species count.
     }
 
     size_t GetOffset(int active_idx, int face, int var_idx) const {
@@ -107,11 +110,8 @@ private:
                 if (dim < 2 && (f == 2 || f == 3)) continue;
                 if (dim < 3 && (f == 4 || f == 5)) continue;
 
-                // A face buffer contains only the active tangential extent.  Do
-                // not start those coordinates at zero: zero is a ghost-cell
-                // index whenever MAX_NG > 0.  Doing so used to send a mixture
-                // of stale ghost values and valid cells, while omitting the
-                // last MAX_NG active rows/columns of every face.
+                // Face buffers cover the active tangential extent. Source
+                // coordinates therefore begin at the first active cell.
                 int src_i = b.grid.Is();
                 int src_j = (dim >= 2) ? b.grid.Js() : 0;
                 int src_k = (dim == 3) ? b.grid.Ks() : 0;

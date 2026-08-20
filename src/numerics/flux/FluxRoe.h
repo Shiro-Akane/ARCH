@@ -1,10 +1,10 @@
 /**
  * @file FluxRoe.h
  * @brief Roe-Glaister Flux Scheme.
- * * Decoupled from time integration.
- * * Responsibilities:
- * * 1. Reconstruction (Cell -> Interface)
- * * 2. Flux Splitting (Interface State -> Interface Flux)
+ * Decoupled from time integration.
+ * Responsibilities:
+ * 1. Reconstruction (Cell -> Interface)
+ * 2. Flux Splitting (Interface State -> Interface Flux)
  */
 
 /**
@@ -32,7 +32,7 @@ struct FluxRoe
     static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
                                std::vector<FluidVector> &flux_out,
                                std::vector<double> &spec_flux_out,
-                               int dir, double entropy_fix_coeff = 0.1) // <--- 统一接口参数
+                               int dir, double entropy_fix_coeff = 0.1) // Shared entropy-fix interface; 0.1 scales the local spectral radius.
     {
         int n_spec = state.GetNumSpecies();
         int total_size = grid.GetTotalSize();
@@ -59,6 +59,7 @@ struct FluxRoe
         {
             std::vector<double> Xi_L(n_spec);
             std::vector<double> Xi_R(n_spec);
+            std::vector<double> Xi_cell(n_spec);
 
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -70,11 +71,9 @@ struct FluxRoe
                     int idx = grid.GetIndex(i, j, k);
                     // 1. Reconstruction
                     FluidVector U_L, U_R;
-                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), U_L, U_R);
+                    AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                    // ======================================================
-                    // 2. 准备热力学变量 (Thermodynamics First)
-                    // ======================================================
+                    // Recover thermodynamic values before Roe averaging.
                     // Left State
                     double rho_L = std::max(U_L.rho, 1e-12);
                     double un_L = get_un(U_L, dir);
@@ -93,21 +92,15 @@ struct FluxRoe
                     double P_R = eos.get_pressure(U_R, Xi_R.data());
                     double H_R = (U_R.eng + P_R) / rho_R;
 
-                    // ======================================================
-                    // 3. 计算物理通量 (调用高效重载版本)
-                    // ======================================================
+                    // Compute physical fluxes with the known-pressure overload.
                     FluidVector F_L = get_flux(U_L, P_L, dir);
                     FluidVector F_R = get_flux(U_R, P_R, dir);
 
-                    // ======================================================
-                    // 4. Roe 平均状态计算
-                    // ======================================================
+                    // Construct the Roe-Glaister averaged state.
                     RoeGlaisterState roe_state = calc_glaister_state(
                         U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Xi_L.data(), eos);
 
-                    // ======================================================
-                    // 5. Roe 通量组装
-                    // ======================================================
+                    // Assemble the Roe flux and entropy-corrected dissipation.
                     FluidVector roe_flux = calc_roe_flux_hydro(
                         F_L, F_R, U_L, U_R, P_L, P_R, roe_state, entropy_fix_coeff, dir);
 

@@ -11,15 +11,15 @@
  */
 #pragma once
 
-#include <vector>
-#include <string>
 #include <algorithm>
+#include <string>
+#include <vector>
 
-#include "TimeIntegratorHelper.h"
 #include "IHydroSolver.h"
+#include "TimeIntegratorHelper.h"
 
-#include "../../data/FluidState.h"
 #include "../../amr/AMRControl.h"
+#include "../../data/FluidState.h"
 
 struct SolverRK2
 {

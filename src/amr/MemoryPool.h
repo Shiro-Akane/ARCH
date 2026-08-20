@@ -12,10 +12,11 @@
 
 #pragma once
 
-#include <vector>
+#include <iostream>
 #include <stack>
 #include <stdexcept>
-#include <iostream>
+#include <vector>
+
 #include "Block.h"
 
 namespace amr {

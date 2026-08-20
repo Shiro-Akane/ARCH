@@ -14,10 +14,12 @@
 
 #include <cstdint>
 #include <vector>
+
+#include "Morton.h"
+
 #include "../data/FluidState.h"
 #include "../grid/Grid.h"
 #include "../grid/GridMetrics.h"
-#include "Morton.h"
 
 namespace amr {
 
@@ -48,10 +50,9 @@ struct Block {
     int children_id[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
     // Neighbor Cache (Face neighbors: -X, +X, -Y, +Y, -Z, +Z)
-    // For 2:1 AMR, a face could be bordering a coarse neighbor (1 id),
-    // a same-level neighbor (1 id), or fine neighbors (4 ids in 3D).
-    // To handle this generically, we can use a small vector or fixed array.
-    // For now, we store up to 4 neighbor IDs per face (for 3D 2:1 refinement).
+    // Under 2:1 refinement, a face has one coarse or same-level neighbor,
+    // or at most four fine neighbors in three dimensions. The fixed capacity
+    // avoids per-face allocation while covering every supported dimension.
     struct FaceNeighbors {
         int count = 0;
         int level_diff = 0; // -1: coarse, 0: same, 1: fine
@@ -66,7 +67,7 @@ struct Block {
     Block() = default;
 
     void Reset() {
-        // Reset hierarchy and tracking, but do NOT free memory
+        // Clear hierarchy and state while retaining allocated storage.
         id = -1;
         morton_code = 0;
         level = 0;

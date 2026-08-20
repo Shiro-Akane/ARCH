@@ -1,23 +1,31 @@
+/**
+ * @file HelmEos.h
+ * @brief C++ adaptation of Frank Timmes's Helmholtz EOS.
+ * @note The interpolation, thermodynamic formulas, and table layout trace to
+ * the Helmholtz package at https://cococubed.com/code_pages/eos.shtml. The
+ * runtime table is helm_table.dat from the project's downloaded
+ * helmholtz.tar.xz archive; ARCH supplies the EOS policy and table checks.
+ */
 #pragma once
 
-#include <iostream>
-#include <fstream>
+#include <algorithm>
 #include <array>
-#include <vector>
 #include <cmath>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <stdexcept>
 #include <string>
-#include <algorithm>
-#include <iomanip>
+#include <vector>
 
 #include "eos.h"
-#include "eos.h"
 #include "eos_Utils.h"
+
 #include "../../data/FluidState.h"
 #include "../species/Species.h"
 
 
-// Timmes Helmholtz EOS (Electron/Positron table + Analytic Ion/Rad)
+// Timmes Helmholtz EOS: tabulated electrons/positrons and analytic ions/radiation.
 class HelmEos : public EOSBase {
 private:
     static constexpr int imax = 541;
@@ -34,7 +42,7 @@ private:
     static constexpr double tstpi = 1.0 / tstp;
 
     // Table data
-    inline static std::vector<double> f[9]; 
+    inline static std::vector<double> f[9];
     inline static std::vector<double> ef_table[4];
     inline static bool is_loaded = false;
 
@@ -44,11 +52,11 @@ private:
     double psi0(double z) const { return z * z * z * (z * (-6.0 * z + 15.0) - 10.0) + 1.0; }
     double dpsi0(double z) const { return z * z * (z * (-30.0 * z + 60.0) - 30.0); }
     double ddpsi0(double z) const { return z * (z * (-120.0 * z + 180.0) - 60.0); }
-    
+
     double psi1(double z) const { return z * (z * z * (z * (-3.0 * z + 8.0) - 6.0) + 1.0); }
     double dpsi1(double z) const { return z * z * (z * (-15.0 * z + 32.0) - 18.0) + 1.0; }
     double ddpsi1(double z) const { return z * (z * (-60.0 * z + 96.0) - 36.0); }
-    
+
     double psi2(double z) const { return 0.5 * z * z * (z * (z * (-z + 3.0) - 3.0) + 1.0); }
     double dpsi2(double z) const { return 0.5 * z * (z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0); }
     double ddpsi2(double z) const { return 1.0 + z * (-9.0 + z * (18.0 - 10.0 * z)); }
@@ -74,35 +82,42 @@ public:
         for (int k = 0; k < 9; ++k) f[k].resize(imax * jmax);
         for (int k = 0; k < 4; ++k) ef_table[k].resize(imax * jmax);
 
-        // helm_table.dat has 4 blocks. The first block is the free energy f (108741 lines)
-        // Each line has 9 values. Fortran outputs column-major: do j=1,jmax; do i=1,imax
-        for (int j = 0; j < jmax; ++j) {
-            for (int i = 0; i < imax; ++i) {
-                int idx = j * imax + i;
-                for (int k = 0; k < 9; ++k) {
-                    file >> f[k][idx];
-                }
+        const auto read_value = [&](double& value) {
+            if (!(file >> value)) {
+                throw std::runtime_error(
+                    "Incomplete or nonnumeric 541x201 Timmes helm_table.dat: " + table_path);
             }
-        }
-        
-        // Block 2: dpdf (4 values)
+        };
+
         for (int j = 0; j < jmax; ++j) {
             for (int i = 0; i < imax; ++i) {
-                double dummy;
-                for (int k = 0; k < 4; ++k) file >> dummy;
+                const int idx = j * imax + i;
+                for (int k = 0; k < 9; ++k) read_value(f[k][idx]);
             }
         }
 
-        // Block 3: ef (4 values)
         for (int j = 0; j < jmax; ++j) {
             for (int i = 0; i < imax; ++i) {
-                int idx = j * imax + i;
-                for (int k = 0; k < 4; ++k) {
-                    file >> ef_table[k][idx];
-                }
+                double unused;
+                for (int k = 0; k < 4; ++k) read_value(unused);
             }
         }
-        std::cout << "[HelmEos] 2D Helmholtz Electron/Positron table loaded successfully." << std::endl;
+
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                const int idx = j * imax + i;
+                for (int k = 0; k < 4; ++k) read_value(ef_table[k][idx]);
+            }
+        }
+
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                double unused;
+                for (int k = 0; k < 4; ++k) read_value(unused);
+            }
+        }
+
+        std::cout << "[HelmEos] Loaded complete 541x201 electron/positron table." << std::endl;
         is_loaded = true;
     }
     }
@@ -150,7 +165,7 @@ public:
         int idx11 = (j + 1) * imax + i + 1;
 
         int offset[9] = {0, 12, 4, 16, 8, 20, 24, 28, 32};
-        
+
         for (int k = 0; k < 9; ++k) {
             int off = offset[k];
             fi[off + 0] = f[k][idx00];
@@ -159,7 +174,7 @@ public:
             fi[off + 3] = f[k][idx11];
         }
 
-        double free_energy = 
+        double free_energy =
              fi[0]*w0d*w0t   + fi[1]*w0md*w0t  + fi[2]*w0d*w0mt  + fi[3]*w0md*w0mt
            + fi[4]*w0d*w1t   + fi[5]*w0md*w1t  + fi[6]*w0d*w1mt  + fi[7]*w0md*w1mt
            + fi[8]*w0d*w2t   + fi[9]*w0md*w2t  + fi[10]*w0d*w2mt + fi[11]*w0md*w2mt
@@ -173,7 +188,7 @@ public:
         double d0d = dpsi0(xd)*ddi, d1d = dpsi1(xd), d2d = dpsi2(xd)*dd;
         double d0md = -dpsi0(1.0 - xd)*ddi, d1md = dpsi1(1.0 - xd), d2md = -dpsi2(1.0 - xd)*dd;
 
-        double df_d = 
+        double df_d =
              fi[0]*d0d*w0t  + fi[1]*d0md*w0t  + fi[2]*d0d*w0mt  + fi[3]*d0md*w0mt
            + fi[4]*d0d*w1t  + fi[5]*d0md*w1t  + fi[6]*d0d*w1mt  + fi[7]*d0md*w1mt
            + fi[8]*d0d*w2t  + fi[9]*d0md*w2t  + fi[10]*d0d*w2mt + fi[11]*d0md*w2mt
@@ -187,7 +202,7 @@ public:
         double d0t = dpsi0(xt)*dti, d1t = dpsi1(xt), d2t = dpsi2(xt)*dth;
         double d0mt = -dpsi0(1.0 - xt)*dti, d1mt = dpsi1(1.0 - xt), d2mt = -dpsi2(1.0 - xt)*dth;
 
-        double df_t = 
+        double df_t =
              fi[0]*w0d*d0t  + fi[1]*w0md*d0t  + fi[2]*w0d*d0mt  + fi[3]*w0md*d0mt
            + fi[4]*w0d*d1t  + fi[5]*w0md*d1t  + fi[6]*w0d*d1mt  + fi[7]*w0md*d1mt
            + fi[8]*w0d*d2t  + fi[9]*w0md*d2t  + fi[10]*w0d*d2mt + fi[11]*w0md*d2mt
@@ -391,7 +406,7 @@ public:
             efi[off + 3] = ef_table[k][idx11];
         }
 
-        double etaele = 
+        double etaele =
               efi[0]*w0d*w0t  + efi[1]*w2d*w0t  + efi[2]*w0d*w2t  + efi[3]*w2d*w2t
             + efi[4]*w1d*w0t  + efi[5]*w3d*w0t  + efi[6]*w1d*w2t  + efi[7]*w3d*w2t
             + efi[8]*w0d*w1t  + efi[9]*w2d*w1t  + efi[10]*w0d*w3t + efi[11]*w2d*w3t
@@ -417,24 +432,24 @@ public:
     }
 
     double get_temperature(double rho, double e, const double* Xi) const {
-        double T_guess = 1e8; 
+        double T_guess = 1e8;
         for (int i = 0; i < 50; ++i) {
             double P, E;
             calc_thermo(rho, T_guess, Xi, P, E);
-            
+
             const double cv = get_cv(rho, T_guess, Xi);
-            
+
             if (std::abs(cv) < 1e-12) break;
-            
+
             double dT_update = (e - E) / cv;
-            
+
             // Limit the temperature update to prevent overshoot and divergence
             double dT_limited = std::max(-0.5 * T_guess, std::min(dT_update, 0.5 * T_guess));
             T_guess += dT_limited;
-            
+
             if (T_guess < 1e3) T_guess = 1e3;
             if (T_guess > 1e11) T_guess = 1e11;
-            
+
             if (std::abs(dT_limited) / T_guess < 1e-6) break;
         }
         return T_guess;
@@ -444,22 +459,22 @@ public:
         double rho = U.rho;
         double e = eos_utils::extract_specific_internal_energy(U);
         double T = get_temperature(U, Xi);
-        
+
         // c_s^2 = dp/drho |_S = dp/drho |_T + (dp/dT |_rho)^2 * T / (rho^2 cv)
         double P, E;
         calc_thermo(rho, T, Xi, P, E);
-        
+
         double drho = rho * 1e-4;
         double P_rho, E_rho;
         calc_thermo(rho + drho, T, Xi, P_rho, E_rho);
         double dp_drho = (P_rho - P) / drho;
-        
+
         double dT = T * 1e-4;
         double P_T, E_T;
         calc_thermo(rho, T + dT, Xi, P_T, E_T);
         double dp_dT = (P_T - P) / dT;
         double cv = get_cv(rho, T, Xi);
-        
+
         double cs2 = dp_drho + dp_dT * dp_dT * T / (rho * rho * cv);
         return std::sqrt(std::max(1e-10, cs2));
     }
@@ -509,22 +524,16 @@ public:
         return (P2 - P1) / de;
     }
 
-    // =========================================================
     // Pipeline: evaluate_state
-    // =========================================================
     void evaluate_state(eos_state_t& state) const {
-        // =========================================================
         // 1. Core Thermodynamics (P, E, cv)
-        // =========================================================
         double P, E, cv;
         calc_thermo_with_cv(state.rho, state.T, state.Xi, P, E, &cv);
         state.P = P;
         state.E = E;
         state.cv = cv;
 
-        // =========================================================
         // 2. Derivatives and Sound Speed
-        // =========================================================
         double drho = state.rho * 1e-4;
         double P_rho, E_rho;
         calc_thermo(state.rho + drho, state.T, state.Xi, P_rho, E_rho);
@@ -538,11 +547,9 @@ public:
         double cv_val = std::max(cv, 1e-12);
         state.sound_speed = std::sqrt(std::max(0.0, state.dp_drho + state.dp_dT * state.dp_dT * state.T / (state.rho * state.rho * cv_val)));
 
-        // =========================================================
         // 3. Deep Physical Variables (eta, pele, xne)
-        // =========================================================
         state.eta = get_eta(state.rho, state.T, state.Xi);
-        
+
         double ytot = 0.0;
         double ye = 0.0;
         for (int k = 0; k < specs->count(); ++k) {
@@ -551,7 +558,7 @@ public:
             ye += state.Xi[k] * specs->get_Z(k) * inv_A;
         }
         ye = std::max(1.0e-16, ye);
-        
+
         double pele, E_ele;
         interpolate_ele_pos(state.rho, state.T, ye, pele, E_ele, nullptr);
         state.pele = pele;

@@ -1,9 +1,9 @@
 /**
  * @file DriverUtils.h
  * @brief Utility functions for boundary enforcement and time-step control.
- * * Provides essential support for the main driver loop, specifically:
- * * 1. Populating ghost cells to enforce boundary conditions (e.g., Outflow).
- * * 2. Computing the adaptive time step (dt) based on the CFL stability criterion.
+ * Provides essential support for the main driver loop, specifically:
+ * 1. Populating ghost cells to enforce boundary conditions (e.g., Outflow).
+ * 2. Computing the adaptive time step (dt) based on the CFL stability criterion.
  */
 
 /**
@@ -23,18 +23,18 @@
 
 /**
  * @brief Applies boundary conditions to the fluid state.
- * Currently implements a Zero-Gradient (Outflow/Neumann) boundary condition
- * where ghost cells simply copy the values of the nearest active cell.
+ * Supports outflow, reflecting, and periodic faces. Outflow ghosts copy the
+ * nearest active cell; reflecting faces also reverse normal momentum.
  *
  * @param state The fluid state container (conservative variables).
  * @param grid  The grid topology information.
  */
 inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const SimConfig &cfg)
 {
-    // Define the indices of the first and last active physical cells
+    // Species follow the same ghost-cell mapping as the conserved fields.
     int n_species = state.GetNumSpecies();
 
-    // Helper lambda to copy all conservative variables from a source index to a destination index
+    // Copy one complete cell, including species mass fractions.
     auto copy_cell = [&](int src, int dst)
     {
         state.rho[dst] = state.rho[src];
@@ -61,9 +61,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
 
     int ng = grid.ng;
 
-    // =========================================================
     // 1. X-Direction Boundaries
-    // =========================================================
     const int ks = grid.Ks();
     const int ke = grid.Ke();
     const int js = grid.Js();
@@ -107,10 +105,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
         }
     }
 
-    // =========================================================
-    // 2. Y-Direction Boundaries (Skips if 1D)
-    // Note: Loop over full X range (0 to n1+2ng) to fill corners!
-    // =========================================================
+    // 2. Y-direction boundaries. Include X ghost columns so corners are filled.
     if (grid.dim >= 2)
     {
         const int total_x = amr::BLOCK_NX + 2 * ng;
@@ -151,10 +146,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
         }
     }
 
-    // =========================================================
-    // 3. Z-Direction Boundaries (Skips if 1D/2D)
-    // Note: Loop over full X and Y ranges to fill 3D corners!
-    // =========================================================
+    // 3. Z-direction boundaries. Include X/Y ghost rows to fill 3D corners.
     if (grid.dim == 3)
     {
 #pragma omp for schedule(static)
@@ -194,9 +186,7 @@ inline void apply_boundary_conditions(FluidState &state, const Grid &grid, const
 }
 
 /**
- * @brief Local Helper Class to wrap Boundary Condition logic.
- * * This allows the RK solver to call bc.apply() inside its stages
- * * without needing to know about SimConfig details.
+ * @brief Binds SimConfig to the boundary-policy interface used by RK stages.
  */
 struct BCHandler
 {

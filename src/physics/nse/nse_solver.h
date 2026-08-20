@@ -1,3 +1,12 @@
+/**
+ * @file nse_solver.h
+ * @brief Network-constrained nuclear statistical equilibrium solver.
+ * @note The Saha formulation, mass/charge residuals, and two-potential Newton
+ * method are adapted from Frank Timmes's public_nse package at
+ * https://cococubed.com/code_pages/nse.shtml. ARCH adds the generic NetType
+ * interface, numerical safeguards, compact-network handling, and energy
+ * closure described in ../network/TIMMES_NETWORKS_TECHNICAL_NOTE.md.
+ */
 #pragma once
 
 #include <algorithm>
@@ -6,7 +15,7 @@
 #include <limits>
 
 /**
- * @brief Timmes-style nuclear statistical equilibrium solver.
+ * @brief Timmes-derived nuclear statistical equilibrium solver.
  *
  * NetType must provide the following compile-time data:
  *
