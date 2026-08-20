@@ -5,7 +5,9 @@ the authoritative source text.
 
 > CPU status: pass. CUDA: pending.
 
-`simulation/DiffusionMode/` evolves a bounded tracer mass fraction on a static,
+The `DiffusionMode` implementation remains in `simulation/DiffusionMode/`; the
+immutable parameter files owned by this record are in [`inputs/`](inputs/).
+They evolve a bounded tracer mass fraction on a static,
 periodic, one-dimensional ideal-gas state:
 
 \[
@@ -22,7 +24,7 @@ Environment and build provenance match the [hydro record](../hydro/README.md).
 
 ```bash
 export OMP_NUM_THREADS=2
-for p in simulation/DiffusionMode/*.par; do
+for p in validation/diffusion/inputs/*.par; do
   ./bin/ARCH DiffusionMode "$p"
 done
 ```
@@ -41,7 +43,7 @@ measured from the final HDF5 cell averages.
 | RKL2 | 128 | 1.213e-6 | 1.347e-6 | 2.000 | 0 |
 | RKL2 | 256 | 3.032e-7 | 3.368e-7 | 2.000 | 5.55e-17 |
 
-![Diffusion convergence](../assets/diffusion_convergence.svg)
+![Diffusion convergence](figures/convergence.svg)
 
 Both CPU paths pass. The RKL2 series is consistent with second-order spatial
 convergence. The mixed resolution/stage-count RKL1 series is a stability,

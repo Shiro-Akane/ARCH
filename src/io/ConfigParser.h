@@ -3,16 +3,18 @@
  * @brief A lightweight, text-based configuration file parser.
  * Supports simple "key = value" syntax.
  * Handles inline comments (starting with '#') and whitespace trimming.
- * Provides type-safe accessors (Int, Double, String) with default fallbacks.
+ * Provides type-safe accessors (Bool, Int, Double, String) with default fallbacks.
  */
 
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 
 class ConfigParser
@@ -81,6 +83,31 @@ public:
         }
         std::cout << "[Info] Loaded " << parameters.size() << " parameters from " << filename << std::endl;
         return true;
+    }
+
+    /**
+     * @brief Retrieves a strict, case-insensitive Boolean value.
+     * @param key The parameter name.
+     * @param defaultVal The value to return if the key is missing.
+     * @throws std::invalid_argument if a present value is not true or false.
+     */
+    bool GetBool(const std::string &key, bool defaultVal) const
+    {
+        const auto it = parameters.find(key);
+        if (it == parameters.end())
+            return defaultVal;
+
+        std::string value = it->second;
+        std::transform(value.begin(), value.end(), value.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (value == "true")
+            return true;
+        if (value == "false")
+            return false;
+
+        throw std::invalid_argument(
+            "Config parameter '" + key + "' expects true or false "
+            "(case-insensitive), got '" + it->second + "'.");
     }
 
     /**

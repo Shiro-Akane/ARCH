@@ -99,13 +99,16 @@ shock tube. The blast benchmark is in `simulation/Sedov/`.
 
 ## Documentation paths
 
-The [Simulation Case Guide](simulation/CaseGuide.md) provides a continuous
+The [Simulation Case Guide](docs/guides/SimulationCase.md) provides a continuous
 student path through the first run, core CFD parameters, and a new
 `Setup`/`Init` case.
 
 For exact parameter names, accepted values, API signatures, output schemas,
 extension contracts, and known compromises, use the single searchable
 [Research and API Reference](docs/Reference.md).
+
+The [documentation index](docs/README.md) groups learning guides, physics
+notes, API reference material, and legal-document pointers by audience.
 
 Quantitative status, CPU results, known failures, and CUDA placeholders are
 indexed in [validation/README.md](validation/README.md). The
@@ -121,11 +124,10 @@ ARCH/
 ├── THIRD_PARTY_NOTICES.md     # Scientific-source provenance and terms
 ├── LICENSES/                  # Retained third-party license texts
 ├── CMakeLists.txt             # CPU build and template-dispatch targets
-├── simulation/               # User cases and teaching guide
-├── docs/Reference.md          # Searchable researcher/API reference
-├── validation/               # Quantitative records, metrics, figures, CUDA placeholders
-├── Validation_file/          # Historical figures and visual renderer
-├── EOS_toolkit/              # EOS generators and model-grouped tabular assets
+├── simulation/               # Case implementations and reusable example inputs
+├── docs/                     # Guides, reference, physics notes, legal index
+├── validation/               # Single V&V tree: inputs, records, metrics, figures
+├── EOS_toolkit/              # Runtime EOS tables grouped by model
 ├── src/
 │   ├── core/                 # Parameter loading, case registry, public facade
 │   ├── interface/            # ProblemGenerator adapters

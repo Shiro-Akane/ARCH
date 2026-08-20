@@ -85,9 +85,11 @@ SodBeginner_chk_0000.h5
 
 ## 文档路径
 
-[模拟算例指南](simulation/CaseGuide.zh-CN.md)提供从首次运行、核心 CFD 参数到新建 `Setup`/`Init` 算例的连续学生学习路径。
+[模拟算例指南](docs/guides/SimulationCase.zh-CN.md)提供从首次运行、核心 CFD 参数到新建 `Setup`/`Init` 算例的连续学生学习路径。
 
 参数名、可接受取值、API 签名、输出格式、扩展契约和已知工程妥协统一收录在可搜索的[研究与 API 参考](docs/Reference.zh-CN.md)中。
+
+[文档索引](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与法律文件入口。
 
 定量状态、CPU 结果、已知失败和 CUDA 占位项集中在[验证索引](validation/README.zh-CN.md)。[AMR 状态页](validation/amr/README.zh-CN.md)整合历史图像，并区分可视化诊断与定量验收。
 
@@ -101,11 +103,10 @@ ARCH/
 ├── THIRD_PARTY_NOTICES.md     # 科学软件来源与第三方条款
 ├── LICENSES/                  # 保留的第三方许可证文本
 ├── CMakeLists.txt             # CPU 构建和模板 dispatch 目标
-├── simulation/               # 用户算例和教学指南
-├── docs/Reference.md          # 可搜索的科研/API 参考规范文本
-├── validation/               # 定量记录、指标、图像和 CUDA 占位
-├── Validation_file/          # 历史图像和可视化渲染器
-├── EOS_toolkit/              # EOS 生成器和按模型分组的表资源
+├── simulation/               # 算例实现与可复用示例输入
+├── docs/                     # 指南、参考、物理说明和法律索引
+├── validation/               # 唯一 V&V 目录：输入、记录、指标与图像
+├── EOS_toolkit/              # 按模型归类的运行时 EOS 表
 ├── src/
 │   ├── core/                 # 参数加载、算例注册、公共门面
 │   ├── interface/            # ProblemGenerator 适配器

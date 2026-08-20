@@ -12,12 +12,12 @@ ARCH 包含 Frank Timmes 所发布软件的 C++ 适配：
 | --- | --- | --- |
 | `src/physics/network/{iso7,aprox13,aprox19,aprox21}/` | [Timmes 反应网络页面](https://cococubed.com/code_pages/burn.shtml)中的 `public_iso7.f90`、`public_aprox13.f90`、`public_aprox19.f90` 和 `public_aprox21.f90` | C++ 策略接口、通用求解器耦合、生成导数和 CPU/GPU 可移植组织 |
 | `src/physics/nse/nse_solver.h` | [Timmes NSE 页面](https://cococubed.com/code_pages/nse.shtml)中的 `public_nse` | 编译期网络耦合、数值保护、小网络处理和能量闭合 |
-| `src/physics/eos/HelmEos.h` 和 `EOS_toolkit/helmholtz/` | [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)中的 Helmholtz EOS 包 | C++ EOS 策略、严格表加载、状态耦合和诊断 |
-| `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat` | 项目下载的 `helmholtz.tar.xz` 中的 `helm_table.dat` | 仅 Git LFS 打包；表数据不是 ARCH 自有作品 |
+| `src/physics/eos/HelmEos.h` | [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)中的 Helmholtz EOS 包 | C++ EOS 策略、严格表加载、状态耦合和诊断 |
+| `EOS_toolkit/tables/helmholtz/helm_table.dat` | 项目下载的 `helmholtz.tar.xz` 中的 `helm_table.dat` | 仅 Git LFS 打包；表数据不是 ARCH 自有作品 |
 
 Timmes 下载页面要求在使用这些代码、代码片段或修改版本时引用相关文献并联系作者。这些页面没有声明标准 SPDX 软件许可证。因此本项目不主张将 Timmes 派生内容重新许可为 ARCH 的 MIT 许可证。维护者应保留来源归属，并在公开发布前确认适用的重新分发条款。
 
-实现和验证细节见 [`src/physics/network/TIMMES_NETWORKS_TECHNICAL_NOTE.zh-CN.md`](src/physics/network/TIMMES_NETWORKS_TECHNICAL_NOTE.zh-CN.md)。
+实现和验证细节见 [`docs/physics/TimmesNetworks.zh-CN.md`](docs/physics/TimmesNetworks.zh-CN.md)。
 
 ## AMReX-Astro Microphysics
 

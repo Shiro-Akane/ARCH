@@ -4,7 +4,7 @@
 
 > CPU 状态：PCM、MUSCL 和 PPM 通过。CUDA：待完成。
 
-`simulation/SmoothAdvection/` 对周期 entropy wave \(\rho=1+0.2\sin(2\pi x)\)、\(u=1\)、\(p=1\) 平流至 \(t=0.1\)。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
+`SmoothAdvection` 实现仍位于 `simulation/SmoothAdvection/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们对周期 entropy wave \(\rho=1+0.2\sin(2\pi x)\)、\(u=1\)、\(p=1\) 平流至 \(t=0.1\)。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
 
 ## 复现
 
@@ -14,7 +14,7 @@
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
 cmake --build build --parallel 2
 export OMP_NUM_THREADS=2
-for p in simulation/SmoothAdvection/*.par; do
+for p in validation/hydro/inputs/*.par; do
   ./bin/ARCH SmoothAdvection "$p"
 done
 ```
@@ -27,7 +27,7 @@ done
 | MUSCL-MC | 9.314e-6 | 2.040 | 1.22e-14 | 通过 |
 | PPM | 9.731e-10 | 3.993 | 1.22e-14 | 通过 |
 
-![流体收敛](../assets/hydro_convergence.svg)
+![流体收敛](figures/convergence.svg)
 
 PPM 在通过所选 EOS 重构压力并保留光滑极值后超过 2.7 验收阶数。接近四阶的结果只属于该光滑常压接触测试，不构成通用四阶声明。此状态不应触发正性或核素修复。
 

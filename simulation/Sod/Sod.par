@@ -48,8 +48,8 @@ restart = false
 eos_type = ideal
 gamma = 1.4
 gravity_type = none
-use_burn = 0
-use_diffusion = 0
+use_burn = false
+use_diffusion = false
 
 x_pos = 0.5
 rho_left = 1.0

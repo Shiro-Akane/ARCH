@@ -39,7 +39,7 @@ time_integrator = RK3        # Options: RK2, RK3, Euler/RK1
 limiter         = none       # Options: minmod, superbee, vanleer, mc, none
 cfl             = 0.4        # Keep lower (<0.5) for multi-D instability tracking
 
-EntropyFix = On
+EntropyFix = true
 EntropyFixCoefficient = 0.1
 
 # ------------------------------------------------------------------------------

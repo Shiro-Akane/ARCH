@@ -4,7 +4,7 @@
 
 > CPU 状态：通过。CUDA：待完成。
 
-`simulation/DiffusionMode/` 在静态、周期一维理想气体状态中推进有界 tracer 质量分数：
+`DiffusionMode` 实现仍位于 `simulation/DiffusionMode/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们在静态、周期一维理想气体状态中推进有界 tracer 质量分数：
 
 \[
 X(x,t)=0.5+0.25\exp[-D(2\pi)^2t]\cos(2\pi x),\qquad D=0.01.
@@ -18,7 +18,7 @@ X(x,t)=0.5+0.25\exp[-D(2\pi)^2t]\cos(2\pi x),\qquad D=0.01.
 
 ```bash
 export OMP_NUM_THREADS=2
-for p in simulation/DiffusionMode/*.par; do
+for p in validation/diffusion/inputs/*.par; do
   ./bin/ARCH DiffusionMode "$p"
 done
 ```
@@ -34,6 +34,6 @@ RKL2 验收要求最后一对分辨率的 tracer L1 阶数至少 1.8，平均 tr
 | RKL2 | 128 | 1.213e-6 | 1.347e-6 | 2.000 | 0 |
 | RKL2 | 256 | 3.032e-7 | 3.368e-7 | 2.000 | 5.55e-17 |
 
-![扩散收敛](../assets/diffusion_convergence.svg)
+![扩散收敛](figures/convergence.svg)
 
 两个 CPU 路径均通过。RKL2 序列与二阶空间收敛一致。RKL1 的分辨率/stage 数混合序列用于稳定性、有界性、守恒性和解析误差回归，不测量 RKL1 时间阶数。CUDA 一致性将使用同一解析参考和已提交输入。

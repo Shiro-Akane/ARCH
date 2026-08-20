@@ -37,7 +37,7 @@ time_integrator = RK2
 limiter     = mc
 cfl         = 0.8        # Reduce if stiff source coupling destabilizes the macro step.
 
-EntropyFix = On
+EntropyFix = true
 EntropyFixCoefficient = 0.1
 
 sml_rho = 1e-2       # Density floor to prevent vacuum crashing (similar to FLASH's smlrho)
@@ -74,14 +74,14 @@ chk_dt       = 5.0e-9         # Output CHK based on physical time interval (-1.0
 # [Physics Core]
 # ------------------------------------------------------------------------------
 eos_type = helmholtz         # Ideal, tabular, helmholtz
-eos_table_path = EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
 
 gravity_type = none
 
 # ------------------------------------------------------------------------------
 # [Nuclear Burn & ODE]
 # ------------------------------------------------------------------------------
-use_burn         = 1
+use_burn         = true
 # Runtime-selectable built-in networks: aprox13, aprox19, aprox21, and iso7.
 network_name     = aprox19
 # burn_verbose_level: 0 = fatal errors only, 1 = initialization summary,

@@ -5,7 +5,9 @@ the authoritative source text.
 
 > CPU status: PCM, MUSCL, and PPM pass. CUDA: pending.
 
-`simulation/SmoothAdvection/` advects a periodic entropy wave with
+The `SmoothAdvection` implementation remains in `simulation/SmoothAdvection/`;
+the immutable parameter files owned by this record are in [`inputs/`](inputs/).
+They advect a periodic entropy wave with
 \(\rho=1+0.2\sin(2\pi x)\), \(u=1\), and \(p=1\) to \(t=0.1\). The initial and
 translated references are exact finite-volume cell averages. HLLC and SSPRK3
 are fixed while PCM, MUSCL-MC, and PPM are run at 64, 128, and 256 cells.
@@ -24,7 +26,7 @@ changes are committed.
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
 cmake --build build --parallel 2
 export OMP_NUM_THREADS=2
-for p in simulation/SmoothAdvection/*.par; do
+for p in validation/hydro/inputs/*.par; do
   ./bin/ARCH SmoothAdvection "$p"
 done
 ```
@@ -40,7 +42,7 @@ drift. Acceptance is final-pair L1 rate at least 0.9 for PCM, 1.8 for MUSCL, and
 | MUSCL-MC | 9.314e-6 | 2.040 | 1.22e-14 | pass |
 | PPM | 9.731e-10 | 3.993 | 1.22e-14 | pass |
 
-![Hydro convergence](../assets/hydro_convergence.svg)
+![Hydro convergence](figures/convergence.svg)
 
 The PPM series exceeds its 2.7 acceptance rate after reconstructing pressure
 through the selected EOS and retaining smooth extrema. The near-fourth-order

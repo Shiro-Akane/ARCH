@@ -2,7 +2,7 @@
 
 英文原文：[Reference.md](Reference.md)。英文版是唯一规范文本；接口或行为变化必须先更新英文版。若中英文内容不一致，以英文版为准。
 
-本文依据当前 `main` 分支的声明和 dispatch 路径整理，可全文搜索。学生工作流见 [`simulation/CaseGuide.zh-CN.md`](../simulation/CaseGuide.zh-CN.md)。
+本文依据当前 `main` 分支的声明和 dispatch 路径整理，可全文搜索。学生工作流见 [`docs/guides/SimulationCase.zh-CN.md`](guides/SimulationCase.zh-CN.md)。
 
 ## 目录
 
@@ -240,6 +240,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 转换后的 `PointCoords` 固定以 `(0,0,0)` 为原点。
 
+所有 `bool` 参数均不区分大小写地接受 `true` 或 `false`，例如 `TRUE`、`False` 和 `tRuE`。数值 `0/1`、`on/off`、`yes/no`、部分匹配及其他拼写都会被拒绝，错误信息会指出参数名。
+
 ### 流体数值方法与执行
 
 | 键 | 类型 | 加载默认值 | 契约 |
@@ -250,7 +252,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `time_integrator` | string | `RK2` | `Euler/RK1`、`RK2/SSPRK2`、`RK3/SSPRK3` |
 | `timeintegrator` | string | — | 规范键缺失时使用的 legacy fallback 键 |
 | `cfl` | double | `0.8` | 显式流体 CFL；加载时不检查范围 |
-| `EntropyFix` | string | `On` | 只有精确的 `Off` 或 `False` 关闭，其他值启用 |
+| `EntropyFix` | bool | `true` | 启用 entropy-fix 平滑 |
 | `EntropyFixCoefficient` | double | `0.1` | 启用 entropy fix 时使用 |
 | `sml_rho` | double | `1e-12` | 密度修复阈值 |
 | `max_eint` | double | `1e21` | 比内能上限 |
@@ -281,23 +283,23 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | 仅为尚不支持的自重力解析 |
 
-维护中的 Helmholtz 验证资源是从 [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。它通过 Git LFS 实体化在 `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat`，大小为 60,242,514 bytes，SHA-256 为 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`。原始表成员是验证权威。loader 使用固定 541×201 Timmes 布局并要求全部四个数据块；燃烧基线还要求上述精确 checksum。
+维护中的 Helmholtz 验证资源是从 [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。它通过 Git LFS 实体化在 `EOS_toolkit/tables/helmholtz/helm_table.dat`，大小为 60,242,514 bytes，SHA-256 为 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`。原始表成员是验证权威。loader 使用固定 541×201 Timmes 布局并要求全部四个数据块；燃烧基线还要求上述精确 checksum。
 
 ### 燃烧、网络与 ODE
 
 | 键 | 类型 | 加载默认值 | 契约 |
 | --- | --- | --- | --- |
-| `use_burn` | int flag | `0` | 非零启用 |
+| `use_burn` | bool | `false` | 启用燃烧模块 |
 | `network_name` | string | `aprox19` | `aprox13`、`aprox19`、`aprox21`、`iso7` |
 | `nuclearTempMin` | double | `1e9` | K；燃烧激活阈值 |
 | `nuclearDensMin` | double | `1e-10` | g/cm3；燃烧激活阈值 |
 | `smallt` | double | `1e5` | K；燃烧状态 floor |
 | `smallx` | double | `1e-20` | 组分 floor |
 | `enucDtFactor` | double | `1e30` | 能量释放时间步 limiter；巨大默认值实际关闭限制 |
-| `use_nse` | int flag | `1` | 启用带阈值 NSE 投影 |
+| `use_nse` | bool | `true` | 启用带阈值 NSE 投影 |
 | `nseTempThreshold` | double | `4.5e9` | K |
 | `nseDensThreshold` | double | `1e6` | g/cm3 |
-| `enforce_mass_conservation` | int flag | `1` | 燃烧后归一化组分 |
+| `enforce_mass_conservation` | bool | `true` | 燃烧后归一化组分 |
 | `burn_verbose_level` | int | `0` | 燃烧诊断详细级别 |
 | `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
 | `linear_solver` | string | `DenseLU` | `SparseKLU` 抛出异常 |
@@ -309,8 +311,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `ode_dt_fac_max` | double | `2.0` | 增长系数 |
 | `ode_dt_fac_min` | double | `0.1` | 缩小系数 |
 | `ode_initial_dt_frac` | double | `1e-3` | 初始内部子步比例 |
-| `ode_use_numerical_jac` | int flag | `0` | 已存储；依赖前验证具体 solver 是否使用 |
-| `ode_freeze_jacobian` | int flag | `0` | 已存储；依赖前验证具体 solver 是否使用 |
+| `ode_use_numerical_jac` | bool | `false` | 已存储；依赖前验证具体 solver 是否使用 |
+| `ode_freeze_jacobian` | bool | `false` | 已存储；依赖前验证具体 solver 是否使用 |
 | `dt_init` | custom double | `1e-16` | 启用燃烧时的首个宏时间步 |
 | `dt_min` | custom double | `1e-20` | 宏时间步终止阈值 |
 | `tstep_change_factor` | custom double | `1.2` | 第一步后的最大宏步增长 |
@@ -323,13 +325,13 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 | 键 | 类型 | 加载默认值 | 契约 |
 | --- | --- | --- | --- |
-| `use_diffusion` | int flag | `0` | 非零启用 |
+| `use_diffusion` | bool | `false` | 启用扩散模块 |
 | `diff_integrator` | string | `RKL2` | `RKL1` 或 `RKL2` |
 | `diff_cfl` | double | `0.8` | RKL stage/step 选择所用比例 |
 | `diff_max_stages` | int | `256` | 限制 STS 多项式和宏步 |
-| `use_thermal_diff` | int flag | `0` | 热传导 |
-| `use_viscous_diff` | int flag | `0` | 动量扩散 |
-| `use_species_diff` | int flag | `0` | 组分扩散 |
+| `use_thermal_diff` | bool | `false` | 热传导 |
+| `use_viscous_diff` | bool | `false` | 动量扩散 |
+| `use_species_diff` | bool | `false` | 组分扩散 |
 | `nu_visc` | double | `0` | 非 Helm 下的常运动黏度 |
 | `alpha_therm` | double | `0` | 非 Helm 下的常热扩散率 |
 | `D_spec` | double | `0` | 非 Helm 下的常组分扩散率 |
@@ -349,7 +351,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `chk_dt` | double | `-1` | 正的物理时间间隔 |
 | `chk_dstep` | int | `-1` | 正的步数间隔 |
 | `plt_variables` | string list | `ALL` | 逗号或 `+`，规范场/核素 |
-| `restart` | string | `false` | 包含 `true`、`1`、`yes` 或 `on` 时启用 |
+| `restart` | bool | `false` | 启用 checkpoint 重启 |
 | `restart_file` | string | 空 | 实际重启路径必需 |
 
 在第零步，ARCH 写入初始 PLT 和 CHK。达到目标时间会强制最终输出；`max_steps` 停止遵循已配置输出调度。

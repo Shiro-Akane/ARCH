@@ -13,12 +13,12 @@ uniform-grid references, L1/L2 norms, or tolerances.
 
 | Case | Modules visible | Current evidence |
 | --- | --- | --- |
-| Sedov | hydro, shock-driven refinement | [figure](../../Validation_file/AMR_Visual_Archive/sedov_amr.png) |
-| Gaussian | diffusion, moving refinement pattern | [figure](../../Validation_file/AMR_Visual_Archive/gaussian_amr.png) |
-| Rayleigh–Taylor | hydro, gravity, diffusion | [figure](../../Validation_file/AMR_Visual_Archive/rt_amr.png) |
-| Cellular burn | hydro, burning | [figure](../../Validation_file/AMR_Visual_Archive/cellular_amr.png) |
+| Sedov | hydro, shock-driven refinement | [figure](figures/legacy/sedov.png) |
+| Gaussian | diffusion, moving refinement pattern | [figure](figures/legacy/gaussian.png) |
+| Rayleigh–Taylor | hydro, gravity, diffusion | [figure](figures/legacy/rayleigh_taylor.png) |
+| Cellular burn | hydro, burning | [figure](figures/legacy/cellular_burn.png) |
 
-![Sedov AMR diagnostic](../../Validation_file/AMR_Visual_Archive/sedov_amr.png)
+![Sedov AMR diagnostic](figures/legacy/sedov.png)
 
 ## Quantitative record still required
 
@@ -33,6 +33,6 @@ finest AMR spacing and report:
 - CPU/CUDA topology and field parity using the same refinement decisions.
 
 PPM currently uses MUSCL-MinMod at coarse/fine faces, so AMR-wide third-order
-spatial convergence is not an accepted claim. The historical renderer and
-input manifest remain in `Validation_file/AMR_Visual_Archive/`; no new analysis
-script is required for this status page.
+spatial convergence is not an accepted claim. The retained figures are historical qualitative evidence. Their source HDF5 files
+and renderer were not committed, so any quantitative AMR claim must add a new,
+reproducible validation record with inputs, metrics, and tolerances.

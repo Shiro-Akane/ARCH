@@ -5,7 +5,7 @@
  * method are adapted from Frank Timmes's public_nse package at
  * https://cococubed.com/code_pages/nse.shtml. ARCH adds the generic NetType
  * interface, numerical safeguards, compact-network handling, and energy
- * closure described in ../network/TIMMES_NETWORKS_TECHNICAL_NOTE.md.
+ * closure described in docs/physics/TimmesNetworks.md.
  */
 #pragma once
 

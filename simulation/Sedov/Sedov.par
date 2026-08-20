@@ -49,8 +49,8 @@ restart = false
 eos_type = ideal
 gamma = 1.4
 gravity_type = none
-use_burn = 0
-use_diffusion = 0
+use_burn = false
+use_diffusion = false
 
 center_x = 0.5
 center_y = 0.5

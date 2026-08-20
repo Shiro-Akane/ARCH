@@ -4,7 +4,7 @@
 
 > CPU 状态：RK2/RK3 通过。CUDA：待完成。
 
-`simulation/ExternalGravity/` 从均匀周期状态开始，其中 \(\rho=1\)、\(p=1\)、\(u=0\)、常数 \(g_x=1\)。在 \(t=0.1\) 时，精确解为 \(u=g_xt=0.1\)，密度和压力不变，且 \(E=p/(\gamma-1)+\rho u^2/2\)。空间通量散度为零，因此该算例隔离流体时间积分器内部的重力源项。
+`ExternalGravity` 实现仍位于 `simulation/ExternalGravity/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们从均匀周期状态开始，其中 \(\rho=1\)、\(p=1\)、\(u=0\)、常数 \(g_x=1\)。在 \(t=0.1\) 时，精确解为 \(u=g_xt=0.1\)，密度和压力不变，且 \(E=p/(\gamma-1)+\rho u^2/2\)。空间通量散度为零，因此该算例隔离流体时间积分器内部的重力源项。
 
 ## 复现
 
@@ -12,7 +12,7 @@
 
 ```bash
 export OMP_NUM_THREADS=2
-for p in simulation/ExternalGravity/*.par; do
+for p in validation/gravity/inputs/*.par; do
   ./bin/ARCH ExternalGravity "$p"
 done
 ```

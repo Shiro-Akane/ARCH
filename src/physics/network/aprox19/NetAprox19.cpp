@@ -1,5 +1,5 @@
 // ARCH compilation unit for the Timmes-derived aprox19 network.
-// Source details: ../TIMMES_NETWORKS_TECHNICAL_NOTE.md.
+// Source details: docs/physics/TimmesNetworks.md.
 #include "NetAprox19.h"
 
 static_assert(NetAprox19::NUM_SPECIES == 19);

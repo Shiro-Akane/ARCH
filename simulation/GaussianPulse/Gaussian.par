@@ -69,21 +69,21 @@ chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 t
 # [Physics Core]
 # Maps to config.physics.*
 eos_type = helmholtz            # Options: ideal, tabular, helmholtz
-eos_table_path = EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
 network_name = aprox19
 
 # ------------------------------------------------------------------------------
 # [Diffusion Configuration]
 # Maps to config.physics.diffusion.*
 # ------------------------------------------------------------------------------
-use_diffusion = 1           # 0 to disable, 1 to enable diffusion
+use_diffusion = true           # false disables, true enables diffusion
 diff_integrator = RKL2      # Options: RKL1, RKL2
 diff_cfl = 0.8              # Explicit CFL limit for diffusion steps
 diff_max_stages = 1024      # Maximum number of RKL super-time-stepping stages
 
-use_thermal_diff = 1        # 1 to enable heat conduction
-use_viscous_diff = 1        # 1 to enable viscous diffusion
-use_species_diff = 1        # 1 to enable species concentration diffusion
+use_thermal_diff = true        # true enables heat conduction
+use_viscous_diff = true        # true enables viscous diffusion
+use_species_diff = true        # true enables species concentration diffusion
 
 # D_spec = 0.1
 # nu_visc = 0.1

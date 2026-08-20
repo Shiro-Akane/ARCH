@@ -4,11 +4,11 @@
 
 > CPU 状态：BD 和 ROS4 通过当前跨求解器容差。CUDA：待完成。
 
-`simulation/BurnOneZone/` 使用生产 burn driver，在 \(\rho=10^7\,\mathrm{g\,cm^{-3}}\)、\(T=3\times10^9\,\mathrm{K}\)、初始 `C12=0.5`、`O16=0.5` 条件下推进至 \(t=10^{-10}\,\mathrm{s}\)。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
+`BurnOneZone` 实现仍位于 `simulation/BurnOneZone/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们使用生产 burn driver，在 \(\rho=10^7\,\mathrm{g\,cm^{-3}}\)、\(T=3\times10^9\,\mathrm{K}\)、初始 `C12=0.5`、`O16=0.5` 条件下推进至 \(t=10^{-10}\,\mathrm{s}\)。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
 
 ## Helmholtz 表身份
 
-本记录唯一使用的表来源是从 [Timmes EOS 网站](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。运行时路径为 `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat`，运行前必须由 Git LFS 实体化。
+本记录唯一使用的表来源是从 [Timmes EOS 网站](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。运行时路径为 `EOS_toolkit/tables/helmholtz/helm_table.dat`，运行前必须由 Git LFS 实体化。
 
 | 属性 | 必需值 |
 | --- | --- |
@@ -23,10 +23,10 @@ loader 要求固定 541×201 表的全部四个数据块，并拒绝截断或非
 环境与构建来源信息和 [hydro 记录](../hydro/README.zh-CN.md)一致。运行前核对表身份：
 
 ```bash
-git lfs pull --include="EOS_toolkit/eos_tabular/helmholtz/helm_table.dat"
-sha256sum EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
+git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat"
+sha256sum EOS_toolkit/tables/helmholtz/helm_table.dat
 export OMP_NUM_THREADS=2
-for p in simulation/BurnOneZone/*.par; do
+for p in validation/burn/inputs/*.par; do
   ./bin/ARCH BurnOneZone "$p"
 done
 ```
@@ -38,6 +38,6 @@ done
 | BD | 5.086e-12 | 1.093e-11 | 3.280e-11 | 1.538e-11 | 通过 |
 | ROS4 | 5.088e-12 | 1.094e-11 | 3.281e-11 | 1.517e-11 | 通过 |
 
-![燃烧求解器比较](../assets/burn_solver_comparison.svg)
+![燃烧求解器比较](figures/solver_comparison.svg)
 
-两个测试解的丰度和均闭合到舍入误差。ROS4 使用匹配的四 stage L-stable 系数集，每个内部步共享一套 Jacobian 矩阵。Stage 方程和系数集遵循 [L-stable ROS4 公式](https://link.springer.com/article/10.1007/s10915-023-02232-3)，并与 [OpenFOAM Rosenbrock34 实现](https://api.openfoam.com/2212/Rosenbrock34_8C_source.html)交叉核对。本记录只验证一个状态和时间区间；生产结论仍需要容差/子步序列及外部网络参考。网络实现测试见 [Timmes 技术说明](../../src/physics/network/TIMMES_NETWORKS_TECHNICAL_NOTE.zh-CN.md)。
+两个测试解的丰度和均闭合到舍入误差。ROS4 使用匹配的四 stage L-stable 系数集，每个内部步共享一套 Jacobian 矩阵。Stage 方程和系数集遵循 [L-stable ROS4 公式](https://link.springer.com/article/10.1007/s10915-023-02232-3)，并与 [OpenFOAM Rosenbrock34 实现](https://api.openfoam.com/2212/Rosenbrock34_8C_source.html)交叉核对。本记录只验证一个状态和时间区间；生产结论仍需要容差/子步序列及外部网络参考。网络实现测试见 [Timmes 技术说明](../../docs/physics/TimmesNetworks.zh-CN.md)。

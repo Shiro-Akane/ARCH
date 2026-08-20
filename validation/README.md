@@ -8,6 +8,15 @@ The first CPU baselines cover uniform-grid hydro reconstruction, RKL1/RKL2 speci
 diffusion, constant external gravity, and an aprox13 one-zone burn. CUDA rows
 are reserved until the V2 backend can run the same committed inputs.
 
+## Directory contract
+
+Each module owns one subdirectory containing its README, machine-readable metrics,
+immutable baseline parameter files under `inputs/`, and optional `figures/`. Each
+validation `.par` file names its owning record and must change together with the
+relevant metrics and acceptance decision. Reusable teaching and example inputs
+remain under `simulation/`; runtime data remain under `EOS_toolkit/`. Do not create
+a parallel validation tree.
+
 ## Current status
 
 | Area | CPU result | CUDA result | Record |

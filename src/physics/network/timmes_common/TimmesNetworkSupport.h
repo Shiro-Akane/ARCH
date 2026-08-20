@@ -1,5 +1,5 @@
 // ARCH-owned generic policy adapter for the Timmes-derived network equations.
-// Upstream/source boundaries: ../TIMMES_NETWORKS_TECHNICAL_NOTE.md.
+// Upstream/source boundaries: docs/physics/TimmesNetworks.md.
 #pragma once
 
 #include <algorithm>

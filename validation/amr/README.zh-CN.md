@@ -8,12 +8,12 @@
 
 | 算例 | 可见模块 | 当前证据 |
 | --- | --- | --- |
-| Sedov | 流体、激波驱动细化 | [图像](../../Validation_file/AMR_Visual_Archive/sedov_amr.png) |
-| Gaussian | 扩散、移动细化模式 | [图像](../../Validation_file/AMR_Visual_Archive/gaussian_amr.png) |
-| Rayleigh–Taylor | 流体、重力、扩散 | [图像](../../Validation_file/AMR_Visual_Archive/rt_amr.png) |
-| Cellular burn | 流体、燃烧 | [图像](../../Validation_file/AMR_Visual_Archive/cellular_amr.png) |
+| Sedov | 流体、激波驱动细化 | [图像](figures/legacy/sedov.png) |
+| Gaussian | 扩散、移动细化模式 | [图像](figures/legacy/gaussian.png) |
+| Rayleigh–Taylor | 流体、重力、扩散 | [图像](figures/legacy/rayleigh_taylor.png) |
+| Cellular burn | 流体、燃烧 | [图像](figures/legacy/cellular_burn.png) |
 
-![Sedov AMR 诊断](../../Validation_file/AMR_Visual_Archive/sedov_amr.png)
+![Sedov AMR 诊断](figures/legacy/sedov.png)
 
 ## 仍需完成的定量记录
 
@@ -26,4 +26,4 @@
 - 穿越细化界面的光滑特征；
 - 使用相同细化决定的 CPU/CUDA 拓扑和场一致性。
 
-PPM 当前在粗细面使用 MUSCL-MinMod，因此不接受 AMR 全域三阶空间收敛声明。历史 renderer 和输入 manifest 保留在 `Validation_file/AMR_Visual_Archive/`；此状态页不需要新的分析脚本。
+PPM 当前在粗细面使用 MUSCL-MinMod，因此不接受 AMR 全域三阶空间收敛声明。保留的图像仅作为历史定性证据；其源 HDF5 文件和 renderer 未提交。今后的 AMR 定量结论必须新增可复现的验证记录，并包含输入、指标和容差。

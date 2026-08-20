@@ -5,7 +5,9 @@ the authoritative source text.
 
 > CPU status: BD and ROS4 pass the current cross-solver tolerance. CUDA: pending.
 
-`simulation/BurnOneZone/` runs the production burn driver at
+The `BurnOneZone` implementation remains in `simulation/BurnOneZone/`; the
+immutable parameter files owned by this record are in [`inputs/`](inputs/).
+They run the production burn driver at
 \(\rho=10^7\,\mathrm{g\,cm^{-3}}\), \(T=3\times10^9\,\mathrm{K}\), initial
 `C12=0.5`, `O16=0.5`, and \(t=10^{-10}\,\mathrm{s}\). The strict BE_NR input
 (`rtol=1e-10`, `atol=1e-14`) supplies an internal converged reference; BD and
@@ -17,7 +19,7 @@ independent physical validation of aprox13 rates.
 The only source used for this record is the `helm_table.dat` member of the
 `helmholtz.tar.xz` package downloaded from the
 [Timmes EOS website](https://cococubed.com/code_pages/eos.shtml). The runtime
-path is `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat`; Git LFS must
+path is `EOS_toolkit/tables/helmholtz/helm_table.dat`; Git LFS must
 materialize it before the run.
 
 | Property | Required value |
@@ -35,10 +37,10 @@ Environment and build provenance match the [hydro record](../hydro/README.md).
 Verify the table identity before running:
 
 ```bash
-git lfs pull --include="EOS_toolkit/eos_tabular/helmholtz/helm_table.dat"
-sha256sum EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
+git lfs pull --include="EOS_toolkit/tables/helmholtz/helm_table.dat"
+sha256sum EOS_toolkit/tables/helmholtz/helm_table.dat
 export OMP_NUM_THREADS=2
-for p in simulation/BurnOneZone/*.par; do
+for p in validation/burn/inputs/*.par; do
   ./bin/ARCH BurnOneZone "$p"
 done
 ```
@@ -54,7 +56,7 @@ quantities use \(\lvert q-q_{ref}\rvert/\lvert q_{ref}\rvert\).
 | BD | 5.086e-12 | 1.093e-11 | 3.280e-11 | 1.538e-11 | pass |
 | ROS4 | 5.088e-12 | 1.094e-11 | 3.281e-11 | 1.517e-11 | pass |
 
-![Burn solver comparison](../assets/burn_solver_comparison.svg)
+![Burn solver comparison](figures/solver_comparison.svg)
 
 Both tested solutions close the abundance sum to roundoff. ROS4 uses the
 matched four-stage L-stable coefficient set and one shared Jacobian matrix per
@@ -65,4 +67,4 @@ and were cross-checked against the
 This record verifies one state and time interval; a
 tolerance/substep series and an external network reference remain required for
 production claims. Network implementation tests are described in the
-[Timmes technical note](../../src/physics/network/TIMMES_NETWORKS_TECHNICAL_NOTE.md).
+[Timmes technical note](../../docs/physics/TimmesNetworks.md).

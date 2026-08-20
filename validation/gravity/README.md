@@ -5,7 +5,9 @@ the authoritative source text.
 
 > CPU status: pass for RK2/RK3. CUDA: pending.
 
-`simulation/ExternalGravity/` starts from a uniform periodic state with
+The `ExternalGravity` implementation remains in `simulation/ExternalGravity/`;
+the immutable parameter files owned by this record are in [`inputs/`](inputs/).
+They start from a uniform periodic state with
 \(\rho=1\), \(p=1\), \(u=0\), and constant \(g_x=1\). At \(t=0.1\), the exact
 solution is \(u=g_xt=0.1\), unchanged density and pressure, and
 \(E=p/(\gamma-1)+\rho u^2/2\). Spatial flux divergence is zero, so the case
@@ -17,7 +19,7 @@ Environment and build provenance match the [hydro record](../hydro/README.md).
 
 ```bash
 export OMP_NUM_THREADS=2
-for p in simulation/ExternalGravity/*.par; do
+for p in validation/gravity/inputs/*.par; do
   ./bin/ARCH ExternalGravity "$p"
 done
 ```

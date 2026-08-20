@@ -199,6 +199,13 @@ if(BUILD_TESTING)
         target_link_libraries(arch_numerics_regression PRIVATE OpenMP::OpenMP_CXX)
     endif()
     add_test(NAME numerics_regression COMMAND arch_numerics_regression)
+
+    add_executable(arch_runtime_params_regression
+        tests/RuntimeParamsRegression.cpp
+    )
+    target_compile_features(arch_runtime_params_regression PRIVATE cxx_std_20)
+    target_include_directories(arch_runtime_params_regression PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    add_test(NAME runtime_params_regression COMMAND arch_runtime_params_regression)
 endif()
 
 # ==============================================================================

@@ -151,16 +151,15 @@ public:
         // with existing parameter files that use the legacy spelling.
         cfg.numerics.time_integrator = parser.GetString(
             "time_integrator", parser.GetString("timeintegrator", "RK2"));
-        std::string fix_switch = parser.GetString("EntropyFix", "On"); // Enabled by default.
-        if (fix_switch == "Off" || fix_switch == "False")
-        {
-            cfg.numerics.entropy_fix_coeff = 0.0; // Zero disables eigenvalue smoothing.
-        }
-        else
+        if (parser.GetBool("EntropyFix", true))
         {
             // 0.1 is the default fraction of local spectral radius used as the
             // entropy-fix smoothing width.
             cfg.numerics.entropy_fix_coeff = parser.GetDouble("EntropyFixCoefficient", 0.1);
+        }
+        else
+        {
+            cfg.numerics.entropy_fix_coeff = 0.0; // Zero disables eigenvalue smoothing.
         }
 
         cfg.numerics.sml_rho = parser.GetDouble("sml_rho", 1e-12);
@@ -180,7 +179,7 @@ public:
         cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
 
         // Nuclear reaction and NSE configuration.
-        cfg.physics.burn.use_burn = (parser.GetInt("use_burn", 0) != 0);
+        cfg.physics.burn.use_burn = parser.GetBool("use_burn", false);
         cfg.physics.burn.network_name = parser.GetString("network_name", "aprox19");
         cfg.physics.burn.nuclearTempMin = parser.GetDouble("nuclearTempMin", 1e9);
         cfg.physics.burn.nuclearDensMin = parser.GetDouble("nuclearDensMin", 1e-10);
@@ -188,11 +187,11 @@ public:
         cfg.physics.burn.smallx = parser.GetDouble("smallx", 1e-20);
 
         cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", 1e30);
-        cfg.physics.burn.use_nse = (parser.GetInt("use_nse", 1) != 0);
+        cfg.physics.burn.use_nse = parser.GetBool("use_nse", true);
         cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", 4.5e9);
         cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", 1.0e6);
 
-        cfg.physics.burn.enforce_mass_conservation = (parser.GetInt("enforce_mass_conservation", 1) != 0); // Enabled by default.
+        cfg.physics.burn.enforce_mass_conservation = parser.GetBool("enforce_mass_conservation", true);
         cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", 0);
 
         // Stiff ODE solver configuration.
@@ -209,18 +208,18 @@ public:
         cfg.physics.burn.odeconfig.dt_fac_min = parser.GetDouble("ode_dt_fac_min", 0.1);
         cfg.physics.burn.odeconfig.initial_dt_frac = parser.GetDouble("ode_initial_dt_frac", 1e-3);
 
-        cfg.physics.burn.odeconfig.use_numerical_jacobian = (parser.GetInt("ode_use_numerical_jac", 0) != 0);
-        cfg.physics.burn.odeconfig.freeze_jacobian = (parser.GetInt("ode_freeze_jacobian", 0) != 0);
+        cfg.physics.burn.odeconfig.use_numerical_jacobian = parser.GetBool("ode_use_numerical_jac", false);
+        cfg.physics.burn.odeconfig.freeze_jacobian = parser.GetBool("ode_freeze_jacobian", false);
 
         // Diffusion configuration.
-        cfg.physics.diffusion.use_diffusion = (parser.GetInt("use_diffusion", 0) != 0);
+        cfg.physics.diffusion.use_diffusion = parser.GetBool("use_diffusion", false);
         cfg.physics.diffusion.integrator = parser.GetString("diff_integrator", "RKL2");
         cfg.physics.diffusion.diff_cfl = parser.GetDouble("diff_cfl", 0.8);
         cfg.physics.diffusion.max_stages = parser.GetInt("diff_max_stages", 256);
 
-        cfg.physics.diffusion.use_thermal_diffusion = (parser.GetInt("use_thermal_diff", 0) != 0);
-        cfg.physics.diffusion.use_viscous_diffusion = (parser.GetInt("use_viscous_diff", 0) != 0);
-        cfg.physics.diffusion.use_species_diffusion = (parser.GetInt("use_species_diff", 0) != 0);
+        cfg.physics.diffusion.use_thermal_diffusion = parser.GetBool("use_thermal_diff", false);
+        cfg.physics.diffusion.use_viscous_diffusion = parser.GetBool("use_viscous_diff", false);
+        cfg.physics.diffusion.use_species_diffusion = parser.GetBool("use_species_diff", false);
         cfg.physics.diffusion.nu_visc = parser.GetDouble("nu_visc", 0.0);
         cfg.physics.diffusion.alpha_therm = parser.GetDouble("alpha_therm", 0.0);
         cfg.physics.diffusion.D_spec = parser.GetDouble("D_spec", 0.0);
@@ -345,13 +344,7 @@ public:
         cfg.io.chk_dt = parser.GetDouble("chk_dt", -1.0);
         cfg.io.chk_dstep = parser.GetInt("chk_dstep", -1);
 
-        std::string restart_str = parser.GetString("restart", "false");
-        std::transform(restart_str.begin(), restart_str.end(), restart_str.begin(), ::tolower);
-
-        cfg.io.restart = (restart_str.find("true") != std::string::npos ||
-                          restart_str.find("1") != std::string::npos ||
-                          restart_str.find("yes") != std::string::npos ||
-                          restart_str.find("on") != std::string::npos);
+        cfg.io.restart = parser.GetBool("restart", false);
 
         std::string r_file = parser.GetString("restart_file", "");
         r_file.erase(0, r_file.find_first_not_of(" \t\r\n"));

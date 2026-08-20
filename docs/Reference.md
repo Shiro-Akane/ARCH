@@ -6,7 +6,7 @@ here first.
 
 This searchable reference follows the declarations and dispatch paths in the
 current `main` branch. The student workflow is in
-[`simulation/CaseGuide.md`](../simulation/CaseGuide.md).
+[`docs/guides/SimulationCase.md`](guides/SimulationCase.md).
 
 ## Contents
 
@@ -294,6 +294,10 @@ Logical coordinate meanings are:
 
 For converted `PointCoords`, the origin is fixed at `(0,0,0)`.
 
+Every `bool` parameter accepts `true` or `false` case-insensitively (for example,
+`TRUE`, `False`, and `tRuE`). Numeric `0/1`, `on/off`, `yes/no`, partial matches,
+and any other spelling are rejected with the parameter name in the error.
+
 ### Hydro numerics and execution
 
 | Key | Type | Load default | Contract |
@@ -304,7 +308,7 @@ For converted `PointCoords`, the origin is fixed at `(0,0,0)`.
 | `time_integrator` | string | `RK2` | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
 | `timeintegrator` | string | — | legacy fallback key when canonical key is absent |
 | `cfl` | double | `0.8` | explicit hydro CFL; range unchecked at load time |
-| `EntropyFix` | string | `On` | exact `Off` or `False` disables; other values enable |
+| `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
 | `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
 | `sml_rho` | double | `1e-12` | density repair threshold |
 | `max_eint` | double | `1e21` | specific internal-energy ceiling |
@@ -338,7 +342,7 @@ For converted `PointCoords`, the origin is fixed at `(0,0,0)`.
 The maintained Helmholtz validation asset is the `helm_table.dat` member of the
 `helmholtz.tar.xz` archive downloaded from the
 [Timmes EOS page](https://cococubed.com/code_pages/eos.shtml). It is materialized
-at `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat` through Git LFS and has
+at `EOS_toolkit/tables/helmholtz/helm_table.dat` through Git LFS and has
 size 60,242,514 bytes and
 SHA-256
 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`.
@@ -350,17 +354,17 @@ also requires the exact checksum above.
 
 | Key | Type | Load default | Contract |
 | --- | --- | --- | --- |
-| `use_burn` | int flag | `0` | nonzero enables |
+| `use_burn` | bool | `false` | enables the burn module |
 | `network_name` | string | `aprox19` | `aprox13`, `aprox19`, `aprox21`, `iso7` |
 | `nuclearTempMin` | double | `1e9` | K; burn activation threshold |
 | `nuclearDensMin` | double | `1e-10` | g/cm3; burn activation threshold |
 | `smallt` | double | `1e5` | K; burn state floor |
 | `smallx` | double | `1e-20` | composition floor |
 | `enucDtFactor` | double | `1e30` | energy-release time-step limiter; huge default is effectively off |
-| `use_nse` | int flag | `1` | enables thresholded NSE projection |
+| `use_nse` | bool | `true` | enables thresholded NSE projection |
 | `nseTempThreshold` | double | `4.5e9` | K |
 | `nseDensThreshold` | double | `1e6` | g/cm3 |
-| `enforce_mass_conservation` | int flag | `1` | renormalizes composition after burn |
+| `enforce_mass_conservation` | bool | `true` | renormalizes composition after burn |
 | `burn_verbose_level` | int | `0` | burn diagnostic verbosity |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
 | `linear_solver` | string | `DenseLU` | `SparseKLU` throws |
@@ -372,8 +376,8 @@ also requires the exact checksum above.
 | `ode_dt_fac_max` | double | `2.0` | growth factor |
 | `ode_dt_fac_min` | double | `0.1` | shrink factor |
 | `ode_initial_dt_frac` | double | `1e-3` | initial internal substep fraction |
-| `ode_use_numerical_jac` | int flag | `0` | stored; verify solver-specific use before relying on it |
-| `ode_freeze_jacobian` | int flag | `0` | stored; verify solver-specific use before relying on it |
+| `ode_use_numerical_jac` | bool | `false` | stored; verify solver-specific use before relying on it |
+| `ode_freeze_jacobian` | bool | `false` | stored; verify solver-specific use before relying on it |
 | `dt_init` | custom double | `1e-16` | first macro step when burn is enabled |
 | `dt_min` | custom double | `1e-20` | abort threshold for macro step |
 | `tstep_change_factor` | custom double | `1.2` | maximum macro-step growth after first step |
@@ -393,13 +397,13 @@ network setup implementation.
 
 | Key | Type | Load default | Contract |
 | --- | --- | --- | --- |
-| `use_diffusion` | int flag | `0` | nonzero enables |
+| `use_diffusion` | bool | `false` | enables the diffusion module |
 | `diff_integrator` | string | `RKL2` | `RKL1` or `RKL2` |
 | `diff_cfl` | double | `0.8` | fraction used in RKL stage/step selection |
 | `diff_max_stages` | int | `256` | caps the STS polynomial and macro step |
-| `use_thermal_diff` | int flag | `0` | thermal conduction |
-| `use_viscous_diff` | int flag | `0` | momentum diffusion |
-| `use_species_diff` | int flag | `0` | composition diffusion |
+| `use_thermal_diff` | bool | `false` | thermal conduction |
+| `use_viscous_diff` | bool | `false` | momentum diffusion |
+| `use_species_diff` | bool | `false` | composition diffusion |
 | `nu_visc` | double | `0` | constant non-Helm kinematic viscosity |
 | `alpha_therm` | double | `0` | constant non-Helm thermal diffusivity |
 | `D_spec` | double | `0` | constant non-Helm species diffusivity |
@@ -421,7 +425,7 @@ zero value.
 | `chk_dt` | double | `-1` | positive physical-time interval |
 | `chk_dstep` | int | `-1` | positive step interval |
 | `plt_variables` | string list | `ALL` | comma or `+`, canonical fields/species |
-| `restart` | string | `false` | strings containing `true`, `1`, `yes`, or `on` enable |
+| `restart` | bool | `false` | enables checkpoint restart |
 | `restart_file` | string | empty | required for an actual restart path |
 
 At step zero, ARCH writes an initial PLT and CHK. Reaching target time forces

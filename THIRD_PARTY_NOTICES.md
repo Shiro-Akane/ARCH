@@ -16,8 +16,8 @@ ARCH contains C++ adaptations of software distributed by Frank Timmes:
 | --- | --- | --- |
 | `src/physics/network/{iso7,aprox13,aprox19,aprox21}/` | `public_iso7.f90`, `public_aprox13.f90`, `public_aprox19.f90`, and `public_aprox21.f90` from the [Timmes reaction-network page](https://cococubed.com/code_pages/burn.shtml) | C++ policy interfaces, generic solver coupling, generated derivatives, and CPU/GPU-portable organization |
 | `src/physics/nse/nse_solver.h` | `public_nse` from the [Timmes NSE page](https://cococubed.com/code_pages/nse.shtml) | compile-time network coupling, safeguards, compact-network handling, and energy closure |
-| `src/physics/eos/HelmEos.h` and `EOS_toolkit/helmholtz/` | Helmholtz EOS package from the [Timmes EOS page](https://cococubed.com/code_pages/eos.shtml) | C++ EOS policy, strict table loading, state coupling, and diagnostics |
-| `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat` | `helm_table.dat` from the project's downloaded `helmholtz.tar.xz` archive | Git LFS packaging only; the table data are not an ARCH-authored work |
+| `src/physics/eos/HelmEos.h` | Helmholtz EOS package from the [Timmes EOS page](https://cococubed.com/code_pages/eos.shtml) | C++ EOS policy, strict table loading, state coupling, and diagnostics |
+| `EOS_toolkit/tables/helmholtz/helm_table.dat` | `helm_table.dat` from the project's downloaded `helmholtz.tar.xz` archive | Git LFS packaging only; the table data are not an ARCH-authored work |
 
 The Timmes download pages request citation of the relevant publications and
 contact with the author when these codes, pieces, or modified versions are
@@ -27,7 +27,7 @@ ARCH's MIT license. Maintainers should preserve source attribution and confirm
 applicable redistribution terms before a public release.
 
 Implementation and validation details are in
-[`src/physics/network/TIMMES_NETWORKS_TECHNICAL_NOTE.md`](src/physics/network/TIMMES_NETWORKS_TECHNICAL_NOTE.md).
+[`docs/physics/TimmesNetworks.md`](docs/physics/TimmesNetworks.md).
 
 ## AMReX-Astro Microphysics
 

@@ -24,7 +24,7 @@ public:
             throw std::invalid_argument("BurnOneZone requires one-dimensional Cartesian geometry.");
         }
         if (!config.physics.burn.use_burn) {
-            throw std::invalid_argument("BurnOneZone requires use_burn=1.");
+            throw std::invalid_argument("BurnOneZone requires use_burn=true.");
         }
 
         density_ = config.Get<double>("rho0", 1.0e7);
