@@ -17,7 +17,8 @@ independent physical validation of aprox13 rates.
 The only source used for this record is the `helm_table.dat` member of the
 `helmholtz.tar.xz` package downloaded from the
 [Timmes EOS website](https://cococubed.com/code_pages/eos.shtml). The runtime
-path is `EOS_toolkit/helm_table.dat`; Git LFS must materialize it before the run.
+path is `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat`; Git LFS must
+materialize it before the run.
 
 | Property | Required value |
 | --- | --- |
@@ -34,8 +35,8 @@ Environment and build provenance match the [hydro record](../hydro/README.md).
 Verify the table identity before running:
 
 ```bash
-git lfs pull --include="EOS_toolkit/helm_table.dat"
-sha256sum EOS_toolkit/helm_table.dat
+git lfs pull --include="EOS_toolkit/eos_tabular/helmholtz/helm_table.dat"
+sha256sum EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
 export OMP_NUM_THREADS=2
 for p in simulation/BurnOneZone/*.par; do
   ./bin/ARCH BurnOneZone "$p"

@@ -74,7 +74,7 @@ chk_dt       = 5.0e-9         # Output CHK based on physical time interval (-1.0
 # [Physics Core]
 # ------------------------------------------------------------------------------
 eos_type = helmholtz         # Ideal, tabular, helmholtz
-eos_table_path = EOS_toolkit/helm_table.dat
+eos_table_path = EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
 
 gravity_type = none
 

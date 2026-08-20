@@ -45,7 +45,7 @@ chk_dstep = -1
 plt_variables = DENS, TEMP, PRES, ENER, ENUC, SPECIES
 
 eos_type = helmholtz
-eos_table_path = EOS_toolkit/helm_table.dat
+eos_table_path = EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
 gravity_type = none
 use_diffusion = 0
 

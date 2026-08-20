@@ -1,13 +1,21 @@
-import numpy as np
-import h5py
-import os
-import helmeos
 from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
+import os
+from pathlib import Path
 
-# ==========================================
-# 1. 物理参数与网格设定 (保持不变)
-# ==========================================
+import h5py
+import helmeos
+import numpy as np
+
+# Resolve the maintained Timmes table independently of the process working directory.
+helm_table_path = (
+    Path(__file__).resolve().parent
+    / "eos_tabular"
+    / "helmholtz"
+    / "helm_table.dat"
+)
+
+# Thermodynamic table dimensions and coordinate bounds.
 n_rho = 150
 n_T   = 150
 n_A   = 15  
@@ -26,9 +34,7 @@ log_T_arr   = np.linspace(log_T_min, log_T_max, n_T)
 A_arr       = np.linspace(A_min, A_max, n_A)
 Z_arr       = np.linspace(Z_min, Z_max, n_Z)
 
-# ==========================================
-# 2. 初始化 1D 展平数组 (保持不变)
-# ==========================================
+# Flat output arrays matching the C++ table layout.
 total_size = n_rho * n_T * n_A * n_Z
 pressure    = np.zeros(total_size, dtype=np.float64)
 energy      = np.zeros(total_size, dtype=np.float64)
@@ -37,24 +43,22 @@ cv          = np.zeros(total_size, dtype=np.float64)
 dp_drho     = np.zeros(total_size, dtype=np.float64)
 dp_dT       = np.zeros(total_size, dtype=np.float64)
 
-# ==========================================
-# 3. 初始化 Helmholtz EOS 并填充数据
-# ==========================================
-print("Loading helm_table.dat and initializing Helmholtz EOS...")
-# 使用正确的类名实例化
-eos = helmeos.HelmTable(fn="helm_table.dat") 
+# Initialize the Helmholtz EOS and populate the table.
+print(f"Loading {helm_table_path} and initializing Helmholtz EOS...")
+# helmeos exposes the Timmes table through HelmTable.
+eos = helmeos.HelmTable(fn=str(helm_table_path))
 
 print(f"Generating 4D Table: {n_rho}x{n_T}x{n_A}x{n_Z} (Total points: {total_size})")
 
-# 1. 定义单层密度切片的处理函数 (Worker Function)
+# Process one density plane per worker.
 def process_density_slice(i):
-    # 每个子进程需要拥有自己独立的 EOS 实例，避免底层 Fortran 内存冲突
-    local_eos = helmeos.HelmTable(fn="helm_table.dat")
+    # Each process owns an EOS instance because the Fortran state is not shared safely.
+    local_eos = helmeos.HelmTable(fn=str(helm_table_path))
     
     rho = 10.0**log_rho_arr[i]
     print(f"Worker processing slice {i}/{n_rho} (rho = {rho:.2e})...")
     
-    # 局部数组，用于存储这一个密度切片产生的所有数据
+    # Local arrays hold one complete density plane.
     slice_size = n_T * n_A * n_Z
     local_P  = np.zeros(slice_size, dtype=np.float64)
     local_E  = np.zeros(slice_size, dtype=np.float64)
@@ -78,7 +82,7 @@ def process_density_slice(i):
                     print(f"Error at rho={rho}, T={T_target}, A={A_bar}, Z={Z_bar}")
                     continue
                 
-                # 局部的 1D 索引 (去掉了 i 的维度)
+                # Flatten the (T, A, Z) indices within this density plane.
                 local_idx = j * (n_A * n_Z) + k * n_Z + l
                 
                 local_P[local_idx]  = state['ptot']
@@ -88,20 +92,20 @@ def process_density_slice(i):
                 local_dpdT[local_idx]   = state['dpt']
                 local_dpdrho[local_idx] = state['dpd']
 
-    # 返回该切片的索引 i 和对应的局部数据
+    # Return the plane index with its local fields.
     return i, local_P, local_E, local_cs, local_cv, local_dpdrho, local_dpdT
 
-# 2. 调度进程池执行
+# Dispatch density planes to the process pool.
 if __name__ == '__main__':
-    # 获取可用核心数 (留一个给系统)
+    # Leave one logical CPU available for the operating system.
     num_cores = max(1, multiprocessing.cpu_count() - 1)
     print(f"Starting parallel generation using {num_cores} cores...")
     
     with ProcessPoolExecutor(max_workers=num_cores) as executor:
-        # 并发执行所有的密度切片
+        # Evaluate every density plane concurrently.
         results = executor.map(process_density_slice, range(n_rho))
         
-        # 收集结果并填入全局大数组
+        # Copy completed planes into the global flat arrays.
         for i, l_P, l_E, l_cs, l_cv, l_dpdrho, l_dpdT in results:
             start_idx = i * (n_T * n_A * n_Z)
             end_idx   = start_idx + (n_T * n_A * n_Z)
@@ -115,21 +119,19 @@ if __name__ == '__main__':
 
     print("Parallel computation finished. Writing to HDF5...")
 
-# ==========================================
-# 4. 写入 HDF5 
-# ==========================================
+# Write the HDF5 table consumed by Tabular4DEOS.
 output_filename = "white_dwarf_eos_4d.h5"
 if os.path.exists(output_filename):
     os.remove(output_filename)
 
 with h5py.File(output_filename, "w") as f:
-    # 写入维度
+    # Grid dimensions.
     f.create_dataset("n_rho", data=n_rho)
     f.create_dataset("n_T",   data=n_T)
     f.create_dataset("n_A",   data=n_A)
     f.create_dataset("n_Z",   data=n_Z)
     
-    # 写入边界
+    # Coordinate bounds.
     f.create_dataset("log_rho_min", data=log_rho_min)
     f.create_dataset("log_rho_max", data=log_rho_max)
     f.create_dataset("log_T_min",   data=log_T_min)
@@ -139,7 +141,7 @@ with h5py.File(output_filename, "w") as f:
     f.create_dataset("Z_min",       data=Z_min)
     f.create_dataset("Z_max",       data=Z_max)
     
-    # 写入物理场
+    # Thermodynamic fields.
     f.create_dataset("pressure",    data=pressure)
     f.create_dataset("energy",      data=energy)
     f.create_dataset("sound_speed", data=sound_speed)

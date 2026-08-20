@@ -8,7 +8,7 @@
 
 ## Helmholtz 表身份
 
-本记录唯一使用的表来源是从 [Timmes EOS 网站](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。运行时路径为 `EOS_toolkit/helm_table.dat`，运行前必须由 Git LFS 实体化。
+本记录唯一使用的表来源是从 [Timmes EOS 网站](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。运行时路径为 `EOS_toolkit/eos_tabular/helmholtz/helm_table.dat`，运行前必须由 Git LFS 实体化。
 
 | 属性 | 必需值 |
 | --- | --- |
@@ -23,8 +23,8 @@ loader 要求固定 541×201 表的全部四个数据块，并拒绝截断或非
 环境与构建来源信息和 [hydro 记录](../hydro/README.zh-CN.md)一致。运行前核对表身份：
 
 ```bash
-git lfs pull --include="EOS_toolkit/helm_table.dat"
-sha256sum EOS_toolkit/helm_table.dat
+git lfs pull --include="EOS_toolkit/eos_tabular/helmholtz/helm_table.dat"
+sha256sum EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
 export OMP_NUM_THREADS=2
 for p in simulation/BurnOneZone/*.par; do
   ./bin/ARCH BurnOneZone "$p"

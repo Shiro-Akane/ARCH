@@ -69,7 +69,7 @@ chk_dt       = 0.1          # Output CHK based on physical time interval (-1.0 t
 # [Physics Core]
 # Maps to config.physics.*
 eos_type = helmholtz            # Options: ideal, tabular, helmholtz
-eos_table_path = EOS_toolkit/helm_table.dat
+eos_table_path = EOS_toolkit/eos_tabular/helmholtz/helm_table.dat
 network_name = aprox19
 
 # ------------------------------------------------------------------------------
