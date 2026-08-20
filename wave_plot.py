@@ -8,9 +8,7 @@ import glob
 import sys
 import os
 
-# ==============================================================================
-# 1. 配置与文件寻找
-# ==============================================================================
+# Locate the newest plot or checkpoint file.
 plt_files = sorted(glob.glob("output/*_plt_*.h5"))
 chk_files = sorted(glob.glob("output/*_CDet_chk_*.h5"))
 
@@ -27,9 +25,7 @@ if len(sys.argv) > 1:
 
 print(f"Plotting file: {last_file}")
 
-# ==============================================================================
-# 2. 从 HDF5 提取数据与元信息 (适配自研均匀网格 IO)
-# ==============================================================================
+# Read fields and metadata from the uniform-grid HDF5 formats.
 data_dict = {}
 axes = {}
 
@@ -44,9 +40,7 @@ with h5py.File(last_file, 'r') as f:
     print(f"Time: {sim_time:.5e}, Dim: {dim}, Geometry: {geometry}")
     print(f"----------------")
 
-    # ----------------------------------------
-    # 模式 A: 读取 PLT 文件 (推荐用于画图)
-    # ----------------------------------------
+    # PLT files contain primitive fields and physical coordinates.
     if 'Grid' in f and 'Data' in f:
         print("[Info] Detected PLT file format. Loading primitive variables and coordinates.")
         for key in f['Grid'].keys():
@@ -54,9 +48,7 @@ with h5py.File(last_file, 'r') as f:
         for key in f['Data'].keys():
             data_dict[key] = np.array(f['Data'][key])
             
-    # ----------------------------------------
-    # 模式 B: 读取 CHK 文件 (仅作回退/调试)
-    # ----------------------------------------
+    # CHK support is a diagnostic fallback reconstructed from conservative state.
     elif 'rho' in f:
         print("[Warning] Detected CHK file format. Calculating primitive variables from conservative states.")
         print("[Warning] Physical coordinates and species names are missing in CHK. Using dummy index & names.")
@@ -64,7 +56,7 @@ with h5py.File(last_file, 'r') as f:
         rho = np.array(f['rho'])
         data_dict['rho'] = rho
         
-        # 提取速度
+        # Recover velocity from momentum density.
         if 'mom_x' in f:
             mom_x = np.array(f['mom_x'])
             u = np.zeros_like(rho)
@@ -74,7 +66,7 @@ with h5py.File(last_file, 'r') as f:
         else:
             data_dict['u'] = np.zeros_like(rho)
             
-        # 提取压力 (假设 Gamma=1.4 的理想气体状态方程)
+        # Recover pressure with a gamma=1.4 ideal-gas closure.
         if 'eng' in f:
             eng = np.array(f['eng'])
             data_dict['eng'] = eng
@@ -84,26 +76,26 @@ with h5py.File(last_file, 'r') as f:
         else:
             data_dict['p'] = np.zeros_like(rho)
             
-        # CHK 不存坐标，用网格索引伪造 X 轴
+        # Checkpoints omit coordinates, so use the cell index as the x-axis.
         axes['x'] = np.arange(len(rho))
         
-        # 提取并切分组分质量分数
+        # Extract and split species mass fractions.
         if 'mass_fractions' in f:
             mf = np.array(f['mass_fractions'])
             num_cells = len(rho)
             if mf.ndim == 1:
-                # 判定一维数组中包含了几种组分
+                # Infer the species count from the flattened array length.
                 num_species = len(mf) // num_cells
                 try:
-                    # 假设内存布局为 (num_species, num_cells) 的 SoA 展平结构
-                    # 如果画出来的组分像白噪声，则改为 mf.reshape((num_cells, num_species)).T
+                    # CHK stores a species-major SoA array with shape
+                    # (num_species, num_cells) after reshaping.
                     mf_reshaped = mf.reshape((num_species, num_cells))
                     for i in range(num_species):
                         data_dict[f'X_{i}'] = mf_reshaped[i, :]
                 except ValueError:
                     print("[Error] Dimension mismatch when reshaping mass_fractions.")
             elif mf.ndim == 2:
-                # 若使用了二维数组存储
+                # Accept either cell-major or species-major two-dimensional data.
                 if mf.shape[0] == num_cells:
                     for i in range(mf.shape[1]):
                         data_dict[f'X_{i}'] = mf[:, i]
@@ -115,30 +107,26 @@ with h5py.File(last_file, 'r') as f:
         print(f"Error: Unknown HDF5 format in {last_file}!")
         sys.exit(1)
 
-# ==============================================================================
-# 3. 剥离多维处理，直接准备画图
-# ==============================================================================
+# Prepare a one-dimensional plotting coordinate.
 possible_axis_names = ['x', 'y', 'z', 'r', 'theta', 'phi', 'r_cy', 'z_cy', 'phi_cy']
 ordered_axes = [k for k in possible_axis_names if k in axes]
 
-# 提取用于绘图的坐标轴
+# Select the first physical coordinate present in the file.
 r_1d_sorted = None
 if ordered_axes:
     r_1d_sorted = axes[ordered_axes[0]]
 else:
     r_1d_sorted = np.arange(len(data_dict['rho']))
 
-# 提取组分 keys
+# Species datasets use the X_ prefix.
 species_keys = [k for k in data_dict.keys() if k.startswith('X_')]
-# ==============================================================================
-# 4. 绘图与排版布局
-# ==============================================================================
+# Build the diagnostic figure.
 # Increase figure size to accommodate species plot
 fig = plt.figure(figsize=(16, 18))
 fig.suptitle(f"ARCH Simulation | Geometry: {geometry.capitalize()} | t = {sim_time:.5e}", fontsize=16)
 
 if dim == 1:
-    # --- 1D 专有布局 (加一张组分追踪图) ---
+    # Three stacked panels for the 1D hydro and composition fields.
     gs = gridspec.GridSpec(3, 1, hspace=0.3)
     ax1 = fig.add_subplot(gs[0, 0])
     ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
@@ -147,7 +135,7 @@ if dim == 1:
     axis_arr = r_1d_sorted
     axis_name = ordered_axes[0] if ordered_axes else 'Index'
 
-    # 1. 密度和速度
+    # Density and velocity.
     ax1.plot(axis_arr, data_dict['rho'], 'c-', linewidth=2, label='Density')
     ax1.set_ylabel("Density")
     ax1.grid(True, linestyle='--', alpha=0.6)
@@ -161,15 +149,15 @@ if dim == 1:
     lines_2, labels_2 = ax1_twin.get_legend_handles_labels()
     ax1.legend(lines_1 + lines_2, labels_1 + labels_2, loc="upper right")
 
-    # 2. 压力
+    # Pressure.
     ax2.plot(axis_arr, data_dict['p'], 'b-', linewidth=2, label='Pressure')
     ax2.set_ylabel("Pressure")
     ax2.grid(True, linestyle='--', alpha=0.6)
     ax2.legend(loc="upper right")
     
-    # 3. 全部组分 (对数坐标展示以验证微量元素的生成)
+    # Log-scale species panel resolves trace production.
     for sp in species_keys:
-        # 只画最大值大于 1e-10 的组分，避免图例太多
+        # Suppress species below 1e-10 to keep the legend readable.
         if np.max(data_dict[sp]) > 1e-10:
             ax3.plot(axis_arr, data_dict[sp], linewidth=1.5, label=sp)
             
@@ -183,7 +171,7 @@ if dim == 1:
 else:
     print("2D/3D species plotting is not fully enabled in this snippet. Please stick to 1D ZND validation.")
 
-# --- 保存与展示 ---
+# Save the non-interactive diagnostic image.
 output_png = "table_check1.png"
 plt.tight_layout()
 plt.savefig(output_png, dpi=300, bbox_inches='tight')
