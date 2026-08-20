@@ -20,7 +20,8 @@ x2_max    = 12.8
 x3_min    = 0.0
 x3_max    = 1.0
 
-# 边界条件：左侧通常设置为反射边界以充当"刚性墙�?支撑起爆，右侧自由流�?x1l_boundary_type = reflect
+# A reflecting left face can act as a rigid wall for ignition; the present
+# file leaves x1l unspecified and therefore uses the parser's default.
 x1r_boundary_type = outflow
 x2l_boundary_type = outflow
 x2r_boundary_type = outflow
@@ -30,11 +31,11 @@ x3r_boundary_type = outflow
 # ------------------------------------------------------------------------------
 # [Numerics]
 # ------------------------------------------------------------------------------
-solver      = HLLC       # 激波捕捉推�?HLLC �?Roe
-reconstruct = muscl        # 燃烧问题对数值耗散敏感，建议使用三�?PPM
+solver      = HLLC       # Contact-resolving shock-capturing flux.
+reconstruct = muscl      # Detonation structure is sensitive to numerical diffusion.
 time_integrator = RK2
 limiter     = mc
-cfl         = 0.8        # 包含刚性源项时，CFL 尽量压低
+cfl         = 0.8        # Reduce if stiff source coupling destabilizes the macro step.
 
 EntropyFix = On
 EntropyFixCoefficient = 0.1
@@ -56,7 +57,7 @@ derefine_threshold = 0.20
 # ------------------------------------------------------------------------------
 # [Time & IO]
 # ------------------------------------------------------------------------------
-tmax         = 5.0e-8    # 物理时间极短
+tmax         = 5.0e-8    # Short physical interval for the initial detonation transient.
 max_steps    = 200
 restart      = false
 
@@ -81,21 +82,19 @@ gravity_type = none
 # [Nuclear Burn & ODE]
 # ------------------------------------------------------------------------------
 use_burn         = 1
-# 支持在无需重新编译的情况下热切换网络，可选值: aprox13, aprox19, aprox21, iso7
+# Runtime-selectable built-in networks: aprox13, aprox19, aprox21, and iso7.
 network_name     = aprox19
-# burn_verbose_level 控制燃烧求解器的调试输出详细程度：
-# 0 = 静默模式（仅输出致命错误）
-# 1 = 基础信息模式（输出网络加载和初始化成功的信息，适合常规运行监控）
-# 2 = 详细调试模式（可能会输出每个刚性积分器子步的具体迭代信息，适用于排错）
+# burn_verbose_level: 0 = fatal errors only, 1 = initialization summary,
+# 2 = detailed stiff-integrator diagnostics.
 burn_verbose_level = 2
 
-nuclearTempMin   = 1e9       # 触发核燃烧的最小温度阈值 (K) (推荐范围: 5e8 ~ 1e9)
-nuclearDensMin   = 1e-10     # 触发核燃烧的最小密度阈值 (g/cm^3)
+nuclearTempMin   = 1e9       # Minimum burn temperature (K); typical range 5e8-1e9.
+nuclearDensMin   = 1e-10     # Minimum burn density (g/cm^3).
 
-dt_init          = 1e-16     # 极度刚性问题起爆时的强制初始时间步长 (推荐范围: 1e-16 ~ 1e-12)
-dt_min           = 1e-20     # 隐式 ODE 求解器允许切分的最小物理步长 (推荐: 1e-22 ~ 1e-20)
-tstep_change_factor = 1.2    # 宏观流体步长的最大增长率，避免能量爆发引发数值真空 (推荐: 1.1 ~ 1.2)
-enucDtFactor     = 0.05      # 核能限制器：限制单步释放的核能比例。设置为 1e30 相当于关闭燃烧对时间步的限制。
+dt_init          = 1e-16     # Initial step for ignition transients; typical range 1e-16-1e-12 s.
+dt_min           = 1e-20     # Smallest ODE substep; typical range 1e-22-1e-20 s.
+tstep_change_factor = 1.2    # Maximum macro-step growth; 1.1-1.2 limits post-ignition jumps.
+enucDtFactor     = 0.05      # Maximum fractional nuclear-energy change; 1e30 effectively disables it.
 
 ode_solver       = BD      # BE_NR, ROS4, BD
 linear_solver    = DenseLU
@@ -103,27 +102,23 @@ linear_solver    = DenseLU
 # ------------------------------------------------------------------------------
 # [User Custom Parameters: CellularDet]
 # ------------------------------------------------------------------------------
-shock_dir = 0            # 激波传播方向 (0=X, 1=Y, 2=Z)
-radiusPerturb = 12.8     # 初始施加 Von Neumann 扰动（跳跃条件）的区域长度 (推荐: ~12.8-25.6，包围几个胞格尺度)
+shock_dir = 0            # Shock direction: 0=x, 1=y, 2=z.
+radiusPerturb = 12.8     # Length of the initial von Neumann spike; typical range 12.8-25.6.
 
-# --- Ambient State (未燃环境) ---
-# 代表激波前方的未反应流体状态
-rhoAmbient = 1.0e7       # 环境密度 (g/cm^3)
-tempAmbient   = 2.0e8    # 环境温度 (K) (不能过高以防提前自燃)
+# Ambient unburned state ahead of the shock.
+rhoAmbient = 1.0e7       # Density (g/cm^3).
+tempAmbient   = 2.0e8    # Temperature (K), kept below premature ignition.
 
-# --- Von Neumann Spike State (冯·诺依曼尖峰态) ---
-# 激波阵面扫过但核反应还未大量发生时的“冻结”热力学状态 (根据 CJ 爆轰理论计算得出)
-rhoPerturb = 4.322e7     # 激波后极值密度 (g/cm^3)
-tempPerturb   = 4.670e9  # 激波后极值温度 (K)
-velxPerturb   = 1.011e9  # 激波波速或活塞驱动速度 (cm/s)
+# Frozen von Neumann spike immediately behind the shock and before substantial burning.
+rhoPerturb = 4.322e7     # Peak post-shock density (g/cm^3).
+tempPerturb   = 4.670e9  # Peak post-shock temperature (K).
+velxPerturb   = 1.011e9  # Shock or piston velocity (cm/s).
 
-# --- 胞格微扰 (Cellular Perturbation) ---
-# 用于在 2D/3D 下打破对称性从而激发真实的胞格爆轰结构
-noiseAmplitude = 0.0     # 密度和压力的横向正弦微扰幅度，0 表示一维平面对称爆轰 (推荐: 0.1 ~ 0.2)
+# Transverse cellular perturbation for breaking symmetry in 2D/3D.
+noiseAmplitude = 0.0     # Sinusoidal density/pressure amplitude; 0 keeps planar 1D symmetry.
 
-# --- Initial Composition (初始同位素组分) ---
-# Pynucastro aprox19 默认顺序：
+# Initial composition in the default pynucastro aprox19 ordering:
 # N, H1, He3, He4, C12, N14, O16, Ne20, Mg24, Si28, S32, Ar36, Ca40, Ti44, Cr48, Fe52, Fe54, Ni56
-xhe4 = 0.4               # 质量分数 (和需为 1.0)
+xhe4 = 0.4               # Mass fractions must sum to one.
 xc12 = 0.6
 xo16 = 0.0

@@ -1,11 +1,12 @@
-# Standard one-dimensional Sod shock-tube benchmark.
+# Minimal one-dimensional Sod problem for the README and CaseGuide.
+# It is a teaching/smoke input, not a quantitative validation baseline.
 
 geometry = cartesian
 
-nblockx1 = 8
+nblockx1 = 4
 nblockx2 = 0
 nblockx3 = 0
-max_blocks = 32
+max_blocks = 16
 
 x1_min = 0.0
 x1_max = 1.0
@@ -34,10 +35,10 @@ refine_var = DENS
 refine_threshold = 0.8
 derefine_threshold = 0.2
 
-tmax = 0.2
+tmax = 0.15
 max_steps = -1
-out_dir = output/sod_standard
-base_name = Sod
+out_dir = output/first_sod
+base_name = SodBeginner
 plt_dt = 0.05
 plt_dstep = -1
 chk_dt = -1.0
@@ -52,9 +53,11 @@ use_burn = 0
 use_diffusion = 0
 
 x_pos = 0.5
+
 rho_left = 1.0
 p_left = 1.0
 u_left = 0.0
+
 rho_right = 0.125
 p_right = 0.1
 u_right = 0.0

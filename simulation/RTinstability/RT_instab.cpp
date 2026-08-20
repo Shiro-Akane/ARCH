@@ -11,36 +11,30 @@
  * 3. Hand the initialized problem to the common AMR driver without solver-specific shortcuts.
  */
 
-#include "../../src/core/UserInterface.h"
-#include "../../src/data/GlobalDefs.h"
 #include <cmath>
 #include <iostream>
+#include <vector>
+
+#include "../../src/core/UserInterface.h"
+#include "../../src/data/GlobalDefs.h"
 
 class RTInstability
 {
-    // ========================================================================
     // Fluid Properties (Density and Pressure stratification)
-    // ========================================================================
     double g_rho_heavy, g_rho_light;
     double g_y_int; // Interface y-coordinate
     double g_P_int; // Pressure at the interface
 
-    // ========================================================================
     // Perturbation Control (Triggering the instability)
-    // ========================================================================
     double g_amp; // Velocity perturbation amplitude
     double g_Lx;  // Domain length in X
     double g_Lz;  // Domain length in Z (for 3D)
     bool g_is_3d;
 
-    // ========================================================================
     // Physics Environment
-    // ========================================================================
     double g_gy; // Global gravity acceleration
 
-    // ========================================================================
     // Species Tracking (Used to visualize fluid mixing)
-    // ========================================================================
     int g_sp_heavy, g_sp_light;
 
 public:
@@ -88,8 +82,8 @@ public:
         out.w = 0.0;
 
         // 4. Velocity Perturbation in Y
-        // A cosine wave to trigger the instability mode.
-        // We apply an exponential decay so it's localized purely at the interface.
+        // A cosine mode seeds the instability. The exponential envelope confines
+        // the perturbation to the material interface; 15 sets its inverse width.
         double decay = std::exp(-15.0 * std::abs(p.y - g_y_int));
         double pert_x = std::cos(2.0 * M_PI * p.x / g_Lx);
 

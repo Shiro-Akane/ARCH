@@ -3,19 +3,17 @@
  * @brief User-defined Problem: Cellular Detonation with Helmholtz EOS & Pynucastro Networks.
  */
 
+#include <cmath>
+#include <iostream>
+#include <stdexcept>
+#include <vector>
+
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
 
-#include <cmath>
-#include <iostream>
-#include <vector>
-#include <stdexcept>
-
 class CellularDetonation
 {
-    // ========================================================================
     // Global State for the Problem (Populated once in Setup, used in Init)
-    // ========================================================================
     double rho_amb, p_amb, T_amb;
     double rho_vn, p_vn, T_vn, u_vn;
 
@@ -73,7 +71,7 @@ public:
             // Use a macroscopic transverse perturbation to avoid numerical dissipation.
             // Assumes a domain transverse length of ~25.6 to fit 4 wavelengths.
             double k_trans = 2.0 * M_PI / (25.6 / 4.0);
-            
+
             if (shock_dir == 0) {
                 noise = noise_amp * std::sin(k_trans * p.y) * std::cos(k_trans * p.z);
             } else if (shock_dir == 1) {
