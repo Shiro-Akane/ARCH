@@ -19,7 +19,7 @@
 // local normal and tangential components and map the result back afterward.
 
 /// Return the velocity normal to the selected coordinate direction.
-inline double get_un(const FluidVector &U, int dir)
+ARCH_INLINE double get_un(const FluidVector &U, int dir)
 {
     if (dir == 0)
         return U.mom_u / U.rho;
@@ -29,7 +29,7 @@ inline double get_un(const FluidVector &U, int dir)
 }
 
 /// Return the first tangential velocity for the selected normal direction.
-inline double get_ut1(const FluidVector &U, int dir)
+ARCH_INLINE double get_ut1(const FluidVector &U, int dir)
 {
     if (dir == 0)
         return U.mom_v / U.rho;
@@ -39,7 +39,7 @@ inline double get_ut1(const FluidVector &U, int dir)
 }
 
 /// Return the second tangential velocity for the selected normal direction.
-inline double get_ut2(const FluidVector &U, int dir)
+ARCH_INLINE double get_ut2(const FluidVector &U, int dir)
 {
     if (dir == 0)
         return U.mom_w / U.rho;
@@ -49,7 +49,7 @@ inline double get_ut2(const FluidVector &U, int dir)
 }
 
 /// Map normal and tangential flux components back to a global FluidVector.
-inline FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, double f_ut2, double f_eng, int dir)
+ARCH_INLINE FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, double f_ut2, double f_eng, int dir)
 {
     FluidVector F;
     F.rho = f_rho;
@@ -91,7 +91,7 @@ inline FluidVector set_flux_vector(double f_rho, double f_un, double f_ut1, doub
  * @return Conservative flux in global coordinates.
  */
 template <typename EosType>
-FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos, int dir)
+ARCH_INLINE FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos, int dir)
 {
     double rho = U.rho;
     if (rho < 1e-12)
@@ -114,7 +114,7 @@ FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos,
 
 // Use this overload when wave-speed estimation has already recovered pressure,
 // avoiding a duplicate EOS evaluation.
-inline FluidVector get_flux(const FluidVector &U, double p, int dir)
+ARCH_INLINE FluidVector get_flux(const FluidVector &U, double p, int dir)
 {
     double rho = U.rho;
     if (rho < 1e-12)
@@ -146,7 +146,7 @@ inline FluidVector get_flux(const FluidVector &U, double p, int dir)
  * @return Flux component with the requested sign.
  */
 template <typename EosType>
-FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
+ARCH_INLINE FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
                             const EosType &eos, int sign, double smoothing_coeff, int dir)
 {
     double rho = std::max(U.rho, 1e-12); // Match the physical-flux near-vacuum floor.
@@ -211,7 +211,7 @@ FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
  * @param dir Flux-face normal direction.
  */
 template <typename EosType>
-FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
+ARCH_INLINE FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
                               const EosType &eos, int sign, int dir)
 {
     // Precompute local velocity. The 1e-12 density floor matches the other
@@ -312,7 +312,7 @@ FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
  * For |lambda|<epsilon, a smooth parabola replaces the absolute value so the
  * function and its first derivative remain continuous.
  */
-inline double entropy_fix(double lambda, double epsilon)
+ARCH_INLINE double entropy_fix(double lambda, double epsilon)
 {
     double abs_lambda = std::abs(lambda);
     if (abs_lambda < epsilon)
@@ -356,7 +356,7 @@ struct RoeGlaisterState
  * @param eos EOS object providing pressure inversion and both derivatives.
  */
 template <typename EosType>
-inline RoeGlaisterState calc_glaister_state(
+ARCH_INLINE RoeGlaisterState calc_glaister_state(
     const FluidVector &U_L, const FluidVector &U_R,
     double P_L, double P_R,
     double e_L, double e_R,
@@ -443,7 +443,7 @@ inline RoeGlaisterState calc_glaister_state(
  * @brief Assemble the final flux from the Roe-averaged state.
  * F_Roe=0.5(F_L+F_R)-0.5*sum(alpha*|lambda|*K).
  */
-inline FluidVector calc_roe_flux_hydro(
+ARCH_INLINE FluidVector calc_roe_flux_hydro(
     const FluidVector &F_L, const FluidVector &F_R,
     const FluidVector &U_L, const FluidVector &U_R,
     double P_L, double P_R,
@@ -545,7 +545,7 @@ inline FluidVector calc_roe_flux_hydro(
  * c^2 = chi + (p / rho^2) * kappa
  */
 template <typename EosType>
-inline double calc_sound_speed_thermo(
+ARCH_INLINE double calc_sound_speed_thermo(
     double rho, double p, double e, const double *Xi,
     const EosType &eos)
 {
@@ -575,7 +575,7 @@ inline double calc_sound_speed_thermo(
 /**
  * @brief Estimate HLL wave speeds with Einfeldt bounds from both states and the Roe average.
  */
-inline void calc_hll_wave_speeds(
+ARCH_INLINE void calc_hll_wave_speeds(
     double un_L, double c_L,
     double un_R, double c_R,
     const RoeGlaisterState &rs, int dir,
@@ -596,7 +596,7 @@ inline void calc_hll_wave_speeds(
  * If the wave speeds straddle zero, use the two-wave intermediate state;
  * otherwise return the physical flux from the upwind side.
  */
-inline FluidVector calc_hll_flux_hydro(
+ARCH_INLINE FluidVector calc_hll_flux_hydro(
     const FluidVector &F_L, const FluidVector &F_R,
     const FluidVector &U_L, const FluidVector &U_R,
     double S_L, double S_R)
@@ -616,7 +616,7 @@ inline FluidVector calc_hll_flux_hydro(
  * S_* = (rho_R*u_R*(S_R - u_R) - rho_L*u_L*(S_L - u_L) + (p_L - p_R))
  * (rho_R*(S_R - u_R) - rho_L*(S_L - u_L))
  */
-inline double calc_hllc_star_speed(
+ARCH_INLINE double calc_hllc_star_speed(
     double un_L, double rho_L, double p_L, double S_L,
     double un_R, double rho_R, double p_R, double S_R)
 {

@@ -11,6 +11,8 @@
 #include <cmath>
 #include <string>
 
+#include "../../core/ArchPortability.h"
+
 /**
  * @struct NoLimiter
  * @brief Suppress the reconstructed gradient and recover first-order PCM.
@@ -21,7 +23,7 @@ struct NoLimiter
 {
     static std::string name() { return "None (1st Order)"; }
 
-    static double calc(double r)
+    static ARCH_INLINE double calc(double r)
     {
         return 0.0;
     }
@@ -36,7 +38,7 @@ struct MinMod
 {
     static std::string name() { return "MinMod"; }
 
-    static double calc(double r)
+    static ARCH_INLINE double calc(double r)
     {
         return (r > 0.0) ? (r < 1.0 ? r : 1.0) : 0.0;
     }
@@ -52,7 +54,7 @@ struct SuperBee
 {
     static std::string name() { return "SuperBee"; }
 
-    static double calc(double r)
+    static ARCH_INLINE double calc(double r)
     {
         if (r <= 0.0)
             return 0.0;
@@ -80,7 +82,7 @@ struct VanLeer
 {
     static std::string name() { return "VanLeer"; }
 
-    static double calc(double r)
+    static ARCH_INLINE double calc(double r)
     {
         // Opposite-sign slopes require phi=0 to preserve monotonicity.
         if (r <= 0.0)
@@ -99,7 +101,7 @@ struct McLimiter
 {
     static std::string name() { return "MC"; }
 
-    static double calc(double r)
+    static ARCH_INLINE double calc(double r)
     {
         if (r <= 0.0)
             return 0.0;

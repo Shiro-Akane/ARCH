@@ -24,7 +24,7 @@
  * @return double The limited slope contribution: 0.5 * phi(r) * (q_p1 - q_0)
  */
 template <typename LimiterPolicy>
-inline double compute_limited_slope(double q_m1, double q_0, double q_p1)
+ARCH_INLINE double compute_limited_slope(double q_m1, double q_0, double q_p1)
 {
     // Treat a forward jump below this absolute scale as locally flat to avoid
     // an ill-conditioned slope ratio. Conserved variables are expected to be
@@ -65,6 +65,21 @@ struct PCMReconstruction
     static std::string name() { return "PCM (1st Order)"; }
 
     static constexpr int NG = 1;
+
+    static ARCH_INLINE void reconstruct(
+        const FluidVector& U_i, const FluidVector& U_ip1,
+        FluidVector& U_L, FluidVector& U_R)
+    {
+        U_L = U_i;
+        U_R = U_ip1;
+    }
+
+    static ARCH_INLINE void reconstruct_species(
+        double X_i, double X_ip1, double& X_L, double& X_R)
+    {
+        X_L = X_i;
+        X_R = X_ip1;
+    }
     /**
      * @brief Apply reconstruction.
      * PCM consumes only the two adjacent cell averages; its compact signature
@@ -74,8 +89,10 @@ struct PCMReconstruction
         const FluidVector &U_i,
         const FluidVector &U_ip1)
     {
-        // PCM passes the two adjacent cell averages directly to the face.
-        return {U_i, U_ip1};
+        FluidVector U_L;
+        FluidVector U_R;
+        reconstruct(U_i, U_ip1, U_L, U_R);
+        return {U_L, U_R};
     }
 
     static std::pair<FluidVector, FluidVector> run(const FluidState &state, int i, int stride = 1)
@@ -90,8 +107,8 @@ struct PCMReconstruction
     {
         for (int k = 0; k < n_spec; ++k)
         {
-            X_L[k] = state.X(k, i);
-            X_R[k] = state.X(k, i + stride);
+            reconstruct_species(
+                state.X(k, i), state.X(k, i + stride), X_L[k], X_R[k]);
         }
     }
 };
@@ -116,6 +133,32 @@ struct MusclReconstruction
 
     static constexpr int NG = 2;
 
+    static ARCH_INLINE void reconstruct_species(
+        double X_im1, double X_i, double X_ip1, double X_ip2,
+        double& X_L, double& X_R)
+    {
+        X_L = X_i + compute_limited_slope<Limiter>(X_im1, X_i, X_ip1);
+        X_R = X_ip1 - compute_limited_slope<Limiter>(X_i, X_ip1, X_ip2);
+    }
+
+    static ARCH_INLINE void reconstruct(
+        const FluidVector& U_im1, const FluidVector& U_i,
+        const FluidVector& U_ip1, const FluidVector& U_ip2,
+        FluidVector& U_L, FluidVector& U_R)
+    {
+        U_L.rho = U_i.rho + compute_limited_slope<Limiter>(U_im1.rho, U_i.rho, U_ip1.rho);
+        U_L.mom_u = U_i.mom_u + compute_limited_slope<Limiter>(U_im1.mom_u, U_i.mom_u, U_ip1.mom_u);
+        U_L.mom_v = U_i.mom_v + compute_limited_slope<Limiter>(U_im1.mom_v, U_i.mom_v, U_ip1.mom_v);
+        U_L.mom_w = U_i.mom_w + compute_limited_slope<Limiter>(U_im1.mom_w, U_i.mom_w, U_ip1.mom_w);
+        U_L.eng = U_i.eng + compute_limited_slope<Limiter>(U_im1.eng, U_i.eng, U_ip1.eng);
+
+        U_R.rho = U_ip1.rho - compute_limited_slope<Limiter>(U_i.rho, U_ip1.rho, U_ip2.rho);
+        U_R.mom_u = U_ip1.mom_u - compute_limited_slope<Limiter>(U_i.mom_u, U_ip1.mom_u, U_ip2.mom_u);
+        U_R.mom_v = U_ip1.mom_v - compute_limited_slope<Limiter>(U_i.mom_v, U_ip1.mom_v, U_ip2.mom_v);
+        U_R.mom_w = U_ip1.mom_w - compute_limited_slope<Limiter>(U_i.mom_w, U_ip1.mom_w, U_ip2.mom_w);
+        U_R.eng = U_ip1.eng - compute_limited_slope<Limiter>(U_i.eng, U_ip1.eng, U_ip2.eng);
+    }
+
     /**
      * @brief Reconstruct Conservative Variables.
      * Decoupled from FluidState for better unit testing and portability.
@@ -128,24 +171,7 @@ struct MusclReconstruction
         const FluidVector &U_ip2)
     {
         FluidVector U_L, U_R;
-
-        // --- Left State (at i+1/2) ---
-        // Based on cell i, looking at i-1 and i+1
-        U_L.rho = U_i.rho + compute_limited_slope<Limiter>(U_im1.rho, U_i.rho, U_ip1.rho);
-        U_L.mom_u = U_i.mom_u + compute_limited_slope<Limiter>(U_im1.mom_u, U_i.mom_u, U_ip1.mom_u);
-        U_L.mom_v = U_i.mom_v + compute_limited_slope<Limiter>(U_im1.mom_v, U_i.mom_v, U_ip1.mom_v);
-        U_L.mom_w = U_i.mom_w + compute_limited_slope<Limiter>(U_im1.mom_w, U_i.mom_w, U_ip1.mom_w);
-        U_L.eng = U_i.eng + compute_limited_slope<Limiter>(U_im1.eng, U_i.eng, U_ip1.eng);
-
-        // --- Right State (at i+1/2) ---
-        // Based on cell i+1, looking at i and i+2
-        // Subtract the limited slope to project cell i+1 to its left face.
-        U_R.rho = U_ip1.rho - compute_limited_slope<Limiter>(U_i.rho, U_ip1.rho, U_ip2.rho);
-        U_R.mom_u = U_ip1.mom_u - compute_limited_slope<Limiter>(U_i.mom_u, U_ip1.mom_u, U_ip2.mom_u);
-        U_R.mom_v = U_ip1.mom_v - compute_limited_slope<Limiter>(U_i.mom_v, U_ip1.mom_v, U_ip2.mom_v);
-        U_R.mom_w = U_ip1.mom_w - compute_limited_slope<Limiter>(U_i.mom_w, U_ip1.mom_w, U_ip2.mom_w);
-        U_R.eng = U_ip1.eng - compute_limited_slope<Limiter>(U_i.eng, U_ip1.eng, U_ip2.eng);
-
+        reconstruct(U_im1, U_i, U_ip1, U_ip2, U_L, U_R);
         return {U_L, U_R};
     }
 
@@ -172,8 +198,7 @@ struct MusclReconstruction
             double x_ip1 = state.X(k, ip1);
             double x_ip2 = state.X(k, ip2);
 
-            X_L[k] = x_i + compute_limited_slope<Limiter>(x_im1, x_i, x_ip1);
-            X_R[k] = x_ip1 - compute_limited_slope<Limiter>(x_i, x_ip1, x_ip2);
+            reconstruct_species(x_im1, x_i, x_ip1, x_ip2, X_L[k], X_R[k]);
         }
     }
 };
@@ -189,12 +214,12 @@ struct PPMReconstruction
     static constexpr int NG = 3;
 
 private:
-    static inline double interpolate_face_4th(double u_im1, double u_i, double u_ip1, double u_ip2)
+    static ARCH_INLINE double interpolate_face_4th(double u_im1, double u_i, double u_ip1, double u_ip2)
     {
         return (7.0 / 12.0) * (u_i + u_ip1) - (1.0 / 12.0) * (u_im1 + u_ip2);
     }
 
-    static inline bool is_smooth_extremum(
+    static ARCH_INLINE bool is_smooth_extremum(
         double u_im2, double u_im1, double u_i, double u_ip1, double u_ip2)
     {
         const double slope_left = u_i - u_im1;
@@ -221,7 +246,7 @@ private:
         return min_curvature >= 0.25 * curvature_scale;
     }
 
-    static inline void apply_cw_limiter(
+    static ARCH_INLINE void apply_cw_limiter(
         double &u_left, double &u_right, double u_average,
         bool preserve_smooth_extremum)
     {
@@ -244,10 +269,9 @@ private:
             u_right = u_average - 2.0 * delta_left;
     }
 
-    /**
-     * @brief Reconstruct both states at face i+1/2 from cells i-2 through i+3.
-     */
-    static std::pair<double, double> reconstruct_scalar_ppm(const double v[6])
+public:
+    static ARCH_INLINE void reconstruct_scalar_ppm(
+        const double (&v)[6], double& left, double& right)
     {
         double u_face_imhalf = interpolate_face_4th(v[0], v[1], v[2], v[3]);
         double u_face_iphalf = interpolate_face_4th(v[1], v[2], v[3], v[4]);
@@ -265,7 +289,100 @@ private:
             u_L_cell_ip1, u_R_cell_ip1, v[3],
             is_smooth_extremum(v[1], v[2], v[3], v[4], v[5]));
 
-        return {u_R_cell_i, u_L_cell_ip1};
+        left = u_R_cell_i;
+        right = u_L_cell_ip1;
+    }
+
+    static ARCH_INLINE void reconstruct_species_value(
+        const double (&stencil)[6], double& left, double& right)
+    {
+        reconstruct_scalar_ppm(stencil, left, right);
+        left = std::max(0.0, std::min(1.0, left));
+        right = std::max(0.0, std::min(1.0, right));
+    }
+
+    static ARCH_INLINE void normalize_species_faces(
+        int n_spec, double* X_L, double* X_R)
+    {
+        double sum_X_L = 0.0;
+        double sum_X_R = 0.0;
+        for (int species = 0; species < n_spec; ++species) {
+            sum_X_L += X_L[species];
+            sum_X_R += X_R[species];
+        }
+        if (sum_X_L > 1e-12) {
+            const double inv = 1.0 / sum_X_L;
+            for (int species = 0; species < n_spec; ++species)
+                X_L[species] *= inv;
+        }
+        if (sum_X_R > 1e-12) {
+            const double inv = 1.0 / sum_X_R;
+            for (int species = 0; species < n_spec; ++species)
+                X_R[species] *= inv;
+        }
+    }
+
+    template <typename EosType>
+    static ARCH_INLINE void gather_eos_stencil_point(
+        const FluidVector& state, const double* composition,
+        const EosType& eos, double& rho, double& velocity_x,
+        double& velocity_y, double& velocity_z, double& pressure)
+    {
+        rho = std::max(1e-13, state.rho);
+        velocity_x = state.mom_u / rho;
+        velocity_y = state.mom_v / rho;
+        velocity_z = state.mom_w / rho;
+        pressure = eos.get_pressure(state, composition);
+    }
+
+    template <typename EosType>
+    static ARCH_INLINE void reconstruct_eos(
+        const double (&rho)[6], const double (&velocity_x)[6],
+        const double (&velocity_y)[6], const double (&velocity_z)[6],
+        const double (&pressure)[6], const double* X_left,
+        const double* X_right, const EosType& eos,
+        FluidVector& left, FluidVector& right)
+    {
+        double face_rho[2], face_velocity_x[2], face_velocity_y[2];
+        double face_velocity_z[2], face_pressure[2];
+        reconstruct_scalar_ppm(rho, face_rho[0], face_rho[1]);
+        reconstruct_scalar_ppm(velocity_x, face_velocity_x[0], face_velocity_x[1]);
+        reconstruct_scalar_ppm(velocity_y, face_velocity_y[0], face_velocity_y[1]);
+        reconstruct_scalar_ppm(velocity_z, face_velocity_z[0], face_velocity_z[1]);
+        reconstruct_scalar_ppm(pressure, face_pressure[0], face_pressure[1]);
+
+        const double rho_left = std::max(1e-13, face_rho[0]);
+        const double rho_right = std::max(1e-13, face_rho[1]);
+        const double pressure_left = std::max(1e-13, face_pressure[0]);
+        const double pressure_right = std::max(1e-13, face_pressure[1]);
+
+        left.rho = rho_left;
+        left.mom_u = rho_left * face_velocity_x[0];
+        left.mom_v = rho_left * face_velocity_y[0];
+        left.mom_w = rho_left * face_velocity_z[0];
+        left.eng = eos.get_total_energy_primitive(
+            rho_left, face_velocity_x[0], face_velocity_y[0],
+            face_velocity_z[0], pressure_left, X_left);
+
+        right.rho = rho_right;
+        right.mom_u = rho_right * face_velocity_x[1];
+        right.mom_v = rho_right * face_velocity_y[1];
+        right.mom_w = rho_right * face_velocity_z[1];
+        right.eng = eos.get_total_energy_primitive(
+            rho_right, face_velocity_x[1], face_velocity_y[1],
+            face_velocity_z[1], pressure_right, X_right);
+    }
+
+private:
+    /**
+     * @brief Reconstruct both states at face i+1/2 from cells i-2 through i+3.
+     */
+    static std::pair<double, double> reconstruct_scalar_ppm(const double (&v)[6])
+    {
+        double left;
+        double right;
+        reconstruct_scalar_ppm(v, left, right);
+        return {left, right};
     }
 
 public:
@@ -355,50 +472,22 @@ public:
             i - 2 * stride, i - stride, i,
             i + stride, i + 2 * stride, i + 3 * stride};
         double rho[6], velocity_x[6], velocity_y[6], velocity_z[6], pressure[6];
-
         for (int stencil_index = 0; stencil_index < 6; ++stencil_index) {
             const int cell = indices[stencil_index];
             const FluidVector U = state.get(cell);
-            const double cell_rho = std::max(1e-13, U.rho);
             for (int species = 0; species < n_spec; ++species)
                 X_cell[species] = state.X(species, cell);
-
-            rho[stencil_index] = cell_rho;
-            velocity_x[stencil_index] = U.mom_u / cell_rho;
-            velocity_y[stencil_index] = U.mom_v / cell_rho;
-            velocity_z[stencil_index] = U.mom_w / cell_rho;
-            pressure[stencil_index] = eos.get_pressure(U, X_cell);
+            gather_eos_stencil_point(
+                U, n_spec > 0 ? X_cell : nullptr, eos,
+                rho[stencil_index], velocity_x[stencil_index],
+                velocity_y[stencil_index], velocity_z[stencil_index],
+                pressure[stencil_index]);
         }
-
-        const auto face_rho = reconstruct_scalar_ppm(rho);
-        const auto face_velocity_x = reconstruct_scalar_ppm(velocity_x);
-        const auto face_velocity_y = reconstruct_scalar_ppm(velocity_y);
-        const auto face_velocity_z = reconstruct_scalar_ppm(velocity_z);
-        const auto face_pressure = reconstruct_scalar_ppm(pressure);
-
-        const double rho_left = std::max(1e-13, face_rho.first);
-        const double rho_right = std::max(1e-13, face_rho.second);
-        const double pressure_left = std::max(1e-13, face_pressure.first);
-        const double pressure_right = std::max(1e-13, face_pressure.second);
-
         FluidVector left;
-        left.rho = rho_left;
-        left.mom_u = rho_left * face_velocity_x.first;
-        left.mom_v = rho_left * face_velocity_y.first;
-        left.mom_w = rho_left * face_velocity_z.first;
-        left.eng = eos.get_total_energy_primitive(
-            rho_left, face_velocity_x.first, face_velocity_y.first,
-            face_velocity_z.first, pressure_left, X_left);
-
         FluidVector right;
-        right.rho = rho_right;
-        right.mom_u = rho_right * face_velocity_x.second;
-        right.mom_v = rho_right * face_velocity_y.second;
-        right.mom_w = rho_right * face_velocity_z.second;
-        right.eng = eos.get_total_energy_primitive(
-            rho_right, face_velocity_x.second, face_velocity_y.second,
-            face_velocity_z.second, pressure_right, X_right);
-
+        reconstruct_eos(
+            rho, velocity_x, velocity_y, velocity_z, pressure,
+            X_left, X_right, eos, left, right);
         return {left, right};
     }
 
@@ -410,38 +499,13 @@ public:
     {
         double stencil[6];
         int indices[6] = {i - 2 * stride, i - stride, i, i + stride, i + 2 * stride, i + 3 * stride};
-        double sum_X_L = 0.0, sum_X_R = 0.0;
-
         for (int k = 0; k < n_spec; ++k)
         {
             for (int s = 0; s < 6; ++s)
                 stencil[s] = state.X(k, indices[s]);
 
-            auto res = reconstruct_scalar_ppm(stencil);
-            double yl = res.first;
-            double yr = res.second;
-
-            yl = std::max(0.0, std::min(1.0, yl));
-            yr = std::max(0.0, std::min(1.0, yr));
-
-            X_L[k] = yl;
-            X_R[k] = yr;
-            sum_X_L += yl;
-            sum_X_R += yr;
+            reconstruct_species_value(stencil, X_L[k], X_R[k]);
         }
-
-        // Supply normalized face compositions to the EOS and Riemann solver.
-        if (sum_X_L > 1e-12)
-        {
-            double inv = 1.0 / sum_X_L;
-            for (int k = 0; k < n_spec; ++k)
-                X_L[k] *= inv;
-        }
-        if (sum_X_R > 1e-12)
-        {
-            double inv = 1.0 / sum_X_R;
-            for (int k = 0; k < n_spec; ++k)
-                X_R[k] *= inv;
-        }
+        normalize_species_faces(n_spec, X_L, X_R);
     }
 };

@@ -34,6 +34,30 @@ struct FluxSW
     // Number of ghost cells required by the reconstruction scheme
     static constexpr int NG = ReconstructPolicy::NG;
 
+    template <typename EosType>
+    static ARCH_INLINE void compute_face_flux(
+        const FluidVector& U_L, const FluidVector& U_R,
+        const double* Xi_L, const double* Xi_R, int n_spec,
+        const EosType& eos, int dir, double coefficient,
+        FluidVector& flux_out, double* species_flux_out)
+    {
+        // 2. Flux Splitting (Vinokur)
+        // F+ (Forward moving waves)
+        FluidVector F_plus = calc_split_flux(U_L, Xi_L, eos, +1, coefficient, dir);
+        // F- (Backward moving waves)
+        FluidVector F_minus = calc_split_flux(U_R, Xi_R, eos, -1, coefficient, dir);
+
+        // 3. Store Total Interface Flux
+        flux_out = F_plus + F_minus;
+
+        // 4. Species Fluxes
+        for (int s = 0; s < n_spec; ++s)
+        {
+            double spec_flux = F_plus.rho * Xi_L[s] + F_minus.rho * Xi_R[s];
+            species_flux_out[s] = spec_flux;
+        }
+    }
+
     /**
      * @brief Computes fluxes at ALL cell interfaces.
      * @param state  Input fluid state (conservative variables).
@@ -73,6 +97,7 @@ struct FluxSW
             std::vector<double> Xi_L(n_spec);
             std::vector<double> Xi_R(n_spec);
             std::vector<double> Xi_cell(n_spec);
+            std::vector<double> face_species_flux(n_spec);
 
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -88,20 +113,12 @@ struct FluxSW
                     FluidVector U_L, U_R;
                     AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                    // 2. Flux Splitting (Vinokur)
-                    // F+ (Forward moving waves)
-                    FluidVector F_plus = calc_split_flux(U_L, Xi_L.data(), eos, +1, smoothing_coeff, dir);
-                    // F- (Backward moving waves)
-                    FluidVector F_minus = calc_split_flux(U_R, Xi_R.data(), eos, -1, smoothing_coeff, dir);
-
-                    // 3. Store Total Interface Flux
-                    flux_out[idx + stride] = F_plus + F_minus;
-
-                    // 4. Species Fluxes
+                    compute_face_flux(
+                        U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                        smoothing_coeff, flux_out[idx + stride], face_species_flux.data());
                     for (int s = 0; s < n_spec; ++s)
                     {
-                        double spec_flux = F_plus.rho * Xi_L[s] + F_minus.rho * Xi_R[s];
-                        spec_flux_out[s * total_size + (idx + stride)] = spec_flux;
+                        spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
                     }
                 }
             }

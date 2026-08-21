@@ -25,6 +25,22 @@
 
 namespace TimeIntegration
 {
+    ARCH_INLINE void accumulate_cell_divergence(
+        const FluidVector& lower_flux, const FluidVector& upper_flux,
+        const double* lower_species_flux, const double* upper_species_flux,
+        int n_spec, int species_stride,
+        double area_l, double area_r, double volume, double dt,
+        FluidVector& dU, double* d_spec)
+    {
+        double dt_over_vol = dt / volume;
+        dU = dU + (lower_flux * area_l - upper_flux * area_r) * dt_over_vol;
+        for (int s = 0; s < n_spec; ++s)
+        {
+            int off = s * species_stride;
+            d_spec[off] += (lower_species_flux[off] * area_l - upper_species_flux[off] * area_r) * dt_over_vol;
+        }
+    }
+
     // Helper 1: Accumulate Flux Divergence
     inline void accumulate_divergence(
         std::vector<FluidVector> &dU, std::vector<double> &d_spec,
@@ -51,13 +67,17 @@ namespace TimeIntegration
                 const double area_l = GridMetrics::FaceArea(grid, dir, i, j, k, false);
                 const double area_r = GridMetrics::FaceArea(grid, dir, i, j, k, true);
 
-                double dt_over_vol = dt / volume;
-                dU[idx] = dU[idx] + (fluxes[idx] * area_l - fluxes[idx + stride] * area_r) * dt_over_vol;
-                for (int s = 0; s < n_spec; ++s)
-                {
-                    int off = s * total_size;
-                    d_spec[off + idx] += (spec_fluxes[off + idx] * area_l - spec_fluxes[off + idx + stride] * area_r) * dt_over_vol;
-                }
+                const double* lower_species_flux = n_spec > 0
+                    ? spec_fluxes.data() + idx : nullptr;
+                const double* upper_species_flux = n_spec > 0
+                    ? spec_fluxes.data() + idx + stride : nullptr;
+                double* species_delta = n_spec > 0
+                    ? d_spec.data() + idx : nullptr;
+                accumulate_cell_divergence(
+                    fluxes[idx], fluxes[idx + stride],
+                    lower_species_flux, upper_species_flux,
+                    n_spec, total_size, area_l, area_r, volume, dt,
+                    dU[idx], species_delta);
             }
         }
     }
@@ -164,6 +184,85 @@ namespace TimeIntegration
             gravity->add_sources_on_patch(dU, state, grid, dt, nullptr);
         }
     }    // ---------------------------------------------------------
+    ARCH_INLINE void update_stage_cell(
+        const FluidVector& U_old, const FluidVector& U_curr,
+        const FluidVector& delta,
+        const double* Xi_old, const double* Xi_curr, const double* d_spec,
+        int n_spec, int species_stride,
+        double weight_n, double weight_flux,
+        double sml_rho, double min_eint, double max_eint,
+        FluidVector& U_new, double* Xi_new)
+    {
+        U_new = weight_n * U_old + weight_flux * (U_curr + delta);
+
+        if (U_new.rho < sml_rho)
+        {
+            U_new.rho = sml_rho;
+            U_new.mom_u = 0.0;
+            U_new.mom_v = 0.0;
+            U_new.mom_w = 0.0;
+            // Keep the device and host repair paths on the configured floor.
+            U_new.eng = sml_rho * min_eint;
+        }
+        else
+        {
+            // Kinetic-energy density removed before applying the internal-energy bounds.
+            double e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
+
+            // Limit repaired states to 1e10 cm/s so vanishing density
+            // cannot inject an unbounded kinetic-energy density.
+            double max_vel = 1e10;
+            double v_sq = 2.0 * e_kin / U_new.rho;
+            if (v_sq > max_vel * max_vel) {
+                double scale = max_vel / std::sqrt(v_sq);
+                U_new.mom_u *= scale;
+                U_new.mom_v *= scale;
+                U_new.mom_w *= scale;
+                e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
+            }
+
+            // Configured bounds prevent EOS calls at invalid internal energy.
+            double current_eint = (U_new.eng - e_kin) / U_new.rho;
+
+            if (current_eint < min_eint || current_eint > max_eint)
+            {
+                current_eint = std::max(min_eint, std::min(current_eint, max_eint));
+                U_new.eng = U_new.rho * current_eint + e_kin;
+            }
+        }
+
+        double rho_new = std::max(U_new.rho, sml_rho);
+        double sum_X = 0.0;
+        for (int s = 0; s < n_spec; ++s)
+        {
+            int off = s * species_stride;
+            double rhoX_old = U_old.rho * Xi_old[off];
+            double rhoX_curr = U_curr.rho * Xi_curr[off];
+            double rhoX_comb = weight_n * rhoX_old + weight_flux * (rhoX_curr + d_spec[off]);
+
+            double X_k = std::max(0.0, rhoX_comb / rho_new);
+            Xi_new[off] = X_k;
+            sum_X += X_k;
+        }
+
+        if (n_spec == 0)
+        {
+            return;
+        }
+        if (sum_X > 1e-13)
+        {
+            double inv_sum = 1.0 / sum_X;
+            for (int s = 0; s < n_spec; ++s)
+                Xi_new[s * species_stride] *= inv_sum;
+        }
+        else
+        {
+            double inv_n = 1.0 / n_spec;
+            for (int s = 0; s < n_spec; ++s)
+                Xi_new[s * species_stride] = inv_n;
+        }
+    }
+
     // Helper 2: Generalized Weighted RK Update
     inline void perform_stage_update(
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
@@ -192,74 +291,20 @@ namespace TimeIntegration
 
                 FluidVector U_old = u_n.get(idx);
                 FluidVector U_curr = u_current.get(idx);
-                FluidVector U_new = weight_n * U_old + weight_flux * (U_curr + dU[idx]);
-
-                if (U_new.rho < sml_rho)
-                {
-                    U_new.rho = sml_rho;
-                    U_new.mom_u = 0.0;
-                    U_new.mom_v = 0.0;
-                    U_new.mom_w = 0.0;
-                    // Use the same configured positive specific-energy floor
-                    // as the repair path below.
-                    U_new.eng = sml_rho * min_eint;
-                }
-                else
-                {
-                    // Kinetic-energy density removed before applying the internal-energy bounds.
-                    double e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
-
-                    // Limit repaired states to 1e10 cm/s so vanishing density
-                    // cannot inject an unbounded kinetic-energy density.
-                    double max_vel = 1e10;
-                    double v_sq = 2.0 * e_kin / U_new.rho;
-                    if (v_sq > max_vel * max_vel) {
-                        double scale = max_vel / std::sqrt(v_sq);
-                        U_new.mom_u *= scale;
-                        U_new.mom_v *= scale;
-                        U_new.mom_w *= scale;
-                        e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
-                    }
-
-                    // A positive configured floor prevents EOS calls at zero
-                    // or negative internal energy.
-                    double current_eint = (U_new.eng - e_kin) / U_new.rho;
-
-                    if (current_eint < min_eint || current_eint > max_eint)
-                    {
-                        current_eint = std::max(min_eint, std::min(current_eint, max_eint));
-                        U_new.eng = U_new.rho * current_eint + e_kin;
-                    }
-                }
-
+                FluidVector U_new;
+                const double* Xi_old = n_spec > 0
+                    ? u_n.mass_fractions.data() + idx : nullptr;
+                const double* Xi_curr = n_spec > 0
+                    ? u_current.mass_fractions.data() + idx : nullptr;
+                const double* species_delta = n_spec > 0
+                    ? d_spec.data() + idx : nullptr;
+                double* Xi_new = n_spec > 0
+                    ? u_dest.mass_fractions.data() + idx : nullptr;
+                update_stage_cell(
+                    U_old, U_curr, dU[idx], Xi_old, Xi_curr, species_delta,
+                    n_spec, total_size, weight_n, weight_flux,
+                    sml_rho, min_eint, max_eint, U_new, Xi_new);
                 u_dest.set(idx, U_new);
-
-                double rho_new = std::max(U_new.rho, sml_rho);
-                double sum_X = 0.0;
-                for (int s = 0; s < n_spec; ++s)
-                {
-                    int off = s * total_size;
-                    double rhoX_old = u_n.rho[idx] * u_n.X(s, idx);
-                    double rhoX_curr = u_current.rho[idx] * u_current.X(s, idx);
-                    double rhoX_comb = weight_n * rhoX_old + weight_flux * (rhoX_curr + d_spec[off + idx]);
-
-                    double X_k = std::max(0.0, rhoX_comb / rho_new);
-                    u_dest.X(s, idx) = X_k;
-                    sum_X += X_k;
-                }
-
-                if (sum_X > 1e-13)
-                {
-                    double inv_sum = 1.0 / sum_X;
-                    for (int s = 0; s < n_spec; ++s)
-                        u_dest.X(s, idx) *= inv_sum;
-                }
-                else
-                {
-                    double inv_n = 1.0 / n_spec;
-                    for (int s = 0; s < n_spec; ++s)
-                        u_dest.X(s, idx) = inv_n;
-                }
             }
         }
     }

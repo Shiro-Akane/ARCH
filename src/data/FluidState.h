@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "../amr/AmrDefines.h"
+#include "../core/ArchPortability.h"
 
 /**
  * @brief Represents the conserved variables at a single point.
@@ -29,31 +30,31 @@ struct FluidVector
     double mom_w;
     double eng;
 
-    FluidVector() : rho(0), mom_u(0), mom_v(0), mom_w(0), eng(0) {}
-    FluidVector(double r, double mx, double my, double mz, double e) : rho(r), mom_u(mx), mom_v(my), mom_w(mz), eng(e) {}
+    ARCH_INLINE FluidVector() : rho(0), mom_u(0), mom_v(0), mom_w(0), eng(0) {}
+    ARCH_INLINE FluidVector(double r, double mx, double my, double mz, double e) : rho(r), mom_u(mx), mom_v(my), mom_w(mz), eng(e) {}
 
-    FluidVector operator+(const FluidVector &other) const
+    ARCH_INLINE FluidVector operator+(const FluidVector &other) const
     {
         return {rho + other.rho, mom_u + other.mom_u, mom_v + other.mom_v, mom_w + other.mom_w, eng + other.eng};
     }
 
-    FluidVector operator-(const FluidVector &other) const
+    ARCH_INLINE FluidVector operator-(const FluidVector &other) const
     {
         return {rho - other.rho, mom_u - other.mom_u, mom_v - other.mom_v, mom_w - other.mom_w, eng - other.eng};
     }
 
-    FluidVector operator*(double s) const
+    ARCH_INLINE FluidVector operator*(double s) const
     {
         return {rho * s, mom_u * s, mom_v * s, mom_w * s, eng * s};
     }
 
-    FluidVector operator/(double s) const
+    ARCH_INLINE FluidVector operator/(double s) const
     {
         return {rho / s, mom_u / s, mom_v / s, mom_w / s, eng / s};
     }
 };
 
-inline FluidVector operator*(double s, const FluidVector &v)
+ARCH_INLINE FluidVector operator*(double s, const FluidVector &v)
 {
     return v * s;
 }

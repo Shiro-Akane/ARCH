@@ -21,6 +21,9 @@
 
 #include "../grid/Grid.h"
 
+#include <bit>
+#include <cstdint>
+
 /**
  * @brief Applies boundary conditions to the fluid state.
  * Supports outflow, reflecting, and periodic faces. Outflow ghosts copy the
@@ -198,6 +201,78 @@ struct BCHandler
     }
 };
 
+ARCH_INLINE double compute_cfl_candidate(
+    const FluidVector& U, double c, int dim,
+    double dx1, double dx2, double dx3)
+{
+    double rho = U.rho;
+    double inv_dt_sum = (std::abs(U.mom_u / rho) + c) / dx1;
+
+    if (dim >= 2)
+        inv_dt_sum += (std::abs(U.mom_v / rho) + c) / dx2;
+
+    if (dim == 3)
+        inv_dt_sum += (std::abs(U.mom_w / rho) + c) / dx3;
+
+    return 1.0 / std::max(inv_dt_sum, 1e-10);
+}
+
+ARCH_INLINE double cfl_inactive_cell_dt()
+{
+    return 1e10;
+}
+
+ARCH_INLINE bool is_cfl_cell_active(const FluidVector& U)
+{
+    return U.rho >= 1e-12;
+}
+
+ARCH_INLINE double compute_cfl_cell_dt(
+    const FluidVector& U, double sound_speed, int dim,
+    double dx1, double dx2, double dx3)
+{
+    if (!is_cfl_cell_active(U))
+        return cfl_inactive_cell_dt();
+    return compute_cfl_candidate(U, sound_speed, dim, dx1, dx2, dx3);
+}
+
+template <typename EosType>
+ARCH_INLINE double evaluate_cfl_cell_dt(
+    const FluidVector& U, const double* composition, const EosType& eos,
+    int dim, double dx1, double dx2, double dx3)
+{
+    if (!is_cfl_cell_active(U))
+        return cfl_inactive_cell_dt();
+    const double pressure = eos.get_pressure(U, composition);
+    const double sound_speed = eos.get_sound_speed(U, pressure, composition);
+    return compute_cfl_cell_dt(U, sound_speed, dim, dx1, dx2, dx3);
+}
+
+ARCH_INLINE bool cfl_value_is_nan(double value)
+{
+#if defined(__CUDA_ARCH__)
+    const std::uint64_t bits = static_cast<std::uint64_t>(
+        __double_as_longlong(value));
+#else
+    const std::uint64_t bits = std::bit_cast<std::uint64_t>(value);
+#endif
+    constexpr std::uint64_t exponent = 0x7ff0000000000000ULL;
+    constexpr std::uint64_t mantissa = 0x000fffffffffffffULL;
+    return (bits & exponent) == exponent && (bits & mantissa) != 0;
+}
+
+ARCH_INLINE double combine_cfl_minimum(double minimum, double candidate)
+{
+    if (cfl_value_is_nan(candidate))
+        return minimum;
+    return candidate < minimum ? candidate : minimum;
+}
+
+ARCH_INLINE double finalize_cfl_dt(double cfl_number, double minimum)
+{
+    return cfl_number * minimum;
+}
+
 /**
  * @brief Computes adaptive time step (dt) strictly evaluating 3D wave speeds.
  * Uses dt = CFL * min( dx1/(|u|+c), dx2/(|v|+c), dx3/(|w|+c) )
@@ -206,7 +281,7 @@ template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number)
 {
     int n_species = state.GetNumSpecies();
-    double min_dt = 1e10;
+    double min_dt = cfl_inactive_cell_dt();
 
     const int ks = grid.Ks();
     const int ke = grid.Ke();
@@ -218,7 +293,7 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
 #pragma omp parallel
     {
         std::vector<double> Xi_cache(n_species);
-        double local_min_dt = 1e10;
+        double local_min_dt = cfl_inactive_cell_dt();
 
 #pragma omp for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
@@ -229,35 +304,22 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
             {
                 int idx = grid.GetIndex(i, j, k);
                 FluidVector U = state.get(idx);
-                double rho = U.rho;
-
-                if (rho < 1e-12)
+                if (!is_cfl_cell_active(U))
                     continue;
-
                 for (int s = 0; s < n_species; ++s)
                     Xi_cache[s] = state.X(s, idx);
-
-                double p = eos.get_pressure(U, Xi_cache.data());
-                double c = eos.get_sound_speed(U, p, Xi_cache.data());
-
-                double inv_dt_sum = (std::abs(U.mom_u / rho) + c) / grid.dx1;
-
-                if (grid.dim >= 2)
-                    inv_dt_sum += (std::abs(U.mom_v / rho) + c) / grid.dx2;
-
-                if (grid.dim == 3)
-                    inv_dt_sum += (std::abs(U.mom_w / rho) + c) / grid.dx3;
-
-                double cell_dt = 1.0 / std::max(inv_dt_sum, 1e-10);
-                local_min_dt = std::min(local_min_dt, cell_dt);
+                const double cell_dt = evaluate_cfl_cell_dt(
+                    U, Xi_cache.data(), eos, grid.dim,
+                    grid.dx1, grid.dx2, grid.dx3);
+                local_min_dt = combine_cfl_minimum(local_min_dt, cell_dt);
             }
         }
 
 #pragma omp critical
         {
-            min_dt = std::min(min_dt, local_min_dt);
+            min_dt = combine_cfl_minimum(min_dt, local_min_dt);
         }
     }
 
-    return cfl_number * min_dt;
+    return finalize_cfl_dt(cfl_number, min_dt);
 }

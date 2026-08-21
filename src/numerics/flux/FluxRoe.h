@@ -29,6 +29,55 @@ struct FluxRoe
     static constexpr int NG = ReconstructPolicy::NG;
 
     template <typename EosType>
+    static ARCH_INLINE void compute_face_flux(
+        const FluidVector& U_L, const FluidVector& U_R,
+        const double* Xi_L, const double* Xi_R, int n_spec,
+        const EosType& eos, int dir, double coefficient,
+        FluidVector& flux_out, double* species_flux_out)
+    {
+        // Recover thermodynamic values before Roe averaging.
+        // Left State
+        double rho_L = std::max(U_L.rho, 1e-12);
+        double un_L = get_un(U_L, dir);
+        double ut1_L = get_ut1(U_L, dir);
+        double ut2_L = get_ut2(U_L, dir);
+        double e_L = std::max((U_L.eng / rho_L) - 0.5 * (un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L), 1e-8);
+        double P_L = eos.get_pressure(U_L, Xi_L);
+        double H_L = (U_L.eng + P_L) / rho_L;
+
+        // Right State
+        double rho_R = std::max(U_R.rho, 1e-12);
+        double un_R = get_un(U_R, dir);
+        double ut1_R = get_ut1(U_R, dir);
+        double ut2_R = get_ut2(U_R, dir);
+        double e_R = std::max((U_R.eng / rho_R) - 0.5 * (un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R), 1e-8);
+        double P_R = eos.get_pressure(U_R, Xi_R);
+        double H_R = (U_R.eng + P_R) / rho_R;
+
+        // Compute physical fluxes with the known-pressure overload.
+        FluidVector F_L = get_flux(U_L, P_L, dir);
+        FluidVector F_R = get_flux(U_R, P_R, dir);
+
+        // Construct the Roe-Glaister averaged state.
+        RoeGlaisterState roe_state = calc_glaister_state(
+            U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Xi_L, eos);
+
+        // Assemble the Roe flux and entropy-corrected dissipation.
+        FluidVector roe_flux = calc_roe_flux_hydro(
+            F_L, F_R, U_L, U_R, P_L, P_R, roe_state, coefficient, dir);
+
+        flux_out = roe_flux;
+
+        // 6. Species Flux
+        double mass_flux = roe_flux.rho;
+        for (int s = 0; s < n_spec; ++s)
+        {
+            double transported_X = (mass_flux >= 0.0) ? Xi_L[s] : Xi_R[s];
+            species_flux_out[s] = mass_flux * transported_X;
+        }
+    }
+
+    template <typename EosType>
     static void compute_fluxes(const FluidState &state, const EosType &eos, const Grid &grid,
                                std::vector<FluidVector> &flux_out,
                                std::vector<double> &spec_flux_out,
@@ -60,6 +109,7 @@ struct FluxRoe
             std::vector<double> Xi_L(n_spec);
             std::vector<double> Xi_R(n_spec);
             std::vector<double> Xi_cell(n_spec);
+            std::vector<double> face_species_flux(n_spec);
 
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -73,45 +123,12 @@ struct FluxRoe
                     FluidVector U_L, U_R;
                     AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                    // Recover thermodynamic values before Roe averaging.
-                    // Left State
-                    double rho_L = std::max(U_L.rho, 1e-12);
-                    double un_L = get_un(U_L, dir);
-                    double ut1_L = get_ut1(U_L, dir);
-                    double ut2_L = get_ut2(U_L, dir);
-                    double e_L = std::max((U_L.eng / rho_L) - 0.5 * (un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L), 1e-8);
-                    double P_L = eos.get_pressure(U_L, Xi_L.data());
-                    double H_L = (U_L.eng + P_L) / rho_L;
-
-                    // Right State
-                    double rho_R = std::max(U_R.rho, 1e-12);
-                    double un_R = get_un(U_R, dir);
-                    double ut1_R = get_ut1(U_R, dir);
-                    double ut2_R = get_ut2(U_R, dir);
-                    double e_R = std::max((U_R.eng / rho_R) - 0.5 * (un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R), 1e-8);
-                    double P_R = eos.get_pressure(U_R, Xi_R.data());
-                    double H_R = (U_R.eng + P_R) / rho_R;
-
-                    // Compute physical fluxes with the known-pressure overload.
-                    FluidVector F_L = get_flux(U_L, P_L, dir);
-                    FluidVector F_R = get_flux(U_R, P_R, dir);
-
-                    // Construct the Roe-Glaister averaged state.
-                    RoeGlaisterState roe_state = calc_glaister_state(
-                        U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Xi_L.data(), eos);
-
-                    // Assemble the Roe flux and entropy-corrected dissipation.
-                    FluidVector roe_flux = calc_roe_flux_hydro(
-                        F_L, F_R, U_L, U_R, P_L, P_R, roe_state, entropy_fix_coeff, dir);
-
-                    flux_out[idx + stride] = roe_flux;
-
-                    // 6. Species Flux
-                    double mass_flux = roe_flux.rho;
+                    compute_face_flux(
+                        U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                        entropy_fix_coeff, flux_out[idx + stride], face_species_flux.data());
                     for (int s = 0; s < n_spec; ++s)
                     {
-                        double transported_X = (mass_flux >= 0.0) ? Xi_L[s] : Xi_R[s];
-                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * transported_X;
+                        spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
                     }
                 }
             }

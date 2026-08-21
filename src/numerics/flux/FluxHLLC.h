@@ -29,7 +29,7 @@ struct FluxHLLC
     // Construct the HLLC star state U*.
     // Ref: Toro, "Riemann Solvers and Numerical Methods for Fluid Dynamics"
     // U_K^* = rho_K * ((S_K - u_K) / (S_K - S_*)) * [1, S_*, E_K/rho_K + ...]
-    static inline FluidVector calc_star_state(
+    static ARCH_INLINE FluidVector calc_star_state(
         const FluidVector &U_K, double rho_K, double un_K, double ut1_K, double ut2_K,
         double p_K, double E_K,
         double S_K, double S_star, int dir)
@@ -62,6 +62,112 @@ struct FluxHLLC
 
         // Map local normal/tangential components back through the shared helper.
         return set_flux_vector(rho_star, rho_star * un_star, rho_star * ut1_K, rho_star * ut2_K, eng_star, dir);
+    }
+
+    template <typename EosType>
+    static ARCH_INLINE void compute_face_flux(
+        const FluidVector& U_L, const FluidVector& U_R,
+        const double* Xi_L, const double* Xi_R, int n_spec,
+        const EosType& eos, int dir, double /* coefficient */,
+        FluidVector& flux_out, double* species_flux_out)
+    {
+        // 2. Thermodynamics Preparation
+        // Left
+        double rho_L = std::max(U_L.rho, 1e-12);
+        double un_L = get_un(U_L, dir);
+        double ut1_L = get_ut1(U_L, dir);
+        double ut2_L = get_ut2(U_L, dir);
+        double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
+
+        double p_L = eos.get_pressure(U_L, Xi_L);
+        double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
+
+        // Right
+        double rho_R = std::max(U_R.rho, 1e-12);
+        double un_R = get_un(U_R, dir);
+        double ut1_R = get_ut1(U_R, dir);
+        double ut2_R = get_ut2(U_R, dir);
+        double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
+
+        double p_R = eos.get_pressure(U_R, Xi_R);
+        double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
+
+        // 3. Physical Fluxes (F_L, F_R)
+        FluidVector F_L = get_flux(U_L, p_L, dir);
+        FluidVector F_R = get_flux(U_R, p_R, dir);
+
+        // 4. Wave Speed Estimates (S_L, S_R, S_*)
+        double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Xi_L, eos);
+        double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Xi_R, eos);
+        double H_L = (U_L.eng + p_L) / rho_L;
+        double H_R = (U_R.eng + p_R) / rho_R;
+
+        // Roe Average (Used for S_L, S_R estimates)
+        RoeGlaisterState roe_state = calc_glaister_state(
+            U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Xi_L, eos);
+
+        double S_L, S_R;
+        calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
+
+        // Contact-wave speed.
+        double S_star = calc_hllc_star_speed(un_L, rho_L, p_L, S_L,
+                                             un_R, rho_R, p_R, S_R);
+
+        // 5. HLLC Flux Assembly & Species Logic
+        FluidVector hllc_flux;
+        const double *chosen_Xi = nullptr; // Upwind composition associated with the selected region.
+
+        // Branch 1: Supersonic L (Flow is all L)
+        if (S_L >= 0.0)
+        {
+            hllc_flux = F_L;
+            chosen_Xi = Xi_L;
+        }
+        // Branch 4: Supersonic R (Flow is all R)
+        else if (S_R <= 0.0)
+        {
+            hllc_flux = F_R;
+            chosen_Xi = Xi_R;
+        }
+        // Subsonic Region (Need Star Fluxes)
+        else
+        {
+            // Branch 2: Left Star Region (S_L < 0 <= S_*)
+            if (S_star >= 0.0)
+            {
+                FluidVector U_L_star = calc_star_state(U_L, rho_L, un_L, ut1_L, ut2_L, p_L, U_L.eng, S_L, S_star, dir);
+                // Formula: F_L* = F_L + S_L * (U_L* - U_L)
+                hllc_flux = F_L + S_L * (U_L_star - U_L);
+
+                // The left star region carries the left composition.
+                chosen_Xi = Xi_L;
+            }
+            // Branch 3: Right Star Region (S_* < 0 < S_R)
+            else
+            {
+                FluidVector U_R_star = calc_star_state(U_R, rho_R, un_R, ut1_R, ut2_R, p_R, U_R.eng, S_R, S_star, dir);
+                // Formula: F_R* = F_R + S_R * (U_R* - U_R)
+                hllc_flux = F_R + S_R * (U_R_star - U_R);
+
+                // The right star region carries the right composition.
+                chosen_Xi = Xi_R;
+            }
+        }
+
+        // Output Hydro Flux
+        flux_out = hllc_flux;
+
+        // 6. Species Flux (Upwind based on Star Region)
+        // HLLC mass flux already includes the contact-wave correction.
+        double mass_flux = hllc_flux.rho;
+
+        for (int s = 0; s < n_spec; ++s)
+        {
+            // Species fractions remain constant across each outer
+            // star region, so advect the composition selected by
+            // the same side test used for the hydrodynamic flux.
+            species_flux_out[s] = mass_flux * chosen_Xi[s];
+        }
     }
 
     template <typename EosType>
@@ -98,6 +204,7 @@ struct FluxHLLC
             std::vector<double> Xi_L(n_spec);
             std::vector<double> Xi_R(n_spec);
             std::vector<double> Xi_cell(n_spec);
+            std::vector<double> face_species_flux(n_spec);
 
 #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -111,102 +218,12 @@ struct FluxHLLC
                     FluidVector U_L, U_R;
                     AMRInterfaceReconstruction::reconstruct_face<ReconstructPolicy>(state, eos, grid, dir, i, j, k, idx, stride, n_spec, Xi_L.data(), Xi_R.data(), Xi_cell.data(), U_L, U_R);
 
-                    // 2. Thermodynamics Preparation
-                    // Left
-                    double rho_L = std::max(U_L.rho, 1e-12);
-                    double un_L = get_un(U_L, dir);
-                    double ut1_L = get_ut1(U_L, dir);
-                    double ut2_L = get_ut2(U_L, dir);
-                    double v2_L = un_L * un_L + ut1_L * ut1_L + ut2_L * ut2_L; // Full 3D kinetic energy
-
-                    double p_L = eos.get_pressure(U_L, Xi_L.data());
-                    double e_L = (U_L.eng / rho_L) - 0.5 * v2_L;
-
-                    // Right
-                    double rho_R = std::max(U_R.rho, 1e-12);
-                    double un_R = get_un(U_R, dir);
-                    double ut1_R = get_ut1(U_R, dir);
-                    double ut2_R = get_ut2(U_R, dir);
-                    double v2_R = un_R * un_R + ut1_R * ut1_R + ut2_R * ut2_R;
-
-                    double p_R = eos.get_pressure(U_R, Xi_R.data());
-                    double e_R = (U_R.eng / rho_R) - 0.5 * v2_R;
-
-                    // 3. Physical Fluxes (F_L, F_R)
-                    FluidVector F_L = get_flux(U_L, p_L, dir);
-                    FluidVector F_R = get_flux(U_R, p_R, dir);
-
-                    // 4. Wave Speed Estimates (S_L, S_R, S_*)
-                    double c_L = calc_sound_speed_thermo(rho_L, p_L, e_L, Xi_L.data(), eos);
-                    double c_R = calc_sound_speed_thermo(rho_R, p_R, e_R, Xi_R.data(), eos);
-                    double H_L = (U_L.eng + p_L) / rho_L;
-                    double H_R = (U_R.eng + p_R) / rho_R;
-
-                    // Roe Average (Used for S_L, S_R estimates)
-                    RoeGlaisterState roe_state = calc_glaister_state(
-                        U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Xi_L.data(), eos);
-
-                    double S_L, S_R;
-                    calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
-
-                    // Contact-wave speed.
-                    double S_star = calc_hllc_star_speed(un_L, rho_L, p_L, S_L,
-                                                         un_R, rho_R, p_R, S_R);
-
-                    // 5. HLLC Flux Assembly & Species Logic
-                    FluidVector hllc_flux;
-                    const double *chosen_Xi = nullptr; // Upwind composition associated with the selected region.
-
-                    // Branch 1: Supersonic L (Flow is all L)
-                    if (S_L >= 0.0)
-                    {
-                        hllc_flux = F_L;
-                        chosen_Xi = Xi_L.data();
-                    }
-                    // Branch 4: Supersonic R (Flow is all R)
-                    else if (S_R <= 0.0)
-                    {
-                        hllc_flux = F_R;
-                        chosen_Xi = Xi_R.data();
-                    }
-                    // Subsonic Region (Need Star Fluxes)
-                    else
-                    {
-                        // Branch 2: Left Star Region (S_L < 0 <= S_*)
-                        if (S_star >= 0.0)
-                        {
-                            FluidVector U_L_star = calc_star_state(U_L, rho_L, un_L, ut1_L, ut2_L, p_L, U_L.eng, S_L, S_star, dir);
-                            // Formula: F_L* = F_L + S_L * (U_L* - U_L)
-                            hllc_flux = F_L + S_L * (U_L_star - U_L);
-
-                            // The left star region carries the left composition.
-                            chosen_Xi = Xi_L.data();
-                        }
-                        // Branch 3: Right Star Region (S_* < 0 < S_R)
-                        else
-                        {
-                            FluidVector U_R_star = calc_star_state(U_R, rho_R, un_R, ut1_R, ut2_R, p_R, U_R.eng, S_R, S_star, dir);
-                            // Formula: F_R* = F_R + S_R * (U_R* - U_R)
-                            hllc_flux = F_R + S_R * (U_R_star - U_R);
-
-                            // The right star region carries the right composition.
-                            chosen_Xi = Xi_R.data();
-                        }
-                    }
-
-                    // Output Hydro Flux
-                    flux_out[idx + stride] = hllc_flux;
-
-                    // 6. Species Flux (Upwind based on Star Region)
-                    // HLLC mass flux already includes the contact-wave correction.
-                    double mass_flux = hllc_flux.rho;
-
+                    compute_face_flux(
+                        U_L, U_R, Xi_L.data(), Xi_R.data(), n_spec, eos, dir,
+                        0.0, flux_out[idx + stride], face_species_flux.data());
                     for (int s = 0; s < n_spec; ++s)
                     {
-                        // Species fractions remain constant across each outer
-                        // star region, so advect the composition selected by
-                        // the same side test used for the hydrodynamic flux.
-                        spec_flux_out[s * total_size + (idx + stride)] = mass_flux * chosen_Xi[s];
+                        spec_flux_out[s * total_size + (idx + stride)] = face_species_flux[s];
                     }
                 }
             }
