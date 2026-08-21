@@ -9,7 +9,6 @@
 
 #include "../../src/core/UserInterface.h"
 
-#include "../../src/amr/AmrDefines.h"
 #include "../../src/data/GlobalDefs.h"
 
 class DiffusionModeProblem
@@ -45,8 +44,7 @@ public:
             throw std::invalid_argument("DiffusionMode parameters require a bounded mass fraction in [0,1].");
         }
 
-        const double cell_width = length_ /
-            static_cast<double>(config.grid.nblockx1 * amr::BLOCK_NX);
+        const double cell_width = ProblemHelper::GetRootCellWidth(config, 1);
         const double half_cell_phase = M_PI * mode_ * cell_width / length_;
         cell_average_factor_ = std::sin(half_cell_phase) / half_cell_phase;
 

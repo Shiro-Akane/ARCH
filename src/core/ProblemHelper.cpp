@@ -16,9 +16,11 @@
 #include "ProblemHelper.h"
 
 #include "../amr/AMRControl.h"
+#include "../amr/AmrDefines.h"
 #include "../data/GlobalDefs.h"
 #include "../data/UserTypes.h"
 #include "../numerics/burnsolver/Networks.h"
+#include "../physics/eos/eos_Utils.h"
 #include "../physics/eos/eosdispatch.h"
 #include "../physics/species/Species.h"
 
@@ -51,6 +53,74 @@ namespace ProblemHelper
             p_out = eos.get_pressure_from_rho_T(rho, T, X);
         });
         return p_out;
+    }
+
+    double GetRootCellWidth(const SimConfig &config, int logical_axis)
+    {
+        double lower = 0.0;
+        double upper = 0.0;
+        int root_blocks = 0;
+        int active_cells_per_block = 0;
+
+        switch (logical_axis) {
+        case 1:
+            lower = config.grid.x1_min;
+            upper = config.grid.x1_max;
+            root_blocks = config.grid.nblockx1;
+            active_cells_per_block = amr::BLOCK_NX;
+            break;
+        case 2:
+            if (config.grid.dim < 2) {
+                throw std::invalid_argument("Root cell width requested for inactive x2 axis.");
+            }
+            lower = config.grid.x2_min;
+            upper = config.grid.x2_max;
+            root_blocks = config.grid.nblockx2;
+            active_cells_per_block = amr::BLOCK_NY;
+            break;
+        case 3:
+            if (config.grid.dim < 3) {
+                throw std::invalid_argument("Root cell width requested for inactive x3 axis.");
+            }
+            lower = config.grid.x3_min;
+            upper = config.grid.x3_max;
+            root_blocks = config.grid.nblockx3;
+            active_cells_per_block = amr::BLOCK_NZ;
+            break;
+        default:
+            throw std::invalid_argument("Root cell width logical_axis must be 1, 2, or 3.");
+        }
+
+        if (root_blocks <= 0 || !std::isfinite(lower) || !std::isfinite(upper) || upper <= lower) {
+            throw std::invalid_argument("Root cell width requires a positive block count and domain extent.");
+        }
+
+        return (upper - lower) /
+            (static_cast<double>(root_blocks) * active_cells_per_block);
+    }
+
+    IsentropicState GetIsentropicStateAtPressureFactor(
+        const SimConfig &config, const SpeciesManager &specs,
+        double reference_rho, double reference_temperature,
+        const double *X, double pressure_factor)
+    {
+        if (!std::isfinite(reference_rho) || reference_rho <= 0.0 ||
+            !std::isfinite(reference_temperature) || reference_temperature <= 0.0 ||
+            !std::isfinite(pressure_factor) || pressure_factor <= 0.0) {
+            throw std::invalid_argument("Invalid reference state or pressure factor for isentropic initialization.");
+        }
+
+        IsentropicState result{};
+        EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos) {
+            const eos_utils::IsentropicState state =
+                eos_utils::get_isentropic_state_at_pressure_factor(
+                    eos, reference_rho, reference_temperature, X, pressure_factor);
+            result.rho = state.rho;
+            result.temperature = state.temperature;
+            result.pressure = state.pressure;
+            result.sound_speed = state.sound_speed;
+        });
+        return result;
     }
 
     namespace detail
