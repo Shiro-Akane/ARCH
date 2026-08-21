@@ -187,6 +187,8 @@ void Init(const PointCoords &point, PrimitiveData &out) const;
 #include "../../src/data/GlobalDefs.h"
 ```
 
+这两个文件构成完整的算例侧 ARCH 头文件表面。可以按需加入 C++ 标准库头文件，但算例不得直接包含具体 EOS 头文件、`eos_Utils.h` 或 `eosdispatch.h`。`UserInterface.h` 重新导出稳定的注册宏、算例类型和 `ProblemHelper` 操作；第二个显式头文件 `GlobalDefs.h` 提供有类型的运行时配置，同时避免算例依赖具体 EOS 策略。
+
 `Setup` 在网格分配前运行，应在其中读取和验证算例参数并注册核素。`Init` 会在 OpenMP 下对已分配单元调用，并可能在初始 AMR 构建期间再次调用；它必须确定、线程安全，且不能依赖调用顺序产生副作用。
 
 最小完整示例：
@@ -306,6 +308,30 @@ const double pressure = ProblemHelper::GetPressureFromRhoT(
 
 该函数执行运行时 EOS dispatch，应只在 `Setup` 中使用。
 
+如果 cell-average 初值需要根层级的物理 cell 宽度，应保持 AMR 实现私有并调用：
+
+```cpp
+const double dx = ProblemHelper::GetRootCellWidth(config, 1);
+```
+
+逻辑轴从 1 开始编号。ARCH 当前每个方向每个 block 使用 16 个有效 cell，两侧各有 4 个 guard cell（x 方向存储为 `16 + 8`）。guard cell 不计入 `dx`；算例不得为了重建该数值而包含 `AmrDefines.h`。
+
+若要在组分和比熵不变时构造邻近状态，可继续使用同一双头文件表面中的 EOS 无关辅助函数：
+
+```cpp
+const ProblemHelper::IsentropicState compressed =
+    ProblemHelper::GetIsentropicStateAtPressureFactor(
+        config, specs, density, temperature,
+        default_X.data(), 1.001);
+
+// compressed.rho
+// compressed.temperature
+// compressed.pressure
+// compressed.sound_speed
+```
+
+最后一个参数是 `P_target/P_reference`，不是 `dP/P`。活动 EOS 通过统一的固定组分等熵实现提供 `c_v`、`(dP/dT)_rho`、压力和声速。该函数执行运行时 EOS dispatch 并积分局部热力学路径，因此只能在 `Setup` 中调用；若结果相对参考态移动超过 `0.25` 的 `ln(rho)`，函数会拒绝请求，而不会静默外推。Helmholtz 或 tabular 状态不得使用理想气体的 `T-P` 关系代替。
+
 如果初始内能必须与给定温度严格一致，在 `Init` 中用同一数值调用 `SetTemperature`。
 
 ## 8. 运行前检查表
@@ -320,6 +346,7 @@ const double pressure = ProblemHelper::GetPressureFromRhoT(
 - 组分索引前必须确认 `GetSpeciesID >= 0`。
 - 初始化所有核素分数并保证总和为一。
 - 将 EOS dispatch 辅助调用放在 `Setup` 中。
+- 算例侧 ARCH 头文件只保留 `UserInterface.h` 和 `GlobalDefs.h`；EOS 操作通过 `ProblemHelper` 访问。
 - 收敛研究中记录 floor、clamp 和 fallback 警告。
 - `main` 上使用 `compute_backend = cpu`。
 

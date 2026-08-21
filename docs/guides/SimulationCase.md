@@ -219,6 +219,13 @@ Use these two ARCH headers from a directory one level below `simulation/`:
 #include "../../src/data/GlobalDefs.h"
 ```
 
+These are the complete case-facing ARCH header surface. Standard-library
+headers may be added as needed, but a simulation case must not include concrete
+EOS headers, `eos_Utils.h`, or `eosdispatch.h`. `UserInterface.h` re-exports the
+stable registration, case types, and `ProblemHelper` operations; keeping
+`GlobalDefs.h` as the second explicit include exposes the typed runtime
+configuration without coupling a case to an EOS policy.
+
 `Setup` runs before grid allocation. Read case parameters, validate them, and
 register species there. `Init` is called under OpenMP for allocated cells and may
 run again during initial AMR setup. It must be deterministic, thread-safe, and
@@ -351,6 +358,41 @@ const double pressure = ProblemHelper::GetPressureFromRhoT(
 
 This helper performs runtime EOS dispatch and belongs in `Setup`.
 
+If a cell-average initializer needs the root-level physical cell width, keep
+the AMR implementation private and call:
+
+```cpp
+const double dx = ProblemHelper::GetRootCellWidth(config, 1);
+```
+
+The logical axis is one-based. ARCH currently uses 16 active cells per block
+direction and four guard cells on each side (`16 + 8` stored along x). Guard
+cells do not contribute to `dx`; do not include `AmrDefines.h` in a case to
+reconstruct this value.
+
+To construct a nearby state at the same composition and specific entropy, use
+the EOS-independent helper from the same two-header surface:
+
+```cpp
+const ProblemHelper::IsentropicState compressed =
+    ProblemHelper::GetIsentropicStateAtPressureFactor(
+        config, specs, density, temperature,
+        default_X.data(), 1.001);
+
+// compressed.rho
+// compressed.temperature
+// compressed.pressure
+// compressed.sound_speed
+```
+
+The final argument is `P_target/P_reference`, not `dP/P`. The active EOS
+supplies `c_v`, `(dP/dT)_rho`, pressure, and sound speed through one common
+fixed-composition isentrope implementation. Call the helper only in `Setup`;
+it performs runtime EOS dispatch and integrates a local thermodynamic path. A
+request that would move farther than `0.25` in `ln(rho)` is rejected rather than
+silently extrapolated. Do not use an ideal-gas `T-P` relation for Helmholtz or
+tabular states.
+
 Use `SetTemperature` in `Init` with the same value when the initial internal
 energy must match the specified temperature exactly.
 
@@ -367,6 +409,8 @@ energy must match the specified temperature exactly.
 - Require `GetSpeciesID >= 0` before indexing composition.
 - Initialize every species fraction and enforce a unit sum.
 - Keep EOS dispatch helpers in `Setup`.
+- Keep the case-facing ARCH includes limited to `UserInterface.h` and
+  `GlobalDefs.h`; access EOS operations through `ProblemHelper`.
 - Record floors, clamps, and fallback warnings in convergence studies.
 - Use `compute_backend = cpu` on `main`.
 

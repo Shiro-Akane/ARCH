@@ -31,7 +31,8 @@ ARCH exposes two interface levels:
 - **Stable case API**: the source surface used by files under
   `simulation/<Case>/`. It consists of `UserInterface.h`, `GlobalDefs.h`, the
   `Setup`/`Init` contract, `SpeciesManager`, and the public `ProblemHelper`
-  functions.
+  functions. A case includes exactly those two ARCH headers; concrete EOS,
+  dispatch, AMR, and driver headers are not part of this surface.
 - **Source-extension API**: template or virtual contracts used to add numerical
   and physical policies inside this repository. They follow in-tree source
   compatibility.
@@ -457,6 +458,10 @@ available PLT field and registered species.
 `ENTR` is the local proxy `p/rho^Gamma1`, with
 `Gamma1 = rho*c_s^2/p` from the active EOS. It is the usual constant-gamma
 ideal-gas invariant and a refinement proxy for general EOS policies.
+It is not an absolute entropy returned by the EOS and must not be used to move
+a general state along an isentrope. Fixed-composition isentropic state
+construction uses the differential EOS identity documented under the EOS
+policy interface.
 
 ## Stable case API
 
@@ -468,6 +473,11 @@ For `simulation/<Case>/<Case>.cpp`:
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
 ```
+
+These are the only ARCH headers a case may include. C++ standard-library
+headers remain unrestricted. EOS operations exposed to a case go through
+`ProblemHelper`, so selecting a different runtime EOS never changes case
+includes or introduces a concrete EOS policy type.
 
 The relative path assumes the maintained two-level case layout. A case class is
 wrapped by `TypedProblemGenerator<T>` and must be default constructible:
@@ -564,11 +574,47 @@ double ProblemHelper::GetPressureFromRhoT(
     double rho,
     double temperature,
     const double *mass_fractions);
+
+double ProblemHelper::GetRootCellWidth(
+    const SimConfig &config,
+    int logical_axis);
+
+struct ProblemHelper::IsentropicState {
+    double rho;
+    double temperature;
+    double pressure;
+    double sound_speed;
+};
+
+ProblemHelper::IsentropicState
+ProblemHelper::GetIsentropicStateAtPressureFactor(
+    const SimConfig &config,
+    const SpeciesManager &specs,
+    double reference_rho,
+    double reference_temperature,
+    const double *mass_fractions,
+    double pressure_factor);
 ```
 
 Call network setup before manually registering other species. It calls a
 network’s `RegisterSpecies` when the manager is empty. Pressure conversion
 performs runtime EOS dispatch and belongs in `Setup`.
+
+`GetRootCellWidth` returns the physical width of one active root-level cell on
+the one-based logical axis `1`, `2`, or `3`. It uses the configured root-block
+count and the compiled active block extent. In the current layout, each block
+has `16` active cells per direction plus four guard cells on each side
+(`16 + 8` stored cells along x); the eight guard cells are not part of the
+physical domain width. Use this function when a case needs cell-average
+initialization instead of including the internal `AmrDefines.h` header.
+
+The isentropic helper keeps `mass_fractions` fixed, interprets
+`pressure_factor` as `P_target/P_reference`, and returns the matched density,
+temperature, pressure, and sound speed. It uses the active EOS and the common
+EOS-policy path described below; it does not assume an ideal gas. The operation
+is intentionally local and rejects a solution farther than `0.25` in
+`ln(rho)` from the reference. Both EOS helpers are setup-time operations, not
+per-cell `Init` or timestep-loop calls.
 
 `ProblemHelper::detail::PopulateState` is an internal initialization bridge.
 
@@ -668,6 +714,26 @@ double get_dp_de_rho(double rho, double e, const double *X) const;
 void evaluate_state(eos_state_t &state) const;
 const SpeciesManager *get_species_manager() const;
 ```
+
+`evaluate_state` is the canonical thermodynamic-state contract. For every
+valid `(rho,T,X)` input it must fill finite `P`, `E`, `cv`, `sound_speed`,
+`dp_drho`, and `dp_dT`; pressure, `cv`, and sound speed must be positive. If a
+tabular file does not provide `dp_dT`, the maintained tabular policies compute
+it by a table-bounded local temperature difference rather than returning zero.
+
+All policies receive the same fixed-composition isentrope algorithm from
+`eos_utils::get_isentropic_state_at_pressure_factor` in `eos_Utils.h`. It
+integrates
+
+```text
+d ln(T) / d ln(rho) |_s,X = (dP/dT)_rho,X / (rho cv)
+```
+
+with RK4 and solves for the target pressure in `ln(rho)` using
+`Gamma1=rho*c_s^2/P`. A new EOS implements `evaluate_state`; it must not copy or
+special-case the isentrope solver. This shared utility is a source-extension
+interface and is not included directly by simulation cases. Case code reaches
+it only through `ProblemHelper` and the two stable public headers.
 
 Check the exact overload set against every EOS implementation. `eos.h` documents
 the duck-typed surface. Register new types in `EOSDispatcher::dispatch_eos`.

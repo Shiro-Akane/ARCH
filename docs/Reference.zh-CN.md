@@ -24,7 +24,7 @@
 
 ARCH 暴露两个接口层级：
 
-- **稳定算例 API**：`simulation/<Case>/` 下文件使用的源码表面，包括 `UserInterface.h`、`GlobalDefs.h`、`Setup`/`Init` 契约、`SpeciesManager` 和公共 `ProblemHelper` 函数。
+- **稳定算例 API**：`simulation/<Case>/` 下文件使用的源码表面，包括 `UserInterface.h`、`GlobalDefs.h`、`Setup`/`Init` 契约、`SpeciesManager` 和公共 `ProblemHelper` 函数。算例只包含这两个 ARCH 头文件；具体 EOS、dispatch、AMR 和 driver 头文件不属于该表面。
 - **源码扩展 API**：在仓库内部添加数值或物理策略时使用的模板或虚函数契约，遵循仓库内源码兼容性。
 
 本文中的稳定性标签含义如下：
@@ -377,7 +377,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 `CONSERVED` 选择 `DENS`、活动速度和 `ENER`。`ALL` 选择所有可用 PLT 场和已注册核素。
 
-`ENTR` 是局部代理量 `p/rho^Gamma1`，其中活动 EOS 给出 `Gamma1 = rho*c_s^2/p`。对于常 gamma 理想气体，它是通常的不变量；对于一般 EOS 策略，它是细化代理量。
+`ENTR` 是局部代理量 `p/rho^Gamma1`，其中活动 EOS 给出 `Gamma1 = rho*c_s^2/p`。对于常 gamma 理想气体，它是通常的不变量；对于一般 EOS 策略，它是细化代理量。它不是 EOS 返回的绝对熵，不能用来把一般状态沿等熵线移动。固定组分等熵状态必须使用 EOS 策略接口一节记录的微分热力学恒等式构造。
 
 ## 稳定算例 API
 
@@ -389,6 +389,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 #include "../../src/core/UserInterface.h"
 #include "../../src/data/GlobalDefs.h"
 ```
+
+这是算例可以包含的全部 ARCH 头文件；C++ 标准库头文件不受限制。算例需要的 EOS 操作通过 `ProblemHelper` 提供，因此切换运行时 EOS 不会改变算例 include，也不会把具体 EOS 策略类型暴露给用户。
 
 相对路径假设维护中的两层算例布局。算例类由 `TypedProblemGenerator<T>` 包装并必须可默认构造：
 
@@ -471,9 +473,33 @@ double ProblemHelper::GetPressureFromRhoT(
     double rho,
     double temperature,
     const double *mass_fractions);
+
+double ProblemHelper::GetRootCellWidth(
+    const SimConfig &config,
+    int logical_axis);
+
+struct ProblemHelper::IsentropicState {
+    double rho;
+    double temperature;
+    double pressure;
+    double sound_speed;
+};
+
+ProblemHelper::IsentropicState
+ProblemHelper::GetIsentropicStateAtPressureFactor(
+    const SimConfig &config,
+    const SpeciesManager &specs,
+    double reference_rho,
+    double reference_temperature,
+    const double *mass_fractions,
+    double pressure_factor);
 ```
 
 手动注册其他核素前先调用网络 setup。当 manager 为空时，它调用网络的 `RegisterSpecies`。压力转换执行运行时 EOS dispatch，应放在 `Setup` 中。
+
+`GetRootCellWidth` 返回根层级上一个有效 cell 的物理宽度；`logical_axis` 采用从 1 开始的 `1`、`2`、`3`。它使用配置中的根 block 数和编译期有效 block 尺寸。当前布局下，每个方向每个 block 有 `16` 个有效 cell；两侧各有 4 个 guard cell，因此 x 方向存储尺寸为 `16 + 8`，但这 8 个 guard cell 不属于物理域宽度。算例若要构造 cell-average 初值，应调用此函数，而不是包含内部 `AmrDefines.h`。
+
+等熵辅助函数固定 `mass_fractions`，将 `pressure_factor` 解释为 `P_target/P_reference`，并返回匹配后的密度、温度、压力和声速。它使用活动 EOS 和下述公共 EOS-policy 路径，不假设理想气体。该操作有意限制在局部邻域；若结果相对参考态移动超过 `0.25` 的 `ln(rho)`，函数会拒绝请求。两个 EOS 辅助函数都只应在 setup 阶段调用，而不能放进逐单元 `Init` 或时间步循环。
 
 `ProblemHelper::detail::PopulateState` 是内部初始化桥接函数。
 
@@ -562,6 +588,16 @@ double get_dp_de_rho(double rho, double e, const double *X) const;
 void evaluate_state(eos_state_t &state) const;
 const SpeciesManager *get_species_manager() const;
 ```
+
+`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、`cv` 和声速必须为正。若 tabular 文件未提供 `dp_dT`，维护中的 tabular 策略会通过受表边界约束的局部温度差分计算，而不是返回零。
+
+所有策略都从 `eos_Utils.h` 中的 `eos_utils::get_isentropic_state_at_pressure_factor` 获得同一套固定组分等熵算法。它用 RK4 积分
+
+```text
+d ln(T) / d ln(rho) |_s,X = (dP/dT)_rho,X / (rho cv)
+```
+
+并以 `Gamma1=rho*c_s^2/P` 在 `ln(rho)` 中求解目标压力。新增 EOS 只实现 `evaluate_state`，不得复制或特判等熵求解器。该公共工具属于源码扩展接口，simulation 算例不得直接包含；算例只能通过 `ProblemHelper` 和两个稳定公共头文件访问。
 
 应对照每个 EOS 实现检查精确 overload 集。`eos.h` 记录 duck-typed 表面，新类型在 `EOSDispatcher::dispatch_eos` 中注册。
 
