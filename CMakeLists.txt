@@ -307,8 +307,19 @@ if(ARCH_ENABLE_CUDA)
     set_target_properties(arch_cuda_compile_probe PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
+    add_executable(arch_cuda_hydro_leaf_parity
+        tests/cuda/test_hydro_leaf_parity.cu)
+    target_compile_features(arch_cuda_hydro_leaf_parity PRIVATE cxx_std_20)
+    target_include_directories(arch_cuda_hydro_leaf_parity PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_options(arch_cuda_hydro_leaf_parity PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_hydro_leaf_parity PROPERTIES
+        CUDA_STANDARD 20
+        CUDA_STANDARD_REQUIRED ON)
     if(BUILD_TESTING)
         add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
+        add_test(NAME hydro_leaf_parity COMMAND arch_cuda_hydro_leaf_parity)
     endif()
 endif()
 
