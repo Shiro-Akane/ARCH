@@ -37,9 +37,18 @@ inline cudaError_t launch_hydro_single_stage_update(
     double old_weight, double flux_weight, double density_floor,
     double maximum_internal_energy, cudaStream_t stream)
 {
-    if (old_state.n_species != current_state.n_species
+    if (!valid_hydro_view(old_state)
+        || !valid_hydro_view(current_state)
+        || !valid_hydro_view(destination)
+        || !valid_hydro_view(delta)
+        || !valid_hydro_grid(grid)
+        || old_state.n_species != current_state.n_species
         || old_state.n_species != destination.n_species
-        || old_state.n_species != delta.n_species)
+        || old_state.n_species != delta.n_species
+        || old_state.total_size != current_state.total_size
+        || old_state.total_size != destination.total_size
+        || old_state.total_size != delta.total_size
+        || old_state.total_size != grid.total_size)
         return cudaErrorInvalidValue;
     constexpr int threads = 128;
     const int count = grid.active_cell_count();

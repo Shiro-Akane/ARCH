@@ -121,6 +121,34 @@ struct CudaHydroWorkspaceView
     double* cfl_result;
 };
 
+inline bool valid_hydro_view(const DeviceStateView& view)
+{
+    return view.total_size > 0
+        && view.n_species >= 0
+        && view.n_species <= kMaxDeviceSpecies
+        && view.rho != nullptr
+        && view.mom_u != nullptr
+        && view.mom_v != nullptr
+        && view.mom_w != nullptr
+        && view.eng != nullptr
+        && view.enuc_rate != nullptr
+        && (view.n_species == 0 || view.mass_fractions != nullptr);
+}
+
+inline bool valid_hydro_grid(const DeviceGridView& grid)
+{
+    if (grid.dim < 1 || grid.dim > 3 || grid.ng < 0
+        || grid.stride_y <= 0 || grid.stride_z <= 0
+        || grid.total_size <= 0 || grid.total_x <= 0
+        || grid.total_y <= 0 || grid.total_z <= 0
+        || grid.is < 0 || grid.is >= grid.ie || grid.ie > grid.total_x
+        || grid.js < 0 || grid.js >= grid.je || grid.je > grid.total_y
+        || grid.ks < 0 || grid.ks >= grid.ke || grid.ke > grid.total_z)
+        return false;
+    return grid.index(grid.ie - 1, grid.je - 1, grid.ke - 1)
+        < grid.total_size;
+}
+
 static_assert(std::is_standard_layout_v<DeviceStateView>);
 static_assert(std::is_trivially_copyable_v<DeviceStateView>);
 static_assert(std::is_standard_layout_v<DeviceGridView>);

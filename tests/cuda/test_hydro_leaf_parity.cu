@@ -204,33 +204,6 @@ FaceResult characterize_face(double coefficient)
                          species_flux[grid.GetTotalSize() + face]}};
 }
 
-template <typename Reconstruction>
-FaceResult characterize_hll_reconstruction()
-{
-    Grid grid(3, 0.0, 16.0);
-    grid.dim = 1;
-    grid.InitializeTopology();
-    FluidState state;
-    state.Preallocate(grid.GetTotalSize());
-    state.InitSpecies(2);
-    const FluidVector left{1.0, 0.75, -0.2, 0.1, 2.80625};
-    const FluidVector right{0.8, -0.2, 0.24, -0.12, 1.82};
-    const int left_cell = grid.Is() + 4;
-    for (int cell = 0; cell < grid.GetTotalSize(); ++cell) {
-        const bool is_left = cell <= left_cell;
-        state.set(cell, is_left ? left : right);
-        state.X(0, cell) = is_left ? 0.4 : 0.7;
-        state.X(1, cell) = is_left ? 0.6 : 0.3;
-    }
-    std::vector<FluidVector> flux(grid.GetTotalSize());
-    std::vector<double> species_flux(2 * grid.GetTotalSize());
-    FluxHLL<Reconstruction>::compute_fluxes(
-        state, TestIdealGas{}, grid, flux, species_flux, 0, 0.0);
-    const int face = left_cell + 1;
-    return {flux[face], {species_flux[face],
-                         species_flux[grid.GetTotalSize() + face]}};
-}
-
 bool exact_bits(double actual, std::uint64_t expected)
 {
     return std::bit_cast<std::uint64_t>(actual) == expected;
@@ -253,6 +226,34 @@ bool vector_near(const FluidVector& actual, const FluidVector& expected)
     return near(actual.rho, expected.rho) && near(actual.mom_u, expected.mom_u)
         && near(actual.mom_v, expected.mom_v) && near(actual.mom_w, expected.mom_w)
         && near(actual.eng, expected.eng);
+}
+
+double frozen_double(std::uint64_t bits)
+{
+    return std::bit_cast<double>(bits);
+}
+
+FluidVector frozen_vector(
+    std::uint64_t rho, std::uint64_t mom_u, std::uint64_t mom_v,
+    std::uint64_t mom_w, std::uint64_t eng)
+{
+    return {frozen_double(rho), frozen_double(mom_u), frozen_double(mom_v),
+            frozen_double(mom_w), frozen_double(eng)};
+}
+
+bool scalar_near(double actual, double expected)
+{
+    return std::abs(actual - expected)
+        <= 3e-14 * std::max(1.0, std::abs(expected));
+}
+
+FaceResult frozen_face_result(
+    std::uint64_t rho, std::uint64_t mom_u, std::uint64_t mom_v,
+    std::uint64_t mom_w, std::uint64_t eng,
+    std::uint64_t species0, std::uint64_t species1)
+{
+    return {frozen_vector(rho, mom_u, mom_v, mom_w, eng),
+            {frozen_double(species0), frozen_double(species1)}};
 }
 
 bool validate_characterized_host_paths()
@@ -443,16 +444,58 @@ struct DeviceStateFixture
 
 bool device_leaf_result_matches(const DeviceLeafResult& actual)
 {
-    const FaceResult hll = characterize_face<FluxHLL>(0.0);
-    const FaceResult hllc = characterize_face<FluxHLLC>(0.0);
-    const FaceResult roe = characterize_face<FluxRoe>(0.1);
-    const FaceResult sw = characterize_face<FluxSW>(0.1);
-    const FaceResult vl = characterize_face<FluxVL>(0.0);
-    const bool matches = vector_near(actual.hll, hll.flux)
-        && vector_near(actual.hllc, hllc.flux)
-        && vector_near(actual.roe, roe.flux)
-        && vector_near(actual.sw, sw.flux)
-        && vector_near(actual.vl, vl.flux)
+    const FluidVector hll = frozen_vector(
+        0x3fdfe0fa91402e76ULL, 0x3ffc59d9bcfbe631ULL,
+        0xbfd6c55f025c1539ULL, 0x3fc6c55f025c1539ULL,
+        0x40008c51d5581401ULL);
+    const FluidVector hllc = frozen_vector(
+        0x3fe03e732de72443ULL, 0x3ffc695d1bdcbc59ULL,
+        0xbfb9fd85163ea06cULL, 0x3fa9fd85163ea06cULL,
+        0x4000b6f9c9e9bf2cULL);
+    const FluidVector roe = frozen_vector(
+        0x3fe0468a0283dcb1ULL, 0x3ffc65ce3bd35266ULL,
+        0xbfc4507df7b36b44ULL, 0x3fb4507df7b36b44ULL,
+        0x4000bdaf3bd85012ULL);
+    const FluidVector sw = frozen_vector(
+        0x3fdd6f579bdceca1ULL, 0x4000492c964085f2ULL,
+        0xbfd41edd0ad3fc16ULL, 0x3fc41edd0ad3fc16ULL,
+        0x3fff91085fc8c1d9ULL);
+    const FluidVector vl = frozen_vector(
+        0x3fdd3f7f1d3b7d98ULL, 0x40006dfb578715e0ULL,
+        0xbfd07e985324a906ULL, 0x3fc07e985324a906ULL,
+        0x3ffff6d62a7013d3ULL);
+    const std::uint64_t species_bits[10] = {
+        0x3fc980c87433585fULL, 0x3fd3209657268247ULL,
+        0x3fc9fd85163ea06cULL, 0x3fd37e23d0aef850ULL,
+        0x3fca0a766a6c944fULL, 0x3fd387d8cfd16f3bULL,
+        0x3fa9dee10cbc3d20ULL, 0x3fda337b7a4564feULL,
+        0x3fb53fc3c72dfef2ULL, 0x3fd7ef8e2b6ffddcULL};
+    bool species_match = true;
+    for (int species = 0; species < 10; ++species)
+        species_match = species_match
+            && scalar_near(actual.species[species],
+                           frozen_double(species_bits[species]));
+    const bool matches = vector_near(actual.hll, hll)
+        && vector_near(actual.hllc, hllc)
+        && vector_near(actual.roe, roe)
+        && vector_near(actual.sw, sw)
+        && vector_near(actual.vl, vl)
+        && vector_bits(actual.pcm_left,
+                       0x3ff0000000000000ULL, 0x3fe8000000000000ULL,
+                       0xbfc999999999999aULL, 0x3fb999999999999aULL,
+                       0x4006733333333333ULL)
+        && vector_bits(actual.pcm_right,
+                       0x3fe999999999999aULL, 0xbfc999999999999aULL,
+                       0x3fceb851eb851eb8ULL, 0xbfbeb851eb851eb8ULL,
+                       0x3ffd1eb851eb851fULL)
+        && vector_bits(actual.muscl_left,
+                       0x3ff4000000000000ULL, 0xbfe0000000000000ULL,
+                       0x400c000000000000ULL, 0x3fe0000000000000ULL,
+                       0x4016000000000000ULL)
+        && vector_bits(actual.muscl_right,
+                       0x4000000000000000ULL, 0x3ff0000000000000ULL,
+                       0x400c000000000000ULL, 0x3fe0000000000000ULL,
+                       0x401e000000000000ULL)
         && exact_bits(actual.limiter, 0x3fe0000000000000ULL)
         && exact_bits(actual.limiter_negzero, 0x0000000000000000ULL)
         && exact_bits(actual.slope, 0x3fe0000000000000ULL)
@@ -462,7 +505,8 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         && std::abs(actual.ppm_right - 25.0 / 3.0)
                <= 2e-15 * std::max(1.0, std::abs(25.0 / 3.0))
         && actual.cfl_nan_minimum == 3.0
-        && actual.cfl_infinite_minimum == 3.0;
+        && actual.cfl_infinite_minimum == 3.0
+        && species_match;
     if (!matches) {
         const auto show = [](const char* name, double value) {
             std::cerr << name << "=" << std::setprecision(17) << value
@@ -482,6 +526,8 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         show("roe.rho", actual.roe.rho);
         show("sw.rho", actual.sw.rho);
         show("vl.rho", actual.vl.rho);
+        for (int species = 0; species < 10; ++species)
+            show("species", actual.species[species]);
     }
     return matches;
 }
@@ -512,6 +558,7 @@ int run_device_primitives()
 
     DeviceGridView grid{};
     grid.dim = 1;
+    grid.ng = 3;
     grid.stride_y = total;
     grid.stride_z = total;
     grid.total_size = total;
@@ -528,30 +575,209 @@ int run_device_primitives()
     grid.dx2 = 1.0;
     grid.dx3 = 1.0;
 
-    const FaceResult expected_pcm = characterize_hll_reconstruction<PCMReconstruction>();
-    const FaceResult expected_muscl = characterize_hll_reconstruction<MusclReconstruction<MinMod>>();
-    const FaceResult expected_ppm = characterize_hll_reconstruction<PPMReconstruction>();
+    const FaceResult expected_hll = frozen_face_result(
+        0x3fdfe0fa91402e76ULL, 0x3ffc59d9bcfbe631ULL,
+        0xbfd6c55f025c1539ULL, 0x3fc6c55f025c1539ULL,
+        0x40008c51d5581401ULL, 0x3fc980c87433585fULL,
+        0x3fd3209657268247ULL);
+    const FaceResult expected_hllc = frozen_face_result(
+        0x3fe03e732de72443ULL, 0x3ffc695d1bdcbc59ULL,
+        0xbfb9fd85163ea06cULL, 0x3fa9fd85163ea06cULL,
+        0x4000b6f9c9e9bf2cULL, 0x3fc9fd85163ea06cULL,
+        0x3fd37e23d0aef850ULL);
+    const FaceResult expected_roe = frozen_face_result(
+        0x3fe0468a0283dcb1ULL, 0x3ffc65ce3bd35266ULL,
+        0xbfc4507df7b36b44ULL, 0x3fb4507df7b36b44ULL,
+        0x4000bdaf3bd85012ULL, 0x3fca0a766a6c944fULL,
+        0x3fd387d8cfd16f3bULL);
+    const FaceResult expected_sw = frozen_face_result(
+        0x3fdd6f579bdceca1ULL, 0x4000492c964085f2ULL,
+        0xbfd41edd0ad3fc16ULL, 0x3fc41edd0ad3fc16ULL,
+        0x3fff91085fc8c1d9ULL, 0x3fa9dee10cbc3d20ULL,
+        0x3fda337b7a4564feULL);
+    const FaceResult expected_vl = frozen_face_result(
+        0x3fdd3f7f1d3b7d98ULL, 0x40006dfb578715e0ULL,
+        0xbfd07e985324a906ULL, 0x3fc07e985324a906ULL,
+        0x3ffff6d62a7013d3ULL, 0x3fb53fc3c72dfef2ULL,
+        0x3fd7ef8e2b6ffddcULL);
+    const auto face_matches = [&](const FaceResult& expected) {
+        return flux.download()
+            && vector_near(flux.load(face), expected.flux)
+            && scalar_near(flux.species(0, face), expected.species[0])
+            && scalar_near(flux.species(1, face), expected.species[1]);
+    };
     if (launch_hydro_faces<CudaPcmReconstruction, CudaHllFlux>(
             state.view, flux.view, grid, TestIdealGas{}, 0, 0.0, nullptr)
             != cudaSuccess
         || cudaDeviceSynchronize() != cudaSuccess
-        || !flux.download()
-        || !vector_near(flux.load(face), expected_pcm.flux))
+        || !face_matches(expected_hll))
         return 102;
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaHllcFlux>(
+            state.view, flux.view, grid, TestIdealGas{}, 0, 0.0, nullptr)
+            != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess
+        || !face_matches(expected_hllc))
+        return 103;
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaRoeFlux>(
+            state.view, flux.view, grid, TestIdealGas{}, 0, 0.1, nullptr)
+            != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess
+        || !face_matches(expected_roe))
+        return 104;
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaSwFlux>(
+            state.view, flux.view, grid, TestIdealGas{}, 0, 0.1, nullptr)
+            != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess
+        || !face_matches(expected_sw))
+        return 105;
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaVlFlux>(
+            state.view, flux.view, grid, TestIdealGas{}, 0, 0.0, nullptr)
+            != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess
+        || !face_matches(expected_vl))
+        return 106;
+
+    for (int cell = 0; cell < total; ++cell) {
+        const double x = static_cast<double>(cell - (face - 1));
+        state.store(cell, {1.0 + 0.05 * x, 0.2 + 0.03 * x,
+                           0.1 - 0.01 * x, 0.05 + 0.02 * x,
+                           3.0 + 0.1 * x});
+        state.set_species(0, cell, 0.35 + 0.02 * x);
+        state.set_species(1, cell, 0.65 - 0.02 * x);
+    }
+    if (!state.upload())
+        return 107;
+    const FaceResult expected_pcm = frozen_face_result(
+        0x3fc72b82e6be8729ULL, 0x3ff3b19b7775ba24ULL,
+        0x3f9ad40e51097a6cULL, 0xbf3a0335634151afULL,
+        0x3fea454fc5825daaULL, 0x3fb0380ed4b891d0ULL,
+        0x3fbe1ef6f8c47c82ULL);
+    const FaceResult expected_muscl = frozen_face_result(
+        0x3fcb851eb851eb86ULL, 0x3ff40ece37f720f0ULL,
+        0x3f9467b2e014c79cULL, 0x3f89c65b35ff4cf9ULL,
+        0x3fec9580dca0089aULL, 0x3fb3d07c84b5dcc7ULL,
+        0x3fc19ce075f6fd23ULL);
+    const FaceResult expected_ppm = frozen_face_result(
+        0x3fcb87c6d1301341ULL, 0x3ff40f01561799ecULL,
+        0x3f946652e47fa70cULL, 0x3f89d0a618abad90ULL,
+        0x3fec9860c6f946b5ULL, 0x3fb3d2663037181aULL,
+        0x3fc19e93b9148734ULL);
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaHllFlux>(
+            state.view, flux.view, grid, TestIdealGas{}, 0, 0.0, nullptr)
+            != cudaSuccess
+        || cudaDeviceSynchronize() != cudaSuccess
+        || !face_matches(expected_pcm))
+        return 108;
     if (launch_hydro_faces<CudaMusclReconstruction<MinMod>, CudaHllFlux>(
             state.view, flux.view, grid, TestIdealGas{}, 0, 0.0, nullptr)
             != cudaSuccess
         || cudaDeviceSynchronize() != cudaSuccess
-        || !flux.download()
-        || !vector_near(flux.load(face), expected_muscl.flux))
-        return 103;
+        || !face_matches(expected_muscl))
+        return 109;
     if (launch_hydro_faces<CudaPpmReconstruction, CudaHllFlux>(
             state.view, flux.view, grid, TestIdealGas{}, 0, 0.0, nullptr)
             != cudaSuccess
         || cudaDeviceSynchronize() != cudaSuccess
-        || !flux.download()
-        || !vector_near(flux.load(face), expected_ppm.flux))
-        return 104;
+        || !face_matches(expected_ppm))
+        return 110;
+
+    const FluidVector face_sentinel{19, 18, 17, 16, 15};
+    flux.store(face, face_sentinel);
+    flux.set_species(0, face, 0.125);
+    flux.set_species(1, face, 0.875);
+    if (!flux.upload())
+        return 116;
+    const auto pcm_face_error = [&](DeviceStateView input,
+                                    DeviceStateView output,
+                                    DeviceGridView candidate_grid,
+                                    int direction) {
+        return launch_hydro_faces<CudaPcmReconstruction, CudaHllFlux>(
+                   input, output, candidate_grid, TestIdealGas{},
+                   direction, 0.0, nullptr)
+            == cudaErrorInvalidValue;
+    };
+    DeviceStateView bad_flux = flux.view;
+    bad_flux.n_species = 1;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0)) {
+        cudaDeviceSynchronize();
+        return 117;
+    }
+    DeviceStateView bad_state = state.view;
+    bad_state.n_species = -1;
+    if (!pcm_face_error(bad_state, flux.view, grid, 0))
+        return 118;
+    bad_state = state.view;
+    bad_state.n_species = kMaxDeviceSpecies + 1;
+    if (!pcm_face_error(bad_state, flux.view, grid, 0))
+        return 119;
+    bad_flux = flux.view;
+    bad_flux.n_species = -1;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0))
+        return 120;
+    bad_flux = flux.view;
+    bad_flux.n_species = kMaxDeviceSpecies + 1;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0))
+        return 121;
+    bad_flux = flux.view;
+    bad_flux.total_size = total - 1;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0))
+        return 122;
+    DeviceGridView bad_grid = grid;
+    bad_grid.total_size = total - 1;
+    if (!pcm_face_error(state.view, flux.view, bad_grid, 0))
+        return 123;
+    bad_state = state.view;
+    bad_state.rho = nullptr;
+    if (!pcm_face_error(bad_state, flux.view, grid, 0))
+        return 124;
+    bad_state = state.view;
+    bad_state.enuc_rate = nullptr;
+    if (!pcm_face_error(bad_state, flux.view, grid, 0)) {
+        cudaDeviceSynchronize();
+        return 124;
+    }
+    bad_state = state.view;
+    bad_state.mass_fractions = nullptr;
+    if (!pcm_face_error(bad_state, flux.view, grid, 0))
+        return 125;
+    bad_flux = flux.view;
+    bad_flux.eng = nullptr;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0))
+        return 126;
+    bad_flux = flux.view;
+    bad_flux.enuc_rate = nullptr;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0))
+        return 126;
+    bad_flux = flux.view;
+    bad_flux.mass_fractions = nullptr;
+    if (!pcm_face_error(state.view, bad_flux, grid, 0))
+        return 127;
+    if (!pcm_face_error(state.view, flux.view, grid, 1))
+        return 128;
+    bad_grid = grid;
+    bad_grid.ng = 0;
+    if (!pcm_face_error(state.view, flux.view, bad_grid, 0))
+        return 129;
+    bad_grid = grid;
+    bad_grid.ng = 2;
+    if (launch_hydro_faces<CudaPpmReconstruction, CudaHllFlux>(
+            state.view, flux.view, bad_grid, TestIdealGas{},
+            0, 0.0, nullptr) != cudaErrorInvalidValue)
+        return 130;
+    bad_grid = grid;
+    bad_grid.ng = 1;
+    if (launch_hydro_faces<CudaMusclReconstruction<MinMod>, CudaHllFlux>(
+            state.view, flux.view, bad_grid, TestIdealGas{},
+            0, 0.0, nullptr) != cudaErrorInvalidValue)
+        return 130;
+    if (cudaDeviceSynchronize() != cudaSuccess || !flux.download()
+        || !vector_bits(flux.load(face),
+                        0x4033000000000000ULL, 0x4032000000000000ULL,
+                        0x4031000000000000ULL, 0x4030000000000000ULL,
+                        0x402e000000000000ULL)
+        || !exact_bits(flux.species(0, face), 0x3fc0000000000000ULL)
+        || !exact_bits(flux.species(1, face), 0x3fec000000000000ULL))
+        return 131;
 
     double* volume = nullptr;
     double* lower_area = nullptr;
@@ -584,14 +810,88 @@ int run_device_primitives()
     flux.set_species(1, active + 1, 3.0);
     if (!delta.upload() || !flux.upload())
         return 108;
-    FluidVector expected_delta{1, 2, 3, 4, 5};
-    double expected_delta_species[2] = {0.5, -1.0};
-    const double lower_species[2] = {2.0, 4.0};
-    const double upper_species[2] = {1.0, 3.0};
-    TimeIntegration::accumulate_cell_divergence(
-        {2, 4, 6, 8, 10}, {1, 1, 1, 1, 1}, lower_species, upper_species,
-        2, 1, 1.0, 1.0, 1.0, 0.5,
-        expected_delta, expected_delta_species);
+    const auto divergence_error = [&](DeviceStateView input_flux,
+                                      DeviceStateView output_delta,
+                                      DeviceGridView candidate_grid,
+                                      int direction) {
+        return launch_hydro_divergence(
+                   input_flux, output_delta, candidate_grid,
+                   0.5, direction, nullptr)
+            == cudaErrorInvalidValue;
+    };
+    DeviceStateView bad_delta = delta.view;
+    bad_delta.n_species = 1;
+    if (!divergence_error(flux.view, bad_delta, grid, 0)) {
+        cudaDeviceSynchronize();
+        return 132;
+    }
+    bad_delta = delta.view;
+    bad_delta.n_species = -1;
+    if (!divergence_error(flux.view, bad_delta, grid, 0))
+        return 133;
+    bad_delta = delta.view;
+    bad_delta.n_species = kMaxDeviceSpecies + 1;
+    if (!divergence_error(flux.view, bad_delta, grid, 0))
+        return 134;
+    DeviceStateView bad_input_flux = flux.view;
+    bad_input_flux.n_species = -1;
+    if (!divergence_error(bad_input_flux, delta.view, grid, 0))
+        return 135;
+    bad_input_flux = flux.view;
+    bad_input_flux.n_species = kMaxDeviceSpecies + 1;
+    if (!divergence_error(bad_input_flux, delta.view, grid, 0))
+        return 136;
+    bad_delta = delta.view;
+    bad_delta.total_size = total - 1;
+    if (!divergence_error(flux.view, bad_delta, grid, 0))
+        return 137;
+    bad_grid = grid;
+    bad_grid.total_size = total - 1;
+    if (!divergence_error(flux.view, delta.view, bad_grid, 0))
+        return 138;
+    bad_input_flux = flux.view;
+    bad_input_flux.rho = nullptr;
+    if (!divergence_error(bad_input_flux, delta.view, grid, 0))
+        return 139;
+    bad_input_flux = flux.view;
+    bad_input_flux.mass_fractions = nullptr;
+    if (!divergence_error(bad_input_flux, delta.view, grid, 0))
+        return 140;
+    bad_delta = delta.view;
+    bad_delta.eng = nullptr;
+    if (!divergence_error(flux.view, bad_delta, grid, 0))
+        return 141;
+    bad_delta = delta.view;
+    bad_delta.mass_fractions = nullptr;
+    if (!divergence_error(flux.view, bad_delta, grid, 0))
+        return 142;
+    bad_grid = grid;
+    bad_grid.cell_volume = nullptr;
+    if (!divergence_error(flux.view, delta.view, bad_grid, 0))
+        return 143;
+    bad_grid = grid;
+    bad_grid.face_area_lower[0] = nullptr;
+    if (!divergence_error(flux.view, delta.view, bad_grid, 0))
+        return 144;
+    bad_grid = grid;
+    bad_grid.face_area_upper[0] = nullptr;
+    if (!divergence_error(flux.view, delta.view, bad_grid, 0))
+        return 145;
+    if (!divergence_error(flux.view, delta.view, grid, 1))
+        return 146;
+    if (cudaDeviceSynchronize() != cudaSuccess || !delta.download()
+        || !vector_bits(delta.load(active),
+                        0x3ff0000000000000ULL, 0x4000000000000000ULL,
+                        0x4008000000000000ULL, 0x4010000000000000ULL,
+                        0x4014000000000000ULL)
+        || !exact_bits(delta.species(0, active), 0x3fe0000000000000ULL)
+        || !exact_bits(delta.species(1, active), 0xbff0000000000000ULL))
+        return 147;
+    const FluidVector expected_delta = frozen_vector(
+        0x3ff8000000000000ULL, 0x400c000000000000ULL,
+        0x4016000000000000ULL, 0x401e000000000000ULL,
+        0x4023000000000000ULL);
+    const double expected_delta_species[2] = {1.0, -0.5};
     if (launch_hydro_divergence(
             flux.view, delta.view, grid, 0.5, 0, nullptr) != cudaSuccess
         || cudaDeviceSynchronize() != cudaSuccess
@@ -624,14 +924,92 @@ int run_device_primitives()
     if (!old_state.upload() || !current_state.upload() || !destination.upload()
         || !stage_delta.upload())
         return 111;
-    FluidVector expected_stage;
-    double expected_stage_species[2];
-    const double input_species[2] = {0.25, 0.75};
-    const double zero_species[2] = {0.0, 0.0};
-    TimeIntegration::update_stage_cell(
-        {1, 2, 3, 4, 50}, {2, 4, 6, 8, 100}, {0.2, 0.2, 0.2, 0.2, 0.1},
-        input_species, input_species, zero_species, 2, 1,
-        0.5, 0.5, 1e-12, 1e20, expected_stage, expected_stage_species);
+    const auto stage_error = [&](DeviceStateView old_view,
+                                 DeviceStateView current_view,
+                                 DeviceStateView destination_view,
+                                 DeviceStateView delta_view,
+                                 DeviceGridView candidate_grid) {
+        return launch_hydro_single_stage_update(
+                   old_view, current_view, destination_view, delta_view,
+                   candidate_grid, 0.5, 0.5, 1e-12, 1e20, nullptr)
+            == cudaErrorInvalidValue;
+    };
+    DeviceStateView bad_old_state = old_state.view;
+    bad_old_state.total_size = total - 1;
+    if (!stage_error(bad_old_state, current_state.view, destination.view,
+                     stage_delta.view, grid)) {
+        cudaDeviceSynchronize();
+        return 148;
+    }
+    DeviceStateView bad_current_state = current_state.view;
+    bad_current_state.total_size = total - 1;
+    if (!stage_error(old_state.view, bad_current_state, destination.view,
+                     stage_delta.view, grid))
+        return 149;
+    DeviceStateView bad_destination = destination.view;
+    bad_destination.total_size = total - 1;
+    if (!stage_error(old_state.view, current_state.view, bad_destination,
+                     stage_delta.view, grid))
+        return 150;
+    DeviceStateView bad_stage_delta = stage_delta.view;
+    bad_stage_delta.total_size = total - 1;
+    if (!stage_error(old_state.view, current_state.view, destination.view,
+                     bad_stage_delta, grid))
+        return 151;
+    bad_grid = grid;
+    bad_grid.total_size = total - 1;
+    if (!stage_error(old_state.view, current_state.view, destination.view,
+                     stage_delta.view, bad_grid))
+        return 152;
+    bad_old_state = old_state.view;
+    bad_old_state.n_species = -1;
+    if (!stage_error(bad_old_state, current_state.view, destination.view,
+                     stage_delta.view, grid))
+        return 153;
+    bad_old_state = old_state.view;
+    bad_old_state.n_species = kMaxDeviceSpecies + 1;
+    if (!stage_error(bad_old_state, current_state.view, destination.view,
+                     stage_delta.view, grid))
+        return 154;
+    bad_destination = destination.view;
+    bad_destination.n_species = 1;
+    if (!stage_error(old_state.view, current_state.view, bad_destination,
+                     stage_delta.view, grid))
+        return 155;
+    bad_old_state = old_state.view;
+    bad_old_state.rho = nullptr;
+    if (!stage_error(bad_old_state, current_state.view, destination.view,
+                     stage_delta.view, grid))
+        return 156;
+    bad_current_state = current_state.view;
+    bad_current_state.mass_fractions = nullptr;
+    if (!stage_error(old_state.view, bad_current_state, destination.view,
+                     stage_delta.view, grid))
+        return 157;
+    bad_destination = destination.view;
+    bad_destination.eng = nullptr;
+    if (!stage_error(old_state.view, current_state.view, bad_destination,
+                     stage_delta.view, grid))
+        return 158;
+    bad_stage_delta = stage_delta.view;
+    bad_stage_delta.mass_fractions = nullptr;
+    if (!stage_error(old_state.view, current_state.view, destination.view,
+                     bad_stage_delta, grid))
+        return 159;
+    if (cudaDeviceSynchronize() != cudaSuccess || !destination.download()
+        || !vector_bits(destination.load(active),
+                        0x4022000000000000ULL, 0x4020000000000000ULL,
+                        0x401c000000000000ULL, 0x4018000000000000ULL,
+                        0x4014000000000000ULL)
+        || !exact_bits(destination.species(0, active), 0x3fc999999999999aULL)
+        || !exact_bits(destination.species(1, active), 0x3fe999999999999aULL)
+        || !exact_bits(destination.enuc_rate[active], 0x4031000000000000ULL))
+        return 160;
+    const FluidVector expected_stage = frozen_vector(
+        0x3ff999999999999aULL, 0x4008cccccccccccdULL,
+        0x4012666666666666ULL, 0x4018666666666666ULL,
+        0x4052c33333333333ULL);
+    const double expected_stage_species[2] = {0.25, 0.75};
     if (launch_hydro_single_stage_update(
             old_state.view, current_state.view, destination.view,
             stage_delta.view, grid, 0.5, 0.5, 1e-12, 1e20, nullptr)
@@ -659,12 +1037,63 @@ int run_device_primitives()
     workspace.delta = delta.view;
     workspace.cfl_candidates = candidates;
     workspace.cfl_result = result;
-    const double composition[2] = {
-        state.species(0, active), state.species(1, active)};
-    const double expected_dt = finalize_cfl_dt(
-        0.8, evaluate_cfl_cell_dt(
-                 state.load(active), composition, TestIdealGas{},
-                 1, 1.0, 1.0, 1.0));
+    const double cfl_sentinel = 123.0;
+    if (cudaMemcpy(result, &cfl_sentinel, sizeof(double),
+                   cudaMemcpyHostToDevice) != cudaSuccess)
+        return 161;
+    const auto cfl_error = [&](DeviceStateView input,
+                               DeviceGridView candidate_grid,
+                               CudaHydroWorkspaceView candidate_workspace) {
+        return launch_compute_hydro_dt(
+                   input, candidate_grid, TestIdealGas{}, 0.8,
+                   candidate_workspace, nullptr)
+            == cudaErrorInvalidValue;
+    };
+    bad_state = state.view;
+    bad_state.total_size = total - 1;
+    if (!cfl_error(bad_state, grid, workspace)) {
+        cudaDeviceSynchronize();
+        return 162;
+    }
+    bad_state = state.view;
+    bad_state.n_species = -1;
+    if (!cfl_error(bad_state, grid, workspace))
+        return 163;
+    bad_state = state.view;
+    bad_state.n_species = kMaxDeviceSpecies + 1;
+    if (!cfl_error(bad_state, grid, workspace))
+        return 164;
+    bad_state = state.view;
+    bad_state.rho = nullptr;
+    if (!cfl_error(bad_state, grid, workspace))
+        return 165;
+    bad_state = state.view;
+    bad_state.mass_fractions = nullptr;
+    if (!cfl_error(bad_state, grid, workspace))
+        return 166;
+    bad_grid = grid;
+    bad_grid.total_size = total - 1;
+    if (!cfl_error(state.view, bad_grid, workspace))
+        return 167;
+    bad_grid = grid;
+    bad_grid.dim = 0;
+    if (!cfl_error(state.view, bad_grid, workspace))
+        return 168;
+    CudaHydroWorkspaceView bad_workspace = workspace;
+    bad_workspace.cfl_candidates = nullptr;
+    if (!cfl_error(state.view, grid, bad_workspace))
+        return 169;
+    bad_workspace = workspace;
+    bad_workspace.cfl_result = nullptr;
+    if (!cfl_error(state.view, grid, bad_workspace))
+        return 170;
+    double invalid_result_host = 0.0;
+    if (cudaDeviceSynchronize() != cudaSuccess
+        || cudaMemcpy(&invalid_result_host, result, sizeof(double),
+                      cudaMemcpyDeviceToHost) != cudaSuccess
+        || !exact_bits(invalid_result_host, 0x405ec00000000000ULL))
+        return 171;
+    const double expected_dt = frozen_double(0x3fd5db37998729f9ULL);
     double result_host = 0.0;
     if (launch_compute_hydro_dt(
             state.view, grid, TestIdealGas{}, 0.8, workspace, nullptr)

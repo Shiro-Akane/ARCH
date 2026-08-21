@@ -90,7 +90,15 @@ inline cudaError_t launch_hydro_divergence(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
     double dt, int direction, cudaStream_t stream)
 {
-    if (direction < 0 || direction >= grid.dim)
+    if (!valid_hydro_view(flux) || !valid_hydro_view(delta)
+        || flux.n_species != delta.n_species
+        || flux.total_size != delta.total_size
+        || flux.total_size != grid.total_size
+        || !valid_hydro_grid(grid)
+        || direction < 0 || direction >= grid.dim
+        || grid.cell_volume == nullptr
+        || grid.face_area_lower[direction] == nullptr
+        || grid.face_area_upper[direction] == nullptr)
         return cudaErrorInvalidValue;
     constexpr int threads = 128;
     const int count = grid.active_cell_count();
@@ -107,7 +115,10 @@ inline cudaError_t launch_compute_hydro_dt(
     DeviceStateView state, DeviceGridView grid, const EosView& eos, double cfl,
     CudaHydroWorkspaceView workspace, cudaStream_t stream)
 {
-    if (state.n_species < 0 || state.n_species > kMaxDeviceSpecies)
+    if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
+        || state.total_size != grid.total_size
+        || workspace.cfl_candidates == nullptr
+        || workspace.cfl_result == nullptr)
         return cudaErrorInvalidValue;
     constexpr int threads = 128;
     const int count = grid.active_cell_count();

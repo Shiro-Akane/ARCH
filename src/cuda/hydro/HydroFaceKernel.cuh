@@ -59,7 +59,12 @@ inline cudaError_t launch_hydro_faces(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     const EosView& eos, int direction, double coefficient, cudaStream_t stream)
 {
-    if (state.n_species < 0 || state.n_species > kMaxDeviceSpecies
+    if (!valid_hydro_view(state) || !valid_hydro_view(flux)
+        || state.n_species != flux.n_species
+        || state.total_size != flux.total_size
+        || state.total_size != grid.total_size
+        || !valid_hydro_grid(grid)
+        || grid.ng < Reconstruction::ghost_depth
         || direction < 0 || direction >= grid.dim)
         return cudaErrorInvalidValue;
     int ni = grid.ie - grid.is;
