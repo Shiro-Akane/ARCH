@@ -156,6 +156,141 @@ struct Probe
     double state_eta;
 };
 
+struct FrozenProbe
+{
+    std::array<std::uint64_t, 19> bits;
+    std::array<double, 19> tolerances;
+};
+
+constexpr std::array<double, 19> standard_probe_tolerances{
+    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
+    1.7e-9, 2.5e-12, 2.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
+    1.1e-9, 0.0, 4.5e-14, 0.0, 0.0};
+
+constexpr FrozenProbe ideal_default_probe{{
+    0x3ff6666666666666ULL, 0x4086700000000000ULL, 0x41e565e7bfffffffULL,
+    0x41e565e7c0000000ULL, 0x414e848000000000ULL, 0x41e565e7bfffffffULL,
+    0x40e394fbaf4fda70ULL, 0x41d11e52ffffffffULL, 0x3feffffffffffffeULL,
+    0x41fabf61b0118000ULL, 0x41e565e7bfffffffULL, 0x41e565e7c0000000ULL,
+    0x4086700000000000ULL, 0x40e394fbaf4fda70ULL, 0x41d11e52ffffffffULL,
+    0x40866fffffffffffULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, standard_probe_tolerances};
+
+constexpr FrozenProbe ideal_strict_probe{{
+    0x3ff8f0f0f0f0f0f1ULL, 0x408a900000000000ULL, 0x41f1b1f3f8000000ULL,
+    0x41e954fc40000000ULL, 0x414e848000000000ULL, 0x41f1b1f3f8000000ULL,
+    0x40ea92c31f70f50aULL, 0x41dc4fecc0000000ULL, 0x3ff65a5a5a5a5a5aULL,
+    0x41ffaa3b50118000ULL, 0x41f1b1f3f8000000ULL, 0x41e954fc40000000ULL,
+    0x408a900000000000ULL, 0x40ea92c31f70f50aULL, 0x41dc4fecc0000000ULL,
+    0x40928e0000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, standard_probe_tolerances};
+
+constexpr FrozenProbe ideal_zero_probe{{
+    0x3ff8cccccccccccdULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL, 0x0000000000000000ULL, 0x3ff6000000000000ULL,
+    0x3ff1800000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, standard_probe_tolerances};
+
+constexpr FrozenProbe helm_probe{{
+    0x3ff6666666666666ULL, 0x41911dd5a315fad7ULL, 0x44a165b3bc685788ULL,
+    0x436de091017e8b86ULL, 0x4197d78400000003ULL, 0x44a165b3bc685788ULL,
+    0x41ae3615babd7d19ULL, 0x4361149de7c947aeULL, 0x412323beb6e55af3ULL,
+    0x44ac7e3dc9d0d2bfULL, 0x44a165b3bc685788ULL, 0x436de091017e8b86ULL,
+    0x41911dd5a315fad7ULL, 0x41ae3615babde9f0ULL, 0x436b44b837e87ae1ULL,
+    0x42c479c25640b780ULL, 0x449fdc71382b3f34ULL, 0x461300a5bbfb5453ULL,
+    0x4032f0e543b5126fULL}, {
+    0.0, 0.0, 8.0e-14, 1.5e-15, 5.0e-16, 8.0e-14, 5.0e-10,
+    1.7e-9, 5.3e-11, 2.0e-15, 8.0e-14, 1.5e-15, 0.0, 4.0e-10,
+    8.0e-10, 2.5e-11, 8.0e-14, 0.0, 1.5e-15}};
+
+constexpr FrozenProbe tab3_table_probe{{
+    0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d87152d40e0000ULL,
+    0x42d6bcc41e911f80ULL, 0x4197d78400000000ULL, 0x42d87152d40e0000ULL,
+    0x4173c9eb00000000ULL, 0x415afd2e00000000ULL, 0x401aaaaaaaaaaaacULL,
+    0x42f1bfe68ca5d2f1ULL, 0x42d87152d40e0000ULL, 0x42d6bcc41e911f80ULL,
+    0x412e848000000000ULL, 0x4173c9eb00000000ULL, 0x415afd2e00000000ULL,
+    0x415ecdbe00000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, standard_probe_tolerances};
+
+constexpr FrozenProbe tab3_iteration_probe{{
+    0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d8a8de26589fd5ULL,
+    0x42fe17eab16f84e6ULL, 0x41b1e1a2c605fc46ULL, 0x42d8a8de25b4b2f3ULL,
+    0x4173e13703bf1c70ULL, 0x415b067f9b193e93ULL, 0x401aaaaaaaaaaaacULL,
+    0x42f36dacf96174bdULL, 0x42d8a8de26589fd5ULL, 0x42fe17eab16f84e6ULL,
+    0x412e848000000000ULL, 0x4173e1370403ddc9ULL, 0x415b067f9b193e93ULL,
+    0x415ed70f9b34bf1dULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, {
+    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
+    1.7e-9, 2.5e-12, 3.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
+    1.1e-9, 2.0e-16, 4.5e-14, 0.0, 0.0}};
+
+constexpr FrozenProbe tab3_fd_probe{{
+    0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d87152d40e0000ULL,
+    0x42d6bcc41e911f80ULL, 0x4197d78400000000ULL, 0x42d87152d40e0000ULL,
+    0x4173c9eb00000000ULL, 0x422439320514d000ULL, 0x401aaaaaaaaaaaacULL,
+    0x42f1bfe68ca5d2f1ULL, 0x42d87152d40e0000ULL, 0x42d6bcc41e911f80ULL,
+    0x412e848000000000ULL, 0x4173c9eb00000000ULL, 0x422439320514d000ULL,
+    0x40c0f6f1e096bb99ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, {
+    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
+    1.7e-9, 2.5e-12, 2.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
+    2.3e-11, 0.0, 4.5e-14, 0.0, 0.0}};
+
+constexpr FrozenProbe tab4_table_probe{{
+    0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42e7dfcdece40000ULL,
+    0x42d6bcc41e911580ULL, 0x4197d78400000000ULL, 0x42e7dfcdece40000ULL,
+    0x417d905c00000000ULL, 0x41615b5c00000000ULL, 0x401aaaaaaaaaaaacULL,
+    0x42ff9642f550e0dcULL, 0x42e7dfcdece40000ULL, 0x42d6bcc41e911580ULL,
+    0x412e848000000000ULL, 0x417d905c00000000ULL, 0x41615b5c00000000ULL,
+    0x416343a400000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, standard_probe_tolerances};
+
+constexpr FrozenProbe tab4_iteration_probe{{
+    0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42e7fb9396094feaULL,
+    0x42fe17eab16f8265ULL, 0x41b1e1a2c605fc54ULL, 0x42e7fb9395b7597aULL,
+    0x417da7a803bf1c70ULL, 0x41616004cd8c9f4aULL, 0x401aaaaaaaaaaaacULL,
+    0x4300a5312f9f9aecULL, 0x42e7fb9396094feaULL, 0x42fe17eab16f8265ULL,
+    0x412e848000000000ULL, 0x417da7a80403ddc9ULL, 0x41616004cd8c9f4aULL,
+    0x4163484ccd9a5f8eULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, standard_probe_tolerances};
+
+constexpr FrozenProbe tab4_fd_probe{{
+    0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42e7dfcdece40000ULL,
+    0x42d6bcc41e911580ULL, 0x4197d78400000000ULL, 0x42e7dfcdece40000ULL,
+    0x417d905c00000000ULL, 0x4224393205166000ULL, 0x401aaaaaaaaaaaacULL,
+    0x42ff9642f550e0dcULL, 0x42e7dfcdece40000ULL, 0x42d6bcc41e911580ULL,
+    0x412e848000000000ULL, 0x417d905c00000000ULL, 0x4224393205166000ULL,
+    0x40c0f6f1e09d4952ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
+    0x0000000000000000ULL}, {
+    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
+    1.7e-9, 2.5e-12, 2.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
+    1.1e-9, 2.3e-10, 4.5e-14, 0.0, 0.0}};
+
+void frozen_probe(const Probe &actual, const FrozenProbe &authority,
+                  const char *prefix)
+{
+    const double values[19]{
+        actual.gamma, actual.cv, actual.pressure_rho_T, actual.eint,
+        actual.temperature, actual.pressure_rho_e, actual.sound_speed,
+        actual.dp_drho, actual.dp_de, actual.total_energy, actual.state_P,
+        actual.state_E, actual.state_cv, actual.state_sound_speed,
+        actual.state_dp_drho, actual.state_dp_dT, actual.state_pele,
+        actual.state_xne, actual.state_eta};
+    const char *names[19]{
+        "gamma", "cv", "pressure_rho_T", "eint", "temperature",
+        "pressure_rho_e", "sound_speed", "dp_drho", "dp_de", "total_energy",
+        "state.P", "state.E", "state.cv", "state.sound_speed",
+        "state.dp_drho", "state.dp_dT", "state.pele", "state.xne", "state.eta"};
+    for (int index = 0; index < 19; ++index) {
+        const std::string field = std::string(prefix) + "." + names[index];
+        frozen_value(values[index], authority.bits[index], authority.tolerances[index],
+                     field.c_str());
+    }
+}
+
 void require_same_raw_probe(const Probe &wrapper, const Probe &leaf, const char *eos)
 {
     const double wrapper_values[19]{
@@ -673,12 +808,12 @@ void test_ideal_and_lifetime(cudaStream_t stream)
     frozen_bits(ideal_default.get_pressure_from_rho_T(0.0, 1.0e5, dummy_Xi.data()),
                 0x0000000000000000ULL, "ideal.invalid.pressure");
     arch::cuda::DeviceSpeciesOwner empty_owner(empty_species, stream);
+    const Probe default_host = probe_host_wrapper(
+        ideal_default, dummy_Xi.data(), 2.5, 4.0e6);
+    frozen_probe(default_host, ideal_default_probe, "ideal.default.probe");
     const Probe default_device = run_device(
         empty_owner.ideal_gas_view(1.4), dummy_Xi, 2.5, 4.0e6, stream);
-    close(default_device.gamma, ideal_default.get_gamma(dummy_Xi.data()), 0.0,
-          "Ideal default global gamma");
-    close(default_device.cv, ideal_default.get_mixture_Cv(dummy_Xi.data()), 0.0,
-          "Ideal default global Cv");
+    compare(default_device, default_host, "Ideal default");
 
     SpeciesManager species;
     species.add_species("a", 1.0, 1.0, 1.4, 700.0);
@@ -703,6 +838,10 @@ void test_ideal_and_lifetime(cudaStream_t stream)
                           0x0000000000000000ULL}, "ideal.state");
     require_same_raw_probe(probe_host_wrapper(host, Xi.data(), 2.5, 4.0e6),
                            probe_leaf(host_view, Xi.data(), 2.5, 4.0e6), "Ideal");
+    const Probe expected = probe_leaf(host_view, Xi.data(), 2.5, 4.0e6);
+    frozen_probe(expected, ideal_strict_probe, "ideal.strict.probe");
+    const Probe zero_expected = probe_leaf(host_view, zero_Xi.data(), 2.5, 4.0e6);
+    frozen_probe(zero_expected, ideal_zero_probe, "ideal.zero.probe");
     const auto isentrope = eos_utils::get_isentropic_state_at_pressure_factor(
         host, 2.5, 4.0e6, Xi.data(), 1.01);
     frozen_bits(isentrope.rho, 0x400420c9637ee893ULL, "ideal.isentrope.rho");
@@ -720,13 +859,11 @@ void test_ideal_and_lifetime(cudaStream_t stream)
     assert_device_pointer(first.view().Z, "species Z pointer");
     assert_device_pointer(first.view().gamma, "species gamma pointer");
     assert_device_pointer(first.view().Cv, "species Cv pointer");
-    const Probe expected = probe_leaf(host_view, Xi.data(), 2.5, 4.0e6);
     compare(run_device(first.ideal_gas_view(1.55), Xi, 2.5, 4.0e6, stream),
             expected, "Ideal");
     const Probe zero_device = run_device(
         first.ideal_gas_view(1.55), zero_Xi, 2.5, 4.0e6, stream);
-    close(zero_device.gamma, host.get_gamma(zero_Xi.data()), 0.0,
-          "Ideal zero-composition global gamma");
+    compare(zero_device, zero_expected, "Ideal zero composition");
 
     const double below = std::nextafter(1.0e-12, 0.0);
     const double exact = 1.0e-12;
@@ -835,6 +972,8 @@ void test_helm(cudaStream_t stream)
                  0x47ca4f5939de4590ULL, 2.0e-14, "helm.upper_bound_P");
     require_same_raw_probe(probe_host_wrapper(host, Xi.data(), 1.0e6, 1.0e8),
                            probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8), "Helm");
+    const Probe expected = probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8);
+    frozen_probe(expected, helm_probe, "helm.probe");
     const auto isentrope = eos_utils::get_isentropic_state_at_pressure_factor(
         host, 1.0e6, 1.0e8, Xi.data(), 1.001);
     frozen_value(isentrope.rho, 0x412e897ef769df7fULL, 8.0e-14,
@@ -871,11 +1010,16 @@ void test_helm(cudaStream_t stream)
             [&] { arch::cuda::HelmEosDeviceOwner rejected(malformed, stream); },
             "Helm long ef descriptor was accepted");
     }
+    auto missing_species = host_view;
+    missing_species.specs = SpeciesHostView{};
+    require_invalid_argument(
+        [&] { arch::cuda::HelmEosDeviceOwner rejected(missing_species, stream); },
+        "Helm descriptor without species metadata owner was accepted");
     arch::cuda::HelmEosDeviceOwner owner(host, stream);
     for (int i = 0; i < 9; ++i) assert_device_pointer(owner.view().f[i], "Helm f pointer");
     for (int i = 0; i < 4; ++i) assert_device_pointer(owner.view().ef_table[i], "Helm ef pointer");
     compare(run_device(owner.view(), Xi, 1.0e6, 1.0e8, stream),
-            probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8), "Helm");
+            expected, "Helm");
     close(run_pressure(owner.view(), Xi, lower_rho, 1.0e3, stream),
           host_view.get_pressure_from_rho_T(lower_rho, 1.0e3, Xi.data()), 5.0e-10,
           "Helm exact lower bound");
@@ -907,7 +1051,7 @@ void test_helm(cudaStream_t stream)
     auto moved = std::move(owner);
     require(owner.empty(), "moved-from Helm owner retained storage");
     compare(run_device(moved.view(), Xi, 1.0e6, 1.0e8, stream),
-            probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8), "Helm moved");
+            expected, "Helm moved");
     arch::cuda::HelmEosDeviceOwner target(host, stream);
     const double *released_f = target.view().f[0];
     const double *released_helm_species = target.view().specs.A;
@@ -925,8 +1069,7 @@ void test_helm(cudaStream_t stream)
         assert_device_pointer(target.view().ef_table[index], "Helm moved ef pointer");
     assert_device_pointer(target.view().specs.A, "Helm moved species pointer");
     compare(run_device(target.view(), Xi, 1.0e6, 1.0e8, stream),
-            probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8),
-            "Helm move-assigned target");
+            expected, "Helm move-assigned target");
     test_delayed_owner_destruction(
         [&] { return arch::cuda::HelmEosDeviceOwner(host, stream); }, Xi,
         1.0e6, 1.0e8, frozen.dp_dT, stream,
@@ -963,9 +1106,10 @@ void test_tabular3(cudaStream_t stream)
                           0x415afd2e00000000ULL, 0x415ecdbe00000000ULL,
                           0x0000000000000000ULL, 0x0000000000000000ULL,
                           0x0000000000000000ULL}, "tab3.present");
-    const Probe iteration_probe = probe_leaf(host, Xi.data(), 10.0, 3.0e8);
-    frozen_bits(iteration_probe.temperature, 0x41b1e1a2c605fc46ULL,
-                "tab3.iteration.recovered_T");
+    const Probe table_expected = probe_leaf(host, Xi.data(), 10.0, 1.0e8);
+    frozen_probe(table_expected, tab3_table_probe, "tab3.table.probe");
+    const Probe iteration_expected = probe_leaf(host, Xi.data(), 10.0, 3.0e8);
+    frozen_probe(iteration_expected, tab3_iteration_probe, "tab3.iteration.probe");
     frozen_bits(host.get_pressure_from_rho_T(1.0, 1.0e7, Xi.data()),
                 0x42d7c2b358420000ULL, "tab3.lower_exact");
     frozen_value(host.get_pressure_from_rho_T(
@@ -996,8 +1140,8 @@ void test_tabular3(cudaStream_t stream)
     assert_device_pointer(view.table_dP_drho, "Tab3 dp_drho pointer");
     assert_device_pointer(view.table_dP_dT, "Tab3 dp_dT pointer");
     compare(run_device(view, Xi, 10.0, 1.0e8, stream),
-            probe_leaf(host, Xi.data(), 10.0, 1.0e8), "Tab3 table");
-    compare(run_device(view, Xi, 10.0, 3.0e8, stream), iteration_probe,
+            table_expected, "Tab3 table");
+    compare(run_device(view, Xi, 10.0, 3.0e8, stream), iteration_expected,
             "Tab3 iteration identity");
     close(run_state_dp_dT(view, Xi, 10.0, 1.0e8, stream),
           std::bit_cast<double>(0x415ecdbe00000000ULL), 0.0,
@@ -1028,24 +1172,7 @@ void test_tabular3(cudaStream_t stream)
     require(null_owner.view().table_dP_drho == nullptr, "Tab3 optional dp_drho not null");
     require(null_owner.view().table_dP_dT == nullptr, "Tab3 optional dp_dT not null");
     const Probe null_expected = probe_leaf(host_null, Xi.data(), 10.0, 1.0e8);
-    frozen_bits(null_expected.state_P, 0x42d87152d40e0000ULL,
-                "tab3.absent.P");
-    frozen_bits(null_expected.state_E, 0x42d6bcc41e911f80ULL,
-                "tab3.absent.E");
-    frozen_bits(null_expected.state_cv, 0x412e848000000000ULL,
-                "tab3.absent.cv");
-    frozen_bits(null_expected.state_sound_speed, 0x4173c9eb00000000ULL,
-                "tab3.absent.sound_speed");
-    frozen_value(null_expected.state_dp_drho, 0x422439320514d000ULL, 2.3e-11,
-                 "tab3.absent.dp_drho");
-    frozen_bits(null_expected.state_dp_dT, 0x40c0f6f1e096bb99ULL,
-                "tab3.absent.dp_dT");
-    frozen_bits(null_expected.state_pele, 0x0000000000000000ULL,
-                "tab3.absent.pele");
-    frozen_bits(null_expected.state_xne, 0x0000000000000000ULL,
-                "tab3.absent.xne");
-    frozen_bits(null_expected.state_eta, 0x0000000000000000ULL,
-                "tab3.absent.eta");
+    frozen_probe(null_expected, tab3_fd_probe, "tab3.finite_difference.probe");
     compare(run_device(null_owner.view(), Xi, 10.0, 1.0e8, stream),
             null_expected, "Tab3 finite difference");
     close(run_state_dp_dT(null_owner.view(), Xi, 10.0, 1.0e8, stream),
@@ -1078,7 +1205,7 @@ void test_tabular3(cudaStream_t stream)
     auto moved = std::move(owner);
     require(owner.empty(), "moved-from Tab3 owner retained storage");
     compare(run_device(moved.view(), Xi, 10.0, 1.0e8, stream),
-            probe_leaf(host, Xi.data(), 10.0, 1.0e8), "Tab3 moved");
+            table_expected, "Tab3 moved");
     arch::cuda::Tabular3DEOSDeviceOwner target(host, stream);
     const double *released_table_P = target.view().table_P;
     const double *released_species_A = target.view().specs.A;
@@ -1093,8 +1220,7 @@ void test_tabular3(cudaStream_t stream)
     assert_device_pointer(target.view().table_dP_dT, "Tab3 moved derivative pointer");
     assert_device_pointer(target.view().specs.Cv, "Tab3 moved species pointer");
     compare(run_device(target.view(), Xi, 10.0, 1.0e8, stream),
-            probe_leaf(host, Xi.data(), 10.0, 1.0e8),
-            "Tab3 move-assigned target");
+            table_expected, "Tab3 move-assigned target");
     test_delayed_owner_destruction(
         [&] { return arch::cuda::Tabular3DEOSDeviceOwner(host, stream); }, Xi,
         10.0, 1.0e8, frozen.dp_dT, stream,
@@ -1124,9 +1250,10 @@ void test_tabular4(cudaStream_t stream)
                           0x41615b5c00000000ULL, 0x416343a400000000ULL,
                           0x0000000000000000ULL, 0x0000000000000000ULL,
                           0x0000000000000000ULL}, "tab4.present");
-    const Probe iteration_probe = probe_leaf(host, Xi.data(), 10.0, 3.0e8);
-    frozen_bits(iteration_probe.temperature, 0x41b1e1a2c605fc54ULL,
-                "tab4.iteration.recovered_T");
+    const Probe table_expected = probe_leaf(host, Xi.data(), 10.0, 1.0e8);
+    frozen_probe(table_expected, tab4_table_probe, "tab4.table.probe");
+    const Probe iteration_expected = probe_leaf(host, Xi.data(), 10.0, 3.0e8);
+    frozen_probe(iteration_expected, tab4_iteration_probe, "tab4.iteration.probe");
     frozen_bits(host.get_pressure_from_rho_T(1.0, 1.0e7, Xi.data()),
                 0x42e7887e2efe0000ULL, "tab4.lower_exact");
     frozen_value(host.get_pressure_from_rho_T(
@@ -1156,8 +1283,8 @@ void test_tabular4(cudaStream_t stream)
     assert_device_pointer(view.table_dP_drho, "Tab4 dp_drho pointer");
     assert_device_pointer(view.table_dP_dT, "Tab4 dp_dT pointer");
     compare(run_device(view, Xi, 10.0, 1.0e8, stream),
-            probe_leaf(host, Xi.data(), 10.0, 1.0e8), "Tab4 table");
-    compare(run_device(view, Xi, 10.0, 3.0e8, stream), iteration_probe,
+            table_expected, "Tab4 table");
+    compare(run_device(view, Xi, 10.0, 3.0e8, stream), iteration_expected,
             "Tab4 iteration identity");
     close(run_state_dp_dT(view, Xi, 10.0, 1.0e8, stream),
           std::bit_cast<double>(0x416343a400000000ULL), 0.0,
@@ -1188,21 +1315,7 @@ void test_tabular4(cudaStream_t stream)
     require(null_owner.view().table_dP_drho == nullptr, "Tab4 optional dp_drho not null");
     require(null_owner.view().table_dP_dT == nullptr, "Tab4 optional dp_dT not null");
     const Probe null_expected = probe_leaf(host_null, Xi.data(), 10.0, 1.0e8);
-    frozen_bits(null_expected.state_P, 0x42e7dfcdece40000ULL, "tab4.absent.P");
-    frozen_bits(null_expected.state_E, 0x42d6bcc41e911580ULL, "tab4.absent.E");
-    frozen_bits(null_expected.state_cv, 0x412e848000000000ULL, "tab4.absent.cv");
-    frozen_bits(null_expected.state_sound_speed, 0x417d905c00000000ULL,
-                "tab4.absent.sound_speed");
-    frozen_bits(null_expected.state_dp_drho, 0x4224393205166000ULL,
-                "tab4.absent.dp_drho");
-    frozen_value(null_expected.state_dp_dT, 0x40c0f6f1e09d4952ULL, 2.3e-10,
-                 "tab4.absent.dp_dT");
-    frozen_bits(null_expected.state_pele, 0x0000000000000000ULL,
-                "tab4.absent.pele");
-    frozen_bits(null_expected.state_xne, 0x0000000000000000ULL,
-                "tab4.absent.xne");
-    frozen_bits(null_expected.state_eta, 0x0000000000000000ULL,
-                "tab4.absent.eta");
+    frozen_probe(null_expected, tab4_fd_probe, "tab4.finite_difference.probe");
     compare(run_device(null_owner.view(), Xi, 10.0, 1.0e8, stream),
             null_expected, "Tab4 finite difference");
     close(run_state_dp_dT(null_owner.view(), Xi, 10.0, 1.0e8, stream),
@@ -1235,7 +1348,7 @@ void test_tabular4(cudaStream_t stream)
     auto moved = std::move(owner);
     require(owner.empty(), "moved-from Tab4 owner retained storage");
     compare(run_device(moved.view(), Xi, 10.0, 1.0e8, stream),
-            probe_leaf(host, Xi.data(), 10.0, 1.0e8), "Tab4 moved");
+            table_expected, "Tab4 moved");
     arch::cuda::Tabular4DEOSDeviceOwner target(host, stream);
     const double *released_table_P = target.view().table_P;
     const double *released_species_A = target.view().specs.A;
@@ -1250,8 +1363,7 @@ void test_tabular4(cudaStream_t stream)
     assert_device_pointer(target.view().table_dP_dT, "Tab4 moved derivative pointer");
     assert_device_pointer(target.view().specs.Cv, "Tab4 moved species pointer");
     compare(run_device(target.view(), Xi, 10.0, 1.0e8, stream),
-            probe_leaf(host, Xi.data(), 10.0, 1.0e8),
-            "Tab4 move-assigned target");
+            table_expected, "Tab4 move-assigned target");
     test_delayed_owner_destruction(
         [&] { return arch::cuda::Tabular4DEOSDeviceOwner(host, stream); }, Xi,
         10.0, 1.0e8, frozen.dp_dT, stream,

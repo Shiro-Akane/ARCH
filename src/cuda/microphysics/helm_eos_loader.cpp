@@ -119,6 +119,8 @@ SpeciesHostView validate_helm_upload(const HelmEosHostView &host)
     for (int index = 0; index < 4; ++index)
         validate_required_upload(host.ef_table[index], host.ef_extents[index], expected,
                                  "Helm ef table");
+    if (host.specs.host_owner == nullptr)
+        throw std::invalid_argument("Helm upload requires species metadata ownership.");
     validate_species_upload(host.specs);
     return host.specs;
 }
