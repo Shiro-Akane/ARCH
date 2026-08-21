@@ -13,6 +13,9 @@
 namespace arch::cuda
 {
 
+// Lifetime contract for every owner below: upload and every consumer of view()
+// use the stream passed to the constructor. Destruction synchronizes that
+// stream before freeing; cross-stream consumers require external synchronization.
 class DeviceSpeciesOwner
 {
 public:
@@ -42,6 +45,7 @@ class HelmEosDeviceOwner
 {
 public:
     HelmEosDeviceOwner(const HelmEos &host, cudaStream_t stream);
+    HelmEosDeviceOwner(const HelmEosHostView &host, cudaStream_t stream);
     ~HelmEosDeviceOwner();
 
     HelmEosDeviceOwner(const HelmEosDeviceOwner &) = delete;

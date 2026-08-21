@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -140,6 +141,7 @@ struct SpeciesHostView
 {
     const GasProperty *host_data = nullptr;
     int count = 0;
+    std::size_t extent = 0;
     const SpeciesManager *host_owner = nullptr;
 
     ARCH_INLINE int size() const { return count; }
@@ -173,7 +175,8 @@ struct SpeciesPODView
 
 inline SpeciesHostView SpeciesManager::get_host_view() const
 {
-    return {species_list.empty() ? nullptr : species_list.data(), count(), this};
+    return {species_list.empty() ? nullptr : species_list.data(), count(),
+            species_list.size(), this};
 }
 
 inline double SpeciesManager::calc_Ye(const double *Xi) const

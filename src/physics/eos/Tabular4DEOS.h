@@ -472,6 +472,7 @@ using Tabular4DEOSView = BasicTabular4DEOSView<SpeciesPODView>;
 
 struct Tabular4DEOSHostView : BasicTabular4DEOSView<SpeciesHostView>
 {
+    std::array<std::size_t, 6> table_extents{};
     const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
@@ -510,6 +511,9 @@ public:
                 h_free_energy_fields[field].empty()
                     ? nullptr : h_free_energy_fields[field].data();
         }
+        rebound.table_extents = {
+            h_table_P.size(), h_table_E.size(), h_table_cs.size(), h_table_cv.size(),
+            h_table_dP_drho.size(), h_table_dP_dT.size()};
         rebound.specs = specs_owner ? specs_owner->get_host_view() : SpeciesHostView{};
         return rebound;
     }

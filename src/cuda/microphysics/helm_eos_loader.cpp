@@ -73,12 +73,85 @@ void stage_optional(std::vector<double> &staging, const double *host,
     else staging.assign(host, host + extent);
 }
 
-const SpeciesManager &require_species(const HelmEos &host)
+void validate_species_upload(SpeciesHostView species)
 {
-    const SpeciesManager *species = host.get_species_manager();
-    if (species == nullptr)
-        throw std::invalid_argument("HelmEos CUDA upload requires species metadata.");
-    return *species;
+    if (species.count < 0 || species.extent != static_cast<std::size_t>(species.count))
+        throw std::invalid_argument("Species upload extent does not match count.");
+    if (species.count == 0) {
+        if (species.host_data != nullptr)
+            throw std::invalid_argument("Empty species upload has non-null data.");
+        if (species.host_owner != nullptr && !species.host_owner->species_list.empty())
+            throw std::invalid_argument("Empty species upload disagrees with its owner.");
+        return;
+    }
+    if (species.host_data == nullptr || species.host_owner == nullptr)
+        throw std::invalid_argument("Species upload must be backed by a host owner.");
+    const auto &owned = species.host_owner->species_list;
+    if (owned.size() != species.extent || owned.data() != species.host_data)
+        throw std::invalid_argument("Species upload data/count disagree with its owner.");
+}
+
+void validate_required_upload(const double *host, std::size_t actual,
+                              std::size_t expected, const char *label)
+{
+    if (host == nullptr || actual != expected)
+        throw std::invalid_argument(std::string(label) +
+                                    " must be non-null with the exact table extent.");
+}
+
+void validate_optional_upload(const double *host, std::size_t actual,
+                              std::size_t expected, const char *label)
+{
+    const bool absent = host == nullptr && actual == 0;
+    const bool present = host != nullptr && actual == expected;
+    if (!absent && !present)
+        throw std::invalid_argument(std::string(label) +
+                                    " must be (null,0) or (non-null,exact extent).");
+}
+
+SpeciesHostView validate_helm_upload(const HelmEosHostView &host)
+{
+    constexpr std::size_t expected =
+        static_cast<std::size_t>(HelmEosView::imax) * HelmEosView::jmax;
+    for (int index = 0; index < 9; ++index)
+        validate_required_upload(host.f[index], host.f_extents[index], expected,
+                                 "Helm f table");
+    for (int index = 0; index < 4; ++index)
+        validate_required_upload(host.ef_table[index], host.ef_extents[index], expected,
+                                 "Helm ef table");
+    validate_species_upload(host.specs);
+    return host.specs;
+}
+
+SpeciesHostView validate_tab3_upload(const Tabular3DEOSHostView &host)
+{
+    const std::size_t expected = checked_extent({host.n_rho, host.n_T, host.n_X});
+    const double *source[6]{host.table_P, host.table_E, host.table_cs, host.table_cv,
+                            host.table_dP_drho, host.table_dP_dT};
+    for (int index = 0; index < 4; ++index)
+        validate_required_upload(source[index], host.table_extents[index], expected,
+                                 "Tabular3 required table");
+    for (int index = 4; index < 6; ++index)
+        validate_optional_upload(source[index], host.table_extents[index], expected,
+                                 "Tabular3 optional table");
+    validate_species_upload(host.specs);
+    return host.specs;
+}
+
+SpeciesHostView validate_tab4_upload(const Tabular4DEOSHostView &host)
+{
+    const std::size_t expected = checked_extent(
+        {host.n_rho, host.n_T, host.n_A, host.n_Z});
+    const double *source[6]{host.table_P, host.table_E, host.table_cs, host.table_cv,
+                            host.table_dP_drho, host.table_dP_dT};
+    for (int index = 0; index < 4; ++index)
+        validate_required_upload(source[index], host.table_extents[index], expected,
+                                 "Tabular4 required table");
+    for (int index = 4; index < 6; ++index)
+        validate_optional_upload(source[index], host.table_extents[index], expected,
+                                 "Tabular4 optional table");
+    validate_species_upload(host.specs);
+    return host.specs;
 }
 
 } // namespace
@@ -91,8 +164,7 @@ DeviceSpeciesOwner::DeviceSpeciesOwner(const SpeciesManager &species, cudaStream
 DeviceSpeciesOwner::DeviceSpeciesOwner(SpeciesHostView species, cudaStream_t stream)
     : stream_(stream), count_(species.count)
 {
-    if (count_ < 0 || (count_ > 0 && species.host_data == nullptr))
-        throw std::invalid_argument("Invalid host species view.");
+    validate_species_upload(species);
     for (auto &values : staging_) values.reserve(static_cast<std::size_t>(count_));
     for (int index = 0; index < count_; ++index) {
         staging_[0].push_back(species.get_A(index));
@@ -159,9 +231,14 @@ bool DeviceSpeciesOwner::empty() const noexcept
 }
 
 HelmEosDeviceOwner::HelmEosDeviceOwner(const HelmEos &host, cudaStream_t stream)
-    : stream_(stream), species_(require_species(host), stream)
+    : HelmEosDeviceOwner(host.get_view(), stream)
 {
-    const HelmEosHostView source = host.get_view();
+}
+
+HelmEosDeviceOwner::HelmEosDeviceOwner(const HelmEosHostView &source,
+                                       cudaStream_t stream)
+    : stream_(stream), species_(validate_helm_upload(source), stream)
+{
     constexpr std::size_t extent =
         static_cast<std::size_t>(HelmEosView::imax) * HelmEosView::jmax;
     try {
@@ -234,7 +311,7 @@ bool HelmEosDeviceOwner::empty() const noexcept
 
 Tabular3DEOSDeviceOwner::Tabular3DEOSDeviceOwner(
     const Tabular3DEOSHostView &host, cudaStream_t stream)
-    : stream_(stream), species_(host.specs, stream)
+    : stream_(stream), species_(validate_tab3_upload(host), stream)
 {
     const std::size_t extent = checked_extent({host.n_rho, host.n_T, host.n_X});
     device_view_.n_rho = host.n_rho; device_view_.n_T = host.n_T;
@@ -304,7 +381,7 @@ bool Tabular3DEOSDeviceOwner::empty() const noexcept
 
 Tabular4DEOSDeviceOwner::Tabular4DEOSDeviceOwner(
     const Tabular4DEOSHostView &host, cudaStream_t stream)
-    : stream_(stream), species_(host.specs, stream)
+    : stream_(stream), species_(validate_tab4_upload(host), stream)
 {
     const std::size_t extent = checked_extent({host.n_rho, host.n_T, host.n_A, host.n_Z});
     device_view_.n_rho = host.n_rho; device_view_.n_T = host.n_T;

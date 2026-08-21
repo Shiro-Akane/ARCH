@@ -524,6 +524,8 @@ using HelmEosView = BasicHelmEosView<SpeciesPODView>;
 
 struct HelmEosHostView : BasicHelmEosView<SpeciesHostView>
 {
+    std::array<std::size_t, 9> f_extents{};
+    std::array<std::size_t, 4> ef_extents{};
     const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
@@ -585,8 +587,14 @@ public:
             is_loaded = true;
         }
 
-        for (int k = 0; k < 9; ++k) f[k] = host_f[k].data();
-        for (int k = 0; k < 4; ++k) ef_table[k] = host_ef_table[k].data();
+        for (int k = 0; k < 9; ++k) {
+            f[k] = host_f[k].data();
+            f_extents[k] = host_f[k].size();
+        }
+        for (int k = 0; k < 4; ++k) {
+            ef_table[k] = host_ef_table[k].data();
+            ef_extents[k] = host_ef_table[k].size();
+        }
         specs = species_owner ? species_owner->get_host_view() : SpeciesHostView{};
     }
 
