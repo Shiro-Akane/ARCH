@@ -57,11 +57,14 @@ int main(int argc, char **argv)
     {
         config = RuntimeParams::Load(par_file);
 
-        // Logger, plot output, and checkpoints all depend on out_dir, so create
-        // it before any file is opened. create_directories also accepts an
-        // existing directory, which lets restart runs reuse the same path.
+        // Plot output and checkpoints depend on out_dir.  Logs may be placed
+        // in a separate directory so HDF5-only trees remain easy to archive
+        // and process; existing inputs retain out_dir as the default.
         std::filesystem::create_directories(config.io.out_dir);
-        std::string log_filename = config.io.out_dir + "/" + config.io.base_name + "_log.dat";
+        const std::string log_dir =
+            config.Get<std::string>("log_dir", config.io.out_dir);
+        std::filesystem::create_directories(log_dir);
+        std::string log_filename = log_dir + "/" + config.io.base_name + "_log.dat";
         Logger::Init(log_filename, config.io.restart);
         std::cout << "[Main] Console output is being recorded to log file: " << log_filename << std::endl;
 
