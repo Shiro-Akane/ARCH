@@ -14,6 +14,7 @@
 #include <cmath>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 
 #include "../core/RuntimeParams.h"
 
@@ -67,12 +68,22 @@ struct SimulationController
             std::cout << "[Terminate] Max simulation steps reached." << std::endl;
             return true;
         }
-        return t_current >= t_max;
+        // Repeated output-time alignment can accumulate a few ulps below
+        // t_max.  Treat a relative 1e-12 remainder as complete instead of
+        // forcing an artificial 1e-14 step that creates a duplicate final H5
+        // and amplifies the ENUC roundoff diagnostic by division by tiny dt.
+        const double tolerance = 1.0e-12 *
+            std::max(std::abs(t_max), std::numeric_limits<double>::min());
+        return t_current >= t_max || t_max - t_current <= tolerance;
     }
 
     void advance(double dt)
     {
         t_current += dt;
+        const double tolerance = 1.0e-12 *
+            std::max(std::abs(t_max), std::numeric_limits<double>::min());
+        if (t_current > t_max - tolerance)
+            t_current = t_max;
         step_count++;
     }
 
@@ -177,15 +188,15 @@ struct SimulationController
         double dt = dt_computed;
         if (config.io.plt_dt > 0 && t_current + dt > next_plt_time)
         {
-            dt = std::max(1e-14, next_plt_time - t_current);
+            dt = next_plt_time - t_current;
         }
         if (config.io.chk_dt > 0 && t_current + dt > next_chk_time)
         {
-            dt = std::max(1e-14, next_chk_time - t_current);
+            dt = next_chk_time - t_current;
         }
         if (t_current + dt > t_max)
         {
-            dt = std::max(1e-14, t_max - t_current);
+            dt = t_max - t_current;
         }
         return dt;
     }
