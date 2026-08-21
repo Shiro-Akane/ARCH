@@ -290,8 +290,10 @@ namespace ConductivityMath {
             double cint = 1.0;
 
             // 3. Mathematical Intermediates
-            double con5 = iec / zbar;
-            double vie = con5 * ymas * cint;
+            // Yakovlev--Urpin electron-ion collision frequency.  The charge
+            // dependence is multiplicative (nu_ei \propto Z), matching the
+            // AMReX-Astro stellar-conductivity authority cited above.
+            double vie = iec * zbar * ymas * cint;
             double cie = wfac / vie;
 
             double tpe = xec * std::sqrt(xne / ymas);
