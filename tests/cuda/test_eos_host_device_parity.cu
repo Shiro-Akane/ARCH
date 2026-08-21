@@ -159,13 +159,34 @@ struct Probe
 struct FrozenProbe
 {
     std::array<std::uint64_t, 19> bits;
-    std::array<double, 19> tolerances;
+    std::array<double, 19> authority_margins;
 };
 
-constexpr std::array<double, 19> standard_probe_tolerances{
-    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
-    1.7e-9, 2.5e-12, 2.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
-    1.1e-9, 0.0, 4.5e-14, 0.0, 0.0};
+// These margins compare the frozen BASE literals with the current host probe.
+// They are deliberately independent of the host/device budgets in compare().
+constexpr std::array<double, 19> exact_authority_margins{};
+constexpr std::array<double, 19> helm_authority_margins{
+    0.0, 0.0, 8.0e-14, 1.5e-15, 6.0e-16, 8.0e-14, 4.0e-10,
+    1.6e-9, 5.3e-11, 1.6e-16, 8.0e-14, 1.5e-15, 0.0, 4.0e-10,
+    8.0e-10, 2.5e-11, 8.0e-14, 0.0, 1.5e-15};
+constexpr std::array<double, 19> tab3_table_authority_margins{
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.1e-15,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+constexpr std::array<double, 19> tab3_iteration_authority_margins{
+    0.0, 0.0, 2.0e-16, 0.0, 0.0, 2.0e-16, 0.0, 1.7e-16, 0.0,
+    3.0e-15, 2.0e-16, 0.0, 0.0, 0.0, 1.7e-16, 1.5e-16, 0.0, 0.0, 0.0};
+constexpr std::array<double, 19> tab3_fd_authority_margins{
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 2.3e-11, 0.0, 1.1e-15,
+    0.0, 0.0, 0.0, 0.0, 2.3e-11, 0.0, 0.0, 0.0, 0.0};
+constexpr std::array<double, 19> tab4_table_authority_margins{
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0e-16,
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+constexpr std::array<double, 19> tab4_iteration_authority_margins{
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+    0.0, 0.0, 0.0, 1.6e-16, 0.0, 0.0, 0.0, 0.0, 0.0};
+constexpr std::array<double, 19> tab4_fd_authority_margins{
+    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0e-16,
+    0.0, 0.0, 0.0, 0.0, 0.0, 2.3e-10, 0.0, 0.0, 0.0};
 
 constexpr FrozenProbe ideal_default_probe{{
     0x3ff6666666666666ULL, 0x4086700000000000ULL, 0x41e565e7bfffffffULL,
@@ -174,7 +195,7 @@ constexpr FrozenProbe ideal_default_probe{{
     0x41fabf61b0118000ULL, 0x41e565e7bfffffffULL, 0x41e565e7c0000000ULL,
     0x4086700000000000ULL, 0x40e394fbaf4fda70ULL, 0x41d11e52ffffffffULL,
     0x40866fffffffffffULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, standard_probe_tolerances};
+    0x0000000000000000ULL}, exact_authority_margins};
 
 constexpr FrozenProbe ideal_strict_probe{{
     0x3ff8f0f0f0f0f0f1ULL, 0x408a900000000000ULL, 0x41f1b1f3f8000000ULL,
@@ -183,7 +204,7 @@ constexpr FrozenProbe ideal_strict_probe{{
     0x41ffaa3b50118000ULL, 0x41f1b1f3f8000000ULL, 0x41e954fc40000000ULL,
     0x408a900000000000ULL, 0x40ea92c31f70f50aULL, 0x41dc4fecc0000000ULL,
     0x40928e0000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, standard_probe_tolerances};
+    0x0000000000000000ULL}, exact_authority_margins};
 
 constexpr FrozenProbe ideal_zero_probe{{
     0x3ff8cccccccccccdULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
@@ -192,7 +213,7 @@ constexpr FrozenProbe ideal_zero_probe{{
     0x3ff1800000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
     0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
     0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, standard_probe_tolerances};
+    0x0000000000000000ULL}, exact_authority_margins};
 
 constexpr FrozenProbe helm_probe{{
     0x3ff6666666666666ULL, 0x41911dd5a315fad7ULL, 0x44a165b3bc685788ULL,
@@ -201,10 +222,7 @@ constexpr FrozenProbe helm_probe{{
     0x44ac7e3dc9d0d2bfULL, 0x44a165b3bc685788ULL, 0x436de091017e8b86ULL,
     0x41911dd5a315fad7ULL, 0x41ae3615babde9f0ULL, 0x436b44b837e87ae1ULL,
     0x42c479c25640b780ULL, 0x449fdc71382b3f34ULL, 0x461300a5bbfb5453ULL,
-    0x4032f0e543b5126fULL}, {
-    0.0, 0.0, 8.0e-14, 1.5e-15, 5.0e-16, 8.0e-14, 5.0e-10,
-    1.7e-9, 5.3e-11, 2.0e-15, 8.0e-14, 1.5e-15, 0.0, 4.0e-10,
-    8.0e-10, 2.5e-11, 8.0e-14, 0.0, 1.5e-15}};
+    0x4032f0e543b5126fULL}, helm_authority_margins};
 
 constexpr FrozenProbe tab3_table_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d87152d40e0000ULL,
@@ -213,7 +231,7 @@ constexpr FrozenProbe tab3_table_probe{{
     0x42f1bfe68ca5d2f1ULL, 0x42d87152d40e0000ULL, 0x42d6bcc41e911f80ULL,
     0x412e848000000000ULL, 0x4173c9eb00000000ULL, 0x415afd2e00000000ULL,
     0x415ecdbe00000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, standard_probe_tolerances};
+    0x0000000000000000ULL}, tab3_table_authority_margins};
 
 constexpr FrozenProbe tab3_iteration_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d8a8de26589fd5ULL,
@@ -222,10 +240,7 @@ constexpr FrozenProbe tab3_iteration_probe{{
     0x42f36dacf96174bdULL, 0x42d8a8de26589fd5ULL, 0x42fe17eab16f84e6ULL,
     0x412e848000000000ULL, 0x4173e1370403ddc9ULL, 0x415b067f9b193e93ULL,
     0x415ed70f9b34bf1dULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, {
-    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
-    1.7e-9, 2.5e-12, 3.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
-    1.1e-9, 2.0e-16, 4.5e-14, 0.0, 0.0}};
+    0x0000000000000000ULL}, tab3_iteration_authority_margins};
 
 constexpr FrozenProbe tab3_fd_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d87152d40e0000ULL,
@@ -234,10 +249,7 @@ constexpr FrozenProbe tab3_fd_probe{{
     0x42f1bfe68ca5d2f1ULL, 0x42d87152d40e0000ULL, 0x42d6bcc41e911f80ULL,
     0x412e848000000000ULL, 0x4173c9eb00000000ULL, 0x422439320514d000ULL,
     0x40c0f6f1e096bb99ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, {
-    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
-    1.7e-9, 2.5e-12, 2.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
-    2.3e-11, 0.0, 4.5e-14, 0.0, 0.0}};
+    0x0000000000000000ULL}, tab3_fd_authority_margins};
 
 constexpr FrozenProbe tab4_table_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42e7dfcdece40000ULL,
@@ -246,7 +258,7 @@ constexpr FrozenProbe tab4_table_probe{{
     0x42ff9642f550e0dcULL, 0x42e7dfcdece40000ULL, 0x42d6bcc41e911580ULL,
     0x412e848000000000ULL, 0x417d905c00000000ULL, 0x41615b5c00000000ULL,
     0x416343a400000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, standard_probe_tolerances};
+    0x0000000000000000ULL}, tab4_table_authority_margins};
 
 constexpr FrozenProbe tab4_iteration_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42e7fb9396094feaULL,
@@ -255,7 +267,7 @@ constexpr FrozenProbe tab4_iteration_probe{{
     0x4300a5312f9f9aecULL, 0x42e7fb9396094feaULL, 0x42fe17eab16f8265ULL,
     0x412e848000000000ULL, 0x417da7a80403ddc9ULL, 0x41616004cd8c9f4aULL,
     0x4163484ccd9a5f8eULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, standard_probe_tolerances};
+    0x0000000000000000ULL}, tab4_iteration_authority_margins};
 
 constexpr FrozenProbe tab4_fd_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42e7dfcdece40000ULL,
@@ -264,10 +276,7 @@ constexpr FrozenProbe tab4_fd_probe{{
     0x42ff9642f550e0dcULL, 0x42e7dfcdece40000ULL, 0x42d6bcc41e911580ULL,
     0x412e848000000000ULL, 0x417d905c00000000ULL, 0x4224393205166000ULL,
     0x40c0f6f1e09d4952ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
-    0x0000000000000000ULL}, {
-    0.0, 3.0e-16, 4.1e-14, 6.0e-16, 5.0e-16, 4.1e-14, 5.0e-10,
-    1.7e-9, 2.5e-12, 2.0e-15, 4.1e-14, 6.0e-16, 3.0e-16, 5.0e-10,
-    1.1e-9, 2.3e-10, 4.5e-14, 0.0, 0.0}};
+    0x0000000000000000ULL}, tab4_fd_authority_margins};
 
 void frozen_probe(const Probe &actual, const FrozenProbe &authority,
                   const char *prefix)
@@ -286,7 +295,8 @@ void frozen_probe(const Probe &actual, const FrozenProbe &authority,
         "state.dp_drho", "state.dp_dT", "state.pele", "state.xne", "state.eta"};
     for (int index = 0; index < 19; ++index) {
         const std::string field = std::string(prefix) + "." + names[index];
-        frozen_value(values[index], authority.bits[index], authority.tolerances[index],
+        frozen_value(values[index], authority.bits[index],
+                     authority.authority_margins[index],
                      field.c_str());
     }
 }
