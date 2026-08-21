@@ -129,7 +129,8 @@ Tabular4DEOS::Tabular4DEOS(const std::string& h5_filename,
             "'; expected 'free_energy' or 'direct'");
     }
 
-    view.specs = specs_ptr;
+    specs_owner = specs_ptr;
+    view.specs = specs_ptr ? specs_ptr->get_host_view() : SpeciesHostView{};
     std::cout << "[Tabular4DEOS] Loaded "
               << (view.uses_free_energy ? "free-energy" : "direct")
               << " table with automatic rank validation." << std::endl;

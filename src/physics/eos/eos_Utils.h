@@ -8,6 +8,7 @@
 #include <cmath>
 #include <stdexcept>
 
+#include "../../core/ArchPortability.h"
 #include "eos.h" // Provides FluidVector through the EOS policy surface.
 
 #ifndef EOS_INLINE
@@ -26,13 +27,13 @@ namespace eos_utils
     };
 
     // Shared kinetic/internal-energy conversions.
-    EOS_INLINE double calc_kinetic_energy(double rho, double u, double v, double w)
+    ARCH_INLINE double calc_kinetic_energy(double rho, double u, double v, double w)
     {
         return 0.5 * rho * (u * u + v * v + w * w);
     }
 
     // Extract specific internal energy from a conservative state.
-    EOS_INLINE double extract_specific_internal_energy(const FluidVector &U)
+    ARCH_INLINE double extract_specific_internal_energy(const FluidVector &U)
     {
         if (U.rho < 1e-12)
             return 0.0;
@@ -69,7 +70,7 @@ namespace eos_utils
     // Generic Newton pressure inversion for three- and four-dimensional tables.
     // TEOSView must provide get_pressure_from_rho_e and get_dp_de_rho.
     template <typename TEOSView>
-    EOS_INLINE double solve_total_energy(const TEOSView &eos_view,
+    ARCH_INLINE double solve_total_energy(const TEOSView &eos_view,
                                          double rho, double u, double v, double w,
                                          double target_p, const double *Xi)
     {

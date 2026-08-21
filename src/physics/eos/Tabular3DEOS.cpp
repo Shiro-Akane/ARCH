@@ -123,7 +123,8 @@ Tabular3DEOS::Tabular3DEOS(const std::string& h5_filename,
             "'; expected 'free_energy' or 'direct'");
     }
 
-    view.specs = specs_ptr;
+    specs_owner = specs_ptr;
+    view.specs = specs_ptr ? specs_ptr->get_host_view() : SpeciesHostView{};
     view.target_species_id = -1;
     if (file.exist("composition_axis")) {
         std::string composition_axis;

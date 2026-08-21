@@ -25,9 +25,9 @@
 #include "../species/Species.h"
 
 
-// Timmes Helmholtz EOS: tabulated electrons/positrons and analytic ions/radiation.
-class HelmEos : public EOSBase {
-private:
+// Timmes Helmholtz EOS leaf parameterized by host or device species metadata.
+template <class SpeciesView>
+struct BasicHelmEosView {
     static constexpr int imax = 541;
     static constexpr int jmax = 201;
 
@@ -41,25 +41,22 @@ private:
     static constexpr double tstp = 0.05;
     static constexpr double tstpi = 1.0 / tstp;
 
-    // Table data
-    inline static std::vector<double> f[9];
-    inline static std::vector<double> ef_table[4];
-    inline static bool is_loaded = false;
-
-    const SpeciesManager* specs;
+    const double *f[9]{};
+    const double *ef_table[4]{};
+    SpeciesView specs{};
 
     // Quintic Hermite polynomials
-    double psi0(double z) const { return z * z * z * (z * (-6.0 * z + 15.0) - 10.0) + 1.0; }
-    double dpsi0(double z) const { return z * z * (z * (-30.0 * z + 60.0) - 30.0); }
-    double ddpsi0(double z) const { return z * (z * (-120.0 * z + 180.0) - 60.0); }
+    ARCH_INLINE double psi0(double z) const { return z * z * z * (z * (-6.0 * z + 15.0) - 10.0) + 1.0; }
+    ARCH_INLINE double dpsi0(double z) const { return z * z * (z * (-30.0 * z + 60.0) - 30.0); }
+    ARCH_INLINE double ddpsi0(double z) const { return z * (z * (-120.0 * z + 180.0) - 60.0); }
 
-    double psi1(double z) const { return z * (z * z * (z * (-3.0 * z + 8.0) - 6.0) + 1.0); }
-    double dpsi1(double z) const { return z * z * (z * (-15.0 * z + 32.0) - 18.0) + 1.0; }
-    double ddpsi1(double z) const { return z * (z * (-60.0 * z + 96.0) - 36.0); }
+    ARCH_INLINE double psi1(double z) const { return z * (z * z * (z * (-3.0 * z + 8.0) - 6.0) + 1.0); }
+    ARCH_INLINE double dpsi1(double z) const { return z * z * (z * (-15.0 * z + 32.0) - 18.0) + 1.0; }
+    ARCH_INLINE double ddpsi1(double z) const { return z * (z * (-60.0 * z + 96.0) - 36.0); }
 
-    double psi2(double z) const { return 0.5 * z * z * (z * (z * (-z + 3.0) - 3.0) + 1.0); }
-    double dpsi2(double z) const { return 0.5 * z * (z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0); }
-    double ddpsi2(double z) const { return 1.0 + z * (-9.0 + z * (18.0 - 10.0 * z)); }
+    ARCH_INLINE double psi2(double z) const { return 0.5 * z * z * (z * (z * (-z + 3.0) - 3.0) + 1.0); }
+    ARCH_INLINE double dpsi2(double z) const { return 0.5 * z * (z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0); }
+    ARCH_INLINE double ddpsi2(double z) const { return 1.0 + z * (-9.0 + z * (18.0 - 10.0 * z)); }
 
     // Physical Constants (matching helmholtz.f90)
     static constexpr double kerg = 1.380650424e-16;
@@ -70,59 +67,7 @@ private:
     static constexpr double asol = 4.0 * ssol / clight;
     static constexpr double m_p  = 1.67262163783e-24; // proton mass
 
-public:
-    HelmEos(const std::string& table_path, const SpeciesManager* specs_) : specs(specs_) {
-        if (!is_loaded) {
-        std::cout << "[HelmEos] Loading 2D Helmholtz table from " << table_path << "..." << std::endl;
-        std::ifstream file(table_path);
-        if (!file.is_open()) {
-            throw std::runtime_error("Could not open helm_table.dat at " + table_path);
-        }
-
-        for (int k = 0; k < 9; ++k) f[k].resize(imax * jmax);
-        for (int k = 0; k < 4; ++k) ef_table[k].resize(imax * jmax);
-
-        const auto read_value = [&](double& value) {
-            if (!(file >> value)) {
-                throw std::runtime_error(
-                    "Incomplete or nonnumeric 541x201 Timmes helm_table.dat: " + table_path);
-            }
-        };
-
-        for (int j = 0; j < jmax; ++j) {
-            for (int i = 0; i < imax; ++i) {
-                const int idx = j * imax + i;
-                for (int k = 0; k < 9; ++k) read_value(f[k][idx]);
-            }
-        }
-
-        for (int j = 0; j < jmax; ++j) {
-            for (int i = 0; i < imax; ++i) {
-                double unused;
-                for (int k = 0; k < 4; ++k) read_value(unused);
-            }
-        }
-
-        for (int j = 0; j < jmax; ++j) {
-            for (int i = 0; i < imax; ++i) {
-                const int idx = j * imax + i;
-                for (int k = 0; k < 4; ++k) read_value(ef_table[k][idx]);
-            }
-        }
-
-        for (int j = 0; j < jmax; ++j) {
-            for (int i = 0; i < imax; ++i) {
-                double unused;
-                for (int k = 0; k < 4; ++k) read_value(unused);
-            }
-        }
-
-        std::cout << "[HelmEos] Loaded complete 541x201 electron/positron table." << std::endl;
-        is_loaded = true;
-    }
-    }
-
-    void interpolate_ele_pos(double rho, double T, double ye,
+    ARCH_INLINE void interpolate_ele_pos(double rho, double T, double ye,
                              double& P_ele, double& E_ele,
                              double* cv_ele = nullptr) const {
         double din = rho * ye;
@@ -130,8 +75,12 @@ public:
         double t_val = std::log10(T);
 
         // clamp
-        d_val = std::max(dlo, std::min(d_val, dhi));
-        t_val = std::max(tlo, std::min(t_val, thi));
+        const double d_lower = dlo;
+        const double d_upper = dhi;
+        const double t_lower = tlo;
+        const double t_upper = thi;
+        d_val = std::max(d_lower, std::min(d_val, d_upper));
+        t_val = std::max(t_lower, std::min(t_val, t_upper));
 
         int i = static_cast<int>((d_val - dlo) * dstpi);
         int j = static_cast<int>((t_val - tlo) * tstpi);
@@ -244,16 +193,16 @@ public:
         }
     }
 
-    void calc_thermo_with_cv(double rho, double T, const double* X,
+    ARCH_INLINE void calc_thermo_with_cv(double rho, double T, const double* X,
                              double& P, double& E, double* cv) const {
         // Timmes variables: ytot = sum(X/A), Abar = 1/ytot,
         // Zbar = sum(X Z/A)/ytot, and Ye = Zbar/Abar = sum(X Z/A).
         double ytot = 0.0;
         double ye = 0.0;
-        for (int k = 0; k < specs->count(); ++k) {
-            const double inv_A = 1.0 / specs->get_A(k);
+        for (int k = 0; k < specs.count; ++k) {
+            const double inv_A = 1.0 / specs.get_A(k);
             ytot += X[k] * inv_A;
-            ye += X[k] * specs->get_Z(k) * inv_A;
+            ye += X[k] * specs.get_Z(k) * inv_A;
         }
         ye = std::max(1.0e-16, ye);
 
@@ -337,20 +286,20 @@ public:
         }
     }
 
-    void calc_thermo(double rho, double T, const double* X,
+    ARCH_INLINE void calc_thermo(double rho, double T, const double* X,
                      double& P, double& E) const {
         calc_thermo_with_cv(rho, T, X, P, E, nullptr);
     }
 
     // --- EOS Interface Implementation ---
 
-    double get_eta(double rho, double T, const double* Xi) const {
+    ARCH_INLINE double get_eta(double rho, double T, const double* Xi) const {
         double ytot = 0.0;
         double ye = 0.0;
-        for (int k = 0; k < specs->count(); ++k) {
-            const double inv_A = 1.0 / specs->get_A(k);
+        for (int k = 0; k < specs.count; ++k) {
+            const double inv_A = 1.0 / specs.get_A(k);
             ytot += Xi[k] * inv_A;
-            ye += Xi[k] * specs->get_Z(k) * inv_A;
+            ye += Xi[k] * specs.get_Z(k) * inv_A;
         }
         ye = std::max(1.0e-16, ye);
 
@@ -359,8 +308,12 @@ public:
         double t_val = std::log10(T);
 
         // clamp
-        d_val = std::max(dlo, std::min(d_val, dhi));
-        t_val = std::max(tlo, std::min(t_val, thi));
+        const double d_lower = dlo;
+        const double d_upper = dhi;
+        const double t_lower = tlo;
+        const double t_upper = thi;
+        d_val = std::max(d_lower, std::min(d_val, d_upper));
+        t_val = std::max(t_lower, std::min(t_val, t_upper));
 
         int i = static_cast<int>((d_val - dlo) * dstpi);
         int j = static_cast<int>((t_val - tlo) * tstpi);
@@ -415,23 +368,23 @@ public:
         return etaele;
     }
 
-    double get_gamma(const double* Xi) const {
+    ARCH_INLINE double get_gamma(const double* Xi) const {
         return 1.4; // Not strictly used for full real EOS formulation, but provided for interface
     }
 
-    double get_pressure(const FluidVector& U, const double* Xi) const {
+    ARCH_INLINE double get_pressure(const FluidVector& U, const double* Xi) const {
         double rho = U.rho;
         double e = eos_utils::extract_specific_internal_energy(U);
         return get_pressure_from_rho_e(rho, e, Xi);
     }
 
-    double get_temperature(const FluidVector& U, const double* Xi) const {
+    ARCH_INLINE double get_temperature(const FluidVector& U, const double* Xi) const {
         double rho = U.rho;
         double e = eos_utils::extract_specific_internal_energy(U);
         return get_temperature(rho, e, Xi);
     }
 
-    double get_temperature(double rho, double e, const double* Xi) const {
+    ARCH_INLINE double get_temperature(double rho, double e, const double* Xi) const {
         double T_guess = 1e8;
         for (int i = 0; i < 50; ++i) {
             double P, E;
@@ -455,7 +408,7 @@ public:
         return T_guess;
     }
 
-    double get_sound_speed(const FluidVector& U, double p, const double* Xi) const {
+    ARCH_INLINE double get_sound_speed(const FluidVector& U, double p, const double* Xi) const {
         double rho = U.rho;
         double e = eos_utils::extract_specific_internal_energy(U);
         double T = get_temperature(U, Xi);
@@ -479,36 +432,36 @@ public:
         return std::sqrt(std::max(1e-10, cs2));
     }
 
-    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double* Xi) const {
+    ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double* Xi) const {
         return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
     }
 
-    double get_pressure_from_rho_e(double rho, double e, const double* Xi) const {
+    ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double* Xi) const {
         double T = get_temperature(rho, e, Xi);
         double P, E;
         calc_thermo(rho, T, Xi, P, E);
         return P;
     }
 
-    double get_pressure_from_rho_T(double rho, double T, const double* Xi) const {
+    ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double* Xi) const {
         double P, E;
         calc_thermo(rho, T, Xi, P, E);
         return P;
     }
 
-    double get_eint_from_T(double rho, double T, const double* Xi) const {
+    ARCH_INLINE double get_eint_from_T(double rho, double T, const double* Xi) const {
         double P, E;
         calc_thermo(rho, T, Xi, P, E);
         return E;
     }
 
-    double get_cv(double rho, double T, const double* Xi) const {
+    ARCH_INLINE double get_cv(double rho, double T, const double* Xi) const {
         double P, E, cv;
         calc_thermo_with_cv(rho, T, Xi, P, E, &cv);
         return cv;
     }
 
-    double get_dp_drho_e(double rho, double e, const double* Xi) const {
+    ARCH_INLINE double get_dp_drho_e(double rho, double e, const double* Xi) const {
         // dp/drho |_e
         double P1 = get_pressure_from_rho_e(rho, e, Xi);
         double drho = rho * 1e-4;
@@ -516,7 +469,7 @@ public:
         return (P2 - P1) / drho;
     }
 
-    double get_dp_de_rho(double rho, double e, const double* Xi) const {
+    ARCH_INLINE double get_dp_de_rho(double rho, double e, const double* Xi) const {
         // dp/de |_rho
         double P1 = get_pressure_from_rho_e(rho, e, Xi);
         double de = e * 1e-4;
@@ -525,7 +478,7 @@ public:
     }
 
     // Pipeline: evaluate_state
-    void evaluate_state(eos_state_t& state) const {
+    ARCH_INLINE void evaluate_state(eos_state_t& state) const {
         // 1. Core Thermodynamics (P, E, cv)
         double P, E, cv;
         calc_thermo_with_cv(state.rho, state.T, state.Xi, P, E, &cv);
@@ -552,10 +505,10 @@ public:
 
         double ytot = 0.0;
         double ye = 0.0;
-        for (int k = 0; k < specs->count(); ++k) {
-            const double inv_A = 1.0 / specs->get_A(k);
+        for (int k = 0; k < specs.count; ++k) {
+            const double inv_A = 1.0 / specs.get_A(k);
             ytot += state.Xi[k] * inv_A;
-            ye += state.Xi[k] * specs->get_Z(k) * inv_A;
+            ye += state.Xi[k] * specs.get_Z(k) * inv_A;
         }
         ye = std::max(1.0e-16, ye);
 
@@ -565,7 +518,80 @@ public:
         state.xne = state.rho * ye * 6.0221417930e23; // n_A from Timmes
     }
 
-    const SpeciesManager* get_species_manager() const { return specs; }
+};
 
-    ~HelmEos() = default;
+using HelmEosView = BasicHelmEosView<SpeciesPODView>;
+
+struct HelmEosHostView : BasicHelmEosView<SpeciesHostView>
+{
+    const SpeciesManager *get_species_manager() const { return specs.host_owner; }
+};
+
+// Host owner for canonical file parsing and table lifetime.
+class HelmEos : public EOSBase, public HelmEosHostView
+{
+    inline static std::vector<double> host_f[9];
+    inline static std::vector<double> host_ef_table[4];
+    inline static bool is_loaded = false;
+
+public:
+    HelmEos(const std::string &table_path, const SpeciesManager *species_owner)
+    {
+        if (!is_loaded) {
+            std::cout << "[HelmEos] Loading 2D Helmholtz table from "
+                      << table_path << "..." << std::endl;
+            std::ifstream file(table_path);
+            if (!file.is_open())
+                throw std::runtime_error("Could not open helm_table.dat at " + table_path);
+
+            for (int k = 0; k < 9; ++k) host_f[k].resize(imax * jmax);
+            for (int k = 0; k < 4; ++k) host_ef_table[k].resize(imax * jmax);
+
+            const auto read_value = [&](double &value) {
+                if (!(file >> value))
+                    throw std::runtime_error(
+                        "Incomplete or nonnumeric 541x201 Timmes helm_table.dat: "
+                        + table_path);
+            };
+
+            for (int j = 0; j < jmax; ++j) {
+                for (int i = 0; i < imax; ++i) {
+                    const int index = j * imax + i;
+                    for (int k = 0; k < 9; ++k) read_value(host_f[k][index]);
+                }
+            }
+            for (int j = 0; j < jmax; ++j) {
+                for (int i = 0; i < imax; ++i) {
+                    double unused;
+                    for (int k = 0; k < 4; ++k) read_value(unused);
+                }
+            }
+            for (int j = 0; j < jmax; ++j) {
+                for (int i = 0; i < imax; ++i) {
+                    const int index = j * imax + i;
+                    for (int k = 0; k < 4; ++k)
+                        read_value(host_ef_table[k][index]);
+                }
+            }
+            for (int j = 0; j < jmax; ++j) {
+                for (int i = 0; i < imax; ++i) {
+                    double unused;
+                    for (int k = 0; k < 4; ++k) read_value(unused);
+                }
+            }
+
+            std::cout << "[HelmEos] Loaded complete 541x201 electron/positron table."
+                      << std::endl;
+            is_loaded = true;
+        }
+
+        for (int k = 0; k < 9; ++k) f[k] = host_f[k].data();
+        for (int k = 0; k < 4; ++k) ef_table[k] = host_ef_table[k].data();
+        specs = species_owner ? species_owner->get_host_view() : SpeciesHostView{};
+    }
+
+    HelmEosHostView get_view() const
+    {
+        return static_cast<const HelmEosHostView &>(*this);
+    }
 };

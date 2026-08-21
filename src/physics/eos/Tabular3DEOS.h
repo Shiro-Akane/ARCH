@@ -26,8 +26,9 @@
 
 #include "../species/Species.h"
 
-// Non-owning table view suitable for host/device numerical kernels.
-struct Tabular3DEOSView
+// One mathematical implementation parameterized by host or device species metadata.
+template <class SpeciesView>
+struct BasicTabular3DEOSView
 {
     // Table dimensions and logarithmic coordinate bounds.
     int n_rho, n_T, n_X;
@@ -41,13 +42,12 @@ struct Tabular3DEOSView
     const double *table_cs;
     const double *table_cv;
 
-    double *table_dP_drho; // Optional precomputed pressure-density derivative.
-    double *table_dP_dT;   // Optional precomputed pressure-temperature derivative.
+    const double *table_dP_drho; // Optional precomputed pressure-density derivative.
+    const double *table_dP_dT;   // Optional precomputed pressure-temperature derivative.
 
     bool uses_free_energy = false;
     std::array<const double*, tabular_eos::FieldCount> free_energy_fields{};
-
-    const SpeciesManager *specs;
+    SpeciesView specs{};
 
     int target_species_id;
 
@@ -57,36 +57,36 @@ struct Tabular3DEOSView
 
     // Domain checks and analytic ideal-gas fallback.
 
-    bool is_out_of_bounds(double log_rho, double log_T, double X) const
+    ARCH_INLINE bool is_out_of_bounds(double log_rho, double log_T, double X) const
     {
         return (log_rho < log_rho_min || log_rho > log_rho_max ||
                 log_T < log_T_min || log_T > log_T_max ||
                 X < X_min || X > X_max);
     }
 
-    double fallback_gamma() const { return 5.0 / 3.0; } // Monatomic ideal-gas fallback.
+    ARCH_INLINE double fallback_gamma() const { return 5.0 / 3.0; } // Monatomic ideal-gas fallback.
 
-    double fallback_pressure(double rho, double e) const
+    ARCH_INLINE double fallback_pressure(double rho, double e) const
     {
         return rho * e * (fallback_gamma() - 1.0);
     }
 
-    double fallback_temperature(double e, const double *Xi) const
+    ARCH_INLINE double fallback_temperature(double e, const double *Xi) const
     {
         // Abar=1 represents pure hydrogen when no SpeciesManager is attached.
-        double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
+        double Abar = (specs.count > 0) ? specs.calc_Abar(Xi) : 1.0;
         double R_spec = k_B_cgs / (Abar * m_u_cgs);
         return e * (fallback_gamma() - 1.0) / R_spec;
     }
 
-    double fallback_sound_speed(double rho, double e) const
+    ARCH_INLINE double fallback_sound_speed(double rho, double e) const
     {
         double p = fallback_pressure(rho, e);
         return std::sqrt(fallback_gamma() * p / rho);
     }
 
     // Trilinear interpolation in log(rho), log(T), and composition coordinate.
-    double interpolate_3d(const double *table, double rho, double T, double X) const
+    ARCH_INLINE double interpolate_3d(const double *table, double rho, double T, double X) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -185,7 +185,7 @@ struct Tabular3DEOSView
 
     // Composition-coordinate query used by generated network interfaces.
 
-    double get_target_X(const double *Xi) const
+    ARCH_INLINE double get_target_X(const double *Xi) const
     {
         // An explicit target species selects its mass fraction directly.
         if (target_species_id >= 0)
@@ -194,16 +194,16 @@ struct Tabular3DEOSView
         }
 
         // Otherwise derive electron fraction Ye when species metadata is available.
-        if (specs && specs->count() > 0)
+        if (specs.count > 0)
         {
-            return specs->calc_Ye(Xi);
+            return specs.calc_Ye(Xi);
         }
 
         // Ye=0.5 is the neutral symmetric-matter fallback without metadata.
         return 0.5;
     }
 
-    double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
+    ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -217,7 +217,7 @@ struct Tabular3DEOSView
                interpolate_3d(table_P, rho, T, X);
     }
 
-    double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -225,7 +225,7 @@ struct Tabular3DEOSView
         return get_pressure_from_rho_T(rho, T, Xi);
     }
 
-    double get_eint_from_T(double rho, double T_target, const double *Xi) const
+    ARCH_INLINE double get_eint_from_T(double rho, double T_target, const double *Xi) const
     {
         if (rho <= 1e-12 || T_target <= 1e-12)
             return 0.0;
@@ -234,7 +234,7 @@ struct Tabular3DEOSView
 
         if (is_out_of_bounds(std::log10(rho), std::log10(T_target), X))
         {
-            double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
+            double Abar = (specs.count > 0) ? specs.calc_Abar(Xi) : 1.0;
             double R_spec = k_B_cgs / (Abar * m_u_cgs);
             return T_target * R_spec / (fallback_gamma() - 1.0);
         }
@@ -243,7 +243,7 @@ struct Tabular3DEOSView
                interpolate_3d(table_E, rho, T_target, X);
     }
 
-    double get_cv(double rho, double T_target, const double *Xi) const
+    ARCH_INLINE double get_cv(double rho, double T_target, const double *Xi) const
     {
         if (rho <= 1e-12 || T_target <= 1e-12)
             return 0.0;
@@ -252,7 +252,7 @@ struct Tabular3DEOSView
 
         if (is_out_of_bounds(std::log10(rho), std::log10(T_target), X))
         {
-            double Abar = (specs && specs->count() > 0) ? specs->calc_Abar(Xi) : 1.0;
+            double Abar = (specs.count > 0) ? specs.calc_Abar(Xi) : 1.0;
             double R_spec = k_B_cgs / (Abar * m_u_cgs);
             return R_spec / (fallback_gamma() - 1.0);
         }
@@ -261,7 +261,7 @@ struct Tabular3DEOSView
                interpolate_3d(table_cv, rho, T_target, X);
     }
 
-    double get_temperature(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_temperature(double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -322,13 +322,13 @@ struct Tabular3DEOSView
         return T_guess;
     }
 
-    double get_pressure(const FluidVector &U, const double *Xi) const
+    ARCH_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
     {
         double e_int = eos_utils::extract_specific_internal_energy(U);
         return get_pressure_from_rho_e(U.rho, e_int, Xi);
     }
 
-    double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    ARCH_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
     {
         double e_int = eos_utils::extract_specific_internal_energy(U);
         if (U.rho <= 1e-12 || e_int <= 1e-12)
@@ -344,7 +344,7 @@ struct Tabular3DEOSView
                interpolate_3d(table_cs, U.rho, T, X);
     }
 
-    double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
+    ARCH_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
         if (rho < 1e-12 || e < 1e-12)
             return fallback_gamma();
@@ -358,7 +358,7 @@ struct Tabular3DEOSView
         return rho * sound_speed * sound_speed / p;
     }
 
-    double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
+    ARCH_INLINE double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
     {
         double X = get_target_X(Xi);
         if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
@@ -371,7 +371,7 @@ struct Tabular3DEOSView
     }
 
     // Derivative interface using table data when present and finite differences otherwise.
-    double get_dp_drho_e(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         double X = get_target_X(Xi);
         double T = get_temperature(rho, e, Xi);
@@ -390,7 +390,7 @@ struct Tabular3DEOSView
             std::pow(10.0, log_rho_max));
     }
 
-    double get_dp_de_rho(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         double X = get_target_X(Xi);
         double T = get_temperature(rho, e, Xi);
@@ -414,15 +414,15 @@ struct Tabular3DEOSView
                (2.0 * de);
     }
     // Damped Newton inversion from pressure to total-energy density.
-    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
+    ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
         return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
     }
 
-    double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
+    ARCH_INLINE double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
 
     // Pipeline: evaluate_state
-    void evaluate_state(eos_state_t& state) const {
+    ARCH_INLINE void evaluate_state(eos_state_t& state) const {
         // 1. Core Thermodynamics (P, E, cv)
         state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
         state.E = get_eint_from_T(state.rho, state.T, state.Xi);
@@ -435,8 +435,8 @@ struct Tabular3DEOSView
         const bool use_fallback = is_out_of_bounds(
             std::log10(state.rho), std::log10(state.T), X);
         if (use_fallback) {
-            const double Abar = (specs && specs->count() > 0)
-                ? specs->calc_Abar(state.Xi) : 1.0;
+            const double Abar = (specs.count > 0)
+                ? specs.calc_Abar(state.Xi) : 1.0;
             const double R_spec = k_B_cgs / (Abar * m_u_cgs);
             state.dp_dT = state.rho * R_spec;
         } else if (uses_free_energy) {
@@ -463,7 +463,13 @@ struct Tabular3DEOSView
         state.eta = 0.0;
     }
 
-    const SpeciesManager* get_species_manager() const { return specs; }
+};
+
+using Tabular3DEOSView = BasicTabular3DEOSView<SpeciesPODView>;
+
+struct Tabular3DEOSHostView : BasicTabular3DEOSView<SpeciesHostView>
+{
+    const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
 // Host owner for HDF5 loading and table lifetime; never used in cell kernels.
@@ -481,14 +487,32 @@ private:
     std::vector<double> h_table_dP_dT;
 
     std::array<std::vector<double>, tabular_eos::FieldCount> h_free_energy_fields;
-
-    Tabular3DEOSView view;
+    const SpeciesManager *specs_owner = nullptr;
+    Tabular3DEOSHostView view;
 
 public:
     Tabular3DEOS(const std::string &h5_filename, const SpeciesManager *specs_ptr = nullptr);
 
     // Solver dispatch receives only the lightweight non-owning view.
-    Tabular3DEOSView get_view() const { return view; }
+    Tabular3DEOSHostView get_view() const
+    {
+        Tabular3DEOSHostView rebound = view;
+        rebound.table_P = h_table_P.data();
+        rebound.table_E = h_table_E.data();
+        rebound.table_cs = h_table_cs.data();
+        rebound.table_cv = h_table_cv.data();
+        rebound.table_dP_drho = h_table_dP_drho.empty()
+            ? nullptr : h_table_dP_drho.data();
+        rebound.table_dP_dT = h_table_dP_dT.empty()
+            ? nullptr : h_table_dP_dT.data();
+        for (int field = 0; field < tabular_eos::FieldCount; ++field) {
+            rebound.free_energy_fields[field] =
+                h_free_energy_fields[field].empty()
+                    ? nullptr : h_free_energy_fields[field].data();
+        }
+        rebound.specs = specs_owner ? specs_owner->get_host_view() : SpeciesHostView{};
+        return rebound;
+    }
 
-    const SpeciesManager* get_species_manager() const { return view.specs; }
+    const SpeciesManager* get_species_manager() const { return specs_owner; }
 };

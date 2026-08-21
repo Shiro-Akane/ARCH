@@ -25,8 +25,9 @@
 
 #include "../species/Species.h"
 
-// Non-owning view for 16-vertex quadrilinear interpolation.
-struct Tabular4DEOSView
+// One mathematical implementation parameterized by host or device species metadata.
+template <class SpeciesView>
+struct BasicTabular4DEOSView
 {
     // Table dimensions and coordinate bounds for rho, energy, Abar, and Zbar.
     int n_rho, n_T, n_A, n_Z;
@@ -41,19 +42,18 @@ struct Tabular4DEOSView
     const double *table_cs;
     const double *table_cv;
 
-    double *table_dP_drho;
-    double *table_dP_dT;
+    const double *table_dP_drho;
+    const double *table_dP_dT;
 
     bool uses_free_energy = false;
     std::array<const double*, tabular_eos::FieldCount> free_energy_fields{};
-
-    const SpeciesManager *specs;
+    SpeciesView specs{};
 
     static constexpr double k_B_cgs = 1.380649e-16; // erg/K
     static constexpr double m_u_cgs = 1.660539e-24; // g
 
     // Domain check and analytic ideal-gas fallback.
-    bool is_out_of_bounds(double log_rho, double log_T, double A, double Z) const
+    ARCH_INLINE bool is_out_of_bounds(double log_rho, double log_T, double A, double Z) const
     {
         return (log_rho < log_rho_min || log_rho > log_rho_max ||
                 log_T < log_T_min || log_T > log_T_max ||
@@ -62,27 +62,27 @@ struct Tabular4DEOSView
     }
 
     // Monatomic ideal-gas ratio used only outside the tabulated domain.
-    double fallback_gamma() const { return 5.0 / 3.0; }
+    ARCH_INLINE double fallback_gamma() const { return 5.0 / 3.0; }
 
-    double fallback_pressure(double rho, double e) const
+    ARCH_INLINE double fallback_pressure(double rho, double e) const
     {
         return rho * e * (fallback_gamma() - 1.0);
     }
 
-    double fallback_temperature(double e, double Abar) const
+    ARCH_INLINE double fallback_temperature(double e, double Abar) const
     {
         double R_spec = k_B_cgs / (Abar * m_u_cgs);
         return e * (fallback_gamma() - 1.0) / R_spec;
     }
 
-    double fallback_sound_speed(double rho, double e) const
+    ARCH_INLINE double fallback_sound_speed(double rho, double e) const
     {
         double p = fallback_pressure(rho, e);
         return std::sqrt(fallback_gamma() * p / rho);
     }
 
     // Quadrilinear interpolation.
-    double interpolate_4d(const double *table, double rho, double T, double A, double Z) const
+    ARCH_INLINE double interpolate_4d(const double *table, double rho, double T, double A, double Z) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -194,21 +194,21 @@ struct Tabular4DEOSView
 
     // Composition coordinates Abar and Zbar.
 
-    double get_Abar(const double *Xi) const
+    ARCH_INLINE double get_Abar(const double *Xi) const
     {
-        if (specs && specs->count() > 0)
-            return specs->calc_Abar(Xi);
+        if (specs.count > 0)
+            return specs.calc_Abar(Xi);
         return 14.0; // Pure-nitrogen fallback when species metadata is absent.
     }
 
-    double get_Zbar(const double *Xi) const
+    ARCH_INLINE double get_Zbar(const double *Xi) const
     {
-        if (specs && specs->count() > 0)
-            return specs->calc_Zbar(Xi);
+        if (specs.count > 0)
+            return specs.calc_Zbar(Xi);
         return 7.0; // Matches the pure-nitrogen Abar fallback above.
     }
 
-    double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
+    ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -222,7 +222,7 @@ struct Tabular4DEOSView
                interpolate_4d(table_P, rho, T, A, Z);
     }
 
-    double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -230,7 +230,7 @@ struct Tabular4DEOSView
         return get_pressure_from_rho_T(rho, T, Xi);
     }
 
-    double get_eint_from_T(double rho, double T_target, const double *Xi) const
+    ARCH_INLINE double get_eint_from_T(double rho, double T_target, const double *Xi) const
     {
         if (rho <= 1e-12 || T_target <= 1e-12)
             return 0.0;
@@ -248,7 +248,7 @@ struct Tabular4DEOSView
                interpolate_4d(table_E, rho, T_target, A, Z);
     }
 
-    double get_cv(double rho, double T_target, const double *Xi) const
+    ARCH_INLINE double get_cv(double rho, double T_target, const double *Xi) const
     {
         if (rho <= 1e-12 || T_target <= 1e-12)
             return 0.0;
@@ -266,7 +266,7 @@ struct Tabular4DEOSView
                interpolate_4d(table_cv, rho, T_target, A, Z);
     }
 
-    double get_temperature(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_temperature(double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -327,13 +327,13 @@ struct Tabular4DEOSView
         return T_guess;
     }
 
-    double get_pressure(const FluidVector &U, const double *Xi) const
+    ARCH_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
     {
         double e_int = eos_utils::extract_specific_internal_energy(U);
         return get_pressure_from_rho_e(U.rho, e_int, Xi);
     }
 
-    double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
+    ARCH_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
     {
         double e_int = eos_utils::extract_specific_internal_energy(U);
         if (U.rho <= 1e-12 || e_int <= 1e-12)
@@ -349,7 +349,7 @@ struct Tabular4DEOSView
                interpolate_4d(table_cs, U.rho, T, A, Z);
     }
 
-    double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
+    ARCH_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
         if (rho < 1e-12 || e < 1e-12)
             return fallback_gamma();
@@ -363,7 +363,7 @@ struct Tabular4DEOSView
         return rho * sound_speed * sound_speed / p;
     }
 
-    double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
+    ARCH_INLINE double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
     {
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         if (is_out_of_bounds(std::log10(rho), std::log10(T), A, Z))
@@ -375,7 +375,7 @@ struct Tabular4DEOSView
                interpolate_4d(table_cs, rho, T, A, Z);
     }
 
-    double get_dp_drho_e(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         double T = get_temperature(rho, e, Xi);
@@ -394,7 +394,7 @@ struct Tabular4DEOSView
             std::pow(10.0, log_rho_max));
     }
 
-    double get_dp_de_rho(double rho, double e, const double *Xi) const
+    ARCH_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         double T = get_temperature(rho, e, Xi);
@@ -418,15 +418,15 @@ struct Tabular4DEOSView
                (2.0 * de);
     }
 
-    double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
+    ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
         return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
     }
 
-    double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
+    ARCH_INLINE double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
 
     // Pipeline: evaluate_state
-    void evaluate_state(eos_state_t& state) const {
+    ARCH_INLINE void evaluate_state(eos_state_t& state) const {
         // 1. Core Thermodynamics (P, E, cv)
         state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
         state.E = get_eint_from_T(state.rho, state.T, state.Xi);
@@ -466,7 +466,13 @@ struct Tabular4DEOSView
         state.eta = 0.0;
     }
 
-    const SpeciesManager* get_species_manager() const { return specs; }
+};
+
+using Tabular4DEOSView = BasicTabular4DEOSView<SpeciesPODView>;
+
+struct Tabular4DEOSHostView : BasicTabular4DEOSView<SpeciesHostView>
+{
+    const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
 // Host owner for HDF5 loading and table lifetime.
@@ -482,12 +488,30 @@ private:
     std::vector<double> h_table_dP_dT;
 
     std::array<std::vector<double>, tabular_eos::FieldCount> h_free_energy_fields;
-
-    Tabular4DEOSView view;
+    const SpeciesManager *specs_owner = nullptr;
+    Tabular4DEOSHostView view;
 
 public:
     Tabular4DEOS(const std::string &h5_filename, const SpeciesManager *specs_ptr = nullptr);
 
-    Tabular4DEOSView get_view() const { return view; }
-    const SpeciesManager* get_species_manager() const { return view.specs; }
+    Tabular4DEOSHostView get_view() const
+    {
+        Tabular4DEOSHostView rebound = view;
+        rebound.table_P = h_table_P.data();
+        rebound.table_E = h_table_E.data();
+        rebound.table_cs = h_table_cs.data();
+        rebound.table_cv = h_table_cv.data();
+        rebound.table_dP_drho = h_table_dP_drho.empty()
+            ? nullptr : h_table_dP_drho.data();
+        rebound.table_dP_dT = h_table_dP_dT.empty()
+            ? nullptr : h_table_dP_dT.data();
+        for (int field = 0; field < tabular_eos::FieldCount; ++field) {
+            rebound.free_energy_fields[field] =
+                h_free_energy_fields[field].empty()
+                    ? nullptr : h_free_energy_fields[field].data();
+        }
+        rebound.specs = specs_owner ? specs_owner->get_host_view() : SpeciesHostView{};
+        return rebound;
+    }
+    const SpeciesManager* get_species_manager() const { return specs_owner; }
 };
