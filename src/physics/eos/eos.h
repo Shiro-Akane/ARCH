@@ -36,4 +36,9 @@ struct EOSBase
  * double get_dp_de_rho(double rho, double e, const double *Xi) const;
  * void evaluate_state(eos_state_t& state) const;
  * const SpeciesManager* get_species_manager() const;
+ *
+ * evaluate_state must fill finite P, E, cv, sound_speed, dp_drho, and dp_dT
+ * for every valid input state.  eos_utils::get_isentropic_state_at_pressure_factor
+ * supplies the shared fixed-composition isentrope implementation for every
+ * policy; concrete EOS types must not duplicate that solver.
  */

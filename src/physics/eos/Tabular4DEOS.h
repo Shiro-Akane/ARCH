@@ -366,10 +366,26 @@ struct Tabular4DEOSView
         // 2. Derivatives and Sound Speed
         state.sound_speed = get_sound_speed_from_rho_T(state.rho, state.T, state.Xi);
         state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
-        state.dp_dT = 0.0;
-        if (table_dP_dT) {
-            double A = get_Abar(state.Xi), Z = get_Zbar(state.Xi);
+        const double A = get_Abar(state.Xi);
+        const double Z = get_Zbar(state.Xi);
+        const bool use_fallback = is_out_of_bounds(
+            std::log10(state.rho), std::log10(state.T), A, Z);
+        if (use_fallback) {
+            const double R_spec = k_B_cgs / (A * m_u_cgs);
+            state.dp_dT = state.rho * R_spec;
+        } else if (table_dP_dT) {
             state.dp_dT = interpolate_4d(table_dP_dT, state.rho, state.T, A, Z);
+        } else {
+            const double dT = std::max(std::abs(state.T) * 1.0e-4, 1.0e-8);
+            const double table_T_min = std::pow(10.0, log_T_min);
+            const double table_T_max = std::pow(10.0, log_T_max - 2.0e-6);
+            const double lower_T = std::max(state.T - dT, table_T_min);
+            const double upper_T = std::min(state.T + dT, table_T_max);
+            const double lower_P = interpolate_4d(
+                table_P, state.rho, lower_T, A, Z);
+            const double upper_P = interpolate_4d(
+                table_P, state.rho, upper_T, A, Z);
+            state.dp_dT = (upper_P - lower_P) / (upper_T - lower_T);
         }
 
         // 3. Deep Physical Variables (Unused in Tabular)
