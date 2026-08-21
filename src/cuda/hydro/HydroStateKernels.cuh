@@ -90,12 +90,17 @@ inline cudaError_t launch_hydro_divergence(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
     double dt, int direction, cudaStream_t stream)
 {
+    const int directional_end = direction == 0 ? grid.ie
+        : (direction == 1 ? grid.je : grid.ke);
+    const int directional_extent = direction == 0 ? grid.total_x
+        : (direction == 1 ? grid.total_y : grid.total_z);
     if (!valid_hydro_view(flux) || !valid_hydro_view(delta)
         || flux.n_species != delta.n_species
         || flux.total_size != delta.total_size
         || flux.total_size != grid.total_size
         || !valid_hydro_grid(grid)
         || direction < 0 || direction >= grid.dim
+        || directional_end >= directional_extent
         || grid.cell_volume == nullptr
         || grid.face_area_lower[direction] == nullptr
         || grid.face_area_upper[direction] == nullptr)
@@ -105,7 +110,7 @@ inline cudaError_t launch_hydro_divergence(
     if (count <= 0)
         return cudaSuccess;
     detail::hydro_divergence_kernel
-        <<<(count + threads - 1) / threads, threads, 0, stream>>>(
+        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
             flux, delta, grid, dt, direction);
     return cudaGetLastError();
 }
@@ -125,7 +130,7 @@ inline cudaError_t launch_compute_hydro_dt(
     if (count <= 0)
         return cudaErrorInvalidValue;
     detail::hydro_cfl_candidates_kernel
-        <<<(count + threads - 1) / threads, threads, 0, stream>>>(
+        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
             state, grid, eos, workspace.cfl_candidates);
     cudaError_t error = cudaGetLastError();
     if (error != cudaSuccess)

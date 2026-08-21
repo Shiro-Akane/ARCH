@@ -55,7 +55,7 @@ inline cudaError_t launch_hydro_single_stage_update(
     if (count <= 0)
         return cudaSuccess;
     detail::hydro_single_stage_update_kernel
-        <<<(count + threads - 1) / threads, threads, 0, stream>>>(
+        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
             old_state, current_state, destination, delta, grid,
             old_weight, flux_weight, density_floor, maximum_internal_energy);
     return cudaGetLastError();

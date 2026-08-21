@@ -59,13 +59,22 @@ inline cudaError_t launch_hydro_faces(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     const EosView& eos, int direction, double coefficient, cudaStream_t stream)
 {
+    const int directional_begin = direction == 0 ? grid.is
+        : (direction == 1 ? grid.js : grid.ks);
+    const int directional_end = direction == 0 ? grid.ie
+        : (direction == 1 ? grid.je : grid.ke);
+    const int directional_extent = direction == 0 ? grid.total_x
+        : (direction == 1 ? grid.total_y : grid.total_z);
     if (!valid_hydro_view(state) || !valid_hydro_view(flux)
         || state.n_species != flux.n_species
         || state.total_size != flux.total_size
         || state.total_size != grid.total_size
         || !valid_hydro_grid(grid)
         || grid.ng < Reconstruction::ghost_depth
-        || direction < 0 || direction >= grid.dim)
+        || direction < 0 || direction >= grid.dim
+        || directional_begin < Reconstruction::ghost_depth
+        || directional_extent - directional_end
+            < Reconstruction::ghost_depth)
         return cudaErrorInvalidValue;
     int ni = grid.ie - grid.is;
     int nj = grid.je - grid.js;
@@ -81,7 +90,7 @@ inline cudaError_t launch_hydro_faces(
     if (count <= 0)
         return cudaSuccess;
     detail::hydro_face_kernel<Reconstruction, Flux>
-        <<<(count + threads - 1) / threads, threads, 0, stream>>>(
+        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
             state, flux, grid, eos, direction, coefficient);
     return cudaGetLastError();
 }

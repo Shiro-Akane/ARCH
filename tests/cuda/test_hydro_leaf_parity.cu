@@ -442,6 +442,116 @@ struct DeviceStateFixture
     }
 };
 
+arch::cuda::DeviceGridView make_three_dimensional_validation_grid(
+    const arch::cuda::DeviceGridView& source)
+{
+    arch::cuda::DeviceGridView grid = source;
+    grid.dim = 3;
+    grid.ng = 3;
+    grid.stride_y = 8;
+    grid.stride_z = 64;
+    grid.total_size = 512;
+    grid.total_x = 8;
+    grid.total_y = 8;
+    grid.total_z = 8;
+    grid.is = 3;
+    grid.ie = 4;
+    grid.js = 3;
+    grid.je = 4;
+    grid.ks = 3;
+    grid.ke = 4;
+    return grid;
+}
+
+arch::cuda::DeviceGridView with_directional_edge(
+    arch::cuda::DeviceGridView grid, int direction, bool upper_edge)
+{
+    int* begin[3] = {&grid.is, &grid.js, &grid.ks};
+    int* end[3] = {&grid.ie, &grid.je, &grid.ke};
+    const int extent[3] = {grid.total_x, grid.total_y, grid.total_z};
+    if (upper_edge) {
+        *begin[direction] = extent[direction] - 1;
+        *end[direction] = extent[direction];
+    }
+    else {
+        *begin[direction] = 0;
+        *end[direction] = 1;
+    }
+    return grid;
+}
+
+arch::cuda::DeviceGridView with_directional_margin(
+    arch::cuda::DeviceGridView grid, int direction,
+    bool upper_margin, int margin)
+{
+    int* begin[3] = {&grid.is, &grid.js, &grid.ks};
+    int* end[3] = {&grid.ie, &grid.je, &grid.ke};
+    const int extent[3] = {grid.total_x, grid.total_y, grid.total_z};
+    if (upper_margin)
+        *end[direction] = extent[direction] - margin;
+    else
+        *begin[direction] = margin;
+    return grid;
+}
+
+template <typename Reconstruction>
+bool rejects_all_directional_face_edges(
+    arch::cuda::DeviceStateView state, arch::cuda::DeviceStateView flux,
+    arch::cuda::DeviceGridView grid)
+{
+    for (int direction = 0; direction < 3; ++direction) {
+        if (arch::cuda::launch_hydro_faces<
+                Reconstruction, arch::cuda::CudaHllFlux>(
+                state, flux,
+                with_directional_edge(grid, direction, true),
+                TestIdealGas{}, direction, 0.0, nullptr)
+            != cudaErrorInvalidValue)
+            return false;
+        if constexpr (Reconstruction::ghost_depth > 1) {
+            constexpr int insufficient_margin =
+                Reconstruction::ghost_depth - 1;
+            if (arch::cuda::launch_hydro_faces<
+                    Reconstruction, arch::cuda::CudaHllFlux>(
+                    state, flux,
+                    with_directional_margin(
+                        grid, direction, true, insufficient_margin),
+                    TestIdealGas{}, direction, 0.0, nullptr)
+                != cudaErrorInvalidValue)
+                return false;
+            if (arch::cuda::launch_hydro_faces<
+                    Reconstruction, arch::cuda::CudaHllFlux>(
+                    state, flux,
+                    with_directional_margin(
+                        grid, direction, false, insufficient_margin),
+                    TestIdealGas{}, direction, 0.0, nullptr)
+                != cudaErrorInvalidValue)
+                return false;
+        }
+        if (arch::cuda::launch_hydro_faces<
+                Reconstruction, arch::cuda::CudaHllFlux>(
+                state, flux,
+                with_directional_edge(grid, direction, false),
+                TestIdealGas{}, direction, 0.0, nullptr)
+            != cudaErrorInvalidValue)
+            return false;
+    }
+    return true;
+}
+
+bool rejects_all_directional_divergence_upper_edges(
+    arch::cuda::DeviceStateView flux, arch::cuda::DeviceStateView delta,
+    arch::cuda::DeviceGridView grid)
+{
+    for (int direction = 0; direction < 3; ++direction) {
+        if (arch::cuda::launch_hydro_divergence(
+                flux, delta, with_directional_edge(grid, direction, true),
+                0.5, direction, nullptr)
+            != cudaErrorInvalidValue)
+            return false;
+    }
+    return true;
+}
+
 bool device_leaf_result_matches(const DeviceLeafResult& actual)
 {
     const FluidVector hll = frozen_vector(
@@ -535,7 +645,10 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
 int run_device_primitives()
 {
     using namespace arch::cuda;
-    constexpr int total = 32;
+    if (detail::hydro_launch_blocks(
+            std::numeric_limits<int>::max(), 128) != 16777216)
+        return 178;
+    constexpr int total = 512;
     constexpr int active = 8;
     constexpr int face = active;
     DeviceStateFixture state(total, 2);
@@ -687,6 +800,13 @@ int run_device_primitives()
     flux.set_species(1, face, 0.875);
     if (!flux.upload())
         return 116;
+    const std::vector<double> face_rho_sentinel = flux.rho;
+    const std::vector<double> face_mom_u_sentinel = flux.mom_u;
+    const std::vector<double> face_mom_v_sentinel = flux.mom_v;
+    const std::vector<double> face_mom_w_sentinel = flux.mom_w;
+    const std::vector<double> face_eng_sentinel = flux.eng;
+    const std::vector<double> face_enuc_sentinel = flux.enuc_rate;
+    const std::vector<double> face_species_sentinel = flux.mass_fractions;
     const auto pcm_face_error = [&](DeviceStateView input,
                                     DeviceStateView output,
                                     DeviceGridView candidate_grid,
@@ -770,13 +890,58 @@ int run_device_primitives()
             state.view, flux.view, bad_grid, TestIdealGas{},
             0, 0.0, nullptr) != cudaErrorInvalidValue)
         return 130;
+    const DeviceGridView three_dimensional_grid =
+        make_three_dimensional_validation_grid(grid);
+    if (!rejects_all_directional_face_edges<CudaPcmReconstruction>(
+            state.view, flux.view, three_dimensional_grid)) {
+        cudaDeviceSynchronize();
+        return 172;
+    }
+    if (!rejects_all_directional_face_edges<
+            CudaMusclReconstruction<MinMod>>(
+            state.view, flux.view, three_dimensional_grid)) {
+        cudaDeviceSynchronize();
+        return 173;
+    }
+    if (!rejects_all_directional_face_edges<CudaPpmReconstruction>(
+            state.view, flux.view, three_dimensional_grid)) {
+        cudaDeviceSynchronize();
+        return 174;
+    }
+    DeviceStateView overflow_state = state.view;
+    DeviceStateView overflow_flux = flux.view;
+    DeviceGridView overflow_grid = grid;
+    const int overflowing_total = std::numeric_limits<int>::max() / 2 + 1;
+    overflow_state.total_size = overflowing_total;
+    overflow_flux.total_size = overflowing_total;
+    overflow_grid.total_size = overflowing_total;
+    overflow_grid.total_x = overflowing_total;
+    overflow_grid.stride_y = overflowing_total;
+    overflow_grid.stride_z = overflowing_total;
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaHllFlux>(
+            overflow_state, overflow_flux, overflow_grid, TestIdealGas{},
+            0, 0.0, nullptr) != cudaErrorInvalidValue)
+        return 175;
+    DeviceGridView overflowing_stride_grid = three_dimensional_grid;
+    overflowing_stride_grid.total_y = std::numeric_limits<int>::max() / 4;
+    if (launch_hydro_faces<CudaPcmReconstruction, CudaHllFlux>(
+            state.view, flux.view, overflowing_stride_grid, TestIdealGas{},
+            0, 0.0, nullptr) != cudaErrorInvalidValue)
+        return 176;
     if (cudaDeviceSynchronize() != cudaSuccess || !flux.download()
         || !vector_bits(flux.load(face),
                         0x4033000000000000ULL, 0x4032000000000000ULL,
                         0x4031000000000000ULL, 0x4030000000000000ULL,
                         0x402e000000000000ULL)
         || !exact_bits(flux.species(0, face), 0x3fc0000000000000ULL)
-        || !exact_bits(flux.species(1, face), 0x3fec000000000000ULL))
+        || !exact_bits(flux.species(1, face), 0x3fec000000000000ULL)
+        || flux.rho != face_rho_sentinel
+        || flux.mom_u != face_mom_u_sentinel
+        || flux.mom_v != face_mom_v_sentinel
+        || flux.mom_w != face_mom_w_sentinel
+        || flux.eng != face_eng_sentinel
+        || flux.enuc_rate != face_enuc_sentinel
+        || flux.mass_fractions != face_species_sentinel)
         return 131;
 
     double* volume = nullptr;
@@ -799,9 +964,11 @@ int run_device_primitives()
     DeviceStateFixture delta(total, 2);
     if (!delta.valid)
         return 107;
-    delta.store(active, {1, 2, 3, 4, 5});
-    delta.set_species(0, active, 0.5);
-    delta.set_species(1, active, -1.0);
+    for (int cell = 0; cell < total; ++cell) {
+        delta.store(cell, {1, 2, 3, 4, 5});
+        delta.set_species(0, cell, 0.5);
+        delta.set_species(1, cell, -1.0);
+    }
     flux.store(active, {2, 4, 6, 8, 10});
     flux.store(active + 1, {1, 1, 1, 1, 1});
     flux.set_species(0, active, 2.0);
@@ -810,6 +977,13 @@ int run_device_primitives()
     flux.set_species(1, active + 1, 3.0);
     if (!delta.upload() || !flux.upload())
         return 108;
+    const std::vector<double> delta_rho_sentinel = delta.rho;
+    const std::vector<double> delta_mom_u_sentinel = delta.mom_u;
+    const std::vector<double> delta_mom_v_sentinel = delta.mom_v;
+    const std::vector<double> delta_mom_w_sentinel = delta.mom_w;
+    const std::vector<double> delta_eng_sentinel = delta.eng;
+    const std::vector<double> delta_enuc_sentinel = delta.enuc_rate;
+    const std::vector<double> delta_species_sentinel = delta.mass_fractions;
     const auto divergence_error = [&](DeviceStateView input_flux,
                                       DeviceStateView output_delta,
                                       DeviceGridView candidate_grid,
@@ -879,13 +1053,32 @@ int run_device_primitives()
         return 145;
     if (!divergence_error(flux.view, delta.view, grid, 1))
         return 146;
+    DeviceGridView divergence_edge_grid =
+        make_three_dimensional_validation_grid(grid);
+    for (int direction = 0; direction < 3; ++direction) {
+        divergence_edge_grid.face_area_lower[direction] = lower_area;
+        divergence_edge_grid.face_area_upper[direction] = upper_area;
+    }
+    divergence_edge_grid.cell_volume = volume;
+    if (!rejects_all_directional_divergence_upper_edges(
+            flux.view, delta.view, divergence_edge_grid)) {
+        cudaDeviceSynchronize();
+        return 177;
+    }
     if (cudaDeviceSynchronize() != cudaSuccess || !delta.download()
         || !vector_bits(delta.load(active),
                         0x3ff0000000000000ULL, 0x4000000000000000ULL,
                         0x4008000000000000ULL, 0x4010000000000000ULL,
                         0x4014000000000000ULL)
         || !exact_bits(delta.species(0, active), 0x3fe0000000000000ULL)
-        || !exact_bits(delta.species(1, active), 0xbff0000000000000ULL))
+        || !exact_bits(delta.species(1, active), 0xbff0000000000000ULL)
+        || delta.rho != delta_rho_sentinel
+        || delta.mom_u != delta_mom_u_sentinel
+        || delta.mom_v != delta_mom_v_sentinel
+        || delta.mom_w != delta_mom_w_sentinel
+        || delta.eng != delta_eng_sentinel
+        || delta.enuc_rate != delta_enuc_sentinel
+        || delta.mass_fractions != delta_species_sentinel)
         return 147;
     const FluidVector expected_delta = frozen_vector(
         0x3ff8000000000000ULL, 0x400c000000000000ULL,

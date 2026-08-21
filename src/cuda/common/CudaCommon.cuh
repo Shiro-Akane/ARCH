@@ -2,6 +2,7 @@
 
 #include <cuda_runtime.h>
 
+#include <limits>
 #include <type_traits>
 
 #include "../../data/FluidState.h"
@@ -10,6 +11,14 @@
 namespace arch::cuda
 {
 inline constexpr int kMaxDeviceSpecies = 30;
+
+namespace detail
+{
+inline int hydro_launch_blocks(int count, int threads)
+{
+    return (count - 1) / threads + 1;
+}
+} // namespace detail
 
 enum class DeviceGeometry : int
 {
@@ -123,7 +132,7 @@ struct CudaHydroWorkspaceView
 
 inline bool valid_hydro_view(const DeviceStateView& view)
 {
-    return view.total_size > 0
+    if (!(view.total_size > 0
         && view.n_species >= 0
         && view.n_species <= kMaxDeviceSpecies
         && view.rho != nullptr
@@ -132,21 +141,37 @@ inline bool valid_hydro_view(const DeviceStateView& view)
         && view.mom_w != nullptr
         && view.eng != nullptr
         && view.enuc_rate != nullptr
-        && (view.n_species == 0 || view.mass_fractions != nullptr);
+        && (view.n_species == 0 || view.mass_fractions != nullptr)))
+        return false;
+    return view.n_species == 0
+        || view.total_size
+            <= std::numeric_limits<int>::max() / view.n_species;
 }
 
 inline bool valid_hydro_grid(const DeviceGridView& grid)
 {
     if (grid.dim < 1 || grid.dim > 3 || grid.ng < 0
-        || grid.stride_y <= 0 || grid.stride_z <= 0
+        || grid.stride_y < grid.total_x || grid.stride_z <= 0
         || grid.total_size <= 0 || grid.total_x <= 0
         || grid.total_y <= 0 || grid.total_z <= 0
         || grid.is < 0 || grid.is >= grid.ie || grid.ie > grid.total_x
         || grid.js < 0 || grid.js >= grid.je || grid.je > grid.total_y
         || grid.ks < 0 || grid.ks >= grid.ke || grid.ke > grid.total_z)
         return false;
-    return grid.index(grid.ie - 1, grid.je - 1, grid.ke - 1)
-        < grid.total_size;
+    if (grid.total_y > std::numeric_limits<int>::max() / grid.stride_y)
+        return false;
+    const int minimum_stride_z = grid.total_y * grid.stride_y;
+    if (grid.stride_z < minimum_stride_z)
+        return false;
+
+    int remaining = grid.total_size - 1;
+    if (grid.total_z - 1 > remaining / grid.stride_z)
+        return false;
+    remaining -= (grid.total_z - 1) * grid.stride_z;
+    if (grid.total_y - 1 > remaining / grid.stride_y)
+        return false;
+    remaining -= (grid.total_y - 1) * grid.stride_y;
+    return grid.total_x - 1 <= remaining;
 }
 
 static_assert(std::is_standard_layout_v<DeviceStateView>);
