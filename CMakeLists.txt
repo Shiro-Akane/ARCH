@@ -62,6 +62,9 @@ option(ARCH_ENABLE_KLU "Enable SuiteSparse KLU for large reaction networks" ON)
 option(ARCH_FETCH_SUITESPARSE "Fetch pinned SuiteSparse when KLU is not installed" ON)
 set(ARCH_CUSTOM_NETWORKS "" CACHE STRING "Semicolon-separated custom network IDs to compile; empty selects all")
 set(ARCH_CUSTOM_NETWORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/custom" CACHE PATH "Custom network package root")
+# This seam is deliberately opt-in: a normal CPU configure must neither enable
+# CUDA nor discover a toolkit or nvcc.
+option(ARCH_ENABLE_CUDA "Build focused CUDA compile probes and later CUDA backend" OFF)
 
 set(ARCH_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Directory for ARCH executables from this build tree")
 set(CMAKE_VERBOSE_MAKEFILE ${ARCH_VERBOSE_BUILD})
@@ -275,6 +278,39 @@ set_target_properties(arch_solver_dispatch PROPERTIES
 )
 
 set_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_OUTPUT_DIRECTORY}")
+
+# Focused latest-main authority coverage intentionally stays independent from
+# ARCH and its HDF5 linkage so it can run under host sanitizers.
+include(CTest)
+if(BUILD_TESTING)
+    find_package(Threads REQUIRED)
+    add_executable(arch_mainline_authority tests/cuda/test_mainline_authority.cpp)
+    target_compile_features(arch_mainline_authority PRIVATE cxx_std_20)
+    target_include_directories(arch_mainline_authority PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_definitions(arch_mainline_authority PRIVATE
+        ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    target_link_libraries(arch_mainline_authority PRIVATE Threads::Threads)
+    add_test(NAME mainline_authority COMMAND arch_mainline_authority)
+endif()
+
+if(ARCH_ENABLE_CUDA)
+    enable_language(CUDA)
+
+    # Task A owns only this compile probe.  A later task may create one normal
+    # arch_cuda_backend STATIC target for production CUDA sources; do not glob
+    # .cu files into ARCH or share CUDA OBJECT files across consumers.
+    add_executable(arch_cuda_compile_probe tests/cuda/test_cuda_compile_probe.cu)
+    target_compile_features(arch_cuda_compile_probe PRIVATE cxx_std_20)
+    target_include_directories(arch_cuda_compile_probe PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    set_target_properties(arch_cuda_compile_probe PROPERTIES
+        CUDA_STANDARD 20
+        CUDA_STANDARD_REQUIRED ON)
+    if(BUILD_TESTING)
+        add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
+    endif()
+endif()
 
 # ==============================================================================
 # Dependencies

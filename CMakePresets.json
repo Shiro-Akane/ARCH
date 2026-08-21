@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 19,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "cuda-dev-sm86",
+      "displayName": "CUDA development (sm86)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/cuda-dev-sm86",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "BUILD_TESTING": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "86"
+      }
+    },
+    {
+      "name": "cuda-release-sm90",
+      "displayName": "CUDA release (sm90)",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/cuda-release-sm90",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "BUILD_TESTING": "ON",
+        "CMAKE_CUDA_ARCHITECTURES": "90"
+      }
+    }
+  ]
+}
