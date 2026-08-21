@@ -333,10 +333,21 @@ if(ARCH_ENABLE_CUDA)
     set_target_properties(arch_cuda_eos_host_device_parity PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
+    add_executable(arch_cuda_network_nse_device
+        tests/cuda/test_network_nse_device.cu)
+    target_compile_features(arch_cuda_network_nse_device PRIVATE cxx_std_20)
+    target_include_directories(arch_cuda_network_nse_device PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_options(arch_cuda_network_nse_device PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+    set_target_properties(arch_cuda_network_nse_device PROPERTIES
+        CUDA_STANDARD 20
+        CUDA_STANDARD_REQUIRED ON)
     if(BUILD_TESTING)
         add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
         add_test(NAME hydro_leaf_parity COMMAND arch_cuda_hydro_leaf_parity)
         add_test(NAME eos_host_device_parity COMMAND arch_cuda_eos_host_device_parity)
+        add_test(NAME network_nse_device COMMAND arch_cuda_network_nse_device)
     endif()
 endif()
 

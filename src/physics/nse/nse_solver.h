@@ -11,8 +11,32 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
+#include <cstdint>
 #include <limits>
+
+#include "../../core/ArchPortability.h"
+
+namespace arch::nse_detail {
+
+ARCH_HOST_DEVICE inline bool is_finite_bits(double value)
+{
+#if defined(__CUDA_ARCH__)
+    const auto bits = static_cast<unsigned long long>(__double_as_longlong(value));
+#else
+    const auto bits = std::bit_cast<std::uint64_t>(value);
+#endif
+    return (bits & 0x7ff0000000000000ULL) != 0x7ff0000000000000ULL;
+}
+
+ARCH_HOST_DEVICE inline double clamp_by_value(double value, double lower,
+                                               double upper)
+{
+    return value < lower ? lower : (value > upper ? upper : value);
+}
+
+} // namespace arch::nse_detail
 
 /**
  * @brief Timmes-derived nuclear statistical equilibrium solver.
@@ -51,8 +75,9 @@ struct NSESolver
      * @return true only after Newton convergence and an independent
      *         mass/charge-conservation check
      */
-    static bool solve(double T, double rho, double Ye,
-                      const double* X_old, double* X_out, double& enuc)
+    ARCH_HOST_DEVICE static bool solve(double T, double rho, double Ye,
+                                       const double* X_old, double* X_out,
+                                       double& enuc)
     {
         enuc = 0.0;
         if (X_old == nullptr || X_out == nullptr || !std::isfinite(T)
@@ -71,14 +96,15 @@ struct NSESolver
         if (!std::isfinite(kT_mev) || kT_mev <= 0.0) return false;
 
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (!std::isfinite(X_old[i]) || X_old[i] < -conservation_tol) {
+            if (!arch::nse_detail::is_finite_bits(X_old[i])
+                || X_old[i] < -conservation_tol) {
                 return false;
             }
 
-            const double A = NetType::AION[i];
-            const double Z = NetType::ZION[i];
-            const double binding = NetType::BINDING_E[i];
-            const double weight = NetType::SPIN[i];
+            const double A = NetType::aion(i);
+            const double Z = NetType::zion(i);
+            const double binding = NetType::binding_energy(i);
+            const double weight = NetType::spin_weight(i);
             if (!std::isfinite(A) || !std::isfinite(Z)
                 || !std::isfinite(binding) || !std::isfinite(weight)
                 || A <= 0.0 || Z < 0.0 || Z > A) {
@@ -135,8 +161,8 @@ struct NSESolver
         for (int i = 0; i < NUM_SPEC; ++i) {
             delta_binding +=
                 static_cast<long double>(solution[i] - X_old[i])
-                * static_cast<long double>(NetType::BINDING_E[i]
-                                           / NetType::AION[i]);
+                * static_cast<long double>(NetType::binding_energy(i)
+                                           / NetType::aion(i));
         }
 
         const double energy = binding_energy_conversion()
@@ -180,7 +206,7 @@ private:
         double j11 = 0.0;
     };
 
-    static constexpr double binding_energy_conversion()
+    ARCH_HOST_DEVICE static constexpr double binding_energy_conversion()
     {
         if constexpr (requires { NetType::NSE_ENERGY_CONVERSION; }) {
             return NetType::NSE_ENERGY_CONVERSION;
@@ -189,19 +215,19 @@ private:
         }
     }
 
-    static bool evaluate(const std::array<double, NUM_SPEC>& log_base,
-                         double eta_n, double eta_p, double Ye,
-                         Evaluation& out)
+    ARCH_HOST_DEVICE static bool evaluate(
+        const std::array<double, NUM_SPEC>& log_base,
+        double eta_n, double eta_p, double Ye, Evaluation& out)
     {
         std::array<double, NUM_SPEC> log_x{};
         double max_log_x = -std::numeric_limits<double>::infinity();
 
 #pragma omp simd reduction(max:max_log_x)
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (NetType::SPIN[i] > 0.0) {
-                const double neutron_number = NetType::AION[i] - NetType::ZION[i];
+            if (NetType::spin_weight(i) > 0.0) {
+                const double neutron_number = NetType::aion(i) - NetType::zion(i);
                 log_x[i] = log_base[i] + neutron_number * eta_n
-                         + NetType::ZION[i] * eta_p;
+                         + NetType::zion(i) * eta_p;
                 max_log_x = std::max(max_log_x, log_x[i]);
             } else {
                 log_x[i] = -std::numeric_limits<double>::infinity();
@@ -217,10 +243,10 @@ private:
         double sum_qz = 0.0;
 #pragma omp simd reduction(+:sum_w,sum_n,sum_z,sum_q,sum_qn,sum_qz)
         for (int i = 0; i < NUM_SPEC; ++i) {
-            const double w = NetType::SPIN[i] > 0.0
+            const double w = NetType::spin_weight(i) > 0.0
                            ? std::exp(log_x[i] - max_log_x) : 0.0;
-            const double A = NetType::AION[i];
-            const double Z = NetType::ZION[i];
+            const double A = NetType::aion(i);
+            const double Z = NetType::zion(i);
             const double N = A - Z;
             const double q = Z / A;
             out.x[i] = w;
@@ -255,14 +281,15 @@ private:
             && std::isfinite(out.j10) && std::isfinite(out.j11);
     }
 
-    static double objective(const Evaluation& e, double q_span)
+    ARCH_HOST_DEVICE static double objective(const Evaluation& e,
+                                              double q_span)
     {
         const double scaled_charge = e.f_charge / std::max(q_span, 1.0e-3);
         return 0.5 * (e.f_mass * e.f_mass
                     + scaled_charge * scaled_charge);
     }
 
-    static bool solve_two_dimensional(
+    ARCH_HOST_DEVICE static bool solve_two_dimensional(
         const std::array<double, NUM_SPEC>& log_base, double Ye,
         double q_span, std::array<double, NUM_SPEC>& solution)
     {
@@ -333,7 +360,7 @@ private:
         return solve_charge_bisection(log_base, Ye, solution);
     }
 
-    static bool normalized_at_charge_potential(
+    ARCH_HOST_DEVICE static bool normalized_at_charge_potential(
         const std::array<double, NUM_SPEC>& log_base, double Ye,
         double charge_potential, Evaluation& result)
     {
@@ -346,8 +373,8 @@ private:
         // guess, then solve log(sum X)=0 analytically with d/deta_n=<A>.
         double eta_n =
             -(log_base[anchor]
-              + NetType::ZION[anchor] * charge_potential)
-            / NetType::AION[anchor];
+              + NetType::zion(anchor) * charge_potential)
+            / NetType::aion(anchor);
         for (int iter = 0; iter < max_iterations; ++iter) {
             if (!evaluate(log_base, eta_n, eta_n + charge_potential,
                           Ye, result)) {
@@ -356,13 +383,13 @@ private:
             if (std::abs(result.f_mass) < residual_tol) return true;
             const double mean_a = result.j00 + result.j01;
             if (!std::isfinite(mean_a) || mean_a <= 0.0) return false;
-            eta_n += std::clamp(-result.f_mass / mean_a,
-                                -max_newton_step, max_newton_step);
+            eta_n += arch::nse_detail::clamp_by_value(
+                -result.f_mass / mean_a, -max_newton_step, max_newton_step);
         }
         return false;
     }
 
-    static bool solve_charge_bisection(
+    ARCH_HOST_DEVICE static bool solve_charge_bisection(
         const std::array<double, NUM_SPEC>& log_base, double Ye,
         std::array<double, NUM_SPEC>& solution)
     {
@@ -435,22 +462,22 @@ private:
         return false;
     }
 
-    static bool solve_degenerate(
+    ARCH_HOST_DEVICE static bool solve_degenerate(
         const std::array<double, NUM_SPEC>& log_base,
         double Ye,
         std::array<double, NUM_SPEC>& solution)
     {
         int anchor = best_anchor(Ye);
         if (anchor < 0) return false;
-        double eta = -log_base[anchor] / NetType::AION[anchor];
+        double eta = -log_base[anchor] / NetType::aion(anchor);
 
         for (int iter = 0; iter < max_iterations; ++iter) {
             double max_log_x = -std::numeric_limits<double>::infinity();
             std::array<double, NUM_SPEC> log_x{};
 #pragma omp simd reduction(max:max_log_x)
             for (int i = 0; i < NUM_SPEC; ++i) {
-                if (NetType::SPIN[i] > 0.0) {
-                    log_x[i] = log_base[i] + NetType::AION[i] * eta;
+                if (NetType::spin_weight(i) > 0.0) {
+                    log_x[i] = log_base[i] + NetType::aion(i) * eta;
                     max_log_x = std::max(max_log_x, log_x[i]);
                 } else {
                     log_x[i] = -std::numeric_limits<double>::infinity();
@@ -462,11 +489,11 @@ private:
             double sum_aw = 0.0;
 #pragma omp simd reduction(+:sum_w,sum_aw)
             for (int i = 0; i < NUM_SPEC; ++i) {
-                const double w = NetType::SPIN[i] > 0.0
+                const double w = NetType::spin_weight(i) > 0.0
                                ? std::exp(log_x[i] - max_log_x) : 0.0;
                 solution[i] = w;
                 sum_w += w;
-                sum_aw += w * NetType::AION[i];
+                sum_aw += w * NetType::aion(i);
             }
             if (!std::isfinite(sum_w) || sum_w <= 0.0) return false;
 
@@ -479,26 +506,25 @@ private:
                 return true;
             }
             if (!std::isfinite(mean_a) || mean_a <= 0.0) return false;
-            const double delta = std::clamp(-f / mean_a,
-                                            -max_newton_step,
-                                            max_newton_step);
+            const double delta = arch::nse_detail::clamp_by_value(
+                -f / mean_a, -max_newton_step, max_newton_step);
             eta += delta;
         }
         return false;
     }
 
-    static int best_anchor(double Ye)
+    ARCH_HOST_DEVICE static int best_anchor(double Ye)
     {
         int anchor = -1;
         double best_charge_distance = std::numeric_limits<double>::infinity();
         double best_binding_per_nucleon =
             -std::numeric_limits<double>::infinity();
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (NetType::SPIN[i] <= 0.0) continue;
+            if (NetType::spin_weight(i) <= 0.0) continue;
             const double charge_distance =
-                std::abs(NetType::ZION[i] / NetType::AION[i] - Ye);
+                std::abs(NetType::zion(i) / NetType::aion(i) - Ye);
             const double binding_per_nucleon =
-                NetType::BINDING_E[i] / NetType::AION[i];
+                NetType::binding_energy(i) / NetType::aion(i);
             if (charge_distance < best_charge_distance
                 || (charge_distance == best_charge_distance
                     && binding_per_nucleon > best_binding_per_nucleon)) {
@@ -510,13 +536,13 @@ private:
         return anchor;
     }
 
-    static bool initial_guess(
+    ARCH_HOST_DEVICE static bool initial_guess(
         const std::array<double, NUM_SPEC>& log_base, double Ye, int attempt,
         double& eta_n, double& eta_p)
     {
         const int anchor = best_anchor(Ye);
         if (anchor < 0) return false;
-        const double eta = -log_base[anchor] / NetType::AION[anchor];
+        const double eta = -log_base[anchor] / NetType::aion(anchor);
 
         if (attempt == 0) {
             // Generic counterpart of Timmes' Ni56 initial guess: select the
@@ -532,8 +558,8 @@ private:
         double q_lo = -std::numeric_limits<double>::infinity();
         double q_hi = std::numeric_limits<double>::infinity();
         for (int i = 0; i < NUM_SPEC; ++i) {
-            if (NetType::SPIN[i] <= 0.0) continue;
-            const double q = NetType::ZION[i] / NetType::AION[i];
+            if (NetType::spin_weight(i) <= 0.0) continue;
+            const double q = NetType::zion(i) / NetType::aion(i);
             if (q < Ye && q > q_lo) {
                 lo = i;
                 q_lo = q;
@@ -547,13 +573,14 @@ private:
         if (attempt == 1 && lo >= 0 && hi >= 0) {
             double x_lo = (q_hi - Ye) / (q_hi - q_lo);
             double x_hi = 1.0 - x_lo;
-            x_lo = std::clamp(x_lo, 1.0e-8, 1.0 - 1.0e-8);
+            x_lo = arch::nse_detail::clamp_by_value(
+                x_lo, 1.0e-8, 1.0 - 1.0e-8);
             x_hi = 1.0 - x_lo;
 
-            const double n_lo = NetType::AION[lo] - NetType::ZION[lo];
-            const double n_hi = NetType::AION[hi] - NetType::ZION[hi];
-            const double z_lo = NetType::ZION[lo];
-            const double z_hi = NetType::ZION[hi];
+            const double n_lo = NetType::aion(lo) - NetType::zion(lo);
+            const double n_hi = NetType::aion(hi) - NetType::zion(hi);
+            const double z_lo = NetType::zion(lo);
+            const double z_hi = NetType::zion(hi);
             const double det = n_lo * z_hi - z_lo * n_hi;
             if (std::abs(det) > std::numeric_limits<double>::epsilon()) {
                 const double rhs_lo = std::log(x_lo) - log_base[lo];
@@ -566,15 +593,16 @@ private:
 
         // Last restart perturbs the chemical-potential difference in the
         // direction required by the target charge fraction.
-        const double anchor_q = NetType::ZION[anchor] / NetType::AION[anchor];
+        const double anchor_q = NetType::zion(anchor) / NetType::aion(anchor);
         const double charge_shift =
-            std::clamp(20.0 * (Ye - anchor_q), -4.0, 4.0);
+            arch::nse_detail::clamp_by_value(
+                20.0 * (Ye - anchor_q), -4.0, 4.0);
         eta_n = eta - charge_shift;
         eta_p = eta + charge_shift;
         return std::isfinite(eta_n) && std::isfinite(eta_p);
     }
 
-    static bool check_conservation(
+    ARCH_HOST_DEVICE static bool check_conservation(
         const std::array<double, NUM_SPEC>& x, double Ye)
     {
         long double mass = 0.0L;
@@ -583,8 +611,8 @@ private:
             if (!std::isfinite(x[i]) || x[i] < 0.0) return false;
             mass += static_cast<long double>(x[i]);
             charge += static_cast<long double>(x[i])
-                    * static_cast<long double>(NetType::ZION[i]
-                                               / NetType::AION[i]);
+                    * static_cast<long double>(NetType::zion(i)
+                                               / NetType::aion(i));
         }
         return std::abs(static_cast<double>(mass - 1.0L)) <= conservation_tol
             && std::abs(static_cast<double>(charge

@@ -65,6 +65,36 @@ struct NetIso7 : timmes::TimmesNetworkSupport<NetIso7> {
         return 0.5 * aion(i);
     }
 
+    template <std::size_t I = 0>
+    TIMMES_HD static constexpr double binding_energy(int i)
+    {
+        if constexpr (I < NUM_SPECIES) {
+            return i == static_cast<int>(I) ? BINDING_E[I]
+                                             : binding_energy<I + 1>(i);
+        }
+        return 0.0;
+    }
+
+    template <std::size_t I = 0>
+    TIMMES_HD static constexpr double spin_weight(int i)
+    {
+        if constexpr (I < NUM_SPECIES) {
+            return i == static_cast<int>(I) ? SPIN[I]
+                                             : spin_weight<I + 1>(i);
+        }
+        return 0.0;
+    }
+
+    template <std::size_t I = 0>
+    TIMMES_HD static constexpr double energy_weight(int i)
+    {
+        if constexpr (I < NUM_SPECIES) {
+            return i == static_cast<int>(I) ? ENERGY_WEIGHTS[I]
+                                             : energy_weight<I + 1>(i);
+        }
+        return 0.0;
+    }
+
     template <typename Scalar, typename RateAccessor>
     TIMMES_HD static inline void fill_screened_rates(const Scalar* y, double rho,
                                            double temperature_value,

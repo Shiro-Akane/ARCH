@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cmath>
 
+#include "../../core/ArchPortability.h"
+
 /**
  * Dense storage is deliberately limited by dispatch to networks with at most
  * BurnLimits::MAX_SPECIES nuclei. N remains a template parameter so a compact
@@ -17,12 +19,23 @@ struct DenseMatrixData
 {
     double data[N][N]{};
 
-    double &operator()(int i, int j) { return data[i - 1][j - 1]; }
-    const double &operator()(int i, int j) const { return data[i - 1][j - 1]; }
+    // Preserve the one-based matrix interface used by generated network code.
+    ARCH_HOST_DEVICE double &operator()(int i, int j)
+    {
+        return data[i - 1][j - 1];
+    }
 
-    void set(int i, int j, double value) { data[i - 1][j - 1] = value; }
+    ARCH_HOST_DEVICE const double &operator()(int i, int j) const
+    {
+        return data[i - 1][j - 1];
+    }
 
-    void zero()
+    ARCH_HOST_DEVICE void set(int i, int j, double val)
+    {
+        data[i - 1][j - 1] = val;
+    }
+
+    ARCH_HOST_DEVICE void zero()
     {
         for (int i = 0; i < N; ++i)
 #pragma omp simd
@@ -30,7 +43,7 @@ struct DenseMatrixData
     }
 
     /// Replace J by I + scale*J without imposing a dense operation on sparse backends.
-    void form_shifted_identity(double scale)
+    ARCH_HOST_DEVICE void form_shifted_identity(double scale)
     {
         for (int i = 0; i < N; ++i) {
 #pragma omp simd
@@ -39,7 +52,8 @@ struct DenseMatrixData
         }
     }
 
-    void set_shifted_identity_from(const DenseMatrixData &jacobian, double scale)
+    ARCH_HOST_DEVICE void set_shifted_identity_from(
+        const DenseMatrixData &jacobian, double scale)
     {
         for (int i = 0; i < N; ++i) {
 #pragma omp simd
@@ -52,7 +66,8 @@ struct DenseMatrixData
 struct DenseLUSolver
 {
     template <int ACTIVE_N, int MAX_N>
-    static bool solve(DenseMatrixData<ACTIVE_N> &A, double b[MAX_N])
+    ARCH_HOST_DEVICE static bool solve(
+        DenseMatrixData<ACTIVE_N> &A, double b[MAX_N])
     {
         int pivots[MAX_N]{};
         if (!factorize<ACTIVE_N, MAX_N>(A, pivots)) return false;
@@ -61,7 +76,8 @@ struct DenseLUSolver
     }
 
     template <int ACTIVE_N, int MAX_N>
-    static bool factorize(DenseMatrixData<ACTIVE_N> &A, int p[MAX_N])
+    ARCH_HOST_DEVICE static bool factorize(
+        DenseMatrixData<ACTIVE_N> &A, int p[MAX_N])
     {
 #pragma omp simd
         for (int i = 0; i < ACTIVE_N; ++i) p[i] = i;
@@ -92,8 +108,9 @@ struct DenseLUSolver
     }
 
     template <int ACTIVE_N, int MAX_N>
-    static void solve_with_factors(const DenseMatrixData<ACTIVE_N> &A,
-                                   const int p[MAX_N], double b[MAX_N])
+    ARCH_HOST_DEVICE static void solve_with_factors(
+        const DenseMatrixData<ACTIVE_N> &A,
+        const int p[MAX_N], double b[MAX_N])
     {
         double y[ACTIVE_N];
         for (int i = 0; i < ACTIVE_N; ++i) {
