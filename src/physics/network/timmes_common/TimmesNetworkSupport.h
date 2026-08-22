@@ -22,6 +22,8 @@ namespace timmes {
 
 template <typename Derived>
 struct TimmesNetworkSupport {
+    static constexpr bool SUPPORTS_NSE = true;
+
     static std::string get_network_name() { return Derived::NETWORK_NAME; }
 
     static void RegisterSpecies(SpeciesManager& specs)

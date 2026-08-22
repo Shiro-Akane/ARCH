@@ -15,7 +15,7 @@ struct Solver_ROS4
 {
     static constexpr int NEQ = NetType::ODE_NEQ;
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES;
-    static constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
+    static constexpr int MAX_N = NEQ;
 
     // Four-stage, fourth-order, L-stable ROS4 tableau.  The coefficients are
     // a matched set; changing gamma independently violates the order conditions.
@@ -90,6 +90,7 @@ struct Solver_ROS4
         // Advance with adaptive internal substeps.
         while (t_current < dt_target)
         {
+            if constexpr (NetType::SUPPORTS_NSE) {
             if (!nse_attempted && burn_cfg.use_nse
                 && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold
                 && rho > burn_cfg.nseDensThreshold)
@@ -99,6 +100,7 @@ struct Solver_ROS4
                                                         burn_cfg, dt_rec)) {
                     return true;
                 }
+            }
             }
 
             substep_count++;
@@ -137,13 +139,7 @@ struct Solver_ROS4
 
             // The normalized form of (I / (gamma*dt) - J) uses
             // A = I - gamma*dt*J and scales every stage right-hand side by gamma.
-            for (int i = 0; i < NEQ; ++i) {
-#pragma omp simd
-                for (int j = 0; j < NEQ; ++j) {
-                    A.set(i + 1, j + 1, -gamma * dt * J_mat(i + 1, j + 1));
-                }
-                A.set(i + 1, i + 1, A(i + 1, i + 1) + 1.0);
-            }
+            A.set_shifted_identity_from(J_mat, -gamma * dt);
 
             // Factor the shared stage matrix once for this substep.
             int p[MAX_N];

@@ -278,15 +278,17 @@ Select a network in the parameter file:
 
 ```text
 use_burn = true
-network_name = iso7       # or aprox13 / aprox19 / aprox21
+network_name = iso7       # or aprox13 / aprox19 / aprox21 / custom:<id>
 use_nse = true               # enabled by default; set to false to disable online constrained NSE
 nseTempThreshold = 4.5e9
 nseDensThreshold = 1.0e6
 ode_solver = BE_NR
-linear_solver = DenseLU
+linear_solver = Auto
 eos_type = helmholtz
 eos_table_path = /absolute/path/to/helm_table.dat
 ```
+
+Generated pynucastro packages are documented in the [custom-network local contract](../../src/physics/network/custom/README.md) and the [Reference](../Reference.md). `Auto` resolves to the dedicated DenseLU backend through 30 isotopes and to SuiteSparse KLU above 30. Generated packages set `SUPPORTS_NSE=false`. Their production qualification covers solver tolerances and composition/energy trajectories.
 
 CMake requires OpenMP through `find_package(OpenMP REQUIRED)`. Control the
 runtime thread count with an environment variable, for example:

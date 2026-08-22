@@ -16,7 +16,7 @@ struct Solver_BE_NR
 {
     static constexpr int NEQ = NetType::ODE_NEQ;
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES; // Excludes the final temperature equation.
-    static constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
+    static constexpr int MAX_N = NEQ;
 
     template <typename EOSType>
     static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
@@ -49,6 +49,7 @@ struct Solver_BE_NR
             // Network-constrained Timmes NSE projection coupled to the EOS.
             // Binding-energy changes update temperature conservatively. A
             // failed projection preserves X_ODE and selects the stiff ODE path.
+            if constexpr (NetType::SUPPORTS_NSE) {
             if (!nse_attempted && burn_cfg.use_nse
                 && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold
                 && rho > burn_cfg.nseDensThreshold)
@@ -58,6 +59,7 @@ struct Solver_BE_NR
                                         burn_cfg, dt_rec)) {
                     return true;
                 }
+            }
             }
 
             substep_count++;
@@ -123,17 +125,10 @@ struct Solver_BE_NR
                 A.set(NEQ, NEQ, denuc_dT * inv_cv);
 
                 // Assemble A=I-dt*J and b=X_old-X_k+dt*RHS(X_k).
-                for (int i = 0; i < NEQ; ++i)
-                {
+                for (int i = 0; i < NEQ; ++i) {
                     b[i] = X_old[i] - X_k[i] + dt * RHS[i];
-#pragma omp simd
-                    for (int j = 0; j < NEQ; ++j)
-                    {
-                        double jac_val = A(i + 1, j + 1);
-                        A.set(i + 1, j + 1, -dt * jac_val);
-                    }
-                    A.set(i + 1, i + 1, A(i + 1, i + 1) + 1.0);
                 }
+                A.form_shifted_identity(-dt);
 
                 // Solve the Newton correction A*dX=b.
                 bool success = LinearSolver::template solve<NEQ, MAX_N>(A, b);

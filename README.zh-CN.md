@@ -36,8 +36,8 @@ ARCH 是一个面向可压缩反应流体力学的块自适应有限体积框架
 - Cartesian、cylindrical 和 spherical 网格上的维度感知 1D、2D 和 3D 存储；
 - SW、VL、Roe、HLL 和 HLLC 通量策略；
 - PCM、MUSCL/PLM 和 PPM 重构，以及 Euler、SSPRK2 或 SSPRK3 时间推进；
-- 理想气体、3D/4D 表格和 Timmes Helmholtz 状态方程；
-- 外部重力、核燃烧、NSE 投影和 RKL1/RKL2 超时间步扩散；
+- 理想气体、自动识别维数的 3D/4D 表格（包括规范化自由能表）和 Timmes Helmholtz 状态方程；
+- 外部重力、内置或 pynucastro 生成的核燃烧、DenseLU/KLU 线性求解、NSE 投影和 RKL1/RKL2 超时间步扩散；
 - HDF5 plot/checkpoint 文件，包括 AMR 叶节点层次的重启。
 
 ## 构建
@@ -45,10 +45,10 @@ ARCH 是一个面向可压缩反应流体力学的块自适应有限体积框架
 ARCH 面向 Linux/WSL 风格的 C++ 环境。所需工具和库包括：
 
 - C++20 编译器；
-- CMake 3.18 或更高版本；
+- CMake 3.22 或更高版本；
 - OpenMP，除非配置时关闭；
 - HDF5 C++ 和 HL 库；
-- Git，以及配置阶段的网络访问，因为 CMake 会获取 HighFive；
+- Git，以及配置阶段的网络访问，因为 CMake 会获取 HighFive，并在找不到已安装 KLU package 时获取固定的 SuiteSparse；
 - Git LFS，用于克隆由 LFS 管理的 EOS `.dat` 或 `.h5` 资源。
 
 在仓库根目录配置和构建：
@@ -61,7 +61,42 @@ cmake --build build --parallel 4
 
 dispatch 翻译单元会实例化较大的模板组合矩阵。即使该目标以较低优化级别编译，过高的并行构建数仍可能耗尽内存。只有在确认可用内存后才提高 `--parallel`。
 
-可执行文件写入 `bin/ARCH`。
+可执行文件写入 `bin/ARCH`。KLU 默认启用；CMake 会使用已安装的 package，或获取固定的 SuiteSparse v7.13.0。
+
+## Tabular EOS 与自定义网络
+
+Tabular EOS 参数提供 HDF5 路径，表内元数据负责维数选择：
+
+~~~text
+eos_type = tabular
+eos_table_path = /path/to/model.h5
+~~~
+
+文件内部的 `table_rank` 自动选择 3D 或 4D 策略。新 EOS 表应保存比 Helmholtz
+自由能并遵循[本地 HDF5 契约](src/physics/eos/TabularEOS.zh-CN.md)；上游
+Shen/LS/HS 或 CompOSE 文件必须先转换成该契约。
+
+生成 custom 网络时复制示例 recipe，自行选择唯一的 `NETWORK_ID` 和核素：
+
+~~~bash
+cp examples/network/CustomNetworkRecipe.py MyNetwork.py
+conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py --check
+conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py
+cmake -S . -B build
+cmake --build build --parallel 4
+~~~
+
+每个生成 package 位于 `src/physics/network/custom/<id>/`。CMake 注册该目录内
+实际存在的 ID，并允许多个 ID 共存；`aprox*`/`iso*` 命名空间保留给内置网络。
+已有 ID 的替换由生成器的受保护流程管理。每次运行选择一个 package：
+
+~~~text
+network_name = custom:<id>
+linear_solver = Auto
+~~~
+
+`Auto` 在不超过 30 个核素时保留专用 DenseLU 路径，超过时选择 SparseKLU。
+完整契约和生成器限制见[研究与 API 参考](docs/Reference.zh-CN.md)。
 
 ## 首次运行
 
@@ -128,7 +163,7 @@ ARCH/
 - 燃烧、扩散和流体使用对称组合 `B(dt/2)-D(dt/2)-H(dt)-D(dt/2)-B(dt/2)`；因此即使流体子步选择 SSPRK3，耦合方法最高也只有二阶；
 - 粗细 AMR 界面以 MUSCL-MinMod 代替 PPM 的宽模板；
 - 在无效或近真空状态下，密度、速度、内能和组分保护可能修改守恒更新；
-- CUDA 一致性、AMR 定量收敛、自重力和 SparseKLU 不属于 `main` 分支已验证功能集；
+- CUDA 一致性、AMR 定量收敛和自重力不属于 `main` 分支已验证功能集；当前 KLU 验证范围包括稀疏线性代数回归和 160 核素生成网络 smoke test，生产级收敛仍按具体网络验证；
 - Release 构建使用 `-march=native` 和 `-ffast-math`，优先性能而不是跨机器逐位复现；
 - ARCH 当前提供源码级扩展接口，而不是已安装的公共库 ABI。
 
@@ -136,4 +171,4 @@ ARCH/
 
 ## 许可证
 
-ARCH 自有内容采用 [MIT License](LICENSE)。第三方派生科学代码和数据保留其上游来源与条款，详见[第三方来源与说明](THIRD_PARTY_NOTICES.zh-CN.md)。MIT 许可证尤其不会重新许可 Timmes 派生的反应网络、NSE 实现、Helmholtz EOS 或表数据。
+ARCH 自有内容采用 [MIT License](LICENSE)。第三方派生科学代码和数据保留其上游来源与条款，详见[第三方来源与说明](THIRD_PARTY_NOTICES.zh-CN.md)。MIT 许可证尤其不会重新许可 Timmes 派生的反应网络、NSE 实现、Helmholtz EOS 或表数据。 可选 KLU 后端的 SuiteSparse LGPL/BSD 条款保留在 [LICENSES](LICENSES/) 与[第三方说明](THIRD_PARTY_NOTICES.zh-CN.md)中。

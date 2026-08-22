@@ -135,7 +135,7 @@ namespace OdeMath
         // Network dimensions are compile-time properties of NetType.
         constexpr int NEQ = NetType::ODE_NEQ;
         constexpr int NUM_SPEC = NetType::NUM_SPECIES;
-        constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
+        constexpr int MAX_N = NEQ;
 
         struct Candidate {
             double temperature = 0.0;

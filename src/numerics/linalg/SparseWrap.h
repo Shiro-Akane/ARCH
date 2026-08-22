@@ -1,92 +1,212 @@
 /**
- * @file linalg/SparseWrap.h
- * @brief Non-operational COO sparse-matrix policy reserved for future solvers.
+ * @file SparseWrap.h
+ * @brief Sparse CSC matrix and SuiteSparse KLU linear-solver policy.
  */
 #pragma once
-#include <iostream>
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <stdexcept>
-#include <tuple>
 #include <vector>
 
-namespace SparseLimits
-{
-    static constexpr int MAX_NNZ = BurnLimits::MAX_ODE_NEQ * 10;
-}
-// Fixed-capacity COO storage used only to preserve the planned policy interface.
+#if ARCH_HAS_KLU
+#include <klu.h>
+#endif
+
+template <int N>
 struct SparseMatrixData
 {
-    int rows[SparseLimits::MAX_NNZ];
-    int cols[SparseLimits::MAX_NNZ];
-    double values[SparseLimits::MAX_NNZ];
-    int nnz = 0;
+    std::vector<int> rows;
+    std::vector<int> columns;
+    std::vector<double> values;
+    std::vector<int> slots;
 
-    // Store nonzero entries as row, column, and value triplets.
-    void zero() { nnz = 0; }
+    std::vector<int> column_pointers;
+    std::vector<int> row_indices;
+    std::vector<double> csc_values;
+    std::vector<int> csc_to_slot;
+    bool pattern_dirty = true;
 
-    double &operator()(int i, int j)
+#if ARCH_HAS_KLU
+    klu_common common{};
+    klu_symbolic *symbolic = nullptr;
+    klu_numeric *numeric = nullptr;
+    bool common_initialized = false;
+#endif
+
+    SparseMatrixData() : slots(static_cast<std::size_t>(N) * N, -1) {}
+    SparseMatrixData(const SparseMatrixData &) = delete;
+    SparseMatrixData &operator=(const SparseMatrixData &) = delete;
+
+    ~SparseMatrixData()
     {
-        // Generated network code writes J(i,j) directly, so this accessor
-        // appends a COO entry. Production integration must replace silent
-        // capacity handling with an explicit overflow error.
-        if (nnz < SparseLimits::MAX_NNZ)
-        {
-            rows[nnz] = i - 1;
-            cols[nnz] = j - 1;
-            values[nnz] = 0.0; // Initialize before returning a writable reference.
-            return values[nnz++];
-        }
-        static double dummy = 0.0;
-        return dummy;
+#if ARCH_HAS_KLU
+        if (numeric != nullptr) klu_free_numeric(&numeric, &common);
+        if (symbolic != nullptr) klu_free_symbolic(&symbolic, &common);
+#endif
     }
 
-    void set(int i, int j, double val)
+    /**
+     * Preserve the symbolic pattern between Jacobian evaluations. Generated
+     * networks write the same structural entries at every state, so this lets
+     * KLU reuse its symbolic analysis while only numeric values are refreshed.
+     */
+    void zero() { std::fill(values.begin(), values.end(), 0.0); }
+
+    double operator()(int i, int j) const
     {
-        if (std::abs(val) > 1e-30 && nnz < SparseLimits::MAX_NNZ)
-        {
-            rows[nnz] = i - 1;
-            cols[nnz] = j - 1;
-            values[nnz++] = val;
+        validate(i, j);
+        const int slot = slots[flat(i - 1, j - 1)];
+        return slot < 0 ? 0.0 : values[slot];
+    }
+
+    void set(int i, int j, double value)
+    {
+        validate(i, j);
+        const int row = i - 1;
+        const int column = j - 1;
+        int &slot = slots[flat(row, column)];
+        if (slot < 0) {
+            slot = static_cast<int>(values.size());
+            rows.push_back(row);
+            columns.push_back(column);
+            values.push_back(value);
+            pattern_dirty = true;
+        } else {
+            values[slot] = value;
+        }
+    }
+
+    void form_shifted_identity(double scale)
+    {
+        for (double &value : values) value *= scale;
+        for (int i = 1; i <= N; ++i) set(i, i, (*this)(i, i) + 1.0);
+    }
+
+    void set_shifted_identity_from(const SparseMatrixData &jacobian, double scale)
+    {
+        zero();
+        for (std::size_t slot = 0; slot < jacobian.values.size(); ++slot) {
+            set(jacobian.rows[slot] + 1, jacobian.columns[slot] + 1,
+                scale * jacobian.values[slot]);
+        }
+        for (int i = 1; i <= N; ++i) set(i, i, (*this)(i, i) + 1.0);
+    }
+
+    void prepare_csc()
+    {
+        if (pattern_dirty) {
+#if ARCH_HAS_KLU
+            if (numeric != nullptr) klu_free_numeric(&numeric, &common);
+            if (symbolic != nullptr) klu_free_symbolic(&symbolic, &common);
+#endif
+            std::vector<int> order(values.size());
+            for (std::size_t k = 0; k < order.size(); ++k) order[k] = static_cast<int>(k);
+            std::sort(order.begin(), order.end(), [&](int lhs, int rhs) {
+                if (columns[lhs] != columns[rhs]) return columns[lhs] < columns[rhs];
+                return rows[lhs] < rows[rhs];
+            });
+
+            column_pointers.assign(N + 1, 0);
+            row_indices.resize(order.size());
+            csc_values.resize(order.size());
+            csc_to_slot.resize(order.size());
+            for (int slot : order) ++column_pointers[columns[slot] + 1];
+            for (int column = 0; column < N; ++column) {
+                column_pointers[column + 1] += column_pointers[column];
+            }
+            for (std::size_t k = 0; k < order.size(); ++k) {
+                row_indices[k] = rows[order[k]];
+                csc_to_slot[k] = order[k];
+            }
+            pattern_dirty = false;
+        }
+        for (std::size_t k = 0; k < csc_values.size(); ++k) {
+            csc_values[k] = values[csc_to_slot[k]];
+        }
+    }
+
+private:
+    static constexpr std::size_t flat(int row, int column)
+    {
+        return static_cast<std::size_t>(column) * N + row;
+    }
+
+    static void validate(int i, int j)
+    {
+        if (i < 1 || i > N || j < 1 || j > N) {
+            throw std::out_of_range(
+                "SparseMatrixData uses one-based indices inside its active extent");
         }
     }
 };
 
-// Sparse-solver policy. Every solve path fails explicitly until integrated.
-struct SparseSolverWrap
+struct SparseKLUSolver
 {
     template <int ACTIVE_N, int MAX_N>
-    static bool solve(SparseMatrixData &A, double b[MAX_N])
+    static bool solve(SparseMatrixData<ACTIVE_N> &A, double b[MAX_N])
     {
-        std::cout << "[SparseWrap] Triggered sparse solve for " << ACTIVE_N << "x" << ACTIVE_N << std::endl;
-        std::cout << "[SparseWrap] Non-zero elements collected: " << A.nnz << std::endl;
-
-        // A future implementation must convert COO to CSR, invoke a selected
-        // sparse backend, and overwrite b with the solution. Throwing in this
-        // prevents the reserved policy from silently producing invalid results.
-        throw std::runtime_error("Real Sparse Solver Not Yet Integrated!");
-        return true;
+        int unused[MAX_N]{};
+        if (!factorize<ACTIVE_N, MAX_N>(A, unused)) return false;
+        return solve_factored<ACTIVE_N>(A, b);
     }
 
-    // Symbolic and numeric factorization. The dense policy uses p for row
-    // pivots; a sparse implementation needs a separate typed factor handle
-    // rather than encoding ownership in this integer array.
     template <int ACTIVE_N, int MAX_N>
-    static bool factorize(SparseMatrixData &A, int p[MAX_N])
+    static bool factorize(SparseMatrixData<ACTIVE_N> &A, int[MAX_N])
     {
-        std::cout << "[SparseWrap] Triggered sparse factorize for " << ACTIVE_N << "x" << ACTIVE_N << std::endl;
-        // Required implementation steps are COO-to-CSR conversion, symbolic
-        // analysis, numeric factorization, and explicit factor ownership for
-        // a backend such as KLU, SuperLU, or cuSPARSE.
-        throw std::runtime_error("Real Sparse Factorize Not Yet Integrated!");
-        return true;
+#if ARCH_HAS_KLU
+        A.prepare_csc();
+        if (!A.common_initialized) {
+            if (klu_defaults(&A.common) == 0) return false;
+            A.common_initialized = true;
+        }
+        if (A.symbolic == nullptr) {
+            A.symbolic = klu_analyze(ACTIVE_N, A.column_pointers.data(),
+                                     A.row_indices.data(), &A.common);
+            if (A.symbolic == nullptr) return false;
+        }
+        if (A.numeric != nullptr) {
+            if (klu_refactor(A.column_pointers.data(), A.row_indices.data(),
+                             A.csc_values.data(), A.symbolic, A.numeric,
+                             &A.common) != 0) {
+                return true;
+            }
+            klu_free_numeric(&A.numeric, &A.common);
+        }
+        A.numeric = klu_factor(A.column_pointers.data(), A.row_indices.data(),
+                               A.csc_values.data(), A.symbolic, &A.common);
+        return A.numeric != nullptr;
+#else
+        (void)A;
+        throw std::runtime_error(
+            "SparseKLU was selected, but ARCH was built without SuiteSparse KLU");
+#endif
     }
 
-    // Triangular solve using previously constructed sparse factors.
     template <int ACTIVE_N, int MAX_N>
-    static void solve_with_factors(const SparseMatrixData &A, const int p[MAX_N], double b[MAX_N])
+    static void solve_with_factors(const SparseMatrixData<ACTIVE_N> &matrix,
+                                   const int[MAX_N], double b[MAX_N])
     {
-        std::cout << "[SparseWrap] Triggered sparse solve_with_factors" << std::endl;
-        // A future backend must receive the owned factor handle, perform both
-        // sparse triangular solves, and overwrite b with the solution.
-        throw std::runtime_error("Real Sparse Solve_with_factors Not Yet Integrated!");
+        auto &A = const_cast<SparseMatrixData<ACTIVE_N> &>(matrix);
+        if (!solve_factored<ACTIVE_N>(A, b)) {
+            std::fill(b, b + ACTIVE_N,
+                      std::numeric_limits<double>::quiet_NaN());
+        }
+    }
+
+private:
+    template <int ACTIVE_N>
+    static bool solve_factored(SparseMatrixData<ACTIVE_N> &A, double *b)
+    {
+#if ARCH_HAS_KLU
+        return A.symbolic != nullptr && A.numeric != nullptr &&
+               klu_solve(A.symbolic, A.numeric, ACTIVE_N, 1, b, &A.common) != 0;
+#else
+        (void)A;
+        (void)b;
+        throw std::runtime_error(
+            "SparseKLU was selected, but ARCH was built without SuiteSparse KLU");
+#endif
     }
 };

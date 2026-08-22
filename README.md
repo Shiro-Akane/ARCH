@@ -43,8 +43,8 @@ executes the CPU backend.
 - dimension-aware 1D, 2D, and 3D storage on Cartesian, cylindrical, and spherical grids;
 - SW, VL, Roe, HLL, and HLLC flux policies;
 - PCM, MUSCL/PLM, and PPM reconstruction with Euler, SSPRK2, or SSPRK3 time stepping;
-- ideal, 3D/4D tabular, and Timmes Helmholtz equations of state;
-- external gravity, nuclear burning, NSE projection, and RKL1/RKL2 super-time-stepping diffusion;
+- ideal, automatically ranked 3D/4D tabular (including normalized free-energy tables), and Timmes Helmholtz equations of state;
+- external gravity, built-in or generated pynucastro nuclear burning, DenseLU/KLU linear solves, NSE projection, and RKL1/RKL2 super-time-stepping diffusion;
 - HDF5 plot and checkpoint files, including restart of the AMR leaf hierarchy.
 
 ## Build
@@ -53,10 +53,10 @@ ARCH targets a Linux/WSL-style C++ environment. Required tools and
 libraries are:
 
 - a C++20 compiler;
-- CMake 3.18 or newer;
+- CMake 3.22 or newer;
 - OpenMP unless configured off;
 - HDF5 C++ and HL libraries;
-- Git and network access during configuration, because CMake fetches HighFive;
+- Git and network access during configuration, because CMake fetches HighFive and, when no installed KLU package is found, pinned SuiteSparse;
 - Git LFS when cloning EOS `.dat` or `.h5` assets tracked through LFS.
 
 Configure and build from the repository root:
@@ -72,7 +72,47 @@ parallel build counts can exhaust memory even though the dispatch target is
 compiled at a reduced optimization level. Increase `--parallel` only after
 checking available RAM.
 
-The executable is written to `bin/ARCH`.
+The executable is written to `bin/ARCH`. KLU is enabled by default; CMake
+uses an installed package or fetches pinned SuiteSparse v7.13.0.
+
+## Tabular EOS and custom networks
+
+Tabular EOS configuration supplies the HDF5 path; rank selection is file-driven:
+
+~~~text
+eos_type = tabular
+eos_table_path = /path/to/model.h5
+~~~
+
+`table_rank` inside the file selects the 3D or 4D policy. New EOS tables should
+store specific Helmholtz free energy and follow the
+[local HDF5 contract](src/physics/eos/TabularEOS.md); upstream Shen/LS/HS or
+CompOSE files require conversion to that contract.
+
+To generate a custom reaction network, copy and edit the example recipe—choose
+a unique folder/`NETWORK_ID` and the required nuclei—then run:
+
+~~~bash
+cp examples/network/CustomNetworkRecipe.py MyNetwork.py
+conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py --check
+conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py
+cmake -S . -B build
+cmake --build build --parallel 4
+~~~
+
+Each generated package occupies `src/physics/network/custom/<id>/`. CMake
+registers the generated IDs present in that directory, supports multiple IDs,
+and reserves the `aprox*`/`iso*` namespaces for built-in networks. Existing-ID
+replacement follows the guarded generator workflow. Select one package per run:
+
+~~~text
+network_name = custom:<id>
+linear_solver = Auto
+~~~
+
+`Auto` keeps the dedicated DenseLU path through 30 isotopes and selects
+SparseKLU above 30. The complete contract and generator limitations are in the
+[Research and API Reference](docs/Reference.md).
 
 ## First run
 
@@ -152,8 +192,10 @@ ARCH/
 - Coarse-fine AMR faces use MUSCL-MinMod in place of PPM's wide stencil;
 - Density, velocity, internal-energy, and species safeguards can modify the
   conservative update in invalid or near-vacuum states;
-- CUDA parity, quantitative AMR convergence, self gravity, and SparseKLU remain
-  outside the validated `main`-branch feature set;
+- CUDA parity, quantitative AMR convergence, and self gravity remain outside the
+  validated `main`-branch feature set; current KLU validation covers the sparse
+  linear algebra regression and a 160-isotope generated-network smoke test,
+  while production convergence remains network-specific;
 - Release builds use `-march=native` and `-ffast-math`, which favor performance
   over cross-machine bitwise reproducibility;
 - ARCH currently exposes source-extension interfaces rather than an installed
@@ -169,4 +211,4 @@ ARCH-authored material is released under the [MIT License](LICENSE).
 Third-party-derived scientific code and data retain their upstream provenance
 and terms; see [Third-Party Provenance and Notices](THIRD_PARTY_NOTICES.md).
 In particular, the MIT license does not relicense the Timmes-derived networks,
-NSE implementation, Helmholtz EOS, or table data.
+NSE implementation, Helmholtz EOS, or table data. The optional KLU backend retains its SuiteSparse LGPL/BSD terms in [LICENSES](LICENSES/) and [third-party notices](THIRD_PARTY_NOTICES.md).

@@ -14,4 +14,7 @@
 #include "../../physics/network/aprox21/NetAprox21.h"
 #include "../../physics/network/iso7/NetIso7.h"
 
+// Generated at CMake configure time from custom/*/network.cmake packages.
+#include "CustomNetworks.generated.h"
+
 // NetType requirements are enforced by template instantiation.

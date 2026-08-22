@@ -42,7 +42,19 @@ namespace ProblemHelper
             if (specs.count() == 0) NetIso7::RegisterSpecies(specs);
             NetIso7::SetupInitialFractions(config, specs, default_X);
         } else {
-            throw std::runtime_error("Unknown network_name in SetupNetworkAndFractions: " + net_type);
+            bool custom_dispatched = false;
+#define ARCH_SETUP_CUSTOM_NETWORK(runtime_name, network_type)               \
+            if (!custom_dispatched && net_type == runtime_name) {            \
+                if (specs.count() == 0) network_type::RegisterSpecies(specs); \
+                network_type::SetupInitialFractions(                         \
+                    config, specs, default_X);                               \
+                custom_dispatched = true;                                   \
+            }
+            ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_SETUP_CUSTOM_NETWORK)
+#undef ARCH_SETUP_CUSTOM_NETWORK
+            if (!custom_dispatched)
+                throw std::runtime_error(
+                    "Unknown network_name in SetupNetworkAndFractions: " + net_type);
         }
     }
 

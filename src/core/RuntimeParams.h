@@ -196,7 +196,7 @@ public:
 
         // Stiff ODE solver configuration.
         cfg.physics.burn.odeconfig.ode_solver = parser.GetString("ode_solver", "BE_NR");
-        cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", "DenseLU");
+        cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", "Auto");
 
         cfg.physics.burn.odeconfig.rtol = parser.GetDouble("ode_rtol", 1e-4);
         cfg.physics.burn.odeconfig.atol = parser.GetDouble("ode_atol", 1e-8);

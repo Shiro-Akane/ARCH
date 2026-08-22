@@ -13,6 +13,7 @@
  */
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -21,6 +22,7 @@
 
 #include "eos.h"
 #include "eos_Utils.h"
+#include "TabularFreeEnergy.h"
 
 #include "../species/Species.h"
 
@@ -42,6 +44,9 @@ struct Tabular3DEOSView
     double *table_dP_drho; // Optional precomputed pressure-density derivative.
     double *table_dP_dT;   // Optional precomputed pressure-temperature derivative.
 
+    bool uses_free_energy = false;
+    std::array<const double*, tabular_eos::FieldCount> free_energy_fields{};
+
     const SpeciesManager *specs;
 
     int target_species_id;
@@ -54,9 +59,9 @@ struct Tabular3DEOSView
 
     bool is_out_of_bounds(double log_rho, double log_T, double X) const
     {
-        return (log_rho < log_rho_min || log_rho >= log_rho_max - 1e-6 ||
-                log_T < log_T_min || log_T >= log_T_max - 1e-6 ||
-                X < X_min || X >= X_max - 1e-6);
+        return (log_rho < log_rho_min || log_rho > log_rho_max ||
+                log_T < log_T_min || log_T > log_T_max ||
+                X < X_min || X > X_max);
     }
 
     double fallback_gamma() const { return 5.0 / 3.0; } // Monatomic ideal-gas fallback.
@@ -133,6 +138,51 @@ struct Tabular3DEOSView
         return c0 * (1.0 - tz) + c1 * tz;
     }
 
+    tabular_eos::FreeEnergyState interpolate_free_energy(
+        double rho, double T, double composition) const
+    {
+        const double log_rho = std::log10(rho);
+        const double log_temperature = std::log10(T);
+        int i = static_cast<int>((log_rho - log_rho_min) / dlog_rho);
+        int j = static_cast<int>((log_temperature - log_T_min) / dlog_T);
+        int k = static_cast<int>((composition - X_min) / dX);
+        i = std::max(0, std::min(i, n_rho - 2));
+        j = std::max(0, std::min(j, n_T - 2));
+        k = std::max(0, std::min(k, n_X - 2));
+
+        const double tx =
+            (log_rho - (log_rho_min + i * dlog_rho)) / dlog_rho;
+        const double ty =
+            (log_temperature - (log_T_min + j * dlog_T)) / dlog_T;
+        const double tc = (composition - (X_min + k * dX)) / dX;
+        const std::size_t rho_stride =
+            static_cast<std::size_t>(n_T) * n_X;
+        auto index = [&](int irho, int itemperature, int icomposition) {
+            return static_cast<std::size_t>(irho) * rho_stride +
+                   static_cast<std::size_t>(itemperature) * n_X +
+                   icomposition;
+        };
+        auto at_composition = [&](int kc) {
+            const std::array<std::size_t, 4> corners{
+                index(i, j, kc), index(i, j + 1, kc),
+                index(i + 1, j, kc), index(i + 1, j + 1, kc)
+            };
+            return tabular_eos::interpolate_biquintic(
+                free_energy_fields, corners, tx, ty,
+                std::log(10.0) * dlog_rho,
+                std::log(10.0) * dlog_T);
+        };
+        return tabular_eos::blend(
+            at_composition(k), at_composition(k + 1), tc);
+    }
+
+    tabular_eos::ThermodynamicState free_energy_state(
+        double rho, double T, double composition) const
+    {
+        return tabular_eos::to_thermodynamics(
+            interpolate_free_energy(rho, T, composition), rho, T);
+    }
+
     // Composition-coordinate query used by generated network interfaces.
 
     double get_target_X(const double *Xi) const
@@ -163,7 +213,8 @@ struct Tabular3DEOSView
             double e = get_eint_from_T(rho, T, Xi);
             return fallback_pressure(rho, e);
         }
-        return interpolate_3d(table_P, rho, T, X);
+        return uses_free_energy ? free_energy_state(rho, T, X).pressure :
+               interpolate_3d(table_P, rho, T, X);
     }
 
     double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
@@ -188,7 +239,8 @@ struct Tabular3DEOSView
             return T_target * R_spec / (fallback_gamma() - 1.0);
         }
 
-        return interpolate_3d(table_E, rho, T_target, X);
+        return uses_free_energy ? free_energy_state(rho, T_target, X).energy :
+               interpolate_3d(table_E, rho, T_target, X);
     }
 
     double get_cv(double rho, double T_target, const double *Xi) const
@@ -205,7 +257,8 @@ struct Tabular3DEOSView
             return R_spec / (fallback_gamma() - 1.0);
         }
 
-        return interpolate_3d(table_cv, rho, T_target, X);
+        return uses_free_energy ? free_energy_state(rho, T_target, X).cv :
+               interpolate_3d(table_cv, rho, T_target, X);
     }
 
     double get_temperature(double rho, double e, const double *Xi) const
@@ -218,14 +271,15 @@ struct Tabular3DEOSView
         double T_max = std::pow(10, log_T_max);
 
         // Out of bounds check for density or composition
-        if (std::log10(rho) < log_rho_min || std::log10(rho) >= log_rho_max ||
-            X < X_min || X >= X_max)
+        if (std::log10(rho) < log_rho_min || std::log10(rho) > log_rho_max ||
+            X < X_min || X > X_max)
         {
             return fallback_temperature(e, Xi);
         }
 
         // Fast boundary check: if e is below the minimum table energy, return T_min
-        double e_min_table = interpolate_3d(table_E, rho, T_min, X);
+        double e_min_table = uses_free_energy ? free_energy_state(rho, T_min, X).energy :
+                             interpolate_3d(table_E, rho, T_min, X);
         if (e <= e_min_table) {
             return T_min;
         }
@@ -238,13 +292,17 @@ struct Tabular3DEOSView
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
 
-            double e_eval = interpolate_3d(table_E, rho, T_guess, X);
-            double cv_eval = interpolate_3d(table_cv, rho, T_guess, X);
+            double e_eval = uses_free_energy ? free_energy_state(rho, T_guess, X).energy :
+                            interpolate_3d(table_E, rho, T_guess, X);
+            double cv_eval = uses_free_energy ? free_energy_state(rho, T_guess, X).cv :
+                             interpolate_3d(table_cv, rho, T_guess, X);
 
             if (cv_eval <= 0.0) {
                 // Finite difference fallback
                 double dT_fd = T_guess * 0.01;
-                double e_plus = interpolate_3d(table_E, rho, T_guess + dT_fd, X);
+                double e_plus = uses_free_energy ?
+                    free_energy_state(rho, T_guess + dT_fd, X).energy :
+                    interpolate_3d(table_E, rho, T_guess + dT_fd, X);
                 cv_eval = (e_plus - e_eval) / dT_fd;
                 if (cv_eval <= 0.0) cv_eval = e_eval / T_guess;
             }
@@ -282,7 +340,8 @@ struct Tabular3DEOSView
         {
             return fallback_sound_speed(U.rho, e_int);
         }
-        return interpolate_3d(table_cs, U.rho, T, X);
+        return uses_free_energy ? free_energy_state(U.rho, T, X).sound_speed :
+               interpolate_3d(table_cs, U.rho, T, X);
     }
 
     double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
@@ -295,7 +354,8 @@ struct Tabular3DEOSView
 
         double X = get_target_X(Xi);
         double T = get_temperature(rho, e, Xi);
-        return get_sound_speed_from_rho_T(rho, T, Xi);
+        const double sound_speed = get_sound_speed_from_rho_T(rho, T, Xi);
+        return rho * sound_speed * sound_speed / p;
     }
 
     double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
@@ -306,7 +366,8 @@ struct Tabular3DEOSView
             double e = get_eint_from_T(rho, T, Xi);
             return fallback_sound_speed(rho, e);
         }
-        return interpolate_3d(table_cs, rho, T, X);
+        return uses_free_energy ? free_energy_state(rho, T, X).sound_speed :
+               interpolate_3d(table_cs, rho, T, X);
     }
 
     // Derivative interface using table data when present and finite differences otherwise.
@@ -319,6 +380,8 @@ struct Tabular3DEOSView
             return e * (fallback_gamma() - 1.0); // Ideal-gas (dP/drho)_e.
         }
 
+        if (uses_free_energy)
+            return free_energy_state(rho, T, X).dp_drho_e;
         if (table_dP_drho)
             return interpolate_3d(table_dP_drho, rho, T, X);
 
@@ -331,12 +394,13 @@ struct Tabular3DEOSView
     double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(e), X))
+        double T = get_temperature(rho, e, Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
         {
             return rho * (fallback_gamma() - 1.0); // Ideal-gas (dP/de)_rho.
         }
-
-        double T = get_temperature(rho, e, Xi);
+        if (uses_free_energy)
+            return free_energy_state(rho, T, X).dp_de_rho;
         if (table_dP_dT && table_cv) {
             double dp_dT = interpolate_3d(table_dP_dT, rho, T, X);
             double cv = interpolate_3d(table_cv, rho, T, X);
@@ -376,12 +440,15 @@ struct Tabular3DEOSView
                 ? specs->calc_Abar(state.Xi) : 1.0;
             const double R_spec = k_B_cgs / (Abar * m_u_cgs);
             state.dp_dT = state.rho * R_spec;
+        } else if (uses_free_energy) {
+            state.dp_dT =
+                free_energy_state(state.rho, state.T, X).dp_dT;
         } else if (table_dP_dT) {
             state.dp_dT = interpolate_3d(table_dP_dT, state.rho, state.T, X);
         } else {
             const double dT = std::max(std::abs(state.T) * 1.0e-4, 1.0e-8);
             const double table_T_min = std::pow(10.0, log_T_min);
-            const double table_T_max = std::pow(10.0, log_T_max - 2.0e-6);
+            const double table_T_max = std::pow(10.0, log_T_max);
             const double lower_T = std::max(state.T - dT, table_T_min);
             const double upper_T = std::min(state.T + dT, table_T_max);
             const double lower_P = interpolate_3d(
@@ -413,6 +480,8 @@ private:
     // Reserved host derivative arrays matching the view's optional pointers.
     std::vector<double> h_table_dP_drho;
     std::vector<double> h_table_dP_dT;
+
+    std::array<std::vector<double>, tabular_eos::FieldCount> h_free_energy_fields;
 
     Tabular3DEOSView view;
 

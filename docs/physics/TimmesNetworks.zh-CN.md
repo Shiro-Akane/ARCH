@@ -187,15 +187,17 @@ BD 的最高阶提前退出条件使用 `k + 1 < MAX_K` 保护 `n_seq[k+1]`。`B
 
 ```text
 use_burn = true
-network_name = iso7       # 或 aprox13 / aprox19 / aprox21
+network_name = iso7       # 或 aprox13 / aprox19 / aprox21 / custom:<id>
 use_nse = true               # 默认开启在线网络受限 NSE；设为 false 可禁用
 nseTempThreshold = 4.5e9
 nseDensThreshold = 1.0e6
 ode_solver = BE_NR
-linear_solver = DenseLU
+linear_solver = Auto
 eos_type = helmholtz
 eos_table_path = /absolute/path/to/helm_table.dat
 ```
+
+pynucastro 生成 package 的工作流见 [custom 网络本地契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。`Auto` 对不超过 30 核素使用专用 DenseLU，超过时使用 SuiteSparse KLU。生成 package 设置 `SUPPORTS_NSE=false`，其生产验收范围包括求解容差与组分/能量轨迹。
 
 CMake 通过 `find_package(OpenMP REQUIRED)` 要求 OpenMP。运行时可用环境变量控制线程数，例如：
 

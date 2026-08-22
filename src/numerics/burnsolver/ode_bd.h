@@ -15,7 +15,7 @@ struct Solver_BD
 {
     static constexpr int NEQ = NetType::ODE_NEQ;
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES;
-    static constexpr int MAX_N = BurnLimits::MAX_ODE_NEQ;
+    static constexpr int MAX_N = NEQ;
 
     // Seven extrapolation levels limit high-order polynomial oscillation while
     // covering the useful compact-network accuracy range.
@@ -64,9 +64,11 @@ struct Solver_BD
         // Advance the requested interval with adaptive macro steps H.
         while (t_current < dt_target)
         {
+            if constexpr (NetType::SUPPORTS_NSE) {
             if (!nse_attempted && burn_cfg.use_nse && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold && rho > burn_cfg.nseDensThreshold) {
                 nse_attempted = true;
                 if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos, burn_cfg, dt_rec)) return true;
+            }
             }
 
             substep_count++;
@@ -114,13 +116,7 @@ struct Solver_BD
                 double h = H / m;
 
                 // Semi-implicit midpoint matrix A=I-h*J.
-                for (int i = 0; i < NEQ; ++i) {
-#pragma omp simd
-                    for (int j = 0; j < NEQ; ++j) {
-                        A.set(i + 1, j + 1, -h * J_mat(i + 1, j + 1));
-                    }
-                    A.set(i + 1, i + 1, A(i + 1, i + 1) + 1.0);
-                }
+                A.set_shifted_identity_from(J_mat, -h);
 
                 if (!LinearSolver::template factorize<NEQ, MAX_N>(A, p)) {
                     // A singular factorization indicates that the current H is

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <vector>
 
 #include "../core/RuntimeParams.h"
 #include "../data/FluidState.h"
@@ -43,10 +44,12 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
     double first_invalid_min = 0.0;
     double first_invalid_max = 0.0;
 
-    // Each cell owns its ODE state, network evaluation and LU factorization.
-    // Dynamic scheduling is important because stiff substep counts vary strongly
-    // across the reaction front; nested teams inside a 22x22 LU are counterproductive.
-#pragma omp parallel for collapse(3) schedule(dynamic, 1) reduction(min : local_dt_burn_min)
+    // Each worker reuses one dynamically sized ODE state. Dynamic scheduling is
+    // important because stiff substep counts vary strongly across the front.
+#pragma omp parallel reduction(min : local_dt_burn_min)
+    {
+        std::vector<double> X_ODE(static_cast<std::size_t>(n_spec) + 1, 0.0);
+#pragma omp for collapse(3) schedule(dynamic, 1)
     for (int k = grid.Ks(); k < grid.Ke(); ++k)
     {
         for (int j = grid.Js(); j < grid.Je(); ++j)
@@ -60,9 +63,9 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         if (rho < config.physics.burn.nuclearDensMin)
             continue;
 
-        // Pack cell mass fractions into the network ODE state.
-        double X_ODE[BurnLimits::MAX_ODE_NEQ]{};
-        current_state.get_species_to_buffer(i, X_ODE);
+        // Pack cell mass fractions into the worker-local network ODE state.
+        std::fill(X_ODE.begin(), X_ODE.end(), 0.0);
+        current_state.get_species_to_buffer(i, X_ODE.data());
 
         // A network state is empty only when the complete composition is
         // invalid.  Testing X_ODE[0] and X_ODE[1] is incorrect: H1/He3
@@ -107,13 +110,13 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         double e_kin = 0.5 * (mx * mx + my * my + mz * mz) / rho;
         double e_int = (current_state.eng[i] - e_kin) / rho;
         // Recover temperature from density, specific internal energy, and composition.
-        double T = eos.get_temperature(rho, e_int, X_ODE);
+        double T = eos.get_temperature(rho, e_int, X_ODE.data());
         if (T < config.physics.burn.nuclearTempMin)
             continue;
         X_ODE[n_spec] = T; // Temperature occupies the final ODE component.
         // Integrate the local network state.
         double dt_rec = burn_dt;
-        bool success = burn.integrate(X_ODE, rho, burn_dt, eos, config.physics.burn, dt_rec);
+        bool success = burn.integrate(X_ODE.data(), rho, burn_dt, eos, config.physics.burn, dt_rec);
 
         if (!success)
         {
@@ -121,10 +124,10 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
             exit(EXIT_FAILURE);
         }
         // Commit the updated composition and temperature.
-        current_state.set_species_from_buffer(i, X_ODE);
+        current_state.set_species_from_buffer(i, X_ODE.data());
         double T_new = X_ODE[n_spec];
         // Reconstruct total energy from the EOS state.
-        double e_int_new = eos.get_eint_from_T(rho, T_new, X_ODE);
+        double e_int_new = eos.get_eint_from_T(rho, T_new, X_ODE.data());
         current_state.eng[i] = rho * e_int_new + e_kin;
         if (burn_dt > 0.0)
             current_state.enuc_rate[i] = (e_int_new - e_int) / burn_dt;
@@ -149,6 +152,7 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         }
     }
         }
+    }
     }
 
     if (invalid_composition_count > 0)

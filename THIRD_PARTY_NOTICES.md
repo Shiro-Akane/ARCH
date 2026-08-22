@@ -45,6 +45,10 @@ Its copyright notice, conditions, and disclaimer must remain with source
 redistributions; binary redistributions must reproduce them in accompanying
 documentation or other materials.
 
+## SuiteSparse KLU sparse solver
+
+ARCH can fetch pinned SuiteSparse v7.13.0 and statically link KLU with its minimal BTF, AMD, COLAMD, and SuiteSparse_config dependencies. KLU and BTF are LGPL-2.1-or-later; AMD, COLAMD, and SuiteSparse_config are BSD-3-Clause. The retained component notices are in [`LICENSES/SuiteSparse-KLU.txt`](LICENSES/SuiteSparse-KLU.txt), and the complete LGPL-2.1 text is in [`LICENSES/LGPL-2.1.txt`](LICENSES/LGPL-2.1.txt). Source and binary redistribution must satisfy the applicable upstream terms; ARCH MIT terms do not relicense these components.
+
 ## ARCH support code inside attributed directories
 
 Directory placement alone does not imply third-party authorship. For example,

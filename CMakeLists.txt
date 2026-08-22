@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.22)
 
 # ==============================================================================
 # Project Configuration
@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.18)
 # 2. Collect source modules into the ARCH executable with a single build contract.
 # 3. Keep feature toggles consistent with the runtime policies documented in src/.
 # ==============================================================================
-project(ARCH LANGUAGES CXX)
+project(ARCH LANGUAGES C CXX)
 
 # Require C++20 Standard
 set(CMAKE_CXX_STANDARD 20)
@@ -58,6 +58,10 @@ endif()
 
 option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
 option(ARCH_VERBOSE_BUILD "Print every compiler and linker command" OFF)
+option(ARCH_ENABLE_KLU "Enable SuiteSparse KLU for large reaction networks" ON)
+option(ARCH_FETCH_SUITESPARSE "Fetch pinned SuiteSparse when KLU is not installed" ON)
+set(ARCH_CUSTOM_NETWORKS "" CACHE STRING "Semicolon-separated custom network IDs to compile; empty selects all")
+set(ARCH_CUSTOM_NETWORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/custom" CACHE PATH "Custom network package root")
 
 set(ARCH_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Directory for ARCH executables from this build tree")
 set(CMAKE_VERBOSE_MAKEFILE ${ARCH_VERBOSE_BUILD})
@@ -79,6 +83,85 @@ foreach(dir IN LISTS APP_SRC_DIRS)
     file(GLOB_RECURSE dir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
     list(APPEND ARCH_APPLICATION_SOURCES ${dir_srcs})
 endforeach()
+
+
+# Discover generated custom networks without editing C++ dispatch source.
+set(ARCH_CUSTOM_REGISTRY_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
+set(ARCH_CUSTOM_REGISTRY_HEADER
+    "${ARCH_CUSTOM_REGISTRY_DIR}/CustomNetworks.generated.h")
+file(MAKE_DIRECTORY "${ARCH_CUSTOM_REGISTRY_DIR}")
+file(WRITE "${ARCH_CUSTOM_REGISTRY_HEADER}" "#pragma once\n")
+set(ARCH_CUSTOM_NETWORK_MACRO "#define ARCH_FOR_EACH_CUSTOM_NETWORK(M)")
+set(ARCH_CUSTOM_DISCOVERED_IDS "")
+file(GLOB ARCH_CUSTOM_NETWORK_CONFIGS CONFIGURE_DEPENDS
+    "${ARCH_CUSTOM_NETWORK_ROOT}/*/network.cmake")
+foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
+    unset(ARCH_CUSTOM_NETWORK_ID)
+    unset(ARCH_CUSTOM_NETWORK_TYPE)
+    unset(ARCH_CUSTOM_NETWORK_HEADER)
+    unset(ARCH_CUSTOM_NETWORK_SOURCE)
+    include("${custom_config}")
+    if(NOT ARCH_CUSTOM_NETWORK_ID OR NOT ARCH_CUSTOM_NETWORK_TYPE
+       OR NOT EXISTS "${ARCH_CUSTOM_NETWORK_HEADER}"
+       OR NOT EXISTS "${ARCH_CUSTOM_NETWORK_SOURCE}")
+        message(FATAL_ERROR "Invalid generated custom network package: ${custom_config}")
+    endif()
+
+    get_filename_component(custom_dir "${custom_config}" DIRECTORY)
+    get_filename_component(custom_folder "${custom_dir}" NAME)
+    string(LENGTH "${ARCH_CUSTOM_NETWORK_ID}" custom_id_length)
+    if(NOT ARCH_CUSTOM_NETWORK_ID MATCHES "^[a-z]"
+       OR ARCH_CUSTOM_NETWORK_ID MATCHES "[^a-z0-9_]"
+       OR custom_id_length GREATER 48
+       OR ARCH_CUSTOM_NETWORK_ID MATCHES "^(aprox|iso)"
+       OR NOT custom_folder STREQUAL ARCH_CUSTOM_NETWORK_ID)
+        message(FATAL_ERROR
+            "Unsafe custom network ID/folder contract in ${custom_config}")
+    endif()
+    list(FIND ARCH_CUSTOM_DISCOVERED_IDS
+        "${ARCH_CUSTOM_NETWORK_ID}" duplicate_custom_index)
+    if(NOT duplicate_custom_index EQUAL -1)
+        message(FATAL_ERROR
+            "Duplicate custom network ID: ${ARCH_CUSTOM_NETWORK_ID}")
+    endif()
+    list(APPEND ARCH_CUSTOM_DISCOVERED_IDS "${ARCH_CUSTOM_NETWORK_ID}")
+
+    file(REAL_PATH "${custom_dir}" custom_dir_real)
+    file(REAL_PATH "${ARCH_CUSTOM_NETWORK_HEADER}" custom_header_real)
+    file(REAL_PATH "${ARCH_CUSTOM_NETWORK_SOURCE}" custom_source_real)
+    cmake_path(IS_PREFIX custom_dir_real "${custom_header_real}"
+        NORMALIZE custom_header_inside)
+    cmake_path(IS_PREFIX custom_dir_real "${custom_source_real}"
+        NORMALIZE custom_source_inside)
+    if(NOT custom_header_inside OR NOT custom_source_inside)
+        message(FATAL_ERROR
+            "Custom network source escaped its package: ${custom_config}")
+    endif()
+
+    if(ARCH_CUSTOM_NETWORKS)
+        list(FIND ARCH_CUSTOM_NETWORKS "${ARCH_CUSTOM_NETWORK_ID}" custom_index)
+        if(custom_index EQUAL -1)
+            continue()
+        endif()
+    endif()
+    file(APPEND "${ARCH_CUSTOM_REGISTRY_HEADER}"
+        "#include \"${ARCH_CUSTOM_NETWORK_HEADER}\"\n")
+    string(APPEND ARCH_CUSTOM_NETWORK_MACRO
+        " M(\"custom:${ARCH_CUSTOM_NETWORK_ID}\", ${ARCH_CUSTOM_NETWORK_TYPE})")
+    list(APPEND ARCH_APPLICATION_SOURCES "${ARCH_CUSTOM_NETWORK_SOURCE}")
+    message(STATUS "[NET] Registered custom:${ARCH_CUSTOM_NETWORK_ID}")
+endforeach()
+foreach(requested_custom_id IN LISTS ARCH_CUSTOM_NETWORKS)
+    list(FIND ARCH_CUSTOM_DISCOVERED_IDS
+        "${requested_custom_id}" requested_custom_index)
+    if(requested_custom_index EQUAL -1)
+        message(FATAL_ERROR
+            "ARCH_CUSTOM_NETWORKS requested an unknown ID: ${requested_custom_id}")
+    endif()
+endforeach()
+file(APPEND "${ARCH_CUSTOM_REGISTRY_HEADER}"
+    "\n${ARCH_CUSTOM_NETWORK_MACRO}\n")
+list(REMOVE_DUPLICATES ARCH_APPLICATION_SOURCES)
 
 # Dispatch sources (isolated in its own object target to manage template instantiation)
 set(DISPATCH_SRC_DIRS
@@ -105,6 +188,7 @@ foreach(target ARCH arch_solver_dispatch)
     target_include_directories(${target} PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/cases
+        ${ARCH_CUSTOM_REGISTRY_DIR}
     )
 endforeach()
 
@@ -183,6 +267,89 @@ foreach(target ARCH arch_solver_dispatch)
     target_include_directories(${target} PRIVATE ${highfive_SOURCE_DIR}/include)
 endforeach()
 message(STATUS "[DEP] HighFive headers configured via FetchContent")
+
+# 4. SuiteSparse KLU
+# Prefer an installed CMake package. The fallback pins an upstream release and
+# builds only KLU plus its minimal SuiteSparse dependencies.
+set(ARCH_KLU_TARGET "")
+if(ARCH_ENABLE_KLU)
+    find_package(KLU CONFIG QUIET)
+    if(TARGET SuiteSparse::KLU)
+        set(ARCH_KLU_TARGET SuiteSparse::KLU)
+    elseif(TARGET KLU::KLU)
+        set(ARCH_KLU_TARGET KLU::KLU)
+    elseif(ARCH_FETCH_SUITESPARSE)
+        set(SUITESPARSE_ENABLE_PROJECTS "klu;amd;colamd" CACHE STRING "" FORCE)
+        set(KLU_USE_CHOLMOD OFF CACHE BOOL "" FORCE)
+        set(SUITESPARSE_USE_CUDA OFF CACHE BOOL "" FORCE)
+        set(SUITESPARSE_USE_FORTRAN OFF CACHE BOOL "" FORCE)
+        set(SUITESPARSE_REQUIRE_BLAS OFF CACHE BOOL "" FORCE)
+        set(BLA_VENDOR Generic CACHE STRING "" FORCE)
+        set(SUITESPARSE_USE_OPENMP OFF CACHE BOOL "" FORCE)
+        set(SUITESPARSE_USE_PYTHON OFF CACHE BOOL "" FORCE)
+        set(SUITESPARSE_DEMOS OFF CACHE BOOL "" FORCE)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+        set(BUILD_STATIC_LIBS ON CACHE BOOL "" FORCE)
+        FetchContent_Declare(
+            suitesparse
+            GIT_REPOSITORY https://github.com/DrTimothyAldenDavis/SuiteSparse.git
+            GIT_TAG v7.13.0
+            GIT_SHALLOW TRUE
+        )
+        FetchContent_MakeAvailable(suitesparse)
+        set(ARCH_KLU_TARGET SuiteSparse::KLU)
+    endif()
+endif()
+
+if(ARCH_KLU_TARGET)
+    foreach(target ARCH arch_solver_dispatch)
+        target_link_libraries(${target} PRIVATE ${ARCH_KLU_TARGET})
+        target_compile_definitions(${target} PRIVATE ARCH_HAS_KLU=1)
+    endforeach()
+    message(STATUS "[DEP] SuiteSparse KLU enabled for sparse reaction networks")
+else()
+    foreach(target ARCH arch_solver_dispatch)
+        target_compile_definitions(${target} PRIVATE ARCH_HAS_KLU=0)
+    endforeach()
+    if(ARCH_ENABLE_KLU)
+        message(FATAL_ERROR
+            "ARCH_ENABLE_KLU=ON but KLU was not found and ARCH_FETCH_SUITESPARSE=OFF")
+    endif()
+    message(STATUS "[DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable")
+endif()
+
+
+# ==============================================================================
+# Regression Tests
+# ==============================================================================
+include(CTest)
+if(BUILD_TESTING)
+    add_executable(tabular_eos_regression
+        tests/TabularEOSRegression.cpp
+        src/physics/eos/Tabular3DEOS.cpp
+        src/physics/eos/Tabular4DEOS.cpp
+        src/physics/eos/eosdispatch.cpp)
+    target_compile_features(tabular_eos_regression PRIVATE cxx_std_20)
+    target_include_directories(tabular_eos_regression PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${highfive_SOURCE_DIR}/include"
+        ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(tabular_eos_regression PRIVATE
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    add_test(NAME tabular_eos_ideal_gas
+        COMMAND tabular_eos_regression
+                "${CMAKE_CURRENT_BINARY_DIR}/tabular-eos-test-data")
+
+    if(ARCH_KLU_TARGET)
+        add_executable(sparse_klu_regression tests/SparseKLURegression.cpp)
+        target_compile_features(sparse_klu_regression PRIVATE cxx_std_20)
+        target_include_directories(sparse_klu_regression PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_definitions(sparse_klu_regression PRIVATE ARCH_HAS_KLU=1)
+        target_link_libraries(sparse_klu_regression PRIVATE ${ARCH_KLU_TARGET})
+        add_test(NAME sparse_klu_160_isotopes COMMAND sparse_klu_regression)
+    endif()
+endif()
 
 # ==============================================================================
 # Runtime Environment Setup & Final Status

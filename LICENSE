@@ -19,3 +19,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Third-party components
+----------------------
+
+The MIT terms above apply only to ARCH-authored material. The optional
+SuiteSparse v7.13.0 KLU backend and its BTF dependency are licensed under
+LGPL-2.1-or-later; AMD, COLAMD, and SuiteSparse_config are BSD-3-Clause. Their
+retained notices and license texts are in LICENSES/SuiteSparse-KLU.txt and
+LICENSES/LGPL-2.1.txt. Other scientific-source terms and provenance are listed
+in THIRD_PARTY_NOTICES.md. No ARCH license text relicenses those components.

@@ -25,6 +25,10 @@ Timmes 下载页面要求在使用这些代码、代码片段或修改版本时�
 
 保留的上游许可证位于 [`LICENSES/AMReX-Astro-Microphysics.txt`](LICENSES/AMReX-Astro-Microphysics.txt)。源码重新分发必须保留其版权声明、条件和免责声明；二进制重新分发必须在随附文档或其他材料中重现这些内容。
 
+## SuiteSparse KLU 稀疏求解器
+
+ARCH 可获取固定的 SuiteSparse v7.13.0，并静态链接 KLU 及其最小依赖 BTF、AMD、COLAMD 和 SuiteSparse_config。KLU 与 BTF 使用 LGPL-2.1-or-later；AMD、COLAMD 与 SuiteSparse_config 使用 BSD-3-Clause。保留的组件说明见 [`LICENSES/SuiteSparse-KLU.txt`](LICENSES/SuiteSparse-KLU.txt)，完整 LGPL-2.1 文本见 [`LICENSES/LGPL-2.1.txt`](LICENSES/LGPL-2.1.txt)。源码和二进制重新分发必须满足对应上游条款；ARCH 的 MIT 条款不会重新许可这些组件。
+
 ## 归属目录中的 ARCH 支撑代码
 
 文件位于归属目录中并不自动表示第三方作者身份。例如 `timmes_common/Dual.h`、`RatePair.h` 和 `TimmesNetworkSupport.h` 是围绕 Timmes 派生方程编写的 ARCH 自有支撑层，文件头已明确说明边界。除非文件头或本说明指出，其他 ARCH 模块不声明外部来源。

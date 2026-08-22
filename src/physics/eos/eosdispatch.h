@@ -25,7 +25,7 @@
 #include "../../core/RuntimeParams.h"
 #include "../species/Species.h"
 
-bool check_eos_is_4d(const std::string& path);
+int inspect_eos_table_rank(const std::string& path);
 
 struct EOSDispatcher
 {
@@ -33,6 +33,8 @@ struct EOSDispatcher
     inline static int table_dimension = 0; // 0 is unloaded; 3 and 4 identify table rank.
     inline static std::unique_ptr<Tabular3DEOS> cached_3d = nullptr;
     inline static std::unique_ptr<Tabular4DEOS> cached_4d = nullptr;
+    inline static std::string cached_table_path;
+    inline static const SpeciesManager *cached_species = nullptr;
     /**
      * @brief Resolve a runtime EOS name and invoke a callback with its concrete policy.
      * The generic callback preserves compile-time EOS specialization after this
@@ -65,35 +67,24 @@ struct EOSDispatcher
                 throw std::runtime_error("Tabular EOS requires 'eos_table_path' in .par file!");
             }
 
-            if (table_dimension == 0)
+            if (table_dimension == 0 || cached_table_path != path ||
+                cached_species != &specs)
             {
-                std::cout << "[EOS Dispatch] Inspecting HDF5 Metadata..." << std::endl;
-
-                bool is_4d = check_eos_is_4d(path);
-
-                if (is_4d)
-                {
-                    std::cout << "[EOS Dispatch] 4D Helmholtz EOS format." << std::endl;
-
-                    // Keep the four-dimensional owner alive while its view is in use.
-                    Tabular4DEOS eos_manager(path, &specs);
-                    func(eos_manager.get_view());
-                }
-                else
-                {
-                    std::cout << "[EOS Dispatch] 3D Tabular EOS format." << std::endl;
-
-                    // Keep the three-dimensional owner alive while its view is in use.
-                    Tabular3DEOS eos_manager(path, &specs);
-                    func(eos_manager.get_view());
+                std::cout << "[EOS Dispatch] Inspecting HDF5 metadata..." << std::endl;
+                cached_3d.reset();
+                cached_4d.reset();
+                table_dimension = inspect_eos_table_rank(path);
+                cached_table_path = path;
+                cached_species = &specs;
+                if (table_dimension == 4) {
+                    cached_4d = std::make_unique<Tabular4DEOS>(path, &specs);
+                } else {
+                    cached_3d = std::make_unique<Tabular3DEOS>(path, &specs);
                 }
             }
-            if (table_dimension == 4)
-            {
+            if (table_dimension == 4) {
                 func(cached_4d->get_view());
-            }
-            else
-            {
+            } else {
                 func(cached_3d->get_view());
             }
         }

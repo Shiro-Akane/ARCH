@@ -66,10 +66,9 @@ ARCH 构建一个可执行文件和一个内部 object target，其扩展契约�
 | 扩散时间推进 | `RKL2`（默认）、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
 | EOS | `ideal`、`tabular`、`helmholtz` | CPU 已 dispatch |
 | 重力 | `none`、`external` | 支持；未知字符串选择无重力 |
-| 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7` | 启用燃烧时 dispatch |
+| 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
-| 线性求解 | `DenseLU` | 支持 |
-| 稀疏求解 | `SparseKLU` | 明确的运行时错误；wrapper 仍是占位 |
+| 线性求解 | `Auto`、`DenseLU`、`SparseKLU` | `Auto` 对不超过 30 核素使用 DenseLU，超过时使用 KLU；显式 DenseLU 拒绝大型网络 |
 
 建议使用上述规范拼写；不同 dispatcher 的规范化行为并不一致。
 
@@ -154,7 +153,9 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
 cmake --build build --parallel 4
 ```
 
-CMake 在配置时获取 HighFive，并链接 HDF5 C++/HL 库。EOS `.dat`/`.h5` 资源可能需要 Git LFS。
+CMake 在配置时获取 HighFive，并链接 HDF5 C++/HL 库。KLU 默认启用：CMake 先查找已安装的 KLU package；若不存在，则获取固定的 SuiteSparse v7.13.0，只构建 KLU、BTF、AMD、COLAMD 与 SuiteSparse_config。EOS `.dat`/`.h5` 资源可能需要 Git LFS。
+
+相关 cache 选项为 `ARCH_ENABLE_KLU`（默认 `ON`）、`ARCH_FETCH_SUITESPARSE`（默认 `ON`）、`ARCH_CUSTOM_NETWORK_ROOT`（生成 package 根目录）和 `ARCH_CUSTOM_NETWORKS`（可选的分号分隔 custom ID 列表）。`BUILD_TESTING=ON` 注册理想气体 tabular EOS 与 161 方程 KLU 回归。
 
 源码通过 CMake `GLOB_RECURSE` 从 `src/core`、`src/physics`、`src/numerics`、`src/io` 和 `simulation` 中发现。新增 `.cpp` 后重新执行 `cmake -S . -B build ...`。
 
@@ -283,6 +284,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | 仅为尚不支持的自重力解析 |
 
+对 `eos_type = tabular`，HDF5 文件声明 `table_rank = 3` 或 `4`，dispatch 自动选择相应策略。新表应优先保存比 Helmholtz 自由能；规范化数据集、导数关系、旧 direct 表路径以及实测的 guard-node/端点间隔规则见源码旁的 [Tabular EOS HDF5 接口](../src/physics/eos/TabularEOS.zh-CN.md)。Shen/LS/HS/CompOSE/EOSDriver 文件通过转换器进入该接口，二进制兼容性由规范化 schema 定义。
+
 维护中的 Helmholtz 验证资源是从 [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。它通过 Git LFS 实体化在 `EOS_toolkit/tables/helmholtz/helm_table.dat`，大小为 60,242,514 bytes，SHA-256 为 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`。原始表成员是验证权威。loader 使用固定 541×201 Timmes 布局并要求全部四个数据块；燃烧基线还要求上述精确 checksum。
 
 ### 燃烧、网络与 ODE
@@ -290,7 +293,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | 键 | 类型 | 加载默认值 | 契约 |
 | --- | --- | --- | --- |
 | `use_burn` | bool | `false` | 启用燃烧模块 |
-| `network_name` | string | `aprox19` | `aprox13`、`aprox19`、`aprox21`、`iso7` |
+| `network_name` | string | `aprox19` | 上述内置网络或任意已编译的 `custom:<id>` |
 | `nuclearTempMin` | double | `1e9` | K；燃烧激活阈值 |
 | `nuclearDensMin` | double | `1e-10` | g/cm3；燃烧激活阈值 |
 | `smallt` | double | `1e5` | K；燃烧状态 floor |
@@ -302,7 +305,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `enforce_mass_conservation` | bool | `true` | 燃烧后归一化组分 |
 | `burn_verbose_level` | int | `0` | 燃烧诊断详细级别 |
 | `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
-| `linear_solver` | string | `DenseLU` | `SparseKLU` 抛出异常 |
+| `linear_solver` | string | `Auto` | `Auto`、`DenseLU`、`SparseKLU`；DenseLU 限于不超过 30 个核素 |
 | `ode_rtol` | double | `1e-4` | ODE 相对容差 |
 | `ode_atol` | double | `1e-8` | ODE 绝对容差 |
 | `ode_max_newton_iter` | int | `50` | 使用 Newton 时的迭代上限 |
@@ -589,7 +592,7 @@ void evaluate_state(eos_state_t &state) const;
 const SpeciesManager *get_species_manager() const;
 ```
 
-`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、`cv` 和声速必须为正。若 tabular 文件未提供 `dp_dT`，维护中的 tabular 策略会通过受表边界约束的局部温度差分计算，而不是返回零。
+`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、`cv` 和声速必须为正。自由能 tabular 策略从同一个插值 Helmholtz 势导出这些量；旧 direct 策略使用已提供的导数数据集，或采用受表边界约束的局部差分，而不是返回零。详见[规范化 HDF5 契约](../src/physics/eos/TabularEOS.zh-CN.md)。
 
 所有策略都从 `eos_Utils.h` 中的 `eos_utils::get_isentropic_state_at_pressure_factor` 获得同一套固定组分等熵算法。它用 RK4 积分
 
@@ -633,7 +636,13 @@ struct Solver_NEW {
 };
 ```
 
-在 `BurnDispatch.h` 注册网络和 ODE 字符串。Dense 线性求解器提供模板 `solve`，必要时提供 `factorize`/`solve_with_factors`。`BurnLimits::MAX_SPECIES` 为 30，另有一个温度方程。
+四个 Timmes 派生内置网络仍直接注册。custom pynucastro 网络由用户维护 recipe `examples/network/CustomNetworkRecipe.py`，并交给安全边界固定的 `tools/network/GenerateNetwork.py` 生成。每个合法的小写 `NETWORK_ID` 在 `src/physics/network/custom/<id>/` 下形成隔离 package。`aprox` 或 `iso` 开头的 ID 保留。已有 ID 的替换需要 `--replace`，旧版本先保存在 `.backup/`。CMake 可发现任意多个共存 package，C++ dispatch 由生成注册表统一处理。一次运行用 `network_name = custom:<id>` 选择其中一个。
+
+adapter 将 pynucastro 的 molar RHS/Jacobian 转为 ARCH 质量分数形式，把核能与弱中微子能量写入 ODE RHS，并隔离 SimpleCxx header namespace。energy Jacobian 当前不含弱中微子能量对组分的导数。custom 网络设置 `SUPPORTS_NSE=false`，温度 Jacobian 列采用相对步长 `1e-4` 的中心差分；生产验收覆盖这两项边界。
+
+矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 30 核素（`BurnLimits::MAX_SPECIES`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号模式，并调用 KLU analyze/factor/refactor/solve。`linear_solver = Auto` 在不超过 30 核素时选择 DenseLU，超过时选择 SparseKLU。显式 DenseLU 会拒绝大型网络；构建时启用 KLU 后，任意已编译网络都可显式选择 `SparseKLU`。
+
+生成或替换 package 后必须重新执行 CMake。写入前先用 `--check`；可用 `-DARCH_CUSTOM_NETWORKS="id1;id2"` 限制昂贵构建。pynucastro 只在生成时需要，ARCH 运行时不依赖 Python。
 
 ### 扩散 — Source extension/Experimental
 
@@ -700,7 +709,7 @@ Data/rhoX    [species, block, interior cell]
 
 ## 已知限制
 
-- `main` 分支执行 CPU 后端。CUDA 一致性和 AMR 定量收敛待完成；自重力、Jeans 指标和 SparseKLU 尚未实现。
+- `main` 分支执行 CPU 后端。CUDA 一致性和 AMR 定量收敛待完成；自重力和 Jeans 指标尚未实现。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据和完整 checkpoint 来源信息仍位于 HDF5 外部；Release flags 也无法保证跨机器逐位复现。

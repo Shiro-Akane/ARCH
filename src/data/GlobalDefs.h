@@ -75,7 +75,7 @@ struct ExecutionConfig
 struct OdeConfig
 {
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
-    std::string linear_solver = "DenseLU"; ///< Default linear solver for the Jacobian system
+    std::string linear_solver = "Auto";    ///< DenseLU through 30 isotopes; KLU above that
 
     double rtol = 1e-4; ///< Relative tolerance for ODE integration
     double atol = 1e-8; ///< Absolute tolerance for ODE integration

@@ -96,7 +96,18 @@ struct BurnDispatcher
         } else if (net_type == "iso7") {
             dispatch_ode<NetIso7>(ode_type, lin_type, std::forward<Func>(func));
         } else {
-            throw std::runtime_error("Unknown network_name in par file: " + net_type);
+            bool custom_dispatched = false;
+#define ARCH_TRY_CUSTOM_NETWORK(runtime_name, network_type)                 \
+            if (!custom_dispatched && net_type == runtime_name) {           \
+                dispatch_ode<network_type>(                                 \
+                    ode_type, lin_type, std::forward<Func>(func));           \
+                custom_dispatched = true;                                   \
+            }
+            ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_TRY_CUSTOM_NETWORK)
+#undef ARCH_TRY_CUSTOM_NETWORK
+            if (!custom_dispatched)
+                throw std::runtime_error(
+                    "Unknown network_name in par file: " + net_type);
         }
     }
 
@@ -134,20 +145,32 @@ private:
     template <template <typename, typename, typename> class ODESolverWrapper, typename NetType, typename Func>
     static void dispatch_linsolver(const std::string &lin_type, Func &&func)
     {
-        if (lin_type == "DenseLU")
+        const bool automatic = lin_type == "Auto" || lin_type == "auto";
+        if (lin_type == "DenseLU" || automatic)
         {
-            ODESolverWrapper<NetType, DenseMatrixData, DenseLUSolver> burner;
+            if constexpr (NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES) {
+                std::cout << "[Burn Dispatch] Matrix backend: DenseLU (N="
+                          << NetType::ODE_NEQ << ")" << std::endl;
+                using Matrix = DenseMatrixData<NetType::ODE_NEQ>;
+                ODESolverWrapper<NetType, Matrix, DenseLUSolver> burner;
+                func(burner);
+                return;
+            } else if (!automatic) {
+                throw std::runtime_error(
+                    "DenseLU is reserved for networks with at most " +
+                    std::to_string(BurnLimits::MAX_SPECIES) +
+                    " isotopes; select linear_solver = SparseKLU or Auto.");
+            }
+        }
+        if (lin_type == "SparseKLU" || automatic)
+        {
+            std::cout << "[Burn Dispatch] Matrix backend: SparseKLU (N="
+                      << NetType::ODE_NEQ << ")" << std::endl;
+            using Matrix = SparseMatrixData<NetType::ODE_NEQ>;
+            ODESolverWrapper<NetType, Matrix, SparseKLUSolver> burner;
             func(burner);
+            return;
         }
-        else if (lin_type == "SparseKLU")
-        {
-            // ODESolverWrapper<NetType, SparseMatrixData, SparseSolverWrap> burner;
-            // func(burner);
-            throw std::runtime_error("SparseKLU not fully implemented.");
-        }
-        else
-        {
-            throw std::runtime_error("Unknown Linear Solver Type: " + lin_type);
-        }
+        throw std::runtime_error("Unknown Linear Solver Type: " + lin_type);
     }
 };

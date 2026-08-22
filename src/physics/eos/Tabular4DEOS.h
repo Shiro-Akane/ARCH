@@ -12,6 +12,7 @@
  */
 #pragma once
 
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
@@ -20,6 +21,7 @@
 
 #include "eos.h"
 #include "eos_Utils.h"
+#include "TabularFreeEnergy.h"
 
 #include "../species/Species.h"
 
@@ -42,6 +44,9 @@ struct Tabular4DEOSView
     double *table_dP_drho;
     double *table_dP_dT;
 
+    bool uses_free_energy = false;
+    std::array<const double*, tabular_eos::FieldCount> free_energy_fields{};
+
     const SpeciesManager *specs;
 
     static constexpr double k_B_cgs = 1.380649e-16; // erg/K
@@ -50,12 +55,10 @@ struct Tabular4DEOSView
     // Domain check and analytic ideal-gas fallback.
     bool is_out_of_bounds(double log_rho, double log_T, double A, double Z) const
     {
-        // The 1e-6 margin keeps a rounded upper-bound coordinate from selecting
-        // a cell whose +1 interpolation vertex lies outside the table.
-        return (log_rho < log_rho_min || log_rho >= log_rho_max - 1e-6 ||
-                log_T < log_T_min || log_T >= log_T_max - 1e-6 ||
-                A < A_min || A >= A_max - 1e-6 ||
-                Z < Z_min || Z >= Z_max - 1e-6);
+        return (log_rho < log_rho_min || log_rho > log_rho_max ||
+                log_T < log_T_min || log_T > log_T_max ||
+                A < A_min || A > A_max ||
+                Z < Z_min || Z > Z_max);
     }
 
     // Monatomic ideal-gas ratio used only outside the tabulated domain.
@@ -136,6 +139,59 @@ struct Tabular4DEOSView
         return c0 * (1.0 - tx) + c1 * tx;
     }
 
+    tabular_eos::FreeEnergyState interpolate_free_energy(
+        double rho, double T, double A, double Z) const
+    {
+        const double log_rho = std::log10(rho);
+        const double log_temperature = std::log10(T);
+        int i = static_cast<int>((log_rho - log_rho_min) / dlog_rho);
+        int j = static_cast<int>((log_temperature - log_T_min) / dlog_T);
+        int k = static_cast<int>((A - A_min) / dA);
+        int l = static_cast<int>((Z - Z_min) / dZ);
+        i = std::max(0, std::min(i, n_rho - 2));
+        j = std::max(0, std::min(j, n_T - 2));
+        k = std::max(0, std::min(k, n_A - 2));
+        l = std::max(0, std::min(l, n_Z - 2));
+
+        const double tx =
+            (log_rho - (log_rho_min + i * dlog_rho)) / dlog_rho;
+        const double ty =
+            (log_temperature - (log_T_min + j * dlog_T)) / dlog_T;
+        const double ta = (A - (A_min + k * dA)) / dA;
+        const double tz = (Z - (Z_min + l * dZ)) / dZ;
+        const std::size_t composition_count =
+            static_cast<std::size_t>(n_A) * n_Z;
+        const std::size_t rho_stride =
+            static_cast<std::size_t>(n_T) * composition_count;
+        auto index = [&](int irho, int itemperature, int ia, int iz) {
+            return static_cast<std::size_t>(irho) * rho_stride +
+                   static_cast<std::size_t>(itemperature) * composition_count +
+                   static_cast<std::size_t>(ia) * n_Z + iz;
+        };
+        auto at_composition = [&](int ka, int kz) {
+            const std::array<std::size_t, 4> corners{
+                index(i, j, ka, kz), index(i, j + 1, ka, kz),
+                index(i + 1, j, ka, kz), index(i + 1, j + 1, ka, kz)
+            };
+            return tabular_eos::interpolate_biquintic(
+                free_energy_fields, corners, tx, ty,
+                std::log(10.0) * dlog_rho,
+                std::log(10.0) * dlog_T);
+        };
+        const auto lower_A = tabular_eos::blend(
+            at_composition(k, l), at_composition(k, l + 1), tz);
+        const auto upper_A = tabular_eos::blend(
+            at_composition(k + 1, l), at_composition(k + 1, l + 1), tz);
+        return tabular_eos::blend(lower_A, upper_A, ta);
+    }
+
+    tabular_eos::ThermodynamicState free_energy_state(
+        double rho, double T, double A, double Z) const
+    {
+        return tabular_eos::to_thermodynamics(
+            interpolate_free_energy(rho, T, A, Z), rho, T);
+    }
+
     // Composition coordinates Abar and Zbar.
 
     double get_Abar(const double *Xi) const
@@ -162,7 +218,8 @@ struct Tabular4DEOSView
             double e = get_eint_from_T(rho, T, Xi);
             return fallback_pressure(rho, e);
         }
-        return interpolate_4d(table_P, rho, T, A, Z);
+        return uses_free_energy ? free_energy_state(rho, T, A, Z).pressure :
+               interpolate_4d(table_P, rho, T, A, Z);
     }
 
     double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
@@ -187,7 +244,8 @@ struct Tabular4DEOSView
             return T_target * R_spec / (fallback_gamma() - 1.0);
         }
 
-        return interpolate_4d(table_E, rho, T_target, A, Z);
+        return uses_free_energy ? free_energy_state(rho, T_target, A, Z).energy :
+               interpolate_4d(table_E, rho, T_target, A, Z);
     }
 
     double get_cv(double rho, double T_target, const double *Xi) const
@@ -204,7 +262,8 @@ struct Tabular4DEOSView
             return R_spec / (fallback_gamma() - 1.0);
         }
 
-        return interpolate_4d(table_cv, rho, T_target, A, Z);
+        return uses_free_energy ? free_energy_state(rho, T_target, A, Z).cv :
+               interpolate_4d(table_cv, rho, T_target, A, Z);
     }
 
     double get_temperature(double rho, double e, const double *Xi) const
@@ -217,14 +276,15 @@ struct Tabular4DEOSView
         double T_max = std::pow(10, log_T_max);
 
         // Out of bounds check for density or composition
-        if (std::log10(rho) < log_rho_min || std::log10(rho) >= log_rho_max ||
-            A < A_min || A >= A_max || Z < Z_min || Z >= Z_max)
+        if (std::log10(rho) < log_rho_min || std::log10(rho) > log_rho_max ||
+            A < A_min || A > A_max || Z < Z_min || Z > Z_max)
         {
             return fallback_temperature(e, A);
         }
 
         // Fast boundary check: if e is below the minimum table energy, return T_min
-        double e_min_table = interpolate_4d(table_E, rho, T_min, A, Z);
+        double e_min_table = uses_free_energy ? free_energy_state(rho, T_min, A, Z).energy :
+                             interpolate_4d(table_E, rho, T_min, A, Z);
         if (e <= e_min_table) {
             return T_min;
         }
@@ -237,13 +297,17 @@ struct Tabular4DEOSView
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
 
-            double e_eval = interpolate_4d(table_E, rho, T_guess, A, Z);
-            double cv_eval = interpolate_4d(table_cv, rho, T_guess, A, Z);
+            double e_eval = uses_free_energy ? free_energy_state(rho, T_guess, A, Z).energy :
+                            interpolate_4d(table_E, rho, T_guess, A, Z);
+            double cv_eval = uses_free_energy ? free_energy_state(rho, T_guess, A, Z).cv :
+                             interpolate_4d(table_cv, rho, T_guess, A, Z);
 
             if (cv_eval <= 0.0) {
                 // Finite difference fallback
                 double dT_fd = T_guess * 0.01;
-                double e_plus = interpolate_4d(table_E, rho, T_guess + dT_fd, A, Z);
+                double e_plus = uses_free_energy ?
+                    free_energy_state(rho, T_guess + dT_fd, A, Z).energy :
+                    interpolate_4d(table_E, rho, T_guess + dT_fd, A, Z);
                 cv_eval = (e_plus - e_eval) / dT_fd;
                 if (cv_eval <= 0.0) cv_eval = e_eval / T_guess;
             }
@@ -281,7 +345,8 @@ struct Tabular4DEOSView
         {
             return fallback_sound_speed(U.rho, e_int);
         }
-        return interpolate_4d(table_cs, U.rho, T, A, Z);
+        return uses_free_energy ? free_energy_state(U.rho, T, A, Z).sound_speed :
+               interpolate_4d(table_cs, U.rho, T, A, Z);
     }
 
     double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
@@ -294,7 +359,8 @@ struct Tabular4DEOSView
 
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
         double T = get_temperature(rho, e, Xi);
-        return get_sound_speed_from_rho_T(rho, T, Xi);
+        const double sound_speed = get_sound_speed_from_rho_T(rho, T, Xi);
+        return rho * sound_speed * sound_speed / p;
     }
 
     double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
@@ -305,7 +371,8 @@ struct Tabular4DEOSView
             double e = get_eint_from_T(rho, T, Xi);
             return fallback_sound_speed(rho, e);
         }
-        return interpolate_4d(table_cs, rho, T, A, Z);
+        return uses_free_energy ? free_energy_state(rho, T, A, Z).sound_speed :
+               interpolate_4d(table_cs, rho, T, A, Z);
     }
 
     double get_dp_drho_e(double rho, double e, const double *Xi) const
@@ -317,6 +384,8 @@ struct Tabular4DEOSView
             return e * (fallback_gamma() - 1.0); // Ideal-gas (dP/drho)_e.
         }
 
+        if (uses_free_energy)
+            return free_energy_state(rho, T, A, Z).dp_drho_e;
         if (table_dP_drho)
             return interpolate_4d(table_dP_drho, rho, T, A, Z);
 
@@ -329,12 +398,13 @@ struct Tabular4DEOSView
     double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
         double A = get_Abar(Xi), Z = get_Zbar(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(e), A, Z))
+        double T = get_temperature(rho, e, Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), A, Z))
         {
             return rho * (fallback_gamma() - 1.0); // Ideal-gas (dP/de)_rho.
         }
-
-        double T = get_temperature(rho, e, Xi);
+        if (uses_free_energy)
+            return free_energy_state(rho, T, A, Z).dp_de_rho;
         if (table_dP_dT && table_cv) {
             double dp_dT = interpolate_4d(table_dP_dT, rho, T, A, Z);
             double cv = interpolate_4d(table_cv, rho, T, A, Z);
@@ -373,12 +443,15 @@ struct Tabular4DEOSView
         if (use_fallback) {
             const double R_spec = k_B_cgs / (A * m_u_cgs);
             state.dp_dT = state.rho * R_spec;
+        } else if (uses_free_energy) {
+            state.dp_dT =
+                free_energy_state(state.rho, state.T, A, Z).dp_dT;
         } else if (table_dP_dT) {
             state.dp_dT = interpolate_4d(table_dP_dT, state.rho, state.T, A, Z);
         } else {
             const double dT = std::max(std::abs(state.T) * 1.0e-4, 1.0e-8);
             const double table_T_min = std::pow(10.0, log_T_min);
-            const double table_T_max = std::pow(10.0, log_T_max - 2.0e-6);
+            const double table_T_max = std::pow(10.0, log_T_max);
             const double lower_T = std::max(state.T - dT, table_T_min);
             const double upper_T = std::min(state.T + dT, table_T_max);
             const double lower_P = interpolate_4d(
@@ -408,6 +481,8 @@ private:
     std::vector<double> h_table_cv;
     std::vector<double> h_table_dP_drho;
     std::vector<double> h_table_dP_dT;
+
+    std::array<std::vector<double>, tabular_eos::FieldCount> h_free_energy_fields;
 
     Tabular4DEOSView view;
 

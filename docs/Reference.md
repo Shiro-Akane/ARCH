@@ -82,10 +82,9 @@ external provenance claim unless their file header or that notice says so.
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
 | EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU |
 | Gravity | `none`, `external` | supported; unknown strings select no gravity |
-| Network | `aprox13`, `aprox19`, `aprox21`, `iso7` | dispatched when burning is enabled |
+| Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
-| Linear solve | `DenseLU` | supported |
-| Sparse solve | `SparseKLU` | explicit runtime error; wrapper remains a placeholder |
+| Linear solve | `Auto`, `DenseLU`, `SparseKLU` | `Auto` selects DenseLU for <=30 isotopes and KLU above 30; explicit DenseLU rejects larger networks |
 
 Use the canonical spellings above; normalization varies by dispatcher.
 
@@ -195,7 +194,15 @@ cmake --build build --parallel 4
 ```
 
 CMake fetches HighFive during configuration and links HDF5 C++/HL libraries.
-EOS `.dat`/`.h5` assets may require Git LFS.
+KLU is enabled by default: CMake first looks for an installed KLU package and,
+if absent, fetches pinned SuiteSparse v7.13.0 and builds only KLU, BTF, AMD,
+COLAMD, and SuiteSparse_config. EOS `.dat`/`.h5` assets may require Git LFS.
+
+Relevant cache controls are `ARCH_ENABLE_KLU` (default `ON`),
+`ARCH_FETCH_SUITESPARSE` (default `ON`), `ARCH_CUSTOM_NETWORK_ROOT` (the
+generated-package root), and `ARCH_CUSTOM_NETWORKS` (an optional semicolon list
+of custom IDs to compile). `BUILD_TESTING=ON` registers the ideal-gas tabular
+EOS and 161-equation KLU regressions.
 
 Sources are found with CMake `GLOB_RECURSE` over `src/core`, `src/physics`,
 `src/numerics`, `src/io`, and `simulation`. Rerun
@@ -340,6 +347,14 @@ and any other spelling are rejected with the parameter name in the error.
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | parsed only for unsupported self gravity |
 
+For `eos_type = tabular`, the HDF5 file declares `table_rank = 3` or `4` and
+dispatch selects the matching policy automatically. New tables should store
+specific Helmholtz free energy; the normalized datasets, derivative identities,
+legacy direct-table path, and measured guard-node/endpoint spacing rules are specified
+in the local [Tabular EOS HDF5 interface](../src/physics/eos/TabularEOS.md).
+Shen/LS/HS/CompOSE/EOSDriver files enter this interface through a converter;
+binary compatibility is defined by the normalized schema.
+
 The maintained Helmholtz validation asset is the `helm_table.dat` member of the
 `helmholtz.tar.xz` archive downloaded from the
 [Timmes EOS page](https://cococubed.com/code_pages/eos.shtml). It is materialized
@@ -356,7 +371,7 @@ also requires the exact checksum above.
 | Key | Type | Load default | Contract |
 | --- | --- | --- | --- |
 | `use_burn` | bool | `false` | enables the burn module |
-| `network_name` | string | `aprox19` | `aprox13`, `aprox19`, `aprox21`, `iso7` |
+| `network_name` | string | `aprox19` | built-ins above or any compiled `custom:<id>` |
 | `nuclearTempMin` | double | `1e9` | K; burn activation threshold |
 | `nuclearDensMin` | double | `1e-10` | g/cm3; burn activation threshold |
 | `smallt` | double | `1e5` | K; burn state floor |
@@ -368,7 +383,7 @@ also requires the exact checksum above.
 | `enforce_mass_conservation` | bool | `true` | renormalizes composition after burn |
 | `burn_verbose_level` | int | `0` | burn diagnostic verbosity |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
-| `linear_solver` | string | `DenseLU` | `SparseKLU` throws |
+| `linear_solver` | string | `Auto` | `Auto`, `DenseLU`, `SparseKLU`; DenseLU is limited to <=30 isotopes |
 | `ode_rtol` | double | `1e-4` | relative ODE tolerance |
 | `ode_atol` | double | `1e-8` | absolute ODE tolerance |
 | `ode_max_newton_iter` | int | `50` | Newton limit where used |
@@ -717,9 +732,10 @@ const SpeciesManager *get_species_manager() const;
 
 `evaluate_state` is the canonical thermodynamic-state contract. For every
 valid `(rho,T,X)` input it must fill finite `P`, `E`, `cv`, `sound_speed`,
-`dp_drho`, and `dp_dT`; pressure, `cv`, and sound speed must be positive. If a
-tabular file does not provide `dp_dT`, the maintained tabular policies compute
-it by a table-bounded local temperature difference rather than returning zero.
+`dp_drho`, and `dp_dT`; pressure, `cv`, and sound speed must be positive. Free-energy tabular policies derive these quantities from one interpolated
+Helmholtz potential. The legacy direct policy uses supplied derivative datasets
+or table-bounded local differences rather than returning zero. See the
+[normalized HDF5 contract](../src/physics/eos/TabularEOS.md).
 
 All policies receive the same fixed-composition isentrope algorithm from
 `eos_utils::get_isentropic_state_at_pressure_factor` in `eos_Utils.h`. It
@@ -775,9 +791,34 @@ struct Solver_NEW {
 };
 ```
 
-Register networks and ODE strings in `BurnDispatch.h`. Dense linear solvers
-provide templated `solve`, and where needed `factorize`/`solve_with_factors`.
-`BurnLimits::MAX_SPECIES` is 30, with one additional temperature equation.
+The four Timmes-derived built-ins remain registered directly. Custom
+pynucastro networks use the user-owned recipe
+`examples/network/CustomNetworkRecipe.py` and the safety-owned generator
+`tools/network/GenerateNetwork.py`. Each valid lowercase `NETWORK_ID` creates
+an isolated package under `src/physics/network/custom/<id>/`. IDs beginning
+with `aprox` or `iso` are reserved. Existing-ID replacement requires
+`--replace` and preserves the previous package under `.backup/`. CMake
+discovers any number of coexisting packages through its generated registry.
+A run selects exactly one with `network_name = custom:<id>`.
+
+The adapter converts pynucastro molar RHS/Jacobian entries to ARCH mass-fraction
+form, carries nuclear/weak-neutrino energy into the ODE RHS, and namespaces the
+generated SimpleCxx headers. The energy Jacobian currently excludes the weak-neutrino composition
+derivative. Custom networks set `SUPPORTS_NSE=false` and calculate the
+temperature Jacobian column by a centered relative `1e-4` finite difference.
+Production qualification covers both boundaries.
+
+Matrix and solver policies are independent template parameters. `DenseWrap` is
+the dedicated fixed-size backend for at most 30 isotopes
+(`BurnLimits::MAX_SPECIES`); `SparseWrap` retains a CSC symbolic pattern and
+uses KLU analyze/factor/refactor/solve. `linear_solver = Auto` chooses DenseLU
+at or below 30 isotopes and SparseKLU above it. Explicit DenseLU rejects a
+larger network. Explicit `SparseKLU` is allowed for any compiled network when ARCH was built with KLU.
+
+After generating or replacing a package, rerun CMake. Use `--check` before
+writing, and use `-DARCH_CUSTOM_NETWORKS="id1;id2"` to restrict expensive builds.
+The generator itself needs pynucastro only at generation time; ARCH has no
+runtime Python dependency.
 
 ### Diffusion — Source extension/Experimental
 
@@ -857,8 +898,7 @@ throw.
 ## Known limitations
 
 - The `main` branch executes the CPU backend. CUDA parity and quantitative AMR
-  convergence remain pending; self gravity, the Jeans indicator, and SparseKLU
-  are not implemented.
+  convergence remain pending; self gravity and the Jeans indicator are not implemented.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict
