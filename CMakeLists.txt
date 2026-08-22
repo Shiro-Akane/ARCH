@@ -292,6 +292,12 @@ if(BUILD_TESTING)
         ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     target_link_libraries(arch_mainline_authority PRIVATE Threads::Threads)
     add_test(NAME mainline_authority COMMAND arch_mainline_authority)
+
+    add_executable(arch_block_handle tests/test_block_handle.cpp)
+    target_compile_features(arch_block_handle PRIVATE cxx_std_20)
+    target_include_directories(arch_block_handle PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME block_handle COMMAND arch_block_handle)
 endif()
 
 if(ARCH_ENABLE_CUDA)
