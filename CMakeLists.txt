@@ -339,7 +339,7 @@ if(ARCH_ENABLE_CUDA)
     target_include_directories(arch_cuda_network_nse_device PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_compile_options(arch_cuda_network_nse_device PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-ffast-math>)
     set_target_properties(arch_cuda_network_nse_device PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)

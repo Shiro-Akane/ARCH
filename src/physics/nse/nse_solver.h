@@ -44,16 +44,18 @@ ARCH_HOST_DEVICE inline double clamp_by_value(double value, double lower,
  * NetType must provide the following compile-time data:
  *
  *   NUM_SPECIES              number of entries in the network
- *   AION[i], ZION[i]         mass and charge numbers
- *   BINDING_E[i]             total nuclear binding energy in MeV
- *   SPIN[i]                  partition/statistical weight (not the spin J)
+ *   aion(i), zion(i)         mass and charge number accessors
+ *   binding_energy(i)        total nuclear binding energy in MeV
+ *   spin_weight(i)           partition/statistical-weight accessor
  *   ENERGY_CONVERSION        MeV per molar-abundance unit -> erg/g
  *
- * A non-positive SPIN entry excludes a network pseudo-species from NSE.  This
- * is useful for approximate networks which contain two bookkeeping entries
- * for the same physical nuclide.  A NetType may additionally provide
- * NSE_ENERGY_CONVERSION when its normal reaction-network energy convention is
- * based on nuclear rest masses rather than binding energies.
+ * The checked-in network AION/ZION/BINDING_E/SPIN arrays remain the host
+ * authority behind these POD accessors.  A non-positive spin_weight entry
+ * excludes a network pseudo-species from NSE.  This is useful for approximate
+ * networks which contain two bookkeeping entries for the same physical
+ * nuclide.  A NetType may additionally provide NSE_ENERGY_CONVERSION when its
+ * normal reaction-network energy convention is based on nuclear rest masses
+ * rather than binding energies.
  *
  * The public interface uses mass fractions X despite the historical Y names.
  * Internally the Saha equation and energy closure use molar abundance X/A.
@@ -173,6 +175,12 @@ struct NSESolver
         for (int i = 0; i < NUM_SPEC; ++i) X_out[i] = solution[i];
         enuc = energy;
         return true;
+    }
+
+    /** @brief Compile-time line-search policy for host/device contract probes. */
+    ARCH_HOST_DEVICE static constexpr int line_search_limit()
+    {
+        return max_line_search;
     }
 
 private:
