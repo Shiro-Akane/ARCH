@@ -344,10 +344,39 @@ if(ARCH_ENABLE_CUDA)
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
     if(BUILD_TESTING)
+        add_executable(arch_cuda_burn_policy_parity
+            tests/cuda/test_burn_policy_parity.cu
+            src/cuda/microphysics/helm_eos_loader.h
+            src/cuda/microphysics/helm_eos_loader.cpp)
+        target_compile_features(arch_cuda_burn_policy_parity PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_burn_policy_parity PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_definitions(arch_cuda_burn_policy_parity PRIVATE
+            ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+        target_compile_options(arch_cuda_burn_policy_parity PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-fno-inline,-fno-tree-vectorize,-fno-tree-slp-vectorize>)
+        set_target_properties(arch_cuda_burn_policy_parity PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
         add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
         add_test(NAME hydro_leaf_parity COMMAND arch_cuda_hydro_leaf_parity)
         add_test(NAME eos_host_device_parity COMMAND arch_cuda_eos_host_device_parity)
         add_test(NAME network_nse_device COMMAND arch_cuda_network_nse_device)
+        add_test(NAME burn_policy_parity_helpers
+            COMMAND arch_cuda_burn_policy_parity helpers)
+        foreach(solver IN ITEMS be_nr bd ros4)
+            add_test(NAME "burn_policy_parity_status_${solver}"
+                COMMAND arch_cuda_burn_policy_parity "status.${solver}")
+        endforeach()
+        foreach(route IN ITEMS
+                aprox13.be_nr aprox13.bd aprox13.ros4
+                aprox19.be_nr aprox19.bd aprox19.ros4
+                aprox21.be_nr aprox21.bd aprox21.ros4
+                iso7.be_nr iso7.bd iso7.ros4)
+            string(REPLACE "." "_" route_test "${route}")
+            add_test(NAME "burn_policy_parity_${route_test}"
+                COMMAND arch_cuda_burn_policy_parity "${route}")
+        endforeach()
     endif()
 endif()
 

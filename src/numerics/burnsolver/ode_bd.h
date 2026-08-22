@@ -21,17 +21,73 @@ struct Solver_BD
     // covering the useful compact-network accuracy range.
     static constexpr int MAX_K = 7;
     // Deuflhard harmonic sequence using the common Roman-sequence variant.
-    static constexpr int n_seq[MAX_K] = {2, 6, 10, 14, 22, 34, 50};
+    ARCH_INLINE static constexpr int sequence_value(int level)
+    {
+        switch (level) {
+        case 0: return 2;
+        case 1: return 6;
+        case 2: return 10;
+        case 3: return 14;
+        case 4: return 22;
+        case 5: return 34;
+        default: return 50;
+        }
+    }
     // Relative work estimates count RHS evaluations and linear solves. One
     // Jacobian is shared by all midpoint substeps at a given extrapolation level.
-    static constexpr double work_cost[MAX_K] = {2.0, 8.0, 18.0, 32.0, 54.0, 88.0, 138.0};
+    ARCH_INLINE static constexpr double work_cost_value(int level)
+    {
+        switch (level) {
+        case 0: return 2.0;
+        case 1: return 8.0;
+        case 2: return 18.0;
+        case 3: return 32.0;
+        case 4: return 54.0;
+        case 5: return 88.0;
+        default: return 138.0;
+        }
+    }
 
     template <typename EOSType>
     static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
                           const BurnConfig &burn_cfg, double &dt_rec)
     {
+        return integrate_report(X_ODE, rho, dt_target, eos,
+                                make_burn_config_view(burn_cfg), dt_rec).success();
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg, double &dt_rec)
+    {
+        MatrixType J_mat, A;
+        return integrate_report_with_matrices(
+            X_ODE, rho, dt_target, eos, burn_cfg, J_mat, A, dt_rec);
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg,
+        OdeMatrixWorkspace<MatrixType>& workspace, double &dt_rec)
+    {
+        return integrate_report_with_matrices(
+            X_ODE, rho, dt_target, eos, burn_cfg,
+            workspace.jacobian, workspace.system, dt_rec);
+    }
+
+private:
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report_with_matrices(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg,
+        MatrixType& J_mat, MatrixType& A, double &dt_rec)
+    {
+        BurnOdeReport report{};
+        report.dt_recommended = dt_rec;
         if (X_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin) {
-            return true;
+            return report;
         }
 
         const double rtol = burn_cfg.odeconfig.rtol;
@@ -42,13 +98,15 @@ struct Solver_BD
         double H = std::min(dt_target, dt_target * burn_cfg.odeconfig.initial_dt_frac);
         int substep_count = 0;
         bool nse_attempted = false;
+        int n_seq[MAX_K];
+        for (int level = 0; level < MAX_K; ++level)
+            n_seq[level] = sequence_value(level);
 
         // Bader-Deuflhard extrapolation tableau and error workspace.
         double T_extrap[MAX_K][MAX_K][NEQ];
         double err_fac[MAX_K];
         double W[MAX_N], X_err[MAX_N], X_trial[MAX_N];
         double RHS[MAX_N], b[MAX_N], delta[MAX_N], x_j[MAX_N], X_j[MAX_N];
-        MatrixType J_mat, A;
         int p[MAX_N]; // Row-pivot indices for the LU factorization.
 
         auto sanitize_state = [&](double* Y_state) {
@@ -67,14 +125,24 @@ struct Solver_BD
             if constexpr (NetType::SUPPORTS_NSE) {
             if (!nse_attempted && burn_cfg.use_nse && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold && rho > burn_cfg.nseDensThreshold) {
                 nse_attempted = true;
-                if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos, burn_cfg, dt_rec)) return true;
+                ++report.nse_attempts;
+                if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos, burn_cfg, dt_rec)) {
+                    report.status = BurnOdeStatus::NseSuccess;
+                    report.dt_recommended = dt_rec;
+                    return report;
+                }
+                ++report.nse_failures;
             }
             }
 
             substep_count++;
+            report.attempted_substeps = substep_count;
             if (substep_count > max_substeps) {
+#if !defined(__CUDA_ARCH__)
                 std::cerr << "[BD] Fatal Error: Exceeded max substeps." << std::endl;
-                return false;
+#endif
+                report.status = BurnOdeStatus::MaxSubsteps;
+                return report;
             }
 
             if (t_current + H > dt_target) H = dt_target - t_current;
@@ -93,7 +161,8 @@ struct Solver_BD
             NetType::eval_jacobian(X_ODE, rho, eta_jac, J_mat, denuc_dX);
             NetType::eval_temperature_derivative(X_ODE, rho, eta_jac, dRHS_dT, denuc_dT);
 
-            const double cv = std::max(eos.get_cv(rho, T_current, X_ODE), 1.0e-10);
+            const double cv = OdeMath::burn_cv_floor(
+                eos.get_cv(rho, T_current, X_ODE));
             const double inv_cv = 1.0 / cv;
             RHS[NEQ - 1] = enuc * inv_cv;
 
@@ -147,7 +216,8 @@ struct Solver_BD
                     double stage_RHS[MAX_N];
                     double eta = eos.get_eta(rho, X_j[NEQ - 1], X_j);
                     NetType::eval_rhs(X_j, rho, eta, stage_RHS, stage_enuc);
-                    double stage_cv = std::max(eos.get_cv(rho, X_j[NEQ - 1], X_j), 1.0e-10);
+                    double stage_cv = OdeMath::burn_cv_floor(
+                        eos.get_cv(rho, X_j[NEQ - 1], X_j));
                     stage_RHS[NEQ - 1] = stage_enuc / stage_cv;
 
 #pragma omp simd
@@ -173,7 +243,8 @@ struct Solver_BD
                 double end_RHS[MAX_N];
                 double eta = eos.get_eta(rho, X_j[NEQ - 1], X_j);
                 NetType::eval_rhs(X_j, rho, eta, end_RHS, end_enuc);
-                double end_cv = std::max(eos.get_cv(rho, X_j[NEQ - 1], X_j), 1.0e-10);
+                double end_cv = OdeMath::burn_cv_floor(
+                    eos.get_cv(rho, X_j[NEQ - 1], X_j));
                 end_RHS[NEQ - 1] = end_enuc / end_cv;
 
 #pragma omp simd
@@ -220,7 +291,7 @@ struct Solver_BD
 
                         long double nuclear_mass_delta = 0.0L;
                         for (int i = 0; i < NUM_SPEC; ++i) {
-                            nuclear_mass_delta += static_cast<long double>(X_trial[i] - X_ODE[i]) / NetType::AION[i] * NetType::ENERGY_WEIGHTS[i];
+                            nuclear_mass_delta += static_cast<long double>(X_trial[i] - X_ODE[i]) / NetType::aion(i) * NetType::energy_weight(i);
                         }
                         const double integrated_enuc = NetType::ENERGY_CONVERSION * static_cast<double>(nuclear_mass_delta);
                         const double old_eint = eos.get_eint_from_T(rho, X_ODE[NEQ - 1], X_ODE);
@@ -232,7 +303,9 @@ struct Solver_BD
                             step_converged = true;
                         }
                         else {
-                            const double closure_scale = std::max({std::abs(integrated_enuc), std::abs(thermal_delta), rtol * std::abs(old_eint), 1.0});
+                            const double closure_scale = OdeMath::max4(
+                                std::abs(integrated_enuc), std::abs(thermal_delta),
+                                rtol * std::abs(old_eint), 1.0);
                             const double closure_error = std::abs(thermal_delta - integrated_enuc) / closure_scale;
 
                             // Accept energy-closure errors up to five percent.
@@ -276,7 +349,7 @@ struct Solver_BD
                 // Compare all accepted lower orders.
                 for (int k = 1; k <= optimal_k; ++k) {
                     double step_for_k = H * err_fac[k] * 0.9; // 0.9 is the extrapolation safety factor.
-                    double work_k = work_cost[k] / step_for_k;
+                    double work_k = work_cost_value(k) / step_for_k;
                     if (work_k < work_min) {
                         work_min = work_k;
                         k_next = k;
@@ -287,7 +360,7 @@ struct Solver_BD
                 if (optimal_k < MAX_K - 1) {
                     double err_est = err_fac[optimal_k] * (static_cast<double>(n_seq[optimal_k + 1]) / n_seq[optimal_k]);
                     double step_higher = H * err_est * 0.9;
-                    double work_higher = work_cost[optimal_k + 1] / step_higher;
+                    double work_higher = work_cost_value(optimal_k + 1) / step_higher;
                     if (work_higher < work_min) {
                         k_next = optimal_k + 1;
                     }
@@ -304,15 +377,21 @@ struct Solver_BD
                 // acceptance, quarter H to leave the rejected stiffness scale.
                 H *= 0.25;
                 nse_attempted = false;
+                report.rejected_substeps += 1;
                 if (H < 1e-22)
                 {
+#if !defined(__CUDA_ARCH__)
                     std::cerr << "[BD] Fatal Error: Stiff ODE stalled. H < 1e-22" << std::endl;
-                    return false;
+#endif
+                    report.status = BurnOdeStatus::Stalled;
+                    return report;
                 }
             }
         }
 
         dt_rec = H;
-        return true;
+        report.status = BurnOdeStatus::OdeSuccess;
+        report.dt_recommended = dt_rec;
+        return report;
     }
 };

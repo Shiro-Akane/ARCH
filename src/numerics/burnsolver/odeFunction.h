@@ -7,8 +7,16 @@
 #include <algorithm>
 #include <cmath>
 
+#include "../../core/ArchPortability.h"
 #include "../../data/GlobalDefs.h"
 #include "../../physics/nse/nse_solver.h"
+
+template <typename MatrixType>
+struct OdeMatrixWorkspace
+{
+    MatrixType jacobian;
+    MatrixType system;
+};
 
 namespace OdeMath
 {
@@ -19,7 +27,7 @@ namespace OdeMath
      * @brief Apply the generic vector update X_new = X_old + alpha*dX.
      */
     template <int ODE_NEQ>
-    void vec_axpy(const double *X_old, double alpha, const double *dX, double *X_new)
+    ARCH_INLINE void vec_axpy(const double *X_old, double alpha, const double *dX, double *X_new)
     {
         // ODE_NEQ is a compile-time constant, allowing vectorization and full
         // unrolling for the compact supported network sizes.
@@ -36,7 +44,7 @@ namespace OdeMath
      * @brief Compute component weights W_i = RTOL*|Y_i| + ATOL.
      */
     template <int ODE_NEQ>
-    void calc_weights(const double *Y, double rtol, double atol, double *W)
+    ARCH_INLINE void calc_weights(const double *Y, double rtol, double atol, double *W)
     {
 #pragma omp simd
         for (int i = 0; i < ODE_NEQ; ++i)
@@ -49,7 +57,7 @@ namespace OdeMath
      * @brief Compute the weighted root-mean-square error norm.
      */
     template <int ODE_NEQ>
-    double wrms_norm(const double *err_vec, const double *weight_vec)
+    ARCH_INLINE double wrms_norm(const double *err_vec, const double *weight_vec)
     {
         double sum = 0.0;
         for (int i = 0; i < ODE_NEQ; ++i)
@@ -68,7 +76,7 @@ namespace OdeMath
      * component is deliberately excluded.
      */
     template <int NUM_SPECIES>
-    void enforce_mass_conservation(double *Y, double smallx)
+    ARCH_INLINE void enforce_mass_conservation(double *Y, double smallx)
     {
         double sum_X = 0.0;
         // Remove small negative values introduced by truncation error.
@@ -92,7 +100,7 @@ namespace OdeMath
      * @brief Clamp the temperature stored in the final ODE component.
      */
     template <int ODE_NEQ>
-    void enforce_temperature_bounds(double *Y, double T_min, double T_max)
+    ARCH_INLINE void enforce_temperature_bounds(double *Y, double T_min, double T_max)
     {
         const int T_INDEX = ODE_NEQ - 1;
         if (Y[T_INDEX] < T_min)
@@ -103,6 +111,11 @@ namespace OdeMath
 
     // Adaptive PI step-size controller.
 
+    ARCH_INLINE bool pi_uses_small_error_branch(double err_n)
+    {
+        return err_n < 1.0e-10;
+    }
+
     /**
      * @brief Compute the next step from current and previous WRMS errors.
      * @param err_n Current-step WRMS error.
@@ -110,14 +123,14 @@ namespace OdeMath
      * @param dt_n Current step size.
      * @return Proposed step size dt_next.
      */
-    inline double pi_controller(double err_n, double err_n_1, double dt_n,
+    ARCH_INLINE double pi_controller(double err_n, double err_n_1, double dt_n,
                          int order_q, double safe, double min_fac, double max_fac)
     {
         // Hairer-Wanner PI exponents scale with the formal method order.
         const double k1 = 0.7 / order_q;
         const double k2 = 0.2 / order_q;
 
-        if (err_n < 1e-10)
+        if (pi_uses_small_error_branch(err_n))
             return dt_n * max_fac;
 
         double fac = safe * std::pow(err_n, -k1) * std::pow(err_n_1, k2);
@@ -125,11 +138,21 @@ namespace OdeMath
         return dt_n * fac;
     }
 
+    ARCH_INLINE double burn_cv_floor(double cv)
+    {
+        return std::max(cv, 1.0e-10);
+    }
+
+    ARCH_INLINE double max4(double a, double b, double c, double d)
+    {
+        return std::max(std::max(a, b), std::max(c, d));
+    }
+
     // Self-consistent NSE projection.
     template <typename NetType, typename EOSType>
-    bool integrate_nse_state(double* state, double rho,
+    ARCH_INLINE bool integrate_nse_state(double* state, double rho,
                              double dt_target, const EOSType& eos,
-                             const BurnConfig& burn_cfg,
+                             const BurnConfigView& burn_cfg,
                              double& dt_rec)
     {
         // Network dimensions are compile-time properties of NetType.
@@ -151,7 +174,7 @@ namespace OdeMath
         for (int i = 0; i < NUM_SPEC; ++i) {
             old_x[i] = state[i];
             ye_sum += static_cast<long double>(state[i])
-                    * static_cast<long double>(NetType::ZION[i] / NetType::AION[i]);
+                    * static_cast<long double>(NetType::zion(i) / NetType::aion(i));
         }
         const double ye = static_cast<double>(ye_sum);
         const double old_temperature = state[NEQ - 1];
@@ -166,7 +189,8 @@ namespace OdeMath
             }
             const double new_eint = eos.get_eint_from_T(rho, temperature, candidate.x);
             candidate.residual = new_eint - old_eint - candidate.enuc;
-            candidate.scale = std::max({std::abs(new_eint), std::abs(old_eint), std::abs(candidate.enuc), 1.0});
+            candidate.scale = max4(std::abs(new_eint), std::abs(old_eint),
+                                   std::abs(candidate.enuc), 1.0);
             return std::isfinite(new_eint) && std::isfinite(candidate.residual) && std::isfinite(candidate.scale);
         };
 
@@ -261,7 +285,7 @@ namespace OdeMath
      * @param y_err Output truncation-error estimate.
      */
     template <int ODE_NEQ, int MAX_K>
-    void bd_extrapolate(int k, const int* n_seq,
+    ARCH_INLINE void bd_extrapolate(int k, const int* n_seq,
                         double T[MAX_K][MAX_K][ODE_NEQ],
                         double* y_err)
     {

@@ -45,15 +45,48 @@ struct Solver_ROS4
     static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
                           const BurnConfig &burn_cfg, double &dt_rec)
     {
+        return integrate_report(X_ODE, rho, dt_target, eos,
+                                make_burn_config_view(burn_cfg), dt_rec).success();
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg, double &dt_rec)
+    {
+        MatrixType J_mat, A;
+        return integrate_report_with_matrices(
+            X_ODE, rho, dt_target, eos, burn_cfg, J_mat, A, dt_rec);
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg,
+        OdeMatrixWorkspace<MatrixType>& workspace, double &dt_rec)
+    {
+        return integrate_report_with_matrices(
+            X_ODE, rho, dt_target, eos, burn_cfg,
+            workspace.jacobian, workspace.system, dt_rec);
+    }
+
+private:
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report_with_matrices(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg,
+        MatrixType& J_mat, MatrixType& A, double &dt_rec)
+    {
+        BurnOdeReport report{};
+        report.dt_recommended = dt_rec;
         if (X_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin)
         {
-            return true;
+            return report;
         }
 
         double X_old[MAX_N], X_k[MAX_N], X_trial[MAX_N];
         double RHS[MAX_N], b[MAX_N], W[MAX_N], X_err[MAX_N];
         double u1[MAX_N], u2[MAX_N], u3[MAX_N], u4[MAX_N];
-        MatrixType J_mat, A;
 
         const double rtol = burn_cfg.odeconfig.rtol;
         const double atol = burn_cfg.odeconfig.atol;
@@ -71,7 +104,8 @@ struct Solver_ROS4
             double enuc = 0.0;
             double eta = eos.get_eta(rho, Y[NEQ - 1], Y);
             NetType::eval_rhs(Y, rho, eta, out_RHS, enuc);
-            double cv = std::max(eos.get_cv(rho, Y[NEQ - 1], Y), 1e-10);
+            double cv = OdeMath::burn_cv_floor(
+                eos.get_cv(rho, Y[NEQ - 1], Y));
             out_RHS[NEQ - 1] = enuc / cv;
         };
 
@@ -96,18 +130,26 @@ struct Solver_ROS4
                 && rho > burn_cfg.nseDensThreshold)
             {
                 nse_attempted = true;
+                ++report.nse_attempts;
                 if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos,
                                                         burn_cfg, dt_rec)) {
-                    return true;
+                    report.status = BurnOdeStatus::NseSuccess;
+                    report.dt_recommended = dt_rec;
+                    return report;
                 }
+                ++report.nse_failures;
             }
             }
 
             substep_count++;
+            report.attempted_substeps = substep_count;
             if (substep_count > max_substeps)
             {
+#if !defined(__CUDA_ARCH__)
                 std::cerr << "[ROS4] Fatal Error: Exceeded max substeps (" << max_substeps << ")" << std::endl;
-                return false;
+#endif
+                report.status = BurnOdeStatus::MaxSubsteps;
+                return report;
             }
 
             if (t_current + dt > dt_target) dt = dt_target - t_current;
@@ -128,7 +170,8 @@ struct Solver_ROS4
             NetType::eval_jacobian(X_old, rho, eta_jac, J_mat, denuc_dX);
             NetType::eval_temperature_derivative(X_old, rho, eta_jac, dRHS_dT, denuc_dT);
 
-            const double cv = std::max(eos.get_cv(rho, T_current, X_old), 1.0e-10);
+            const double cv = OdeMath::burn_cv_floor(
+                eos.get_cv(rho, T_current, X_old));
             const double inv_cv = 1.0 / cv;
 
 #pragma omp simd
@@ -151,6 +194,7 @@ struct Solver_ROS4
                 // A singular shared matrix rejects the trial stiffness scale;
                 // a factor-of-four reduction moves the retry well below it.
                 dt *= 0.25;
+                report.rejected_substeps += 1;
                 continue;
             }
 
@@ -262,7 +306,7 @@ struct Solver_ROS4
                         // Evaluate the nuclear/thermal energy closure.
                         long double nuclear_mass_delta = 0.0L;
                         for (int i = 0; i < NUM_SPEC; ++i) {
-                            nuclear_mass_delta += static_cast<long double>(X_trial[i] - X_old[i]) / NetType::AION[i] * NetType::ENERGY_WEIGHTS[i];
+                            nuclear_mass_delta += static_cast<long double>(X_trial[i] - X_old[i]) / NetType::aion(i) * NetType::energy_weight(i);
                         }
                         const double integrated_enuc = NetType::ENERGY_CONVERSION * static_cast<double>(nuclear_mass_delta);
                         const double old_eint = eos.get_eint_from_T(rho, X_old[NEQ - 1], X_old);
@@ -276,7 +320,9 @@ struct Solver_ROS4
                             step_converged = true;
                         }
                         else {
-                            const double closure_scale = std::max({std::abs(integrated_enuc), std::abs(thermal_delta), rtol * std::abs(old_eint), 1.0});
+                            const double closure_scale = OdeMath::max4(
+                                std::abs(integrated_enuc), std::abs(thermal_delta),
+                                rtol * std::abs(old_eint), 1.0);
                             const double closure_error = std::abs(thermal_delta - integrated_enuc) / closure_scale;
 
                             // Five percent is the engineering energy-closure
@@ -309,17 +355,23 @@ struct Solver_ROS4
                 // Quarter the rejected step before retrying the same interval.
                 dt *= 0.25;
                 nse_attempted = false;
+                report.rejected_substeps += 1;
                 // Below 1e-22 s, double-precision time accumulation no longer
                 // provides useful progress for the supported burn cases.
                 if (dt < 1e-22)
                 {
+#if !defined(__CUDA_ARCH__)
                     std::cerr << "[ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
-                    return false;
+#endif
+                    report.status = BurnOdeStatus::Stalled;
+                    return report;
                 }
             }
         }
 
         dt_rec = dt;
-        return true;
+        report.status = BurnOdeStatus::OdeSuccess;
+        report.dt_recommended = dt_rec;
+        return report;
     }
 };

@@ -22,9 +22,20 @@ struct Solver_BE_NR
     static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
                           const BurnConfig &burn_cfg, double &dt_rec)
     {
+        return integrate_report(X_ODE, rho, dt_target, eos,
+                                make_burn_config_view(burn_cfg), dt_rec).success();
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg, double &dt_rec)
+    {
+        BurnOdeReport report{};
+        report.dt_recommended = dt_rec;
         if (X_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin)
         {
-            return true;
+            return report;
         }
 
         double X_old[MAX_N], X_k[MAX_N], X_trial[MAX_N];
@@ -55,18 +66,26 @@ struct Solver_BE_NR
                 && rho > burn_cfg.nseDensThreshold)
             {
                 nse_attempted = true;
+                ++report.nse_attempts;
                 if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos,
                                         burn_cfg, dt_rec)) {
-                    return true;
+                    report.status = BurnOdeStatus::NseSuccess;
+                    report.dt_recommended = dt_rec;
+                    return report;
                 }
+                ++report.nse_failures;
             }
             }
 
             substep_count++;
+            report.attempted_substeps = substep_count;
             if (substep_count > max_substeps)
             {
+#if !defined(__CUDA_ARCH__)
                 std::cerr << "[BE-NR] Fatal Error: Exceeded max substeps (" << max_substeps << ")" << std::endl;
-                return false;
+#endif
+                report.status = BurnOdeStatus::MaxSubsteps;
+                return report;
             }
 
             // Shorten the final substep to land exactly on dt_target.
@@ -110,8 +129,8 @@ struct Solver_BE_NR
                 // dT/dt = enuc/cv and J_T,* = J_enuc,*/cv.  Timmes obtains cv
                 // analytically from Helmholtz but does not differentiate cv in
                 // the ODE Jacobian. Temperature is not perturbed by this column.
-                const double cv = std::max(eos.get_cv(rho, T_current, X_k),
-                                           1.0e-10);
+                const double cv = OdeMath::burn_cv_floor(
+                    eos.get_cv(rho, T_current, X_k));
                 const double inv_cv = 1.0 / cv;
                 RHS[NEQ - 1] = enuc * inv_cv;
 
@@ -201,7 +220,7 @@ struct Solver_BE_NR
                     for (int i = 0; i < NUM_SPEC; ++i) {
                         nuclear_mass_delta +=
                             static_cast<long double>(X_trial[i] - X_old[i])
-                            / NetType::AION[i] * NetType::ENERGY_WEIGHTS[i];
+                            / NetType::aion(i) * NetType::energy_weight(i);
                     }
                     const double integrated_enuc = NetType::ENERGY_CONVERSION
                         * static_cast<double>(nuclear_mass_delta);
@@ -210,9 +229,9 @@ struct Solver_BE_NR
                     const double new_eint = eos.get_eint_from_T(
                         rho, X_trial[NEQ - 1], X_trial);
                     const double thermal_delta = new_eint - old_eint;
-                    const double closure_scale = std::max(
-                        {std::abs(integrated_enuc), std::abs(thermal_delta),
-                         rtol * std::abs(old_eint), 1.0});
+                    const double closure_scale = OdeMath::max4(
+                        std::abs(integrated_enuc), std::abs(thermal_delta),
+                        rtol * std::abs(old_eint), 1.0);
                     const double closure_error =
                         std::abs(thermal_delta - integrated_enuc) / closure_scale;
                     // Reject thermal/nuclear energy disagreement above five percent.
@@ -264,13 +283,30 @@ struct Solver_BE_NR
                 // make meaningful time progress in double precision.
                 if (dt < 1e-22)
                 {
+#if !defined(__CUDA_ARCH__)
                     std::cerr << "[BE-NR] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
-                    return false;
+#endif
+                    report.status = BurnOdeStatus::Stalled;
+                    report.rejected_substeps += 1;
+                    return report;
                 }
+                report.rejected_substeps += 1;
             }
         }
 
         dt_rec = dt; // Return the PI controller's final stable substep recommendation.
-        return true; // The solver covered the complete requested interval.
+        report.status = BurnOdeStatus::OdeSuccess;
+        report.dt_recommended = dt_rec;
+        return report; // The solver covered the complete requested interval.
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double *X_ODE, double rho, double dt_target, const EOSType &eos,
+        const BurnConfigView &burn_cfg,
+        OdeMatrixWorkspace<MatrixType>&, double &dt_rec)
+    {
+        return integrate_report(
+            X_ODE, rho, dt_target, eos, burn_cfg, dt_rec);
     }
 };

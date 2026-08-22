@@ -25,6 +25,153 @@
 #include <omp.h>
 #endif
 
+namespace DriverBurn
+{
+inline constexpr double INACTIVE_LIMITER_CANDIDATE = 1.0e99;
+
+enum class BurnCellDisposition : unsigned char
+{
+    BurnDisabled,
+    Ready,
+    BelowDensity,
+    BelowTemperature,
+    InvalidComposition,
+    SolverFailed
+};
+
+struct BurnCellPreparation
+{
+    BurnCellDisposition disposition = BurnCellDisposition::InvalidComposition;
+    double kinetic_energy = 0.0;
+    double internal_energy = 0.0;
+    double composition_sum = 0.0;
+    double composition_min = 0.0;
+    double composition_max = 0.0;
+};
+
+struct BurnEnergyHandoff
+{
+    double new_internal_energy = 0.0;
+    double total_energy = 0.0;
+    double enuc_rate = 0.0;
+    double limiter_candidate = INACTIVE_LIMITER_CANDIDATE;
+};
+
+template <typename EosPolicy>
+ARCH_INLINE double recover_burn_temperature(
+    double rho, double internal_energy, const double* composition,
+    const EosPolicy& eos)
+{
+    return eos.get_temperature(rho, internal_energy, composition);
+}
+
+template <typename EosPolicy>
+ARCH_INLINE double recover_burn_internal_energy(
+    double rho, double temperature, const double* composition,
+    const EosPolicy& eos)
+{
+    return eos.get_eint_from_T(rho, temperature, composition);
+}
+
+ARCH_INLINE BurnCellDisposition check_burn_density(
+    const FluidVector& fluid, const BurnConfigView& burn_cfg)
+{
+    return fluid.rho < burn_cfg.nuclearDensMin
+        ? BurnCellDisposition::BelowDensity
+        : BurnCellDisposition::Ready;
+}
+
+/** Prepare one post-density-gate, already-packed ODE state. */
+template <typename EosPolicy>
+ARCH_INLINE BurnCellPreparation prepare_burn_cell(
+    const FluidVector& fluid, double* ode_state, int n_spec,
+    const EosPolicy& eos, const BurnConfigView& burn_cfg)
+{
+    BurnCellPreparation prepared{};
+    const double rho = fluid.rho;
+
+    double composition_sum = 0.0;
+    double composition_min = ode_state[0];
+    double composition_max = ode_state[0];
+    bool composition_is_finite = true;
+    bool composition_has_negative = false;
+    for (int k = 0; k < n_spec; ++k)
+    {
+        const double xk = ode_state[k];
+        composition_is_finite = composition_is_finite && std::isfinite(xk);
+        composition_has_negative = composition_has_negative
+            || xk < -10.0 * burn_cfg.smallx;
+        composition_sum += xk;
+        composition_min = std::min(composition_min, xk);
+        composition_max = std::max(composition_max, xk);
+    }
+    prepared.composition_sum = composition_sum;
+    prepared.composition_min = composition_min;
+    prepared.composition_max = composition_max;
+
+    const bool composition_is_valid = composition_is_finite
+        && !composition_has_negative && std::isfinite(composition_sum)
+        && composition_sum > 1.0e-13
+        && std::abs(composition_sum - 1.0) <= 1.0e-6;
+    if (!composition_is_valid)
+    {
+        prepared.disposition = BurnCellDisposition::InvalidComposition;
+        return prepared;
+    }
+
+    prepared.kinetic_energy = 0.5
+        * (fluid.mom_u * fluid.mom_u + fluid.mom_v * fluid.mom_v
+           + fluid.mom_w * fluid.mom_w) / rho;
+    prepared.internal_energy = (fluid.eng - prepared.kinetic_energy) / rho;
+    const double temperature = recover_burn_temperature(
+        rho, prepared.internal_energy, ode_state, eos);
+    if (temperature < burn_cfg.nuclearTempMin)
+    {
+        prepared.disposition = BurnCellDisposition::BelowTemperature;
+        return prepared;
+    }
+    ode_state[n_spec] = temperature;
+    prepared.disposition = BurnCellDisposition::Ready;
+    return prepared;
+}
+
+/** Reconstruct energy, signed ENUC and the per-cell global limiter candidate. */
+template <typename EosPolicy>
+ARCH_INLINE BurnEnergyHandoff compute_burn_energy_handoff(
+    const FluidVector& fluid, const double* ode_state, int n_spec,
+    double old_internal_energy, double kinetic_energy, double burn_dt,
+    const EosPolicy& eos, const BurnConfigView& burn_cfg)
+{
+    BurnEnergyHandoff handoff{};
+    const double new_internal_energy = recover_burn_internal_energy(
+        fluid.rho, ode_state[n_spec], ode_state, eos);
+    handoff.new_internal_energy = new_internal_energy;
+    handoff.total_energy = fluid.rho * new_internal_energy + kinetic_energy;
+    if (burn_dt > 0.0)
+        handoff.enuc_rate = (new_internal_energy - old_internal_energy) / burn_dt;
+
+    if (burn_cfg.enucDtFactor > 0.0)
+    {
+        const double delta_e = std::abs(new_internal_energy - old_internal_energy);
+        if (burn_dt > 0.0)
+        {
+            const double enuc_rate = delta_e / burn_dt;
+            const double energyRatioInv = enuc_rate
+                / std::max(new_internal_energy, 1.0e-20);
+            if (energyRatioInv > 1.0e-30)
+                handoff.limiter_candidate = burn_cfg.enucDtFactor / energyRatioInv;
+        }
+    }
+    return handoff;
+}
+
+ARCH_INLINE void commit_burn_energy(
+    FluidVector& fluid, const BurnEnergyHandoff& handoff)
+{
+    fluid.eng = handoff.total_energy;
+}
+} // namespace DriverBurn
+
 template <typename EosPolicy, typename BurnerPolicy>
 void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolicy &eos,
                        BurnerPolicy &burn, const Grid &grid, const SimConfig &config,
@@ -35,7 +182,8 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
     std::fill(current_state.enuc_rate.begin(), current_state.enuc_rate.end(), 0.0);
     if (!config.physics.burn.use_burn)
         return;
-    double local_dt_burn_min = 1e99;
+    const BurnConfigView burn_cfg = make_burn_config_view(config.physics.burn);
+    double local_dt_burn_min = DriverBurn::INACTIVE_LIMITER_CANDIDATE;
     const int n_spec = current_state.GetNumSpecies();
 
     int invalid_composition_count = 0;
@@ -57,10 +205,12 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
             for (int i_idx = grid.Is(); i_idx < grid.Ie(); ++i_idx)
             {
                 int i = grid.GetIndex(i_idx, j, k);
-        double rho = current_state.rho[i];
+        FluidVector fluid = current_state.get(i);
+        double rho = fluid.rho;
 
-        // Skip cells below the configured nuclear-density activation threshold.
-        if (rho < config.physics.burn.nuclearDensMin)
+        // Preserve the density gate before composition packing.
+        if (DriverBurn::check_burn_density(fluid, burn_cfg)
+            == DriverBurn::BurnCellDisposition::BelowDensity)
             continue;
 
         // Pack cell mass fractions into the worker-local network ODE state.
@@ -71,23 +221,11 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         // invalid.  Testing X_ODE[0] and X_ODE[1] is incorrect: H1/He3
         // are normally zero in aprox19/21 helium/carbon fuel, and He4/C12
         // can both be depleted in an evolved alpha-chain state.
-        double composition_sum = 0.0;
-        double composition_min = X_ODE[0];
-        double composition_max = X_ODE[0];
-        bool composition_is_finite = true;
-        bool composition_has_negative = false;
-        for (int k = 0; k < n_spec; ++k)
-        {
-            const double xk = X_ODE[k];
-            composition_is_finite = composition_is_finite && std::isfinite(xk);
-            composition_has_negative = composition_has_negative || xk < -10.0 * config.physics.burn.smallx;
-            composition_sum += xk;
-            composition_min = std::min(composition_min, xk);
-            composition_max = std::max(composition_max, xk);
-        }
-
-        const bool composition_is_valid = composition_is_finite && !composition_has_negative && std::isfinite(composition_sum) && composition_sum > 1.0e-13 && std::abs(composition_sum - 1.0) <= 1.0e-6;
-        if (!composition_is_valid)
+        const auto prepared = DriverBurn::prepare_burn_cell(
+            fluid, X_ODE.data(), n_spec, eos, burn_cfg);
+        if (prepared.disposition == DriverBurn::BurnCellDisposition::BelowTemperature)
+            continue;
+        if (prepared.disposition == DriverBurn::BurnCellDisposition::InvalidComposition)
         {
 #pragma omp critical(burn_invalid_composition)
             {
@@ -95,25 +233,14 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
                 if (first_invalid_cell < 0)
                 {
                     first_invalid_cell = i;
-                    first_invalid_sum = composition_sum;
-                    first_invalid_min = composition_min;
-                    first_invalid_max = composition_max;
+                    first_invalid_sum = prepared.composition_sum;
+                    first_invalid_min = prepared.composition_min;
+                    first_invalid_max = prepared.composition_max;
                 }
             }
             continue;
         }
 
-        // Remove kinetic energy and recover the current temperature through the EOS.
-        double mx = current_state.mom_u[i];
-        double my = current_state.mom_v[i];
-        double mz = current_state.mom_w[i];
-        double e_kin = 0.5 * (mx * mx + my * my + mz * mz) / rho;
-        double e_int = (current_state.eng[i] - e_kin) / rho;
-        // Recover temperature from density, specific internal energy, and composition.
-        double T = eos.get_temperature(rho, e_int, X_ODE.data());
-        if (T < config.physics.burn.nuclearTempMin)
-            continue;
-        X_ODE[n_spec] = T; // Temperature occupies the final ODE component.
         // Integrate the local network state.
         double dt_rec = burn_dt;
         bool success = burn.integrate(X_ODE.data(), rho, burn_dt, eos, config.physics.burn, dt_rec);
@@ -125,31 +252,14 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
         }
         // Commit the updated composition and temperature.
         current_state.set_species_from_buffer(i, X_ODE.data());
-        double T_new = X_ODE[n_spec];
-        // Reconstruct total energy from the EOS state.
-        double e_int_new = eos.get_eint_from_T(rho, T_new, X_ODE.data());
-        current_state.eng[i] = rho * e_int_new + e_kin;
-        if (burn_dt > 0.0)
-            current_state.enuc_rate[i] = (e_int_new - e_int) / burn_dt;
-
-        // Apply the nuclear energy timestep limiter when requested.
-        if (config.physics.burn.enucDtFactor > 0.0)
-        {
-            double delta_e = std::abs(e_int_new - e_int);
-            if (burn_dt > 0.0)
-            {
-                double enuc_rate = delta_e / burn_dt;
-
-                // Ratio used by the FLASH-style nuclear energy timestep limit.
-                double energyRatioInv = enuc_rate / std::max(e_int_new, 1e-20);
-                // Limit the next macro step only for a non-negligible source.
-                if (energyRatioInv > 1e-30)
-                {
-                    double dt_enuc_limit = config.physics.burn.enucDtFactor / energyRatioInv;
-                    local_dt_burn_min = std::min(local_dt_burn_min, dt_enuc_limit);
-                }
-            }
-        }
+        const auto handoff = DriverBurn::compute_burn_energy_handoff(
+            fluid, X_ODE.data(), n_spec, prepared.internal_energy,
+            prepared.kinetic_energy, burn_dt, eos, burn_cfg);
+        DriverBurn::commit_burn_energy(fluid, handoff);
+        current_state.eng[i] = fluid.eng;
+        current_state.enuc_rate[i] = handoff.enuc_rate;
+        local_dt_burn_min = std::min(
+            local_dt_burn_min, handoff.limiter_candidate);
     }
         }
     }

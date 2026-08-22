@@ -9,10 +9,13 @@
  */
 
 #pragma once
+#include <cstdint>
 #include <map>
 #include <string>
 #include <type_traits>
 #include <vector>
+
+#include "../core/ArchPortability.h"
 
 // Grid and domain configuration.
 struct GridConfig
@@ -99,6 +102,68 @@ struct BurnLimits
     static constexpr int MAX_ODE_NEQ = MAX_SPECIES + 1; ///< Maximum ODE system size (species + temperature)
 };
 
+/**
+ * Plain numeric ODE controls passed through compile-time host/device policies.
+ * Runtime-only names stay in OdeConfig and never enter a device-visible ABI.
+ */
+struct OdeConfigView
+{
+    double rtol;
+    double atol;
+    int max_newton_iter;
+    int max_substeps;
+    double dt_safe_factor;
+    double dt_fac_max;
+    double dt_fac_min;
+    double initial_dt_frac;
+    bool use_numerical_jacobian;
+    bool freeze_jacobian;
+};
+
+/**
+ * Plain numeric burn controls shared by the CPU authority and CUDA policy calls.
+ */
+struct BurnConfigView
+{
+    bool use_burn;
+    double nuclearTempMin;
+    double nuclearDensMin;
+    double smallt;
+    double smallx;
+    double enucDtFactor;
+    bool use_nse;
+    double nseTempThreshold;
+    double nseDensThreshold;
+    bool enforce_mass_conservation;
+    OdeConfigView odeconfig;
+};
+
+enum class BurnOdeStatus : std::uint8_t
+{
+    ActivationSkipped,
+    NseSuccess,
+    OdeSuccess,
+    MaxSubsteps,
+    Stalled
+};
+
+struct BurnOdeReport
+{
+    BurnOdeStatus status = BurnOdeStatus::ActivationSkipped;
+    int attempted_substeps = 0;
+    int rejected_substeps = 0;
+    int nse_attempts = 0;
+    int nse_failures = 0;
+    double dt_recommended = 0.0;
+
+    ARCH_HOST_DEVICE constexpr bool success() const
+    {
+        return status == BurnOdeStatus::ActivationSkipped
+            || status == BurnOdeStatus::NseSuccess
+            || status == BurnOdeStatus::OdeSuccess;
+    }
+};
+
 struct BurnConfig
 {
     double ignition_temp = 1e9; ///< Ignition temperature threshold for burning (in Kelvin)
@@ -124,6 +189,34 @@ struct BurnConfig
 
     OdeConfig odeconfig; ///< ODE solver configuration for the burn module
 };
+
+inline BurnConfigView make_burn_config_view(const BurnConfig& config)
+{
+    return {
+        config.use_burn,
+        config.nuclearTempMin,
+        config.nuclearDensMin,
+        config.smallt,
+        config.smallx,
+        config.enucDtFactor,
+        config.use_nse,
+        config.nseTempThreshold,
+        config.nseDensThreshold,
+        config.enforce_mass_conservation,
+        {
+            config.odeconfig.rtol,
+            config.odeconfig.atol,
+            config.odeconfig.max_newton_iter,
+            config.odeconfig.max_substeps,
+            config.odeconfig.dt_safe_factor,
+            config.odeconfig.dt_fac_max,
+            config.odeconfig.dt_fac_min,
+            config.odeconfig.initial_dt_frac,
+            config.odeconfig.use_numerical_jacobian,
+            config.odeconfig.freeze_jacobian,
+        },
+    };
+}
 
 // Gravity configuration.
 struct GravityConfig
