@@ -22,6 +22,8 @@
 #include <cmath>
 #include <vector>
 
+#include "../../core/ArchPortability.h"
+
 namespace ConductivityMath {
 
     // Transport-fit constants retained from the AMReX-Astro stellar
@@ -63,7 +65,7 @@ namespace ConductivityMath {
      * @param aion_inv Inverse atomic weight of each isotope
      * @return Computed thermal conductivity (erg/cm/K/sec)
      */
-    inline double compute_stellar_conductivity(
+    ARCH_INLINE double compute_stellar_conductivity(
         double T, double rho,
         double pele, double xne, double eta,
         const double* xn, int NumSpec,

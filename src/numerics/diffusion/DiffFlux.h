@@ -13,6 +13,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -23,11 +25,342 @@
 #include "../../grid/Grid.h"
 #include "../../physics/diffusionCoe/diffusion_math.hpp"
 #include "../../physics/eos/eos_state.h"
+#include "../../physics/species/Species.h"
 
 // Diffusive flux and operator assembly.
 
 namespace DiffFlux
 {
+    enum class DiffusionGeometry : int
+    {
+        Cartesian = 0,
+        Cylindrical = 1,
+        Spherical = 2,
+        Unsupported = 3,
+    };
+
+    struct DiffusionConfigView
+    {
+        bool use_diffusion = false;
+        bool use_thermal_diffusion = false;
+        bool use_viscous_diffusion = false;
+        bool use_species_diffusion = false;
+        double nu_visc = 0.0;
+        double alpha_therm = 0.0;
+        double D_spec = 0.0;
+    };
+
+    struct DiffusionCoefficients
+    {
+        double nu_visc = 0.0;
+        double alpha_therm = 0.0;
+        double D_spec = 0.0;
+        bool valid = true;
+    };
+
+    struct DiffusionFaceStatus
+    {
+        bool active = false;
+        bool valid = true;
+    };
+
+    struct DiffusionDtCandidate
+    {
+        double value = 1.0e10;
+        bool valid = true;
+    };
+
+    static_assert(std::is_standard_layout_v<DiffusionConfigView>);
+    static_assert(std::is_trivially_copyable_v<DiffusionConfigView>);
+    static_assert(std::is_standard_layout_v<DiffusionCoefficients>);
+    static_assert(std::is_trivially_copyable_v<DiffusionCoefficients>);
+    static_assert(std::is_standard_layout_v<DiffusionFaceStatus>);
+    static_assert(std::is_trivially_copyable_v<DiffusionFaceStatus>);
+    static_assert(std::is_standard_layout_v<DiffusionDtCandidate>);
+    static_assert(std::is_trivially_copyable_v<DiffusionDtCandidate>);
+
+    inline DiffusionConfigView make_diffusion_config_view(const SimConfig& config)
+    {
+        return {
+            config.physics.diffusion.use_diffusion,
+            config.physics.diffusion.use_thermal_diffusion,
+            config.physics.diffusion.use_viscous_diffusion,
+            config.physics.diffusion.use_species_diffusion,
+            config.physics.diffusion.nu_visc,
+            config.physics.diffusion.alpha_therm,
+            config.physics.diffusion.D_spec};
+    }
+
+    inline DiffusionGeometry diffusion_geometry_from_name(const std::string& geometry)
+    {
+        if (geometry == "cartesian") return DiffusionGeometry::Cartesian;
+        if (geometry == "cylindrical") return DiffusionGeometry::Cylindrical;
+        if (geometry == "spherical") return DiffusionGeometry::Spherical;
+        return DiffusionGeometry::Unsupported;
+    }
+
+    ARCH_INLINE constexpr double diffusion_dt_sentinel()
+    {
+        return 1.0e10;
+    }
+
+    ARCH_INLINE bool diffusion_routes_enabled(const DiffusionConfigView& config)
+    {
+        return config.use_diffusion
+            && (config.use_thermal_diffusion
+                || config.use_viscous_diffusion
+                || config.use_species_diffusion);
+    }
+
+    ARCH_INLINE bool diffusion_face_is_active(double rho_left, double rho_right)
+    {
+        return !(rho_left < 1.0e-12 || rho_right < 1.0e-12);
+    }
+
+    ARCH_INLINE double diffusion_face_spacing(
+        DiffusionGeometry geometry, int dim, int direction,
+        double dx1, double dx2, double dx3, double radius, double theta)
+    {
+        if (geometry == DiffusionGeometry::Cartesian)
+            return direction == 0 ? dx1 : (direction == 1 ? dx2 : dx3);
+        if (geometry == DiffusionGeometry::Cylindrical) {
+            if (direction == 0) return dx1;
+            if (direction == 1) return dim == 2 ? radius * dx2 : dx2;
+            return radius * dx3;
+        }
+        if (geometry == DiffusionGeometry::Spherical) {
+            if (direction == 0) return dx1;
+            if (direction == 1) return radius * dx2;
+            return radius * std::sin(theta) * dx3;
+        }
+        return 0.0;
+    }
+
+    ARCH_INLINE DiffusionCoefficients evaluate_diffusion_coefficients(
+        const eos_state_t& state, const DiffusionConfigView& config,
+        int species_count, const double* charge, const double* inverse_mass)
+    {
+        DiffusionCoefficients coefficients{};
+        const bool stellar = species_count > 0 && state.xne > 0.0;
+        if (config.nu_visc > 0.0 || config.alpha_therm > 0.0) {
+            if (stellar) {
+                coefficients.valid = false;
+                return coefficients;
+            }
+            coefficients.nu_visc = config.nu_visc;
+            coefficients.alpha_therm = config.alpha_therm;
+            coefficients.D_spec = config.D_spec;
+            return coefficients;
+        }
+
+        if (stellar) {
+            const double conductivity =
+                ConductivityMath::compute_stellar_conductivity(
+                    state.T, state.rho, state.pele, state.xne, state.eta,
+                    state.Xi, species_count, charge, inverse_mass);
+            const double cv_value = std::max(state.cv, 1.0e-12);
+            coefficients.alpha_therm =
+                conductivity / (state.rho * cv_value);
+        } else {
+            coefficients.nu_visc = config.nu_visc;
+            coefficients.alpha_therm = config.alpha_therm;
+            coefficients.D_spec = config.D_spec;
+        }
+        return coefficients;
+    }
+
+    template <typename EosType, typename SpeciesAccessor>
+    ARCH_INLINE DiffusionCoefficients evaluate_diffusion_coefficients_from_eos(
+        const EosType& eos, const SpeciesAccessor& species,
+        const DiffusionConfigView& config, double rho, double temperature,
+        const double* composition, double* charge, double* inverse_mass)
+    {
+        eos_state_t state{};
+        state.rho = rho;
+        state.T = temperature;
+        state.Xi = composition;
+        eos.evaluate_state(state);
+
+        const bool needs_arrays = species.size() > 0 && state.xne > 0.0
+            && !(config.nu_visc > 0.0 || config.alpha_therm > 0.0);
+        if (needs_arrays) {
+            for (int species_index = 0;
+                 species_index < species.size(); ++species_index) {
+                charge[species_index] = species.get_Z(species_index);
+                inverse_mass[species_index] = 1.0 / species.get_A(species_index);
+            }
+        }
+        return evaluate_diffusion_coefficients(
+            state, config, species.size(), charge, inverse_mass);
+    }
+
+    ARCH_INLINE void assemble_diffusion_face_flux(
+        const FluidVector& left, const FluidVector& right,
+        double temperature_left, double temperature_right,
+        double face_density, const double* species_left,
+        const double* species_right, int species_count, double spacing,
+        double heat_capacity, const DiffusionCoefficients& coefficients,
+        const DiffusionConfigView& config, FluidVector& flux,
+        double* species_flux, int species_flux_stride)
+    {
+        const double temperature_gradient =
+            (temperature_right - temperature_left) / spacing;
+        const double thermal_flux = config.use_thermal_diffusion
+            ? (-coefficients.alpha_therm * face_density
+               * std::max(heat_capacity, 1.0e-12) * temperature_gradient)
+            : 0.0;
+
+        flux.rho = 0.0;
+        const double velocity_face_x =
+            0.5 * (left.mom_u / left.rho + right.mom_u / right.rho);
+        const double velocity_face_y =
+            0.5 * (left.mom_v / left.rho + right.mom_v / right.rho);
+        const double velocity_face_z =
+            0.5 * (left.mom_w / left.rho + right.mom_w / right.rho);
+
+        if (config.use_viscous_diffusion) {
+            const double velocity_gradient_x =
+                (right.mom_u / right.rho - left.mom_u / left.rho) / spacing;
+            const double velocity_gradient_y =
+                (right.mom_v / right.rho - left.mom_v / left.rho) / spacing;
+            const double velocity_gradient_z =
+                (right.mom_w / right.rho - left.mom_w / left.rho) / spacing;
+            flux.mom_u = -coefficients.nu_visc * face_density * velocity_gradient_x;
+            flux.mom_v = -coefficients.nu_visc * face_density * velocity_gradient_y;
+            flux.mom_w = -coefficients.nu_visc * face_density * velocity_gradient_z;
+        }
+        flux.eng = thermal_flux
+            + (flux.mom_u * velocity_face_x
+               + flux.mom_v * velocity_face_y
+               + flux.mom_w * velocity_face_z);
+
+        if (config.use_species_diffusion) {
+            for (int species = 0; species < species_count; ++species) {
+                const double composition_gradient =
+                    (species_right[species] - species_left[species]) / spacing;
+                species_flux[species * species_flux_stride] =
+                    -face_density * coefficients.D_spec * composition_gradient;
+            }
+        }
+    }
+
+    template <typename EosType, typename SpeciesAccessor>
+    ARCH_INLINE DiffusionFaceStatus evaluate_diffusion_face(
+        const FluidVector& left, const FluidVector& right,
+        const double* species_left_source, const double* species_right_source,
+        int species_count, int species_source_stride, double spacing,
+        const EosType& eos, const SpeciesAccessor& species,
+        const DiffusionConfigView& config,
+        double* species_left, double* species_right, double* species_face,
+        double* charge, double* inverse_mass,
+        FluidVector& flux, double* species_flux, int species_flux_stride)
+    {
+        if (!diffusion_face_is_active(left.rho, right.rho))
+            return {false, true};
+
+        const double velocity_sq_left =
+            (left.mom_u * left.mom_u + left.mom_v * left.mom_v
+             + left.mom_w * left.mom_w) / (left.rho * left.rho);
+        const double velocity_sq_right =
+            (right.mom_u * right.mom_u + right.mom_v * right.mom_v
+             + right.mom_w * right.mom_w) / (right.rho * right.rho);
+        const double internal_left =
+            (left.eng - 0.5 * left.rho * velocity_sq_left) / left.rho;
+        const double internal_right =
+            (right.eng - 0.5 * right.rho * velocity_sq_right) / right.rho;
+
+        for (int index = 0; index < species_count; ++index) {
+            species_left[index] = species_left_source[index * species_source_stride];
+            species_right[index] = species_right_source[index * species_source_stride];
+        }
+        const double temperature_left =
+            eos.get_temperature(left.rho, internal_left, species_left);
+        const double temperature_right =
+            eos.get_temperature(right.rho, internal_right, species_right);
+        const double face_density = 0.5 * (left.rho + right.rho);
+        const double face_temperature =
+            0.5 * (temperature_left + temperature_right);
+        for (int index = 0; index < species_count; ++index)
+            species_face[index] = 0.5 * (species_left[index] + species_right[index]);
+
+        const DiffusionCoefficients coefficients =
+            evaluate_diffusion_coefficients_from_eos(
+                eos, species, config, face_density, face_temperature,
+                species_face, charge, inverse_mass);
+        if (!coefficients.valid) return {true, false};
+        const double heat_capacity = config.use_thermal_diffusion
+            ? eos.get_cv(face_density, face_temperature, species_face) : 0.0;
+        assemble_diffusion_face_flux(
+            left, right, temperature_left, temperature_right, face_density,
+            species_left, species_right, species_count, spacing,
+            heat_capacity, coefficients, config, flux,
+            species_flux, species_flux_stride);
+        return {true, true};
+    }
+
+    ARCH_INLINE double raw_forward_euler_candidate(
+        double maximum_coefficient, const double* spacing, int dimension)
+    {
+        if (!(maximum_coefficient > 1.0e-12))
+            return diffusion_dt_sentinel();
+        double inverse_dt = 0.0;
+        for (int direction = 0; direction < dimension; ++direction)
+            inverse_dt += 2.0 * maximum_coefficient
+                / (spacing[direction] * spacing[direction]);
+        return 1.0 / std::max(inverse_dt, 1.0e-20);
+    }
+
+    ARCH_INLINE double finalize_raw_diffusion_dt(double minimum)
+    {
+        return 1.0 * minimum;
+    }
+
+    template <typename EosType, typename SpeciesAccessor>
+    ARCH_INLINE DiffusionDtCandidate evaluate_diffusion_dt_candidate(
+        const FluidVector& value, const double* species_source,
+        int species_count, int species_source_stride,
+        const EosType& eos, const SpeciesAccessor& species,
+        const DiffusionConfigView& config, int dimension,
+        DiffusionGeometry geometry, double dx1, double dx2, double dx3,
+        double radius, double theta, double* composition,
+        double* charge, double* inverse_mass)
+    {
+        if (geometry == DiffusionGeometry::Unsupported)
+            return {diffusion_dt_sentinel(), false};
+        if (value.rho < 1.0e-12) return {};
+        for (int index = 0; index < species_count; ++index)
+            composition[index] = species_source[index * species_source_stride];
+        const double internal =
+            (value.eng - 0.5 * value.rho
+                 * (std::pow(value.mom_u / value.rho, 2)
+                    + std::pow(value.mom_v / value.rho, 2)
+                    + std::pow(value.mom_w / value.rho, 2))) / value.rho;
+        const double temperature =
+            eos.get_temperature(value.rho, internal, composition);
+        const DiffusionCoefficients coefficients =
+            evaluate_diffusion_coefficients_from_eos(
+                eos, species, config, value.rho, temperature,
+                composition, charge, inverse_mass);
+        if (!coefficients.valid) return {diffusion_dt_sentinel(), false};
+
+        double maximum = 0.0;
+        if (config.use_thermal_diffusion)
+            maximum = std::max(maximum, coefficients.alpha_therm);
+        if (config.use_viscous_diffusion)
+            maximum = std::max(maximum, coefficients.nu_visc);
+        if (config.use_species_diffusion)
+            maximum = std::max(maximum, coefficients.D_spec);
+        double spacing[3] = {1.0, 1.0, 1.0};
+        for (int direction = 0; direction < dimension; ++direction) {
+            spacing[direction] = diffusion_face_spacing(
+                geometry, dimension, direction, dx1, dx2, dx3,
+                radius, theta);
+            if (!(spacing[direction] > 0.0))
+                return {diffusion_dt_sentinel(), false};
+        }
+        return {raw_forward_euler_candidate(maximum, spacing, dimension), true};
+    }
+
     // 1. SFINAE Checks and Coefficient Extraction
     /**
      * @brief Retrieves diffusion coefficients. Uses eos_state_t and diffusion_math directly.
@@ -37,53 +370,22 @@ namespace DiffFlux
                            double rho, double T, const double* Xi,
                            double& nu_visc, double& alpha_therm, double& D_spec)
     {
-        // 1. Initialize and Evaluate State
-        eos_state_t state;
-        state.rho = rho;
-        state.T = T;
-        state.Xi = Xi;
-
-        eos.evaluate_state(state);
-
         const SpeciesManager* specs = eos.get_species_manager();
-        bool is_stellar_eos = (specs && specs->count() > 0 && state.xne > 0.0);
-
-        // 2. Process Override Config Parameters
-        if (config.physics.diffusion.nu_visc > 0 || config.physics.diffusion.alpha_therm > 0) {
-            if (is_stellar_eos) {
-                std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
-                std::abort();
-            }
-            nu_visc = config.physics.diffusion.nu_visc;
-            alpha_therm = config.physics.diffusion.alpha_therm;
-            D_spec = config.physics.diffusion.D_spec;
-            return;
+        const SpeciesHostView species =
+            specs ? specs->get_host_view() : SpeciesHostView{};
+        std::vector<double> charge(species.size());
+        std::vector<double> inverse_mass(species.size());
+        const DiffusionCoefficients coefficients =
+            evaluate_diffusion_coefficients_from_eos(
+                eos, species, make_diffusion_config_view(config),
+                rho, T, Xi, charge.data(), inverse_mass.data());
+        if (!coefficients.valid) {
+            std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
+            std::abort();
         }
-
-        // 3. Compute Stellar Transport Coefficients
-        if (is_stellar_eos) {
-            std::vector<double> zion(specs->count());
-            std::vector<double> aion_inv(specs->count());
-            for (int k = 0; k < specs->count(); ++k) {
-                zion[k] = specs->get_Z(k);
-                aion_inv[k] = 1.0 / specs->get_A(k);
-            }
-
-            double cond = ConductivityMath::compute_stellar_conductivity(
-                state.T, state.rho, state.pele, state.xne, state.eta,
-                state.Xi, specs->count(),
-                zion.data(), aion_inv.data()
-            );
-
-            double cv_val = std::max(state.cv, 1e-12);
-            alpha_therm = cond / (state.rho * cv_val);
-            nu_visc = 0.0;
-            D_spec = 0.0;
-        } else {
-            nu_visc = config.physics.diffusion.nu_visc;
-            alpha_therm = config.physics.diffusion.alpha_therm;
-            D_spec = config.physics.diffusion.D_spec;
-        }
+        nu_visc = coefficients.nu_visc;
+        alpha_therm = coefficients.alpha_therm;
+        D_spec = coefficients.D_spec;
     }
 
     // 2. Flux Computation
@@ -108,11 +410,26 @@ namespace DiffFlux
         const bool do_viscous = config.physics.diffusion.use_viscous_diffusion;
         const bool do_species = config.physics.diffusion.use_species_diffusion;
 
-        if (!do_thermal && !do_viscous && !do_species) return;
+        if (!config.physics.diffusion.use_diffusion
+            || (!do_thermal && !do_viscous && !do_species)) return;
+
+        const SpeciesManager* species_manager = eos.get_species_manager();
+        const SpeciesHostView species = species_manager
+            ? species_manager->get_host_view() : SpeciesHostView{};
+        const DiffusionConfigView diffusion_config =
+            make_diffusion_config_view(config);
+        const DiffusionGeometry geometry =
+            diffusion_geometry_from_name(grid.geometry);
+        if (geometry == DiffusionGeometry::Unsupported) {
+            std::cerr << "[FATAL ERROR] Unsupported diffusion geometry: "
+                      << grid.geometry << std::endl;
+            std::abort();
+        }
 
         #pragma omp parallel
         {
             std::vector<double> Xi_L(n_species), Xi_R(n_species), Xi_face(n_species);
+            std::vector<double> charge(species.size()), inverse_mass(species.size());
 
             #pragma omp for schedule(static)
             for (int k = grid.Ks(); k < k_end; ++k) {
@@ -121,86 +438,28 @@ namespace DiffFlux
                         int idx_R = grid.GetIndex(i, j, k);
                         int idx_L = idx_R - stride;
 
-                        double rho_L = state.rho[idx_L];
-                        double rho_R = state.rho[idx_R];
-                        if (rho_L < 1e-12 || rho_R < 1e-12) continue;
-
                         FluidVector U_L = state.get(idx_L);
                         FluidVector U_R = state.get(idx_R);
-
-                        double uL_sq = (U_L.mom_u * U_L.mom_u + U_L.mom_v * U_L.mom_v + U_L.mom_w * U_L.mom_w) / (rho_L * rho_L);
-                        double uR_sq = (U_R.mom_u * U_R.mom_u + U_R.mom_v * U_R.mom_v + U_R.mom_w * U_R.mom_w) / (rho_R * rho_R);
-
-                        double e_int_L = (U_L.eng - 0.5 * rho_L * uL_sq) / rho_L;
-                        double e_int_R = (U_R.eng - 0.5 * rho_R * uR_sq) / rho_R;
-
-                        state.get_species_to_buffer(idx_L, Xi_L.data());
-                        state.get_species_to_buffer(idx_R, Xi_R.data());
-
-                        double T_L = eos.get_temperature(rho_L, e_int_L, Xi_L.data());
-                        double T_R = eos.get_temperature(rho_R, e_int_R, Xi_R.data());
-
-                        double rho_f = 0.5 * (rho_L + rho_R);
-                        double T_f = 0.5 * (T_L + T_R);
-                        for(int s=0; s<n_species; ++s) Xi_face[s] = 0.5*(Xi_L[s] + Xi_R[s]);
-
-                        double nu, alpha, D;
-                        get_coeffs(eos, config, rho_f, T_f, Xi_face.data(), nu, alpha, D);
-
-                        // Calculate physical distance between cell centers
-                        double dx1 = 1.0;
-                        if (grid.geometry == "cartesian") {
-                            dx1 = (dir == 0) ? grid.dx1 : ((dir == 1) ? grid.dx2 : grid.dx3);
-                        } else if (grid.geometry == "cylindrical") {
-                            if (dir == 0) dx1 = grid.dx1;
-                            else if (dir == 1) {
-                                if (grid.dim == 2) dx1 = grid.GetCellCenterX(i) * grid.dx2;
-                                else dx1 = grid.dx2;
-                            }
-                            else if (dir == 2) dx1 = grid.GetCellCenterX(i) * grid.dx3;
-                        } else if (grid.geometry == "spherical") {
-                            if (dir == 0) dx1 = grid.dx1;
-                            else if (dir == 1) {
-                                dx1 = grid.GetCellCenterX(i) * grid.dx2; // theta direction uses cell radius
-                            }
-                            else if (dir == 2) {
-                                double theta_c = grid.GetCellCenterY(j);
-                                dx1 = grid.GetCellCenterX(i) * std::sin(theta_c) * grid.dx3;
-                            }
-                        }
-
-                        // Gradient calculations
-                        double dT_dx = (T_R - T_L) / dx1;
-                        double q_therm = do_thermal ? (-alpha * rho_f * std::max(eos.get_cv(rho_f, T_f, Xi_face.data()), 1e-12) * dT_dx) : 0.0;
-
                         FluidVector F_diff;
-                        F_diff.rho = 0.0;
-
-                        double v_face_x = 0.5 * (U_L.mom_u / rho_L + U_R.mom_u / rho_R);
-                        double v_face_y = 0.5 * (U_L.mom_v / rho_L + U_R.mom_v / rho_R);
-                        double v_face_z = 0.5 * (U_L.mom_w / rho_L + U_R.mom_w / rho_R);
-
-                        if (do_viscous) {
-                            double dvx_dx = (U_R.mom_u / rho_R - U_L.mom_u / rho_L) / dx1;
-                            double dvy_dx = (U_R.mom_v / rho_R - U_L.mom_v / rho_L) / dx1;
-                            double dvz_dx = (U_R.mom_w / rho_R - U_L.mom_w / rho_L) / dx1;
-
-                            F_diff.mom_u = -nu * rho_f * dvx_dx;
-                            F_diff.mom_v = -nu * rho_f * dvy_dx;
-                            F_diff.mom_w = -nu * rho_f * dvz_dx;
+                        const double spacing = diffusion_face_spacing(
+                            geometry, grid.dim, dir, grid.dx1, grid.dx2, grid.dx3,
+                            grid.GetCellCenterX(i), grid.GetCellCenterY(j));
+                        const DiffusionFaceStatus status = evaluate_diffusion_face(
+                            U_L, U_R,
+                            n_species > 0 ? state.mass_fractions.data() + idx_L : nullptr,
+                            n_species > 0 ? state.mass_fractions.data() + idx_R : nullptr,
+                            n_species, grid.GetTotalSize(), spacing,
+                            eos, species, diffusion_config,
+                            Xi_L.data(), Xi_R.data(), Xi_face.data(),
+                            charge.data(), inverse_mass.data(), F_diff,
+                            n_species > 0 ? spec_flux_out.data() + idx_R : nullptr,
+                            grid.GetTotalSize());
+                        if (!status.active) continue;
+                        if (!status.valid) {
+                            std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
+                            std::abort();
                         }
-
-                        // Energy flux = thermal conduction + viscous dissipation work
-                        F_diff.eng = q_therm + (F_diff.mom_u * v_face_x + F_diff.mom_v * v_face_y + F_diff.mom_w * v_face_z);
-
                         flux_out[idx_R] = F_diff;
-
-                        if (do_species) {
-                            for (int s = 0; s < n_species; ++s) {
-                                double dX_dx = (Xi_R[s] - Xi_L[s]) / dx1;
-                                spec_flux_out[s * grid.GetTotalSize() + idx_R] = -rho_f * D * dX_dx;
-                            }
-                        }
                     }
                 }
             }
@@ -304,7 +563,8 @@ namespace DiffFlux
         const bool do_viscous = config.physics.diffusion.use_viscous_diffusion;
         const bool do_species = config.physics.diffusion.use_species_diffusion;
 
-        if (!do_thermal && !do_viscous && !do_species) return;
+        if (!config.physics.diffusion.use_diffusion
+            || (!do_thermal && !do_viscous && !do_species)) return;
 
         std::vector<FluidVector> dU(grid.GetTotalSize());
         std::vector<double> d_spec(grid.GetTotalSize() * n_spec, 0.0);
@@ -342,10 +602,11 @@ namespace DiffFlux
     template <typename EosType>
     inline double adaptive_dt_diff(const FluidState &state, const EosType &eos, const Grid &grid, const SimConfig &config, double cfl_number)
     {
-        if (!config.physics.diffusion.use_diffusion) return 1e10;
+        if (!config.physics.diffusion.use_diffusion)
+            return diffusion_dt_sentinel();
 
         int n_species = state.GetNumSpecies();
-        double min_dt = 1e10;
+        double min_dt = diffusion_dt_sentinel();
 
         const int ks = grid.Ks();
         const int ke = grid.Ke();
@@ -354,14 +615,24 @@ namespace DiffFlux
         const int nk = ke - ks;
         const int nj = je - js;
 
-        const bool do_thermal = config.physics.diffusion.use_thermal_diffusion;
-        const bool do_viscous = config.physics.diffusion.use_viscous_diffusion;
-        const bool do_species = config.physics.diffusion.use_species_diffusion;
+        const SpeciesManager* species_manager = eos.get_species_manager();
+        const SpeciesHostView species = species_manager
+            ? species_manager->get_host_view() : SpeciesHostView{};
+        const DiffusionConfigView diffusion_config =
+            make_diffusion_config_view(config);
+        const DiffusionGeometry geometry =
+            diffusion_geometry_from_name(grid.geometry);
+        if (geometry == DiffusionGeometry::Unsupported) {
+            std::cerr << "[FATAL ERROR] Unsupported diffusion geometry: "
+                      << grid.geometry << std::endl;
+            std::abort();
+        }
 
     #pragma omp parallel
         {
             std::vector<double> Xi_cache(n_species);
-            double local_min_dt = 1e10;
+            std::vector<double> charge(species.size()), inverse_mass(species.size());
+            double local_min_dt = diffusion_dt_sentinel();
 
     #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -371,50 +642,21 @@ namespace DiffFlux
                 for (int i = grid.Is(); i < grid.Ie(); ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
-                    FluidVector U = state.get(idx);
-                    double rho = U.rho;
-
-                    if (rho < 1e-12)
-                        continue;
-
-                    for (int s = 0; s < n_species; ++s)
-                        Xi_cache[s] = state.X(s, idx);
-
-                    double e_int = (U.eng - 0.5 * rho * (std::pow(U.mom_u/rho, 2) + std::pow(U.mom_v/rho, 2) + std::pow(U.mom_w/rho, 2))) / rho;
-                    double T = eos.get_temperature(rho, e_int, Xi_cache.data());
-
-                    double nu = 0.0, alpha = 0.0, D = 0.0;
-                    get_coeffs(eos, config, rho, T, Xi_cache.data(), nu, alpha, D);
-
-                    double max_coeff = 0.0;
-                    if (do_thermal) max_coeff = std::max(max_coeff, alpha);
-                    if (do_viscous) max_coeff = std::max(max_coeff, nu);
-                    if (do_species) max_coeff = std::max(max_coeff, D);
-
-                    if (max_coeff > 1e-12) {
-                        double inv_dt_sum = 0.0;
-                        for (int dir = 0; dir < grid.dim; ++dir) {
-                            double dx1 = 1.0;
-                            if (grid.geometry == "cartesian") {
-                                dx1 = (dir == 0) ? grid.dx1 : ((dir == 1) ? grid.dx2 : grid.dx3);
-                            } else if (grid.geometry == "cylindrical") {
-                                if (dir == 0) dx1 = grid.dx1;
-                                else if (dir == 1) dx1 = (grid.dim == 2) ? grid.GetCellCenterX(i) * grid.dx2 : grid.dx2;
-                                else if (dir == 2) dx1 = grid.GetCellCenterX(i) * grid.dx3;
-                            } else if (grid.geometry == "spherical") {
-                                if (dir == 0) dx1 = grid.dx1;
-                                else if (dir == 1) dx1 = grid.GetCellCenterX(i) * grid.dx2;
-                                else if (dir == 2) {
-                                    double theta_c = grid.GetCellCenterY(j);
-                                    dx1 = grid.GetCellCenterX(i) * std::sin(theta_c) * grid.dx3;
-                                }
-                            }
-                            inv_dt_sum += 2.0 * max_coeff / (dx1 * dx1);
-                        }
-
-                        double cell_dt = 1.0 / std::max(inv_dt_sum, 1e-20);
-                        local_min_dt = std::min(local_min_dt, cell_dt);
+                    const DiffusionDtCandidate candidate =
+                        evaluate_diffusion_dt_candidate(
+                            state.get(idx),
+                            n_species > 0
+                                ? state.mass_fractions.data() + idx : nullptr,
+                            n_species, grid.GetTotalSize(), eos, species,
+                            diffusion_config, grid.dim, geometry,
+                            grid.dx1, grid.dx2, grid.dx3,
+                            grid.GetCellCenterX(i), grid.GetCellCenterY(j),
+                            Xi_cache.data(), charge.data(), inverse_mass.data());
+                    if (!candidate.valid) {
+                        std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
+                        std::abort();
                     }
+                    local_min_dt = std::min(local_min_dt, candidate.value);
                 }
             }
     #pragma omp critical
@@ -422,6 +664,6 @@ namespace DiffFlux
                 min_dt = std::min(min_dt, local_min_dt);
             }
         }
-        return cfl_number * min_dt;
+        return cfl_number * finalize_raw_diffusion_dt(min_dt);
     }
 }

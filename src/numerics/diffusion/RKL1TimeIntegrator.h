@@ -43,6 +43,7 @@ struct RKL1TimeIntegrator
         // Y0 = U^n
         Y0 = state;
         Y_jm2 = state; // For RKL1, j-2 is initially Y0
+        Y_jm1 = Y0; // Diffusion stages preserve the burn-owned ENUC diagnostic.
 
         // Stage 1
         DiffFlux::compute_diffusion_operator(Y0, L_U, eos, grid, config);
@@ -50,13 +51,21 @@ struct RKL1TimeIntegrator
 
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < grid.GetTotalSize(); ++i) {
-            Y_jm1.rho[i]   = Y0.rho[i]   + c1.tilde_mu * dt_hydro * L_U.rho[i];
-            Y_jm1.mom_u[i] = Y0.mom_u[i] + c1.tilde_mu * dt_hydro * L_U.mom_u[i];
-            Y_jm1.mom_v[i] = Y0.mom_v[i] + c1.tilde_mu * dt_hydro * L_U.mom_v[i];
-            Y_jm1.mom_w[i] = Y0.mom_w[i] + c1.tilde_mu * dt_hydro * L_U.mom_w[i];
-            Y_jm1.eng[i]   = Y0.eng[i]   + c1.tilde_mu * dt_hydro * L_U.eng[i];
+            Y_jm1.rho[i] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                Y0.rho[i], c1.tilde_mu * dt_hydro, L_U.rho[i]);
+            Y_jm1.mom_u[i] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                Y0.mom_u[i], c1.tilde_mu * dt_hydro, L_U.mom_u[i]);
+            Y_jm1.mom_v[i] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                Y0.mom_v[i], c1.tilde_mu * dt_hydro, L_U.mom_v[i]);
+            Y_jm1.mom_w[i] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                Y0.mom_w[i], c1.tilde_mu * dt_hydro, L_U.mom_w[i]);
+            Y_jm1.eng[i] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                Y0.eng[i], c1.tilde_mu * dt_hydro, L_U.eng[i]);
             for (int k = 0; k < state.GetNumSpecies(); ++k) {
-                double rhoX_new = Y0.rho[i] * Y0.X(k, i) + c1.tilde_mu * dt_hydro * L_U.X(k, i);
+                const double rhoX_new =
+                    ARCH_DIFFUSION_FIRST_RKL_SPECIES_EXPRESSION(
+                        Y0.rho[i], Y0.X(k, i), c1.tilde_mu * dt_hydro,
+                        L_U.X(k, i));
                 Y_jm1.X(k, i) = rhoX_new / Y_jm1.rho[i];
             }
         }
@@ -72,13 +81,25 @@ struct RKL1TimeIntegrator
 
             #pragma omp parallel for schedule(static)
             for (int i = 0; i < grid.GetTotalSize(); ++i) {
-                Y_j.rho[i]   = cj.mu * Y_jm1.rho[i]   + cj.nu * Y_jm2.rho[i]   + cj.tilde_mu * dt_hydro * L_U.rho[i];
-                Y_j.mom_u[i] = cj.mu * Y_jm1.mom_u[i] + cj.nu * Y_jm2.mom_u[i] + cj.tilde_mu * dt_hydro * L_U.mom_u[i];
-                Y_j.mom_v[i] = cj.mu * Y_jm1.mom_v[i] + cj.nu * Y_jm2.mom_v[i] + cj.tilde_mu * dt_hydro * L_U.mom_v[i];
-                Y_j.mom_w[i] = cj.mu * Y_jm1.mom_w[i] + cj.nu * Y_jm2.mom_w[i] + cj.tilde_mu * dt_hydro * L_U.mom_w[i];
-                Y_j.eng[i]   = cj.mu * Y_jm1.eng[i]   + cj.nu * Y_jm2.eng[i]   + cj.tilde_mu * dt_hydro * L_U.eng[i];
+                Y_j.rho[i] = ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                    cj, Y_jm1.rho[i], Y_jm2.rho[i], L_U.rho[i], dt_hydro);
+                Y_j.mom_u[i] = ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                    cj, Y_jm1.mom_u[i], Y_jm2.mom_u[i], L_U.mom_u[i],
+                    dt_hydro);
+                Y_j.mom_v[i] = ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                    cj, Y_jm1.mom_v[i], Y_jm2.mom_v[i], L_U.mom_v[i],
+                    dt_hydro);
+                Y_j.mom_w[i] = ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                    cj, Y_jm1.mom_w[i], Y_jm2.mom_w[i], L_U.mom_w[i],
+                    dt_hydro);
+                Y_j.eng[i] = ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                    cj, Y_jm1.eng[i], Y_jm2.eng[i], L_U.eng[i], dt_hydro);
                 for (int k = 0; k < state.GetNumSpecies(); ++k) {
-                    double rhoX_new = cj.mu * Y_jm1.rho[i] * Y_jm1.X(k, i) + cj.nu * Y_jm2.rho[i] * Y_jm2.X(k, i) + cj.tilde_mu * dt_hydro * L_U.X(k, i);
+                    const double rhoX_new =
+                        ARCH_DIFFUSION_UNSCALED_RKL1_SPECIES_EXPRESSION(
+                            cj, Y_jm1.rho[i], Y_jm1.X(k, i),
+                            Y_jm2.rho[i], Y_jm2.X(k, i), L_U.X(k, i),
+                            dt_hydro);
                     Y_j.X(k, i) = rhoX_new / Y_j.rho[i];
                 }
             }
