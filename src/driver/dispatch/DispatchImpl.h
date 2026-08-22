@@ -14,6 +14,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 
 // Core runtime types.
 #include "../../core/RuntimeParams.h"
@@ -39,8 +40,78 @@
 #include "../../numerics/integrator/HydroSolverImpl.h"
 #include "../../physics/gravity/IGravityPolicy.h"
 #include "../Driver.h"
+#include "PolicyDescriptor.h"
 
 namespace DispatchImpl {
+
+inline auto parse_flux_selection(const SimConfig& config) noexcept
+{
+    return arch::dispatch::parse_registered_policy<arch::dispatch::FluxPolicies>(
+        config.numerics.solver_name);
+}
+
+template <class Binding>
+struct CpuLimiterType;
+
+template <> struct CpuLimiterType<arch::dispatch::CpuMinModBinding> { using type = MinMod; };
+template <> struct CpuLimiterType<arch::dispatch::CpuMcBinding> { using type = McLimiter; };
+template <> struct CpuLimiterType<arch::dispatch::CpuSuperBeeBinding> { using type = SuperBee; };
+template <> struct CpuLimiterType<arch::dispatch::CpuVanLeerLimiterBinding> { using type = VanLeer; };
+
+template <class Binding>
+struct CpuReconstructionType;
+
+template <> struct CpuReconstructionType<arch::dispatch::CpuPcmBinding> { using type = PCMReconstruction; };
+template <> struct CpuReconstructionType<arch::dispatch::CpuPpmBinding> { using type = PPMReconstruction; };
+
+template <class Binding, class Reconstruction>
+struct CpuFluxType;
+
+template <class Reconstruction>
+struct CpuFluxType<arch::dispatch::CpuVlBinding, Reconstruction> { using type = FluxVL<Reconstruction>; };
+template <class Reconstruction>
+struct CpuFluxType<arch::dispatch::CpuSwBinding, Reconstruction> { using type = FluxSW<Reconstruction>; };
+template <class Reconstruction>
+struct CpuFluxType<arch::dispatch::CpuRoeBinding, Reconstruction> { using type = FluxRoe<Reconstruction>; };
+template <class Reconstruction>
+struct CpuFluxType<arch::dispatch::CpuHllBinding, Reconstruction> { using type = FluxHLL<Reconstruction>; };
+template <class Reconstruction>
+struct CpuFluxType<arch::dispatch::CpuHllcBinding, Reconstruction> { using type = FluxHLLC<Reconstruction>; };
+
+template <class Function>
+bool visit_hydro_cpu_route(
+    const arch::dispatch::ResolvedExecutionPlan& plan, Function&& function)
+{
+    using namespace arch::dispatch;
+    bool invoked = false;
+    const bool flux_found = visit_policy<FluxPolicies>(plan.flux, [&]<class FluxRegistration> {
+        using FluxBinding = typename PolicyRegistration<FluxRegistration>::CpuBinding;
+        const bool reconstruction_found = visit_policy<ReconstructionPolicies>(
+            plan.reconstruction, [&]<class ReconstructionRegistration> {
+                using ReconstructionBinding =
+                    typename PolicyRegistration<ReconstructionRegistration>::CpuBinding;
+                if constexpr (std::is_same_v<ReconstructionBinding, CpuMusclBinding>) {
+                    visit_policy<LimiterPolicies>(plan.limiter, [&]<class LimiterRegistration> {
+                        using LimiterBinding =
+                            typename PolicyRegistration<LimiterRegistration>::CpuBinding;
+                        using Limiter = typename CpuLimiterType<LimiterBinding>::type;
+                        using Reconstruction = MusclReconstruction<Limiter>;
+                        using Flux = typename CpuFluxType<FluxBinding, Reconstruction>::type;
+                        function.template operator()<Flux, Reconstruction>();
+                        invoked = true;
+                    });
+                } else {
+                    using Reconstruction =
+                        typename CpuReconstructionType<ReconstructionBinding>::type;
+                    using Flux = typename CpuFluxType<FluxBinding, Reconstruction>::type;
+                    function.template operator()<Flux, Reconstruction>();
+                    invoked = true;
+                }
+            });
+        invoked = invoked && reconstruction_found;
+    });
+    return flux_found && invoked;
+}
 
 // Level 4: Execute the simulation with the fully assembled type
 template <typename TimeIntegrator, typename FluxSchemePolicy, typename EosPolicy>
@@ -62,79 +133,52 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
 }
 
 // Level 3: Select Limiter (For MUSCL)
-template <typename TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy>
+template <typename TimeIntegrator, class FluxBinding, typename EosPolicy>
 void select_limiter(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const Physical::Gravity::IGravityPolicy* gravity,
                     const BurnerHandle<EosPolicy> &burn,
                     const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
-    std::string lim = config.numerics.limiter;
-
-    if (lim == "minmod" || lim == "MinMod")
-    {
-        using MyRecon = MusclReconstruction<MinMod>;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (lim == "superbee" || lim == "SuperBee")
-    {
-        using MyRecon = MusclReconstruction<SuperBee>;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (lim == "vanleer" || lim == "VanLeer")
-    {
-        using MyRecon = MusclReconstruction<VanLeer>;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (lim == "mc" || lim == "MC")
-    {
-        using MyRecon = MusclReconstruction<McLimiter>;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else
-    {
-        std::cerr << "[Warning] Unknown limiter '" << lim << "', defaulting to MinMod." << std::endl;
-        using MyRecon = MusclReconstruction<MinMod>;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
+    using namespace arch::dispatch;
+    const auto selected = parse_registered_policy<LimiterPolicies>(config.numerics.limiter);
+    if (selected.defaulted)
+        std::cerr << "[Warning] Unknown limiter '" << config.numerics.limiter
+                  << "', defaulting to MinMod." << std::endl;
+    visit_policy<LimiterPolicies>(selected.value, [&]<class Registration> {
+        using LimiterBinding = typename PolicyRegistration<Registration>::CpuBinding;
+        using Limiter = typename CpuLimiterType<LimiterBinding>::type;
+        using Reconstruction = MusclReconstruction<Limiter>;
+        using Flux = typename CpuFluxType<FluxBinding, Reconstruction>::type;
+        launch_run<TimeIntegrator, Flux>(amr_ctrl, eos, gravity, burn,
+                                         config, specs, run_state);
+    });
 }
 
 // Level 2: Select Reconstruction Scheme
-template <typename TimeIntegrator, template <typename> class FluxScheme, typename EosPolicy>
+template <typename TimeIntegrator, class FluxBinding, typename EosPolicy>
 void select_reconstruction(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                            const Physical::Gravity::IGravityPolicy* gravity,
                            const BurnerHandle<EosPolicy> &burn,
                            const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
-    std::string recon = config.numerics.reconstruction;
-
-    if (recon == "pcm" || recon == "PCM" || recon == "donor_cell")
-    {
-        using MyRecon = PCMReconstruction;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (recon == "plm" || recon == "PLM" || recon == "muscl" || recon == "MUSCL")
-    {
-        select_limiter<TimeIntegrator, FluxScheme>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (recon == "ppm" || recon == "PPM")
-    {
-        using MyRecon = PPMReconstruction;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else
-    {
-        std::cerr << "[Warning] Unknown reconstruction '" << recon << "', defaulting to PCM." << std::endl;
-        using MyRecon = PCMReconstruction;
-        using MyFlux = FluxScheme<MyRecon>;
-        launch_run<TimeIntegrator, MyFlux>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
+    using namespace arch::dispatch;
+    const auto selected = parse_registered_policy<ReconstructionPolicies>(
+        config.numerics.reconstruction);
+    if (selected.defaulted)
+        std::cerr << "[Warning] Unknown reconstruction '" << config.numerics.reconstruction
+                  << "', defaulting to PCM." << std::endl;
+    visit_policy<ReconstructionPolicies>(selected.value, [&]<class Registration> {
+        using Binding = typename PolicyRegistration<Registration>::CpuBinding;
+        if constexpr (std::is_same_v<Binding, CpuMusclBinding>) {
+            select_limiter<TimeIntegrator, FluxBinding>(
+                amr_ctrl, eos, gravity, burn, config, specs, run_state);
+        } else {
+            using Reconstruction = typename CpuReconstructionType<Binding>::type;
+            using Flux = typename CpuFluxType<FluxBinding, Reconstruction>::type;
+            launch_run<TimeIntegrator, Flux>(amr_ctrl, eos, gravity, burn,
+                                             config, specs, run_state);
+        }
+    });
 }
 
 // Level 1: Select Flux Scheme
@@ -144,33 +188,16 @@ void select_flux(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                  const BurnerHandle<EosPolicy> &burn,
                  const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
 {
-    std::string flux = config.numerics.solver_name;
-
-    if (flux == "VL" || flux == "VanLeer")
-    {
-        select_reconstruction<TimeIntegrator, FluxVL>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (flux == "SW" || flux == "StegerWarming")
-    {
-        select_reconstruction<TimeIntegrator, FluxSW>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (flux == "Roe" || flux == "roe")
-    {
-        select_reconstruction<TimeIntegrator, FluxRoe>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (flux == "HLL" || flux == "hll")
-    {
-        select_reconstruction<TimeIntegrator, FluxHLL>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else if (flux == "HLLC" || flux == "hllc")
-    {
-        select_reconstruction<TimeIntegrator, FluxHLLC>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
-    else
-    {
-        std::cerr << "[Warning] Unknown solver '" << flux << "', defaulting to HLLC." << std::endl;
-        select_reconstruction<TimeIntegrator, FluxHLLC>(amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    }
+    using namespace arch::dispatch;
+    const auto selected = parse_flux_selection(config);
+    if (selected.defaulted)
+        std::cerr << "[Warning] Unknown solver '" << config.numerics.solver_name
+                  << "', defaulting to HLLC." << std::endl;
+    visit_policy<FluxPolicies>(selected.value, [&]<class Registration> {
+        using Binding = typename PolicyRegistration<Registration>::CpuBinding;
+        select_reconstruction<TimeIntegrator, Binding>(
+            amr_ctrl, eos, gravity, burn, config, specs, run_state);
+    });
 }
 
 } // namespace DispatchImpl

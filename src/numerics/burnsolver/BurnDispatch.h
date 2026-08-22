@@ -18,6 +18,7 @@
 #include "ode_ros4.h"
 
 #include "../../data/GlobalDefs.h" // Defines SimConfig and its burn configuration.
+#include "../../driver/dispatch/PolicyDescriptor.h"
 
 #include "../linalg/DenseWrap.h"  // Dense matrix and LU policy.
 #include "../linalg/SparseWrap.h" // Reserved sparse-matrix policy.
@@ -33,6 +34,14 @@ struct DummyBurner
         return true; // The compiler removes this empty policy from specialized drivers.
     }
 };
+
+template <class Binding>
+struct CpuBurnNetworkType;
+
+template <> struct CpuBurnNetworkType<arch::dispatch::CpuAprox13Binding> { using type = NetAprox13; };
+template <> struct CpuBurnNetworkType<arch::dispatch::CpuAprox19Binding> { using type = NetAprox19; };
+template <> struct CpuBurnNetworkType<arch::dispatch::CpuAprox21Binding> { using type = NetAprox21; };
+template <> struct CpuBurnNetworkType<arch::dispatch::CpuIso7Binding> { using type = NetIso7; };
 
 // Three-stage runtime-to-compile-time burn dispatcher.
 struct BurnDispatcher
@@ -86,28 +95,32 @@ struct BurnDispatcher
                       << " g/cm^3." << std::endl;
         }
 
-        // Map the normalized runtime name to a compile-time network policy.
-        if (net_type == "aprox19") {
-            dispatch_ode<NetAprox19>(ode_type, lin_type, std::forward<Func>(func));
-        } else if (net_type == "aprox21") {
-            dispatch_ode<NetAprox21>(ode_type, lin_type, std::forward<Func>(func));
-        } else if (net_type == "aprox13") {
-            dispatch_ode<NetAprox13>(ode_type, lin_type, std::forward<Func>(func));
-        } else if (net_type == "iso7") {
-            dispatch_ode<NetIso7>(ode_type, lin_type, std::forward<Func>(func));
-        } else {
-            bool custom_dispatched = false;
+        using namespace arch::dispatch;
+        const auto selected = parse_registered_policy<NetworkPolicies>(net_type);
+        if (selected.ok && selected.value != NetworkId::None) {
+            visit_policy<NetworkPolicies>(selected.value, [&]<class Registration> {
+                using Binding = typename PolicyRegistration<Registration>::CpuBinding;
+                if constexpr (!std::is_same_v<Binding, CpuNoNetworkBinding>
+                              && !std::is_same_v<Binding, AbsentBinding>) {
+                    using Network = typename CpuBurnNetworkType<Binding>::type;
+                    dispatch_ode<Network>(
+                        ode_type, lin_type, std::forward<Func>(func));
+                }
+            });
+            return;
+        }
+
+        bool custom_dispatched = false;
 #define ARCH_TRY_CUSTOM_NETWORK(runtime_name, network_type)                 \
-            if (!custom_dispatched && net_type == runtime_name) {           \
+            if (!custom_dispatched && ascii_iequals(net_type, runtime_name)) { \
                 dispatch_ode<network_type>(                                 \
                     ode_type, lin_type, std::forward<Func>(func));           \
                 custom_dispatched = true;                                   \
             }
-            ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_TRY_CUSTOM_NETWORK)
+        ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_TRY_CUSTOM_NETWORK)
 #undef ARCH_TRY_CUSTOM_NETWORK
-            if (!custom_dispatched)
-                throw std::runtime_error(
-                    "Unknown network_name in par file: " + net_type);
+        if (!custom_dispatched) {
+            throw std::runtime_error("Unknown network_name in par file: " + net_type);
         }
     }
 
@@ -119,23 +132,21 @@ private:
     template <typename NetType, typename Func>
     static void dispatch_ode(const std::string &ode_type, const std::string &lin_type, Func &&func)
     {
-        if (ode_type == "BE_NR" || ode_type == "be_nr")
-        {
-            // Forward the three-parameter solver template to linear dispatch.
-            dispatch_linsolver<Solver_BE_NR, NetType>(lin_type, std::forward<Func>(func));
-        }
-        else if (ode_type == "ROS4" || ode_type == "ros4")
-        {
-            dispatch_linsolver<Solver_ROS4, NetType>(lin_type, std::forward<Func>(func));
-        }
-        else if (ode_type == "BD" || ode_type == "bd")
-        {
-            dispatch_linsolver<Solver_BD, NetType>(lin_type, std::forward<Func>(func));
-        }
-        else
-        {
+        using namespace arch::dispatch;
+        const auto selected = parse_registered_policy<OdeSolverPolicies>(ode_type);
+        if (!selected.ok || selected.value == OdeSolverId::None) {
             throw std::runtime_error("Unknown ODE Solver Type: [" + ode_type + "]");
         }
+        visit_policy<OdeSolverPolicies>(selected.value, [&]<class Registration> {
+            using Binding = typename PolicyRegistration<Registration>::CpuBinding;
+            if constexpr (std::is_same_v<Binding, CpuBeNrBinding>) {
+                dispatch_linsolver<Solver_BE_NR, NetType>(lin_type, std::forward<Func>(func));
+            } else if constexpr (std::is_same_v<Binding, CpuBdBinding>) {
+                dispatch_linsolver<Solver_BD, NetType>(lin_type, std::forward<Func>(func));
+            } else if constexpr (std::is_same_v<Binding, CpuRos4Binding>) {
+                dispatch_linsolver<Solver_ROS4, NetType>(lin_type, std::forward<Func>(func));
+            }
+        });
     }
 
     /**
@@ -145,8 +156,23 @@ private:
     template <template <typename, typename, typename> class ODESolverWrapper, typename NetType, typename Func>
     static void dispatch_linsolver(const std::string &lin_type, Func &&func)
     {
-        const bool automatic = lin_type == "Auto" || lin_type == "auto";
-        if (lin_type == "DenseLU" || automatic)
+        using namespace arch::dispatch;
+        const bool automatic = ascii_iequals(lin_type, "auto");
+        LinearSolverId selected_id = LinearSolverId::None;
+        if (automatic) {
+            selected_id = NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES
+                ? LinearSolverId::DenseLu : LinearSolverId::SparseKlu;
+        } else {
+            const auto selected =
+                parse_registered_policy<LinearSolverPolicies>(lin_type);
+            if (!selected.ok || selected.value == LinearSolverId::None) {
+                throw std::runtime_error(
+                    "Unknown Linear Solver Type: " + lin_type);
+            }
+            selected_id = selected.value;
+        }
+
+        if (selected_id == LinearSolverId::DenseLu)
         {
             if constexpr (NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES) {
                 std::cout << "[Burn Dispatch] Matrix backend: DenseLU (N="
@@ -155,14 +181,14 @@ private:
                 ODESolverWrapper<NetType, Matrix, DenseLUSolver> burner;
                 func(burner);
                 return;
-            } else if (!automatic) {
+            } else {
                 throw std::runtime_error(
                     "DenseLU is reserved for networks with at most " +
                     std::to_string(BurnLimits::MAX_SPECIES) +
                     " isotopes; select linear_solver = SparseKLU or Auto.");
             }
         }
-        if (lin_type == "SparseKLU" || automatic)
+        if (selected_id == LinearSolverId::SparseKlu)
         {
 #if !ARCH_HAS_KLU
             throw std::runtime_error(

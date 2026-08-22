@@ -115,6 +115,29 @@ class CombinationAuditTests(unittest.TestCase):
     def test_rejects_noncanonical_object_injection(self):
         self.assert_rejected("CMakeLists.txt", "target_sources(ARCH PRIVATE $<TARGET_OBJECTS:backend>)")
 
+    def test_accepts_only_central_resolver_fallback_reason_field(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            self.populate_protected(root)
+            target = root / "src/driver/dispatch/BackendCapabilities.h"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(
+                "enum class ComputeBackend { Cpu, Cuda }; "
+                "struct BackendResolution { ComputeBackend requested_backend; ComputeBackend resolved_backend; "
+                "const char* fallback_reason; };",
+                encoding="utf-8")
+            self.assertEqual(audit_tree(root), [])
+
+    def test_rejects_fallback_reason_field_outside_central_resolver(self):
+        self.assert_rejected(
+            "src/driver/Execution.cpp",
+            "struct Result { const char* fallback_reason; }; // cpu cuda")
+
+    def test_rejects_generic_fallback_inside_central_resolver_path(self):
+        self.assert_rejected(
+            "src/driver/dispatch/BackendCapabilities.h",
+            "if (cuda_failed) cpu_fallback();")
+
 
 if __name__ == "__main__":
     unittest.main()

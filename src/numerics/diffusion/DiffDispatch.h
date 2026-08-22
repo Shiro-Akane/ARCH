@@ -13,11 +13,13 @@
 
 #include <iostream>
 #include <string>
+#include <type_traits>
 
 #include "RKL1TimeIntegrator.h"
 #include "RKL2TimeIntegrator.h"
 
 #include "../../data/GlobalDefs.h"
+#include "../../driver/dispatch/PolicyDescriptor.h"
 
 namespace Numerics
 {
@@ -46,25 +48,26 @@ namespace Numerics
                 return;
             }
 
-            std::string integrator_type = config.physics.diffusion.integrator;
-
-            if (integrator_type == "RKL1" || integrator_type == "rkl1")
-            {
-                RKL1TimeIntegrator integrator;
-                next_step(integrator);
-            }
-            else if (integrator_type == "RKL2" || integrator_type == "rkl2")
-            {
-                RKL2TimeIntegrator integrator;
-                next_step(integrator);
-            }
-
-            else
+            const std::string integrator_type = config.physics.diffusion.integrator;
+            using namespace arch::dispatch;
+            const auto selected = parse_registered_policy<DiffusionIntegratorPolicies>(
+                integrator_type);
+            if (!selected.ok || selected.value == DiffusionIntegratorId::None)
             {
                 std::cerr << "[Fatal Error] Unknown diffusion integrator: " << integrator_type
                           << ". Check your configuration file." << std::endl;
                 std::exit(EXIT_FAILURE);
             }
+            visit_policy<DiffusionIntegratorPolicies>(selected.value, [&]<class Registration> {
+                using Binding = typename PolicyRegistration<Registration>::CpuBinding;
+                if constexpr (std::is_same_v<Binding, CpuRkl1Binding>) {
+                    RKL1TimeIntegrator integrator;
+                    next_step(integrator);
+                } else if constexpr (std::is_same_v<Binding, CpuRkl2Binding>) {
+                    RKL2TimeIntegrator integrator;
+                    next_step(integrator);
+                }
+            });
         }
 
     } // namespace Diffusion

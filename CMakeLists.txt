@@ -232,6 +232,9 @@ foreach(dir IN LISTS DISPATCH_SRC_DIRS)
         "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
     list(APPEND ARCH_DISPATCH_SOURCES ${dir_srcs})
 endforeach()
+# Runtime probing is not part of the production startup until E3 threads the
+# resolved plan through that call chain.  D1 compiles it only in its focused test.
+list(FILTER ARCH_DISPATCH_SOURCES EXCLUDE REGEX "/RuntimeProbe\\.cpp$")
 
 # ==============================================================================
 # Target Definition & Properties
@@ -298,10 +301,36 @@ if(BUILD_TESTING)
     target_include_directories(arch_block_handle PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME block_handle COMMAND arch_block_handle)
+
+    add_executable(arch_resolved_execution_plan
+        tests/test_resolved_execution_plan.cpp)
+    target_compile_features(arch_resolved_execution_plan PRIVATE cxx_std_20)
+    target_include_directories(arch_resolved_execution_plan PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${ARCH_CUSTOM_REGISTRY_DIR}")
+    add_test(NAME resolved_execution_plan COMMAND arch_resolved_execution_plan)
+
+    add_executable(arch_runtime_probe_capabilities
+        tests/test_runtime_probe_and_capabilities.cpp
+        src/driver/dispatch/RuntimeProbe.cpp)
+    target_compile_features(arch_runtime_probe_capabilities PRIVATE cxx_std_20)
+    target_include_directories(arch_runtime_probe_capabilities PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_definitions(arch_runtime_probe_capabilities PRIVATE
+        ARCH_D1_TEST_CUDA_BUILD=$<BOOL:${ARCH_ENABLE_CUDA}>)
+    if(CMAKE_DL_LIBS)
+        target_link_libraries(arch_runtime_probe_capabilities PRIVATE ${CMAKE_DL_LIBS})
+    endif()
+    add_test(NAME runtime_probe_and_capabilities
+        COMMAND arch_runtime_probe_capabilities)
 endif()
 
 if(ARCH_ENABLE_CUDA)
     enable_language(CUDA)
+    if(BUILD_TESTING)
+        set_property(TARGET arch_runtime_probe_capabilities APPEND PROPERTY
+            BUILD_RPATH "${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}")
+    endif()
 
     # Task A owns only this compile probe.  A later task may create one normal
     # arch_cuda_backend STATIC target for production CUDA sources; do not glob
@@ -375,6 +404,16 @@ if(ARCH_ENABLE_CUDA)
         set_target_properties(arch_cuda_diffusion_rkl_parity PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
+        add_executable(arch_cuda_policy_resolution
+            tests/cuda/test_cuda_policy_resolution.cu)
+        target_compile_features(arch_cuda_policy_resolution PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_policy_resolution PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(arch_cuda_policy_resolution PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+        set_target_properties(arch_cuda_policy_resolution PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
         add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
         add_test(NAME hydro_leaf_parity COMMAND arch_cuda_hydro_leaf_parity)
         add_test(NAME eos_host_device_parity COMMAND arch_cuda_eos_host_device_parity)
@@ -383,6 +422,8 @@ if(ARCH_ENABLE_CUDA)
             COMMAND arch_cuda_burn_policy_parity helpers)
         add_test(NAME diffusion_rkl_parity
             COMMAND arch_cuda_diffusion_rkl_parity)
+        add_test(NAME cuda_policy_resolution
+            COMMAND arch_cuda_policy_resolution)
         foreach(solver IN ITEMS be_nr bd ros4)
             add_test(NAME "burn_policy_parity_status_${solver}"
                 COMMAND arch_cuda_burn_policy_parity "status.${solver}")
