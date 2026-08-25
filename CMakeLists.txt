@@ -302,6 +302,12 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME block_handle COMMAND arch_block_handle)
 
+    add_executable(arch_state_residency tests/test_state_residency.cpp)
+    target_compile_features(arch_state_residency PRIVATE cxx_std_20)
+    target_include_directories(arch_state_residency PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME state_residency COMMAND arch_state_residency)
+
     add_executable(arch_resolved_execution_plan
         tests/test_resolved_execution_plan.cpp)
     target_compile_features(arch_resolved_execution_plan PRIVATE cxx_std_20)
