@@ -20,6 +20,7 @@
 
 #include "../../amr/AMRControl.h"
 #include "../../data/FluidState.h"
+#include "../../driver/StageScheduler.h"
 
 struct SolverRK2
 {
@@ -41,49 +42,73 @@ struct SolverRK2
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
         int dim = amr_ctrl.tree->GetRootGridDim();
 
-        // Stage 1
-        #pragma omp parallel
-        {
-            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-            std::vector<FluidVector> dU(total_size);
-            std::vector<double> d_spec(n_spec * total_size);
-
-            #pragma omp for schedule(dynamic)
-            for (size_t i = 0; i < active_blocks.size(); ++i) {
-                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.fluid_state, b.grid, dt, dU, d_spec, gravity, num_cfg, 0.5, nullptr);
-                hydro->update_patch(b.fluid_state, b.fluid_state, b.state_scratch, dU, d_spec, b.grid, 0.0, 1.0, num_cfg, nullptr);
+        using namespace arch::scheduler;
+        using arch::state::StateSlot;
+        const StageBinding& binding = current_stage_binding();
+        if (binding.handles.size() != active_blocks.size())
+            throw std::logic_error("RK2 scheduler handle count mismatch");
+        const auto state_for = [](amr::Block& block,
+                                  StateSlot slot) -> FluidState& {
+            switch (slot) {
+            case StateSlot::Current: return block.fluid_state;
+            case StateSlot::Next: return block.state_next;
+            case StateSlot::Scratch: return block.state_scratch;
             }
-        }
+            throw std::logic_error("RK2 descriptor selected unknown slot");
+        };
 
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            boundary_condition.apply(b.state_scratch, b.grid);
-        }
-        amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, dim, &amr::Block::state_scratch);
+        (void)execute_rk2_lane(
+            binding.context, binding.handles,
+                [&](const StageDescriptor& descriptor,
+                    arch::state::CompletionToken token) {
+#pragma omp parallel
+                    {
+                        int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
+                        std::vector<FluidVector> dU(total_size);
+                        std::vector<double> d_spec(n_spec * total_size);
 
-        // Stage 2
-        #pragma omp parallel
-        {
-            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-            std::vector<FluidVector> dU(total_size);
-            std::vector<double> d_spec(n_spec * total_size);
-
-            #pragma omp for schedule(dynamic)
-            for (size_t i = 0; i < active_blocks.size(); ++i) {
-                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.state_scratch, b.grid, dt, dU, d_spec, gravity, num_cfg, 0.5, nullptr);
-                hydro->update_patch(b.fluid_state, b.state_scratch, b.state_next, dU, d_spec, b.grid, 0.5, 0.5, num_cfg, nullptr);
-            }
-        }
-
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            std::swap(b.fluid_state, b.state_next);
-        }
-
-        amr_ctrl.ApplyReflux(dt);
+#pragma omp for schedule(dynamic)
+                        for (size_t i = 0; i < active_blocks.size(); ++i) {
+                            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                            FluidState& old_state = state_for(b, descriptor.old_slot);
+                            FluidState& input_state = state_for(b, descriptor.input_slot);
+                            FluidState& output_state = state_for(b, descriptor.output_slot);
+                            hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr);
+                            hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
+                        }
+                    }
+                    return token;
+                },
+                [&](StateSlot output, arch::state::StateVersion,
+                    arch::state::CompletionToken token) {
+#pragma omp parallel for schedule(dynamic)
+                    for (size_t i = 0; i < active_blocks.size(); ++i) {
+                        amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                        boundary_condition.apply(state_for(b, output), b.grid);
+                    }
+                    if (output != StateSlot::Scratch)
+                        throw std::logic_error("RK2 ghost exchange requires Scratch output");
+                    amr_ctrl.ghost_exchange.ExecuteExchange(
+                        amr_ctrl.pool, amr_ctrl.tree, dim,
+                        &amr::Block::state_scratch);
+                    return token;
+                },
+            [&](arch::state::SlotRotation rotation) {
+                if (rotation.current_from != StateSlot::Next
+                    || rotation.next_from != StateSlot::Current
+                    || rotation.scratch_from != StateSlot::Scratch) {
+                    throw std::logic_error("RK2 physical rotation descriptor mismatch");
+                }
+#pragma omp parallel for schedule(dynamic)
+                for (size_t i = 0; i < active_blocks.size(); ++i) {
+                    amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                    std::swap(b.fluid_state, b.state_next);
+                }
+            },
+            [&](const HydroPlan&, StateSlot,
+                arch::state::CompletionToken token) {
+                amr_ctrl.ApplyReflux(dt);
+                return token;
+            });
     }
 };

@@ -387,9 +387,10 @@ void test_factory_routes_preserved()
     threw = false;
     try { BurnDispatcher::dispatch(config, [](auto) {}); }
     catch (const std::runtime_error& error) {
-        threw = std::string(error.what()) == "SparseKLU not fully implemented.";
+        threw = std::string(error.what())
+            == "SparseKLU was selected, but this ARCH build has KLU disabled.";
     }
-    expect(threw, "burn factory SparseKLU error");
+    expect(threw, "burn factory reports the build-time SparseKLU capability");
 
     config.physics.diffusion.use_diffusion = false;
     Numerics::Diffusion::dispatch_diffusion(config, [](auto selected) {

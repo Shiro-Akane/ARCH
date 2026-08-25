@@ -20,6 +20,7 @@
 
 #include "../../amr/AMRControl.h"
 #include "../../data/FluidState.h"
+#include "../../driver/StageScheduler.h"
 
 struct SolverEuler
 {
@@ -40,28 +41,66 @@ struct SolverEuler
         }
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
         int dim = amr_ctrl.tree->GetRootGridDim();
+        (void)dim;
 
-        // Stage 1
-        #pragma omp parallel
-        {
-            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-            std::vector<FluidVector> dU(total_size);
-            std::vector<double> d_spec(n_spec * total_size);
-
-            #pragma omp for schedule(dynamic)
-            for (size_t i = 0; i < active_blocks.size(); ++i) {
-                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.fluid_state, b.grid, dt, dU, d_spec, gravity, num_cfg, 1.0, nullptr);
-                hydro->update_patch(b.fluid_state, b.fluid_state, b.state_next, dU, d_spec, b.grid, 0.0, 1.0, num_cfg, nullptr);
+        using namespace arch::scheduler;
+        const StageBinding& binding = current_stage_binding();
+        if (binding.handles.size() != active_blocks.size())
+            throw std::logic_error("Euler scheduler handle count mismatch");
+        const auto state_for = [](amr::Block& block,
+                                  arch::state::StateSlot slot) -> FluidState& {
+            switch (slot) {
+            case arch::state::StateSlot::Current: return block.fluid_state;
+            case arch::state::StateSlot::Next: return block.state_next;
+            case arch::state::StateSlot::Scratch: return block.state_scratch;
             }
-        }
+            throw std::logic_error("Euler descriptor selected unknown slot");
+        };
 
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            std::swap(b.fluid_state, b.state_next);
-        }
+        (void)execute_euler_lane(
+            binding.context, binding.handles,
+            [&](const StageDescriptor& descriptor,
+                arch::state::CompletionToken token) {
+#pragma omp parallel
+                {
+                    int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
+                    std::vector<FluidVector> dU(total_size);
+                    std::vector<double> d_spec(n_spec * total_size);
 
-        amr_ctrl.ApplyReflux(dt);
+#pragma omp for schedule(dynamic)
+                    for (size_t i = 0; i < active_blocks.size(); ++i) {
+                        amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                        FluidState& old_state = state_for(b, descriptor.old_slot);
+                        FluidState& input_state = state_for(b, descriptor.input_slot);
+                        FluidState& output_state = state_for(b, descriptor.output_slot);
+                        hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr);
+                        hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
+                    }
+                }
+                return token;
+            },
+            [](arch::state::StateSlot, arch::state::StateVersion,
+               arch::state::CompletionToken token) { return token; },
+            [&](arch::state::SlotRotation rotation) {
+                if (rotation.current_from
+                        != arch::state::StateSlot::Next
+                    || rotation.next_from
+                           != arch::state::StateSlot::Current
+                    || rotation.scratch_from
+                           != arch::state::StateSlot::Scratch) {
+                    throw std::logic_error(
+                        "Euler physical rotation descriptor mismatch");
+                }
+#pragma omp parallel for schedule(dynamic)
+                for (size_t i = 0; i < active_blocks.size(); ++i) {
+                    amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                    std::swap(b.fluid_state, b.state_next);
+                }
+            },
+            [&](const HydroPlan&, arch::state::StateSlot,
+                arch::state::CompletionToken token) {
+                amr_ctrl.ApplyReflux(dt);
+                return token;
+            });
     }
 };

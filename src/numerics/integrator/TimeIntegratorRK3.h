@@ -21,6 +21,7 @@
 
 #include "../../amr/AMRControl.h"
 #include "../../data/FluidState.h"
+#include "../../driver/StageScheduler.h"
 
 struct SolverRK3
 {
@@ -45,80 +46,77 @@ struct SolverRK3
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
         int dim = amr_ctrl.tree->GetRootGridDim();
 
-        // Stage 1: U^(1) = U^n + dt * L(U^n)
-        #pragma omp parallel
-        {
-            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-            std::vector<FluidVector> dU(total_size);
-            std::vector<double> d_spec(n_spec * total_size);
-
-            #pragma omp for schedule(dynamic)
-            for (size_t i = 0; i < active_blocks.size(); ++i) {
-                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-
-                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.fluid_state, b.grid, dt, dU, d_spec, gravity, num_cfg, 1.0/6.0, nullptr);
-
-                hydro->update_patch(b.fluid_state, b.fluid_state, b.state_scratch, dU, d_spec, b.grid, 0.0, 1.0, num_cfg, nullptr);
+        using namespace arch::scheduler;
+        using arch::state::StateSlot;
+        const StageBinding& binding = current_stage_binding();
+        if (binding.handles.size() != active_blocks.size())
+            throw std::logic_error("RK3 scheduler handle count mismatch");
+        const auto state_for = [](amr::Block& block,
+                                  StateSlot slot) -> FluidState& {
+            switch (slot) {
+            case StateSlot::Current: return block.fluid_state;
+            case StateSlot::Next: return block.state_next;
+            case StateSlot::Scratch: return block.state_scratch;
             }
-        }
+            throw std::logic_error("RK3 descriptor selected unknown slot");
+        };
 
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            boundary_condition.apply(b.state_scratch, b.grid);
-        }
-        amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, dim, &amr::Block::state_scratch);
+        (void)execute_rk3_lane(
+            binding.context, binding.handles,
+                [&](const StageDescriptor& descriptor,
+                    arch::state::CompletionToken token) {
+#pragma omp parallel
+                    {
+                        int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
+                        std::vector<FluidVector> dU(total_size);
+                        std::vector<double> d_spec(n_spec * total_size);
 
-        // Stage 2: U^(2) = (3/4) * U^n + (1/4) * U^(1) + (1/4) * dt * L(U^(1))
-        #pragma omp parallel
-        {
-            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-            std::vector<FluidVector> dU(total_size);
-            std::vector<double> d_spec(n_spec * total_size);
-
-            #pragma omp for schedule(dynamic)
-            for (size_t i = 0; i < active_blocks.size(); ++i) {
-                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-
-                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.state_scratch, b.grid, dt, dU, d_spec, gravity, num_cfg, 1.0/6.0, nullptr);
-
-                hydro->update_patch(b.fluid_state, b.state_scratch, b.state_next, dU, d_spec, b.grid, 0.75, 0.25, num_cfg, nullptr);
-            }
-        }
-
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            boundary_condition.apply(b.state_next, b.grid);
-        }
-        amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, dim, &amr::Block::state_next);
-
-
-        // Stage 3: U^{n+1} = (1/3) * U^n + (2/3) * U^(2) + (2/3) * dt * L(U^(2))
-        #pragma omp parallel
-        {
-            int n_spec = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-            std::vector<FluidVector> dU(total_size);
-            std::vector<double> d_spec(n_spec * total_size);
-
-            #pragma omp for schedule(dynamic)
-            for (size_t i = 0; i < active_blocks.size(); ++i) {
-                amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-
-                hydro->evaluate_patch(&amr_ctrl, active_blocks[i], b.state_next, b.grid, dt, dU, d_spec, gravity, num_cfg, 2.0/3.0, nullptr);
-
-                // Reuse state_scratch for U^{n+1} to avoid a third stage buffer.
-                hydro->update_patch(b.fluid_state, b.state_next, b.state_scratch, dU, d_spec, b.grid, 1.0/3.0, 2.0/3.0, num_cfg, nullptr);
-            }
-        }
-
-        // Publish U^{n+1}, which is stored in state_scratch after stage 3.
-        #pragma omp parallel for schedule(dynamic)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            std::swap(b.fluid_state, b.state_scratch);
-        }
-
-        amr_ctrl.ApplyReflux(dt);
+#pragma omp for schedule(dynamic)
+                        for (size_t i = 0; i < active_blocks.size(); ++i) {
+                            amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                            FluidState& old_state = state_for(b, descriptor.old_slot);
+                            FluidState& input_state = state_for(b, descriptor.input_slot);
+                            FluidState& output_state = state_for(b, descriptor.output_slot);
+                            hydro->evaluate_patch(&amr_ctrl, active_blocks[i], input_state, b.grid, dt, dU, d_spec, gravity, num_cfg, descriptor.flux_register_weight, nullptr);
+                            hydro->update_patch(old_state, input_state, output_state, dU, d_spec, b.grid, descriptor.old_weight, descriptor.update_weight, num_cfg, nullptr);
+                        }
+                    }
+                    return token;
+                },
+                [&](StateSlot output, arch::state::StateVersion,
+                    arch::state::CompletionToken token) {
+#pragma omp parallel for schedule(dynamic)
+                    for (size_t i = 0; i < active_blocks.size(); ++i) {
+                        amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                        boundary_condition.apply(state_for(b, output), b.grid);
+                    }
+                    FluidState amr::Block::* output_member = nullptr;
+                    if (output == StateSlot::Scratch)
+                        output_member = &amr::Block::state_scratch;
+                    else if (output == StateSlot::Next)
+                        output_member = &amr::Block::state_next;
+                    else
+                        throw std::logic_error("RK3 ghost exchange selected Current output");
+                    amr_ctrl.ghost_exchange.ExecuteExchange(
+                        amr_ctrl.pool, amr_ctrl.tree, dim, output_member);
+                    return token;
+                },
+            [&](arch::state::SlotRotation rotation) {
+                if (rotation.current_from != StateSlot::Scratch
+                    || rotation.next_from != StateSlot::Next
+                    || rotation.scratch_from != StateSlot::Current) {
+                    throw std::logic_error("RK3 physical rotation descriptor mismatch");
+                }
+#pragma omp parallel for schedule(dynamic)
+                for (size_t i = 0; i < active_blocks.size(); ++i) {
+                    amr::Block &b = amr_ctrl.pool->GetBlock(active_blocks[i]);
+                    std::swap(b.fluid_state, b.state_scratch);
+                }
+            },
+            [&](const HydroPlan&, StateSlot,
+                arch::state::CompletionToken token) {
+                amr_ctrl.ApplyReflux(dt);
+                return token;
+            });
     }
 };

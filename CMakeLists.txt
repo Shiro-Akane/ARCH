@@ -308,6 +308,15 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME state_residency COMMAND arch_state_residency)
 
+    add_executable(arch_shared_stage_scheduler
+        tests/test_shared_stage_scheduler.cpp)
+    target_compile_features(arch_shared_stage_scheduler PRIVATE cxx_std_20)
+    target_include_directories(arch_shared_stage_scheduler PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_definitions(arch_shared_stage_scheduler PRIVATE
+        ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
+
     add_executable(arch_resolved_execution_plan
         tests/test_resolved_execution_plan.cpp)
     target_compile_features(arch_resolved_execution_plan PRIVATE cxx_std_20)

@@ -28,7 +28,7 @@ namespace Numerics
         // Dummy struct for no diffusion
         struct NoDiffusionIntegrator
         {
-            static void integrate(FluidState&, const auto&, const Grid&, const SimConfig&, double, double, const auto&)
+            static void integrate(amr::Block&, const auto&, const Grid&, const SimConfig&, double, double, const auto&)
             {
                 // Do nothing
             }

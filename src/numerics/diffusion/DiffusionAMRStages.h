@@ -24,6 +24,7 @@
 #include "DiffFlux.h"
 #include "DiffFunction.h"
 #include "../../amr/AMRFluxRegistering.h"
+#include "../../driver/StageScheduler.h"
 
 namespace Numerics::Diffusion {
 
@@ -395,13 +396,263 @@ inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
                                             amr_ctrl.tree->GetRootGridDim(), state_ptr);
 }
 
-inline void copy_stage_to_solution(amr::AMRControl& amr_ctrl, FluidState amr::Block::* source_ptr)
+inline FluidState& state_for(amr::Block& block,
+                             arch::state::StateSlot slot)
 {
-    const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+    using arch::state::StateSlot;
+    switch (slot) {
+    case StateSlot::Current: return block.fluid_state;
+    case StateSlot::Next: return block.state_next;
+    case StateSlot::Scratch: return block.state_scratch;
+    }
+    throw std::logic_error("RKL descriptor selected unknown slot");
+}
+
+inline FluidState amr::Block::* member_for(arch::state::StateSlot slot)
+{
+    using arch::state::StateSlot;
+    switch (slot) {
+    case StateSlot::Current: return &amr::Block::fluid_state;
+    case StateSlot::Next: return &amr::Block::state_next;
+    case StateSlot::Scratch: return &amr::Block::state_scratch;
+    }
+    throw std::logic_error("RKL descriptor selected unknown slot member");
+}
+
+inline DiffFunction::RKLOrder order_for(arch::scheduler::RklMethod method)
+{
+    using arch::scheduler::RklMethod;
+    if (method == RklMethod::RKL1)
+        return DiffFunction::RKLOrder::First;
+    if (method == RklMethod::RKL2)
+        return DiffFunction::RKLOrder::Second;
+    throw std::invalid_argument("unknown shared RKL method");
+}
+
+inline void rotate_single_block(amr::Block& block,
+                                arch::state::SlotRotation rotation)
+{
+    using arch::state::StateSlot;
+    if (rotation.current_from == StateSlot::Next
+        && rotation.next_from == StateSlot::Current
+        && rotation.scratch_from == StateSlot::Scratch) {
+        std::swap(block.fluid_state, block.state_next);
+        return;
+    }
+    if (rotation.current_from == StateSlot::Scratch
+        && rotation.next_from == StateSlot::Next
+        && rotation.scratch_from == StateSlot::Current) {
+        std::swap(block.fluid_state, block.state_scratch);
+        return;
+    }
+    throw std::logic_error("RKL physical rotation descriptor mismatch");
+}
+
+template <typename EosType, typename BCPolicy>
+inline void advance_single_rkl(
+    amr::Block& block, const EosType& eos, const Grid& grid,
+    const SimConfig& config, double dt, double dt_diff_fe,
+    BCPolicy& boundary_condition, arch::scheduler::RklMethod method)
+{
+    using namespace arch::scheduler;
+    using arch::state::StateSlot;
+    const DiffFunction::RKLOrder order = order_for(method);
+    const int stages = DiffFunction::compute_stages(
+        order, dt, dt_diff_fe, config.physics.diffusion.diff_cfl,
+        config.physics.diffusion.max_stages);
+    if (stages <= 0) return;
+
+    const StageBinding& binding = current_stage_binding();
+    if (binding.handles.size() != 1)
+        throw std::logic_error("single RKL requires one scheduler handle");
+    const auto current = binding.context.ledger.inspect(
+        {binding.handles.front(), StateSlot::Current});
+    if (!arch::state::side_can_read(current.ghost.residency,
+                                    binding.context.side)
+        || current.ghost.version != current.interior.version
+        || current.ghost_source_version != current.interior.version) {
+        boundary_condition.apply(block.fluid_state, grid);
+        (void)complete_boundary(
+            binding.context, binding.handles, StateSlot::Current,
+            current.interior.version,
+            [](StateSlot, arch::state::StateVersion,
+               arch::state::CompletionToken token) { return token; });
+    }
+
+    (void)copy_slot(
+        binding.context, binding.handles, StateSlot::Current,
+        StateSlot::Scratch,
+        [&] { block.state_scratch = block.fluid_state; });
+    (void)copy_slot(
+        binding.context, binding.handles, StateSlot::Current,
+        StateSlot::Next,
+        [&] { block.state_next = block.fluid_state; });
+
+    FluidState increment_previous;
+    FluidState increment_initial;
+    for (FluidState* workspace : {&increment_previous, &increment_initial}) {
+        workspace->Preallocate(grid.GetTotalSize());
+        workspace->InitSpecies(block.fluid_state.GetNumSpecies());
+    }
+
+    const auto executor =
+            [&](const RklPlan& selected_plan,
+                const RklStageDescriptor& descriptor,
+                arch::state::CompletionToken token) {
+                FluidState& state_n = state_for(block, descriptor.state_n_slot);
+                FluidState& previous = state_for(block, descriptor.previous_slot);
+                FluidState& older = state_for(block, descriptor.older_slot);
+                FluidState& output = state_for(block, descriptor.output_slot);
+                const DiffFunction::RKLCoeffs coefficients =
+                    DiffFunction::get_rkl_coeffs(
+                        order, descriptor.stage, stages);
+
+                if (descriptor.stage == 1) {
+                    DiffFlux::compute_diffusion_operator(
+                        state_n, increment_initial, eos, grid, config);
 #pragma omp parallel for schedule(static)
-    for (size_t index = 0; index < active_blocks.size(); ++index) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
-        block.fluid_state = block.*source_ptr;
+                    for (int index = 0; index < grid.GetTotalSize(); ++index) {
+                        output.rho[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                            state_n.rho[index], coefficients.tilde_mu * dt,
+                            increment_initial.rho[index]);
+                        output.mom_u[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                            state_n.mom_u[index], coefficients.tilde_mu * dt,
+                            increment_initial.mom_u[index]);
+                        output.mom_v[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                            state_n.mom_v[index], coefficients.tilde_mu * dt,
+                            increment_initial.mom_v[index]);
+                        output.mom_w[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                            state_n.mom_w[index], coefficients.tilde_mu * dt,
+                            increment_initial.mom_w[index]);
+                        output.eng[index] = ARCH_DIFFUSION_FIRST_RKL_COMPONENT(
+                            state_n.eng[index], coefficients.tilde_mu * dt,
+                            increment_initial.eng[index]);
+                        for (int species = 0;
+                             species < state_n.GetNumSpecies(); ++species) {
+                            const double rho_x =
+                                ARCH_DIFFUSION_FIRST_RKL_SPECIES_EXPRESSION(
+                                    state_n.rho[index],
+                                    state_n.X(species, index),
+                                    coefficients.tilde_mu * dt,
+                                    increment_initial.X(species, index));
+                            output.X(species, index) =
+                                rho_x / output.rho[index];
+                        }
+                    }
+                    return token;
+                }
+
+                DiffFlux::compute_diffusion_operator(
+                    previous, increment_previous, eos, grid, config);
+                const double initial_weight = selected_plan.second_order
+                    ? 1.0 - coefficients.mu - coefficients.nu : 0.0;
+#pragma omp parallel for schedule(static)
+                for (int index = 0; index < grid.GetTotalSize(); ++index) {
+                    const double rho_older = older.rho[index];
+                    if (selected_plan.second_order) {
+                        output.rho[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
+                                coefficients, previous.rho[index],
+                                older.rho[index], initial_weight,
+                                state_n.rho[index],
+                                increment_previous.rho[index],
+                                increment_initial.rho[index], dt);
+                        output.mom_u[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
+                                coefficients, previous.mom_u[index],
+                                older.mom_u[index], initial_weight,
+                                state_n.mom_u[index],
+                                increment_previous.mom_u[index],
+                                increment_initial.mom_u[index], dt);
+                        output.mom_v[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
+                                coefficients, previous.mom_v[index],
+                                older.mom_v[index], initial_weight,
+                                state_n.mom_v[index],
+                                increment_previous.mom_v[index],
+                                increment_initial.mom_v[index], dt);
+                        output.mom_w[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
+                                coefficients, previous.mom_w[index],
+                                older.mom_w[index], initial_weight,
+                                state_n.mom_w[index],
+                                increment_previous.mom_w[index],
+                                increment_initial.mom_w[index], dt);
+                        output.eng[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL2_COMPONENT(
+                                coefficients, previous.eng[index],
+                                older.eng[index], initial_weight,
+                                state_n.eng[index],
+                                increment_previous.eng[index],
+                                increment_initial.eng[index], dt);
+                    } else {
+                        output.rho[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                                coefficients, previous.rho[index],
+                                older.rho[index],
+                                increment_previous.rho[index], dt);
+                        output.mom_u[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                                coefficients, previous.mom_u[index],
+                                older.mom_u[index],
+                                increment_previous.mom_u[index], dt);
+                        output.mom_v[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                                coefficients, previous.mom_v[index],
+                                older.mom_v[index],
+                                increment_previous.mom_v[index], dt);
+                        output.mom_w[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                                coefficients, previous.mom_w[index],
+                                older.mom_w[index],
+                                increment_previous.mom_w[index], dt);
+                        output.eng[index] =
+                            ARCH_DIFFUSION_UNSCALED_RKL1_COMPONENT(
+                                coefficients, previous.eng[index],
+                                older.eng[index],
+                                increment_previous.eng[index], dt);
+                    }
+                    for (int species = 0;
+                         species < state_n.GetNumSpecies(); ++species) {
+                        const double rho_x = selected_plan.second_order
+                            ? ARCH_DIFFUSION_UNSCALED_RKL2_SPECIES_EXPRESSION(
+                                  coefficients, previous.rho[index],
+                                  previous.X(species, index),
+                                  rho_older, older.X(species, index),
+                                  initial_weight, state_n.rho[index],
+                                  state_n.X(species, index),
+                                  increment_previous.X(species, index),
+                                  increment_initial.X(species, index), dt)
+                            : ARCH_DIFFUSION_UNSCALED_RKL1_SPECIES_EXPRESSION(
+                                  coefficients, previous.rho[index],
+                                  previous.X(species, index),
+                                  rho_older, older.X(species, index),
+                                  increment_previous.X(species, index), dt);
+                        output.X(species, index) = rho_x / output.rho[index];
+                    }
+                }
+                return token;
+            };
+    const auto reflux =
+            [](const RklPlan&, const RklStageDescriptor&,
+               arch::state::CompletionToken token) { return token; };
+    const auto boundary =
+            [&](StateSlot output, arch::state::StateVersion,
+                arch::state::CompletionToken token) {
+                boundary_condition.apply(state_for(block, output), grid);
+                return token;
+            };
+    const auto rotate = [&](arch::state::SlotRotation rotation) {
+        rotate_single_block(block, rotation);
+    };
+    if (method == RklMethod::RKL1) {
+        (void)execute_single_rkl1_lane(
+            binding.context, binding.handles, stages, executor, reflux,
+            boundary, rotate);
+    } else {
+        (void)execute_single_rkl2_lane(
+            binding.context, binding.handles, stages, executor, reflux,
+            boundary, rotate);
     }
 }
 
@@ -415,9 +666,12 @@ inline void copy_stage_to_solution(amr::AMRControl& amr_ctrl, FluidState amr::Bl
 template <typename EosType, typename BCPolicy>
 inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff_fe,
                             BCPolicy& boundary_condition, const EosType& eos,
-                            const SimConfig& config, DiffFunction::RKLOrder order)
+                            const SimConfig& config,
+                            arch::scheduler::RklMethod method)
 {
-    const bool second_order = order == DiffFunction::RKLOrder::Second;
+    using namespace arch::scheduler;
+    using arch::state::StateSlot;
+    const DiffFunction::RKLOrder order = detail::order_for(method);
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
     if (active_blocks.empty()) return;
 
@@ -426,86 +680,137 @@ inline void advance_amr_rkl(amr::AMRControl& amr_ctrl, double dt, double dt_diff
     const int stages = DiffFunction::compute_stages(order, dt, dt_diff_fe, diff_cfl, max_stages);
     if (stages <= 0) return;
 
+    const StageBinding& binding = current_stage_binding();
+    if (binding.handles.size() != active_blocks.size())
+        throw std::logic_error("AMR RKL scheduler handle count mismatch");
     amr_ctrl.flux_register.EnsureSpecies(
         amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies());
     detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
+    const arch::state::StateVersion current_version =
+        binding.context.ledger.inspect(
+            {binding.handles.front(), StateSlot::Current}).interior.version;
+    (void)complete_boundary(
+        binding.context, binding.handles, StateSlot::Current,
+        current_version,
+        [](StateSlot, arch::state::StateVersion,
+           arch::state::CompletionToken token) { return token; });
 
-    // fluid_state remains Y_0 for the full polynomial.  state_scratch and
-    // state_next alternate as Y_{j-1}/Y_{j-2}; this preserves the block pool's
-    // fixed allocation and avoids stage-history reallocations.
+    (void)copy_slot(
+        binding.context, binding.handles, StateSlot::Current,
+        StateSlot::Scratch, [&] {
 #pragma omp parallel for schedule(static)
-    for (size_t index = 0; index < active_blocks.size(); ++index) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
-        detail::initialize_amr_rkl_stage_buffers(
-            block.fluid_state, block.state_scratch, block.state_next);
-    }
-
-    const DiffFunction::RKLCoeffs first_coeffs = DiffFunction::get_rkl_coeffs(order, 1, stages);
-    amr_ctrl.flux_register.Clear();
-    for (const int block_id : active_blocks) {
-        amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
-        std::vector<FluidVector> d_initial;
-        std::vector<double> d_species_initial;
-        detail::evaluate_diffusion_increment(amr_ctrl, block_id, block.fluid_state, eos,
-                                             block.grid, config, dt,
-                                             first_coeffs.tilde_mu,
-                                             d_initial, d_species_initial);
-        const double first_coefficient = first_coeffs.tilde_mu;
-        detail::apply_first_rkl_stage(block.fluid_state, block.state_scratch,
-                                      d_initial, d_species_initial, block.grid, first_coefficient);
-    }
-    amr_ctrl.ApplyReflux(dt, &amr::Block::state_scratch);
-    detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::state_scratch);
-
-    if (stages == 1) {
-        detail::copy_stage_to_solution(amr_ctrl, &amr::Block::state_scratch);
-        detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
-        return;
-    }
-
-    for (int stage = 2; stage <= stages; ++stage) {
-        const DiffFunction::RKLCoeffs coeffs = DiffFunction::get_rkl_coeffs(order, stage, stages);
-        const bool previous_in_scratch = (stage % 2) == 0;
-        FluidState amr::Block::* previous_ptr = previous_in_scratch
-            ? &amr::Block::state_scratch : &amr::Block::state_next;
-        FluidState amr::Block::* older_ptr = previous_in_scratch
-            ? &amr::Block::state_next : &amr::Block::state_scratch;
-
-        amr_ctrl.flux_register.Clear();
-        for (const int block_id : active_blocks) {
-            amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
-            FluidState& previous = block.*previous_ptr;
-            FluidState& older = block.*older_ptr;
-            std::vector<FluidVector> d_previous;
-            std::vector<double> d_species_previous;
-            detail::evaluate_diffusion_increment(amr_ctrl, block_id, previous, eos, block.grid,
-                                                 config, dt, coeffs.tilde_mu,
-                                                 d_previous, d_species_previous);
-
-            std::vector<FluidVector> d_initial;
-            std::vector<double> d_species_initial;
-            if (second_order) {
-                detail::evaluate_diffusion_increment(amr_ctrl, block_id, block.fluid_state, eos,
-                                                     block.grid, config, dt, coeffs.gamma,
-                                                     d_initial, d_species_initial);
-            } else {
-                d_initial.assign(block.grid.GetTotalSize(), FluidVector{});
-                d_species_initial.assign(static_cast<size_t>(block.fluid_state.GetNumSpecies())
-                                         * block.grid.GetTotalSize(), 0.0);
+            for (size_t index = 0; index < active_blocks.size(); ++index) {
+                amr::Block& block =
+                    amr_ctrl.pool->GetBlock(active_blocks[index]);
+                block.state_scratch = block.fluid_state;
             }
-            detail::apply_recursive_rkl_stage(block.fluid_state, previous, older, older,
-                                              d_previous, d_species_previous,
-                                              d_initial, d_species_initial, block.grid,
-                                              coeffs, second_order);
-        }
-        amr_ctrl.ApplyReflux(dt, older_ptr);
-        detail::synchronize(amr_ctrl, boundary_condition, older_ptr);
-    }
+        });
+    (void)copy_slot(
+        binding.context, binding.handles, StateSlot::Current,
+        StateSlot::Next, [&] {
+#pragma omp parallel for schedule(static)
+            for (size_t index = 0; index < active_blocks.size(); ++index) {
+                amr::Block& block =
+                    amr_ctrl.pool->GetBlock(active_blocks[index]);
+                block.state_next = block.fluid_state;
+            }
+        });
 
-    FluidState amr::Block::* final_ptr = (stages % 2) == 0
-        ? &amr::Block::state_next : &amr::Block::state_scratch;
-    detail::copy_stage_to_solution(amr_ctrl, final_ptr);
+    const auto executor =
+            [&](const RklPlan& selected_plan,
+                const RklStageDescriptor& descriptor,
+                arch::state::CompletionToken token) {
+                const DiffFunction::RKLCoeffs coefficients =
+                    DiffFunction::get_rkl_coeffs(
+                        order, descriptor.stage, stages);
+                amr_ctrl.flux_register.Clear();
+                for (const int block_id : active_blocks) {
+                    amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
+                    FluidState& state_n =
+                        detail::state_for(block, descriptor.state_n_slot);
+                    FluidState& previous =
+                        detail::state_for(block, descriptor.previous_slot);
+                    FluidState& older =
+                        detail::state_for(block, descriptor.older_slot);
+                    FluidState& output =
+                        detail::state_for(block, descriptor.output_slot);
+                    std::vector<FluidVector> d_previous;
+                    std::vector<double> d_species_previous;
+                    detail::evaluate_diffusion_increment(
+                        amr_ctrl, block_id, previous, eos, block.grid,
+                        config, dt, coefficients.tilde_mu, d_previous,
+                        d_species_previous);
+
+                    if (descriptor.stage == 1) {
+                        detail::apply_first_rkl_stage(
+                            state_n, output, d_previous,
+                            d_species_previous, block.grid,
+                            coefficients.tilde_mu);
+                        continue;
+                    }
+
+                    std::vector<FluidVector> d_initial;
+                    std::vector<double> d_species_initial;
+                    if (selected_plan.second_order) {
+                        detail::evaluate_diffusion_increment(
+                            amr_ctrl, block_id, state_n, eos, block.grid,
+                            config, dt, coefficients.gamma, d_initial,
+                            d_species_initial);
+                    } else {
+                        d_initial.assign(block.grid.GetTotalSize(),
+                                         FluidVector{});
+                        d_species_initial.assign(
+                            static_cast<size_t>(state_n.GetNumSpecies())
+                                * block.grid.GetTotalSize(),
+                            0.0);
+                    }
+                    detail::apply_recursive_rkl_stage(
+                        state_n, previous, older, output, d_previous,
+                        d_species_previous, d_initial, d_species_initial,
+                        block.grid, coefficients,
+                        selected_plan.second_order);
+                }
+                return token;
+            };
+    const auto reflux =
+            [&](const RklPlan&, const RklStageDescriptor& descriptor,
+                arch::state::CompletionToken token) {
+                amr_ctrl.ApplyReflux(
+                    dt, detail::member_for(descriptor.output_slot));
+                return token;
+            };
+    const auto boundary =
+            [&](StateSlot output, arch::state::StateVersion,
+                arch::state::CompletionToken token) {
+                detail::synchronize(amr_ctrl, boundary_condition,
+                                    detail::member_for(output));
+                return token;
+            };
+    const auto rotate = [&](arch::state::SlotRotation rotation) {
+#pragma omp parallel for schedule(static)
+                for (size_t index = 0; index < active_blocks.size(); ++index) {
+                    amr::Block& block =
+                        amr_ctrl.pool->GetBlock(active_blocks[index]);
+                    detail::rotate_single_block(block, rotation);
+                }
+            };
+    if (method == RklMethod::RKL1) {
+        (void)execute_multi_rkl1_lane(
+            binding.context, binding.handles, stages, executor, reflux,
+            boundary, rotate);
+    } else {
+        (void)execute_multi_rkl2_lane(
+            binding.context, binding.handles, stages, executor, reflux,
+            boundary, rotate);
+    }
     detail::synchronize(amr_ctrl, boundary_condition, &amr::Block::fluid_state);
+    const arch::state::StateVersion final_version =
+        binding.context.ledger.inspect(
+            {binding.handles.front(), StateSlot::Current}).interior.version;
+    (void)complete_boundary(
+        binding.context, binding.handles, StateSlot::Current, final_version,
+        [](StateSlot, arch::state::StateVersion,
+           arch::state::CompletionToken token) { return token; });
 }
 
 } // namespace Numerics::Diffusion
