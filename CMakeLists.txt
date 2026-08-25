@@ -323,6 +323,13 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME runtime_probe_and_capabilities
         COMMAND arch_runtime_probe_capabilities)
+
+    add_executable(arch_reduction_contract tests/test_reduction_contract.cpp)
+    target_compile_features(arch_reduction_contract PRIVATE cxx_std_20)
+    target_include_directories(arch_reduction_contract PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${ARCH_CUSTOM_REGISTRY_DIR}")
+    add_test(NAME reduction_contract COMMAND arch_reduction_contract)
 endif()
 
 if(ARCH_ENABLE_CUDA)
@@ -340,16 +347,6 @@ if(ARCH_ENABLE_CUDA)
     target_include_directories(arch_cuda_compile_probe PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     set_target_properties(arch_cuda_compile_probe PROPERTIES
-        CUDA_STANDARD 20
-        CUDA_STANDARD_REQUIRED ON)
-    add_executable(arch_cuda_hydro_leaf_parity
-        tests/cuda/test_hydro_leaf_parity.cu)
-    target_compile_features(arch_cuda_hydro_leaf_parity PRIVATE cxx_std_20)
-    target_include_directories(arch_cuda_hydro_leaf_parity PRIVATE
-        "${CMAKE_CURRENT_SOURCE_DIR}/src")
-    target_compile_options(arch_cuda_hydro_leaf_parity PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
-    set_target_properties(arch_cuda_hydro_leaf_parity PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
     add_executable(arch_cuda_eos_host_device_parity
@@ -379,6 +376,26 @@ if(ARCH_ENABLE_CUDA)
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
     if(BUILD_TESTING)
+        add_executable(arch_cuda_hydro_leaf_parity
+            tests/cuda/test_hydro_leaf_parity.cu)
+        target_compile_features(arch_cuda_hydro_leaf_parity PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_hydro_leaf_parity PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(arch_cuda_hydro_leaf_parity PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_hydro_leaf_parity PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
+        add_executable(arch_cuda_reduction_contract
+            tests/cuda/test_cuda_reduction_contract.cu)
+        target_compile_features(arch_cuda_reduction_contract PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_reduction_contract PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(arch_cuda_reduction_contract PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_reduction_contract PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
         add_executable(arch_cuda_burn_policy_parity
             tests/cuda/test_burn_policy_parity.cu
             src/cuda/microphysics/helm_eos_loader.h
@@ -424,6 +441,8 @@ if(ARCH_ENABLE_CUDA)
             COMMAND arch_cuda_diffusion_rkl_parity)
         add_test(NAME cuda_policy_resolution
             COMMAND arch_cuda_policy_resolution)
+        add_test(NAME cuda_reduction_contract
+            COMMAND arch_cuda_reduction_contract)
         foreach(solver IN ITEMS be_nr bd ros4)
             add_test(NAME "burn_policy_parity_status_${solver}"
                 COMMAND arch_cuda_burn_policy_parity "status.${solver}")
@@ -450,11 +469,20 @@ if(ARCH_ENABLE_OPENMP)
         target_link_libraries(${target} PRIVATE OpenMP::OpenMP_CXX)
         target_compile_definitions(${target} PRIVATE ARCH_OPENMP_ENABLED=1)
     endforeach()
+    if(TARGET arch_reduction_contract)
+        target_link_libraries(arch_reduction_contract PRIVATE OpenMP::OpenMP_CXX)
+        target_compile_definitions(arch_reduction_contract PRIVATE
+            ARCH_OPENMP_ENABLED=1)
+    endif()
     message(STATUS "[DEP] OpenMP enabled for target ARCH")
 else()
     foreach(target ARCH arch_solver_dispatch)
         target_compile_definitions(${target} PRIVATE ARCH_OPENMP_ENABLED=0)
     endforeach()
+    if(TARGET arch_reduction_contract)
+        target_compile_definitions(arch_reduction_contract PRIVATE
+            ARCH_OPENMP_ENABLED=0)
+    endif()
     message(STATUS "[DEP] OpenMP disabled for target ARCH")
 endif()
 

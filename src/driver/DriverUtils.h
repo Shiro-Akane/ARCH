@@ -15,6 +15,8 @@
 
 #pragma once
 
+#include "ReductionSpec.h"
+
 #include "../data/FluidState.h"
 
 #include "../core/RuntimeParams.h"
@@ -23,6 +25,53 @@
 
 #include <bit>
 #include <cstdint>
+#include <limits>
+#include <span>
+#include <stdexcept>
+
+namespace DriverReduction
+{
+enum class BlockReductionComponent : int {
+    Hydro = 1,
+    Diffusion = 2,
+    BurnFirstHalf = 3,
+    BurnSecondHalf = 4
+};
+
+inline amr::CellLogicalKey make_block_reduction_key(
+    int level, std::uint64_t morton, std::uint32_t logical_x1,
+    std::uint32_t logical_x2, std::uint32_t logical_x3,
+    BlockReductionComponent component)
+{
+    const auto root = amr::root_logical_key_from_leaf(
+        level, logical_x1, logical_x2, logical_x3);
+    if (!root)
+        throw std::runtime_error("Invalid block coordinates for reduction key");
+    return {
+        *root, level, morton,
+        static_cast<int>(logical_x1), static_cast<int>(logical_x2),
+        static_cast<int>(logical_x3), static_cast<int>(component)};
+}
+
+inline amr::CellLogicalKey make_accumulator_reduction_key(
+    BlockReductionComponent component) noexcept
+{
+    constexpr auto minimum = std::numeric_limits<std::int64_t>::min();
+    return {{minimum, minimum, minimum}, 0, 0, 0, 0, 0,
+            static_cast<int>(component)};
+}
+
+inline double reduce_block_minimum(
+    double identity,
+    std::span<const arch::reduction::ReductionCandidate> candidates)
+{
+    const auto result = arch::reduction::execute_host_reduction(
+        arch::reduction::minimum_spec(identity), candidates);
+    if (result.status != arch::reduction::ReductionStatus::Ok)
+        throw std::runtime_error("Invalid block minimum reduction");
+    return result.value;
+}
+} // namespace DriverReduction
 
 /**
  * @brief Applies boundary conditions to the fluid state.
@@ -263,9 +312,15 @@ ARCH_INLINE bool cfl_value_is_nan(double value)
 
 ARCH_INLINE double combine_cfl_minimum(double minimum, double candidate)
 {
-    if (cfl_value_is_nan(candidate))
-        return minimum;
-    return candidate < minimum ? candidate : minimum;
+    const auto spec = arch::reduction::minimum_spec(cfl_inactive_cell_dt());
+    auto state = arch::reduction::begin_reduction(spec);
+    arch::reduction::combine_candidate(
+        spec, state, {minimum, {}, true});
+    amr::CellLogicalKey candidate_key{};
+    candidate_key.component = 1;
+    arch::reduction::combine_candidate(
+        spec, state, {candidate, candidate_key, true});
+    return arch::reduction::finalize_reduction(spec, state).value;
 }
 
 ARCH_INLINE double finalize_cfl_dt(double cfl_number, double minimum)
@@ -281,7 +336,9 @@ template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number)
 {
     int n_species = state.GetNumSpecies();
-    double min_dt = cfl_inactive_cell_dt();
+    const auto reduction_spec = arch::reduction::minimum_spec(
+        cfl_inactive_cell_dt());
+    auto global_reduction = arch::reduction::begin_reduction(reduction_spec);
 
     const int ks = grid.Ks();
     const int ke = grid.Ke();
@@ -293,7 +350,7 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
 #pragma omp parallel
     {
         std::vector<double> Xi_cache(n_species);
-        double local_min_dt = cfl_inactive_cell_dt();
+        auto local_reduction = arch::reduction::begin_reduction(reduction_spec);
 
 #pragma omp for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
@@ -304,22 +361,36 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
             {
                 int idx = grid.GetIndex(i, j, k);
                 FluidVector U = state.get(idx);
-                if (!is_cfl_cell_active(U))
-                    continue;
-                for (int s = 0; s < n_species; ++s)
-                    Xi_cache[s] = state.X(s, idx);
-                const double cell_dt = evaluate_cfl_cell_dt(
-                    U, Xi_cache.data(), eos, grid.dim,
-                    grid.dx1, grid.dx2, grid.dx3);
-                local_min_dt = combine_cfl_minimum(local_min_dt, cell_dt);
+                double cell_dt = cfl_inactive_cell_dt();
+                if (is_cfl_cell_active(U)) {
+                    for (int s = 0; s < n_species; ++s)
+                        Xi_cache[s] = state.X(s, idx);
+                    cell_dt = evaluate_cfl_cell_dt(
+                        U, Xi_cache.data(), eos, grid.dim,
+                        grid.dx1, grid.dx2, grid.dx3);
+                }
+                amr::CellLogicalKey cell_key{};
+                cell_key.logical_i = i;
+                cell_key.logical_j = j;
+                cell_key.logical_k = k;
+                cell_key.component = static_cast<int>(
+                    DriverReduction::BlockReductionComponent::Hydro);
+                arch::reduction::combine_candidate(
+                    reduction_spec, local_reduction,
+                    {cell_dt, cell_key, true});
             }
         }
 
-#pragma omp critical
+#pragma omp critical(hydro_cfl_reduction)
         {
-            min_dt = combine_cfl_minimum(min_dt, local_min_dt);
+            arch::reduction::combine_state(
+                reduction_spec, global_reduction, local_reduction);
         }
     }
 
-    return finalize_cfl_dt(cfl_number, min_dt);
+    const auto result = arch::reduction::finalize_reduction(
+        reduction_spec, global_reduction);
+    if (result.status != arch::reduction::ReductionStatus::Ok)
+        throw std::runtime_error("Invalid hydro CFL reduction");
+    return finalize_cfl_dt(cfl_number, result.value);
 }

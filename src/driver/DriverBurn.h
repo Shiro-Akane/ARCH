@@ -14,8 +14,10 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
+#include "ReductionSpec.h"
 #include "../core/RuntimeParams.h"
 #include "../data/FluidState.h"
 #include "../grid/Grid.h"
@@ -28,6 +30,20 @@
 namespace DriverBurn
 {
 inline constexpr double INACTIVE_LIMITER_CANDIDATE = 1.0e99;
+
+ARCH_INLINE double combine_burn_minimum(double minimum, double candidate)
+{
+    const auto spec = arch::reduction::minimum_spec(
+        INACTIVE_LIMITER_CANDIDATE);
+    auto state = arch::reduction::begin_reduction(spec);
+    arch::reduction::combine_candidate(
+        spec, state, {minimum, {}, true});
+    amr::CellLogicalKey candidate_key{};
+    candidate_key.component = 1;
+    arch::reduction::combine_candidate(
+        spec, state, {candidate, candidate_key, true});
+    return arch::reduction::finalize_reduction(spec, state).value;
+}
 
 enum class BurnCellDisposition : unsigned char
 {
@@ -183,7 +199,9 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
     if (!config.physics.burn.use_burn)
         return;
     const BurnConfigView burn_cfg = make_burn_config_view(config.physics.burn);
-    double local_dt_burn_min = DriverBurn::INACTIVE_LIMITER_CANDIDATE;
+    const auto reduction_spec = arch::reduction::minimum_spec(
+        DriverBurn::INACTIVE_LIMITER_CANDIDATE);
+    auto global_reduction = arch::reduction::begin_reduction(reduction_spec);
     const int n_spec = current_state.GetNumSpecies();
 
     int invalid_composition_count = 0;
@@ -192,78 +210,118 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
     double first_invalid_min = 0.0;
     double first_invalid_max = 0.0;
 
-    // Each worker reuses one dynamically sized ODE state. Dynamic scheduling is
-    // important because stiff substep counts vary strongly across the front.
-#pragma omp parallel reduction(min : local_dt_burn_min)
+    // Each cell owns its ODE state, network evaluation and LU factorization.
+    // Dynamic scheduling is important because stiff substep counts vary strongly
+    // across the reaction front; nested teams inside a 22x22 LU are counterproductive.
+#pragma omp parallel
     {
-        std::vector<double> X_ODE(static_cast<std::size_t>(n_spec) + 1, 0.0);
+        std::vector<double> X_ODE(
+            static_cast<std::size_t>(n_spec) + 1, 0.0);
+        auto local_reduction = arch::reduction::begin_reduction(reduction_spec);
 #pragma omp for collapse(3) schedule(dynamic, 1)
-    for (int k = grid.Ks(); k < grid.Ke(); ++k)
-    {
-        for (int j = grid.Js(); j < grid.Je(); ++j)
+        for (int k = grid.Ks(); k < grid.Ke(); ++k)
         {
-            for (int i_idx = grid.Is(); i_idx < grid.Ie(); ++i_idx)
+            for (int j = grid.Js(); j < grid.Je(); ++j)
             {
-                int i = grid.GetIndex(i_idx, j, k);
-        FluidVector fluid = current_state.get(i);
-        double rho = fluid.rho;
-
-        // Preserve the density gate before composition packing.
-        if (DriverBurn::check_burn_density(fluid, burn_cfg)
-            == DriverBurn::BurnCellDisposition::BelowDensity)
-            continue;
-
-        // Pack cell mass fractions into the worker-local network ODE state.
-        std::fill(X_ODE.begin(), X_ODE.end(), 0.0);
-        current_state.get_species_to_buffer(i, X_ODE.data());
-
-        // A network state is empty only when the complete composition is
-        // invalid.  Testing X_ODE[0] and X_ODE[1] is incorrect: H1/He3
-        // are normally zero in aprox19/21 helium/carbon fuel, and He4/C12
-        // can both be depleted in an evolved alpha-chain state.
-        const auto prepared = DriverBurn::prepare_burn_cell(
-            fluid, X_ODE.data(), n_spec, eos, burn_cfg);
-        if (prepared.disposition == DriverBurn::BurnCellDisposition::BelowTemperature)
-            continue;
-        if (prepared.disposition == DriverBurn::BurnCellDisposition::InvalidComposition)
-        {
-#pragma omp critical(burn_invalid_composition)
-            {
-                ++invalid_composition_count;
-                if (first_invalid_cell < 0)
+                for (int i_idx = grid.Is(); i_idx < grid.Ie(); ++i_idx)
                 {
-                    first_invalid_cell = i;
-                    first_invalid_sum = prepared.composition_sum;
-                    first_invalid_min = prepared.composition_min;
-                    first_invalid_max = prepared.composition_max;
+                    int i = grid.GetIndex(i_idx, j, k);
+                    FluidVector fluid = current_state.get(i);
+                    double rho = fluid.rho;
+                    amr::CellLogicalKey cell_key{};
+                    cell_key.logical_i = i_idx;
+                    cell_key.logical_j = j;
+                    cell_key.logical_k = k;
+                    cell_key.component = 3;
+
+                    // Preserve the density gate before composition packing.
+                    if (DriverBurn::check_burn_density(fluid, burn_cfg)
+                        == DriverBurn::BurnCellDisposition::BelowDensity) {
+                        arch::reduction::combine_candidate(
+                            reduction_spec, local_reduction,
+                            {DriverBurn::INACTIVE_LIMITER_CANDIDATE,
+                             cell_key, true});
+                        continue;
+                    }
+
+                    // Reuse one exact-size state per worker; CPU custom
+                    // networks are not constrained by the CUDA dense limit.
+                    std::fill(X_ODE.begin(), X_ODE.end(), 0.0);
+                    current_state.get_species_to_buffer(i, X_ODE.data());
+
+                    // A network state is empty only when the complete composition is
+                    // invalid.  Testing X_ODE[0] and X_ODE[1] is incorrect: H1/He3
+                    // are normally zero in aprox19/21 helium/carbon fuel, and He4/C12
+                    // can both be depleted in an evolved alpha-chain state.
+                    const auto prepared = DriverBurn::prepare_burn_cell(
+                        fluid, X_ODE.data(), n_spec, eos, burn_cfg);
+                    if (prepared.disposition
+                        == DriverBurn::BurnCellDisposition::BelowTemperature) {
+                        arch::reduction::combine_candidate(
+                            reduction_spec, local_reduction,
+                            {DriverBurn::INACTIVE_LIMITER_CANDIDATE,
+                             cell_key, true});
+                        continue;
+                    }
+                    if (prepared.disposition
+                        == DriverBurn::BurnCellDisposition::InvalidComposition)
+                    {
+#pragma omp critical(burn_invalid_composition)
+                        {
+                            ++invalid_composition_count;
+                            if (first_invalid_cell < 0)
+                            {
+                                first_invalid_cell = i;
+                                first_invalid_sum = prepared.composition_sum;
+                                first_invalid_min = prepared.composition_min;
+                                first_invalid_max = prepared.composition_max;
+                            }
+                        }
+                        arch::reduction::combine_candidate(
+                            reduction_spec, local_reduction,
+                            {DriverBurn::INACTIVE_LIMITER_CANDIDATE,
+                             cell_key, true});
+                        continue;
+                    }
+
+                    // Integrate the local network state.
+                    double dt_rec = burn_dt;
+                    bool success = burn.integrate(
+                        X_ODE.data(), rho, burn_dt, eos,
+                        config.physics.burn, dt_rec);
+
+                    if (!success)
+                    {
+                        std::cerr << "[Fatal Error] Burn failed at cell "
+                                  << i << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    // Commit the updated composition and temperature.
+                    current_state.set_species_from_buffer(i, X_ODE.data());
+                    const auto handoff = DriverBurn::compute_burn_energy_handoff(
+                        fluid, X_ODE.data(), n_spec, prepared.internal_energy,
+                        prepared.kinetic_energy, burn_dt, eos, burn_cfg);
+                    DriverBurn::commit_burn_energy(fluid, handoff);
+                    current_state.eng[i] = fluid.eng;
+                    current_state.enuc_rate[i] = handoff.enuc_rate;
+                    arch::reduction::combine_candidate(
+                        reduction_spec, local_reduction,
+                        arch::reduction::ReductionCandidate{
+                            handoff.limiter_candidate, cell_key, true});
                 }
             }
-            continue;
         }
-
-        // Integrate the local network state.
-        double dt_rec = burn_dt;
-        bool success = burn.integrate(X_ODE.data(), rho, burn_dt, eos, config.physics.burn, dt_rec);
-
-        if (!success)
+#pragma omp critical(burn_limiter_reduction)
         {
-            std::cerr << "[Fatal Error] Burn failed at cell " << i << std::endl;
-            exit(EXIT_FAILURE);
-        }
-        // Commit the updated composition and temperature.
-        current_state.set_species_from_buffer(i, X_ODE.data());
-        const auto handoff = DriverBurn::compute_burn_energy_handoff(
-            fluid, X_ODE.data(), n_spec, prepared.internal_energy,
-            prepared.kinetic_energy, burn_dt, eos, burn_cfg);
-        DriverBurn::commit_burn_energy(fluid, handoff);
-        current_state.eng[i] = fluid.eng;
-        current_state.enuc_rate[i] = handoff.enuc_rate;
-        local_dt_burn_min = std::min(
-            local_dt_burn_min, handoff.limiter_candidate);
-    }
+            arch::reduction::combine_state(
+                reduction_spec, global_reduction, local_reduction);
         }
     }
-    }
+
+    const auto reduction_result = arch::reduction::finalize_reduction(
+        reduction_spec, global_reduction);
+    if (reduction_result.status != arch::reduction::ReductionStatus::Ok)
+        throw std::runtime_error("Invalid burn limiter reduction");
 
     if (invalid_composition_count > 0)
     {
@@ -278,5 +336,6 @@ void execute_burn_step(FluidState &current_state, double burn_dt, const EosPolic
     }
 
     // Reduce the per-cell burn recommendation into the global candidate step.
-    dt_burn_global = std::min(dt_burn_global, local_dt_burn_min);
+    dt_burn_global = DriverBurn::combine_burn_minimum(
+        dt_burn_global, reduction_result.value);
 }

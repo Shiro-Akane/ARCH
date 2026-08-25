@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -22,6 +23,7 @@
 
 #include "../../data/FluidState.h"
 #include "../../data/GlobalDefs.h"
+#include "../../driver/ReductionSpec.h"
 #include "../../grid/Grid.h"
 #include "../../physics/diffusionCoe/diffusion_math.hpp"
 #include "../../physics/eos/eos_state.h"
@@ -315,6 +317,21 @@ namespace DiffFlux
         return 1.0 * minimum;
     }
 
+    ARCH_INLINE double combine_diffusion_minimum(
+        double minimum, double candidate)
+    {
+        const auto spec = arch::reduction::minimum_spec(
+            diffusion_dt_sentinel());
+        auto state = arch::reduction::begin_reduction(spec);
+        arch::reduction::combine_candidate(
+            spec, state, {minimum, {}, true});
+        amr::CellLogicalKey candidate_key{};
+        candidate_key.component = 1;
+        arch::reduction::combine_candidate(
+            spec, state, {candidate, candidate_key, true});
+        return arch::reduction::finalize_reduction(spec, state).value;
+    }
+
     template <typename EosType, typename SpeciesAccessor>
     ARCH_INLINE DiffusionDtCandidate evaluate_diffusion_dt_candidate(
         const FluidVector& value, const double* species_source,
@@ -606,7 +623,15 @@ namespace DiffFlux
             return diffusion_dt_sentinel();
 
         int n_species = state.GetNumSpecies();
-        double min_dt = diffusion_dt_sentinel();
+        const auto reduction_spec = arch::reduction::minimum_spec(
+            diffusion_dt_sentinel());
+        auto global_reduction = arch::reduction::begin_reduction(reduction_spec);
+        amr::CellLogicalKey seed_key{};
+        seed_key.logical_i = -1;
+        seed_key.component = 2;
+        arch::reduction::combine_candidate(
+            reduction_spec, global_reduction,
+            {diffusion_dt_sentinel(), seed_key, true});
 
         const int ks = grid.Ks();
         const int ke = grid.Ke();
@@ -632,7 +657,8 @@ namespace DiffFlux
         {
             std::vector<double> Xi_cache(n_species);
             std::vector<double> charge(species.size()), inverse_mass(species.size());
-            double local_min_dt = diffusion_dt_sentinel();
+            auto local_reduction = arch::reduction::begin_reduction(
+                reduction_spec);
 
     #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
@@ -656,14 +682,26 @@ namespace DiffFlux
                         std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
                         std::abort();
                     }
-                    local_min_dt = std::min(local_min_dt, candidate.value);
+                    amr::CellLogicalKey cell_key{};
+                    cell_key.logical_i = i;
+                    cell_key.logical_j = j;
+                    cell_key.logical_k = k;
+                    cell_key.component = 2;
+                    arch::reduction::combine_candidate(
+                        reduction_spec, local_reduction,
+                        {candidate.value, cell_key, true});
                 }
             }
-    #pragma omp critical
+    #pragma omp critical(diffusion_dt_reduction)
             {
-                min_dt = std::min(min_dt, local_min_dt);
+                arch::reduction::combine_state(
+                    reduction_spec, global_reduction, local_reduction);
             }
         }
-        return cfl_number * finalize_raw_diffusion_dt(min_dt);
+        const auto result = arch::reduction::finalize_reduction(
+            reduction_spec, global_reduction);
+        if (result.status != arch::reduction::ReductionStatus::Ok)
+            throw std::runtime_error("Invalid diffusion dt reduction");
+        return cfl_number * finalize_raw_diffusion_dt(result.value);
     }
 }

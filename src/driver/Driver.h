@@ -213,13 +213,22 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
 
         // Step B: Calculate Time Step (CFL Condition)
-        double dt_hydro = 1e99;
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+        std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
+        hydro_dt_candidates.reserve(active_blocks.size());
         for (int block_id : active_blocks) {
             amr::Block& b = amr_ctrl.pool->GetBlock(block_id);
             double dt_b = adaptive_dt(b.fluid_state, eos, b.grid, cfl);
-            dt_hydro = std::min(dt_hydro, dt_b);
+            hydro_dt_candidates.push_back({
+                dt_b,
+                DriverReduction::make_block_reduction_key(
+                    b.level, b.morton_code, b.logical_x1, b.logical_x2,
+                    b.logical_x3,
+                    DriverReduction::BlockReductionComponent::Hydro),
+                true});
         }
+        double dt_hydro = DriverReduction::reduce_block_minimum(
+            1e99, hydro_dt_candidates);
 
         // The diffusion operator reports a forward-Euler stability step.  STS
         // removes that O(dx^2) restriction from the macro step, except when
@@ -227,11 +236,23 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         double dt_diff_fe = 1e99;
         double dt_diff_sts_limit = 1e99;
         if (has_diff) {
+            std::vector<arch::reduction::ReductionCandidate>
+                diffusion_dt_candidates;
+            diffusion_dt_candidates.reserve(active_blocks.size());
             for (const int block_id : active_blocks) {
                 const amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
-                dt_diff_fe = std::min(dt_diff_fe,
-                    DiffFlux::adaptive_dt_diff(block.fluid_state, eos, block.grid, config, 1.0));
+                const double block_dt = DiffFlux::adaptive_dt_diff(
+                    block.fluid_state, eos, block.grid, config, 1.0);
+                diffusion_dt_candidates.push_back({
+                    block_dt,
+                    DriverReduction::make_block_reduction_key(
+                        block.level, block.morton_code, block.logical_x1,
+                        block.logical_x2, block.logical_x3,
+                        DriverReduction::BlockReductionComponent::Diffusion),
+                    true});
             }
+            dt_diff_fe = DriverReduction::reduce_block_minimum(
+                1e99, diffusion_dt_candidates);
             const std::string& diff_integrator = config.physics.diffusion.integrator;
             const bool rkl1 = diff_integrator == "RKL1" || diff_integrator == "rkl1";
             const bool rkl2 = diff_integrator == "RKL2" || diff_integrator == "rkl2";
@@ -295,9 +316,27 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 bc_handler.apply(b.fluid_state, b.grid);
                 execute_burn_step(b.fluid_state, 0.5 * dt, eos, burn, b.grid, config, dt_burn_by_block[i]);
             }
-            for (double dt_burn_block : dt_burn_by_block) {
-                dt_burn_global = std::min(dt_burn_global, dt_burn_block);
+            std::vector<arch::reduction::ReductionCandidate>
+                burn_dt_candidates;
+            burn_dt_candidates.reserve(active_blocks.size() + 1);
+            burn_dt_candidates.push_back({
+                dt_burn_global,
+                DriverReduction::make_accumulator_reduction_key(
+                    DriverReduction::BlockReductionComponent::BurnFirstHalf),
+                true});
+            for (size_t i = 0; i < dt_burn_by_block.size(); ++i) {
+                const amr::Block& block = amr_ctrl.pool->GetBlock(
+                    active_blocks[i]);
+                burn_dt_candidates.push_back({
+                    dt_burn_by_block[i],
+                    DriverReduction::make_block_reduction_key(
+                        block.level, block.morton_code, block.logical_x1,
+                        block.logical_x2, block.logical_x3,
+                        DriverReduction::BlockReductionComponent::BurnFirstHalf),
+                    true});
             }
+            dt_burn_global = DriverReduction::reduce_block_minimum(
+                1e99, burn_dt_candidates);
         }
 
         // C2. Diffusion Step (1/2 dt)
@@ -320,9 +359,27 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 bc_handler.apply(b.fluid_state, b.grid);
                 execute_burn_step(b.fluid_state, 0.5 * dt, eos, burn, b.grid, config, dt_burn_by_block[i]);
             }
-            for (double dt_burn_block : dt_burn_by_block) {
-                dt_burn_global = std::min(dt_burn_global, dt_burn_block);
+            std::vector<arch::reduction::ReductionCandidate>
+                burn_dt_candidates;
+            burn_dt_candidates.reserve(active_blocks.size() + 1);
+            burn_dt_candidates.push_back({
+                dt_burn_global,
+                DriverReduction::make_accumulator_reduction_key(
+                    DriverReduction::BlockReductionComponent::BurnSecondHalf),
+                true});
+            for (size_t i = 0; i < dt_burn_by_block.size(); ++i) {
+                const amr::Block& block = amr_ctrl.pool->GetBlock(
+                    active_blocks[i]);
+                burn_dt_candidates.push_back({
+                    dt_burn_by_block[i],
+                    DriverReduction::make_block_reduction_key(
+                        block.level, block.morton_code, block.logical_x1,
+                        block.logical_x2, block.logical_x3,
+                        DriverReduction::BlockReductionComponent::BurnSecondHalf),
+                    true});
             }
+            dt_burn_global = DriverReduction::reduce_block_minimum(
+                1e99, burn_dt_candidates);
         }
 
         // Step D: Advance Counters

@@ -226,10 +226,24 @@ static __global__ void diffusion_dt_reduce_kernel(
     const double* candidates, int count, double* result)
 {
     if (blockIdx.x != 0 || threadIdx.x != 0) return;
-    double minimum = DiffFlux::diffusion_dt_sentinel();
-    for (int cell = 0; cell < count; ++cell)
-        minimum = std::min(minimum, candidates[cell]);
-    *result = DiffFlux::finalize_raw_diffusion_dt(minimum);
+    const auto spec = arch::reduction::minimum_spec(
+        DiffFlux::diffusion_dt_sentinel());
+    auto state = arch::reduction::begin_reduction(spec);
+    amr::CellLogicalKey seed_key{};
+    seed_key.logical_i = -1;
+    seed_key.component = 2;
+    arch::reduction::combine_candidate(
+        spec, state,
+        {DiffFlux::diffusion_dt_sentinel(), seed_key, true});
+    for (int cell = 0; cell < count; ++cell) {
+        amr::CellLogicalKey key{};
+        key.logical_i = cell;
+        key.component = 2;
+        arch::reduction::combine_candidate(
+            spec, state, {candidates[cell], key, true});
+    }
+    const auto reduced = arch::reduction::finalize_reduction(spec, state);
+    *result = DiffFlux::finalize_raw_diffusion_dt(reduced.value);
 }
 
 static __global__ void first_rkl_stage_kernel(

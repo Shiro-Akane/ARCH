@@ -12,6 +12,7 @@
 #endif
 
 #include "driver/DriverUtils.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 #include "numerics/flux/FluxFunctions.h"
 #include "numerics/flux/FluxHLL.h"
 #include "numerics/flux/FluxHLLC.h"
@@ -22,6 +23,8 @@
 #include "numerics/reconstruction/Reconstruction.h"
 
 #if defined(__CUDACC__)
+#include "cuda/hydro/HydroFluxPolicies.cuh"
+#include "cuda/hydro/HydroReconstructionPolicies.cuh"
 #include "cuda/hydro/HydroStageKernels.cuh"
 #endif
 
@@ -172,6 +175,289 @@ ARCH_INLINE void evaluate_device_leaves(DeviceLeafResult* output)
 __global__ void evaluate_device_leaves_kernel(DeviceLeafResult* result)
 {
     evaluate_device_leaves(result);
+}
+
+struct RouteFingerprint
+{
+    int limiter_id;
+    int flux_id;
+    int stage_id;
+    std::uint64_t limiter_hash;
+    std::uint64_t reconstruction_hash;
+    std::uint64_t flux_hash;
+    std::uint64_t stage_hash;
+};
+
+ARCH_INLINE std::uint64_t route_mix(std::uint64_t hash, double value)
+{
+    hash ^= std::bit_cast<std::uint64_t>(value);
+    return hash * 1099511628211ULL;
+}
+
+ARCH_INLINE std::uint64_t route_mix_vector(
+    std::uint64_t hash, const FluidVector& value)
+{
+    hash = route_mix(hash, value.rho);
+    hash = route_mix(hash, value.mom_u);
+    hash = route_mix(hash, value.mom_v);
+    hash = route_mix(hash, value.mom_w);
+    return route_mix(hash, value.eng);
+}
+
+template<class Binding> struct LimiterFor;
+template<> struct LimiterFor<arch::dispatch::CudaMinModBinding>
+{ using type = MinMod; };
+template<> struct LimiterFor<arch::dispatch::CudaMcBinding>
+{ using type = McLimiter; };
+template<> struct LimiterFor<arch::dispatch::CudaSuperBeeBinding>
+{ using type = SuperBee; };
+template<> struct LimiterFor<arch::dispatch::CudaVanLeerLimiterBinding>
+{ using type = VanLeer; };
+
+template<class Binding> struct FluxFor;
+template<> struct FluxFor<arch::dispatch::CudaVlBinding>
+{ using type = arch::cuda::CudaVlFlux; static constexpr double coefficient = 0.0; };
+template<> struct FluxFor<arch::dispatch::CudaSwBinding>
+{ using type = arch::cuda::CudaSwFlux; static constexpr double coefficient = 0.1; };
+template<> struct FluxFor<arch::dispatch::CudaRoeBinding>
+{ using type = arch::cuda::CudaRoeFlux; static constexpr double coefficient = 0.1; };
+template<> struct FluxFor<arch::dispatch::CudaHllBinding>
+{ using type = arch::cuda::CudaHllFlux; static constexpr double coefficient = 0.0; };
+template<> struct FluxFor<arch::dispatch::CudaHllcBinding>
+{ using type = arch::cuda::CudaHllcFlux; static constexpr double coefficient = 0.0; };
+
+template<class Binding> struct StageFor;
+template<> struct StageFor<arch::dispatch::CudaEulerBinding>
+{ static constexpr double old_weight = 0.0; static constexpr double flux_weight = 1.0; };
+template<> struct StageFor<arch::dispatch::CudaRk2Binding>
+{ static constexpr double old_weight = 0.5; static constexpr double flux_weight = 0.5; };
+template<> struct StageFor<arch::dispatch::CudaRk3Binding>
+{ static constexpr double old_weight = 0.75; static constexpr double flux_weight = 0.25; };
+
+template<class LimiterRegistration, class FluxRegistration,
+         class StageRegistration>
+__global__ void route_matrix_kernel(RouteFingerprint* output, int index)
+{
+    using LimiterBinding = typename arch::dispatch::PolicyRegistration<
+        LimiterRegistration>::CudaBinding;
+    using FluxBinding = typename arch::dispatch::PolicyRegistration<
+        FluxRegistration>::CudaBinding;
+    using StageBinding = typename arch::dispatch::PolicyRegistration<
+        StageRegistration>::CudaBinding;
+    using Limiter = typename LimiterFor<LimiterBinding>::type;
+    using Flux = typename FluxFor<FluxBinding>::type;
+
+    double rho[8], mom_u[8], mom_v[8], mom_w[8], eng[8], enuc[8];
+    for (int i = 0; i < 8; ++i) {
+        const double x = static_cast<double>(i - 3);
+        rho[i] = 1.2 + 0.06 * x + 0.013 * x * x;
+        mom_u[i] = 0.31 + 0.047 * x - 0.009 * x * x;
+        mom_v[i] = -0.08 + 0.019 * x + 0.004 * x * x;
+        mom_w[i] = 0.04 - 0.011 * x + 0.002 * x * x;
+        eng[i] = 3.7 + 0.21 * x + 0.027 * x * x;
+        enuc[i] = 0.0;
+    }
+    arch::cuda::DeviceStateView state{
+        rho, mom_u, mom_v, mom_w, eng, enuc, nullptr, 8, 0};
+    FluidVector left{}, right{};
+    double species_left[1]{}, species_right[1]{}, species_cell[1]{};
+    arch::cuda::CudaMusclReconstruction<Limiter>::reconstruct(
+        state, 3, 1, TestIdealGas{}, left, right,
+        species_left, species_right, species_cell);
+    FluidVector flux{};
+    double species_flux[1]{};
+    Flux::compute(
+        left, right, nullptr, nullptr, 0, TestIdealGas{}, 0,
+        FluxFor<FluxBinding>::coefficient, flux, species_flux);
+    FluidVector stage{};
+    TimeIntegration::update_stage_cell(
+        left, right, flux, nullptr, nullptr, nullptr, 0, 1,
+        StageFor<StageBinding>::old_weight,
+        StageFor<StageBinding>::flux_weight,
+        1.0e-12, 1.0e20, stage, nullptr);
+
+    std::uint64_t limiter_hash = 1469598103934665603ULL;
+    limiter_hash = route_mix(limiter_hash, Limiter::calc(0.21));
+    limiter_hash = route_mix(limiter_hash, Limiter::calc(0.57));
+    limiter_hash = route_mix(limiter_hash, Limiter::calc(1.43));
+    limiter_hash = route_mix(limiter_hash, Limiter::calc(-0.37));
+    std::uint64_t reconstruction_hash = 1469598103934665603ULL;
+    reconstruction_hash = route_mix_vector(reconstruction_hash, left);
+    reconstruction_hash = route_mix_vector(reconstruction_hash, right);
+    std::uint64_t flux_hash = route_mix_vector(
+        1469598103934665603ULL, flux);
+    std::uint64_t stage_hash = route_mix_vector(
+        1469598103934665603ULL, stage);
+    output[index] = {
+        static_cast<int>(arch::dispatch::PolicyRegistration<
+            LimiterRegistration>::id),
+        static_cast<int>(arch::dispatch::PolicyRegistration<
+            FluxRegistration>::id),
+        static_cast<int>(arch::dispatch::PolicyRegistration<
+            StageRegistration>::id),
+        limiter_hash, reconstruction_hash, flux_hash, stage_hash};
+}
+
+template<class LimiterRegistration, class FluxRegistration, class List>
+struct StageRouteLauncher;
+
+template<class LimiterRegistration, class FluxRegistration, class Id,
+         arch::dispatch::UnknownPolicyBehavior Behavior, class... Stages>
+struct StageRouteLauncher<
+    LimiterRegistration, FluxRegistration,
+    arch::dispatch::TypeList<Id, Behavior, Stages...>>
+{
+    static void launch(RouteFingerprint* output, int& index)
+    {
+        (launch_one<Stages>(output, index), ...);
+    }
+
+    template<class StageRegistration>
+    static void launch_one(RouteFingerprint* output, int& index)
+    {
+        route_matrix_kernel<LimiterRegistration, FluxRegistration,
+                            StageRegistration><<<1, 1>>>(output, index++);
+    }
+};
+
+template<class LimiterRegistration, class FluxList, class StageList>
+struct FluxRouteLauncher;
+
+template<class LimiterRegistration, class Id,
+         arch::dispatch::UnknownPolicyBehavior Behavior, class... Fluxes,
+         class StageList>
+struct FluxRouteLauncher<
+    LimiterRegistration,
+    arch::dispatch::TypeList<Id, Behavior, Fluxes...>, StageList>
+{
+    static void launch(RouteFingerprint* output, int& index)
+    {
+        (StageRouteLauncher<LimiterRegistration, Fluxes, StageList>::launch(
+             output, index), ...);
+    }
+};
+
+template<class LimiterList, class FluxList, class StageList>
+struct LimiterRouteLauncher;
+
+template<class Id, arch::dispatch::UnknownPolicyBehavior Behavior,
+         class... Limiters, class FluxList, class StageList>
+struct LimiterRouteLauncher<
+    arch::dispatch::TypeList<Id, Behavior, Limiters...>, FluxList, StageList>
+{
+    static void launch(RouteFingerprint* output, int& index)
+    {
+        (FluxRouteLauncher<Limiters, FluxList, StageList>::launch(
+             output, index), ...);
+    }
+};
+
+int run_route_matrix()
+{
+    constexpr int route_count = 60;
+    RouteFingerprint* device_routes = nullptr;
+    if (cudaMalloc(&device_routes, route_count * sizeof(RouteFingerprint))
+        != cudaSuccess)
+        return 180;
+    int launched = 0;
+    LimiterRouteLauncher<
+        arch::dispatch::LimiterPolicies,
+        arch::dispatch::FluxPolicies,
+        arch::dispatch::TimeIntegratorPolicies>::launch(
+            device_routes, launched);
+    RouteFingerprint actual[route_count]{};
+    const cudaError_t launch_error = cudaGetLastError();
+    const cudaError_t sync_error = cudaDeviceSynchronize();
+    const cudaError_t copy_error = cudaMemcpy(
+        actual, device_routes, sizeof(actual), cudaMemcpyDeviceToHost);
+    cudaFree(device_routes);
+    if (launched != route_count || launch_error != cudaSuccess
+        || sync_error != cudaSuccess || copy_error != cudaSuccess)
+        return 181;
+
+    static constexpr RouteFingerprint expected[route_count] = {
+        {0,0,0,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xfd3f95c86181ce2aULL,0xd523883fde34fa8fULL},
+        {0,0,1,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xfd3f95c86181ce2aULL,0x358b4526db819e36ULL},
+        {0,0,2,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xfd3f95c86181ce2aULL,0x82900bc8432a2dbcULL},
+        {0,1,0,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0x0740227b01c83d02ULL,0x3fcfa75ddf0cf1e1ULL},
+        {0,1,1,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0x0740227b01c83d02ULL,0x5f14fdf013729b2cULL},
+        {0,1,2,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0x0740227b01c83d02ULL,0xc7fa390a742e6ffbULL},
+        {0,2,0,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xc6d550b25d02dd3fULL,0x5e5fdaef836ecb1bULL},
+        {0,2,1,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xc6d550b25d02dd3fULL,0x135546d57009e587ULL},
+        {0,2,2,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xc6d550b25d02dd3fULL,0xdad3c1dd7391944aULL},
+        {0,3,0,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xe898926667814272ULL,0x56cd04c53be89160ULL},
+        {0,3,1,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xe898926667814272ULL,0x7325855582b9a21eULL},
+        {0,3,2,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xe898926667814272ULL,0x187e44beb5fb707cULL},
+        {0,4,0,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xbe49c723491c31b7ULL,0x56c1215a51759a51ULL},
+        {0,4,1,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xbe49c723491c31b7ULL,0x13da535acfb3229fULL},
+        {0,4,2,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xbe49c723491c31b7ULL,0xa4bf7a7453c7024eULL},
+        {1,0,0,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x99fb766e16105410ULL,0x8bc3289e2f0bc42cULL},
+        {1,0,1,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x99fb766e16105410ULL,0xc3b3e11920fea9f1ULL},
+        {1,0,2,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x99fb766e16105410ULL,0x246ec7bced010b67ULL},
+        {1,1,0,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0xf2125c86da445969ULL,0x3d8a2a7c8bad66adULL},
+        {1,1,1,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0xf2125c86da445969ULL,0xf0de9eb7d3b61460ULL},
+        {1,1,2,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0xf2125c86da445969ULL,0xbe3128b9e5824224ULL},
+        {1,2,0,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x6c672b50dc859f26ULL,0x8bc3289e2f0bc42cULL},
+        {1,2,1,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x6c672b50dc859f26ULL,0xc3b3e11920fea9f1ULL},
+        {1,2,2,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x6c672b50dc859f26ULL,0x246ec7bced010b67ULL},
+        {1,3,0,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x40a62050d57c4545ULL,0x8bc3289e2f0bc42cULL},
+        {1,3,1,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x40a62050d57c4545ULL,0xc3b3e11920fea9f1ULL},
+        {1,3,2,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x40a62050d57c4545ULL,0x246ec7bced010b67ULL},
+        {1,4,0,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x430c8b2c041555bcULL,0xb2585198c4675447ULL},
+        {1,4,1,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x430c8b2c041555bcULL,0xc3bae91920ead9c6ULL},
+        {1,4,2,0x9ac8d0702920dbf8ULL,0x17202ff85ac37066ULL,0x430c8b2c041555bcULL,0x1deec1601712f616ULL},
+        {2,0,0,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xbd6b1a9f6dea19daULL,0xba9d63039da904acULL},
+        {2,0,1,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xbd6b1a9f6dea19daULL,0xc2589ad43244e9e5ULL},
+        {2,0,2,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xbd6b1a9f6dea19daULL,0x6b70bac2defd9053ULL},
+        {2,1,0,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xdf83a88e1daebfb3ULL,0xd5c06b224dd3811cULL},
+        {2,1,1,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xdf83a88e1daebfb3ULL,0x43bb7bcf3c6b322bULL},
+        {2,1,2,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xdf83a88e1daebfb3ULL,0x9524d5d911db8348ULL},
+        {2,2,0,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0x2870f9491b685703ULL,0x85839b2c65e824faULL},
+        {2,2,1,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0x2870f9491b685703ULL,0x6db619eca5989eaaULL},
+        {2,2,2,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0x2870f9491b685703ULL,0x08d012d18a358d2fULL},
+        {2,3,0,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xb5909a8167862696ULL,0x4acbb059ccc871baULL},
+        {2,3,1,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xb5909a8167862696ULL,0x32d2f5465a635108ULL},
+        {2,3,2,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0xb5909a8167862696ULL,0x853ce326b6473a6bULL},
+        {2,4,0,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0x5edb455bdf234a11ULL,0x698621eadf5452b2ULL},
+        {2,4,1,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0x5edb455bdf234a11ULL,0x3a42485057b9f28fULL},
+        {2,4,2,0x9f23f95b5828b24bULL,0xb35396756ee2e8e5ULL,0x5edb455bdf234a11ULL,0x18c1b3d7c61b7f03ULL},
+        {3,0,0,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xec7eb00354d4d02aULL,0x26c4ff1e44ea80c0ULL},
+        {3,0,1,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xec7eb00354d4d02aULL,0x8e701157a4a87f1cULL},
+        {3,0,2,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xec7eb00354d4d02aULL,0x8082f99d0673f6faULL},
+        {3,1,0,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xfe73cef99dd2a6b5ULL,0x75c849d7e399391dULL},
+        {3,1,1,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xfe73cef99dd2a6b5ULL,0x5a5eae2ec894c085ULL},
+        {3,1,2,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xfe73cef99dd2a6b5ULL,0x33fa1324370c351fULL},
+        {3,2,0,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0x217cdc1c0c4814bbULL,0x85d7c92b983faa30ULL},
+        {3,2,1,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0x217cdc1c0c4814bbULL,0x9b15d3cae5331d5aULL},
+        {3,2,2,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0x217cdc1c0c4814bbULL,0xcb535dbfeb3ed5acULL},
+        {3,3,0,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xcbec74d625af9f93ULL,0x585c05c73464367eULL},
+        {3,3,1,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xcbec74d625af9f93ULL,0x74201af9e9c33472ULL},
+        {3,3,2,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0xcbec74d625af9f93ULL,0xcf840140f8de5067ULL},
+        {3,4,0,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0x60ff4a25b463c33eULL,0xb1b61706d1a38d47ULL},
+        {3,4,1,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0x60ff4a25b463c33eULL,0x2c3cf514e69b5f79ULL},
+        {3,4,2,0x37c37dc36e6aee60ULL,0xd1c57ff9caf479fcULL,0x60ff4a25b463c33eULL,0x3b92f3335189a734ULL}
+    };
+    bool matches = true;
+    for (int i = 0; i < route_count; ++i) {
+        const RouteFingerprint& a = actual[i];
+        const RouteFingerprint& e = expected[i];
+        const bool route_matches = a.limiter_id == e.limiter_id
+            && a.flux_id == e.flux_id && a.stage_id == e.stage_id
+            && a.limiter_hash == e.limiter_hash
+            && a.reconstruction_hash == e.reconstruction_hash
+            && a.flux_hash == e.flux_hash && a.stage_hash == e.stage_hash;
+        if (!route_matches) {
+            matches = false;
+        }
+        if (!route_matches) {
+            std::cerr << "route fingerprint mismatch index=" << i
+                      << " ids=" << a.limiter_id << ',' << a.flux_id
+                      << ',' << a.stage_id << '\n';
+        }
+    }
+    if (matches)
+        std::cout << "D2_ROUTE_MATRIX_PASS routes=" << route_count << '\n';
+    return matches ? 0 : 182;
 }
 #endif
 
@@ -1422,6 +1708,9 @@ int main()
     const int primitive_result = run_device_primitives();
     if (primitive_result != 0)
         return primitive_result;
+    const int route_result = run_route_matrix();
+    if (route_result != 0)
+        return route_result;
 #endif
     return 0;
 }

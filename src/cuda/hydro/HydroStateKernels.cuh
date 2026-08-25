@@ -38,10 +38,17 @@ static __global__ void hydro_cfl_reduce_kernel(
 {
     if (blockIdx.x != 0 || threadIdx.x != 0)
         return;
-    double minimum = cfl_inactive_cell_dt();
-    for (int cell = 0; cell < count; ++cell)
-        minimum = combine_cfl_minimum(minimum, candidates[cell]);
-    *result = finalize_cfl_dt(cfl, minimum);
+    const auto spec = arch::reduction::minimum_spec(
+        cfl_inactive_cell_dt());
+    auto state = arch::reduction::begin_reduction(spec);
+    for (int cell = 0; cell < count; ++cell) {
+        amr::CellLogicalKey key{};
+        key.logical_i = cell;
+        arch::reduction::combine_candidate(
+            spec, state, {candidates[cell], key, true});
+    }
+    const auto reduced = arch::reduction::finalize_reduction(spec, state);
+    *result = finalize_cfl_dt(cfl, reduced.value);
 }
 
 static __global__ void hydro_divergence_kernel(
