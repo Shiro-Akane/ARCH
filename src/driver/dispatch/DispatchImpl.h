@@ -40,6 +40,7 @@
 #include "../../numerics/integrator/HydroSolverImpl.h"
 #include "../../physics/gravity/IGravityPolicy.h"
 #include "../Driver.h"
+#include "BackendCapabilities.h"
 #include "PolicyDescriptor.h"
 
 namespace DispatchImpl {
@@ -119,7 +120,11 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 const Physical::Gravity::IGravityPolicy* gravity,
                 const BurnerHandle<EosPolicy> &burn,
                 const SimConfig &config,
-                const SpeciesManager &specs, const RunState &run_state)
+                const SpeciesManager &specs, const RunState &run_state,
+                const arch::dispatch::ResolvedExecutionPlan* resolved_plan = nullptr,
+                const arch::dispatch::ExecutionRequirements* requirements = nullptr,
+                const arch::dispatch::BackendResolution* backend = nullptr,
+                arch::dispatch::StartupOrder* startup_order = nullptr)
 {
     // Bind the selected EOS and flux policy behind the hydrodynamics interface.
     Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
@@ -129,7 +134,31 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // Pass the integrator entry point to the non-templated driver loop.
     run_simulation<EosPolicy>(amr_ctrl, eos, gravity, burn, &hydro_solver,
                               &TimeIntegrator::template solve<BCHandler>,
-                              integrator_name, config, specs, run_state);
+                              integrator_name, config, specs, run_state,
+                              resolved_plan, requirements, backend,
+                              startup_order);
+}
+
+template <typename TimeIntegrator, typename EosPolicy>
+void launch_resolved_run(
+    amr::AMRControl& amr_ctrl, const EosPolicy& eos,
+    const Physical::Gravity::IGravityPolicy* gravity,
+    const BurnerHandle<EosPolicy>& burn, const SimConfig& config,
+    const SpeciesManager& specs, const RunState& run_state,
+    const arch::dispatch::ResolvedExecutionPlan& plan,
+    const arch::dispatch::ExecutionRequirements& requirements,
+    const arch::dispatch::BackendResolution& backend,
+    arch::dispatch::StartupOrder& startup_order)
+{
+    const bool launched = visit_hydro_cpu_route(
+        plan, [&]<typename Flux, typename Reconstruction>() {
+            (void)sizeof(Reconstruction);
+            launch_run<TimeIntegrator, Flux>(
+                amr_ctrl, eos, gravity, burn, config, specs, run_state,
+                &plan, &requirements, &backend, &startup_order);
+        });
+    if (!launched)
+        throw std::logic_error("resolved Hydro route has no CPU binding");
 }
 
 // Level 3: Select Limiter (For MUSCL)

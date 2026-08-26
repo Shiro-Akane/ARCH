@@ -22,19 +22,28 @@
 #include "../../physics/eos/eosdispatch.h"
 #include "../../physics/gravity/GravityDispatch.h"
 
-void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
+void Dispatch_RK2(
+    amr::AMRControl &amr_ctrl, const SimConfig &config,
+    const SpeciesManager &specs, const RunState &run_state,
+    const arch::dispatch::ResolvedExecutionPlan& plan,
+    const arch::dispatch::ExecutionRequirements& requirements,
+    const arch::dispatch::BackendResolution& backend,
+    arch::dispatch::StartupOrder& startup_order)
 {
-    EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos)
+    EOSDispatcher::dispatch_eos(plan.eos, config, specs, [&](auto &&eos)
     {
         using EosType = std::remove_cvref_t<decltype(eos)>;
-        auto burn_handle = BurnDispatcher::make_handle<EosType>(config);
+        auto burn_handle = BurnDispatcher::make_handle<EosType>(config, plan);
 
-        auto grav_handle = Physical::Gravity::make_gravity(config);
+        auto grav_handle = Physical::Gravity::make_gravity(
+            config, requirements.gravity);
         std::cout << "[Dispatch] Strategy: SSPRK2 + "
                   << config.numerics.solver_name << " + "
                   << config.numerics.reconstruction
                   << " (" << config.numerics.limiter << ")" << std::endl;
 
-        DispatchImpl::select_flux<SolverRK2>(amr_ctrl, eos, grav_handle.get(), burn_handle, config, specs, run_state);
+        DispatchImpl::launch_resolved_run<SolverRK2>(
+            amr_ctrl, eos, grav_handle.get(), burn_handle, config, specs,
+            run_state, plan, requirements, backend, startup_order);
     });
 }

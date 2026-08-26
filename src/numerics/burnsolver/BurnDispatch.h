@@ -63,6 +63,22 @@ struct BurnDispatcher
         return result;
     }
 
+    template <typename EosPolicy>
+    static BurnerHandle<EosPolicy> make_handle(
+        const SimConfig& config,
+        const arch::dispatch::ResolvedExecutionPlan& plan)
+    {
+        BurnerHandle<EosPolicy> result;
+        dispatch(config, plan.network, plan.ode_solver, plan.linear_solver,
+                 [&](auto&& burner) {
+                     using BurnerPolicy =
+                         std::remove_cvref_t<decltype(burner)>;
+                     result = BurnerHandle<EosPolicy>::template bind<
+                         BurnerPolicy>();
+                 });
+        return result;
+    }
+
     /**
      * @brief Resolve the network type.
      */
@@ -124,6 +140,57 @@ struct BurnDispatcher
         }
     }
 
+    template <typename Func>
+    static void dispatch(const SimConfig& config,
+                         arch::dispatch::NetworkId network,
+                         arch::dispatch::OdeSolverId ode,
+                         arch::dispatch::LinearSolverId linear,
+                         Func&& func)
+    {
+        using namespace arch::dispatch;
+        if (!config.physics.burn.use_burn) {
+            if (network != NetworkId::None || ode != OdeSolverId::None
+                || linear != LinearSolverId::None) {
+                throw std::logic_error("disabled burn received an active plan");
+            }
+            std::cout << "[Burn Dispatch] Burning is DISABLED. Using DummyBurner."
+                      << std::endl;
+            DummyBurner dummy;
+            func(dummy);
+            return;
+        }
+        if (network == NetworkId::None || ode == OdeSolverId::None
+            || linear == LinearSolverId::None) {
+            throw std::logic_error("enabled burn received an incomplete plan");
+        }
+        std::cout << "[Burn Dispatch] Resolving Network: "
+                  << config.physics.burn.network_name
+                  << " | ODE Solver: "
+                  << config.physics.burn.odeconfig.ode_solver
+                  << " | Linear Solver: "
+                  << config.physics.burn.odeconfig.linear_solver << std::endl;
+        if (config.physics.burn.use_nse) {
+            std::cout << "[Burn Dispatch] Online Timmes NSE solver enabled above T="
+                      << config.physics.burn.nseTempThreshold << " K and rho="
+                      << config.physics.burn.nseDensThreshold
+                      << " g/cm^3." << std::endl;
+        }
+        if (!visit_policy<NetworkPolicies>(network,
+                [&]<class Registration> {
+                    using Binding = typename PolicyRegistration<
+                        Registration>::CpuBinding;
+                    if constexpr (!std::is_same_v<Binding,
+                                                  CpuNoNetworkBinding>) {
+                        using Network =
+                            typename CpuBurnNetworkType<Binding>::type;
+                        dispatch_ode<Network>(ode, linear,
+                                              std::forward<Func>(func));
+                    }
+                })) {
+            throw std::logic_error("resolved network has no CPU binding");
+        }
+    }
+
 private:
     /**
      * @brief Resolve the ODE integration policy for a fixed network.
@@ -147,6 +214,31 @@ private:
                 dispatch_linsolver<Solver_ROS4, NetType>(lin_type, std::forward<Func>(func));
             }
         });
+    }
+
+    template <typename NetType, typename Func>
+    static void dispatch_ode(arch::dispatch::OdeSolverId ode,
+                             arch::dispatch::LinearSolverId linear,
+                             Func&& func)
+    {
+        using namespace arch::dispatch;
+        if (!visit_policy<OdeSolverPolicies>(ode,
+                [&]<class Registration> {
+                    using Binding = typename PolicyRegistration<
+                        Registration>::CpuBinding;
+                    if constexpr (std::is_same_v<Binding, CpuBeNrBinding>) {
+                        dispatch_linsolver<Solver_BE_NR, NetType>(
+                            linear, std::forward<Func>(func));
+                    } else if constexpr (std::is_same_v<Binding, CpuBdBinding>) {
+                        dispatch_linsolver<Solver_BD, NetType>(
+                            linear, std::forward<Func>(func));
+                    } else if constexpr (std::is_same_v<Binding, CpuRos4Binding>) {
+                        dispatch_linsolver<Solver_ROS4, NetType>(
+                            linear, std::forward<Func>(func));
+                    }
+                })) {
+            throw std::logic_error("resolved ODE has no CPU binding");
+        }
     }
 
     /**
@@ -203,5 +295,41 @@ private:
 #endif
         }
         throw std::runtime_error("Unknown Linear Solver Type: " + lin_type);
+    }
+
+    template <template <typename, typename, typename> class ODESolverWrapper,
+              typename NetType, typename Func>
+    static void dispatch_linsolver(
+        arch::dispatch::LinearSolverId linear, Func&& func)
+    {
+        using namespace arch::dispatch;
+        if (linear == LinearSolverId::DenseLu) {
+            if constexpr (NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES) {
+                std::cout << "[Burn Dispatch] Matrix backend: DenseLU (N="
+                          << NetType::ODE_NEQ << ")" << std::endl;
+                using Matrix = DenseMatrixData<NetType::ODE_NEQ>;
+                ODESolverWrapper<NetType, Matrix, DenseLUSolver> burner;
+                func(burner);
+                return;
+            }
+            throw std::runtime_error(
+                "DenseLU is reserved for networks with at most "
+                + std::to_string(BurnLimits::MAX_SPECIES)
+                + " isotopes; select linear_solver = SparseKLU or Auto.");
+        }
+        if (linear == LinearSolverId::SparseKlu) {
+#if !ARCH_HAS_KLU
+            throw std::runtime_error(
+                "SparseKLU was selected, but this ARCH build has KLU disabled.");
+#else
+            std::cout << "[Burn Dispatch] Matrix backend: SparseKLU (N="
+                      << NetType::ODE_NEQ << ")" << std::endl;
+            using Matrix = SparseMatrixData<NetType::ODE_NEQ>;
+            ODESolverWrapper<NetType, Matrix, SparseKLUSolver> burner;
+            func(burner);
+            return;
+#endif
+        }
+        throw std::logic_error("resolved linear solver has no CPU binding");
     }
 };

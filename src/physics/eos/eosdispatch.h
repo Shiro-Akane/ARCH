@@ -15,6 +15,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include "HelmEos.h"
 #include "IdealGas.h"
@@ -23,6 +24,7 @@
 #include "eos.h"
 
 #include "../../core/RuntimeParams.h"
+#include "../../driver/dispatch/PolicyDescriptor.h"
 #include "../species/Species.h"
 
 int inspect_eos_table_rank(const std::string& path);
@@ -35,6 +37,77 @@ struct EOSDispatcher
     inline static std::unique_ptr<Tabular4DEOS> cached_4d = nullptr;
     inline static std::string cached_table_path;
     inline static const SpeciesManager *cached_species = nullptr;
+
+    static std::string table_path(const SimConfig& config, const char* label)
+    {
+        std::string path = config.physics.eos_table_path;
+        path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());
+        path.erase(std::remove(path.begin(), path.end(), '\''), path.end());
+        if (path.empty())
+            throw std::runtime_error(std::string(label)
+                + " EOS requires 'eos_table_path' in .par file!");
+        return path;
+    }
+
+    /** @brief Visit the already-resolved EOS without parsing configuration. */
+    template <typename Func>
+    static void dispatch_eos(arch::dispatch::EosId eos_id,
+                             const SimConfig& config,
+                             const SpeciesManager& specs, Func&& func)
+    {
+        using arch::dispatch::EosId;
+        if (is_first_call) {
+            std::cout << "[EOS Dispatch] Resolving EOS Policy: "
+                      << config.physics.eos_type << std::endl;
+        }
+
+        switch (eos_id) {
+        case EosId::Ideal: {
+            IdealGas eos(config.physics.gamma, specs);
+            func(eos);
+            break;
+        }
+        case EosId::Helmholtz: {
+            HelmEos eos_manager(table_path(config, "Helmholtz"), &specs);
+            func(eos_manager);
+            break;
+        }
+        case EosId::Tabular3D: {
+            const std::string path = table_path(config, "Tabular");
+            if (table_dimension != 3 || !cached_3d
+                || cached_table_path != path || cached_species != &specs) {
+                auto replacement =
+                    std::make_unique<Tabular3DEOS>(path, &specs);
+                cached_4d.reset();
+                cached_3d = std::move(replacement);
+                cached_table_path = path;
+                cached_species = &specs;
+            }
+            table_dimension = 3;
+            func(cached_3d->get_view());
+            break;
+        }
+        case EosId::Tabular4D: {
+            const std::string path = table_path(config, "Tabular");
+            if (table_dimension != 4 || !cached_4d
+                || cached_table_path != path || cached_species != &specs) {
+                auto replacement =
+                    std::make_unique<Tabular4DEOS>(path, &specs);
+                cached_3d.reset();
+                cached_4d = std::move(replacement);
+                cached_table_path = path;
+                cached_species = &specs;
+            }
+            table_dimension = 4;
+            func(cached_4d->get_view());
+            break;
+        }
+        default:
+            throw std::runtime_error("Unknown resolved EOS policy");
+        }
+        is_first_call = false;
+    }
+
     /**
      * @brief Resolve a runtime EOS name and invoke a callback with its concrete policy.
      * The generic callback preserves compile-time EOS specialization after this
@@ -43,72 +116,20 @@ struct EOSDispatcher
     template <typename Func>
     static void dispatch_eos(const SimConfig &config, const SpeciesManager &specs, Func &&func)
     {
-        std::string eos_type = config.physics.eos_type;
-
-        if (is_first_call)
-        {
-            std::cout << "[EOS Dispatch] Resolving EOS Policy: " << eos_type << std::endl;
+        using namespace arch::dispatch;
+        EosId eos_id{};
+        if (registration_matches<Tabular3DPolicy>(config.physics.eos_type)) {
+            const int rank = inspect_eos_table_rank(
+                table_path(config, "Tabular"));
+            eos_id = rank == 4 ? EosId::Tabular4D : EosId::Tabular3D;
+        } else {
+            const auto parsed = parse_registered_policy<EosPolicies>(
+                config.physics.eos_type);
+            if (!parsed.ok)
+                throw std::runtime_error(
+                    "Unknown EOS Type: " + config.physics.eos_type);
+            eos_id = parsed.value;
         }
-
-        if (eos_type == "ideal" || eos_type == "Ideal")
-        {
-            // IdealGas owns no table, so the policy object is passed directly.
-            IdealGas eos(config.physics.gamma, specs);
-            func(eos);
-        }
-        else if (eos_type == "tabular" || eos_type == "Tabular")
-        {
-            // Resolve the table path once before inspecting its dimensionality.
-            std::string path = config.physics.eos_table_path;
-            path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());
-            path.erase(std::remove(path.begin(), path.end(), '\''), path.end());
-            if (path.empty())
-            {
-                throw std::runtime_error("Tabular EOS requires 'eos_table_path' in .par file!");
-            }
-
-            if (table_dimension == 0 || cached_table_path != path ||
-                cached_species != &specs)
-            {
-                std::cout << "[EOS Dispatch] Inspecting HDF5 metadata..." << std::endl;
-                const int inspected_dimension = inspect_eos_table_rank(path);
-                if (inspected_dimension == 4) {
-                    auto replacement =
-                        std::make_unique<Tabular4DEOS>(path, &specs);
-                    cached_3d.reset();
-                    cached_4d = std::move(replacement);
-                } else {
-                    auto replacement =
-                        std::make_unique<Tabular3DEOS>(path, &specs);
-                    cached_4d.reset();
-                    cached_3d = std::move(replacement);
-                }
-                table_dimension = inspected_dimension;
-                cached_table_path = path;
-                cached_species = &specs;
-            }
-            if (table_dimension == 4) {
-                func(cached_4d->get_view());
-            } else {
-                func(cached_3d->get_view());
-            }
-        }
-        else if (eos_type == "helmholtz" || eos_type == "Helmholtz")
-        {
-            std::string path = config.physics.eos_table_path;
-            path.erase(std::remove(path.begin(), path.end(), '\"'), path.end());
-            path.erase(std::remove(path.begin(), path.end(), '\''), path.end());
-            if (path.empty())
-            {
-                throw std::runtime_error("Helmholtz EOS requires 'eos_table_path' in .par file!");
-            }
-            HelmEos eos_manager(path, &specs);
-            func(eos_manager);
-        }
-        else
-        {
-            throw std::runtime_error("Unknown EOS Type: " + eos_type);
-        }
-        is_first_call = false;
+        dispatch_eos(eos_id, config, specs, std::forward<Func>(func));
     }
 };

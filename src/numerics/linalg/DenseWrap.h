@@ -65,20 +65,22 @@ struct DenseMatrixData
 
 struct DenseLUSolver
 {
-    template <int ACTIVE_N, int MAX_N>
+    template <int ACTIVE_N, int MAX_N, int STORAGE_N>
     ARCH_HOST_DEVICE static bool solve(
-        DenseMatrixData<ACTIVE_N> &A, double b[MAX_N])
+        DenseMatrixData<STORAGE_N> &A, double b[MAX_N])
     {
+        static_assert(STORAGE_N >= ACTIVE_N);
         int pivots[MAX_N]{};
         if (!factorize<ACTIVE_N, MAX_N>(A, pivots)) return false;
         solve_with_factors<ACTIVE_N, MAX_N>(A, pivots, b);
         return true;
     }
 
-    template <int ACTIVE_N, int MAX_N>
+    template <int ACTIVE_N, int MAX_N, int STORAGE_N>
     ARCH_HOST_DEVICE static bool factorize(
-        DenseMatrixData<ACTIVE_N> &A, int p[MAX_N])
+        DenseMatrixData<STORAGE_N> &A, int p[MAX_N])
     {
+        static_assert(STORAGE_N >= ACTIVE_N);
 #pragma omp simd
         for (int i = 0; i < ACTIVE_N; ++i) p[i] = i;
 
@@ -107,11 +109,12 @@ struct DenseLUSolver
         return true;
     }
 
-    template <int ACTIVE_N, int MAX_N>
+    template <int ACTIVE_N, int MAX_N, int STORAGE_N>
     ARCH_HOST_DEVICE static void solve_with_factors(
-        const DenseMatrixData<ACTIVE_N> &A,
+        const DenseMatrixData<STORAGE_N> &A,
         const int p[MAX_N], double b[MAX_N])
     {
+        static_assert(STORAGE_N >= ACTIVE_N);
         double y[ACTIVE_N];
         for (int i = 0; i < ACTIVE_N; ++i) {
             y[i] = b[p[i]];

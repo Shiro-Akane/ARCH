@@ -1410,7 +1410,8 @@ int run_device_primitives()
                                  DeviceGridView candidate_grid) {
         return launch_hydro_single_stage_update(
                    old_view, current_view, destination_view, delta_view,
-                   candidate_grid, 0.5, 0.5, 1e-12, 1e20, nullptr)
+                   candidate_grid, 0.5, 0.5, 1e-12, 1e-10, 1e20,
+                   nullptr)
             == cudaErrorInvalidValue;
     };
     DeviceStateView bad_old_state = old_state.view;
@@ -1491,7 +1492,8 @@ int run_device_primitives()
     const double expected_stage_species[2] = {0.25, 0.75};
     if (launch_hydro_single_stage_update(
             old_state.view, current_state.view, destination.view,
-            stage_delta.view, grid, 0.5, 0.5, 1e-12, 1e20, nullptr)
+            stage_delta.view, grid, 0.5, 0.5, 1e-12, 1e-10, 1e20,
+            nullptr)
             != cudaSuccess
         || cudaDeviceSynchronize() != cudaSuccess
         || !destination.download()

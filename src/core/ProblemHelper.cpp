@@ -19,6 +19,8 @@
 #include "../amr/AmrDefines.h"
 #include "../data/GlobalDefs.h"
 #include "../data/UserTypes.h"
+#include "../driver/dispatch/PolicyDescriptor.h"
+#include "../interface/ProblemGenerator.h"
 #include "../numerics/burnsolver/Networks.h"
 #include "../physics/eos/eos_Utils.h"
 #include "../physics/eos/eosdispatch.h"
@@ -28,17 +30,21 @@ namespace ProblemHelper
 {
     void SetupNetworkAndFractions(SimConfig &config, SpeciesManager &specs, std::vector<double> &default_X)
     {
-        std::string net_type = config.physics.burn.network_name;
-        if (net_type == "aprox19") {
+        using namespace arch::dispatch;
+        const std::string &net_type = config.physics.burn.network_name;
+        const auto selected = parse_registered_policy<NetworkPolicies>(
+            net_type);
+
+        if (selected.ok && selected.value == NetworkId::Aprox19) {
             if (specs.count() == 0) NetAprox19::RegisterSpecies(specs);
             NetAprox19::SetupInitialFractions(config, specs, default_X);
-        } else if (net_type == "aprox21") {
+        } else if (selected.ok && selected.value == NetworkId::Aprox21) {
             if (specs.count() == 0) NetAprox21::RegisterSpecies(specs);
             NetAprox21::SetupInitialFractions(config, specs, default_X);
-        } else if (net_type == "aprox13") {
+        } else if (selected.ok && selected.value == NetworkId::Aprox13) {
             if (specs.count() == 0) NetAprox13::RegisterSpecies(specs);
             NetAprox13::SetupInitialFractions(config, specs, default_X);
-        } else if (net_type == "iso7") {
+        } else if (selected.ok && selected.value == NetworkId::Iso7) {
             if (specs.count() == 0) NetIso7::RegisterSpecies(specs);
             NetIso7::SetupInitialFractions(config, specs, default_X);
         } else {
@@ -137,13 +143,15 @@ namespace ProblemHelper
 
     namespace detail
     {
-    void PopulateState(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs,
+    void PopulateState(amr::AMRControl &amr_ctrl, const SimConfig &config,
+                       const SpeciesManager &specs,
+                       ProblemInitializationContext context,
                        std::function<void(const PointCoords&, PrimitiveData&)> init_callback)
     {
         int n_species = specs.count();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
 
-        EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos) {
+        EOSDispatcher::dispatch_eos(context.eos, config, specs, [&](auto &&eos) {
 #pragma omp parallel
             {
                 PrimitiveData data{};

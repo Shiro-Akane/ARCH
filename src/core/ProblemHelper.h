@@ -17,6 +17,7 @@ struct PointCoords;
 struct PrimitiveData;
 struct SimConfig;
 struct SpeciesManager;
+struct ProblemInitializationContext;
 
 namespace amr {
 class AMRControl;
@@ -81,6 +82,7 @@ namespace detail {
 /** @brief Internal bridge from a case Init callback to AMR state initialization. */
 void PopulateState(amr::AMRControl& amr_ctrl, const SimConfig& config,
                    const SpeciesManager& specs,
+                   ProblemInitializationContext context,
                    std::function<void(const PointCoords&, PrimitiveData&)> init_callback);
 
 } // namespace detail

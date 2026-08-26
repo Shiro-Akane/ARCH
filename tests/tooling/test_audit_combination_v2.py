@@ -43,11 +43,36 @@ class CombinationAuditTests(unittest.TestCase):
             target.write_text(contents, encoding="utf-8")
             self.assertTrue(audit_tree(root), relative_path)
 
+    def assert_accepted(self, files):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            self.populate_protected(root)
+            for relative_path, contents in files.items():
+                target = root / relative_path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(contents, encoding="utf-8")
+            self.assertEqual(audit_tree(root), [])
+
     def test_rejects_core_formula_copy(self):
         self.assert_rejected("src/cuda/HydroCore.cuh", "double flux = rho * velocity;")
 
     def test_rejects_adapter_formula_copy(self):
         self.assert_rejected("src/cuda/EosAdapter.cuh", "return pressure_from_rho_T(rho, T);")
+
+    def test_accepts_exact_include_only_diagnostic_adapter(self):
+        self.assert_accepted({
+            "src/cuda/common/DiffusionConfigViewAdapter.h":
+                "#pragma once\n"
+                "#pragma GCC system_header\n"
+                "#include \"numerics/diffusion/DiffFlux.h\"\n"
+        })
+
+    def test_rejects_diagnostic_adapter_with_owned_declaration(self):
+        self.assert_rejected(
+            "src/cuda/common/DiffusionConfigViewAdapter.h",
+            "#pragma GCC system_header\n"
+            "#include \"numerics/diffusion/DiffFlux.h\"\n"
+            "inline int copied_formula(int value) { return value + 1; }\n")
 
     def test_rejects_device_formula_copy(self):
         self.assert_rejected("src/cuda/diffusion_device.cuh", "double vie = iec * zbar;")
@@ -109,6 +134,93 @@ class CombinationAuditTests(unittest.TestCase):
     def test_rejects_cuda_object_and_duplicate_ownership(self):
         self.assert_rejected("CMakeLists.txt", "add_library(x OBJECT cuda.cu)\nadd_library(y STATIC cuda.cu)")
 
+    def test_rejects_two_nonobject_cuda_source_owners(self):
+        self.assert_rejected(
+            "CMakeLists.txt",
+            "add_library(x STATIC cuda.cu)\nadd_library(y STATIC cuda.cu)")
+
+    def test_rejects_duplicate_cuda_source_within_one_target(self):
+        self.assert_rejected(
+            "CMakeLists.txt",
+            "add_library(x STATIC cuda.cu cuda.cu)")
+
+    def test_rejects_unconditional_cmake_feature_guard(self):
+        self.assert_rejected(
+            "CMakeLists.txt",
+            "if(TRUE)\nadd_executable(arch_cuda_test test.cu)\nendif()")
+
+    def test_rejects_production_cuda_backend_under_testing_guard(self):
+        self.assert_rejected(
+            "CMakeLists.txt",
+            "if(BUILD_TESTING)\nadd_library(arch_cuda_backend STATIC x.cu)\nendif()")
+
+    def test_rejects_duplicate_runtime_probe_owner(self):
+        self.assert_rejected(
+            "CMakeLists.txt",
+            "target_sources(ARCH PRIVATE src/driver/RuntimeProbe.cpp)")
+
+    def test_rejects_e3_resolution_regression_markers(self):
+        for marker in (
+                "resolve_execution_plan_bypassed",
+                "handwritten_network_mapping",
+                "parse_ode_again",
+                "probe_after_backend_construction",
+                "allocate_backend_before_resolution",
+                "requested_omitted=",
+                "mutate_plan_after_sidecar"):
+            with self.subTest(marker=marker):
+                self.assert_rejected(
+                    "src/driver/SolverDispatch.cpp", marker)
+
+    def test_rejects_e3_ownership_regression_markers(self):
+        for marker in (
+                "retained_block",
+                "retained_pool_index",
+                "upload_current_fluid_state",
+                "allocate_and_initialize",
+                "leaked_helm_owner",
+                "recomputed_boundary_sources",
+                "get_rkl_coeffs_drifted"):
+            with self.subTest(marker=marker):
+                self.assert_rejected(
+                    "src/cuda/runtime/CudaBackend.cu", marker)
+
+    def test_rejects_incomplete_bounded_hydro_lowering(self):
+        self.assert_rejected(
+            "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+            "void launch_bounded_hydro_stage();")
+
+    def test_rejects_explicit_cuda_owned_stage_loops(self):
+        for marker in ("stage_loop_owned_by_cuda", "cuda_owned_rkl_loop"):
+            with self.subTest(marker=marker):
+                self.assert_rejected("src/cuda/stage.cuh", marker)
+
+    def test_rejects_cuda_runtime_accepting_mutable_config(self):
+        self.assert_rejected(
+            "src/cuda/runtime/CudaBackend.h",
+            "void make(const SimConfig& launch);")
+
+    def test_accepts_one_owner_with_repeated_source_metadata(self):
+        self.assert_accepted({
+            "CMakeLists.txt":
+                "add_executable(one tests/cuda/test_cuda_hydro_block.cu)\n"
+                "set_source_files_properties(tests/cuda/test_cuda_hydro_block.cu "
+                "PROPERTIES LANGUAGE CXX)"
+        })
+
+    def test_accepts_bounded_e3_stage_seams_without_a_controller(self):
+        self.assert_accepted({
+            "src/cuda/hydro/HydroIntegratorPolicies.cuh":
+                "/** @file HydroIntegratorPolicies.cuh */\n"
+                "void launch_one_bounded_hydro_stage();",
+            "src/cuda/diffusion/DiffusionSolver.cuh":
+                "/** @file DiffusionSolver.cuh */\n"
+                "void launch_one_bounded_diffusion_stage();",
+            "src/cuda/runtime/CudaBackend.cu":
+                "#include \"cuda/hydro/HydroIntegratorPolicies.cuh\"\n"
+                "#include \"cuda/diffusion/DiffusionSolver.cuh\""
+        })
+
     def test_rejects_arch_cuda_variable_injection(self):
         self.assert_rejected("CMakeLists.txt", "target_sources(ARCH PRIVATE ${cuda_sources})")
 
@@ -128,6 +240,13 @@ class CombinationAuditTests(unittest.TestCase):
                 encoding="utf-8")
             self.assertEqual(audit_tree(root), [])
 
+    def test_accepts_resolved_fallback_reason_sidecar_read(self):
+        self.assert_accepted({
+            "src/driver/SolverDispatch.cpp":
+                "output << resolution.fallback_reason; "
+                "if (resolution.resolved_backend == ComputeBackend::Cpu) {}"
+        })
+
     def test_rejects_fallback_reason_field_outside_central_resolver(self):
         self.assert_rejected(
             "src/driver/Execution.cpp",
@@ -137,6 +256,21 @@ class CombinationAuditTests(unittest.TestCase):
         self.assert_rejected(
             "src/driver/dispatch/BackendCapabilities.h",
             "if (cuda_failed) cpu_fallback();")
+
+    def test_rejects_cuda_burn_route_without_caller_workspace(self):
+        self.assert_rejected(
+            "src/cuda/runtime/CudaBackend.cu",
+            "launch(nullptr, impl_->burn_candidates.get());")
+
+    def test_rejects_cuda_burn_route_without_failed_nse_continuation(self):
+        self.assert_rejected(
+            "src/cuda/runtime/CudaBackend.cu",
+            "execute_burn_policy_cell_without_failed_nse_continuation();")
+
+    def test_rejects_cuda_burn_limiter_using_full_host_state(self):
+        self.assert_rejected(
+            "src/driver/Driver.h",
+            "DriverBurn::combine_full_host_state_minimum();")
 
 
 if __name__ == "__main__":

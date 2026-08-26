@@ -269,6 +269,17 @@ void test_aliases_defaults_and_plan()
            && resolved.value.linear_solver == LinearSolverId::DenseLu
            && resolved.value.diffusion_integrator == DiffusionIntegratorId::Rkl1,
            "burn/diffusion plan IDs");
+    config.physics.burn.odeconfig.linear_solver = "AuTo";
+    resolved = resolve_execution_plan(config, [] { return 0; }, 21);
+    expect(resolved.ok
+               && resolved.value.linear_solver == LinearSolverId::DenseLu,
+           "Auto selects DenseLU through the dense-network limit");
+    resolved = resolve_execution_plan(
+        config, [] { return 0; }, BurnLimits::MAX_SPECIES + 1);
+    expect(resolved.ok
+               && resolved.value.linear_solver == LinearSolverId::SparseKlu,
+           "Auto selects SparseKLU above the dense-network limit");
+    config.physics.burn.odeconfig.linear_solver = "DenseLU";
     config.physics.burn.network_name = "bad";
     expect(!resolve_execution_plan(config, [] { return 0; }).ok,
            "unknown network remains error");

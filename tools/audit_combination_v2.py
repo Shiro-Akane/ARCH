@@ -16,6 +16,35 @@ def _source_files(root: pathlib.Path):
             yield path
 
 
+def _is_include_only_diagnostic_adapter(relative: str, content: str) -> bool:
+    if relative != "src/cuda/common/DiffusionConfigViewAdapter.h":
+        return False
+
+    without_comments = re.sub(r"/\*.*?\*/", "", content, flags=re.DOTALL)
+    without_comments = re.sub(r"//.*", "", without_comments)
+    lines = [line.strip() for line in without_comments.splitlines()
+             if line.strip()]
+    include = '#include "numerics/diffusion/DiffFlux.h"'
+    system_header = "#pragma GCC system_header"
+    compiler_guard = "#if defined(__GNUC__) || defined(__clang__)"
+    allowed = {
+        "#pragma once",
+        compiler_guard,
+        system_header,
+        "#endif",
+        include,
+    }
+    if any(line not in allowed for line in lines):
+        return False
+    guarded = compiler_guard in lines or "#endif" in lines
+    return (lines.count("#pragma once") == 1
+            and lines.count(system_header) == 1
+            and lines.count(include) == 1
+            and (not guarded
+                 or (lines.count(compiler_guard) == 1
+                     and lines.count("#endif") == 1)))
+
+
 def audit_tree(root: pathlib.Path):
     """Return violations for a repository root; an empty list is a pass."""
     root = pathlib.Path(root)
@@ -46,11 +75,66 @@ def audit_tree(root: pathlib.Path):
         lowered = relative.lower()
         content = path.read_text(encoding="utf-8", errors="ignore")
         content_lower = content.lower()
+        e3_regression_markers = (
+            "resolve_execution_plan_bypassed",
+            "reparsed_time",
+            "reparsed_hydro",
+            "handwritten_network_mapping",
+            "parse_ode_again",
+            "parse_linear_again",
+            "parse_diffusion_again",
+            "parse_gravity_again",
+            "probe_after_backend_construction",
+            "allocate_backend_before_resolution",
+            "query_support_after_construction",
+            "requested_omitted=",
+            "resolved_omitted=",
+            "runtime_omitted=",
+            "mutate_plan_after_sidecar",
+            "retained_block",
+            "retained_pool_index",
+            "upload_current_fluid_state",
+            "allocate_and_initialize",
+            "false && pointer_ != nullptr",
+            "leaked_helm_owner",
+            "cudabackend::~cudabackend_no_quiesce",
+            "short_lived_tabular3_owner",
+            "grid.cell_volume = block.grid.cell_volume.data",
+            "derivative_nonnull_drift",
+            "recomputed_boundary_sources",
+            "recomputed_reflection_signs",
+            "get_rkl_coeffs_drifted",
+            "false && status != 0",
+            "stage_loop_owned_by_cuda",
+            "cuda_owned_rkl_loop",
+        )
+        if lowered.startswith("src/") and any(
+                marker in content_lower for marker in e3_regression_markers):
+            violations.append(f"E3 authority regression is forbidden: {relative}")
+        if (relative == "src/cuda/runtime/CudaBackend.h"
+                and "const simconfig& launch" in content_lower):
+            violations.append("CUDA runtime must consume the frozen launch plan")
+        if (relative == "src/core/ProblemHelper.cpp"
+                and "ProblemInitializationContext" in content):
+            bootstrap_eos_calls = content.count(
+                "EOSDispatcher::dispatch_eos(config, specs")
+            if (bootstrap_eos_calls != 2
+                    or "EOSDispatcher::dispatch_eos(context.eos, config, specs"
+                        not in content):
+                violations.append(
+                    "post-freeze EOS dispatch must consume ProblemInitializationContext")
         fallback_scan = content_lower
-        if relative == "src/driver/dispatch/BackendCapabilities.h":
+        if relative in {
+            "src/driver/dispatch/BackendCapabilities.h",
+            "src/driver/SolverDispatch.cpp",
+        }:
             fallback_scan = re.sub(r"\bfallback_reason\b", "", fallback_scan)
         cuda_production = lowered.startswith("src/cuda/")
-        if cuda_production and any(token in lowered for token in ("core", "adapter", "_device")):
+        diagnostic_include_adapter = _is_include_only_diagnostic_adapter(
+            relative, content)
+        if (cuda_production
+                and not diagnostic_include_adapter
+                and any(token in lowered for token in ("core", "adapter", "_device"))):
             violations.append(f"formula-copy filename is forbidden: {relative}")
         if cuda_production and ("runner" in lowered or "int main(" in content_lower):
             violations.append(f"second CUDA runner is forbidden: {relative}")
@@ -69,13 +153,83 @@ def audit_tree(root: pathlib.Path):
         if lowered.startswith("src/") and ("fallback" in fallback_scan and
                                              ("cpu" in fallback_scan or cuda_production)):
             violations.append(f"hidden CUDA fallback is forbidden: {relative}")
-        if cuda_production and any(identifier.lower() in content_lower or identifier.lower() in lowered for identifier in
-                                   ("CudaAuthorityIntegrator", "HydroIntegratorPolicies", "HydroSolver",
-                                    "launch_diffusion_rkl", "DiffusionSolver")):
+        bounded_stage_headers = {
+            "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+            "src/cuda/diffusion/DiffusionSolver.cuh",
+        }
+        historical_content = re.sub(
+            r"/\*.*?\*/|//[^\n]*", "", content_lower,
+            flags=re.DOTALL)
+        historical_content = re.sub(
+            r"^\s*#include[^\n]*$", "", historical_content,
+            flags=re.MULTILINE)
+        historical_identifiers = (
+            "CudaAuthorityIntegrator", "HydroIntegratorPolicies",
+            "HydroSolver", "launch_diffusion_rkl", "DiffusionSolver")
+        historical_in_path = relative not in bounded_stage_headers and any(
+            identifier.lower() in lowered
+            for identifier in historical_identifiers)
+        historical_in_body = any(
+            identifier.lower() in historical_content
+            for identifier in historical_identifiers)
+        if cuda_production and (historical_in_path or historical_in_body):
             violations.append(f"historical complete controller is forbidden: {relative}")
+        if (relative == "src/cuda/hydro/HydroIntegratorPolicies.cuh"
+                and "launch_bounded_hydro_stage" in content):
+            required_hydro_lowering = (
+                "clear_hydro_buffer(delta, stream)",
+                "for (int direction = 0; direction < 3; ++direction)",
+                "if (direction >= grid.dim) break;",
+            )
+            if any(required not in content
+                   for required in required_hydro_lowering):
+                violations.append(
+                    "bounded CUDA Hydro lowering must clear and visit XYZ")
+        if (relative == "src/cuda/runtime/CudaBackend.cu"
+                and "execute_physical_boundary" in content
+                and not re.search(
+                    r"quiesce\(\)\s*;\s*for\s*"
+                    r"\(const auto& phase : impl_->boundary\.phases\)",
+                    content)):
+            violations.append(
+                "CUDA boundary completion must follow stream quiescence")
+        if (relative == "src/cuda/runtime/CudaBackend.cu"
+                and "execute_hydro_stage" in content):
+            synchronized_counter_updates = re.findall(
+                r"quiesce\(\)\s*;\s*"
+                r"impl_->runtime_counters\.kernel_count\s*\+=", content)
+            if len(synchronized_counter_updates) < 5:
+                violations.append(
+                    "CUDA bounded work must quiesce before completion")
+        if (relative == "src/cuda/runtime/CudaBackend.cu"
+                and "burn_candidates" in content
+                and not re.search(
+                    r"impl_->burn_workspaces\.get\(\)\s*,\s*"
+                    r"impl_->burn_candidates\.get\(\)", content)):
+            violations.append(
+                "CUDA burn routes must consume the caller workspace")
+        if cuda_production and "without_failed_nse_continuation" in content:
+            violations.append(
+                "CUDA burn routes must preserve failed-NSE continuation")
+        if (lowered.startswith("src/driver/")
+                and "combine_full_host_state_minimum" in content):
+            violations.append(
+                "CUDA burn limiter must consume the compact candidate")
         if path.name == "CMakeLists.txt":
             cmake_code = "\n".join(line for line in content_lower.splitlines()
                                     if not line.lstrip().startswith("#"))
+            if re.search(r"\bif\s*\(\s*true\s*\)", cmake_code):
+                violations.append("CMake feature guards must not be unconditional")
+            if re.search(
+                    r"if\s*\(\s*build_testing\s*\)\s*"
+                    r"add_library\s*\(\s*arch_cuda_backend\b",
+                    cmake_code, flags=re.DOTALL):
+                violations.append(
+                    "production CUDA backend must exist when testing is off")
+            if re.search(
+                    r"target_sources\s*\(\s*arch\b[^)]*runtimeprobe\.cpp",
+                    cmake_code, flags=re.DOTALL):
+                violations.append("RuntimeProbe.cpp must have one target owner")
             if re.search(r"file\s*\(\s*glob[^)]*\.cu", cmake_code, flags=re.DOTALL):
                 violations.append("production CUDA source glob is forbidden")
             if "target_objects:cuda" in cmake_code or "target_objects:arch_cuda" in cmake_code:
@@ -87,8 +241,23 @@ def audit_tree(root: pathlib.Path):
                 violations.append("ARCH must not receive CUDA sources or CUDA variables")
             if re.search(r"add_library\s*\([^)]*\bobject\b[^)]*(?:\.cu|cuda)", cmake_code, flags=re.DOTALL):
                 violations.append("CUDA OBJECT libraries are forbidden")
-            cu_paths = re.findall(r"[\w./-]+\.cu\b", cmake_code)
-            if any(cu_paths.count(path) > 1 for path in set(cu_paths)):
+            cuda_source_owners = {}
+            for command in re.finditer(
+                    r"\b(?:add_library|add_executable|target_sources)\s*"
+                    r"\(([^)]*)\)", cmake_code, flags=re.DOTALL):
+                arguments = command.group(1).split()
+                if not arguments:
+                    continue
+                owner = arguments[0]
+                cuda_sources = re.findall(
+                    r"[\w./-]+\.cu\b", command.group(1))
+                if len(cuda_sources) != len(set(cuda_sources)):
+                    violations.append(
+                        "a CUDA source may appear only once per target")
+                for source in cuda_sources:
+                    cuda_source_owners.setdefault(source, set()).add(owner)
+            if any(len(owners) > 1
+                   for owners in cuda_source_owners.values()):
                 violations.append("a CUDA source may not have multiple target owners")
             if re.search(r"add_executable\s*\(\s*arch\b[^)]*\.cu", cmake_code, flags=re.DOTALL):
                 violations.append("ARCH must not compile CUDA sources directly")

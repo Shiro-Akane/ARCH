@@ -22,21 +22,30 @@
 #include "../../physics/eos/eosdispatch.h"
 #include "../../physics/gravity/GravityDispatch.h"
 
-void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
+void Dispatch_Euler(
+    amr::AMRControl &amr_ctrl, const SimConfig &config,
+    const SpeciesManager &specs, const RunState &run_state,
+    const arch::dispatch::ResolvedExecutionPlan& plan,
+    const arch::dispatch::ExecutionRequirements& requirements,
+    const arch::dispatch::BackendResolution& backend,
+    arch::dispatch::StartupOrder& startup_order)
 {
-    EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos) {
+    EOSDispatcher::dispatch_eos(plan.eos, config, specs, [&](auto &&eos) {
         // Erase the burner policy after EOS resolution. Flux dispatch then sees
         // one BurnerHandle<EosPolicy> type instead of every ODE/network/linear-
         // solver combination, which controls template-instantiation memory.
         using EosType = std::remove_cvref_t<decltype(eos)>;
-        auto burn_handle = BurnDispatcher::make_handle<EosType>(config);
+        auto burn_handle = BurnDispatcher::make_handle<EosType>(config, plan);
 
-        auto grav_handle = Physical::Gravity::make_gravity(config);
+        auto grav_handle = Physical::Gravity::make_gravity(
+            config, requirements.gravity);
         std::cout << "[Dispatch] Strategy: Euler/RK1 + "
                   << config.numerics.solver_name << " + "
                   << config.numerics.reconstruction
                   << " (" << config.numerics.limiter << ")" << std::endl;
 
-        DispatchImpl::select_flux<SolverEuler>(amr_ctrl, eos, grav_handle.get(), burn_handle, config, specs, run_state);
+        DispatchImpl::launch_resolved_run<SolverEuler>(
+            amr_ctrl, eos, grav_handle.get(), burn_handle, config, specs,
+            run_state, plan, requirements, backend, startup_order);
     });
 }

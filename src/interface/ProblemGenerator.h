@@ -22,6 +22,12 @@
 #include "../grid/Grid.h"
 #include "../physics/eos/IdealGas.h"
 #include "../physics/species/Species.h"
+#include "../driver/dispatch/ResolvedExecutionPlan.h"
+
+struct ProblemInitializationContext
+{
+    arch::dispatch::EosId eos = arch::dispatch::EosId::Ideal;
+};
 
 class ProblemGenerator
 {
@@ -46,7 +52,10 @@ public:
      *
      * Case implementations may cache setup data required by this method.
      */
-    virtual void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs) = 0;
+    virtual void InitializeData(amr::AMRControl &amr_ctrl,
+                                const SimConfig &config,
+                                const SpeciesManager &specs,
+                                ProblemInitializationContext context) = 0;
 
     /**
      * @brief Returns the name of the problem for logging.

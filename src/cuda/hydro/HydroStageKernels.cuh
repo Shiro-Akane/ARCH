@@ -11,7 +11,7 @@ static __global__ void hydro_single_stage_update_kernel(
     DeviceStateView old_state, DeviceStateView current_state,
     DeviceStateView destination, DeviceStateView delta, DeviceGridView grid,
     double old_weight, double flux_weight, double density_floor,
-    double maximum_internal_energy)
+    double minimum_internal_energy, double maximum_internal_energy)
 {
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     if (linear >= grid.active_cell_count())
@@ -24,7 +24,8 @@ static __global__ void hydro_single_stage_update_kernel(
         current_state.n_species > 0 ? current_state.mass_fractions + cell : nullptr,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr,
         old_state.n_species, old_state.total_size,
-        old_weight, flux_weight, density_floor, maximum_internal_energy,
+        old_weight, flux_weight, density_floor, minimum_internal_energy,
+        maximum_internal_energy,
         updated,
         destination.n_species > 0 ? destination.mass_fractions + cell : nullptr);
     destination.store(cell, updated);
@@ -35,7 +36,8 @@ inline cudaError_t launch_hydro_single_stage_update(
     DeviceStateView old_state, DeviceStateView current_state,
     DeviceStateView destination, DeviceStateView delta, DeviceGridView grid,
     double old_weight, double flux_weight, double density_floor,
-    double maximum_internal_energy, cudaStream_t stream)
+    double minimum_internal_energy, double maximum_internal_energy,
+    cudaStream_t stream)
 {
     if (!valid_hydro_view(old_state)
         || !valid_hydro_view(current_state)
@@ -57,7 +59,8 @@ inline cudaError_t launch_hydro_single_stage_update(
     detail::hydro_single_stage_update_kernel
         <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
             old_state, current_state, destination, delta, grid,
-            old_weight, flux_weight, density_floor, maximum_internal_energy);
+            old_weight, flux_weight, density_floor, minimum_internal_energy,
+            maximum_internal_energy);
     return cudaGetLastError();
 }
 } // namespace arch::cuda

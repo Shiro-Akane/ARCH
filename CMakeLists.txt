@@ -232,19 +232,37 @@ foreach(dir IN LISTS DISPATCH_SRC_DIRS)
         "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
     list(APPEND ARCH_DISPATCH_SOURCES ${dir_srcs})
 endforeach()
-# Runtime probing is not part of the production startup until E3 threads the
-# resolved plan through that call chain.  D1 compiles it only in its focused test.
-list(FILTER ARCH_DISPATCH_SOURCES EXCLUDE REGEX "/RuntimeProbe\\.cpp$")
-
+# DiffFunction is a shared Host authority used by both the CPU driver and the
+# production CUDA backend. Compile it once as a narrow math leaf rather than
+# changing its language or duplicating it in CUDA targets.
+list(FILTER ARCH_APPLICATION_SOURCES EXCLUDE REGEX
+    "/src/numerics/diffusion/DiffFunction\\.cpp$")
 # ==============================================================================
 # Target Definition & Properties
 # ==============================================================================
-add_library(arch_solver_dispatch OBJECT ${ARCH_DISPATCH_SOURCES})
+add_library(arch_build_contract INTERFACE)
+target_compile_features(arch_build_contract INTERFACE cxx_std_20)
+target_include_directories(arch_build_contract INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/cases
+    ${ARCH_CUSTOM_REGISTRY_DIR})
+target_compile_definitions(arch_build_contract INTERFACE
+    ARCH_CUDA_BUILD_ENABLED=$<BOOL:${ARCH_ENABLE_CUDA}>)
 
-add_executable(ARCH
-    ${ARCH_APPLICATION_SOURCES}
-    $<TARGET_OBJECTS:arch_solver_dispatch>
-)
+add_library(arch_diffusion_math STATIC
+    src/numerics/diffusion/DiffFunction.cpp)
+target_link_libraries(arch_diffusion_math PUBLIC arch_build_contract)
+
+add_library(arch_solver_dispatch STATIC ${ARCH_DISPATCH_SOURCES})
+target_link_libraries(arch_solver_dispatch
+    PUBLIC arch_build_contract
+    PRIVATE arch_diffusion_math)
+
+add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
+target_link_libraries(ARCH PRIVATE arch_solver_dispatch)
+if(CMAKE_DL_LIBS)
+    target_link_libraries(arch_solver_dispatch PRIVATE ${CMAKE_DL_LIBS})
+endif()
 
 foreach(target ARCH arch_solver_dispatch)
     target_compile_features(${target} PRIVATE cxx_std_20)
@@ -329,11 +347,12 @@ if(BUILD_TESTING)
     target_include_directories(arch_resolved_execution_plan PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${ARCH_CUSTOM_REGISTRY_DIR}")
+    target_link_libraries(arch_resolved_execution_plan PRIVATE
+        arch_build_contract)
     add_test(NAME resolved_execution_plan COMMAND arch_resolved_execution_plan)
 
     add_executable(arch_runtime_probe_capabilities
-        tests/test_runtime_probe_and_capabilities.cpp
-        src/driver/dispatch/RuntimeProbe.cpp)
+        tests/test_runtime_probe_and_capabilities.cpp)
     target_compile_features(arch_runtime_probe_capabilities PRIVATE cxx_std_20)
     target_include_directories(arch_runtime_probe_capabilities PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -342,6 +361,8 @@ if(BUILD_TESTING)
     if(CMAKE_DL_LIBS)
         target_link_libraries(arch_runtime_probe_capabilities PRIVATE ${CMAKE_DL_LIBS})
     endif()
+    target_link_libraries(arch_runtime_probe_capabilities PRIVATE
+        arch_solver_dispatch)
     add_test(NAME runtime_probe_and_capabilities
         COMMAND arch_runtime_probe_capabilities)
 
@@ -350,19 +371,44 @@ if(BUILD_TESTING)
     target_include_directories(arch_reduction_contract PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${ARCH_CUSTOM_REGISTRY_DIR}")
+    target_link_libraries(arch_reduction_contract PRIVATE
+        arch_build_contract)
     add_test(NAME reduction_contract COMMAND arch_reduction_contract)
+
+    add_executable(arch_compute_backend tests/test_compute_backend.cpp)
+    target_compile_features(arch_compute_backend PRIVATE cxx_std_20)
+    target_include_directories(arch_compute_backend PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME compute_backend COMMAND arch_compute_backend)
 endif()
 
 if(ARCH_ENABLE_CUDA)
     enable_language(CUDA)
+    add_library(arch_cuda_backend STATIC
+        src/cuda/runtime/CudaBackend.cu
+        src/cuda/microphysics/helm_eos_loader.cpp)
+    set_source_files_properties(src/cuda/microphysics/helm_eos_loader.cpp
+        PROPERTIES LANGUAGE CUDA)
+    target_compile_features(arch_cuda_backend PRIVATE cxx_std_20)
+    target_include_directories(arch_cuda_backend PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${ARCH_CUSTOM_REGISTRY_DIR}")
+    target_link_libraries(arch_cuda_backend
+        PUBLIC arch_build_contract
+        PRIVATE arch_diffusion_math)
+    target_compile_options(arch_cuda_backend PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+    set_target_properties(arch_cuda_backend PROPERTIES
+        CUDA_STANDARD 20
+        CUDA_STANDARD_REQUIRED ON)
+    target_link_libraries(ARCH PRIVATE arch_cuda_backend)
     if(BUILD_TESTING)
         set_property(TARGET arch_runtime_probe_capabilities APPEND PROPERTY
             BUILD_RPATH "${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}")
     endif()
 
-    # Task A owns only this compile probe.  A later task may create one normal
-    # arch_cuda_backend STATIC target for production CUDA sources; do not glob
-    # .cu files into ARCH or share CUDA OBJECT files across consumers.
+    if(BUILD_TESTING)
+    # Focused CUDA targets never enter a production testing-off graph.
     add_executable(arch_cuda_compile_probe tests/cuda/test_cuda_compile_probe.cu)
     target_compile_features(arch_cuda_compile_probe PRIVATE cxx_std_20)
     target_include_directories(arch_cuda_compile_probe PRIVATE
@@ -371,11 +417,7 @@ if(ARCH_ENABLE_CUDA)
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
     add_executable(arch_cuda_eos_host_device_parity
-        tests/cuda/test_eos_host_device_parity.cu
-        src/cuda/microphysics/helm_eos_loader.h
-        src/cuda/microphysics/helm_eos_loader.cpp)
-    set_source_files_properties(src/cuda/microphysics/helm_eos_loader.cpp
-        PROPERTIES LANGUAGE CUDA)
+        tests/cuda/test_eos_host_device_parity.cu)
     target_compile_features(arch_cuda_eos_host_device_parity PRIVATE cxx_std_20)
     target_include_directories(arch_cuda_eos_host_device_parity PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -386,6 +428,8 @@ if(ARCH_ENABLE_CUDA)
     set_target_properties(arch_cuda_eos_host_device_parity PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
+    target_link_libraries(arch_cuda_eos_host_device_parity PRIVATE
+        arch_cuda_backend)
     add_executable(arch_cuda_network_nse_device
         tests/cuda/test_network_nse_device.cu)
     target_compile_features(arch_cuda_network_nse_device PRIVATE cxx_std_20)
@@ -396,12 +440,13 @@ if(ARCH_ENABLE_CUDA)
     set_target_properties(arch_cuda_network_nse_device PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
-    if(BUILD_TESTING)
         add_executable(arch_cuda_hydro_leaf_parity
             tests/cuda/test_hydro_leaf_parity.cu)
         target_compile_features(arch_cuda_hydro_leaf_parity PRIVATE cxx_std_20)
         target_include_directories(arch_cuda_hydro_leaf_parity PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(arch_cuda_hydro_leaf_parity PRIVATE
+            arch_build_contract)
         target_compile_options(arch_cuda_hydro_leaf_parity PRIVATE
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
         set_target_properties(arch_cuda_hydro_leaf_parity PROPERTIES
@@ -418,9 +463,7 @@ if(ARCH_ENABLE_CUDA)
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
         add_executable(arch_cuda_burn_policy_parity
-            tests/cuda/test_burn_policy_parity.cu
-            src/cuda/microphysics/helm_eos_loader.h
-            src/cuda/microphysics/helm_eos_loader.cpp)
+            tests/cuda/test_burn_policy_parity.cu)
         target_compile_features(arch_cuda_burn_policy_parity PRIVATE cxx_std_20)
         target_include_directories(arch_cuda_burn_policy_parity PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -431,9 +474,40 @@ if(ARCH_ENABLE_CUDA)
         set_target_properties(arch_cuda_burn_policy_parity PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_burn_policy_parity PRIVATE
+            arch_cuda_backend)
+        add_executable(arch_cuda_hydro_block
+            tests/cuda/test_cuda_hydro_block.cu)
+        # This is a Host scheduler/controller witness linked to the one
+        # production CUDA backend.  It intentionally owns no device code, so
+        # compile the .cu-named focused fixture as ordinary C++ and keep all
+        # kernels in arch_cuda_backend.
+        set_source_files_properties(tests/cuda/test_cuda_hydro_block.cu
+            PROPERTIES
+                LANGUAGE CXX
+                COMPILE_FLAGS "-x c++")
+        target_compile_features(arch_cuda_hydro_block PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_hydro_block PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_definitions(arch_cuda_hydro_block PRIVATE
+            ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+        target_compile_options(arch_cuda_hydro_block PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+        set_target_properties(arch_cuda_hydro_block PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_hydro_block PRIVATE
+            arch_cuda_backend arch_solver_dispatch)
+        add_executable(arch_cuda_single_level_validation
+            tests/cuda/test_cuda_single_level_validation.cpp)
+        target_compile_features(arch_cuda_single_level_validation PRIVATE
+            cxx_std_20)
+        target_include_directories(arch_cuda_single_level_validation PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(arch_cuda_single_level_validation PRIVATE
+            arch_cuda_backend)
         add_executable(arch_cuda_diffusion_rkl_parity
-            tests/cuda/test_diffusion_rkl_parity.cu
-            src/numerics/diffusion/DiffFunction.cpp)
+            tests/cuda/test_diffusion_rkl_parity.cu)
         target_compile_features(arch_cuda_diffusion_rkl_parity PRIVATE cxx_std_20)
         target_include_directories(arch_cuda_diffusion_rkl_parity PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -442,6 +516,8 @@ if(ARCH_ENABLE_CUDA)
         set_target_properties(arch_cuda_diffusion_rkl_parity PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_diffusion_rkl_parity PRIVATE
+            arch_diffusion_math)
         add_executable(arch_cuda_boundary_plan_parity
             tests/cuda/test_boundary_plan_parity.cu)
         target_compile_features(arch_cuda_boundary_plan_parity PRIVATE cxx_std_20)
@@ -457,6 +533,8 @@ if(ARCH_ENABLE_CUDA)
         target_compile_features(arch_cuda_policy_resolution PRIVATE cxx_std_20)
         target_include_directories(arch_cuda_policy_resolution PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(arch_cuda_policy_resolution PRIVATE
+            arch_build_contract)
         target_compile_options(arch_cuda_policy_resolution PRIVATE
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
         set_target_properties(arch_cuda_policy_resolution PROPERTIES
@@ -476,6 +554,28 @@ if(ARCH_ENABLE_CUDA)
             COMMAND arch_cuda_policy_resolution)
         add_test(NAME cuda_reduction_contract
             COMMAND arch_cuda_reduction_contract)
+        add_test(NAME cuda_hydro_block COMMAND arch_cuda_hydro_block)
+        add_test(NAME cuda_hydro_route_matrix
+            COMMAND arch_cuda_hydro_block hydro-matrix)
+        add_test(NAME cuda_hydro_integrator_matrix
+            COMMAND arch_cuda_hydro_block hydro-integrators)
+        add_test(NAME cuda_backend_eos_owner_matrix
+            COMMAND arch_cuda_hydro_block eos-matrix)
+        add_test(NAME cuda_backend_diffusion_rkl1
+            COMMAND arch_cuda_hydro_block rkl1)
+        add_test(NAME cuda_backend_diffusion_rkl2
+            COMMAND arch_cuda_hydro_block rkl2)
+        foreach(route IN ITEMS
+                aprox13.be_nr aprox13.bd aprox13.ros4
+                aprox19.be_nr aprox19.bd aprox19.ros4
+                aprox21.be_nr aprox21.bd aprox21.ros4
+                iso7.be_nr iso7.bd iso7.ros4)
+            string(REPLACE "." "_" backend_route_test "${route}")
+            add_test(NAME "cuda_backend_burn_${backend_route_test}"
+                COMMAND arch_cuda_hydro_block "${route}")
+        endforeach()
+        add_test(NAME cuda_single_level_validation
+            COMMAND arch_cuda_single_level_validation)
         foreach(solver IN ITEMS be_nr bd ros4)
             add_test(NAME "burn_policy_parity_status_${solver}"
                 COMMAND arch_cuda_burn_policy_parity "status.${solver}")
@@ -589,15 +689,11 @@ if(ARCH_ENABLE_KLU)
 endif()
 
 if(ARCH_KLU_TARGET)
-    foreach(target ARCH arch_solver_dispatch)
-        target_link_libraries(${target} PRIVATE ${ARCH_KLU_TARGET})
-        target_compile_definitions(${target} PRIVATE ARCH_HAS_KLU=1)
-    endforeach()
+    target_compile_definitions(arch_build_contract INTERFACE ARCH_HAS_KLU=1)
+    target_link_libraries(arch_build_contract INTERFACE ${ARCH_KLU_TARGET})
     message(STATUS "[DEP] SuiteSparse KLU enabled for sparse reaction networks")
 else()
-    foreach(target ARCH arch_solver_dispatch)
-        target_compile_definitions(${target} PRIVATE ARCH_HAS_KLU=0)
-    endforeach()
+    target_compile_definitions(arch_build_contract INTERFACE ARCH_HAS_KLU=0)
     if(ARCH_ENABLE_KLU)
         message(FATAL_ERROR
             "ARCH_ENABLE_KLU=ON but KLU was not found and ARCH_FETCH_SUITESPARSE=OFF")
@@ -632,8 +728,7 @@ if(BUILD_TESTING)
         target_compile_features(sparse_klu_regression PRIVATE cxx_std_20)
         target_include_directories(sparse_klu_regression PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
-        target_compile_definitions(sparse_klu_regression PRIVATE ARCH_HAS_KLU=1)
-        target_link_libraries(sparse_klu_regression PRIVATE ${ARCH_KLU_TARGET})
+        target_link_libraries(sparse_klu_regression PRIVATE arch_build_contract)
         add_test(NAME sparse_klu_161_equations COMMAND sparse_klu_regression)
     endif()
 endif()

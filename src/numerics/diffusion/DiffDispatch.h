@@ -12,6 +12,7 @@
 #pragma once
 
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 
@@ -68,6 +69,42 @@ namespace Numerics
                     next_step(integrator);
                 }
             });
+        }
+
+        template <typename NextDispatchFunc>
+        inline void dispatch_diffusion(
+            const SimConfig& config,
+            arch::dispatch::DiffusionIntegratorId selected_id,
+            NextDispatchFunc&& next_step)
+        {
+            using namespace arch::dispatch;
+            if (!config.physics.diffusion.use_diffusion) {
+                if (selected_id != DiffusionIntegratorId::None)
+                    throw std::logic_error(
+                        "disabled diffusion received an active plan");
+                NoDiffusionIntegrator integrator;
+                next_step(integrator);
+                return;
+            }
+            if (selected_id == DiffusionIntegratorId::None)
+                throw std::logic_error(
+                    "enabled diffusion received an inactive plan");
+            if (!visit_policy<DiffusionIntegratorPolicies>(
+                    selected_id, [&]<class Registration> {
+                        using Binding = typename PolicyRegistration<
+                            Registration>::CpuBinding;
+                        if constexpr (std::is_same_v<Binding, CpuRkl1Binding>) {
+                            RKL1TimeIntegrator integrator;
+                            next_step(integrator);
+                        } else if constexpr (std::is_same_v<Binding,
+                                                           CpuRkl2Binding>) {
+                            RKL2TimeIntegrator integrator;
+                            next_step(integrator);
+                        }
+                    })) {
+                throw std::logic_error(
+                    "resolved diffusion integrator has no CPU binding");
+            }
         }
 
     } // namespace Diffusion

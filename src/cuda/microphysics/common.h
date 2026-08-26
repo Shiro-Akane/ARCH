@@ -14,17 +14,25 @@
 
 namespace arch::cuda
 {
-using BurnOdeMatrixWorkspace = OdeMatrixWorkspace<DenseMatrixData>;
+template <int N>
+using BurnOdeMatrixWorkspaceFor =
+    OdeMatrixWorkspace<DenseMatrixData<N>>;
 
+// Compatibility surface for focused maximum-size policy tests. Production
+// storage is allocated with BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>.
+using BurnOdeMatrixWorkspace =
+    BurnOdeMatrixWorkspaceFor<BurnLimits::MAX_ODE_NEQ>;
+
+template <int N>
 ARCH_INLINE bool burn_ode_workspace_preflight(
-    const BurnOdeMatrixWorkspace* workspaces,
+    const BurnOdeMatrixWorkspaceFor<N>* workspaces,
     std::size_t workspace_count, std::size_t required_count)
 {
     if (required_count == 0) return true;
     return workspaces != nullptr
         && workspace_count >= required_count
         && reinterpret_cast<std::uintptr_t>(workspaces)
-               % alignof(BurnOdeMatrixWorkspace) == 0;
+               % alignof(BurnOdeMatrixWorkspaceFor<N>) == 0;
 }
 
 struct BurnInteriorEffect

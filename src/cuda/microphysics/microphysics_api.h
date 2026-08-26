@@ -9,15 +9,18 @@
 namespace arch::cuda
 {
 template <typename NetType, template <typename, typename, typename> class Solver,
-          typename EosPolicy>
+          typename EosPolicy, int MatrixExtent>
 ARCH_INLINE void execute_ode_policy(
-    BurnPolicyCell& cell, BurnOdeMatrixWorkspace& workspace,
+    BurnPolicyCell& cell,
+    BurnOdeMatrixWorkspaceFor<MatrixExtent>& workspace,
     const EosPolicy& eos, const BurnConfigView& burn_cfg)
 {
+    static_assert(MatrixExtent >= NetType::ODE_NEQ);
     cell.eint_old = DriverBurn::recover_burn_internal_energy(
         cell.fluid.rho, cell.state[NetType::ODE_NEQ - 1], cell.state, eos);
     cell.dt_recommended = cell.burn_dt;
-    cell.ode = Solver<NetType, DenseMatrixData, DenseLUSolver>::integrate_report(
+    cell.ode = Solver<NetType, DenseMatrixData<MatrixExtent>,
+                      DenseLUSolver>::integrate_report(
         cell.state, cell.fluid.rho, cell.burn_dt, eos, burn_cfg,
         workspace, cell.dt_recommended);
     cell.ode.dt_recommended = cell.dt_recommended;
@@ -27,11 +30,13 @@ ARCH_INLINE void execute_ode_policy(
 }
 
 template <typename NetType, template <typename, typename, typename> class Solver,
-          typename EosPolicy>
+          typename EosPolicy, int MatrixExtent>
 ARCH_INLINE void execute_burn_policy_cell(
-    BurnPolicyCell& cell, BurnOdeMatrixWorkspace& workspace,
+    BurnPolicyCell& cell,
+    BurnOdeMatrixWorkspaceFor<MatrixExtent>& workspace,
     const EosPolicy& eos, const BurnConfigView& burn_cfg)
 {
+    static_assert(MatrixExtent >= NetType::ODE_NEQ);
     cell.enuc_rate = 0.0;
     cell.limiter_candidate = DriverBurn::INACTIVE_LIMITER_CANDIDATE;
     cell.interior_effect.interior_written = false;
@@ -53,7 +58,8 @@ ARCH_INLINE void execute_burn_policy_cell(
 
     const double burn_dt = cell.burn_dt;
     cell.dt_recommended = burn_dt;
-    cell.ode = Solver<NetType, DenseMatrixData, DenseLUSolver>::integrate_report(
+    cell.ode = Solver<NetType, DenseMatrixData<MatrixExtent>,
+                      DenseLUSolver>::integrate_report(
         cell.state, cell.fluid.rho, burn_dt, eos, burn_cfg,
         workspace, cell.dt_recommended);
     cell.ode.dt_recommended = cell.dt_recommended;

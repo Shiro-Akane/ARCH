@@ -11,6 +11,8 @@
  */
 
 #include <cmath>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -23,14 +25,100 @@
 #include "../grid/Grid.h"
 #include "../interface/ProblemGenerator.h"
 #include "../io/IO.h"
+#include "../physics/eos/eosdispatch.h"
+#include "dispatch/BackendCapabilities.h"
+#include "dispatch/PolicyDescriptor.h"
+
+#ifndef ARCH_CUDA_BUILD_ENABLED
+#define ARCH_CUDA_BUILD_ENABLED 0
+#endif
 
 // Integrator-specific translation units expose these narrow dispatch entries.
-void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK3(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
+void Dispatch_Euler(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                    const RunState&,
+                    const arch::dispatch::ResolvedExecutionPlan&,
+                    const arch::dispatch::ExecutionRequirements&,
+                    const arch::dispatch::BackendResolution&,
+                    arch::dispatch::StartupOrder&);
+void Dispatch_RK2(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                  const RunState&,
+                  const arch::dispatch::ResolvedExecutionPlan&,
+                  const arch::dispatch::ExecutionRequirements&,
+                  const arch::dispatch::BackendResolution&,
+                  arch::dispatch::StartupOrder&);
+void Dispatch_RK3(amr::AMRControl&, const SimConfig&, const SpeciesManager&,
+                  const RunState&,
+                  const arch::dispatch::ResolvedExecutionPlan&,
+                  const arch::dispatch::ExecutionRequirements&,
+                  const arch::dispatch::BackendResolution&,
+                  arch::dispatch::StartupOrder&);
 
 namespace
 {
+
+template <class List>
+std::string_view policy_name(typename List::id_type id)
+{
+    constexpr auto descriptors =
+        arch::dispatch::make_policy_descriptors<List>();
+    for (const auto& descriptor : descriptors)
+        if (descriptor.id == id) return descriptor.canonical_name;
+    throw std::logic_error("resolved policy has no descriptor");
+}
+
+const char* backend_name(arch::dispatch::ComputeBackend backend)
+{
+    using arch::dispatch::ComputeBackend;
+    switch (backend) {
+    case ComputeBackend::Cpu: return "cpu";
+    case ComputeBackend::Cuda: return "cuda";
+    case ComputeBackend::Auto: return "auto";
+    }
+    throw std::logic_error("invalid backend id");
+}
+
+void write_backend_sidecar(
+    const SimConfig& config,
+    const arch::dispatch::ResolvedExecutionPlan& plan,
+    const arch::dispatch::BackendResolution& resolution)
+{
+    using namespace arch::dispatch;
+    const std::filesystem::path directory = config.Get<std::string>(
+        "log_dir", config.io.out_dir);
+    std::filesystem::create_directories(directory);
+    const std::filesystem::path path =
+        directory / (config.io.base_name + "_backend_plan.txt");
+    std::ofstream output(path, std::ios::trunc);
+    if (!output)
+        throw std::runtime_error("cannot write backend resolution sidecar");
+    output << "schema=1\n"
+           << "requested=" << backend_name(resolution.requested_backend) << '\n'
+           << "resolved=" << backend_name(resolution.resolved_backend) << '\n'
+           << "capability_code="
+           << static_cast<unsigned int>(resolution.code) << '\n'
+           << "fallback_reason=" << resolution.fallback_reason << '\n'
+           << "device_ordinal=" << resolution.device.ordinal << '\n'
+           << "device_name=" << resolution.device.device_name.data() << '\n'
+           << "compute_capability=" << resolution.device.compute_major << '.'
+           << resolution.device.compute_minor << '\n'
+           << "runtime_version=" << resolution.device.runtime_version << '\n'
+           << "driver_version=" << resolution.device.driver_version << '\n'
+           << "flux=" << policy_name<FluxPolicies>(plan.flux) << '\n'
+           << "reconstruction="
+           << policy_name<ReconstructionPolicies>(plan.reconstruction) << '\n'
+           << "limiter=" << policy_name<LimiterPolicies>(plan.limiter) << '\n'
+           << "time=" << policy_name<TimeIntegratorPolicies>(
+                  plan.time_integrator) << '\n'
+           << "eos=" << policy_name<EosPolicies>(plan.eos) << '\n'
+           << "network=" << policy_name<NetworkPolicies>(plan.network) << '\n'
+           << "ode=" << policy_name<OdeSolverPolicies>(plan.ode_solver) << '\n'
+           << "linear=" << policy_name<LinearSolverPolicies>(
+                  plan.linear_solver) << '\n'
+           << "diffusion=" << policy_name<DiffusionIntegratorPolicies>(
+                  plan.diffusion_integrator) << '\n';
+    if (!output)
+        throw std::runtime_error("failed writing backend resolution sidecar");
+}
 
 /**
  * @brief Returns the physical label for one logical coordinate axis.
@@ -89,39 +177,6 @@ void print_amr_resolution_summary(const SimConfig& config)
     }
 }
 
-// Helper: Determine Ghost Cells based on Config
-int determine_required_ng(const SimConfig &config)
-{
-    std::string recon = config.numerics.reconstruction;
-
-    int ng_recon = 1; // default PCM
-
-    if (recon == "pcm" || recon == "PCM")
-    {
-        ng_recon = 1;
-    }
-    else if (recon == "muscl" || recon == "MUSCL")
-    {
-        ng_recon = 2;
-    }
-    else if (recon == "ppm" || recon == "PPM" || recon == "weno5")
-    {
-        ng_recon = 3; // PPM/WENO uses a wider stencil.
-    }
-    else
-    {
-        ng_recon = 2;
-    }
-
-    int ng_flux = 1;
-    if (config.numerics.solver_name == "SomeHighOrderFlux")
-    {
-        ng_flux = 3;
-    }
-
-    return std::max(ng_recon, ng_flux);
-}
-
 } // namespace
 
 // The Public Dispatch Function
@@ -133,7 +188,44 @@ void DispatchSolver(const std::string &solver_name,
 {
     std::cout << "[Dispatch] Initializing System..." << std::endl;
 
-    int required_ng = determine_required_ng(config);
+    using namespace arch::dispatch;
+    StartupOrder startup_order;
+    const auto requested_backend = parse_compute_backend(
+        config.execution.compute_backend);
+    if (!requested_backend.ok)
+        throw std::runtime_error(std::string(requested_backend.error));
+
+    const auto resolved_plan = resolve_execution_plan(
+        config, [&] {
+            return inspect_eos_table_rank(
+                EOSDispatcher::table_path(config, "Tabular"));
+        }, specs.count());
+    if (!resolved_plan.ok)
+        throw std::runtime_error(std::string(resolved_plan.error));
+    const ResolvedExecutionPlan& plan = resolved_plan.value;
+    startup_order.record(StartupEvent::Parsed);
+    const auto resolved_requirements =
+        resolve_execution_requirements(config, specs.count());
+    if (!resolved_requirements.ok)
+        throw std::runtime_error(std::string(resolved_requirements.error));
+    const ExecutionRequirements& requirements = resolved_requirements.value;
+    startup_order.record(StartupEvent::RequirementsBuilt);
+
+    const RuntimeProbeResult probe = probe_runtime_native({
+        requested_backend.value,
+        static_cast<bool>(ARCH_CUDA_BUILD_ENABLED),
+        config.execution.cuda_device});
+    startup_order.record(StartupEvent::Probed);
+    const CapabilityResult support = query_support(plan, requirements, probe);
+    startup_order.record(StartupEvent::SupportQueried);
+    const BackendResolution backend = resolve_backend(
+        requested_backend.value, support, probe,
+        StartupPhase::BeforeConstruction);
+    startup_order.record(StartupEvent::Resolved);
+    write_backend_sidecar(config, plan, backend);
+    const ProblemInitializationContext initialization{plan.eos};
+
+    const int required_ng = requirements.required_ghost_depth;
     if (required_ng > amr::MAX_NG) {
         throw std::runtime_error("Required ghost cells exceed AMR static MAX_NG!");
     }
@@ -159,7 +251,7 @@ void DispatchSolver(const std::string &solver_name,
         std::cout << "[Dispatch] Initializing Root Grid (Level 0)..." << std::endl;
         amr_ctrl.tree->InitRootGrid(config, specs.count());
         std::cout << "[Dispatch] Initializing Data via Problem Generator..." << std::endl;
-        problem.InitializeData(amr_ctrl, config, specs);
+        problem.InitializeData(amr_ctrl, config, specs, initialization);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
         print_amr_resolution_summary(config);
@@ -197,22 +289,23 @@ void DispatchSolver(const std::string &solver_name,
                   << " (CFL_diff = " << config.physics.diffusion.diff_cfl << ")" << std::endl;
     }
 
-    const std::string &time_int = config.numerics.time_integrator;
-    if (time_int == "RK2" || time_int == "SSPRK2")
+    if (plan.time_integrator == arch::dispatch::TimeIntegratorId::Rk2)
     {
-        Dispatch_RK2(amr_ctrl, config, specs, run_state);
+        Dispatch_RK2(amr_ctrl, config, specs, run_state, plan, requirements,
+                     backend, startup_order);
     }
-    else if (time_int == "RK3" || time_int == "SSPRK3")
+    else if (plan.time_integrator == arch::dispatch::TimeIntegratorId::Rk3)
     {
-        Dispatch_RK3(amr_ctrl, config, specs, run_state);
+        Dispatch_RK3(amr_ctrl, config, specs, run_state, plan, requirements,
+                     backend, startup_order);
     }
-    else if (time_int == "Euler" || time_int == "RK1")
+    else if (plan.time_integrator == arch::dispatch::TimeIntegratorId::Euler)
     {
-        Dispatch_Euler(amr_ctrl, config, specs, run_state);
+        Dispatch_Euler(amr_ctrl, config, specs, run_state, plan, requirements,
+                       backend, startup_order);
     }
     else
     {
-        std::cerr << "[Warning] Unknown time integrator '" << time_int << "', defaulting to SSPRK2." << std::endl;
-        Dispatch_RK2(amr_ctrl, config, specs, run_state);
+        throw std::logic_error("resolved time integrator has no dispatcher");
     }
 }

@@ -66,9 +66,12 @@ public:
      * @param grid  Input: Grid topology.
      * @param eos   Input: Equation of State for variable conversion.
      */
-    void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs) override
+    void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config,
+                        const SpeciesManager &specs,
+                        ProblemInitializationContext context) override
     {
-        ProblemHelper::detail::PopulateState(amr_ctrl, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
+        ProblemHelper::detail::PopulateState(amr_ctrl, config, specs, context,
+            [&](const PointCoords& p, PrimitiveData& data) {
             user_init(p, data);
         });
     }
@@ -93,9 +96,12 @@ public:
         user_model.Setup(config, specs);
     }
 
-    void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs) override
+    void InitializeData(amr::AMRControl &amr_ctrl, const SimConfig &config,
+                        const SpeciesManager &specs,
+                        ProblemInitializationContext context) override
     {
-        ProblemHelper::detail::PopulateState(amr_ctrl, config, specs, [&](const PointCoords& p, PrimitiveData& data) {
+        ProblemHelper::detail::PopulateState(amr_ctrl, config, specs, context,
+            [&](const PointCoords& p, PrimitiveData& data) {
             user_model.Init(p, data);
         });
     }

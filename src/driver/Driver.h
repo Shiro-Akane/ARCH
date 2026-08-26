@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -28,8 +29,11 @@
 #include "DriverBurn.h"
 #include "DriverControl.h"
 #include "DriverUtils.h"
+#include "ComputeBackend.h"
 #include "StageScheduler.h"
 #include "TopologyIdentityRegistry.h"
+#include "dispatch/BackendCapabilities.h"
+#include "dispatch/ResolvedExecutionPlan.h"
 
 // AMR and I/O services.
 #include "../amr/AMRControl.h"
@@ -42,6 +46,11 @@
 #include "../numerics/diffusion/DiffFunction.h"
 #include "../numerics/integrator/IHydroSolver.h"
 #include "../physics/gravity/IGravityPolicy.h"
+
+#if ARCH_CUDA_BUILD_ENABLED
+#include "../cuda/common/CudaLaunchConfig.h"
+#include "../cuda/runtime/CudaBackend.h"
+#endif
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -63,8 +72,17 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const std::string& integrator_name,
                     const SimConfig &config,
                     const SpeciesManager &specs,
-                    const RunState &start_state)
+                    const RunState &start_state,
+                    const arch::dispatch::ResolvedExecutionPlan* resolved_plan = nullptr,
+                    const arch::dispatch::ExecutionRequirements* execution_requirements = nullptr,
+                    const arch::dispatch::BackendResolution* backend_resolution = nullptr,
+                    arch::dispatch::StartupOrder* startup_order = nullptr)
 {
+    if (resolved_plan == nullptr || execution_requirements == nullptr
+        || backend_resolution == nullptr || startup_order == nullptr) {
+        throw std::invalid_argument(
+            "resolved execution inputs are required by the Driver");
+    }
     // Initialize output scheduling, time-step control, and run counters.
     SimulationController ctrl(config, start_state);
 
@@ -91,6 +109,15 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     MonotonicSchedulerClock scheduler_clock;
     std::unique_ptr<StateResidencyLedger> residency_ledger;
     std::vector<amr::BlockHandle> stage_handles;
+    std::unique_ptr<arch::backend::ComputeBackend> compute_backend;
+    arch::backend::StorageGenerationIssuer storage_generation_issuer;
+    const bool use_cuda = backend_resolution->resolved_backend
+        == arch::dispatch::ComputeBackend::Cuda;
+
+#if !ARCH_CUDA_BUILD_ENABLED
+    if (use_cuda)
+        throw std::logic_error("CUDA backend selected by a CPU-only build");
+#endif
 
     const auto observe_topology = [&] {
         std::vector<TopologyObservation> observations;
@@ -184,10 +211,94 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         return U.rho * sound_speed * sound_speed / pressure;
     };
-    // Apply physical boundaries and exchange every internal AMR face through
-    // one path. Regrid, hydro, and derivative plot fields all require the same
-    // synchronized fluid halos.
+    const auto host_transfer_view = [](FluidState& state) {
+        const std::size_t cells = state.rho.size();
+        const std::size_t species = static_cast<std::size_t>(
+            state.GetNumSpecies());
+        return arch::backend::HostStateTransferView{
+            state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+            state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
+            species == 0 ? nullptr : state.mass_fractions.data(), cells,
+            species, species == 0 ? 0 : cells};
+    };
+    const auto backend_access = [&](StateSlot slot) {
+        if (!compute_backend)
+            throw std::logic_error("CUDA backend is not constructed");
+        return arch::backend::BackendStateAccess{
+            compute_backend->block_handle(),
+            compute_backend->storage_generation(), slot};
+    };
+    const auto trace_backend_operation = [&] (
+        arch::backend::BackendOperation operation, StateSlot slot,
+        const arch::backend::BackendCounters& before) {
+        const auto after = compute_backend->counters();
+        compute_backend->append_trace({
+            static_cast<std::uint64_t>(ctrl.step_count), operation,
+            compute_backend->block_handle(),
+            compute_backend->storage_generation(), slot,
+            residency_ledger->inspect({compute_backend->block_handle(), slot}),
+            after.bytes_h2d - before.bytes_h2d,
+            after.bytes_d2h - before.bytes_d2h,
+            after.kernel_count - before.kernel_count,
+            after.stream_sync_count - before.stream_sync_count});
+    };
+    const auto complete_device_boundary = [&](StateSlot slot) {
+        const auto handle = compute_backend->block_handle();
+        const arch::state::StateKey key{handle, slot};
+        const auto coherence = residency_ledger->inspect(key);
+        residency_ledger->require_readable(
+            key, {ExecutionSide::Device, coherence.interior.version,
+                  true, false});
+        const auto before = compute_backend->counters();
+        StageExecutionContext context{
+            ExecutionSide::Device, *residency_ledger, scheduler_clock};
+        (void)arch::scheduler::complete_boundary(
+            context, stage_handles, slot, coherence.interior.version,
+            [&](StateSlot requested, arch::state::StateVersion version,
+                arch::state::CompletionToken token) {
+                return compute_backend->execute_physical_boundary(
+                    backend_access(requested), version, token);
+            });
+        trace_backend_operation(
+            arch::backend::BackendOperation::PhysicalBoundary, slot, before);
+    };
+    // Keep one synchronization boundary for regrid, hydro, checkpoint, and
+    // derivative output. CPU executes physical faces plus neighbor exchange;
+    // CUDA completes the device boundary and materializes accepted Current
+    // only when a host consumer actually needs it.
     const auto synchronize_fluid_ghosts = [&] {
+        if (compute_backend) {
+            const auto handle = compute_backend->block_handle();
+            const arch::state::StateKey key{handle, StateSlot::Current};
+            auto coherence = residency_ledger->inspect(key);
+            if (!arch::state::side_can_read(
+                    coherence.ghost.residency, ExecutionSide::Device)
+                || coherence.ghost.version != coherence.interior.version
+                || coherence.ghost_source_version
+                    != coherence.interior.version) {
+                complete_device_boundary(StateSlot::Current);
+                coherence = residency_ledger->inspect(key);
+            }
+            const bool host_current = arch::state::side_can_read(
+                    coherence.interior.residency, ExecutionSide::Host)
+                && arch::state::side_can_read(
+                    coherence.ghost.residency, ExecutionSide::Host)
+                && coherence.ghost.version == coherence.interior.version
+                && coherence.ghost_source_version
+                    == coherence.interior.version;
+            if (!host_current) {
+                amr::Block& block = amr_ctrl.pool->GetBlock(
+                    amr_ctrl.tree->GetActiveBlocks().front());
+                (void)arch::backend::transfer_state_regions(
+                    *compute_backend, *residency_ledger, scheduler_clock,
+                    backend_access(StateSlot::Current),
+                    host_transfer_view(block.fluid_state),
+                    arch::state::PendingTransferPhase::PendingD2H,
+                    static_cast<std::uint64_t>(ctrl.step_count),
+                    arch::backend::BackendOperation::Materialize);
+            }
+            return;
+        }
 #pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
             amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
@@ -289,6 +400,53 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     }
     ctrl.print_header(has_burn, has_diff);
 
+    if (use_cuda) {
+#if ARCH_CUDA_BUILD_ENABLED
+        const auto& active = amr_ctrl.tree->GetActiveBlocks();
+        if (active.size() != 1 || stage_handles.size() != 1
+            || execution_requirements->amr
+            || execution_requirements->uniform_multiblock) {
+            throw std::logic_error(
+                "CUDA E3 requires one static active block");
+        }
+        const arch::state::StateKey current_key{
+            stage_handles.front(), StateSlot::Current};
+        auto current_coherence = residency_ledger->inspect(current_key);
+        if (!arch::state::side_can_read(
+                current_coherence.ghost.residency, ExecutionSide::Host)
+            || current_coherence.ghost.version
+                != current_coherence.interior.version
+            || current_coherence.ghost_source_version
+                != current_coherence.interior.version) {
+            synchronize_fluid_ghosts();
+        }
+
+        amr::Block& block = amr_ctrl.pool->GetBlock(active.front());
+        const arch::backend::StorageGeneration storage =
+            storage_generation_issuer.issue();
+        compute_backend = arch::cuda::make_cuda_backend(
+            block, stage_handles.front(), storage,
+            backend_resolution->device.ordinal,
+            arch::cuda::make_cuda_launch_config(*resolved_plan, config),
+            specs, bc_handler.logical_plan(), eos);
+        startup_order->record(arch::dispatch::StartupEvent::Constructed);
+        startup_order->record(arch::dispatch::StartupEvent::Allocated);
+        (void)arch::backend::transfer_state_regions(
+            *compute_backend, *residency_ledger, scheduler_clock,
+            backend_access(StateSlot::Current),
+            host_transfer_view(block.fluid_state),
+            arch::state::PendingTransferPhase::PendingH2D, 0,
+            arch::backend::BackendOperation::InitialUpload);
+        startup_order->record(arch::dispatch::StartupEvent::Running);
+#else
+        throw std::logic_error("CUDA backend is unavailable");
+#endif
+    } else {
+        startup_order->record(arch::dispatch::StartupEvent::Constructed);
+        startup_order->record(arch::dispatch::StartupEvent::Allocated);
+        startup_order->record(arch::dispatch::StartupEvent::Running);
+    }
+
     // Main Time Loop (Method of Lines)
     bool skip_regrid_once = start_state.resume_after_regrid;
     bool advanced_any_step = false;
@@ -297,7 +455,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         // Step A: IO Routine & AMR Regrid
         if (skip_regrid_once) {
             skip_regrid_once = false;
-        } else if (ctrl.step_count % config.amr.regrid_interval == 0) {
+        } else if (!compute_backend
+                   && ctrl.step_count % config.amr.regrid_interval == 0) {
             const auto pre_commit_topology = observe_topology();
             topology_registry.validate_committed_snapshot(
                 pre_commit_topology);
@@ -380,8 +539,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         bool do_plt, do_chk;
         ctrl.check_io(do_plt, do_chk);
 
-        if (do_plt) {
+        if (do_plt || (compute_backend && do_chk)) {
             synchronize_fluid_ghosts();
+        }
+        if (do_plt) {
             write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
         }
         if (do_chk) {
@@ -395,16 +556,29 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 "active topology and scheduler handles disagree");
         std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
         hydro_dt_candidates.reserve(active_blocks.size());
-        for (int block_id : active_blocks) {
-            amr::Block& b = amr_ctrl.pool->GetBlock(block_id);
-            double dt_b = adaptive_dt(b.fluid_state, eos, b.grid, cfl);
+        if (compute_backend) {
+            const amr::Block& b = amr_ctrl.pool->GetBlock(
+                active_blocks.front());
             hydro_dt_candidates.push_back({
-                dt_b,
+                compute_backend->compute_hydro_dt(
+                    backend_access(StateSlot::Current), cfl),
                 DriverReduction::make_block_reduction_key(
                     b.level, b.morton_code, b.logical_x1, b.logical_x2,
                     b.logical_x3,
                     DriverReduction::BlockReductionComponent::Hydro),
                 true});
+        } else {
+            for (int block_id : active_blocks) {
+                amr::Block& b = amr_ctrl.pool->GetBlock(block_id);
+                double dt_b = adaptive_dt(b.fluid_state, eos, b.grid, cfl);
+                hydro_dt_candidates.push_back({
+                    dt_b,
+                    DriverReduction::make_block_reduction_key(
+                        b.level, b.morton_code, b.logical_x1, b.logical_x2,
+                        b.logical_x3,
+                        DriverReduction::BlockReductionComponent::Hydro),
+                    true});
+            }
         }
         double dt_hydro = DriverReduction::reduce_block_minimum(
             1e99, hydro_dt_candidates);
@@ -420,8 +594,11 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             diffusion_dt_candidates.reserve(active_blocks.size());
             for (const int block_id : active_blocks) {
                 const amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
-                const double block_dt = DiffFlux::adaptive_dt_diff(
-                    block.fluid_state, eos, block.grid, config, 1.0);
+                const double block_dt = compute_backend
+                    ? compute_backend->compute_diffusion_dt(
+                        backend_access(StateSlot::Current))
+                    : DiffFlux::adaptive_dt_diff(
+                        block.fluid_state, eos, block.grid, config, 1.0);
                 diffusion_dt_candidates.push_back({
                     block_dt,
                     DriverReduction::make_block_reduction_key(
@@ -432,11 +609,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             }
             dt_diff_fe = DriverReduction::reduce_block_minimum(
                 1e99, diffusion_dt_candidates);
-            const std::string& diff_integrator = config.physics.diffusion.integrator;
-            const bool rkl1 = diff_integrator == "RKL1" || diff_integrator == "rkl1";
-            const bool rkl2 = diff_integrator == "RKL2" || diff_integrator == "rkl2";
+            const bool rkl1 = resolved_plan->diffusion_integrator
+                == arch::dispatch::DiffusionIntegratorId::Rkl1;
+            const bool rkl2 = resolved_plan->diffusion_integrator
+                == arch::dispatch::DiffusionIntegratorId::Rkl2;
             if (!rkl1 && !rkl2) {
-                throw std::runtime_error("Unknown diffusion integrator: " + diff_integrator);
+                throw std::logic_error(
+                    "enabled diffusion received an invalid resolved route");
             }
             const DiffFunction::RKLOrder rkl_order = rkl1
                 ? DiffFunction::RKLOrder::First : DiffFunction::RKLOrder::Second;
@@ -453,18 +632,91 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         // Step C: Symmetric Strang update
         // B(dt/2) D(dt/2) H(dt) D(dt/2) B(dt/2)
         StageExecutionContext stage_context{
-            ExecutionSide::Host, *residency_ledger, scheduler_clock};
+            compute_backend ? ExecutionSide::Device : ExecutionSide::Host,
+            *residency_ledger, scheduler_clock};
         ScopedStageBinding stage_binding(stage_context, stage_handles);
 
         const auto advance_diffusion = [&](double diffusion_dt) {
             if (!has_diff || diffusion_dt <= 0.0) return;
 
+            if (compute_backend) {
+                complete_device_boundary(StateSlot::Current);
+                const auto copy_one = [&](StateSlot destination) {
+                    const auto before = compute_backend->counters();
+                    (void)arch::scheduler::copy_slot(
+                        stage_context, stage_handles, StateSlot::Current,
+                        destination, [&] {
+                            compute_backend->copy_state_slot(
+                                backend_access(StateSlot::Current),
+                                backend_access(destination));
+                        });
+                    trace_backend_operation(
+                        arch::backend::BackendOperation::DiffusionCopy,
+                        destination, before);
+                };
+                copy_one(StateSlot::Scratch);
+                copy_one(StateSlot::Next);
+
+                const bool rkl1 = resolved_plan->diffusion_integrator
+                    == arch::dispatch::DiffusionIntegratorId::Rkl1;
+                const bool rkl2 = resolved_plan->diffusion_integrator
+                    == arch::dispatch::DiffusionIntegratorId::Rkl2;
+                if (!rkl1 && !rkl2)
+                    throw std::logic_error(
+                        "CUDA diffusion received an invalid resolved route");
+                const DiffFunction::RKLOrder order = rkl1
+                    ? DiffFunction::RKLOrder::First
+                    : DiffFunction::RKLOrder::Second;
+                const int stages = DiffFunction::compute_stages(
+                    order, diffusion_dt, dt_diff_fe,
+                    config.physics.diffusion.diff_cfl,
+                    config.physics.diffusion.max_stages);
+                const auto before = compute_backend->counters();
+                const auto executor = [&] (
+                    const arch::scheduler::RklPlan& plan,
+                    const arch::scheduler::RklStageDescriptor& descriptor,
+                    arch::state::CompletionToken token) {
+                    return compute_backend->execute_diffusion_stage(
+                        backend_access(StateSlot::Current), plan, descriptor,
+                        diffusion_dt, dt_diff_fe, token);
+                };
+                const auto reflux = [] (
+                    const arch::scheduler::RklPlan&,
+                    const arch::scheduler::RklStageDescriptor&,
+                    arch::state::CompletionToken token) { return token; };
+                const auto boundary = [&] (
+                    StateSlot slot, arch::state::StateVersion version,
+                    arch::state::CompletionToken token) {
+                    return compute_backend->execute_physical_boundary(
+                        backend_access(slot), version, token);
+                };
+                const auto rotation = [&] (arch::state::SlotRotation value) {
+                    compute_backend->rotate_slots(
+                        backend_access(StateSlot::Current), value);
+                };
+                if (rkl1) {
+                    (void)arch::scheduler::execute_single_rkl1_lane(
+                        stage_context, stage_handles, stages, executor,
+                        reflux, boundary, rotation);
+                } else {
+                    (void)arch::scheduler::execute_single_rkl2_lane(
+                        stage_context, stage_handles, stages, executor,
+                        reflux, boundary, rotation);
+                }
+                trace_backend_operation(
+                    arch::backend::BackendOperation::DiffusionStage,
+                    StateSlot::Current, before);
+                return;
+            }
+
             if (active_blocks.size() > 1) {
-                const std::string& diff_integrator = config.physics.diffusion.integrator;
-                const bool rkl1 = diff_integrator == "RKL1" || diff_integrator == "rkl1";
-                const bool rkl2 = diff_integrator == "RKL2" || diff_integrator == "rkl2";
+                const bool rkl1 = resolved_plan->diffusion_integrator
+                    == arch::dispatch::DiffusionIntegratorId::Rkl1;
+                const bool rkl2 = resolved_plan->diffusion_integrator
+                    == arch::dispatch::DiffusionIntegratorId::Rkl2;
                 if (!rkl1 && !rkl2) {
-                    throw std::runtime_error("Unknown diffusion integrator: " + diff_integrator);
+                    throw std::logic_error(
+                        "enabled diffusion received an invalid resolved route");
                 }
                 if (!reported_composite_diffusion) {
                     std::cout << "[Diffusion] multi-block AMR uses composite "
@@ -481,11 +733,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                         amr_ctrl, diffusion_dt, dt_diff_fe, bc_handler, eos, config);
                 }
             } else {
-                Numerics::Diffusion::dispatch_diffusion(config, [&](auto& integrator) {
+                const auto execute_single = [&](auto& integrator) {
                     amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks.front());
                     integrator.integrate(block, eos, block.grid, config,
                                          diffusion_dt, dt_diff_fe, bc_handler);
-                });
+                };
+                Numerics::Diffusion::dispatch_diffusion(
+                    config, resolved_plan->diffusion_integrator,
+                    execute_single);
             }
         };
 
@@ -494,6 +749,22 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             (void)arch::scheduler::execute_burn_first_lane(
                 stage_context, stage_handles,
                 [&](arch::state::CompletionToken token) {
+            if (compute_backend) {
+                const auto before = compute_backend->counters();
+                const auto result = compute_backend->execute_burn(
+                    backend_access(StateSlot::Current), 0.5 * dt, token);
+                if (!arch::state::is_complete(result.completion)
+                    || result.completion.value != token.value
+                    || result.status != 0 || result.failed_cells != 0) {
+                    throw std::runtime_error("CUDA first burn failed");
+                }
+                dt_burn_global = DriverBurn::combine_burn_minimum(
+                    dt_burn_global, result.dt_recommended);
+                trace_backend_operation(
+                    arch::backend::BackendOperation::Burn,
+                    StateSlot::Current, before);
+                return result.completion;
+            }
             std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
             #pragma omp parallel for schedule(dynamic, 1)
             for (size_t i = 0; i < active_blocks.size(); ++i) {
@@ -530,9 +801,59 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         advance_diffusion(0.5 * dt);
 
         // C3. Hydrodynamics Step (dt)
-        synchronize_fluid_ghosts();
-
-        integrator_solve(amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
+        if (compute_backend) {
+            complete_device_boundary(StateSlot::Current);
+            const auto before = compute_backend->counters();
+            const auto executor = [&] (
+                const arch::scheduler::StageDescriptor& descriptor,
+                arch::state::CompletionToken token) {
+                return compute_backend->execute_hydro_stage(
+                    backend_access(StateSlot::Current), descriptor, dt,
+                    token);
+            };
+            const auto boundary = [&] (
+                StateSlot slot, arch::state::StateVersion version,
+                arch::state::CompletionToken token) {
+                return compute_backend->execute_physical_boundary(
+                    backend_access(slot), version, token);
+            };
+            const auto rotation = [&] (arch::state::SlotRotation value) {
+                compute_backend->rotate_slots(
+                    backend_access(StateSlot::Current), value);
+            };
+            const auto reflux = [] (const arch::scheduler::HydroPlan&,
+                                    StateSlot,
+                                    arch::state::CompletionToken token) {
+                return token;
+            };
+            switch (resolved_plan->time_integrator) {
+            case arch::dispatch::TimeIntegratorId::Euler:
+                (void)arch::scheduler::execute_euler_lane(
+                    stage_context, stage_handles, executor, boundary,
+                    rotation, reflux);
+                break;
+            case arch::dispatch::TimeIntegratorId::Rk2:
+                (void)arch::scheduler::execute_rk2_lane(
+                    stage_context, stage_handles, executor, boundary,
+                    rotation, reflux);
+                break;
+            case arch::dispatch::TimeIntegratorId::Rk3:
+                (void)arch::scheduler::execute_rk3_lane(
+                    stage_context, stage_handles, executor, boundary,
+                    rotation, reflux);
+                break;
+            default:
+                throw std::logic_error(
+                    "CUDA Hydro received an invalid time integrator");
+            }
+            trace_backend_operation(
+                arch::backend::BackendOperation::HydroStage,
+                StateSlot::Current, before);
+        } else {
+            synchronize_fluid_ghosts();
+            integrator_solve(
+                amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
+        }
 
         // C4. Diffusion Step (1/2 dt)
         advance_diffusion(0.5 * dt);
@@ -542,6 +863,22 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             (void)arch::scheduler::execute_burn_second_lane(
                 stage_context, stage_handles,
                 [&](arch::state::CompletionToken token) {
+            if (compute_backend) {
+                const auto before = compute_backend->counters();
+                const auto result = compute_backend->execute_burn(
+                    backend_access(StateSlot::Current), 0.5 * dt, token);
+                if (!arch::state::is_complete(result.completion)
+                    || result.completion.value != token.value
+                    || result.status != 0 || result.failed_cells != 0) {
+                    throw std::runtime_error("CUDA second burn failed");
+                }
+                dt_burn_global = DriverBurn::combine_burn_minimum(
+                    dt_burn_global, result.dt_recommended);
+                trace_backend_operation(
+                    arch::backend::BackendOperation::Burn,
+                    StateSlot::Current, before);
+                return result.completion;
+            }
             std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
             #pragma omp parallel for schedule(dynamic, 1)
             for (size_t i = 0; i < active_blocks.size(); ++i) {
@@ -587,6 +924,51 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         synchronize_fluid_ghosts();
         write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
         write_checkpoint(false);
+    }
+
+    if (compute_backend) {
+        const std::filesystem::path directory = config.Get<std::string>(
+            "log_dir", config.io.out_dir);
+        std::filesystem::create_directories(directory);
+        const std::filesystem::path trace_path = directory
+            / (config.io.base_name + "_backend_trace.tsv");
+        std::ofstream trace_output(trace_path, std::ios::trunc);
+        if (!trace_output)
+            throw std::runtime_error("cannot write CUDA backend trace");
+        trace_output
+            << "macro_step\toperation\tuid\tepoch\tstorage_generation\tslot"
+               "\tinterior_residency\tinterior_version\tinterior_pending"
+               "\tinterior_token\tinterior_token_state\tghost_residency"
+               "\tghost_version\tghost_source_version\tghost_pending"
+               "\tghost_token\tghost_token_state\tbytes_h2d\tbytes_d2h"
+               "\tkernel_count\tstream_sync_count\n";
+        for (const auto& record : compute_backend->trace_snapshot()) {
+            const auto& interior = record.coherence.interior;
+            const auto& ghost = record.coherence.ghost;
+            trace_output
+                << record.macro_step << '\t'
+                << static_cast<unsigned int>(record.operation) << '\t'
+                << record.block.uid.value << '\t'
+                << record.block.epoch.value << '\t'
+                << record.storage.value << '\t'
+                << static_cast<unsigned int>(record.slot) << '\t'
+                << static_cast<unsigned int>(interior.residency) << '\t'
+                << interior.version.value << '\t'
+                << static_cast<unsigned int>(interior.pending_transfer) << '\t'
+                << interior.completion.value << '\t'
+                << static_cast<unsigned int>(interior.completion.state) << '\t'
+                << static_cast<unsigned int>(ghost.residency) << '\t'
+                << ghost.version.value << '\t'
+                << record.coherence.ghost_source_version.value << '\t'
+                << static_cast<unsigned int>(ghost.pending_transfer) << '\t'
+                << ghost.completion.value << '\t'
+                << static_cast<unsigned int>(ghost.completion.state) << '\t'
+                << record.bytes_h2d << '\t' << record.bytes_d2h << '\t'
+                << record.kernel_count << '\t'
+                << record.stream_sync_count << '\n';
+        }
+        if (!trace_output)
+            throw std::runtime_error("failed writing CUDA backend trace");
     }
 
     std::cout << ">>> Simulation Done. Total Steps: " << ctrl.step_count

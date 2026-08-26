@@ -478,7 +478,8 @@ inline ParseResult<BoundaryFeature> parse_boundary(std::string_view value) noexc
 
 template <class TableRankResolver>
 ParseResult<ResolvedExecutionPlan> resolve_execution_plan(
-    const SimConfig& config, TableRankResolver&& table_rank)
+    const SimConfig& config, TableRankResolver&& table_rank,
+    std::size_t species_count = 0)
 {
     ParseResult<ResolvedExecutionPlan> result{};
     const auto flux = parse_registered_policy<FluxPolicies>(config.numerics.solver_name);
@@ -518,8 +519,16 @@ ParseResult<ResolvedExecutionPlan> resolve_execution_plan(
             config.physics.burn.network_name);
         const auto ode = parse_registered_policy<OdeSolverPolicies>(
             config.physics.burn.odeconfig.ode_solver);
-        const auto linear = parse_registered_policy<LinearSolverPolicies>(
-            config.physics.burn.odeconfig.linear_solver);
+        ParseResult<LinearSolverId> linear{};
+        if (ascii_iequals(
+                config.physics.burn.odeconfig.linear_solver, "auto")) {
+            linear.value = species_count > BurnLimits::MAX_SPECIES
+                ? LinearSolverId::SparseKlu : LinearSolverId::DenseLu;
+            linear.ok = true;
+        } else {
+            linear = parse_registered_policy<LinearSolverPolicies>(
+                config.physics.burn.odeconfig.linear_solver);
+        }
         if (!network.ok || network.value == NetworkId::None) {
             result.error = "unknown burn network";
             return result;
