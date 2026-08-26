@@ -317,6 +317,12 @@ if(BUILD_TESTING)
         ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 
+    add_executable(arch_boundary_plan tests/test_boundary_plan.cpp)
+    target_compile_features(arch_boundary_plan PRIVATE cxx_std_20)
+    target_include_directories(arch_boundary_plan PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME boundary_plan COMMAND arch_boundary_plan)
+
     add_executable(arch_resolved_execution_plan
         tests/test_resolved_execution_plan.cpp)
     target_compile_features(arch_resolved_execution_plan PRIVATE cxx_std_20)
@@ -436,6 +442,16 @@ if(ARCH_ENABLE_CUDA)
         set_target_properties(arch_cuda_diffusion_rkl_parity PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
+        add_executable(arch_cuda_boundary_plan_parity
+            tests/cuda/test_boundary_plan_parity.cu)
+        target_compile_features(arch_cuda_boundary_plan_parity PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_boundary_plan_parity PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(arch_cuda_boundary_plan_parity PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_boundary_plan_parity PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
         add_executable(arch_cuda_policy_resolution
             tests/cuda/test_cuda_policy_resolution.cu)
         target_compile_features(arch_cuda_policy_resolution PRIVATE cxx_std_20)
@@ -454,6 +470,8 @@ if(ARCH_ENABLE_CUDA)
             COMMAND arch_cuda_burn_policy_parity helpers)
         add_test(NAME diffusion_rkl_parity
             COMMAND arch_cuda_diffusion_rkl_parity)
+        add_test(NAME boundary_plan_parity
+            COMMAND arch_cuda_boundary_plan_parity)
         add_test(NAME cuda_policy_resolution
             COMMAND arch_cuda_policy_resolution)
         add_test(NAME cuda_reduction_contract
@@ -487,6 +505,11 @@ if(ARCH_ENABLE_OPENMP)
     if(TARGET arch_reduction_contract)
         target_link_libraries(arch_reduction_contract PRIVATE OpenMP::OpenMP_CXX)
         target_compile_definitions(arch_reduction_contract PRIVATE
+            ARCH_OPENMP_ENABLED=1)
+    endif()
+    if(TARGET arch_boundary_plan)
+        target_link_libraries(arch_boundary_plan PRIVATE OpenMP::OpenMP_CXX)
+        target_compile_definitions(arch_boundary_plan PRIVATE
             ARCH_OPENMP_ENABLED=1)
     endif()
     message(STATUS "[DEP] OpenMP enabled for target ARCH")
