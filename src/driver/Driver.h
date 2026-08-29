@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -23,6 +24,9 @@
 #include <limits>
 #include <memory>
 #include <stdexcept>
+#include <span>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 // Driver-local orchestration.
@@ -37,6 +41,7 @@
 
 // AMR and I/O services.
 #include "../amr/AMRControl.h"
+#include "../amr/TopologyTransaction.h"
 #include "../io/IO.h"
 
 // Numerical and physical policy interfaces.
@@ -89,6 +94,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     const NumericsConfig &num_cfg = config.numerics;
     BCHandler bc_handler{config};
 
+    const auto prepare_regrid = [&](int step, double time) {
+        (void)step;
+        (void)time;
+        return amr_ctrl.tree->PrepareRegrid(config);
+    };
+
     using arch::scheduler::MonotonicSchedulerClock;
     using arch::scheduler::ScopedStageBinding;
     using arch::scheduler::StageExecutionContext;
@@ -107,6 +118,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
          static_cast<std::uint32_t>(std::max(1, config.grid.nblockx3))},
         config.amr.lrefinemax});
     MonotonicSchedulerClock scheduler_clock;
+    std::uint64_t next_amr_transaction_id = 1;
     std::unique_ptr<StateResidencyLedger> residency_ledger;
     std::vector<amr::BlockHandle> stage_handles;
     std::unique_ptr<arch::backend::ComputeBackend> compute_backend;
@@ -120,9 +132,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         throw std::logic_error("CUDA backend selected by a CPU-only build");
 #endif
 
-    const auto observe_topology = [&] {
+    const auto observe_blocks = [&](std::span<const int> active) {
         std::vector<TopologyObservation> observations;
-        const auto& active = amr_ctrl.tree->GetActiveBlocks();
         observations.reserve(active.size());
         for (const int pool_index : active) {
             const amr::Block& block = amr_ctrl.pool->GetBlock(pool_index);
@@ -133,6 +144,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     block.logical_x2, block.logical_x3}});
         }
         return observations;
+    };
+    const auto observe_topology = [&] {
+        const auto& active = amr_ctrl.tree->GetActiveBlocks();
+        return observe_blocks(active);
     };
 
     const auto current_interior_version = [&] {
@@ -340,18 +355,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         if (residency_ledger && !stage_handles.empty())
             publish_current_ghost();
     };
-    // Complete deferred thermodynamic regrids with synchronized ghost zones
-    // and conservative prolongation before the first output or hydro step.
-    const int deferred_initial_passes = amr_ctrl.tree->ConsumeDeferredInitialRefinement();
-    if (deferred_initial_passes > 0) {
-        std::cout << "[Dispatch] Performing initial AMR refinement loop..." << std::endl;
-        for (int pass = 0; pass < deferred_initial_passes; ++pass) {
-            synchronize_fluid_ghosts();
-            if (!amr_ctrl.tree->Regrid(config)) break;
-            std::cout << "           -> Refining initial condition (Pass " << pass + 1 << ")..." << std::endl;
-        }
-        synchronize_fluid_ghosts();
-    }
+    const int deferred_initial_passes =
+        amr_ctrl.tree->ConsumeDeferredInitialRefinement();
 
     auto initial_candidate =
         topology_registry.stage_adoption(observe_topology());
@@ -396,6 +401,198 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (initial_topology.handles_in_observation_order != stage_handles)
         throw std::logic_error("initial topology commit result mismatch");
     amr_ctrl.BindActiveHandles(stage_handles);
+
+    const auto perform_host_regrid = [&](int step, double time) {
+        topology_registry.validate_committed_snapshot(observe_topology());
+
+        // Freeze one complete, readable Host source topology before staging.
+        // This is also the rollback authority for the old hierarchy.
+        synchronize_fluid_ghosts();
+        const std::vector<int> old_active(
+            amr_ctrl.tree->GetActiveBlocks().begin(),
+            amr_ctrl.tree->GetActiveBlocks().end());
+
+        auto prepared = prepare_regrid(step, time);
+        auto topology_candidate = topology_registry.stage_reconciliation(
+            observe_blocks(prepared.proposed_active_blocks()));
+        const auto& proposed = topology_candidate.reconciliation();
+        if (proposed.topology_changed != prepared.topology_changed())
+            throw std::logic_error(
+                "staged AMR topology disagrees with identity reconciliation");
+
+        if (!prepared.topology_changed()) {
+            const auto reconciliation = topology_registry.commit_after_success(
+                std::move(topology_candidate),
+                [&](const auto&) { prepared.PublishNoChangeNoexcept(); });
+            stage_handles = reconciliation.handles_in_observation_order;
+            amr_ctrl.BindActiveHandles(stage_handles);
+            return false;
+        }
+
+        if (stage_handles.empty())
+            throw std::logic_error("AMR regrid has no source handles");
+        if (next_amr_transaction_id
+            == std::numeric_limits<std::uint64_t>::max())
+            throw std::overflow_error("AMR transaction ID exhausted");
+        const amr::AmrPlanScope scope{
+            next_amr_transaction_id++, stage_handles.front().epoch,
+            proposed.epoch};
+        prepared.BuildMigrationPlans(
+            stage_handles, proposed.handles_in_observation_order, scope);
+
+        amr::TopologyTransaction transaction(
+            scope.transaction_id, scope.from_epoch, scope.to_epoch);
+        transaction.begin_migration();
+        transaction.require_scope(prepared.prolongation_plan());
+        transaction.require_scope(prepared.restriction_plan());
+        prepared.ExecuteMigration();
+        transaction.mark_ready();
+
+        struct HostStateBackup {
+            int pool_index = -1;
+            FluidState state;
+        };
+        struct RegridPublication {
+            std::unique_ptr<StateResidencyLedger> ledger;
+            std::vector<amr::BlockHandle> handles;
+            arch::scheduler::PublicationWitness topology_witness{};
+            std::vector<HostStateBackup> source_backups;
+        };
+        static_assert(std::is_nothrow_swappable_v<FluidState>);
+
+        std::unique_ptr<StateResidencyLedger> staged_ledger;
+        std::vector<amr::BlockHandle> staged_handles;
+        try {
+            (void)topology_registry.commit_after_success(
+                    std::move(topology_candidate),
+                    [&](const auto& committed_topology) {
+                        transaction.commit_after_success(
+                            [&](const amr::AmrPlanScope& transaction_scope) {
+                                if (transaction_scope != scope
+                                    || committed_topology.epoch
+                                        != transaction_scope.to_epoch)
+                                    throw std::logic_error(
+                                        "AMR publication scope drifted");
+                                RegridPublication payload;
+                                payload.ledger =
+                                    std::make_unique<StateResidencyLedger>(
+                                        committed_topology.epoch);
+                                payload.handles = committed_topology
+                                    .handles_in_observation_order;
+                                payload.topology_witness =
+                                    scheduler_clock.next_publication();
+                                for (const amr::BlockHandle handle
+                                     : payload.handles) {
+                                    payload.ledger->register_block(
+                                        handle,
+                                        payload.topology_witness.version,
+                                        payload.topology_witness.completion);
+                                }
+                                payload.source_backups.reserve(
+                                    old_active.size());
+                                for (const int pool_index : old_active) {
+                                    payload.source_backups.push_back({
+                                        pool_index,
+                                        amr_ctrl.pool->GetBlock(pool_index)
+                                            .fluid_state});
+                                }
+                                return payload;
+                            },
+                            [&](const amr::AmrPlanScope& transaction_scope,
+                                RegridPublication& payload) {
+                                const auto restore_source_states = [&]() noexcept {
+                                    for (auto& backup
+                                         : payload.source_backups) {
+                                        using std::swap;
+                                        swap(amr_ctrl.pool
+                                                 ->GetBlock(backup.pool_index)
+                                                 .fluid_state,
+                                             backup.state);
+                                    }
+                                };
+                                try {
+                                    if (transaction_scope != scope)
+                                        throw std::logic_error(
+                                            "AMR finalizer scope drifted");
+                                    prepared.ActivateForFinalization();
+#pragma omp parallel for schedule(dynamic, 1)
+                                    for (std::size_t index = 0;
+                                         index < amr_ctrl.tree
+                                                     ->GetActiveBlocks()
+                                                     .size();
+                                         ++index) {
+                                        amr::Block& block =
+                                            amr_ctrl.pool->GetBlock(
+                                                amr_ctrl.tree
+                                                    ->GetActiveBlocks()[index]);
+                                        bc_handler.apply(
+                                            block.fluid_state, block.grid);
+                                    }
+                                    amr_ctrl.ghost_exchange.ExecuteExchange(
+                                        amr_ctrl.pool, amr_ctrl.tree,
+                                        config.grid.dim,
+                                        &amr::Block::fluid_state,
+                                        payload.handles);
+                                    StageExecutionContext staged_context{
+                                        ExecutionSide::Host, *payload.ledger,
+                                        scheduler_clock};
+                                    (void)arch::scheduler::complete_boundary(
+                                        staged_context, payload.handles,
+                                        StateSlot::Current,
+                                        payload.topology_witness.version,
+                                        [](StateSlot,
+                                           arch::state::StateVersion,
+                                           arch::state::CompletionToken token) {
+                                            return token;
+                                        });
+                                    for (const amr::BlockHandle handle
+                                         : payload.handles) {
+                                        payload.ledger->require_readable(
+                                            {handle, StateSlot::Current},
+                                            {ExecutionSide::Host,
+                                             payload.topology_witness.version,
+                                             true, true});
+                                    }
+                                } catch (...) {
+                                    restore_source_states();
+                                    prepared.AbortNoexcept();
+                                    throw;
+                                }
+                            },
+                            [&](RegridPublication&& payload) noexcept {
+                                prepared.PublishNoexcept();
+                                staged_ledger = std::move(payload.ledger);
+                                staged_handles = std::move(payload.handles);
+                            });
+                    });
+        } catch (...) {
+            if (transaction.state()
+                != amr::TopologyTransactionState::Committed) {
+                transaction.abort(
+                    [&]() noexcept { prepared.AbortNoexcept(); });
+            }
+            throw;
+        }
+
+        stage_handles = std::move(staged_handles);
+        residency_ledger = std::move(staged_ledger);
+        amr_ctrl.BindActiveHandles(stage_handles);
+        prepared.ReleaseRetired();
+        return true;
+    };
+
+    // Complete deferred thermodynamic regrids through the same transaction
+    // coordinator used by production regrids before the first output/step.
+    if (deferred_initial_passes > 0) {
+        std::cout << "[Dispatch] Performing initial AMR refinement loop..."
+                  << std::endl;
+        for (int pass = 0; pass < deferred_initial_passes; ++pass) {
+            if (!perform_host_regrid(ctrl.step_count, ctrl.t_current)) break;
+            std::cout << "           -> Refining initial condition (Pass "
+                      << pass + 1 << ")..." << std::endl;
+        }
+        synchronize_fluid_ghosts();
+    }
 
     std::cout << ">>> Simulation Started | Solver: " << integrator_name
               << " | Entropy Fix Coeff: " << num_cfg.entropy_fix_coeff;
@@ -500,86 +697,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             skip_regrid_once = false;
         } else if (!compute_backend
                    && ctrl.step_count % config.amr.regrid_interval == 0) {
-            const auto pre_commit_topology = observe_topology();
-            topology_registry.validate_committed_snapshot(
-                pre_commit_topology);
-            synchronize_fluid_ghosts();
-            const bool mesh_changed = amr_ctrl.tree->Regrid(config);
-            auto topology_candidate =
-                topology_registry.stage_reconciliation(observe_topology());
-            if (topology_candidate.reconciliation().topology_changed
-                != mesh_changed) {
-                throw std::logic_error(
-                    "CPU regrid result disagrees with logical topology");
-            }
-
-            // Regrid creates (or restricts into) blocks whose ghost zones have
-            // not participated in the pre-regrid exchange. RK stage 1 reads
-            // those zones immediately, so synchronize the new hierarchy before
-            // any reconstruction can use a reset halo value.
-            if (mesh_changed) {
-                std::unique_ptr<StateResidencyLedger> staged_ledger;
-                std::vector<amr::BlockHandle> staged_handles;
-                const auto reconciliation =
-                    topology_registry.commit_after_success(
-                        std::move(topology_candidate),
-                        [&](const auto& proposed) {
-                            auto replacement =
-                                std::make_unique<StateResidencyLedger>(
-                                    proposed.epoch);
-                            const arch::scheduler::PublicationWitness
-                                topology_witness =
-                                    scheduler_clock.next_publication();
-                            for (const amr::BlockHandle handle
-                                 : proposed.handles_in_observation_order) {
-                                replacement->register_block(
-                                    handle, topology_witness.version,
-                                    topology_witness.completion);
-                            }
-
-#pragma omp parallel for schedule(dynamic, 1)
-                            for (size_t i = 0;
-                                 i < amr_ctrl.tree->GetActiveBlocks().size();
-                                 ++i) {
-                                amr::Block& b = amr_ctrl.pool->GetBlock(
-                                    amr_ctrl.tree->GetActiveBlocks()[i]);
-                                bc_handler.apply(b.fluid_state, b.grid);
-                            }
-                            amr_ctrl.ghost_exchange.ExecuteExchange(
-                                amr_ctrl.pool, amr_ctrl.tree,
-                                config.grid.dim, &amr::Block::fluid_state,
-                                proposed.handles_in_observation_order);
-                            StageExecutionContext staged_context{
-                                ExecutionSide::Host, *replacement,
-                                scheduler_clock};
-                            (void)arch::scheduler::complete_boundary(
-                                staged_context,
-                                proposed.handles_in_observation_order,
-                                StateSlot::Current,
-                                topology_witness.version,
-                                [](StateSlot, arch::state::StateVersion,
-                                   arch::state::CompletionToken token) {
-                                    return token;
-                                });
-                            staged_handles =
-                                proposed.handles_in_observation_order;
-                            staged_ledger = std::move(replacement);
-                        });
-                stage_handles = std::move(staged_handles);
-                residency_ledger = std::move(staged_ledger);
-                if (reconciliation.handles_in_observation_order
-                    != stage_handles) {
-                    throw std::logic_error(
-                        "topology commit result and staged handles disagree");
-                }
-                amr_ctrl.BindActiveHandles(stage_handles);
-            } else {
-                const auto reconciliation =
-                    topology_registry.commit_after_success(
-                        std::move(topology_candidate), [](const auto&) {});
-                stage_handles = reconciliation.handles_in_observation_order;
-                amr_ctrl.BindActiveHandles(stage_handles);
-            }
+            (void)perform_host_regrid(ctrl.step_count, ctrl.t_current);
         }
 
         bool do_plt, do_chk;

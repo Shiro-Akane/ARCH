@@ -17,11 +17,17 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <map>
 #include <memory>
+#include <set>
+#include <span>
 #include <stdexcept>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
+#include "AmrTransferPlans.h"
 #include "MemoryPool.h"
 #include "Morton.h"
 
@@ -498,113 +504,539 @@ public:
         }
     }
 
-    bool Regrid(const SimConfig& config) {
+    using PreApplyRegridObserver = std::function<void(const AmrTree&)>;
+
+    class PreparedRegrid {
+    public:
+        PreparedRegrid(const PreparedRegrid&) = delete;
+        PreparedRegrid& operator=(const PreparedRegrid&) = delete;
+        PreparedRegrid& operator=(PreparedRegrid&&) = delete;
+
+        PreparedRegrid(PreparedRegrid&& other) noexcept
+            : owner_(std::exchange(other.owner_, nullptr)),
+              config_(std::move(other.config_)),
+              old_active_(std::move(other.old_active_)),
+              proposed_active_(std::move(other.proposed_active_)),
+              allocated_(std::move(other.allocated_)),
+              retire_(std::move(other.retire_)),
+              old_refinement_(std::move(other.old_refinement_)),
+              refinements_(std::move(other.refinements_)),
+              restrictions_(std::move(other.restrictions_)),
+              old_handles_(std::move(other.old_handles_)),
+              proposed_handles_(std::move(other.proposed_handles_)),
+              prolongation_(std::move(other.prolongation_)),
+              restriction_(std::move(other.restriction_)),
+              changed_(other.changed_), plans_built_(other.plans_built_),
+              migration_complete_(other.migration_complete_),
+              activated_(other.activated_), published_(other.published_),
+              retired_released_(other.retired_released_)
+        {
+            other.published_ = true;
+            other.retired_released_ = true;
+        }
+
+        ~PreparedRegrid() { abort_noexcept(); }
+
+        bool topology_changed() const noexcept { return changed_; }
+
+        std::span<const int> proposed_active_blocks() const noexcept
+        {
+            return proposed_active_;
+        }
+
+        const ProlongationPlan& prolongation_plan() const
+        {
+            require_owner();
+            if (!plans_built_)
+                throw std::logic_error("prolongation plan is not built");
+            return prolongation_;
+        }
+
+        const RestrictionPlan& restriction_plan() const
+        {
+            require_owner();
+            if (!plans_built_)
+                throw std::logic_error("restriction plan is not built");
+            return restriction_;
+        }
+
+        void BuildMigrationPlans(std::span<const BlockHandle> old_handles,
+                                 std::span<const BlockHandle> proposed_handles,
+                                 const AmrPlanScope& scope)
+        {
+            require_owner();
+            if (!changed_ || plans_built_ || old_handles.size() != old_active_.size()
+                || proposed_handles.size() != proposed_active_.size()
+                || scope.transaction_id == 0
+                || scope.from_epoch == scope.to_epoch)
+                throw std::invalid_argument("invalid staged AMR migration inputs");
+            old_handles_.assign(old_handles.begin(), old_handles.end());
+            proposed_handles_.assign(
+                proposed_handles.begin(), proposed_handles.end());
+            std::tie(prolongation_, restriction_) = make_migration_plans(scope);
+            plans_built_ = true;
+        }
+
+        void ExecuteMigration()
+        {
+            require_owner();
+            if (!plans_built_ || migration_complete_)
+                throw std::logic_error("staged AMR migration is not executable");
+            const auto expected = make_migration_plans(prolongation_.scope);
+            if (expected.first.operations != prolongation_.operations
+                || expected.first.fingerprint != prolongation_.fingerprint
+                || expected.second.operations != restriction_.operations
+                || expected.second.fingerprint != restriction_.fingerprint)
+                throw std::invalid_argument("staged AMR migration plan drifted");
+
+            // All plans and endpoint lowering validate before the first write.
+            validate_amr_plan(prolongation_);
+            validate_amr_plan(restriction_);
+            std::map<BlockHandle, int> old_lowering;
+            std::map<BlockHandle, int> proposed_lowering;
+            for (std::size_t index = 0; index < old_active_.size(); ++index)
+                old_lowering.emplace(old_handles_[index], old_active_[index]);
+            for (std::size_t index = 0; index < proposed_active_.size(); ++index)
+                proposed_lowering.emplace(
+                    proposed_handles_[index], proposed_active_[index]);
+
+            // The logical plan, rather than the staging relations, is the
+            // execution authority.  Multiple field records for one endpoint
+            // pair collapse to the one existing all-field reconstruction leaf.
+            std::map<std::pair<BlockHandle, BlockHandle>, int>
+                prolongation_groups;
+            for (const auto& operation : prolongation_.operations) {
+                const int child_index =
+                    (operation.destination.logical.logical_x1 & 1U)
+                    | ((owner_->root_grid.dim >= 2
+                            ? operation.destination.logical.logical_x2 & 1U
+                            : 0U)
+                       << 1U)
+                    | ((owner_->root_grid.dim == 3
+                            ? operation.destination.logical.logical_x3 & 1U
+                            : 0U)
+                       << 2U);
+                const auto [entry, inserted] = prolongation_groups.emplace(
+                    std::pair{operation.source.handle,
+                              operation.destination.handle},
+                    child_index);
+                if (!inserted && entry->second != child_index)
+                    throw std::invalid_argument(
+                        "prolongation endpoint child index drifted");
+            }
+            for (const auto& [endpoints, child_index]
+                 : prolongation_groups) {
+                const Block& parent = owner_->pool->GetBlock(
+                    old_lowering.at(endpoints.first));
+                owner_->pool->GetBlock(
+                    proposed_lowering.at(endpoints.second))
+                    .InterpolateFromCoarse(
+                        parent, child_index, owner_->root_grid.dim,
+                        config_.numerics.sml_rho,
+                        config_.numerics.min_eint);
+            }
+
+            // Restriction needs the complete child group in geometric child
+            // order.  Recover that order from the logical source coordinates
+            // carried by the plan before invoking the shared averaging leaf.
+            std::map<BlockHandle, std::map<int, BlockHandle>>
+                restriction_groups;
+            for (const auto& operation : restriction_.operations) {
+                const int child_index =
+                    (operation.source.logical.logical_x1 & 1U)
+                    | ((owner_->root_grid.dim >= 2
+                            ? operation.source.logical.logical_x2 & 1U
+                            : 0U)
+                       << 1U)
+                    | ((owner_->root_grid.dim == 3
+                            ? operation.source.logical.logical_x3 & 1U
+                            : 0U)
+                       << 2U);
+                auto& children = restriction_groups[
+                    operation.destination.handle];
+                const auto [entry, inserted] = children.emplace(
+                    child_index, operation.source.handle);
+                if (!inserted && entry->second != operation.source.handle)
+                    throw std::invalid_argument(
+                        "restriction child endpoint drifted");
+            }
+            const int expected_children = 1 << owner_->root_grid.dim;
+            for (const auto& [destination, child_handles]
+                 : restriction_groups) {
+                if (static_cast<int>(child_handles.size())
+                    != expected_children)
+                    throw std::invalid_argument(
+                        "restriction plan has an incomplete child group");
+                const Block* children[8]{};
+                for (const auto& [child_index, handle] : child_handles) {
+                    if (child_index < 0 || child_index >= expected_children)
+                        throw std::invalid_argument(
+                            "restriction child index is out of range");
+                    children[child_index] = &owner_->pool->GetBlock(
+                        old_lowering.at(handle));
+                }
+                owner_->pool->GetBlock(proposed_lowering.at(destination))
+                    .AverageToCoarse(
+                        children, owner_->root_grid.dim,
+                        config_.numerics.sml_rho,
+                        config_.numerics.min_eint);
+            }
+            migration_complete_ = true;
+        }
+
+        void ActivateForFinalization()
+        {
+            require_owner();
+            if (!changed_ || !migration_complete_ || activated_ || published_)
+                throw std::logic_error("staged AMR topology is not activatable");
+            owner_->active_blocks.swap(proposed_active_);
+            try {
+                owner_->SortActiveBlocks();
+                owner_->UpdateNeighbors(config_);
+                activated_ = true;
+            } catch (...) {
+                owner_->active_blocks.swap(proposed_active_);
+                owner_->SortActiveBlocks();
+                owner_->UpdateNeighbors(config_);
+                throw;
+            }
+        }
+
+        void PublishNoexcept() noexcept
+        {
+            if (owner_ == nullptr || !activated_ || published_)
+                std::terminate();
+            published_ = true;
+        }
+
+        void PublishNoChangeNoexcept() noexcept
+        {
+            if (owner_ == nullptr || changed_ || published_)
+                std::terminate();
+            published_ = true;
+        }
+
+        void ReleaseRetired()
+        {
+            if (owner_ == nullptr || !published_ || retired_released_)
+                throw std::logic_error("retired AMR blocks are not releasable");
+            for (const int id : retire_) owner_->pool->FreeBlock(id);
+            retire_.clear();
+            allocated_.clear();
+            retired_released_ = true;
+        }
+
+        void AbortNoexcept() noexcept { abort_noexcept(); }
+
+    private:
+        friend class AmrTree;
+
+        struct RefinementSnapshot {
+            int id = -1;
+            int refine_flag = 0;
+            int criterion_refine_flag = 0;
+            double refinement_indicator = 0.0;
+        };
+        struct RefinementRelation {
+            int parent = -1;
+            std::vector<int> children;
+        };
+        struct RestrictionRelation {
+            std::vector<int> children;
+            int parent = -1;
+        };
+
+        PreparedRegrid(AmrTree& owner, const SimConfig& config)
+            : owner_(&owner), config_(config), old_active_(owner.active_blocks)
+        {
+            old_refinement_.reserve(old_active_.size());
+            for (const int id : old_active_) {
+                const Block& block = owner_->pool->GetBlock(id);
+                old_refinement_.push_back({
+                    id, block.refine_flag, block.criterion_refine_flag,
+                    block.refinement_indicator});
+            }
+        }
+
+        void require_owner() const
+        {
+            if (owner_ == nullptr || published_)
+                throw std::logic_error("staged AMR regrid is no longer usable");
+        }
+
+        static LogicalBlockKey logical_key(const Block& block, int dim)
+        {
+            return {dim, block.level, block.logical_x1,
+                    block.logical_x2, block.logical_x3};
+        }
+
+        std::pair<ProlongationPlan, RestrictionPlan>
+        make_migration_plans(const AmrPlanScope& scope) const
+        {
+            std::map<int, BlockHandle> old_lowering;
+            std::map<int, BlockHandle> proposed_lowering;
+            for (std::size_t index = 0; index < old_active_.size(); ++index)
+                old_lowering.emplace(old_active_[index], old_handles_[index]);
+            for (std::size_t index = 0; index < proposed_active_.size(); ++index)
+                proposed_lowering.emplace(
+                    proposed_active_[index], proposed_handles_[index]);
+
+            ProlongationPlan prolongation{};
+            RestrictionPlan restriction{};
+            prolongation.dimension = restriction.dimension = owner_->root_grid.dim;
+            prolongation.scope = restriction.scope = scope;
+            const std::array<std::uint32_t, 3> extent{
+                static_cast<std::uint32_t>(BLOCK_NX),
+                static_cast<std::uint32_t>(owner_->root_grid.dim >= 2 ? BLOCK_NY : 1),
+                static_cast<std::uint32_t>(owner_->root_grid.dim == 3 ? BLOCK_NZ : 1)};
+            const LogicalAmrBox active_box{{0, 0, 0}, extent};
+            const auto append_fields = [&](auto& plan,
+                                           const AmrEndpoint& source,
+                                           const AmrEndpoint& destination,
+                                           RefinementRule rule,
+                                           int species) {
+                const auto append = [&](AmrField field, int component) {
+                    plan.operations.push_back({
+                        0, source, destination, active_box, active_box,
+                        AmrAxis::X, AmrSide::Lower, field, component,
+                        rule, 1.0, 1.0});
+                };
+                append(AmrField::Rho, -1);
+                append(AmrField::MomU, -1);
+                append(AmrField::MomV, -1);
+                append(AmrField::MomW, -1);
+                append(AmrField::Energy, -1);
+                for (int component = 0; component < species; ++component)
+                    append(AmrField::Species, component);
+            };
+
+            for (const auto& relation : refinements_) {
+                const Block& parent = owner_->pool->GetBlock(relation.parent);
+                const auto parent_handle = old_lowering.at(relation.parent);
+                const AmrEndpoint source{
+                    logical_key(parent, owner_->root_grid.dim), parent_handle};
+                for (const int child_id : relation.children) {
+                    const Block& child = owner_->pool->GetBlock(child_id);
+                    const AmrEndpoint destination{
+                        logical_key(child, owner_->root_grid.dim),
+                        proposed_lowering.at(child_id)};
+                    append_fields(
+                        prolongation, source, destination,
+                        RefinementRule::ConservativeMinmodProlongation,
+                        child.fluid_state.GetNumSpecies());
+                }
+            }
+            for (const auto& relation : restrictions_) {
+                const Block& parent = owner_->pool->GetBlock(relation.parent);
+                const AmrEndpoint destination{
+                    logical_key(parent, owner_->root_grid.dim),
+                    proposed_lowering.at(relation.parent)};
+                for (const int child_id : relation.children) {
+                    const Block& child = owner_->pool->GetBlock(child_id);
+                    const AmrEndpoint source{
+                        logical_key(child, owner_->root_grid.dim),
+                        old_lowering.at(child_id)};
+                    append_fields(
+                        restriction, source, destination,
+                        RefinementRule::VolumeRestriction,
+                        child.fluid_state.GetNumSpecies());
+                }
+            }
+            finalize_amr_plan(prolongation);
+            finalize_amr_plan(restriction);
+            return {std::move(prolongation), std::move(restriction)};
+        }
+
+        void abort_noexcept() noexcept
+        {
+            if (owner_ == nullptr || published_) return;
+            try {
+                if (activated_) {
+                    owner_->active_blocks.swap(proposed_active_);
+                    owner_->SortActiveBlocks();
+                    owner_->UpdateNeighbors(config_);
+                    activated_ = false;
+                }
+                for (const int id : allocated_) owner_->pool->FreeBlock(id);
+                for (const auto& snapshot : old_refinement_) {
+                    Block& block = owner_->pool->GetBlock(snapshot.id);
+                    block.refine_flag = snapshot.refine_flag;
+                    block.criterion_refine_flag = snapshot.criterion_refine_flag;
+                    block.refinement_indicator = snapshot.refinement_indicator;
+                }
+                allocated_.clear();
+                owner_ = nullptr;
+            } catch (...) {
+                std::terminate();
+            }
+        }
+
+        AmrTree* owner_ = nullptr;
+        SimConfig config_{};
+        std::vector<int> old_active_;
+        std::vector<int> proposed_active_;
+        std::vector<int> allocated_;
+        std::vector<int> retire_;
+        std::vector<RefinementSnapshot> old_refinement_;
+        std::vector<RefinementRelation> refinements_;
+        std::vector<RestrictionRelation> restrictions_;
+        std::vector<BlockHandle> old_handles_;
+        std::vector<BlockHandle> proposed_handles_;
+        ProlongationPlan prolongation_{};
+        RestrictionPlan restriction_{};
+        bool changed_ = false;
+        bool plans_built_ = false;
+        bool migration_complete_ = false;
+        bool activated_ = false;
+        bool published_ = false;
+        bool retired_released_ = false;
+    };
+
+    PreparedRegrid PrepareRegrid(
+        const SimConfig& config,
+        const PreApplyRegridObserver& observer = {})
+    {
+        PreparedRegrid prepared(*this, config);
         EvaluateRefinement(config);
         RippleCheck();
+        if (observer) observer(*this);
 
-        bool changed = false;
-        std::vector<int> new_active_blocks;
-        std::vector<int> blocks_to_free;
-
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            int b_id = active_blocks[i];
-            Block& b = pool->GetBlock(b_id);
-
-            if (b.refine_flag == 1) {
-                changed = true;
-                // Split
-                int num_children = 1 << root_grid.dim;
-                for (int c = 0; c < num_children; ++c) {
-                    int c_id = pool->AllocateBlock();
-                    Block& child = pool->GetBlock(c_id);
-                    child.level = b.level + 1;
-                    child.logical_x1 = (b.logical_x1 << 1) + ((c & 1) ? 1 : 0);
-                    child.logical_x2 = (b.logical_x2 << 1) + ((root_grid.dim >= 2 && (c & 2)) ? 1 : 0);
-                    child.logical_x3 = (b.logical_x3 << 1) + ((root_grid.dim == 3 && (c & 4)) ? 1 : 0);
-                    child.morton_code = encodeMorton(child.level, child.logical_x1, child.logical_x2, child.logical_x3);
-                    child.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
-
-                    int n_species = b.fluid_state.GetNumSpecies();
-                    child.fluid_state.InitSpecies(n_species);
-                    child.state_next.InitSpecies(n_species);
-                    child.state_scratch.InitSpecies(n_species);
-
-                    child.InterpolateFromCoarse(
-                        b, c, root_grid.dim, config.numerics.sml_rho,
-                        config.numerics.min_eint);
-
-                    new_active_blocks.push_back(c_id);
+        const int num_children = 1 << root_grid.dim;
+        for (const int block_id : active_blocks) {
+            Block& block = pool->GetBlock(block_id);
+            if (block.refine_flag == 1) {
+                prepared.changed_ = true;
+                typename PreparedRegrid::RefinementRelation relation{};
+                relation.parent = block_id;
+                relation.children.reserve(num_children);
+                for (int child_index = 0; child_index < num_children;
+                     ++child_index) {
+                    const int child_id = pool->AllocateBlock();
+                    prepared.allocated_.push_back(child_id);
+                    Block& child = pool->GetBlock(child_id);
+                    child.level = block.level + 1;
+                    child.logical_x1 = (block.logical_x1 << 1)
+                        + ((child_index & 1) ? 1 : 0);
+                    child.logical_x2 = (block.logical_x2 << 1)
+                        + ((root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
+                    child.logical_x3 = (block.logical_x3 << 1)
+                        + ((root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
+                    child.morton_code = encodeMorton(
+                        child.level, child.logical_x1,
+                        child.logical_x2, child.logical_x3);
+                    child.InitGeometry(
+                        root_grid, root_dx1, root_dx2, root_dx3);
+                    const int species = block.fluid_state.GetNumSpecies();
+                    child.fluid_state.InitSpecies(species);
+                    child.state_next.InitSpecies(species);
+                    child.state_scratch.InitSpecies(species);
+                    relation.children.push_back(child_id);
+                    prepared.proposed_active_.push_back(child_id);
                 }
-                blocks_to_free.push_back(b_id);
-            }
-            else if (b.refine_flag == -1) {
-                // Only the lowest-coordinate child initiates a sibling-group merge.
-                int num_children = 1 << root_grid.dim;
-                bool is_first = ((b.logical_x1 & 1) == 0) && ((root_grid.dim < 2) || ((b.logical_x2 & 1) == 0)) && ((root_grid.dim < 3) || ((b.logical_x3 & 1) == 0));
-
-                bool can_merge = is_first;
+                prepared.refinements_.push_back(std::move(relation));
+                prepared.retire_.push_back(block_id);
+            } else if (block.refine_flag == -1) {
+                const bool first = ((block.logical_x1 & 1) == 0)
+                    && (root_grid.dim < 2 || (block.logical_x2 & 1) == 0)
+                    && (root_grid.dim < 3 || (block.logical_x3 & 1) == 0);
+                bool can_merge = first;
                 std::vector<int> siblings;
                 if (can_merge) {
-                    siblings.push_back(b_id);
-                    for (int c = 1; c < num_children; ++c) {
-                        int nx = b.logical_x1 + ((c & 1) ? 1 : 0);
-                        int ny = b.logical_x2 + ((root_grid.dim >= 2 && (c & 2)) ? 1 : 0);
-                        int nz = b.logical_x3 + ((root_grid.dim == 3 && (c & 4)) ? 1 : 0);
-                        int sib_id = FindBlock(b.level, nx, ny, nz);
-                        if (sib_id == -1 || pool->GetBlock(sib_id).refine_flag != -1) {
+                    siblings.push_back(block_id);
+                    for (int child_index = 1; child_index < num_children;
+                         ++child_index) {
+                        const int x = block.logical_x1
+                            + ((child_index & 1) ? 1 : 0);
+                        const int y = block.logical_x2
+                            + ((root_grid.dim >= 2 && (child_index & 2)) ? 1 : 0);
+                        const int z = block.logical_x3
+                            + ((root_grid.dim == 3 && (child_index & 4)) ? 1 : 0);
+                        const int sibling = FindBlock(block.level, x, y, z);
+                        if (sibling == -1
+                            || pool->GetBlock(sibling).refine_flag != -1) {
                             can_merge = false;
                             break;
                         }
-                        siblings.push_back(sib_id);
+                        siblings.push_back(sibling);
                     }
                 }
-
                 if (can_merge) {
-                    changed = true;
-                    int c_id = pool->AllocateBlock();
-                    Block& parent = pool->GetBlock(c_id);
-                    parent.level = b.level - 1;
-                    parent.logical_x1 = b.logical_x1 >> 1;
-                    parent.logical_x2 = b.logical_x2 >> 1;
-                    parent.logical_x3 = b.logical_x3 >> 1;
-                    parent.morton_code = encodeMorton(parent.level, parent.logical_x1, parent.logical_x2, parent.logical_x3);
-                    parent.InitGeometry(root_grid, root_dx1, root_dx2, root_dx3);
-
-                    int n_species = b.fluid_state.GetNumSpecies();
-                    parent.fluid_state.InitSpecies(n_species);
-                    parent.state_next.InitSpecies(n_species);
-                    parent.state_scratch.InitSpecies(n_species);
-
-                    const Block* child_ptrs[8];
-                    for(int i=0; i<8; i++) child_ptrs[i] = nullptr;
-                    for (int i=0; i<num_children; i++) child_ptrs[i] = &pool->GetBlock(siblings[i]);
-
-                    parent.AverageToCoarse(
-                        child_ptrs, root_grid.dim, config.numerics.sml_rho,
-                        config.numerics.min_eint);
-
-                    new_active_blocks.push_back(c_id);
-                    for (int sib : siblings) {
-                        blocks_to_free.push_back(sib);
-                        pool->GetBlock(sib).refine_flag = 2; // Mark as handled and deleted
+                    prepared.changed_ = true;
+                    const int parent_id = pool->AllocateBlock();
+                    prepared.allocated_.push_back(parent_id);
+                    Block& parent = pool->GetBlock(parent_id);
+                    parent.level = block.level - 1;
+                    parent.logical_x1 = block.logical_x1 >> 1;
+                    parent.logical_x2 = block.logical_x2 >> 1;
+                    parent.logical_x3 = block.logical_x3 >> 1;
+                    parent.morton_code = encodeMorton(
+                        parent.level, parent.logical_x1,
+                        parent.logical_x2, parent.logical_x3);
+                    parent.InitGeometry(
+                        root_grid, root_dx1, root_dx2, root_dx3);
+                    const int species = block.fluid_state.GetNumSpecies();
+                    parent.fluid_state.InitSpecies(species);
+                    parent.state_next.InitSpecies(species);
+                    parent.state_scratch.InitSpecies(species);
+                    prepared.restrictions_.push_back({siblings, parent_id});
+                    prepared.proposed_active_.push_back(parent_id);
+                    for (const int sibling : siblings) {
+                        prepared.retire_.push_back(sibling);
+                        pool->GetBlock(sibling).refine_flag = 2;
                     }
                 } else {
-                    new_active_blocks.push_back(b_id); // Keep it since it couldn't merge
+                    prepared.proposed_active_.push_back(block_id);
                 }
-            } else if (b.refine_flag != 2) {
-                new_active_blocks.push_back(b_id);
+            } else if (block.refine_flag != 2) {
+                prepared.proposed_active_.push_back(block_id);
             }
         }
+        std::sort(prepared.proposed_active_.begin(),
+                  prepared.proposed_active_.end(),
+                  [this](int lhs, int rhs) {
+                      return pool->GetBlock(lhs).morton_code
+                          < pool->GetBlock(rhs).morton_code;
+                  });
+        return prepared;
+    }
 
-        for (int id : blocks_to_free) {
-            pool->FreeBlock(id);
+    bool Regrid(const SimConfig& config,
+                const PreApplyRegridObserver& observer = {})
+    {
+        auto prepared = PrepareRegrid(config, observer);
+        if (!prepared.topology_changed()) {
+            prepared.PublishNoChangeNoexcept();
+            return false;
         }
 
-        active_blocks = new_active_blocks;
-        SortActiveBlocks();
-        UpdateNeighbors(config);
-
-        return changed;
+        std::map<LogicalBlockKey, BlockUid> old_uids;
+        std::uint64_t next_uid = 1;
+        std::vector<BlockHandle> old_handles;
+        old_handles.reserve(active_blocks.size());
+        for (const int id : active_blocks) {
+            const auto key = PreparedRegrid::logical_key(
+                pool->GetBlock(id), root_grid.dim);
+            const BlockUid uid{next_uid++};
+            old_uids.emplace(key, uid);
+            old_handles.push_back({uid, {1}});
+        }
+        std::vector<BlockHandle> proposed_handles;
+        proposed_handles.reserve(prepared.proposed_active_.size());
+        for (const int id : prepared.proposed_active_) {
+            const auto key = PreparedRegrid::logical_key(
+                pool->GetBlock(id), root_grid.dim);
+            const auto found = old_uids.find(key);
+            const BlockUid uid = found == old_uids.end()
+                ? BlockUid{next_uid++} : found->second;
+            proposed_handles.push_back({uid, {2}});
+        }
+        prepared.BuildMigrationPlans(
+            old_handles, proposed_handles, {1, {1}, {2}});
+        prepared.ExecuteMigration();
+        prepared.ActivateForFinalization();
+        prepared.PublishNoexcept();
+        prepared.ReleaseRetired();
+        return true;
     }
 
     void UpdateNeighbors(const SimConfig& config) {
