@@ -94,6 +94,51 @@ void test_two_block_1d()
             "mutated logical plan retained a valid fingerprint");
 }
 
+void test_single_block_periodic_wrap()
+{
+    std::vector<SameLevelTopologyEntry> topology{
+        entry(key(1, 0), 13, 8)};
+    topology[0].neighbors[static_cast<std::size_t>(
+        ExchangeFace::X1Lower)] = topology[0].logical;
+    topology[0].neighbors[static_cast<std::size_t>(
+        ExchangeFace::X1Upper)] = topology[0].logical;
+
+    const auto plan = amr::make_same_level_exchange_plan(
+        topology, 1, {8, 1, 1}, 2, TopologyEpoch{8});
+    require(plan.operations.size() == 2,
+            "single-block periodic wrap must emit both directed faces");
+    require(plan.phases[0].first == 0 && plan.phases[0].count == 2
+                && plan.phases[1].count == 0
+                && plan.phases[2].count == 0,
+            "single-block periodic phase metadata drifted");
+
+    const auto& lower = plan.operations[0];
+    const auto& upper = plan.operations[1];
+    require(lower.source.logical == topology[0].logical
+                && lower.destination.logical == topology[0].logical
+                && lower.source.handle == topology[0].handle
+                && lower.destination.handle == topology[0].handle,
+            "periodic lower self-wrap endpoints drifted");
+    require(lower.destination_box.first
+                    == std::array<std::int32_t, 3>{-2, 0, 0}
+                && lower.source_box.first
+                    == std::array<std::int32_t, 3>{6, 0, 0},
+            "periodic lower self-wrap boxes drifted");
+    require(upper.source.logical == topology[0].logical
+                && upper.destination.logical == topology[0].logical
+                && upper.source.handle == topology[0].handle
+                && upper.destination.handle == topology[0].handle,
+            "periodic upper self-wrap endpoints drifted");
+    require(upper.destination_box.first
+                    == std::array<std::int32_t, 3>{8, 0, 0}
+                && upper.source_box.first
+                    == std::array<std::int32_t, 3>{0, 0, 0},
+            "periodic upper self-wrap boxes drifted");
+    require(amr::compute_same_level_exchange_fingerprint(plan)
+                == plan.fingerprint,
+            "single-block periodic fingerprint cannot be revalidated");
+}
+
 std::vector<SameLevelTopologyEntry> make_2x2()
 {
     std::vector<SameLevelTopologyEntry> result{
@@ -170,6 +215,20 @@ void test_invalid_topology_rejected()
         asymmetric_rejected = true;
     }
     require(asymmetric_rejected, "nonreciprocal neighbor relation accepted");
+
+    std::vector<SameLevelTopologyEntry> one_sided_self{
+        entry(key(1, 0), 31, 11)};
+    one_sided_self[0].neighbors[static_cast<std::size_t>(
+        ExchangeFace::X1Lower)] = one_sided_self[0].logical;
+    bool one_sided_self_rejected = false;
+    try {
+        (void)amr::make_same_level_exchange_plan(
+            one_sided_self, 1, {8, 1, 1}, 2, TopologyEpoch{11});
+    } catch (const std::invalid_argument&) {
+        one_sided_self_rejected = true;
+    }
+    require(one_sided_self_rejected,
+            "one-sided self-periodic neighbor relation accepted");
 }
 
 void test_logical_only_bootstrap_plan()
@@ -301,6 +360,7 @@ int main()
 {
     try {
         test_two_block_1d();
+        test_single_block_periodic_wrap();
         test_2x2_phase_and_permutation();
         test_invalid_topology_rejected();
         test_logical_only_bootstrap_plan();

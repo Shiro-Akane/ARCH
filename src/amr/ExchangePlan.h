@@ -282,8 +282,6 @@ inline SameLevelExchangePlan make_same_level_exchange_plan(
             const auto& neighbor = entry.neighbors[
                 static_cast<std::size_t>(face)];
             if (!neighbor.has_value()) continue;
-            if (*neighbor == logical)
-                throw std::invalid_argument("same-level block is its own neighbor");
             const auto found = ordered.find(*neighbor);
             if (found == ordered.end())
                 throw std::invalid_argument("same-level neighbor is not active");
