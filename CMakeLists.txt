@@ -388,6 +388,20 @@ if(BUILD_TESTING)
     add_test(NAME same_level_exchange_plan
         COMMAND arch_same_level_exchange_plan)
 
+    add_executable(arch_amr_operation_plans
+        tests/test_amr_operation_plans.cpp)
+    target_compile_features(arch_amr_operation_plans PRIVATE cxx_std_20)
+    target_include_directories(arch_amr_operation_plans PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME amr_operation_plans COMMAND arch_amr_operation_plans)
+
+    add_executable(arch_topology_transaction
+        tests/test_topology_transaction.cpp)
+    target_compile_features(arch_topology_transaction PRIVATE cxx_std_20)
+    target_include_directories(arch_topology_transaction PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME topology_transaction COMMAND arch_topology_transaction)
+
     add_executable(arch_resolved_execution_plan
         tests/test_resolved_execution_plan.cpp)
     target_compile_features(arch_resolved_execution_plan PRIVATE cxx_std_20)
