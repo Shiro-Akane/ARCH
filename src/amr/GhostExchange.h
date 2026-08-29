@@ -11,10 +11,13 @@
 #pragma once
 
 #include <memory>
+#include <map>
+#include <span>
 #include <vector>
 
 #include "AmrTree.h"
 #include "Block.h"
+#include "ExchangePlan.h"
 
 #include "../data/GlobalDefs.h"
 
@@ -24,194 +27,110 @@
 
 namespace amr {
 
-static constexpr int Align(int size, int alignment) {
-    return (size + alignment - 1) & ~(alignment - 1);
-}
-
 class GhostExchange {
-private:
-    std::vector<double> comm_buffer;
-    int current_num_species = 0;
-    int current_num_blocks = 0;
-    int current_dim = 0;
-    int num_vars = 0;
-
-    int face_stride[6] = {0};
-    size_t face_start_offset[6] = {0};
-    size_t block_total_size = 0;
-
 public:
     GhostExchange() = default;
 
-    void Resize(int max_blocks) {
-        // Buffer allocation is deferred until UpdateLayout supplies the species count.
+    SameLevelExchangePlan BuildSameLevelPlan(
+        const std::shared_ptr<MemoryPool>& pool,
+        const std::shared_ptr<AmrTree>& tree, int dim,
+        std::span<const BlockHandle> handles = {}) const
+    {
+        const auto& active_blocks = tree->GetActiveBlocks();
+        if (active_blocks.empty())
+            throw std::invalid_argument(
+                "same-level exchange requires active blocks");
+        if (!handles.empty() && handles.size() != active_blocks.size())
+            throw std::invalid_argument(
+                "same-level exchange handle count mismatch");
+
+        std::map<int, std::size_t> active_index;
+        std::vector<SameLevelTopologyEntry> topology(active_blocks.size());
+        for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+            if (!active_index.emplace(active_blocks[index], index).second)
+                throw std::invalid_argument(
+                    "same-level active pool index is duplicated");
+            const Block& block = pool->GetBlock(active_blocks[index]);
+            topology[index].logical = {
+                dim, block.level, block.logical_x1,
+                block.logical_x2, block.logical_x3};
+            topology[index].handle = handles.empty()
+                ? BlockHandle{} : handles[index];
+        }
+        for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+            const Block& block = pool->GetBlock(active_blocks[index]);
+            for (int face = 0; face < 2 * dim; ++face) {
+                const Block::FaceNeighbors& neighbors =
+                    block.face_neighbors[face];
+                if (neighbors.count == 0) continue;
+                if (neighbors.level_diff != 0) continue;
+                if (neighbors.count != 1 || neighbors.ids[0] < 0)
+                    throw std::invalid_argument(
+                        "same-level face has invalid neighbor cardinality");
+                const auto found = active_index.find(neighbors.ids[0]);
+                if (found == active_index.end())
+                    throw std::invalid_argument(
+                        "same-level neighbor is not active");
+                topology[index].neighbors[static_cast<std::size_t>(face)] =
+                    topology[found->second].logical;
+            }
+        }
+        const TopologyEpoch epoch = handles.empty()
+            ? TopologyEpoch{} : handles.front().epoch;
+        return make_same_level_exchange_plan(
+            topology, dim,
+            {BLOCK_NX, dim >= 2 ? BLOCK_NY : 1,
+             dim == 3 ? BLOCK_NZ : 1},
+            MAX_NG, epoch);
     }
 
-    size_t GetOffset(int active_idx, int face, int var_idx) const {
-        return active_idx * block_total_size + face_start_offset[face] + var_idx * face_stride[face];
-    }
-
-    void UpdateLayout(int n_species, int dim) {
-        num_vars = 5 + n_species;
-
-        int ny = (dim >= 2) ? BLOCK_NY : 1;
-        int nz = (dim == 3) ? BLOCK_NZ : 1;
-
-        // Keep the exchange arena contiguous, but do not reserve slots for
-        // faces that cannot exist in a lower-dimensional run.
-        for (int f = 0; f < 6; ++f) face_stride[f] = 0;
-        face_stride[0] = Align(MAX_NG * ny * nz, 16);
-        face_stride[1] = Align(MAX_NG * ny * nz, 16);
-        if (dim >= 2) {
-            face_stride[2] = Align(BLOCK_NX * MAX_NG * nz, 16);
-            face_stride[3] = Align(BLOCK_NX * MAX_NG * nz, 16);
-        }
-        if (dim == 3) {
-            face_stride[4] = Align(BLOCK_NX * ny * MAX_NG, 16);
-            face_stride[5] = Align(BLOCK_NX * ny * MAX_NG, 16);
-        }
-
-        block_total_size = 0;
-        for (int f = 0; f < 6; ++f) {
-            face_start_offset[f] = block_total_size;
-            block_total_size += num_vars * face_stride[f];
-        }
-    }
-
-    void ExecuteExchange(std::shared_ptr<MemoryPool> pool, std::shared_ptr<AmrTree> tree, int dim, FluidState Block::* state_ptr) {
+    void ExecuteExchange(
+        std::shared_ptr<MemoryPool> pool, std::shared_ptr<AmrTree> tree,
+        int dim, FluidState Block::* state_ptr,
+        std::span<const BlockHandle> handles = {})
+    {
         const auto& active_blocks = tree->GetActiveBlocks();
         if (active_blocks.empty()) return;
 
         int n_species = pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
-
-        if (n_species != current_num_species || active_blocks.size() != current_num_blocks || dim != current_dim) {
-            current_num_species = n_species;
-            current_num_blocks = active_blocks.size();
-            current_dim = dim;
-            UpdateLayout(n_species, dim);
-            comm_buffer.assign(current_num_blocks * block_total_size, 0.0);
+        const SameLevelExchangePlan plan = BuildSameLevelPlan(
+            pool, tree, dim, handles);
+        std::vector<HostExchangeBlockView> views;
+        views.reserve(active_blocks.size());
+        for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+            Block& block = pool->GetBlock(active_blocks[index]);
+            FluidState& state = block.*state_ptr;
+            if (state.GetNumSpecies() != n_species)
+                throw std::invalid_argument(
+                    "same-level blocks have inconsistent species counts");
+            HostExchangeBlockView view{};
+            view.logical = {
+                dim, block.level, block.logical_x1,
+                block.logical_x2, block.logical_x3};
+            view.handle = handles.empty() ? BlockHandle{} : handles[index];
+            view.layout = {
+                dim,
+                {block.grid.Is(), block.grid.Js(), block.grid.Ks()},
+                {block.grid.GetTotalX(), block.grid.GetTotalY(),
+                 block.grid.GetTotalZ()},
+                {1, block.grid.stride_y, block.grid.stride_z},
+                block.grid.GetTotalSize()};
+            view.conserved = {
+                state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+                state.mom_w.data(), state.eng.data(), state.enuc_rate.data()};
+            view.species = n_species == 0
+                ? nullptr : state.mass_fractions.data();
+            view.species_count = n_species;
+            view.species_stride = block.grid.GetTotalSize();
+            views.push_back(view);
         }
-
-        PackSameLevel(pool, active_blocks, dim, state_ptr);
-        UnpackSameLevel(pool, active_blocks, dim, state_ptr);
+        const auto compiled = compile_host_exchange_plan(plan, views);
+        execute_host_exchange_plan(compiled, views);
         UpdateGhostFromCoarse(pool, active_blocks, dim, state_ptr);
         UpdateGhostFromFine(pool, active_blocks, dim, state_ptr);
     }
 
 private:
-    void PackSameLevel(std::shared_ptr<MemoryPool> pool, const std::vector<int>& active_blocks, int dim, FluidState Block::* state_ptr) {
-        #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            Block& b = pool->GetBlock(active_blocks[i]);
-            FluidState& b_state = b.*state_ptr;
-            int active_idx = b.active_index;
-
-            for (int f = 0; f < 6; ++f) {
-                if (dim < 2 && (f == 2 || f == 3)) continue;
-                if (dim < 3 && (f == 4 || f == 5)) continue;
-
-                // Face buffers cover the active tangential extent. Source
-                // coordinates therefore begin at the first active cell.
-                int src_i = b.grid.Is();
-                int src_j = (dim >= 2) ? b.grid.Js() : 0;
-                int src_k = (dim == 3) ? b.grid.Ks() : 0;
-                int nx = BLOCK_NX, ny = (dim >= 2) ? BLOCK_NY : 1, nz = (dim == 3) ? BLOCK_NZ : 1;
-
-                if (f == 0) { src_i = b.grid.Is(); nx = MAX_NG; }
-                else if (f == 1) { src_i = b.grid.Ie() - MAX_NG; nx = MAX_NG; }
-                else if (f == 2) { src_j = b.grid.Js(); ny = MAX_NG; }
-                else if (f == 3) { src_j = b.grid.Je() - MAX_NG; ny = MAX_NG; }
-                else if (f == 4) { src_k = b.grid.Ks(); nz = MAX_NG; }
-                else if (f == 5) { src_k = b.grid.Ke() - MAX_NG; nz = MAX_NG; }
-
-                size_t off_rho = GetOffset(active_idx, f, 0);
-                size_t off_u   = GetOffset(active_idx, f, 1);
-                size_t off_v   = GetOffset(active_idx, f, 2);
-                size_t off_w   = GetOffset(active_idx, f, 3);
-                size_t off_e   = GetOffset(active_idx, f, 4);
-
-                int cell_idx = 0;
-                for (int k = 0; k < nz; ++k) {
-                    for (int j = 0; j < ny; ++j) {
-                        for (int ii = 0; ii < nx; ++ii) {
-                            int src_idx = b.grid.GetIndex(src_i + ii, src_j + j, src_k + k);
-                            comm_buffer[off_rho + cell_idx] = b_state.rho[src_idx];
-                            comm_buffer[off_u + cell_idx]   = b_state.mom_u[src_idx];
-                            comm_buffer[off_v + cell_idx]   = b_state.mom_v[src_idx];
-                            comm_buffer[off_w + cell_idx]   = b_state.mom_w[src_idx];
-                            comm_buffer[off_e + cell_idx]   = b_state.eng[src_idx];
-                            for (int s = 0; s < current_num_species; ++s) {
-                                comm_buffer[GetOffset(active_idx, f, 5 + s) + cell_idx] = b_state.X(s, src_idx);
-                            }
-                            cell_idx++;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    void UnpackSameLevel(std::shared_ptr<MemoryPool> pool, const std::vector<int>& active_blocks, int dim, FluidState Block::* state_ptr) {
-        #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            Block& b = pool->GetBlock(active_blocks[i]);
-            FluidState& b_state = b.*state_ptr;
-
-            for (int f = 0; f < 6; ++f) {
-                if (dim < 2 && (f == 2 || f == 3)) continue;
-                if (dim < 3 && (f == 4 || f == 5)) continue;
-
-                if (b.face_neighbors[f].count == 1 && b.face_neighbors[f].level_diff == 0) {
-                    int neighbor_id = b.face_neighbors[f].ids[0];
-                    if (neighbor_id < 0) continue; // Domain boundary
-
-                    Block& nb = pool->GetBlock(neighbor_id);
-                    int nb_idx = nb.active_index;
-
-                    int opp_f = f ^ 1;
-
-                    // Match PackSameLevel: the tangential dimensions are the
-                    // active cells only, not their local ghost layers.
-                    int dst_i = b.grid.Is();
-                    int dst_j = (dim >= 2) ? b.grid.Js() : 0;
-                    int dst_k = (dim == 3) ? b.grid.Ks() : 0;
-                    int nx = BLOCK_NX, ny = (dim >= 2) ? BLOCK_NY : 1, nz = (dim == 3) ? BLOCK_NZ : 1;
-
-                    if (f == 0) { dst_i = b.grid.Is() - MAX_NG; nx = MAX_NG; }
-                    else if (f == 1) { dst_i = b.grid.Ie(); nx = MAX_NG; }
-                    else if (f == 2) { dst_j = b.grid.Js() - MAX_NG; ny = MAX_NG; }
-                    else if (f == 3) { dst_j = b.grid.Je(); ny = MAX_NG; }
-                    else if (f == 4) { dst_k = b.grid.Ks() - MAX_NG; nz = MAX_NG; }
-                    else if (f == 5) { dst_k = b.grid.Ke(); nz = MAX_NG; }
-
-                    size_t off_rho = GetOffset(nb_idx, opp_f, 0);
-                    size_t off_u   = GetOffset(nb_idx, opp_f, 1);
-                    size_t off_v   = GetOffset(nb_idx, opp_f, 2);
-                    size_t off_w   = GetOffset(nb_idx, opp_f, 3);
-                    size_t off_e   = GetOffset(nb_idx, opp_f, 4);
-
-                    int cell_idx = 0;
-                    for (int k = 0; k < nz; ++k) {
-                        for (int j = 0; j < ny; ++j) {
-                            for (int ii = 0; ii < nx; ++ii) {
-                                int dst_idx = b.grid.GetIndex(dst_i + ii, dst_j + j, dst_k + k);
-                                b_state.rho[dst_idx]   = comm_buffer[off_rho + cell_idx];
-                                b_state.mom_u[dst_idx] = comm_buffer[off_u + cell_idx];
-                                b_state.mom_v[dst_idx] = comm_buffer[off_v + cell_idx];
-                                b_state.mom_w[dst_idx] = comm_buffer[off_w + cell_idx];
-                                b_state.eng[dst_idx]   = comm_buffer[off_e + cell_idx];
-                                for (int s = 0; s < current_num_species; ++s) {
-                                    b_state.X(s, dst_idx) = comm_buffer[GetOffset(nb_idx, opp_f, 5 + s) + cell_idx];
-                                }
-                                cell_idx++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     void UpdateGhostFromCoarse(std::shared_ptr<MemoryPool> pool, const std::vector<int>& active_blocks, int dim, FluidState Block::* state_ptr) {
         #pragma omp parallel for schedule(static)
         for (size_t i = 0; i < active_blocks.size(); ++i) {

@@ -184,17 +184,19 @@ void test_all_requirement_codes()
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedDimension, "dimension low");
     r = requirements; r.dimension = 4;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedDimension, "dimension high");
-    r = requirements; r.root_blocks_x1 = 2;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRootTopology, "x1 multiroot");
-    r = requirements; r.root_blocks_x2 = 2;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRootTopology, "x2 multiroot");
+    r = requirements; r.root_blocks_x1 = 2; r.uniform_multiblock = true;
+    expect(query_support(plan, r, probe).cuda_supported,
+           "uniform x1 multiblock");
+    r = requirements; r.root_blocks_x2 = 2; r.uniform_multiblock = true;
+    expect(query_support(plan, r, probe).cuda_supported,
+           "uniform x2 multiblock");
     r = requirements; r.root_blocks_x3 = 0;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRootTopology, "active axis root");
     r = requirements; r.dimension = 1; r.root_blocks_x2 = 1; r.root_blocks_x3 = 0;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRootTopology, "inactive axis root");
     r = requirements; r.uniform_multiblock = true;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRootTopology,
-                     "uniform multiblock flag");
+                     "uniform flag requires multiple roots");
     r = requirements; r.amr = true;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedAmr, "AMR");
     r = requirements; r.gravity = GravityId::External;

@@ -189,7 +189,8 @@ def audit_tree(root: pathlib.Path):
                 and "execute_physical_boundary" in content
                 and not re.search(
                     r"quiesce\(\)\s*;\s*for\s*"
-                    r"\(const auto& phase : impl_->boundary\.phases\)",
+                    r"\(const auto& phase : (?:impl_->boundary|block\.boundary)"
+                    r"\.phases\)",
                     content)):
             violations.append(
                 "CUDA boundary completion must follow stream quiescence")
@@ -204,8 +205,8 @@ def audit_tree(root: pathlib.Path):
         if (relative == "src/cuda/runtime/CudaBackend.cu"
                 and "burn_candidates" in content
                 and not re.search(
-                    r"impl_->burn_workspaces\.get\(\)\s*,\s*"
-                    r"impl_->burn_candidates\.get\(\)", content)):
+                    r"(?:impl_->|block\.)burn_workspaces\.get\(\)\s*,\s*"
+                    r"(?:impl_->|block\.)burn_candidates\.get\(\)", content)):
             violations.append(
                 "CUDA burn routes must consume the caller workspace")
         if cuda_production and "without_failed_nse_continuation" in content:
@@ -232,15 +233,85 @@ def audit_tree(root: pathlib.Path):
                 violations.append("RuntimeProbe.cpp must have one target owner")
             if re.search(r"file\s*\(\s*glob[^)]*\.cu", cmake_code, flags=re.DOTALL):
                 violations.append("production CUDA source glob is forbidden")
-            if "target_objects:cuda" in cmake_code or "target_objects:arch_cuda" in cmake_code:
-                violations.append("CUDA OBJECT injection into ARCH is forbidden")
-            object_injections = re.findall(r"\$<target_objects:([^>]+)>", cmake_code)
-            if any(target != "arch_solver_dispatch" for target in object_injections):
-                violations.append("ARCH may consume only arch_solver_dispatch OBJECT files")
+            allowed_backend_objects = {
+                "arch_cuda_backend_burn_ideal",
+                "arch_cuda_backend_burn_helm",
+                "arch_cuda_backend_burn_tabular3d",
+                "arch_cuda_backend_burn_tabular4d",
+                "arch_cuda_backend_hydro",
+                "arch_cuda_backend_diffusion",
+                "arch_cuda_backend_exchange",
+            }
+            for command in re.finditer(
+                    r"\b(?:add_library|add_executable|target_sources)\s*"
+                    r"\(([^)]*)\)", cmake_code, flags=re.DOTALL):
+                arguments = command.group(1).split()
+                if not arguments:
+                    continue
+                owner = arguments[0]
+                for object_target in re.findall(
+                        r"\$<target_objects:([^>]+)>", command.group(1)):
+                    allowed_solver = (owner == "arch"
+                                      and object_target == "arch_solver_dispatch")
+                    allowed_backend = (owner == "arch_cuda_backend"
+                                       and object_target in allowed_backend_objects)
+                    if not allowed_solver and not allowed_backend:
+                        violations.append(
+                            "OBJECT files may enter only their canonical owner")
             if re.search(r"target_sources\s*\(\s*arch\b[^)]*(?:\.cu|cuda)", cmake_code, flags=re.DOTALL):
                 violations.append("ARCH must not receive CUDA sources or CUDA variables")
-            if re.search(r"add_library\s*\([^)]*\bobject\b[^)]*(?:\.cu|cuda)", cmake_code, flags=re.DOTALL):
-                violations.append("CUDA OBJECT libraries are forbidden")
+            allowed_object_sources = {
+                "arch_cuda_backend_burn_ideal":
+                    "src/cuda/runtime/cudabackendburnideal.cu",
+                "arch_cuda_backend_burn_helm":
+                    "src/cuda/runtime/cudabackendburnhelm.cu",
+                "arch_cuda_backend_burn_tabular3d":
+                    "src/cuda/runtime/cudabackendburntabular3d.cu",
+                "arch_cuda_backend_burn_tabular4d":
+                    "src/cuda/runtime/cudabackendburntabular4d.cu",
+                "arch_cuda_backend_hydro":
+                    "src/cuda/runtime/cudabackendhydro.cu",
+                "arch_cuda_backend_diffusion":
+                    "src/cuda/runtime/cudabackenddiffusion.cu",
+                "arch_cuda_backend_exchange":
+                    "src/cuda/runtime/cudabackendexchange.cu",
+            }
+            helper_calls = re.findall(
+                r"^\s*arch_configure_cuda_backend_object\s*\(([^)]*)\)",
+                cmake_code, flags=re.MULTILINE)
+            helper_definition = re.search(
+                r"function\s*\(\s*arch_configure_cuda_backend_object\s+"
+                r"target\s+source\s*\)(.*?)endfunction\s*\(\s*\)",
+                cmake_code, flags=re.DOTALL)
+            helper_body = helper_definition.group(1) if helper_definition else ""
+            canonical_object_helper = (bool(helper_calls)
+                and len(re.findall(r"\badd_library\s*\(", helper_body)) == 1
+                and bool(re.search(
+                    r"add_library\s*\(\s*\$\{target\}\s+object\s+"
+                    r"\$\{source\}\s*\)", helper_body)))
+            for call in helper_calls:
+                call_arguments = call.split()
+                if (len(call_arguments) != 2
+                        or call_arguments[0] not in allowed_object_sources
+                        or call_arguments[1]
+                            != allowed_object_sources[call_arguments[0]]):
+                    canonical_object_helper = False
+            for command in re.finditer(
+                    r"add_library\s*\(([^)]*)\)", cmake_code,
+                    flags=re.DOTALL):
+                arguments = command.group(1).split()
+                if len(arguments) < 3 or arguments[1] != "object":
+                    continue
+                owner = arguments[0]
+                cuda_sources = re.findall(
+                    r"[\w./-]+\.cu\b", command.group(1))
+                helper_definition = (owner == "${target}"
+                                     and arguments[2:] == ["${source}"]
+                                     and canonical_object_helper)
+                if (not helper_definition
+                        and (owner not in allowed_object_sources
+                        or cuda_sources != [allowed_object_sources[owner]])):
+                    violations.append("CUDA OBJECT libraries are forbidden")
             cuda_source_owners = {}
             for command in re.finditer(
                     r"\b(?:add_library|add_executable|target_sources)\s*"

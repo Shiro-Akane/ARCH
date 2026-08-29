@@ -98,7 +98,8 @@ struct SolverRK3
                     else
                         throw std::logic_error("RK3 ghost exchange selected Current output");
                     amr_ctrl.ghost_exchange.ExecuteExchange(
-                        amr_ctrl.pool, amr_ctrl.tree, dim, output_member);
+                        amr_ctrl.pool, amr_ctrl.tree, dim, output_member,
+                        binding.handles);
                     return token;
                 },
             [&](arch::state::SlotRotation rotation) {

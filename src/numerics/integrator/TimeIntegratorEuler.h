@@ -41,7 +41,6 @@ struct SolverEuler
         }
         int total_size = active_blocks.empty() ? 0 : amr_ctrl.pool->GetBlock(active_blocks[0]).grid.GetTotalSize();
         int dim = amr_ctrl.tree->GetRootGridDim();
-        (void)dim;
 
         using namespace arch::scheduler;
         const StageBinding& binding = current_stage_binding();
@@ -79,8 +78,22 @@ struct SolverEuler
                 }
                 return token;
             },
-            [](arch::state::StateSlot, arch::state::StateVersion,
-               arch::state::CompletionToken token) { return token; },
+            [&](arch::state::StateSlot output, arch::state::StateVersion,
+                arch::state::CompletionToken token) {
+                if (output != arch::state::StateSlot::Next)
+                    throw std::logic_error(
+                        "Euler ghost exchange requires Next output");
+#pragma omp parallel for schedule(dynamic)
+                for (size_t i = 0; i < active_blocks.size(); ++i) {
+                    amr::Block& block =
+                        amr_ctrl.pool->GetBlock(active_blocks[i]);
+                    boundary_condition.apply(block.state_next, block.grid);
+                }
+                amr_ctrl.ghost_exchange.ExecuteExchange(
+                    amr_ctrl.pool, amr_ctrl.tree, dim,
+                    &amr::Block::state_next, binding.handles);
+                return token;
+            },
             [&](arch::state::SlotRotation rotation) {
                 if (rotation.current_from
                         != arch::state::StateSlot::Next

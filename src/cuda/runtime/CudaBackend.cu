@@ -1,16 +1,16 @@
 #include "CudaBackend.h"
+#include "CudaBackendBurn.h"
+#include "CudaBackendDiffusion.h"
+#include "CudaBackendExchange.h"
+#include "CudaBackendHydro.h"
+#include "DeviceBlockStore.h"
 
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
-#include "cuda/diffusion/DiffusionSolver.cuh"
+#include "amr/ExchangePlan.h"
 #include "cuda/hydro/Boundary.cuh"
-#include "cuda/hydro/HydroIntegratorPolicies.cuh"
 #include "cuda/microphysics/helm_eos_loader.h"
-#include "cuda/microphysics/microphysics_api.h"
 #include "grid/GridMetrics.h"
-#include "numerics/burnsolver/ode_bd.h"
-#include "numerics/burnsolver/ode_be-nr.h"
-#include "numerics/burnsolver/ode_ros4.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/Tabular3DEOS.h"
@@ -20,8 +20,10 @@
 #include <cuda_runtime.h>
 
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -246,6 +248,13 @@ struct CudaBurnNetworkType<dispatch::CudaIso7Binding> {
     using type = NetIso7;
 };
 
+#define ARCH_BIND_CUDA_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
+    template <> struct CudaBurnNetworkType<dispatch::Cuda##TAG##Binding> { \
+        using type = TYPE; \
+    };
+ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_BIND_CUDA_CUSTOM_NETWORK)
+#undef ARCH_BIND_CUDA_CUSTOM_NETWORK
+
 struct BurnWorkspaceSizeVisitor {
     std::size_t bytes_per_cell = 0;
 
@@ -286,222 +295,6 @@ std::size_t burn_workspace_bytes(
                               / visitor.bytes_per_cell)
         throw std::overflow_error("CUDA burn workspace extent overflow");
     return workspace_count * visitor.bytes_per_cell;
-}
-
-template <class Binding>
-struct CudaBurnOdeType;
-template <>
-struct CudaBurnOdeType<dispatch::CudaBeNrBinding> {
-    template <class Network, class Matrix, class Linear>
-    using solver = Solver_BE_NR<Network, Matrix, Linear>;
-};
-template <>
-struct CudaBurnOdeType<dispatch::CudaBdBinding> {
-    template <class Network, class Matrix, class Linear>
-    using solver = Solver_BD<Network, Matrix, Linear>;
-};
-template <>
-struct CudaBurnOdeType<dispatch::CudaRos4Binding> {
-    template <class Network, class Matrix, class Linear>
-    using solver = Solver_ROS4<Network, Matrix, Linear>;
-};
-
-struct DeviceBurnSummary {
-    double limiter = DriverBurn::INACTIVE_LIMITER_CANDIDATE;
-    std::uint64_t failed_cells = 0;
-    int status = 0;
-};
-
-template <class Network, class OdeBinding, class Eos>
-__global__ void burn_cells_kernel(
-    DeviceStateView state, DeviceGridView grid,
-    BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>* workspaces,
-    reduction::ReductionCandidate* candidates, int* statuses,
-    double burn_dt, Eos eos, BurnConfigView config)
-{
-    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
-    const int count = grid.active_cell_count();
-    if (linear >= count) return;
-    const int nx = grid.ie - grid.is;
-    const int ny = grid.je - grid.js;
-    const int i = grid.is + linear % nx;
-    const int j = grid.js + (linear / nx) % ny;
-    const int k = grid.ks + linear / (nx * ny);
-    const int cell_index = grid.index(i, j, k);
-
-    BurnPolicyCell cell{};
-    cell.fluid = state.load(cell_index);
-    for (int species = 0; species < Network::NUM_SPECIES; ++species)
-        cell.state[species] = state.species(species, cell_index);
-    cell.burn_dt = burn_dt;
-    using Ode = CudaBurnOdeType<OdeBinding>;
-    constexpr bool shared_workspace =
-        std::is_same_v<OdeBinding, dispatch::CudaBeNrBinding>;
-    execute_burn_policy_cell<Network, Ode::template solver>(
-        cell, workspaces[shared_workspace ? 0 : linear], eos, config);
-
-    if (cell.interior_effect.interior_written) {
-        state.store(cell_index, cell.fluid);
-        for (int species = 0; species < Network::NUM_SPECIES; ++species)
-            state.mass_fractions[
-                static_cast<std::size_t>(species) * state.total_size
-                + cell_index] = cell.state[species];
-        state.enuc_rate[cell_index] = cell.enuc_rate;
-    }
-    amr::CellLogicalKey key{};
-    key.logical_i = i;
-    key.logical_j = j;
-    key.logical_k = k;
-    key.component = 3;
-    candidates[linear] = {cell.limiter_candidate, key, true};
-    statuses[linear] = static_cast<int>(cell.disposition);
-}
-
-__global__ void reduce_burn_kernel(
-    const reduction::ReductionCandidate* candidates, const int* statuses,
-    int count, DeviceBurnSummary* result)
-{
-    if (blockIdx.x != 0 || threadIdx.x != 0) return;
-    const auto spec = reduction::minimum_spec(
-        DriverBurn::INACTIVE_LIMITER_CANDIDATE);
-    auto reduced = reduction::begin_reduction(spec);
-    amr::CellLogicalKey seed_key{};
-    seed_key.logical_i = -1;
-    seed_key.component = 3;
-    reduction::combine_candidate(
-        spec, reduced,
-        {DriverBurn::INACTIVE_LIMITER_CANDIDATE, seed_key, true});
-    DeviceBurnSummary summary{};
-    for (int cell = 0; cell < count; ++cell) {
-        reduction::combine_candidate(spec, reduced, candidates[cell]);
-        const auto disposition = static_cast<DriverBurn::BurnCellDisposition>(
-            statuses[cell]);
-        if (disposition == DriverBurn::BurnCellDisposition::InvalidComposition
-            || disposition == DriverBurn::BurnCellDisposition::SolverFailed) {
-            ++summary.failed_cells;
-            if (summary.status == 0)
-                summary.status = statuses[cell];
-        }
-    }
-    const auto finalized = reduction::finalize_reduction(spec, reduced);
-    if (finalized.status != reduction::ReductionStatus::Ok
-        && summary.status == 0) {
-        summary.status = -static_cast<int>(finalized.status) - 1;
-    }
-    summary.limiter = finalized.value;
-    *result = summary;
-}
-
-template <class Network, class OdeBinding, class Eos>
-cudaError_t launch_burn_route(
-    DeviceStateView state, DeviceGridView grid,
-    BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>* workspaces,
-    reduction::ReductionCandidate* candidates, int* statuses,
-    DeviceBurnSummary* summary, double burn_dt, Eos eos,
-    BurnConfigView config, cudaStream_t stream)
-{
-    if (state.n_species != Network::NUM_SPECIES)
-        return cudaErrorInvalidValue;
-    const int count = grid.active_cell_count();
-    constexpr int threads = 128;
-    const int blocks = (count + threads - 1) / threads;
-    burn_cells_kernel<Network, OdeBinding>
-        <<<blocks, threads, 0, stream>>>(
-            state, grid, workspaces, candidates, statuses, burn_dt, eos,
-            config);
-    cudaError_t error = cudaGetLastError();
-    if (error == cudaSuccess) {
-        reduce_burn_kernel<<<1, 1, 0, stream>>>(
-            candidates, statuses, count, summary);
-        error = cudaGetLastError();
-    }
-    return error;
-}
-
-template <class Eos>
-struct BurnRouteContext {
-    const dispatch::ResolvedExecutionPlan& plan;
-    DeviceStateView state;
-    DeviceGridView grid;
-    std::byte* workspace_storage;
-    reduction::ReductionCandidate* candidates;
-    int* statuses;
-    DeviceBurnSummary* summary;
-    double burn_dt;
-    Eos eos;
-    BurnConfigView config;
-    cudaStream_t stream;
-    cudaError_t result = cudaErrorInvalidValue;
-    bool invoked = false;
-};
-
-template <class Network, class Eos>
-struct BurnOdeRouteVisitor {
-    BurnRouteContext<Eos>& context;
-
-    template <class OdeRegistration>
-    void operator()()
-    {
-        using OdeBinding = typename dispatch::PolicyRegistration<
-            OdeRegistration>::CudaBinding;
-        if constexpr (!std::is_same_v<OdeBinding, dispatch::AbsentBinding>
-                      && !std::is_same_v<
-                          OdeBinding, dispatch::CudaNoOdeBinding>) {
-            using Workspace = BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>;
-            auto* workspaces = reinterpret_cast<Workspace*>(
-                context.workspace_storage);
-            context.result = launch_burn_route<Network, OdeBinding>(
-                context.state, context.grid, workspaces,
-                context.candidates, context.statuses, context.summary,
-                context.burn_dt, context.eos, context.config,
-                context.stream);
-            context.invoked = true;
-        }
-    }
-};
-
-template <class Eos>
-struct BurnNetworkRouteVisitor {
-    BurnRouteContext<Eos>& context;
-
-    template <class NetworkRegistration>
-    void operator()()
-    {
-        using NetworkBinding = typename dispatch::PolicyRegistration<
-            NetworkRegistration>::CudaBinding;
-        if constexpr (!std::is_same_v<NetworkBinding, dispatch::AbsentBinding>
-                      && !std::is_same_v<
-                          NetworkBinding, dispatch::CudaNoNetworkBinding>) {
-            using Network = typename CudaBurnNetworkType<
-                NetworkBinding>::type;
-            BurnOdeRouteVisitor<Network, Eos> visitor{context};
-            const bool ode_found = dispatch::visit_policy<
-                dispatch::OdeSolverPolicies>(context.plan.ode_solver, visitor);
-            context.invoked = context.invoked && ode_found;
-        }
-    }
-};
-
-template <class Eos>
-cudaError_t visit_cuda_burn_route(
-    const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
-    DeviceGridView grid, std::byte* workspace_storage,
-    reduction::ReductionCandidate* candidates, int* statuses,
-    DeviceBurnSummary* summary, double burn_dt, Eos eos,
-    BurnConfigView config, cudaStream_t stream)
-{
-    if (plan.linear_solver != dispatch::LinearSolverId::DenseLu
-        || workspace_storage == nullptr || candidates == nullptr
-        || statuses == nullptr || summary == nullptr)
-        return cudaErrorInvalidValue;
-    BurnRouteContext<Eos> context{
-        plan, state, grid, workspace_storage, candidates, statuses, summary,
-        burn_dt, eos, config, stream};
-    BurnNetworkRouteVisitor<Eos> visitor{context};
-    const bool network_found = dispatch::visit_policy<
-        dispatch::NetworkPolicies>(plan.network, visitor);
-    return network_found && context.invoked
-        ? context.result : cudaErrorInvalidValue;
 }
 
 template <class Function>
@@ -556,14 +349,20 @@ constexpr bool same_storage_generation(
     return left.value == right.value;
 }
 
+DeviceLayoutGeneration issue_device_layout_generation()
+{
+    static std::atomic<std::uint64_t> next{1};
+    const std::uint64_t value = next.fetch_add(1, std::memory_order_relaxed);
+    if (value == 0 || value == std::numeric_limits<std::uint64_t>::max())
+        throw std::overflow_error("CUDA layout generation exhausted");
+    return {value};
+}
+
 } // namespace
 
-struct CudaBackend::Impl {
-    int device_ordinal;
+struct CudaBlockRuntime {
     amr::BlockHandle handle;
     backend::StorageGeneration generation;
-    CudaLaunchConfig launch;
-    StreamOwner stream;
     std::array<DeviceStateStorage, 3> state_storage;
     std::array<DeviceStateView, 3> slots{};
     DeviceStateStorage face_flux;
@@ -585,28 +384,16 @@ struct CudaBackend::Impl {
     DeviceGridView grid{};
     DeviceCompiledBoundaryPlan boundary;
     DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
-    std::unique_ptr<DeviceSpeciesOwner> species_owner;
-    std::unique_ptr<HelmEosDeviceOwner> helm_owner;
-    std::unique_ptr<Tabular3DEOSDeviceOwner> tabular3_owner;
-    std::unique_ptr<Tabular4DEOSDeviceOwner> tabular4_owner;
-    SpeciesPODView species_view{};
-    std::variant<std::monostate, IdealGasView, HelmEosView,
-                 Tabular3DEOSView, Tabular4DEOSView> eos;
-    backend::BackendCounters runtime_counters{};
-    std::vector<backend::BackendTraceRecord> runtime_trace;
-
-    Impl(const amr::Block& block, amr::BlockHandle requested_handle,
-         backend::StorageGeneration requested_generation, int device,
-         const CudaLaunchConfig& launch_config,
-         const SpeciesManager& species,
-         const boundary::BoundaryPlan& logical_boundary)
-        : device_ordinal(device), handle(requested_handle),
-          generation(requested_generation), launch(launch_config)
+    CudaBlockRuntime(
+        const amr::Block& block, amr::BlockHandle requested_handle,
+        backend::StorageGeneration requested_generation,
+        const SpeciesManager& species,
+        const boundary::BoundaryPlan& logical_boundary,
+        const CudaLaunchConfig& launch, cudaStream_t stream)
+        : handle(requested_handle), generation(requested_generation)
     {
         if (!amr::is_valid(handle) || !backend::is_valid(generation))
             throw std::invalid_argument("invalid backend identity");
-        if (device_ordinal < 0)
-            throw std::invalid_argument("negative CUDA device ordinal");
         if (block.grid.geometry != "cartesian")
             throw std::invalid_argument("CUDA E3 requires Cartesian geometry");
         const int total = block.grid.GetTotalSize();
@@ -616,8 +403,6 @@ struct CudaBackend::Impl {
         validate_host_state_shape(block.fluid_state, total, count);
         validate_host_state_shape(block.state_next, total, count);
         validate_host_state_shape(block.state_scratch, total, count);
-
-        stream.create(device_ordinal);
 
         for (auto& storage : state_storage) storage.allocate(total, count);
         for (std::size_t slot = 0; slot < slots.size(); ++slot)
@@ -678,17 +463,17 @@ struct CudaBackend::Impl {
             static_cast<std::size_t>(total) * sizeof(double);
         check_cuda(cudaMemcpyAsync(
                        cell_volume.get(), volumes.data(), metric_bytes,
-                       cudaMemcpyHostToDevice, stream.get()),
+                       cudaMemcpyHostToDevice, stream),
                    "upload cell volume");
         grid.cell_volume = cell_volume.get();
         for (int axis = 0; axis < 3; ++axis) {
             check_cuda(cudaMemcpyAsync(
                            face_area_lower[axis].get(), lower[axis].data(),
-                           metric_bytes, cudaMemcpyHostToDevice, stream.get()),
+                           metric_bytes, cudaMemcpyHostToDevice, stream),
                        "upload lower face area");
             check_cuda(cudaMemcpyAsync(
                            face_area_upper[axis].get(), upper[axis].data(),
-                           metric_bytes, cudaMemcpyHostToDevice, stream.get()),
+                           metric_bytes, cudaMemcpyHostToDevice, stream),
                        "upload upper face area");
             grid.face_area_lower[axis] = face_area_lower[axis].get();
             grid.face_area_upper[axis] = face_area_upper[axis].get();
@@ -700,61 +485,8 @@ struct CudaBackend::Impl {
                        boundary_transfers.get(), boundary.transfers.data(),
                        boundary.transfers.size()
                            * sizeof(DeviceBoundaryTransfer),
-                       cudaMemcpyHostToDevice, stream.get()),
+                       cudaMemcpyHostToDevice, stream),
                    "upload boundary transfers");
-        check_cuda(cudaStreamSynchronize(stream.get()),
-                   "synchronize immutable construction uploads");
-        ++runtime_counters.stream_sync_count;
-    }
-
-    ~Impl()
-    {
-        static_cast<void>(cudaSetDevice(device_ordinal));
-        static_cast<void>(cudaStreamSynchronize(stream.get()));
-    }
-
-    void initialize_eos(const IdealGas& host, const SpeciesManager& species)
-    {
-        species_owner = std::make_unique<DeviceSpeciesOwner>(
-            species, stream.get());
-        species_view = species_owner->view();
-        eos = species_owner->ideal_gas_view(host.global_gamma);
-        check_cuda(cudaStreamSynchronize(stream.get()), "upload Ideal EOS");
-        ++runtime_counters.stream_sync_count;
-    }
-
-    void initialize_eos(const HelmEos& host, const SpeciesManager&)
-    {
-        helm_owner = std::make_unique<HelmEosDeviceOwner>(host, stream.get());
-        const HelmEosView view = helm_owner->view();
-        species_view = view.specs;
-        eos = view;
-        check_cuda(cudaStreamSynchronize(stream.get()), "upload Helm EOS");
-        ++runtime_counters.stream_sync_count;
-    }
-
-    void initialize_eos(
-        const Tabular3DEOSHostView& host, const SpeciesManager&)
-    {
-        tabular3_owner = std::make_unique<Tabular3DEOSDeviceOwner>(
-            host, stream.get());
-        const Tabular3DEOSView view = tabular3_owner->view();
-        species_view = view.specs;
-        eos = view;
-        check_cuda(cudaStreamSynchronize(stream.get()), "upload Tabular3 EOS");
-        ++runtime_counters.stream_sync_count;
-    }
-
-    void initialize_eos(
-        const Tabular4DEOSHostView& host, const SpeciesManager&)
-    {
-        tabular4_owner = std::make_unique<Tabular4DEOSDeviceOwner>(
-            host, stream.get());
-        const Tabular4DEOSView view = tabular4_owner->view();
-        species_view = view.specs;
-        eos = view;
-        check_cuda(cudaStreamSynchronize(stream.get()), "upload Tabular4 EOS");
-        ++runtime_counters.stream_sync_count;
     }
 
     DeviceStateView require_access(backend::BackendStateAccess access) const
@@ -794,7 +526,8 @@ struct CudaBackend::Impl {
 
     std::uint64_t copy_host_device_region(
         DeviceStateView device, const backend::HostStateTransferView& host,
-        state::StateRegion region, cudaMemcpyKind direction)
+        state::StateRegion region, cudaMemcpyKind direction,
+        cudaStream_t stream)
     {
         backend::validate_host_state_transfer_view(host);
         if (host.cell_count != static_cast<std::size_t>(grid.total_size)
@@ -819,7 +552,7 @@ struct CudaBackend::Impl {
                     : static_cast<const void*>(device_fields[field] + offset);
                 check_cuda(cudaMemcpyAsync(
                                destination, source, bytes, direction,
-                               stream.get()),
+                               stream),
                            "enqueue state transfer");
                 copied += bytes;
             }
@@ -838,12 +571,135 @@ struct CudaBackend::Impl {
                     : static_cast<const void*>(device_pointer);
                 check_cuda(cudaMemcpyAsync(
                                destination, source, bytes, direction,
-                               stream.get()),
+                               stream),
                            "enqueue species transfer");
                 copied += bytes;
             }
         });
         return copied;
+    }
+};
+
+struct CudaBackend::Impl {
+    int device_ordinal;
+    CudaLaunchConfig launch;
+    StreamOwner stream;
+    std::unique_ptr<DeviceSpeciesOwner> species_owner;
+    std::unique_ptr<HelmEosDeviceOwner> helm_owner;
+    std::unique_ptr<Tabular3DEOSDeviceOwner> tabular3_owner;
+    std::unique_ptr<Tabular4DEOSDeviceOwner> tabular4_owner;
+    SpeciesPODView species_view{};
+    std::variant<std::monostate, IdealGasView, HelmEosView,
+                 Tabular3DEOSView, Tabular4DEOSView> eos;
+    backend::BackendCounters runtime_counters{};
+    std::vector<backend::BackendTraceRecord> runtime_trace;
+    std::vector<DeviceBlockRecord> records;
+    DeviceBlockStoreIndex store;
+    std::vector<std::unique_ptr<CudaBlockRuntime>> blocks;
+
+    static std::vector<DeviceBlockRecord> make_records(
+        std::span<const CudaBlockBinding> bindings)
+    {
+        std::vector<DeviceBlockRecord> result;
+        result.reserve(bindings.size());
+        for (const auto& binding : bindings) {
+            if (binding.block == nullptr || binding.physical_boundary == nullptr)
+                throw std::invalid_argument("null CUDA block binding");
+            result.push_back({
+                binding.handle, binding.storage,
+                issue_device_layout_generation()});
+        }
+        return result;
+    }
+
+    Impl(std::span<const CudaBlockBinding> bindings, int device,
+         const CudaLaunchConfig& launch_config,
+         const SpeciesManager& species)
+        : device_ordinal(device), launch(launch_config),
+          records(make_records(bindings)),
+          store(std::span<const DeviceBlockRecord>(records))
+    {
+        if (device_ordinal < 0)
+            throw std::invalid_argument("negative CUDA device ordinal");
+        stream.create(device_ordinal);
+        blocks.reserve(bindings.size());
+        for (const auto& binding : bindings) {
+            blocks.push_back(std::make_unique<CudaBlockRuntime>(
+                *binding.block, binding.handle, binding.storage, species,
+                *binding.physical_boundary, launch, stream.get()));
+        }
+        check_cuda(cudaStreamSynchronize(stream.get()),
+                   "synchronize immutable block construction uploads");
+        ++runtime_counters.stream_sync_count;
+    }
+
+    ~Impl()
+    {
+        static_cast<void>(cudaSetDevice(device_ordinal));
+        static_cast<void>(cudaStreamSynchronize(stream.get()));
+    }
+
+    CudaBlockRuntime& require_block(backend::BackendStateAccess access)
+    {
+        return *blocks[store.index_of(access)];
+    }
+
+    const CudaBlockRuntime& require_block(
+        backend::BackendStateAccess access) const
+    {
+        return *blocks[store.index_of(access)];
+    }
+
+    CudaBlockRuntime& first_block() noexcept { return *blocks.front(); }
+    const CudaBlockRuntime& first_block() const noexcept
+    {
+        return *blocks.front();
+    }
+
+    void initialize_eos(const IdealGas& host, const SpeciesManager& species)
+    {
+        species_owner = std::make_unique<DeviceSpeciesOwner>(
+            species, stream.get());
+        species_view = species_owner->view();
+        eos = species_owner->ideal_gas_view(host.global_gamma);
+        finish_eos_upload("upload Ideal EOS");
+    }
+
+    void initialize_eos(const HelmEos& host, const SpeciesManager&)
+    {
+        helm_owner = std::make_unique<HelmEosDeviceOwner>(host, stream.get());
+        const HelmEosView view = helm_owner->view();
+        species_view = view.specs;
+        eos = view;
+        finish_eos_upload("upload Helm EOS");
+    }
+
+    void initialize_eos(
+        const Tabular3DEOSHostView& host, const SpeciesManager&)
+    {
+        tabular3_owner = std::make_unique<Tabular3DEOSDeviceOwner>(
+            host, stream.get());
+        const Tabular3DEOSView view = tabular3_owner->view();
+        species_view = view.specs;
+        eos = view;
+        finish_eos_upload("upload Tabular3 EOS");
+    }
+
+    void initialize_eos(
+        const Tabular4DEOSHostView& host, const SpeciesManager&)
+    {
+        tabular4_owner = std::make_unique<Tabular4DEOSDeviceOwner>(
+            host, stream.get());
+        const Tabular4DEOSView view = tabular4_owner->view();
+        species_view = view.specs;
+        eos = view;
+        finish_eos_upload("upload Tabular4 EOS");
+    }
+
+    void finish_eos_upload(const char* operation)
+    {
+        check_cuda(cudaStreamSynchronize(stream.get()), operation);
+        ++runtime_counters.stream_sync_count;
     }
 };
 
@@ -862,32 +718,39 @@ state::ExecutionSide CudaBackend::side() const noexcept
 
 amr::BlockHandle CudaBackend::block_handle() const noexcept
 {
-    return impl_->handle;
+    return impl_->first_block().handle;
 }
 
 backend::StorageGeneration CudaBackend::storage_generation() const noexcept
 {
-    return impl_->generation;
+    return impl_->first_block().generation;
+}
+
+bool CudaBackend::contains(
+    backend::BackendStateAccess access) const noexcept
+{
+    return impl_->store.contains(access);
 }
 
 double CudaBackend::compute_hydro_dt(
     backend::BackendStateAccess current, double cfl)
 {
-    const DeviceStateView state = impl_->require_access(current);
+    auto& block = impl_->require_block(current);
+    const DeviceStateView state = block.require_access(current);
     if (current.slot != state::StateSlot::Current)
         throw std::invalid_argument("Hydro dt requires Current");
     const CudaHydroWorkspaceView workspace{
-        impl_->face_flux.view(), impl_->hydro_delta.view(),
-        impl_->cfl_candidates.get(), impl_->cfl_result.get()};
+        block.face_flux.view(), block.hydro_delta.view(),
+        block.cfl_candidates.get(), block.cfl_result.get()};
     cudaError_t launch_error = cudaSuccess;
     visit_eos(impl_->eos, [&](const auto& eos) {
-        launch_error = launch_compute_hydro_dt(
-            state, impl_->grid, eos, cfl, workspace, impl_->stream.get());
+        launch_error = launch_cuda_backend_hydro_dt(
+            state, block.grid, eos, cfl, workspace, impl_->stream.get());
     });
     check_cuda(launch_error, "launch Hydro dt");
     double result = 0.0;
     check_cuda(cudaMemcpyAsync(
-                   &result, impl_->cfl_result.get(), sizeof(double),
+                   &result, block.cfl_result.get(), sizeof(double),
                    cudaMemcpyDeviceToHost, impl_->stream.get()),
                "download Hydro dt");
     quiesce();
@@ -901,7 +764,8 @@ state::CompletionToken CudaBackend::execute_hydro_stage(
     const scheduler::StageDescriptor& descriptor,
     double dt, state::CompletionToken expected)
 {
-    static_cast<void>(impl_->require_access(current));
+    auto& block = impl_->require_block(current);
+    static_cast<void>(block.require_access(current));
     const scheduler::HydroPlan plan = scheduler::make_hydro_plan(
         hydro_method(impl_->launch.plan.time_integrator));
     if (current.slot != state::StateSlot::Current || !complete_token(expected)
@@ -910,30 +774,26 @@ state::CompletionToken CudaBackend::execute_hydro_stage(
         || !same_hydro_descriptor(
             descriptor, plan.stages[descriptor.stage - 1]))
         throw std::invalid_argument("invalid Hydro stage contract");
-    const DeviceStateView old_state = impl_->slots[slot_index(descriptor.old_slot)];
-    const DeviceStateView input = impl_->slots[slot_index(descriptor.input_slot)];
-    const DeviceStateView output = impl_->slots[slot_index(descriptor.output_slot)];
-    cudaError_t launch_error = cudaErrorInvalidValue;
-    int kernels = 0;
-    const bool route = visit_cuda_hydro_route(
-        impl_->launch.plan,
-        [&]<class Reconstruction, class Flux> {
-            visit_eos(impl_->eos, [&](const auto& eos) {
-                launch_error = launch_bounded_hydro_stage<Reconstruction, Flux>(
-                    old_state, input, output, impl_->hydro_delta.view(),
-                    impl_->face_flux.view(), impl_->grid, eos,
-                    impl_->launch.entropy_fix_coefficient,
-                    impl_->launch.density_floor,
-                    impl_->launch.minimum_internal_energy,
-                    impl_->launch.maximum_internal_energy,
-                    descriptor, dt, impl_->stream.get(), kernels);
-            });
+    const DeviceStateView old_state = block.slots[slot_index(descriptor.old_slot)];
+    const DeviceStateView input = block.slots[slot_index(descriptor.input_slot)];
+    const DeviceStateView output = block.slots[slot_index(descriptor.output_slot)];
+    CudaBackendLaunchResult launch{};
+    visit_eos(impl_->eos, [&](const auto& eos) {
+        launch = launch_cuda_backend_hydro_stage(
+            impl_->launch.plan, old_state, input, output,
+            block.hydro_delta.view(), block.face_flux.view(), block.grid, eos,
+            impl_->launch.entropy_fix_coefficient,
+            impl_->launch.density_floor,
+            impl_->launch.minimum_internal_energy,
+            impl_->launch.maximum_internal_energy,
+            descriptor, dt, impl_->stream.get());
         });
-    if (!route) throw std::logic_error("CUDA Hydro route is unavailable");
-    check_cuda(launch_error, "launch Hydro stage");
+    if (!launch.route_found)
+        throw std::logic_error("CUDA Hydro route is unavailable");
+    check_cuda(launch.error, "launch Hydro stage");
     quiesce();
     impl_->runtime_counters.kernel_count +=
-        static_cast<std::uint64_t>(kernels);
+        static_cast<std::uint64_t>(launch.kernels_launched);
     return expected;
 }
 
@@ -941,23 +801,180 @@ state::CompletionToken CudaBackend::execute_physical_boundary(
     backend::BackendStateAccess access, state::StateVersion version,
     state::CompletionToken expected)
 {
-    const DeviceStateView selected = impl_->require_access(access);
+    auto& block = impl_->require_block(access);
+    const DeviceStateView selected = block.require_access(access);
     if (!state::is_valid(version) || !complete_token(expected))
         throw std::invalid_argument("invalid boundary completion contract");
     check_cuda(launch_boundary_plan(
-                   selected, impl_->boundary_transfers.get(),
-                   impl_->boundary, impl_->stream.get()),
+                   selected, block.boundary_transfers.get(),
+                   block.boundary, impl_->stream.get()),
                "launch boundary plan");
     quiesce();
-    for (const auto& phase : impl_->boundary.phases)
+    for (const auto& phase : block.boundary.phases)
         if (phase.count > 0) ++impl_->runtime_counters.kernel_count;
+    return expected;
+}
+
+state::CompletionToken CudaBackend::execute_same_level_exchange(
+    std::span<const backend::BackendStateAccess> accesses,
+    const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
+    state::StateVersion source_version,
+    state::CompletionToken expected)
+{
+    if (!state::is_valid(source_version) || !complete_token(expected)
+        || !amr::is_valid(plan.epoch) || plan.fingerprint == 0
+        || amr::compute_same_level_exchange_fingerprint(plan)
+            != plan.fingerprint
+        || accesses.empty() || accesses.size() != plan.blocks.size())
+        throw std::invalid_argument("invalid CUDA same-level exchange contract");
+
+    std::map<amr::BlockHandle, int> indices;
+    std::vector<DeviceExchangeBlock> host_blocks;
+    host_blocks.reserve(accesses.size());
+    int species_count = -1;
+    for (const auto& access : accesses) {
+        if (access.slot != slot
+            || access.block.epoch.value != plan.epoch.value)
+            throw std::invalid_argument("stale CUDA exchange access");
+        auto& block = impl_->require_block(access);
+        if (!indices.emplace(access.block, static_cast<int>(host_blocks.size())).second)
+            throw std::invalid_argument("duplicate CUDA exchange access");
+        const DeviceStateView selected = block.require_access(access);
+        if (species_count >= 0 && selected.n_species != species_count)
+            throw std::invalid_argument("CUDA exchange species counts differ");
+        species_count = selected.n_species;
+        host_blocks.push_back({selected, block.grid});
+    }
+    for (const auto& endpoint : plan.blocks) {
+        if (!amr::is_valid(endpoint.handle)
+            || endpoint.handle.epoch.value != plan.epoch.value
+            || indices.find(endpoint.handle) == indices.end())
+            throw std::invalid_argument("CUDA exchange endpoint is missing");
+    }
+
+    struct PreparedExchangePhase {
+        std::vector<DeviceExchangeOperation> operations;
+        std::uint64_t cells = 0;
+        DeviceAllocation<DeviceExchangeOperation> device_operations;
+        DeviceAllocation<double> scratch;
+    };
+    std::array<PreparedExchangePhase, 3> prepared_phases{};
+    const std::uint64_t field_count =
+        static_cast<std::uint64_t>(6 + species_count);
+    if (field_count < 6
+        || field_count > static_cast<std::uint64_t>(
+            std::numeric_limits<int>::max()))
+        throw std::overflow_error("CUDA exchange field count overflow");
+    std::size_t expected_first = 0;
+    for (std::size_t phase_index = 0; phase_index < plan.phases.size(); ++phase_index) {
+        const auto phase = plan.phases[phase_index];
+        if (phase.id != static_cast<amr::ExchangePhaseId>(phase_index)
+            || phase.first != expected_first
+            || phase.first > plan.operations.size()
+            || phase.count > plan.operations.size() - phase.first
+            || phase.count > static_cast<std::size_t>(
+                std::numeric_limits<int>::max()))
+            throw std::invalid_argument("invalid CUDA exchange phase metadata");
+        expected_first += phase.count;
+        if (phase.count == 0) continue;
+
+        auto& prepared = prepared_phases[phase_index];
+        prepared.operations.reserve(phase.count);
+        for (std::size_t offset = 0; offset < phase.count; ++offset) {
+            const auto& operation = plan.operations[phase.first + offset];
+            if (operation.ordinal != phase.first + offset
+                || operation.phase != phase.id
+                || operation.source_box.extent
+                    != operation.destination_box.extent)
+                throw std::invalid_argument("invalid CUDA exchange operation");
+            const auto source = indices.find(operation.source.handle);
+            const auto destination = indices.find(operation.destination.handle);
+            if (source == indices.end() || destination == indices.end())
+                throw std::invalid_argument("stale CUDA exchange operation");
+            const auto validate_box = [&](const amr::LogicalExchangeBox& box,
+                                          const DeviceGridView& grid) {
+                for (int axis = 0; axis < 3; ++axis) {
+                    const std::int64_t origin = axis == 0 ? grid.is
+                        : (axis == 1 ? grid.js : grid.ks);
+                    const std::int64_t total = axis == 0 ? grid.total_x
+                        : (axis == 1 ? grid.total_y : grid.total_z);
+                    const std::int64_t first = origin + box.first[axis];
+                    const std::int64_t end = first + box.extent[axis];
+                    if (box.extent[axis] == 0 || first < 0 || end > total)
+                        throw std::out_of_range(
+                            "CUDA exchange box is outside block layout");
+                }
+            };
+            validate_box(operation.source_box, host_blocks[source->second].grid);
+            validate_box(
+                operation.destination_box,
+                host_blocks[destination->second].grid);
+            const std::uint64_t cells =
+                amr::exchange_detail::checked_product(
+                    operation.source_box.extent);
+            if (prepared.cells
+                > std::numeric_limits<std::uint64_t>::max() - cells)
+                throw std::overflow_error("CUDA exchange phase size overflow");
+            DeviceExchangeOperation compiled{};
+            compiled.source_block = source->second;
+            compiled.destination_block = destination->second;
+            compiled.scratch_first = prepared.cells;
+            for (int axis = 0; axis < 3; ++axis) {
+                compiled.source_first[axis] = operation.source_box.first[axis];
+                compiled.destination_first[axis] =
+                    operation.destination_box.first[axis];
+                compiled.extent[axis] = operation.source_box.extent[axis];
+            }
+            prepared.operations.push_back(compiled);
+            prepared.cells += cells;
+        }
+        if (prepared.cells
+            > std::numeric_limits<std::size_t>::max() / field_count)
+            throw std::overflow_error("CUDA exchange scratch size overflow");
+    }
+    if (expected_first != plan.operations.size())
+        throw std::invalid_argument("CUDA exchange phases do not cover plan");
+
+    DeviceAllocation<DeviceExchangeBlock> device_blocks;
+    device_blocks.allocate(host_blocks.size());
+    check_cuda(cudaMemcpyAsync(
+                   device_blocks.get(), host_blocks.data(),
+                   host_blocks.size() * sizeof(DeviceExchangeBlock),
+                   cudaMemcpyHostToDevice, impl_->stream.get()),
+               "upload CUDA exchange blocks");
+    for (auto& prepared : prepared_phases) {
+        if (prepared.operations.empty()) continue;
+        prepared.device_operations.allocate(prepared.operations.size());
+        prepared.scratch.allocate(static_cast<std::size_t>(
+            prepared.cells * field_count));
+        check_cuda(cudaMemcpyAsync(
+                       prepared.device_operations.get(),
+                       prepared.operations.data(),
+                       prepared.operations.size()
+                           * sizeof(DeviceExchangeOperation),
+                       cudaMemcpyHostToDevice, impl_->stream.get()),
+                   "upload CUDA exchange operations");
+    }
+
+    for (auto& prepared : prepared_phases) {
+        if (prepared.operations.empty()) continue;
+        check_cuda(launch_cuda_backend_exchange_phase(
+                       device_blocks.get(), prepared.device_operations.get(),
+                       static_cast<int>(prepared.operations.size()),
+                       static_cast<int>(field_count), prepared.cells,
+                       prepared.scratch.get(), impl_->stream.get()),
+                   "launch CUDA same-level exchange phase");
+        impl_->runtime_counters.kernel_count += 2;
+        quiesce();
+    }
     return expected;
 }
 
 void CudaBackend::rotate_slots(
     backend::BackendStateAccess current, state::SlotRotation rotation)
 {
-    static_cast<void>(impl_->require_access(current));
+    auto& block = impl_->require_block(current);
+    static_cast<void>(block.require_access(current));
     if (current.slot != state::StateSlot::Current)
         throw std::invalid_argument("rotation requires Current access");
     const std::array<std::size_t, 3> source{
@@ -966,35 +983,36 @@ void CudaBackend::rotate_slots(
     if (source[0] == source[1] || source[0] == source[2]
         || source[1] == source[2])
         throw std::invalid_argument("slot rotation is not a permutation");
-    const auto old = impl_->slots;
+    const auto old = block.slots;
     for (std::size_t destination = 0; destination < 3; ++destination)
-        impl_->slots[destination] = old[source[destination]];
+        block.slots[destination] = old[source[destination]];
 }
 
 double CudaBackend::compute_diffusion_dt(
     backend::BackendStateAccess current)
 {
-    const DeviceStateView selected = impl_->require_access(current);
+    auto& block = impl_->require_block(current);
+    const DeviceStateView selected = block.require_access(current);
     if (current.slot != state::StateSlot::Current)
         throw std::invalid_argument("diffusion dt requires Current");
-    const DiffusionWorkspaceView workspace{
-        impl_->face_flux.view(), impl_->diffusion_dt_candidates.get(),
-        impl_->diffusion_dt_result.get(), impl_->diffusion_status.get()};
-    DiffusionLaunchResult result{};
+    const CudaBackendDiffusionWorkspace workspace{
+        block.face_flux.view(), block.diffusion_dt_candidates.get(),
+        block.diffusion_dt_result.get(), block.diffusion_status.get()};
+    CudaBackendLaunchResult result{};
     visit_eos(impl_->eos, [&](const auto& eos) {
-        result = launch_raw_diffusion_dt(
-            selected, eos, impl_->species_view, impl_->grid,
+        result = launch_cuda_backend_diffusion_dt(
+            selected, eos, impl_->species_view, block.grid,
             impl_->launch.diffusion, workspace, impl_->stream.get());
     });
     check_cuda(result.error, "launch diffusion dt");
     int status = 0;
     double dt = 0.0;
     check_cuda(cudaMemcpyAsync(
-                   &status, impl_->diffusion_status.get(), sizeof(int),
+                   &status, block.diffusion_status.get(), sizeof(int),
                    cudaMemcpyDeviceToHost, impl_->stream.get()),
                "download diffusion status");
     check_cuda(cudaMemcpyAsync(
-                   &dt, impl_->diffusion_dt_result.get(), sizeof(double),
+                   &dt, block.diffusion_dt_result.get(), sizeof(double),
                    cudaMemcpyDeviceToHost, impl_->stream.get()),
                "download diffusion dt");
     quiesce();
@@ -1008,11 +1026,15 @@ void CudaBackend::copy_state_slot(
     backend::BackendStateAccess source,
     backend::BackendStateAccess destination)
 {
-    const DeviceStateView from = impl_->require_access(source);
-    const DeviceStateView to = impl_->require_access(destination);
+    if (!same_block_handle(source.block, destination.block)
+        || !same_storage_generation(source.storage, destination.storage))
+        throw std::invalid_argument("state copy crosses CUDA blocks");
+    auto& block = impl_->require_block(source);
+    const DeviceStateView from = block.require_access(source);
+    const DeviceStateView to = block.require_access(destination);
     if (source.slot == destination.slot)
         throw std::invalid_argument("state copy aliases one logical slot");
-    check_cuda(copy_diffusion_slot(from, to, impl_->stream.get()),
+    check_cuda(copy_cuda_backend_state_slot(from, to, impl_->stream.get()),
                "copy state slot");
     quiesce();
 }
@@ -1022,7 +1044,8 @@ state::CompletionToken CudaBackend::execute_diffusion_stage(
     const scheduler::RklStageDescriptor& descriptor,
     double dt, double dt_fe, state::CompletionToken expected)
 {
-    static_cast<void>(impl_->require_access(current));
+    auto& block = impl_->require_block(current);
+    static_cast<void>(block.require_access(current));
     const bool frozen_rkl1 = impl_->launch.plan.diffusion_integrator
         == dispatch::DiffusionIntegratorId::Rkl1;
     const bool frozen_rkl2 = impl_->launch.plan.diffusion_integrator
@@ -1038,56 +1061,34 @@ state::CompletionToken CudaBackend::execute_diffusion_stage(
         || !(dt > 0.0) || !(dt_fe > 0.0))
         throw std::invalid_argument("invalid diffusion stage contract");
     const DeviceStateView state_n =
-        impl_->slots[slot_index(descriptor.state_n_slot)];
+        block.slots[slot_index(descriptor.state_n_slot)];
     const DeviceStateView previous =
-        impl_->slots[slot_index(descriptor.previous_slot)];
+        block.slots[slot_index(descriptor.previous_slot)];
     const DeviceStateView older =
-        impl_->slots[slot_index(descriptor.older_slot)];
+        block.slots[slot_index(descriptor.older_slot)];
     const DeviceStateView output =
-        impl_->slots[slot_index(descriptor.output_slot)];
-    const DiffusionWorkspaceView workspace{
-        impl_->face_flux.view(), impl_->diffusion_dt_candidates.get(),
-        impl_->diffusion_dt_result.get(), impl_->diffusion_status.get()};
-    DiffusionLaunchResult operation{};
+        block.slots[slot_index(descriptor.output_slot)];
+    const CudaBackendDiffusionWorkspace workspace{
+        block.face_flux.view(), block.diffusion_dt_candidates.get(),
+        block.diffusion_dt_result.get(), block.diffusion_status.get()};
+    CudaBackendLaunchResult operation{};
     visit_eos(impl_->eos, [&](const auto& eos) {
-        operation = launch_bounded_diffusion_operator(
-            descriptor.stage == 1 ? state_n : previous,
-            descriptor.stage == 1 && plan.second_order
-                ? impl_->diffusion_initial_delta.view()
-                : impl_->diffusion_delta.view(),
-            eos, impl_->species_view, impl_->grid, impl_->launch.diffusion,
-            workspace, impl_->stream.get());
+        operation = launch_cuda_backend_diffusion_stage(
+            plan, descriptor, state_n, previous, older, output,
+            block.diffusion_delta.view(),
+            block.diffusion_initial_delta.view(), eos, impl_->species_view,
+            block.grid, impl_->launch.diffusion, workspace, dt,
+            impl_->stream.get());
     });
     check_cuda(operation.error, "launch diffusion operator");
-    DiffusionLaunchResult update{};
-    const DiffFunction::RKLOrder order = plan.second_order
-        ? DiffFunction::RKLOrder::Second : DiffFunction::RKLOrder::First;
-    const auto coefficients = DiffFunction::get_rkl_coeffs(
-        order, descriptor.stage, static_cast<int>(plan.stages.size()));
-    if (descriptor.stage == 1) {
-        update = launch_bounded_first_rkl_stage(
-            state_n,
-            plan.second_order ? impl_->diffusion_initial_delta.view()
-                              : impl_->diffusion_delta.view(),
-            output, impl_->grid, impl_->launch.diffusion,
-            coefficients.tilde_mu * dt, impl_->stream.get());
-    } else {
-        update = launch_bounded_recursive_rkl_stage(
-            state_n, previous, older, impl_->diffusion_delta.view(),
-            plan.second_order ? impl_->diffusion_initial_delta.view()
-                              : impl_->diffusion_delta.view(),
-            output, impl_->grid, impl_->launch.diffusion, coefficients,
-            plan.second_order, dt, false, impl_->stream.get());
-    }
-    check_cuda(update.error, "launch diffusion stage");
     int status = 0;
     check_cuda(cudaMemcpyAsync(
-                   &status, impl_->diffusion_status.get(), sizeof(int),
+                   &status, block.diffusion_status.get(), sizeof(int),
                    cudaMemcpyDeviceToHost, impl_->stream.get()),
                "download diffusion stage status");
     quiesce();
     impl_->runtime_counters.kernel_count +=
-        operation.kernels_launched + update.kernels_launched;
+        operation.kernels_launched;
     impl_->runtime_counters.bytes_d2h += sizeof(int);
     if (status != 0) throw std::runtime_error("diffusion stage failed");
     return expected;
@@ -1097,15 +1098,16 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
     backend::BackendStateAccess current, double dt,
     state::CompletionToken expected)
 {
-    static_cast<void>(impl_->require_access(current));
+    auto& block = impl_->require_block(current);
+    static_cast<void>(block.require_access(current));
     if (current.slot != state::StateSlot::Current || !complete_token(expected)
         || !(dt > 0.0))
         throw std::invalid_argument("invalid burn contract");
     if (!impl_->launch.burn.use_burn) {
         check_cuda(cudaMemsetAsync(
-                       impl_->slots[slot_index(state::StateSlot::Current)].enuc_rate,
+                       block.slots[slot_index(state::StateSlot::Current)].enuc_rate,
                        0,
-                       static_cast<std::size_t>(impl_->grid.total_size)
+                       static_cast<std::size_t>(block.grid.total_size)
                            * sizeof(double),
                        impl_->stream.get()),
                    "clear disabled burn diagnostic");
@@ -1113,25 +1115,25 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
         return {DriverBurn::INACTIVE_LIMITER_CANDIDATE, 0, 0, expected};
     }
     DeviceStateView selected =
-        impl_->slots[slot_index(state::StateSlot::Current)];
+        block.slots[slot_index(state::StateSlot::Current)];
     check_cuda(cudaMemsetAsync(
                    selected.enuc_rate, 0,
-                   static_cast<std::size_t>(impl_->grid.total_size)
+                   static_cast<std::size_t>(block.grid.total_size)
                        * sizeof(double),
                    impl_->stream.get()),
                "clear burn diagnostic");
     cudaError_t launch_error = cudaErrorInvalidValue;
     visit_eos(impl_->eos, [&](const auto& eos) {
-        launch_error = visit_cuda_burn_route(
-            impl_->launch.plan, selected, impl_->grid,
-            impl_->burn_workspace_storage.get(), impl_->burn_candidates.get(),
-            impl_->burn_statuses.get(), impl_->burn_summary.get(), dt, eos,
+        launch_error = launch_cuda_burn_route(
+            impl_->launch.plan, selected, block.grid,
+            block.burn_workspace_storage.get(), block.burn_candidates.get(),
+            block.burn_statuses.get(), block.burn_summary.get(), dt, eos,
             impl_->launch.burn, impl_->stream.get());
     });
     check_cuda(launch_error, "launch burn route");
     DeviceBurnSummary summary{};
     check_cuda(cudaMemcpyAsync(
-                   &summary, impl_->burn_summary.get(), sizeof(summary),
+                   &summary, block.burn_summary.get(), sizeof(summary),
                    cudaMemcpyDeviceToHost, impl_->stream.get()),
                "download burn summary");
     quiesce();
@@ -1144,20 +1146,22 @@ void CudaBackend::enqueue_materialize_host_current(
     backend::BackendStateAccess current, state::StateRegion region,
     backend::HostStateTransferView host)
 {
-    const DeviceStateView selected = impl_->require_access(current);
+    auto& block = impl_->require_block(current);
+    const DeviceStateView selected = block.require_access(current);
     if (current.slot != state::StateSlot::Current)
         throw std::invalid_argument("materialization requires Current");
-    impl_->runtime_counters.bytes_d2h += impl_->copy_host_device_region(
-        selected, host, region, cudaMemcpyDeviceToHost);
+    impl_->runtime_counters.bytes_d2h += block.copy_host_device_region(
+        selected, host, region, cudaMemcpyDeviceToHost, impl_->stream.get());
 }
 
 void CudaBackend::enqueue_upload_slot(
     backend::BackendStateAccess access, state::StateRegion region,
     backend::HostStateTransferView host)
 {
-    const DeviceStateView selected = impl_->require_access(access);
-    impl_->runtime_counters.bytes_h2d += impl_->copy_host_device_region(
-        selected, host, region, cudaMemcpyHostToDevice);
+    auto& block = impl_->require_block(access);
+    const DeviceStateView selected = block.require_access(access);
+    impl_->runtime_counters.bytes_h2d += block.copy_host_device_region(
+        selected, host, region, cudaMemcpyHostToDevice, impl_->stream.get());
 }
 
 void CudaBackend::quiesce()
@@ -1175,8 +1179,7 @@ backend::BackendCounters CudaBackend::counters() const noexcept
 
 void CudaBackend::append_trace(backend::BackendTraceRecord record)
 {
-    if (!same_block_handle(record.block, impl_->handle)
-        || !same_storage_generation(record.storage, impl_->generation))
+    if (!impl_->store.contains({record.block, record.storage, record.slot}))
         throw std::invalid_argument("trace targets stale CUDA storage");
     impl_->runtime_trace.push_back(record);
 }
@@ -1190,18 +1193,31 @@ CudaBackend::trace_snapshot() const noexcept
 
 template <class Eos>
 std::unique_ptr<CudaBackend> make_cuda_backend_impl(
-    const amr::Block& block, amr::BlockHandle handle,
-    backend::StorageGeneration storage, int device_ordinal,
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
     const CudaLaunchConfig& launch, const SpeciesManager& species,
-    const boundary::BoundaryPlan& boundary, const Eos& eos)
+    const Eos& eos)
 {
     if (launch.plan.eos != host_eos_id(eos))
         throw std::invalid_argument(
             "resolved EOS does not match the CUDA factory owner");
     auto implementation = std::make_unique<CudaBackend::Impl>(
-        block, handle, storage, device_ordinal, launch, species, boundary);
+        blocks, device_ordinal, launch, species);
     implementation->initialize_eos(eos, species);
     return std::make_unique<CudaBackend>(std::move(implementation));
+}
+
+template <class Eos>
+std::unique_ptr<CudaBackend> make_single_cuda_backend_impl(
+    const amr::Block& block, amr::BlockHandle handle,
+    backend::StorageGeneration storage, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const boundary::BoundaryPlan& boundary, const Eos& eos)
+{
+    const std::array<CudaBlockBinding, 1> blocks{{
+        {&block, handle, storage, &boundary}}};
+    return make_cuda_backend_impl(
+        std::span<const CudaBlockBinding>(blocks), device_ordinal, launch,
+        species, eos);
 }
 
 std::unique_ptr<CudaBackend> make_cuda_backend(
@@ -1210,7 +1226,7 @@ std::unique_ptr<CudaBackend> make_cuda_backend(
     const CudaLaunchConfig& launch, const SpeciesManager& species,
     const boundary::BoundaryPlan& boundary, const IdealGas& eos)
 {
-    return make_cuda_backend_impl(
+    return make_single_cuda_backend_impl(
         block, handle, storage, device_ordinal, launch, species, boundary, eos);
 }
 
@@ -1220,7 +1236,7 @@ std::unique_ptr<CudaBackend> make_cuda_backend(
     const CudaLaunchConfig& launch, const SpeciesManager& species,
     const boundary::BoundaryPlan& boundary, const HelmEos& eos)
 {
-    return make_cuda_backend_impl(
+    return make_single_cuda_backend_impl(
         block, handle, storage, device_ordinal, launch, species, boundary, eos);
 }
 
@@ -1231,7 +1247,7 @@ std::unique_ptr<CudaBackend> make_cuda_backend(
     const boundary::BoundaryPlan& boundary,
     const Tabular3DEOSHostView& eos)
 {
-    return make_cuda_backend_impl(
+    return make_single_cuda_backend_impl(
         block, handle, storage, device_ordinal, launch, species, boundary, eos);
 }
 
@@ -1242,8 +1258,44 @@ std::unique_ptr<CudaBackend> make_cuda_backend(
     const boundary::BoundaryPlan& boundary,
     const Tabular4DEOSHostView& eos)
 {
-    return make_cuda_backend_impl(
+    return make_single_cuda_backend_impl(
         block, handle, storage, device_ordinal, launch, species, boundary, eos);
+}
+
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const IdealGas& eos)
+{
+    return make_cuda_backend_impl(
+        blocks, device_ordinal, launch, species, eos);
+}
+
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const HelmEos& eos)
+{
+    return make_cuda_backend_impl(
+        blocks, device_ordinal, launch, species, eos);
+}
+
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const Tabular3DEOSHostView& eos)
+{
+    return make_cuda_backend_impl(
+        blocks, device_ordinal, launch, species, eos);
+}
+
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const Tabular4DEOSHostView& eos)
+{
+    return make_cuda_backend_impl(
+        blocks, device_ordinal, launch, species, eos);
 }
 
 } // namespace arch::cuda

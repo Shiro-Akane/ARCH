@@ -16,6 +16,8 @@
 #include <stdexcept>
 #include <type_traits>
 
+namespace amr { struct SameLevelExchangePlan; }
+
 namespace arch::backend {
 
 struct StorageGeneration {
@@ -210,6 +212,7 @@ public:
     virtual state::ExecutionSide side() const noexcept = 0;
     virtual amr::BlockHandle block_handle() const noexcept = 0;
     virtual StorageGeneration storage_generation() const noexcept = 0;
+    virtual bool contains(BackendStateAccess access) const noexcept = 0;
 
     virtual double compute_hydro_dt(BackendStateAccess current,
                                     double cfl) = 0;
@@ -219,6 +222,11 @@ public:
         double dt, state::CompletionToken expected) = 0;
     virtual state::CompletionToken execute_physical_boundary(
         BackendStateAccess access, state::StateVersion version,
+        state::CompletionToken expected) = 0;
+    virtual state::CompletionToken execute_same_level_exchange(
+        std::span<const BackendStateAccess> accesses,
+        const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
+        state::StateVersion source_version,
         state::CompletionToken expected) = 0;
     virtual void rotate_slots(BackendStateAccess current,
                               state::SlotRotation rotation) = 0;
@@ -252,8 +260,7 @@ inline state::CompletionToken transfer_state_regions(
     BackendOperation operation = BackendOperation::InitialUpload)
 {
     if (backend.side() != state::ExecutionSide::Device
-        || access.block != backend.block_handle()
-        || access.storage != backend.storage_generation()) {
+        || !backend.contains(access)) {
         throw std::invalid_argument("transfer targets a stale backend access");
     }
     if (direction != state::PendingTransferPhase::PendingH2D

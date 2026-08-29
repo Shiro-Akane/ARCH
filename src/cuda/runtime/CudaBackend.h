@@ -1,6 +1,6 @@
 /**
  * @file CudaBackend.h
- * @brief Ordinary-C++ declaration of the single-block CUDA backend.
+ * @brief Ordinary-C++ declaration of the uniform multi-block CUDA backend.
  */
 
 #pragma once
@@ -17,10 +17,17 @@ struct Tabular3DEOSHostView;
 struct Tabular4DEOSHostView;
 struct SpeciesManager;
 
-namespace amr { struct Block; }
+namespace amr { struct Block; struct SameLevelExchangePlan; }
 namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::cuda {
+
+struct CudaBlockBinding {
+    const amr::Block* block = nullptr;
+    amr::BlockHandle handle{};
+    backend::StorageGeneration storage{};
+    const boundary::BoundaryPlan* physical_boundary = nullptr;
+};
 
 class CudaBackend final : public backend::ComputeBackend {
 public:
@@ -37,6 +44,7 @@ public:
     state::ExecutionSide side() const noexcept override;
     amr::BlockHandle block_handle() const noexcept override;
     backend::StorageGeneration storage_generation() const noexcept override;
+    bool contains(backend::BackendStateAccess access) const noexcept override;
     double compute_hydro_dt(backend::BackendStateAccess current,
                             double cfl) override;
     state::CompletionToken execute_hydro_stage(
@@ -45,6 +53,11 @@ public:
         double dt, state::CompletionToken expected) override;
     state::CompletionToken execute_physical_boundary(
         backend::BackendStateAccess access, state::StateVersion version,
+        state::CompletionToken expected) override;
+    state::CompletionToken execute_same_level_exchange(
+        std::span<const backend::BackendStateAccess> accesses,
+        const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
+        state::StateVersion source_version,
         state::CompletionToken expected) override;
     void rotate_slots(backend::BackendStateAccess current,
                       state::SlotRotation rotation) override;
@@ -97,6 +110,23 @@ std::unique_ptr<CudaBackend> make_cuda_backend(
     backend::StorageGeneration storage, int device_ordinal,
     const CudaLaunchConfig& launch, const SpeciesManager& species,
     const boundary::BoundaryPlan& boundary,
+    const Tabular4DEOSHostView& eos);
+
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const IdealGas& eos);
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const HelmEos& eos);
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
+    const Tabular3DEOSHostView& eos);
+std::unique_ptr<CudaBackend> make_cuda_backend(
+    std::span<const CudaBlockBinding> blocks, int device_ordinal,
+    const CudaLaunchConfig& launch, const SpeciesManager& species,
     const Tabular4DEOSHostView& eos);
 
 } // namespace arch::cuda

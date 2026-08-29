@@ -111,6 +111,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     std::vector<amr::BlockHandle> stage_handles;
     std::unique_ptr<arch::backend::ComputeBackend> compute_backend;
     arch::backend::StorageGenerationIssuer storage_generation_issuer;
+    std::vector<arch::backend::StorageGeneration> backend_storage;
     const bool use_cuda = backend_resolution->resolved_backend
         == arch::dispatch::ComputeBackend::Cuda;
 
@@ -221,43 +222,65 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             species == 0 ? nullptr : state.mass_fractions.data(), cells,
             species, species == 0 ? 0 : cells};
     };
-    const auto backend_access = [&](StateSlot slot) {
+    const auto backend_access = [&](std::size_t block_index, StateSlot slot) {
         if (!compute_backend)
             throw std::logic_error("CUDA backend is not constructed");
+        if (block_index >= stage_handles.size()
+            || block_index >= backend_storage.size())
+            throw std::out_of_range("CUDA backend block index is invalid");
         return arch::backend::BackendStateAccess{
-            compute_backend->block_handle(),
-            compute_backend->storage_generation(), slot};
+            stage_handles[block_index], backend_storage[block_index], slot};
     };
     const auto trace_backend_operation = [&] (
         arch::backend::BackendOperation operation, StateSlot slot,
         const arch::backend::BackendCounters& before) {
         const auto after = compute_backend->counters();
-        compute_backend->append_trace({
-            static_cast<std::uint64_t>(ctrl.step_count), operation,
-            compute_backend->block_handle(),
-            compute_backend->storage_generation(), slot,
-            residency_ledger->inspect({compute_backend->block_handle(), slot}),
-            after.bytes_h2d - before.bytes_h2d,
-            after.bytes_d2h - before.bytes_d2h,
-            after.kernel_count - before.kernel_count,
-            after.stream_sync_count - before.stream_sync_count});
+        for (std::size_t index = 0; index < stage_handles.size(); ++index) {
+            compute_backend->append_trace({
+                static_cast<std::uint64_t>(ctrl.step_count), operation,
+                stage_handles[index], backend_storage[index], slot,
+                residency_ledger->inspect({stage_handles[index], slot}),
+                index == 0 ? after.bytes_h2d - before.bytes_h2d : 0,
+                index == 0 ? after.bytes_d2h - before.bytes_d2h : 0,
+                index == 0 ? after.kernel_count - before.kernel_count : 0,
+                index == 0
+                    ? after.stream_sync_count - before.stream_sync_count : 0});
+        }
+    };
+    const auto execute_device_boundary = [&] (
+        StateSlot requested, arch::state::StateVersion version,
+        arch::state::CompletionToken token) {
+        std::vector<arch::backend::BackendStateAccess> accesses;
+        accesses.reserve(stage_handles.size());
+        for (std::size_t index = 0; index < stage_handles.size(); ++index) {
+            const auto access = backend_access(index, requested);
+            (void)compute_backend->execute_physical_boundary(
+                access, version, token);
+            accesses.push_back(access);
+        }
+        const auto plan = amr_ctrl.ghost_exchange.BuildSameLevelPlan(
+            amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
+        return compute_backend->execute_same_level_exchange(
+            accesses, plan, requested, version, token);
     };
     const auto complete_device_boundary = [&](StateSlot slot) {
-        const auto handle = compute_backend->block_handle();
-        const arch::state::StateKey key{handle, slot};
-        const auto coherence = residency_ledger->inspect(key);
-        residency_ledger->require_readable(
-            key, {ExecutionSide::Device, coherence.interior.version,
-                  true, false});
+        if (stage_handles.empty())
+            throw std::logic_error("CUDA boundary requires active blocks");
+        const auto version = residency_ledger->inspect(
+            {stage_handles.front(), slot}).interior.version;
+        for (const auto handle : stage_handles) {
+            residency_ledger->require_readable(
+                {handle, slot},
+                {ExecutionSide::Device, version, true, false});
+        }
         const auto before = compute_backend->counters();
         StageExecutionContext context{
             ExecutionSide::Device, *residency_ledger, scheduler_clock};
         (void)arch::scheduler::complete_boundary(
-            context, stage_handles, slot, coherence.interior.version,
+            context, stage_handles, slot, version,
             [&](StateSlot requested, arch::state::StateVersion version,
                 arch::state::CompletionToken token) {
-                return compute_backend->execute_physical_boundary(
-                    backend_access(requested), version, token);
+                return execute_device_boundary(requested, version, token);
             });
         trace_backend_operation(
             arch::backend::BackendOperation::PhysicalBoundary, slot, before);
@@ -268,34 +291,40 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // only when a host consumer actually needs it.
     const auto synchronize_fluid_ghosts = [&] {
         if (compute_backend) {
-            const auto handle = compute_backend->block_handle();
-            const arch::state::StateKey key{handle, StateSlot::Current};
-            auto coherence = residency_ledger->inspect(key);
-            if (!arch::state::side_can_read(
-                    coherence.ghost.residency, ExecutionSide::Device)
-                || coherence.ghost.version != coherence.interior.version
-                || coherence.ghost_source_version
-                    != coherence.interior.version) {
-                complete_device_boundary(StateSlot::Current);
-                coherence = residency_ledger->inspect(key);
+            bool needs_device_ghosts = false;
+            for (const auto handle : stage_handles) {
+                const auto coherence = residency_ledger->inspect(
+                    {handle, StateSlot::Current});
+                needs_device_ghosts = needs_device_ghosts
+                    || !arch::state::side_can_read(
+                        coherence.ghost.residency, ExecutionSide::Device)
+                    || coherence.ghost.version != coherence.interior.version
+                    || coherence.ghost_source_version
+                        != coherence.interior.version;
             }
-            const bool host_current = arch::state::side_can_read(
-                    coherence.interior.residency, ExecutionSide::Host)
-                && arch::state::side_can_read(
-                    coherence.ghost.residency, ExecutionSide::Host)
-                && coherence.ghost.version == coherence.interior.version
-                && coherence.ghost_source_version
-                    == coherence.interior.version;
-            if (!host_current) {
-                amr::Block& block = amr_ctrl.pool->GetBlock(
-                    amr_ctrl.tree->GetActiveBlocks().front());
-                (void)arch::backend::transfer_state_regions(
-                    *compute_backend, *residency_ledger, scheduler_clock,
-                    backend_access(StateSlot::Current),
-                    host_transfer_view(block.fluid_state),
-                    arch::state::PendingTransferPhase::PendingD2H,
-                    static_cast<std::uint64_t>(ctrl.step_count),
-                    arch::backend::BackendOperation::Materialize);
+            if (needs_device_ghosts)
+                complete_device_boundary(StateSlot::Current);
+            const auto& active = amr_ctrl.tree->GetActiveBlocks();
+            for (std::size_t index = 0; index < stage_handles.size(); ++index) {
+                const auto coherence = residency_ledger->inspect(
+                    {stage_handles[index], StateSlot::Current});
+                const bool host_current = arch::state::side_can_read(
+                        coherence.interior.residency, ExecutionSide::Host)
+                    && arch::state::side_can_read(
+                        coherence.ghost.residency, ExecutionSide::Host)
+                    && coherence.ghost.version == coherence.interior.version
+                    && coherence.ghost_source_version
+                        == coherence.interior.version;
+                if (!host_current) {
+                    amr::Block& block = amr_ctrl.pool->GetBlock(active[index]);
+                    (void)arch::backend::transfer_state_regions(
+                        *compute_backend, *residency_ledger, scheduler_clock,
+                        backend_access(index, StateSlot::Current),
+                        host_transfer_view(block.fluid_state),
+                        arch::state::PendingTransferPhase::PendingD2H,
+                        static_cast<std::uint64_t>(ctrl.step_count),
+                        arch::backend::BackendOperation::Materialize);
+                }
             }
             return;
         }
@@ -305,7 +334,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             bc_handler.apply(block.fluid_state, block.grid);
         }
         amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                                config.grid.dim, &amr::Block::fluid_state);
+                                                config.grid.dim,
+                                                &amr::Block::fluid_state,
+                                                stage_handles);
         if (residency_ledger && !stage_handles.empty())
             publish_current_ghost();
     };
@@ -403,40 +434,51 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (use_cuda) {
 #if ARCH_CUDA_BUILD_ENABLED
         const auto& active = amr_ctrl.tree->GetActiveBlocks();
-        if (active.size() != 1 || stage_handles.size() != 1
-            || execution_requirements->amr
-            || execution_requirements->uniform_multiblock) {
+        if (active.empty() || stage_handles.size() != active.size()
+            || execution_requirements->amr) {
             throw std::logic_error(
-                "CUDA E3 requires one static active block");
+                "CUDA F requires a static uniform active topology");
         }
-        const arch::state::StateKey current_key{
-            stage_handles.front(), StateSlot::Current};
-        auto current_coherence = residency_ledger->inspect(current_key);
-        if (!arch::state::side_can_read(
-                current_coherence.ghost.residency, ExecutionSide::Host)
-            || current_coherence.ghost.version
-                != current_coherence.interior.version
-            || current_coherence.ghost_source_version
-                != current_coherence.interior.version) {
+        bool needs_host_ghosts = false;
+        for (const auto handle : stage_handles) {
+            const auto coherence = residency_ledger->inspect(
+                {handle, StateSlot::Current});
+            needs_host_ghosts = needs_host_ghosts
+                || !arch::state::side_can_read(
+                    coherence.ghost.residency, ExecutionSide::Host)
+                || coherence.ghost.version != coherence.interior.version
+                || coherence.ghost_source_version != coherence.interior.version;
+        }
+        if (needs_host_ghosts)
             synchronize_fluid_ghosts();
-        }
 
-        amr::Block& block = amr_ctrl.pool->GetBlock(active.front());
-        const arch::backend::StorageGeneration storage =
-            storage_generation_issuer.issue();
+        std::vector<arch::cuda::CudaBlockBinding> bindings;
+        bindings.reserve(active.size());
+        backend_storage.clear();
+        backend_storage.reserve(active.size());
+        for (std::size_t index = 0; index < active.size(); ++index) {
+            const auto storage = storage_generation_issuer.issue();
+            backend_storage.push_back(storage);
+            bindings.push_back({
+                &amr_ctrl.pool->GetBlock(active[index]), stage_handles[index],
+                storage, &bc_handler.logical_plan()});
+        }
         compute_backend = arch::cuda::make_cuda_backend(
-            block, stage_handles.front(), storage,
+            bindings,
             backend_resolution->device.ordinal,
             arch::cuda::make_cuda_launch_config(*resolved_plan, config),
-            specs, bc_handler.logical_plan(), eos);
+            specs, eos);
         startup_order->record(arch::dispatch::StartupEvent::Constructed);
         startup_order->record(arch::dispatch::StartupEvent::Allocated);
-        (void)arch::backend::transfer_state_regions(
-            *compute_backend, *residency_ledger, scheduler_clock,
-            backend_access(StateSlot::Current),
-            host_transfer_view(block.fluid_state),
-            arch::state::PendingTransferPhase::PendingH2D, 0,
-            arch::backend::BackendOperation::InitialUpload);
+        for (std::size_t index = 0; index < active.size(); ++index) {
+            amr::Block& block = amr_ctrl.pool->GetBlock(active[index]);
+            (void)arch::backend::transfer_state_regions(
+                *compute_backend, *residency_ledger, scheduler_clock,
+                backend_access(index, StateSlot::Current),
+                host_transfer_view(block.fluid_state),
+                arch::state::PendingTransferPhase::PendingH2D, 0,
+                arch::backend::BackendOperation::InitialUpload);
+        }
         startup_order->record(arch::dispatch::StartupEvent::Running);
 #else
         throw std::logic_error("CUDA backend is unavailable");
@@ -504,7 +546,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                             }
                             amr_ctrl.ghost_exchange.ExecuteExchange(
                                 amr_ctrl.pool, amr_ctrl.tree,
-                                config.grid.dim, &amr::Block::fluid_state);
+                                config.grid.dim, &amr::Block::fluid_state,
+                                proposed.handles_in_observation_order);
                             StageExecutionContext staged_context{
                                 ExecutionSide::Host, *replacement,
                                 scheduler_clock};
@@ -557,16 +600,18 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
         hydro_dt_candidates.reserve(active_blocks.size());
         if (compute_backend) {
-            const amr::Block& b = amr_ctrl.pool->GetBlock(
-                active_blocks.front());
-            hydro_dt_candidates.push_back({
-                compute_backend->compute_hydro_dt(
-                    backend_access(StateSlot::Current), cfl),
-                DriverReduction::make_block_reduction_key(
-                    b.level, b.morton_code, b.logical_x1, b.logical_x2,
-                    b.logical_x3,
-                    DriverReduction::BlockReductionComponent::Hydro),
-                true});
+            for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+                const amr::Block& b = amr_ctrl.pool->GetBlock(
+                    active_blocks[index]);
+                hydro_dt_candidates.push_back({
+                    compute_backend->compute_hydro_dt(
+                        backend_access(index, StateSlot::Current), cfl),
+                    DriverReduction::make_block_reduction_key(
+                        b.level, b.morton_code, b.logical_x1, b.logical_x2,
+                        b.logical_x3,
+                        DriverReduction::BlockReductionComponent::Hydro),
+                    true});
+            }
         } else {
             for (int block_id : active_blocks) {
                 amr::Block& b = amr_ctrl.pool->GetBlock(block_id);
@@ -592,11 +637,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             std::vector<arch::reduction::ReductionCandidate>
                 diffusion_dt_candidates;
             diffusion_dt_candidates.reserve(active_blocks.size());
-            for (const int block_id : active_blocks) {
+            for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+                const int block_id = active_blocks[index];
                 const amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
                 const double block_dt = compute_backend
                     ? compute_backend->compute_diffusion_dt(
-                        backend_access(StateSlot::Current))
+                        backend_access(index, StateSlot::Current))
                     : DiffFlux::adaptive_dt_diff(
                         block.fluid_state, eos, block.grid, config, 1.0);
                 diffusion_dt_candidates.push_back({
@@ -646,9 +692,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     (void)arch::scheduler::copy_slot(
                         stage_context, stage_handles, StateSlot::Current,
                         destination, [&] {
-                            compute_backend->copy_state_slot(
-                                backend_access(StateSlot::Current),
-                                backend_access(destination));
+                            for (std::size_t index = 0;
+                                 index < stage_handles.size(); ++index) {
+                                compute_backend->copy_state_slot(
+                                    backend_access(index, StateSlot::Current),
+                                    backend_access(index, destination));
+                            }
                         });
                     trace_backend_operation(
                         arch::backend::BackendOperation::DiffusionCopy,
@@ -676,9 +725,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const arch::scheduler::RklPlan& plan,
                     const arch::scheduler::RklStageDescriptor& descriptor,
                     arch::state::CompletionToken token) {
-                    return compute_backend->execute_diffusion_stage(
-                        backend_access(StateSlot::Current), plan, descriptor,
-                        diffusion_dt, dt_diff_fe, token);
+                    for (std::size_t index = 0;
+                         index < stage_handles.size(); ++index) {
+                        (void)compute_backend->execute_diffusion_stage(
+                            backend_access(index, StateSlot::Current), plan,
+                            descriptor, diffusion_dt, dt_diff_fe, token);
+                    }
+                    return token;
                 };
                 const auto reflux = [] (
                     const arch::scheduler::RklPlan&,
@@ -687,12 +740,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 const auto boundary = [&] (
                     StateSlot slot, arch::state::StateVersion version,
                     arch::state::CompletionToken token) {
-                    return compute_backend->execute_physical_boundary(
-                        backend_access(slot), version, token);
+                    return execute_device_boundary(slot, version, token);
                 };
                 const auto rotation = [&] (arch::state::SlotRotation value) {
-                    compute_backend->rotate_slots(
-                        backend_access(StateSlot::Current), value);
+                    for (std::size_t index = 0;
+                         index < stage_handles.size(); ++index) {
+                        compute_backend->rotate_slots(
+                            backend_access(index, StateSlot::Current), value);
+                    }
                 };
                 if (rkl1) {
                     (void)arch::scheduler::execute_single_rkl1_lane(
@@ -751,19 +806,42 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 [&](arch::state::CompletionToken token) {
             if (compute_backend) {
                 const auto before = compute_backend->counters();
-                const auto result = compute_backend->execute_burn(
-                    backend_access(StateSlot::Current), 0.5 * dt, token);
-                if (!arch::state::is_complete(result.completion)
-                    || result.completion.value != token.value
-                    || result.status != 0 || result.failed_cells != 0) {
-                    throw std::runtime_error("CUDA first burn failed");
+                std::vector<arch::reduction::ReductionCandidate>
+                    burn_dt_candidates;
+                burn_dt_candidates.reserve(active_blocks.size() + 1);
+                burn_dt_candidates.push_back({
+                    dt_burn_global,
+                    DriverReduction::make_accumulator_reduction_key(
+                        DriverReduction::BlockReductionComponent::BurnFirstHalf),
+                    true});
+                for (std::size_t index = 0;
+                     index < stage_handles.size(); ++index) {
+                    const auto result = compute_backend->execute_burn(
+                        backend_access(index, StateSlot::Current),
+                        0.5 * dt, token);
+                    if (!arch::state::is_complete(result.completion)
+                        || result.completion.value != token.value
+                        || result.status != 0 || result.failed_cells != 0) {
+                        throw std::runtime_error("CUDA first burn failed");
+                    }
+                    const amr::Block& block = amr_ctrl.pool->GetBlock(
+                        active_blocks[index]);
+                    burn_dt_candidates.push_back({
+                        result.dt_recommended,
+                        DriverReduction::make_block_reduction_key(
+                            block.level, block.morton_code,
+                            block.logical_x1, block.logical_x2,
+                            block.logical_x3,
+                            DriverReduction::BlockReductionComponent::BurnFirstHalf),
+                        true});
                 }
-                dt_burn_global = DriverBurn::combine_burn_minimum(
-                    dt_burn_global, result.dt_recommended);
+                dt_burn_global = DriverReduction::reduce_block_minimum(
+                    DriverBurn::INACTIVE_LIMITER_CANDIDATE,
+                    burn_dt_candidates);
                 trace_backend_operation(
                     arch::backend::BackendOperation::Burn,
                     StateSlot::Current, before);
-                return result.completion;
+                return token;
             }
             std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
             #pragma omp parallel for schedule(dynamic, 1)
@@ -807,19 +885,25 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             const auto executor = [&] (
                 const arch::scheduler::StageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
-                return compute_backend->execute_hydro_stage(
-                    backend_access(StateSlot::Current), descriptor, dt,
-                    token);
+                for (std::size_t index = 0;
+                     index < stage_handles.size(); ++index) {
+                    (void)compute_backend->execute_hydro_stage(
+                        backend_access(index, StateSlot::Current),
+                        descriptor, dt, token);
+                }
+                return token;
             };
             const auto boundary = [&] (
                 StateSlot slot, arch::state::StateVersion version,
                 arch::state::CompletionToken token) {
-                return compute_backend->execute_physical_boundary(
-                    backend_access(slot), version, token);
+                return execute_device_boundary(slot, version, token);
             };
             const auto rotation = [&] (arch::state::SlotRotation value) {
-                compute_backend->rotate_slots(
-                    backend_access(StateSlot::Current), value);
+                for (std::size_t index = 0;
+                     index < stage_handles.size(); ++index) {
+                    compute_backend->rotate_slots(
+                        backend_access(index, StateSlot::Current), value);
+                }
             };
             const auto reflux = [] (const arch::scheduler::HydroPlan&,
                                     StateSlot,
@@ -865,19 +949,42 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 [&](arch::state::CompletionToken token) {
             if (compute_backend) {
                 const auto before = compute_backend->counters();
-                const auto result = compute_backend->execute_burn(
-                    backend_access(StateSlot::Current), 0.5 * dt, token);
-                if (!arch::state::is_complete(result.completion)
-                    || result.completion.value != token.value
-                    || result.status != 0 || result.failed_cells != 0) {
-                    throw std::runtime_error("CUDA second burn failed");
+                std::vector<arch::reduction::ReductionCandidate>
+                    burn_dt_candidates;
+                burn_dt_candidates.reserve(active_blocks.size() + 1);
+                burn_dt_candidates.push_back({
+                    dt_burn_global,
+                    DriverReduction::make_accumulator_reduction_key(
+                        DriverReduction::BlockReductionComponent::BurnSecondHalf),
+                    true});
+                for (std::size_t index = 0;
+                     index < stage_handles.size(); ++index) {
+                    const auto result = compute_backend->execute_burn(
+                        backend_access(index, StateSlot::Current),
+                        0.5 * dt, token);
+                    if (!arch::state::is_complete(result.completion)
+                        || result.completion.value != token.value
+                        || result.status != 0 || result.failed_cells != 0) {
+                        throw std::runtime_error("CUDA second burn failed");
+                    }
+                    const amr::Block& block = amr_ctrl.pool->GetBlock(
+                        active_blocks[index]);
+                    burn_dt_candidates.push_back({
+                        result.dt_recommended,
+                        DriverReduction::make_block_reduction_key(
+                            block.level, block.morton_code,
+                            block.logical_x1, block.logical_x2,
+                            block.logical_x3,
+                            DriverReduction::BlockReductionComponent::BurnSecondHalf),
+                        true});
                 }
-                dt_burn_global = DriverBurn::combine_burn_minimum(
-                    dt_burn_global, result.dt_recommended);
+                dt_burn_global = DriverReduction::reduce_block_minimum(
+                    DriverBurn::INACTIVE_LIMITER_CANDIDATE,
+                    burn_dt_candidates);
                 trace_backend_operation(
                     arch::backend::BackendOperation::Burn,
                     StateSlot::Current, before);
-                return result.completion;
+                return token;
             }
             std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
             #pragma omp parallel for schedule(dynamic, 1)

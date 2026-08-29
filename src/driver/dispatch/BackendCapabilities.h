@@ -250,12 +250,18 @@ inline CapabilityResult query_support(
     if (requirements.dimension < 1 || requirements.dimension > 3)
         return reject_cuda(BackendCapabilityCode::UnsupportedDimension);
 
-    const int expected_x2 = requirements.dimension >= 2 ? 1 : 0;
-    const int expected_x3 = requirements.dimension >= 3 ? 1 : 0;
-    if (requirements.root_blocks_x1 != 1
-        || requirements.root_blocks_x2 != expected_x2
-        || requirements.root_blocks_x3 != expected_x3
-        || requirements.uniform_multiblock)
+    const bool valid_root_topology = requirements.root_blocks_x1 >= 1
+        && (requirements.dimension >= 2
+            ? requirements.root_blocks_x2 >= 1
+            : requirements.root_blocks_x2 == 0)
+        && (requirements.dimension >= 3
+            ? requirements.root_blocks_x3 >= 1
+            : requirements.root_blocks_x3 == 0);
+    const bool is_uniform_multiblock = requirements.root_blocks_x1 > 1
+        || (requirements.dimension >= 2 && requirements.root_blocks_x2 > 1)
+        || (requirements.dimension >= 3 && requirements.root_blocks_x3 > 1);
+    if (!valid_root_topology
+        || requirements.uniform_multiblock != is_uniform_multiblock)
         return reject_cuda(BackendCapabilityCode::UnsupportedRootTopology);
     if (requirements.amr)
         return reject_cuda(BackendCapabilityCode::UnsupportedAmr);

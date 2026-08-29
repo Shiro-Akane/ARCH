@@ -1,5 +1,7 @@
 #include "driver/ComputeBackend.h"
 #include "cuda/common/CudaLaunchConfig.h"
+#include "cuda/runtime/DeviceBlockStore.h"
+#include "amr/ExchangePlan.h"
 
 #include <array>
 #include <cstdint>
@@ -51,6 +53,43 @@ void test_generation_authority()
             (void)exhausted.issue();
         },
         "storage generation exhaustion wrapped");
+}
+
+void test_device_block_store_identity()
+{
+    using arch::backend::StorageGeneration;
+    using arch::cuda::DeviceBlockRecord;
+    using arch::cuda::DeviceBlockStoreIndex;
+    const std::array records{
+        DeviceBlockRecord{amr::BlockHandle{{41}, {7}},
+                          StorageGeneration{101}, {1}},
+        DeviceBlockRecord{amr::BlockHandle{{42}, {7}},
+                          StorageGeneration{102}, {2}}};
+    const DeviceBlockStoreIndex store(records);
+    require(store.size() == 2
+                && store.index_of({records[0].handle, records[0].storage,
+                                   arch::state::StateSlot::Current}) == 0
+                && store.index_of({records[1].handle, records[1].storage,
+                                   arch::state::StateSlot::Scratch}) == 1,
+            "device block store identity lowering drifted");
+    require(!store.contains({records[0].handle, StorageGeneration{999},
+                             arch::state::StateSlot::Current}),
+            "stale storage generation accepted");
+    require_failure(
+        [&] {
+            (void)store.index_of({
+                amr::BlockHandle{{41}, {8}}, records[0].storage,
+                arch::state::StateSlot::Current});
+        },
+        "stale topology epoch accepted by device block store");
+    require_failure(
+        [&] {
+            const std::array duplicate{
+                records[0], DeviceBlockRecord{
+                    records[0].handle, StorageGeneration{103}, {3}}};
+            (void)DeviceBlockStoreIndex(duplicate);
+        },
+        "duplicate BlockHandle accepted by device block store");
 }
 
 void test_host_transfer_view()
@@ -171,6 +210,13 @@ public:
     {
         return storage;
     }
+    bool contains(
+        arch::backend::BackendStateAccess access) const noexcept override
+    {
+        return (access.block == block && access.storage == storage)
+            || (access.block == second_block
+                && access.storage == second_storage);
+    }
     double compute_hydro_dt(arch::backend::BackendStateAccess, double) override
     {
         return 1.0;
@@ -187,6 +233,23 @@ public:
     double compute_diffusion_dt(arch::backend::BackendStateAccess) override
     {
         return 1.0;
+    }
+
+    arch::state::CompletionToken execute_same_level_exchange(
+        std::span<const arch::backend::BackendStateAccess> accesses,
+        const amr::SameLevelExchangePlan&, arch::state::StateSlot slot,
+        arch::state::StateVersion source_version,
+        arch::state::CompletionToken expected) override
+    {
+        if (!arch::state::is_valid(source_version)
+            || !arch::state::is_complete(expected))
+            throw std::invalid_argument("invalid fake exchange contract");
+        for (const auto& access : accesses) {
+            if (!contains(access) || access.slot != slot)
+                throw std::invalid_argument("stale fake exchange access");
+        }
+        ++counters_value.kernel_count;
+        return expected;
     }
     void copy_state_slot(arch::backend::BackendStateAccess,
                          arch::backend::BackendStateAccess) override {}
@@ -252,6 +315,8 @@ public:
 
     amr::BlockHandle block{{7}, {3}};
     arch::backend::StorageGeneration storage{9};
+    amr::BlockHandle second_block{{8}, {3}};
+    arch::backend::StorageGeneration second_storage{10};
     std::vector<int> calls;
     int enqueue_count = 0;
     int fail_enqueue = 0;
@@ -463,6 +528,34 @@ void test_transfer_transaction()
             "batch preflight changed ledger/backend before rejection");
 }
 
+void test_multiblock_exchange_contract()
+{
+    FakeBackend backend;
+    const std::array accesses{
+        arch::backend::BackendStateAccess{
+            backend.block, backend.storage,
+            arch::state::StateSlot::Next},
+        arch::backend::BackendStateAccess{
+            backend.second_block, backend.second_storage,
+            arch::state::StateSlot::Next}};
+    amr::SameLevelExchangePlan plan{};
+    const arch::state::CompletionToken token{
+        17, arch::state::CompletionState::Complete};
+    require(backend.execute_same_level_exchange(
+                accesses, plan, arch::state::StateSlot::Next, {4}, token)
+                == token
+                && backend.counters_value.kernel_count == 1,
+            "multi-block exchange did not route all backend identities");
+    auto stale = accesses;
+    stale[1].storage.value += 1;
+    require_failure(
+        [&] {
+            (void)backend.execute_same_level_exchange(
+                stale, plan, arch::state::StateSlot::Next, {4}, token);
+        },
+        "multi-block exchange accepted stale storage");
+}
+
 } // namespace
 
 int main()
@@ -472,8 +565,10 @@ int main()
     static_assert(!std::is_copy_constructible_v<
                   arch::backend::StorageGenerationIssuer>);
     test_generation_authority();
+    test_device_block_store_identity();
     test_host_transfer_view();
     test_cuda_launch_config();
     test_transfer_transaction();
+    test_multiblock_exchange_contract();
     return 0;
 }

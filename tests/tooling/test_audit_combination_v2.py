@@ -227,6 +227,60 @@ class CombinationAuditTests(unittest.TestCase):
     def test_rejects_noncanonical_object_injection(self):
         self.assert_rejected("CMakeLists.txt", "target_sources(ARCH PRIVATE $<TARGET_OBJECTS:backend>)")
 
+    def test_accepts_split_cuda_backend_object_assembly(self):
+        self.assert_accepted({
+            "CMakeLists.txt":
+                "add_library(arch_cuda_backend_burn_ideal OBJECT "
+                "src/cuda/runtime/CudaBackendBurnIdeal.cu)\n"
+                "add_library(arch_cuda_backend STATIC runtime.cu "
+                "$<TARGET_OBJECTS:arch_cuda_backend_burn_ideal>)\n"
+                "target_link_libraries(ARCH PRIVATE arch_cuda_backend)\n"
+        })
+
+    def test_accepts_canonical_split_cuda_backend_helper(self):
+        self.assert_accepted({
+            "CMakeLists.txt":
+                "function(arch_configure_cuda_backend_object target source)\n"
+                "  add_library(${target} OBJECT ${source})\n"
+                "endfunction()\n"
+                "arch_configure_cuda_backend_object("
+                "arch_cuda_backend_burn_ideal "
+                "src/cuda/runtime/CudaBackendBurnIdeal.cu)\n"
+                "add_library(arch_cuda_backend STATIC runtime.cu "
+                "$<TARGET_OBJECTS:arch_cuda_backend_burn_ideal>)\n"
+        })
+
+    def test_accepts_canonical_hydro_diffusion_exchange_objects(self):
+        self.assert_accepted({
+            "CMakeLists.txt":
+                "function(arch_configure_cuda_backend_object target source)\n"
+                "  add_library(${target} OBJECT ${source})\n"
+                "endfunction()\n"
+                "arch_configure_cuda_backend_object("
+                "arch_cuda_backend_hydro "
+                "src/cuda/runtime/CudaBackendHydro.cu)\n"
+                "arch_configure_cuda_backend_object("
+                "arch_cuda_backend_diffusion "
+                "src/cuda/runtime/CudaBackendDiffusion.cu)\n"
+                "arch_configure_cuda_backend_object("
+                "arch_cuda_backend_exchange "
+                "src/cuda/runtime/CudaBackendExchange.cu)\n"
+                "add_library(arch_cuda_backend STATIC runtime.cu "
+                "$<TARGET_OBJECTS:arch_cuda_backend_hydro> "
+                "$<TARGET_OBJECTS:arch_cuda_backend_diffusion> "
+                "$<TARGET_OBJECTS:arch_cuda_backend_exchange>)\n"
+        })
+
+    def test_rejects_swapped_canonical_backend_object_source(self):
+        self.assert_rejected(
+            "CMakeLists.txt",
+            "function(arch_configure_cuda_backend_object target source)\n"
+            "  add_library(${target} OBJECT ${source})\n"
+            "endfunction()\n"
+            "arch_configure_cuda_backend_object("
+            "arch_cuda_backend_hydro "
+            "src/cuda/runtime/CudaBackendDiffusion.cu)\n")
+
     def test_accepts_only_central_resolver_fallback_reason_field(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
@@ -261,6 +315,15 @@ class CombinationAuditTests(unittest.TestCase):
         self.assert_rejected(
             "src/cuda/runtime/CudaBackend.cu",
             "launch(nullptr, impl_->burn_candidates.get());")
+
+    def test_accepts_per_block_boundary_and_burn_ownership(self):
+        self.assert_accepted({
+            "src/cuda/runtime/CudaBackend.cu":
+                "void execute_physical_boundary() { launch(); quiesce(); "
+                "for (const auto& phase : block.boundary.phases) use(phase); }\n"
+                "void burn_candidates() { launch(block.burn_workspaces.get(), "
+                "block.burn_candidates.get()); }\n"
+        })
 
     def test_rejects_cuda_burn_route_without_failed_nse_continuation(self):
         self.assert_rejected(

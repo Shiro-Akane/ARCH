@@ -386,14 +386,18 @@ template <typename BCPolicy>
 inline void synchronize(amr::AMRControl& amr_ctrl, BCPolicy& boundary_condition,
                         FluidState amr::Block::* state_ptr)
 {
+    const auto& binding = arch::scheduler::current_stage_binding();
     const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
+    if (binding.handles.size() != active_blocks.size())
+        throw std::logic_error("RKL exchange handle count mismatch");
 #pragma omp parallel for schedule(dynamic, 1)
     for (size_t index = 0; index < active_blocks.size(); ++index) {
         amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
         boundary_condition.apply(block.*state_ptr, block.grid);
     }
     amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                            amr_ctrl.tree->GetRootGridDim(), state_ptr);
+                                            amr_ctrl.tree->GetRootGridDim(),
+                                            state_ptr, binding.handles);
 }
 
 inline FluidState& state_for(amr::Block& block,

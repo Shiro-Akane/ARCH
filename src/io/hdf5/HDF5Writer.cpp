@@ -192,10 +192,18 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
                                     const std::vector<size_t>& expected_dims,
                                     std::vector<double>& values) {
             DataSet dataset = data.getDataSet(name);
-            if (dataset.getDimensions() != expected_dims)
+            const auto actual_dims = dataset.getDimensions();
+            if (actual_dims != expected_dims)
                 throw std::runtime_error("Checkpoint dataset '" + name + "' has incompatible dimensions.");
             size_t count = 1;
-            for (const size_t extent : expected_dims) count *= extent;
+            for (const size_t extent : actual_dims) {
+                if (extent == 0 ||
+                    count > std::numeric_limits<size_t>::max() / extent) {
+                    throw std::runtime_error(
+                        "Checkpoint dataset '" + name + "' size overflows.");
+                }
+                count *= extent;
+            }
             values.resize(count);
             dataset.read(values.data());
         };

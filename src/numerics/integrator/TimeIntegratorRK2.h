@@ -90,7 +90,7 @@ struct SolverRK2
                         throw std::logic_error("RK2 ghost exchange requires Scratch output");
                     amr_ctrl.ghost_exchange.ExecuteExchange(
                         amr_ctrl.pool, amr_ctrl.tree, dim,
-                        &amr::Block::state_scratch);
+                        &amr::Block::state_scratch, binding.handles);
                     return token;
                 },
             [&](arch::state::SlotRotation rotation) {

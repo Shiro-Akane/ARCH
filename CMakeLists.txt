@@ -338,6 +338,12 @@ set_target_properties(ARCH PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${ARCH_RUNTIME_O
 include(CTest)
 if(BUILD_TESTING)
     find_package(Threads REQUIRED)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME backend_validation_contract
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validate_backend_results.py)
+    set_tests_properties(backend_validation_contract PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_executable(arch_mainline_authority tests/cuda/test_mainline_authority.cpp)
     target_compile_features(arch_mainline_authority PRIVATE cxx_std_20)
     target_include_directories(arch_mainline_authority PRIVATE
@@ -373,6 +379,14 @@ if(BUILD_TESTING)
     target_include_directories(arch_boundary_plan PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME boundary_plan COMMAND arch_boundary_plan)
+
+    add_executable(arch_same_level_exchange_plan
+        tests/test_same_level_exchange_plan.cpp)
+    target_compile_features(arch_same_level_exchange_plan PRIVATE cxx_std_20)
+    target_include_directories(arch_same_level_exchange_plan PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME same_level_exchange_plan
+        COMMAND arch_same_level_exchange_plan)
 
     add_executable(arch_resolved_execution_plan
         tests/test_resolved_execution_plan.cpp)
@@ -417,9 +431,62 @@ endif()
 
 if(ARCH_ENABLE_CUDA)
     enable_language(CUDA)
+
+    # Each burn/EOS instantiation produces a large PTX unit.  Keep those
+    # units separate and order the internal object targets so Unix Makefiles
+    # cannot assemble all of them concurrently and exhaust a constrained
+    # WSL/CI host.  The only public/linkable backend target remains
+    # arch_cuda_backend.
+    function(arch_configure_cuda_backend_object target source)
+        add_library(${target} OBJECT ${source})
+        target_compile_features(${target} PRIVATE cxx_std_20)
+        target_include_directories(${target} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(${target} PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+        set_target_properties(${target} PROPERTIES
+            CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON)
+    endfunction()
+
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_ideal
+        src/cuda/runtime/CudaBackendBurnIdeal.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_helm
+        src/cuda/runtime/CudaBackendBurnHelm.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d
+        src/cuda/runtime/CudaBackendBurnTabular3D.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d
+        src/cuda/runtime/CudaBackendBurnTabular4D.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_hydro
+        src/cuda/runtime/CudaBackendHydro.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
+        src/cuda/runtime/CudaBackendDiffusion.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_exchange
+        src/cuda/runtime/CudaBackendExchange.cu)
+    add_dependencies(arch_cuda_backend_burn_helm
+        arch_cuda_backend_burn_ideal)
+    add_dependencies(arch_cuda_backend_burn_tabular3d
+        arch_cuda_backend_burn_helm)
+    add_dependencies(arch_cuda_backend_burn_tabular4d
+        arch_cuda_backend_burn_tabular3d)
+    add_dependencies(arch_cuda_backend_hydro
+        arch_cuda_backend_burn_tabular4d)
+    add_dependencies(arch_cuda_backend_diffusion
+        arch_cuda_backend_hydro)
+    add_dependencies(arch_cuda_backend_exchange
+        arch_cuda_backend_diffusion)
+
     add_library(arch_cuda_backend STATIC
         src/cuda/runtime/CudaBackend.cu
-        src/cuda/microphysics/helm_eos_loader.cpp)
+        src/cuda/microphysics/helm_eos_loader.cpp
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_ideal>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_helm>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d>
+        $<TARGET_OBJECTS:arch_cuda_backend_hydro>
+        $<TARGET_OBJECTS:arch_cuda_backend_diffusion>
+        $<TARGET_OBJECTS:arch_cuda_backend_exchange>)
+    add_dependencies(arch_cuda_backend arch_cuda_backend_exchange)
     set_source_files_properties(src/cuda/microphysics/helm_eos_loader.cpp
         PROPERTIES LANGUAGE CUDA)
     target_compile_features(arch_cuda_backend PRIVATE cxx_std_20)
@@ -531,6 +598,37 @@ if(ARCH_ENABLE_CUDA)
             CUDA_STANDARD_REQUIRED ON)
         target_link_libraries(arch_cuda_hydro_block PRIVATE
             arch_cuda_backend arch_solver_dispatch)
+        add_executable(arch_cuda_multiblock_hydro
+            tests/cuda/test_cuda_multiblock_hydro.cu)
+        set_source_files_properties(tests/cuda/test_cuda_multiblock_hydro.cu
+            PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+        target_compile_features(arch_cuda_multiblock_hydro PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_multiblock_hydro PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        set_target_properties(arch_cuda_multiblock_hydro PROPERTIES
+            CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_multiblock_hydro PRIVATE
+            arch_cuda_backend arch_solver_dispatch)
+        add_executable(arch_cuda_multiblock_diffusion
+            tests/cuda/test_cuda_multiblock_diffusion.cu)
+        set_source_files_properties(tests/cuda/test_cuda_multiblock_diffusion.cu
+            PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+        target_compile_features(arch_cuda_multiblock_diffusion PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_multiblock_diffusion PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(arch_cuda_multiblock_diffusion PRIVATE
+            arch_cuda_backend arch_solver_dispatch)
+        add_executable(arch_cuda_multiblock_burn
+            tests/cuda/test_cuda_multiblock_burn.cu)
+        set_source_files_properties(tests/cuda/test_cuda_multiblock_burn.cu
+            PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+        target_compile_features(arch_cuda_multiblock_burn PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_multiblock_burn PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_definitions(arch_cuda_multiblock_burn PRIVATE
+            ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+        target_link_libraries(arch_cuda_multiblock_burn PRIVATE
+            arch_cuda_backend arch_solver_dispatch)
         add_executable(arch_cuda_single_level_validation
             tests/cuda/test_cuda_single_level_validation.cpp)
         target_compile_features(arch_cuda_single_level_validation PRIVATE
@@ -588,6 +686,12 @@ if(ARCH_ENABLE_CUDA)
         add_test(NAME cuda_reduction_contract
             COMMAND arch_cuda_reduction_contract)
         add_test(NAME cuda_hydro_block COMMAND arch_cuda_hydro_block)
+        add_test(NAME cuda_multiblock_hydro
+            COMMAND arch_cuda_multiblock_hydro)
+        add_test(NAME cuda_multiblock_diffusion
+            COMMAND arch_cuda_multiblock_diffusion)
+        add_test(NAME cuda_multiblock_burn
+            COMMAND arch_cuda_multiblock_burn)
         add_test(NAME cuda_hydro_route_matrix
             COMMAND arch_cuda_hydro_block hydro-matrix)
         add_test(NAME cuda_hydro_integrator_matrix
