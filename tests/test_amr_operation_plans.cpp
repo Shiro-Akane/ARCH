@@ -1,4 +1,6 @@
 #include "amr/AmrTransferPlans.h"
+#include "amr/AMRFluxRegistering.h"
+#include "amr/FluxRegister.h"
 #include "amr/GhostExchange.h"
 
 #include <bit>
@@ -6,6 +8,7 @@
 #include <cstdint>
 #include <iostream>
 #include <limits>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -236,8 +239,9 @@ void test_mixed_level_and_coarse_fine_execution()
     config.amr.lrefinemin = 0;
     config.amr.lrefinemax = 1;
 
-    auto pool = std::make_shared<amr::MemoryPool>(16, 1);
-    auto tree = std::make_shared<amr::AmrTree>(pool);
+    amr::AMRControl control(16, 1);
+    auto pool = control.pool;
+    auto tree = control.tree;
     tree->LoadLeafGrid(
         config, 2,
         std::vector<int>{1, 1, 0},
@@ -252,8 +256,10 @@ void test_mixed_level_and_coarse_fine_execution()
         handles.push_back({{100 + index}, {31}});
         fill_block(pool->GetBlock(active[index]));
     }
+    control.BindActiveHandles(handles);
+    control.flux_register.EnsureSpecies(2);
 
-    amr::GhostExchange exchange;
+    amr::GhostExchange& exchange = control.ghost_exchange;
     const auto same_level = exchange.BuildSameLevelPlans(
         pool, tree, 1, handles);
     expect(same_level.size() == 2,
@@ -317,6 +323,104 @@ void test_mixed_level_and_coarse_fine_execution()
     expect(coarse_after.fluid_state.enuc_rate[coarse_lower_ghost]
                == expected_enuc,
            "fine-to-coarse ENUC ghost average drifted");
+
+    std::map<amr::AmrEndpoint, int> lowering;
+    amr::AmrEndpoint fine_endpoint{};
+    amr::AmrEndpoint coarse_endpoint{};
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        const auto& active_block = pool->GetBlock(active[index]);
+        const amr::AmrEndpoint value{
+            {1, active_block.level, active_block.logical_x1, 0, 0},
+            handles[index]};
+        lowering.emplace(value, active[index]);
+        if (active[index] == fine_id) fine_endpoint = value;
+        if (active[index] == coarse_id) coarse_endpoint = value;
+    }
+
+    amr::FluxRegister invalid_register;
+    invalid_register.EnsureSpecies(2);
+    invalid_register.Resize(16, 1);
+    amr::FluxRegistrationPlan registration{};
+    registration.dimension = 1;
+    registration.scope = {0, {31}, {31}};
+    const std::array<double, 7> field_values{
+        2.0, 3.0, 4.0, 5.0, 6.0, 0.4, 0.6};
+    for (int field = 0; field < 7; ++field) {
+        registration.operations.push_back({
+            0, fine_endpoint, coarse_endpoint,
+            {{amr::BLOCK_NX - 1, 0, 0}, {1, 1, 1}},
+            {{0, 0, 0}, {1, 1, 1}},
+            amr::AmrAxis::X, amr::AmrSide::Lower,
+            field < 5 ? static_cast<amr::AmrField>(field)
+                      : amr::AmrField::Species,
+            field < 5 ? -1 : field - 5,
+            amr::RefinementRule::FineFluxContribution, 0.5, 1.0});
+    }
+    amr::finalize_amr_plan(registration);
+
+    std::vector<double> nonfinite_values(
+        field_values.begin(), field_values.end());
+    nonfinite_values[0] = std::numeric_limits<double>::quiet_NaN();
+    expect_rejected(
+        [&] { invalid_register.ApplyRegistrationPlan(
+            registration, nonfinite_values, lowering); },
+        "nonfinite flux contribution was accepted");
+    expect(!invalid_register.HasData(coarse_id, 0),
+           "rejected flux registration performed a partial write");
+
+    const int fine_total = fine_after.grid.GetTotalSize();
+    std::vector<FluidVector> hydro_flux(
+        static_cast<std::size_t>(fine_total),
+        {field_values[0], field_values[1], field_values[2],
+         field_values[3], field_values[4]});
+    std::vector<double> species_flux(
+        static_cast<std::size_t>(2 * fine_total));
+    std::fill_n(species_flux.begin(), fine_total, field_values[5]);
+    std::fill_n(species_flux.begin() + fine_total,
+                fine_total, field_values[6]);
+    amr::RegisterCoarseFineFluxes(
+        control, fine_id, fine_after.grid, 0, hydro_flux,
+        species_flux, 2, 0.5);
+    expect(control.flux_register.HasData(coarse_id, 0),
+           "production flux registration did not activate its coarse face");
+    expect(control.flux_register.GetSummedFlux(coarse_id, 0, 0).rho == 1.0
+               && control.flux_register.GetSummedFlux(coarse_id, 0, 0).eng == 3.0
+               && control.flux_register.GetSummedSpeciesFlux(coarse_id, 0, 0, 0)
+                   == 0.2
+               && control.flux_register.GetSummedSpeciesFlux(coarse_id, 0, 0, 1)
+                   == 0.3,
+           "logical flux registration arithmetic drifted");
+
+    const double reflux_dt = 0.25;
+    const auto reflux = control.flux_register.BuildRefluxPlan(
+        pool, active, handles, 1, reflux_dt);
+    expect(reflux.operations.size() == 7,
+           "reflux plan did not cover five conserved and two species fields");
+    const int coarse_cell = coarse_after.grid.GetIndex(
+        coarse_after.grid.Is(), coarse_after.grid.Js(),
+        coarse_after.grid.Ks());
+    const double rho_before = coarse_after.fluid_state.rho[coarse_cell];
+    const double x0_before = coarse_after.fluid_state.X(0, coarse_cell);
+    const double area = GridMetrics::FaceArea(
+        coarse_after.grid, 0, coarse_after.grid.Is(),
+        coarse_after.grid.Js(), coarse_after.grid.Ks(), false);
+    const double volume = GridMetrics::CellVolume(
+        coarse_after.grid, coarse_after.grid.Is(),
+        coarse_after.grid.Js(), coarse_after.grid.Ks());
+    const double correction = reflux_dt * area / volume;
+    const double expected_rho = rho_before + correction;
+    const double expected_x0 =
+        (rho_before * x0_before + correction * 0.2) / expected_rho;
+    control.flux_register.ExecuteRefluxPlan(
+        reflux, pool, active, handles, &amr::Block::fluid_state);
+    const auto& refluxed = pool->GetBlock(coarse_id).fluid_state;
+    expect(refluxed.rho[coarse_cell] == expected_rho
+               && refluxed.X(0, coarse_cell) == expected_x0,
+           "logical reflux execution arithmetic drifted: rho="
+               + std::to_string(refluxed.rho[coarse_cell])
+               + " expected_rho=" + std::to_string(expected_rho)
+               + " x0=" + std::to_string(refluxed.X(0, coarse_cell))
+               + " expected_x0=" + std::to_string(expected_x0));
 }
 
 } // namespace

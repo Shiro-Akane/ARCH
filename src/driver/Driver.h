@@ -395,6 +395,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     residency_ledger = std::move(staged_initial_ledger);
     if (initial_topology.handles_in_observation_order != stage_handles)
         throw std::logic_error("initial topology commit result mismatch");
+    amr_ctrl.BindActiveHandles(stage_handles);
 
     std::cout << ">>> Simulation Started | Solver: " << integrator_name
               << " | Entropy Fix Coeff: " << num_cfg.entropy_fix_coeff;
@@ -571,11 +572,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     throw std::logic_error(
                         "topology commit result and staged handles disagree");
                 }
+                amr_ctrl.BindActiveHandles(stage_handles);
             } else {
                 const auto reconciliation =
                     topology_registry.commit_after_success(
                         std::move(topology_candidate), [](const auto&) {});
                 stage_handles = reconciliation.handles_in_observation_order;
+                amr_ctrl.BindActiveHandles(stage_handles);
             }
         }
 
