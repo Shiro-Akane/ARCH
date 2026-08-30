@@ -79,9 +79,40 @@ set(APP_SRC_DIRS
 )
 
 set(ARCH_APPLICATION_SOURCES src/main.cpp)
+set(ARCH_BUILTIN_CUSTOM_NETWORK_ROOT
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/custom")
+file(REAL_PATH "${ARCH_BUILTIN_CUSTOM_NETWORK_ROOT}"
+    ARCH_BUILTIN_CUSTOM_NETWORK_ROOT_REAL)
+file(REAL_PATH "${ARCH_CUSTOM_NETWORK_ROOT}"
+    ARCH_CUSTOM_NETWORK_ROOT_REAL)
+file(REAL_PATH "${CMAKE_CURRENT_SOURCE_DIR}" ARCH_PROJECT_ROOT_REAL)
+cmake_path(IS_PREFIX ARCH_PROJECT_ROOT_REAL
+    "${ARCH_CUSTOM_NETWORK_ROOT_REAL}" NORMALIZE custom_root_inside_project)
+cmake_path(IS_PREFIX ARCH_CUSTOM_NETWORK_ROOT_REAL
+    "${ARCH_PROJECT_ROOT_REAL}" NORMALIZE custom_root_contains_project)
+cmake_path(IS_PREFIX ARCH_BUILTIN_CUSTOM_NETWORK_ROOT_REAL
+    "${ARCH_CUSTOM_NETWORK_ROOT_REAL}" NORMALIZE custom_root_inside_builtin_root)
+if(custom_root_contains_project OR
+   (custom_root_inside_project AND NOT custom_root_inside_builtin_root))
+    message(FATAL_ERROR
+        "ARCH_CUSTOM_NETWORK_ROOT must not contain the project and, when it is "
+        "inside the source tree, must stay under src/physics/network/custom; "
+        "use an external directory for audit builds")
+endif()
 foreach(dir IN LISTS APP_SRC_DIRS)
-    file(GLOB_RECURSE dir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
-    list(APPEND ARCH_APPLICATION_SOURCES ${dir_srcs})
+    file(GLOB_RECURSE dir_srcs CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
+    foreach(candidate_source IN LISTS dir_srcs)
+        file(REAL_PATH "${candidate_source}" candidate_source_real)
+        cmake_path(IS_PREFIX ARCH_BUILTIN_CUSTOM_NETWORK_ROOT_REAL
+            "${candidate_source_real}" NORMALIZE source_in_builtin_custom_root)
+        cmake_path(IS_PREFIX ARCH_CUSTOM_NETWORK_ROOT_REAL
+            "${candidate_source_real}" NORMALIZE source_in_configured_custom_root)
+        if(NOT source_in_builtin_custom_root AND
+           NOT source_in_configured_custom_root)
+            list(APPEND ARCH_APPLICATION_SOURCES "${candidate_source}")
+        endif()
+    endforeach()
 endforeach()
 
 
@@ -93,6 +124,7 @@ file(MAKE_DIRECTORY "${ARCH_CUSTOM_REGISTRY_DIR}")
 file(WRITE "${ARCH_CUSTOM_REGISTRY_HEADER}" "#pragma once\n")
 set(ARCH_CUSTOM_NETWORK_MACRO "#define ARCH_FOR_EACH_CUSTOM_NETWORK(M)")
 set(ARCH_CUSTOM_DISCOVERED_IDS "")
+set(ARCH_CUSTOM_RESERVED_IDS custom none null ideal helmholtz tabular)
 file(GLOB ARCH_CUSTOM_NETWORK_CONFIGS CONFIGURE_DEPENDS
     "${ARCH_CUSTOM_NETWORK_ROOT}/*/network.cmake")
 foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
@@ -109,11 +141,35 @@ foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
 
     get_filename_component(custom_dir "${custom_config}" DIRECTORY)
     get_filename_component(custom_folder "${custom_dir}" NAME)
+    set(custom_manifest "${custom_dir}/manifest.json")
+    if(NOT EXISTS "${custom_manifest}")
+        message(FATAL_ERROR
+            "Generated custom network is missing manifest.json: ${custom_config}")
+    endif()
+    file(READ "${custom_manifest}" custom_manifest_json)
+    string(JSON custom_manifest_schema ERROR_VARIABLE custom_schema_error
+        GET "${custom_manifest_json}" schema_version)
+    string(JSON custom_generator_version ERROR_VARIABLE custom_generator_error
+        GET "${custom_manifest_json}" generator_version)
+    string(JSON custom_manifest_id ERROR_VARIABLE custom_id_error
+        GET "${custom_manifest_json}" network_id)
+    if(NOT custom_schema_error STREQUAL "NOTFOUND"
+       OR NOT custom_generator_error STREQUAL "NOTFOUND"
+       OR NOT custom_id_error STREQUAL "NOTFOUND"
+       OR NOT custom_manifest_schema EQUAL 1
+       OR custom_generator_version LESS 3
+       OR NOT custom_manifest_id STREQUAL ARCH_CUSTOM_NETWORK_ID)
+        message(FATAL_ERROR
+            "Unsupported or inconsistent custom network manifest: ${custom_manifest}")
+    endif()
+    list(FIND ARCH_CUSTOM_RESERVED_IDS "${ARCH_CUSTOM_NETWORK_ID}"
+        custom_reserved_index)
     string(LENGTH "${ARCH_CUSTOM_NETWORK_ID}" custom_id_length)
     if(NOT ARCH_CUSTOM_NETWORK_ID MATCHES "^[a-z]"
        OR ARCH_CUSTOM_NETWORK_ID MATCHES "[^a-z0-9_]"
        OR custom_id_length GREATER 48
        OR ARCH_CUSTOM_NETWORK_ID MATCHES "^(aprox|iso)"
+       OR NOT custom_reserved_index EQUAL -1
        OR NOT custom_folder STREQUAL ARCH_CUSTOM_NETWORK_ID)
         message(FATAL_ERROR
             "Unsafe custom network ID/folder contract in ${custom_config}")
@@ -169,7 +225,8 @@ set(DISPATCH_SRC_DIRS
 )
 set(ARCH_DISPATCH_SOURCES src/driver/SolverDispatch.cpp)
 foreach(dir IN LISTS DISPATCH_SRC_DIRS)
-    file(GLOB dir_srcs "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
+    file(GLOB dir_srcs CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
     list(APPEND ARCH_DISPATCH_SOURCES ${dir_srcs})
 endforeach()
 
@@ -347,7 +404,7 @@ if(BUILD_TESTING)
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_compile_definitions(sparse_klu_regression PRIVATE ARCH_HAS_KLU=1)
         target_link_libraries(sparse_klu_regression PRIVATE ${ARCH_KLU_TARGET})
-        add_test(NAME sparse_klu_160_isotopes COMMAND sparse_klu_regression)
+        add_test(NAME sparse_klu_161_equations COMMAND sparse_klu_regression)
     endif()
 endif()
 

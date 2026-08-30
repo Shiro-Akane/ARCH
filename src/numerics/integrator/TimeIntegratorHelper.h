@@ -168,7 +168,8 @@ namespace TimeIntegration
     inline void perform_stage_update(
         const FluidState &u_n, const FluidState &u_current, FluidState &u_dest,
         const std::vector<FluidVector> &dU, const std::vector<double> &d_spec,
-        const Grid &grid, double weight_n, double weight_flux, double sml_rho, double max_eint)
+        const Grid &grid, double weight_n, double weight_flux,
+        double sml_rho, double min_eint, double max_eint)
     {
         int n_spec = u_n.GetNumSpecies();
         int total_size = grid.GetTotalSize();
@@ -199,8 +200,9 @@ namespace TimeIntegration
                     U_new.mom_u = 0.0;
                     U_new.mom_v = 0.0;
                     U_new.mom_w = 0.0;
-                    // Use the same positive specific-energy floor as the repair path below.
-                    U_new.eng = sml_rho * 1e-10;
+                    // Use the same configured positive specific-energy floor
+                    // as the repair path below.
+                    U_new.eng = sml_rho * min_eint;
                 }
                 else
                 {
@@ -219,10 +221,9 @@ namespace TimeIntegration
                         e_kin = 0.5 * (U_new.mom_u * U_new.mom_u + U_new.mom_v * U_new.mom_v + U_new.mom_w * U_new.mom_w) / U_new.rho;
                     }
 
-                    // A positive 1e-10 erg/g floor prevents EOS calls at zero or
-                    // negative internal energy; max_eint is supplied by configuration.
+                    // A positive configured floor prevents EOS calls at zero
+                    // or negative internal energy.
                     double current_eint = (U_new.eng - e_kin) / U_new.rho;
-                    double min_eint = 1e-10;
 
                     if (current_eint < min_eint || current_eint > max_eint)
                     {

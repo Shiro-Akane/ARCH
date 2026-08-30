@@ -71,16 +71,21 @@ struct EOSDispatcher
                 cached_species != &specs)
             {
                 std::cout << "[EOS Dispatch] Inspecting HDF5 metadata..." << std::endl;
-                cached_3d.reset();
-                cached_4d.reset();
-                table_dimension = inspect_eos_table_rank(path);
+                const int inspected_dimension = inspect_eos_table_rank(path);
+                if (inspected_dimension == 4) {
+                    auto replacement =
+                        std::make_unique<Tabular4DEOS>(path, &specs);
+                    cached_3d.reset();
+                    cached_4d = std::move(replacement);
+                } else {
+                    auto replacement =
+                        std::make_unique<Tabular3DEOS>(path, &specs);
+                    cached_4d.reset();
+                    cached_3d = std::move(replacement);
+                }
+                table_dimension = inspected_dimension;
                 cached_table_path = path;
                 cached_species = &specs;
-                if (table_dimension == 4) {
-                    cached_4d = std::make_unique<Tabular4DEOS>(path, &specs);
-                } else {
-                    cached_3d = std::make_unique<Tabular3DEOS>(path, &specs);
-                }
             }
             if (table_dimension == 4) {
                 func(cached_4d->get_view());

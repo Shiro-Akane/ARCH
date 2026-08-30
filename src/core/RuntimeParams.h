@@ -163,7 +163,17 @@ public:
         }
 
         cfg.numerics.sml_rho = parser.GetDouble("sml_rho", 1e-12);
+        cfg.numerics.min_eint = parser.GetDouble("min_eint", 1e-10);
         cfg.numerics.max_eint = parser.GetDouble("max_eint", 1e21);
+        if (!std::isfinite(cfg.numerics.sml_rho) ||
+            !std::isfinite(cfg.numerics.min_eint) ||
+            !std::isfinite(cfg.numerics.max_eint) ||
+            !(cfg.numerics.sml_rho > 0.0) ||
+            !(cfg.numerics.min_eint > 0.0) ||
+            cfg.numerics.max_eint < cfg.numerics.min_eint) {
+            throw std::invalid_argument(
+                "sml_rho and min_eint must be positive and max_eint must not be smaller than min_eint.");
+        }
 
         // Execution backend.  This is independent of the time integrator:
         // a CUDA-enabled fat binary can still execute the CPU path at runtime.
@@ -353,6 +363,10 @@ public:
 
         if (cfg.io.restart)
         {
+            if (cfg.io.restart_file.empty()) {
+                throw std::invalid_argument(
+                    "restart_file must be non-empty when restart = true.");
+            }
             std::cout << "[RuntimeParams] Restart Enabled. Target file: '"
                       << cfg.io.restart_file << "'" << std::endl;
         }

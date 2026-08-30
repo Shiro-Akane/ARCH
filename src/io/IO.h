@@ -37,6 +37,8 @@ void write_plt(amr::AMRControl &amr_ctrl,
 void write_chk(amr::AMRControl &amr_ctrl,
                int chk_file_index, int plt_file_index,
                int step_count, double current_time,
+               double dt_old, double dt_burn,
+               bool resume_after_regrid,
                const SimConfig &config);
 
 // Checkpoint input for restart.

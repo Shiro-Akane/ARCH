@@ -74,7 +74,9 @@ eos_table_path = /path/to/model.h5
 
 文件内部的 `table_rank` 自动选择 3D 或 4D 策略。新 EOS 表应保存比 Helmholtz
 自由能并遵循[本地 HDF5 契约](src/physics/eos/TabularEOS.zh-CN.md)；上游
-Shen/LS/HS 或 CompOSE 文件必须先转换成该契约。
+Shen/LS/HS 或 CompOSE 文件必须使用表族专用转换器转换成该契约。仓库目前不
+附带外部 EOS 转换器；真实 Shen 来源表评估见
+[validation/eos](validation/eos/README.zh-CN.md)。
 
 生成 custom 网络时复制示例 recipe，自行选择唯一的 `NETWORK_ID` 和核素：
 
@@ -96,7 +98,8 @@ linear_solver = Auto
 ~~~
 
 `Auto` 在不超过 30 个核素时保留专用 DenseLU 路径，超过时选择 SparseKLU。
-完整契约和生成器限制见[研究与 API 参考](docs/Reference.zh-CN.md)。
+完整契约和生成器限制见[研究与 API 参考](docs/Reference.zh-CN.md)，多规模网络
+兼容证据统一见 [validation/network](validation/network/README.zh-CN.md)。
 
 ## 首次运行
 
@@ -126,7 +129,7 @@ SodBeginner_chk_0000.h5
 
 [文档索引](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与法律文件入口。
 
-定量状态、CPU 结果、已知失败和 CUDA 占位项集中在[验证索引](validation/README.zh-CN.md)。[AMR 状态页](validation/amr/README.zh-CN.md)整合历史图像，并区分可视化诊断与定量验收。
+定量状态、CPU 结果、已知失败和 CUDA 占位项集中在[验证索引](validation/README.zh-CN.md)。[AMR 状态页](validation/amr/README.zh-CN.md)整合历史图像、定量守恒基线和仍存在的局部细化保持限制。
 
 ## 仓库结构
 
@@ -163,7 +166,7 @@ ARCH/
 - 燃烧、扩散和流体使用对称组合 `B(dt/2)-D(dt/2)-H(dt)-D(dt/2)-B(dt/2)`；因此即使流体子步选择 SSPRK3，耦合方法最高也只有二阶；
 - 粗细 AMR 界面以 MUSCL-MinMod 代替 PPM 的宽模板；
 - 在无效或近真空状态下，密度、速度、内能和组分保护可能修改守恒更新；
-- CUDA 一致性、AMR 定量收敛和自重力不属于 `main` 分支已验证功能集；当前 KLU 验证范围包括稀疏线性代数回归和 160 核素生成网络 smoke test，生产级收敛仍按具体网络验证；
+- CUDA 一致性、稳定保持局部 AMR 细化和自重力不属于 `main` 分支已验证功能集；当前 KLU 与生成式网络证据统一索引在 `validation/network`，生产级收敛仍按具体网络验证；
 - Release 构建使用 `-march=native` 和 `-ffast-math`，优先性能而不是跨机器逐位复现；
 - ARCH 当前提供源码级扩展接口，而不是已安装的公共库 ABI。
 

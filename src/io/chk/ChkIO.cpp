@@ -39,6 +39,8 @@ size_t checkpoint_cells_per_block(int dim)
 void write_chk(amr::AMRControl &amr_ctrl,
                int chk_file_index, int plt_file_index,
                int step_count, double current_time,
+               double dt_old, double dt_burn,
+               bool resume_after_regrid,
                const SimConfig &config)
 {
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
@@ -55,12 +57,16 @@ void write_chk(amr::AMRControl &amr_ctrl,
     const size_t field_size = active_blocks.size() * cells_per_block;
     io::CheckpointData checkpoint;
     checkpoint.time = current_time;
+    checkpoint.dt_old = dt_old;
+    checkpoint.dt_burn = dt_burn;
     checkpoint.step_count = step_count;
     checkpoint.chk_file_index = chk_file_index;
     checkpoint.plt_file_index = plt_file_index;
     checkpoint.dim = dim;
     checkpoint.geometry = config.grid.geometry;
     checkpoint.cells_per_block = cells_per_block;
+    checkpoint.has_timestep_state = true;
+    checkpoint.resume_after_regrid = resume_after_regrid;
     checkpoint.num_species = amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies();
     checkpoint.levels.reserve(active_blocks.size());
     checkpoint.logical_x1.reserve(active_blocks.size());
@@ -144,9 +150,18 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
         }
     }
     run_state.time = checkpoint.time;
+    run_state.dt_old = checkpoint.dt_old;
+    run_state.dt_burn = checkpoint.dt_burn;
     run_state.step = checkpoint.step_count;
     run_state.plt_idx = checkpoint.plt_file_index;
     run_state.chk_idx = checkpoint.chk_file_index;
+    run_state.has_timestep_state = checkpoint.has_timestep_state;
+    run_state.resume_after_regrid = checkpoint.resume_after_regrid;
+    if (!run_state.has_timestep_state) {
+        std::cout << "[IO] Legacy checkpoint has no timestep-controller state; "
+                     "hydro recomputes its CFL limit and burn resumes conservatively from dt_init."
+                  << std::endl;
+    }
     std::cout << "[IO] Restored CHK: " << filepath << " at step " << run_state.step
               << " with " << active_blocks.size() << " AMR leaves." << std::endl;
 }

@@ -227,9 +227,10 @@ stable registration, case types, and `ProblemHelper` operations; keeping
 configuration without coupling a case to an EOS policy.
 
 `Setup` runs before grid allocation. Read case parameters, validate them, and
-register species there. `Init` is called under OpenMP for allocated cells and may
-run again during initial AMR setup. It must be deterministic, thread-safe, and
-free of order-dependent side effects.
+register species there. `Init` is called under OpenMP to populate the allocated
+root-grid cells once. Initial and later fine blocks are constructed by
+conservative AMR transfer instead of calling `Init` again. `Init` must still be
+deterministic, thread-safe, and free of order-dependent side effects.
 
 Minimal complete example:
 

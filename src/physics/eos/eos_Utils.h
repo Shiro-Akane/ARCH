@@ -40,6 +40,32 @@ namespace eos_utils
         return (U.eng - kinetic_density) / U.rho;
     }
 
+    /** Estimate (dP/drho)_e without accidentally holding temperature fixed. */
+    template <typename TEOSView>
+    EOS_INLINE double finite_difference_dp_drho_e(
+        const TEOSView &eos_view, double rho, double specific_energy,
+        const double *mass_fractions, double rho_min, double rho_max)
+    {
+        const double delta = std::max(1.0e-3 * std::abs(rho), 1.0e-300);
+        const double lower = std::max(rho - delta, rho_min);
+        const double upper = std::min(rho + delta, rho_max);
+        if (!(upper > lower)) {
+            throw std::runtime_error(
+                "Tabular EOS cannot difference density at constant energy.");
+        }
+        const double pressure_lower = eos_view.get_pressure_from_rho_e(
+            lower, specific_energy, mass_fractions);
+        const double pressure_upper = eos_view.get_pressure_from_rho_e(
+            upper, specific_energy, mass_fractions);
+        const double derivative =
+            (pressure_upper - pressure_lower) / (upper - lower);
+        if (!std::isfinite(derivative)) {
+            throw std::runtime_error(
+                "Tabular EOS produced a non-finite constant-energy derivative.");
+        }
+        return derivative;
+    }
+
     // Generic Newton pressure inversion for three- and four-dimensional tables.
     // TEOSView must provide get_pressure_from_rho_e and get_dp_de_rho.
     template <typename TEOSView>

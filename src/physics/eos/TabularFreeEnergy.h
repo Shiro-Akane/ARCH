@@ -144,9 +144,9 @@ inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,
     state.pressure = rho * f.ax;
     state.energy = f.a - f.ay;
     if (!(state.pressure > 0.0) || !std::isfinite(state.pressure) ||
-        !std::isfinite(state.energy)) {
+        !(state.energy > 0.0) || !std::isfinite(state.energy)) {
         throw std::runtime_error(
-            "Tabular EOS free energy produced invalid pressure or energy");
+            "Tabular EOS free energy produced non-positive or non-finite pressure or energy");
     }
     state.cv = (f.ay - f.ayy) / temperature;
     if (!(state.cv > 0.0) || !std::isfinite(state.cv)) {

@@ -9,6 +9,8 @@
  */
 
 #include <iostream>
+#include <cmath>
+#include <limits>
 
 #include "HDF5Writer.h"
 
@@ -19,6 +21,45 @@
 using namespace HighFive;
 
 namespace io {
+
+namespace {
+
+bool has_valid_timestep_state(const CheckpointData& checkpoint)
+{
+    return checkpoint.has_timestep_state &&
+           std::isfinite(checkpoint.dt_old) && checkpoint.dt_old > 0.0 &&
+           std::isfinite(checkpoint.dt_burn) && checkpoint.dt_burn > 0.0;
+}
+
+bool has_consistent_checkpoint_payload(const CheckpointData& checkpoint)
+{
+    const size_t blocks = checkpoint.levels.size();
+    if (blocks == 0 || checkpoint.cells_per_block == 0 ||
+        checkpoint.num_species < 0 ||
+        checkpoint.cells_per_block >
+            std::numeric_limits<size_t>::max() / blocks) {
+        return false;
+    }
+    const size_t cells = blocks * checkpoint.cells_per_block;
+    if (checkpoint.num_species > 0 &&
+        cells > std::numeric_limits<size_t>::max() /
+                    static_cast<size_t>(checkpoint.num_species)) {
+        return false;
+    }
+    return
+           checkpoint.logical_x1.size() == blocks &&
+           checkpoint.logical_x2.size() == blocks &&
+           checkpoint.logical_x3.size() == blocks &&
+           checkpoint.rho.size() == cells &&
+           checkpoint.mom_u.size() == cells &&
+           checkpoint.mom_v.size() == cells &&
+           checkpoint.mom_w.size() == cells &&
+           checkpoint.eng.size() == cells &&
+           checkpoint.rhoX.size() ==
+               static_cast<size_t>(checkpoint.num_species) * cells;
+}
+
+} // namespace
 
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,
                          const std::vector<size_t>& dims,
@@ -59,20 +100,19 @@ void write_hdf5_plt_impl(const std::string& filepath, double current_time, int d
 void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& checkpoint)
 {
     const size_t blocks = checkpoint.levels.size();
-    const size_t cells = blocks * checkpoint.cells_per_block;
-    if (blocks == 0 || checkpoint.cells_per_block == 0 ||
-        checkpoint.logical_x1.size() != blocks || checkpoint.logical_x2.size() != blocks ||
-        checkpoint.logical_x3.size() != blocks || checkpoint.rho.size() != cells ||
-        checkpoint.mom_u.size() != cells || checkpoint.mom_v.size() != cells ||
-        checkpoint.mom_w.size() != cells || checkpoint.eng.size() != cells ||
-        (checkpoint.num_species > 0 &&
-         checkpoint.rhoX.size() != static_cast<size_t>(checkpoint.num_species) * cells)) {
+    if (!has_consistent_checkpoint_payload(checkpoint)) {
         throw std::invalid_argument("Checkpoint payload dimensions are inconsistent.");
+    }
+    if (!has_valid_timestep_state(checkpoint)) {
+        throw std::invalid_argument("Checkpoint timestep-controller state is invalid.");
     }
     try {
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
-        file.createAttribute("checkpoint_version", 1);
+        file.createAttribute("checkpoint_version", 2);
         file.createAttribute("time", checkpoint.time);
+        file.createAttribute("dt_old", checkpoint.dt_old);
+        file.createAttribute("dt_burn", checkpoint.dt_burn);
+        file.createAttribute("resume_after_regrid", checkpoint.resume_after_regrid ? 1 : 0);
         file.createAttribute("step", checkpoint.step_count);
         file.createAttribute("chk_index", checkpoint.chk_file_index);
         file.createAttribute("plt_index", checkpoint.plt_file_index);
@@ -118,8 +158,20 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         CheckpointData checkpoint;
         int version = 0;
         file.getAttribute("checkpoint_version").read(version);
-        if (version != 1) throw std::runtime_error("Unsupported checkpoint format version.");
+        if (version != 1 && version != 2)
+            throw std::runtime_error("Unsupported checkpoint format version.");
         file.getAttribute("time").read(checkpoint.time);
+        if (version >= 2) {
+            int resume_after_regrid = 0;
+            file.getAttribute("dt_old").read(checkpoint.dt_old);
+            file.getAttribute("dt_burn").read(checkpoint.dt_burn);
+            file.getAttribute("resume_after_regrid").read(resume_after_regrid);
+            checkpoint.has_timestep_state = true;
+            checkpoint.resume_after_regrid = resume_after_regrid != 0;
+            if (!has_valid_timestep_state(checkpoint)) {
+                throw std::runtime_error("Checkpoint timestep-controller state is invalid.");
+            }
+        }
         file.getAttribute("step").read(checkpoint.step_count);
         file.getAttribute("chk_index").read(checkpoint.chk_file_index);
         file.getAttribute("plt_index").read(checkpoint.plt_file_index);
@@ -134,22 +186,30 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         blocks_group.getDataSet("logical_x2").read(checkpoint.logical_x2);
         blocks_group.getDataSet("logical_x3").read(checkpoint.logical_x3);
         Group data = file.getGroup("Data");
-        data.getDataSet("rho").read(checkpoint.rho);
-        data.getDataSet("mom_u").read(checkpoint.mom_u);
-        data.getDataSet("mom_v").read(checkpoint.mom_v);
-        data.getDataSet("mom_w").read(checkpoint.mom_w);
-        data.getDataSet("eng").read(checkpoint.eng);
-        if (checkpoint.num_species > 0) data.getDataSet("rhoX").read(checkpoint.rhoX);
+        const size_t blocks = checkpoint.levels.size();
+        const std::vector<size_t> field_dims = {blocks, checkpoint.cells_per_block};
+        const auto read_field = [&](const std::string& name,
+                                    const std::vector<size_t>& expected_dims,
+                                    std::vector<double>& values) {
+            DataSet dataset = data.getDataSet(name);
+            if (dataset.getDimensions() != expected_dims)
+                throw std::runtime_error("Checkpoint dataset '" + name + "' has incompatible dimensions.");
+            size_t count = 1;
+            for (const size_t extent : expected_dims) count *= extent;
+            values.resize(count);
+            dataset.read(values.data());
+        };
+        read_field("rho", field_dims, checkpoint.rho);
+        read_field("mom_u", field_dims, checkpoint.mom_u);
+        read_field("mom_v", field_dims, checkpoint.mom_v);
+        read_field("mom_w", field_dims, checkpoint.mom_w);
+        read_field("eng", field_dims, checkpoint.eng);
+        if (checkpoint.num_species > 0) {
+            read_field("rhoX", {static_cast<size_t>(checkpoint.num_species),
+                                blocks, checkpoint.cells_per_block}, checkpoint.rhoX);
+        }
 
-        const size_t cells = checkpoint.levels.size() * checkpoint.cells_per_block;
-        if (checkpoint.levels.empty() || checkpoint.logical_x1.size() != checkpoint.levels.size() ||
-            checkpoint.logical_x2.size() != checkpoint.levels.size() ||
-            checkpoint.logical_x3.size() != checkpoint.levels.size() ||
-            checkpoint.rho.size() != cells || checkpoint.mom_u.size() != cells ||
-            checkpoint.mom_v.size() != cells || checkpoint.mom_w.size() != cells ||
-            checkpoint.eng.size() != cells ||
-            (checkpoint.num_species > 0 &&
-             checkpoint.rhoX.size() != static_cast<size_t>(checkpoint.num_species) * cells)) {
+        if (!has_consistent_checkpoint_payload(checkpoint)) {
             throw std::runtime_error("Checkpoint datasets have inconsistent dimensions.");
         }
         return checkpoint;

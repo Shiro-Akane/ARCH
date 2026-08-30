@@ -160,7 +160,7 @@ and geometric sources. The composition gives:
 
 - density below `sml_rho` is reset, momenta are zeroed, and energy is rebuilt;
 - velocity magnitude is capped by a hard-coded `1e10` ceiling;
-- specific internal energy is clamped to `[1e-10, max_eint]`;
+- specific internal energy is clamped to `[min_eint, max_eint]`;
 - negative species fractions are clipped and all fractions are renormalized;
 - if the species sum is nearly zero, a uniform composition is installed.
 
@@ -201,12 +201,16 @@ COLAMD, and SuiteSparse_config. EOS `.dat`/`.h5` assets may require Git LFS.
 Relevant cache controls are `ARCH_ENABLE_KLU` (default `ON`),
 `ARCH_FETCH_SUITESPARSE` (default `ON`), `ARCH_CUSTOM_NETWORK_ROOT` (the
 generated-package root), and `ARCH_CUSTOM_NETWORKS` (an optional semicolon list
-of custom IDs to compile). `BUILD_TESTING=ON` registers the ideal-gas tabular
-EOS and 161-equation KLU regressions.
+of custom IDs to compile). `BUILD_TESTING=ON` registers the maintained
+ideal-gas tabular EOS and 161-equation KLU regressions. Restart, AMR, real-table,
+and generated-network audit evidence is retained together under `validation/`
+without adding per-audit test targets.
 
 Sources are found with CMake `GLOB_RECURSE` over `src/core`, `src/physics`,
-`src/numerics`, `src/io`, and `simulation`. Rerun
-`cmake -S . -B build ...` after adding a `.cpp`.
+`src/numerics`, `src/io`, and `simulation`, excluding the generated custom
+network subtree handled by its registry. The glob uses `CONFIGURE_DEPENDS`, so
+the build regenerates when a `.cpp` is added; an explicit CMake configure is
+also valid.
 
 ### Case registration
 
@@ -319,6 +323,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
 | `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
 | `sml_rho` | double | `1e-12` | density repair threshold |
+| `min_eint` | double | `1e-10` | positive specific internal-energy floor |
 | `max_eint` | double | `1e21` | specific internal-energy ceiling |
 | `compute_backend` | string | `cpu` | parsed; `cuda/auto` reserved for V2 in current branch |
 | `cuda_device` | int | `0` | reserved |
@@ -352,8 +357,11 @@ dispatch selects the matching policy automatically. New tables should store
 specific Helmholtz free energy; the normalized datasets, derivative identities,
 legacy direct-table path, and measured guard-node/endpoint spacing rules are specified
 in the local [Tabular EOS HDF5 interface](../src/physics/eos/TabularEOS.md).
-Shen/LS/HS/CompOSE/EOSDriver files enter this interface through a converter;
-binary compatibility is defined by the normalized schema.
+Shen/LS/HS/CompOSE/EOSDriver files require a family-specific converter; none is
+currently bundled. Binary compatibility is defined by the normalized schema,
+not by an upstream filename or HDF5 container. The acquired Shen EOS4 and
+EOSDriver HShen assets are assessed, but not accepted as directly loadable, in
+the [EOS validation record](../validation/eos/README.md).
 
 The maintained Helmholtz validation asset is the `helm_table.dat` member of the
 `helmholtz.tar.xz` archive downloaded from the
@@ -442,7 +450,7 @@ zero value.
 | `chk_dstep` | int | `-1` | positive step interval |
 | `plt_variables` | string list | `ALL` | comma or `+`, canonical fields/species |
 | `restart` | bool | `false` | enables checkpoint restart |
-| `restart_file` | string | empty | required for an actual restart path |
+| `restart_file` | string | empty | must be non-empty when `restart = true` |
 
 At step zero, ARCH writes an initial PLT and CHK. Reaching target time forces
 final output; a `max_steps` stop follows the configured output schedule.
@@ -502,10 +510,10 @@ void Setup(SimConfig &config, SpeciesManager &specs);
 void Init(const PointCoords &point, PrimitiveData &out) const;
 ```
 
-`Setup` runs once before allocation. `Init` runs through an OpenMP population
-loop for allocated block cells, including ghost storage, and can run again
-during initial AMR construction. Keep it deterministic, thread-safe, and
-independent of call count.
+`Setup` runs once before allocation. `Init` populates the allocated root blocks,
+including ghost storage, through an OpenMP loop. Initial and later fine blocks
+are created by conservative AMR transfer; `Init` is not called again to
+overwrite them. Keep it deterministic and thread-safe.
 
 ### `SimConfig`
 
@@ -732,9 +740,12 @@ const SpeciesManager *get_species_manager() const;
 
 `evaluate_state` is the canonical thermodynamic-state contract. For every
 valid `(rho,T,X)` input it must fill finite `P`, `E`, `cv`, `sound_speed`,
-`dp_drho`, and `dp_dT`; pressure, `cv`, and sound speed must be positive. Free-energy tabular policies derive these quantities from one interpolated
-Helmholtz potential. The legacy direct policy uses supplied derivative datasets
-or table-bounded local differences rather than returning zero. See the
+`dp_drho`, and `dp_dT`; pressure, specific internal energy, `cv`, and sound
+speed must be positive. `dp_drho` means `(dP/drho)_e`, while `dp_dT` means
+`(dP/dT)_rho`. Free-energy tabular policies derive these quantities from one
+interpolated Helmholtz potential. The legacy direct policy uses supplied
+derivative datasets or table-bounded local differences rather than returning
+zero. See the
 [normalized HDF5 contract](../src/physics/eos/TabularEOS.md).
 
 All policies receive the same fixed-composition isentrope algorithm from
@@ -806,19 +817,32 @@ form, carries nuclear/weak-neutrino energy into the ODE RHS, and namespaces the
 generated SimpleCxx headers. The energy Jacobian currently excludes the weak-neutrino composition
 derivative. Custom networks set `SUPPORTS_NSE=false` and calculate the
 temperature Jacobian column by a centered relative `1e-4` finite difference.
-Production qualification covers both boundaries.
+Generator version 3 removes only compile-time literal-zero Jacobian calls;
+runtime numerical zeros remain structural entries for safe KLU refactorization.
+The default `NUCLEI` path retains disconnected requested nuclei as inert
+species and rejects duplicates. CMake validates each manifest and rejects
+packages that predate these version-3 safeguards. Weak-neutrino-dominated
+networks remain outside the accepted contract because the composition
+derivative and the burn solver's integrated weak-energy closure are pending.
+Production qualification covers these boundaries.
 
 Matrix and solver policies are independent template parameters. `DenseWrap` is
 the dedicated fixed-size backend for at most 30 isotopes
 (`BurnLimits::MAX_SPECIES`); `SparseWrap` retains a CSC symbolic pattern and
 uses KLU analyze/factor/refactor/solve. `linear_solver = Auto` chooses DenseLU
 at or below 30 isotopes and SparseKLU above it. Explicit DenseLU rejects a
-larger network. Explicit `SparseKLU` is allowed for any compiled network when ARCH was built with KLU.
+larger network. Explicit `SparseKLU` is allowed for any compiled network when
+ARCH was built with KLU. Sparse values use CSC storage, while the current
+entry-to-slot lookup still allocates `N*N` integers; the retained evidence
+covers up to 200 isotopes and is not an unbounded-size guarantee.
 
 After generating or replacing a package, rerun CMake. Use `--check` before
 writing, and use `-DARCH_CUSTOM_NETWORKS="id1;id2"` to restrict expensive builds.
-The generator itself needs pynucastro only at generation time; ARCH has no
-runtime Python dependency.
+The generic source scan excludes the custom subtree, so only selected adapter
+sources are compiled. The generator itself needs pynucastro only at generation
+time; ARCH has no runtime Python dependency. Multi-size generated-network
+compatibility evidence is centralized in
+[validation/network](../validation/network/README.md).
 
 ### Diffusion — Source extension/Experimental
 
@@ -876,10 +900,13 @@ searches for `X_` prefixes, creating a composition auto-selection mismatch.
 
 `HDF5Writer` logs PLT write failures and continues the simulation.
 
-### Checkpoint file version 1
+### Checkpoint file version 2
 
 Attributes include `checkpoint_version`, `time`, `step`, `chk_index`,
-`plt_index`, `dim`, `geometry`, `num_species`, and `cells_per_block`.
+`plt_index`, `dim`, `geometry`, `num_species`, `cells_per_block`, `dt_old`,
+`dt_burn`, and `resume_after_regrid`. The last three values restore timestep
+growth, the burn limit carried into the next macro step, and loop phase without
+repeating a completed regrid or step-based output event.
 
 Datasets:
 
@@ -893,12 +920,18 @@ Data/rhoX    [species, block, interior cell]
 Restart compatibility checks dimension, geometry, species count, and cells per
 block. Scientific provenance—parameter file, compiler, EOS, species order,
 solver, boundaries, and commit—stays external. Checkpoint structural failures
-throw.
+throw. Version-1 files remain readable; because they have no controller state,
+hydro recomputes its CFL step and burning starts conservatively from `dt_init`.
+Step-zero and already-final restarts do not duplicate initial/final files.
+Dynamic-AMR split-run equivalence remains pending, particularly for the
+transient, uncheckpointed `ENUC` refinement diagnostic.
 
 ## Known limitations
 
-- The `main` branch executes the CPU backend. CUDA parity and quantitative AMR
-  convergence remain pending; self gravity and the Jeans indicator are not implemented.
+- The `main` branch executes the CPU backend. CUDA parity remains pending; AMR
+  conservation has a CPU baseline, but stable local refinement retention is a
+  known coarse/fine ghost-transfer limitation. Self gravity and the Jeans
+  indicator are not implemented.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict

@@ -189,7 +189,7 @@ void Init(const PointCoords &point, PrimitiveData &out) const;
 
 这两个文件构成完整的算例侧 ARCH 头文件表面。可以按需加入 C++ 标准库头文件，但算例不得直接包含具体 EOS 头文件、`eos_Utils.h` 或 `eosdispatch.h`。`UserInterface.h` 重新导出稳定的注册宏、算例类型和 `ProblemHelper` 操作；第二个显式头文件 `GlobalDefs.h` 提供有类型的运行时配置，同时避免算例依赖具体 EOS 策略。
 
-`Setup` 在网格分配前运行，应在其中读取和验证算例参数并注册核素。`Init` 会在 OpenMP 下对已分配单元调用，并可能在初始 AMR 构建期间再次调用；它必须确定、线程安全，且不能依赖调用顺序产生副作用。
+`Setup` 在网格分配前运行，应在其中读取和验证算例参数并注册核素。`Init` 会在 OpenMP 下仅填充一次已分配的根网格单元；初始及后续细网格 block 均由守恒 AMR transfer 构造，不会再次调用 `Init`。该函数仍必须确定、线程安全，且不能依赖调用顺序产生副作用。
 
 最小完整示例：
 

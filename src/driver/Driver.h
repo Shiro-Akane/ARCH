@@ -120,9 +120,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         return U.rho * sound_speed * sound_speed / pressure;
     };
-    // Derivative plot fields use centered stencils. Synchronize halos at every
-    // plot event so VORT and DIVV never sample an outdated neighboring block.
-    const auto synchronize_plot_ghosts = [&] {
+    // Apply physical boundaries and exchange every internal AMR face through
+    // one path. Regrid, hydro, and derivative plot fields all require the same
+    // synchronized fluid halos.
+    const auto synchronize_fluid_ghosts = [&] {
 #pragma omp parallel for schedule(dynamic, 1)
         for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
             amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
@@ -137,23 +138,11 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (deferred_initial_passes > 0) {
         std::cout << "[Dispatch] Performing initial AMR refinement loop..." << std::endl;
         for (int pass = 0; pass < deferred_initial_passes; ++pass) {
-#pragma omp parallel for schedule(dynamic, 1)
-            for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-                amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-                bc_handler.apply(block.fluid_state, block.grid);
-            }
-            amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                                    config.grid.dim, &amr::Block::fluid_state);
+            synchronize_fluid_ghosts();
             if (!amr_ctrl.tree->Regrid(config)) break;
             std::cout << "           -> Refining initial condition (Pass " << pass + 1 << ")..." << std::endl;
         }
-#pragma omp parallel for schedule(dynamic, 1)
-        for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-            amr::Block& block = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-            bc_handler.apply(block.fluid_state, block.grid);
-        }
-        amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree,
-                                                config.grid.dim, &amr::Block::fluid_state);
+        synchronize_fluid_ghosts();
     }
 
     std::cout << ">>> Simulation Started | Solver: " << integrator_name
@@ -168,32 +157,39 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
-    double dt_burn_global = 1e99;
+    double dt_burn_global = start_state.has_timestep_state
+        ? start_state.dt_burn
+        : ((config.io.restart && config.physics.burn.use_burn)
+               ? config.GetCustomParam("dt_init", 1e-16)
+               : 1e99);
+    const auto write_checkpoint = [&](bool resume_after_regrid) {
+        write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index,
+                  ctrl.step_count, ctrl.t_current, ctrl.dt_old,
+                  dt_burn_global, resume_after_regrid, config);
+    };
     double cfl = config.numerics.cfl;
     bool reported_composite_diffusion = false;
 
-    // Emit the initial state only for a fresh run.
-    if (ctrl.should_print_header())
+    // Emit the initial state only for a fresh run. A step-zero restart already
+    // represents that state and must retain the checkpoint's next-file indices.
+    if (ctrl.should_write_initial_output())
     {
-        synchronize_plot_ghosts();
+        synchronize_fluid_ghosts();
         write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
-        write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index, ctrl.step_count, ctrl.t_current, config);
-        ctrl.print_header(has_burn, has_diff);
+        write_checkpoint(false);
     }
+    ctrl.print_header(has_burn, has_diff);
 
     // Main Time Loop (Method of Lines)
+    bool skip_regrid_once = start_state.resume_after_regrid;
+    bool advanced_any_step = false;
     while (!ctrl.is_finished())
     {
         // Step A: IO Routine & AMR Regrid
-        if (ctrl.step_count % config.amr.regrid_interval == 0) {
-            // Apply physical boundary conditions first.  Exchange then replaces
-            // the ghost layers of internal AMR faces with neighboring data.
-            #pragma omp parallel for schedule(dynamic, 1)
-            for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-                amr::Block& b = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-                bc_handler.apply(b.fluid_state, b.grid);
-            }
-            amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, &amr::Block::fluid_state);
+        if (skip_regrid_once) {
+            skip_regrid_once = false;
+        } else if (ctrl.step_count % config.amr.regrid_interval == 0) {
+            synchronize_fluid_ghosts();
             const bool mesh_changed = amr_ctrl.tree->Regrid(config);
 
             // Regrid creates (or restricts into) blocks whose ghost zones have
@@ -201,12 +197,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             // those zones immediately, so synchronize the new hierarchy before
             // any reconstruction can use a reset halo value.
             if (mesh_changed) {
-                #pragma omp parallel for schedule(dynamic, 1)
-                for (size_t i = 0; i < amr_ctrl.tree->GetActiveBlocks().size(); ++i) {
-                    amr::Block& b = amr_ctrl.pool->GetBlock(amr_ctrl.tree->GetActiveBlocks()[i]);
-                    bc_handler.apply(b.fluid_state, b.grid);
-                }
-                amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, &amr::Block::fluid_state);
+                synchronize_fluid_ghosts();
             }
         }
 
@@ -214,11 +205,11 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         ctrl.check_io(do_plt, do_chk);
 
         if (do_plt) {
-            synchronize_plot_ghosts();
+            synchronize_fluid_ghosts();
             write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
         }
         if (do_chk) {
-            write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index, ctrl.step_count, ctrl.t_current, config);
+            write_checkpoint(true);
         }
 
         // Step B: Calculate Time Step (CFL Condition)
@@ -313,12 +304,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         advance_diffusion(0.5 * dt);
 
         // C3. Hydrodynamics Step (dt)
-        #pragma omp parallel for schedule(dynamic, 1)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-            bc_handler.apply(b.fluid_state, b.grid);
-        }
-        amr_ctrl.ghost_exchange.ExecuteExchange(amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, &amr::Block::fluid_state);
+        synchronize_fluid_ghosts();
 
         integrator_solve(amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
 
@@ -341,16 +327,17 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
 
         // Step D: Advance Counters
         ctrl.advance(dt);
+        advanced_any_step = true;
         ctrl.print_step(dt, dt_hydro, has_burn ? dt / 2.0 : 0.0, dt_diff_fe, has_burn, has_diff);
     }
 
     // Final Output (Force output at t_max)
-    if (std::abs(ctrl.t_current - ctrl.t_max) < 1e-9)
+    if (advanced_any_step && ctrl.reached_target_time())
     {
         std::cout << ">>> Target Time Reached. Forcing final output..." << std::endl;
-        synchronize_plot_ghosts();
+        synchronize_fluid_ghosts();
         write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
-        write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index, ctrl.step_count, ctrl.t_current, config);
+        write_checkpoint(false);
     }
 
     std::cout << ">>> Simulation Done. Total Steps: " << ctrl.step_count

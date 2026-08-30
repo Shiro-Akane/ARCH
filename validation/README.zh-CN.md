@@ -2,7 +2,7 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本目录是定量验证记录的统一入口。首批 CPU 基线覆盖均匀网格流体重构、RKL1/RKL2 组分扩散、常外部重力和 aprox13 单区燃烧。只有 V2 后端能使用同一批已提交输入运行后，才能填写 CUDA 行。
+本目录是定量验证记录的统一入口。CPU 基线覆盖均匀网格流体重构、RKL1/RKL2 组分扩散、常外部重力、aprox13 单区燃烧、AMR transfer 与守恒、tabular EOS 插值、restart 连续性，以及生成式自定义网络与 KLU。只有 V2 后端能使用同一批已提交输入运行后，才能填写 CUDA 行。
 
 ## 目录契约
 
@@ -16,8 +16,12 @@
 | RKL1/RKL2 组分扩散 | 均通过；RKL2 显示二阶空间收敛 | 待完成 | [diffusion](diffusion/README.zh-CN.md) |
 | 外部重力 | RK2/RK3 常加速度更新通过 | 待完成 | [gravity](gravity/README.zh-CN.md) |
 | aprox13 单区燃烧 | BD 和 ROS4 通过 BE_NR 比较 | 待完成 | [burn](burn/README.zh-CN.md) |
-| AMR | 仅定性档案；定量范数待完成 | 待完成 | [AMR](amr/README.zh-CN.md) |
-| Sod、Sedov、EOS、几何、NSE、重启 | 待完成 | 待完成 | 已规划 |
+| AMR | transfer/reflux 守恒与基本二维对称性通过；局部细化保持是已知限制 | 待完成 | [AMR](amr/README.zh-CN.md) |
+| Tabular EOS | 规范化 3D/4D 平滑 sweep 通过；Shen 资产已评估、未接受 | 待完成 | [EOS](eos/README.zh-CN.md) |
+| HDF5/restart | v1 兼容与 v2 流体/燃烧连续性通过；动态 AMR split-run 待测 | 待完成 | [restart](restart/README.zh-CN.md) |
+| 生成式网络/KLU | 多规模网络生成、共存、稀疏求解及单步燃烧通过 | 待完成 | [network](network/README.zh-CN.md) |
+| 网络受限 NSE | Timmes 网络记录已保留现有 CPU/线程证据 | 待完成 | [Timmes 网络](../docs/physics/TimmesNetworks.zh-CN.md) |
+| Sod 解析解与制造几何 | 待完成 | 待完成 | 已规划 |
 
 “待完成”是明确占位，不是后端一致性的证据。
 
@@ -59,10 +63,10 @@ AMR 比较必须将参考场和数值场放到已说明的公共网格，并使�
 | 强激波 | Sedov 相似解 | 径向 profile L1/L2、激波半径、能量、对称性 |
 | 流体时间积分 | 光滑半离散参考 | Euler、SSPRK2、SSPRK3 随时间步误差 |
 | 几何 | cylindrical/spherical 制造解 | 体积加权 L1/L2 和源项平衡 |
-| AMR | 均匀网格参考和界面穿越 | 公共网格 L1/L2、reflux 守恒、restriction/prolongation 一致性 |
-| EOS | 可信理想/表格/Helmholtz 状态 | 往返、状态 L1/L2、单调性和定义域检查 |
+| AMR 后续 | 修复 ghost transfer 后的稳定局部界面穿越 | 公共网格 L1/L2、局部拓扑保持、曲线坐标 face 一致性 |
+| EOS 后续 | 表族专用核物质转换器 | 原生字段变换、相区 mask、逐轴减半、轨迹检查 |
 | NSE | 独立平衡状态 | 组分/热力学 L1/L2 和平衡残差 |
-| HDF5/restart | 不间断运行 | 状态、拓扑和元数据一致性 |
+| HDF5/restart 后续 | 动态 AMR 不间断运行 | topology 与元数据一致性，包括细化诊断 |
 | CPU/CUDA | 上述相同记录 | 场/状态 L1/L2、不变量、配置和设备元数据 |
 
 新记录使用 [CASE_TEMPLATE.zh-CN.md](CASE_TEMPLATE.zh-CN.md)。

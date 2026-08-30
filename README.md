@@ -87,7 +87,9 @@ eos_table_path = /path/to/model.h5
 `table_rank` inside the file selects the 3D or 4D policy. New EOS tables should
 store specific Helmholtz free energy and follow the
 [local HDF5 contract](src/physics/eos/TabularEOS.md); upstream Shen/LS/HS or
-CompOSE files require conversion to that contract.
+CompOSE files require a family-specific converter to that contract. No external
+EOS converter is currently bundled; the real Shen source-table assessment is
+recorded in [validation/eos](validation/eos/README.md).
 
 To generate a custom reaction network, copy and edit the example recipe—choose
 a unique folder/`NETWORK_ID` and the required nuclei—then run:
@@ -112,7 +114,8 @@ linear_solver = Auto
 
 `Auto` keeps the dedicated DenseLU path through 30 isotopes and selects
 SparseKLU above 30. The complete contract and generator limitations are in the
-[Research and API Reference](docs/Reference.md).
+[Research and API Reference](docs/Reference.md); multi-size compatibility
+evidence is centralized in [validation/network](validation/network/README.md).
 
 ## First run
 
@@ -153,7 +156,8 @@ notes, API reference material, and legal-document pointers by audience.
 Quantitative status, CPU results, known failures, and CUDA placeholders are
 indexed in [validation/README.md](validation/README.md). The
 [AMR status page](validation/amr/README.md) integrates the historical figures
-and distinguishes visual diagnostics from quantitative acceptance.
+with quantitative conservation baselines and the remaining local
+refinement-retention limitation.
 
 ## Repository map
 
@@ -192,10 +196,10 @@ ARCH/
 - Coarse-fine AMR faces use MUSCL-MinMod in place of PPM's wide stencil;
 - Density, velocity, internal-energy, and species safeguards can modify the
   conservative update in invalid or near-vacuum states;
-- CUDA parity, quantitative AMR convergence, and self gravity remain outside the
-  validated `main`-branch feature set; current KLU validation covers the sparse
-  linear algebra regression and a 160-isotope generated-network smoke test,
-  while production convergence remains network-specific;
+- CUDA parity, stable local AMR refinement retention, and self gravity remain
+  outside the validated `main`-branch feature set; current KLU and generated-
+  network evidence is indexed under `validation/network`, while production
+  convergence remains network-specific;
 - Release builds use `-march=native` and `-ffast-math`, which favor performance
   over cross-machine bitwise reproducibility;
 - ARCH currently exposes source-extension interfaces rather than an installed

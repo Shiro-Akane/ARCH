@@ -164,12 +164,17 @@ private:
         }
         if (lin_type == "SparseKLU" || automatic)
         {
+#if !ARCH_HAS_KLU
+            throw std::runtime_error(
+                "SparseKLU was selected, but this ARCH build has KLU disabled.");
+#else
             std::cout << "[Burn Dispatch] Matrix backend: SparseKLU (N="
                       << NetType::ODE_NEQ << ")" << std::endl;
             using Matrix = SparseMatrixData<NetType::ODE_NEQ>;
             ODESolverWrapper<NetType, Matrix, SparseKLUSolver> burner;
             func(burner);
             return;
+#endif
         }
         throw std::runtime_error("Unknown Linear Solver Type: " + lin_type);
     }

@@ -529,7 +529,9 @@ public:
                     child.state_next.InitSpecies(n_species);
                     child.state_scratch.InitSpecies(n_species);
 
-                    child.InterpolateFromCoarse(b, c, root_grid.dim);
+                    child.InterpolateFromCoarse(
+                        b, c, root_grid.dim, config.numerics.sml_rho,
+                        config.numerics.min_eint);
 
                     new_active_blocks.push_back(c_id);
                 }
@@ -577,7 +579,9 @@ public:
                     for(int i=0; i<8; i++) child_ptrs[i] = nullptr;
                     for (int i=0; i<num_children; i++) child_ptrs[i] = &pool->GetBlock(siblings[i]);
 
-                    parent.AverageToCoarse(child_ptrs, root_grid.dim);
+                    parent.AverageToCoarse(
+                        child_ptrs, root_grid.dim, config.numerics.sml_rho,
+                        config.numerics.min_eint);
 
                     new_active_blocks.push_back(c_id);
                     for (int sib : siblings) {

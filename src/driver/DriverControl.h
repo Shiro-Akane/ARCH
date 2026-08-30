@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
@@ -32,6 +33,7 @@ struct SimulationController
     double next_chk_time;
 
     double dt_old;
+    bool suppress_step_io_once;
 
     SimulationController(const SimConfig &cfg, const RunState &start_state)
         : config(cfg),
@@ -40,25 +42,49 @@ struct SimulationController
           t_max(cfg.io.tmax),
           plt_file_index(start_state.plt_idx),
           chk_file_index(start_state.chk_idx),
-          next_plt_time(1e99),
-          next_chk_time(1e99),
-          dt_old(cfg.GetCustomParam("dt_init", 1e-16))
+          next_plt_time(next_scheduled_time(start_state.time, cfg.io.plt_dt)),
+          next_chk_time(next_scheduled_time(start_state.time, cfg.io.chk_dt)),
+          dt_old(start_state.has_timestep_state
+                     ? start_state.dt_old
+                     : (cfg.io.restart
+                            ? 1.0e99
+                            : cfg.GetCustomParam("dt_init", 1e-16))),
+          suppress_step_io_once(cfg.io.restart)
     {
         if (config.io.restart)
         {
-            plt_file_index += 1;
             chk_file_index += 1;
         }
 
-        if (config.io.plt_dt > 0)
-        {
-            next_plt_time = std::floor(t_current / config.io.plt_dt + 1e-6) * config.io.plt_dt + config.io.plt_dt;
-        }
+    }
 
-        if (config.io.chk_dt > 0)
-        {
-            next_chk_time = std::floor(t_current / config.io.chk_dt + 1e-6) * config.io.chk_dt + config.io.chk_dt;
+    static double time_tolerance(double lhs, double rhs, double interval = 0.0)
+    {
+        const double scale = std::max(
+            {std::abs(lhs), std::abs(rhs), std::abs(interval),
+             std::numeric_limits<double>::min()});
+        return 64.0 * std::numeric_limits<double>::epsilon() * scale;
+    }
+
+    static double next_scheduled_time(double current_time, double interval)
+    {
+        if (!(interval > 0.0)) return 1.0e99;
+        double next =
+            (std::floor(current_time / interval) + 1.0) * interval;
+        if (next <= current_time +
+                        time_tolerance(current_time, next, interval)) {
+            next += interval;
         }
+        return next;
+    }
+
+    bool reached_target_time() const
+    {
+        const double target_tolerance = 1.0e-12 * std::max(
+            {std::abs(t_current), std::abs(t_max),
+             std::numeric_limits<double>::min()});
+        return t_current >= t_max ||
+               t_max - t_current <= target_tolerance;
     }
 
     bool is_finished() const
@@ -69,27 +95,23 @@ struct SimulationController
             return true;
         }
         // Repeated output-time alignment can accumulate a few ulps below
-        // t_max.  Treat a relative 1e-12 remainder as complete instead of
-        // forcing an artificial 1e-14 step that creates a duplicate final H5
+        // t_max. Treat a relative 1e-12 remainder as complete instead of
+        // forcing an artificial tiny step that creates a duplicate final H5
         // and amplifies the ENUC roundoff diagnostic by division by tiny dt.
-        const double tolerance = 1.0e-12 *
-            std::max(std::abs(t_max), std::numeric_limits<double>::min());
-        return t_current >= t_max || t_max - t_current <= tolerance;
+        return reached_target_time();
     }
 
     void advance(double dt)
     {
         t_current += dt;
-        const double tolerance = 1.0e-12 *
-            std::max(std::abs(t_max), std::numeric_limits<double>::min());
-        if (t_current > t_max - tolerance)
+        if (reached_target_time())
             t_current = t_max;
         step_count++;
     }
 
-    bool should_print_header() const
+    bool should_write_initial_output() const
     {
-        return step_count == 0;
+        return step_count == 0 && !config.io.restart;
     }
 
     void print_header(bool has_burn, bool has_diffusion) const
@@ -127,26 +149,31 @@ struct SimulationController
     {
         do_plt = false;
         do_chk = false;
-        const double eps = 1e-10;
-
-        if (config.io.plt_dt > 0 && t_current >= next_plt_time - eps)
+        if (config.io.plt_dt > 0 &&
+            t_current + time_tolerance(
+                t_current, next_plt_time, config.io.plt_dt) >= next_plt_time)
         {
             do_plt = true;
-            next_plt_time += config.io.plt_dt;
+            next_plt_time = next_scheduled_time(
+                t_current, config.io.plt_dt);
         }
-        if (config.io.chk_dt > 0 && t_current >= next_chk_time - eps)
+        if (config.io.chk_dt > 0 &&
+            t_current + time_tolerance(
+                t_current, next_chk_time, config.io.chk_dt) >= next_chk_time)
         {
             do_chk = true;
-            next_chk_time += config.io.chk_dt;
+            next_chk_time = next_scheduled_time(
+                t_current, config.io.chk_dt);
         }
 
-        if (step_count > 0)
+        if (step_count > 0 && !suppress_step_io_once)
         {
             if (config.io.plt_dstep > 0 && step_count % config.io.plt_dstep == 0)
                 do_plt = true;
             if (config.io.chk_dstep > 0 && step_count % config.io.chk_dstep == 0)
                 do_chk = true;
         }
+        suppress_step_io_once = false;
     }
 
     double calculate_next_dt(double dt_hydro, double dt_burn_global)

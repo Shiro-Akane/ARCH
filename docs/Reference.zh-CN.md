@@ -130,7 +130,7 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 
 - 低于 `sml_rho` 的密度会被重置，动量清零并重建能量；
 - 速度模由硬编码的 `1e10` 上限截断；
-- 比内能限制到 `[1e-10, max_eint]`；
+- 比内能限制到 `[min_eint, max_eint]`；
 - 负质量分数被截为零，所有分数重新归一化；
 - 当组分和接近零时，安装均匀组分。
 
@@ -155,9 +155,9 @@ cmake --build build --parallel 4
 
 CMake 在配置时获取 HighFive，并链接 HDF5 C++/HL 库。KLU 默认启用：CMake 先查找已安装的 KLU package；若不存在，则获取固定的 SuiteSparse v7.13.0，只构建 KLU、BTF、AMD、COLAMD 与 SuiteSparse_config。EOS `.dat`/`.h5` 资源可能需要 Git LFS。
 
-相关 cache 选项为 `ARCH_ENABLE_KLU`（默认 `ON`）、`ARCH_FETCH_SUITESPARSE`（默认 `ON`）、`ARCH_CUSTOM_NETWORK_ROOT`（生成 package 根目录）和 `ARCH_CUSTOM_NETWORKS`（可选的分号分隔 custom ID 列表）。`BUILD_TESTING=ON` 注册理想气体 tabular EOS 与 161 方程 KLU 回归。
+相关 cache 选项为 `ARCH_ENABLE_KLU`（默认 `ON`）、`ARCH_FETCH_SUITESPARSE`（默认 `ON`）、`ARCH_CUSTOM_NETWORK_ROOT`（生成 package 根目录）和 `ARCH_CUSTOM_NETWORKS`（可选的分号分隔 custom ID 列表）。`BUILD_TESTING=ON` 注册维护中的理想气体 tabular EOS 与 161 方程 KLU 回归；restart、AMR、真实来源表和生成式网络的审计证据统一保留在 `validation/`，不为每次审计新增 test target。
 
-源码通过 CMake `GLOB_RECURSE` 从 `src/core`、`src/physics`、`src/numerics`、`src/io` 和 `simulation` 中发现。新增 `.cpp` 后重新执行 `cmake -S . -B build ...`。
+源码通过 CMake `GLOB_RECURSE CONFIGURE_DEPENDS` 从 `src/core`、`src/physics`、`src/numerics`、`src/io` 和 `simulation` 中发现；由专用注册表处理的生成式 custom network 子树会被排除。新增 `.cpp` 后构建系统会自动重新生成，也可显式重新执行 CMake configure。
 
 ### 算例注册
 
@@ -256,6 +256,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `EntropyFix` | bool | `true` | 启用 entropy-fix 平滑 |
 | `EntropyFixCoefficient` | double | `0.1` | 启用 entropy fix 时使用 |
 | `sml_rho` | double | `1e-12` | 密度修复阈值 |
+| `min_eint` | double | `1e-10` | 正比内能下限 |
 | `max_eint` | double | `1e21` | 比内能上限 |
 | `compute_backend` | string | `cpu` | 已解析；当前分支中 `cuda/auto` 为 V2 预留 |
 | `cuda_device` | int | `0` | 预留 |
@@ -284,7 +285,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | 仅为尚不支持的自重力解析 |
 
-对 `eos_type = tabular`，HDF5 文件声明 `table_rank = 3` 或 `4`，dispatch 自动选择相应策略。新表应优先保存比 Helmholtz 自由能；规范化数据集、导数关系、旧 direct 表路径以及实测的 guard-node/端点间隔规则见源码旁的 [Tabular EOS HDF5 接口](../src/physics/eos/TabularEOS.zh-CN.md)。Shen/LS/HS/CompOSE/EOSDriver 文件通过转换器进入该接口，二进制兼容性由规范化 schema 定义。
+对 `eos_type = tabular`，HDF5 文件声明 `table_rank = 3` 或 `4`，dispatch 自动选择相应策略。新表应优先保存比 Helmholtz 自由能；规范化数据集、导数关系、旧 direct 表路径以及实测的 guard-node/端点间隔规则见源码旁的 [Tabular EOS HDF5 接口](../src/physics/eos/TabularEOS.zh-CN.md)。Shen/LS/HS/CompOSE/EOSDriver 文件需要表族专用转换器，目前仓库不附带这类工具；二进制兼容性由规范化 schema 而不是上游文件名或 HDF5 容器定义。已获取的 Shen EOS4 与 EOSDriver HShen 资产已完成评估，但未被接受为可直接载入，详见 [EOS 验证记录](../validation/eos/README.zh-CN.md)。
 
 维护中的 Helmholtz 验证资源是从 [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。它通过 Git LFS 实体化在 `EOS_toolkit/tables/helmholtz/helm_table.dat`，大小为 60,242,514 bytes，SHA-256 为 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`。原始表成员是验证权威。loader 使用固定 541×201 Timmes 布局并要求全部四个数据块；燃烧基线还要求上述精确 checksum。
 
@@ -355,7 +356,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `chk_dstep` | int | `-1` | 正的步数间隔 |
 | `plt_variables` | string list | `ALL` | 逗号或 `+`，规范场/核素 |
 | `restart` | bool | `false` | 启用 checkpoint 重启 |
-| `restart_file` | string | 空 | 实际重启路径必需 |
+| `restart_file` | string | 空 | `restart = true` 时必须为非空路径 |
 
 在第零步，ARCH 写入初始 PLT 和 CHK。达到目标时间会强制最终输出；`max_steps` 停止遵循已配置输出调度。
 
@@ -402,7 +403,7 @@ void Setup(SimConfig &config, SpeciesManager &specs);
 void Init(const PointCoords &point, PrimitiveData &out) const;
 ```
 
-`Setup` 在分配前运行一次。`Init` 通过 OpenMP population loop 对已分配 block 单元运行，包括 ghost 存储，并可能在初始 AMR 构建期间再次运行。它必须确定、线程安全且与调用次数无关。
+`Setup` 在分配前运行一次。`Init` 通过 OpenMP population loop 填充已分配的根 block，包括 ghost 存储。初始及后续 fine block 由守恒 AMR transfer 创建，不会再次调用 `Init` 覆盖；该函数仍必须确定且线程安全。
 
 ### `SimConfig`
 
@@ -592,7 +593,7 @@ void evaluate_state(eos_state_t &state) const;
 const SpeciesManager *get_species_manager() const;
 ```
 
-`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、`cv` 和声速必须为正。自由能 tabular 策略从同一个插值 Helmholtz 势导出这些量；旧 direct 策略使用已提供的导数数据集，或采用受表边界约束的局部差分，而不是返回零。详见[规范化 HDF5 契约](../src/physics/eos/TabularEOS.zh-CN.md)。
+`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、比内能、`cv` 和声速必须为正。`dp_drho` 表示 `(dP/drho)_e`，`dp_dT` 表示 `(dP/dT)_rho`。自由能 tabular 策略从同一个插值 Helmholtz 势导出这些量；旧 direct 策略使用已提供的导数数据集，或采用受表边界约束的局部差分，而不是返回零。详见[规范化 HDF5 契约](../src/physics/eos/TabularEOS.zh-CN.md)。
 
 所有策略都从 `eos_Utils.h` 中的 `eos_utils::get_isentropic_state_at_pressure_factor` 获得同一套固定组分等熵算法。它用 RK4 积分
 
@@ -638,11 +639,11 @@ struct Solver_NEW {
 
 四个 Timmes 派生内置网络仍直接注册。custom pynucastro 网络由用户维护 recipe `examples/network/CustomNetworkRecipe.py`，并交给安全边界固定的 `tools/network/GenerateNetwork.py` 生成。每个合法的小写 `NETWORK_ID` 在 `src/physics/network/custom/<id>/` 下形成隔离 package。`aprox` 或 `iso` 开头的 ID 保留。已有 ID 的替换需要 `--replace`，旧版本先保存在 `.backup/`。CMake 可发现任意多个共存 package，C++ dispatch 由生成注册表统一处理。一次运行用 `network_name = custom:<id>` 选择其中一个。
 
-adapter 将 pynucastro 的 molar RHS/Jacobian 转为 ARCH 质量分数形式，把核能与弱中微子能量写入 ODE RHS，并隔离 SimpleCxx header namespace。energy Jacobian 当前不含弱中微子能量对组分的导数。custom 网络设置 `SUPPORTS_NSE=false`，温度 Jacobian 列采用相对步长 `1e-4` 的中心差分；生产验收覆盖这两项边界。
+adapter 将 pynucastro 的 molar RHS/Jacobian 转为 ARCH 质量分数形式，把核能与弱中微子能量写入 ODE RHS，并隔离 SimpleCxx header namespace。energy Jacobian 当前不含弱中微子能量对组分的导数。custom 网络设置 `SUPPORTS_NSE=false`，温度 Jacobian 列采用相对步长 `1e-4` 的中心差分。生成器版本 3 只删除编译期字面零 Jacobian 调用；运行值为零的结构项仍保留，以保证 KLU refactor 安全。默认 `NUCLEI` 路径会把没有连通反应的请求核素保留为 inert species，并拒绝重复项。CMake 会校验 manifest，并拒绝缺少版本 3 防呆的旧 package。弱中微子能量占主导的网络尚不在已接受契约内，因为其组分导数和 burn solver 的积分弱能闭合仍待实现。生产验收覆盖这些边界。
 
-矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 30 核素（`BurnLimits::MAX_SPECIES`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号模式，并调用 KLU analyze/factor/refactor/solve。`linear_solver = Auto` 在不超过 30 核素时选择 DenseLU，超过时选择 SparseKLU。显式 DenseLU 会拒绝大型网络；构建时启用 KLU 后，任意已编译网络都可显式选择 `SparseKLU`。
+矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 30 核素（`BurnLimits::MAX_SPECIES`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号模式，并调用 KLU analyze/factor/refactor/solve。`linear_solver = Auto` 在不超过 30 核素时选择 DenseLU，超过时选择 SparseKLU。显式 DenseLU 会拒绝大型网络；构建时启用 KLU 后，任意已编译网络都可显式选择 `SparseKLU`。稀疏数值采用 CSC 存储，但当前 entry-to-slot 查询仍分配 `N*N` 个整数；保留证据覆盖到 200 核素，不构成无界规模保证。
 
-生成或替换 package 后必须重新执行 CMake。写入前先用 `--check`；可用 `-DARCH_CUSTOM_NETWORKS="id1;id2"` 限制昂贵构建。pynucastro 只在生成时需要，ARCH 运行时不依赖 Python。
+生成或替换 package 后必须重新执行 CMake。写入前先用 `--check`；可用 `-DARCH_CUSTOM_NETWORKS="id1;id2"` 限制昂贵构建。通用源码扫描排除整个 custom 子树，因此只编译被选择的 adapter。pynucastro 只在生成时需要，ARCH 运行时不依赖 Python。多规模生成式网络兼容证据统一见 [validation/network](../validation/network/README.zh-CN.md)。
 
 ### 扩散 — Source extension/Experimental
 
@@ -692,9 +693,9 @@ Data/<requested field>       [block, z?, y?, x] 内部单元数组
 
 `HDF5Writer` 记录 PLT 写入失败，但继续运行模拟。
 
-### Checkpoint 文件版本 1
+### Checkpoint 文件版本 2
 
-属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species` 和 `cells_per_block`。
+属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn` 和 `resume_after_regrid`。后三项分别恢复时间步增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。
 
 数据集：
 
@@ -705,11 +706,11 @@ Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng
 Data/rhoX    [species, block, interior cell]
 ```
 
-重启兼容性检查维度、几何、核素数和每 block 单元数。科学来源信息——参数文件、编译器、EOS、核素顺序、求解器、边界和 commit——保留在 HDF5 外部。Checkpoint 结构错误会抛出异常。
+重启兼容性检查维度、几何、核素数和每 block 单元数。科学来源信息——参数文件、编译器、EOS、核素顺序、求解器、边界和 commit——保留在 HDF5 外部。Checkpoint 结构错误会抛出异常。版本 1 文件仍可读取；由于它没有控制器状态，流体重新计算 CFL，燃烧从 `dt_init` 保守恢复。step-zero 与已经到达终点的 restart 不会重复写初始/最终文件。动态 AMR split-run 等价性仍待验证，尤其是未写入 checkpoint 的瞬态 `ENUC` 细化诊断。
 
 ## 已知限制
 
-- `main` 分支执行 CPU 后端。CUDA 一致性和 AMR 定量收敛待完成；自重力和 Jeans 指标尚未实现。
+- `main` 分支执行 CPU 后端。CUDA 一致性待完成；AMR 守恒已有 CPU 基线，但稳定保持局部细化仍受粗细 ghost transfer 的已知限制。自重力和 Jeans 指标尚未实现。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据和完整 checkpoint 来源信息仍位于 HDF5 外部；Release flags 也无法保证跨机器逐位复现。

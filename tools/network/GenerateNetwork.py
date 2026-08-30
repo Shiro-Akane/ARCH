@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Safely generate and register an ARCH custom pynucastro SimpleCxx network."""
 from __future__ import annotations
-import argparse, hashlib, importlib.util, json, os, re, shutil, tempfile
+import argparse, hashlib, importlib.util, json, os, re, shutil, sys, tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-GENERATOR_VERSION = 1
+GENERATOR_VERSION = 3
 ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,47}$")
 RESERVED = {"custom", "none", "null", "ideal", "helmholtz", "tabular"}
 
@@ -29,11 +29,20 @@ def default_network(recipe, pyna):
     if not hasattr(recipe, "NUCLEI"):
         fail("recipe must define build_network(pynucastro) or NUCLEI")
     nuclei = [pyna.Nucleus.from_cache(name) for name in recipe.NUCLEI]
+    requested_names = [n.short_spec_name for n in nuclei]
+    if len(set(requested_names)) != len(requested_names):
+        fail("NUCLEI must not contain duplicate nuclei")
     library = pyna.ReacLibLibrary().linking_nuclei(
         nuclei, with_reverse=bool(getattr(recipe, "WITH_REVERSE", True)),
         print_warning=bool(getattr(recipe, "PRINT_RATE_WARNINGS", True)))
-    return pyna.SimpleCxxNetwork(
-        libraries=library, do_screening=bool(getattr(recipe, "DO_SCREENING", True)))
+    network = pyna.SimpleCxxNetwork(
+        libraries=library, inert_nuclei=nuclei,
+        do_screening=bool(getattr(recipe, "DO_SCREENING", True)))
+    produced_names = {n.short_spec_name for n in network.unique_nuclei}
+    missing = [name for name in requested_names if name not in produced_names]
+    if missing:
+        fail("pynucastro dropped requested nuclei: " + ", ".join(missing))
+    return network
 
 def rewrite_local_includes(generated_dir):
     names = {p.name for p in generated_dir.glob("*.H")}
@@ -43,6 +52,21 @@ def rewrite_local_includes(generated_dir):
         text = pattern.sub(lambda m: f'{m.group(1)}"{m.group(2)}"{m.group(3)}'
                            if m.group(2) in names else m.group(0), text)
         path.write_text(text, encoding="utf-8")
+
+def prune_literal_zero_jacobian(generated_dir):
+    """Remove entries that pynucastro proves structurally zero in generated C++."""
+    path = generated_dir / "actual_rhs.H"
+    if not path.is_file():
+        fail("pynucastro output is missing generated/actual_rhs.H")
+    text = path.read_text(encoding="utf-8")
+    pattern = re.compile(
+        r"^[ \t]*jac\.set\(\s*[A-Za-z_]\w*\s*,\s*[A-Za-z_]\w*\s*,"
+        r"\s*0\.0\s*\);[ \t]*\r?\n?",
+        re.MULTILINE,
+    )
+    text, count = pattern.subn("", text)
+    path.write_text(text, encoding="utf-8")
+    return count
 
 def cpp_array(values): return ", ".join(f"{float(v):.17g}" for v in values)
 def quoted_array(values): return ", ".join(json.dumps(str(v)) for v in values)
@@ -235,13 +259,12 @@ def main():
     repo_root=Path(__file__).resolve().parents[2]
     custom_root=(args.custom_root.resolve() if args.custom_root else
                  repo_root/"src"/"physics"/"network"/"custom")
-    custom_root.mkdir(parents=True, exist_ok=True)
     target=custom_root/network_id
     if target.parent.resolve()!=custom_root.resolve(): fail("target escaped custom root")
     try: import pynucastro as pyna
     except ImportError: fail("run with: conda run -n p311 python tools/network/GenerateNetwork.py ...")
     recipe_hash=hashlib.sha256(recipe_path.read_bytes()).hexdigest()
-    if target.exists() and not args.replace:
+    if target.exists() and not args.replace and not args.check:
         manifest_path=target/"manifest.json"
         if manifest_path.is_file():
             m=json.loads(manifest_path.read_text())
@@ -257,10 +280,21 @@ def main():
     if args.check:
         print(f"validated custom:{network_id}: {len(network.unique_nuclei)} nuclei, "
               f"{len(network.rates)} rates, pynucastro {pyna.__version__}"); return
+    custom_root.mkdir(parents=True, exist_ok=True)
     stage=Path(tempfile.mkdtemp(prefix=f".{network_id}.", dir=custom_root))
+    backup = None
     try:
         generated_dir=stage/"generated"; generated_dir.mkdir()
-        network.write_network(odir=generated_dir); rewrite_local_includes(generated_dir)
+        network.write_network(odir=generated_dir)
+        rewrite_local_includes(generated_dir)
+        pruned_zero_jacobian_entries = prune_literal_zero_jacobian(generated_dir)
+        if pruned_zero_jacobian_entries == 0:
+            print(
+                "GenerateNetwork: warning: no literal-zero Jacobian entries "
+                "matched; review generated/actual_rhs.H if this network was "
+                "expected to be sparse",
+                file=sys.stderr,
+            )
         cls, header, source=write_adapter(stage, network_id, network)
         manifest={"schema_version":1, "generator_version":GENERATOR_VERSION,
             "network_id":network_id, "runtime_name":f"custom:{network_id}",
@@ -269,6 +303,7 @@ def main():
             "recipe_sha256":recipe_hash, "species_count":len(network.unique_nuclei),
             "species":[n.short_spec_name.lower() for n in network.unique_nuclei],
             "rate_count":len(network.rates), "supports_nse":False,
+            "literal_zero_jacobian_entries_pruned":pruned_zero_jacobian_entries,
             "temperature_jacobian":"centered finite difference, relative step 1e-4"}
         (stage/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
         (stage/"network.cmake").write_text(
@@ -280,11 +315,17 @@ def main():
             backup_root=custom_root/".backup"; backup_root.mkdir(exist_ok=True)
             backup=backup_root/f"{network_id}-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
             os.replace(target, backup); print(f"preserved previous network at {backup}")
-        os.replace(stage, target)
+        try:
+            os.replace(stage, target)
+        except Exception:
+            if backup is not None and not target.exists():
+                os.replace(backup, target)
+            raise
     except Exception:
         if stage.exists(): shutil.rmtree(stage)
         raise
     print(f"generated custom:{network_id}: {len(network.unique_nuclei)} nuclei, "
-          f"{len(network.rates)} rates; rerun CMake to register it")
+          f"{len(network.rates)} rates; pruned {pruned_zero_jacobian_entries} "
+          "literal-zero Jacobian entries; rerun CMake to register it")
 
 if __name__=="__main__": main()

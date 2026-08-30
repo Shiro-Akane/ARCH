@@ -47,7 +47,10 @@ public:
                               const NumericsConfig& num_cfg,
                               void* execution_stream = nullptr) const override
     {
-        TimeIntegration::perform_stage_update(state_old, state_curr, state_new, dU, d_spec, grid, w_old, w_flux, num_cfg.sml_rho, num_cfg.max_eint);
+        TimeIntegration::perform_stage_update(
+            state_old, state_curr, state_new, dU, d_spec, grid,
+            w_old, w_flux, num_cfg.sml_rho, num_cfg.min_eint,
+            num_cfg.max_eint);
     }
 
 private:

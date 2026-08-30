@@ -146,7 +146,7 @@ void DispatchSolver(const std::string &solver_name,
     amr_ctrl.tree->ConfigureRefinementSpecies(config.amr, specs);
     RunState run_state;
 
-    if (config.io.restart && !config.io.restart_file.empty())
+    if (config.io.restart)
     {
         std::cout << "[Dispatch] Restarting from checkpoint: " << config.io.restart_file << std::endl;
         read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs.count());
@@ -165,26 +165,13 @@ void DispatchSolver(const std::string &solver_name,
         print_amr_resolution_summary(config);
 
         if (config.amr.lrefinemax > 0) {
-            const bool eos_indicator = config.amr.refine_on_p || config.amr.refine_on_temp ||
-                config.amr.refine_on_entropy;
-            if (eos_indicator) {
-                // EOS policies are selected by the later template dispatch.  Do not
-                // approximate pressure or temperature in this phase: initial refinement is
-                // deferred until Driver has installed the actual EOS callback.
-                amr_ctrl.tree->DeferInitialRefinement(config.amr.lrefinemax);
-            } else {
-                std::cout << "[Dispatch] Performing initial AMR refinement loop..." << std::endl;
-                for (int l = 0; l < config.amr.lrefinemax; ++l) {
-                    bool changed = amr_ctrl.tree->Regrid(config);
-                    if (changed) {
-                        std::cout << "           -> Refining initial condition (Pass " << l + 1 << ")..." << std::endl;
-                        // Re-initialize exact data on newly created fine blocks.
-                        problem.InitializeData(amr_ctrl, config, specs);
-                    } else {
-                        break;
-                    }
-                }
-            }
+            // Every initial refinement pass is completed in Driver after the
+            // selected EOS evaluator, physical boundaries, and neighbor ghost
+            // exchange are available. Regrid's conservative prolongation is
+            // the sole owner of new fine-cell states; re-running a problem
+            // initializer here would replace those cell averages and change
+            // conserved integrals.
+            amr_ctrl.tree->DeferInitialRefinement(config.amr.lrefinemax);
         }
     }
 

@@ -19,6 +19,8 @@ namespace io {
 /** Complete restart payload in Morton-sorted AMR leaf and interior-cell order. */
 struct CheckpointData {
     double time = 0.0;
+    double dt_old = 0.0;
+    double dt_burn = 0.0;
     int step_count = 0;
     int chk_file_index = 0;
     int plt_file_index = 0;
@@ -26,6 +28,8 @@ struct CheckpointData {
     int num_species = 0;
     std::string geometry;
     std::size_t cells_per_block = 0;
+    bool has_timestep_state = false;
+    bool resume_after_regrid = false;
     std::vector<int> levels;
     std::vector<uint32_t> logical_x1, logical_x2, logical_x3;
     std::vector<double> rho, mom_u, mom_v, mom_w, eng, rhoX;

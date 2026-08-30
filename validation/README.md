@@ -4,9 +4,11 @@ Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
 This directory is the single entry point for quantitative verification records.
-The first CPU baselines cover uniform-grid hydro reconstruction, RKL1/RKL2 species
-diffusion, constant external gravity, and an aprox13 one-zone burn. CUDA rows
-are reserved until the V2 backend can run the same committed inputs.
+The CPU baselines cover uniform-grid hydro reconstruction, RKL1/RKL2 species
+diffusion, constant external gravity, an aprox13 one-zone burn, AMR transfer and
+conservation, tabular-EOS interpolation, restart continuity, and generated
+custom networks with KLU. CUDA rows are reserved until the V2 backend can run
+the same committed inputs.
 
 ## Directory contract
 
@@ -25,8 +27,12 @@ a parallel validation tree.
 | RKL1/RKL2 species diffusion | both pass; RKL2 shows second-order spatial convergence | pending | [diffusion](diffusion/README.md) |
 | External gravity | pass for RK2/RK3 constant-acceleration update | pending | [gravity](gravity/README.md) |
 | aprox13 one-zone burn | BD and ROS4 pass the BE_NR comparison | pending | [burn](burn/README.md) |
-| AMR | qualitative archive only; quantitative norms pending | pending | [AMR](amr/README.md) |
-| Sod, Sedov, EOS, geometry, NSE, restart | pending | pending | planned |
+| AMR | transfer/reflux conservation and basic 2D symmetry pass; local refinement retention is a known limitation | pending | [AMR](amr/README.md) |
+| Tabular EOS | normalized 3D/4D smooth sweep passes; Shen assets assessed, not accepted | pending | [EOS](eos/README.md) |
+| HDF5/restart | v1 compatibility and v2 hydro/burn continuity pass; dynamic-AMR split run pending | pending | [restart](restart/README.md) |
+| Generated networks/KLU | multi-size generation, coexistence, sparse solve, and one-step burn pass | pending | [network](network/README.md) |
+| Network-constrained NSE | existing CPU/thread evidence retained in the Timmes network record | pending | [Timmes networks](../docs/physics/TimmesNetworks.md) |
+| Sod analytic solution and manufactured geometry | pending | pending | planned |
 
 “Pending” is an explicit placeholder, not evidence of backend parity.
 
@@ -76,10 +82,10 @@ same case source, parameters, reference, and metric definitions.
 | Strong shock | Sedov similarity solution | radial-profile L1/L2, shock radius, energy, symmetry |
 | Hydro time integration | smooth semi-discrete reference | error versus time step for Euler, SSPRK2, SSPRK3 |
 | Geometry | cylindrical/spherical manufactured solution | volume-weighted L1/L2 and source balance |
-| AMR | uniform-grid reference and interface crossing | common-mesh L1/L2, reflux conservation, restriction/prolongation consistency |
-| EOS | trusted ideal/tabular/Helmholtz states | round trips, state L1/L2, monotonicity and domain checks |
+| AMR follow-up | stable local interface crossing after ghost-transfer repair | common-mesh L1/L2, retained local topology, curved-coordinate face consistency |
+| EOS follow-up | family-specific nuclear-matter converter | native-field transforms, phase masks, axis-halving, trajectory checks |
 | NSE | independent equilibrium states | composition/thermodynamic L1/L2 and equilibrium residuals |
-| HDF5/restart | uninterrupted run | state, topology, and metadata parity |
+| HDF5/restart follow-up | dynamic-AMR uninterrupted run | topology and metadata parity, including refinement diagnostics |
 | CPU/CUDA | identical records above | field/state L1/L2, invariants, configuration and device metadata |
 
 Use [CASE_TEMPLATE.md](CASE_TEMPLATE.md) for new records.

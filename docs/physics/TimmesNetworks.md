@@ -289,6 +289,9 @@ eos_table_path = /absolute/path/to/helm_table.dat
 ```
 
 Generated pynucastro packages are documented in the [custom-network local contract](../../src/physics/network/custom/README.md) and the [Reference](../Reference.md). `Auto` resolves to the dedicated DenseLU backend through 30 isotopes and to SuiteSparse KLU above 30. Generated packages set `SUPPORTS_NSE=false`. Their production qualification covers solver tolerances and composition/energy trajectories.
+The generated-network generation, dispatch, and sparse-solver compatibility
+record is under [validation/network](../../validation/network/README.md);
+it is an interface smoke test rather than a physical trajectory qualification.
 
 CMake requires OpenMP through `find_package(OpenMP REQUIRED)`. Control the
 runtime thread count with an environment variable, for example:

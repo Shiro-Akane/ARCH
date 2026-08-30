@@ -389,10 +389,9 @@ struct Tabular4DEOSView
         if (table_dP_drho)
             return interpolate_4d(table_dP_drho, rho, T, A, Z);
 
-        double drho = rho * 0.001;
-        return (interpolate_4d(table_P, rho + drho, T, A, Z) -
-                interpolate_4d(table_P, rho - drho, T, A, Z)) /
-               (2.0 * drho);
+        return eos_utils::finite_difference_dp_drho_e(
+            *this, rho, e, Xi, std::pow(10.0, log_rho_min),
+            std::pow(10.0, log_rho_max));
     }
 
     double get_dp_de_rho(double rho, double e, const double *Xi) const

@@ -12,7 +12,11 @@
 
 #pragma once
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <limits>
+#include <stdexcept>
 #include <vector>
 
 #include "Morton.h"
@@ -96,14 +100,18 @@ struct Block {
      * @param child_idx The relative child index (0 to 7 in 3D).
      * @param dim Dimensionality (1, 2, or 3).
      */
-    void InterpolateFromCoarse(const Block& coarse, int child_idx, int dim);
+    void InterpolateFromCoarse(const Block& coarse, int child_idx, int dim,
+                               double density_floor,
+                               double min_specific_internal_energy);
 
     /**
      * @brief Volume average data from child blocks to this coarse block.
      * @param children Array of pointers to the 8 children blocks.
      * @param dim Dimensionality (1, 2, or 3).
      */
-    void AverageToCoarse(const Block* children[], int dim);
+    void AverageToCoarse(const Block* children[], int dim,
+                         double density_floor,
+                         double min_specific_internal_energy);
 
 
     /**
@@ -151,7 +159,45 @@ inline double minmod(double a, double b) {
     return 0.0;
 }
 
-inline void Block::InterpolateFromCoarse(const Block& coarse, int child_idx, int dim) {
+inline bool is_admissible_conserved_state(
+    const FluidVector& state, double density_floor,
+    double min_specific_internal_energy)
+{
+    if (!std::isfinite(state.rho) || !std::isfinite(state.mom_u) ||
+        !std::isfinite(state.mom_v) || !std::isfinite(state.mom_w) ||
+        !std::isfinite(state.eng) || state.rho < density_floor) {
+        return false;
+    }
+    const double kinetic = 0.5 *
+        (state.mom_u * state.mom_u + state.mom_v * state.mom_v +
+         state.mom_w * state.mom_w) / state.rho;
+    return std::isfinite(kinetic) &&
+           state.eng - kinetic >=
+               state.rho * min_specific_internal_energy;
+}
+
+inline double composition_simplex_tolerance(int species_count)
+{
+    return 64.0 * std::numeric_limits<double>::epsilon() *
+           static_cast<double>(std::max(1, species_count));
+}
+
+inline FluidVector blend_conserved_state(
+    const FluidVector& average, const FluidVector& candidate, double theta)
+{
+    if (theta <= 0.0) return average;
+    if (theta >= 1.0) return candidate;
+    return FluidVector(
+        average.rho + theta * (candidate.rho - average.rho),
+        average.mom_u + theta * (candidate.mom_u - average.mom_u),
+        average.mom_v + theta * (candidate.mom_v - average.mom_v),
+        average.mom_w + theta * (candidate.mom_w - average.mom_w),
+        average.eng + theta * (candidate.eng - average.eng));
+}
+
+inline void Block::InterpolateFromCoarse(
+    const Block& coarse, int child_idx, int dim, double density_floor,
+    double min_specific_internal_energy) {
     const int x_offset = (child_idx & 1) ? amr::BLOCK_NX / 2 : 0;
     const int y_offset = (dim >= 2 && (child_idx & 2)) ? amr::BLOCK_NY / 2 : 0;
     const int z_offset = (dim == 3 && (child_idx & 4)) ? amr::BLOCK_NZ / 2 : 0;
@@ -240,14 +286,174 @@ inline void Block::InterpolateFromCoarse(const Block& coarse, int child_idx, int
                 correct_component(coarse.fluid_state.mom_w[c_idx], [](FluidVector& value) -> double& { return value.mom_w; });
                 correct_component(coarse.fluid_state.eng[c_idx], [](FluidVector& value) -> double& { return value.eng; });
 
+                // Euler-admissible states form a convex set. Scale every
+                // reconstructed conserved-variable deviation by one common
+                // factor so density and internal energy remain admissible while
+                // the physical-volume average stays exactly equal to the parent.
+                const FluidVector parent_state = coarse.fluid_state.get(c_idx);
+                if (!is_admissible_conserved_state(
+                        parent_state, density_floor,
+                        min_specific_internal_energy)) {
+                    throw std::runtime_error(
+                        "AMR prolongation requires an admissible parent fluid state.");
+                }
+                double fluid_theta = 1.0;
+                for (const FluidVector& candidate : fine_values) {
+                    if (candidate.rho < density_floor) {
+                        fluid_theta = std::min(
+                            fluid_theta,
+                            (parent_state.rho - density_floor) /
+                                (parent_state.rho - candidate.rho));
+                    }
+                }
+                fluid_theta = std::clamp(fluid_theta, 0.0, 1.0);
+                for (const FluidVector& candidate : fine_values) {
+                    if (is_admissible_conserved_state(
+                            blend_conserved_state(
+                                parent_state, candidate, fluid_theta),
+                            density_floor,
+                            min_specific_internal_energy)) {
+                        continue;
+                    }
+                    double lower = 0.0;
+                    double upper = fluid_theta;
+                    for (int iteration = 0; iteration < 64; ++iteration) {
+                        const double midpoint = 0.5 * (lower + upper);
+                        if (is_admissible_conserved_state(
+                                blend_conserved_state(
+                                    parent_state, candidate, midpoint),
+                                density_floor,
+                                min_specific_internal_energy)) {
+                            lower = midpoint;
+                        } else {
+                            upper = midpoint;
+                        }
+                    }
+                    fluid_theta = lower;
+                }
+                if (fluid_theta < 1.0) {
+                    fluid_theta *= 1.0 - 64.0 *
+                        std::numeric_limits<double>::epsilon();
+                }
+                for (FluidVector& candidate : fine_values) {
+                    candidate = blend_conserved_state(
+                        parent_state, candidate, fluid_theta);
+                    if (!is_admissible_conserved_state(
+                            candidate, density_floor,
+                            min_specific_internal_energy)) {
+                        throw std::runtime_error(
+                            "AMR prolongation produced an inadmissible fine-cell fluid state.");
+                    }
+                }
+
+                // A valid species state is a simplex. Independent limited
+                // slopes for rho and rhoX preserve their parent integrals but
+                // do not, by themselves, preserve sum(rhoX)=rho in every fine
+                // cell. Use an exactly normalized parent composition for the
+                // species row targets; any adjustment is limited to roundoff.
+                std::vector<double> parent_X(n_sp, 0.0);
+                int closure_species = -1;
+                double parent_sum = 0.0;
+                const double simplex_tolerance =
+                    composition_simplex_tolerance(n_sp);
+                for (int sp = 0; sp < n_sp; ++sp) {
+                    const double value = coarse.fluid_state.X(sp, c_idx);
+                    if (!std::isfinite(value) ||
+                        value < -simplex_tolerance) {
+                        throw std::runtime_error(
+                            "AMR prolongation requires finite, non-negative parent mass fractions.");
+                    }
+                    parent_X[sp] = std::max(0.0, value);
+                    parent_sum += parent_X[sp];
+                    if (closure_species < 0 || parent_X[sp] > parent_X[closure_species])
+                        closure_species = sp;
+                }
+                if (n_sp > 0) {
+                    if (!std::isfinite(parent_sum) ||
+                        std::abs(parent_sum - 1.0) > simplex_tolerance) {
+                        throw std::runtime_error(
+                            "AMR prolongation requires parent mass fractions normalized to one.");
+                    }
+                    parent_X[closure_species] += 1.0 - parent_sum;
+                    if (parent_X[closure_species] < 0.0) {
+                        throw std::runtime_error(
+                            "AMR prolongation could not close the parent composition simplex.");
+                    }
+                }
+
                 for (int sp = 0; sp < n_sp; ++sp) {
                     double integral = 0.0;
                     for (int cell = 0; cell < fine_count; ++cell)
                         integral += fine_rhoX[sp][cell] * fine_volumes[cell];
-                    const double coarse_rhoX = coarse.fluid_state.rho[c_idx] * coarse.fluid_state.X(sp, c_idx);
+                    const double coarse_rhoX = coarse.fluid_state.rho[c_idx] * parent_X[sp];
                     const double shift = coarse_rhoX - integral / coarse_volume;
                     for (int cell = 0; cell < fine_count; ++cell)
                         fine_rhoX[sp][cell] += shift;
+                }
+
+                if (n_sp > 0) {
+                    // Project the independently reconstructed rhoX fields onto
+                    // both required margins: each species retains its parent
+                    // physical-volume integral, while every fine cell sums to
+                    // its already-conservative rho. The correction weights are
+                    // constant parent fractions, so their volume integral is
+                    // zero. A common positivity limiter scales only the
+                    // zero-margin deviations and therefore preserves both
+                    // constraints.
+                    std::vector<double> column_excess(fine_count, 0.0);
+                    std::vector<std::vector<double>> deviation(
+                        n_sp, std::vector<double>(fine_count, 0.0));
+                    for (int cell = 0; cell < fine_count; ++cell) {
+                        double sum_rhoX = 0.0;
+                        for (int sp = 0; sp < n_sp; ++sp)
+                            sum_rhoX += fine_rhoX[sp][cell];
+                        column_excess[cell] = sum_rhoX - fine_values[cell].rho;
+                    }
+
+                    double theta = 1.0;
+                    for (int sp = 0; sp < n_sp; ++sp) {
+                        for (int cell = 0; cell < fine_count; ++cell) {
+                            const double baseline =
+                                parent_X[sp] * fine_values[cell].rho;
+                            deviation[sp][cell] = fine_rhoX[sp][cell] - baseline
+                                - parent_X[sp] * column_excess[cell];
+                            if (deviation[sp][cell] < 0.0) {
+                                theta = std::min(
+                                    theta, baseline / -deviation[sp][cell]);
+                            }
+                        }
+                    }
+                    theta = std::clamp(theta, 0.0, 1.0);
+                    if (theta < 1.0) {
+                        theta *= 1.0 - 32.0 *
+                            std::numeric_limits<double>::epsilon();
+                    }
+                    for (int cell = 0; cell < fine_count; ++cell) {
+                        double sum_rhoX = 0.0;
+                        for (int sp = 0; sp < n_sp; ++sp) {
+                            const double baseline =
+                                parent_X[sp] * fine_values[cell].rho;
+                            fine_rhoX[sp][cell] =
+                                baseline + theta * deviation[sp][cell];
+                            if (!std::isfinite(fine_rhoX[sp][cell]) ||
+                                fine_rhoX[sp][cell] < 0.0) {
+                                throw std::runtime_error(
+                                    "AMR composition projection produced an invalid mass fraction.");
+                            }
+                            sum_rhoX += fine_rhoX[sp][cell];
+                        }
+                        // Absorb the final floating-point closure residual into
+                        // the largest parent species. This is at roundoff scale
+                        // and leaves its conserved integral unchanged to the
+                        // same tolerance as the fluid prolongation.
+                        fine_rhoX[closure_species][cell] +=
+                            fine_values[cell].rho - sum_rhoX;
+                        if (!std::isfinite(fine_rhoX[closure_species][cell]) ||
+                            fine_rhoX[closure_species][cell] < 0.0) {
+                            throw std::runtime_error(
+                                "AMR composition projection produced a negative mass fraction.");
+                        }
+                    }
                 }
 
                 for (int cell = 0; cell < fine_count; ++cell) {
@@ -260,7 +466,9 @@ inline void Block::InterpolateFromCoarse(const Block& coarse, int child_idx, int
     }
 }
 
-inline void Block::AverageToCoarse(const Block* children[], int dim) {
+inline void Block::AverageToCoarse(
+    const Block* children[], int dim, double density_floor,
+    double min_specific_internal_energy) {
     const int nz = (dim == 3) ? amr::BLOCK_NZ : 1;
     const int ny = (dim >= 2) ? amr::BLOCK_NY : 1;
     const int nx = amr::BLOCK_NX;
@@ -304,9 +512,36 @@ inline void Block::AverageToCoarse(const Block* children[], int dim) {
                 }
 
                 const FluidVector averaged = integral * (1.0 / coarse_volume);
+                if (!is_admissible_conserved_state(
+                        averaged, density_floor,
+                        min_specific_internal_energy)) {
+                    throw std::runtime_error(
+                        "AMR restriction produced an inadmissible coarse-cell fluid state.");
+                }
                 fluid_state.set(c_idx, averaged);
-                for (int sp = 0; sp < n_sp; ++sp)
+                double total_rhoX_integral = 0.0;
+                for (int sp = 0; sp < n_sp; ++sp) {
+                    if (!std::isfinite(rhoX_integral[sp]) ||
+                        rhoX_integral[sp] < 0.0) {
+                        throw std::runtime_error(
+                            "AMR restriction produced an invalid species integral.");
+                    }
+                    total_rhoX_integral += rhoX_integral[sp];
                     fluid_state.X(sp, c_idx) = rhoX_integral[sp] / (averaged.rho * coarse_volume);
+                }
+                if (n_sp > 0) {
+                    const double expected_rho_integral =
+                        averaged.rho * coarse_volume;
+                    const double scale = std::max(
+                        std::abs(expected_rho_integral),
+                        std::numeric_limits<double>::min());
+                    if (!std::isfinite(total_rhoX_integral) ||
+                        std::abs(total_rhoX_integral - expected_rho_integral) >
+                            composition_simplex_tolerance(n_sp) * scale) {
+                        throw std::runtime_error(
+                            "AMR restriction requires species mass to close to density.");
+                    }
+                }
             }
         }
     }

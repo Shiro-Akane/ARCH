@@ -58,6 +58,7 @@ struct NumericsConfig
     double entropy_fix_coeff = 0.1; ///< Roe entropy-fix width relative to the local sound speed.
 
     double sml_rho = 1e-12; ///< Positive density floor in code units.
+    double min_eint = 1e-10; ///< Positive specific internal-energy floor in code units.
     double max_eint = 1e21; ///< Specific internal-energy ceiling in code units.
 };
 
@@ -243,6 +244,10 @@ struct RunState
     int step = 0;      ///< Current iteration step count
     int plt_idx = 0;   ///< Current plot file index
     int chk_idx = 0;   ///< Current checkpoint file index
+    double dt_old = 0.0; ///< Unsynchronized macro-step proposal used by the growth limiter
+    double dt_burn = 0.0; ///< Burn-reported limit carried into the next macro step
+    bool has_timestep_state = false; ///< True for checkpoint formats that persist both limits
+    bool resume_after_regrid = false; ///< The saved loop checkpoint already completed regrid/I/O
 };
 
 // Complete runtime configuration.

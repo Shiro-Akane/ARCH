@@ -198,6 +198,7 @@ eos_table_path = /absolute/path/to/helm_table.dat
 ```
 
 pynucastro 生成 package 的工作流见 [custom 网络本地契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。`Auto` 对不超过 30 核素使用专用 DenseLU，超过时使用 SuiteSparse KLU。生成 package 设置 `SUPPORTS_NSE=false`，其生产验收范围包括求解容差与组分/能量轨迹。
+生成式网络的生成、dispatch 与稀疏求解兼容记录见 [validation/network](../../validation/network/README.zh-CN.md)；它属于接口 smoke test，不构成物理轨迹资格。
 
 CMake 通过 `find_package(OpenMP REQUIRED)` 要求 OpenMP。运行时可用环境变量控制线程数，例如：
 

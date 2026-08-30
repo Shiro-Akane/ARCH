@@ -1,0 +1,4 @@
+network,isotopes,rates,literal_zero_entries_pruned,species_structural_nnz,ode_jacobian_nnz,mass_rhs_relative,klu_error,klu_refactor_error,burn_smoke_result
+audit31,31,229,538,423,486,2.80480380e-17,0.0,4.44089210e-16,pass
+audit150,150,1416,20137,2363,2664,1.27414855e-16,0.0,6.66133815e-16,pass
+audit200,200,1965,36777,3223,3624,1.46403630e-16,8.88178420e-16,2.22044605e-16,pass
