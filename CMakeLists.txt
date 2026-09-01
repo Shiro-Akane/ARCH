@@ -441,6 +441,16 @@ if(BUILD_TESTING)
     target_include_directories(arch_compute_backend PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME compute_backend COMMAND arch_compute_backend)
+
+    add_executable(arch_device_block_store_lifecycle
+        tests/test_device_block_store_lifecycle.cpp)
+    target_compile_features(arch_device_block_store_lifecycle PRIVATE cxx_std_20)
+    target_include_directories(arch_device_block_store_lifecycle PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(arch_device_block_store_lifecycle PRIVATE
+        arch_build_contract)
+    add_test(NAME device_block_store_lifecycle
+        COMMAND arch_device_block_store_lifecycle)
 endif()
 
 if(ARCH_ENABLE_CUDA)
