@@ -35,33 +35,26 @@ namespace ProblemHelper
         const auto selected = parse_registered_policy<NetworkPolicies>(
             net_type);
 
-        if (selected.ok && selected.value == NetworkId::Aprox19) {
-            if (specs.count() == 0) NetAprox19::RegisterSpecies(specs);
-            NetAprox19::SetupInitialFractions(config, specs, default_X);
-        } else if (selected.ok && selected.value == NetworkId::Aprox21) {
-            if (specs.count() == 0) NetAprox21::RegisterSpecies(specs);
-            NetAprox21::SetupInitialFractions(config, specs, default_X);
-        } else if (selected.ok && selected.value == NetworkId::Aprox13) {
-            if (specs.count() == 0) NetAprox13::RegisterSpecies(specs);
-            NetAprox13::SetupInitialFractions(config, specs, default_X);
-        } else if (selected.ok && selected.value == NetworkId::Iso7) {
-            if (specs.count() == 0) NetIso7::RegisterSpecies(specs);
-            NetIso7::SetupInitialFractions(config, specs, default_X);
-        } else {
-            bool custom_dispatched = false;
-#define ARCH_SETUP_CUSTOM_NETWORK(runtime_name, network_type)               \
-            if (!custom_dispatched && net_type == runtime_name) {            \
-                if (specs.count() == 0) network_type::RegisterSpecies(specs); \
-                network_type::SetupInitialFractions(                         \
-                    config, specs, default_X);                               \
-                custom_dispatched = true;                                   \
-            }
-            ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_SETUP_CUSTOM_NETWORK)
-#undef ARCH_SETUP_CUSTOM_NETWORK
-            if (!custom_dispatched)
-                throw std::runtime_error(
-                    "Unknown network_name in SetupNetworkAndFractions: " + net_type);
-        }
+        if (!selected.ok || selected.value == NetworkId::None)
+            throw std::runtime_error(
+                "Unknown network_name in SetupNetworkAndFractions: " + net_type);
+        bool setup = false;
+        const bool registered = visit_policy<NetworkPolicies>(
+            selected.value, [&]<class Registration> {
+                using Binding =
+                    typename PolicyRegistration<Registration>::CpuBinding;
+                if constexpr (!std::is_same_v<Binding, AbsentBinding>
+                              && !std::is_same_v<Binding,
+                                                 CpuNoNetworkBinding>) {
+                    using Network = typename CpuNetworkType<Binding>::type;
+                    if (specs.count() == 0) Network::RegisterSpecies(specs);
+                    Network::SetupInitialFractions(
+                        config, specs, default_X);
+                    setup = true;
+                }
+            });
+        if (!registered || !setup)
+            throw std::logic_error("registered network has no CPU setup binding");
     }
 
     double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)

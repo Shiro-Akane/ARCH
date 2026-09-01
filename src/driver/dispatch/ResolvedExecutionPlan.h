@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "CustomNetworkRegistry.generated.h"
+
 namespace arch::dispatch
 {
 
@@ -12,7 +14,16 @@ enum class ReconstructionId : std::uint8_t { Pcm, Muscl, Ppm };
 enum class LimiterId : std::uint8_t { MinMod, Mc, SuperBee, VanLeer };
 enum class TimeIntegratorId : std::uint8_t { Euler, Rk2, Rk3 };
 enum class EosId : std::uint8_t { Ideal, Helmholtz, Tabular3D, Tabular4D };
-enum class NetworkId : std::uint8_t { None, Aprox13, Aprox19, Aprox21, Iso7 };
+enum class NetworkId : std::uint16_t {
+    None,
+    Aprox13,
+    Aprox19,
+    Aprox21,
+    Iso7,
+#define ARCH_CUSTOM_NETWORK_ENUM(TAG, VALUE, NAME, TYPE) TAG = VALUE,
+    ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_CUSTOM_NETWORK_ENUM)
+#undef ARCH_CUSTOM_NETWORK_ENUM
+};
 enum class OdeSolverId : std::uint8_t { None, BeNr, Bd, Ros4 };
 enum class LinearSolverId : std::uint8_t { None, DenseLu, SparseKlu };
 enum class DiffusionIntegratorId : std::uint8_t { None, Rkl1, Rkl2 };

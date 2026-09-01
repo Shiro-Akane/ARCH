@@ -17,4 +17,20 @@
 // Generated at CMake configure time from custom/*/network.cmake packages.
 #include "CustomNetworks.generated.h"
 
+#include "../../driver/dispatch/PolicyDescriptor.h"
+
+template <class Binding>
+struct CpuNetworkType;
+
+template <> struct CpuNetworkType<arch::dispatch::CpuAprox13Binding> { using type = NetAprox13; };
+template <> struct CpuNetworkType<arch::dispatch::CpuAprox19Binding> { using type = NetAprox19; };
+template <> struct CpuNetworkType<arch::dispatch::CpuAprox21Binding> { using type = NetAprox21; };
+template <> struct CpuNetworkType<arch::dispatch::CpuIso7Binding> { using type = NetIso7; };
+
+#define ARCH_BIND_CPU_NETWORK_TYPE(TAG, VALUE, NAME, TYPE) \
+    template <> struct CpuNetworkType< \
+        arch::dispatch::Cpu##TAG##Binding> { using type = TYPE; };
+ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_BIND_CPU_NETWORK_TYPE)
+#undef ARCH_BIND_CPU_NETWORK_TYPE
+
 // NetType requirements are enforced by template instantiation.

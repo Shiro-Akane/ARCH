@@ -110,6 +110,17 @@ struct NoDiffusionPolicy {};
 struct Rkl1Policy {};
 struct Rkl2Policy {};
 
+#define ARCH_DECLARE_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
+    struct Cpu##TAG##Binding {}; \
+    struct TAG##Policy {};
+ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_DECLARE_CUSTOM_NETWORK)
+#undef ARCH_DECLARE_CUSTOM_NETWORK
+
+#define ARCH_DECLARE_CUDA_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
+    struct Cuda##TAG##Binding {};
+ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_DECLARE_CUDA_CUSTOM_NETWORK)
+#undef ARCH_DECLARE_CUDA_CUSTOM_NETWORK
+
 struct StaticRequirements
 {
     int ghost_depth;
@@ -226,6 +237,25 @@ ARCH_REGISTER_POLICY(Iso7Policy, NetworkId, NetworkId::Iso7, false,
                      StateLayoutRequirement::SpeciesMassFractions | StateLayoutRequirement::EnucDiagnostic,
                      "iso7");
 
+#define ARCH_REGISTER_CPU_ONLY_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
+    ARCH_REGISTER_POLICY(TAG##Policy, NetworkId, NetworkId::TAG, false, \
+                         Cpu##TAG##Binding, AbsentBinding, 0, \
+                         StateLayoutRequirement::SpeciesMassFractions | \
+                             StateLayoutRequirement::EnucDiagnostic, \
+                         NAME);
+ARCH_FOR_EACH_CPU_ONLY_CUSTOM_NETWORK(
+    ARCH_REGISTER_CPU_ONLY_CUSTOM_NETWORK)
+#undef ARCH_REGISTER_CPU_ONLY_CUSTOM_NETWORK
+
+#define ARCH_REGISTER_CUDA_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
+    ARCH_REGISTER_POLICY(TAG##Policy, NetworkId, NetworkId::TAG, false, \
+                         Cpu##TAG##Binding, Cuda##TAG##Binding, 0, \
+                         StateLayoutRequirement::SpeciesMassFractions | \
+                             StateLayoutRequirement::EnucDiagnostic, \
+                         NAME);
+ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_REGISTER_CUDA_CUSTOM_NETWORK)
+#undef ARCH_REGISTER_CUDA_CUSTOM_NETWORK
+
 ARCH_REGISTER_POLICY(NoOdePolicy, OdeSolverId, OdeSolverId::None, true,
                      CpuNoOdeBinding, CudaNoOdeBinding, 0,
                      StateLayoutRequirement::None, "none");
@@ -277,7 +307,12 @@ using TimeIntegratorPolicies = TypeList<TimeIntegratorId, UnknownPolicyBehavior:
 using EosPolicies = TypeList<EosId, UnknownPolicyBehavior::Error,
     IdealPolicy, HelmholtzPolicy, Tabular3DPolicy, Tabular4DPolicy>;
 using NetworkPolicies = TypeList<NetworkId, UnknownPolicyBehavior::Error,
-    NoNetworkPolicy, Aprox13Policy, Aprox19Policy, Aprox21Policy, Iso7Policy>;
+    NoNetworkPolicy, Aprox13Policy, Aprox19Policy, Aprox21Policy, Iso7Policy
+#define ARCH_APPEND_CUSTOM_NETWORK_POLICY(TAG, VALUE, NAME, TYPE) \
+    , TAG##Policy
+    ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_APPEND_CUSTOM_NETWORK_POLICY)
+#undef ARCH_APPEND_CUSTOM_NETWORK_POLICY
+    >;
 using OdeSolverPolicies = TypeList<OdeSolverId, UnknownPolicyBehavior::Error,
     NoOdePolicy, BeNrPolicy, BdPolicy, Ros4Policy>;
 using LinearSolverPolicies = TypeList<LinearSolverId, UnknownPolicyBehavior::Error,

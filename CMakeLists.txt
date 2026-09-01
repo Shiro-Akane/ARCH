@@ -122,14 +122,24 @@ endforeach()
 # Discover generated custom networks without editing C++ dispatch source.
 set(ARCH_CUSTOM_REGISTRY_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated")
 set(ARCH_CUSTOM_REGISTRY_HEADER
+    "${ARCH_CUSTOM_REGISTRY_DIR}/CustomNetworkRegistry.generated.h")
+set(ARCH_CUSTOM_TYPES_HEADER
     "${ARCH_CUSTOM_REGISTRY_DIR}/CustomNetworks.generated.h")
 file(MAKE_DIRECTORY "${ARCH_CUSTOM_REGISTRY_DIR}")
-file(WRITE "${ARCH_CUSTOM_REGISTRY_HEADER}" "#pragma once\n")
-set(ARCH_CUSTOM_NETWORK_MACRO "#define ARCH_FOR_EACH_CUSTOM_NETWORK(M)")
+set(ARCH_CUSTOM_REGISTRY_CONTENT "#pragma once\n")
+set(ARCH_CUSTOM_TYPES_CONTENT
+    "#pragma once\n#include \"CustomNetworkRegistry.generated.h\"\n")
+set(ARCH_CUSTOM_ALL "#define ARCH_FOR_EACH_CUSTOM_NETWORK(M)")
+set(ARCH_CUSTOM_CPU_ONLY
+    "#define ARCH_FOR_EACH_CPU_ONLY_CUSTOM_NETWORK(M)")
+set(ARCH_CUSTOM_CUDA "#define ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(M)")
 set(ARCH_CUSTOM_DISCOVERED_IDS "")
+set(ARCH_CUSTOM_DISCOVERY_COUNT 0)
+set(ARCH_CUSTOM_COUNT 0)
 set(ARCH_CUSTOM_RESERVED_IDS custom none null ideal helmholtz tabular)
 file(GLOB ARCH_CUSTOM_NETWORK_CONFIGS CONFIGURE_DEPENDS
     "${ARCH_CUSTOM_NETWORK_ROOT}/*/network.cmake")
+list(SORT ARCH_CUSTOM_NETWORK_CONFIGS)
 foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
     unset(ARCH_CUSTOM_NETWORK_ID)
     unset(ARCH_CUSTOM_NETWORK_TYPE)
@@ -184,6 +194,9 @@ foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
             "Duplicate custom network ID: ${ARCH_CUSTOM_NETWORK_ID}")
     endif()
     list(APPEND ARCH_CUSTOM_DISCOVERED_IDS "${ARCH_CUSTOM_NETWORK_ID}")
+    math(EXPR custom_numeric_id "1024 + ${ARCH_CUSTOM_DISCOVERY_COUNT}")
+    math(EXPR ARCH_CUSTOM_DISCOVERY_COUNT
+        "${ARCH_CUSTOM_DISCOVERY_COUNT} + 1")
 
     file(REAL_PATH "${custom_dir}" custom_dir_real)
     file(REAL_PATH "${ARCH_CUSTOM_NETWORK_HEADER}" custom_header_real)
@@ -203,11 +216,20 @@ foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
             continue()
         endif()
     endif()
-    file(APPEND "${ARCH_CUSTOM_REGISTRY_HEADER}"
+    string(APPEND ARCH_CUSTOM_TYPES_CONTENT
         "#include \"${ARCH_CUSTOM_NETWORK_HEADER}\"\n")
-    string(APPEND ARCH_CUSTOM_NETWORK_MACRO
-        " M(\"custom:${ARCH_CUSTOM_NETWORK_ID}\", ${ARCH_CUSTOM_NETWORK_TYPE})")
+    set(custom_token "Custom_${ARCH_CUSTOM_NETWORK_ID}")
+    set(custom_entry
+        "M(${custom_token}, ${custom_numeric_id}, \"custom:${ARCH_CUSTOM_NETWORK_ID}\", ${ARCH_CUSTOM_NETWORK_TYPE})")
+    string(APPEND ARCH_CUSTOM_ALL " \\")
+    string(APPEND ARCH_CUSTOM_ALL "\n    ${custom_entry}")
+    # Generator-v3 adapters intentionally use host-only containers in their
+    # Jacobian bridge.  They remain CPU-only until a future manifest version
+    # explicitly certifies a device binding.
+    string(APPEND ARCH_CUSTOM_CPU_ONLY " \\")
+    string(APPEND ARCH_CUSTOM_CPU_ONLY "\n    ${custom_entry}")
     list(APPEND ARCH_APPLICATION_SOURCES "${ARCH_CUSTOM_NETWORK_SOURCE}")
+    math(EXPR ARCH_CUSTOM_COUNT "${ARCH_CUSTOM_COUNT} + 1")
     message(STATUS "[NET] Registered custom:${ARCH_CUSTOM_NETWORK_ID}")
 endforeach()
 foreach(requested_custom_id IN LISTS ARCH_CUSTOM_NETWORKS)
@@ -218,8 +240,15 @@ foreach(requested_custom_id IN LISTS ARCH_CUSTOM_NETWORKS)
             "ARCH_CUSTOM_NETWORKS requested an unknown ID: ${requested_custom_id}")
     endif()
 endforeach()
-file(APPEND "${ARCH_CUSTOM_REGISTRY_HEADER}"
-    "\n${ARCH_CUSTOM_NETWORK_MACRO}\n")
+string(APPEND ARCH_CUSTOM_REGISTRY_CONTENT
+    "#define ARCH_CUSTOM_NETWORK_COUNT ${ARCH_CUSTOM_COUNT}\n"
+    "#define ARCH_CUSTOM_CPU_ONLY_NETWORK_COUNT ${ARCH_CUSTOM_COUNT}\n"
+    "#define ARCH_CUSTOM_CUDA_NETWORK_COUNT 0\n"
+    "${ARCH_CUSTOM_ALL}\n${ARCH_CUSTOM_CPU_ONLY}\n${ARCH_CUSTOM_CUDA}\n")
+file(CONFIGURE OUTPUT "${ARCH_CUSTOM_REGISTRY_HEADER}"
+    CONTENT "${ARCH_CUSTOM_REGISTRY_CONTENT}" @ONLY NEWLINE_STYLE UNIX)
+file(CONFIGURE OUTPUT "${ARCH_CUSTOM_TYPES_HEADER}"
+    CONTENT "${ARCH_CUSTOM_TYPES_CONTENT}" @ONLY NEWLINE_STYLE UNIX)
 list(REMOVE_DUPLICATES ARCH_APPLICATION_SOURCES)
 
 # Dispatch sources (isolated in its own object target to manage template instantiation)
@@ -248,6 +277,10 @@ target_include_directories(arch_build_contract INTERFACE
     ${ARCH_CUSTOM_REGISTRY_DIR})
 target_compile_definitions(arch_build_contract INTERFACE
     ARCH_CUDA_BUILD_ENABLED=$<BOOL:${ARCH_ENABLE_CUDA}>)
+# Every ARCH target declared below consumes headers whose policy layout depends
+# on this generated registry and the build-feature macros populated later.
+# Keep one directory-wide contract instead of maintaining a fragile target list.
+link_libraries(arch_build_contract)
 
 add_library(arch_diffusion_math STATIC
     src/numerics/diffusion/DiffFunction.cpp)

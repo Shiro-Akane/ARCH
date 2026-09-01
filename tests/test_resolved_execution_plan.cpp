@@ -68,7 +68,8 @@ void test_plain_cpp_contracts()
     static_assert(list_size_v<LimiterPolicies> == 4);
     static_assert(list_size_v<TimeIntegratorPolicies> == 3);
     static_assert(list_size_v<EosPolicies> == 4);
-    static_assert(list_size_v<NetworkPolicies> == 5);
+    static_assert(list_size_v<NetworkPolicies>
+                  == 5 + ARCH_CUSTOM_NETWORK_COUNT);
     static_assert(list_size_v<OdeSolverPolicies> == 4);
     static_assert(list_size_v<LinearSolverPolicies> == 3);
     static_assert(list_size_v<DiffusionIntegratorPolicies> == 3);
@@ -96,7 +97,10 @@ void test_plain_cpp_contracts()
     expect_supported.template operator()<LimiterPolicies>();
     expect_supported.template operator()<TimeIntegratorPolicies>();
     expect_supported.template operator()<EosPolicies>();
-    expect_supported.template operator()<NetworkPolicies>();
+    constexpr auto networks = make_policy_descriptors<NetworkPolicies>();
+    for (const auto& descriptor : networks)
+        expect(descriptor.cpu_supported,
+               "every registered network has a CPU binding");
     expect_supported.template operator()<OdeSolverPolicies>();
     expect_supported.template operator()<DiffusionIntegratorPolicies>();
 }

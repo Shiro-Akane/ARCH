@@ -35,14 +35,6 @@ struct DummyBurner
     }
 };
 
-template <class Binding>
-struct CpuBurnNetworkType;
-
-template <> struct CpuBurnNetworkType<arch::dispatch::CpuAprox13Binding> { using type = NetAprox13; };
-template <> struct CpuBurnNetworkType<arch::dispatch::CpuAprox19Binding> { using type = NetAprox19; };
-template <> struct CpuBurnNetworkType<arch::dispatch::CpuAprox21Binding> { using type = NetAprox21; };
-template <> struct CpuBurnNetworkType<arch::dispatch::CpuIso7Binding> { using type = NetIso7; };
-
 // Three-stage runtime-to-compile-time burn dispatcher.
 struct BurnDispatcher
 {
@@ -118,7 +110,7 @@ struct BurnDispatcher
                 using Binding = typename PolicyRegistration<Registration>::CpuBinding;
                 if constexpr (!std::is_same_v<Binding, CpuNoNetworkBinding>
                               && !std::is_same_v<Binding, AbsentBinding>) {
-                    using Network = typename CpuBurnNetworkType<Binding>::type;
+                    using Network = typename CpuNetworkType<Binding>::type;
                     dispatch_ode<Network>(
                         ode_type, lin_type, std::forward<Func>(func));
                 }
@@ -126,18 +118,7 @@ struct BurnDispatcher
             return;
         }
 
-        bool custom_dispatched = false;
-#define ARCH_TRY_CUSTOM_NETWORK(runtime_name, network_type)                 \
-            if (!custom_dispatched && ascii_iequals(net_type, runtime_name)) { \
-                dispatch_ode<network_type>(                                 \
-                    ode_type, lin_type, std::forward<Func>(func));           \
-                custom_dispatched = true;                                   \
-            }
-        ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_TRY_CUSTOM_NETWORK)
-#undef ARCH_TRY_CUSTOM_NETWORK
-        if (!custom_dispatched) {
-            throw std::runtime_error("Unknown network_name in par file: " + net_type);
-        }
+        throw std::runtime_error("Unknown network_name in par file: " + net_type);
     }
 
     template <typename Func>
@@ -181,8 +162,7 @@ struct BurnDispatcher
                         Registration>::CpuBinding;
                     if constexpr (!std::is_same_v<Binding,
                                                   CpuNoNetworkBinding>) {
-                        using Network =
-                            typename CpuBurnNetworkType<Binding>::type;
+                        using Network = typename CpuNetworkType<Binding>::type;
                         dispatch_ode<Network>(ode, linear,
                                               std::forward<Func>(func));
                     }
