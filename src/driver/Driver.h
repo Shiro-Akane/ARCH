@@ -612,6 +612,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                ? config.GetCustomParam("dt_init", 1e-16)
                : 1e99);
     const auto write_checkpoint = [&](bool resume_after_regrid) {
+        if (compute_backend)
+            synchronize_fluid_ghosts();
         write_chk(amr_ctrl, ctrl.chk_file_index++, ctrl.plt_file_index,
                   ctrl.step_count, ctrl.t_current, ctrl.dt_old,
                   dt_burn_global, resume_after_regrid, config);
@@ -703,7 +705,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         bool do_plt, do_chk;
         ctrl.check_io(do_plt, do_chk);
 
-        if (do_plt || (compute_backend && do_chk)) {
+        if (do_plt) {
             synchronize_fluid_ghosts();
         }
         if (do_plt) {
