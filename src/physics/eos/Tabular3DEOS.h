@@ -138,7 +138,16 @@ struct BasicTabular3DEOSView
         return c0 * (1.0 - tz) + c1 * tz;
     }
 
-    tabular_eos::FreeEnergyState interpolate_free_energy(
+    ARCH_INLINE std::size_t free_energy_index(
+        int irho, int itemperature, int icomposition) const
+    {
+        return static_cast<std::size_t>(irho) *
+                   static_cast<std::size_t>(n_T) * n_X +
+               static_cast<std::size_t>(itemperature) * n_X +
+               static_cast<std::size_t>(icomposition);
+    }
+
+    ARCH_INLINE tabular_eos::FreeEnergyState interpolate_free_energy(
         double rho, double T, double composition) const
     {
         const double log_rho = std::log10(rho);
@@ -155,32 +164,42 @@ struct BasicTabular3DEOSView
         const double ty =
             (log_temperature - (log_T_min + j * dlog_T)) / dlog_T;
         const double tc = (composition - (X_min + k * dX)) / dX;
-        const std::size_t rho_stride =
-            static_cast<std::size_t>(n_T) * n_X;
-        auto index = [&](int irho, int itemperature, int icomposition) {
-            return static_cast<std::size_t>(irho) * rho_stride +
-                   static_cast<std::size_t>(itemperature) * n_X +
-                   icomposition;
-        };
-        auto at_composition = [&](int kc) {
-            const std::array<std::size_t, 4> corners{
-                index(i, j, kc), index(i, j + 1, kc),
-                index(i + 1, j, kc), index(i + 1, j + 1, kc)
-            };
-            return tabular_eos::interpolate_biquintic(
-                free_energy_fields, corners, tx, ty,
-                std::log(10.0) * dlog_rho,
-                std::log(10.0) * dlog_T);
-        };
-        return tabular_eos::blend(
-            at_composition(k), at_composition(k + 1), tc);
+        const std::array<std::size_t, 4> lower_corners{
+            free_energy_index(i, j, k),
+            free_energy_index(i, j + 1, k),
+            free_energy_index(i + 1, j, k),
+            free_energy_index(i + 1, j + 1, k)};
+        const std::array<std::size_t, 4> upper_corners{
+            free_energy_index(i, j, k + 1),
+            free_energy_index(i, j + 1, k + 1),
+            free_energy_index(i + 1, j, k + 1),
+            free_energy_index(i + 1, j + 1, k + 1)};
+        const double hx = std::log(10.0) * dlog_rho;
+        const double hy = std::log(10.0) * dlog_T;
+        const auto lower = tabular_eos::interpolate_biquintic(
+            free_energy_fields, lower_corners, tx, ty, hx, hy);
+        const auto upper = tabular_eos::interpolate_biquintic(
+            free_energy_fields, upper_corners, tx, ty, hx, hy);
+        return tabular_eos::blend(lower, upper, tc);
     }
 
-    tabular_eos::ThermodynamicState free_energy_state(
+    ARCH_INLINE tabular_eos::FreeEnergyResult free_energy_result(
         double rho, double T, double composition) const
     {
-        return tabular_eos::to_thermodynamics(
+        return tabular_eos::evaluate_thermodynamics(
             interpolate_free_energy(rho, T, composition), rho, T);
+    }
+
+    ARCH_INLINE tabular_eos::ThermodynamicState free_energy_state(
+        double rho, double T, double composition) const
+    {
+        const auto result = free_energy_result(rho, T, composition);
+#if defined(__CUDA_ARCH__)
+        return result.status == tabular_eos::FreeEnergyStatus::success
+            ? result.state : tabular_eos::invalid_thermodynamic_state();
+#else
+        return tabular_eos::require_thermodynamics(result);
+#endif
     }
 
     // Composition-coordinate query used by generated network interfaces.
@@ -470,6 +489,7 @@ using Tabular3DEOSView = BasicTabular3DEOSView<SpeciesPODView>;
 struct Tabular3DEOSHostView : BasicTabular3DEOSView<SpeciesHostView>
 {
     std::array<std::size_t, 6> table_extents{};
+    std::array<std::size_t, tabular_eos::FieldCount> free_energy_extents{};
     const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
@@ -498,10 +518,10 @@ public:
     Tabular3DEOSHostView get_view() const
     {
         Tabular3DEOSHostView rebound = view;
-        rebound.table_P = h_table_P.data();
-        rebound.table_E = h_table_E.data();
-        rebound.table_cs = h_table_cs.data();
-        rebound.table_cv = h_table_cv.data();
+        rebound.table_P = h_table_P.empty() ? nullptr : h_table_P.data();
+        rebound.table_E = h_table_E.empty() ? nullptr : h_table_E.data();
+        rebound.table_cs = h_table_cs.empty() ? nullptr : h_table_cs.data();
+        rebound.table_cv = h_table_cv.empty() ? nullptr : h_table_cv.data();
         rebound.table_dP_drho = h_table_dP_drho.empty()
             ? nullptr : h_table_dP_drho.data();
         rebound.table_dP_dT = h_table_dP_dT.empty()
@@ -510,6 +530,8 @@ public:
             rebound.free_energy_fields[field] =
                 h_free_energy_fields[field].empty()
                     ? nullptr : h_free_energy_fields[field].data();
+            rebound.free_energy_extents[field] =
+                h_free_energy_fields[field].size();
         }
         rebound.table_extents = {
             h_table_P.size(), h_table_E.size(), h_table_cs.size(), h_table_cv.size(),

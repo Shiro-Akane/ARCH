@@ -7,8 +7,11 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <stdexcept>
 #include <vector>
+
+#include "../../core/ArchPortability.h"
 
 namespace tabular_eos {
 
@@ -36,54 +39,94 @@ struct ThermodynamicState {
     double gamma1 = 0.0;
 };
 
-inline int field_for_orders(int dx, int dy)
+enum class FreeEnergyStatus : int {
+    success = 0,
+    invalid_pressure_or_energy,
+    invalid_heat_capacity,
+    invalid_derivatives,
+    invalid_sound_speed
+};
+
+struct FreeEnergyResult {
+    ThermodynamicState state{};
+    FreeEnergyStatus status = FreeEnergyStatus::success;
+};
+
+ARCH_INLINE ThermodynamicState invalid_thermodynamic_state()
 {
-    static constexpr int map[3][3] = {
-        {F, Fy, Fyy},
-        {Fx, Fxy, Fxyy},
-        {Fxx, Fxxy, Fxxyy}
-    };
-    return map[dx][dy];
+    const double value = std::numeric_limits<double>::quiet_NaN();
+    return {value, value, value, value, value, value, value, value};
 }
 
-inline double polynomial_derivative(const std::array<double, 6>& coefficients,
-                                    double t, int order)
+ARCH_INLINE FreeEnergyResult free_energy_failure(FreeEnergyStatus status)
+{
+    return {invalid_thermodynamic_state(), status};
+}
+
+ARCH_INLINE int field_for_orders(int dx, int dy)
+{
+    if (dx == 0) return dy == 0 ? F : (dy == 1 ? Fy : Fyy);
+    if (dx == 1) return dy == 0 ? Fx : (dy == 1 ? Fxy : Fxyy);
+    return dy == 0 ? Fxx : (dy == 1 ? Fxxy : Fxxyy);
+}
+
+ARCH_INLINE double quintic_coefficient(int endpoint, int derivative_order,
+                                       int degree)
+{
+    if (endpoint == 0) {
+        if (derivative_order == 0) {
+            const double values[6]{1.0, 0.0, 0.0, -10.0, 15.0, -6.0};
+            return values[degree];
+        }
+        if (derivative_order == 1) {
+            const double values[6]{0.0, 1.0, 0.0, -6.0, 8.0, -3.0};
+            return values[degree];
+        }
+        const double values[6]{0.0, 0.0, 0.5, -1.5, 1.5, -0.5};
+        return values[degree];
+    }
+    if (derivative_order == 0) {
+        const double values[6]{0.0, 0.0, 0.0, 10.0, -15.0, 6.0};
+        return values[degree];
+    }
+    if (derivative_order == 1) {
+        const double values[6]{0.0, 0.0, 0.0, -4.0, 7.0, -3.0};
+        return values[degree];
+    }
+    const double values[6]{0.0, 0.0, 0.0, 0.5, -1.0, 0.5};
+    return values[degree];
+}
+
+ARCH_INLINE double polynomial_derivative(int endpoint, int derivative_order,
+                                         double t, int order)
 {
     double result = 0.0;
     for (int degree = order; degree <= 5; ++degree) {
         double factor = 1.0;
         for (int k = 0; k < order; ++k) factor *= degree - k;
-        result += coefficients[degree] * factor *
-                  std::pow(t, degree - order);
+        result += quintic_coefficient(endpoint, derivative_order, degree) *
+                  factor * std::pow(t, degree - order);
     }
     return result;
 }
 
-inline double quintic_basis(int endpoint, int derivative_order,
-                            double t, int query_derivative)
+ARCH_INLINE double quintic_basis(int endpoint, int derivative_order,
+                                 double t, int query_derivative)
 {
-    static constexpr std::array<std::array<std::array<double, 6>, 3>, 2>
-        coefficients{{
-            {{{1.0, 0.0, 0.0, -10.0, 15.0, -6.0},
-              {0.0, 1.0, 0.0, -6.0, 8.0, -3.0},
-              {0.0, 0.0, 0.5, -1.5, 1.5, -0.5}}},
-            {{{0.0, 0.0, 0.0, 10.0, -15.0, 6.0},
-              {0.0, 0.0, 0.0, -4.0, 7.0, -3.0},
-              {0.0, 0.0, 0.0, 0.5, -1.0, 0.5}}}
-        }};
-    return polynomial_derivative(
-        coefficients[endpoint][derivative_order], t, query_derivative);
+    return polynomial_derivative(endpoint, derivative_order, t,
+                                 query_derivative);
 }
 
-inline double scaled_basis(int endpoint, int stored_derivative,
-                           int requested_derivative, double t, double spacing)
+ARCH_INLINE double scaled_basis(int endpoint, int stored_derivative,
+                                int requested_derivative, double t,
+                                double spacing)
 {
     return std::pow(spacing, stored_derivative - requested_derivative) *
            quintic_basis(endpoint, stored_derivative, t,
                          requested_derivative);
 }
 
-inline FreeEnergyState interpolate_biquintic(
+ARCH_INLINE FreeEnergyState interpolate_biquintic(
     const std::array<const double*, FieldCount>& fields,
     const std::array<std::size_t, 4>& corners,
     double tx, double ty, double hx, double hy)
@@ -93,13 +136,11 @@ inline FreeEnergyState interpolate_biquintic(
         &state.a, &state.ax, &state.ay,
         &state.axx, &state.axy, &state.ayy
     };
-    static constexpr int requested[6][2] = {
-        {0, 0}, {1, 0}, {0, 1}, {2, 0}, {1, 1}, {0, 2}
-    };
-
     for (int output = 0; output < 6; ++output) {
-        const int qx = requested[output][0];
-        const int qy = requested[output][1];
+        const int qx = output == 1 ? 1 : (output == 3 ? 2 :
+                       (output == 4 ? 1 : 0));
+        const int qy = output == 2 ? 1 : (output == 4 ? 1 :
+                       (output == 5 ? 2 : 0));
         double value = 0.0;
         for (int ex = 0; ex < 2; ++ex) {
             for (int ey = 0; ey < 2; ++ey) {
@@ -121,37 +162,35 @@ inline FreeEnergyState interpolate_biquintic(
     return state;
 }
 
-inline FreeEnergyState blend(const FreeEnergyState& lower,
-                             const FreeEnergyState& upper, double fraction)
+ARCH_INLINE FreeEnergyState blend(const FreeEnergyState& lower,
+                                  const FreeEnergyState& upper,
+                                  double fraction)
 {
     FreeEnergyState out{};
-    auto mix = [fraction](double lo, double hi) {
-        return lo + fraction * (hi - lo);
-    };
-    out.a = mix(lower.a, upper.a);
-    out.ax = mix(lower.ax, upper.ax);
-    out.ay = mix(lower.ay, upper.ay);
-    out.axx = mix(lower.axx, upper.axx);
-    out.axy = mix(lower.axy, upper.axy);
-    out.ayy = mix(lower.ayy, upper.ayy);
+    out.a = lower.a + fraction * (upper.a - lower.a);
+    out.ax = lower.ax + fraction * (upper.ax - lower.ax);
+    out.ay = lower.ay + fraction * (upper.ay - lower.ay);
+    out.axx = lower.axx + fraction * (upper.axx - lower.axx);
+    out.axy = lower.axy + fraction * (upper.axy - lower.axy);
+    out.ayy = lower.ayy + fraction * (upper.ayy - lower.ayy);
     return out;
 }
 
-inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,
-                                            double rho, double temperature)
+ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
+    const FreeEnergyState& f, double rho, double temperature)
 {
-    ThermodynamicState state{};
+    FreeEnergyResult result{};
+    ThermodynamicState& state = result.state;
     state.pressure = rho * f.ax;
     state.energy = f.a - f.ay;
     if (!(state.pressure > 0.0) || !std::isfinite(state.pressure) ||
         !(state.energy > 0.0) || !std::isfinite(state.energy)) {
-        throw std::runtime_error(
-            "Tabular EOS free energy produced non-positive or non-finite pressure or energy");
+        return free_energy_failure(
+            FreeEnergyStatus::invalid_pressure_or_energy);
     }
     state.cv = (f.ay - f.ayy) / temperature;
     if (!(state.cv > 0.0) || !std::isfinite(state.cv)) {
-        throw std::runtime_error(
-            "Tabular EOS free energy produced non-positive or non-finite cv");
+        return free_energy_failure(FreeEnergyStatus::invalid_heat_capacity);
     }
 
     state.dp_dT = rho * f.axy / temperature;
@@ -163,8 +202,7 @@ inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,
     if (!std::isfinite(state.dp_dT) || !std::isfinite(dp_drho_T) ||
         !std::isfinite(de_drho_T) || !std::isfinite(state.dp_drho_e) ||
         !std::isfinite(state.dp_de_rho)) {
-        throw std::runtime_error(
-            "Tabular EOS free energy produced non-finite derivatives");
+        return free_energy_failure(FreeEnergyStatus::invalid_derivatives);
     }
 
     const double sound_speed_squared =
@@ -172,12 +210,38 @@ inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,
         state.dp_de_rho * state.pressure / (rho * rho);
     if (!(sound_speed_squared > 0.0) ||
         !std::isfinite(sound_speed_squared)) {
-        throw std::runtime_error(
-            "Tabular EOS free energy produced non-positive sound speed squared");
+        return free_energy_failure(FreeEnergyStatus::invalid_sound_speed);
     }
     state.sound_speed = std::sqrt(sound_speed_squared);
     state.gamma1 = rho * sound_speed_squared / state.pressure;
-    return state;
+    return result;
+}
+
+inline ThermodynamicState require_thermodynamics(const FreeEnergyResult& result)
+{
+    switch (result.status) {
+    case FreeEnergyStatus::success:
+        return result.state;
+    case FreeEnergyStatus::invalid_pressure_or_energy:
+        throw std::runtime_error(
+            "Tabular EOS free energy produced non-positive or non-finite pressure or energy");
+    case FreeEnergyStatus::invalid_heat_capacity:
+        throw std::runtime_error(
+            "Tabular EOS free energy produced non-positive or non-finite cv");
+    case FreeEnergyStatus::invalid_derivatives:
+        throw std::runtime_error(
+            "Tabular EOS free energy produced non-finite derivatives");
+    case FreeEnergyStatus::invalid_sound_speed:
+        throw std::runtime_error(
+            "Tabular EOS free energy produced non-positive sound speed squared");
+    }
+    throw std::runtime_error("Tabular EOS free energy produced an unknown error");
+}
+
+inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,
+                                            double rho, double temperature)
+{
+    return require_thermodynamics(evaluate_thermodynamics(f, rho, temperature));
 }
 
 inline double derivative_sample(const std::vector<double>& input,

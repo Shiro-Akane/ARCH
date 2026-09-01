@@ -139,7 +139,19 @@ struct BasicTabular4DEOSView
         return c0 * (1.0 - tx) + c1 * tx;
     }
 
-    tabular_eos::FreeEnergyState interpolate_free_energy(
+    ARCH_INLINE std::size_t free_energy_index(
+        int irho, int itemperature, int ia, int iz) const
+    {
+        const std::size_t composition_count =
+            static_cast<std::size_t>(n_A) * n_Z;
+        return static_cast<std::size_t>(irho) *
+                   static_cast<std::size_t>(n_T) * composition_count +
+               static_cast<std::size_t>(itemperature) * composition_count +
+               static_cast<std::size_t>(ia) * n_Z +
+               static_cast<std::size_t>(iz);
+    }
+
+    ARCH_INLINE tabular_eos::FreeEnergyState interpolate_free_energy(
         double rho, double T, double A, double Z) const
     {
         const double log_rho = std::log10(rho);
@@ -159,37 +171,58 @@ struct BasicTabular4DEOSView
             (log_temperature - (log_T_min + j * dlog_T)) / dlog_T;
         const double ta = (A - (A_min + k * dA)) / dA;
         const double tz = (Z - (Z_min + l * dZ)) / dZ;
-        const std::size_t composition_count =
-            static_cast<std::size_t>(n_A) * n_Z;
-        const std::size_t rho_stride =
-            static_cast<std::size_t>(n_T) * composition_count;
-        auto index = [&](int irho, int itemperature, int ia, int iz) {
-            return static_cast<std::size_t>(irho) * rho_stride +
-                   static_cast<std::size_t>(itemperature) * composition_count +
-                   static_cast<std::size_t>(ia) * n_Z + iz;
-        };
-        auto at_composition = [&](int ka, int kz) {
-            const std::array<std::size_t, 4> corners{
-                index(i, j, ka, kz), index(i, j + 1, ka, kz),
-                index(i + 1, j, ka, kz), index(i + 1, j + 1, ka, kz)
-            };
-            return tabular_eos::interpolate_biquintic(
-                free_energy_fields, corners, tx, ty,
-                std::log(10.0) * dlog_rho,
-                std::log(10.0) * dlog_T);
-        };
-        const auto lower_A = tabular_eos::blend(
-            at_composition(k, l), at_composition(k, l + 1), tz);
-        const auto upper_A = tabular_eos::blend(
-            at_composition(k + 1, l), at_composition(k + 1, l + 1), tz);
+        const double hx = std::log(10.0) * dlog_rho;
+        const double hy = std::log(10.0) * dlog_T;
+        const std::array<std::size_t, 4> corners_00{
+            free_energy_index(i, j, k, l),
+            free_energy_index(i, j + 1, k, l),
+            free_energy_index(i + 1, j, k, l),
+            free_energy_index(i + 1, j + 1, k, l)};
+        const std::array<std::size_t, 4> corners_01{
+            free_energy_index(i, j, k, l + 1),
+            free_energy_index(i, j + 1, k, l + 1),
+            free_energy_index(i + 1, j, k, l + 1),
+            free_energy_index(i + 1, j + 1, k, l + 1)};
+        const std::array<std::size_t, 4> corners_10{
+            free_energy_index(i, j, k + 1, l),
+            free_energy_index(i, j + 1, k + 1, l),
+            free_energy_index(i + 1, j, k + 1, l),
+            free_energy_index(i + 1, j + 1, k + 1, l)};
+        const std::array<std::size_t, 4> corners_11{
+            free_energy_index(i, j, k + 1, l + 1),
+            free_energy_index(i, j + 1, k + 1, l + 1),
+            free_energy_index(i + 1, j, k + 1, l + 1),
+            free_energy_index(i + 1, j + 1, k + 1, l + 1)};
+        const auto state_00 = tabular_eos::interpolate_biquintic(
+            free_energy_fields, corners_00, tx, ty, hx, hy);
+        const auto state_01 = tabular_eos::interpolate_biquintic(
+            free_energy_fields, corners_01, tx, ty, hx, hy);
+        const auto state_10 = tabular_eos::interpolate_biquintic(
+            free_energy_fields, corners_10, tx, ty, hx, hy);
+        const auto state_11 = tabular_eos::interpolate_biquintic(
+            free_energy_fields, corners_11, tx, ty, hx, hy);
+        const auto lower_A = tabular_eos::blend(state_00, state_01, tz);
+        const auto upper_A = tabular_eos::blend(state_10, state_11, tz);
         return tabular_eos::blend(lower_A, upper_A, ta);
     }
 
-    tabular_eos::ThermodynamicState free_energy_state(
+    ARCH_INLINE tabular_eos::FreeEnergyResult free_energy_result(
         double rho, double T, double A, double Z) const
     {
-        return tabular_eos::to_thermodynamics(
+        return tabular_eos::evaluate_thermodynamics(
             interpolate_free_energy(rho, T, A, Z), rho, T);
+    }
+
+    ARCH_INLINE tabular_eos::ThermodynamicState free_energy_state(
+        double rho, double T, double A, double Z) const
+    {
+        const auto result = free_energy_result(rho, T, A, Z);
+#if defined(__CUDA_ARCH__)
+        return result.status == tabular_eos::FreeEnergyStatus::success
+            ? result.state : tabular_eos::invalid_thermodynamic_state();
+#else
+        return tabular_eos::require_thermodynamics(result);
+#endif
     }
 
     // Composition coordinates Abar and Zbar.
@@ -473,6 +506,7 @@ using Tabular4DEOSView = BasicTabular4DEOSView<SpeciesPODView>;
 struct Tabular4DEOSHostView : BasicTabular4DEOSView<SpeciesHostView>
 {
     std::array<std::size_t, 6> table_extents{};
+    std::array<std::size_t, tabular_eos::FieldCount> free_energy_extents{};
     const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
@@ -498,10 +532,10 @@ public:
     Tabular4DEOSHostView get_view() const
     {
         Tabular4DEOSHostView rebound = view;
-        rebound.table_P = h_table_P.data();
-        rebound.table_E = h_table_E.data();
-        rebound.table_cs = h_table_cs.data();
-        rebound.table_cv = h_table_cv.data();
+        rebound.table_P = h_table_P.empty() ? nullptr : h_table_P.data();
+        rebound.table_E = h_table_E.empty() ? nullptr : h_table_E.data();
+        rebound.table_cs = h_table_cs.empty() ? nullptr : h_table_cs.data();
+        rebound.table_cv = h_table_cv.empty() ? nullptr : h_table_cv.data();
         rebound.table_dP_drho = h_table_dP_drho.empty()
             ? nullptr : h_table_dP_drho.data();
         rebound.table_dP_dT = h_table_dP_dT.empty()
@@ -510,6 +544,8 @@ public:
             rebound.free_energy_fields[field] =
                 h_free_energy_fields[field].empty()
                     ? nullptr : h_free_energy_fields[field].data();
+            rebound.free_energy_extents[field] =
+                h_free_energy_fields[field].size();
         }
         rebound.table_extents = {
             h_table_P.size(), h_table_E.size(), h_table_cs.size(), h_table_cv.size(),

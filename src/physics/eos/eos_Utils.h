@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 #include "../../core/ArchPortability.h"
@@ -43,7 +44,7 @@ namespace eos_utils
 
     /** Estimate (dP/drho)_e without accidentally holding temperature fixed. */
     template <typename TEOSView>
-    EOS_INLINE double finite_difference_dp_drho_e(
+    ARCH_INLINE double finite_difference_dp_drho_e(
         const TEOSView &eos_view, double rho, double specific_energy,
         const double *mass_fractions, double rho_min, double rho_max)
     {
@@ -51,8 +52,12 @@ namespace eos_utils
         const double lower = std::max(rho - delta, rho_min);
         const double upper = std::min(rho + delta, rho_max);
         if (!(upper > lower)) {
+#if defined(__CUDA_ARCH__)
+            return std::numeric_limits<double>::quiet_NaN();
+#else
             throw std::runtime_error(
                 "Tabular EOS cannot difference density at constant energy.");
+#endif
         }
         const double pressure_lower = eos_view.get_pressure_from_rho_e(
             lower, specific_energy, mass_fractions);
@@ -61,8 +66,12 @@ namespace eos_utils
         const double derivative =
             (pressure_upper - pressure_lower) / (upper - lower);
         if (!std::isfinite(derivative)) {
+#if defined(__CUDA_ARCH__)
+            return std::numeric_limits<double>::quiet_NaN();
+#else
             throw std::runtime_error(
                 "Tabular EOS produced a non-finite constant-energy derivative.");
+#endif
         }
         return derivative;
     }
