@@ -734,8 +734,6 @@ public:
         struct RefinementSnapshot {
             int id = -1;
             int refine_flag = 0;
-            int criterion_refine_flag = 0;
-            double refinement_indicator = 0.0;
         };
         struct RefinementRelation {
             int parent = -1;
@@ -752,9 +750,7 @@ public:
             old_refinement_.reserve(old_active_.size());
             for (const int id : old_active_) {
                 const Block& block = owner_->pool->GetBlock(id);
-                old_refinement_.push_back({
-                    id, block.refine_flag, block.criterion_refine_flag,
-                    block.refinement_indicator});
+                old_refinement_.push_back({id, block.refine_flag});
             }
         }
 
@@ -861,8 +857,6 @@ public:
                 for (const auto& snapshot : old_refinement_) {
                     Block& block = owner_->pool->GetBlock(snapshot.id);
                     block.refine_flag = snapshot.refine_flag;
-                    block.criterion_refine_flag = snapshot.criterion_refine_flag;
-                    block.refinement_indicator = snapshot.refinement_indicator;
                 }
                 allocated_.clear();
                 owner_ = nullptr;

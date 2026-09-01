@@ -208,9 +208,9 @@ std::shared_ptr<amr::AmrTree> make_regrid_tree(
     std::fill(root.fluid_state.mom_u.begin(), root.fluid_state.mom_u.end(), 2.0);
     std::fill(root.fluid_state.mom_v.begin(), root.fluid_state.mom_v.end(), 3.0);
     std::fill(root.fluid_state.mom_w.begin(), root.fluid_state.mom_w.end(), 4.0);
-    std::fill(root.fluid_state.eng.begin(), root.fluid_state.eng.end(), 5.0);
+    std::fill(root.fluid_state.eng.begin(), root.fluid_state.eng.end(), 50.0);
     for (int index = 0; index < root.grid.GetTotalSize(); ++index)
-        root.fluid_state.X(0, index) = 0.25;
+        root.fluid_state.X(0, index) = 1.0;
     root.fluid_state.rho[root.grid.GetIndex(
         root.grid.Is() + amr::BLOCK_NX / 2,
         root.grid.Js(), root.grid.Ks())] = 9.0;
