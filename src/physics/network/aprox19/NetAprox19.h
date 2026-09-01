@@ -94,58 +94,37 @@ struct NetAprox19 : timmes::TimmesNetworkSupport<NetAprox19> {
     static constexpr double ENERGY_CONVERSION = timmes::constants::enuc_conv2;
     static constexpr double NSE_ENERGY_CONVERSION = timmes::constants::enuc_conv;
 
-    // Device-safe scalar accessors. Namespace-scope std::array storage is
-    // host-only under NVCC when addressed with a runtime index.
+    // Device-safe scalar accessors.  Compile-time recursion lets NVCC embed
+    // each element from the canonical host array without dynamically
+    // addressing namespace-scope std::array storage on the device.
+    template <std::size_t I>
+    TIMMES_HD static constexpr double aion_from_canonical(int i)
+    {
+        if constexpr (I < NUM_SPECIES) {
+            return i == static_cast<int>(I) ? AION[I]
+                                             : aion_from_canonical<I + 1>(i);
+        }
+        return 0.0;
+    }
+
     TIMMES_HD static constexpr double aion(int i)
     {
-        switch (i) {
-        case 0:  return 1.0;
-        case 1:  return 3.0;
-        case 2:  return 4.0;
-        case 3:  return 12.0;
-        case 4:  return 14.0;
-        case 5:  return 16.0;
-        case 6:  return 20.0;
-        case 7:  return 24.0;
-        case 8:  return 28.0;
-        case 9:  return 32.0;
-        case 10: return 36.0;
-        case 11: return 40.0;
-        case 12: return 44.0;
-        case 13: return 48.0;
-        case 14: return 52.0;
-        case 15: return 54.0;
-        case 16: return 56.0;
-        case 17: return 1.0;
-        case 18: return 1.0;
-        default: return 0.0;
+        return aion_from_canonical<0>(i);
+    }
+
+    template <std::size_t I>
+    TIMMES_HD static constexpr double zion_from_canonical(int i)
+    {
+        if constexpr (I < NUM_SPECIES) {
+            return i == static_cast<int>(I) ? ZION[I]
+                                             : zion_from_canonical<I + 1>(i);
         }
+        return 0.0;
     }
 
     TIMMES_HD static constexpr double zion(int i)
     {
-        switch (i) {
-        case 0:  return 1.0;
-        case 1:  return 2.0;
-        case 2:  return 2.0;
-        case 3:  return 6.0;
-        case 4:  return 7.0;
-        case 5:  return 8.0;
-        case 6:  return 10.0;
-        case 7:  return 12.0;
-        case 8:  return 14.0;
-        case 9:  return 16.0;
-        case 10: return 18.0;
-        case 11: return 20.0;
-        case 12: return 22.0;
-        case 13: return 24.0;
-        case 14: return 26.0;
-        case 15: return 26.0;
-        case 16: return 28.0;
-        case 17: return 0.0;
-        case 18: return 1.0;
-        default: return 0.0;
-        }
+        return zion_from_canonical<0>(i);
     }
 
     template <std::size_t I = 0>

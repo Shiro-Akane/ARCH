@@ -6,6 +6,7 @@
 #pragma once
 
 #include "CudaBackendBurn.h"
+#include "CudaBurnNetworkTypes.h"
 
 #include "cuda/microphysics/microphysics_api.h"
 #include "driver/dispatch/PolicyDescriptor.h"
@@ -16,24 +17,6 @@
 #include <type_traits>
 
 namespace arch::cuda::burn_detail {
-
-template <class Binding>
-struct NetworkType;
-template <>
-struct NetworkType<dispatch::CudaAprox13Binding> { using type = NetAprox13; };
-template <>
-struct NetworkType<dispatch::CudaAprox19Binding> { using type = NetAprox19; };
-template <>
-struct NetworkType<dispatch::CudaAprox21Binding> { using type = NetAprox21; };
-template <>
-struct NetworkType<dispatch::CudaIso7Binding> { using type = NetIso7; };
-
-#define ARCH_BIND_CUDA_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
-    template <> struct NetworkType<dispatch::Cuda##TAG##Binding> { \
-        using type = TYPE; \
-    };
-ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_BIND_CUDA_CUSTOM_NETWORK)
-#undef ARCH_BIND_CUDA_CUSTOM_NETWORK
 
 template <class Binding>
 struct OdeType;
@@ -212,7 +195,7 @@ struct NetworkRouteVisitor {
         if constexpr (!std::is_same_v<NetworkBinding, dispatch::AbsentBinding>
                       && !std::is_same_v<
                           NetworkBinding, dispatch::CudaNoNetworkBinding>) {
-            using Network = typename NetworkType<NetworkBinding>::type;
+            using Network = NetworkTypeFor<NetworkBinding>;
             OdeRouteVisitor<Network, Eos> visitor{context};
             const bool ode_found = dispatch::visit_policy<
                 dispatch::OdeSolverPolicies>(

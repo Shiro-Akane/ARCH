@@ -1,5 +1,6 @@
 #include "CudaBackend.h"
 #include "CudaBackendBurn.h"
+#include "CudaBurnNetworkTypes.h"
 #include "CudaBackendDiffusion.h"
 #include "CudaBackendExchange.h"
 #include "CudaBackendHydro.h"
@@ -229,32 +230,6 @@ bool same_rkl_descriptor(
         && left.refresh_ghost_after == right.refresh_ghost_after;
 }
 
-template <class Binding>
-struct CudaBurnNetworkType;
-template <>
-struct CudaBurnNetworkType<dispatch::CudaAprox13Binding> {
-    using type = NetAprox13;
-};
-template <>
-struct CudaBurnNetworkType<dispatch::CudaAprox19Binding> {
-    using type = NetAprox19;
-};
-template <>
-struct CudaBurnNetworkType<dispatch::CudaAprox21Binding> {
-    using type = NetAprox21;
-};
-template <>
-struct CudaBurnNetworkType<dispatch::CudaIso7Binding> {
-    using type = NetIso7;
-};
-
-#define ARCH_BIND_CUDA_CUSTOM_NETWORK(TAG, VALUE, NAME, TYPE) \
-    template <> struct CudaBurnNetworkType<dispatch::Cuda##TAG##Binding> { \
-        using type = TYPE; \
-    };
-ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_BIND_CUDA_CUSTOM_NETWORK)
-#undef ARCH_BIND_CUDA_CUSTOM_NETWORK
-
 struct BurnWorkspaceSizeVisitor {
     std::size_t bytes_per_cell = 0;
 
@@ -266,7 +241,7 @@ struct BurnWorkspaceSizeVisitor {
         if constexpr (!std::is_same_v<Binding, dispatch::AbsentBinding>
                       && !std::is_same_v<
                           Binding, dispatch::CudaNoNetworkBinding>) {
-            using Network = typename CudaBurnNetworkType<Binding>::type;
+            using Network = burn_detail::NetworkTypeFor<Binding>;
             bytes_per_cell =
                 sizeof(BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>);
         }
