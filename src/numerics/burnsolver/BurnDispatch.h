@@ -18,6 +18,7 @@
 #include "ode_ros4.h"
 
 #include "../../data/GlobalDefs.h" // Defines SimConfig and its burn configuration.
+#include "../../driver/dispatch/BackendCapabilities.h"
 #include "../../driver/dispatch/PolicyDescriptor.h"
 
 #include "../linalg/DenseWrap.h"  // Dense matrix and LU policy.
@@ -35,9 +36,73 @@ struct DummyBurner
     }
 };
 
+// Active CUDA burning must never enter the host burn loop.  The CUDA backend
+// owns its kernel launch and reduction path, so this guard turns an accidental
+// host invocation into an immediate control-flow error instead of silently
+// skipping the source term.
+struct CudaHostBurnGuard
+{
+    template <typename EOSViewType>
+    [[noreturn]] bool integrate(
+        double* /*X_ODE*/, double /*rho*/, double /*dt_target*/,
+        const EOSViewType& /*eos*/, const BurnConfig& /*burn_cfg*/,
+        double& /*dt_rec*/) const
+    {
+        throw std::logic_error(
+            "active CUDA burn was invoked through the host burner handle");
+    }
+};
+
 // Three-stage runtime-to-compile-time burn dispatcher.
 struct BurnDispatcher
 {
+
+    /**
+     * @brief Bind the host-side burner after the compute backend is resolved.
+     *
+     * CPU execution retains the concrete network/ODE/linear-solver handle.
+     * CUDA execution uses a no-op only when burning is disabled; active CUDA
+     * burning receives a fail-closed guard because the device backend owns the
+     * burn operation.  A still-unresolved Auto backend is never accepted at
+     * this construction boundary.
+     */
+    template <typename EosPolicy>
+    static BurnerHandle<EosPolicy> make_host_handle(
+        const SimConfig& config,
+        const arch::dispatch::ResolvedExecutionPlan& plan,
+        const arch::dispatch::BackendResolution& backend)
+    {
+        using namespace arch::dispatch;
+
+        if (backend.resolved_backend == ComputeBackend::Auto) {
+            throw std::logic_error(
+                "host burner construction received an unresolved Auto backend");
+        }
+
+        const bool disabled_plan = plan.network == NetworkId::None
+            && plan.ode_solver == OdeSolverId::None
+            && plan.linear_solver == LinearSolverId::None;
+        const bool complete_active_plan = plan.network != NetworkId::None
+            && plan.ode_solver != OdeSolverId::None
+            && plan.linear_solver != LinearSolverId::None;
+        if ((!config.physics.burn.use_burn && !disabled_plan)
+            || (config.physics.burn.use_burn && !complete_active_plan)) {
+            throw std::logic_error(
+                "host burner construction received an incomplete burn plan");
+        }
+
+        if (backend.resolved_backend == ComputeBackend::Cpu) {
+            return make_handle<EosPolicy>(config, plan);
+        }
+        if (backend.resolved_backend != ComputeBackend::Cuda) {
+            throw std::logic_error(
+                "host burner construction received an invalid resolved backend");
+        }
+        if (!config.physics.burn.use_burn) {
+            return BurnerHandle<EosPolicy>::template bind<DummyBurner>();
+        }
+        return BurnerHandle<EosPolicy>::template bind<CudaHostBurnGuard>();
+    }
 
     /**
      * @brief Resolve the burner once without instantiating the hydro matrix for

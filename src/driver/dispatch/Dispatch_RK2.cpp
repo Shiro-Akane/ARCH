@@ -33,7 +33,8 @@ void Dispatch_RK2(
     EOSDispatcher::dispatch_eos(plan.eos, config, specs, [&](auto &&eos)
     {
         using EosType = std::remove_cvref_t<decltype(eos)>;
-        auto burn_handle = BurnDispatcher::make_handle<EosType>(config, plan);
+        auto burn_handle = BurnDispatcher::make_host_handle<EosType>(
+            config, plan, backend);
 
         auto grav_handle = Physical::Gravity::make_gravity(
             config, requirements.gravity);

@@ -35,7 +35,8 @@ void Dispatch_Euler(
         // one BurnerHandle<EosPolicy> type instead of every ODE/network/linear-
         // solver combination, which controls template-instantiation memory.
         using EosType = std::remove_cvref_t<decltype(eos)>;
-        auto burn_handle = BurnDispatcher::make_handle<EosType>(config, plan);
+        auto burn_handle = BurnDispatcher::make_host_handle<EosType>(
+            config, plan, backend);
 
         auto grav_handle = Physical::Gravity::make_gravity(
             config, requirements.gravity);

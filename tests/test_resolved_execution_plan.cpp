@@ -16,6 +16,23 @@ namespace {
 
 using namespace arch::dispatch;
 
+struct CpuHostBurnProbe {};
+
+struct HostHandleProbeEos
+{
+    double get_eta(double, double, const double*) const
+    {
+        throw CpuHostBurnProbe{};
+    }
+
+    double get_cv(double, double, const double*) const noexcept { return 1.0; }
+    double get_eint_from_T(double, double temperature,
+                           const double*) const noexcept
+    {
+        return temperature;
+    }
+};
+
 void expect(bool condition, const std::string& message)
 {
     if (!condition) throw std::runtime_error(message);
@@ -463,6 +480,127 @@ void test_factory_routes_preserved()
                                            MusclReconstruction<VanLeer>>(plan);
 }
 
+void test_backend_aware_host_burn_handle()
+{
+    SimConfig config{};
+    config.physics.burn.use_burn = true;
+    config.physics.burn.use_nse = false;
+    config.physics.burn.nuclearTempMin = 0.0;
+    config.physics.burn.nuclearDensMin = 0.0;
+    config.physics.burn.network_name = "aprox13";
+    config.physics.burn.odeconfig.ode_solver = "BE_NR";
+    config.physics.burn.odeconfig.linear_solver = "DenseLU";
+
+    ResolvedExecutionPlan plan{};
+    plan.network = NetworkId::Aprox13;
+    plan.ode_solver = OdeSolverId::BeNr;
+    plan.linear_solver = LinearSolverId::DenseLu;
+
+    BackendResolution backend{};
+    backend.requested_backend = ComputeBackend::Cpu;
+    backend.resolved_backend = ComputeBackend::Cpu;
+    backend.code = BackendCapabilityCode::Supported;
+
+    double state[NetAprox13::ODE_NEQ]{};
+    state[NetAprox13::ODE_NEQ - 1] = 1.0;
+    double dt_recommended = 1.0;
+    bool reached_cpu_burner = false;
+    auto cpu_handle = BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+        config, plan, backend);
+    try {
+        (void)cpu_handle.integrate(
+            state, 1.0, 1.0, HostHandleProbeEos{}, config.physics.burn,
+            dt_recommended);
+    } catch (const CpuHostBurnProbe&) {
+        reached_cpu_burner = true;
+    }
+    expect(reached_cpu_burner,
+           "resolved CPU binds the concrete host burner");
+
+    // Auto is valid only after resolution.  A pre-construction fallback to CPU
+    // must retain the same concrete host burner rather than a CUDA guard/no-op.
+    backend.requested_backend = ComputeBackend::Auto;
+    backend.resolved_backend = ComputeBackend::Cpu;
+    auto fallback_handle =
+        BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+            config, plan, backend);
+    reached_cpu_burner = false;
+    try {
+        (void)fallback_handle.integrate(
+            state, 1.0, 1.0, HostHandleProbeEos{}, config.physics.burn,
+            dt_recommended);
+    } catch (const CpuHostBurnProbe&) {
+        reached_cpu_burner = true;
+    }
+    expect(reached_cpu_burner,
+           "Auto fallback to CPU binds the concrete host burner");
+
+    backend.requested_backend = ComputeBackend::Cuda;
+    backend.resolved_backend = ComputeBackend::Cuda;
+    auto cuda_handle = BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+        config, plan, backend);
+    bool cuda_guard_threw = false;
+    try {
+        (void)cuda_handle.integrate(
+            state, 1.0, 1.0, HostHandleProbeEos{}, config.physics.burn,
+            dt_recommended);
+    } catch (const std::logic_error& error) {
+        cuda_guard_threw = std::string(error.what())
+            == "active CUDA burn was invoked through the host burner handle";
+    }
+    expect(cuda_guard_threw,
+           "active CUDA burn binds a fail-closed host guard");
+
+    config.physics.burn.use_burn = false;
+    plan.network = NetworkId::None;
+    plan.ode_solver = OdeSolverId::None;
+    plan.linear_solver = LinearSolverId::None;
+    auto disabled_cuda_handle =
+        BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+            config, plan, backend);
+    expect(disabled_cuda_handle.integrate(
+               nullptr, 0.0, 0.0, HostHandleProbeEos{}, config.physics.burn,
+               dt_recommended),
+           "disabled CUDA burn binds the no-op host burner");
+
+    backend.requested_backend = ComputeBackend::Auto;
+    backend.resolved_backend = ComputeBackend::Auto;
+    bool threw = false;
+    try {
+        (void)BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+            config, plan, backend);
+    } catch (const std::logic_error&) {
+        threw = true;
+    }
+    expect(threw, "unresolved Auto backend is rejected");
+
+    backend.requested_backend = ComputeBackend::Cuda;
+    backend.resolved_backend = ComputeBackend::Cuda;
+    config.physics.burn.use_burn = true;
+    plan.network = NetworkId::Aprox13;
+    plan.ode_solver = OdeSolverId::BeNr;
+    plan.linear_solver = LinearSolverId::None;
+    threw = false;
+    try {
+        (void)BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+            config, plan, backend);
+    } catch (const std::logic_error&) {
+        threw = true;
+    }
+    expect(threw, "active burn requires a complete resolved plan");
+
+    config.physics.burn.use_burn = false;
+    plan.linear_solver = LinearSolverId::DenseLu;
+    threw = false;
+    try {
+        (void)BurnDispatcher::make_host_handle<HostHandleProbeEos>(
+            config, plan, backend);
+    } catch (const std::logic_error&) {
+        threw = true;
+    }
+    expect(threw, "disabled burn rejects an active resolved plan");
+}
+
 } // namespace
 
 int main()
@@ -471,5 +609,6 @@ int main()
     test_aliases_defaults_and_plan();
     test_requirements();
     test_factory_routes_preserved();
+    test_backend_aware_host_burn_handle();
     std::cout << "resolved_execution_plan: ok\n";
 }
