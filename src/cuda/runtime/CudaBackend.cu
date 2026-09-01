@@ -8,7 +8,7 @@
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
 #include "amr/ExchangePlan.h"
-#include "cuda/hydro/Boundary.cuh"
+#include "cuda/hydro/BoundaryPlan.h"
 #include "cuda/microphysics/helm_eos_loader.h"
 #include "grid/GridMetrics.h"
 #include "physics/eos/HelmEos.h"
@@ -805,7 +805,7 @@ state::CompletionToken CudaBackend::execute_physical_boundary(
     const DeviceStateView selected = block.require_access(access);
     if (!state::is_valid(version) || !complete_token(expected))
         throw std::invalid_argument("invalid boundary completion contract");
-    check_cuda(launch_boundary_plan(
+    check_cuda(launch_cuda_backend_boundary_plan(
                    selected, block.boundary_transfers.get(),
                    block.boundary, impl_->stream.get()),
                "launch boundary plan");

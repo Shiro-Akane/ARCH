@@ -6,6 +6,7 @@
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"
+#include "cuda/hydro/BoundaryPlan.h"
 
 #include <cuda_runtime.h>
 
@@ -32,5 +33,9 @@ cudaError_t launch_cuda_backend_exchange_phase(
     const DeviceExchangeOperation* operations, int operation_count,
     int field_count, std::uint64_t total_cells, double* scratch,
     cudaStream_t stream);
+
+cudaError_t launch_cuda_backend_boundary_plan(
+    DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,
+    const DeviceCompiledBoundaryPlan& compiled, cudaStream_t stream);
 
 } // namespace arch::cuda

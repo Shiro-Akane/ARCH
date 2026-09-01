@@ -431,6 +431,7 @@ endif()
 
 if(ARCH_ENABLE_CUDA)
     enable_language(CUDA)
+    find_package(CUDAToolkit REQUIRED)
 
     # Each burn/EOS instantiation produces a large PTX unit.  Keep those
     # units separate and order the internal object targets so Unix Makefiles
@@ -476,6 +477,13 @@ if(ARCH_ENABLE_CUDA)
     add_dependencies(arch_cuda_backend_exchange
         arch_cuda_backend_diffusion)
 
+    # Runtime/store control and immutable EOS uploads contain no kernels.
+    # Keep them on the ordinary C++ frontend; only the narrow launch wrappers
+    # and numerical kernels belong to NVCC.
+    set_source_files_properties(src/cuda/runtime/CudaBackend.cu
+        PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
+    set_source_files_properties(src/cuda/microphysics/helm_eos_loader.cpp
+        PROPERTIES LANGUAGE CXX)
     add_library(arch_cuda_backend STATIC
         src/cuda/runtime/CudaBackend.cu
         src/cuda/microphysics/helm_eos_loader.cpp
@@ -487,15 +495,13 @@ if(ARCH_ENABLE_CUDA)
         $<TARGET_OBJECTS:arch_cuda_backend_diffusion>
         $<TARGET_OBJECTS:arch_cuda_backend_exchange>)
     add_dependencies(arch_cuda_backend arch_cuda_backend_exchange)
-    set_source_files_properties(src/cuda/microphysics/helm_eos_loader.cpp
-        PROPERTIES LANGUAGE CUDA)
     target_compile_features(arch_cuda_backend PRIVATE cxx_std_20)
     target_include_directories(arch_cuda_backend PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${ARCH_CUSTOM_REGISTRY_DIR}")
     target_link_libraries(arch_cuda_backend
         PUBLIC arch_build_contract
-        PRIVATE arch_diffusion_math)
+        PRIVATE arch_diffusion_math CUDA::cudart)
     target_compile_options(arch_cuda_backend PRIVATE
         $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
     set_target_properties(arch_cuda_backend PROPERTIES
