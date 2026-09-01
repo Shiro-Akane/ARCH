@@ -6,8 +6,10 @@
 #pragma once
 
 #include "cuda/common/CudaLaunchConfig.h"
+#include "cuda/runtime/DeviceBlockStore.h"
 #include "driver/ComputeBackend.h"
 
+#include <cstdint>
 #include <memory>
 #include <span>
 
@@ -29,9 +31,51 @@ struct CudaBlockBinding {
     const boundary::BoundaryPlan* physical_boundary = nullptr;
 };
 
+/**
+ * @brief Diagnostic snapshot of the CUDA allocation namespace.
+ *
+ * This reports storage-lifecycle state only.  It is deliberately not an AMR
+ * capability signal.
+ */
+struct CudaStoreSnapshot {
+    std::uint64_t active_blocks = 0;
+    std::uint64_t staged_blocks = 0;
+    std::uint64_t retirement_batches = 0;
+    std::uint64_t bytes_h2d = 0;
+    std::uint64_t immutable_owner_constructions = 0;
+};
+
 class CudaBackend final : public backend::ComputeBackend {
 public:
     struct Impl;
+
+    /**
+     * @brief Move-only owner of one unpublished device block namespace.
+     *
+     * Destruction synchronizes and aborts an unconsumed transaction.  The
+     * transaction retains the backend implementation so it cannot dangle if
+     * the public CudaBackend owner is destroyed first.  Device selection or
+     * synchronization failure is fail-fast: staged allocations are never
+     * released without a successful quiescence witness.
+     */
+    class StoreTransaction {
+    public:
+        struct Impl;
+
+        ~StoreTransaction();
+        StoreTransaction(const StoreTransaction&) = delete;
+        StoreTransaction& operator=(const StoreTransaction&) = delete;
+        StoreTransaction(StoreTransaction&&) noexcept;
+        StoreTransaction& operator=(StoreTransaction&&) = delete;
+
+        std::span<const DeviceStoreEntry> entries() const;
+        amr::AmrPlanScope scope() const;
+
+    private:
+        friend class CudaBackend;
+        explicit StoreTransaction(std::unique_ptr<Impl> implementation);
+        std::unique_ptr<Impl> impl_;
+    };
 
     explicit CudaBackend(std::unique_ptr<Impl> implementation);
     ~CudaBackend() override;
@@ -85,8 +129,31 @@ public:
     std::span<const backend::BackendTraceRecord>
     trace_snapshot() const noexcept override;
 
+    StoreTransaction begin_store_transaction(
+        amr::AmrPlanScope scope,
+        std::span<const CudaBlockBinding> bindings);
+    bool contains_migration(
+        const StoreTransaction& transaction,
+        DeviceMigrationAccess access) const noexcept;
+    void enqueue_upload_staged_current(
+        StoreTransaction& transaction, DeviceMigrationAccess access,
+        state::StateRegion region, backend::HostStateTransferView host);
+    void abort_store_transaction(StoreTransaction&& transaction);
+    void publish_store_transaction(
+        StoreTransaction&& transaction, DeviceRetirementFence fence);
+    bool retirement_ready(DeviceRetirementFence fence) const;
+    void complete_store_retirement(DeviceRetirementFence fence);
+    CudaStoreSnapshot store_snapshot() const noexcept;
+
+    // A transactional storage namespace is necessary but not sufficient for
+    // dynamic AMR. Coarse-fine device ghosts and reflux remain gated.
+    static constexpr bool cuda_amr_execution_available() noexcept
+    {
+        return false;
+    }
+
 private:
-    std::unique_ptr<Impl> impl_;
+    std::shared_ptr<Impl> impl_;
 };
 
 std::unique_ptr<CudaBackend> make_cuda_backend(

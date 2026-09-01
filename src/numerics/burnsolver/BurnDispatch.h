@@ -90,6 +90,11 @@ struct BurnDispatcher
             throw std::logic_error(
                 "host burner construction received an incomplete burn plan");
         }
+        if (config.physics.burn.use_burn && config.physics.burn.use_nse
+            && !network_supports_nse(plan.network)) {
+            throw std::logic_error(
+                "host burner construction received an NSE-incompatible network");
+        }
 
         if (backend.resolved_backend == ComputeBackend::Cpu) {
             return make_handle<EosPolicy>(config, plan);
@@ -160,14 +165,6 @@ struct BurnDispatcher
         std::cout << "[Burn Dispatch] Resolving Network: " << net_type
                   << " | ODE Solver: " << ode_type << " | Linear Solver: " << lin_type << std::endl;
 
-        if (config.physics.burn.use_nse)
-        {
-            std::cout << "[Burn Dispatch] Online Timmes NSE solver enabled above T="
-                      << config.physics.burn.nseTempThreshold << " K and rho="
-                      << config.physics.burn.nseDensThreshold
-                      << " g/cm^3." << std::endl;
-        }
-
         using namespace arch::dispatch;
         const auto selected = parse_registered_policy<NetworkPolicies>(net_type);
         if (selected.ok && selected.value != NetworkId::None) {
@@ -176,6 +173,7 @@ struct BurnDispatcher
                 if constexpr (!std::is_same_v<Binding, CpuNoNetworkBinding>
                               && !std::is_same_v<Binding, AbsentBinding>) {
                     using Network = typename CpuNetworkType<Binding>::type;
+                    validate_and_report_nse<Registration, Network>(config);
                     dispatch_ode<Network>(
                         ode_type, lin_type, std::forward<Func>(func));
                 }
@@ -215,12 +213,6 @@ struct BurnDispatcher
                   << config.physics.burn.odeconfig.ode_solver
                   << " | Linear Solver: "
                   << config.physics.burn.odeconfig.linear_solver << std::endl;
-        if (config.physics.burn.use_nse) {
-            std::cout << "[Burn Dispatch] Online Timmes NSE solver enabled above T="
-                      << config.physics.burn.nseTempThreshold << " K and rho="
-                      << config.physics.burn.nseDensThreshold
-                      << " g/cm^3." << std::endl;
-        }
         if (!visit_policy<NetworkPolicies>(network,
                 [&]<class Registration> {
                     using Binding = typename PolicyRegistration<
@@ -228,6 +220,7 @@ struct BurnDispatcher
                     if constexpr (!std::is_same_v<Binding,
                                                   CpuNoNetworkBinding>) {
                         using Network = typename CpuNetworkType<Binding>::type;
+                        validate_and_report_nse<Registration, Network>(config);
                         dispatch_ode<Network>(ode, linear,
                                               std::forward<Func>(func));
                     }
@@ -237,6 +230,28 @@ struct BurnDispatcher
     }
 
 private:
+    template <class Registration, class Network>
+    static void validate_and_report_nse(const SimConfig& config)
+    {
+        static_assert(
+            Network::SUPPORTS_NSE
+                == arch::dispatch::NetworkPolicyMetadata<
+                    Registration>::supports_nse,
+            "network NSE metadata must match the concrete network type");
+        if (!config.physics.burn.use_nse) return;
+        if constexpr (!Network::SUPPORTS_NSE) {
+            throw std::runtime_error(
+                "NSE is unavailable for burn network: "
+                + std::string(
+                    arch::dispatch::PolicyRegistration<Registration>::names[0]));
+        } else {
+            std::cout << "[Burn Dispatch] Online Timmes NSE solver enabled above T="
+                      << config.physics.burn.nseTempThreshold << " K and rho="
+                      << config.physics.burn.nseDensThreshold
+                      << " g/cm^3." << std::endl;
+        }
+    }
+
     /**
      * @brief Resolve the ODE integration policy for a fixed network.
      */

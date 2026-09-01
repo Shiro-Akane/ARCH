@@ -34,12 +34,18 @@ __global__ void hydro_cfl_candidates_kernel(
 }
 
 static __global__ void hydro_cfl_reduce_kernel(
-    const double* candidates, int count, double cfl, double* result)
+    const double* candidates, int count, double cfl, double* result,
+    int* status)
 {
     if (blockIdx.x != 0 || threadIdx.x != 0)
         return;
-    const auto spec = arch::reduction::minimum_spec(
+    auto spec = arch::reduction::minimum_spec(
         cfl_inactive_cell_dt());
+    // Host tabular free-energy evaluation throws on an invalid
+    // thermodynamic state.  Device views cannot throw, so they return NaNs;
+    // the CFL boundary must convert that sentinel back into a checked backend
+    // failure rather than ignoring the offending cell.
+    spec.nan = arch::reduction::ReductionNanPolicy::Error;
     auto state = arch::reduction::begin_reduction(spec);
     for (int cell = 0; cell < count; ++cell) {
         amr::CellLogicalKey key{};
@@ -48,7 +54,10 @@ static __global__ void hydro_cfl_reduce_kernel(
             spec, state, {candidates[cell], key, true});
     }
     const auto reduced = arch::reduction::finalize_reduction(spec, state);
-    *result = finalize_cfl_dt(cfl, reduced.value);
+    *status = static_cast<int>(reduced.status);
+    *result = reduced.status == arch::reduction::ReductionStatus::Ok
+        ? finalize_cfl_dt(cfl, reduced.value)
+        : std::numeric_limits<double>::quiet_NaN();
 }
 
 static __global__ void hydro_divergence_kernel(
@@ -130,7 +139,8 @@ inline cudaError_t launch_compute_hydro_dt(
     if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
         || state.total_size != grid.total_size
         || workspace.cfl_candidates == nullptr
-        || workspace.cfl_result == nullptr)
+        || workspace.cfl_result == nullptr
+        || workspace.cfl_status == nullptr)
         return cudaErrorInvalidValue;
     constexpr int threads = 128;
     const int count = grid.active_cell_count();
@@ -143,7 +153,8 @@ inline cudaError_t launch_compute_hydro_dt(
     if (error != cudaSuccess)
         return error;
     detail::hydro_cfl_reduce_kernel<<<1, 1, 0, stream>>>(
-        workspace.cfl_candidates, count, cfl, workspace.cfl_result);
+        workspace.cfl_candidates, count, cfl, workspace.cfl_result,
+        workspace.cfl_status);
     return cudaGetLastError();
 }
 } // namespace arch::cuda

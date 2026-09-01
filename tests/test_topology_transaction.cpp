@@ -39,6 +39,14 @@ struct PreparedPayload {
     int value = 0;
 };
 
+class InjectedStagedAllocationFailure final : public std::runtime_error {
+public:
+    InjectedStagedAllocationFailure()
+        : std::runtime_error("injected staged AMR allocation failure")
+    {
+    }
+};
+
 void test_success_order()
 {
     amr::TopologyTransaction transaction(41, {7}, {8});
@@ -392,6 +400,114 @@ std::vector<arch::topology::TopologyObservation> observe_tree(
     return observations;
 }
 
+void test_staged_allocation_failure_rollback()
+{
+    using arch::topology::TopologyDomainBounds;
+    using arch::topology::TopologyIdentityRegistry;
+
+    const auto refinement_flags = [](const amr::AmrTree& tree,
+                                     const amr::MemoryPool& pool) {
+        std::vector<int> result;
+        result.reserve(tree.GetActiveBlocks().size());
+        for (const int id : tree.GetActiveBlocks())
+            result.push_back(pool.GetBlock(id).refine_flag);
+        return result;
+    };
+    const auto active_states = [](const amr::AmrTree& tree,
+                                  const amr::MemoryPool& pool) {
+        std::vector<std::vector<double>> result;
+        result.reserve(tree.GetActiveBlocks().size());
+        for (const int id : tree.GetActiveBlocks())
+            result.push_back(pool.GetBlock(id).fluid_state.rho);
+        return result;
+    };
+
+    const auto exercise_failure = [&] (
+        const SimConfig& config, const std::shared_ptr<amr::AmrTree>& tree,
+        const std::shared_ptr<amr::MemoryPool>& pool,
+        TopologyIdentityRegistry& registry, const std::string& context) {
+        const std::vector<int> active_before = tree->GetActiveBlocks();
+        const int count_before = pool->GetNumActiveBlocks();
+        const auto flags_before = refinement_flags(*tree, *pool);
+        const auto states_before = active_states(*tree, *pool);
+        const amr::TopologyEpoch epoch_before = registry.epoch();
+        int guarded_id = -1;
+        bool saw_guarded_active = false;
+        bool failed = false;
+        try {
+            auto unexpected = tree->PrepareRegrid(
+                config, {},
+                [&](const amr::AmrTree&, int allocated_id) {
+                    guarded_id = allocated_id;
+                    saw_guarded_active = pool->GetBlock(allocated_id).active;
+                    throw InjectedStagedAllocationFailure{};
+                });
+            (void)unexpected;
+        } catch (const InjectedStagedAllocationFailure&) {
+            failed = true;
+        }
+
+        expect(failed && saw_guarded_active && guarded_id >= 0,
+               context + " did not inject after pool allocation");
+        expect(tree->GetActiveBlocks() == active_before
+                   && pool->GetNumActiveBlocks() == count_before
+                   && !pool->GetBlock(guarded_id).active,
+               context + " leaked its guarded pool block");
+        expect(refinement_flags(*tree, *pool) == flags_before
+                   && active_states(*tree, *pool) == states_before,
+               context + " changed the committed hierarchy state");
+        expect(registry.epoch() == epoch_before,
+               context + " changed the committed topology epoch");
+        registry.validate_committed_snapshot(observe_tree(*tree, *pool, 1));
+
+        // The freed id must return to the same pool stack position so a retry
+        // observes the same first allocation without publishing it.
+        auto retry = tree->PrepareRegrid(config);
+        expect(retry.topology_changed()
+                   && std::find(retry.proposed_active_blocks().begin(),
+                                retry.proposed_active_blocks().end(), guarded_id)
+                       != retry.proposed_active_blocks().end(),
+               context + " did not restore the pool allocation order");
+        retry.AbortNoexcept();
+        expect(tree->GetActiveBlocks() == active_before
+                   && pool->GetNumActiveBlocks() == count_before
+                   && registry.epoch() == epoch_before,
+               context + " retry rollback drifted committed ownership");
+        registry.validate_committed_snapshot(observe_tree(*tree, *pool, 1));
+    };
+
+    {
+        const SimConfig config = regrid_config(0.01);
+        std::shared_ptr<amr::MemoryPool> pool;
+        auto tree = make_regrid_tree(config, pool);
+        TopologyIdentityRegistry registry(
+            TopologyDomainBounds{1, {1U, 1U, 1U}, 1});
+        auto adoption = registry.stage_adoption(observe_tree(*tree, *pool, 1));
+        registry.commit(std::move(adoption));
+        exercise_failure(config, tree, pool, registry,
+                         "refinement allocation failure");
+    }
+
+    {
+        const SimConfig refine = regrid_config(0.01);
+        std::shared_ptr<amr::MemoryPool> pool;
+        auto tree = make_regrid_tree(refine, pool);
+        expect(tree->Regrid(refine),
+               "restriction failure fixture did not refine");
+
+        SimConfig derefine = refine;
+        derefine.amr.refine_on_rho = false;
+        derefine.amr.refine_threshold = 1.0;
+        derefine.amr.derefine_threshold = 1.0;
+        TopologyIdentityRegistry registry(
+            TopologyDomainBounds{1, {1U, 1U, 1U}, 1});
+        auto adoption = registry.stage_adoption(observe_tree(*tree, *pool, 1));
+        registry.commit(std::move(adoption));
+        exercise_failure(derefine, tree, pool, registry,
+                         "restriction allocation failure");
+    }
+}
+
 void expect_same_coherence(const arch::state::SlotCoherence& actual,
                            const arch::state::SlotCoherence& expected,
                            const std::string& message)
@@ -528,6 +644,7 @@ int main()
         test_scope_validation();
         test_dimension_plan_cardinality();
         test_prepared_regrid_commit_and_abort();
+        test_staged_allocation_failure_rollback();
         test_identity_and_residency_rollback();
         std::cout << "TOPOLOGY_TRANSACTION_PASS\n";
         return 0;

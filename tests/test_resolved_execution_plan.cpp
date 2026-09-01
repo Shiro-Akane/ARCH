@@ -115,9 +115,19 @@ void test_plain_cpp_contracts()
     expect_supported.template operator()<TimeIntegratorPolicies>();
     expect_supported.template operator()<EosPolicies>();
     constexpr auto networks = make_policy_descriptors<NetworkPolicies>();
-    for (const auto& descriptor : networks)
+    for (const auto& descriptor : networks) {
         expect(descriptor.cpu_supported,
                "every registered network has a CPU binding");
+        const bool built_in_nse_network = descriptor.id == NetworkId::Aprox13
+            || descriptor.id == NetworkId::Aprox19
+            || descriptor.id == NetworkId::Aprox21
+            || descriptor.id == NetworkId::Iso7;
+        expect(descriptor.supports_nse == built_in_nse_network,
+               "only built-in Timmes networks advertise NSE support");
+        expect(network_supports_nse(descriptor.id)
+                   == descriptor.supports_nse,
+               "NSE capability lookup must derive from network metadata");
+    }
     expect_supported.template operator()<OdeSolverPolicies>();
     expect_supported.template operator()<DiffusionIntegratorPolicies>();
 }
@@ -389,6 +399,7 @@ void test_factory_routes_preserved()
         expect(std::string(burn_route<decltype(burner)>()) == "none", "disabled burn route");
     });
     config.physics.burn.use_burn = true;
+    config.physics.burn.use_nse = true;
     for (const char* network : {"aprox13", "aprox19", "aprox21", "iso7"}) {
         for (const char* solver : {"BE_NR", "BD", "ROS4"}) {
             config.physics.burn.network_name = network;
@@ -403,6 +414,15 @@ void test_factory_routes_preserved()
             });
         }
     }
+    bool direct_route = false;
+    BurnDispatcher::dispatch(
+        config, NetworkId::Aprox13, OdeSolverId::BeNr,
+        LinearSolverId::DenseLu, [&](auto burner) {
+            direct_route = std::string(burn_route<decltype(burner)>())
+                == "aprox13.be_nr.dense_lu";
+        });
+    expect(direct_route,
+           "direct burn factory route validates NSE on the concrete network");
     bool threw = false;
     config.physics.burn.network_name = "bad";
     try { BurnDispatcher::dispatch(config, [](auto) {}); }

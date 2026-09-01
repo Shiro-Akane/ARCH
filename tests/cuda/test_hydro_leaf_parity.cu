@@ -274,7 +274,7 @@ __global__ void route_matrix_kernel(RouteFingerprint* output, int index)
         left, right, flux, nullptr, nullptr, nullptr, 0, 1,
         StageFor<StageBinding>::old_weight,
         StageFor<StageBinding>::flux_weight,
-        1.0e-12, 1.0e20, stage, nullptr);
+        1.0e-12, 1.0e-10, 1.0e20, stage, nullptr);
 
     std::uint64_t limiter_hash = 1469598103934665603ULL;
     limiter_hash = route_mix(limiter_hash, Limiter::calc(0.21));
@@ -1510,14 +1510,17 @@ int run_device_primitives()
         return 113;
     double* candidates = nullptr;
     double* result = nullptr;
+    int* cfl_status = nullptr;
     if (cudaMalloc(&candidates, sizeof(double)) != cudaSuccess
-        || cudaMalloc(&result, sizeof(double)) != cudaSuccess)
+        || cudaMalloc(&result, sizeof(double)) != cudaSuccess
+        || cudaMalloc(&cfl_status, sizeof(int)) != cudaSuccess)
         return 114;
     CudaHydroWorkspaceView workspace{};
     workspace.flux = flux.view;
     workspace.delta = delta.view;
     workspace.cfl_candidates = candidates;
     workspace.cfl_result = result;
+    workspace.cfl_status = cfl_status;
     const double cfl_sentinel = 123.0;
     if (cudaMemcpy(result, &cfl_sentinel, sizeof(double),
                    cudaMemcpyHostToDevice) != cudaSuccess)
@@ -1568,6 +1571,10 @@ int run_device_primitives()
     bad_workspace.cfl_result = nullptr;
     if (!cfl_error(state.view, grid, bad_workspace))
         return 170;
+    bad_workspace = workspace;
+    bad_workspace.cfl_status = nullptr;
+    if (!cfl_error(state.view, grid, bad_workspace))
+        return 172;
     double invalid_result_host = 0.0;
     if (cudaDeviceSynchronize() != cudaSuccess
         || cudaMemcpy(&invalid_result_host, result, sizeof(double),
@@ -1576,17 +1583,23 @@ int run_device_primitives()
         return 171;
     const double expected_dt = frozen_double(0x3fd5db37998729f9ULL);
     double result_host = 0.0;
+    int status_host = -1;
     if (launch_compute_hydro_dt(
             state.view, grid, TestIdealGas{}, 0.8, workspace, nullptr)
             != cudaSuccess
         || cudaDeviceSynchronize() != cudaSuccess
         || cudaMemcpy(&result_host, result, sizeof(double), cudaMemcpyDeviceToHost)
                != cudaSuccess
+        || cudaMemcpy(&status_host, cfl_status, sizeof(int),
+                      cudaMemcpyDeviceToHost) != cudaSuccess
+        || status_host
+               != static_cast<int>(arch::reduction::ReductionStatus::Ok)
         || std::abs(result_host - expected_dt) > 3e-14 * std::abs(expected_dt))
         return 115;
 
     cudaFree(candidates);
     cudaFree(result);
+    cudaFree(cfl_status);
     cudaFree(volume);
     cudaFree(lower_area);
     cudaFree(upper_area);
@@ -1673,7 +1686,7 @@ int main()
     }
     TimeIntegration::perform_stage_update(
         old_state, current_state, destination, delta, species_delta, grid,
-        0.5, 0.5, 1e-12, 1e20);
+        0.5, 0.5, 1e-12, 1e-10, 1e20);
     print_vector("stage.active", destination.get(grid.Is()));
     print_double("stage.spec0", destination.X(0, grid.Is()));
     print_double("stage.spec1", destination.X(1, grid.Is()));

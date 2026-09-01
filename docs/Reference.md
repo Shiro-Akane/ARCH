@@ -5,7 +5,7 @@ is the authoritative source text; interface and behavior changes must be made
 here first.
 
 This searchable reference follows the declarations and dispatch paths in the
-current `main` branch. The student workflow is in
+current source tree. The student workflow is in
 [`docs/guides/SimulationCase.md`](guides/SimulationCase.md).
 
 ## Contents
@@ -61,15 +61,26 @@ external provenance claim unless their file header or that notice says so.
 
 ### Execution and mesh
 
-| Feature | Accepted value or interface | Status in `main` | Notes |
+| Feature | Accepted value or interface | Current status | Notes |
 | --- | --- | --- | --- |
 | Host execution | `compute_backend = cpu` | supported | OpenMP is configured at build time. |
-| CUDA execution | `compute_backend = cuda/auto` | reserved | Keys are parsed; `main` executes the CPU backend. |
+| CUDA execution | `compute_backend = cuda/auto` | experimental | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
-| Geometry | `cartesian`, `cylindrical`, `spherical` | supported | Strings are effectively case-sensitive in grid logic. |
-| AMR | `lrefinemax >= 0` | supported | Fixed 16-cell block extent per active dimension. |
-| Self gravity | `gravity_type = self` | unavailable | The gravity factory aborts. |
+| Geometry | `cartesian`, `cylindrical`, `spherical` | CPU supported | Enum-like input is case-insensitive and stored canonically; CUDA accepts Cartesian only. |
+| AMR | `lrefinemax >= 0` | CPU supported | Fixed 16-cell block extent per active dimension; CUDA currently rejects dynamic AMR. |
+| Self gravity | `gravity_type = self` | unavailable | The capability gate rejects it before policy construction. |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
+
+The CUDA capability is intentionally narrower than the CPU capability. It
+supports uniform Cartesian 1D/2D/3D hydro, the registered flux/reconstruction/
+time-integrator matrix, Ideal/Helmholtz/Tabular3D/Tabular4D EOS, built-in burn
+networks with DenseLU and NSE, Cartesian diffusion with RKL1/RKL2, static
+multiblock boundary exchange, and plot/checkpoint writes through the shared
+host writer. Dynamic AMR, restart input, gravity, non-Cartesian geometry,
+generated networks and SparseKLU are rejected. cuDSS is not registered or
+integrated, so it cannot be selected as a linear-solver policy. Several
+implemented CUDA paths still have validation status `pending` and are not
+production claims.
 
 ### Numerical policies
 
@@ -80,13 +91,14 @@ external provenance claim unless their file header or that notice says so.
 | MUSCL limiter | `minmod`, `superbee`, `vanleer`, `mc` | dispatched; unknown values, including `none`, fall back to MinMod |
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
-| EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU |
-| Gravity | `none`, `external` | supported; unknown strings select no gravity |
+| EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and the experimental CUDA backend |
+| Gravity | `none`, `external` | CPU supported; unknown strings and `self` are rejected before construction |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
-| Linear solve | `Auto`, `DenseLU`, `SparseKLU` | `Auto` selects DenseLU for <=30 isotopes and KLU above 30; explicit DenseLU rejects larger networks |
+| Linear solve | `Auto`, `DenseLU`, `SparseKLU` | `Auto` selects DenseLU for <=30 isotopes and, in a KLU-enabled CPU build, SparseKLU above 30; explicit DenseLU rejects larger networks |
 
-Use the canonical spellings above; normalization varies by dispatcher.
+Policy names are ASCII case-insensitive, but accepted aliases and fallback
+behavior still vary by dispatcher.
 
 ## Runtime architecture
 
@@ -98,6 +110,9 @@ main(argc, argv)
   -> ProblemRegistry::Create(problem name)
   -> case.Setup(config, species)
   -> DispatchSolver
+       -> resolve registered execution plan and runtime requirements
+       -> probe build/device and query CPU/CUDA capability gates
+       -> resolve backend (the only `auto` fallback boundary)
        -> allocate AMRControl/MemoryPool
        -> initialize or restart leaf state
        -> dispatch EOS, burn handle, gravity, time integrator, flux, reconstruction
@@ -246,6 +261,10 @@ case-sensitive.
 Important behavior:
 
 - integer and double core values use `std::stoi`/`std::stod`;
+- Boolean values accept only `true` or `false`, case-insensitively; numeric
+  `0`/`1` and `on`/`off` are rejected;
+- geometry, boundary, gravity, and compute-backend tokens are normalized to
+  ASCII lowercase once during parameter loading;
 - unknown keys are retained in `SimConfig::custom_params` or
   `custom_string_params`; spelling validation is unavailable;
 - `SimConfig::Get<T>` returns its caller-supplied default when a custom key is
@@ -265,7 +284,7 @@ Fallback policy is inconsistent by design today:
 | reconstruction | warning, PCM |
 | MUSCL limiter | warning, MinMod |
 | hydro integrator | warning, SSPRK2 |
-| gravity | unknown value becomes no gravity |
+| gravity | exception during resolved-requirement construction |
 | EOS, network, ODE, linear solver | exception |
 | diffusion integrator | fatal/exception depending path |
 
@@ -325,8 +344,8 @@ and any other spelling are rejected with the parameter name in the error.
 | `sml_rho` | double | `1e-12` | density repair threshold |
 | `min_eint` | double | `1e-10` | positive specific internal-energy floor |
 | `max_eint` | double | `1e21` | specific internal-energy ceiling |
-| `compute_backend` | string | `cpu` | parsed; `cuda/auto` reserved for V2 in current branch |
-| `cuda_device` | int | `0` | reserved |
+| `compute_backend` | string | `cpu` | `cpu`, `cuda`, or `auto`; explicit CUDA is fail-closed and `auto` may fall back only before construction |
+| `cuda_device` | int | `0` | CUDA runtime device ordinal used by probing, construction, and lifecycle operations |
 
 ### AMR
 
@@ -348,7 +367,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `eos_type` | string | `ideal` | `ideal`, `tabular`, `helmholtz` |
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
 | `gamma` | double | `1.4` | ideal-gas fallback/reference gamma |
-| `gravity_type` | string | `none` | `none`, `external`; `self` aborts |
+| `gravity_type` | string | `none` | `none`, `external`; `self` is rejected by the capability gate before construction |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | parsed only for unsupported self gravity |
 
@@ -379,17 +398,17 @@ also requires the exact checksum above.
 | Key | Type | Load default | Contract |
 | --- | --- | --- | --- |
 | `use_burn` | bool | `false` | enables the burn module |
-| `network_name` | string | `aprox19` | built-ins above or any compiled `custom:<id>` |
+| `network_name` | string | `aprox19` | built-ins above or any compiled `custom:<id>`; generated networks require `use_nse = false` |
 | `nuclearTempMin` | double | `1e9` | K; burn activation threshold |
 | `nuclearDensMin` | double | `1e-10` | g/cm3; burn activation threshold |
 | `smallt` | double | `1e5` | K; burn state floor |
 | `smallx` | double | `1e-20` | composition floor |
 | `enucDtFactor` | double | `1e30` | energy-release time-step limiter; huge default is effectively off |
-| `use_nse` | bool | `true` | enables thresholded NSE projection |
+| `use_nse` | bool | `true` | enables thresholded NSE projection for the four built-in networks only |
 | `nseTempThreshold` | double | `4.5e9` | K |
 | `nseDensThreshold` | double | `1e6` | g/cm3 |
-| `enforce_mass_conservation` | bool | `true` | renormalizes composition after burn |
-| `burn_verbose_level` | int | `0` | burn diagnostic verbosity |
+| `enforce_mass_conservation` | bool | `true` | parsed and stored; no active burn path currently consumes this switch |
+| `burn_verbose_level` | int | `0` | parsed and stored; no active burn path currently consumes this level |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
 | `linear_solver` | string | `Auto` | `Auto`, `DenseLU`, `SparseKLU`; DenseLU is limited to <=30 isotopes |
 | `ode_rtol` | double | `1e-4` | relative ODE tolerance |
@@ -872,7 +891,7 @@ and post-reflux synchronization.
 `AMRControl` owns `MemoryPool`, `AmrTree`, `GhostExchange`, and `FluxRegister`.
 Direct case access is unsupported. `amr::BLOCK_NX/NY/NZ` are 16,
 `amr::MAX_NG` is 4, and x storage is padded to 32. Changing these constants affects
-allocation, IO shape, reconstruction reach, and planned CUDA layout.
+allocation, IO shape, reconstruction reach, and the active CUDA device layout.
 
 ## HDF5 and restart format
 
@@ -928,10 +947,12 @@ transient, uncheckpointed `ENUC` refinement diagnostic.
 
 ## Known limitations
 
-- The `main` branch executes the CPU backend. CUDA parity remains pending; AMR
-  conservation has a CPU baseline, but stable local refinement retention is a
-  known coarse/fine ghost-transfer limitation. Self gravity and the Jeans
-  indicator are not implemented.
+- CUDA is an experimental uniform-Cartesian backend, not full CPU parity.
+  Dynamic AMR, restart input, gravity, non-Cartesian geometry, generated
+  networks, and sparse device solves remain unavailable. AMR conservation has
+  a CPU baseline, but stable local refinement retention is a known coarse/fine
+  ghost-transfer limitation. Self gravity and the Jeans indicator are not
+  implemented on either backend.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict

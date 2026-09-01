@@ -71,6 +71,16 @@ void expect_cuda_code(const ResolvedExecutionPlan& plan,
     expect(!support.cuda_supported && support.cuda_code == code, label);
 }
 
+void expect_cpu_code(const ResolvedExecutionPlan& plan,
+                     const ExecutionRequirements& requirements,
+                     const RuntimeProbeResult& probe,
+                     BackendCapabilityCode code,
+                     const char* label)
+{
+    const CapabilityResult support = query_support(plan, requirements, probe);
+    expect(!support.cpu_supported && support.cpu_code == code, label);
+}
+
 void test_probe_matrix_and_failures()
 {
     for (bool build : {false, true}) {
@@ -200,8 +210,12 @@ void test_all_requirement_codes()
     r = requirements; r.amr = true;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedAmr, "AMR");
     r = requirements; r.gravity = GravityId::External;
+    expect(query_support(plan, r, probe).cpu_supported,
+           "CPU external gravity remains supported");
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "external gravity");
     r = requirements; r.gravity = GravityId::Self;
+    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity,
+                    "CPU self gravity");
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "self gravity");
     r = requirements; r.restart = true;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRestart, "restart");
@@ -215,6 +229,8 @@ void test_all_requirement_codes()
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedDiffusionMode,
                      "diffusion plan mismatch");
     r = requirements; r.use_nse = true;
+    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedNse,
+                    "CPU NSE without burn");
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedNse, "NSE without burn");
     r = requirements; r.thermal_diffusion = true;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedDiffusionMode,
@@ -249,11 +265,19 @@ void test_all_requirement_codes()
     r.species_count = 7;
     r.state_layout |= StateLayoutRequirement::SpeciesMassFractions;
     r.state_layout |= StateLayoutRequirement::EnucDiagnostic;
-    expect(query_support(burn_plan, r, probe).cuda_supported,
+    support = query_support(burn_plan, r, probe);
+    expect(support.cpu_supported && support.cuda_supported,
            "burn and NSE supported route");
     p = burn_plan; p.network = NetworkId::None;
-    expect_cuda_code(p, r, probe, BackendCapabilityCode::InvalidPlan,
-                     "enabled burn requires network");
+    expect_cpu_code(p, r, probe, BackendCapabilityCode::UnsupportedNse,
+                    "CPU NSE requires a compatible network");
+    expect_cuda_code(p, r, probe, BackendCapabilityCode::UnsupportedNse,
+                     "CUDA NSE requires a compatible network");
+    auto burn_without_nse = r;
+    burn_without_nse.use_nse = false;
+    expect_cuda_code(p, burn_without_nse, probe,
+                     BackendCapabilityCode::InvalidPlan,
+                     "enabled burn without NSE still requires network");
     p = burn_plan; p.ode_solver = OdeSolverId::None;
     expect_cuda_code(p, r, probe, BackendCapabilityCode::InvalidPlan,
                      "enabled burn requires ODE solver");

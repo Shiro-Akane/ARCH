@@ -22,6 +22,7 @@
 #include "core/ProblemHelper.h"
 #include "core/RuntimeParams.h"
 #include "driver/DriverControl.h"
+#include "driver/dispatch/PolicyDescriptor.h"
 #include "io/ConfigParser.h"
 #include "physics/diffusionCoe/diffusion_math.hpp"
 #include "physics/eos/eos_Utils.h"
@@ -110,6 +111,45 @@ void require(bool condition, const std::string& message)
     }
 }
 
+SimConfig load_fixture_config(
+    const TempFixture& fixture, const std::string& name,
+    const std::string& contents)
+{
+    const auto path = fixture.path() / name;
+    {
+        std::ofstream output(path);
+        require(output.good(), "could not create runtime-parameter fixture");
+        output << contents;
+        require(output.good(), "could not write runtime-parameter fixture");
+    }
+    return RuntimeParams::Load(path.string());
+}
+
+bool same_requirements(
+    const arch::dispatch::ExecutionRequirements& left,
+    const arch::dispatch::ExecutionRequirements& right)
+{
+    return left.dimension == right.dimension
+        && left.root_blocks_x1 == right.root_blocks_x1
+        && left.root_blocks_x2 == right.root_blocks_x2
+        && left.root_blocks_x3 == right.root_blocks_x3
+        && left.geometry == right.geometry
+        && left.uniform_multiblock == right.uniform_multiblock
+        && left.amr == right.amr
+        && left.gravity == right.gravity
+        && left.restart == right.restart
+        && left.burn == right.burn
+        && left.diffusion == right.diffusion
+        && left.use_nse == right.use_nse
+        && left.thermal_diffusion == right.thermal_diffusion
+        && left.species_diffusion == right.species_diffusion
+        && left.viscous_diffusion == right.viscous_diffusion
+        && left.species_count == right.species_count
+        && left.required_ghost_depth == right.required_ghost_depth
+        && left.state_layout == right.state_layout
+        && left.boundary_features == right.boundary_features;
+}
+
 std::string read_file(const std::filesystem::path& path)
 {
     std::ifstream input(path);
@@ -169,6 +209,119 @@ void test_case_api_and_log_directory_fallback()
     const SimConfig override = RuntimeParams::Load(override_path.string());
     require(override.Get<std::string>("log_dir", override.io.out_dir) == "authority-log",
             "explicit log_dir did not override out_dir");
+}
+
+void test_runtime_enum_token_canonicalization()
+{
+    using namespace arch::dispatch;
+
+    TempFixture fixture;
+    const SimConfig lowercase = load_fixture_config(
+        fixture, "lowercase-enums.par",
+        "geometry = cartesian\n"
+        "nblockx1 = 1\n"
+        "nblockx2 = 1\n"
+        "nblockx3 = 1\n"
+        "x1l_boundary_type = periodic\n"
+        "x1r_boundary_type = outflow\n"
+        "x2l_boundary_type = reflect\n"
+        "x2r_boundary_type = reflecting\n"
+        "x3l_boundary_type = periodic\n"
+        "x3r_boundary_type = outflow\n"
+        "gravity_type = external\n"
+        "gravity_g_x = 1.25\n"
+        "gravity_g_y = -2.5\n"
+        "gravity_g_z = 3.75\n");
+    const SimConfig mixed_case = load_fixture_config(
+        fixture, "mixed-case-enums.par",
+        "geometry = CaRtEsIaN\n"
+        "nblockx1 = 1\n"
+        "nblockx2 = 1\n"
+        "nblockx3 = 1\n"
+        "x1l_boundary_type = PeRiOdIc\n"
+        "x1r_boundary_type = OuTfLoW\n"
+        "x2l_boundary_type = ReFlEcT\n"
+        "x2r_boundary_type = ReFlEcTiNg\n"
+        "x3l_boundary_type = pErIoDiC\n"
+        "x3r_boundary_type = oUtFlOw\n"
+        "gravity_type = ExTeRnAl\n"
+        "gravity_g_x = 1.25\n"
+        "gravity_g_y = -2.5\n"
+        "gravity_g_z = 3.75\n");
+
+    require(mixed_case.grid.geometry == lowercase.grid.geometry,
+            "mixed-case Cartesian was not stored canonically");
+    require(mixed_case.grid.x1l_boundary_type == lowercase.grid.x1l_boundary_type
+                && mixed_case.grid.x1r_boundary_type == lowercase.grid.x1r_boundary_type
+                && mixed_case.grid.x2l_boundary_type == lowercase.grid.x2l_boundary_type
+                && mixed_case.grid.x2r_boundary_type == lowercase.grid.x2r_boundary_type
+                && mixed_case.grid.x3l_boundary_type == lowercase.grid.x3l_boundary_type
+                && mixed_case.grid.x3r_boundary_type == lowercase.grid.x3r_boundary_type,
+            "mixed-case boundary types were not stored canonically");
+    require(mixed_case.physics.gravity.type == lowercase.physics.gravity.type
+                && mixed_case.physics.gravity.g_x == lowercase.physics.gravity.g_x
+                && mixed_case.physics.gravity.g_y == lowercase.physics.gravity.g_y
+                && mixed_case.physics.gravity.g_z == lowercase.physics.gravity.g_z,
+            "mixed-case External did not follow the lowercase load path");
+
+    const auto lowercase_requirements =
+        resolve_execution_requirements(lowercase, 0);
+    const auto mixed_case_requirements =
+        resolve_execution_requirements(mixed_case, 0);
+    require(lowercase_requirements.ok && mixed_case_requirements.ok,
+            "canonical enum tokens did not reach requirement resolution");
+    require(same_requirements(
+                lowercase_requirements.value, mixed_case_requirements.value),
+            "mixed-case enum tokens selected a different execution path");
+    require(mixed_case_requirements.value.geometry == GeometryId::Cartesian
+                && mixed_case_requirements.value.gravity == GravityId::External
+                && (mixed_case_requirements.value.boundary_features
+                    & boundary_bit(BoundaryFeature::Periodic)) != 0,
+            "mixed-case enum tokens selected the wrong resolved requirements");
+
+    const SimConfig unknown = load_fixture_config(
+        fixture, "unknown-enums.par",
+        "geometry = NoSuchGeometry\n"
+        "nblockx1 = 1\n"
+        "nblockx2 = 1\n"
+        "nblockx3 = 1\n"
+        "x1l_boundary_type = NoSuchBoundary\n"
+        "gravity_type = NoSuchGravity\n");
+    require(unknown.grid.geometry == "nosuchgeometry"
+                && unknown.grid.x1l_boundary_type == "nosuchboundary"
+                && unknown.physics.gravity.type == "nosuchgravity",
+            "unknown enum tokens were not preserved modulo ASCII case");
+    require(!resolve_execution_requirements(unknown, 0).ok,
+            "unknown geometry was silently mapped to a valid mode");
+    SimConfig invalid = unknown;
+    invalid.grid.geometry = lowercase.grid.geometry;
+    require(!resolve_execution_requirements(invalid, 0).ok,
+            "unknown gravity was silently mapped to a valid mode");
+    invalid.physics.gravity.type = lowercase.physics.gravity.type;
+    require(!resolve_execution_requirements(invalid, 0).ok,
+            "unknown active boundary was silently mapped to a valid mode");
+
+    const SimConfig inactive_faces = load_fixture_config(
+        fixture, "inactive-face-enums.par",
+        "geometry = Cartesian\n"
+        "nblockx1 = 1\n"
+        "nblockx2 = 0\n"
+        "nblockx3 = 0\n"
+        "x1l_boundary_type = Periodic\n"
+        "x1r_boundary_type = Outflow\n"
+        "x2l_boundary_type = IgnoredInactiveLower\n"
+        "x2r_boundary_type = IgnoredInactiveUpper\n"
+        "x3l_boundary_type = AlsoIgnoredInactiveLower\n"
+        "x3r_boundary_type = AlsoIgnoredInactiveUpper\n"
+        "gravity_type = External\n");
+    const auto inactive_requirements =
+        resolve_execution_requirements(inactive_faces, 0);
+    require(inactive_requirements.ok,
+            "enum canonicalization changed inactive-face semantics");
+    require(inactive_requirements.value.boundary_features
+                == (boundary_bit(BoundaryFeature::Periodic)
+                    | boundary_bit(BoundaryFeature::Outflow)),
+            "inactive faces contributed boundary requirements");
 }
 
 void test_portability_and_fixture_concurrency()
@@ -277,6 +430,7 @@ int main()
         test_strict_bool_parsing();
         test_portability_and_fixture_concurrency();
         test_case_api_and_log_directory_fallback();
+        test_runtime_enum_token_canonicalization();
         test_conductivity_charge_factor();
         test_terminal_time_alignment();
         test_shared_fixed_composition_isentrope();

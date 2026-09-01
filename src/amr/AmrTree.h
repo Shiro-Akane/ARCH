@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <exception>
 #include <functional>
 #include <limits>
 #include <map>
@@ -40,6 +41,50 @@ namespace amr {
 
 class AmrTree {
 private:
+    /**
+     * @brief Owns one freshly allocated pool block until a logical owner records it.
+     *
+     * AllocateBlock makes the block active before any staging vector can record
+     * its id.  Keeping that short ownership window in a non-copyable guard gives
+     * the caller a strong per-allocation guarantee even when the recording
+     * push_back (or a diagnostic observer immediately before it) throws.
+     */
+    class PoolBlockAllocationGuard {
+    public:
+        PoolBlockAllocationGuard(MemoryPool& pool, int id) noexcept
+            : pool_(&pool), id_(id)
+        {
+        }
+
+        PoolBlockAllocationGuard(const PoolBlockAllocationGuard&) = delete;
+        PoolBlockAllocationGuard& operator=(const PoolBlockAllocationGuard&)
+            = delete;
+        PoolBlockAllocationGuard(PoolBlockAllocationGuard&&) = delete;
+        PoolBlockAllocationGuard& operator=(PoolBlockAllocationGuard&&) = delete;
+
+        ~PoolBlockAllocationGuard() noexcept
+        {
+            if (pool_ == nullptr) return;
+            try {
+                pool_->FreeBlock(id_);
+            } catch (...) {
+                std::terminate();
+            }
+        }
+
+        int id() const noexcept { return id_; }
+
+        void transfer_to(std::vector<int>& allocated)
+        {
+            allocated.push_back(id_);
+            pool_ = nullptr;
+        }
+
+    private:
+        MemoryPool* pool_ = nullptr;
+        int id_ = -1;
+    };
+
     std::shared_ptr<MemoryPool> pool;
     std::vector<int> active_blocks; // List of active block IDs
 
@@ -143,7 +188,9 @@ public:
         for (int k = 0; k < loop_k; ++k) {
             for (int j = 0; j < loop_j; ++j) {
                 for (int i = 0; i < loop_i; ++i) {
-                    int id = pool->AllocateBlock();
+                    PoolBlockAllocationGuard allocation(
+                        *pool, pool->AllocateBlock());
+                    const int id = allocation.id();
                     Block& b = pool->GetBlock(id);
 
                     b.level = 0;
@@ -156,7 +203,7 @@ public:
                     b.state_next.InitSpecies(n_species);
                     b.state_scratch.InitSpecies(n_species);
 
-                    active_blocks.push_back(id);
+                    allocation.transfer_to(active_blocks);
                 }
             }
         }
@@ -195,7 +242,9 @@ public:
         for (size_t index = 0; index < count; ++index) {
             if (levels[index] < 0 || levels[index] > config.amr.lrefinemax)
                 throw std::invalid_argument("Checkpoint leaf level is outside the configured AMR range.");
-            const int id = pool->AllocateBlock();
+            PoolBlockAllocationGuard allocation(
+                *pool, pool->AllocateBlock());
+            const int id = allocation.id();
             Block& block = pool->GetBlock(id);
             block.level = levels[index];
             block.logical_x1 = logical_x1[index];
@@ -207,7 +256,7 @@ public:
             block.fluid_state.InitSpecies(n_species);
             block.state_next.InitSpecies(n_species);
             block.state_scratch.InitSpecies(n_species);
-            active_blocks.push_back(id);
+            allocation.transfer_to(active_blocks);
         }
         SortActiveBlocks();
         UpdateNeighbors(config);
@@ -505,6 +554,10 @@ public:
     }
 
     using PreApplyRegridObserver = std::function<void(const AmrTree&)>;
+    // Called while a no-throw guard still owns the freshly allocated block.
+    // This is useful for diagnostics and deterministic exception-safety tests.
+    using StagedAllocationObserver =
+        std::function<void(const AmrTree&, int)>;
 
     class PreparedRegrid {
     public:
@@ -888,7 +941,8 @@ public:
 
     PreparedRegrid PrepareRegrid(
         const SimConfig& config,
-        const PreApplyRegridObserver& observer = {})
+        const PreApplyRegridObserver& observer = {},
+        const StagedAllocationObserver& allocation_observer = {})
     {
         PreparedRegrid prepared(*this, config);
         EvaluateRefinement(config);
@@ -905,8 +959,12 @@ public:
                 relation.children.reserve(num_children);
                 for (int child_index = 0; child_index < num_children;
                      ++child_index) {
-                    const int child_id = pool->AllocateBlock();
-                    prepared.allocated_.push_back(child_id);
+                    PoolBlockAllocationGuard allocation(
+                        *pool, pool->AllocateBlock());
+                    const int child_id = allocation.id();
+                    if (allocation_observer)
+                        allocation_observer(*this, child_id);
+                    allocation.transfer_to(prepared.allocated_);
                     Block& child = pool->GetBlock(child_id);
                     child.level = block.level + 1;
                     child.logical_x1 = (block.logical_x1 << 1)
@@ -956,8 +1014,12 @@ public:
                 }
                 if (can_merge) {
                     prepared.changed_ = true;
-                    const int parent_id = pool->AllocateBlock();
-                    prepared.allocated_.push_back(parent_id);
+                    PoolBlockAllocationGuard allocation(
+                        *pool, pool->AllocateBlock());
+                    const int parent_id = allocation.id();
+                    if (allocation_observer)
+                        allocation_observer(*this, parent_id);
+                    allocation.transfer_to(prepared.allocated_);
                     Block& parent = pool->GetBlock(parent_id);
                     parent.level = block.level - 1;
                     parent.logical_x1 = block.logical_x1 >> 1;

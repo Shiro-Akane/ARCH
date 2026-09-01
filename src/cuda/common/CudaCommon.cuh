@@ -128,6 +128,7 @@ struct CudaHydroWorkspaceView
     DeviceStateView delta;
     double* cfl_candidates;
     double* cfl_result;
+    int* cfl_status;
 };
 
 inline bool valid_hydro_view(const DeviceStateView& view)

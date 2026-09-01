@@ -6,13 +6,15 @@ change.
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
-[![Main backend](https://img.shields.io/badge/main-CPU-success.svg)]()
-[![CUDA](https://img.shields.io/badge/CUDA-V2%20in%20development-yellow.svg)]()
+[![CPU backend](https://img.shields.io/badge/backend-CPU-success.svg)]()
+[![CUDA](https://img.shields.io/badge/CUDA-experimental-yellow.svg)]()
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
 
 ARCH is a block-adaptive finite-volume framework for compressible and reactive
-hydrodynamics. The `main` branch provides the CPU implementation. CUDA development
-continues on GitHub branches.
+hydrodynamics. The CPU backend is the scientific authority. An
+`ARCH_ENABLE_CUDA=ON` build also provides an experimental uniform-Cartesian
+backend that reuses the same registered policies and allocation-free physics
+mathematics.
 
 The project is intended for two groups:
 
@@ -22,19 +24,28 @@ The project is intended for two groups:
 
 ## Project status
 
-| Capability | `main` branch | V2 CUDA branch |
+| Capability | CPU backend | CUDA backend |
 | --- | --- | --- |
-| CPU/OpenMP hydrodynamics | supported | supported target |
-| CUDA execution | reserved | in active development |
-| 1D/2D/3D block AMR | supported | parity work in progress |
-| Ideal, tabular, and Helmholtz EOS | supported on CPU | module parity must be reported by V2 |
-| External gravity | supported | module parity must be reported by V2 |
-| Self gravity | unavailable | unavailable |
-| Nuclear networks and NSE | supported on CPU | module parity must be reported by V2 |
-| Quantitative validation suite | first CPU baselines recorded | CPU/CUDA parity pending |
+| 1D/2D/3D hydrodynamics | supported | experimental; uniform Cartesian topology only |
+| Dynamic block AMR | supported | rejected; device storage transactions are infrastructure, not AMR execution |
+| Ideal, tabular, and Helmholtz EOS | supported | implemented; device qualification remains pending for several table paths |
+| Diffusion with RKL1/RKL2 | supported | implemented for Cartesian grids |
+| Gravity | none and external | none only; external/self are rejected |
+| Nuclear networks and NSE | built-in and generated networks; NSE only for the four built-ins; DenseLU/optional KLU | four built-in networks with NSE and DenseLU (at most 30 species); no generated networks or sparse solve |
+| Plot/checkpoint write | shared host writer | same writer; device-authoritative state is explicitly materialized first |
+| Checkpoint restart | supported | rejected; `auto` may fall back to CPU before construction |
+| Quantitative validation suite | CPU baselines recorded | CPU/CUDA parity remains pending |
 
-`compute_backend` and `cuda_device` are reserved CUDA keys. The `main` driver
-executes the CPU backend.
+`compute_backend = cpu`, `cuda`, or `auto` is resolved once before backend
+construction. Explicit CUDA never silently falls back. `auto` may select CPU
+only at that pre-construction boundary when the requested run is outside the
+CUDA capability matrix or no usable device is available, and only when the CPU
+capability gate accepts the same run.
+
+The backend split is deliberately narrow: policy registration, AMR decisions,
+host-only Morton/topology mathematics, EOS/network/solver mathematics,
+scheduling, and HDF5 schemas are shared. CUDA-specific code owns kernels, device storage,
+transfers, streams, and retirement fences.
 
 ## Implemented capabilities
 
@@ -66,6 +77,16 @@ git lfs pull
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
 cmake --build build --parallel 4
 ```
+
+For the experimental CUDA backend, use a CUDA toolkit and a device with compute
+capability 8.6 or newer:
+
+```bash
+cmake -S . -B build-cuda -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_KLU=OFF
+cmake --build build-cuda --parallel 2
+```
+
+KLU remains a CPU-only optional backend. cuDSS is not integrated.
 
 The dispatch translation units instantiate a large template matrix. Very high
 parallel build counts can exhaust memory even though the dispatch target is
@@ -109,11 +130,15 @@ replacement follows the guarded generator workflow. Select one package per run:
 
 ~~~text
 network_name = custom:<id>
+use_burn = true
+use_nse = false
 linear_solver = Auto
 ~~~
 
-`Auto` keeps the dedicated DenseLU path through 30 isotopes and selects
-SparseKLU above 30. The complete contract and generator limitations are in the
+Generated networks are currently CPU-only and do not implement the Timmes NSE
+projection. `Auto` keeps the dedicated DenseLU path through 30 isotopes and
+selects SparseKLU above 30 only when the CPU build has KLU enabled. The complete
+contract and generator limitations are in the
 [Research and API Reference](docs/Reference.md); multi-size compatibility
 evidence is centralized in [validation/network](validation/network/README.md).
 
@@ -196,10 +221,10 @@ ARCH/
 - Coarse-fine AMR faces use MUSCL-MinMod in place of PPM's wide stencil;
 - Density, velocity, internal-energy, and species safeguards can modify the
   conservative update in invalid or near-vacuum states;
-- CUDA parity, stable local AMR refinement retention, and self gravity remain
-  outside the validated `main`-branch feature set; current KLU and generated-
-  network evidence is indexed under `validation/network`, while production
-  convergence remains network-specific;
+- CUDA parity, dynamic CUDA AMR, CUDA restart input, non-Cartesian CUDA
+  geometry, CUDA gravity, generated CUDA networks, and CUDA sparse solves
+  remain outside the validated feature set; current KLU and generated-network
+  evidence is CPU-only and indexed under `validation/network`;
 - Release builds use `-march=native` and `-ffast-math`, which favor performance
   over cross-machine bitwise reproducibility;
 - ARCH currently exposes source-extension interfaces rather than an installed

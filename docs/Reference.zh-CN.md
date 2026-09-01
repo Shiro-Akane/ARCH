@@ -2,7 +2,7 @@
 
 英文原文：[Reference.md](Reference.md)。英文版是唯一规范文本；接口或行为变化必须先更新英文版。若中英文内容不一致，以英文版为准。
 
-本文依据当前 `main` 分支的声明和 dispatch 路径整理，可全文搜索。学生工作流见 [`docs/guides/SimulationCase.zh-CN.md`](guides/SimulationCase.zh-CN.md)。
+本文依据当前源码树的声明和 dispatch 路径整理，可全文搜索。学生工作流见 [`docs/guides/SimulationCase.zh-CN.md`](guides/SimulationCase.zh-CN.md)。
 
 ## 目录
 
@@ -45,15 +45,17 @@ ARCH 构建一个可执行文件和一个内部 object target，其扩展契约�
 
 ### 执行与网格
 
-| 功能 | 接受值或接口 | `main` 状态 | 说明 |
+| 功能 | 接受值或接口 | 当前状态 | 说明 |
 | --- | --- | --- | --- |
 | Host 执行 | `compute_backend = cpu` | 支持 | OpenMP 在构建时配置。 |
-| CUDA 执行 | `compute_backend = cuda/auto` | 预留 | 参数会解析；`main` 执行 CPU 后端。 |
+| CUDA 执行 | `compute_backend = cuda/auto` | 实验性 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
-| 几何 | `cartesian`、`cylindrical`、`spherical` | 支持 | 网格逻辑中的字符串实际区分大小写。 |
-| AMR | `lrefinemax >= 0` | 支持 | 每个活动维固定 16 个单元的 block 尺寸。 |
-| 自重力 | `gravity_type = self` | 不可用 | gravity factory 会终止。 |
+| 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 支持 | enum-like 输入不区分大小写并规范保存；CUDA 仅接受 Cartesian。 |
+| AMR | `lrefinemax >= 0` | CPU 支持 | 每个活动维固定 16 个单元的 block 尺寸；CUDA 当前拒绝动态 AMR。 |
+| 自重力 | `gravity_type = self` | 不可用 | capability gate 会在策略构造前拒绝。 |
 | Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
+
+CUDA 能力被刻意限制为 CPU 能力的子集：支持 uniform Cartesian 1D/2D/3D hydro、已注册的 flux/reconstruction/time-integrator 组合、Ideal/Helmholtz/Tabular3D/Tabular4D EOS、使用 DenseLU 与 NSE 的内置燃烧网络、Cartesian RKL1/RKL2 扩散、静态 multiblock 边界交换，以及通过共用 host writer 完成 plot/checkpoint 写出。动态 AMR、restart 读入、重力、非 Cartesian 几何、生成网络与 SparseKLU 均会被拒绝。cuDSS 尚未注册或集成，不能作为 linear-solver policy 选择。若干已实现 CUDA 路径的验证状态仍是 `pending`，不能作为生产级声明。
 
 ### 数值策略
 
@@ -64,13 +66,13 @@ ARCH 构建一个可执行文件和一个内部 object target，其扩展契约�
 | MUSCL limiter | `minmod`、`superbee`、`vanleer`、`mc` | 已 dispatch；包括 `none` 在内的未知值回退到 MinMod |
 | 流体时间推进 | `Euler`、`RK1`；`RK2`、`SSPRK2`；`RK3`、`SSPRK3` | Euler、SSPRK2、SSPRK3 |
 | 扩散时间推进 | `RKL2`（默认）、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
-| EOS | `ideal`、`tabular`、`helmholtz` | CPU 已 dispatch |
-| 重力 | `none`、`external` | 支持；未知字符串选择无重力 |
+| EOS | `ideal`、`tabular`、`helmholtz` | CPU 与实验性 CUDA 后端均已 dispatch |
+| 重力 | `none`、`external` | CPU 支持；未知字符串与 `self` 会在构造前被拒绝 |
 | 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
-| 线性求解 | `Auto`、`DenseLU`、`SparseKLU` | `Auto` 对不超过 30 核素使用 DenseLU，超过时使用 KLU；显式 DenseLU 拒绝大型网络 |
+| 线性求解 | `Auto`、`DenseLU`、`SparseKLU` | `Auto` 对不超过 30 核素使用 DenseLU；在启用 KLU 的 CPU build 中，超过 30 时使用 SparseKLU；显式 DenseLU 拒绝大型网络 |
 
-建议使用上述规范拼写；不同 dispatcher 的规范化行为并不一致。
+策略名称按 ASCII 大小写不敏感；但不同 dispatcher 接受的 alias 与 fallback 行为仍不一致。
 
 ## 运行时架构
 
@@ -82,6 +84,9 @@ main(argc, argv)
   -> ProblemRegistry::Create(problem name)
   -> case.Setup(config, species)
   -> DispatchSolver
+       -> 解析已注册 execution plan 与运行要求
+       -> probe build/device 并查询 CPU/CUDA capability gate
+       -> 解析 backend（`auto` 唯一允许回退的位置）
        -> allocate AMRControl/MemoryPool
        -> initialize or restart leaf state
        -> dispatch EOS, burn handle, gravity, time integrator, flux, reconstruction
@@ -188,6 +193,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 重要行为：
 
 - 整数和浮点核心值使用 `std::stoi`/`std::stod`；
+- Boolean 只接受不区分大小写的 `true` 或 `false`；数字 `0`/`1` 与 `on`/`off` 会被拒绝；
+- geometry、boundary、gravity 与 compute-backend token 在参数加载时统一规范为 ASCII 小写；
 - 未知键保留在 `SimConfig::custom_params` 或 `custom_string_params`，不提供拼写验证；
 - 自定义键缺失时，`SimConfig::Get<T>` 返回调用者提供的默认值；
 - 轻量 `pi` 表达式解析器用于域边界和外部重力分量，支持 `pi`、`-pi`、`2*pi`、`pi*2` 和 `pi/2` 等形式；
@@ -202,7 +209,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | reconstruction | 警告，选择 PCM |
 | MUSCL limiter | 警告，选择 MinMod |
 | hydro integrator | 警告，选择 SSPRK2 |
-| gravity | 未知值变为无重力 |
+| gravity | 在 resolved-requirement 构造阶段抛出异常 |
 | EOS、network、ODE、linear solver | 抛出异常 |
 | diffusion integrator | 根据路径 fatal 或异常 |
 
@@ -258,8 +265,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `sml_rho` | double | `1e-12` | 密度修复阈值 |
 | `min_eint` | double | `1e-10` | 正比内能下限 |
 | `max_eint` | double | `1e21` | 比内能上限 |
-| `compute_backend` | string | `cpu` | 已解析；当前分支中 `cuda/auto` 为 V2 预留 |
-| `cuda_device` | int | `0` | 预留 |
+| `compute_backend` | string | `cpu` | `cpu`、`cuda` 或 `auto`；显式 CUDA fail-closed，`auto` 只能在构造前回退 |
+| `cuda_device` | int | `0` | CUDA probe、构造与生命周期操作使用的 runtime device ordinal |
 
 ### AMR
 
@@ -281,7 +288,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_type` | string | `ideal` | `ideal`、`tabular`、`helmholtz` |
 | `eos_table_path` | string | 空 | tabular/Helmholtz 必需 |
 | `gamma` | double | `1.4` | 理想气体 fallback/参考 gamma |
-| `gravity_type` | string | `none` | `none`、`external`；`self` 会终止 |
+| `gravity_type` | string | `none` | `none`、`external`；`self` 会在构造前由 capability gate 拒绝 |
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | 仅为尚不支持的自重力解析 |
 
@@ -294,17 +301,17 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | 键 | 类型 | 加载默认值 | 契约 |
 | --- | --- | --- | --- |
 | `use_burn` | bool | `false` | 启用燃烧模块 |
-| `network_name` | string | `aprox19` | 上述内置网络或任意已编译的 `custom:<id>` |
+| `network_name` | string | `aprox19` | 上述内置网络或任意已编译的 `custom:<id>`；生成网络要求 `use_nse = false` |
 | `nuclearTempMin` | double | `1e9` | K；燃烧激活阈值 |
 | `nuclearDensMin` | double | `1e-10` | g/cm3；燃烧激活阈值 |
 | `smallt` | double | `1e5` | K；燃烧状态 floor |
 | `smallx` | double | `1e-20` | 组分 floor |
 | `enucDtFactor` | double | `1e30` | 能量释放时间步 limiter；巨大默认值实际关闭限制 |
-| `use_nse` | bool | `true` | 启用带阈值 NSE 投影 |
+| `use_nse` | bool | `true` | 仅为四个内置网络启用带阈值 NSE 投影 |
 | `nseTempThreshold` | double | `4.5e9` | K |
 | `nseDensThreshold` | double | `1e6` | g/cm3 |
-| `enforce_mass_conservation` | bool | `true` | 燃烧后归一化组分 |
-| `burn_verbose_level` | int | `0` | 燃烧诊断详细级别 |
+| `enforce_mass_conservation` | bool | `true` | 已解析并保存；当前 burn 路径尚未消费该开关 |
+| `burn_verbose_level` | int | `0` | 已解析并保存；当前 burn 路径尚未消费该级别 |
 | `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
 | `linear_solver` | string | `Auto` | `Auto`、`DenseLU`、`SparseKLU`；DenseLU 限于不超过 30 个核素 |
 | `ode_rtol` | double | `1e-4` | ODE 相对容差 |
@@ -666,7 +673,7 @@ RKL stage 数学通过 `DiffFunction::RKLOrder`、`compute_stages`、`usable_max
 
 ### AMR — Internal/source extension
 
-`AMRControl` 拥有 `MemoryPool`、`AmrTree`、`GhostExchange` 和 `FluxRegister`，不支持算例直接访问。`amr::BLOCK_NX/NY/NZ` 为 16，`amr::MAX_NG` 为 4，x 存储 padding 到 32。修改这些常量会影响分配、IO 形状、重构范围和计划中的 CUDA 布局。
+`AMRControl` 拥有 `MemoryPool`、`AmrTree`、`GhostExchange` 和 `FluxRegister`，不支持算例直接访问。`amr::BLOCK_NX/NY/NZ` 为 16，`amr::MAX_NG` 为 4，x 存储 padding 到 32。修改这些常量会影响分配、IO 形状、重构范围和当前 CUDA device 布局。
 
 ## HDF5 与重启格式
 
@@ -710,7 +717,7 @@ Data/rhoX    [species, block, interior cell]
 
 ## 已知限制
 
-- `main` 分支执行 CPU 后端。CUDA 一致性待完成；AMR 守恒已有 CPU 基线，但稳定保持局部细化仍受粗细 ghost transfer 的已知限制。自重力和 Jeans 指标尚未实现。
+- CUDA 是实验性的 uniform-Cartesian 后端，并非完整 CPU parity。动态 AMR、restart 读入、重力、非 Cartesian 几何、生成网络与 device 稀疏求解仍不可用。AMR 守恒已有 CPU 基线，但稳定保持局部细化仍受粗细 ghost transfer 的已知限制；两个后端都尚未实现自重力与 Jeans 指标。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据和完整 checkpoint 来源信息仍位于 HDF5 外部；Release flags 也无法保证跨机器逐位复现。

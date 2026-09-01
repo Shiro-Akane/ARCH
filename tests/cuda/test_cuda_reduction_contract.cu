@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <bit>
+#include <cmath>
 #include <cstdint>
 #include <iostream>
 #include <limits>
@@ -406,27 +407,48 @@ void verify_real_hydro_owner()
     const int count = grid.Ie() - grid.Is();
     DeviceArray<double> candidates(count);
     DeviceArray<double> result(1);
+    DeviceArray<int> status(1);
     arch::cuda::CudaHydroWorkspaceView workspace{
-        {}, {}, candidates.pointer, result.pointer};
+        {}, {}, candidates.pointer, result.pointer, status.pointer};
     const auto launch = arch::cuda::launch_compute_hydro_dt(
         device_state.view, arch::cuda::make_device_grid_view(grid),
         HydroEos{}, 0.8, workspace, nullptr);
     require_cuda(launch, "real hydro reduction launch");
     require_cuda(cudaDeviceSynchronize(), "real hydro reduction sync");
     double value = 0.0;
+    int device_status = -1;
     result.download(&value, 1);
+    status.download(&device_status, 1);
+    if (device_status != static_cast<int>(ReductionStatus::Ok))
+        fail("real hydro reduction status");
     if (std::bit_cast<std::uint64_t>(value) != 0x3fce8a38358aef78ULL)
         fail("real hydro reduction raw authority");
 
     const double signed_zero_candidates[2] = {+0.0, -0.0};
     candidates.upload(signed_zero_candidates, 2);
     arch::cuda::detail::hydro_cfl_reduce_kernel<<<1, 1>>>(
-        candidates.pointer, 2, 1.0, result.pointer);
+        candidates.pointer, 2, 1.0, result.pointer, status.pointer);
     require_cuda(cudaGetLastError(), "signed-zero hydro reduce launch");
     require_cuda(cudaDeviceSynchronize(), "signed-zero hydro reduce sync");
     result.download(&value, 1);
+    status.download(&device_status, 1);
     if (std::bit_cast<std::uint64_t>(value) != 0x0000000000000000ULL)
         fail("signed-zero hydro reduce keyed authority");
+    if (device_status != static_cast<int>(ReductionStatus::Ok))
+        fail("signed-zero hydro reduce status");
+
+    const double invalid_candidates[2] = {
+        3.0, std::numeric_limits<double>::quiet_NaN()};
+    candidates.upload(invalid_candidates, 2);
+    arch::cuda::detail::hydro_cfl_reduce_kernel<<<1, 1>>>(
+        candidates.pointer, 2, 1.0, result.pointer, status.pointer);
+    require_cuda(cudaGetLastError(), "invalid hydro reduce launch");
+    require_cuda(cudaDeviceSynchronize(), "invalid hydro reduce sync");
+    result.download(&value, 1);
+    status.download(&device_status, 1);
+    if (!std::isnan(value)
+        || device_status != static_cast<int>(ReductionStatus::NanRejected))
+        fail("invalid hydro candidate was not rejected");
 }
 
 void verify_real_diffusion_owner()

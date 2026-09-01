@@ -233,6 +233,16 @@ inline CapabilityResult query_support(
         ? BackendCapabilityCode::Supported
         : BackendCapabilityCode::UnsupportedBinding;
 
+    const bool nse_requirements_valid = !requirements.use_nse
+        || (requirements.burn && network_supports_nse(plan.network));
+    if (result.cpu_supported && requirements.gravity == GravityId::Self) {
+        result.cpu_supported = false;
+        result.cpu_code = BackendCapabilityCode::UnsupportedGravity;
+    } else if (result.cpu_supported && !nse_requirements_valid) {
+        result.cpu_supported = false;
+        result.cpu_code = BackendCapabilityCode::UnsupportedNse;
+    }
+
     const auto reject_cuda = [&](BackendCapabilityCode code) {
         result.cuda_supported = false;
         result.cuda_code = code;
@@ -271,6 +281,8 @@ inline CapabilityResult query_support(
         return reject_cuda(BackendCapabilityCode::UnsupportedRestart);
     if (requirements.geometry != GeometryId::Cartesian)
         return reject_cuda(BackendCapabilityCode::UnsupportedGeometry);
+    if (!nse_requirements_valid)
+        return reject_cuda(BackendCapabilityCode::UnsupportedNse);
     const bool network_enabled = plan.network != NetworkId::None;
     const bool ode_enabled = plan.ode_solver != OdeSolverId::None;
     const bool linear_enabled = plan.linear_solver != LinearSolverId::None;
@@ -279,8 +291,6 @@ inline CapabilityResult query_support(
         || (!requirements.burn
             && (network_enabled || ode_enabled || linear_enabled)))
         return reject_cuda(BackendCapabilityCode::InvalidPlan);
-    if (requirements.use_nse && !requirements.burn)
-        return reject_cuda(BackendCapabilityCode::UnsupportedNse);
     if ((!requirements.diffusion
          && (requirements.thermal_diffusion || requirements.species_diffusion
              || requirements.viscous_diffusion))

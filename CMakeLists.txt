@@ -64,7 +64,7 @@ set(ARCH_CUSTOM_NETWORKS "" CACHE STRING "Semicolon-separated custom network IDs
 set(ARCH_CUSTOM_NETWORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/custom" CACHE PATH "Custom network package root")
 # This seam is deliberately opt-in: a normal CPU configure must neither enable
 # CUDA nor discover a toolkit or nvcc.
-option(ARCH_ENABLE_CUDA "Build focused CUDA compile probes and later CUDA backend" OFF)
+option(ARCH_ENABLE_CUDA "Build the CUDA execution backend and focused validation targets" OFF)
 
 set(ARCH_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Directory for ARCH executables from this build tree")
 set(CMAKE_VERBOSE_MAKEFILE ${ARCH_VERBOSE_BUILD})
@@ -560,6 +560,19 @@ if(ARCH_ENABLE_CUDA)
         CUDA_STANDARD_REQUIRED ON)
     target_link_libraries(arch_cuda_eos_host_device_parity PRIVATE
         arch_cuda_backend)
+    add_executable(arch_cuda_tabular_free_energy_owner
+        tests/cuda/test_tabular_free_energy_owner.cu)
+    target_compile_features(arch_cuda_tabular_free_energy_owner PRIVATE
+        cxx_std_20)
+    target_include_directories(arch_cuda_tabular_free_energy_owner PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_options(arch_cuda_tabular_free_energy_owner PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+    set_target_properties(arch_cuda_tabular_free_energy_owner PROPERTIES
+        CUDA_STANDARD 20
+        CUDA_STANDARD_REQUIRED ON)
+    target_link_libraries(arch_cuda_tabular_free_energy_owner PRIVATE
+        arch_cuda_backend)
     add_executable(arch_cuda_network_nse_device
         tests/cuda/test_network_nse_device.cu)
     target_compile_features(arch_cuda_network_nse_device PRIVATE cxx_std_20)
@@ -659,6 +672,13 @@ if(ARCH_ENABLE_CUDA)
             ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         target_link_libraries(arch_cuda_multiblock_burn PRIVATE
             arch_cuda_backend arch_solver_dispatch)
+        add_executable(arch_cuda_store_lifecycle
+            tests/cuda/test_cuda_store_lifecycle.cpp)
+        target_compile_features(arch_cuda_store_lifecycle PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_store_lifecycle PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(arch_cuda_store_lifecycle PRIVATE
+            arch_cuda_backend arch_solver_dispatch CUDA::cudart)
         add_executable(arch_cuda_single_level_validation
             tests/cuda/test_cuda_single_level_validation.cpp)
         target_compile_features(arch_cuda_single_level_validation PRIVATE
@@ -704,6 +724,10 @@ if(ARCH_ENABLE_CUDA)
         add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
         add_test(NAME hydro_leaf_parity COMMAND arch_cuda_hydro_leaf_parity)
         add_test(NAME eos_host_device_parity COMMAND arch_cuda_eos_host_device_parity)
+        add_test(NAME tabular_free_energy_owner
+            COMMAND arch_cuda_tabular_free_energy_owner)
+        set_tests_properties(tabular_free_energy_owner PROPERTIES
+            SKIP_RETURN_CODE 77)
         add_test(NAME network_nse_device COMMAND arch_cuda_network_nse_device)
         add_test(NAME burn_policy_parity_helpers
             COMMAND arch_cuda_burn_policy_parity helpers)
@@ -722,6 +746,10 @@ if(ARCH_ENABLE_CUDA)
             COMMAND arch_cuda_multiblock_diffusion)
         add_test(NAME cuda_multiblock_burn
             COMMAND arch_cuda_multiblock_burn)
+        add_test(NAME cuda_store_lifecycle
+            COMMAND arch_cuda_store_lifecycle)
+        set_tests_properties(cuda_store_lifecycle PROPERTIES
+            SKIP_RETURN_CODE 77)
         add_test(NAME cuda_hydro_route_matrix
             COMMAND arch_cuda_hydro_block hydro-matrix)
         add_test(NAME cuda_hydro_integrator_matrix

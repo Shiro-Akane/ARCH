@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
 #include <sstream>
 #include <stdexcept>
@@ -25,6 +26,24 @@
 class RuntimeParams
 {
 private:
+    /**
+     * @brief Store enum-like runtime tokens in their ASCII lowercase form.
+     *
+     * This is deliberately only case canonicalization: it does not validate
+     * tokens or translate aliases. Unknown values therefore remain unknown
+     * and are rejected by the resolved execution-plan parsers downstream.
+     */
+    static std::string CanonicalizeEnumToken(std::string value)
+    {
+        std::transform(value.begin(), value.end(), value.begin(),
+            [](unsigned char c) {
+                return c >= 'A' && c <= 'Z'
+                    ? static_cast<char>(c - 'A' + 'a')
+                    : static_cast<char>(c);
+            });
+        return value;
+    }
+
     /**
      * @brief Parse a restricted numeric expression containing an optional pi.
      * Supported forms are a plain number, pi, -pi, coefficient*pi,
@@ -110,7 +129,8 @@ public:
 
         SimConfig cfg;
 
-        cfg.grid.geometry = parser.GetString("geometry", "cartesian");
+        cfg.grid.geometry = CanonicalizeEnumToken(
+            parser.GetString("geometry", "cartesian"));
         // Grid topology uses canonical nblockx* keys.
         cfg.grid.nblockx1 = parser.GetInt("nblockx1", 1);
         cfg.grid.nblockx2 = parser.GetInt("nblockx2", 1);
@@ -135,12 +155,18 @@ public:
         cfg.grid.x3_min = ParseMathExpr(parser.GetString("x3_min", "0.0"));
         cfg.grid.x3_max = ParseMathExpr(parser.GetString("x3_max", "1.0"));
 
-        cfg.grid.x1l_boundary_type = parser.GetString("x1l_boundary_type", "outflow");
-        cfg.grid.x1r_boundary_type = parser.GetString("x1r_boundary_type", "outflow");
-        cfg.grid.x2l_boundary_type = parser.GetString("x2l_boundary_type", "outflow");
-        cfg.grid.x2r_boundary_type = parser.GetString("x2r_boundary_type", "outflow");
-        cfg.grid.x3l_boundary_type = parser.GetString("x3l_boundary_type", "outflow");
-        cfg.grid.x3r_boundary_type = parser.GetString("x3r_boundary_type", "outflow");
+        cfg.grid.x1l_boundary_type = CanonicalizeEnumToken(
+            parser.GetString("x1l_boundary_type", "outflow"));
+        cfg.grid.x1r_boundary_type = CanonicalizeEnumToken(
+            parser.GetString("x1r_boundary_type", "outflow"));
+        cfg.grid.x2l_boundary_type = CanonicalizeEnumToken(
+            parser.GetString("x2l_boundary_type", "outflow"));
+        cfg.grid.x2r_boundary_type = CanonicalizeEnumToken(
+            parser.GetString("x2r_boundary_type", "outflow"));
+        cfg.grid.x3l_boundary_type = CanonicalizeEnumToken(
+            parser.GetString("x3l_boundary_type", "outflow"));
+        cfg.grid.x3r_boundary_type = CanonicalizeEnumToken(
+            parser.GetString("x3r_boundary_type", "outflow"));
 
         // Numerical-method configuration.
         cfg.numerics.solver_name = parser.GetString("solver", "SW");
@@ -177,10 +203,8 @@ public:
 
         // Execution backend.  This is independent of the time integrator:
         // a CUDA-enabled fat binary can still execute the CPU path at runtime.
-        cfg.execution.compute_backend = parser.GetString("compute_backend", "cpu");
-        std::transform(cfg.execution.compute_backend.begin(),
-                       cfg.execution.compute_backend.end(),
-                       cfg.execution.compute_backend.begin(), ::tolower);
+        cfg.execution.compute_backend = CanonicalizeEnumToken(
+            parser.GetString("compute_backend", "cpu"));
         cfg.execution.cuda_device = parser.GetInt("cuda_device", 0);
 
         // Equation-of-state and physical-module configuration.
@@ -250,8 +274,8 @@ public:
         }
 
         // Gravity configuration.
-        std::string grav_type = parser.GetString("gravity_type", "none");
-        std::transform(grav_type.begin(), grav_type.end(), grav_type.begin(), ::tolower);
+        std::string grav_type = CanonicalizeEnumToken(
+            parser.GetString("gravity_type", "none"));
         cfg.physics.gravity.type = grav_type;
 
         if (grav_type == "external")

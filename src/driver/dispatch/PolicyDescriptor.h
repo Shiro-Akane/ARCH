@@ -121,6 +121,35 @@ ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_DECLARE_CUSTOM_NETWORK)
 ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_DECLARE_CUDA_CUSTOM_NETWORK)
 #undef ARCH_DECLARE_CUDA_CUSTOM_NETWORK
 
+template <class PolicyTag>
+struct NetworkPolicyMetadata
+{
+    static constexpr bool supports_nse = false;
+};
+
+template <>
+struct NetworkPolicyMetadata<NoNetworkPolicy>
+{
+    static constexpr bool supports_nse = false;
+};
+
+#define ARCH_DECLARE_NSE_NETWORK_METADATA(TAG) \
+    template <> struct NetworkPolicyMetadata<TAG> { \
+        static constexpr bool supports_nse = true; \
+    }
+ARCH_DECLARE_NSE_NETWORK_METADATA(Aprox13Policy);
+ARCH_DECLARE_NSE_NETWORK_METADATA(Aprox19Policy);
+ARCH_DECLARE_NSE_NETWORK_METADATA(Aprox21Policy);
+ARCH_DECLARE_NSE_NETWORK_METADATA(Iso7Policy);
+#undef ARCH_DECLARE_NSE_NETWORK_METADATA
+
+#define ARCH_DECLARE_CUSTOM_NETWORK_METADATA(TAG, VALUE, NAME, TYPE) \
+    template <> struct NetworkPolicyMetadata<TAG##Policy> { \
+        static constexpr bool supports_nse = false; \
+    };
+ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_DECLARE_CUSTOM_NETWORK_METADATA)
+#undef ARCH_DECLARE_CUSTOM_NETWORK_METADATA
+
 struct StaticRequirements
 {
     int ghost_depth;
@@ -328,6 +357,7 @@ struct PolicyDescriptor
     bool is_default;
     bool cpu_supported;
     bool cuda_supported;
+    bool supports_nse;
     StaticRequirements requirements;
 };
 
@@ -339,6 +369,7 @@ consteval auto describe_policy()
         Data::id, Data::names[0], Data::is_default,
         !std::is_same_v<typename Data::CpuBinding, AbsentBinding>,
         !std::is_same_v<typename Data::CudaBinding, AbsentBinding>,
+        NetworkPolicyMetadata<Registration>::supports_nse,
         Data::requirements};
 }
 
@@ -466,6 +497,14 @@ constexpr bool policy_cuda_supported(typename List::id_type id) noexcept
     constexpr auto descriptors = make_policy_descriptors<List>();
     for (const auto& descriptor : descriptors)
         if (descriptor.id == id) return descriptor.cuda_supported;
+    return false;
+}
+
+constexpr bool network_supports_nse(NetworkId id) noexcept
+{
+    constexpr auto descriptors = make_policy_descriptors<NetworkPolicies>();
+    for (const auto& descriptor : descriptors)
+        if (descriptor.id == id) return descriptor.supports_nse;
     return false;
 }
 

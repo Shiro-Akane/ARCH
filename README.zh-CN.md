@@ -4,11 +4,11 @@
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
-[![Main backend](https://img.shields.io/badge/main-CPU-success.svg)]()
-[![CUDA](https://img.shields.io/badge/CUDA-V2%20in%20development-yellow.svg)]()
+[![CPU backend](https://img.shields.io/badge/backend-CPU-success.svg)]()
+[![CUDA](https://img.shields.io/badge/CUDA-experimental-yellow.svg)]()
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
 
-ARCH 是一个面向可压缩反应流体力学的块自适应有限体积框架。`main` 分支提供 CPU 实现，CUDA 开发在 GitHub 的其他分支中继续进行。
+ARCH 是一个面向可压缩反应流体力学的块自适应有限体积框架。CPU 后端是科学语义权威；使用 `ARCH_ENABLE_CUDA=ON` 构建时，还会提供实验性的 uniform-Cartesian 后端。该后端复用同一套注册策略与无分配物理数学实现。
 
 项目主要面向两类使用者：
 
@@ -17,18 +17,21 @@ ARCH 是一个面向可压缩反应流体力学的块自适应有限体积框架
 
 ## 项目状态
 
-| 功能 | `main` 分支 | V2 CUDA 分支 |
+| 功能 | CPU 后端 | CUDA 后端 |
 | --- | --- | --- |
-| CPU/OpenMP 流体力学 | 支持 | 支持目标 |
-| CUDA 执行 | 预留 | 正在开发 |
-| 1D/2D/3D 块 AMR | 支持 | 一致性工作进行中 |
-| 理想、表格和 Helmholtz EOS | CPU 支持 | V2 需报告模块一致性 |
-| 外部重力 | 支持 | V2 需报告模块一致性 |
-| 自重力 | 不可用 | 不可用 |
-| 核反应网络和 NSE | CPU 支持 | V2 需报告模块一致性 |
-| 定量验证套件 | 已记录首批 CPU 基线 | CPU/CUDA 一致性待完成 |
+| 1D/2D/3D 流体力学 | 支持 | 实验性；仅 uniform Cartesian 拓扑 |
+| 动态块 AMR | 支持 | 明确拒绝；device storage transaction 只是基础设施，不代表 AMR 已接入 |
+| 理想、表格和 Helmholtz EOS | 支持 | 已实现；若干表格路径仍缺 device 资格验证 |
+| RKL1/RKL2 扩散 | 支持 | Cartesian 网格已实现 |
+| 重力 | none 与 external | 仅 none；external/self 会被拒绝 |
+| 核反应网络与 NSE | 内置与生成网络；仅四个内置网络支持 NSE；DenseLU/可选 KLU | 四个内置网络、NSE 与 DenseLU（最多 30 个核素）；不支持生成网络和稀疏求解 |
+| Plot/checkpoint 写出 | 共用 host writer | 复用同一 writer；device 为权威时先显式 materialize 到 host |
+| Checkpoint 重启 | 支持 | 明确拒绝；`auto` 可在构造前回退 CPU |
+| 定量验证套件 | 已记录 CPU 基线 | CPU/CUDA 一致性仍待完成 |
 
-`compute_backend` 和 `cuda_device` 是为 CUDA 预留的参数。当前 `main` 驱动只执行 CPU 后端。
+`compute_backend = cpu`、`cuda` 或 `auto` 会在后端构造前一次性解析。显式 CUDA 不会静默回退；只有 `auto` 可以在请求超出 CUDA 能力矩阵或没有可用设备、且 CPU capability gate 接受同一运行时，于构造前选择 CPU。
+
+后端分离被刻意限制在必要范围：策略注册、AMR 决策、host-only Morton/拓扑数学、EOS/网络/求解器数学、调度与 HDF5 schema 全部共用；CUDA 专用部分只负责 kernel、device storage、传输、stream 和 retirement fence。
 
 ## 已实现功能
 
@@ -58,6 +61,15 @@ git lfs pull
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
 cmake --build build --parallel 4
 ```
+
+实验性 CUDA 后端需要 CUDA toolkit，以及 compute capability 不低于 8.6 的设备：
+
+```bash
+cmake -S . -B build-cuda -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_KLU=OFF
+cmake --build build-cuda --parallel 2
+```
+
+KLU 仍是 CPU-only 的可选后端；cuDSS 尚未接入。
 
 dispatch 翻译单元会实例化较大的模板组合矩阵。即使该目标以较低优化级别编译，过高的并行构建数仍可能耗尽内存。只有在确认可用内存后才提高 `--parallel`。
 
@@ -94,10 +106,14 @@ cmake --build build --parallel 4
 
 ~~~text
 network_name = custom:<id>
+use_burn = true
+use_nse = false
 linear_solver = Auto
 ~~~
 
-`Auto` 在不超过 30 个核素时保留专用 DenseLU 路径，超过时选择 SparseKLU。
+生成网络当前仅支持 CPU，且不实现 Timmes NSE 投影。`Auto` 在不超过 30 个核素时
+保留专用 DenseLU 路径；超过 30 个核素时，只有启用了 KLU 的 CPU build 才会选择
+SparseKLU。
 完整契约和生成器限制见[研究与 API 参考](docs/Reference.zh-CN.md)，多规模网络
 兼容证据统一见 [validation/network](validation/network/README.zh-CN.md)。
 
@@ -166,7 +182,7 @@ ARCH/
 - 燃烧、扩散和流体使用对称组合 `B(dt/2)-D(dt/2)-H(dt)-D(dt/2)-B(dt/2)`；因此即使流体子步选择 SSPRK3，耦合方法最高也只有二阶；
 - 粗细 AMR 界面以 MUSCL-MinMod 代替 PPM 的宽模板；
 - 在无效或近真空状态下，密度、速度、内能和组分保护可能修改守恒更新；
-- CUDA 一致性、稳定保持局部 AMR 细化和自重力不属于 `main` 分支已验证功能集；当前 KLU 与生成式网络证据统一索引在 `validation/network`，生产级收敛仍按具体网络验证；
+- CUDA 一致性、动态 CUDA AMR、CUDA restart 读入、非 Cartesian CUDA 几何、CUDA 重力、生成式 CUDA 网络和 CUDA 稀疏求解仍不属于已验证功能集；当前 KLU 与生成式网络证据均为 CPU-only，并统一索引在 `validation/network`；
 - Release 构建使用 `-march=native` 和 `-ffast-math`，优先性能而不是跨机器逐位复现；
 - ARCH 当前提供源码级扩展接口，而不是已安装的公共库 ABI。
 
