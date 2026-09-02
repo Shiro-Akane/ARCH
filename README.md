@@ -12,7 +12,7 @@ change.
 
 ARCH is a block-adaptive finite-volume framework for compressible and reactive
 hydrodynamics. The CPU backend is the scientific authority. An
-`ARCH_ENABLE_CUDA=ON` build also provides an experimental uniform-Cartesian
+`ARCH_ENABLE_CUDA=ON` build also provides an experimental Cartesian block
 backend that reuses the same registered policies and allocation-free physics
 mathematics.
 
@@ -26,15 +26,22 @@ The project is intended for two groups:
 
 | Capability | CPU backend | CUDA backend |
 | --- | --- | --- |
-| 1D/2D/3D hydrodynamics | supported | experimental; uniform Cartesian topology only |
-| Dynamic block AMR | supported | rejected; device storage transactions are infrastructure, not AMR execution |
+| 1D/2D/3D hydrodynamics | supported | experimental; Cartesian grids, including dynamic block hierarchies |
+| Dynamic block AMR | supported | implemented experimentally: Host-authoritative regrid/migration, device ghost exchange, compact flux registration, and reflux; runtime parity validation pending |
 | Ideal, tabular, and Helmholtz EOS | supported | implemented; device qualification remains pending for several table paths |
 | Diffusion with RKL1/RKL2 | supported | implemented for Cartesian grids |
 | Gravity | none and external | none only; external/self are rejected |
 | Nuclear networks and NSE | built-in and generated networks; NSE only for the four built-ins; DenseLU/optional KLU | four built-in networks with NSE and DenseLU (at most 30 species); no generated networks or sparse solve |
 | Plot/checkpoint write | shared host writer | same writer; device-authoritative state is explicitly materialized first |
-| Checkpoint restart | supported | rejected; `auto` may fall back to CPU before construction |
+| Checkpoint restart | shared version-3 Host schema with ENUC and EOS/table/network/ordered-species identity | same schema restore followed by device upload; runtime parity validation pending |
 | Quantitative validation suite | CPU baselines recorded | CPU/CUDA parity remains pending |
+
+Version-1/2 checkpoints remain readable as legacy/unverified inputs. They lack
+the ordered scientific identity and `ENUC`; version 1 also lacks the timestep
+controller state. Version 3 records the active burn/network/NSE identity and
+the digest of the table actually loaded by the EOS owner. CPU and CUDA use the
+same schema, and backend selection is intentionally not a restart-compatibility
+field.
 
 `compute_backend = cpu`, `cuda`, or `auto` is resolved once before backend
 construction. Explicit CUDA never silently falls back. `auto` may select CPU
@@ -83,10 +90,15 @@ capability 8.6 or newer:
 
 ```bash
 cmake -S . -B build-cuda -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_KLU=OFF
-cmake --build build-cuda --parallel 2
+cmake --build build-cuda --target arch_cuda_backend --parallel 6
+cmake --build build-cuda --target ARCH --parallel 2
 ```
 
-KLU remains a CPU-only optional backend. cuDSS is not integrated.
+The first build command above is a controlled production-backend compile; it
+does not build the full validation suite. KLU remains a CPU-only optional
+backend. `cuDSS` is accepted as a case-insensitive solver request, but the CUDA
+cuDSS provider is not implemented. Installing the cuDSS library alone does not
+enable that execution path.
 
 The dispatch translation units instantiate a large template matrix. Very high
 parallel build counts can exhaust memory even though the dispatch target is
@@ -136,9 +148,13 @@ linear_solver = Auto
 ~~~
 
 Generated networks are currently CPU-only and do not implement the Timmes NSE
-projection. `Auto` keeps the dedicated DenseLU path through 30 isotopes and
-selects SparseKLU above 30 only when the CPU build has KLU enabled. The complete
-contract and generator limitations are in the
+projection. Linear-solver requests are case-insensitive. `Auto` materializes as
+DenseLU through 30 isotopes; above 30 it produces a SparseKLU CPU candidate and
+a cuDSS CUDA candidate. Explicit SparseKLU is CPU-only and explicit cuDSS is
+CUDA-only; an incompatible backend/solver pair is rejected before backend
+construction. The cuDSS provider and CUDA generated-network/large-network paths
+remain unavailable, so those CUDA candidates fail closed. The complete contract
+and generator limitations are in the
 [Research and API Reference](docs/Reference.md); multi-size compatibility
 evidence is centralized in [validation/network](validation/network/README.md).
 
@@ -177,6 +193,10 @@ extension contracts, and known compromises, use the single searchable
 
 The [documentation index](docs/README.md) groups learning guides, physics
 notes, API reference material, and legal-document pointers by audience.
+
+The current implementation, validation, and remaining-work boundaries for the
+CUDA backend and GPU-AMR are recorded in the
+[CUDA/GPU-AMR handoff status](docs/CudaBackendStatus.md).
 
 Quantitative status, CPU results, known failures, and CUDA placeholders are
 indexed in [validation/README.md](validation/README.md). The
@@ -221,10 +241,11 @@ ARCH/
 - Coarse-fine AMR faces use MUSCL-MinMod in place of PPM's wide stencil;
 - Density, velocity, internal-energy, and species safeguards can modify the
   conservative update in invalid or near-vacuum states;
-- CUDA parity, dynamic CUDA AMR, CUDA restart input, non-Cartesian CUDA
-  geometry, CUDA gravity, generated CUDA networks, and CUDA sparse solves
-  remain outside the validated feature set; current KLU and generated-network
-  evidence is CPU-only and indexed under `validation/network`;
+- Quantitative CUDA parity, including dynamic-AMR and restart split-run tests,
+  remains pending on real hardware. Non-Cartesian CUDA geometry, CUDA gravity,
+  generated CUDA networks, and CUDA sparse solves remain unavailable; current
+  KLU and generated-network evidence is CPU-only and indexed under
+  `validation/network`;
 - Release builds use `-march=native` and `-ffast-math`, which favor performance
   over cross-machine bitwise reproducibility;
 - ARCH currently exposes source-extension interfaces rather than an installed

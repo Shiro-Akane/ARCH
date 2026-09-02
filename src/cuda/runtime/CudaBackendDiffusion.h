@@ -34,7 +34,8 @@ cudaError_t copy_cuda_backend_state_slot(
         DeviceStateView delta, DeviceStateView initial_delta, \
         EOS eos, SpeciesPODView species, DeviceGridView grid, \
         DiffFlux::DiffusionConfigView config, \
-        CudaBackendDiffusionWorkspace workspace, double dt, \
+        CudaBackendDiffusionWorkspace workspace, \
+        const CudaAmrFluxDirectionRouteView* amr_routes, double dt, \
         cudaStream_t stream)
 
 ARCH_DECLARE_BACKEND_DIFFUSION(IdealGasView);

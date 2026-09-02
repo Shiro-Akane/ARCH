@@ -7,8 +7,9 @@ This directory is the single entry point for quantitative verification records.
 The CPU baselines cover uniform-grid hydro reconstruction, RKL1/RKL2 species
 diffusion, constant external gravity, an aprox13 one-zone burn, AMR transfer and
 conservation, tabular-EOS interpolation, restart continuity, and generated
-custom networks with KLU. CUDA rows are reserved until the V2 backend can run
-the same committed inputs.
+custom networks with KLU. CUDA status below distinguishes implementation and
+source/compile qualification from real-device validation on the same committed
+inputs; compile qualification alone is not evidence of backend parity.
 
 ## Directory contract
 
@@ -25,16 +26,18 @@ a parallel validation tree.
 | --- | --- | --- | --- |
 | Smooth hydro reconstruction | PCM, MUSCL, and PPM pass | pending | [hydro](hydro/README.md) |
 | RKL1/RKL2 species diffusion | both pass; RKL2 shows second-order spatial convergence | pending | [diffusion](diffusion/README.md) |
-| External gravity | pass for RK2/RK3 constant-acceleration update | pending | [gravity](gravity/README.md) |
+| External gravity | pass for RK2/RK3 constant-acceleration update | unsupported / not applicable | [gravity](gravity/README.md) |
 | aprox13 one-zone burn | BD and ROS4 pass the BE_NR comparison | pending | [burn](burn/README.md) |
-| AMR | transfer/reflux conservation and basic 2D symmetry pass; local refinement retention is a known limitation | pending | [AMR](amr/README.md) |
+| AMR | transfer/reflux conservation and basic 2D symmetry pass; local refinement retention is a known limitation | implemented and source/compile qualified; real-device validation pending | [AMR](amr/README.md) |
 | Tabular EOS | normalized 3D/4D smooth sweep passes; Shen assets assessed, not accepted | pending | [EOS](eos/README.md) |
-| HDF5/restart | v1 compatibility and v2 hydro/burn continuity pass; dynamic-AMR split run pending | pending | [restart](restart/README.md) |
+| HDF5/restart | retained v1 compatibility and v2 hydro/burn continuity evidence; current v3 schema adds ENUC and scientific provenance; dynamic-AMR split run pending | implemented and source/compile qualified; real-device validation pending | [restart](restart/README.md) |
 | Generated networks/KLU | multi-size generation, coexistence, sparse solve, and one-step burn pass | pending | [network](network/README.md) |
 | Network-constrained NSE | existing CPU/thread evidence retained in the Timmes network record | pending | [Timmes networks](../docs/physics/TimmesNetworks.md) |
 | Sod analytic solution and manufactured geometry | pending | pending | planned |
 
-“Pending” is an explicit placeholder, not evidence of backend parity.
+“Pending” is an explicit placeholder, and “source/compile qualified” records an
+implementation milestone rather than backend parity. “Unsupported / not
+applicable” means that the current backend capability contract rejects the case.
 
 ## Error conventions
 

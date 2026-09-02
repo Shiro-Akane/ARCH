@@ -288,7 +288,7 @@ eos_type = helmholtz
 eos_table_path = /absolute/path/to/helm_table.dat
 ```
 
-Generated pynucastro packages are documented in the [custom-network local contract](../../src/physics/network/custom/README.md) and the [Reference](../Reference.md). `Auto` resolves to the dedicated DenseLU backend through 30 isotopes and to SuiteSparse KLU above 30. Generated packages set `SUPPORTS_NSE=false`. Their production qualification covers solver tolerances and composition/energy trajectories.
+Generated pynucastro packages are documented in the [custom-network local contract](../../src/physics/network/custom/README.md) and the [Reference](../Reference.md). Linear-solver requests are case-insensitive. `Auto` becomes DenseLU through 30 isotopes; above 30 it forms a SuiteSparse KLU CPU candidate and a cuDSS CUDA candidate. SparseKLU is CPU-only and cuDSS is CUDA-only, with incompatible explicit pairs rejected before backend construction. The cuDSS provider and CUDA generated-network/large-network paths remain unavailable, so CUDA sparse execution fails closed. Generated packages set `SUPPORTS_NSE=false`. Their production qualification covers solver tolerances and composition/energy trajectories.
 The generated-network generation, dispatch, and sparse-solver compatibility
 record is under [validation/network](../../validation/network/README.md);
 it is an interface smoke test rather than a physical trajectory qualification.

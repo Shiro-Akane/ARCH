@@ -2,12 +2,14 @@
 
 英文权威文本见 [README.md](README.md)。
 
-> CPU 状态：checkpoint v2 已通过均匀网格流体以及带 species/burn 的分段连续性测试；CUDA 待测。
+> CPU 状态：保留的 v1/v2 审计已通过均匀网格流体以及带 species/burn 的分段连续性测试。当前 checkpoint 格式为 v3，新增 ENUC 与科学 provenance。CUDA restart 路径已实现并通过源码/编译资格检查；真实设备验证待完成。
 
-本记录验证从中途 checkpoint 恢复后的轨迹与不中断运行一致。v2 除 AMR
-叶块守恒状态外，还保存 `dt_old`、下一宏步使用的 burn 限制以及循环阶段，避免
-restart 后重复执行本步 regrid 或按步输出。读取器仍能读取 v1 的多维场数组；
-由于 v1 不含控制器状态，旧文件不承诺逐步完全一致。
+本记录验证从中途 checkpoint 恢复后的轨迹与不中断运行一致。v3 除 AMR
+叶块守恒状态和 `ENUC` 外，还保存 `dt_old`、下一宏步使用的 burn 限制以及循环阶段，避免
+restart 后重复执行本步 regrid 或按步输出。它还记录已解析 EOS 身份、理想气体 gamma
+或 EOS 表身份与摘要、burn/network/NSE 选择，以及有序 species 元数据。读取器仍兼容
+v1/v2，但这两种旧格式都不含 ENUC 和科学 provenance；v1 还不含实现精确轨迹连续性
+所需的控制器状态。
 
 ## 审计环境
 
@@ -54,13 +56,17 @@ no-op，也不会重复写最终文件。配置现在会拒绝 `restart = true` 
 一份使用 `plt_dt = chk_dt = 1e-12` 的 scheduler probe 还确认 `t = 0`
 不会重复产生按时间输出；在较长的累积检查中，连续调度与 restart 重建都选择了
 完全相同的下一时刻 `0.60000000000000009`。
+以上是保留的 v1/v2 CPU 历史结果。当前 v3 writer/reader 与 provenance 检查已通过
+源码/编译资格检查，但本记录不会把这些历史运行重新标记为 v3 运行时验证。
 
 ## 范围标签
 
-- **已验证：** CPU HDF5 v1 多维读取兼容、v1 step-zero 续跑、v2 round trip 与
-  no-op restart、均匀网格流体连续性、species/burn 连续性、元数据与输出编号，
-  以及空路径拒绝。
-- **待验证：** 动态 AMR split-run 的 topology 连续性。schema 能恢复叶拓扑，
-  但 `ENUC` 是未写入 checkpoint 的瞬态细化诊断，因此不声明
-  `refine_var = ENUC` 的精确 restart。
-- **待验证：** CUDA HDF5 对等以及外部库调用过程中断。
+- **已验证的 CPU 历史证据：** HDF5 v1 多维读取兼容、v1 step-zero 续跑、v2
+  round trip 与 no-op restart、均匀网格流体连续性、species/burn 连续性、元数据与
+  输出编号，以及空路径拒绝。
+- **已实现并通过源码/编译资格检查：** checkpoint v3 写入 ENUC 与科学 provenance，
+  restore 时验证 provenance，并在将恢复状态上传至 CUDA 前使用同一套 Host schema。
+- **真实设备验证待完成：** CUDA 不间断运行与 split-run 对等、CPU 到 CUDA 及 CUDA
+  到 CPU 的续跑，以及动态 AMR topology 和 `refine_var = ENUC` 连续性。旧 v1/v2
+  文件会把 ENUC 初始化为零，不能建立基于 ENUC 的 split-run 对等性。
+- **待验证：** 外部库调用过程中断。

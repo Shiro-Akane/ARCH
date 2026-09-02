@@ -532,60 +532,56 @@ struct HelmEosHostView : BasicHelmEosView<SpeciesHostView>
 // Host owner for canonical file parsing and table lifetime.
 class HelmEos : public EOSBase, public HelmEosHostView
 {
-    inline static std::vector<double> host_f[9];
-    inline static std::vector<double> host_ef_table[4];
-    inline static bool is_loaded = false;
+    std::vector<double> host_f[9];
+    std::vector<double> host_ef_table[4];
 
 public:
     HelmEos(const std::string &table_path, const SpeciesManager *species_owner)
     {
-        if (!is_loaded) {
-            std::cout << "[HelmEos] Loading 2D Helmholtz table from "
-                      << table_path << "..." << std::endl;
-            std::ifstream file(table_path);
-            if (!file.is_open())
-                throw std::runtime_error("Could not open helm_table.dat at " + table_path);
+        std::cout << "[HelmEos] Loading 2D Helmholtz table from "
+                  << table_path << "..." << std::endl;
+        std::ifstream file(table_path);
+        if (!file.is_open())
+            throw std::runtime_error("Could not open helm_table.dat at " + table_path);
 
-            for (int k = 0; k < 9; ++k) host_f[k].resize(imax * jmax);
-            for (int k = 0; k < 4; ++k) host_ef_table[k].resize(imax * jmax);
+        for (int k = 0; k < 9; ++k) host_f[k].resize(imax * jmax);
+        for (int k = 0; k < 4; ++k) host_ef_table[k].resize(imax * jmax);
 
-            const auto read_value = [&](double &value) {
-                if (!(file >> value))
-                    throw std::runtime_error(
-                        "Incomplete or nonnumeric 541x201 Timmes helm_table.dat: "
-                        + table_path);
-            };
+        const auto read_value = [&](double &value) {
+            if (!(file >> value))
+                throw std::runtime_error(
+                    "Incomplete or nonnumeric 541x201 Timmes helm_table.dat: "
+                    + table_path);
+        };
 
-            for (int j = 0; j < jmax; ++j) {
-                for (int i = 0; i < imax; ++i) {
-                    const int index = j * imax + i;
-                    for (int k = 0; k < 9; ++k) read_value(host_f[k][index]);
-                }
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                const int index = j * imax + i;
+                for (int k = 0; k < 9; ++k) read_value(host_f[k][index]);
             }
-            for (int j = 0; j < jmax; ++j) {
-                for (int i = 0; i < imax; ++i) {
-                    double unused;
-                    for (int k = 0; k < 4; ++k) read_value(unused);
-                }
-            }
-            for (int j = 0; j < jmax; ++j) {
-                for (int i = 0; i < imax; ++i) {
-                    const int index = j * imax + i;
-                    for (int k = 0; k < 4; ++k)
-                        read_value(host_ef_table[k][index]);
-                }
-            }
-            for (int j = 0; j < jmax; ++j) {
-                for (int i = 0; i < imax; ++i) {
-                    double unused;
-                    for (int k = 0; k < 4; ++k) read_value(unused);
-                }
-            }
-
-            std::cout << "[HelmEos] Loaded complete 541x201 electron/positron table."
-                      << std::endl;
-            is_loaded = true;
         }
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                double unused;
+                for (int k = 0; k < 4; ++k) read_value(unused);
+            }
+        }
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                const int index = j * imax + i;
+                for (int k = 0; k < 4; ++k)
+                    read_value(host_ef_table[k][index]);
+            }
+        }
+        for (int j = 0; j < jmax; ++j) {
+            for (int i = 0; i < imax; ++i) {
+                double unused;
+                for (int k = 0; k < 4; ++k) read_value(unused);
+            }
+        }
+
+        std::cout << "[HelmEos] Loaded complete 541x201 electron/positron table."
+                  << std::endl;
 
         for (int k = 0; k < 9; ++k) {
             f[k] = host_f[k].data();
@@ -597,6 +593,11 @@ public:
         }
         specs = species_owner ? species_owner->get_host_view() : SpeciesHostView{};
     }
+
+    HelmEos(const HelmEos&) = delete;
+    HelmEos& operator=(const HelmEos&) = delete;
+    HelmEos(HelmEos&&) = delete;
+    HelmEos& operator=(HelmEos&&) = delete;
 
     HelmEosHostView get_view() const
     {

@@ -1,7 +1,10 @@
 #include "amr/AmrTransferPlans.h"
+#include "amr/CoarseFineCellPlan.h"
+#include "amr/ConservativeRestriction.h"
 #include "amr/AMRFluxRegistering.h"
 #include "amr/FluxRegister.h"
 #include "amr/GhostExchange.h"
+#include "numerics/reconstruction/AMRInterfaceStencil.h"
 
 #include <bit>
 #include <cmath>
@@ -9,6 +12,7 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -36,6 +40,30 @@ void expect_rejected(Function&& function, const std::string& message)
         rejected = true;
     }
     expect(rejected, message);
+}
+
+void test_conservative_restriction_math()
+{
+    const double density_integral =
+        amr::restriction_math::weighted_conserved_value(1.0, 1.0)
+        + amr::restriction_math::weighted_conserved_value(3.0, 1.0);
+    const double species_density_integral =
+        amr::restriction_math::weighted_species_density(1.0, 1.0, 1.0)
+        + amr::restriction_math::weighted_species_density(3.0, 0.0, 1.0);
+    expect(amr::restriction_math::restricted_mass_fraction(
+               species_density_integral, density_integral) == 0.25,
+           "shared Host/device rho-X restriction drifted");
+
+    const double weighted_density_integral =
+        amr::restriction_math::weighted_conserved_value(1.0, 1.0)
+        + amr::restriction_math::weighted_conserved_value(3.0, 3.0);
+    const double weighted_species_density_integral =
+        amr::restriction_math::weighted_species_density(1.0, 1.0, 1.0)
+        + amr::restriction_math::weighted_species_density(3.0, 0.0, 3.0);
+    expect(amr::restriction_math::restricted_mass_fraction(
+               weighted_species_density_integral,
+               weighted_density_integral) == 0.1,
+           "shared physical-volume rho-X restriction drifted");
 }
 
 amr::AmrEndpoint endpoint(int level, std::uint32_t x,
@@ -226,6 +254,232 @@ void fill_block(amr::Block& block)
             block.fluid_state.X(species, index) =
                 0.1 * (species + 1) + 1.0e-6 * value;
     }
+    block.state_next = block.fluid_state;
+    block.state_scratch = block.fluid_state;
+    for (int index = 0; index < total; ++index) {
+        block.state_next.rho[index] += 10000.0;
+        block.state_next.mom_u[index] += 10000.0;
+        block.state_next.mom_v[index] += 10000.0;
+        block.state_next.mom_w[index] += 10000.0;
+        block.state_next.eng[index] += 10000.0;
+        block.state_next.enuc_rate[index] += 10000.0;
+        for (int species = 0;
+             species < block.state_next.GetNumSpecies(); ++species)
+            block.state_next.X(species, index) += 10.0;
+
+        block.state_scratch.rho[index] += 20000.0;
+        block.state_scratch.mom_u[index] += 20000.0;
+        block.state_scratch.mom_v[index] += 20000.0;
+        block.state_scratch.mom_w[index] += 20000.0;
+        block.state_scratch.eng[index] += 20000.0;
+        block.state_scratch.enuc_rate[index] += 20000.0;
+        for (int species = 0;
+             species < block.state_scratch.GetNumSpecies(); ++species)
+            block.state_scratch.X(species, index) += 20.0;
+    }
+}
+
+void test_amr_interface_stencil_predicate()
+{
+    bool host_flags[6]{false, false, false, false, false, false};
+    expect(!AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+               3, host_flags, 0, 7, 4, 20),
+           "unmarked PPM face was lowered");
+    host_flags[0] = true;
+    expect(AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+               3, host_flags, 0, 5, 4, 20)
+               && !AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+                   3, host_flags, 0, 6, 4, 20),
+           "lower coarse-fine PPM threshold drifted");
+    expect(!AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+               2, host_flags, 0, 5, 4, 20),
+           "native MUSCL stencil was unnecessarily lowered");
+
+    std::uint8_t device_flags[6]{0, 0, 0, 1, 0, 0};
+    expect(AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+               3, device_flags, 1, 17, 4, 20)
+               && !AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+                   3, device_flags, 1, 16, 4, 20),
+           "upper device coarse-fine PPM threshold drifted");
+    expect(AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+               3, device_flags, 3, 10, 4, 20),
+           "invalid wide-stencil metadata did not take the narrow path");
+}
+
+amr::CoarseFineTransferPlan geometric_plan(
+    int dimension, amr::RefinementRule rule,
+    const amr::LogicalAmrBox& source_box,
+    const amr::LogicalAmrBox& destination_box)
+{
+    const bool injection =
+        rule == amr::RefinementRule::CoarseGhostInjection;
+    amr::CoarseFineTransferPlan plan{};
+    plan.dimension = dimension;
+    plan.scope = {0, {9}, {9}};
+    const amr::AmrEndpoint source{
+        {dimension, injection ? 0 : 1, 0, 0, 0}, {{41}, {9}}};
+    const amr::AmrEndpoint destination{
+        {dimension, injection ? 1 : 0, 0, 0, 0}, {{42}, {9}}};
+    for (int field = 0; field < 6; ++field) {
+        plan.operations.push_back({
+            0, source, destination, source_box, destination_box,
+            amr::AmrAxis::X, amr::AmrSide::Lower,
+            static_cast<amr::AmrField>(field), -1, rule, 1.0, 1.0});
+    }
+    amr::finalize_amr_plan(plan);
+    return plan;
+}
+
+void test_multidimensional_cell_lowering()
+{
+    const auto injection = geometric_plan(
+        2, amr::RefinementRule::CoarseGhostInjection,
+        {{14, 0, 0}, {2, 8, 1}}, {{-4, 0, 0}, {4, 16, 1}});
+    const auto injected = amr::compile_coarse_fine_cell_plan(injection, 0);
+    expect(injected.transfers.size() == 64
+               && injected.transfers.front().source_count == 1
+               && injected.transfers.front().destination_cell
+                   == amr::LogicalAmrCell{-4, 0, 0}
+               && injected.transfers.front().source_cells[0]
+                   == amr::LogicalAmrCell{14, 0, 0},
+           "2D coarse injection cell mathematics drifted");
+
+    const auto average = geometric_plan(
+        3, amr::RefinementRule::FineGhostAverage,
+        {{8, 0, 0}, {8, 16, 16}}, {{-4, 0, 0}, {4, 8, 8}});
+    const auto averaged = amr::compile_coarse_fine_cell_plan(average, 0);
+    expect(averaged.transfers.size() == 256
+               && averaged.transfers.front().source_count == 8
+               && averaged.transfers.front().destination_cell
+                   == amr::LogicalAmrCell{-4, 0, 0}
+               && averaged.transfers.front().source_cells.front()
+                   == amr::LogicalAmrCell{8, 0, 0}
+               && averaged.transfers.front().source_cells[7]
+                   == amr::LogicalAmrCell{9, 1, 1},
+           "3D fine average cell mathematics drifted");
+
+    auto weighted = injection;
+    weighted.operations.front().weight = 0.5;
+    weighted.fingerprint = amr::compute_amr_plan_fingerprint(weighted);
+    expect_rejected(
+        [&] { (void)amr::compile_coarse_fine_cell_plan(weighted, 0); },
+        "weighted logical transfer was silently treated as a copy");
+}
+
+void test_curvilinear_host_restriction()
+{
+    SimConfig config{};
+    config.grid.dim = 1;
+    config.grid.nblockx1 = 2;
+    config.grid.nblockx2 = 0;
+    config.grid.nblockx3 = 0;
+    config.grid.geometry = "cylindrical";
+    config.grid.amr_max_blocks = 16;
+    config.amr.lrefinemin = 0;
+    config.amr.lrefinemax = 1;
+
+    amr::AMRControl control(16, 1);
+    auto pool = control.pool;
+    auto tree = control.tree;
+    tree->LoadLeafGrid(
+        config, 1, std::vector<int>{1, 1, 0},
+        std::vector<std::uint32_t>{0, 1, 1},
+        std::vector<std::uint32_t>{0, 0, 0},
+        std::vector<std::uint32_t>{0, 0, 0});
+
+    const auto& active = tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles;
+    handles.reserve(active.size());
+    for (std::size_t index = 0; index < active.size(); ++index) {
+        handles.push_back({{200 + index}, {47}});
+        fill_block(pool->GetBlock(active[index]));
+    }
+    control.BindActiveHandles(handles);
+    const auto plan = control.ghost_exchange.BuildCoarseFinePlan(
+        pool, tree, 1, handles);
+    const auto cell_plan = amr::compile_coarse_fine_cell_plan(plan, 1);
+    const auto selected = std::find_if(
+        cell_plan.transfers.begin(), cell_plan.transfers.end(),
+        [](const amr::CoarseFineCellTransfer& transfer) {
+            return transfer.rule == amr::RefinementRule::FineGhostAverage;
+        });
+    expect(selected != cell_plan.transfers.end()
+               && selected->source_count == 2,
+           "curvilinear fixture has no fine restriction route");
+
+    const auto block_for = [&](const amr::BlockHandle handle) -> amr::Block& {
+        for (std::size_t index = 0; index < handles.size(); ++index)
+            if (handles[index] == handle)
+                return pool->GetBlock(active[index]);
+        throw std::runtime_error("curvilinear fixture handle is missing");
+    };
+    amr::Block& source = block_for(selected->source.handle);
+    amr::Block& destination = block_for(selected->destination.handle);
+    const auto cell_index = [](const Grid& grid,
+                               const amr::LogicalAmrCell& logical) {
+        return grid.GetIndex(
+            grid.Is() + logical[0], grid.Js() + logical[1],
+            grid.Ks() + logical[2]);
+    };
+    const int source_a = cell_index(source.grid, selected->source_cells[0]);
+    const int source_b = cell_index(source.grid, selected->source_cells[1]);
+    const int destination_cell = cell_index(
+        destination.grid, selected->destination_cell);
+    source.fluid_state.rho[source_a] = 1.0;
+    source.fluid_state.rho[source_b] = 3.0;
+    source.fluid_state.mom_u[source_a] = 2.0;
+    source.fluid_state.mom_u[source_b] = 6.0;
+    source.fluid_state.enuc_rate[source_a] = -4.0;
+    source.fluid_state.enuc_rate[source_b] = 8.0;
+    source.fluid_state.X(0, source_a) = 1.0;
+    source.fluid_state.X(0, source_b) = 0.0;
+
+    const auto measure = [&](const amr::LogicalAmrCell& logical) {
+        return GridMetrics::CellVolume(
+            source.grid, source.grid.Is() + logical[0],
+            source.grid.Js() + logical[1],
+            source.grid.Ks() + logical[2]);
+    };
+    const double measure_a = measure(selected->source_cells[0]);
+    const double measure_b = measure(selected->source_cells[1]);
+    const double measure_sum = measure_a + measure_b;
+    const double density_integral =
+        amr::restriction_math::weighted_conserved_value(1.0, measure_a)
+        + amr::restriction_math::weighted_conserved_value(3.0, measure_b);
+    const double expected_rho = amr::restriction_math::restricted_average(
+        density_integral, measure_sum);
+    const double expected_mom_u =
+        amr::restriction_math::restricted_average(
+            amr::restriction_math::weighted_conserved_value(2.0, measure_a)
+                + amr::restriction_math::weighted_conserved_value(
+                    6.0, measure_b),
+            measure_sum);
+    const double expected_enuc =
+        amr::restriction_math::restricted_average(
+            amr::restriction_math::weighted_conserved_value(-4.0, measure_a)
+                + amr::restriction_math::weighted_conserved_value(
+                    8.0, measure_b),
+            measure_sum);
+    const double expected_x =
+        amr::restriction_math::restricted_mass_fraction(
+            amr::restriction_math::weighted_species_density(
+                1.0, 1.0, measure_a)
+                + amr::restriction_math::weighted_species_density(
+                    3.0, 0.0, measure_b),
+            density_integral);
+
+    control.ghost_exchange.ExecuteCoarseFinePlan(
+        plan, pool, tree, 1, &amr::Block::fluid_state, handles);
+    expect(destination.fluid_state.rho[destination_cell] == expected_rho
+               && destination.fluid_state.mom_u[destination_cell]
+                   == expected_mom_u
+               && destination.fluid_state.enuc_rate[destination_cell]
+                   == expected_enuc
+               && destination.fluid_state.X(0, destination_cell)
+                   == expected_x,
+           "curvilinear Host restriction ignored physical cell volume");
+    expect(expected_rho != 2.0 && expected_x != 0.25,
+           "curvilinear test did not distinguish volume weighting");
 }
 
 void test_mixed_level_and_coarse_fine_execution()
@@ -260,6 +514,25 @@ void test_mixed_level_and_coarse_fine_execution()
     control.flux_register.EnsureSpecies(2);
 
     amr::GhostExchange& exchange = control.ghost_exchange;
+    const double fail_closed_witness =
+        pool->GetBlock(active.front()).fluid_state.rho.front();
+    expect_rejected(
+        [&] { (void)exchange.BuildSameLevelPlans(pool, tree, 1); },
+        "same-level planning accepted empty handles");
+    expect_rejected(
+        [&] { exchange.ExecuteExchange(
+            pool, tree, 1, &amr::Block::fluid_state); },
+        "Host exchange accepted empty handles");
+    const std::span<const amr::BlockHandle> short_handles(
+        handles.data(), handles.size() - 1);
+    expect_rejected(
+        [&] { exchange.ExecuteExchange(
+            pool, tree, 1, &amr::Block::fluid_state, short_handles); },
+        "Host exchange accepted an incomplete identity view");
+    expect(pool->GetBlock(active.front()).fluid_state.rho.front()
+               == fail_closed_witness,
+           "rejected Host exchange modified state");
+
     const auto same_level = exchange.BuildSameLevelPlans(
         pool, tree, 1, handles);
     expect(same_level.size() == 2,
@@ -276,6 +549,34 @@ void test_mixed_level_and_coarse_fine_execution()
                || plan.operations.front().rule
                == amr::RefinementRule::CoarseGhostInjection,
            "coarse-fine plan has an invalid first rule");
+    const auto cell_plan = amr::compile_coarse_fine_cell_plan(plan, 2);
+    expect(cell_plan.dimension == 1 && cell_plan.species_count == 2
+               && cell_plan.scope == plan.scope
+               && cell_plan.logical_fingerprint == plan.fingerprint
+               && cell_plan.transfers.size() == 2 * amr::MAX_NG,
+           "coarse-fine CPU-only cell lowering metadata drifted");
+    int injection_cells = 0;
+    int average_cells = 0;
+    std::set<std::pair<amr::AmrEndpoint, amr::LogicalAmrCell>> destinations;
+    for (const auto& transfer : cell_plan.transfers) {
+        expect(destinations.emplace(
+                   transfer.destination, transfer.destination_cell).second,
+               "coarse-fine cell lowering produced overlapping writes");
+        if (transfer.rule
+            == amr::RefinementRule::CoarseGhostInjection) {
+            expect(transfer.source_count == 1,
+                   "coarse injection did not lower to one source");
+            ++injection_cells;
+        } else {
+            expect(transfer.rule == amr::RefinementRule::FineGhostAverage
+                       && transfer.source_count == 2,
+                   "1D fine average did not lower to two sources");
+            ++average_cells;
+        }
+    }
+    expect(injection_cells == amr::MAX_NG
+               && average_cells == amr::MAX_NG,
+           "coarse-fine cell lowering route coverage drifted");
 
     int fine_id = -1;
     int coarse_id = -1;
@@ -286,8 +587,8 @@ void test_mixed_level_and_coarse_fine_execution()
     }
     expect(fine_id >= 0 && coarse_id >= 0,
            "mixed AMR fixture endpoints are missing");
-    const amr::Block& fine_before = pool->GetBlock(fine_id);
-    const amr::Block& coarse_before = pool->GetBlock(coarse_id);
+    amr::Block& fine_before = pool->GetBlock(fine_id);
+    amr::Block& coarse_before = pool->GetBlock(coarse_id);
     const int coarse_source = coarse_before.grid.GetIndex(
         coarse_before.grid.Is(), coarse_before.grid.Js(),
         coarse_before.grid.Ks());
@@ -301,6 +602,28 @@ void test_mixed_level_and_coarse_fine_execution()
     const int coarse_lower_ghost = coarse_before.grid.GetIndex(
         coarse_before.grid.Is() - amr::MAX_NG, coarse_before.grid.Js(),
         coarse_before.grid.Ks());
+
+    // A direct arithmetic average would produce X0=0.5 here.  Restriction
+    // must instead conserve rho*X and recover X0=(1*1+3*0)/(1+3)=0.25.
+    fine_before.fluid_state.rho[fine_average_a] = 1.0;
+    fine_before.fluid_state.rho[fine_average_b] = 3.0;
+    fine_before.fluid_state.mom_u[fine_average_a] = 2.0;
+    fine_before.fluid_state.mom_u[fine_average_b] = 6.0;
+    fine_before.fluid_state.mom_v[fine_average_a] = 4.0;
+    fine_before.fluid_state.mom_v[fine_average_b] = 8.0;
+    fine_before.fluid_state.mom_w[fine_average_a] = 6.0;
+    fine_before.fluid_state.mom_w[fine_average_b] = 10.0;
+    fine_before.fluid_state.eng[fine_average_a] = 8.0;
+    fine_before.fluid_state.eng[fine_average_b] = 12.0;
+    fine_before.fluid_state.enuc_rate[fine_average_a] = 10.0;
+    fine_before.fluid_state.enuc_rate[fine_average_b] = 14.0;
+    fine_before.fluid_state.X(0, fine_average_a) = 1.0;
+    fine_before.fluid_state.X(0, fine_average_b) = 0.0;
+    fine_before.fluid_state.X(1, fine_average_a) = 0.0;
+    fine_before.fluid_state.X(1, fine_average_b) = 1.0;
+    coarse_before.fluid_state.enuc_rate[coarse_source] = -0.0;
+    coarse_before.fluid_state.X(0, coarse_source) = -0.0;
+
     const double expected_fine_ghost =
         coarse_before.fluid_state.rho[coarse_source];
     const double expected_coarse_ghost = 0.5
@@ -309,20 +632,97 @@ void test_mixed_level_and_coarse_fine_execution()
     const double expected_enuc = 0.5
         * (fine_before.fluid_state.enuc_rate[fine_average_a]
            + fine_before.fluid_state.enuc_rate[fine_average_b]);
+    const auto shared_restriction = [&](const FluidState& state, int species) {
+        const double density_integral =
+            amr::restriction_math::weighted_conserved_value(
+                state.rho[fine_average_a], 1.0)
+            + amr::restriction_math::weighted_conserved_value(
+                state.rho[fine_average_b], 1.0);
+        const double species_density_integral =
+            amr::restriction_math::weighted_species_density(
+                state.rho[fine_average_a],
+                state.X(species, fine_average_a), 1.0)
+            + amr::restriction_math::weighted_species_density(
+                state.rho[fine_average_b],
+                state.X(species, fine_average_b), 1.0);
+        return amr::restriction_math::restricted_mass_fraction(
+            species_density_integral, density_integral);
+    };
+    const double expected_ghost_x0 =
+        shared_restriction(fine_before.fluid_state, 0);
+    const double expected_ghost_x1 =
+        shared_restriction(fine_before.fluid_state, 1);
+    const double expected_next_fine_ghost =
+        coarse_before.state_next.rho[coarse_source];
+    const double expected_next_coarse_ghost = 0.5
+        * (fine_before.state_next.rho[fine_average_a]
+           + fine_before.state_next.rho[fine_average_b]);
+    const double expected_next_x0 =
+        shared_restriction(fine_before.state_next, 0);
+    const double expected_next_x1 =
+        shared_restriction(fine_before.state_next, 1);
+    const double expected_scratch_fine_ghost =
+        coarse_before.state_scratch.rho[coarse_source];
+    const double expected_scratch_coarse_ghost = 0.5
+        * (fine_before.state_scratch.rho[fine_average_a]
+           + fine_before.state_scratch.rho[fine_average_b]);
+    const double expected_scratch_x0 =
+        shared_restriction(fine_before.state_scratch, 0);
+    const double expected_scratch_x1 =
+        shared_restriction(fine_before.state_scratch, 1);
 
+    exchange.ExecuteExchange(
+        pool, tree, 1, &amr::Block::fluid_state, handles);
     exchange.ExecuteCoarseFinePlan(
-        plan, pool, tree, 1, &amr::Block::fluid_state, handles);
+        plan, pool, tree, 1, &amr::Block::state_next, handles);
+    exchange.ExecuteCoarseFinePlan(
+        plan, pool, tree, 1, &amr::Block::state_scratch, handles);
     const amr::Block& fine_after = pool->GetBlock(fine_id);
     const amr::Block& coarse_after = pool->GetBlock(coarse_id);
     expect(fine_after.fluid_state.rho[fine_upper_ghost]
                == expected_fine_ghost,
            "coarse-to-fine ghost route drifted");
+    expect(std::signbit(
+               fine_after.fluid_state.enuc_rate[fine_upper_ghost])
+               && std::signbit(
+                   fine_after.fluid_state.X(0, fine_upper_ghost)),
+           "coarse-to-fine injection lost bitwise scalar copies");
     expect(coarse_after.fluid_state.rho[coarse_lower_ghost]
                == expected_coarse_ghost,
            "fine-to-coarse ghost average drifted");
     expect(coarse_after.fluid_state.enuc_rate[coarse_lower_ghost]
                == expected_enuc,
            "fine-to-coarse ENUC ghost average drifted");
+    expect(coarse_after.fluid_state.mom_u[coarse_lower_ghost] == 4.0
+               && coarse_after.fluid_state.mom_v[coarse_lower_ghost] == 6.0
+               && coarse_after.fluid_state.mom_w[coarse_lower_ghost] == 8.0
+               && coarse_after.fluid_state.eng[coarse_lower_ghost] == 10.0,
+           "fine-to-coarse conserved ghost restriction drifted");
+    expect(coarse_after.fluid_state.X(0, coarse_lower_ghost)
+                   == expected_ghost_x0
+               && coarse_after.fluid_state.X(1, coarse_lower_ghost)
+                   == expected_ghost_x1
+               && expected_ghost_x0 == 0.25
+               && expected_ghost_x1 == 0.75,
+           "Host lowering no longer matches shared CUDA rho-X math");
+    expect(fine_after.state_next.rho[fine_upper_ghost]
+               == expected_next_fine_ghost
+               && coarse_after.state_next.rho[coarse_lower_ghost]
+                   == expected_next_coarse_ghost
+               && coarse_after.state_next.X(0, coarse_lower_ghost)
+                   == expected_next_x0
+               && coarse_after.state_next.X(1, coarse_lower_ghost)
+                   == expected_next_x1,
+           "Next coarse-fine state-slot execution drifted");
+    expect(fine_after.state_scratch.rho[fine_upper_ghost]
+               == expected_scratch_fine_ghost
+               && coarse_after.state_scratch.rho[coarse_lower_ghost]
+                   == expected_scratch_coarse_ghost
+               && coarse_after.state_scratch.X(0, coarse_lower_ghost)
+                   == expected_scratch_x0
+               && coarse_after.state_scratch.X(1, coarse_lower_ghost)
+                   == expected_scratch_x1,
+           "Scratch coarse-fine state-slot execution drifted");
 
     std::map<amr::AmrEndpoint, int> lowering;
     amr::AmrEndpoint fine_endpoint{};
@@ -430,6 +830,10 @@ int main()
     try {
         test_public_contract();
         test_validation();
+        test_conservative_restriction_math();
+        test_amr_interface_stencil_predicate();
+        test_multidimensional_cell_lowering();
+        test_curvilinear_host_restriction();
         test_mixed_level_and_coarse_fine_execution();
         const auto ordinary = ordinary_plan();
         const auto migration = migration_plan();

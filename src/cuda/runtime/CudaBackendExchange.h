@@ -1,6 +1,6 @@
 /**
  * @file CudaBackendExchange.h
- * @brief Narrow runtime ABI for CUDA same-level exchange kernels.
+ * @brief Narrow runtime ABI for CUDA same-level and coarse/fine exchange.
  */
 
 #pragma once
@@ -28,11 +28,27 @@ struct DeviceExchangeOperation {
     std::uint64_t scratch_first = 0;
 };
 
+struct DeviceCoarseFineTransfer {
+    int source_block = 0;
+    int destination_block = 0;
+    int destination_cell = 0;
+    int source_cells[8]{};
+    std::uint8_t source_count = 0;
+};
+
+static_assert(std::is_standard_layout_v<DeviceCoarseFineTransfer>);
+static_assert(std::is_trivially_copyable_v<DeviceCoarseFineTransfer>);
+
 cudaError_t launch_cuda_backend_exchange_phase(
     const DeviceExchangeBlock* blocks,
     const DeviceExchangeOperation* operations, int operation_count,
     int field_count, std::uint64_t total_cells, double* scratch,
     cudaStream_t stream);
+
+cudaError_t launch_cuda_backend_coarse_fine_exchange(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoarseFineTransfer* transfers, int transfer_count,
+    int field_count, double* scratch, cudaStream_t stream);
 
 cudaError_t launch_cuda_backend_boundary_plan(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,

@@ -144,8 +144,9 @@ void test_all_requirement_codes()
 
     auto p = plan;
     p.linear_solver = LinearSolverId::SparseKlu;
-    expect_cuda_code(p, requirements, probe, BackendCapabilityCode::UnsupportedBinding,
-                     "absent binding");
+    expect_cuda_code(p, requirements, probe,
+                     BackendCapabilityCode::SparseKluRequiresCpu,
+                     "SparseKLU is CPU-only even when CUDA is available");
     p = plan;
     p.flux = static_cast<FluxId>(255);
     expect_cuda_code(p, requirements, probe, BackendCapabilityCode::InvalidPlan,
@@ -208,7 +209,8 @@ void test_all_requirement_codes()
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRootTopology,
                      "uniform flag requires multiple roots");
     r = requirements; r.amr = true;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedAmr, "AMR");
+    expect(query_support(plan, r, probe).cuda_supported,
+           "CUDA dynamic AMR support");
     r = requirements; r.gravity = GravityId::External;
     expect(query_support(plan, r, probe).cpu_supported,
            "CPU external gravity remains supported");
@@ -218,7 +220,11 @@ void test_all_requirement_codes()
                     "CPU self gravity");
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "self gravity");
     r = requirements; r.restart = true;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedRestart, "restart");
+    expect(query_support(plan, r, probe).cuda_supported,
+           "CUDA restart through the shared Host checkpoint schema");
+    r.amr = true;
+    expect(query_support(plan, r, probe).cuda_supported,
+           "CUDA restart with a dynamic AMR leaf hierarchy");
     r = requirements; r.geometry = GeometryId::Cylindrical;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGeometry, "cylindrical");
     r = requirements; r.geometry = GeometryId::Spherical;
@@ -284,6 +290,116 @@ void test_all_requirement_codes()
     p = burn_plan; p.linear_solver = LinearSolverId::None;
     expect_cuda_code(p, r, probe, BackendCapabilityCode::InvalidPlan,
                      "enabled burn requires linear solver");
+
+    p = burn_plan;
+    p.linear_solver = LinearSolverId::CuDss;
+    support = query_support(p, r, probe);
+    expect(!support.cpu_supported
+               && support.cpu_code == BackendCapabilityCode::CuDssRequiresCuda,
+           "explicit CPU+cuDSS is rejected with a backend-specific reason");
+#if ARCH_HAS_CUDSS_PROVIDER
+    expect(support.cuda_supported,
+           "committed cuDSS provider makes explicit CUDA+cuDSS available");
+#else
+    expect(!support.cuda_supported
+               && support.cuda_code
+                   == BackendCapabilityCode::CuDssProviderUnavailable,
+           "parseable cuDSS fails closed without a committed provider");
+#endif
+    bool rejected = false;
+    try {
+        (void)resolve_backend(
+            ComputeBackend::Cpu, support, probe,
+            StartupPhase::BeforeConstruction);
+    } catch (const std::runtime_error& error) {
+        rejected = std::string(error.what())
+            == "cuDSS requires compute_backend = cuda";
+    }
+    expect(rejected, "CPU+cuDSS reports the exact invalid pairing");
+
+    p.linear_solver = LinearSolverId::SparseKlu;
+    support = query_support(p, r, probe);
+    expect(!support.cuda_supported
+               && support.cuda_code
+                   == BackendCapabilityCode::SparseKluRequiresCpu,
+           "explicit CUDA+SparseKLU is rejected with a backend-specific reason");
+    rejected = false;
+    try {
+        (void)resolve_backend(
+            ComputeBackend::Cuda, support, probe,
+            StartupPhase::BeforeConstruction);
+    } catch (const std::runtime_error& error) {
+        rejected = std::string(error.what())
+            == "SparseKLU requires compute_backend = cpu";
+    }
+    expect(rejected, "CUDA+SparseKLU reports the exact invalid pairing");
+
+#if ARCH_HAS_KLU
+    expect(resolve_backend(
+               ComputeBackend::Auto, support, probe,
+               StartupPhase::BeforeConstruction).resolved_backend
+               == ComputeBackend::Cpu,
+           "compute Auto plus explicit SparseKLU pins CPU");
+#else
+    rejected = false;
+    try {
+        (void)resolve_backend(
+            ComputeBackend::Auto, support, probe,
+            StartupPhase::BeforeConstruction);
+    } catch (const std::runtime_error& error) {
+        rejected = std::string(error.what())
+            == "SparseKLU was selected, but this ARCH build has KLU disabled";
+    }
+    expect(rejected,
+           "compute Auto plus explicit SparseKLU fails when KLU is absent");
+#endif
+
+    p.linear_solver = LinearSolverId::CuDss;
+    support = query_support(p, r, probe);
+#if ARCH_HAS_CUDSS_PROVIDER
+    expect(resolve_backend(
+               ComputeBackend::Auto, support, probe,
+               StartupPhase::BeforeConstruction).resolved_backend
+               == ComputeBackend::Cuda,
+           "compute Auto plus explicit cuDSS pins CUDA");
+#else
+    rejected = false;
+    try {
+        (void)resolve_backend(
+            ComputeBackend::Auto, support, probe,
+            StartupPhase::BeforeConstruction);
+    } catch (const std::runtime_error& error) {
+        rejected = std::string(error.what())
+            == "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider";
+    }
+    expect(rejected,
+           "compute Auto plus explicit cuDSS fails when its provider is absent");
+#endif
+
+    const ExecutionPlanRequest automatic_request{
+        burn_plan.flux, burn_plan.reconstruction, burn_plan.limiter,
+        burn_plan.time_integrator, burn_plan.eos, burn_plan.network,
+        burn_plan.ode_solver, LinearSolverRequest::Auto,
+        burn_plan.diffusion_integrator};
+    const auto large_cpu = materialize_execution_plan(
+        automatic_request, ComputeBackend::Cpu,
+        BurnLimits::MAX_SPECIES + 1);
+    const auto large_cuda = materialize_execution_plan(
+        automatic_request, ComputeBackend::Cuda,
+        BurnLimits::MAX_SPECIES + 1);
+    expect(large_cpu.ok && large_cuda.ok
+               && large_cpu.value.linear_solver
+                   == LinearSolverId::SparseKlu
+               && large_cuda.value.linear_solver == LinearSolverId::CuDss,
+           "large-network Auto materializes KLU/CuDSS candidates");
+    auto large_requirements = r;
+    large_requirements.species_count = BurnLimits::MAX_SPECIES + 1;
+    support = query_support(
+        large_cpu.value, large_cuda.value, large_requirements, probe);
+    expect(!support.cuda_supported
+               && support.cuda_code
+                   == BackendCapabilityCode::UnsupportedSpeciesCount,
+           "cuDSS candidate does not bypass the current CUDA species gate");
 
     auto diffusion_plan = plan;
     diffusion_plan.diffusion_integrator = DiffusionIntegratorId::Rkl1;

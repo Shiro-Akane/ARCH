@@ -3,14 +3,20 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-> CPU status: checkpoint format v2 passes uniform-hydro and species/burn split-run continuity. CUDA: pending.
+> CPU status: the retained v1/v2 audit passes uniform-hydro and species/burn
+> split-run continuity. The current checkpoint format is v3, with ENUC and
+> scientific provenance. The CUDA restart path is implemented and source/compile
+> qualified; real-device validation is pending.
 
 This record verifies that a run resumed from an intermediate checkpoint follows
-the same trajectory as the uninterrupted run. Format v2 stores the conserved
-AMR leaf state together with `dt_old`, the burn limit carried into the next
-macro step, and the loop phase needed to avoid repeating regrid or step-based
-output work. The reader retains compatibility with v1 field arrays; v1 files do
-not contain the controller state required for exact trajectory continuity.
+the same trajectory as the uninterrupted run. Format v3 stores the conserved
+AMR leaf state and `ENUC` together with `dt_old`, the burn limit carried into the
+next macro step, and the loop phase needed to avoid repeating regrid or
+step-based output work. It also records the resolved EOS identity, ideal-gas
+gamma or EOS-table identity and digest, burn/network/NSE selection, and ordered
+species metadata. The reader retains v1/v2 compatibility, but those legacy
+formats have neither ENUC nor scientific provenance; v1 also lacks the
+controller state required for exact trajectory continuity.
 
 ## Audit environment
 
@@ -65,13 +71,21 @@ starting a fresh run. A scheduler probe with `plt_dt = chk_dt = 1e-12`
 confirmed that `t = 0` does not produce a duplicate time-based output; a
 continuous schedule and restart reconstruction both selected the identical
 next value `0.60000000000000009` in the longer accumulation check.
+These are retained historical v1/v2 CPU results. The current v3 writer/reader
+and provenance checks have source/compile qualification, but this record does
+not relabel those historical runs as v3 runtime validation.
 
 ## Scope label
 
-- **Verified:** CPU HDF5 v1 multidimensional read compatibility; v1 step-zero
-  continuation; v2 round trip and no-op restart; uniform-grid hydro continuity;
-  species/burn continuity; metadata and output numbering; empty-path rejection.
-- **Pending:** dynamic-AMR split-run topology continuity. The schema restores
-  leaf topology, but `ENUC` is a transient refinement diagnostic and is not
-  checkpointed; exact `refine_var = ENUC` restart is not claimed.
-- **Pending:** CUDA HDF5 parity and interruption during an external library call.
+- **Verified historical CPU evidence:** HDF5 v1 multidimensional read
+  compatibility; v1 step-zero continuation; v2 round trip and no-op restart;
+  uniform-grid hydro continuity; species/burn continuity; metadata and output
+  numbering; empty-path rejection.
+- **Implemented and source/compile qualified:** checkpoint v3 writes ENUC and
+  scientific provenance, validates that provenance on restore, and uses the
+  same Host schema before uploading restored state to CUDA.
+- **Real-device validation pending:** CUDA uninterrupted-versus-split-run
+  parity, CPU-to-CUDA and CUDA-to-CPU continuation, and dynamic-AMR topology and
+  `refine_var = ENUC` continuity. Legacy v1/v2 files initialize ENUC to zero and
+  cannot establish ENUC-based split-run parity.
+- **Pending:** interruption during an external library call.

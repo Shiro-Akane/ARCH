@@ -103,7 +103,8 @@ struct HostCompiledBoundaryTransfer {
     std::uint64_t logical_ordinal;
     int source_index;
     int destination_index;
-    std::array<std::int8_t, 5> conserved_signs;
+    // rho, three momenta, energy, and scalar ENUC diagnostic.
+    std::array<std::int8_t, 6> conserved_signs;
     std::int8_t species_sign;
 };
 
@@ -231,6 +232,8 @@ inline HostCompiledBoundaryPlan compile(
             transfer.conserved_signs[field] = component_mapping(
                 operation, static_cast<BoundaryFieldClass>(field)).sign;
         }
+        transfer.conserved_signs[5] = component_mapping(
+            operation, BoundaryFieldClass::AllSpecies).sign;
         transfer.species_sign = component_mapping(
             operation, BoundaryFieldClass::AllSpecies).sign;
         compiled.transfers.push_back(transfer);
@@ -325,6 +328,8 @@ inline void execute(
                     state.mom_w[source], transfer.conserved_signs[3]);
                 state.eng[destination] = signed_copy(
                     state.eng[source], transfer.conserved_signs[4]);
+                state.enuc_rate[destination] = signed_copy(
+                    state.enuc_rate[source], transfer.conserved_signs[5]);
                 for (int species = 0; species < n_species; ++species) {
                     state.X(species, destination) = signed_copy(
                         state.X(species, source), transfer.species_sign);

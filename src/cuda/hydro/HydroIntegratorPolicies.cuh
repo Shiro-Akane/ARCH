@@ -105,6 +105,7 @@ cudaError_t launch_bounded_hydro_stage(
     const EosView& eos, double entropy_fix_coefficient,
     double density_floor, double minimum_internal_energy,
     double maximum_internal_energy,
+    const CudaAmrFluxDirectionRouteView* amr_routes,
     const scheduler::StageDescriptor& descriptor, double dt,
     cudaStream_t stream, int& kernels_launched)
 {
@@ -126,6 +127,14 @@ cudaError_t launch_bounded_hydro_stage(
             face_flux, delta, grid, dt, direction, stream);
         if (error != cudaSuccess) return error;
         ++kernels_launched;
+        if (amr_routes != nullptr) {
+            const auto registration = launch_cuda_amr_flux_register(
+                amr_routes[direction], AmrFluxSource::StageScratch,
+                descriptor.flux_register_weight, stream);
+            if (registration.error != cudaSuccess)
+                return registration.error;
+            kernels_launched += registration.kernels_launched;
+        }
     }
     error = launch_hydro_single_stage_update(
         old_state, input, output, delta, grid,

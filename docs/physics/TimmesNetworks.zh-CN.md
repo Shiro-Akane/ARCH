@@ -197,7 +197,7 @@ eos_type = helmholtz
 eos_table_path = /absolute/path/to/helm_table.dat
 ```
 
-pynucastro 生成 package 的工作流见 [custom 网络本地契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。`Auto` 对不超过 30 核素使用专用 DenseLU，超过时使用 SuiteSparse KLU。生成 package 设置 `SUPPORTS_NSE=false`，其生产验收范围包括求解容差与组分/能量轨迹。
+pynucastro 生成 package 的工作流见 [custom 网络本地契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。线性求解器 request 不区分大小写。`Auto` 对不超过 30 个核素具体化为 DenseLU；超过 30 时形成 SuiteSparse KLU 的 CPU candidate 和 cuDSS 的 CUDA candidate。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在 backend 构造前被拒绝。cuDSS provider 与 CUDA 生成网络/大型网络路径仍不可用，因此 CUDA 稀疏执行 fail closed。生成 package 设置 `SUPPORTS_NSE=false`，其生产验收范围包括求解容差与组分/能量轨迹。
 生成式网络的生成、dispatch 与稀疏求解兼容记录见 [validation/network](../../validation/network/README.zh-CN.md)；它属于接口 smoke test，不构成物理轨迹资格。
 
 CMake 通过 `find_package(OpenMP REQUIRED)` 要求 OpenMP。运行时可用环境变量控制线程数，例如：

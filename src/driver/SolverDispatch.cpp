@@ -25,6 +25,7 @@
 #include "../grid/Grid.h"
 #include "../interface/ProblemGenerator.h"
 #include "../io/IO.h"
+#include "../io/chk/CheckpointCompatibility.h"
 #include "../physics/eos/eosdispatch.h"
 #include "dispatch/BackendCapabilities.h"
 #include "dispatch/PolicyDescriptor.h"
@@ -59,10 +60,9 @@ namespace
 template <class List>
 std::string_view policy_name(typename List::id_type id)
 {
-    constexpr auto descriptors =
-        arch::dispatch::make_policy_descriptors<List>();
-    for (const auto& descriptor : descriptors)
-        if (descriptor.id == id) return descriptor.canonical_name;
+    const std::string_view name =
+        arch::dispatch::canonical_policy_name<List>(id);
+    if (!name.empty()) return name;
     throw std::logic_error("resolved policy has no descriptor");
 }
 
@@ -195,14 +195,19 @@ void DispatchSolver(const std::string &solver_name,
     if (!requested_backend.ok)
         throw std::runtime_error(std::string(requested_backend.error));
 
-    const auto resolved_plan = resolve_execution_plan(
+    const auto parsed_plan = resolve_execution_plan(
         config, [&] {
             return inspect_eos_table_rank(
                 EOSDispatcher::table_path(config, "Tabular"));
         }, specs.count());
-    if (!resolved_plan.ok)
-        throw std::runtime_error(std::string(resolved_plan.error));
-    const ResolvedExecutionPlan& plan = resolved_plan.value;
+    if (!parsed_plan.ok)
+        throw std::runtime_error(std::string(parsed_plan.error));
+    const auto cpu_candidate = materialize_execution_plan(
+        parsed_plan.value, ComputeBackend::Cpu, specs.count());
+    const auto cuda_candidate = materialize_execution_plan(
+        parsed_plan.value, ComputeBackend::Cuda, specs.count());
+    if (!cpu_candidate.ok || !cuda_candidate.ok)
+        throw std::logic_error("failed to materialize backend execution plans");
     startup_order.record(StartupEvent::Parsed);
     const auto resolved_requirements =
         resolve_execution_requirements(config, specs.count());
@@ -216,12 +221,16 @@ void DispatchSolver(const std::string &solver_name,
         static_cast<bool>(ARCH_CUDA_BUILD_ENABLED),
         config.execution.cuda_device});
     startup_order.record(StartupEvent::Probed);
-    const CapabilityResult support = query_support(plan, requirements, probe);
+    const CapabilityResult support = query_support(
+        cpu_candidate.value, cuda_candidate.value, requirements, probe);
     startup_order.record(StartupEvent::SupportQueried);
     const BackendResolution backend = resolve_backend(
         requested_backend.value, support, probe,
         StartupPhase::BeforeConstruction);
     startup_order.record(StartupEvent::Resolved);
+    const ResolvedExecutionPlan plan =
+        backend.resolved_backend == ComputeBackend::Cpu
+            ? cpu_candidate.value : cuda_candidate.value;
     write_backend_sidecar(config, plan, backend);
     const ProblemInitializationContext initialization{plan.eos};
 
@@ -241,7 +250,12 @@ void DispatchSolver(const std::string &solver_name,
     if (config.io.restart)
     {
         std::cout << "[Dispatch] Restarting from checkpoint: " << config.io.restart_file << std::endl;
-        read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs.count());
+        const auto expected_provenance = io::inspect_checkpoint_provenance(
+            config, specs, plan.eos, requirements.burn,
+            canonical_policy_name<NetworkPolicies>(plan.network),
+            requirements.use_nse);
+        read_chk(config.io.restart_file, amr_ctrl, run_state, config, specs,
+                 expected_provenance);
         std::cout << ">>> Grid Config | Dim: " << config.grid.dim
                   << " | Geometry: " << config.grid.geometry << std::endl;
         print_amr_resolution_summary(config);

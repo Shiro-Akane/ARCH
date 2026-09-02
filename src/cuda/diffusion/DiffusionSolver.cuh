@@ -44,10 +44,13 @@ DiffusionLaunchResult launch_bounded_diffusion_operator(
     DeviceStateView source, DeviceStateView increment,
     const EosView& eos, SpeciesPODView species, DeviceGridView grid,
     DiffFlux::DiffusionConfigView config, DiffusionWorkspaceView workspace,
+    const CudaAmrFluxDirectionRouteView* amr_routes,
+    double registration_weight, bool capture_initial_operator,
     cudaStream_t stream)
 {
     return launch_diffusion_operator(
-        source, increment, eos, species, grid, config, workspace, stream);
+        source, increment, eos, species, grid, config, workspace,
+        amr_routes, registration_weight, capture_initial_operator, stream);
 }
 
 inline DiffusionLaunchResult launch_bounded_first_rkl_stage(

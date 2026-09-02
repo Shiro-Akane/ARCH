@@ -8,6 +8,8 @@
 
 - [算例指南](guides/SimulationCase.zh-CN.md)：构建、配置、运行及扩展算例；
 - [研究与 API 参考](Reference.zh-CN.md)：参数、策略和扩展契约；
+- [CUDA 后端与 GPU-AMR 交接状态](CudaBackendStatus.zh-CN.md)：已验证、待验证与
+  尚未实现能力的明确边界；
 - [物理说明](physics/)：实现边界、来源和数值对齐记录；
 - [Verification 与 Validation](../validation/README.zh-CN.md)：可执行结论、验收标准、指标和后端一致性；
 - [EOS 运行时表](../EOS_toolkit/README.zh-CN.md)：表目录、来源和完整性要求；

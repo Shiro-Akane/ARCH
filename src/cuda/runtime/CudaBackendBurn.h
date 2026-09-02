@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "CudaBackendTypes.h"
 #include "cuda/common/CudaCommon.cuh"
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/microphysics/common.h"
@@ -17,15 +18,8 @@
 #include <cuda_runtime.h>
 
 #include <cstddef>
-#include <cstdint>
 
 namespace arch::cuda {
-
-struct DeviceBurnSummary {
-    double limiter = 0.0;
-    std::uint64_t failed_cells = 0;
-    int status = 0;
-};
 
 #define ARCH_DECLARE_BURN_LAUNCH(EOS) \
     cudaError_t launch_cuda_burn_route( \

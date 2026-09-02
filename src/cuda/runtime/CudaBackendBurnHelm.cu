@@ -1,4 +1,4 @@
-#include "CudaBackendBurnImpl.cuh"
+#include "CudaBackendBurnAllNetworksImpl.cuh"
 
 namespace arch::cuda {
 cudaError_t launch_cuda_burn_route(

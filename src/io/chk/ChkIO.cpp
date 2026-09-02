@@ -19,7 +19,9 @@
 #include "../../data/GlobalDefs.h"
 
 #include "../IO.h"
+#include "CheckpointCompatibility.h"
 #include "../hdf5/HDF5Writer.h"
+#include "../../physics/species/Species.h"
 
 namespace fs = std::filesystem;
 
@@ -41,7 +43,8 @@ void write_chk(amr::AMRControl &amr_ctrl,
                int step_count, double current_time,
                double dt_old, double dt_burn,
                bool resume_after_regrid,
-               const SimConfig &config)
+               const SimConfig &config, const SpeciesManager &specs,
+               const io::CheckpointProvenance &provenance)
 {
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
 
@@ -67,7 +70,12 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.cells_per_block = cells_per_block;
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = resume_after_regrid;
+    checkpoint.has_enuc_rate = true;
+    checkpoint.provenance = provenance;
     checkpoint.num_species = amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies();
+    if (checkpoint.num_species != specs.count())
+        throw std::runtime_error(
+            "Checkpoint state and registered species counts disagree.");
     checkpoint.levels.reserve(active_blocks.size());
     checkpoint.logical_x1.reserve(active_blocks.size());
     checkpoint.logical_x2.reserve(active_blocks.size());
@@ -77,6 +85,7 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.mom_v.resize(field_size);
     checkpoint.mom_w.resize(field_size);
     checkpoint.eng.resize(field_size);
+    checkpoint.enuc_rate.resize(field_size);
     checkpoint.rhoX.resize(static_cast<size_t>(checkpoint.num_species) * field_size);
 
     for (size_t block_index = 0; block_index < active_blocks.size(); ++block_index) {
@@ -99,6 +108,8 @@ void write_chk(amr::AMRControl &amr_ctrl,
                     checkpoint.mom_v[offset] = block.fluid_state.mom_v[cell];
                     checkpoint.mom_w[offset] = block.fluid_state.mom_w[cell];
                     checkpoint.eng[offset] = block.fluid_state.eng[cell];
+                    checkpoint.enuc_rate[offset] =
+                        block.fluid_state.enuc_rate[cell];
                     for (int species = 0; species < checkpoint.num_species; ++species)
                         checkpoint.rhoX[static_cast<size_t>(species) * field_size + offset] =
                             block.fluid_state.rho[cell] * block.fluid_state.X(species, cell);
@@ -111,13 +122,27 @@ void write_chk(amr::AMRControl &amr_ctrl,
 
 // 3. Checkpoint file input
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
-              RunState &run_state, const SimConfig &config, int expected_species)
+              RunState &run_state, const SimConfig &config,
+              const SpeciesManager &specs,
+              const io::CheckpointProvenance &expected_provenance)
 {
     io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
+    const int expected_species = specs.count();
     const size_t cells_per_block = checkpoint_cells_per_block(config.grid.dim);
     if (checkpoint.dim != config.grid.dim || checkpoint.geometry != config.grid.geometry ||
         checkpoint.num_species != expected_species || checkpoint.cells_per_block != cells_per_block) {
         throw std::runtime_error("Checkpoint is incompatible with the configured dimension, geometry, or species network.");
+    }
+    const bool verified_identity = checkpoint.provenance.available
+        ? io::require_checkpoint_provenance_compatible(
+              checkpoint.provenance, expected_provenance)
+        : false;
+    if (!verified_identity) {
+        std::cout << "[IO] Legacy checkpoint has no EOS/network/table or "
+                     "ordered-species identity; only its historical shape "
+                     "checks can be applied. Rewrite a checkpoint before "
+                     "claiming verified restart compatibility."
+                  << std::endl;
     }
 
     amr_ctrl.tree->LoadLeafGrid(config, expected_species, checkpoint.levels,
@@ -140,6 +165,9 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
                     block.fluid_state.mom_v[cell] = checkpoint.mom_v[offset];
                     block.fluid_state.mom_w[cell] = checkpoint.mom_w[offset];
                     block.fluid_state.eng[cell] = checkpoint.eng[offset];
+                    block.fluid_state.enuc_rate[cell] =
+                        checkpoint.has_enuc_rate
+                            ? checkpoint.enuc_rate[offset] : 0.0;
                     for (int species = 0; species < expected_species; ++species) {
                         const double rho = checkpoint.rho[offset];
                         const double rhoX = checkpoint.rhoX[static_cast<size_t>(species) * field_size + offset];
@@ -157,9 +185,19 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     run_state.chk_idx = checkpoint.chk_file_index;
     run_state.has_timestep_state = checkpoint.has_timestep_state;
     run_state.resume_after_regrid = checkpoint.resume_after_regrid;
+    run_state.checkpoint_provenance_verified = verified_identity;
+    run_state.verified_eos_table_sha256 = verified_identity
+        ? checkpoint.provenance.eos_table_sha256 : std::string{};
     if (!run_state.has_timestep_state) {
         std::cout << "[IO] Legacy checkpoint has no timestep-controller state; "
                      "hydro recomputes its CFL limit and burn resumes conservatively from dt_init."
+                  << std::endl;
+    }
+    if (!checkpoint.has_enuc_rate) {
+        std::cout << "[IO] Legacy checkpoint has no ENUC restart field; "
+                     "the diagnostic is initialized to zero. ENUC-based "
+                     "dynamic-AMR split-run parity is not verifiable until "
+                     "a version-3 checkpoint is written."
                   << std::endl;
     }
     std::cout << "[IO] Restored CHK: " << filepath << " at step " << run_state.step

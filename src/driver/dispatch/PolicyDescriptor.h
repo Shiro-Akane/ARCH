@@ -69,6 +69,7 @@ ARCH_DECLARE_BINDINGS(Ros4);
 ARCH_DECLARE_BINDINGS(NoLinear);
 ARCH_DECLARE_BINDINGS(DenseLu);
 struct CpuSparseKluBinding {};
+struct CudaCuDssBinding {};
 ARCH_DECLARE_BINDINGS(NoDiffusion);
 ARCH_DECLARE_BINDINGS(Rkl1);
 ARCH_DECLARE_BINDINGS(Rkl2);
@@ -106,6 +107,7 @@ struct Ros4Policy {};
 struct NoLinearPolicy {};
 struct DenseLuPolicy {};
 struct SparseKluPolicy {};
+struct CuDssPolicy {};
 struct NoDiffusionPolicy {};
 struct Rkl1Policy {};
 struct Rkl2Policy {};
@@ -312,6 +314,14 @@ using CpuSparseKluBuildBinding = std::conditional_t<
 ARCH_REGISTER_POLICY(SparseKluPolicy, LinearSolverId, LinearSolverId::SparseKlu, false,
                      CpuSparseKluBuildBinding, AbsentBinding, 0,
                      StateLayoutRequirement::SpeciesMassFractions, "sparseklu", "sparse_klu");
+#ifndef ARCH_HAS_CUDSS_PROVIDER
+#define ARCH_HAS_CUDSS_PROVIDER 0
+#endif
+using CudaCuDssProviderBinding = std::conditional_t<
+    (ARCH_HAS_CUDSS_PROVIDER != 0), CudaCuDssBinding, AbsentBinding>;
+ARCH_REGISTER_POLICY(CuDssPolicy, LinearSolverId, LinearSolverId::CuDss, false,
+                     AbsentBinding, CudaCuDssProviderBinding, 0,
+                     StateLayoutRequirement::SpeciesMassFractions, "cudss", "cu_dss");
 
 ARCH_REGISTER_POLICY(NoDiffusionPolicy, DiffusionIntegratorId, DiffusionIntegratorId::None, true,
                      CpuNoDiffusionBinding, CudaNoDiffusionBinding, 0,
@@ -345,7 +355,7 @@ using NetworkPolicies = TypeList<NetworkId, UnknownPolicyBehavior::Error,
 using OdeSolverPolicies = TypeList<OdeSolverId, UnknownPolicyBehavior::Error,
     NoOdePolicy, BeNrPolicy, BdPolicy, Ros4Policy>;
 using LinearSolverPolicies = TypeList<LinearSolverId, UnknownPolicyBehavior::Error,
-    NoLinearPolicy, DenseLuPolicy, SparseKluPolicy>;
+    NoLinearPolicy, DenseLuPolicy, SparseKluPolicy, CuDssPolicy>;
 using DiffusionIntegratorPolicies = TypeList<DiffusionIntegratorId, UnknownPolicyBehavior::Error,
     NoDiffusionPolicy, Rkl1Policy, Rkl2Policy>;
 
@@ -389,6 +399,17 @@ template <class List>
 consteval auto make_policy_descriptors()
 {
     return DescriptorBuilder<List>::make();
+}
+
+/** Return the registered canonical spelling for one resolved policy id. */
+template <class List>
+constexpr std::string_view canonical_policy_name(
+    typename List::id_type id) noexcept
+{
+    constexpr auto descriptors = make_policy_descriptors<List>();
+    for (const auto& descriptor : descriptors)
+        if (descriptor.id == id) return descriptor.canonical_name;
+    return {};
 }
 
 template <class T>
@@ -525,6 +546,27 @@ inline ParseResult<ComputeBackend> parse_compute_backend(std::string_view value)
     return {{}, false, false, "unknown compute backend"};
 }
 
+inline ParseResult<LinearSolverRequest> parse_linear_solver_request(
+    std::string_view value) noexcept
+{
+    if (ascii_iequals(value, "auto"))
+        return {LinearSolverRequest::Auto, true, false, {}};
+    const auto parsed = parse_registered_policy<LinearSolverPolicies>(value);
+    if (!parsed.ok)
+        return {{}, false, false, "unknown linear solver"};
+    switch (parsed.value) {
+    case LinearSolverId::None:
+        return {LinearSolverRequest::None, true, false, {}};
+    case LinearSolverId::DenseLu:
+        return {LinearSolverRequest::DenseLu, true, false, {}};
+    case LinearSolverId::SparseKlu:
+        return {LinearSolverRequest::SparseKlu, true, false, {}};
+    case LinearSolverId::CuDss:
+        return {LinearSolverRequest::CuDss, true, false, {}};
+    }
+    return {{}, false, false, "unknown linear solver"};
+}
+
 inline ParseResult<GeometryId> parse_geometry(std::string_view value) noexcept
 {
     if (ascii_iequals(value, "cartesian")) return {GeometryId::Cartesian, true, false, {}};
@@ -551,11 +593,11 @@ inline ParseResult<BoundaryFeature> parse_boundary(std::string_view value) noexc
 }
 
 template <class TableRankResolver>
-ParseResult<ResolvedExecutionPlan> resolve_execution_plan(
+ParseResult<ExecutionPlanRequest> resolve_execution_plan(
     const SimConfig& config, TableRankResolver&& table_rank,
-    std::size_t species_count = 0)
+    std::size_t = 0)
 {
-    ParseResult<ResolvedExecutionPlan> result{};
+    ParseResult<ExecutionPlanRequest> result{};
     const auto flux = parse_registered_policy<FluxPolicies>(config.numerics.solver_name);
     const auto reconstruction = parse_registered_policy<ReconstructionPolicies>(
         config.numerics.reconstruction);
@@ -587,22 +629,14 @@ ParseResult<ResolvedExecutionPlan> resolve_execution_plan(
     if (!config.physics.burn.use_burn) {
         result.value.network = NetworkId::None;
         result.value.ode_solver = OdeSolverId::None;
-        result.value.linear_solver = LinearSolverId::None;
+        result.value.linear_solver = LinearSolverRequest::None;
     } else {
         const auto network = parse_registered_policy<NetworkPolicies>(
             config.physics.burn.network_name);
         const auto ode = parse_registered_policy<OdeSolverPolicies>(
             config.physics.burn.odeconfig.ode_solver);
-        ParseResult<LinearSolverId> linear{};
-        if (ascii_iequals(
-                config.physics.burn.odeconfig.linear_solver, "auto")) {
-            linear.value = species_count > BurnLimits::MAX_SPECIES
-                ? LinearSolverId::SparseKlu : LinearSolverId::DenseLu;
-            linear.ok = true;
-        } else {
-            linear = parse_registered_policy<LinearSolverPolicies>(
-                config.physics.burn.odeconfig.linear_solver);
-        }
+        const auto linear = parse_linear_solver_request(
+            config.physics.burn.odeconfig.linear_solver);
         if (!network.ok || network.value == NetworkId::None) {
             result.error = "unknown burn network";
             return result;
@@ -611,7 +645,7 @@ ParseResult<ResolvedExecutionPlan> resolve_execution_plan(
             result.error = "unknown ODE solver";
             return result;
         }
-        if (!linear.ok || linear.value == LinearSolverId::None) {
+        if (!linear.ok || linear.value == LinearSolverRequest::None) {
             result.error = "unknown linear solver";
             return result;
         }
@@ -634,6 +668,55 @@ ParseResult<ResolvedExecutionPlan> resolve_execution_plan(
     result.ok = true;
     result.defaulted = flux.defaulted || reconstruction.defaulted
         || limiter.defaulted || time.defaulted;
+    return result;
+}
+
+inline ParseResult<ResolvedExecutionPlan> materialize_execution_plan(
+    const ExecutionPlanRequest& request, ComputeBackend backend,
+    std::size_t species_count) noexcept
+{
+    ParseResult<ResolvedExecutionPlan> result{};
+    if (backend == ComputeBackend::Auto) {
+        result.error = "linear solver materialization requires a concrete backend";
+        return result;
+    }
+
+    result.value = {
+        request.flux,
+        request.reconstruction,
+        request.limiter,
+        request.time_integrator,
+        request.eos,
+        request.network,
+        request.ode_solver,
+        LinearSolverId::None,
+        request.diffusion_integrator};
+
+    switch (request.linear_solver) {
+    case LinearSolverRequest::None:
+        result.value.linear_solver = LinearSolverId::None;
+        break;
+    case LinearSolverRequest::Auto:
+        result.value.linear_solver = species_count <= BurnLimits::MAX_SPECIES
+            ? LinearSolverId::DenseLu
+            : (backend == ComputeBackend::Cpu
+                   ? LinearSolverId::SparseKlu
+                   : LinearSolverId::CuDss);
+        break;
+    case LinearSolverRequest::DenseLu:
+        result.value.linear_solver = LinearSolverId::DenseLu;
+        break;
+    case LinearSolverRequest::SparseKlu:
+        result.value.linear_solver = LinearSolverId::SparseKlu;
+        break;
+    case LinearSolverRequest::CuDss:
+        result.value.linear_solver = LinearSolverId::CuDss;
+        break;
+    default:
+        result.error = "unknown linear solver request";
+        return result;
+    }
+    result.ok = true;
     return result;
 }
 

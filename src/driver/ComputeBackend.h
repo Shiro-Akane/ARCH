@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "amr/AmrTransferPlans.h"
 #include "amr/BlockHandle.h"
 #include "driver/StageScheduler.h"
 
@@ -12,11 +13,13 @@
 #include <cstdint>
 #include <array>
 #include <limits>
+#include <memory>
 #include <span>
 #include <stdexcept>
 #include <type_traits>
 
-namespace amr { struct SameLevelExchangePlan; }
+namespace amr { struct AmrFluxTopologyPlan; struct Block; }
+namespace arch::boundary { class BoundaryPlan; }
 
 namespace arch::backend {
 
@@ -64,6 +67,32 @@ struct BackendStateAccess {
     amr::BlockHandle block{};
     StorageGeneration storage{};
     state::StateSlot slot = state::StateSlot::Current;
+};
+
+/**
+ * Backend-neutral description of one block in an unpublished topology.
+ * Topology and state reconstruction remain Host-owned; a device backend uses
+ * this only to stage its private allocation namespace.
+ */
+struct BackendTopologyBinding {
+    const amr::Block* block = nullptr;
+    amr::BlockHandle handle{};
+    StorageGeneration storage{};
+    const boundary::BoundaryPlan* physical_boundary = nullptr;
+};
+
+class BackendTopologyStoreTransaction {
+public:
+    BackendTopologyStoreTransaction() = default;
+    virtual ~BackendTopologyStoreTransaction() = default;
+    BackendTopologyStoreTransaction(
+        const BackendTopologyStoreTransaction&) = delete;
+    BackendTopologyStoreTransaction& operator=(
+        const BackendTopologyStoreTransaction&) = delete;
+    BackendTopologyStoreTransaction(
+        BackendTopologyStoreTransaction&&) = delete;
+    BackendTopologyStoreTransaction& operator=(
+        BackendTopologyStoreTransaction&&) = delete;
 };
 
 struct HostStateTransferView {
@@ -228,6 +257,14 @@ public:
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
         state::StateVersion source_version,
         state::CompletionToken expected) = 0;
+    virtual state::CompletionToken execute_coarse_fine_exchange(
+        std::span<const BackendStateAccess>,
+        const amr::CoarseFineTransferPlan&, state::StateSlot,
+        state::StateVersion, state::CompletionToken)
+    {
+        throw std::logic_error(
+            "backend coarse-fine exchange is unavailable");
+    }
     virtual void rotate_slots(BackendStateAccess current,
                               state::SlotRotation rotation) = 0;
     virtual double compute_diffusion_dt(BackendStateAccess current) = 0;
@@ -246,6 +283,55 @@ public:
     virtual void enqueue_upload_slot(
         BackendStateAccess access, state::StateRegion region,
         HostStateTransferView host) = 0;
+    virtual bool supports_dynamic_topology_store() const noexcept
+    {
+        return false;
+    }
+    virtual std::unique_ptr<BackendTopologyStoreTransaction>
+    begin_topology_store_transaction(
+        const amr::AmrPlanScope&,
+        std::span<const BackendTopologyBinding>)
+    {
+        throw std::logic_error(
+            "backend dynamic topology store is unavailable");
+    }
+    virtual void enqueue_upload_staged_current(
+        BackendTopologyStoreTransaction&, BackendStateAccess,
+        state::StateRegion, HostStateTransferView)
+    {
+        throw std::logic_error(
+            "backend staged Current upload is unavailable");
+    }
+    /** Prepare all throwing AMR flux allocations for the active topology. */
+    virtual void prepare_amr_flux_plan(
+        const amr::AmrFluxTopologyPlan&, const amr::RefluxPlan&)
+    {
+        throw std::logic_error("backend AMR flux plans are unavailable");
+    }
+    /** Stage the next epoch's AMR flux resources before store publication. */
+    virtual void stage_amr_flux_plan(
+        BackendTopologyStoreTransaction&, const amr::AmrFluxTopologyPlan&,
+        const amr::RefluxPlan&)
+    {
+        throw std::logic_error(
+            "backend staged AMR flux plans are unavailable");
+    }
+    virtual state::CompletionToken clear_amr_flux_register(
+        state::CompletionToken expected)
+    {
+        throw std::logic_error("backend AMR flux clear is unavailable");
+    }
+    virtual state::CompletionToken execute_amr_reflux(
+        state::StateSlot, double, state::CompletionToken)
+    {
+        throw std::logic_error("backend AMR reflux is unavailable");
+    }
+    virtual void publish_topology_store_transaction(
+        std::unique_ptr<BackendTopologyStoreTransaction>)
+    {
+        throw std::logic_error(
+            "backend topology store publication is unavailable");
+    }
     virtual void quiesce() = 0;
     virtual BackendCounters counters() const noexcept = 0;
     virtual void append_trace(BackendTraceRecord record) = 0;
@@ -334,6 +420,7 @@ inline state::CompletionToken transfer_state_regions(
 
 static_assert(std::is_trivially_copyable_v<StorageGeneration>);
 static_assert(std::is_trivially_copyable_v<BackendStateAccess>);
+static_assert(std::is_trivially_copyable_v<BackendTopologyBinding>);
 static_assert(std::is_trivially_copyable_v<HostStateTransferView>);
 static_assert(std::is_trivially_copyable_v<BackendTraceRecord>);
 

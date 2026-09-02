@@ -67,20 +67,24 @@ external provenance claim unless their file header or that notice says so.
 | CUDA execution | `compute_backend = cuda/auto` | experimental | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
 | Geometry | `cartesian`, `cylindrical`, `spherical` | CPU supported | Enum-like input is case-insensitive and stored canonically; CUDA accepts Cartesian only. |
-| AMR | `lrefinemax >= 0` | CPU supported | Fixed 16-cell block extent per active dimension; CUDA currently rejects dynamic AMR. |
+| AMR | `lrefinemax >= 0` | CPU supported; CUDA experimental | Fixed 16-cell block extent per active dimension. CUDA keeps topology, Morton, and conservative migration on the Host and executes ghosts and reflux on the device. |
 | Self gravity | `gravity_type = self` | unavailable | The capability gate rejects it before policy construction. |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
 The CUDA capability is intentionally narrower than the CPU capability. It
-supports uniform Cartesian 1D/2D/3D hydro, the registered flux/reconstruction/
+supports Cartesian 1D/2D/3D hydro, the registered flux/reconstruction/
 time-integrator matrix, Ideal/Helmholtz/Tabular3D/Tabular4D EOS, built-in burn
 networks with DenseLU and NSE, Cartesian diffusion with RKL1/RKL2, static
-multiblock boundary exchange, and plot/checkpoint writes through the shared
-host writer. Dynamic AMR, restart input, gravity, non-Cartesian geometry,
-generated networks and SparseKLU are rejected. cuDSS is not registered or
-integrated, so it cannot be selected as a linear-solver policy. Several
-implemented CUDA paths still have validation status `pending` and are not
-production claims.
+and dynamic multiblock exchange, Host-authoritative dynamic regrid with device
+store transactions, compact Hydro/RKL reflux, restart through the shared Host
+checkpoint schema, and plot/checkpoint writes through the shared host writer.
+Gravity, non-Cartesian geometry, generated networks and SparseKLU are rejected.
+The case-insensitive `cuDSS`
+request is registered for capability routing, but no CUDA cuDSS provider is
+implemented; CUDA networks above 30 species and generated CUDA networks remain
+gated as well. Consequently cuDSS execution fails closed, and installing the
+library alone does not enable it. Several implemented CUDA paths still have
+validation status `pending` and are not production claims.
 
 ### Numerical policies
 
@@ -95,7 +99,7 @@ production claims.
 | Gravity | `none`, `external` | CPU supported; unknown strings and `self` are rejected before construction |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
-| Linear solve | `Auto`, `DenseLU`, `SparseKLU` | `Auto` selects DenseLU for <=30 isotopes and, in a KLU-enabled CPU build, SparseKLU above 30; explicit DenseLU rejects larger networks |
+| Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` becomes DenseLU for <=30 isotopes; above 30 it becomes SparseKLU for the CPU candidate and cuDSS for the CUDA candidate. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction. The current cuDSS provider and CUDA >30/generated-network paths are unavailable, so cuDSS execution fails closed. |
 
 Policy names are ASCII case-insensitive, but accepted aliases and fallback
 behavior still vary by dispatcher.
@@ -410,7 +414,7 @@ also requires the exact checksum above.
 | `enforce_mass_conservation` | bool | `true` | parsed and stored; no active burn path currently consumes this switch |
 | `burn_verbose_level` | int | `0` | parsed and stored; no active burn path currently consumes this level |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
-| `linear_solver` | string | `Auto` | `Auto`, `DenseLU`, `SparseKLU`; DenseLU is limited to <=30 isotopes |
+| `linear_solver` | string | `Auto` | Case-insensitive `Auto`, `DenseLU`, `SparseKLU`, or `cuDSS` (`dense_lu`, `sparse_klu`, `cu_dss` aliases accepted); see backend-dependent materialization below |
 | `ode_rtol` | double | `1e-4` | relative ODE tolerance |
 | `ode_atol` | double | `1e-8` | absolute ODE tolerance |
 | `ode_max_newton_iter` | int | `50` | Newton limit where used |
@@ -848,12 +852,21 @@ Production qualification covers these boundaries.
 Matrix and solver policies are independent template parameters. `DenseWrap` is
 the dedicated fixed-size backend for at most 30 isotopes
 (`BurnLimits::MAX_SPECIES`); `SparseWrap` retains a CSC symbolic pattern and
-uses KLU analyze/factor/refactor/solve. `linear_solver = Auto` chooses DenseLU
-at or below 30 isotopes and SparseKLU above it. Explicit DenseLU rejects a
-larger network. Explicit `SparseKLU` is allowed for any compiled network when
-ARCH was built with KLU. Sparse values use CSC storage, while the current
-entry-to-slot lookup still allocates `N*N` integers; the retained evidence
-covers up to 200 isotopes and is not an unbounded-size guarantee.
+uses KLU analyze/factor/refactor/solve. Parsing preserves
+`linear_solver = Auto` until concrete CPU and CUDA candidates are formed. At or
+below 30 isotopes both candidates use DenseLU; above 30 the CPU candidate uses
+SparseKLU and the CUDA candidate uses cuDSS. Explicit SparseKLU is CPU-only and
+explicit cuDSS is CUDA-only. An explicit CPU+cuDSS or CUDA+SparseKLU pair is
+rejected during capability resolution, before backend construction; with
+`compute_backend = auto`, an explicit solver can therefore select only its
+compatible backend. Explicit DenseLU rejects a larger network.
+
+SparseKLU requires a KLU-enabled build. cuDSS is currently a parseable,
+fail-closed request only: no CUDA provider has been committed, CUDA still
+rejects more than 30 species and generated networks, and installing the cuDSS
+library alone does not change those gates. Sparse values use CSC storage, while
+the current entry-to-slot lookup still allocates `N*N` integers; the retained
+evidence covers up to 200 isotopes and is not an unbounded-size guarantee.
 
 After generating or replacing a package, rerun CMake. Use `--check` before
 writing, and use `-DARCH_CUSTOM_NETWORKS="id1;id2"` to restrict expensive builds.
@@ -919,47 +932,63 @@ searches for `X_` prefixes, creating a composition auto-selection mismatch.
 
 `HDF5Writer` logs PLT write failures and continues the simulation.
 
-### Checkpoint file version 2
+### Checkpoint file version 3
 
 Attributes include `checkpoint_version`, `time`, `step`, `chk_index`,
 `plt_index`, `dim`, `geometry`, `num_species`, `cells_per_block`, `dt_old`,
-`dt_burn`, and `resume_after_regrid`. The last three values restore timestep
-growth, the burn limit carried into the next macro step, and loop phase without
-repeating a completed regrid or step-based output event.
+`dt_burn`, `resume_after_regrid`, `eos_type`, `ideal_gamma`, `burn_enabled`,
+`active_network`, `nse_enabled`, `eos_table_path`, and `eos_table_sha256`.
+Checkpoint `eos_type` records the resolved canonical policy (`ideal`,
+`helmholtz`, `tabular3d`, or `tabular4d`), so automatic table-rank dispatch is
+part of restart identity rather than the raw `tabular` configuration spelling.
+`active_network` is `none` when burning is disabled. The timestep values restore growth,
+the burn limit carried into the next macro step, and loop phase without
+repeating a completed regrid or step-based output event. The table path is
+audit metadata; compatibility uses the SHA-256 content identity, so an
+unchanged table may move between installations. The table loader fingerprints
+the file before and after loading, binds cached owners to that digest, and the
+immutable identity passed to every checkpoint therefore describes the bytes
+actually resident in the EOS owner rather than a later path lookup.
 
 Datasets:
 
 ```text
 Blocks/level
 Blocks/logical_x1, logical_x2, logical_x3
-Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng
+Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng, Data/enuc_rate
 Data/rhoX    [species, block, interior cell]
+Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
 
-Restart compatibility checks dimension, geometry, species count, and cells per
-block. Scientific provenance—parameter file, compiler, EOS, species order,
-solver, boundaries, and commit—stays external. Checkpoint structural failures
-throw. Version-1 files remain readable; because they have no controller state,
-hydro recomputes its CFL step and burning starts conservatively from `dt_init`.
-Step-zero and already-final restarts do not duplicate initial/final files.
-Dynamic-AMR split-run equivalence remains pending, particularly for the
-transient, uncheckpointed `ENUC` refinement diagnostic.
+Restart compatibility checks dimension, geometry, cells per block, EOS policy,
+ideal-gas gamma where applicable, reaction-network identity, EOS-table content,
+burn and NSE enablement, and every ordered species name and thermodynamic
+property. `ENUC` is persisted
+because it is restart-relevant when it drives dynamic refinement. Structural
+or present-provenance mismatches throw before hierarchy publication. Version-1
+and version-2 files remain readable, but are reported as legacy/unverified
+because they have no ordered scientific identity or `ENUC`; version 1 also has
+no controller state, so hydro recomputes its CFL step and burning starts
+conservatively from `dt_init`. Step-zero and already-final restarts do not
+duplicate initial/final files. CPU/CUDA both read and write this same Host
+schema; the backend name is intentionally not part of compatibility.
 
 ## Known limitations
 
-- CUDA is an experimental uniform-Cartesian backend, not full CPU parity.
-  Dynamic AMR, restart input, gravity, non-Cartesian geometry, generated
-  networks, and sparse device solves remain unavailable. AMR conservation has
-  a CPU baseline, but stable local refinement retention is a known coarse/fine
-  ghost-transfer limitation. Self gravity and the Jeans indicator are not
-  implemented on either backend.
+- CUDA is an experimental Cartesian backend, not yet a production parity
+  claim. Dynamic AMR and restart are implemented but still need real-device
+  conservation and split-run qualification. Gravity, non-Cartesian geometry,
+  generated networks, and sparse device solves remain unavailable. Self
+  gravity and the Jeans indicator are not implemented on either backend.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict
   conservation or hide malformed numerical selections; production runs must
   inspect their resolved configuration and diagnostics.
-- Unit metadata and complete checkpoint provenance remain external to HDF5;
-  release flags also prevent a cross-machine bitwise-reproducibility guarantee.
+- Unit metadata and complete build/run provenance (parameter file, compiler,
+  solver settings, boundaries, and commit) remain external to HDF5. Version 3
+  embeds the restart-critical EOS/table/network/species identity, but release
+  flags still prevent a cross-machine bitwise-reproducibility guarantee.
 - Case builds assume the `simulation/<Case>/` layout, and plot-write failures are
   reported without aborting the simulation.
 - The historical AMR visual archive is qualitative and retains an input/renderer

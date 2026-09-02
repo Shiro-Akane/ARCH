@@ -14,6 +14,7 @@
 
 #include <type_traits>
 
+#include "AMRInterfaceStencil.h"
 #include "Reconstruction.h"
 #include "../../grid/Grid.h"
 
@@ -28,21 +29,12 @@ namespace AMRInterfaceReconstruction
 template <typename ReconstructPolicy>
 inline bool needs_tvd_interface_reconstruction(const Grid& grid, int dir, int i, int j, int k)
 {
-    if constexpr (ReconstructPolicy::NG <= MusclReconstruction<MinMod>::NG)
-    {
-        return false;
-    }
-
     const int normal_index = (dir == 0) ? i : ((dir == 1) ? j : k);
     const int normal_begin = (dir == 0) ? grid.Is() : ((dir == 1) ? grid.Js() : grid.Ks());
     const int normal_end = (dir == 0) ? grid.Ie() : ((dir == 1) ? grid.Je() : grid.Ke());
-
-    const bool touches_lower_coarse_fine =
-        grid.amr_coarse_fine_face[2 * dir] && normal_index < normal_begin + 2;
-    const bool touches_upper_coarse_fine =
-        grid.amr_coarse_fine_face[2 * dir + 1] && normal_index >= normal_end - 3;
-
-    return touches_lower_coarse_fine || touches_upper_coarse_fine;
+    return needs_tvd_interface_stencil(
+        ReconstructPolicy::NG, grid.amr_coarse_fine_face, dir,
+        normal_index, normal_begin, normal_end);
 }
 
 template <typename ReconstructPolicy, typename EosType>

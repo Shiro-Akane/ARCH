@@ -22,6 +22,7 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
     double entropy_fix_coefficient, double density_floor,
     double minimum_internal_energy,
     double maximum_internal_energy,
+    const CudaAmrFluxDirectionRouteView* amr_routes,
     const scheduler::StageDescriptor& descriptor, double dt,
     cudaStream_t stream)
 {
@@ -32,7 +33,7 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
                 old_state, input, output, delta, face_flux, grid, eos,
                 entropy_fix_coefficient, density_floor,
                 minimum_internal_energy,
-                maximum_internal_energy, descriptor, dt, stream,
+                maximum_internal_energy, amr_routes, descriptor, dt, stream,
                 result.kernels_launched);
         });
     return result;
@@ -55,6 +56,7 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
         double entropy_fix_coefficient, double density_floor, \
         double minimum_internal_energy, \
         double maximum_internal_energy, \
+        const CudaAmrFluxDirectionRouteView* amr_routes, \
         const scheduler::StageDescriptor& descriptor, double dt, \
         cudaStream_t stream) \
     { \
@@ -62,7 +64,7 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
             plan, old_state, input, output, delta, face_flux, grid, eos, \
             entropy_fix_coefficient, density_floor, minimum_internal_energy, \
             maximum_internal_energy, \
-            descriptor, dt, stream); \
+            amr_routes, descriptor, dt, stream); \
     }
 
 ARCH_DEFINE_BACKEND_HYDRO(IdealGasView)

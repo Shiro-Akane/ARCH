@@ -76,6 +76,8 @@ void test_plain_cpp_contracts()
 {
     static_assert(std::is_standard_layout_v<ResolvedExecutionPlan>);
     static_assert(std::is_trivially_copyable_v<ResolvedExecutionPlan>);
+    static_assert(std::is_standard_layout_v<ExecutionPlanRequest>);
+    static_assert(std::is_trivially_copyable_v<ExecutionPlanRequest>);
     static_assert(std::is_standard_layout_v<ExecutionRequirements>);
     static_assert(std::is_trivially_copyable_v<ExecutionRequirements>);
     static_assert(std::is_standard_layout_v<DeviceCapability>);
@@ -88,14 +90,28 @@ void test_plain_cpp_contracts()
     static_assert(list_size_v<NetworkPolicies>
                   == 5 + ARCH_CUSTOM_NETWORK_COUNT);
     static_assert(list_size_v<OdeSolverPolicies> == 4);
-    static_assert(list_size_v<LinearSolverPolicies> == 3);
+    static_assert(list_size_v<LinearSolverPolicies> == 4);
     static_assert(list_size_v<DiffusionIntegratorPolicies> == 3);
 
     constexpr auto linear = make_policy_descriptors<LinearSolverPolicies>();
-    expect(linear.size() == 3, "linear descriptor count");
+    expect(linear.size() == 4, "linear descriptor count");
     expect(linear[2].id == LinearSolverId::SparseKlu, "SparseKLU descriptor ID");
+#if ARCH_HAS_KLU
+    expect(linear[2].cpu_supported && !linear[2].cuda_supported,
+           "SparseKLU support must follow the CPU KLU build binding");
+#else
     expect(!linear[2].cpu_supported && !linear[2].cuda_supported,
            "SparseKLU support must derive from absent bindings");
+#endif
+    expect(linear[3].id == LinearSolverId::CuDss,
+           "cuDSS descriptor ID");
+#if ARCH_HAS_CUDSS_PROVIDER
+    expect(!linear[3].cpu_supported && linear[3].cuda_supported,
+           "cuDSS support must follow the committed CUDA provider binding");
+#else
+    expect(!linear[3].cpu_supported && !linear[3].cuda_supported,
+           "cuDSS stays unavailable until a CUDA provider is committed");
+#endif
     constexpr auto flux = make_policy_descriptors<FluxPolicies>();
     for (const auto& descriptor : flux) {
         expect(descriptor.cpu_supported && descriptor.cuda_supported,
@@ -223,6 +239,9 @@ void test_aliases_defaults_and_plan()
     expect(parse_registered_policy<LinearSolverPolicies>("sparse_klu").value
                == LinearSolverId::SparseKlu,
            "SparseKLU alias");
+    expect(parse_registered_policy<LinearSolverPolicies>("CuDSS").value
+               == LinearSolverId::CuDss,
+           "cuDSS alias");
     expect(!parse_registered_policy<LinearSolverPolicies>("unknown").ok,
            "unknown linear solver remains error");
     expect(parse_registered_policy<DiffusionIntegratorPolicies>("RKL1").value
@@ -256,7 +275,7 @@ void test_aliases_defaults_and_plan()
            "hydro/EOS plan IDs");
     expect(resolved.value.network == NetworkId::None
            && resolved.value.ode_solver == OdeSolverId::None
-           && resolved.value.linear_solver == LinearSolverId::None
+           && resolved.value.linear_solver == LinearSolverRequest::None
            && resolved.value.diffusion_integrator == DiffusionIntegratorId::None,
            "disabled plan IDs");
     resolved = resolve_execution_plan(config, [] { return 4; });
@@ -297,19 +316,33 @@ void test_aliases_defaults_and_plan()
     expect(resolved.ok && resolved.value.eos == EosId::Helmholtz
            && resolved.value.network == NetworkId::Aprox21
            && resolved.value.ode_solver == OdeSolverId::Ros4
-           && resolved.value.linear_solver == LinearSolverId::DenseLu
+           && resolved.value.linear_solver == LinearSolverRequest::DenseLu
            && resolved.value.diffusion_integrator == DiffusionIntegratorId::Rkl1,
            "burn/diffusion plan IDs");
     config.physics.burn.odeconfig.linear_solver = "AuTo";
     resolved = resolve_execution_plan(config, [] { return 0; }, 21);
     expect(resolved.ok
-               && resolved.value.linear_solver == LinearSolverId::DenseLu,
+               && resolved.value.linear_solver == LinearSolverRequest::Auto,
+           "parser preserves backend-dependent Auto");
+    auto cpu_plan = materialize_execution_plan(
+        resolved.value, ComputeBackend::Cpu, 21);
+    auto cuda_plan = materialize_execution_plan(
+        resolved.value, ComputeBackend::Cuda, 21);
+    expect(cpu_plan.ok && cuda_plan.ok
+               && cpu_plan.value.linear_solver == LinearSolverId::DenseLu
+               && cuda_plan.value.linear_solver == LinearSolverId::DenseLu,
            "Auto selects DenseLU through the dense-network limit");
-    resolved = resolve_execution_plan(
-        config, [] { return 0; }, BurnLimits::MAX_SPECIES + 1);
-    expect(resolved.ok
-               && resolved.value.linear_solver == LinearSolverId::SparseKlu,
-           "Auto selects SparseKLU above the dense-network limit");
+    cpu_plan = materialize_execution_plan(
+        resolved.value, ComputeBackend::Cpu, BurnLimits::MAX_SPECIES + 1);
+    cuda_plan = materialize_execution_plan(
+        resolved.value, ComputeBackend::Cuda, BurnLimits::MAX_SPECIES + 1);
+    expect(cpu_plan.ok && cuda_plan.ok
+               && cpu_plan.value.linear_solver == LinearSolverId::SparseKlu
+               && cuda_plan.value.linear_solver == LinearSolverId::CuDss,
+           "large-network Auto is materialized per backend");
+    expect(!materialize_execution_plan(
+                resolved.value, ComputeBackend::Auto, 21).ok,
+           "unresolved compute Auto cannot enter a concrete plan");
     config.physics.burn.odeconfig.linear_solver = "DenseLU";
     config.physics.burn.network_name = "bad";
     expect(!resolve_execution_plan(config, [] { return 0; }).ok,
@@ -443,6 +476,16 @@ void test_factory_routes_preserved()
             == "SparseKLU was selected, but this ARCH build has KLU disabled.";
     }
     expect(threw, "burn factory reports the build-time SparseKLU capability");
+    config.physics.burn.odeconfig.linear_solver = "cUdSs";
+    threw = false;
+    try { BurnDispatcher::dispatch(config, [](auto) {}); }
+    catch (const std::runtime_error& error) {
+        threw = std::string(error.what())
+            == "cuDSS requires compute_backend = cuda; the CPU burn factory "
+               "has no cuDSS binding.";
+    }
+    expect(threw,
+           "CPU burn factory rejects case-insensitive explicit cuDSS");
 
     config.physics.diffusion.use_diffusion = false;
     Numerics::Diffusion::dispatch_diffusion(config, [](auto selected) {

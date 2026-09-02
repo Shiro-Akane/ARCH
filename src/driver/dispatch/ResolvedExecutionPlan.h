@@ -25,7 +25,19 @@ enum class NetworkId : std::uint16_t {
 #undef ARCH_CUSTOM_NETWORK_ENUM
 };
 enum class OdeSolverId : std::uint8_t { None, BeNr, Bd, Ros4 };
-enum class LinearSolverId : std::uint8_t { None, DenseLu, SparseKlu };
+enum class LinearSolverRequest : std::uint8_t {
+    None,
+    Auto,
+    DenseLu,
+    SparseKlu,
+    CuDss,
+};
+enum class LinearSolverId : std::uint8_t {
+    None,
+    DenseLu,
+    SparseKlu,
+    CuDss,
+};
 enum class DiffusionIntegratorId : std::uint8_t { None, Rkl1, Rkl2 };
 enum class GeometryId : std::uint8_t { Cartesian, Cylindrical, Spherical };
 enum class GravityId : std::uint8_t { None, External, Self };
@@ -75,7 +87,8 @@ constexpr BoundaryFeatureMask boundary_bit(BoundaryFeature feature) noexcept
     return static_cast<BoundaryFeatureMask>(feature);
 }
 
-struct ResolvedExecutionPlan
+template <class LinearPolicy>
+struct BasicExecutionPlan
 {
     FluxId flux;
     ReconstructionId reconstruction;
@@ -84,9 +97,15 @@ struct ResolvedExecutionPlan
     EosId eos;
     NetworkId network;
     OdeSolverId ode_solver;
-    LinearSolverId linear_solver;
+    LinearPolicy linear_solver;
     DiffusionIntegratorId diffusion_integrator;
 };
+
+// Linear-solver Auto is backend-dependent.  Keep it in the parsed request and
+// only expose a ResolvedExecutionPlan after one CPU or CUDA candidate has been
+// materialized.
+using ExecutionPlanRequest = BasicExecutionPlan<LinearSolverRequest>;
+using ResolvedExecutionPlan = BasicExecutionPlan<LinearSolverId>;
 
 struct ExecutionRequirements
 {

@@ -200,8 +200,8 @@ void run_store_lifecycle(int device_count)
         make_launch_config(), species, boundary, eos);
     require_backend_device_selected(
         "CUDA backend construction did not select its device");
-    require(!backend->cuda_amr_execution_available(),
-            "storage lifecycle advertised dynamic CUDA AMR");
+    require(backend->cuda_amr_execution_available(),
+            "CUDA backend did not advertise its dynamic AMR contract");
 
     const auto old_access = current(old_handle, old_storage);
     backend->enqueue_upload_slot(

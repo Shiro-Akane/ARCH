@@ -23,6 +23,10 @@ namespace amr {
     class AMRControl;
 }
 
+namespace io {
+    struct CheckpointProvenance;
+}
+
 using PressureFunc = double (*)(const FluidVector&, const double*, const void*);
 using TemperatureFunc = double (*)(const FluidVector&, const double*, const void*);
 using Gamma1Func = double (*)(const FluidVector&, const double*, const void*);
@@ -39,8 +43,11 @@ void write_chk(amr::AMRControl &amr_ctrl,
                int step_count, double current_time,
                double dt_old, double dt_burn,
                bool resume_after_regrid,
-               const SimConfig &config);
+               const SimConfig &config, const SpeciesManager &specs,
+               const io::CheckpointProvenance &provenance);
 
 // Checkpoint input for restart.
 void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
-              RunState &run_state, const SimConfig &config, int expected_species);
+              RunState &run_state, const SimConfig &config,
+              const SpeciesManager &specs,
+              const io::CheckpointProvenance &expected_provenance);

@@ -374,12 +374,21 @@ void test_host_lowering_and_executor()
 
     FluidState state;
     seed_state(state, grid, 2);
-    const auto enuc_before = state_hash(state, true);
+    std::vector<double> expected_enuc = state.enuc_rate;
+    for (const auto& phase : compiled.phases) {
+        for (std::size_t offset = 0; offset < phase.count; ++offset) {
+            const auto& transfer = compiled.transfers[phase.first + offset];
+            expected_enuc[transfer.destination_index] =
+                expected_enuc[transfer.source_index];
+            require(transfer.conserved_signs[5] == 1,
+                    "Host ENUC lowering did not retain scalar sign");
+        }
+    }
     arch::boundary::host::execute(compiled, state);
     require(state_hash(state, false) == UINT64_C(0x5602b3e48fc0055b),
             "Host executor drifted from frozen latest-main state");
-    require(state_hash(state, true) == enuc_before,
-            "Host executor changed enuc_rate");
+    require(state.enuc_rate == expected_enuc,
+            "Host executor did not apply the ENUC boundary plan");
 
     FluidState exact_copy;
     seed_state(exact_copy, grid, 0);
@@ -518,9 +527,20 @@ void test_production_bc_handler()
             grid.InitializeTopology();
             FluidState state;
             seed_state(state, grid, species);
-            const auto enuc_before = state_hash(state, true);
             const auto species_before = values_hash(state.mass_fractions);
             const BCHandler boundary{config};
+            const auto lowered = arch::boundary::host::compile(
+                boundary.logical_plan(),
+                arch::boundary::host::make_layout(grid));
+            std::vector<double> expected_enuc = state.enuc_rate;
+            for (const auto& phase : lowered.phases) {
+                for (std::size_t offset = 0; offset < phase.count; ++offset) {
+                    const auto& transfer =
+                        lowered.transfers[phase.first + offset];
+                    expected_enuc[transfer.destination_index] =
+                        expected_enuc[transfer.source_index];
+                }
+            }
             boundary.apply(state, grid);
             const auto actual = state_hash(state, false);
             if (actual != frozen[dimension - 1][species_case]) {
@@ -539,8 +559,8 @@ void test_production_bc_handler()
             }
             require(actual == frozen[dimension - 1][species_case],
                     "BCHandler drifted from pre-edit latest-main authority");
-            require(state_hash(state, true) == enuc_before,
-                    "BCHandler changed enuc_rate");
+            require(state.enuc_rate == expected_enuc,
+                    "BCHandler did not apply ENUC physical boundaries");
         }
     }
 

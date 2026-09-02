@@ -16,6 +16,23 @@
 
 namespace io {
 
+/** Scientific/state-layout identity required for a verified restart. */
+struct CheckpointProvenance {
+    bool available = false;
+    std::string eos_type;
+    double ideal_gamma = 0.0;
+    bool burn_enabled = false;
+    std::string active_network = "none";
+    bool nse_enabled = false;
+    // The path is audit metadata only.  Compatibility is determined by the
+    // content digest so an unchanged table may be relocated between machines.
+    std::string eos_table_path;
+    std::string eos_table_sha256;
+    std::vector<std::string> species_names;
+    std::vector<double> species_A, species_Z;
+    std::vector<double> species_gamma, species_Cv;
+};
+
 /** Complete restart payload in Morton-sorted AMR leaf and interior-cell order. */
 struct CheckpointData {
     double time = 0.0;
@@ -30,9 +47,11 @@ struct CheckpointData {
     std::size_t cells_per_block = 0;
     bool has_timestep_state = false;
     bool resume_after_regrid = false;
+    bool has_enuc_rate = false;
+    CheckpointProvenance provenance;
     std::vector<int> levels;
     std::vector<uint32_t> logical_x1, logical_x2, logical_x3;
-    std::vector<double> rho, mom_u, mom_v, mom_w, eng, rhoX;
+    std::vector<double> rho, mom_u, mom_v, mom_w, eng, enuc_rate, rhoX;
 };
 
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,

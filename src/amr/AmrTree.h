@@ -773,6 +773,13 @@ public:
         {
             if (owner_ == nullptr || !published_ || retired_released_)
                 throw std::logic_error("retired AMR blocks are not releasable");
+            ReleaseRetiredNoexcept();
+        }
+
+        void ReleaseRetiredNoexcept() noexcept
+        {
+            if (owner_ == nullptr || !published_ || retired_released_)
+                std::terminate();
             for (const int id : retire_) owner_->pool->FreeBlock(id);
             retire_.clear();
             allocated_.clear();
@@ -855,6 +862,7 @@ public:
                 append(AmrField::MomV, -1);
                 append(AmrField::MomW, -1);
                 append(AmrField::Energy, -1);
+                append(AmrField::EnucRate, -1);
                 for (int component = 0; component < species; ++component)
                     append(AmrField::Species, component);
             };

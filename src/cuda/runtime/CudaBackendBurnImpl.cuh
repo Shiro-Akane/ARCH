@@ -1,12 +1,11 @@
 /**
  * @file CudaBackendBurnImpl.cuh
- * @brief Template implementation shared by per-EOS burn instantiation TUs.
+ * @brief Burn kernels and ODE routing shared by narrowly instantiated TUs.
  */
 
 #pragma once
 
 #include "CudaBackendBurn.h"
-#include "CudaBurnNetworkTypes.h"
 
 #include "cuda/microphysics/microphysics_api.h"
 #include "driver/dispatch/PolicyDescriptor.h"
@@ -184,46 +183,50 @@ struct OdeRouteVisitor {
 };
 
 template <class Eos>
-struct NetworkRouteVisitor {
-    RouteContext<Eos>& context;
-
-    template <class NetworkRegistration>
-    void operator()()
-    {
-        using NetworkBinding = typename dispatch::PolicyRegistration<
-            NetworkRegistration>::CudaBinding;
-        if constexpr (!std::is_same_v<NetworkBinding, dispatch::AbsentBinding>
-                      && !std::is_same_v<
-                          NetworkBinding, dispatch::CudaNoNetworkBinding>) {
-            using Network = NetworkTypeFor<NetworkBinding>;
-            OdeRouteVisitor<Network, Eos> visitor{context};
-            const bool ode_found = dispatch::visit_policy<
-                dispatch::OdeSolverPolicies>(
-                    context.plan.ode_solver, visitor);
-            context.invoked = context.invoked && ode_found;
-        }
-    }
-};
-
-template <class Eos>
-cudaError_t visit_route(
+bool valid_route_arguments(
     const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
     DeviceGridView grid, std::byte* workspace_storage,
     reduction::ReductionCandidate* candidates, int* statuses,
     DeviceBurnSummary* summary, double burn_dt, Eos eos,
     BurnConfigView config, cudaStream_t stream)
 {
-    if (plan.linear_solver != dispatch::LinearSolverId::DenseLu
-        || workspace_storage == nullptr || candidates == nullptr
-        || statuses == nullptr || summary == nullptr)
+    (void)state;
+    (void)grid;
+    (void)burn_dt;
+    (void)eos;
+    (void)config;
+    (void)stream;
+    return plan.linear_solver == dispatch::LinearSolverId::DenseLu
+        && workspace_storage != nullptr && candidates != nullptr
+        && statuses != nullptr && summary != nullptr;
+}
+
+/**
+ * Instantiate exactly one reaction network and the registered CUDA ODE set.
+ *
+ * Keeping network selection outside this template is intentional: a Tabular
+ * dispatcher can live in a lightweight TU while each network owns one bounded
+ * NVCC template graph.  The mathematical kernels remain defined once above.
+ */
+template <class Network, class Eos>
+cudaError_t visit_ode_route(
+    const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
+    DeviceGridView grid, std::byte* workspace_storage,
+    reduction::ReductionCandidate* candidates, int* statuses,
+    DeviceBurnSummary* summary, double burn_dt, Eos eos,
+    BurnConfigView config, cudaStream_t stream)
+{
+    if (!valid_route_arguments(
+            plan, state, grid, workspace_storage, candidates, statuses,
+            summary, burn_dt, eos, config, stream))
         return cudaErrorInvalidValue;
     RouteContext<Eos> context{
         plan, state, grid, workspace_storage, candidates, statuses, summary,
         burn_dt, eos, config, stream};
-    NetworkRouteVisitor<Eos> visitor{context};
-    const bool network_found = dispatch::visit_policy<
-        dispatch::NetworkPolicies>(plan.network, visitor);
-    return network_found && context.invoked
+    OdeRouteVisitor<Network, Eos> visitor{context};
+    const bool ode_found = dispatch::visit_policy<
+        dispatch::OdeSolverPolicies>(plan.ode_solver, visitor);
+    return ode_found && context.invoked
         ? context.result : cudaErrorInvalidValue;
 }
 

@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include <array>
+#include <cmath>
 #include <memory>
 #include <map>
 #include <span>
@@ -18,13 +20,11 @@
 #include "AmrTree.h"
 #include "AmrTransferPlans.h"
 #include "Block.h"
+#include "CoarseFineCellPlan.h"
+#include "ConservativeRestriction.h"
 #include "ExchangePlan.h"
 
 #include "../data/GlobalDefs.h"
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
 
 namespace amr {
 
@@ -53,9 +53,9 @@ public:
         if (active_blocks.empty())
             throw std::invalid_argument(
                 "same-level exchange requires active blocks");
-        if (!handles.empty() && handles.size() != active_blocks.size())
+        if (handles.empty() || handles.size() != active_blocks.size())
             throw std::invalid_argument(
-                "same-level exchange handle count mismatch");
+                "same-level exchange requires committed handles");
 
         std::map<int, std::size_t> active_index;
         std::map<int, std::vector<std::size_t>> indices_by_level;
@@ -82,8 +82,7 @@ public:
                 topology[local].logical = {
                     dim, block.level, block.logical_x1,
                     block.logical_x2, block.logical_x3};
-                topology[local].handle = handles.empty()
-                    ? BlockHandle{} : handles[global];
+                topology[local].handle = handles[global];
             }
             for (std::size_t local = 0; local < indices.size(); ++local) {
                 const std::size_t global = indices[local];
@@ -109,8 +108,7 @@ public:
                         topology[grouped->second].logical;
                 }
             }
-            const TopologyEpoch epoch = handles.empty()
-                ? TopologyEpoch{} : topology.front().handle.epoch;
+            const TopologyEpoch epoch = topology.front().handle.epoch;
             plans.push_back(make_same_level_exchange_plan(
                 topology, dim,
                 {BLOCK_NX, dim >= 2 ? BLOCK_NY : 1,
@@ -239,93 +237,179 @@ public:
         FluidState Block::* state_ptr,
         std::span<const BlockHandle> handles)
     {
-        validate_amr_plan(plan);
         const auto& active_blocks = tree->GetActiveBlocks();
-        if (plan.dimension != dim || handles.size() != active_blocks.size())
+        if (state_ptr == nullptr || plan.dimension != dim
+            || handles.size() != active_blocks.size())
             throw std::invalid_argument(
                 "coarse-fine Host execution view mismatch");
 
-        struct CompiledGroup {
+        struct CompiledTransfer {
             int source_id = -1;
             int destination_id = -1;
-            int face = -1;
-            RefinementRule rule = RefinementRule::CoarseGhostInjection;
+            int destination_cell = -1;
+            std::array<int, 8> source_cells{};
+            std::array<double, 8> source_measures{};
+            std::uint8_t source_count = 0;
+            double source_measure_sum = 0.0;
         };
         std::map<LogicalBlockKey, std::size_t> active_index;
+        int species_count = -1;
         for (std::size_t index = 0; index < active_blocks.size(); ++index) {
             const Block& block = pool->GetBlock(active_blocks[index]);
             if (!active_index.emplace(logical_key(block, dim), index).second)
                 throw std::invalid_argument(
                     "coarse-fine Host view has duplicate logical block");
-            if (handles[index].epoch != plan.scope.from_epoch)
+            if (!is_valid(handles[index])
+                || handles[index].epoch != plan.scope.from_epoch)
                 throw std::invalid_argument(
                     "coarse-fine Host view has stale handle");
+            const int block_species = (block.*state_ptr).GetNumSpecies();
+            if (species_count >= 0 && block_species != species_count)
+                throw std::invalid_argument(
+                    "coarse-fine Host species count mismatch");
+            species_count = block_species;
         }
+        if (species_count < 0)
+            throw std::invalid_argument(
+                "coarse-fine Host execution requires active blocks");
 
-        std::vector<CompiledGroup> groups;
-        for (std::size_t first = 0; first < plan.operations.size();) {
-            const auto& head = plan.operations[first];
-            const auto source = active_index.find(head.source.logical);
+        const CoarseFineCellPlan cell_plan =
+            compile_coarse_fine_cell_plan(plan, species_count);
+        const auto cell_index = [](const Grid& grid,
+                                   const LogicalAmrCell& cell) {
+            const std::array<std::int64_t, 3> absolute{
+                static_cast<std::int64_t>(grid.Is()) + cell[0],
+                static_cast<std::int64_t>(grid.Js()) + cell[1],
+                static_cast<std::int64_t>(grid.Ks()) + cell[2]};
+            if (absolute[0] < 0 || absolute[0] >= grid.GetTotalX()
+                || absolute[1] < 0 || absolute[1] >= grid.GetTotalY()
+                || absolute[2] < 0 || absolute[2] >= grid.GetTotalZ())
+                throw std::out_of_range(
+                    "coarse-fine cell is outside Host block layout");
+            return grid.GetIndex(
+                static_cast<int>(absolute[0]),
+                static_cast<int>(absolute[1]),
+                static_cast<int>(absolute[2]));
+        };
+
+        std::vector<CompiledTransfer> compiled;
+        compiled.reserve(cell_plan.transfers.size());
+        for (const CoarseFineCellTransfer& transfer : cell_plan.transfers) {
+            const auto source = active_index.find(transfer.source.logical);
             const auto destination = active_index.find(
-                head.destination.logical);
+                transfer.destination.logical);
             if (source == active_index.end()
                 || destination == active_index.end()
-                || handles[source->second] != head.source.handle
-                || handles[destination->second] != head.destination.handle)
+                || handles[source->second] != transfer.source.handle
+                || handles[destination->second]
+                    != transfer.destination.handle)
                 throw std::invalid_argument(
                     "coarse-fine logical endpoint is stale");
             const Block& source_block = pool->GetBlock(
                 active_blocks[source->second]);
             const Block& destination_block = pool->GetBlock(
                 active_blocks[destination->second]);
-            const int species = destination_block.fluid_state.GetNumSpecies();
-            if (source_block.fluid_state.GetNumSpecies() != species)
+            if ((source_block.*state_ptr).GetNumSpecies() != species_count
+                || (destination_block.*state_ptr).GetNumSpecies()
+                    != species_count)
                 throw std::invalid_argument(
                     "coarse-fine Host species count mismatch");
-            const std::size_t count = static_cast<std::size_t>(6 + species);
-            if (count > plan.operations.size() - first)
+            CompiledTransfer lowered{};
+            lowered.source_id = active_blocks[source->second];
+            lowered.destination_id = active_blocks[destination->second];
+            lowered.destination_cell = cell_index(
+                destination_block.grid, transfer.destination_cell);
+            lowered.source_count = transfer.source_count;
+            if (lowered.source_count == 0
+                || lowered.source_count > lowered.source_cells.size())
                 throw std::invalid_argument(
-                    "coarse-fine field group is incomplete");
-            for (std::size_t offset = 0; offset < count; ++offset) {
-                const auto& operation = plan.operations[first + offset];
-                const AmrField expected_field = offset < 6
-                    ? static_cast<AmrField>(offset)
-                    : AmrField::Species;
-                const int expected_component = offset < 6
-                    ? -1 : static_cast<int>(offset - 6);
-                if (operation.source != head.source
-                    || operation.destination != head.destination
-                    || operation.source_box != head.source_box
-                    || operation.destination_box != head.destination_box
-                    || operation.axis != head.axis
-                    || operation.side != head.side
-                    || operation.rule != head.rule
-                    || operation.field != expected_field
-                    || operation.component != expected_component)
+                    "coarse-fine Host source count is invalid");
+            for (std::size_t cell = 0; cell < lowered.source_count; ++cell) {
+                lowered.source_cells[cell] = cell_index(
+                    source_block.grid, transfer.source_cells[cell]);
+                // Cartesian fine cells have one common measure, so unit
+                // weights preserve the existing arithmetic.  Curvilinear
+                // restriction must use physical cell volumes.
+                double measure = 1.0;
+                if (source_block.grid.geometry != "cartesian") {
+                    const LogicalAmrCell& logical =
+                        transfer.source_cells[cell];
+                    measure = GridMetrics::CellVolume(
+                        source_block.grid,
+                        source_block.grid.Is() + logical[0],
+                        source_block.grid.Js() + logical[1],
+                        source_block.grid.Ks() + logical[2]);
+                }
+                if (!std::isfinite(measure) || measure <= 0.0)
                     throw std::invalid_argument(
-                        "coarse-fine field group is noncanonical");
+                        "coarse-fine Host source measure is invalid");
+                lowered.source_measures[cell] = measure;
+                lowered.source_measure_sum += measure;
             }
-            groups.push_back({
-                active_blocks[source->second],
-                active_blocks[destination->second],
-                2 * axis_value(head.axis) + side_value(head.side),
-                head.rule});
-            first += count;
+            if (!std::isfinite(lowered.source_measure_sum)
+                || lowered.source_measure_sum <= 0.0)
+                throw std::invalid_argument(
+                    "coarse-fine Host source measure sum is invalid");
+            compiled.push_back(lowered);
         }
 
-        // Execute only after the complete lowering and field coverage validate.
-        for (const CompiledGroup& group : groups) {
-            Block& destination = pool->GetBlock(group.destination_id);
-            const Block& source = pool->GetBlock(group.source_id);
-            if (group.rule == RefinementRule::CoarseGhostInjection) {
-                InterpolateFaceFromCoarse(
-                    destination, source, group.face, dim, state_ptr);
-            } else if (group.rule == RefinementRule::FineGhostAverage) {
-                AverageFaceFromFine(
-                    destination, source, group.face, dim, state_ptr);
-            } else {
-                throw std::logic_error(
-                    "coarse-fine Host executor received an invalid rule");
+        // No state changes occur until the complete logical plan, identities,
+        // layouts, and cell addresses have validated.
+        for (const CompiledTransfer& transfer : compiled) {
+            FluidState& destination =
+                pool->GetBlock(transfer.destination_id).*state_ptr;
+            const FluidState& source =
+                pool->GetBlock(transfer.source_id).*state_ptr;
+            const auto restrict_field = [&](const std::vector<double>& field) {
+                if (transfer.source_count == 1)
+                    return field[transfer.source_cells[0]];
+                double integral = 0.0;
+                for (std::size_t cell = 0;
+                     cell < transfer.source_count; ++cell)
+                    integral += restriction_math::weighted_conserved_value(
+                        field[transfer.source_cells[cell]],
+                        transfer.source_measures[cell]);
+                return restriction_math::restricted_average(
+                    integral, transfer.source_measure_sum);
+            };
+            double density_integral = 0.0;
+            for (std::size_t cell = 0;
+                 cell < transfer.source_count; ++cell)
+                density_integral +=
+                    restriction_math::weighted_conserved_value(
+                        source.rho[transfer.source_cells[cell]],
+                        transfer.source_measures[cell]);
+            destination.rho[transfer.destination_cell] =
+                restrict_field(source.rho);
+            destination.mom_u[transfer.destination_cell] =
+                restrict_field(source.mom_u);
+            destination.mom_v[transfer.destination_cell] =
+                restrict_field(source.mom_v);
+            destination.mom_w[transfer.destination_cell] =
+                restrict_field(source.mom_w);
+            destination.eng[transfer.destination_cell] =
+                restrict_field(source.eng);
+            destination.enuc_rate[transfer.destination_cell] =
+                restrict_field(source.enuc_rate);
+            for (int species = 0; species < species_count; ++species) {
+                if (transfer.source_count == 1) {
+                    destination.X(species, transfer.destination_cell) =
+                        source.X(species, transfer.source_cells[0]);
+                    continue;
+                }
+                double species_density_integral = 0.0;
+                for (std::size_t cell = 0;
+                     cell < transfer.source_count; ++cell) {
+                    const int source_cell = transfer.source_cells[cell];
+                    species_density_integral +=
+                        restriction_math::weighted_species_density(
+                            source.rho[source_cell],
+                            source.X(species, source_cell),
+                            transfer.source_measures[cell]);
+                }
+                destination.X(species, transfer.destination_cell) =
+                    restriction_math::restricted_mass_fraction(
+                        species_density_integral, density_integral);
             }
         }
     }
@@ -336,6 +420,9 @@ public:
         std::span<const BlockHandle> handles = {})
     {
         const auto& active_blocks = tree->GetActiveBlocks();
+        if (handles.empty() || handles.size() != active_blocks.size())
+            throw std::invalid_argument(
+                "Host exchange requires committed handles");
         if (active_blocks.empty()) return;
 
         int n_species = pool->GetBlock(active_blocks[0]).fluid_state.GetNumSpecies();
@@ -351,7 +438,7 @@ public:
             view.logical = {
                 dim, block.level, block.logical_x1,
                 block.logical_x2, block.logical_x3};
-            view.handle = handles.empty() ? BlockHandle{} : handles[index];
+            view.handle = handles[index];
             view.layout = {
                 dim,
                 {block.grid.Is(), block.grid.Js(), block.grid.Ks()},
@@ -389,18 +476,10 @@ public:
                 plan, level_views);
             execute_host_exchange_plan(compiled, level_views);
         }
-        if (handles.empty()) {
-            // Bootstrap refinement precedes E1 identity adoption.  Task I0's
-            // transactional initial-adoption step removes this temporary
-            // uncommitted path before the final gate.
-            UpdateGhostFromCoarse(pool, active_blocks, dim, state_ptr);
-            UpdateGhostFromFine(pool, active_blocks, dim, state_ptr);
-        } else {
-            const auto coarse_fine = BuildCoarseFinePlan(
-                pool, tree, dim, handles);
-            ExecuteCoarseFinePlan(
-                coarse_fine, pool, tree, dim, state_ptr, handles);
-        }
+        const auto coarse_fine = BuildCoarseFinePlan(
+            pool, tree, dim, handles);
+        ExecuteCoarseFinePlan(
+            coarse_fine, pool, tree, dim, state_ptr, handles);
     }
 
 private:
@@ -482,175 +561,6 @@ private:
         return {source, destination};
     }
 
-    void UpdateGhostFromCoarse(std::shared_ptr<MemoryPool> pool, const std::vector<int>& active_blocks, int dim, FluidState Block::* state_ptr) {
-        #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            Block& b = pool->GetBlock(active_blocks[i]);
-            for (int f = 0; f < 6; ++f) {
-                if (dim < 2 && (f == 2 || f == 3)) continue;
-                if (dim < 3 && (f == 4 || f == 5)) continue;
-
-                if (b.face_neighbors[f].count == 1 && b.face_neighbors[f].level_diff == -1) {
-                    int coarse_id = b.face_neighbors[f].ids[0];
-                    if (coarse_id >= 0) {
-                        const Block& coarse = pool->GetBlock(coarse_id);
-                        InterpolateFaceFromCoarse(b, coarse, f, dim, state_ptr);
-                    }
-                }
-            }
-        }
-    }
-
-    void UpdateGhostFromFine(std::shared_ptr<MemoryPool> pool, const std::vector<int>& active_blocks, int dim, FluidState Block::* state_ptr) {
-        #pragma omp parallel for schedule(static)
-        for (size_t i = 0; i < active_blocks.size(); ++i) {
-            Block& b = pool->GetBlock(active_blocks[i]);
-            for (int f = 0; f < 6; ++f) {
-                if (dim < 2 && (f == 2 || f == 3)) continue;
-                if (dim < 3 && (f == 4 || f == 5)) continue;
-
-                if (b.face_neighbors[f].count > 0 && b.face_neighbors[f].level_diff == 1) {
-                    for (int n = 0; n < b.face_neighbors[f].count; ++n) {
-                        int fine_id = b.face_neighbors[f].ids[n];
-                        if (fine_id < 0) continue;
-                        const Block& fine = pool->GetBlock(fine_id);
-                        AverageFaceFromFine(b, fine, f, dim, state_ptr);
-                    }
-                }
-            }
-        }
-    }
-
-        void InterpolateFaceFromCoarse(Block& fine, const Block& coarse, int face, int dim, FluidState Block::* state_ptr) {
-        FluidState& f_state = fine.*state_ptr;
-        const FluidState& c_state = coarse.*state_ptr;
-
-        int n_sp = f_state.GetNumSpecies();
-
-        int f_i_start = 0, f_j_start = 0, f_k_start = 0;
-        int nx = BLOCK_NX, ny = (dim >= 2) ? BLOCK_NY : 1, nz = (dim == 3) ? BLOCK_NZ : 1;
-
-        if (face == 0) { f_i_start = -MAX_NG; nx = MAX_NG; }
-        else if (face == 1) { f_i_start = BLOCK_NX; nx = MAX_NG; }
-        else if (face == 2) { f_j_start = -MAX_NG; ny = MAX_NG; }
-        else if (face == 3) { f_j_start = BLOCK_NY; ny = MAX_NG; }
-        else if (face == 4) { f_k_start = -MAX_NG; nz = MAX_NG; }
-        else if (face == 5) { f_k_start = BLOCK_NZ; nz = MAX_NG; }
-
-        int child_x = fine.logical_x1 % 2;
-        int child_y = fine.logical_x2 % 2;
-        int child_z = fine.logical_x3 % 2;
-
-        int x_off = child_x * (BLOCK_NX / 2);
-        int y_off = (dim >= 2) ? child_y * (BLOCK_NY / 2) : 0;
-        int z_off = (dim == 3) ? child_z * (BLOCK_NZ / 2) : 0;
-
-        if (face == 0) x_off = BLOCK_NX;
-        if (face == 1) x_off = - (BLOCK_NX / 2);
-        if (face == 2) y_off = BLOCK_NY;
-        if (face == 3) y_off = - (BLOCK_NY / 2);
-        if (face == 4) z_off = BLOCK_NZ;
-        if (face == 5) z_off = - (BLOCK_NZ / 2);
-
-        for (int k = 0; k < nz; ++k) {
-            for (int j = 0; j < ny; ++j) {
-                for (int i = 0; i < nx; ++i) {
-                    int f_i = f_i_start + i;
-                    int f_j = f_j_start + j;
-                    int f_k = f_k_start + k;
-
-                    int c_i = x_off + (f_i >= 0 ? f_i / 2 : (f_i - 1) / 2);
-                    int c_j = y_off + (f_j >= 0 ? f_j / 2 : (f_j - 1) / 2);
-                    int c_k = z_off + (f_k >= 0 ? f_k / 2 : (f_k - 1) / 2);
-
-                    int c_idx = coarse.grid.GetIndex(coarse.grid.Is() + c_i, coarse.grid.Js() + c_j, coarse.grid.Ks() + c_k);
-                    int f_idx = fine.grid.GetIndex(fine.grid.Is() + f_i, fine.grid.Js() + f_j, fine.grid.Ks() + f_k);
-
-                    f_state.rho[f_idx] = c_state.rho[c_idx];
-                    f_state.mom_u[f_idx] = c_state.mom_u[c_idx];
-                    f_state.mom_v[f_idx] = c_state.mom_v[c_idx];
-                    f_state.mom_w[f_idx] = c_state.mom_w[c_idx];
-                    f_state.eng[f_idx] = c_state.eng[c_idx];
-                    f_state.enuc_rate[f_idx] = c_state.enuc_rate[c_idx];
-                    for (int s = 0; s < n_sp; ++s) {
-                        f_state.X(s, f_idx) = c_state.X(s, c_idx);
-                    }
-                }
-            }
-        }
-    }
-
-    void AverageFaceFromFine(Block& coarse, const Block& fine, int face, int dim, FluidState Block::* state_ptr) {
-        FluidState& c_state = coarse.*state_ptr;
-        const FluidState& f_state = fine.*state_ptr;
-        int n_sp = c_state.GetNumSpecies();
-
-        int child_x = fine.logical_x1 % 2;
-        int child_y = fine.logical_x2 % 2;
-        int child_z = fine.logical_x3 % 2;
-
-        int x_off = child_x * (BLOCK_NX / 2);
-        int y_off = (dim >= 2) ? child_y * (BLOCK_NY / 2) : 0;
-        int z_off = (dim == 3) ? child_z * (BLOCK_NZ / 2) : 0;
-
-        int c_i_start = 0, c_j_start = 0, c_k_start = 0;
-        int nx = BLOCK_NX / 2, ny = (dim >= 2) ? BLOCK_NY / 2 : 1, nz = (dim == 3) ? BLOCK_NZ / 2 : 1;
-
-        int f_i_start = 0, f_j_start = 0, f_k_start = 0;
-
-        if (face == 0) { c_i_start = -MAX_NG; nx = MAX_NG; f_i_start = BLOCK_NX - 2 * MAX_NG; }
-        else if (face == 1) { c_i_start = BLOCK_NX; nx = MAX_NG; f_i_start = 0; }
-        else if (face == 2) { c_j_start = -MAX_NG; ny = MAX_NG; f_j_start = BLOCK_NY - 2 * MAX_NG; }
-        else if (face == 3) { c_j_start = BLOCK_NY; ny = MAX_NG; f_j_start = 0; }
-        else if (face == 4) { c_k_start = -MAX_NG; nz = MAX_NG; f_k_start = BLOCK_NZ - 2 * MAX_NG; }
-        else if (face == 5) { c_k_start = BLOCK_NZ; nz = MAX_NG; f_k_start = 0; }
-
-        for (int k = 0; k < nz; ++k) {
-            for (int j = 0; j < ny; ++j) {
-                for (int i = 0; i < nx; ++i) {
-                    int c_i = c_i_start + i + ((face == 0 || face == 1) ? 0 : x_off);
-                    int c_j = c_j_start + j + ((face == 2 || face == 3) ? 0 : y_off);
-                    int c_k = c_k_start + k + ((face == 4 || face == 5) ? 0 : z_off);
-
-                    int c_idx = coarse.grid.GetIndex(coarse.grid.Is() + c_i, coarse.grid.Js() + c_j, coarse.grid.Ks() + c_k);
-
-                    int f_i_base = ((face == 0 || face == 1) ? f_i_start + i * 2 : (c_i - x_off) * 2);
-                    int f_j_base = ((face == 2 || face == 3) ? f_j_start + j * 2 : (c_j - y_off) * 2);
-                    int f_k_base = ((face == 4 || face == 5) ? f_k_start + k * 2 : (c_k - z_off) * 2);
-
-                    double rho = 0, u = 0, v = 0, w = 0, eng = 0;
-                    double enuc_rate = 0;
-                    std::vector<double> X(n_sp, 0.0);
-                    int count = 0;
-
-                    for (int fk = 0; fk < (dim == 3 ? 2 : 1); ++fk) {
-                        for (int fj = 0; fj < (dim >= 2 ? 2 : 1); ++fj) {
-                            for (int fi = 0; fi < 2; ++fi) {
-                                int f_idx = fine.grid.GetIndex(fine.grid.Is() + f_i_base + fi, fine.grid.Js() + f_j_base + fj, fine.grid.Ks() + f_k_base + fk);
-                                rho += f_state.rho[f_idx];
-                                u += f_state.mom_u[f_idx];
-                                v += f_state.mom_v[f_idx];
-                                w += f_state.mom_w[f_idx];
-                                eng += f_state.eng[f_idx];
-                                enuc_rate += f_state.enuc_rate[f_idx];
-                                for (int s = 0; s < n_sp; ++s) X[s] += f_state.X(s, f_idx);
-                                count++;
-                            }
-                        }
-                    }
-
-                    double inv = 1.0 / count;
-                    c_state.rho[c_idx] = rho * inv;
-                    c_state.mom_u[c_idx] = u * inv;
-                    c_state.mom_v[c_idx] = v * inv;
-                    c_state.mom_w[c_idx] = w * inv;
-                    c_state.eng[c_idx] = eng * inv;
-                    c_state.enuc_rate[c_idx] = enuc_rate * inv;
-                    for (int s = 0; s < n_sp; ++s) c_state.X(s, c_idx) = X[s] * inv;
-                }
-            }
-        }
-    }
 };
 
 } // namespace amr

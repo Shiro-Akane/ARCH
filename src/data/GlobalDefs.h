@@ -79,7 +79,7 @@ struct ExecutionConfig
 struct OdeConfig
 {
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
-    std::string linear_solver = "Auto";    ///< DenseLU through 30 isotopes; KLU above that
+    std::string linear_solver = "Auto";    ///< <=30 DenseLU; larger CPU/CUDA candidates use KLU/cuDSS
 
     double rtol = 1e-4; ///< Relative tolerance for ODE integration
     double atol = 1e-8; ///< Absolute tolerance for ODE integration
@@ -341,6 +341,8 @@ struct RunState
     double dt_burn = 0.0; ///< Burn-reported limit carried into the next macro step
     bool has_timestep_state = false; ///< True for checkpoint formats that persist both limits
     bool resume_after_regrid = false; ///< The saved loop checkpoint already completed regrid/I/O
+    bool checkpoint_provenance_verified = false; ///< True after strict v3 scientific-identity validation
+    std::string verified_eos_table_sha256; ///< Saved table identity rechecked after the EOS owner loads
 };
 
 // Complete runtime configuration.

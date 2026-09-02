@@ -366,14 +366,15 @@ void run_cuda_lowering_and_execution(int dimension, int species_count)
     const auto actual_v = device_state.mom_v.download();
     const auto actual_w = device_state.mom_w.download();
     const auto actual_eng = device_state.eng.download();
+    const auto actual_enuc = device_state.enuc.download();
     const auto actual_species = device_state.species.download();
     require_raw_equal(actual_rho, expected.rho, "rho");
     require_raw_equal(actual_u, expected.mom_u, "mom_u");
     require_raw_equal(actual_v, expected.mom_v, "mom_v");
     require_raw_equal(actual_w, expected.mom_w, "mom_w");
     require_raw_equal(actual_eng, expected.eng, "eng");
+    require_raw_equal(actual_enuc, expected.enuc_rate, "enuc_rate");
     require_raw_equal(actual_species, expected.mass_fractions, "species");
-    require_raw_equal(device_state.enuc.download(), initial.enuc_rate, "enuc_rate");
 
     const auto& normal_values = ieee.normal == BoundaryFieldClass::MomentumX
         ? actual_u : (ieee.normal == BoundaryFieldClass::MomentumY

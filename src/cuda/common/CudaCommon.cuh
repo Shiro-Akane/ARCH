@@ -2,6 +2,7 @@
 
 #include <cuda_runtime.h>
 
+#include <cstdint>
 #include <limits>
 #include <type_traits>
 
@@ -82,6 +83,7 @@ struct DeviceGridView
     int ks;
     int ke;
     int geometry;
+    std::uint8_t amr_coarse_fine_face[6]{};
     double dx1;
     double dx2;
     double dx3;
@@ -159,6 +161,8 @@ inline bool valid_hydro_grid(const DeviceGridView& grid)
         || grid.js < 0 || grid.js >= grid.je || grid.je > grid.total_y
         || grid.ks < 0 || grid.ks >= grid.ke || grid.ke > grid.total_z)
         return false;
+    for (const std::uint8_t flag : grid.amr_coarse_fine_face)
+        if (flag > 1) return false;
     if (grid.total_y > std::numeric_limits<int>::max() / grid.stride_y)
         return false;
     const int minimum_stride_z = grid.total_y * grid.stride_y;
@@ -206,6 +210,9 @@ inline DeviceGridView make_device_grid_view(const Grid& grid)
     view.ks = grid.Ks();
     view.ke = grid.Ke();
     view.geometry = geometry;
+    for (int face = 0; face < 6; ++face)
+        view.amr_coarse_fine_face[face] = static_cast<std::uint8_t>(
+            grid.amr_coarse_fine_face[face]);
     view.dx1 = grid.dx1;
     view.dx2 = grid.dx2;
     view.dx3 = grid.dx3;

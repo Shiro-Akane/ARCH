@@ -71,7 +71,7 @@ public:
      * @brief Returns a block to the free list.
      * @param id The ID of the block to free.
      */
-    void FreeBlock(int id) {
+    void FreeBlock(int id) noexcept {
         if (id < 0 || id >= max_blocks || !pool[id].active) {
             return; // Invalid free
         }

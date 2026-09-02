@@ -32,20 +32,37 @@ CudaBackendLaunchResult launch_diffusion_stage_impl(
     DeviceStateView delta, DeviceStateView initial_delta,
     Eos eos, SpeciesPODView species, DeviceGridView grid,
     DiffFlux::DiffusionConfigView config,
-    CudaBackendDiffusionWorkspace workspace, double dt,
+    CudaBackendDiffusionWorkspace workspace,
+    const CudaAmrFluxDirectionRouteView* amr_routes, double dt,
     cudaStream_t stream)
 {
-    const DiffusionLaunchResult operation = launch_bounded_diffusion_operator(
-        descriptor.stage == 1 ? state_n : previous,
-        descriptor.stage == 1 && plan.second_order ? initial_delta : delta,
-        eos, species, grid, config, make_workspace(workspace), stream);
-    if (operation.error != cudaSuccess)
-        return {operation.error, operation.kernels_launched, true};
-
     const DiffFunction::RKLOrder order = plan.second_order
         ? DiffFunction::RKLOrder::Second : DiffFunction::RKLOrder::First;
     const auto coefficients = DiffFunction::get_rkl_coeffs(
         order, descriptor.stage, static_cast<int>(plan.stages.size()));
+    const DiffusionLaunchResult operation = launch_bounded_diffusion_operator(
+        descriptor.stage == 1 ? state_n : previous,
+        descriptor.stage == 1 && plan.second_order ? initial_delta : delta,
+        eos, species, grid, config, make_workspace(workspace), amr_routes,
+        coefficients.tilde_mu,
+        descriptor.stage == 1 && plan.second_order, stream);
+    if (operation.error != cudaSuccess)
+        return {operation.error, operation.kernels_launched, true};
+
+    int registration_kernels = 0;
+    if (descriptor.stage > 1 && plan.second_order && amr_routes != nullptr) {
+        for (int direction = 0; direction < grid.dim; ++direction) {
+            const auto registration = launch_cuda_amr_flux_register(
+                amr_routes[direction], AmrFluxSource::InitialSurface,
+                coefficients.gamma, stream);
+            if (registration.error != cudaSuccess) {
+                return {registration.error,
+                        operation.kernels_launched + registration_kernels,
+                        true};
+            }
+            registration_kernels += registration.kernels_launched;
+        }
+    }
     DiffusionLaunchResult update{};
     if (descriptor.stage == 1) {
         update = launch_bounded_first_rkl_stage(
@@ -59,7 +76,9 @@ CudaBackendLaunchResult launch_diffusion_stage_impl(
             dt, false, stream);
     }
     return {update.error,
-            operation.kernels_launched + update.kernels_launched, true};
+            operation.kernels_launched + registration_kernels
+                + update.kernels_launched,
+            true};
 }
 
 } // namespace
@@ -88,12 +107,14 @@ cudaError_t copy_cuda_backend_state_slot(
         DeviceStateView delta, DeviceStateView initial_delta, \
         EOS eos, SpeciesPODView species, DeviceGridView grid, \
         DiffFlux::DiffusionConfigView config, \
-        CudaBackendDiffusionWorkspace workspace, double dt, \
+        CudaBackendDiffusionWorkspace workspace, \
+        const CudaAmrFluxDirectionRouteView* amr_routes, double dt, \
         cudaStream_t stream) \
     { \
         return launch_diffusion_stage_impl( \
             plan, descriptor, state_n, previous, older, output, delta, \
-            initial_delta, eos, species, grid, config, workspace, dt, stream); \
+            initial_delta, eos, species, grid, config, workspace, amr_routes, \
+            dt, stream); \
     }
 
 ARCH_DEFINE_BACKEND_DIFFUSION(IdealGasView)

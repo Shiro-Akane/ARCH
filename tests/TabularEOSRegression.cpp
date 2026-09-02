@@ -1,11 +1,15 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <highfive/H5File.hpp>
+#include "core/FileFingerprint.h"
+#include "core/RuntimeParams.h"
 #include "physics/eos/Tabular3DEOS.h"
 #include "physics/eos/Tabular4DEOS.h"
 #include "physics/eos/eosdispatch.h"
@@ -46,11 +50,12 @@ void common(HighFive::File& file, int rank, int nr, int nt,
     scalar(file,"log_rho_min",r0); scalar(file,"log_rho_max",r1);
     scalar(file,"log_T_min",t0); scalar(file,"log_T_max",t1);
 }
-void write3(const std::filesystem::path& path) {
+void write3(const std::filesystem::path& path,
+            const std::string& composition_axis="Ye") {
     constexpr int nr=161, nt=161, nx=3; constexpr double r0=0,r1=2,t0=6,t1=8;
     HighFive::File file(path.string(),HighFive::File::Overwrite);
     common(file,3,nr,nt,r0,r1,t0,t1);
-    scalar(file,"composition_axis",std::string("Ye"));
+    scalar(file,"composition_axis",composition_axis);
     scalar(file,"n_X",nx); scalar(file,"X_min",0.4); scalar(file,"X_max",0.6);
     field(file,"free_energy",{nr,nt,nx},
           values(nr,nt,nx,r0,(r1-r0)/(nr-1),t0,(t1-t0)/(nt-1)));
@@ -122,7 +127,9 @@ int main(int argc,char** argv) {
     std::filesystem::path dir=argv[1]; std::filesystem::create_directories(dir);
     auto p3=dir/"ideal_gas_3d.h5", p4=dir/"ideal_gas_4d.h5";
     auto pd=dir/"ideal_gas_direct_legacy_3d.h5";
+    auto pcache=dir/"species_cache_3d.h5";
     write3(p3); write4(p4); write_direct3(pd);
+    write3(pcache,"species:test");
     if(inspect_eos_table_rank(p3.string())!=3 ||
        inspect_eos_table_rank(p4.string())!=4 ||
        inspect_eos_table_rank(pd.string())!=3)
@@ -137,4 +144,92 @@ int main(int argc,char** argv) {
              <<", 4D="<<e4<<"; legacy direct 3D="<<ed<<std::endl;
     if(e3>1.0e-3 || e4>1.0e-3 || ed>1.0e-2)
         throw std::runtime_error("tabular EOS error exceeds its regression tolerance");
+
+    SimConfig ideal_config;
+    ideal_config.physics.eos_type="ideal";
+    ideal_config.physics.eos_table_path=(dir/"does-not-exist").string();
+    bool one_argument_callback=false;
+    EOSDispatcher::dispatch_eos(
+        arch::dispatch::EosId::Ideal, ideal_config, species,
+        [&](auto&&) { one_argument_callback=true; });
+    if(!one_argument_callback)
+        throw std::runtime_error("one-argument EOS callback was not invoked");
+
+    SimConfig dispatch_config;
+    dispatch_config.physics.eos_type="tabular";
+    dispatch_config.physics.eos_table_path=pcache.string();
+    std::string first_digest;
+    EOSDispatcher::dispatch_eos(
+        arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+        [&](auto&&, std::string_view digest) {
+            first_digest=std::string(digest);
+        });
+    if(first_digest!=arch::core::file_sha256(pcache.string()))
+        throw std::runtime_error("dispatcher did not report the loaded table digest");
+
+    {
+        HighFive::File file(pcache.string(),HighFive::File::ReadWrite);
+        scalar(file,"cache_generation",1);
+    }
+    std::string reloaded_digest;
+    EOSDispatcher::dispatch_eos(
+        arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+        [&](auto&&, std::string_view digest) {
+            reloaded_digest=std::string(digest);
+        });
+    if(reloaded_digest==first_digest
+       || reloaded_digest!=arch::core::file_sha256(pcache.string())
+       || EOSDispatcher::cached_table_sha256!=reloaded_digest)
+        throw std::runtime_error("changed table content did not invalidate the EOS cache");
+
+    // The cached Host view and the 3D target-species id both depend on the
+    // ordered registry values, not merely on the SpeciesManager object's
+    // address.  Insert into the same object to exercise reallocation, order,
+    // size, and target-id changes together.
+    species.species_list.insert(
+        species.species_list.begin(),
+        GasProperty{"other",4.0,2.0,gamma_gas,cv_gas});
+    const double reordered_x[2]{0.2,0.8};
+    double target_x=-1.0;
+    EOSDispatcher::dispatch_eos(
+        arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+        [&](auto&& eos, std::string_view) {
+            if constexpr (requires { eos.get_target_X(reordered_x); })
+                target_x=eos.get_target_X(reordered_x);
+        });
+    if(target_x!=reordered_x[1])
+        throw std::runtime_error(
+            "same-object species reorder reused a stale tabular target id");
+
+    // This edit keeps the vector size and allocation unchanged.  A stale
+    // pointer-only cache would silently retain the former target id, whereas
+    // reloading must reject the now-unregistered axis species.
+    species.species_list[1].name="renamed";
+    bool in_place_change_rejected=false;
+    try {
+        EOSDispatcher::dispatch_eos(
+            arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+            [&](auto&&) {});
+    } catch(const std::exception&) {
+        in_place_change_rejected=true;
+    }
+    if(!in_place_change_rejected)
+        throw std::runtime_error(
+            "same-object species value change reused the stale EOS cache");
+    species.species_list[1].name="test";
+
+    {
+        std::ofstream damaged(pcache,std::ios::binary|std::ios::trunc);
+        damaged<<"not an HDF5 EOS table";
+    }
+    bool corrupt_rejected=false;
+    try {
+        EOSDispatcher::dispatch_eos(
+            arch::dispatch::EosId::Tabular3D, dispatch_config, species,
+            [&](auto&&) {});
+    } catch(const std::exception&) {
+        corrupt_rejected=true;
+    }
+    if(!corrupt_rejected)
+        throw std::runtime_error("changed invalid table reused the stale EOS cache");
 }

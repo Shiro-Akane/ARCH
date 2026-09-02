@@ -17,7 +17,8 @@ struct DeviceBoundaryTransfer {
     std::uint64_t logical_ordinal;
     int source_index;
     int destination_index;
-    std::int8_t conserved_signs[5];
+    // rho, three momenta, energy, and scalar ENUC diagnostic.
+    std::int8_t conserved_signs[6];
     std::int8_t species_sign;
 };
 
@@ -97,6 +98,8 @@ inline DeviceCompiledBoundaryPlan compile_boundary_plan(
                 operation,
                 static_cast<boundary::BoundaryFieldClass>(field)).sign;
         }
+        transfer.conserved_signs[5] = boundary::component_mapping(
+            operation, boundary::BoundaryFieldClass::AllSpecies).sign;
         transfer.species_sign = boundary::component_mapping(
             operation, boundary::BoundaryFieldClass::AllSpecies).sign;
         compiled.transfers.push_back(transfer);

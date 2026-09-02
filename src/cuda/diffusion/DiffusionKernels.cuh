@@ -8,6 +8,7 @@
 
 #include "../common/CudaCommon.cuh"
 #include "../hydro/HydroStateKernels.cuh"
+#include "../runtime/CudaBackendAmrFlux.h"
 #include "../../numerics/diffusion/DiffFlux.h"
 #include "../../numerics/diffusion/DiffusionAMRStages.h"
 #include "../../physics/species/Species.h"
@@ -335,7 +336,10 @@ inline DiffusionLaunchResult launch_diffusion_operator(
     DeviceStateView state, DeviceStateView output, const EosView& eos,
     SpeciesPODView species, DeviceGridView grid,
     DiffFlux::DiffusionConfigView config,
-    DiffusionWorkspaceView workspace, cudaStream_t stream)
+    DiffusionWorkspaceView workspace,
+    const CudaAmrFluxDirectionRouteView* amr_routes,
+    double registration_weight, bool capture_initial_operator,
+    cudaStream_t stream)
 {
     DiffusionLaunchResult result{};
     if (!config.use_diffusion || !DiffFlux::diffusion_routes_enabled(config))
@@ -377,9 +381,41 @@ inline DiffusionLaunchResult launch_diffusion_operator(
             workspace.face_flux, output, grid, 1.0, direction, stream);
         if (result.error != cudaSuccess) return result;
         ++result.kernels_launched;
+        if (amr_routes != nullptr) {
+            if (capture_initial_operator) {
+                const auto capture = launch_cuda_amr_flux_capture_initial(
+                    amr_routes[direction], grid, stream);
+                if (capture.error != cudaSuccess) {
+                    result.error = capture.error;
+                    return result;
+                }
+                result.kernels_launched += capture.kernels_launched;
+            }
+            const auto registration = launch_cuda_amr_flux_register(
+                amr_routes[direction], AmrFluxSource::StageScratch,
+                registration_weight, stream);
+            if (registration.error != cudaSuccess) {
+                result.error = registration.error;
+                return result;
+            }
+            result.kernels_launched += registration.kernels_launched;
+        }
     }
     result.effect = DiffusionWriteEffect::InteriorWritten;
     return result;
+}
+
+/** Preserve the focused operator-test ABI when AMR observation is absent. */
+template <typename EosView>
+inline DiffusionLaunchResult launch_diffusion_operator(
+    DeviceStateView state, DeviceStateView output, const EosView& eos,
+    SpeciesPODView species, DeviceGridView grid,
+    DiffFlux::DiffusionConfigView config,
+    DiffusionWorkspaceView workspace, cudaStream_t stream)
+{
+    return launch_diffusion_operator(
+        state, output, eos, species, grid, config, workspace,
+        nullptr, 0.0, false, stream);
 }
 
 template <typename EosView>

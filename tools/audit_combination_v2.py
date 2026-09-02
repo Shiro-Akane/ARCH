@@ -7,6 +7,110 @@ import re
 import sys
 
 
+_CUDA_DEVICE_OBJECT_SOURCES = {
+    "arch_cuda_backend_burn_ideal":
+        "src/cuda/runtime/cudabackendburnideal.cu",
+    "arch_cuda_backend_burn_helm":
+        "src/cuda/runtime/cudabackendburnhelm.cu",
+    "arch_cuda_backend_burn_tabular3d":
+        "src/cuda/runtime/cudabackendburntabular3d.cu",
+    "arch_cuda_backend_burn_tabular3d_aprox13":
+        "src/cuda/runtime/cudabackendburntabular3daprox13.cu",
+    "arch_cuda_backend_burn_tabular3d_aprox19":
+        "src/cuda/runtime/cudabackendburntabular3daprox19.cu",
+    "arch_cuda_backend_burn_tabular3d_aprox21":
+        "src/cuda/runtime/cudabackendburntabular3daprox21.cu",
+    "arch_cuda_backend_burn_tabular3d_iso7":
+        "src/cuda/runtime/cudabackendburntabular3diso7.cu",
+    "arch_cuda_backend_burn_tabular4d":
+        "src/cuda/runtime/cudabackendburntabular4d.cu",
+    "arch_cuda_backend_burn_tabular4d_aprox13":
+        "src/cuda/runtime/cudabackendburntabular4daprox13.cu",
+    "arch_cuda_backend_burn_tabular4d_aprox19":
+        "src/cuda/runtime/cudabackendburntabular4daprox19.cu",
+    "arch_cuda_backend_burn_tabular4d_aprox21":
+        "src/cuda/runtime/cudabackendburntabular4daprox21.cu",
+    "arch_cuda_backend_burn_tabular4d_iso7":
+        "src/cuda/runtime/cudabackendburntabular4diso7.cu",
+    "arch_cuda_backend_hydro":
+        "src/cuda/runtime/cudabackendhydro.cu",
+    "arch_cuda_backend_diffusion":
+        "src/cuda/runtime/cudabackenddiffusion.cu",
+    "arch_cuda_backend_exchange":
+        "src/cuda/runtime/cudabackendexchange.cu",
+    "arch_cuda_backend_amr_flux":
+        "src/cuda/runtime/cudabackendamrflux.cu",
+}
+
+_CUDA_HOST_OBJECT_SPECS = {
+    "arch_cuda_backend_eos_utils": (
+        "src/cuda/microphysics/device_eos_owner_utils.cpp", "-g0"),
+    "arch_cuda_backend_eos_species": (
+        "src/cuda/microphysics/device_species_owner.cpp", "-g0"),
+    "arch_cuda_backend_eos_helm": (
+        "src/cuda/microphysics/helm_eos_device_owner.cpp", "-g0"),
+    "arch_cuda_backend_eos_tabular3": (
+        "src/cuda/microphysics/tabular3_eos_device_owner.cpp", "-g0"),
+    "arch_cuda_backend_eos_tabular4": (
+        "src/cuda/microphysics/tabular4_eos_device_owner.cpp", "-g0"),
+    "arch_cuda_backend_resources": (
+        "src/cuda/runtime/cudabackendresources.cpp", "-g1"),
+    "arch_cuda_backend_core": (
+        "src/cuda/runtime/cudabackendcore.cpp", "-g1"),
+    "arch_cuda_backend_factory": (
+        "src/cuda/runtime/cudabackendfactory.cpp", "-g1"),
+    "arch_cuda_backend_hydro_control": (
+        "src/cuda/runtime/cudabackendhydrocontrol.cpp", "-g1"),
+    "arch_cuda_backend_microphysics_control": (
+        "src/cuda/runtime/cudabackendmicrophysicscontrol.cpp", "-g1"),
+    "arch_cuda_backend_store": (
+        "src/cuda/runtime/cudabackendstore.cpp", "-g1"),
+}
+
+# These names describe resource ownership or runtime orchestration; they are not
+# alternate homes for mathematical formulae.  Keep this list exact so a new
+# Core/Adapter/Device source still fails closed until its role is reviewed.
+_CUDA_FORMULA_FILENAME_EXCEPTIONS = frozenset({
+    "src/cuda/runtime/cudabackendcore.cpp",
+    "src/cuda/microphysics/helm_eos_device_owner.h",
+    "src/cuda/microphysics/helm_eos_device_owner.cpp",
+    "src/cuda/microphysics/tabular3_eos_device_owner.h",
+    "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+    "src/cuda/microphysics/tabular4_eos_device_owner.h",
+    "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+})
+
+_CUDA_RUNTIME_FUNCTION_OWNERS = {
+    "compute_hydro_dt": "src/cuda/runtime/cudabackendhydrocontrol.cpp",
+    "execute_hydro_stage": "src/cuda/runtime/cudabackendhydrocontrol.cpp",
+    "execute_physical_boundary":
+        "src/cuda/runtime/cudabackendhydrocontrol.cpp",
+    "compute_diffusion_dt":
+        "src/cuda/runtime/cudabackendmicrophysicscontrol.cpp",
+    "execute_diffusion_stage":
+        "src/cuda/runtime/cudabackendmicrophysicscontrol.cpp",
+    "execute_burn":
+        "src/cuda/runtime/cudabackendmicrophysicscontrol.cpp",
+}
+
+_CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
+    "compute_hydro_dt",
+    "execute_hydro_stage",
+    "compute_diffusion_dt",
+    "execute_diffusion_stage",
+    "execute_burn",
+})
+
+_CUDA_COMPLETION_LAUNCHES = {
+    "compute_hydro_dt": r"\blaunch_cuda_backend_hydro_dt\s*\(",
+    "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage\s*\(",
+    "compute_diffusion_dt": r"\blaunch_cuda_backend_diffusion_dt\s*\(",
+    "execute_diffusion_stage":
+        r"\blaunch_cuda_backend_diffusion_stage\s*\(",
+    "execute_burn": r"\blaunch_cuda_burn_route\s*\(",
+}
+
+
 def _source_files(root: pathlib.Path):
     ignored = {".git", "build", "output", ".superpowers"}
     for path in root.rglob("*"):
@@ -14,6 +118,70 @@ def _source_files(root: pathlib.Path):
             continue
         if path.name == "CMakeLists.txt" or path.suffix.lower() in {".cu", ".cuh", ".cpp", ".h", ".hpp", ".py"}:
             yield path
+
+
+def _function_body(content: str, qualified_name: str):
+    """Return one C++ definition body, excluding braces, or None."""
+    match = re.search(r"\b" + re.escape(qualified_name) + r"\s*\(", content)
+    if match is None:
+        return None
+    opening = content.find("{", match.end())
+    if opening < 0:
+        return None
+
+    depth = 0
+    index = opening
+    quote = None
+    while index < len(content):
+        char = content[index]
+        following = content[index + 1] if index + 1 < len(content) else ""
+        if quote is not None:
+            if char == "\\":
+                index += 2
+                continue
+            if char == quote:
+                quote = None
+            index += 1
+            continue
+        if char in {'"', "'"}:
+            quote = char
+            index += 1
+            continue
+        if char == "/" and following == "/":
+            newline = content.find("\n", index + 2)
+            index = len(content) if newline < 0 else newline + 1
+            continue
+        if char == "/" and following == "*":
+            closing = content.find("*/", index + 2)
+            index = len(content) if closing < 0 else closing + 2
+            continue
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return content[opening + 1:index]
+        index += 1
+    return None
+
+
+def _matches_in_order(content: str, *patterns: str) -> bool:
+    position = 0
+    for pattern in patterns:
+        match = re.search(pattern, content[position:], flags=re.DOTALL)
+        if match is None:
+            return False
+        position += match.end()
+    return True
+
+
+def _launch_quiesces_before_kernel_count(
+        body: str, launch_pattern: str) -> bool:
+    return _matches_in_order(
+        body,
+        launch_pattern,
+        r"\bquiesce\s*\(\s*\)\s*;",
+        r"impl_->runtime_counters\.kernel_count\s*\+=")
 
 
 def _is_include_only_diagnostic_adapter(relative: str, content: str) -> bool:
@@ -134,6 +302,7 @@ def audit_tree(root: pathlib.Path):
             relative, content)
         if (cuda_production
                 and not diagnostic_include_adapter
+                and lowered not in _CUDA_FORMULA_FILENAME_EXCEPTIONS
                 and any(token in lowered for token in ("core", "adapter", "_device"))):
             violations.append(f"formula-copy filename is forbidden: {relative}")
         if cuda_production and ("runner" in lowered or "int main(" in content_lower):
@@ -185,30 +354,42 @@ def audit_tree(root: pathlib.Path):
                    for required in required_hydro_lowering):
                 violations.append(
                     "bounded CUDA Hydro lowering must clear and visit XYZ")
-        if (relative == "src/cuda/runtime/CudaBackend.cu"
-                and "execute_physical_boundary" in content
-                and not re.search(
-                    r"quiesce\(\)\s*;\s*for\s*"
-                    r"\(const auto& phase : (?:impl_->boundary|block\.boundary)"
-                    r"\.phases\)",
-                    content)):
-            violations.append(
-                "CUDA boundary completion must follow stream quiescence")
-        if (relative == "src/cuda/runtime/CudaBackend.cu"
-                and "execute_hydro_stage" in content):
-            synchronized_counter_updates = re.findall(
-                r"quiesce\(\)\s*;\s*"
-                r"impl_->runtime_counters\.kernel_count\s*\+=", content)
-            if len(synchronized_counter_updates) < 5:
+        for function_name, owner in _CUDA_RUNTIME_FUNCTION_OWNERS.items():
+            body = (_function_body(content, f"CudaBackend::{function_name}")
+                    if lowered.startswith("src/cuda/runtime/")
+                    and path.suffix.lower() in {".cpp", ".cu"}
+                    else None)
+            if body is None:
+                continue
+            if lowered != owner:
                 violations.append(
-                    "CUDA bounded work must quiesce before completion")
-        if (relative == "src/cuda/runtime/CudaBackend.cu"
-                and "burn_candidates" in content
-                and not re.search(
-                    r"(?:impl_->|block\.)burn_workspaces\.get\(\)\s*,\s*"
-                    r"(?:impl_->|block\.)burn_candidates\.get\(\)", content)):
-            violations.append(
-                "CUDA burn routes must consume the caller workspace")
+                    f"CUDA runtime function has the wrong functional owner: "
+                    f"{function_name} in {relative}")
+                continue
+            if (function_name in _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS
+                    and not _launch_quiesces_before_kernel_count(
+                        body, _CUDA_COMPLETION_LAUNCHES[function_name])):
+                violations.append(
+                    f"CUDA bounded work must quiesce before completion: "
+                    f"{function_name}")
+            if (function_name == "execute_physical_boundary"
+                    and not _matches_in_order(
+                        body,
+                        r"\blaunch_cuda_backend_boundary_plan\s*\(",
+                        r"\bquiesce\s*\(\s*\)\s*;",
+                        r"for\s*\(\s*const\s+auto\s*&\s*phase\s*:\s*"
+                        r"block\.boundary\.phases\s*\)")):
+                violations.append(
+                    "CUDA boundary completion must follow stream quiescence")
+            if (function_name == "execute_burn"
+                    and not re.search(
+                        r"\bblock\.burn_workspace_storage\.get\(\)\s*,\s*"
+                        r"block\.burn_candidates\.get\(\)\s*,\s*"
+                        r"block\.burn_statuses\.get\(\)\s*,\s*"
+                        r"block\.burn_summary\.get\(\)",
+                        body, flags=re.DOTALL)):
+                violations.append(
+                    "CUDA burn routes must consume the caller workspace")
         if cuda_production and "without_failed_nse_continuation" in content:
             violations.append(
                 "CUDA burn routes must preserve failed-NSE continuation")
@@ -233,15 +414,9 @@ def audit_tree(root: pathlib.Path):
                 violations.append("RuntimeProbe.cpp must have one target owner")
             if re.search(r"file\s*\(\s*glob[^)]*\.cu", cmake_code, flags=re.DOTALL):
                 violations.append("production CUDA source glob is forbidden")
-            allowed_backend_objects = {
-                "arch_cuda_backend_burn_ideal",
-                "arch_cuda_backend_burn_helm",
-                "arch_cuda_backend_burn_tabular3d",
-                "arch_cuda_backend_burn_tabular4d",
-                "arch_cuda_backend_hydro",
-                "arch_cuda_backend_diffusion",
-                "arch_cuda_backend_exchange",
-            }
+            allowed_backend_objects = (
+                set(_CUDA_DEVICE_OBJECT_SOURCES)
+                | set(_CUDA_HOST_OBJECT_SPECS))
             for command in re.finditer(
                     r"\b(?:add_library|add_executable|target_sources)\s*"
                     r"\(([^)]*)\)", cmake_code, flags=re.DOTALL):
@@ -260,22 +435,6 @@ def audit_tree(root: pathlib.Path):
                             "OBJECT files may enter only their canonical owner")
             if re.search(r"target_sources\s*\(\s*arch\b[^)]*(?:\.cu|cuda)", cmake_code, flags=re.DOTALL):
                 violations.append("ARCH must not receive CUDA sources or CUDA variables")
-            allowed_object_sources = {
-                "arch_cuda_backend_burn_ideal":
-                    "src/cuda/runtime/cudabackendburnideal.cu",
-                "arch_cuda_backend_burn_helm":
-                    "src/cuda/runtime/cudabackendburnhelm.cu",
-                "arch_cuda_backend_burn_tabular3d":
-                    "src/cuda/runtime/cudabackendburntabular3d.cu",
-                "arch_cuda_backend_burn_tabular4d":
-                    "src/cuda/runtime/cudabackendburntabular4d.cu",
-                "arch_cuda_backend_hydro":
-                    "src/cuda/runtime/cudabackendhydro.cu",
-                "arch_cuda_backend_diffusion":
-                    "src/cuda/runtime/cudabackenddiffusion.cu",
-                "arch_cuda_backend_exchange":
-                    "src/cuda/runtime/cudabackendexchange.cu",
-            }
             helper_calls = re.findall(
                 r"^\s*arch_configure_cuda_backend_object\s*\(([^)]*)\)",
                 cmake_code, flags=re.MULTILINE)
@@ -292,10 +451,38 @@ def audit_tree(root: pathlib.Path):
             for call in helper_calls:
                 call_arguments = call.split()
                 if (len(call_arguments) != 2
-                        or call_arguments[0] not in allowed_object_sources
+                        or call_arguments[0] not in _CUDA_DEVICE_OBJECT_SOURCES
                         or call_arguments[1]
-                            != allowed_object_sources[call_arguments[0]]):
+                            != _CUDA_DEVICE_OBJECT_SOURCES[call_arguments[0]]):
                     canonical_object_helper = False
+            if helper_calls and not canonical_object_helper:
+                violations.append(
+                    "CUDA OBJECT libraries must keep their canonical owners")
+            host_helper_calls = re.findall(
+                r"^\s*arch_configure_cuda_host_object\s*\(([^)]*)\)",
+                cmake_code, flags=re.MULTILINE)
+            host_helper_definition = re.search(
+                r"function\s*\(\s*arch_configure_cuda_host_object\s+"
+                r"target\s+source\s+debug_level\s*\)(.*?)"
+                r"endfunction\s*\(\s*\)",
+                cmake_code, flags=re.DOTALL)
+            host_helper_body = (host_helper_definition.group(1)
+                                if host_helper_definition else "")
+            canonical_host_helper = (bool(host_helper_calls) and
+                len(re.findall(r"\badd_library\s*\(", host_helper_body)) == 1
+                and bool(re.search(
+                    r"add_library\s*\(\s*\$\{target\}\s+object\s+"
+                    r"\$\{source\}\s*\)", host_helper_body)))
+            for call in host_helper_calls:
+                call_arguments = call.split()
+                expected = _CUDA_HOST_OBJECT_SPECS.get(call_arguments[0]) \
+                    if call_arguments else None
+                if (len(call_arguments) != 3 or expected is None
+                        or tuple(call_arguments[1:]) != expected):
+                    canonical_host_helper = False
+            if host_helper_calls and not canonical_host_helper:
+                violations.append(
+                    "CUDA Host OBJECT libraries must keep their canonical owners")
             for command in re.finditer(
                     r"add_library\s*\(([^)]*)\)", cmake_code,
                     flags=re.DOTALL):
@@ -307,11 +494,22 @@ def audit_tree(root: pathlib.Path):
                     r"[\w./-]+\.cu\b", command.group(1))
                 helper_definition = (owner == "${target}"
                                      and arguments[2:] == ["${source}"]
-                                     and canonical_object_helper)
-                if (not helper_definition
-                        and (owner not in allowed_object_sources
-                        or cuda_sources != [allowed_object_sources[owner]])):
-                    violations.append("CUDA OBJECT libraries are forbidden")
+                                     and (canonical_object_helper
+                                          or canonical_host_helper))
+                if not helper_definition:
+                    if owner in _CUDA_DEVICE_OBJECT_SOURCES:
+                        if cuda_sources != [
+                                _CUDA_DEVICE_OBJECT_SOURCES[owner]]:
+                            violations.append(
+                                "CUDA OBJECT library has the wrong source owner")
+                    elif cuda_sources:
+                        violations.append("CUDA OBJECT libraries are forbidden")
+                cpp_sources = re.findall(
+                    r"[\w./-]+\.cpp\b", command.group(1))
+                if (owner in _CUDA_HOST_OBJECT_SPECS
+                        and cpp_sources != [_CUDA_HOST_OBJECT_SPECS[owner][0]]):
+                    violations.append(
+                        "CUDA Host OBJECT library has the wrong source owner")
             cuda_source_owners = {}
             for command in re.finditer(
                     r"\b(?:add_library|add_executable|target_sources)\s*"

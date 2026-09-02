@@ -19,6 +19,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "ConservativeRestriction.h"
 #include "Morton.h"
 
 #include "../data/FluidState.h"
@@ -229,6 +230,7 @@ inline void Block::InterpolateFromCoarse(
                 const double coarse_volume = GridMetrics::CellVolume(coarse.grid, ic, jc, kc);
 
                 std::vector<FluidVector> fine_values(fine_count);
+                std::vector<double> fine_enuc(fine_count);
                 std::vector<std::vector<double>> fine_rhoX(n_sp, std::vector<double>(fine_count));
                 std::vector<int> fine_indices(fine_count);
                 std::vector<double> fine_volumes(fine_count);
@@ -263,6 +265,9 @@ inline void Block::InterpolateFromCoarse(
                                 reconstruct([&](int idx) { return coarse.fluid_state.mom_v[idx]; }),
                                 reconstruct([&](int idx) { return coarse.fluid_state.mom_w[idx]; }),
                                 reconstruct([&](int idx) { return coarse.fluid_state.eng[idx]; }));
+                            fine_enuc[q] = reconstruct([&](int idx) {
+                                return coarse.fluid_state.enuc_rate[idx];
+                            });
                             for (int sp = 0; sp < n_sp; ++sp) {
                                 fine_rhoX[sp][q] = reconstruct([&](int idx) {
                                     return coarse.fluid_state.rho[idx] * coarse.fluid_state.X(sp, idx);
@@ -285,6 +290,18 @@ inline void Block::InterpolateFromCoarse(
                 correct_component(coarse.fluid_state.mom_v[c_idx], [](FluidVector& value) -> double& { return value.mom_v; });
                 correct_component(coarse.fluid_state.mom_w[c_idx], [](FluidVector& value) -> double& { return value.mom_w; });
                 correct_component(coarse.fluid_state.eng[c_idx], [](FluidVector& value) -> double& { return value.eng; });
+                double enuc_integral = 0.0;
+                for (int cell = 0; cell < fine_count; ++cell)
+                    enuc_integral += fine_enuc[cell] * fine_volumes[cell];
+                const double enuc_shift = coarse.fluid_state.enuc_rate[c_idx]
+                    - enuc_integral / coarse_volume;
+                for (double& value : fine_enuc) {
+                    value += enuc_shift;
+                    if (!std::isfinite(value)) {
+                        throw std::runtime_error(
+                            "AMR prolongation requires finite ENUC state.");
+                    }
+                }
 
                 // Euler-admissible states form a convex set. Scale every
                 // reconstructed conserved-variable deviation by one common
@@ -458,6 +475,7 @@ inline void Block::InterpolateFromCoarse(
 
                 for (int cell = 0; cell < fine_count; ++cell) {
                     fluid_state.set(fine_indices[cell], fine_values[cell]);
+                    fluid_state.enuc_rate[fine_indices[cell]] = fine_enuc[cell];
                     for (int sp = 0; sp < n_sp; ++sp)
                         fluid_state.X(sp, fine_indices[cell]) = fine_rhoX[sp][cell] / fine_values[cell].rho;
                 }
@@ -494,6 +512,7 @@ inline void Block::AverageToCoarse(
                 const double coarse_volume = GridMetrics::CellVolume(grid, c_i, c_j, c_k);
 
                 FluidVector integral{};
+                double enuc_integral = 0.0;
                 std::vector<double> rhoX_integral(n_sp, 0.0);
                 for (int fk = 0; fk < fine_z; ++fk) {
                     for (int fj = 0; fj < fine_y; ++fj) {
@@ -504,9 +523,14 @@ inline void Block::AverageToCoarse(
                             const int f_idx = child->grid.GetIndex(f_i, f_j, f_k);
                             const double volume = GridMetrics::CellVolume(child->grid, f_i, f_j, f_k);
                             integral = integral + child->fluid_state.get(f_idx) * volume;
+                            enuc_integral +=
+                                child->fluid_state.enuc_rate[f_idx] * volume;
                             for (int sp = 0; sp < n_sp; ++sp)
-                                rhoX_integral[sp] += child->fluid_state.rho[f_idx]
-                                                   * child->fluid_state.X(sp, f_idx) * volume;
+                                rhoX_integral[sp] +=
+                                    restriction_math::weighted_species_density(
+                                        child->fluid_state.rho[f_idx],
+                                        child->fluid_state.X(sp, f_idx),
+                                        volume);
                         }
                     }
                 }
@@ -519,6 +543,11 @@ inline void Block::AverageToCoarse(
                         "AMR restriction produced an inadmissible coarse-cell fluid state.");
                 }
                 fluid_state.set(c_idx, averaged);
+                fluid_state.enuc_rate[c_idx] = enuc_integral / coarse_volume;
+                if (!std::isfinite(fluid_state.enuc_rate[c_idx])) {
+                    throw std::runtime_error(
+                        "AMR restriction produced invalid ENUC state.");
+                }
                 double total_rhoX_integral = 0.0;
                 for (int sp = 0; sp < n_sp; ++sp) {
                     if (!std::isfinite(rhoX_integral[sp]) ||
@@ -527,11 +556,12 @@ inline void Block::AverageToCoarse(
                             "AMR restriction produced an invalid species integral.");
                     }
                     total_rhoX_integral += rhoX_integral[sp];
-                    fluid_state.X(sp, c_idx) = rhoX_integral[sp] / (averaged.rho * coarse_volume);
+                    fluid_state.X(sp, c_idx) =
+                        restriction_math::restricted_mass_fraction(
+                            rhoX_integral[sp], integral.rho);
                 }
                 if (n_sp > 0) {
-                    const double expected_rho_integral =
-                        averaged.rho * coarse_volume;
+                    const double expected_rho_integral = integral.rho;
                     const double scale = std::max(
                         std::abs(expected_rho_integral),
                         std::numeric_limits<double>::min());

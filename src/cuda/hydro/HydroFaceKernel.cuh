@@ -2,11 +2,37 @@
 
 #include "HydroFluxPolicies.cuh"
 #include "HydroReconstructionPolicies.cuh"
+#include "numerics/reconstruction/AMRInterfaceStencil.h"
 
 namespace arch::cuda
 {
 namespace detail
 {
+template <typename Reconstruction, typename EosView>
+ARCH_INLINE void reconstruct_amr_face(
+    DeviceStateView state, DeviceGridView grid, int direction,
+    int i, int j, int k, int cell, int stride, const EosView& eos,
+    FluidVector& left, FluidVector& right,
+    double* species_left, double* species_right, double* species_cell)
+{
+    const int normal_index = direction == 0 ? i : (direction == 1 ? j : k);
+    const int normal_begin = direction == 0 ? grid.is
+        : (direction == 1 ? grid.js : grid.ks);
+    const int normal_end = direction == 0 ? grid.ie
+        : (direction == 1 ? grid.je : grid.ke);
+    if (AMRInterfaceReconstruction::needs_tvd_interface_stencil(
+            Reconstruction::ghost_depth, grid.amr_coarse_fine_face,
+            direction, normal_index, normal_begin, normal_end)) {
+        CudaMusclReconstruction<MinMod>::reconstruct(
+            state, cell, stride, eos, left, right,
+            species_left, species_right, species_cell);
+        return;
+    }
+    Reconstruction::reconstruct(
+        state, cell, stride, eos, left, right,
+        species_left, species_right, species_cell);
+}
+
 template <typename Reconstruction, typename Flux, typename EosView>
 __global__ void hydro_face_kernel(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
@@ -40,8 +66,8 @@ __global__ void hydro_face_kernel(
     double face_species_flux[kMaxDeviceSpecies];
     FluidVector left;
     FluidVector right;
-    Reconstruction::reconstruct(
-        state, cell, stride, eos, left, right,
+    reconstruct_amr_face<Reconstruction>(
+        state, grid, direction, i, j, k, cell, stride, eos, left, right,
         species_left, species_right, species_cell);
     FluidVector face_flux;
     Flux::compute(

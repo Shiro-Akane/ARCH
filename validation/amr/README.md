@@ -5,7 +5,9 @@ the authoritative source text.
 
 > CPU status: basic prolongation/restriction, dynamic regrid/reflux
 > conservation, species transport, and two-dimensional symmetry pass. Local
-> refinement retention is a known limitation. CUDA: pending.
+> refinement retention is a known limitation. CUDA dynamic topology, device
+> coarse/fine exchange, compact flux registration, and reflux are implemented
+> and source/compile qualified; real-device validation is pending.
 
 This record separates conservation from refinement efficiency. The current AMR
 path preserves the tested integral quantities to roundoff, but its
@@ -106,10 +108,12 @@ physical-volume weights. These paths did not break the integral tests above,
 but they prevent accepting local-refinement retention or curvilinear ghost
 transfer as verified.
 
-`ENUC` is computed as a transient burn diagnostic. It is neither checkpointed
-nor transferred/exchanged as an AMR field, so dynamic split-run equivalence for
-`refine_var = ENUC` remains pending even though density/pressure/species-driven
-conservation passes.
+`ENUC` is persisted by checkpoint format v3 and participates in the implemented
+Host and CUDA AMR transfer/exchange paths. The former missing-field limitation
+therefore does not apply to new v3 checkpoints. Exact dynamic split-run
+equivalence for `refine_var = ENUC` still needs CPU end-to-end and real-device
+CUDA validation; legacy v1/v2 checkpoints initialize ENUC to zero and cannot
+establish that equivalence.
 
 The follow-up implementation should use limited-linear conservative-variable
 reconstruction for coarse-to-fine ghosts, interpolate `rho X` before recovering

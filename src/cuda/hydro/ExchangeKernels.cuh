@@ -6,6 +6,7 @@
 #pragma once
 
 #include "cuda/runtime/CudaBackendExchange.h"
+#include "cuda/common/DeviceStateFields.cuh"
 
 #include <cuda_runtime.h>
 
@@ -14,19 +15,6 @@
 #include <limits>
 
 namespace arch::cuda {
-
-__device__ inline double* exchange_field(
-    DeviceStateView state, int field)
-{
-    if (field == 0) return state.rho;
-    if (field == 1) return state.mom_u;
-    if (field == 2) return state.mom_v;
-    if (field == 3) return state.mom_w;
-    if (field == 4) return state.eng;
-    if (field == 5) return state.enuc_rate;
-    return state.mass_fractions
-        + static_cast<std::size_t>(field - 6) * state.total_size;
-}
 
 __device__ inline bool locate_exchange_work(
     std::uint64_t linear, const DeviceExchangeOperation* operations,
@@ -82,7 +70,7 @@ __global__ void gather_same_level_exchange_kernel(
     const auto& source = blocks[operation.source_block];
     const int source_cell = exchange_cell_index(
         source, operation.source_first, operation.extent, cell);
-    scratch[linear] = exchange_field(source.state, field)[source_cell];
+    scratch[linear] = device_state_field(source.state, field)[source_cell];
 }
 
 __global__ void scatter_same_level_exchange_kernel(
@@ -104,7 +92,8 @@ __global__ void scatter_same_level_exchange_kernel(
     const auto& destination = blocks[operation.destination_block];
     const int destination_cell = exchange_cell_index(
         destination, operation.destination_first, operation.extent, cell);
-    exchange_field(destination.state, field)[destination_cell] = scratch[linear];
+    device_state_field(destination.state, field)[destination_cell] =
+        scratch[linear];
 }
 
 inline cudaError_t launch_same_level_exchange_phase(

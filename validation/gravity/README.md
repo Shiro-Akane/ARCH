@@ -3,7 +3,8 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-> CPU status: pass for RK2/RK3. CUDA: pending.
+> CPU status: pass for RK2/RK3. CUDA: unsupported / not applicable; the current
+> CUDA capability contract rejects every non-`none` gravity mode.
 
 The `ExternalGravity` implementation remains in `simulation/ExternalGravity/`;
 the immutable parameter files owned by this record are in [`inputs/`](inputs/).
@@ -37,4 +38,5 @@ and L2 value.
 | RK3 | 8.327e-17 | 4.441e-16 | 4.441e-16 | pass |
 
 The result verifies the constant external-gravity source path on CPU. It is not
-a hydrostatic-balance or self-gravity test. CUDA remains an empty parity row.
+a hydrostatic-balance or self-gravity test. CUDA external gravity is unsupported,
+so this record has no applicable CUDA parity row.

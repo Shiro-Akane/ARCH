@@ -6,6 +6,7 @@
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"
+#include "cuda/runtime/CudaBackendAmrFlux.h"
 #include "driver/StageScheduler.h"
 #include "driver/dispatch/ResolvedExecutionPlan.h"
 #include "physics/eos/HelmEos.h"
@@ -34,6 +35,7 @@ struct CudaBackendLaunchResult {
         double entropy_fix_coefficient, double density_floor, \
         double minimum_internal_energy, \
         double maximum_internal_energy, \
+        const CudaAmrFluxDirectionRouteView* amr_routes, \
         const scheduler::StageDescriptor& descriptor, double dt, \
         cudaStream_t stream)
 

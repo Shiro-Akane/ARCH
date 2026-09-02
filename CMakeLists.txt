@@ -395,6 +395,13 @@ if(BUILD_TESTING)
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME amr_operation_plans COMMAND arch_amr_operation_plans)
 
+    add_executable(arch_amr_flux_surface_plan
+        tests/test_amr_flux_surface_plan.cpp)
+    target_compile_features(arch_amr_flux_surface_plan PRIVATE cxx_std_20)
+    target_include_directories(arch_amr_flux_surface_plan PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    add_test(NAME amr_flux_surface_plan COMMAND arch_amr_flux_surface_plan)
+
     add_executable(arch_topology_transaction
         tests/test_topology_transaction.cpp)
     target_compile_features(arch_topology_transaction PRIVATE cxx_std_20)
@@ -457,11 +464,49 @@ if(ARCH_ENABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
 
-    # Each burn/EOS instantiation produces a large PTX unit.  Keep those
-    # units separate and order the internal object targets so Unix Makefiles
-    # cannot assemble all of them concurrently and exhaust a constrained
-    # WSL/CI host.  The only public/linkable backend target remains
-    # arch_cuda_backend.
+    # ccache 4.x understands NVCC dependency/output modes.  Apply the same
+    # launcher used by Host C++ to the split CUDA matrix so a small dispatcher
+    # or header edit does not force every network/EOS object through NVCC
+    # again.  This stays CUDA-opt-in because the language is enabled above.
+    if(CCACHE_PROGRAM)
+        set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        message(STATUS "[OPT] CUDA compiler cache enabled: ${CCACHE_PROGRAM}")
+    endif()
+
+    # Ninja may otherwise start every independent object edge even when its
+    # logical target participates in an add_dependencies chain.  Put all CUDA
+    # backend frontends (NVCC and the table-heavy Host owners) in one named
+    # compile pool.  `cmake --build ... --parallel 6` can still use its other
+    # five jobs for the lightweight graph, while this lane has a hard peak of
+    # one compiler process.  Non-Ninja generators retain the target ordering
+    # below and simply ignore this optional scheduling refinement.
+    if(CMAKE_GENERATOR MATCHES "Ninja")
+        set_property(GLOBAL APPEND PROPERTY JOB_POOLS arch_cuda_heavy=1)
+        set(ARCH_CUDA_HEAVY_JOB_POOL arch_cuda_heavy)
+    endif()
+
+    # add_dependencies() alone only creates an object-order phony edge for
+    # Ninja.  It does not require the dependency archive to exist before the
+    # dependent target starts compiling.  Turn completion of each heavy phase
+    # into a file-backed edge so a high top-level --parallel value cannot make
+    # the CUDA frontend overlap the dispatch template matrix.
+    function(arch_add_completion_barrier barrier dependency)
+        set(stamp
+            "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${barrier}.stamp")
+        add_custom_command(
+            OUTPUT "${stamp}"
+            COMMAND "${CMAKE_COMMAND}" -E touch "${stamp}"
+            DEPENDS "${dependency}"
+            COMMENT "Completing ${dependency} before the next heavy phase"
+            VERBATIM)
+        add_custom_target(${barrier} DEPENDS "${stamp}")
+    endfunction()
+
+    # Put every NVCC frontend in one serial lane.  Burn/EOS, hydro, and
+    # diffusion instantiate large device templates, and even the small
+    # exchange wrapper can push an 8 GiB WSL guest over its limit when it
+    # overlaps a memory-heavy host-control phase.
+    # The only public/linkable backend target remains arch_cuda_backend.
     function(arch_configure_cuda_backend_object target source)
         add_library(${target} OBJECT ${source})
         target_compile_features(${target} PRIVATE cxx_std_20)
@@ -471,7 +516,12 @@ if(ARCH_ENABLE_CUDA)
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
         set_target_properties(${target} PROPERTIES
             CUDA_STANDARD 20
-            CUDA_STANDARD_REQUIRED ON)
+            CUDA_STANDARD_REQUIRED ON
+            INTERPROCEDURAL_OPTIMIZATION OFF)
+        if(ARCH_CUDA_HEAVY_JOB_POOL)
+            set_property(TARGET ${target} PROPERTY JOB_POOL_COMPILE
+                ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endif()
     endfunction()
 
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_ideal
@@ -480,45 +530,173 @@ if(ARCH_ENABLE_CUDA)
         src/cuda/runtime/CudaBackendBurnHelm.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d
         src/cuda/runtime/CudaBackendBurnTabular3D.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_aprox13
+        src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_aprox19
+        src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_aprox21
+        src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_iso7
+        src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d
         src/cuda/runtime/CudaBackendBurnTabular4D.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox13
+        src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox19
+        src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox21
+        src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_iso7
+        src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_hydro
         src/cuda/runtime/CudaBackendHydro.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
         src/cuda/runtime/CudaBackendDiffusion.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_exchange
         src/cuda/runtime/CudaBackendExchange.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_amr_flux
+        src/cuda/runtime/CudaBackendAmrFlux.cu)
     add_dependencies(arch_cuda_backend_burn_helm
         arch_cuda_backend_burn_ideal)
     add_dependencies(arch_cuda_backend_burn_tabular3d
         arch_cuda_backend_burn_helm)
-    add_dependencies(arch_cuda_backend_burn_tabular4d
+    add_dependencies(arch_cuda_backend_burn_tabular3d_aprox13
         arch_cuda_backend_burn_tabular3d)
-    add_dependencies(arch_cuda_backend_hydro
+    add_dependencies(arch_cuda_backend_burn_tabular3d_aprox19
+        arch_cuda_backend_burn_tabular3d_aprox13)
+    add_dependencies(arch_cuda_backend_burn_tabular3d_aprox21
+        arch_cuda_backend_burn_tabular3d_aprox19)
+    add_dependencies(arch_cuda_backend_burn_tabular3d_iso7
+        arch_cuda_backend_burn_tabular3d_aprox21)
+    add_dependencies(arch_cuda_backend_burn_tabular4d
+        arch_cuda_backend_burn_tabular3d_iso7)
+    add_dependencies(arch_cuda_backend_burn_tabular4d_aprox13
         arch_cuda_backend_burn_tabular4d)
+    add_dependencies(arch_cuda_backend_burn_tabular4d_aprox19
+        arch_cuda_backend_burn_tabular4d_aprox13)
+    add_dependencies(arch_cuda_backend_burn_tabular4d_aprox21
+        arch_cuda_backend_burn_tabular4d_aprox19)
+    add_dependencies(arch_cuda_backend_burn_tabular4d_iso7
+        arch_cuda_backend_burn_tabular4d_aprox21)
+    # The burn and hydro instantiations each approach the memory ceiling of an
+    # 8 GiB WSL guest.  Keep every heavy NVCC unit in one lane so callers may
+    # still use --parallel 6 for the split host-control work without running
+    # two template-heavy device compilations at the same time.
+    add_dependencies(arch_cuda_backend_hydro
+        arch_cuda_backend_burn_tabular4d_iso7)
     add_dependencies(arch_cuda_backend_diffusion
         arch_cuda_backend_hydro)
     add_dependencies(arch_cuda_backend_exchange
         arch_cuda_backend_diffusion)
+    add_dependencies(arch_cuda_backend_amr_flux
+        arch_cuda_backend_exchange)
 
     # Runtime/store control and immutable EOS uploads contain no kernels.
-    # Keep them on the ordinary C++ frontend; only the narrow launch wrappers
-    # and numerical kernels belong to NVCC.
-    set_source_files_properties(src/cuda/runtime/CudaBackend.cu
-        PROPERTIES LANGUAGE CXX COMPILE_FLAGS "-x c++")
-    set_source_files_properties(src/cuda/microphysics/helm_eos_loader.cpp
-        PROPERTIES LANGUAGE CXX)
+    # Keep each immutable owner in the translation unit matching its resource
+    # lifetime; this avoids one table-heavy umbrella unit while retaining a
+    # single public loader API.
+    # Give each functionally split Host unit its own object target.  The named
+    # compile pool above provides the hard Ninja scheduling bound, while the
+    # explicit target order documents the intended generator-neutral lane.
+    function(arch_configure_cuda_host_object target source debug_level)
+        add_library(${target} OBJECT ${source})
+        target_compile_features(${target} PRIVATE cxx_std_20)
+        target_include_directories(${target} PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src"
+            "${ARCH_CUSTOM_REGISTRY_DIR}")
+        target_link_libraries(${target} PRIVATE
+            arch_build_contract CUDA::cudart)
+        target_compile_options(${target} PRIVATE
+            $<$<AND:$<COMPILE_LANGUAGE:CXX>,$<CONFIG:Debug>>:${debug_level}>)
+        set_target_properties(${target} PROPERTIES
+            INTERPROCEDURAL_OPTIMIZATION OFF)
+        if(ARCH_CUDA_HEAVY_JOB_POOL)
+            set_property(TARGET ${target} PROPERTY JOB_POOL_COMPILE
+                ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endif()
+    endfunction()
+
+    # Immutable table owners are support code; omit their large template
+    # graphs from DWARF.  Operational control units retain line diagnostics.
+    arch_configure_cuda_host_object(arch_cuda_backend_eos_utils
+        src/cuda/microphysics/device_eos_owner_utils.cpp -g0)
+    arch_configure_cuda_host_object(arch_cuda_backend_eos_species
+        src/cuda/microphysics/device_species_owner.cpp -g0)
+    arch_configure_cuda_host_object(arch_cuda_backend_eos_helm
+        src/cuda/microphysics/helm_eos_device_owner.cpp -g0)
+    arch_configure_cuda_host_object(arch_cuda_backend_eos_tabular3
+        src/cuda/microphysics/tabular3_eos_device_owner.cpp -g0)
+    arch_configure_cuda_host_object(arch_cuda_backend_eos_tabular4
+        src/cuda/microphysics/tabular4_eos_device_owner.cpp -g0)
+    arch_configure_cuda_host_object(arch_cuda_backend_resources
+        src/cuda/runtime/CudaBackendResources.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_core
+        src/cuda/runtime/CudaBackendCore.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_factory
+        src/cuda/runtime/CudaBackendFactory.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_hydro_control
+        src/cuda/runtime/CudaBackendHydroControl.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_microphysics_control
+        src/cuda/runtime/CudaBackendMicrophysicsControl.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_store
+        src/cuda/runtime/CudaBackendStore.cpp -g1)
+
+    add_dependencies(arch_cuda_backend_eos_species
+        arch_cuda_backend_eos_utils)
+    add_dependencies(arch_cuda_backend_eos_helm
+        arch_cuda_backend_eos_species)
+    add_dependencies(arch_cuda_backend_eos_tabular3
+        arch_cuda_backend_eos_helm)
+    add_dependencies(arch_cuda_backend_eos_tabular4
+        arch_cuda_backend_eos_tabular3)
+    add_dependencies(arch_cuda_backend_resources
+        arch_cuda_backend_eos_tabular4)
+    add_dependencies(arch_cuda_backend_core
+        arch_cuda_backend_resources)
+    add_dependencies(arch_cuda_backend_factory
+        arch_cuda_backend_core)
+    add_dependencies(arch_cuda_backend_hydro_control
+        arch_cuda_backend_factory)
+    add_dependencies(arch_cuda_backend_microphysics_control
+        arch_cuda_backend_hydro_control)
+    add_dependencies(arch_cuda_backend_store
+        arch_cuda_backend_microphysics_control)
+
+    # Finish the inexpensive host-control phase before entering the serial
+    # device-template lane.  A clean `--parallel 6` build otherwise overlaps
+    # one multi-gigabyte NVCC frontend with five LTO C++ frontends and can
+    # exhaust an 8 GiB WSL guest even though the NVCC targets are serialized.
+    add_dependencies(arch_cuda_backend_burn_ideal
+        arch_cuda_backend_store)
+
     add_library(arch_cuda_backend STATIC
-        src/cuda/runtime/CudaBackend.cu
-        src/cuda/microphysics/helm_eos_loader.cpp
+        $<TARGET_OBJECTS:arch_cuda_backend_eos_utils>
+        $<TARGET_OBJECTS:arch_cuda_backend_eos_species>
+        $<TARGET_OBJECTS:arch_cuda_backend_eos_helm>
+        $<TARGET_OBJECTS:arch_cuda_backend_eos_tabular3>
+        $<TARGET_OBJECTS:arch_cuda_backend_eos_tabular4>
+        $<TARGET_OBJECTS:arch_cuda_backend_resources>
+        $<TARGET_OBJECTS:arch_cuda_backend_core>
+        $<TARGET_OBJECTS:arch_cuda_backend_factory>
+        $<TARGET_OBJECTS:arch_cuda_backend_hydro_control>
+        $<TARGET_OBJECTS:arch_cuda_backend_microphysics_control>
+        $<TARGET_OBJECTS:arch_cuda_backend_store>
         $<TARGET_OBJECTS:arch_cuda_backend_burn_ideal>
         $<TARGET_OBJECTS:arch_cuda_backend_burn_helm>
         $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d_aprox13>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d_aprox19>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d_aprox21>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular3d_iso7>
         $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox13>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox19>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox21>
+        $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_iso7>
         $<TARGET_OBJECTS:arch_cuda_backend_hydro>
         $<TARGET_OBJECTS:arch_cuda_backend_diffusion>
-        $<TARGET_OBJECTS:arch_cuda_backend_exchange>)
-    add_dependencies(arch_cuda_backend arch_cuda_backend_exchange)
+        $<TARGET_OBJECTS:arch_cuda_backend_exchange>
+        $<TARGET_OBJECTS:arch_cuda_backend_amr_flux>)
     target_compile_features(arch_cuda_backend PRIVATE cxx_std_20)
     target_include_directories(arch_cuda_backend PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -530,8 +708,25 @@ if(ARCH_ENABLE_CUDA)
         $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
     set_target_properties(arch_cuda_backend PROPERTIES
         CUDA_STANDARD 20
-        CUDA_STANDARD_REQUIRED ON)
+        CUDA_STANDARD_REQUIRED ON
+        INTERPROCEDURAL_OPTIMIZATION OFF)
     target_link_libraries(ARCH PRIVATE arch_cuda_backend)
+    # A full CUDA build has three explicit phases: backend archive, dispatch
+    # archive, and then the application.  The file-backed barriers are stronger
+    # than target-level object ordering under Ninja and therefore make
+    # `cmake --build ... --parallel 6` safe on an 8 GiB WSL guest.
+    arch_add_completion_barrier(
+        arch_cuda_backend_complete arch_cuda_backend)
+    add_dependencies(arch_solver_dispatch arch_cuda_backend_complete)
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        set_property(TARGET arch_solver_dispatch PROPERTY JOB_POOL_COMPILE
+            ${ARCH_CUDA_HEAVY_JOB_POOL})
+        set_property(TARGET arch_solver_dispatch PROPERTY JOB_POOL_LINK
+            ${ARCH_CUDA_HEAVY_JOB_POOL})
+    endif()
+    arch_add_completion_barrier(
+        arch_solver_dispatch_complete arch_solver_dispatch)
+    add_dependencies(ARCH arch_solver_dispatch_complete)
     if(BUILD_TESTING)
         set_property(TARGET arch_runtime_probe_capabilities APPEND PROPERTY
             BUILD_RPATH "${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES}")
@@ -721,6 +916,39 @@ if(ARCH_ENABLE_CUDA)
         set_target_properties(arch_cuda_policy_resolution PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
+        if(ARCH_CUDA_HEAVY_JOB_POOL)
+            # Focused CUDA validation is outside the production ARCH target,
+            # but a default test build may schedule it at the same time.  Use
+            # the same single-slot lane for every CUDA-facing test compiler and
+            # linker.  In testing builds ARCH joins that lane as well, avoiding
+            # an ordinary application compile alongside a multi-GiB NVCC edge.
+            foreach(target IN ITEMS
+                    arch_cuda_compile_probe
+                    arch_cuda_eos_host_device_parity
+                    arch_cuda_tabular_free_energy_owner
+                    arch_cuda_network_nse_device
+                    arch_cuda_hydro_leaf_parity
+                    arch_cuda_reduction_contract
+                    arch_cuda_burn_policy_parity
+                    arch_cuda_hydro_block
+                    arch_cuda_multiblock_hydro
+                    arch_cuda_multiblock_diffusion
+                    arch_cuda_multiblock_burn
+                    arch_cuda_store_lifecycle
+                    arch_cuda_single_level_validation
+                    arch_cuda_diffusion_rkl_parity
+                    arch_cuda_boundary_plan_parity
+                    arch_cuda_policy_resolution)
+                set_property(TARGET ${target} PROPERTY JOB_POOL_COMPILE
+                    ${ARCH_CUDA_HEAVY_JOB_POOL})
+                set_property(TARGET ${target} PROPERTY JOB_POOL_LINK
+                    ${ARCH_CUDA_HEAVY_JOB_POOL})
+            endforeach()
+            set_property(TARGET ARCH PROPERTY JOB_POOL_COMPILE
+                ${ARCH_CUDA_HEAVY_JOB_POOL})
+            set_property(TARGET ARCH PROPERTY JOB_POOL_LINK
+                ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endif()
         add_test(NAME cuda_compile_probe COMMAND arch_cuda_compile_probe)
         add_test(NAME hydro_leaf_parity COMMAND arch_cuda_hydro_leaf_parity)
         add_test(NAME eos_host_device_parity COMMAND arch_cuda_eos_host_device_parity)
@@ -848,6 +1076,18 @@ FetchContent_Populate(highfive)
 foreach(target ARCH arch_solver_dispatch)
     target_include_directories(${target} PRIVATE ${highfive_SOURCE_DIR}/include)
 endforeach()
+# This focused CUDA test reads the production Host checkpoint schema directly.
+# Keep it on the same HDF5Writer implementation as CPU restart rather than
+# introducing a CUDA-specific reader or duplicating schema logic in the test.
+if(TARGET arch_cuda_single_level_validation)
+    target_sources(arch_cuda_single_level_validation PRIVATE
+        src/io/hdf5/HDF5Writer.cpp)
+    target_include_directories(arch_cuda_single_level_validation PRIVATE
+        "${highfive_SOURCE_DIR}/include"
+        ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_cuda_single_level_validation PRIVATE
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+endif()
 message(STATUS "[DEP] HighFive headers configured via FetchContent")
 
 # 4. SuiteSparse KLU
@@ -902,8 +1142,25 @@ endif()
 # ==============================================================================
 include(CTest)
 if(BUILD_TESTING)
+    add_executable(arch_checkpoint_compatibility
+        tests/test_checkpoint_compatibility.cpp
+        src/core/FileFingerprint.cpp
+        src/io/chk/CheckpointCompatibility.cpp
+        src/io/hdf5/HDF5Writer.cpp)
+    target_compile_features(arch_checkpoint_compatibility PRIVATE cxx_std_20)
+    target_include_directories(arch_checkpoint_compatibility PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${highfive_SOURCE_DIR}/include"
+        ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_checkpoint_compatibility PRIVATE
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    add_test(NAME checkpoint_compatibility
+        COMMAND arch_checkpoint_compatibility
+                "${CMAKE_CURRENT_BINARY_DIR}/checkpoint-compatibility-data")
+
     add_executable(tabular_eos_regression
         tests/TabularEOSRegression.cpp
+        src/core/FileFingerprint.cpp
         src/physics/eos/Tabular3DEOS.cpp
         src/physics/eos/Tabular4DEOS.cpp
         src/physics/eos/eosdispatch.cpp)

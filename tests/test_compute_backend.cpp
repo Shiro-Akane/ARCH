@@ -2,6 +2,7 @@
 #include "cuda/common/CudaLaunchConfig.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 #include "amr/ExchangePlan.h"
+#include "amr/AmrFluxPlan.h"
 
 #include <array>
 #include <cstdint>
@@ -556,6 +557,53 @@ void test_multiblock_exchange_contract()
         "multi-block exchange accepted stale storage");
 }
 
+void test_dynamic_topology_store_is_fail_closed_by_default()
+{
+    class DummyTopologyTransaction final
+        : public arch::backend::BackendTopologyStoreTransaction {};
+
+    FakeBackend backend;
+    require(!backend.supports_dynamic_topology_store(),
+            "generic backend unexpectedly enabled dynamic topology storage");
+    const amr::AmrPlanScope scope{1, {3}, {4}};
+    require_failure(
+        [&] {
+            (void)backend.begin_topology_store_transaction(
+                scope,
+                std::span<const arch::backend::BackendTopologyBinding>{});
+        },
+        "backend without a topology store accepted a transaction");
+    require_failure(
+        [&] {
+            backend.publish_topology_store_transaction(nullptr);
+        },
+        "backend without a topology store accepted publication");
+
+    amr::AmrFluxTopologyPlan flux_plan;
+    amr::RefluxPlan reflux_plan;
+    DummyTopologyTransaction transaction;
+    const arch::state::CompletionToken completed{
+        7, arch::state::CompletionState::Complete};
+    require_failure(
+        [&] { backend.prepare_amr_flux_plan(flux_plan, reflux_plan); },
+        "backend without AMR flux support accepted an active plan");
+    require_failure(
+        [&] {
+            backend.stage_amr_flux_plan(
+                transaction, flux_plan, reflux_plan);
+        },
+        "backend without AMR flux support accepted a staged plan");
+    require_failure(
+        [&] { (void)backend.clear_amr_flux_register(completed); },
+        "backend without AMR flux support accepted a clear");
+    require_failure(
+        [&] {
+            (void)backend.execute_amr_reflux(
+                arch::state::StateSlot::Current, 1.0, completed);
+        },
+        "backend without AMR flux support accepted reflux");
+}
+
 } // namespace
 
 int main()
@@ -564,11 +612,14 @@ int main()
     static_assert(!std::is_move_constructible_v<arch::backend::ComputeBackend>);
     static_assert(!std::is_copy_constructible_v<
                   arch::backend::StorageGenerationIssuer>);
+    static_assert(!std::is_copy_constructible_v<
+                  arch::backend::BackendTopologyStoreTransaction>);
     test_generation_authority();
     test_device_block_store_identity();
     test_host_transfer_view();
     test_cuda_launch_config();
     test_transfer_transaction();
     test_multiblock_exchange_contract();
+    test_dynamic_topology_store_is_fail_closed_by_default();
     return 0;
 }

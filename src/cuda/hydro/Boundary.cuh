@@ -31,6 +31,8 @@ __global__ void boundary_phase_kernel(
         state.mom_w[source], transfer.conserved_signs[3]);
     state.eng[destination] = boundary_signed_copy(
         state.eng[source], transfer.conserved_signs[4]);
+    state.enuc_rate[destination] = boundary_signed_copy(
+        state.enuc_rate[source], transfer.conserved_signs[5]);
     for (int species = 0; species < state.n_species; ++species) {
         state.set_species(
             species, destination,

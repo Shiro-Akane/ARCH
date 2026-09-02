@@ -22,6 +22,7 @@
 #include <tuple>
 #include <vector>
 
+#include "AmrFluxMath.h"
 #include "AmrTransferPlans.h"
 #include "Block.h"
 #include "MemoryPool.h"
@@ -185,6 +186,34 @@ public:
         active_[FaceSlot(block_id, face_dir)] = 1;
     }
 
+    /** Accumulate an already-oriented (fine - coarse) contribution. */
+    void AddRegisteredFlux(int block_id, int face_dir, int cell_idx,
+                           const FluidVector& flux, double coefficient) {
+        FluidVector& target = FluxAt(block_id, face_dir, cell_idx);
+#pragma omp atomic update
+        target.rho += flux.rho * coefficient;
+#pragma omp atomic update
+        target.mom_u += flux.mom_u * coefficient;
+#pragma omp atomic update
+        target.mom_v += flux.mom_v * coefficient;
+#pragma omp atomic update
+        target.mom_w += flux.mom_w * coefficient;
+#pragma omp atomic update
+        target.eng += flux.eng * coefficient;
+#pragma omp atomic write
+        active_[FaceSlot(block_id, face_dir)] = 1;
+    }
+
+    void AddRegisteredSpeciesFlux(int block_id, int face_dir, int cell_idx,
+                                  int species, double flux,
+                                  double coefficient) {
+#pragma omp atomic update
+        species_fluxes_[SpeciesFluxSlot(
+            block_id, face_dir, cell_idx, species)] += flux * coefficient;
+#pragma omp atomic write
+        active_[FaceSlot(block_id, face_dir)] = 1;
+    }
+
     bool HasData(int coarse_id, int face_dir) const {
         return active_[FaceSlot(coarse_id, face_dir)] != 0;
     }
@@ -200,12 +229,16 @@ public:
     void ApplyRegistrationPlan(
         const FluxRegistrationPlan& plan,
         std::span<const double> values,
-        const std::map<AmrEndpoint, int>& pool_lowering)
+        const std::map<AmrEndpoint, int>& pool_lowering,
+        double stage_weight = 1.0)
     {
         validate_amr_plan(plan);
         if (values.size() != plan.operations.size())
             throw std::invalid_argument(
                 "flux registration values do not match logical plan");
+        if (!amr_plan_detail::is_finite_binary64(stage_weight))
+            throw std::invalid_argument(
+                "flux registration stage weight is nonfinite");
 
         struct CompiledContribution {
             int block_id = -1;
@@ -214,7 +247,7 @@ public:
             AmrField field = AmrField::Rho;
             int component = -1;
             RefinementRule rule = RefinementRule::FineFluxContribution;
-            double weight = 0.0;
+            double coefficient = 0.0;
             double value = 0.0;
         };
         std::vector<CompiledContribution> compiled;
@@ -236,11 +269,9 @@ public:
                 || cell < 0 || cell >= face_cells_[face])
                 throw std::out_of_range(
                     "flux registration destination is outside storage");
-            if ((operation.rule == RefinementRule::FineFluxContribution
-                    && operation.sign != 1.0)
-                || (operation.rule
-                        == RefinementRule::CoarseFluxContribution
-                    && operation.sign != -1.0))
+            if (!flux_math::is_flux_registration_rule(operation.rule)
+                || operation.sign
+                    != flux_math::registration_route_sign(operation.rule))
                 throw std::invalid_argument(
                     "flux registration sign does not match its route");
             if (operation.field == AmrField::EnucRate)
@@ -255,24 +286,21 @@ public:
                     "flux registration value is nonfinite");
             compiled.push_back({
                 destination->second, face, cell, operation.field,
-                operation.component, operation.rule, operation.weight,
+                operation.component, operation.rule,
+                flux_math::registration_coefficient(
+                    operation.rule, operation.weight, stage_weight),
                 values[index]});
         }
 
+        // Zero-weight stages are a mathematical no-op and must not create a
+        // false HasData witness in the Host register.
+        if (stage_weight == 0.0) return;
         for (const auto& contribution : compiled) {
             if (contribution.field == AmrField::Species) {
-                if (contribution.rule
-                    == RefinementRule::FineFluxContribution) {
-                    AddFineSpeciesFlux(
-                        contribution.block_id, contribution.face,
-                        contribution.cell, contribution.component,
-                        contribution.value, contribution.weight);
-                } else {
-                    AddCoarseSpeciesFlux(
-                        contribution.block_id, contribution.face,
-                        contribution.cell, contribution.component,
-                        contribution.value, contribution.weight);
-                }
+                AddRegisteredSpeciesFlux(
+                    contribution.block_id, contribution.face,
+                    contribution.cell, contribution.component,
+                    contribution.value, contribution.coefficient);
                 continue;
             }
             FluidVector flux{};
@@ -287,14 +315,9 @@ public:
                 throw std::logic_error(
                     "invalid compiled conservative flux field");
             }
-            if (contribution.rule
-                == RefinementRule::FineFluxContribution) {
-                AddFineFlux(contribution.block_id, contribution.face,
-                            contribution.cell, flux, contribution.weight);
-            } else {
-                AddCoarseFlux(contribution.block_id, contribution.face,
-                              contribution.cell, flux, contribution.weight);
-            }
+            AddRegisteredFlux(
+                contribution.block_id, contribution.face,
+                contribution.cell, flux, contribution.coefficient);
         }
     }
 
@@ -372,11 +395,15 @@ public:
         const std::shared_ptr<MemoryPool>& pool,
         std::span<const int> active_blocks,
         std::span<const BlockHandle> handles,
-        FluidState Block::* state_ptr)
+        FluidState Block::* state_ptr,
+        double timestep_scale = 1.0)
     {
         validate_amr_plan(plan);
         if (handles.size() != active_blocks.size())
             throw std::invalid_argument("reflux Host view count mismatch");
+        if (!amr_plan_detail::is_finite_binary64(timestep_scale)
+            || timestep_scale < 0.0)
+            throw std::invalid_argument("invalid reflux timestep scale");
         std::map<LogicalBlockKey, std::size_t> active_index;
         for (std::size_t index = 0; index < active_blocks.size(); ++index) {
             const Block& block = pool->GetBlock(active_blocks[index]);
@@ -414,10 +441,9 @@ public:
                 + side_value(operation.side);
             const int cell = face_cell_index(
                 operation.destination_box, operation.axis);
-            if (!HasData(active_blocks[found->second], face)
-                || cell < 0 || cell >= face_cells_[face])
+            if (cell < 0 || cell >= face_cells_[face])
                 throw std::invalid_argument(
-                    "reflux logical cell has no register data");
+                    "reflux logical cell is outside register storage");
 
             const GroupKey key{
                 operation.destination, operation.destination_box,
@@ -489,18 +515,25 @@ public:
                 block.grid.Ks() + logical[2]);
             const FluidVector delta = GetSummedFlux(
                 group.block_id, group.face, group.cell);
-            const double correction = group.sign * group.weight;
+            const double correction =
+                timestep_scale * group.sign * group.weight;
             const double rho_before = state.rho[index];
-            state.rho[index] += correction * delta.rho;
-            state.mom_u[index] += correction * delta.mom_u;
-            state.mom_v[index] += correction * delta.mom_v;
-            state.mom_w[index] += correction * delta.mom_w;
-            state.eng[index] += correction * delta.eng;
+            state.rho[index] = flux_math::reflux_conserved(
+                rho_before, correction, delta.rho);
+            state.mom_u[index] = flux_math::reflux_conserved(
+                state.mom_u[index], correction, delta.mom_u);
+            state.mom_v[index] = flux_math::reflux_conserved(
+                state.mom_v[index], correction, delta.mom_v);
+            state.mom_w[index] = flux_math::reflux_conserved(
+                state.mom_w[index], correction, delta.mom_w);
+            state.eng[index] = flux_math::reflux_conserved(
+                state.eng[index], correction, delta.eng);
             for (int species = 0; species < state.GetNumSpecies(); ++species) {
-                const double rho_x = rho_before * state.X(species, index)
-                    + correction * GetSummedSpeciesFlux(
-                        group.block_id, group.face, group.cell, species);
-                state.X(species, index) = rho_x / state.rho[index];
+                state.X(species, index) = flux_math::reflux_mass_fraction(
+                    rho_before, state.X(species, index), correction,
+                    GetSummedSpeciesFlux(
+                        group.block_id, group.face, group.cell, species),
+                    state.rho[index]);
             }
         }
     }

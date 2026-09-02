@@ -435,8 +435,34 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
                 && reference.levels == candidate.levels
                 && reference.logical_x1 == candidate.logical_x1
                 && reference.logical_x2 == candidate.logical_x2
-                && reference.logical_x3 == candidate.logical_x3,
+                && reference.logical_x3 == candidate.logical_x3
+                && reference.has_enuc_rate && candidate.has_enuc_rate,
             "checkpoint topology or layout mismatch");
+    require(reference.provenance.available
+                && candidate.provenance.available
+                && reference.provenance.eos_type
+                    == candidate.provenance.eos_type
+                && reference.provenance.ideal_gamma
+                    == candidate.provenance.ideal_gamma
+                && reference.provenance.burn_enabled
+                    == candidate.provenance.burn_enabled
+                && reference.provenance.active_network
+                    == candidate.provenance.active_network
+                && reference.provenance.nse_enabled
+                    == candidate.provenance.nse_enabled
+                && reference.provenance.eos_table_sha256
+                    == candidate.provenance.eos_table_sha256
+                && reference.provenance.species_names
+                    == candidate.provenance.species_names
+                && reference.provenance.species_A
+                    == candidate.provenance.species_A
+                && reference.provenance.species_Z
+                    == candidate.provenance.species_Z
+                && reference.provenance.species_gamma
+                    == candidate.provenance.species_gamma
+                && reference.provenance.species_Cv
+                    == candidate.provenance.species_Cv,
+            "checkpoint scientific identity mismatch");
 
     struct FieldView {
         const char* name;
@@ -449,6 +475,8 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
         FieldView{"mom_v", &reference.mom_v, &candidate.mom_v},
         FieldView{"mom_w", &reference.mom_w, &candidate.mom_w},
         FieldView{"eng", &reference.eng, &candidate.eng},
+        FieldView{"enuc_rate", &reference.enuc_rate,
+                  &candidate.enuc_rate},
         FieldView{"rhoX", &reference.rhoX, &candidate.rhoX}};
     double global_max_abs = 0.0;
     double global_max_rel = 0.0;

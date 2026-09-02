@@ -124,7 +124,8 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 const arch::dispatch::ResolvedExecutionPlan* resolved_plan = nullptr,
                 const arch::dispatch::ExecutionRequirements* requirements = nullptr,
                 const arch::dispatch::BackendResolution* backend = nullptr,
-                arch::dispatch::StartupOrder* startup_order = nullptr)
+                arch::dispatch::StartupOrder* startup_order = nullptr,
+                const io::CheckpointProvenance* checkpoint_provenance = nullptr)
 {
     // Bind the selected EOS and flux policy behind the hydrodynamics interface.
     Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
@@ -132,9 +133,13 @@ void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     std::string integrator_name = TimeIntegrator::name() + " + " + FluxSchemePolicy::name();
 
     // Pass the integrator entry point to the non-templated driver loop.
+    if (checkpoint_provenance == nullptr)
+        throw std::invalid_argument(
+            "checkpoint provenance is required by the Driver");
     run_simulation<EosPolicy>(amr_ctrl, eos, gravity, burn, &hydro_solver,
                               &TimeIntegrator::template solve<BCHandler>,
                               integrator_name, config, specs, run_state,
+                              *checkpoint_provenance,
                               resolved_plan, requirements, backend,
                               startup_order);
 }
@@ -145,6 +150,7 @@ void launch_resolved_run(
     const Physical::Gravity::IGravityPolicy* gravity,
     const BurnerHandle<EosPolicy>& burn, const SimConfig& config,
     const SpeciesManager& specs, const RunState& run_state,
+    const io::CheckpointProvenance& checkpoint_provenance,
     const arch::dispatch::ResolvedExecutionPlan& plan,
     const arch::dispatch::ExecutionRequirements& requirements,
     const arch::dispatch::BackendResolution& backend,
@@ -155,7 +161,8 @@ void launch_resolved_run(
             (void)sizeof(Reconstruction);
             launch_run<TimeIntegrator, Flux>(
                 amr_ctrl, eos, gravity, burn, config, specs, run_state,
-                &plan, &requirements, &backend, &startup_order);
+                &plan, &requirements, &backend, &startup_order,
+                &checkpoint_provenance);
         });
     if (!launched)
         throw std::logic_error("resolved Hydro route has no CPU binding");
@@ -230,7 +237,3 @@ void select_flux(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
 }
 
 } // namespace DispatchImpl
-
-void Dispatch_Euler(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK2(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);
-void Dispatch_RK3(amr::AMRControl &amr_ctrl, const SimConfig &config, const SpeciesManager &specs, const RunState &run_state);

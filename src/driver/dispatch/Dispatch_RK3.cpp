@@ -11,6 +11,8 @@
  * template matrix; Dispatch_Euler.cpp documents the dispatch boundary.
  */
 
+#include <string_view>
+
 #include "DispatchImpl.h"
 
 // Integrator isolated in this translation unit.
@@ -19,6 +21,7 @@
 // Runtime physics dispatch.
 #include "../../numerics/burnsolver/BurnDispatch.h" // Provides make_handle().
 #include "../../numerics/burnsolver/BurnerHandle.h"
+#include "../../io/chk/CheckpointCompatibility.h"
 #include "../../physics/eos/eosdispatch.h"
 #include "../../physics/gravity/GravityDispatch.h"
 
@@ -30,8 +33,17 @@ void Dispatch_RK3(
     const arch::dispatch::BackendResolution& backend,
     arch::dispatch::StartupOrder& startup_order)
 {
-    EOSDispatcher::dispatch_eos(plan.eos, config, specs, [&](auto &&eos)
+    EOSDispatcher::dispatch_eos(
+        plan.eos, config, specs,
+        [&](auto &&eos, std::string_view loaded_table_sha256)
     {
+        io::require_loaded_eos_table_compatible(
+            run_state.verified_eos_table_sha256, loaded_table_sha256);
+        const auto checkpoint_provenance = io::make_checkpoint_provenance(
+            config, specs, plan.eos, requirements.burn,
+            arch::dispatch::canonical_policy_name<
+                arch::dispatch::NetworkPolicies>(plan.network),
+            requirements.use_nse, loaded_table_sha256);
         using EosType = std::remove_cvref_t<decltype(eos)>;
         auto burn_handle = BurnDispatcher::make_host_handle<EosType>(
             config, plan, backend);
@@ -45,6 +57,7 @@ void Dispatch_RK3(
 
         DispatchImpl::launch_resolved_run<SolverRK3>(
             amr_ctrl, eos, grav_handle.get(), burn_handle, config, specs,
-            run_state, plan, requirements, backend, startup_order);
+            run_state, checkpoint_provenance, plan, requirements, backend,
+            startup_order);
     });
 }

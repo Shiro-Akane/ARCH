@@ -49,11 +49,16 @@ recipe/pynucastro/generator version is a no-op. A changed recipe requires
 activate the staged package restores that backup. Two variants that remain
 selectable in one executable use distinct IDs.
 
-Set `linear_solver = Auto`. It retains the dedicated DenseLU backend through 30
-isotopes and selects SuiteSparse KLU above 30; explicit DenseLU rejects a larger
-network. Sparse matrix values use CSC storage, but the current entry-to-slot
-lookup allocates `N*N` integers. The retained compatibility audit reaches 200
-isotopes; substantially larger packages require their own memory qualification.
+Set `linear_solver = Auto`. Requests are case-insensitive. `Auto` retains the
+dedicated DenseLU backend through 30 isotopes; above 30 it forms a SuiteSparse
+KLU CPU candidate and a cuDSS CUDA candidate. Generated packages are currently
+CPU-only, so their usable large-network route is KLU. SparseKLU is CPU-only and
+cuDSS is CUDA-only, and an incompatible explicit backend/solver pair is rejected
+before backend construction. The cuDSS provider and CUDA generated-network/
+large-network paths are not implemented; installing cuDSS alone does not enable
+them. Sparse matrix values use CSC storage, but the current entry-to-slot lookup
+allocates `N*N` integers. The retained compatibility audit reaches 200 isotopes;
+substantially larger packages require their own memory qualification.
 
 ## Adapter boundary
 

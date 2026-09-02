@@ -103,6 +103,11 @@ public:
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
         state::StateVersion source_version,
         state::CompletionToken expected) override;
+    state::CompletionToken execute_coarse_fine_exchange(
+        std::span<const backend::BackendStateAccess> accesses,
+        const amr::CoarseFineTransferPlan& plan, state::StateSlot slot,
+        state::StateVersion source_version,
+        state::CompletionToken expected) override;
     void rotate_slots(backend::BackendStateAccess current,
                       state::SlotRotation rotation) override;
     double compute_diffusion_dt(
@@ -123,6 +128,30 @@ public:
     void enqueue_upload_slot(
         backend::BackendStateAccess access, state::StateRegion region,
         backend::HostStateTransferView host) override;
+    bool supports_dynamic_topology_store() const noexcept override;
+    std::unique_ptr<backend::BackendTopologyStoreTransaction>
+    begin_topology_store_transaction(
+        const amr::AmrPlanScope& scope,
+        std::span<const backend::BackendTopologyBinding> bindings) override;
+    void enqueue_upload_staged_current(
+        backend::BackendTopologyStoreTransaction& transaction,
+        backend::BackendStateAccess access, state::StateRegion region,
+        backend::HostStateTransferView host) override;
+    void prepare_amr_flux_plan(
+        const amr::AmrFluxTopologyPlan& topology,
+        const amr::RefluxPlan& reflux) override;
+    void stage_amr_flux_plan(
+        backend::BackendTopologyStoreTransaction& transaction,
+        const amr::AmrFluxTopologyPlan& topology,
+        const amr::RefluxPlan& reflux) override;
+    state::CompletionToken clear_amr_flux_register(
+        state::CompletionToken expected) override;
+    state::CompletionToken execute_amr_reflux(
+        state::StateSlot slot, double dt,
+        state::CompletionToken expected) override;
+    void publish_topology_store_transaction(
+        std::unique_ptr<backend::BackendTopologyStoreTransaction>
+            transaction) override;
     void quiesce() override;
     backend::BackendCounters counters() const noexcept override;
     void append_trace(backend::BackendTraceRecord record) override;
@@ -145,11 +174,11 @@ public:
     void complete_store_retirement(DeviceRetirementFence fence);
     CudaStoreSnapshot store_snapshot() const noexcept;
 
-    // A transactional storage namespace is necessary but not sufficient for
-    // dynamic AMR. Coarse-fine device ghosts and reflux remain gated.
+    // Dynamic AMR keeps topology/Morton/prolongation authority on the Host;
+    // CUDA owns only the staged store, compact face data, and leaf kernels.
     static constexpr bool cuda_amr_execution_available() noexcept
     {
-        return false;
+        return true;
     }
 
 private:

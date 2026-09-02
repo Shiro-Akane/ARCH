@@ -11,6 +11,8 @@ This directory is the canonical entry point for maintained documentation.
   extend a case.
 - [Research and API reference](Reference.md): parameters, policies, and
   extension contracts.
+- [CUDA backend and GPU-AMR handoff status](CudaBackendStatus.md): verified,
+  pending-validation, and not-yet-implemented capability boundaries.
 - [Physics notes](physics/): implementation boundaries, provenance, and
   numerical-alignment records.
 - [Verification and validation](../validation/README.md): executable claims,

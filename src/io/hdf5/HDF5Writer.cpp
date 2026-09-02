@@ -9,6 +9,7 @@
  */
 
 #include <iostream>
+#include <algorithm>
 #include <cmath>
 #include <limits>
 
@@ -55,8 +56,57 @@ bool has_consistent_checkpoint_payload(const CheckpointData& checkpoint)
            checkpoint.mom_v.size() == cells &&
            checkpoint.mom_w.size() == cells &&
            checkpoint.eng.size() == cells &&
+           (!checkpoint.has_enuc_rate ||
+            checkpoint.enuc_rate.size() == cells) &&
            checkpoint.rhoX.size() ==
                static_cast<size_t>(checkpoint.num_species) * cells;
+}
+
+bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
+{
+    const auto& provenance = checkpoint.provenance;
+    const auto species = static_cast<size_t>(checkpoint.num_species);
+    const auto is_canonical_identity = [](const std::string& identity) {
+        return std::none_of(identity.begin(), identity.end(), [](char character) {
+            return character >= 'A' && character <= 'Z';
+        });
+    };
+    if (!provenance.available || provenance.eos_type.empty()
+        || provenance.active_network.empty()
+        || !is_canonical_identity(provenance.eos_type)
+        || !is_canonical_identity(provenance.active_network)
+        || provenance.species_names.size() != species
+        || provenance.species_A.size() != species
+        || provenance.species_Z.size() != species
+        || provenance.species_gamma.size() != species
+        || provenance.species_Cv.size() != species) {
+        return false;
+    }
+    if (std::any_of(provenance.species_names.begin(),
+                    provenance.species_names.end(),
+                    [](const std::string& name) { return name.empty(); })) {
+        return false;
+    }
+    if (provenance.burn_enabled) {
+        if (provenance.active_network == "none") return false;
+    } else if (provenance.active_network != "none"
+               || provenance.nse_enabled) {
+        return false;
+    }
+    if (provenance.eos_type == "ideal") {
+        return std::isfinite(provenance.ideal_gamma)
+            && provenance.ideal_gamma > 1.0
+            && provenance.eos_table_path.empty()
+            && provenance.eos_table_sha256.empty();
+    }
+    const bool valid_sha256 = provenance.eos_table_sha256.size() == 64
+        && std::all_of(provenance.eos_table_sha256.begin(),
+                       provenance.eos_table_sha256.end(), [](char character) {
+                           return (character >= '0' && character <= '9')
+                               || (character >= 'a' && character <= 'f');
+                       });
+    return !provenance.eos_table_path.empty()
+        && valid_sha256;
 }
 
 } // namespace
@@ -106,9 +156,17 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
     if (!has_valid_timestep_state(checkpoint)) {
         throw std::invalid_argument("Checkpoint timestep-controller state is invalid.");
     }
+    if (!checkpoint.has_enuc_rate) {
+        throw std::invalid_argument(
+            "Checkpoint ENUC restart state is unavailable.");
+    }
+    if (!has_consistent_checkpoint_provenance(checkpoint)) {
+        throw std::invalid_argument(
+            "Checkpoint scientific provenance is inconsistent.");
+    }
     try {
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
-        file.createAttribute("checkpoint_version", 2);
+        file.createAttribute("checkpoint_version", 3);
         file.createAttribute("time", checkpoint.time);
         file.createAttribute("dt_old", checkpoint.dt_old);
         file.createAttribute("dt_burn", checkpoint.dt_burn);
@@ -120,6 +178,18 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         file.createAttribute("geometry", checkpoint.geometry);
         file.createAttribute("num_species", checkpoint.num_species);
         file.createAttribute("cells_per_block", checkpoint.cells_per_block);
+        file.createAttribute("eos_type", checkpoint.provenance.eos_type);
+        file.createAttribute("ideal_gamma", checkpoint.provenance.ideal_gamma);
+        file.createAttribute(
+            "burn_enabled", checkpoint.provenance.burn_enabled ? 1 : 0);
+        file.createAttribute(
+            "active_network", checkpoint.provenance.active_network);
+        file.createAttribute(
+            "nse_enabled", checkpoint.provenance.nse_enabled ? 1 : 0);
+        file.createAttribute(
+            "eos_table_path", checkpoint.provenance.eos_table_path);
+        file.createAttribute(
+            "eos_table_sha256", checkpoint.provenance.eos_table_sha256);
 
         Group blocks_group = file.createGroup("Blocks");
         blocks_group.createDataSet("level", checkpoint.levels);
@@ -138,11 +208,18 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         write_field("mom_v", checkpoint.mom_v);
         write_field("mom_w", checkpoint.mom_w);
         write_field("eng", checkpoint.eng);
+        write_field("enuc_rate", checkpoint.enuc_rate);
         if (checkpoint.num_species > 0) {
             const std::vector<size_t> dims = {
                 static_cast<size_t>(checkpoint.num_species), blocks, checkpoint.cells_per_block};
             DataSet dataset = data.createDataSet<double>("rhoX", DataSpace(dims));
             dataset.write_raw(checkpoint.rhoX.data());
+            Group species = file.createGroup("Species");
+            species.createDataSet("name", checkpoint.provenance.species_names);
+            species.createDataSet("A", checkpoint.provenance.species_A);
+            species.createDataSet("Z", checkpoint.provenance.species_Z);
+            species.createDataSet("gamma", checkpoint.provenance.species_gamma);
+            species.createDataSet("Cv", checkpoint.provenance.species_Cv);
         }
         std::cout << "[IO] Saved CHK: " << filepath << " at step "
                   << checkpoint.step_count << " with " << blocks << " AMR leaves." << std::endl;
@@ -158,7 +235,7 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         CheckpointData checkpoint;
         int version = 0;
         file.getAttribute("checkpoint_version").read(version);
-        if (version != 1 && version != 2)
+        if (version != 1 && version != 2 && version != 3)
             throw std::runtime_error("Unsupported checkpoint format version.");
         file.getAttribute("time").read(checkpoint.time);
         if (version >= 2) {
@@ -179,6 +256,29 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         file.getAttribute("geometry").read(checkpoint.geometry);
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
+        if (version >= 3) {
+            int burn_enabled = 0;
+            int nse_enabled = 0;
+            checkpoint.provenance.available = true;
+            file.getAttribute("eos_type").read(checkpoint.provenance.eos_type);
+            file.getAttribute("ideal_gamma").read(
+                checkpoint.provenance.ideal_gamma);
+            file.getAttribute("burn_enabled").read(burn_enabled);
+            file.getAttribute("active_network").read(
+                checkpoint.provenance.active_network);
+            file.getAttribute("nse_enabled").read(nse_enabled);
+            if ((burn_enabled != 0 && burn_enabled != 1)
+                || (nse_enabled != 0 && nse_enabled != 1)) {
+                throw std::runtime_error(
+                    "Checkpoint burn/NSE provenance flags are not Boolean.");
+            }
+            checkpoint.provenance.burn_enabled = burn_enabled != 0;
+            checkpoint.provenance.nse_enabled = nse_enabled != 0;
+            file.getAttribute("eos_table_path").read(
+                checkpoint.provenance.eos_table_path);
+            file.getAttribute("eos_table_sha256").read(
+                checkpoint.provenance.eos_table_sha256);
+        }
 
         Group blocks_group = file.getGroup("Blocks");
         blocks_group.getDataSet("level").read(checkpoint.levels);
@@ -212,13 +312,32 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         read_field("mom_v", field_dims, checkpoint.mom_v);
         read_field("mom_w", field_dims, checkpoint.mom_w);
         read_field("eng", field_dims, checkpoint.eng);
+        if (version >= 3) {
+            read_field("enuc_rate", field_dims, checkpoint.enuc_rate);
+            checkpoint.has_enuc_rate = true;
+        }
         if (checkpoint.num_species > 0) {
             read_field("rhoX", {static_cast<size_t>(checkpoint.num_species),
                                 blocks, checkpoint.cells_per_block}, checkpoint.rhoX);
+            if (version >= 3) {
+                Group species = file.getGroup("Species");
+                species.getDataSet("name").read(
+                    checkpoint.provenance.species_names);
+                species.getDataSet("A").read(checkpoint.provenance.species_A);
+                species.getDataSet("Z").read(checkpoint.provenance.species_Z);
+                species.getDataSet("gamma").read(
+                    checkpoint.provenance.species_gamma);
+                species.getDataSet("Cv").read(
+                    checkpoint.provenance.species_Cv);
+            }
         }
 
         if (!has_consistent_checkpoint_payload(checkpoint)) {
             throw std::runtime_error("Checkpoint datasets have inconsistent dimensions.");
+        }
+        if (version >= 3 && !has_consistent_checkpoint_provenance(checkpoint)) {
+            throw std::runtime_error(
+                "Checkpoint scientific provenance is inconsistent.");
         }
         return checkpoint;
     } catch (const Exception& err) {

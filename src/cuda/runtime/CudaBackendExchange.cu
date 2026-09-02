@@ -1,5 +1,6 @@
 #include "CudaBackendExchange.h"
 
+#include "cuda/amr/CoarseFineExchangeKernels.cuh"
 #include "cuda/hydro/Boundary.cuh"
 #include "cuda/hydro/ExchangeKernels.cuh"
 
@@ -14,6 +15,15 @@ cudaError_t launch_cuda_backend_exchange_phase(
     return launch_same_level_exchange_phase(
         blocks, operations, operation_count, field_count, total_cells,
         scratch, stream);
+}
+
+cudaError_t launch_cuda_backend_coarse_fine_exchange(
+    const DeviceExchangeBlock* blocks,
+    const DeviceCoarseFineTransfer* transfers, int transfer_count,
+    int field_count, double* scratch, cudaStream_t stream)
+{
+    return launch_coarse_fine_exchange(
+        blocks, transfers, transfer_count, field_count, scratch, stream);
 }
 
 cudaError_t launch_cuda_backend_boundary_plan(

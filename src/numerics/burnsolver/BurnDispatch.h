@@ -354,6 +354,11 @@ private:
             return;
 #endif
         }
+        if (selected_id == LinearSolverId::CuDss) {
+            throw std::runtime_error(
+                "cuDSS requires compute_backend = cuda; the CPU burn factory "
+                "has no cuDSS binding.");
+        }
         throw std::runtime_error("Unknown Linear Solver Type: " + lin_type);
     }
 
@@ -389,6 +394,11 @@ private:
             func(burner);
             return;
 #endif
+        }
+        if (linear == LinearSolverId::CuDss) {
+            throw std::logic_error(
+                "cuDSS requires compute_backend = cuda; the CPU burn factory "
+                "has no cuDSS binding");
         }
         throw std::logic_error("resolved linear solver has no CPU binding");
     }

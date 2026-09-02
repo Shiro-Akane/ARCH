@@ -2,7 +2,7 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-> CPU 状态：基本 prolongation/restriction、动态 regrid/reflux 守恒、核素输运及二维对称性通过；局部细化保持仍是已知限制。CUDA 待验证。
+> CPU 状态：基本 prolongation/restriction、动态 regrid/reflux 守恒、核素输运及二维对称性通过；局部细化保持仍是已知限制。CUDA 的动态 topology、设备 coarse/fine exchange、紧凑通量登记和 reflux 已实现并通过源码/编译资格检查；真实设备验证待完成。
 
 本记录将守恒与细化效率分开验收。当前 AMR 路径能把所测积分量保持在舍入误差范围内，但粗到细 ghost 的分片常数填充会在 block 界面制造细化指标，并使一个光滑周期算例最终扩展为全域细化。后一个现象作为限制如实记录，不以放宽阈值掩盖。
 
@@ -65,7 +65,7 @@ Sedov 拓扑在整个运行中保持 12 个 0 级和 16 个 1 级叶 block。注
 
 `AverageFaceFromFine` 还在算术平均质量分数，而非体积加权 `rho X`；曲线坐标的 face exchange 也尚未使用物理体积权重。这些路径没有破坏上述积分测试，但局部细化保持和曲线坐标 ghost transfer 不能据此标为通过。
 
-`ENUC` 是燃烧过程中生成的瞬态诊断，目前既不写入 checkpoint，也不作为 AMR 字段执行 transfer/exchange。因此，即使密度、压力和核素驱动的守恒测试通过，`refine_var = ENUC` 的动态 split-run 等价性仍待验证。
+`ENUC` 是燃烧过程中生成的瞬态诊断，checkpoint v3 已持久化该字段，已实现的 Host 与 CUDA AMR 路径也会对它执行 transfer/exchange。因此，新 v3 checkpoint 不再存在此前的缺失字段限制。`refine_var = ENUC` 的精确动态 split-run 等价性仍需 CPU 端到端与 CUDA 真实设备验证；旧 v1/v2 checkpoint 会把 ENUC 初始化为零，不能建立这种等价性。
 
 后续实现应对粗到细 ghost 使用受限线性的守恒变量重构，先插值 `rho X` 再恢复 `X`，并对细到粗的流体与核素状态使用体积权重。届时的验收条件是光滑算例在 `t = 0.01` 仍至少保留一个 0 级叶 block。
 

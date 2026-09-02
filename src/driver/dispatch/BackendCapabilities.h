@@ -20,6 +20,10 @@ enum class BackendCapabilityCode : std::uint16_t
     RuntimeUnavailable,
     ComputeCapabilityTooLow,
     UnsupportedBinding,
+    SparseKluRequiresCpu,
+    CuDssRequiresCuda,
+    SparseKluBuildUnavailable,
+    CuDssProviderUnavailable,
     UnsupportedDimension,
     UnsupportedRootTopology,
     UnsupportedAmr,
@@ -105,6 +109,20 @@ constexpr bool execution_plan_is_valid(const ResolvedExecutionPlan& plan) noexce
         || !policy_id_registered<DiffusionIntegratorPolicies>(plan.diffusion_integrator))
         return false;
     return true;
+}
+
+constexpr bool plans_share_non_linear_policy(
+    const ResolvedExecutionPlan& left,
+    const ResolvedExecutionPlan& right) noexcept
+{
+    return left.flux == right.flux
+        && left.reconstruction == right.reconstruction
+        && left.limiter == right.limiter
+        && left.time_integrator == right.time_integrator
+        && left.eos == right.eos
+        && left.network == right.network
+        && left.ode_solver == right.ode_solver
+        && left.diffusion_integrator == right.diffusion_integrator;
 }
 
 constexpr bool cpu_bindings_exist(const ResolvedExecutionPlan& plan) noexcept
@@ -202,6 +220,14 @@ constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
     case BackendCapabilityCode::RuntimeUnavailable: return "CUDA runtime unavailable";
     case BackendCapabilityCode::ComputeCapabilityTooLow: return "compute capability too low";
     case BackendCapabilityCode::UnsupportedBinding: return "policy binding unavailable";
+    case BackendCapabilityCode::SparseKluRequiresCpu:
+        return "SparseKLU requires compute_backend = cpu";
+    case BackendCapabilityCode::CuDssRequiresCuda:
+        return "cuDSS requires compute_backend = cuda";
+    case BackendCapabilityCode::SparseKluBuildUnavailable:
+        return "SparseKLU was selected, but this ARCH build has KLU disabled";
+    case BackendCapabilityCode::CuDssProviderUnavailable:
+        return "cuDSS was selected, but this ARCH build has no CUDA cuDSS provider";
     case BackendCapabilityCode::UnsupportedDimension: return "dimension unsupported";
     case BackendCapabilityCode::UnsupportedRootTopology: return "root topology unsupported";
     case BackendCapabilityCode::UnsupportedAmr: return "AMR unsupported";
@@ -221,24 +247,34 @@ constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
 } // namespace detail
 
 inline CapabilityResult query_support(
-    const ResolvedExecutionPlan& plan,
+    const ResolvedExecutionPlan& cpu_plan,
+    const ResolvedExecutionPlan& cuda_plan,
     const ExecutionRequirements& requirements,
     const RuntimeProbeResult& probe) noexcept
 {
     CapabilityResult result{};
-    if (!detail::execution_plan_is_valid(plan)) return result;
+    if (!detail::execution_plan_is_valid(cpu_plan)
+        || !detail::execution_plan_is_valid(cuda_plan)
+        || !detail::plans_share_non_linear_policy(cpu_plan, cuda_plan))
+        return result;
 
-    result.cpu_supported = detail::cpu_bindings_exist(plan);
-    result.cpu_code = result.cpu_supported
-        ? BackendCapabilityCode::Supported
-        : BackendCapabilityCode::UnsupportedBinding;
+    if (cpu_plan.linear_solver == LinearSolverId::CuDss) {
+        result.cpu_code = BackendCapabilityCode::CuDssRequiresCuda;
+    } else {
+        result.cpu_supported = detail::cpu_bindings_exist(cpu_plan);
+        result.cpu_code = result.cpu_supported
+            ? BackendCapabilityCode::Supported
+            : (cpu_plan.linear_solver == LinearSolverId::SparseKlu
+                   ? BackendCapabilityCode::SparseKluBuildUnavailable
+                   : BackendCapabilityCode::UnsupportedBinding);
+    }
 
-    const bool nse_requirements_valid = !requirements.use_nse
-        || (requirements.burn && network_supports_nse(plan.network));
+    const bool cpu_nse_requirements_valid = !requirements.use_nse
+        || (requirements.burn && network_supports_nse(cpu_plan.network));
     if (result.cpu_supported && requirements.gravity == GravityId::Self) {
         result.cpu_supported = false;
         result.cpu_code = BackendCapabilityCode::UnsupportedGravity;
-    } else if (result.cpu_supported && !nse_requirements_valid) {
+    } else if (result.cpu_supported && !cpu_nse_requirements_valid) {
         result.cpu_supported = false;
         result.cpu_code = BackendCapabilityCode::UnsupportedNse;
     }
@@ -248,15 +284,16 @@ inline CapabilityResult query_support(
         result.cuda_code = code;
         return result;
     };
+    if (cuda_plan.linear_solver == LinearSolverId::SparseKlu)
+        return reject_cuda(BackendCapabilityCode::SparseKluRequiresCpu);
     if (probe.state == RuntimeProbeState::BuildDisabled)
         return reject_cuda(BackendCapabilityCode::BuildDisabled);
     if (probe.state != RuntimeProbeState::Available)
         return reject_cuda(BackendCapabilityCode::RuntimeUnavailable);
-    if (!detail::selected_minimum_compute_capability(plan, probe.device))
+    if (!detail::selected_minimum_compute_capability(cuda_plan, probe.device))
         return reject_cuda(BackendCapabilityCode::ComputeCapabilityTooLow);
-    if (!detail::cuda_bindings_exist(plan))
-        return reject_cuda(BackendCapabilityCode::UnsupportedBinding);
-    const StaticRequirements selected = detail::selected_static_requirements(plan);
+    const StaticRequirements selected =
+        detail::selected_static_requirements(cuda_plan);
     if (requirements.dimension < 1 || requirements.dimension > 3)
         return reject_cuda(BackendCapabilityCode::UnsupportedDimension);
 
@@ -273,19 +310,17 @@ inline CapabilityResult query_support(
     if (!valid_root_topology
         || requirements.uniform_multiblock != is_uniform_multiblock)
         return reject_cuda(BackendCapabilityCode::UnsupportedRootTopology);
-    if (requirements.amr)
-        return reject_cuda(BackendCapabilityCode::UnsupportedAmr);
     if (requirements.gravity != GravityId::None)
         return reject_cuda(BackendCapabilityCode::UnsupportedGravity);
-    if (requirements.restart)
-        return reject_cuda(BackendCapabilityCode::UnsupportedRestart);
     if (requirements.geometry != GeometryId::Cartesian)
         return reject_cuda(BackendCapabilityCode::UnsupportedGeometry);
-    if (!nse_requirements_valid)
+    const bool cuda_nse_requirements_valid = !requirements.use_nse
+        || (requirements.burn && network_supports_nse(cuda_plan.network));
+    if (!cuda_nse_requirements_valid)
         return reject_cuda(BackendCapabilityCode::UnsupportedNse);
-    const bool network_enabled = plan.network != NetworkId::None;
-    const bool ode_enabled = plan.ode_solver != OdeSolverId::None;
-    const bool linear_enabled = plan.linear_solver != LinearSolverId::None;
+    const bool network_enabled = cuda_plan.network != NetworkId::None;
+    const bool ode_enabled = cuda_plan.ode_solver != OdeSolverId::None;
+    const bool linear_enabled = cuda_plan.linear_solver != LinearSolverId::None;
     if ((requirements.burn
          && (!network_enabled || !ode_enabled || !linear_enabled))
         || (!requirements.burn
@@ -295,10 +330,17 @@ inline CapabilityResult query_support(
          && (requirements.thermal_diffusion || requirements.species_diffusion
              || requirements.viscous_diffusion))
         || (requirements.diffusion
-            != (plan.diffusion_integrator != DiffusionIntegratorId::None)))
+            != (cuda_plan.diffusion_integrator
+                != DiffusionIntegratorId::None)))
         return reject_cuda(BackendCapabilityCode::UnsupportedDiffusionMode);
     if (requirements.species_count > BurnLimits::MAX_SPECIES)
         return reject_cuda(BackendCapabilityCode::UnsupportedSpeciesCount);
+    if (!detail::cuda_bindings_exist(cuda_plan)) {
+        return reject_cuda(
+            cuda_plan.linear_solver == LinearSolverId::CuDss
+                ? BackendCapabilityCode::CuDssProviderUnavailable
+                : BackendCapabilityCode::UnsupportedBinding);
+    }
     if (requirements.required_ghost_depth < selected.ghost_depth
         || requirements.required_ghost_depth > 3)
         return reject_cuda(BackendCapabilityCode::UnsupportedGhostDepth);
@@ -319,6 +361,14 @@ inline CapabilityResult query_support(
     result.cuda_supported = true;
     result.cuda_code = BackendCapabilityCode::Supported;
     return result;
+}
+
+inline CapabilityResult query_support(
+    const ResolvedExecutionPlan& plan,
+    const ExecutionRequirements& requirements,
+    const RuntimeProbeResult& probe) noexcept
+{
+    return query_support(plan, plan, requirements, probe);
 }
 
 inline BackendResolution resolve_backend(
@@ -353,8 +403,16 @@ inline BackendResolution resolve_backend(
     }
     if (phase != StartupPhase::BeforeConstruction)
         throw std::runtime_error("backend selection is closed after construction begins");
-    if (!support.cpu_supported)
-        throw std::runtime_error(std::string(detail::capability_name(support.cpu_code)));
+    if (!support.cpu_supported) {
+        // An explicitly requested solver pins the only compatible backend.
+        // Report the missing provider on that backend rather than the less
+        // actionable cross-backend rejection from the other candidate.
+        if (support.cpu_code == BackendCapabilityCode::CuDssRequiresCuda)
+            throw std::runtime_error(
+                std::string(detail::capability_name(support.cuda_code)));
+        throw std::runtime_error(
+            std::string(detail::capability_name(support.cpu_code)));
+    }
     result.resolved_backend = ComputeBackend::Cpu;
     result.code = support.cuda_code;
     result.fallback_reason = detail::capability_name(support.cuda_code);

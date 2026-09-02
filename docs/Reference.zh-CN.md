@@ -51,11 +51,11 @@ ARCH 构建一个可执行文件和一个内部 object target，其扩展契约�
 | CUDA 执行 | `compute_backend = cuda/auto` | 实验性 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
 | 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 支持 | enum-like 输入不区分大小写并规范保存；CUDA 仅接受 Cartesian。 |
-| AMR | `lrefinemax >= 0` | CPU 支持 | 每个活动维固定 16 个单元的 block 尺寸；CUDA 当前拒绝动态 AMR。 |
+| AMR | `lrefinemax >= 0` | CPU 支持；CUDA 实验性 | 每个活动维固定 16 个单元的 block 尺寸。CUDA 将 topology、Morton 与守恒 migration 保持为 Host 权威，在 device 执行 ghost 与 reflux。 |
 | 自重力 | `gravity_type = self` | 不可用 | capability gate 会在策略构造前拒绝。 |
 | Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
 
-CUDA 能力被刻意限制为 CPU 能力的子集：支持 uniform Cartesian 1D/2D/3D hydro、已注册的 flux/reconstruction/time-integrator 组合、Ideal/Helmholtz/Tabular3D/Tabular4D EOS、使用 DenseLU 与 NSE 的内置燃烧网络、Cartesian RKL1/RKL2 扩散、静态 multiblock 边界交换，以及通过共用 host writer 完成 plot/checkpoint 写出。动态 AMR、restart 读入、重力、非 Cartesian 几何、生成网络与 SparseKLU 均会被拒绝。cuDSS 尚未注册或集成，不能作为 linear-solver policy 选择。若干已实现 CUDA 路径的验证状态仍是 `pending`，不能作为生产级声明。
+CUDA 能力被刻意限制为 CPU 能力的子集：支持 Cartesian 1D/2D/3D hydro、已注册的 flux/reconstruction/time-integrator 组合、Ideal/Helmholtz/Tabular3D/Tabular4D EOS、使用 DenseLU 与 NSE 的内置燃烧网络、Cartesian RKL1/RKL2 扩散、静态与动态 multiblock 交换、Host 权威动态 regrid 与 device store transaction、紧凑 Hydro/RKL reflux、通过共用 Host checkpoint schema 的 restart，以及共用 host writer 的 plot/checkpoint 写出。重力、非 Cartesian 几何、生成网络与 SparseKLU 会被拒绝。当前已注册不区分大小写的 `cuDSS` request 以便 capability routing，但尚未实现 CUDA cuDSS provider；CUDA 超过 30 核素和生成式 CUDA 网络的 gate 也仍然存在。因此 cuDSS 执行会 fail closed，仅安装该库不会启用它。若干已实现 CUDA 路径的验证状态仍是 `pending`，不能作为生产级声明。
 
 ### 数值策略
 
@@ -70,7 +70,7 @@ CUDA 能力被刻意限制为 CPU 能力的子集：支持 uniform Cartesian 1D/
 | 重力 | `none`、`external` | CPU 支持；未知字符串与 `self` 会在构造前被拒绝 |
 | 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
-| 线性求解 | `Auto`、`DenseLU`、`SparseKLU` | `Auto` 对不超过 30 核素使用 DenseLU；在启用 KLU 的 CPU build 中，超过 30 时使用 SparseKLU；显式 DenseLU 拒绝大型网络 |
+| 线性求解 | `Auto`、`DenseLU`、`SparseKLU`、`cuDSS` | 不区分大小写；接受 `dense_lu`、`sparse_klu`、`cu_dss` alias。`Auto` 对不超过 30 个核素具体化为 DenseLU；超过 30 时，CPU candidate 为 SparseKLU、CUDA candidate 为 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在 backend 构造前被拒绝。当前 cuDSS provider 与 CUDA >30/生成网络路径不可用，因此 cuDSS 执行 fail closed。 |
 
 策略名称按 ASCII 大小写不敏感；但不同 dispatcher 接受的 alias 与 fallback 行为仍不一致。
 
@@ -313,7 +313,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `enforce_mass_conservation` | bool | `true` | 已解析并保存；当前 burn 路径尚未消费该开关 |
 | `burn_verbose_level` | int | `0` | 已解析并保存；当前 burn 路径尚未消费该级别 |
 | `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
-| `linear_solver` | string | `Auto` | `Auto`、`DenseLU`、`SparseKLU`；DenseLU 限于不超过 30 个核素 |
+| `linear_solver` | string | `Auto` | 不区分大小写的 `Auto`、`DenseLU`、`SparseKLU` 或 `cuDSS`（接受 `dense_lu`、`sparse_klu`、`cu_dss` alias）；具体化规则见下文 |
 | `ode_rtol` | double | `1e-4` | ODE 相对容差 |
 | `ode_atol` | double | `1e-8` | ODE 绝对容差 |
 | `ode_max_newton_iter` | int | `50` | 使用 Newton 时的迭代上限 |
@@ -648,7 +648,9 @@ struct Solver_NEW {
 
 adapter 将 pynucastro 的 molar RHS/Jacobian 转为 ARCH 质量分数形式，把核能与弱中微子能量写入 ODE RHS，并隔离 SimpleCxx header namespace。energy Jacobian 当前不含弱中微子能量对组分的导数。custom 网络设置 `SUPPORTS_NSE=false`，温度 Jacobian 列采用相对步长 `1e-4` 的中心差分。生成器版本 3 只删除编译期字面零 Jacobian 调用；运行值为零的结构项仍保留，以保证 KLU refactor 安全。默认 `NUCLEI` 路径会把没有连通反应的请求核素保留为 inert species，并拒绝重复项。CMake 会校验 manifest，并拒绝缺少版本 3 防呆的旧 package。弱中微子能量占主导的网络尚不在已接受契约内，因为其组分导数和 burn solver 的积分弱能闭合仍待实现。生产验收覆盖这些边界。
 
-矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 30 核素（`BurnLimits::MAX_SPECIES`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号模式，并调用 KLU analyze/factor/refactor/solve。`linear_solver = Auto` 在不超过 30 核素时选择 DenseLU，超过时选择 SparseKLU。显式 DenseLU 会拒绝大型网络；构建时启用 KLU 后，任意已编译网络都可显式选择 `SparseKLU`。稀疏数值采用 CSC 存储，但当前 entry-to-slot 查询仍分配 `N*N` 个整数；保留证据覆盖到 200 核素，不构成无界规模保证。
+矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 30 核素（`BurnLimits::MAX_SPECIES`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号模式，并调用 KLU analyze/factor/refactor/solve。解析阶段保留 `linear_solver = Auto`，直到分别形成具体的 CPU 与 CUDA candidate：不超过 30 核素时两者均为 DenseLU；超过 30 时 CPU candidate 为 SparseKLU，CUDA candidate 为 cuDSS。显式 SparseKLU 仅适用于 CPU，显式 cuDSS 仅适用于 CUDA。显式 CPU+cuDSS 或 CUDA+SparseKLU 会在 capability resolution 阶段、backend 构造前被拒绝；因此当 `compute_backend = auto` 时，显式 solver 只能选择与其兼容的 backend。显式 DenseLU 会拒绝大型网络。
+
+SparseKLU 要求构建时启用 KLU。cuDSS 当前只是可解析但 fail-closed 的 request：尚未提交 CUDA provider，CUDA 仍拒绝超过 30 核素与生成网络，仅安装 cuDSS 库不会改变这些 gate。稀疏数值采用 CSC 存储，但当前 entry-to-slot 查询仍分配 `N*N` 个整数；保留证据覆盖到 200 核素，不构成无界规模保证。
 
 生成或替换 package 后必须重新执行 CMake。写入前先用 `--check`；可用 `-DARCH_CUSTOM_NETWORKS="id1;id2"` 限制昂贵构建。通用源码扫描排除整个 custom 子树，因此只编译被选择的 adapter。pynucastro 只在生成时需要，ARCH 运行时不依赖 Python。多规模生成式网络兼容证据统一见 [validation/network](../validation/network/README.zh-CN.md)。
 
@@ -700,27 +702,28 @@ Data/<requested field>       [block, z?, y?, x] 内部单元数组
 
 `HDF5Writer` 记录 PLT 写入失败，但继续运行模拟。
 
-### Checkpoint 文件版本 2
+### Checkpoint 文件版本 3
 
-属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn` 和 `resume_after_regrid`。后三项分别恢复时间步增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。
+属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn`、`resume_after_regrid`、`eos_type`、`ideal_gamma`、`burn_enabled`、`active_network`、`nse_enabled`、`eos_table_path` 和 `eos_table_sha256`。checkpoint 中的 `eos_type` 记录已解析的规范策略（`ideal`、`helmholtz`、`tabular3d` 或 `tabular4d`），因此自动识别出的表 rank 属于 restart 身份，而不是沿用配置中的原始 `tabular` 拼写。燃烧关闭时 `active_network` 必须为 `none`。时间步字段分别恢复增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。表路径仅用于审计；兼容性按 SHA-256 内容身份判断，因此同一份表可以在不同安装位置之间移动。表加载器会在加载前后计算摘要，并将缓存 owner 绑定到该摘要；传给每次 checkpoint 的不可变身份描述的是 EOS owner 实际驻留的字节，而不是稍后重新读取路径的结果。
 
 数据集：
 
 ```text
 Blocks/level
 Blocks/logical_x1, logical_x2, logical_x3
-Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng
+Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng, Data/enuc_rate
 Data/rhoX    [species, block, interior cell]
+Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
 
-重启兼容性检查维度、几何、核素数和每 block 单元数。科学来源信息——参数文件、编译器、EOS、核素顺序、求解器、边界和 commit——保留在 HDF5 外部。Checkpoint 结构错误会抛出异常。版本 1 文件仍可读取；由于它没有控制器状态，流体重新计算 CFL，燃烧从 `dt_init` 保守恢复。step-zero 与已经到达终点的 restart 不会重复写初始/最终文件。动态 AMR split-run 等价性仍待验证，尤其是未写入 checkpoint 的瞬态 `ENUC` 细化诊断。
+重启兼容性检查维度、几何、每 block 单元数、EOS 策略、适用时的理想气体 gamma、反应网络身份、EOS 表内容、燃烧与 NSE 开关，以及每个按顺序排列的核素名称和热力学属性。`ENUC` 在驱动动态细化时属于重启相关状态，因此会被持久化。结构错误或已有来源身份不匹配会在发布层次结构前抛出异常。版本 1 和版本 2 仍可读取，但由于缺少有序科学身份与 `ENUC`，会明确报告为 legacy/unverified；版本 1 还没有控制器状态，因此流体重新计算 CFL，燃烧从 `dt_init` 保守恢复。step-zero 与已经到达终点的 restart 不会重复写初始/最终文件。CPU/CUDA 读写完全相同的 Host schema；后端名称刻意不参与兼容性判断。
 
 ## 已知限制
 
-- CUDA 是实验性的 uniform-Cartesian 后端，并非完整 CPU parity。动态 AMR、restart 读入、重力、非 Cartesian 几何、生成网络与 device 稀疏求解仍不可用。AMR 守恒已有 CPU 基线，但稳定保持局部细化仍受粗细 ghost transfer 的已知限制；两个后端都尚未实现自重力与 Jeans 指标。
+- CUDA 是实验性的 Cartesian 后端，尚不能作为生产级 CPU parity 声明。动态 AMR 与 restart 已实现，但仍需真实 device 上的守恒与 split-run 资格验证。重力、非 Cartesian 几何、生成网络与 device 稀疏求解仍不可用；两个后端都尚未实现自重力与 Jeans 指标。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
-- 单位元数据和完整 checkpoint 来源信息仍位于 HDF5 外部；Release flags 也无法保证跨机器逐位复现。
+- 单位元数据以及完整的构建/运行来源（参数文件、编译器、求解器设置、边界与 commit）仍位于 HDF5 外部。版本 3 已内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 仍无法保证跨机器逐位复现。
 - 算例构建假设 `simulation/<Case>/` 布局；plot 写入失败会报告但不会终止模拟。
 - 历史 AMR 图像库只提供定性结果，输入/renderer 的核素命名不匹配要等重新生成 archive 时处理。
 - Sedov 在单元中心沉积归一化的连续有限半径 profile，因此离散注入能量随分辨率变化。
