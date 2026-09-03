@@ -6,6 +6,7 @@
 #pragma once
 
 #include "amr/ConservativeRestriction.h"
+#include "amr/LimitedLinearProlongation.h"
 #include "cuda/common/DeviceStateFields.cuh"
 #include "cuda/runtime/CudaBackendExchange.h"
 
@@ -15,6 +16,71 @@
 #include <limits>
 
 namespace arch::cuda {
+
+__device__ inline double prolong_device_field(
+    const double* values, const DeviceCoarseFineTransfer& transfer)
+{
+    double lower[3]{};
+    double upper[3]{};
+    for (int axis = 0; axis < transfer.prolongation_dimension; ++axis) {
+        lower[axis] = values[transfer.slope_cells[2 * axis]];
+        upper[axis] = values[transfer.slope_cells[2 * axis + 1]];
+    }
+    return amr::prolongation_math::limited_linear_value(
+        values[transfer.source_cells[0]], lower, upper,
+        transfer.fine_position, transfer.prolongation_dimension);
+}
+
+__device__ inline double prolong_device_species_density(
+    DeviceStateView source, const DeviceCoarseFineTransfer& transfer,
+    int species)
+{
+    const double* fractions = device_state_field(source, 6 + species);
+    double lower[3]{};
+    double upper[3]{};
+    for (int axis = 0; axis < transfer.prolongation_dimension; ++axis) {
+        const int lower_cell = transfer.slope_cells[2 * axis];
+        const int upper_cell = transfer.slope_cells[2 * axis + 1];
+        lower[axis] = source.rho[lower_cell] * fractions[lower_cell];
+        upper[axis] = source.rho[upper_cell] * fractions[upper_cell];
+    }
+    const int center = transfer.source_cells[0];
+    return amr::prolongation_math::limited_linear_value(
+        source.rho[center] * fractions[center], lower, upper,
+        transfer.fine_position, transfer.prolongation_dimension);
+}
+
+__device__ inline bool prolong_device_composition_is_admissible(
+    DeviceStateView source, const DeviceCoarseFineTransfer& transfer,
+    int species_count)
+{
+    const int sibling_count = 1 << transfer.prolongation_dimension;
+    DeviceCoarseFineTransfer sibling_transfer = transfer;
+    for (int sibling = 0; sibling < sibling_count; ++sibling) {
+        for (int axis = 0; axis < transfer.prolongation_dimension; ++axis)
+            sibling_transfer.fine_position[axis] =
+                (sibling & (1 << axis)) != 0 ? 0.25 : -0.25;
+        const double density = prolong_device_field(
+            source.rho, sibling_transfer);
+        bool admissible = amr::prolongation_math::finite_number(density)
+            && density > 0.0;
+        double partial = 0.0;
+        for (int species = 0; species + 1 < species_count && admissible;
+             ++species) {
+            const double candidate = prolong_device_species_density(
+                source, sibling_transfer, species);
+            admissible = amr::prolongation_math::finite_number(candidate)
+                && candidate >= 0.0;
+            partial += candidate;
+        }
+        const double closure = density - partial;
+        if (!admissible
+            || !amr::prolongation_math::finite_number(closure)
+            || closure < 0.0)
+            return false;
+    }
+    return true;
+}
 
 __global__ void gather_coarse_fine_exchange_kernel(
     const DeviceExchangeBlock* blocks,
@@ -28,6 +94,34 @@ __global__ void gather_coarse_fine_exchange_kernel(
     const int field = static_cast<int>(linear % field_count);
     const DeviceCoarseFineTransfer& transfer = transfers[transfer_index];
     const DeviceStateView source = blocks[transfer.source_block].state;
+    if (transfer.prolongation_dimension != 0) {
+        if (field < 6) {
+            scratch[linear] = prolong_device_field(
+                device_state_field(source, field), transfer);
+            return;
+        }
+        const double density = prolong_device_field(source.rho, transfer);
+        const int species_count = field_count - 6;
+        const int species = field - 6;
+        const bool admissible =
+            prolong_device_composition_is_admissible(
+                source, transfer, species_count);
+        double species_density = 0.0;
+        if (species + 1 < species_count) {
+            species_density = prolong_device_species_density(
+                source, transfer, species);
+        } else {
+            species_density = density;
+            for (int component = 0; component + 1 < species_count;
+                 ++component)
+                species_density -= prolong_device_species_density(
+                    source, transfer, component);
+        }
+        scratch[linear] = admissible
+            ? species_density / density
+            : device_state_field(source, field)[transfer.source_cells[0]];
+        return;
+    }
     if (transfer.source_count == 1) {
         scratch[linear] =
             device_state_field(source, field)[transfer.source_cells[0]];

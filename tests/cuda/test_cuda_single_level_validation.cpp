@@ -7,11 +7,13 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
 #include <limits>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <vector>
 
@@ -414,10 +416,15 @@ void validate_burn_rkl_trace(const std::filesystem::path& trace_path,
 
 void compare_real_checkpoints(const std::filesystem::path& reference_path,
                               const std::filesystem::path& candidate_path,
-                              double rtol, double atol)
+                              double rtol, double atol,
+                              double enuc_scale_rtol,
+                              double dt_burn_rtol)
 {
     require(std::isfinite(rtol) && rtol >= 0.0
-                && std::isfinite(atol) && atol >= 0.0,
+                && std::isfinite(atol) && atol >= 0.0
+                && std::isfinite(enuc_scale_rtol)
+                && enuc_scale_rtol >= 0.0
+                && std::isfinite(dt_burn_rtol) && dt_burn_rtol >= 0.0,
             "checkpoint comparison tolerance is invalid");
     const io::CheckpointData reference =
         io::read_hdf5_chk_impl(reference_path.string());
@@ -428,10 +435,32 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
     require(within_checkpoint_time_budget(
                 reference.time, candidate.time, reference.step_count),
             "checkpoint physical-time mismatch");
+    const double dt_burn_scale = std::max(
+        std::abs(reference.dt_burn), std::abs(candidate.dt_burn));
+    const double dt_burn_absolute = std::abs(
+        reference.dt_burn - candidate.dt_burn);
+    const double dt_burn_relative = dt_burn_scale == 0.0
+        ? 0.0 : dt_burn_absolute / dt_burn_scale;
+    require(reference.has_timestep_state && candidate.has_timestep_state
+                && within_checkpoint_time_budget(
+                    reference.dt_old, candidate.dt_old,
+                    reference.step_count)
+                && (within_checkpoint_time_budget(
+                        reference.dt_burn, candidate.dt_burn,
+                        reference.step_count)
+                    || dt_burn_absolute
+                           <= atol + dt_burn_rtol * dt_burn_scale),
+            "checkpoint timestep-controller state mismatch");
+    require(reference.chk_file_index == candidate.chk_file_index
+                && reference.plt_file_index == candidate.plt_file_index
+                && reference.resume_after_regrid
+                    == candidate.resume_after_regrid,
+            "checkpoint output index or loop phase mismatch");
     require(reference.dim == candidate.dim
                 && reference.geometry == candidate.geometry
                 && reference.num_species == candidate.num_species
                 && reference.cells_per_block == candidate.cells_per_block
+                && !reference.levels.empty()
                 && reference.levels == candidate.levels
                 && reference.logical_x1 == candidate.logical_x1
                 && reference.logical_x2 == candidate.logical_x2
@@ -480,9 +509,20 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
         FieldView{"rhoX", &reference.rhoX, &candidate.rhoX}};
     double global_max_abs = 0.0;
     double global_max_rel = 0.0;
+    double global_max_field_normalized = 0.0;
+    double max_enuc_normalized = 0.0;
     for (const auto& field : fields) {
         require(field.reference->size() == field.candidate->size(),
                 "checkpoint field shape mismatch");
+        double field_scale = 0.0;
+        for (std::size_t index = 0; index < field.reference->size(); ++index) {
+            field_scale = std::max(
+                field_scale,
+                std::max(std::abs((*field.reference)[index]),
+                         std::abs((*field.candidate)[index])));
+        }
+        const bool enuc_diagnostic =
+            std::string_view(field.name) == "enuc_rate";
         for (std::size_t index = 0; index < field.reference->size(); ++index) {
             const double left = (*field.reference)[index];
             const double right = (*field.candidate)[index];
@@ -493,20 +533,130 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
             const double relative = scale == 0.0 ? 0.0 : absolute / scale;
             global_max_abs = std::max(global_max_abs, absolute);
             global_max_rel = std::max(global_max_rel, relative);
-            if (absolute > atol + rtol * std::abs(left)) {
+            const double normalized = field_scale == 0.0
+                ? (absolute == 0.0 ? 0.0
+                                   : std::numeric_limits<double>::infinity())
+                : absolute / field_scale;
+            global_max_field_normalized = std::max(
+                global_max_field_normalized, normalized);
+            if (enuc_diagnostic)
+                max_enuc_normalized = std::max(
+                    max_enuc_normalized, normalized);
+            // Pointwise relative error is ill-conditioned where a signed
+            // field crosses zero (notably symmetric momentum).  Normalize
+            // each field to its checkpoint-wide peak while retaining the
+            // dedicated, looser ENUC differencing budget.
+            const double budget = enuc_diagnostic
+                ? atol + enuc_scale_rtol * field_scale
+                : atol + rtol * field_scale;
+            if (absolute > budget) {
                 std::ostringstream message;
                 message << "checkpoint first mismatch field=" << field.name
                         << " index=" << index << " reference=" << left
                         << " candidate=" << right << " abs=" << absolute
-                        << " rel=" << relative;
+                        << " rel=" << relative
+                        << " normalized_to_field_peak=" << normalized;
                 throw std::runtime_error(message.str());
             }
         }
     }
     std::cout << "{\"status\":\"pass\",\"step\":"
               << reference.step_count << ",\"time\":" << reference.time
+              << ",\"dimension\":" << reference.dim
+              << ",\"blocks\":" << reference.levels.size()
+              << ",\"min_level\":"
+              << *std::min_element(reference.levels.begin(),
+                                   reference.levels.end())
+              << ",\"max_level\":"
+              << *std::max_element(reference.levels.begin(),
+                                   reference.levels.end())
+              << ",\"dt_old\":" << reference.dt_old
+              << ",\"dt_burn\":" << reference.dt_burn
+              << ",\"candidate_dt_burn\":" << candidate.dt_burn
+              << ",\"dt_burn_relative\":" << dt_burn_relative
+              << ",\"chk_file_index\":" << reference.chk_file_index
+              << ",\"plt_file_index\":" << reference.plt_file_index
+              << ",\"resume_after_regrid\":"
+              << (reference.resume_after_regrid ? "true" : "false")
+              << ",\"topology\":[";
+    for (std::size_t block = 0; block < reference.levels.size(); ++block) {
+        if (block != 0) std::cout << ',';
+        std::cout << '[' << reference.levels[block]
+                  << ',' << reference.logical_x1[block]
+                  << ',' << reference.logical_x2[block]
+                  << ',' << reference.logical_x3[block] << ']';
+    }
+    std::cout << ']'
               << ",\"max_abs\":" << global_max_abs
-              << ",\"max_rel\":" << global_max_rel << "}\n";
+              << ",\"max_rel\":" << global_max_rel
+              << ",\"max_field_normalized\":"
+              << global_max_field_normalized
+              << ",\"max_enuc_normalized\":"
+              << max_enuc_normalized << "}\n";
+}
+
+void print_conservation_metrics(const std::filesystem::path& checkpoint_path)
+{
+    const io::CheckpointData checkpoint =
+        io::read_hdf5_chk_impl(checkpoint_path.string());
+    require(checkpoint.geometry == "cartesian"
+                && checkpoint.dim >= 1 && checkpoint.dim <= 3
+                && !checkpoint.levels.empty(),
+            "conservation metrics require a Cartesian AMR checkpoint");
+    const std::size_t blocks = checkpoint.levels.size();
+    const std::size_t cells = blocks * checkpoint.cells_per_block;
+    require(checkpoint.rho.size() == cells
+                && checkpoint.mom_u.size() == cells
+                && checkpoint.mom_v.size() == cells
+                && checkpoint.mom_w.size() == cells
+                && checkpoint.eng.size() == cells
+                && checkpoint.rhoX.size()
+                    == static_cast<std::size_t>(checkpoint.num_species)
+                        * cells,
+            "conservation checkpoint field shape drifted");
+
+    long double mass = 0.0L;
+    long double mom_u = 0.0L;
+    long double mom_v = 0.0L;
+    long double mom_w = 0.0L;
+    long double energy = 0.0L;
+    std::vector<long double> species(
+        static_cast<std::size_t>(checkpoint.num_species), 0.0L);
+    for (std::size_t block = 0; block < blocks; ++block) {
+        const int exponent = -checkpoint.dim * checkpoint.levels[block];
+        const long double measure = std::ldexp(1.0L, exponent);
+        require(std::isfinite(measure) && measure > 0.0L,
+                "conservation checkpoint level is invalid");
+        for (std::size_t local = 0; local < checkpoint.cells_per_block;
+             ++local) {
+            const std::size_t index =
+                block * checkpoint.cells_per_block + local;
+            mass += measure * checkpoint.rho[index];
+            mom_u += measure * checkpoint.mom_u[index];
+            mom_v += measure * checkpoint.mom_v[index];
+            mom_w += measure * checkpoint.mom_w[index];
+            energy += measure * checkpoint.eng[index];
+            for (std::size_t component = 0; component < species.size();
+                 ++component)
+                species[component] += measure * checkpoint.rhoX[
+                    component * cells + index];
+        }
+    }
+    std::cout << std::setprecision(17)
+              << "{\"step\":" << checkpoint.step_count
+              << ",\"time\":" << checkpoint.time
+              << ",\"blocks\":" << blocks
+              << ",\"mass\":" << static_cast<double>(mass)
+              << ",\"mom_u\":" << static_cast<double>(mom_u)
+              << ",\"mom_v\":" << static_cast<double>(mom_v)
+              << ",\"mom_w\":" << static_cast<double>(mom_w)
+              << ",\"energy\":" << static_cast<double>(energy)
+              << ",\"rhoX\":[";
+    for (std::size_t component = 0; component < species.size(); ++component) {
+        if (component != 0) std::cout << ',';
+        std::cout << static_cast<double>(species[component]);
+    }
+    std::cout << "]}\n";
 }
 
 struct SodPrimitive {
@@ -964,10 +1114,22 @@ int main(int argc, char** argv)
                                     arch::cuda::CudaBackend>);
     static_assert(!std::is_copy_constructible_v<arch::cuda::CudaBackend>);
     static_assert(!std::is_move_constructible_v<arch::cuda::CudaBackend>);
-    if (argc == 1) return 0;
-    if (argc == 6 && std::string(argv[1]) == "--compare") {
+    if (argc == 1) {
+        std::cerr
+            << "arch_cuda_single_level_validation requires an explicit "
+               "trace or checkpoint operation\n";
+        return 2;
+    }
+    if ((argc >= 6 && argc <= 8)
+        && std::string(argv[1]) == "--compare") {
         compare_real_checkpoints(
-            argv[2], argv[3], std::stod(argv[4]), std::stod(argv[5]));
+            argv[2], argv[3], std::stod(argv[4]), std::stod(argv[5]),
+            argc >= 7 ? std::stod(argv[6]) : std::stod(argv[4]),
+            argc == 8 ? std::stod(argv[7]) : std::stod(argv[4]));
+        return 0;
+    }
+    if (argc == 3 && std::string(argv[1]) == "--metrics") {
+        print_conservation_metrics(argv[2]);
         return 0;
     }
     if (argc == 4 && std::string(argv[1]) == "--qualify") {
@@ -986,7 +1148,9 @@ int main(int argc, char** argv)
     throw std::invalid_argument(
         "usage: arch_cuda_single_level_validation --compare "
         "CPU_CHECKPOINT CUDA_CHECKPOINT "
-        "RTOL ATOL | --qualify CHECKPOINT {smooth|diffusion|burn} | "
+        "RTOL ATOL [ENUC_PEAK_RTOL [DT_BURN_RTOL]] | "
+        "--qualify CHECKPOINT {smooth|diffusion|burn} | "
+        "--metrics CHECKPOINT | "
         "TRACE STEPS | "
         "TRACE PLAN {rkl1|rkl2} STEPS");
 }

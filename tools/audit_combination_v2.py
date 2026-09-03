@@ -32,8 +32,14 @@ _CUDA_DEVICE_OBJECT_SOURCES = {
         "src/cuda/runtime/cudabackendburntabular4daprox21.cu",
     "arch_cuda_backend_burn_tabular4d_iso7":
         "src/cuda/runtime/cudabackendburntabular4diso7.cu",
-    "arch_cuda_backend_hydro":
-        "src/cuda/runtime/cudabackendhydro.cu",
+    "arch_cuda_backend_hydro_ideal":
+        "src/cuda/runtime/cudabackendhydroideal.cu",
+    "arch_cuda_backend_hydro_helm":
+        "src/cuda/runtime/cudabackendhydrohelm.cu",
+    "arch_cuda_backend_hydro_tabular3":
+        "src/cuda/runtime/cudabackendhydrotabular3.cu",
+    "arch_cuda_backend_hydro_tabular4":
+        "src/cuda/runtime/cudabackendhydrotabular4.cu",
     "arch_cuda_backend_diffusion":
         "src/cuda/runtime/cudabackenddiffusion.cu",
     "arch_cuda_backend_exchange":

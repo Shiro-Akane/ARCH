@@ -1,6 +1,17 @@
+/**
+ * @file CudaBackendHydroInstantiation.cuh
+ * @brief Shared CUDA Hydro implementation instantiated by one EOS owner TU.
+ */
+
+#pragma once
+
 #include "CudaBackendHydro.h"
 
 #include "cuda/hydro/HydroIntegratorPolicies.cuh"
+
+#ifndef ARCH_CUDA_HYDRO_EOS_TYPE
+#error "a CUDA Hydro EOS owner must define ARCH_CUDA_HYDRO_EOS_TYPE"
+#endif
 
 namespace arch::cuda {
 namespace {
@@ -67,11 +78,10 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
             amr_routes, descriptor, dt, stream); \
     }
 
-ARCH_DEFINE_BACKEND_HYDRO(IdealGasView)
-ARCH_DEFINE_BACKEND_HYDRO(HelmEosView)
-ARCH_DEFINE_BACKEND_HYDRO(Tabular3DEOSView)
-ARCH_DEFINE_BACKEND_HYDRO(Tabular4DEOSView)
+ARCH_DEFINE_BACKEND_HYDRO(ARCH_CUDA_HYDRO_EOS_TYPE)
 
 #undef ARCH_DEFINE_BACKEND_HYDRO
 
 } // namespace arch::cuda
+
+#undef ARCH_CUDA_HYDRO_EOS_TYPE

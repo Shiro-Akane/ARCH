@@ -87,9 +87,15 @@ struct SimulationController
                t_max - t_current <= target_tolerance;
     }
 
+    bool reached_step_limit() const
+    {
+        return config.io.max_steps > 0
+            && step_count >= config.io.max_steps;
+    }
+
     bool is_finished() const
     {
-        if (config.io.max_steps > 0 && step_count >= config.io.max_steps)
+        if (reached_step_limit())
         {
             std::cout << "[Terminate] Max simulation steps reached." << std::endl;
             return true;

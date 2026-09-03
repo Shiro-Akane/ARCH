@@ -30,6 +30,8 @@ struct CoarseFineCellTransfer {
     AmrEndpoint destination{};
     LogicalAmrCell destination_cell{};
     std::array<LogicalAmrCell, 8> source_cells{};
+    std::array<LogicalAmrCell, 6> slope_cells{};
+    std::array<double, 3> fine_position{};
     std::uint8_t source_count = 0;
     RefinementRule rule = RefinementRule::CoarseGhostInjection;
 };
@@ -52,6 +54,15 @@ inline std::int32_t checked_coordinate(
         throw std::overflow_error("coarse-fine cell coordinate overflow");
     const std::int64_t value = static_cast<std::int64_t>(first)
         + static_cast<std::int64_t>(offset);
+    if (value < std::numeric_limits<std::int32_t>::min()
+        || value > std::numeric_limits<std::int32_t>::max())
+        throw std::overflow_error("coarse-fine cell coordinate overflow");
+    return static_cast<std::int32_t>(value);
+}
+
+inline std::int32_t checked_shift(std::int32_t coordinate, int delta)
+{
+    const std::int64_t value = static_cast<std::int64_t>(coordinate) + delta;
     if (value < std::numeric_limits<std::int32_t>::min()
         || value > std::numeric_limits<std::int32_t>::max())
         throw std::overflow_error("coarse-fine cell coordinate overflow");
@@ -147,6 +158,19 @@ inline void append_injection_transfers(
                     - operation.destination_box.first[axis]);
             transfer.source_cells[0][axis] = checked_coordinate(
                 operation.source_box.first[axis], destination_offset / 2);
+            transfer.fine_position[axis] = axis < compiled.dimension
+                ? ((destination_offset & 1U) == 0U ? -0.25 : 0.25)
+                : 0.0;
+        }
+        for (int axis = 0; axis < 3; ++axis) {
+            transfer.slope_cells[2 * axis] = transfer.source_cells[0];
+            transfer.slope_cells[2 * axis + 1] = transfer.source_cells[0];
+            if (axis < compiled.dimension) {
+                transfer.slope_cells[2 * axis][axis] =
+                    checked_shift(transfer.source_cells[0][axis], -1);
+                transfer.slope_cells[2 * axis + 1][axis] =
+                    checked_coordinate(transfer.source_cells[0][axis], 1);
+            }
         }
         if (!contains(operation.source_box, transfer.source_cells[0])
             || !destinations.emplace(
@@ -220,10 +244,11 @@ inline void append_average_transfers(
 /**
  * @brief Validate and lower a logical coarse/fine plan to cell operations.
  *
- * Coordinates are relative to each block's active-cell origin.  Injection
- * records contain one source cell; fine averages contain 2^dimension source
- * cells.  Destination cells are required to be unique so the backend scatter
- * phase is race-free.
+ * Coordinates are relative to each block's active-cell origin.  Prolongation
+ * records contain one center source plus the axis-neighbor stencil used by
+ * shared limited-linear reconstruction; fine averages contain 2^dimension
+ * source cells.  Destination cells are required to be unique so the backend
+ * scatter phase is race-free.
  */
 inline CoarseFineCellPlan compile_coarse_fine_cell_plan(
     const CoarseFineTransferPlan& plan, int species_count)

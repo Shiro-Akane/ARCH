@@ -1,0 +1,112 @@
+{
+  "schema": 1,
+  "description": "Real-device Cartesian CPU/CUDA AMR parity matrix",
+  "cases": [
+    {
+      "id": "hydro_amr_euler_1d",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {"time_integrator": "Euler", "lrefinemax": "1", "regrid_interval": "1"},
+      "accepted_steps": [1, 2, 5],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 5e-9, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "hydro_amr_rk2_1d",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {"time_integrator": "RK2", "lrefinemax": "1", "regrid_interval": "1"},
+      "accepted_steps": [1, 2, 5],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 5e-9, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "hydro_amr_rk3_1d",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {"time_integrator": "RK3", "lrefinemax": "1", "regrid_interval": "1"},
+      "accepted_steps": [1, 2, 5],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 5e-9, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "hydro_amr_regrid_cycle_1d",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {"time_integrator": "RK3", "lrefinemax": "1", "regrid_interval": "1", "derefine_threshold": "0.03"},
+      "accepted_steps": [1, 5, 10, 20],
+      "topology_policy": {"require_refined": true, "require_mixed": true, "require_count_change": true, "require_refine_transition": true, "require_derefine_transition": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 5e-9, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "diffusion_amr_rkl1_5stage",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "overrides": {"diff_integrator": "RKL1", "diff_max_stages": "5", "lrefinemax": "1"},
+      "rkl_policy": {"order": 1, "stages": 4, "lanes_per_step": 2},
+      "accepted_steps": [1, 2, 5],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 1e-8, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "diffusion_amr_rkl2_2stage",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "overrides": {"diff_integrator": "RKL2", "diff_max_stages": "2", "lrefinemax": "1"},
+      "rkl_policy": {"order": 2, "stages": 2, "lanes_per_step": 2},
+      "accepted_steps": [1, 2],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 1e-8, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "diffusion_amr_rkl2_3stage",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "overrides": {"diff_integrator": "RKL2", "diff_max_stages": "3", "lrefinemax": "1"},
+      "rkl_policy": {"order": 2, "stages": 3, "lanes_per_step": 2},
+      "accepted_steps": [1, 2],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 1e-8, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "diffusion_amr_rkl2_5stage",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "overrides": {"diff_integrator": "RKL2", "diff_max_stages": "5", "lrefinemax": "1"},
+      "rkl_policy": {"order": 2, "stages": 5, "lanes_per_step": 2},
+      "accepted_steps": [1, 2, 5],
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-11, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 1e-8, "atol": 5e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "hydro_amr_rk3_2d",
+      "problem": "Sedov",
+      "input": "validation/amr/inputs/sedov_amr_species.par",
+      "overrides": {"lrefinemax": "1", "regrid_interval": "1"},
+      "accepted_steps": [1, 2],
+      "timeout_seconds": 1200,
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 2e-10, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 1e-8, "atol": 1e-11, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    },
+    {
+      "id": "hydro_amr_rk3_3d",
+      "problem": "Sedov",
+      "input": "validation/amr/inputs/sedov_amr_3d.par",
+      "overrides": {"lrefinemax": "1", "regrid_interval": "1"},
+      "accepted_steps": [1, 2],
+      "timeout_seconds": 1800,
+      "topology_policy": {"require_refined": true, "require_mixed": true},
+      "conservation_policy": {"rtol": 2e-12, "atol": 1e-9, "fields": ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"]},
+      "reduction_policy": {"rtol": 2e-8, "atol": 2e-11, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]}
+    }
+  ]
+}

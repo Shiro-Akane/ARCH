@@ -50,6 +50,7 @@ struct OdeProbeNet
 {
     static constexpr int NUM_SPECIES = 2;
     static constexpr int ODE_NEQ = 3;
+    static constexpr bool SUPPORTS_NSE = false;
     static constexpr double ENERGY_CONVERSION = 1.0;
 
     ARCH_INLINE static constexpr double aion(int) { return 1.0; }
@@ -176,7 +177,7 @@ ARCH_INLINE double policy_witness(
             : (std::is_same_v<Binding, CudaRk2Binding> ? 0.5 : 0.25);
         TimeIntegration::update_stage_cell(
             old_state, current, delta, nullptr, nullptr, nullptr, 0, 1,
-            old_weight, flux_weight, 1e-12, 1e21, result, nullptr);
+            old_weight, flux_weight, 1e-12, 1e-10, 1e21, result, nullptr);
         return result.rho + 0.1 * result.eng;
     } else if constexpr (std::is_same_v<Binding, CudaIdealBinding>) {
         return eos.get_pressure_from_rho_e(1.7, 2.3, nullptr);
@@ -230,7 +231,7 @@ ARCH_INLINE double policy_witness(
             + 0.0001 * cell.ode.attempted_substeps
             + 0.00001 * cell.ode.rejected_substeps;
     } else if constexpr (std::is_same_v<Binding, CudaDenseLuBinding>) {
-        DenseMatrixData matrix{};
+        DenseMatrixData<2> matrix{};
         matrix.set(1, 1, 3.0); matrix.set(1, 2, 1.0);
         matrix.set(2, 1, 1.0); matrix.set(2, 2, 2.0);
         double rhs[BurnLimits::MAX_ODE_NEQ]{};

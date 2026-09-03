@@ -2,9 +2,9 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-> CPU 状态：基本 prolongation/restriction、动态 regrid/reflux 守恒、核素输运及二维对称性通过；局部细化保持仍是已知限制。CUDA 的动态 topology、设备 coarse/fine exchange、紧凑通量登记和 reflux 已实现并通过源码/编译资格检查；真实设备验证待完成。
+> 当前状态（2026-09-03）：守恒 limited-linear prolongation、体积加权 restriction、动态 regrid/reflux 与 restart 互操作均已实现。16 GiB、零 swap 的 clean Debug CUDA 构建和 H100 生产级 CPU/CUDA AMR 矩阵均已通过。证据见 [SM90 验收目录](results/h100-sm90-20260903/README.md)。
 
-本记录将守恒与细化效率分开验收。当前 AMR 路径能把所测积分量保持在舍入误差范围内，但粗到细 ghost 的分片常数填充会在 block 界面制造细化指标，并使一个光滑周期算例最终扩展为全域细化。后一个现象作为限制如实记录，不以放宽阈值掩盖。
+本记录将守恒与细化效率分开验收。下方历史 CPU 数据建立了原始基线；当前 AMR 路径已用一套共享、守恒的 limited-linear 重构替换旧有 coarse-to-fine 分片常数填充，并保留了能够暴露旧版伪细化信号的聚焦回归测试。
 
 ## 固定算例
 
@@ -17,7 +17,7 @@
 
 所有算例均使用 Cartesian 几何、理想气体 EOS、HLLC 和 RK3。光滑算例使用 MUSCL-MC，每两步 regrid；Sedov 使用 PPM，并覆盖多维 regrid、reflux 和核素通量。
 
-## 审计环境
+## 历史 CPU 审计环境
 
 被审计工作树以 `affde827fcbf317382ed45372912b562652a71c5` 为基线，并包含本页
 记录的改动；测试使用 GCC 13.3.0、CPU backend、Release flags
@@ -49,25 +49,13 @@ Sedov 拓扑在整个运行中保持 12 个 0 级和 16 个 1 级叶 block。注
 
 同一 probe 还包含一个独立分量 limiter 会产生 `-0.605` 内能密度的对抗 Euler 状态。共同凸限制器把所有细单元保持在 `min_eint = 1e-10` 以上，最小比内能为 `1.000036e-10`；五个守恒量的物理体积平均在 Cartesian 下变化为零，在非均匀体积 cylindrical 检查中为 `4.44e-16`。
 
-## 细化限制
+## 细化问题修复状态
 
-光滑输入特意设置 `refine_threshold = 0.035`，拓扑演化为：
+旧审计发现，piecewise-constant coarse-to-fine ghost fill 会把界面 Lohner 指标从 `0.00775/0.00954` 抬高到 `0.06727/0.04230`。该实现现已替换为共享的 limited-linear 守恒变量重构：先重构 `rho X` 再恢复组分，使用统一凸物理状态 limiter，并对 fine-to-coarse restriction 采用体积权重。
 
-| 时间 | 0 级叶 block | 1 级叶 block |
-| ---: | ---: | ---: |
-| `0` | 4 | 2 |
-| `0.00161450` | 3 | 4 |
-| `0.00484349` | 2 | 6 |
-| `0.00645799` | 1 | 8 |
-| `0.00807248` | 0 | 10 |
+保留的 transfer 与 AMR exchange 测试现覆盖 Cartesian 1D/2D/3D、Host 曲线坐标体积加权、X/Y/Z 面、粗细界面两侧及 `Current`/`Next`/`Scratch`。CUDA 只消费 Host-lowered plan 和相同标量插值数学，不维护第二套公式。
 
-最初未细化 block 中的解析 Lohner 指标只有约 `0.010--0.028`，低于阈值；而阈值 `0.05` 因解析最大值约为 `0.037`，完全不会触发初始细化。`GhostExchange::InterpolateFaceFromCoarse` 当前把一个粗网格值复制到两个细 ghost 单元。聚焦检查测得 fine ghost 误差为 `3.44e-3`，界面指标由 `0.00775/0.00954` 升至 `0.06727/0.04230`，从而解释了逐步扩展为全域细化的行为；该算例目前不存在可靠的阈值窗口。
-
-`AverageFaceFromFine` 还在算术平均质量分数，而非体积加权 `rho X`；曲线坐标的 face exchange 也尚未使用物理体积权重。这些路径没有破坏上述积分测试，但局部细化保持和曲线坐标 ghost transfer 不能据此标为通过。
-
-`ENUC` 是燃烧过程中生成的瞬态诊断，checkpoint v3 已持久化该字段，已实现的 Host 与 CUDA AMR 路径也会对它执行 transfer/exchange。因此，新 v3 checkpoint 不再存在此前的缺失字段限制。`refine_var = ENUC` 的精确动态 split-run 等价性仍需 CPU 端到端与 CUDA 真实设备验证；旧 v1/v2 checkpoint 会把 ENUC 初始化为零，不能建立这种等价性。
-
-后续实现应对粗到细 ghost 使用受限线性的守恒变量重构，先插值 `rho X` 再恢复 `X`，并对细到粗的流体与核素状态使用体积权重。届时的验收条件是光滑算例在 `t = 0.01` 仍至少保留一个 0 级叶 block。
+Checkpoint v3 持久化 ENUC，两个后端均在 regrid 中迁移它。真实设备上的 `refine_var = ENUC` restart 矩阵已通过连续运行和四条 split-run backend route。旧 v1/v2 checkpoint 仍会将 ENUC 初始化为零，因此不能用于建立 ENUC split-run 等价性。
 
 ## 复现
 

@@ -3,17 +3,17 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-> CPU status: basic prolongation/restriction, dynamic regrid/reflux
-> conservation, species transport, and two-dimensional symmetry pass. Local
-> refinement retention is a known limitation. CUDA dynamic topology, device
-> coarse/fine exchange, compact flux registration, and reflux are implemented
-> and source/compile qualified; real-device validation is pending.
+> Current status (2026-09-03): conservative limited-linear prolongation,
+> volume-aware restriction, dynamic regrid/reflux, and restart interoperability
+> are implemented. A clean 16 GiB / zero-swap Debug CUDA build and the
+> production H100 CPU/CUDA AMR matrix pass. See the retained
+> [SM90 qualification evidence](results/h100-sm90-20260903/README.md).
 
-This record separates conservation from refinement efficiency. The current AMR
-path preserves the tested integral quantities to roundoff, but its
-piecewise-constant coarse-to-fine ghost fill can create a refinement indicator
-at block interfaces and eventually refine a smooth periodic problem globally.
-The latter behavior is recorded rather than hidden by a permissive threshold.
+This record separates conservation from refinement efficiency. The historic
+CPU measurements below established the original baseline. The current AMR path
+replaces the old piecewise-constant coarse-to-fine fill with one shared,
+conservative limited-linear reconstruction and retains the focused interface
+regression that exposed the old false-refinement signal.
 
 ## Fixed cases
 
@@ -29,7 +29,7 @@ All cases use Cartesian geometry, the ideal-gas EOS, HLLC, and RK3. The smooth
 case uses MUSCL-MC and regrids every two steps. The Sedov case uses PPM and
 exercises multidimensional regrid, reflux, and species fluxes.
 
-## Audit environment
+## Historic CPU audit environment
 
 The audited working tree was based on
 `affde827fcbf317382ed45372912b562652a71c5` plus the changes recorded here. It
@@ -80,45 +80,24 @@ energy of `1.000036e-10`, while the five conserved physical-volume averages
 changed by zero in Cartesian geometry and `4.44e-16` in a nonuniform-volume
 cylindrical check.
 
-## Refinement limitation
+## Refinement follow-up status
 
-The smooth input deliberately uses `refine_threshold = 0.035`. Its topology
-changes as follows:
+The earlier audit found that piecewise-constant coarse-to-fine ghost filling
+could raise an interface Lohner indicator from `0.00775/0.00954` to
+`0.06727/0.04230`. That implementation has been replaced by shared
+limited-linear conservative-variable reconstruction. It reconstructs `rho X`
+before recovering composition, applies one convex physical-state limiter, and
+uses volume-aware fine-to-coarse restriction.
 
-| time | level-0 leaves | level-1 leaves |
-| ---: | ---: | ---: |
-| `0` | 4 | 2 |
-| `0.00161450` | 3 | 4 |
-| `0.00484349` | 2 | 6 |
-| `0.00645799` | 1 | 8 |
-| `0.00807248` | 0 | 10 |
+The retained transfer and AMR exchange tests now cover Cartesian 1D/2D/3D,
+curvilinear Host volume weighting, X/Y/Z faces, both interface orientations,
+and `Current`/`Next`/`Scratch`. CUDA consumes the Host-lowered plan and the same
+scalar interpolation mathematics; it does not keep a second formula.
 
-The analytic Lohner indicator in the initially unrefined blocks is only about
-`0.010--0.028`, below the threshold. A threshold of `0.05` produces no initial
-refinement because the analytic maximum is about `0.037`. The current
-coarse-to-fine face path in `GhostExchange::InterpolateFaceFromCoarse` copies a
-coarse value into both fine ghost cells. A focused audit measured a fine-ghost
-error of `3.44e-3` and interface indicators rising from
-`0.00775/0.00954` to `0.06727/0.04230`. This explains the progressive global
-refinement; there is no reliable threshold window for this case.
-
-`AverageFaceFromFine` also averages mass fractions arithmetically instead of
-volume-weighting `rho X`, and curved-coordinate face exchange does not yet use
-physical-volume weights. These paths did not break the integral tests above,
-but they prevent accepting local-refinement retention or curvilinear ghost
-transfer as verified.
-
-`ENUC` is persisted by checkpoint format v3 and participates in the implemented
-Host and CUDA AMR transfer/exchange paths. The former missing-field limitation
-therefore does not apply to new v3 checkpoints. Exact dynamic split-run
-equivalence for `refine_var = ENUC` still needs CPU end-to-end and real-device
-CUDA validation; legacy v1/v2 checkpoints initialize ENUC to zero and cannot
-establish that equivalence.
-
-The follow-up implementation should use limited-linear conservative-variable
-reconstruction for coarse-to-fine ghosts, interpolate `rho X` before recovering
-`X`, and volume-weight fine-to-coarse fluid and species states. Acceptance then
-requires the smooth case to retain at least one level-0 leaf at `t = 0.01`.
+Checkpoint v3 persists ENUC and both backends transfer it through regrid. The
+real-device restart matrix for `refine_var = ENUC` passes uninterrupted and all
+four split-run backend routes. Legacy v1/v2 checkpoints still initialize ENUC
+to zero and therefore cannot establish ENUC split-run equivalence.
 
 ## Reproduce
 

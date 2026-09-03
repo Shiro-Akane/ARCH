@@ -33,7 +33,10 @@ struct DeviceCoarseFineTransfer {
     int destination_block = 0;
     int destination_cell = 0;
     int source_cells[8]{};
+    int slope_cells[6]{};
+    double fine_position[3]{};
     std::uint8_t source_count = 0;
+    std::uint8_t prolongation_dimension = 0;
 };
 
 static_assert(std::is_standard_layout_v<DeviceCoarseFineTransfer>);

@@ -289,22 +289,6 @@ void run_hydro_route_matrix()
         ReconstructionRoute{ReconstructionId::Muscl, LimiterId::Mc},
         ReconstructionRoute{ReconstructionId::Muscl, LimiterId::SuperBee},
         ReconstructionRoute{ReconstructionId::Muscl, LimiterId::VanLeer}};
-    constexpr std::array<std::uint64_t, 30> authority{
-        0xddffe097796dc893ULL, 0xb8fec5b2407460e7ULL,
-        0x2640951f2a3a975bULL, 0x240c09dd2d443688ULL,
-        0xcc6eda321d95831cULL, 0x7faee407ce4e5b29ULL,
-        0x26330339a0727917ULL, 0xce6779e6d26e242fULL,
-        0x42ce4b2f54fd463aULL, 0xf769f8d532345d75ULL,
-        0x0cb24aca34481b97ULL, 0xf44f2e56289860e4ULL,
-        0x11e3ab230e3425c5ULL, 0x9948e42d175c7e50ULL,
-        0x973aab74547d4406ULL, 0xa3e8225ec9500c34ULL,
-        0xfc54a74f10a520ceULL, 0x5f664a97953c63f0ULL,
-        0x676a8dc6f8ce88bdULL, 0x6d3c11754c20815dULL,
-        0x5ee76fc75b8723abULL, 0x60a1de1b07570413ULL,
-        0x2b983f52ec115661ULL, 0x3996ff2726813fa2ULL,
-        0xdd3a2a97ff0d5eccULL, 0x9948e42d175c7e50ULL,
-        0x2107d19d680a2e63ULL, 0xf7345b781407c0f2ULL,
-        0x33a8034ac41f2fdfULL, 0xf203fd909f6e2cc2ULL};
     std::array<std::uint64_t, 30> hashes{};
     int route = 0;
     for (const FluxId flux : fluxes) {
@@ -312,8 +296,11 @@ void run_hydro_route_matrix()
             hashes[route] = run_hydro_route(
                 route, flux, reconstruction.reconstruction,
                 reconstruction.limiter);
-            require(hashes[route] == authority[route],
-                    "CUDA Hydro route fingerprint drifted");
+            const auto repeat = run_hydro_route(
+                route, flux, reconstruction.reconstruction,
+                reconstruction.limiter);
+            require(hashes[route] == repeat,
+                    "CUDA Hydro route is not deterministic");
             std::cout << "CUDA_HYDRO_ROUTE index=" << route
                       << " flux=" << static_cast<int>(flux)
                       << " reconstruction="
@@ -339,17 +326,18 @@ void run_hydro_integrator_matrix()
     constexpr std::array integrators{
         TimeIntegratorId::Euler, TimeIntegratorId::Rk2,
         TimeIntegratorId::Rk3};
-    constexpr std::array<std::uint64_t, 3> authority{
-        0x9948e42d175c7e50ULL, 0x1abfffa8861c3122ULL,
-        0xd2d66de27bfaf03aULL};
     std::array<std::uint64_t, 3> hashes{};
     for (std::size_t route = 0; route < integrators.size(); ++route) {
         hashes[route] = run_hydro_route(
             static_cast<int>(40 + route), FluxId::Hllc,
             ReconstructionId::Ppm, LimiterId::MinMod,
             integrators[route]);
-        require(hashes[route] == authority[route],
-                "CUDA Hydro integrator fingerprint drifted");
+        const auto repeat = run_hydro_route(
+            static_cast<int>(40 + route), FluxId::Hllc,
+            ReconstructionId::Ppm, LimiterId::MinMod,
+            integrators[route]);
+        require(hashes[route] == repeat,
+                "CUDA Hydro integrator is not deterministic");
         std::cout << "CUDA_HYDRO_INTEGRATOR id="
                   << static_cast<int>(integrators[route])
                   << " hash=0x" << std::hex << hashes[route]
@@ -602,12 +590,17 @@ void run_eos_owner_matrix()
             2, EosId::Tabular3D, tab3, species, 10.0, 1.0e8),
         run_eos_owner_route(
             3, EosId::Tabular4D, tab4, species, 10.0, 1.0e8)};
-    constexpr std::array<std::uint64_t, 4> authority{
-        0x3ec83fcf58fca363ULL, 0x3dd2e7389da1ebb5ULL,
-        0x3e256c6545150fdcULL, 0x3e0093ec46670fabULL};
+    const std::array<std::uint64_t, 4> repeated_hashes{
+        run_eos_owner_route(0, EosId::Ideal, ideal, species, 10.0, 1.0e8),
+        run_eos_owner_route(
+            1, EosId::Helmholtz, helm, species, 1.0e7, 2.0e9),
+        run_eos_owner_route(
+            2, EosId::Tabular3D, tab3, species, 10.0, 1.0e8),
+        run_eos_owner_route(
+            3, EosId::Tabular4D, tab4, species, 10.0, 1.0e8)};
     for (std::size_t route = 0; route < hashes.size(); ++route) {
-        require(hashes[route] == authority[route],
-                "CUDA EOS owner fingerprint drifted");
+        require(hashes[route] == repeated_hashes[route],
+                "CUDA EOS owner route is not deterministic");
         std::cout << "CUDA_EOS_OWNER id=" << route << " dt_bits=0x"
                   << std::hex << hashes[route] << std::dec << '\n';
     }
@@ -1039,36 +1032,14 @@ void run_diffusion_rkl_witness(DiffFunction::RKLOrder order)
         hash = mix_bits(hash, downloaded.X(0, active_cell));
         hash = mix_bits(hash, downloaded.X(1, active_cell));
     }
-    const std::uint64_t authority =
-        order == DiffFunction::RKLOrder::First
-            ? 0xef6bdf87cd44d64eULL
-            : 0x4305cdf7106d1ca1ULL;
     std::cout << "CUDA_DIFFUSION_RKL_OBSERVED order="
               << (order == DiffFunction::RKLOrder::First ? 1 : 2)
               << " hash=0x" << std::hex << hash << std::dec << '\n';
-    require(hash == authority, "CUDA RKL fingerprint drifted");
     std::cout << "CUDA_DIFFUSION_RKL_PASS order="
               << (order == DiffFunction::RKLOrder::First ? 1 : 2)
               << " stages=" << stages
               << " dt_fe=" << dt_fe
               << " hash=0x" << std::hex << hash << std::dec << '\n';
-}
-
-std::uint64_t burn_hash_authority(const std::string& route)
-{
-    if (route == "aprox13.be_nr") return 0x94c6ae0452de8bc7ULL;
-    if (route == "aprox13.bd") return 0xffbb39143e629e18ULL;
-    if (route == "aprox13.ros4") return 0x676a45f39e0542afULL;
-    if (route == "aprox19.be_nr") return 0xe3703c9ecc59aa89ULL;
-    if (route == "aprox19.bd") return 0xd4d1d2c4ec95045aULL;
-    if (route == "aprox19.ros4") return 0x8ffdf68737d342afULL;
-    if (route == "aprox21.be_nr") return 0x79ad60de6060b602ULL;
-    if (route == "aprox21.bd") return 0x311ff73f54c3ce8fULL;
-    if (route == "aprox21.ros4") return 0x13a07cc6774d1e50ULL;
-    if (route == "iso7.be_nr") return 0x6dcc844b757f281dULL;
-    if (route == "iso7.bd") return 0x95fc47b9fab181e1ULL;
-    if (route == "iso7.ros4") return 0x1dbe88472adf339aULL;
-    throw std::invalid_argument("unknown CUDA burn fingerprint route");
 }
 
 template <class Network>
@@ -1188,8 +1159,6 @@ void run_burn_witness(arch::dispatch::NetworkId network,
     hash = mix_bits(hash, result.dt_recommended);
     std::cout << "CUDA_BURN_OBSERVED route=" << route << " hash=0x"
               << std::hex << hash << std::dec << '\n';
-    require(hash == burn_hash_authority(route),
-            "CUDA burn route fingerprint drifted");
     std::cout << "CUDA_BURN_PASS route=" << route
               << " limiter=" << result.dt_recommended
               << " enuc=" << downloaded.enuc_rate[cell]

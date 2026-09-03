@@ -25,6 +25,17 @@
 
 #include "../species/Species.h"
 
+// Keep the two large interpolation routines as explicit device call
+// boundaries.  Force-inlining them into every reconstruction/flux query makes
+// NVCC materialize the same 4-D/free-energy expression graph many times in a
+// single Hydro kernel and can exceed a 16 GiB Debug-build worker.  The formula
+// remains shared by Host and CUDA; only the CUDA compilation boundary differs.
+#if defined(__CUDACC__)
+#define ARCH_TABULAR4_HEAVY_CALL ARCH_HOST_DEVICE __noinline__
+#else
+#define ARCH_TABULAR4_HEAVY_CALL inline
+#endif
+
 // One mathematical implementation parameterized by host or device species metadata.
 template <class SpeciesView>
 struct BasicTabular4DEOSView
@@ -82,7 +93,8 @@ struct BasicTabular4DEOSView
     }
 
     // Quadrilinear interpolation.
-    ARCH_INLINE double interpolate_4d(const double *table, double rho, double T, double A, double Z) const
+    ARCH_TABULAR4_HEAVY_CALL double interpolate_4d(
+        const double *table, double rho, double T, double A, double Z) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -151,7 +163,7 @@ struct BasicTabular4DEOSView
                static_cast<std::size_t>(iz);
     }
 
-    ARCH_INLINE tabular_eos::FreeEnergyState interpolate_free_energy(
+    ARCH_TABULAR4_HEAVY_CALL tabular_eos::FreeEnergyState interpolate_free_energy(
         double rho, double T, double A, double Z) const
     {
         const double log_rho = std::log10(rho);
@@ -213,7 +225,7 @@ struct BasicTabular4DEOSView
             interpolate_free_energy(rho, T, A, Z), rho, T);
     }
 
-    ARCH_INLINE tabular_eos::ThermodynamicState free_energy_state(
+    ARCH_TABULAR4_HEAVY_CALL tabular_eos::ThermodynamicState free_energy_state(
         double rho, double T, double A, double Z) const
     {
         const auto result = free_energy_result(rho, T, A, Z);
@@ -299,7 +311,8 @@ struct BasicTabular4DEOSView
                interpolate_4d(table_cv, rho, T_target, A, Z);
     }
 
-    ARCH_INLINE double get_temperature(double rho, double e, const double *Xi) const
+    ARCH_TABULAR4_HEAVY_CALL double get_temperature(
+        double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -325,7 +338,7 @@ struct BasicTabular4DEOSView
         // Newton-Raphson iteration
         double T_guess = 1e8; // reasonable astrophysics start
         const int max_iters = 20;
-        const double tol = 1e-6;
+        const double tol = 1e-14;
 
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
@@ -354,7 +367,7 @@ struct BasicTabular4DEOSView
 
             T_guess += dT;
 
-            if (std::abs(dT) / T_guess < tol) break;
+            if (std::abs(dT) <= tol * std::max(std::abs(T_guess), 1.0)) break;
         }
 
         return T_guess;
@@ -500,6 +513,8 @@ struct BasicTabular4DEOSView
     }
 
 };
+
+#undef ARCH_TABULAR4_HEAVY_CALL
 
 using Tabular4DEOSView = BasicTabular4DEOSView<SpeciesPODView>;
 

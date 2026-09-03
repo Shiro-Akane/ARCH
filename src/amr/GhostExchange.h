@@ -23,6 +23,7 @@
 #include "CoarseFineCellPlan.h"
 #include "ConservativeRestriction.h"
 #include "ExchangePlan.h"
+#include "LimitedLinearProlongation.h"
 
 #include "../data/GlobalDefs.h"
 
@@ -248,9 +249,12 @@ public:
             int destination_id = -1;
             int destination_cell = -1;
             std::array<int, 8> source_cells{};
+            std::array<int, 6> slope_cells{};
+            std::array<double, 3> fine_position{};
             std::array<double, 8> source_measures{};
             std::uint8_t source_count = 0;
             double source_measure_sum = 0.0;
+            RefinementRule rule = RefinementRule::CoarseGhostInjection;
         };
         std::map<LogicalBlockKey, std::size_t> active_index;
         int species_count = -1;
@@ -320,6 +324,8 @@ public:
             lowered.destination_cell = cell_index(
                 destination_block.grid, transfer.destination_cell);
             lowered.source_count = transfer.source_count;
+            lowered.fine_position = transfer.fine_position;
+            lowered.rule = transfer.rule;
             if (lowered.source_count == 0
                 || lowered.source_count > lowered.source_cells.size())
                 throw std::invalid_argument(
@@ -346,6 +352,12 @@ public:
                 lowered.source_measures[cell] = measure;
                 lowered.source_measure_sum += measure;
             }
+            if (lowered.rule == RefinementRule::CoarseGhostInjection) {
+                for (std::size_t cell = 0;
+                     cell < lowered.slope_cells.size(); ++cell)
+                    lowered.slope_cells[cell] = cell_index(
+                        source_block.grid, transfer.slope_cells[cell]);
+            }
             if (!std::isfinite(lowered.source_measure_sum)
                 || lowered.source_measure_sum <= 0.0)
                 throw std::invalid_argument(
@@ -353,16 +365,37 @@ public:
             compiled.push_back(lowered);
         }
 
-        // No state changes occur until the complete logical plan, identities,
-        // layouts, and cell addresses have validated.
+        struct GatheredTransfer {
+            std::array<double, 6> fields{};
+            std::vector<double> mass_fractions;
+        };
+        std::vector<GatheredTransfer> gathered;
+        gathered.reserve(compiled.size());
+
+        // Gather the complete plan before scattering.  Besides matching the
+        // CUDA two-kernel execution, this prevents the fine-to-coarse route
+        // from overwriting a coarse stencil needed by its reciprocal
+        // coarse-to-fine route.
         for (const CompiledTransfer& transfer : compiled) {
-            FluidState& destination =
-                pool->GetBlock(transfer.destination_id).*state_ptr;
             const FluidState& source =
                 pool->GetBlock(transfer.source_id).*state_ptr;
-            const auto restrict_field = [&](const std::vector<double>& field) {
-                if (transfer.source_count == 1)
-                    return field[transfer.source_cells[0]];
+            const auto prolong_field_at = [&](auto getter,
+                                               const double position[3]) {
+                const int center = transfer.source_cells[0];
+                double lower[3]{};
+                double upper[3]{};
+                for (int axis = 0; axis < plan.dimension; ++axis) {
+                    lower[axis] = getter(transfer.slope_cells[2 * axis]);
+                    upper[axis] = getter(transfer.slope_cells[2 * axis + 1]);
+                }
+                return prolongation_math::limited_linear_value(
+                    getter(center), lower, upper, position, plan.dimension);
+            };
+            const auto transfer_field = [&](const std::vector<double>& field) {
+                if (transfer.rule == RefinementRule::CoarseGhostInjection)
+                    return prolong_field_at(
+                        [&](int cell) { return field[cell]; },
+                        transfer.fine_position.data());
                 double integral = 0.0;
                 for (std::size_t cell = 0;
                      cell < transfer.source_count; ++cell)
@@ -379,38 +412,119 @@ public:
                     restriction_math::weighted_conserved_value(
                         source.rho[transfer.source_cells[cell]],
                         transfer.source_measures[cell]);
-            destination.rho[transfer.destination_cell] =
-                restrict_field(source.rho);
-            destination.mom_u[transfer.destination_cell] =
-                restrict_field(source.mom_u);
-            destination.mom_v[transfer.destination_cell] =
-                restrict_field(source.mom_v);
-            destination.mom_w[transfer.destination_cell] =
-                restrict_field(source.mom_w);
-            destination.eng[transfer.destination_cell] =
-                restrict_field(source.eng);
-            destination.enuc_rate[transfer.destination_cell] =
-                restrict_field(source.enuc_rate);
-            for (int species = 0; species < species_count; ++species) {
-                if (transfer.source_count == 1) {
-                    destination.X(species, transfer.destination_cell) =
-                        source.X(species, transfer.source_cells[0]);
-                    continue;
+            GatheredTransfer values{};
+            values.fields = {
+                transfer_field(source.rho),
+                transfer_field(source.mom_u),
+                transfer_field(source.mom_v),
+                transfer_field(source.mom_w),
+                transfer_field(source.eng),
+                transfer_field(source.enuc_rate)};
+            values.mass_fractions.resize(
+                static_cast<std::size_t>(species_count));
+            if (transfer.rule == RefinementRule::CoarseGhostInjection) {
+                const double fine_density = values.fields[0];
+                if (!prolongation_math::finite_number(fine_density)
+                    || fine_density <= 0.0)
+                    throw std::runtime_error(
+                        "coarse-fine prolongation produced invalid density");
+
+                // A fallback decision belongs to the whole sibling family,
+                // not to one fine cell.  Otherwise one rejected child would
+                // destroy the conservative cancellation of the symmetric
+                // limited-linear reconstruction.
+                bool use_linear_composition = true;
+                const int sibling_count = 1 << plan.dimension;
+                for (int sibling = 0;
+                     sibling < sibling_count && use_linear_composition;
+                     ++sibling) {
+                    double position[3]{};
+                    for (int axis = 0; axis < plan.dimension; ++axis)
+                        position[axis] = (sibling & (1 << axis)) != 0
+                            ? 0.25 : -0.25;
+                    const double sibling_density = prolong_field_at(
+                        [&](int cell) { return source.rho[cell]; }, position);
+                    double partial = 0.0;
+                    use_linear_composition =
+                        prolongation_math::finite_number(sibling_density)
+                        && sibling_density > 0.0;
+                    for (int species = 0;
+                         species + 1 < species_count
+                         && use_linear_composition; ++species) {
+                        const double candidate = prolong_field_at(
+                            [&](int cell) {
+                                return source.rho[cell]
+                                    * source.X(species, cell);
+                            }, position);
+                        use_linear_composition =
+                            prolongation_math::finite_number(candidate)
+                            && candidate >= 0.0;
+                        partial += candidate;
+                    }
+                    const double closure = sibling_density - partial;
+                    use_linear_composition = use_linear_composition
+                        && prolongation_math::finite_number(closure)
+                        && closure >= 0.0;
                 }
-                double species_density_integral = 0.0;
-                for (std::size_t cell = 0;
-                     cell < transfer.source_count; ++cell) {
-                    const int source_cell = transfer.source_cells[cell];
-                    species_density_integral +=
-                        restriction_math::weighted_species_density(
-                            source.rho[source_cell],
-                            source.X(species, source_cell),
-                            transfer.source_measures[cell]);
+
+                std::vector<double> fine_species(
+                    static_cast<std::size_t>(species_count), 0.0);
+                if (use_linear_composition) {
+                    double partial = 0.0;
+                    for (int species = 0; species + 1 < species_count;
+                         ++species) {
+                        fine_species[species] = prolong_field_at(
+                            [&](int cell) {
+                                return source.rho[cell]
+                                    * source.X(species, cell);
+                            }, transfer.fine_position.data());
+                        partial += fine_species[species];
+                    }
+                    if (species_count > 0)
+                        fine_species.back() = fine_density - partial;
+                } else {
+                    const int center = transfer.source_cells[0];
+                    for (int species = 0; species < species_count; ++species)
+                        fine_species[species] = fine_density
+                            * source.X(species, center);
                 }
-                destination.X(species, transfer.destination_cell) =
-                    restriction_math::restricted_mass_fraction(
-                        species_density_integral, density_integral);
+                for (int species = 0; species < species_count; ++species)
+                    values.mass_fractions[species] =
+                        fine_species[species] / fine_density;
+            } else {
+                for (int species = 0; species < species_count; ++species) {
+                    double species_density_integral = 0.0;
+                    for (std::size_t cell = 0;
+                         cell < transfer.source_count; ++cell) {
+                        const int source_cell = transfer.source_cells[cell];
+                        species_density_integral +=
+                            restriction_math::weighted_species_density(
+                                source.rho[source_cell],
+                                source.X(species, source_cell),
+                                transfer.source_measures[cell]);
+                    }
+                    values.mass_fractions[species] =
+                        restriction_math::restricted_mass_fraction(
+                            species_density_integral, density_integral);
+                }
             }
+            gathered.push_back(std::move(values));
+        }
+
+        for (std::size_t index = 0; index < compiled.size(); ++index) {
+            const CompiledTransfer& transfer = compiled[index];
+            const GatheredTransfer& values = gathered[index];
+            FluidState& destination =
+                pool->GetBlock(transfer.destination_id).*state_ptr;
+            destination.rho[transfer.destination_cell] = values.fields[0];
+            destination.mom_u[transfer.destination_cell] = values.fields[1];
+            destination.mom_v[transfer.destination_cell] = values.fields[2];
+            destination.mom_w[transfer.destination_cell] = values.fields[3];
+            destination.eng[transfer.destination_cell] = values.fields[4];
+            destination.enuc_rate[transfer.destination_cell] = values.fields[5];
+            for (int species = 0; species < species_count; ++species)
+                destination.X(species, transfer.destination_cell) =
+                    values.mass_fractions[species];
         }
     }
 

@@ -4,6 +4,7 @@
 #include "amr/AMRFluxRegistering.h"
 #include "amr/FluxRegister.h"
 #include "amr/GhostExchange.h"
+#include "amr/LimitedLinearProlongation.h"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 
 #include <bit>
@@ -64,6 +65,32 @@ void test_conservative_restriction_math()
                weighted_species_density_integral,
                weighted_density_integral) == 0.1,
            "shared physical-volume rho-X restriction drifted");
+}
+
+void test_limited_linear_prolongation_math()
+{
+    const double lower[3]{8.0, 8.0, 0.0};
+    const double upper[3]{12.0, 12.0, 0.0};
+    double sum = 0.0;
+    for (int child = 0; child < 4; ++child) {
+        const double position[3]{
+            (child & 1) != 0 ? 0.25 : -0.25,
+            (child & 2) != 0 ? 0.25 : -0.25, 0.0};
+        const double value = amr::prolongation_math::limited_linear_value(
+            10.0, lower, upper, position, 2);
+        expect(value >= 8.0 && value <= 12.0,
+               "limited-linear prolongation exceeded its stencil bounds");
+        sum += value;
+    }
+    expect(sum == 40.0,
+           "symmetric limited-linear children did not conserve the parent");
+
+    const double extremum_lower[3]{9.0, 0.0, 0.0};
+    const double extremum_upper[3]{8.0, 0.0, 0.0};
+    const double position[3]{0.25, 0.0, 0.0};
+    expect(amr::prolongation_math::limited_linear_value(
+               10.0, extremum_lower, extremum_upper, position, 1) == 10.0,
+           "limited-linear prolongation did not flatten an extremum");
 }
 
 amr::AmrEndpoint endpoint(int level, std::uint32_t x,
@@ -240,6 +267,9 @@ void test_validation()
 void fill_block(amr::Block& block)
 {
     const int total = block.grid.GetTotalSize();
+    const int species_count = block.fluid_state.GetNumSpecies();
+    const double species_weight_sum = 0.5 * species_count
+        * (species_count + 1.0);
     for (int index = 0; index < total; ++index) {
         const double value = 1000.0 * block.level
             + 100.0 * block.logical_x1 + index;
@@ -249,10 +279,9 @@ void fill_block(amr::Block& block)
         block.fluid_state.mom_w[index] = value + 4.0;
         block.fluid_state.eng[index] = value + 5.0;
         block.fluid_state.enuc_rate[index] = value + 6.0;
-        for (int species = 0;
-             species < block.fluid_state.GetNumSpecies(); ++species)
-            block.fluid_state.X(species, index) =
-                0.1 * (species + 1) + 1.0e-6 * value;
+        for (int species = 0; species < species_count; ++species)
+            block.fluid_state.X(species, index) = species_count == 0
+                ? 0.0 : (species + 1.0) / species_weight_sum;
     }
     block.state_next = block.fluid_state;
     block.state_scratch = block.fluid_state;
@@ -263,19 +292,12 @@ void fill_block(amr::Block& block)
         block.state_next.mom_w[index] += 10000.0;
         block.state_next.eng[index] += 10000.0;
         block.state_next.enuc_rate[index] += 10000.0;
-        for (int species = 0;
-             species < block.state_next.GetNumSpecies(); ++species)
-            block.state_next.X(species, index) += 10.0;
-
         block.state_scratch.rho[index] += 20000.0;
         block.state_scratch.mom_u[index] += 20000.0;
         block.state_scratch.mom_v[index] += 20000.0;
         block.state_scratch.mom_w[index] += 20000.0;
         block.state_scratch.eng[index] += 20000.0;
         block.state_scratch.enuc_rate[index] += 20000.0;
-        for (int species = 0;
-             species < block.state_scratch.GetNumSpecies(); ++species)
-            block.state_scratch.X(species, index) += 20.0;
     }
 }
 
@@ -341,7 +363,17 @@ void test_multidimensional_cell_lowering()
                && injected.transfers.front().destination_cell
                    == amr::LogicalAmrCell{-4, 0, 0}
                && injected.transfers.front().source_cells[0]
-                   == amr::LogicalAmrCell{14, 0, 0},
+                   == amr::LogicalAmrCell{14, 0, 0}
+               && injected.transfers.front().slope_cells[0]
+                   == amr::LogicalAmrCell{13, 0, 0}
+               && injected.transfers.front().slope_cells[1]
+                   == amr::LogicalAmrCell{15, 0, 0}
+               && injected.transfers.front().slope_cells[2]
+                   == amr::LogicalAmrCell{14, -1, 0}
+               && injected.transfers.front().slope_cells[3]
+                   == amr::LogicalAmrCell{14, 1, 0}
+               && injected.transfers.front().fine_position
+                   == std::array<double, 3>{-0.25, -0.25, 0.0},
            "2D coarse injection cell mathematics drifted");
 
     const auto average = geometric_plan(
@@ -621,11 +653,52 @@ void test_mixed_level_and_coarse_fine_execution()
     fine_before.fluid_state.X(0, fine_average_b) = 0.0;
     fine_before.fluid_state.X(1, fine_average_a) = 0.0;
     fine_before.fluid_state.X(1, fine_average_b) = 1.0;
-    coarse_before.fluid_state.enuc_rate[coarse_source] = -0.0;
-    coarse_before.fluid_state.X(0, coarse_source) = -0.0;
-
-    const double expected_fine_ghost =
-        coarse_before.fluid_state.rho[coarse_source];
+    const auto fine_index = static_cast<std::size_t>(
+        std::find(active.begin(), active.end(), fine_id) - active.begin());
+    const amr::LogicalAmrCell fine_ghost_logical{
+        amr::BLOCK_NX + 1, 0, 0};
+    const auto injection = std::find_if(
+        cell_plan.transfers.begin(), cell_plan.transfers.end(),
+        [&](const amr::CoarseFineCellTransfer& transfer) {
+            return transfer.rule
+                    == amr::RefinementRule::CoarseGhostInjection
+                && transfer.destination.handle == handles[fine_index]
+                && transfer.destination_cell == fine_ghost_logical;
+        });
+    expect(injection != cell_plan.transfers.end()
+               && injection->source.handle
+                   != injection->destination.handle,
+           "fine ghost has no lowered prolongation transfer");
+    const auto prolonged = [&](const std::vector<double>& field) {
+        const auto source_index = [&](const amr::LogicalAmrCell& logical) {
+            return coarse_before.grid.GetIndex(
+                coarse_before.grid.Is() + logical[0],
+                coarse_before.grid.Js() + logical[1],
+                coarse_before.grid.Ks() + logical[2]);
+        };
+        double lower[3]{};
+        double upper[3]{};
+        for (int axis = 0; axis < 1; ++axis) {
+            lower[axis] = field[source_index(
+                injection->slope_cells[2 * axis])];
+            upper[axis] = field[source_index(
+                injection->slope_cells[2 * axis + 1])];
+        }
+        return amr::prolongation_math::limited_linear_value(
+            field[source_index(injection->source_cells[0])],
+            lower, upper, injection->fine_position.data(), 1);
+    };
+    const double expected_fine_ghost = prolonged(
+        coarse_before.fluid_state.rho);
+    const double expected_fine_enuc = prolonged(
+        coarse_before.fluid_state.enuc_rate);
+    std::vector<double> coarse_rho_x0(
+        coarse_before.fluid_state.rho.size());
+    for (std::size_t index = 0; index < coarse_rho_x0.size(); ++index)
+        coarse_rho_x0[index] = coarse_before.fluid_state.rho[index]
+            * coarse_before.fluid_state.X(0, static_cast<int>(index));
+    const double expected_fine_x0 = prolonged(coarse_rho_x0)
+        / expected_fine_ghost;
     const double expected_coarse_ghost = 0.5
         * (fine_before.fluid_state.rho[fine_average_a]
            + fine_before.fluid_state.rho[fine_average_b]);
@@ -652,8 +725,8 @@ void test_mixed_level_and_coarse_fine_execution()
         shared_restriction(fine_before.fluid_state, 0);
     const double expected_ghost_x1 =
         shared_restriction(fine_before.fluid_state, 1);
-    const double expected_next_fine_ghost =
-        coarse_before.state_next.rho[coarse_source];
+    const double expected_next_fine_ghost = prolonged(
+        coarse_before.state_next.rho);
     const double expected_next_coarse_ghost = 0.5
         * (fine_before.state_next.rho[fine_average_a]
            + fine_before.state_next.rho[fine_average_b]);
@@ -661,8 +734,8 @@ void test_mixed_level_and_coarse_fine_execution()
         shared_restriction(fine_before.state_next, 0);
     const double expected_next_x1 =
         shared_restriction(fine_before.state_next, 1);
-    const double expected_scratch_fine_ghost =
-        coarse_before.state_scratch.rho[coarse_source];
+    const double expected_scratch_fine_ghost = prolonged(
+        coarse_before.state_scratch.rho);
     const double expected_scratch_coarse_ghost = 0.5
         * (fine_before.state_scratch.rho[fine_average_a]
            + fine_before.state_scratch.rho[fine_average_b]);
@@ -682,11 +755,14 @@ void test_mixed_level_and_coarse_fine_execution()
     expect(fine_after.fluid_state.rho[fine_upper_ghost]
                == expected_fine_ghost,
            "coarse-to-fine ghost route drifted");
-    expect(std::signbit(
-               fine_after.fluid_state.enuc_rate[fine_upper_ghost])
-               && std::signbit(
-                   fine_after.fluid_state.X(0, fine_upper_ghost)),
-           "coarse-to-fine injection lost bitwise scalar copies");
+    expect(fine_after.fluid_state.enuc_rate[fine_upper_ghost]
+                   == expected_fine_enuc
+               && fine_after.fluid_state.X(0, fine_upper_ghost)
+                   == expected_fine_x0
+               && fine_after.fluid_state.X(0, fine_upper_ghost)
+                       + fine_after.fluid_state.X(1, fine_upper_ghost)
+                   == 1.0,
+           "coarse-to-fine shared limited-linear reconstruction drifted");
     expect(coarse_after.fluid_state.rho[coarse_lower_ghost]
                == expected_coarse_ghost,
            "fine-to-coarse ghost average drifted");
@@ -831,6 +907,7 @@ int main()
         test_public_contract();
         test_validation();
         test_conservative_restriction_math();
+        test_limited_linear_prolongation_math();
         test_amr_interface_stencil_predicate();
         test_multidimensional_cell_lowering();
         test_curvilinear_host_restriction();

@@ -454,6 +454,12 @@ state::CompletionToken CudaBackend::execute_coarse_fine_exchange(
             host_blocks[destination->second].grid,
             transfer.destination_cell);
         lowered.source_count = transfer.source_count;
+        if (transfer.rule == amr::RefinementRule::CoarseGhostInjection) {
+            lowered.prolongation_dimension = static_cast<std::uint8_t>(
+                cell_plan.dimension);
+            for (int axis = 0; axis < 3; ++axis)
+                lowered.fine_position[axis] = transfer.fine_position[axis];
+        }
         if (lowered.source_count == 0
             || lowered.source_count > std::size(lowered.source_cells))
             throw std::invalid_argument(
@@ -462,6 +468,13 @@ state::CompletionToken CudaBackend::execute_coarse_fine_exchange(
             lowered.source_cells[cell] = cell_index(
                 host_blocks[source->second].grid,
                 transfer.source_cells[cell]);
+        }
+        if (lowered.prolongation_dimension != 0) {
+            for (std::size_t cell = 0; cell < std::size(lowered.slope_cells);
+                 ++cell)
+                lowered.slope_cells[cell] = cell_index(
+                    host_blocks[source->second].grid,
+                    transfer.slope_cells[cell]);
         }
         host_transfers.push_back(lowered);
     }

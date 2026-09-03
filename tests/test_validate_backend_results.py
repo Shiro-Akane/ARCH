@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -110,6 +111,23 @@ class BackendValidationTests(unittest.TestCase):
         result = module.compare_numeric_fields(reference, candidate, policy)
         self.assertFalse(result["passed"])
         self.assertEqual(result["first_mismatch"]["field"], "eng")
+
+    def test_hdf_comparator_propagates_enuc_peak_tolerance(self):
+        module = load_module()
+        completed = mock.Mock(
+            returncode=0,
+            stdout='{"status":"pass","max_enuc_normalized":0.0004}\n',
+            stderr="")
+        with mock.patch.object(
+            module.subprocess, "run", return_value=completed
+        ) as run:
+            result = module.compare_hdf5_checkpoints(
+                Path("reference.h5"), Path("candidate.h5"),
+                {"rtol": 5e-9, "atol": 5e-12,
+                 "enuc_scale_rtol": 1e-3,
+                 "dt_burn_rtol": 2e-3}, Path("validator"))
+        self.assertTrue(result["passed"])
+        self.assertEqual(run.call_args.args[0][-2:], ["0.001", "0.002"])
 
     def test_periodic_conservation_checks_every_hydro_invariant(self):
         module = load_module()
@@ -219,6 +237,57 @@ class BackendValidationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "minimum"):
             module.validate_scientific_steps(
                 {"steps": 999}, {"steps": 999}, case)
+
+    def test_topology_transition_requires_real_parent_child_changes(self):
+        module = load_module()
+        snapshots = [
+            {"dimension": 1, "topology": [[0, 0, 0, 0], [0, 1, 0, 0]]},
+            {"dimension": 1,
+             "topology": [[1, 0, 0, 0], [1, 1, 0, 0], [0, 1, 0, 0]]},
+            {"dimension": 1, "topology": [[0, 0, 0, 0], [0, 1, 0, 0]]},
+        ]
+        result = module.validate_topology_transitions(
+            snapshots, require_refine=True, require_derefine=True)
+        self.assertEqual(result, {"refined": True, "derefined": True})
+        with self.assertRaisesRegex(RuntimeError, "derefine"):
+            module.validate_topology_transitions(
+                snapshots[:2], require_refine=True, require_derefine=True)
+
+    def test_cuda_diffusion_schedule_proves_rkl2_cache_lifetime(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            schedule = Path(directory) / "schedule.tsv"
+            schedule.write_text(
+                "macro_step\tcache_generation\torder\tstages\t"
+                "negative_gamma_stages\tcaptures_initial_operator\t"
+                "diffusion_dt\tdt_forward_euler\n"
+                "0\t1\t2\t3\t2\t1\t0.1\t0.01\n"
+                "0\t2\t2\t3\t2\t1\t0.1\t0.01\n",
+                encoding="utf-8")
+            result = module.validate_cuda_diffusion_schedule(
+                schedule, 1,
+                {"order": 2, "stages": 3, "lanes_per_step": 2})
+            self.assertEqual(result["cache_generations"], [1, 2])
+            schedule.write_text(
+                schedule.read_text(encoding="utf-8").replace(
+                    "0\t2\t2\t3", "0\t1\t2\t3"),
+                encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "generation"):
+                module.validate_cuda_diffusion_schedule(
+                    schedule, 1,
+                    {"order": 2, "stages": 3, "lanes_per_step": 2})
+
+            schedule.write_text(
+                "macro_step\tcache_generation\torder\tstages\t"
+                "negative_gamma_stages\tcaptures_initial_operator\t"
+                "diffusion_dt\tdt_forward_euler\n"
+                "0\t1\t2\t3\t2\t1\t0.1\t0.01\n"
+                "1\t2\t2\t3\t2\t1\t0.1\t0.01\n",
+                encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "macro-step"):
+                module.validate_cuda_diffusion_schedule(
+                    schedule, 1,
+                    {"order": 2, "stages": 3, "lanes_per_step": 2})
 
 
 if __name__ == "__main__":

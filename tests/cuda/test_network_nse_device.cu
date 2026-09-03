@@ -147,7 +147,7 @@ struct DenseProbe
 ARCH_INLINE DenseProbe evaluate_dense()
 {
     DenseProbe out{};
-    DenseMatrixData matrix{};
+    DenseMatrixData<3> matrix{};
     matrix.set(1, 1, 3.0);  matrix.set(1, 2, 2.0);  matrix.set(1, 3, -1.0);
     matrix.set(2, 1, 2.0);  matrix.set(2, 2, -2.0); matrix.set(2, 3, 4.0);
     matrix.set(3, 1, -1.0); matrix.set(3, 2, 0.5);  matrix.set(3, 3, -1.0);
@@ -156,7 +156,7 @@ ARCH_INLINE DenseProbe evaluate_dense()
     out.solve_ok = DenseLUSolver::solve<3, BurnLimits::MAX_ODE_NEQ>(matrix, rhs);
     for (int i = 0; i < 3; ++i) out.solution[i] = rhs[i];
 
-    DenseMatrixData factors{};
+    DenseMatrixData<3> factors{};
     factors.set(1, 1, 3.0);  factors.set(1, 2, 2.0);  factors.set(1, 3, -1.0);
     factors.set(2, 1, 2.0);  factors.set(2, 2, -2.0); factors.set(2, 3, 4.0);
     factors.set(3, 1, -1.0); factors.set(3, 2, 0.5);  factors.set(3, 3, -1.0);
@@ -178,7 +178,7 @@ ARCH_INLINE DenseProbe evaluate_dense()
     bool* statuses[3]{&out.below_ok, &out.exact_ok, &out.above_ok};
     double* outputs[3]{&out.below_rhs, &out.exact_rhs, &out.above_rhs};
     for (int i = 0; i < 3; ++i) {
-        DenseMatrixData one{};
+        DenseMatrixData<1> one{};
         one.set(1, 1, pivots[i]);
         double one_rhs[BurnLimits::MAX_ODE_NEQ]{};
         one_rhs[0] = 7.0;
@@ -348,7 +348,7 @@ ARCH_INLINE auto evaluate_network()
     for (int i = 0; i < R; ++i) out.above_temperature_rates[i] = above_rates[i];
 
     Network::eval_rhs(state, 1.0e6, 0.25, out.rhs, out.enuc);
-    DenseMatrixData jacobian{};
+    DenseMatrixData<N> jacobian{};
     Network::eval_jacobian(state, 1.0e6, 0.25, jacobian, out.denuc_dx);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
@@ -574,7 +574,19 @@ void check_network_authority(
                 require(frozen_abs >= 0.0 && frozen_rel >= 0.0,
                         full + " frozen tolerance sign at "
                         + std::to_string(i));
-                compare_field(values[i], expected, frozen_abs, frozen_rel,
+                // Frozen values are a cross-toolchain regression witness, not
+                // the host/device oracle.  Preserve exact zeros; otherwise
+                // allow a 1e-12 portable envelope.  The current
+                // host/device values are compared directly below.
+                const bool exact_zero = expected == 0.0;
+                const double scale = std::isfinite(expected)
+                    ? std::abs(expected) * 1.0e-12 : 0.0;
+                const double portable_abs = exact_zero ? 0.0 : std::max(
+                    64.0 * frozen_abs, scale);
+                const double portable_rel = exact_zero ? 0.0 : std::max(
+                    64.0 * frozen_rel, 1.0e-12);
+                compare_field(values[i], expected,
+                              portable_abs, portable_rel,
                               full.c_str(), i);
             }
         }
@@ -617,6 +629,58 @@ void check_network_authority(
         require(actual.nse_invalid_preserved[i] == expected_preserved,
                 std::string(name) + ".frozen invalid preservation "
                 + std::to_string(i));
+    }
+}
+
+template <int N, int R>
+void compare_network_parity(const char* name,
+                            const NetworkProbe<N, R>& device,
+                            const NetworkProbe<N, R>& host)
+{
+    auto group = [&](const char* field, const double* device_values,
+                     const double* host_values, int count) {
+        const std::string full = std::string(name) + ".host_device." + field;
+        for (int i = 0; i < count; ++i)
+            compare_field(device_values[i], host_values[i], 0.0, 2.0e-12,
+                          full.c_str(), i);
+    };
+    group("aion", device.aion, host.aion, N);
+    group("zion", device.zion, host.zion, N);
+    group("binding", device.binding, host.binding, N);
+    group("spin", device.spin, host.spin, N);
+    group("energy_weight", device.energy_weight, host.energy_weight, N);
+    group("rates", device.rates, host.rates, R);
+    group("below_temperature_rates", device.below_temperature_rates,
+          host.below_temperature_rates, R);
+    group("exact_temperature_rates", device.exact_temperature_rates,
+          host.exact_temperature_rates, R);
+    group("above_temperature_rates", device.above_temperature_rates,
+          host.above_temperature_rates, R);
+    group("rhs", device.rhs, host.rhs, N);
+    group("enuc", &device.enuc, &host.enuc, 1);
+    group("jacobian", device.jacobian, host.jacobian, N * N);
+    group("denuc_dx", device.denuc_dx, host.denuc_dx, N);
+    group("drhs_dt", device.drhs_dt, host.drhs_dt, N);
+    group("denuc_dt", &device.denuc_dt, &host.denuc_dt, 1);
+    group("frozen_rhs", device.frozen_rhs, host.frozen_rhs, N);
+    group("clamp_rhs", &device.clamp_rhs[0][0], &host.clamp_rhs[0][0], 3 * N);
+    group("clamp_enuc", device.clamp_enuc, host.clamp_enuc, 3);
+    group("nse_x", device.nse_x, host.nse_x, N);
+    group("nse_enuc", &device.nse_enuc, &host.nse_enuc, 1);
+    group("invalid_enuc", device.nse_invalid_enuc,
+          host.nse_invalid_enuc, kInvalidNseCases);
+    group("invalid_x", &device.nse_invalid_x[0][0],
+          &host.nse_invalid_x[0][0], kInvalidNseCases * N);
+    require(device.nse_ok == host.nse_ok,
+            std::string(name) + ".host_device NSE status");
+    for (int i = 0; i < kInvalidNseCases; ++i) {
+        require(device.nse_invalid_status[i] == host.nse_invalid_status[i],
+                std::string(name) + ".host_device invalid status "
+                    + std::to_string(i));
+        require(device.nse_invalid_preserved[i]
+                    == host.nse_invalid_preserved[i],
+                std::string(name) + ".host_device invalid preservation "
+                    + std::to_string(i));
     }
 }
 
@@ -2815,7 +2879,7 @@ __global__ void network_jacobian_kernel(
     double state[N + 1]{};
     double y[N]{};
     make_device_state<Network>(state, y);
-    DenseMatrixData jacobian{};
+    DenseMatrixData<N> jacobian{};
     Network::eval_jacobian(state, 1.0e6, 0.25, jacobian, out->denuc_dx);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
@@ -2950,7 +3014,9 @@ template <typename Network>
 void run_network_device(
     const char* name,
     const FrozenNetworkAuthority<Network::NUM_SPECIES,
-                                 NetworkTraits<Network>::rate_count>& authority)
+                                 NetworkTraits<Network>::rate_count>& authority,
+    const NetworkProbe<Network::NUM_SPECIES,
+                       NetworkTraits<Network>::rate_count>& host)
 {
     using Probe = NetworkProbe<Network::NUM_SPECIES,
                                NetworkTraits<Network>::rate_count>;
@@ -2980,6 +3046,7 @@ void run_network_device(
                           cudaMemcpyDeviceToHost), "network result copy");
     check_cuda(cudaFree(device_result), "cudaFree network");
     check_network_authority(name, device, authority, false);
+    compare_network_parity(name, device, host);
 }
 #endif
 
@@ -3090,10 +3157,13 @@ int main()
                 && policy.line_search_limit
                     == kIterationBoundaryAuthority.line_search_limit,
                 "NSE 100-iteration device frozen status/output");
-        run_network_device<NetAprox13>("aprox13", kAprox13Authority);
-        run_network_device<NetAprox19>("aprox19", kAprox19Authority);
-        run_network_device<NetAprox21>("aprox21", kAprox21Authority);
-        run_network_device<NetIso7>("iso7", kIso7Authority);
+        run_network_device<NetAprox13>(
+            "aprox13", kAprox13Authority, host_aprox13);
+        run_network_device<NetAprox19>(
+            "aprox19", kAprox19Authority, host_aprox19);
+        run_network_device<NetAprox21>(
+            "aprox21", kAprox21Authority, host_aprox21);
+        run_network_device<NetIso7>("iso7", kIso7Authority, host_iso7);
 #else
         print_dense(host_dense);
         std::cout << "nse.iteration_boundary.status=" << host_policy.converged

@@ -383,6 +383,17 @@ void test_terminal_time_alignment()
     residual_controller.advance(exact_residual);
     require(residual_controller.t_current == config.io.tmax,
             "final timestep did not snap exactly to tmax");
+
+    config.io.max_steps = 3;
+    RunState bounded{};
+    bounded.step = 2;
+    SimulationController bounded_controller(config, bounded);
+    require(!bounded_controller.reached_step_limit(),
+            "step limit terminated one accepted step early");
+    bounded_controller.advance(0.1);
+    require(bounded_controller.reached_step_limit()
+                && bounded_controller.is_finished(),
+            "accepted max_steps limit was not a terminal run state");
 }
 
 struct CompositionSensitiveEos {

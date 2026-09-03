@@ -1,0 +1,5 @@
+========= COMPUTE-SANITIZER
+========= Error: GPU debugging features are disabled. Please consult the list of supported CUDA devices for more details.
+=========
+CUDA store lifecycle passed
+========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)

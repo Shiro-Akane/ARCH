@@ -916,6 +916,18 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     };
     double cfl = config.numerics.cfl;
     bool reported_composite_diffusion = false;
+    struct CudaDiffusionScheduleRecord {
+        std::uint64_t macro_step = 0;
+        std::uint64_t cache_generation = 0;
+        int order = 0;
+        int stages = 0;
+        int negative_gamma_stages = 0;
+        bool captures_initial_operator = false;
+        double diffusion_dt = 0.0;
+        double dt_forward_euler = 0.0;
+    };
+    std::vector<CudaDiffusionScheduleRecord> cuda_diffusion_schedule;
+    std::uint64_t cuda_diffusion_cache_generation = 0;
 
     // Emit the initial state only for a fresh run. A step-zero restart already
     // represents that state and must retain the checkpoint's next-file indices.
@@ -1140,6 +1152,21 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     order, diffusion_dt, dt_diff_fe,
                     config.physics.diffusion.diff_cfl,
                     config.physics.diffusion.max_stages);
+                int negative_gamma_stages = 0;
+                for (int stage = 1; stage <= stages; ++stage) {
+                    const auto coefficients = DiffFunction::get_rkl_coeffs(
+                        order, stage, stages);
+                    if (!std::isfinite(coefficients.gamma))
+                        throw std::runtime_error(
+                            "CUDA RKL schedule produced non-finite gamma");
+                    if (coefficients.gamma < 0.0)
+                        ++negative_gamma_stages;
+                }
+                cuda_diffusion_schedule.push_back({
+                    static_cast<std::uint64_t>(ctrl.step_count),
+                    ++cuda_diffusion_cache_generation,
+                    rkl1 ? 1 : 2, stages, negative_gamma_stages, rkl2,
+                    diffusion_dt, dt_diff_fe});
                 const auto before = compute_backend->counters();
                 const auto executor = [&] (
                     const arch::scheduler::RklPlan& plan,
@@ -1451,10 +1478,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         ctrl.print_step(dt, dt_hydro, has_burn ? dt / 2.0 : 0.0, dt_diff_fe, has_burn, has_diff);
     }
 
-    // Final Output (Force output at t_max)
-    if (advanced_any_step && ctrl.reached_target_time())
+    // An intentional time or step limit is a complete run.  Persist that
+    // exact terminal state so fixed-step validation and restart workflows do
+    // not silently stop one checkpoint short.
+    if (advanced_any_step
+        && (ctrl.reached_target_time() || ctrl.reached_step_limit()))
     {
-        std::cout << ">>> Target Time Reached. Forcing final output..." << std::endl;
+        std::cout << ">>> Terminal time/step limit reached. Forcing final output..."
+                  << std::endl;
         synchronize_fluid_ghosts();
         write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
         write_checkpoint(false);
@@ -1503,6 +1534,34 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         if (!trace_output)
             throw std::runtime_error("failed writing CUDA backend trace");
+
+        if (has_diff) {
+            const std::filesystem::path schedule_path = directory
+                / (config.io.base_name + "_diffusion_schedule.tsv");
+            std::ofstream schedule_output(schedule_path, std::ios::trunc);
+            if (!schedule_output)
+                throw std::runtime_error(
+                    "cannot write CUDA diffusion schedule");
+            schedule_output
+                << "macro_step\tcache_generation\torder\tstages"
+                   "\tnegative_gamma_stages\tcaptures_initial_operator"
+                   "\tdiffusion_dt\tdt_forward_euler\n"
+                << std::setprecision(17);
+            for (const auto& record : cuda_diffusion_schedule) {
+                schedule_output
+                    << record.macro_step << '\t'
+                    << record.cache_generation << '\t'
+                    << record.order << '\t'
+                    << record.stages << '\t'
+                    << record.negative_gamma_stages << '\t'
+                    << (record.captures_initial_operator ? 1 : 0) << '\t'
+                    << record.diffusion_dt << '\t'
+                    << record.dt_forward_euler << '\n';
+            }
+            if (!schedule_output || cuda_diffusion_schedule.empty())
+                throw std::runtime_error(
+                    "failed writing CUDA diffusion schedule");
+        }
     }
 
     std::cout << ">>> Simulation Done. Total Steps: " << ctrl.step_count

@@ -37,12 +37,15 @@ message(STATUS "[OPT] Build Type: ${CMAKE_BUILD_TYPE}")
 # Optimization flags for Release mode
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ffast-math -DNDEBUG")
 
-# Enable LTO (Link Time Optimization)
+# Enable LTO only for optimized configurations.  Applying IPO globally also
+# adds -flto to Debug objects and makes the already template-heavy CUDA build
+# and final link consume substantially more memory without a runtime benefit.
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported OUTPUT error)
 if(ipo_supported)
-    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
-    message(STATUS "[OPT] LTO (Link Time Optimization) Enabled")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
+    message(STATUS "[OPT] LTO enabled for optimized configurations")
 
     # Use lld or mold for memory-efficient linking, critical for LTO memory safety
     find_program(MOLD_LINKER mold)
@@ -548,8 +551,17 @@ if(ARCH_ENABLE_CUDA)
         src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_iso7
         src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu)
-    arch_configure_cuda_backend_object(arch_cuda_backend_hydro
-        src/cuda/runtime/CudaBackendHydro.cu)
+    # Hydro owns one shared template implementation and one canonical source
+    # owner per EOS.  Heavy tabular interpolation call boundaries keep NVCC
+    # Debug frontend memory bounded without duplicating physics or routes.
+    arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal
+        src/cuda/runtime/CudaBackendHydroIdeal.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm
+        src/cuda/runtime/CudaBackendHydroHelm.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3
+        src/cuda/runtime/CudaBackendHydroTabular3.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4
+        src/cuda/runtime/CudaBackendHydroTabular4.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
         src/cuda/runtime/CudaBackendDiffusion.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_exchange
@@ -582,10 +594,16 @@ if(ARCH_ENABLE_CUDA)
     # 8 GiB WSL guest.  Keep every heavy NVCC unit in one lane so callers may
     # still use --parallel 6 for the split host-control work without running
     # two template-heavy device compilations at the same time.
-    add_dependencies(arch_cuda_backend_hydro
+    add_dependencies(arch_cuda_backend_hydro_ideal
         arch_cuda_backend_burn_tabular4d_iso7)
+    add_dependencies(arch_cuda_backend_hydro_helm
+        arch_cuda_backend_hydro_ideal)
+    add_dependencies(arch_cuda_backend_hydro_tabular3
+        arch_cuda_backend_hydro_helm)
+    add_dependencies(arch_cuda_backend_hydro_tabular4
+        arch_cuda_backend_hydro_tabular3)
     add_dependencies(arch_cuda_backend_diffusion
-        arch_cuda_backend_hydro)
+        arch_cuda_backend_hydro_tabular4)
     add_dependencies(arch_cuda_backend_exchange
         arch_cuda_backend_diffusion)
     add_dependencies(arch_cuda_backend_amr_flux
@@ -693,7 +711,10 @@ if(ARCH_ENABLE_CUDA)
         $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox19>
         $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_aprox21>
         $<TARGET_OBJECTS:arch_cuda_backend_burn_tabular4d_iso7>
-        $<TARGET_OBJECTS:arch_cuda_backend_hydro>
+        $<TARGET_OBJECTS:arch_cuda_backend_hydro_ideal>
+        $<TARGET_OBJECTS:arch_cuda_backend_hydro_helm>
+        $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular3>
+        $<TARGET_OBJECTS:arch_cuda_backend_hydro_tabular4>
         $<TARGET_OBJECTS:arch_cuda_backend_diffusion>
         $<TARGET_OBJECTS:arch_cuda_backend_exchange>
         $<TARGET_OBJECTS:arch_cuda_backend_amr_flux>)
@@ -874,6 +895,13 @@ if(ARCH_ENABLE_CUDA)
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_link_libraries(arch_cuda_store_lifecycle PRIVATE
             arch_cuda_backend arch_solver_dispatch CUDA::cudart)
+        add_executable(arch_cuda_amr_exchange
+            tests/cuda/test_cuda_amr_exchange.cpp)
+        target_compile_features(arch_cuda_amr_exchange PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_amr_exchange PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_link_libraries(arch_cuda_amr_exchange PRIVATE
+            arch_cuda_backend arch_solver_dispatch CUDA::cudart)
         add_executable(arch_cuda_single_level_validation
             tests/cuda/test_cuda_single_level_validation.cpp)
         target_compile_features(arch_cuda_single_level_validation PRIVATE
@@ -893,7 +921,7 @@ if(ARCH_ENABLE_CUDA)
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
         target_link_libraries(arch_cuda_diffusion_rkl_parity PRIVATE
-            arch_diffusion_math)
+            arch_cuda_backend)
         add_executable(arch_cuda_boundary_plan_parity
             tests/cuda/test_boundary_plan_parity.cu)
         target_compile_features(arch_cuda_boundary_plan_parity PRIVATE cxx_std_20)
@@ -935,6 +963,7 @@ if(ARCH_ENABLE_CUDA)
                     arch_cuda_multiblock_diffusion
                     arch_cuda_multiblock_burn
                     arch_cuda_store_lifecycle
+                    arch_cuda_amr_exchange
                     arch_cuda_single_level_validation
                     arch_cuda_diffusion_rkl_parity
                     arch_cuda_boundary_plan_parity
@@ -967,7 +996,11 @@ if(ARCH_ENABLE_CUDA)
             COMMAND arch_cuda_policy_resolution)
         add_test(NAME cuda_reduction_contract
             COMMAND arch_cuda_reduction_contract)
-        add_test(NAME cuda_hydro_block COMMAND arch_cuda_hydro_block)
+        # This is the first real-device gate: the default witness allocates a
+        # CUDA backend, transfers state, launches Hydro and RKL kernels, and
+        # materializes the result.  Keep the result validator below out of
+        # CTest because it requires explicit trace/checkpoint inputs.
+        add_test(NAME cuda_single_level_smoke COMMAND arch_cuda_hydro_block)
         add_test(NAME cuda_multiblock_hydro
             COMMAND arch_cuda_multiblock_hydro)
         add_test(NAME cuda_multiblock_diffusion
@@ -977,6 +1010,9 @@ if(ARCH_ENABLE_CUDA)
         add_test(NAME cuda_store_lifecycle
             COMMAND arch_cuda_store_lifecycle)
         set_tests_properties(cuda_store_lifecycle PROPERTIES
+            SKIP_RETURN_CODE 77)
+        add_test(NAME cuda_amr_exchange COMMAND arch_cuda_amr_exchange)
+        set_tests_properties(cuda_amr_exchange PROPERTIES
             SKIP_RETURN_CODE 77)
         add_test(NAME cuda_hydro_route_matrix
             COMMAND arch_cuda_hydro_block hydro-matrix)
@@ -997,8 +1033,6 @@ if(ARCH_ENABLE_CUDA)
             add_test(NAME "cuda_backend_burn_${backend_route_test}"
                 COMMAND arch_cuda_hydro_block "${route}")
         endforeach()
-        add_test(NAME cuda_single_level_validation
-            COMMAND arch_cuda_single_level_validation)
         foreach(solver IN ITEMS be_nr bd ros4)
             add_test(NAME "burn_policy_parity_status_${solver}"
                 COMMAND arch_cuda_burn_policy_parity "status.${solver}")

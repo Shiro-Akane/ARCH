@@ -231,7 +231,9 @@ def compare_hdf5_checkpoints(
 ) -> dict[str, Any]:
     completed = subprocess.run(
         [str(checkpoint_validator), "--compare", str(reference), str(candidate),
-         str(policy["rtol"]), str(policy["atol"])],
+         str(policy["rtol"]), str(policy["atol"]),
+         str(policy.get("enuc_scale_rtol", policy["rtol"])),
+         str(policy.get("dt_burn_rtol", policy["rtol"]))],
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         timeout=120, check=False)
     if completed.returncode != 0:
@@ -248,6 +250,91 @@ def compare_hdf5_checkpoints(
     result = json.loads(lines[-1])
     result["passed"] = result.get("status") == "pass"
     return result
+
+
+def read_conservation_metrics(
+    checkpoint_validator: Path, checkpoint: Path
+) -> dict[str, Any]:
+    completed = subprocess.run(
+        [str(checkpoint_validator), "--metrics", str(checkpoint)],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        timeout=120, check=False)
+    if completed.returncode != 0:
+        raise RuntimeError(
+            f"checkpoint metrics failed: {completed.stderr.strip()}")
+    lines = [line for line in completed.stdout.splitlines() if line.startswith("{")]
+    if not lines:
+        raise RuntimeError("checkpoint metrics produced no JSON summary")
+    return json.loads(lines[-1])
+
+
+def validate_conservation(
+    checkpoint_validator: Path, initial: Path, final: Path,
+    policy: dict[str, Any]
+) -> dict[str, Any]:
+    before = read_conservation_metrics(checkpoint_validator, initial)
+    after = read_conservation_metrics(checkpoint_validator, final)
+    rtol = float(policy.get("rtol", 0.0))
+    atol = float(policy.get("atol", 0.0))
+    requested = policy.get(
+        "fields", ["mass", "mom_u", "mom_v", "mom_w", "energy", "rhoX"])
+    errors: dict[str, Any] = {}
+    for field in requested:
+        left_values = before[field] if field == "rhoX" else [before[field]]
+        right_values = after[field] if field == "rhoX" else [after[field]]
+        if len(left_values) != len(right_values):
+            raise RuntimeError(f"conservation field shape drifted: {field}")
+        field_errors = []
+        for left, right in zip(left_values, right_values):
+            absolute = abs(float(right) - float(left))
+            relative = absolute / max(
+                abs(float(left)), float.fromhex("0x1p-1022"))
+            if absolute > atol + rtol * abs(float(left)):
+                raise RuntimeError(
+                    f"conservation drift field={field} before={left} "
+                    f"after={right} abs={absolute} rel={relative}")
+            field_errors.append({"absolute": absolute, "relative": relative})
+        errors[field] = field_errors if field == "rhoX" else field_errors[0]
+    return {"before": before, "after": after, "errors": errors}
+
+
+def validate_topology_transitions(
+    snapshots: list[dict[str, Any]], *, require_refine: bool,
+    require_derefine: bool
+) -> dict[str, bool]:
+    """Require explicit parent/children leaf transitions between snapshots."""
+    refined = False
+    derefined = False
+    for left, right in zip(snapshots, snapshots[1:]):
+        dimension = int(left.get("dimension", 0))
+        if dimension != int(right.get("dimension", 0)) or dimension not in (1, 2, 3):
+            raise RuntimeError("topology transition dimension is invalid")
+        left_keys = {tuple(map(int, item)) for item in left.get("topology", [])}
+        right_keys = {tuple(map(int, item)) for item in right.get("topology", [])}
+        if not left_keys or not right_keys or any(len(item) != 4 for item in left_keys | right_keys):
+            raise RuntimeError("topology transition evidence is incomplete")
+
+        def children(parent: tuple[int, ...]) -> set[tuple[int, ...]]:
+            level, x1, x2, x3 = parent
+            result: set[tuple[int, ...]] = set()
+            for child in range(1 << dimension):
+                coordinates = [x1, x2, x3]
+                for axis in range(dimension):
+                    coordinates[axis] = 2 * coordinates[axis] + ((child >> axis) & 1)
+                result.add((level + 1, *coordinates))
+            return result
+
+        refined = refined or any(
+            parent not in right_keys and children(parent).issubset(right_keys)
+            for parent in left_keys)
+        derefined = derefined or any(
+            parent not in left_keys and children(parent).issubset(left_keys)
+            for parent in right_keys)
+    if require_refine and not refined:
+        raise RuntimeError("no explicit refine transition was observed")
+    if require_derefine and not derefined:
+        raise RuntimeError("no explicit derefine transition was observed")
+    return {"refined": refined, "derefined": derefined}
 
 
 def validate_qualification_metrics(
@@ -403,6 +490,75 @@ def validate_cuda_trace(path: Path, expected_steps: int) -> dict[str, int]:
     return {"records": len(rows)}
 
 
+def validate_cuda_diffusion_schedule(
+    path: Path, expected_steps: int, policy: dict[str, Any]
+) -> dict[str, Any]:
+    if not path.is_file():
+        raise RuntimeError(f"missing CUDA diffusion schedule: {path}")
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines()
+             if line.strip()]
+    if len(lines) < 2:
+        raise RuntimeError("CUDA diffusion schedule is empty")
+    header = lines[0].split("\t")
+    required = {
+        "macro_step", "cache_generation", "order", "stages",
+        "negative_gamma_stages", "captures_initial_operator",
+        "diffusion_dt", "dt_forward_euler",
+    }
+    if not required.issubset(header):
+        raise RuntimeError("CUDA diffusion schedule schema drifted")
+    rows = [dict(zip(header, line.split("\t"))) for line in lines[1:]]
+    lanes_per_step = int(policy.get("lanes_per_step", 2))
+    if len(rows) != expected_steps * lanes_per_step:
+        raise RuntimeError("CUDA diffusion schedule lane count drifted")
+    expected_order = int(policy["order"])
+    expected_stages = int(policy["stages"])
+    generations: list[int] = []
+    expected_macro_steps = [
+        step for step in range(expected_steps)
+        for _ in range(lanes_per_step)
+    ]
+    observed_macro_steps: list[int] = []
+    for row in rows:
+        observed_macro_steps.append(int(row["macro_step"]))
+        order = int(row["order"])
+        stages = int(row["stages"])
+        negative = int(row["negative_gamma_stages"])
+        captures = int(row["captures_initial_operator"])
+        generation = int(row["cache_generation"])
+        diffusion_dt = float(row["diffusion_dt"])
+        dt_forward_euler = float(row["dt_forward_euler"])
+        if order != expected_order or stages != expected_stages:
+            raise RuntimeError(
+                "CUDA diffusion schedule order/stage count drifted")
+        if not math.isfinite(diffusion_dt) or diffusion_dt <= 0.0 \
+                or not math.isfinite(dt_forward_euler) \
+                or dt_forward_euler <= 0.0:
+            raise RuntimeError("CUDA diffusion schedule timestep is invalid")
+        if expected_order == 2:
+            if negative <= 0 or captures != 1:
+                raise RuntimeError(
+                    "RKL2 did not exercise negative gamma and F(Y0) capture")
+        elif negative != 0 or captures != 0:
+            raise RuntimeError("RKL1 unexpectedly used the RKL2 F(Y0) cache")
+        generations.append(generation)
+    if generations != list(range(1, len(rows) + 1)):
+        raise RuntimeError(
+            "CUDA diffusion F(Y0) cache generation crossed a lane boundary")
+    if observed_macro_steps != expected_macro_steps:
+        raise RuntimeError(
+            "CUDA diffusion schedule macro-step/lane ordering drifted")
+    return {
+        "records": len(rows),
+        "order": expected_order,
+        "stages": expected_stages,
+        "negative_gamma_records": sum(
+            int(row["negative_gamma_stages"]) > 0 for row in rows),
+        "cache_generations": generations,
+        "macro_steps": observed_macro_steps,
+    }
+
+
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -442,20 +598,29 @@ def run_arch_lane(
         raise RuntimeError(f"{case['id']} {backend} accepted-step count drifted")
     prefix = lane_root / base_name
     plan = prefix.with_name(prefix.name + "_backend_plan.txt")
+    initial_checkpoint = prefix.with_name(prefix.name + "_chk_0000.h5")
     checkpoint = prefix.with_name(prefix.name + "_chk_0001.h5")
     validate_resolved_plan(plan, backend)
     trace = prefix.with_name(prefix.name + "_backend_trace.tsv")
     trace_summary = validate_cuda_trace(trace, steps) if backend == "cuda" else None
-    if not checkpoint.is_file():
+    schedule = prefix.with_name(prefix.name + "_diffusion_schedule.tsv")
+    schedule_summary = None
+    if backend == "cuda" and case.get("rkl_policy"):
+        schedule_summary = validate_cuda_diffusion_schedule(
+            schedule, steps, case["rkl_policy"])
+    if not initial_checkpoint.is_file() or not checkpoint.is_file():
         raise RuntimeError(f"missing HDF5 checkpoint: {checkpoint}")
     return {
         "backend": backend,
         "steps": steps,
+        "initial_checkpoint": initial_checkpoint,
         "checkpoint": checkpoint,
         "checkpoint_sha256": _sha256(checkpoint),
         "plan": plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
+        "diffusion_schedule": schedule if schedule_summary else None,
+        "diffusion_schedule_summary": schedule_summary,
     }
 
 
@@ -536,10 +701,21 @@ def run_case(
             checkpoint_validator, cpu["checkpoint"], case)
         cuda_qualification = qualify_checkpoint(
             checkpoint_validator, cuda["checkpoint"], case)
+        conservation_policy = case.get("conservation_policy")
+        cpu_conservation = cuda_conservation = {"status": "not-requested"}
+        if conservation_policy:
+            cpu_conservation = validate_conservation(
+                checkpoint_validator, cpu["initial_checkpoint"],
+                cpu["checkpoint"], conservation_policy)
+            cuda_conservation = validate_conservation(
+                checkpoint_validator, cuda["initial_checkpoint"],
+                cuda["checkpoint"], conservation_policy)
         result["checkpoints"].append({
             "cpu": cpu, "cuda": cuda, "parity": parity,
             "cpu_qualification": cpu_qualification,
-            "cuda_qualification": cuda_qualification})
+            "cuda_qualification": cuda_qualification,
+            "cpu_conservation": cpu_conservation,
+            "cuda_conservation": cuda_conservation})
     if "scientific_time" in case:
         terminal_time = float(case["scientific_time"])
         cpu = run_arch_terminal_lane(
@@ -565,6 +741,30 @@ def run_case(
             "cpu_qualification": cpu_qualification,
             "cuda_qualification": cuda_qualification,
         }
+    topology_policy = case.get("topology_policy", {})
+    if topology_policy:
+        observed = [entry["parity"] for entry in result["checkpoints"]]
+        if topology_policy.get("require_refined") and not any(
+            int(item.get("max_level", 0)) > 0 for item in observed
+        ):
+            raise RuntimeError(f"{case['id']} never produced a refined leaf")
+        if topology_policy.get("require_mixed") and not any(
+            int(item.get("min_level", 0)) < int(item.get("max_level", 0))
+            for item in observed
+        ):
+            raise RuntimeError(f"{case['id']} never produced a mixed-level hierarchy")
+        if topology_policy.get("require_count_change"):
+            counts = {int(item.get("blocks", 0)) for item in observed}
+            if len(counts) < 2:
+                raise RuntimeError(f"{case['id']} leaf count never changed")
+        if topology_policy.get("require_refine_transition") \
+                or topology_policy.get("require_derefine_transition"):
+            result["topology_transitions"] = validate_topology_transitions(
+                observed,
+                require_refine=bool(topology_policy.get(
+                    "require_refine_transition")),
+                require_derefine=bool(topology_policy.get(
+                    "require_derefine_transition")))
     return result
 
 

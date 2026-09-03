@@ -1,0 +1,7 @@
+========= COMPUTE-SANITIZER
+========= Error: GPU debugging features are disabled. Please consult the list of supported CUDA devices for more details.
+=========
+CUDA_AMR_EXCHANGE_PASS dimension=1 blocks=3 operations=16
+CUDA_AMR_EXCHANGE_PASS dimension=2 blocks=7 operations=64
+CUDA_AMR_EXCHANGE_PASS dimension=3 blocks=15 operations=192
+========= RACECHECK SUMMARY: 1 hazard displayed (1 error, 0 warnings)

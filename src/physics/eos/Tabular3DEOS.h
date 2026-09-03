@@ -26,6 +26,15 @@
 
 #include "../species/Species.h"
 
+// Preserve one Host/CUDA mathematical implementation while preventing NVCC
+// from force-inlining the full table/free-energy graph into every Hydro policy
+// instantiation.  These are compilation boundaries, not CUDA formula copies.
+#if defined(__CUDACC__)
+#define ARCH_TABULAR3_HEAVY_CALL ARCH_HOST_DEVICE __noinline__
+#else
+#define ARCH_TABULAR3_HEAVY_CALL inline
+#endif
+
 // One mathematical implementation parameterized by host or device species metadata.
 template <class SpeciesView>
 struct BasicTabular3DEOSView
@@ -86,7 +95,8 @@ struct BasicTabular3DEOSView
     }
 
     // Trilinear interpolation in log(rho), log(T), and composition coordinate.
-    ARCH_INLINE double interpolate_3d(const double *table, double rho, double T, double X) const
+    ARCH_TABULAR3_HEAVY_CALL double interpolate_3d(
+        const double *table, double rho, double T, double X) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -147,7 +157,7 @@ struct BasicTabular3DEOSView
                static_cast<std::size_t>(icomposition);
     }
 
-    ARCH_INLINE tabular_eos::FreeEnergyState interpolate_free_energy(
+    ARCH_TABULAR3_HEAVY_CALL tabular_eos::FreeEnergyState interpolate_free_energy(
         double rho, double T, double composition) const
     {
         const double log_rho = std::log10(rho);
@@ -190,7 +200,7 @@ struct BasicTabular3DEOSView
             interpolate_free_energy(rho, T, composition), rho, T);
     }
 
-    ARCH_INLINE tabular_eos::ThermodynamicState free_energy_state(
+    ARCH_TABULAR3_HEAVY_CALL tabular_eos::ThermodynamicState free_energy_state(
         double rho, double T, double composition) const
     {
         const auto result = free_energy_result(rho, T, composition);
@@ -280,7 +290,8 @@ struct BasicTabular3DEOSView
                interpolate_3d(table_cv, rho, T_target, X);
     }
 
-    ARCH_INLINE double get_temperature(double rho, double e, const double *Xi) const
+    ARCH_TABULAR3_HEAVY_CALL double get_temperature(
+        double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
             return 0.0;
@@ -306,7 +317,7 @@ struct BasicTabular3DEOSView
         // Newton-Raphson iteration
         double T_guess = 1e8; // reasonable astrophysics start
         const int max_iters = 20;
-        const double tol = 1e-6;
+        const double tol = 1e-14;
 
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
@@ -335,7 +346,7 @@ struct BasicTabular3DEOSView
 
             T_guess += dT;
 
-            if (std::abs(dT) / T_guess < tol) break;
+            if (std::abs(dT) <= tol * std::max(std::abs(T_guess), 1.0)) break;
         }
 
         return T_guess;
@@ -483,6 +494,8 @@ struct BasicTabular3DEOSView
     }
 
 };
+
+#undef ARCH_TABULAR3_HEAVY_CALL
 
 using Tabular3DEOSView = BasicTabular3DEOSView<SpeciesPODView>;
 
