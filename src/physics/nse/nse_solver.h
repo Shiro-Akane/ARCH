@@ -17,6 +17,7 @@
 #include <limits>
 
 #include "../../core/ArchPortability.h"
+#include "../../core/CompensatedSum.h"
 
 namespace arch::nse_detail {
 
@@ -158,17 +159,15 @@ struct NSESolver
 
         if (!converged || !check_conservation(solution, Ye)) return false;
 
-        long double delta_binding = 0.0L;
-#pragma omp simd reduction(+:delta_binding)
+        arch::math::CompensatedSum delta_binding;
         for (int i = 0; i < NUM_SPEC; ++i) {
-            delta_binding +=
-                static_cast<long double>(solution[i] - X_old[i])
-                * static_cast<long double>(NetType::binding_energy(i)
-                                           / NetType::aion(i));
+            delta_binding.add(
+                (solution[i] - X_old[i])
+                * (NetType::binding_energy(i) / NetType::aion(i)));
         }
 
         const double energy = binding_energy_conversion()
-                            * static_cast<double>(delta_binding);
+                            * delta_binding.value();
         if (!std::isfinite(energy)) return false;
 
 #pragma omp simd
@@ -613,18 +612,14 @@ private:
     ARCH_HOST_DEVICE static bool check_conservation(
         const std::array<double, NUM_SPEC>& x, double Ye)
     {
-        long double mass = 0.0L;
-        long double charge = 0.0L;
+        arch::math::CompensatedSum mass;
+        arch::math::CompensatedSum charge;
         for (int i = 0; i < NUM_SPEC; ++i) {
             if (!std::isfinite(x[i]) || x[i] < 0.0) return false;
-            mass += static_cast<long double>(x[i]);
-            charge += static_cast<long double>(x[i])
-                    * static_cast<long double>(NetType::zion(i)
-                                               / NetType::aion(i));
+            mass.add(x[i]);
+            charge.add(x[i] * (NetType::zion(i) / NetType::aion(i)));
         }
-        return std::abs(static_cast<double>(mass - 1.0L)) <= conservation_tol
-            && std::abs(static_cast<double>(charge
-                                            - static_cast<long double>(Ye)))
-               <= conservation_tol;
+        return std::abs(mass.value() - 1.0) <= conservation_tol
+            && std::abs(charge.value() - Ye) <= conservation_tol;
     }
 };

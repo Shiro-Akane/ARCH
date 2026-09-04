@@ -289,11 +289,15 @@ private:
 #pragma omp simd
                         for (int i = 0; i < NUM_SPEC; ++i) X_trial[i] = std::max(X_trial[i], burn_cfg.smallx) * inv_sum;
 
-                        long double nuclear_mass_delta = 0.0L;
+                        arch::math::CompensatedSum nuclear_mass_delta;
                         for (int i = 0; i < NUM_SPEC; ++i) {
-                            nuclear_mass_delta += static_cast<long double>(X_trial[i] - X_ODE[i]) / NetType::aion(i) * NetType::energy_weight(i);
+                            const double molar_delta =
+                                (X_trial[i] - X_ODE[i]) / NetType::aion(i);
+                            nuclear_mass_delta.add(
+                                molar_delta * NetType::energy_weight(i));
                         }
-                        const double integrated_enuc = NetType::ENERGY_CONVERSION * static_cast<double>(nuclear_mass_delta);
+                        const double integrated_enuc = NetType::ENERGY_CONVERSION
+                            * nuclear_mass_delta.value();
                         const double old_eint = eos.get_eint_from_T(rho, X_ODE[NEQ - 1], X_ODE);
                         const double new_eint = eos.get_eint_from_T(rho, X_trial[NEQ - 1], X_trial);
                         const double thermal_delta = new_eint - old_eint;

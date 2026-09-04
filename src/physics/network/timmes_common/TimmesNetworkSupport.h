@@ -14,6 +14,7 @@
 #include "RatePair.h"
 
 #include "../../../core/RuntimeParams.h"
+#include "../../../core/CompensatedSum.h"
 #include "../../../numerics/linalg/DenseWrap.h"
 #include "../../../numerics/linalg/SparseWrap.h"
 #include "../../species/Species.h"
@@ -76,12 +77,11 @@ struct TimmesNetworkSupport {
             rhs[i] = dydt[i] * Derived::aion(i);
         }
 
-        long double mass_sum = 0.0L;
+        arch::math::CompensatedSum mass_sum;
         for (int i = 0; i < N; ++i) {
-            mass_sum += static_cast<long double>(dydt[i])
-                      * Derived::energy_weight(i);
+            mass_sum.add(dydt[i] * Derived::energy_weight(i));
         }
-        enuc = Derived::ENERGY_CONVERSION * static_cast<double>(mass_sum);
+        enuc = Derived::ENERGY_CONVERSION * mass_sum.value();
     }
 
     template <typename MatrixType>
@@ -113,13 +113,13 @@ struct TimmesNetworkSupport {
 
         if (denuc_dX != nullptr) {
             for (int j = 0; j < N; ++j) {
-                long double mass_sum = 0.0L;
+                arch::math::CompensatedSum mass_sum;
                 for (int i = 0; i < N; ++i) {
-                    mass_sum += static_cast<long double>(dydt[i].deriv[j])
-                              * Derived::energy_weight(i);
+                    mass_sum.add(
+                        dydt[i].deriv[j] * Derived::energy_weight(i));
                 }
                 denuc_dX[j] = Derived::ENERGY_CONVERSION
-                            * static_cast<double>(mass_sum);
+                            * mass_sum.value();
             }
         }
     }
@@ -140,13 +140,12 @@ struct TimmesNetworkSupport {
         Derived::template molar_rhs_impl<AD, RateTemperatureAccessor>(
             y, rho, eta, state[N], temperature, dydt);
 
-        long double mass_sum = 0.0L;
+        arch::math::CompensatedSum mass_sum;
         for (int i = 0; i < N; ++i) {
             drhs_dT[i] = dydt[i].deriv[0] * Derived::aion(i);
-            mass_sum += static_cast<long double>(dydt[i].deriv[0])
-                      * Derived::energy_weight(i);
+            mass_sum.add(dydt[i].deriv[0] * Derived::energy_weight(i));
         }
-        denuc_dT = Derived::ENERGY_CONVERSION * static_cast<double>(mass_sum);
+        denuc_dT = Derived::ENERGY_CONVERSION * mass_sum.value();
     }
 };
 

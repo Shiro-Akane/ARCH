@@ -3,7 +3,7 @@
 Chinese translation: [CudaBackendStatus.zh-CN.md](CudaBackendStatus.zh-CN.md).
 The English file is authoritative.
 
-Status date: 2026-09-03. This tree is based on the GPU-AMR handoff commit
+Status date: 2026-09-05. This tree is based on the GPU-AMR handoff commit
 `21d6b2c` and includes the completion and qualification changes recorded below.
 
 ## Qualification summary
@@ -19,10 +19,12 @@ Status date: 2026-09-03. This tree is based on the GPU-AMR handoff commit
 - Smooth and ENUC-driven restart matrices both pass CPU-to-CPU, CUDA-to-CUDA,
   CPU-to-CUDA, CUDA-to-CPU, and uninterrupted CPU/CUDA comparison routes.
 - The focused CUDA AMR tests pass with `CUDA_LAUNCH_BLOCKING=1`.
-- The first full 65-test CUDA CTest run passed 52 tests. The remaining 13
-  large-network tests failed at allocation with `out of memory` while two
-  unrelated workloads occupied 9.4 GiB of the 20 GiB vGPU. They are a pending
-  resource-isolated rerun, not recorded as passes.
+- The first full 65-test CUDA CTest run passed 52 tests under external GPU
+  contention. The first resource-isolated retry passed 10/13 and exposed three
+  deterministic burn CPU/CUDA precision defects. After introducing shared
+  compensated `double` reduction and a measured route-specific budget, the
+  burn-policy tests pass 16/16, the original focused set passes 13/13, the full
+  CTest suite passes 65/65, and the tooling tests pass 72/72.
 - `compute-sanitizer` memcheck and racecheck cannot instrument this NVIDIA vGPU:
   the driver reports that GPU debugging features are disabled. The attempted
   logs are retained and sanitizer cleanliness is not claimed.
@@ -74,6 +76,10 @@ Machine-readable evidence and the exact build/test records are in
   finite CPU/CUDA comparison tolerances without duplicating device formulas.
 - Built-in burn/network routes use one registry and fail closed when a route is
   unavailable or not device-capable. External KLU remains CPU-only.
+- Ye, Timmes RHS/Jacobian and temperature-energy terms, ODE energy closure, and
+  NSE conservation totals now use one fixed-order compensated `double`
+  reduction on Host and device. Only aprox19 ROS4 has field-specific budgets
+  set to 125% of measured maxima; no global tolerance was relaxed.
 - Checkpoint schema v3 is shared by both backends and records ENUC, EOS/table
   SHA-256, burn/network/NSE state, and species metadata. CUDA materializes
   `Current` before invoking the Host writer.
@@ -87,13 +93,14 @@ Machine-readable evidence and the exact build/test records are in
 | Host compiler | GCC 11.4.0 (`g++-12` was unavailable on this host) |
 | Build tools | CMake 4.4.0, Ninja 1.13.2 |
 | Memory boundary | systemd user scope, `MemoryMax=16G`, `MemorySwapMax=0` |
-| CUDA archive | 174,611,782 bytes; SHA-256 `ea789c913caa1091433fd0c82ad340ee0679dc32ee1e5eb68d390ef00a6eedf8` |
-| `ARCH` executable | 202,176,184 bytes; SHA-256 `d42711fa4a19357713be49df77cd3ab714faf4ccfe89c5d9bb16efa09231490b` |
+| CUDA archive | 176,691,142 bytes; SHA-256 `9fa494d579c5450265789b19a16e83c4c2ba380785980a4fef8a11a9f81a4eb8` |
+| `ARCH` executable | 204,248,832 bytes; SHA-256 `e903232e298ee9ea2cc958a404fe370a305463c8008ec5969b4adb9430f4f8e2` |
 
-The serial clean archive build completed in `1:11:37` with maximum recorded RSS
-`4,466,132 KiB`; the complete executable link completed in `1:54.77` with
-`1,206,568 KiB`; all CUDA test targets compiled in `20:31.74` with
-`4,807,348 KiB`. All three records report zero swaps. One-second cgroup samples
+The original serial clean archive build completed in `1:11:37` with maximum
+recorded RSS `4,466,132 KiB`. The compensated-reduction backend rebuild took
+`1:13:21` with `4,752,228 KiB`; the final incremental executable link took
+`1:06.81` with `1,206,036 KiB`. All CUDA test targets originally compiled in
+`20:31.74` with `4,807,348 KiB`. Every record reports zero swaps. One-second cgroup samples
 attributed to active CUDA translation units are retained in
 `tu-memory-samples.csv`; they include build-scope overhead and must not be read
 as isolated compiler-process RSS.
@@ -124,11 +131,9 @@ and ENUC difference is `6.71411e-4`.
 
 ## Open qualification items
 
-1. Rerun the 13 large aprox19/aprox21/NSE tests, then the full 65-test suite,
-   after the unrelated GPU jobs release enough device memory.
-2. Run memcheck and racecheck on a bare-metal or vGPU profile that exposes CUDA
+1. Run memcheck and racecheck on a bare-metal or vGPU profile that exposes CUDA
    debugging. The current H100 vGPU cannot satisfy this requirement.
-3. Record a clean `--parallel 6` build only if parallel-build throughput is
+2. Record a clean `--parallel 6` build only if parallel-build throughput is
    needed; it must not weaken the 16 GiB / zero-swap acceptance envelope.
 
 These open items are qualification boundaries. They do not change the AMR

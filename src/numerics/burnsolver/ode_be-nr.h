@@ -216,14 +216,15 @@ struct Solver_BE_NR
                         X_trial[i] *= inv_projected_sum;
                     }
 
-                    long double nuclear_mass_delta = 0.0L;
+                    arch::math::CompensatedSum nuclear_mass_delta;
                     for (int i = 0; i < NUM_SPEC; ++i) {
-                        nuclear_mass_delta +=
-                            static_cast<long double>(X_trial[i] - X_old[i])
-                            / NetType::aion(i) * NetType::energy_weight(i);
+                        const double molar_delta =
+                            (X_trial[i] - X_old[i]) / NetType::aion(i);
+                        nuclear_mass_delta.add(
+                            molar_delta * NetType::energy_weight(i));
                     }
                     const double integrated_enuc = NetType::ENERGY_CONVERSION
-                        * static_cast<double>(nuclear_mass_delta);
+                        * nuclear_mass_delta.value();
                     const double old_eint = eos.get_eint_from_T(
                         rho, X_old[NEQ - 1], X_old);
                     const double new_eint = eos.get_eint_from_T(

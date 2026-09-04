@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "../../core/ArchPortability.h"
+#include "../../core/CompensatedSum.h"
 #include "../../data/GlobalDefs.h"
 #include "../../physics/nse/nse_solver.h"
 
@@ -169,14 +170,12 @@ namespace OdeMath
         };
 
         double old_x[MAX_N]{};
-        long double ye_sum = 0.0L;
-#pragma omp simd reduction(+:ye_sum)
+        arch::math::CompensatedSum ye_sum;
         for (int i = 0; i < NUM_SPEC; ++i) {
             old_x[i] = state[i];
-            ye_sum += static_cast<long double>(state[i])
-                    * static_cast<long double>(NetType::zion(i) / NetType::aion(i));
+            ye_sum.add(state[i] * (NetType::zion(i) / NetType::aion(i)));
         }
-        const double ye = static_cast<double>(ye_sum);
+        const double ye = ye_sum.value();
         const double old_temperature = state[NEQ - 1];
         const double old_eint = eos.get_eint_from_T(rho, old_temperature, old_x);
         if (!std::isfinite(ye) || !std::isfinite(old_eint)) return false;
