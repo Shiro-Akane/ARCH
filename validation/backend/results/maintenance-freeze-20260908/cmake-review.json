@@ -1,0 +1,1083 @@
+{
+  "schema": 1,
+  "status": "PASS",
+  "reviewed_utc": "2026-09-08T06:00:10.135463+00:00",
+  "current_source": {
+    "commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "3bc8f1ce79ef787f398128962a4b72dcec2339a3a2fc397816576e999cfb228e",
+    "dirty": true,
+    "modified_files": [
+      "CMakeLists.txt"
+    ],
+    "untracked_source_files": [
+      "cmake/Application.cmake",
+      "cmake/BuildOptions.cmake",
+      "cmake/CudaBackend.cmake",
+      "cmake/CustomNetworks.cmake",
+      "cmake/Dependencies.cmake",
+      "cmake/tests/CudaTests.cmake",
+      "cmake/tests/HostTests.cmake"
+    ]
+  },
+  "scope": "CMake organization equivalence plus bounded host checks; this is not a full CUDA rebuild or rerun of the 98-test campaign.",
+  "change_proof": {
+    "base_commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
+    "scope": [
+      "src",
+      "simulation",
+      "tests",
+      "tools"
+    ],
+    "unchanged": true,
+    "tracked_files_verified": 391,
+    "content_inventory_sha256": "ee428bf51524fbf190181447128c7b377c1e4151fb0075f861fc612b1a05806b",
+    "changed_paths": [],
+    "added_paths": [],
+    "removed_paths": [],
+    "excluded_suffixes": [
+      ".md"
+    ],
+    "excluded_documentation_paths": [
+      "tests/README.md",
+      "tests/README.zh-CN.md"
+    ],
+    "documentation_changes": [
+      {
+        "path": "/home/shiroakane/ARCH/tests/README.md",
+        "sha256": "16cb3cb0a1b22038cf593776cae17ff2d772385616478a33f8c43c6fdd077162",
+        "bytes": 6668
+      },
+      {
+        "path": "/home/shiroakane/ARCH/tests/README.zh-CN.md",
+        "sha256": "a1d24da6cc5db59967e58011a3a1a95ae2ea096e3bdb686a9bdb56fae32428dc",
+        "bytes": 6262
+      }
+    ],
+    "build_inputs": [
+      {
+        "path": "/home/shiroakane/ARCH/CMakeLists.txt",
+        "sha256": "6a0598b976384a2075b1979b8b9f1dc72b53a78071968aa319c212b4d1609905",
+        "bytes": 1370
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/BuildOptions.cmake",
+        "sha256": "fd9d5f1ac92d1ef77f4ddd1d55eed5e99ca57bf514ae8ff96c4026b11d09be2b",
+        "bytes": 4990
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+        "sha256": "eca2b4c5dc0cc005101d6166094774462167cd9cab54827abb350fbb1911fd2e",
+        "bytes": 5687
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/CustomNetworks.cmake",
+        "sha256": "8c4eff66b61e53a46402bf32e158d900f4b91d9a2da141981cf72845e501f2bb",
+        "bytes": 9181
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/CudaBackend.cmake",
+        "sha256": "cab12b2447848638d1e15dfe572db74205b9e693aaeb66daa8ddb0a8b0f0585b",
+        "bytes": 18773
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/Application.cmake",
+        "sha256": "e19c12335d940c8230675fd9da9ce0833ef18f12a9041282add5f3106b1dbe38",
+        "bytes": 7083
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/tests/HostTests.cmake",
+        "sha256": "0fc4e9c230cccafa145be58fd4c749a7e0a3ecc1f4af78f0d88744e2379d7758",
+        "bytes": 8598
+      },
+      {
+        "path": "/home/shiroakane/ARCH/cmake/tests/CudaTests.cmake",
+        "sha256": "b2c8af81a7e052a182fc312bf9012dd2ab46f66cb1b38efe9ac6586f799fd8b9",
+        "bytes": 24028
+      }
+    ],
+    "proof_method": "Every tracked non-documentation file in the four trees is compared to its Git blob; tracked source differences and added source paths are rejected. The two separately identified self-validation README edits are documentation-only exclusions."
+  },
+  "graph_equivalence": {
+    "status": "PASS",
+    "before": {
+      "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/before/snapshot.json",
+      "sha256": "52446b77da4361f5700c6098d8d3a73258c16182e4327e9cc5dbc06fde2c9ef5",
+      "bytes": 1929873
+    },
+    "after": {
+      "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/after/snapshot.json",
+      "sha256": "7726c1fa890d6d673583774375275a1d18c1c62a047090a23b85fb04349ca9c4",
+      "bytes": 1930543
+    },
+    "comparison": {
+      "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/comparison.json",
+      "sha256": "ba68670e8a94756ad4e88ad3909362a799a7cd261cf031b847e37674f08bdb9e",
+      "bytes": 637
+    },
+    "counts": {
+      "compile_commands": 281,
+      "effective_commands": 698,
+      "ninja_edges": 758,
+      "ctest_tests": 98,
+      "generated_files": 44,
+      "rules": 226
+    },
+    "sections": {
+      "compile_commands": {
+        "before_sha256": "50cf53538a551f226b7be4461026eaf988632c34353df166da75a93fe3dc79b1",
+        "after_sha256": "50cf53538a551f226b7be4461026eaf988632c34353df166da75a93fe3dc79b1",
+        "equal": true
+      },
+      "ctest_tests": {
+        "before_sha256": "d618f84ae7b14199cc6f5022bb1bd6915ce494c28ed6443c7a443154fd74abe0",
+        "after_sha256": "d618f84ae7b14199cc6f5022bb1bd6915ce494c28ed6443c7a443154fd74abe0",
+        "equal": true
+      },
+      "generated_hashes": {
+        "before_sha256": "2a6eff4150b64ad7d04952be41605edd56f5faf821775a24bdace9763f8da440",
+        "after_sha256": "2a6eff4150b64ad7d04952be41605edd56f5faf821775a24bdace9763f8da440",
+        "equal": true
+      },
+      "ninja_edges": {
+        "before_sha256": "ac1004079e32deb4bbcb2010f4ca9490eaae4fba59c590323ad15834a09050a7",
+        "after_sha256": "ac1004079e32deb4bbcb2010f4ca9490eaae4fba59c590323ad15834a09050a7",
+        "equal": true
+      },
+      "ninja_effective_commands": {
+        "before_sha256": "76d9f65fb2c3569637f5bbde7e5eb795a3cced9c79a70b9c110560e2274e8976",
+        "after_sha256": "76d9f65fb2c3569637f5bbde7e5eb795a3cced9c79a70b9c110560e2274e8976",
+        "equal": true
+      },
+      "ninja_global_statements": {
+        "before_sha256": "43245c286e69d011aa20062313437045890d9cacad329e0a128a36864333fdff",
+        "after_sha256": "43245c286e69d011aa20062313437045890d9cacad329e0a128a36864333fdff",
+        "equal": true
+      },
+      "ninja_rules_and_pools": {
+        "before_sha256": "ae5b8fcea17d73d4408855c06d368deddb9ecab7abd700568cda4f1dc3afa83a",
+        "after_sha256": "ae5b8fcea17d73d4408855c06d368deddb9ecab7abd700568cda4f1dc3afa83a",
+        "equal": true
+      }
+    },
+    "generated_hashes": {
+      "CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx": {
+        "bytes": 313,
+        "sha256": "caeea70858bb1c70ce2d8d9d345604a43b712b201bf0cfecfaa45444782caaa7"
+      },
+      "CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx": {
+        "bytes": 25,
+        "sha256": "cab2492c7cc77e71528d3e8de61f82a0d07300a8c063e359ae56505863a2a708"
+      },
+      "generated/CustomNetworkRegistry.generated.h": {
+        "bytes": 659,
+        "sha256": "ad613f62915e45356a32b6c3e616572901de28762c994e604e293ee3a66429f3"
+      },
+      "generated/CustomNetworks.generated.h": {
+        "bytes": 584,
+        "sha256": "d2bd8e9c1cb5355c6390a11dd3e18dd5c031a67fdd4f316d87db884408cf7f05"
+      },
+      "generated/burn_tabular3d_audit31.cu": {
+        "bytes": 1814,
+        "sha256": "0965349cd8473bbee4d96e6657d3c25dc81345685da49fc605e28de62ea1b773"
+      },
+      "generated/burn_tabular3d_weak_urca.cu": {
+        "bytes": 1822,
+        "sha256": "673135b1d3746d6b512abdaee99511abfe3e4b790218a96b9f7a9211eee8e920"
+      },
+      "generated/burn_tabular4d_audit31.cu": {
+        "bytes": 1814,
+        "sha256": "b7e7d42d483e0e45b149f140cd67a09cb51ee708d6a1ed34c275c2109096162a"
+      },
+      "generated/burn_tabular4d_weak_urca.cu": {
+        "bytes": 1822,
+        "sha256": "043b0d31953eb503a596b66c45378667879498ae423643cedf9b8faad011b561"
+      },
+      "generated/cuda_dense_burn/helm_aprox13.cu": {
+        "bytes": 1957,
+        "sha256": "9b8df20987123c3a19e084b5a8e10a5dbbac460caeebbb4eb1568ee912cd9280"
+      },
+      "generated/cuda_dense_burn/helm_aprox19.cu": {
+        "bytes": 1957,
+        "sha256": "d95c5dee4abbd4f7017083d662b86351073d0fb4a776191547af2b7ddd790fe3"
+      },
+      "generated/cuda_dense_burn/helm_aprox21.cu": {
+        "bytes": 1957,
+        "sha256": "81cd5fdf8f49ebbf8bb51ff907aeb90f500e1470f47d5fc57989e14cfcc01045"
+      },
+      "generated/cuda_dense_burn/helm_custom_audit31.cu": {
+        "bytes": 2003,
+        "sha256": "3a8995e7d63b9e8358728db40c9747c65269a0f4a89aed5ba2cbf8cbb770e025"
+      },
+      "generated/cuda_dense_burn/helm_custom_weak_urca.cu": {
+        "bytes": 2011,
+        "sha256": "275aeef56d2cb8812ee8944ecb81593c13b6ed9c6368be9d2063db3dc1f9fae8"
+      },
+      "generated/cuda_dense_burn/helm_iso7.cu": {
+        "bytes": 1945,
+        "sha256": "3e66d1fe63a91f9ed7b9a383e20f2494e9ebf622f22212a717aa78320877bcd0"
+      },
+      "generated/cuda_dense_burn/ideal_aprox13.cu": {
+        "bytes": 1960,
+        "sha256": "6cbd8f33dbe8e052b856c9896bef19fb3766a23fc26b43270d790370b2644205"
+      },
+      "generated/cuda_dense_burn/ideal_aprox19.cu": {
+        "bytes": 1960,
+        "sha256": "d5324cd8ef5752fb09b0391701d34f253e4fe6b3751cca84f472d926baf84504"
+      },
+      "generated/cuda_dense_burn/ideal_aprox21.cu": {
+        "bytes": 1960,
+        "sha256": "1c153e8b05243a0a439fe379117a59cb2d5049d539f686b28d8b95047a898cca"
+      },
+      "generated/cuda_dense_burn/ideal_custom_audit31.cu": {
+        "bytes": 2006,
+        "sha256": "edc8ec212b1d37ee65122f3ced3f08d6a34434e2bd9eedbcf351c1f8bb0f0773"
+      },
+      "generated/cuda_dense_burn/ideal_custom_weak_urca.cu": {
+        "bytes": 2014,
+        "sha256": "d65c8e3593aab14b8aa25aeee6386fc6e2a267454be95b1587f2ea6d418a2f3a"
+      },
+      "generated/cuda_dense_burn/ideal_iso7.cu": {
+        "bytes": 1948,
+        "sha256": "105dbf0174fafe31dbf9f13b00e8c32d2ebac65cfa66e69a18bb2bde2ede98d7"
+      },
+      "generated/cuda_sparse_burn/aprox13_helmeosview.cu": {
+        "bytes": 976,
+        "sha256": "0c4861e3fbc8b84457803d51176e0a2b3d86c789f8c7394c8b2320e2bd25901f"
+      },
+      "generated/cuda_sparse_burn/aprox13_idealgasview.cu": {
+        "bytes": 979,
+        "sha256": "508a642369eafdf05ba8a8ba4e1248cd93051da6fd2cda07448dab030e8dae9e"
+      },
+      "generated/cuda_sparse_burn/aprox13_tabular3deosview.cu": {
+        "bytes": 991,
+        "sha256": "9c36e3b3d210ba05589c25fc9c8bcac7ed97120855663b71c8c51109cfdbeb87"
+      },
+      "generated/cuda_sparse_burn/aprox13_tabular4deosview.cu": {
+        "bytes": 991,
+        "sha256": "0a851a3df6ba33f8f30aa8aae979a8cc9e98bda4019e1658eef4968bf121085c"
+      },
+      "generated/cuda_sparse_burn/aprox19_helmeosview.cu": {
+        "bytes": 976,
+        "sha256": "3438006e10667389da500d9dab347b1263dfcdbd6ee24cdd789c59e4053d9947"
+      },
+      "generated/cuda_sparse_burn/aprox19_idealgasview.cu": {
+        "bytes": 979,
+        "sha256": "62fb803bbccb57ae8b07971ab5a51e78129c242a2f2578362d60ddf2a0450388"
+      },
+      "generated/cuda_sparse_burn/aprox19_tabular3deosview.cu": {
+        "bytes": 991,
+        "sha256": "1544e94387f5dc38d2b09fc3e169512ae120fd8d6b97499966d4cbe77ae10167"
+      },
+      "generated/cuda_sparse_burn/aprox19_tabular4deosview.cu": {
+        "bytes": 991,
+        "sha256": "4b0bc006bdf923d6ca9b5d70574e605587594e95c1ada8030038cc1031b2bb66"
+      },
+      "generated/cuda_sparse_burn/aprox21_helmeosview.cu": {
+        "bytes": 976,
+        "sha256": "6d8f3b4ec7af0327ca91aa6517710edb48a0f5165f87b7bce739dc559d5829d1"
+      },
+      "generated/cuda_sparse_burn/aprox21_idealgasview.cu": {
+        "bytes": 979,
+        "sha256": "5a21ffb5384ef3465270ed175b28402fbd0936cbe76ecbbba39faee85a5a95ab"
+      },
+      "generated/cuda_sparse_burn/aprox21_tabular3deosview.cu": {
+        "bytes": 991,
+        "sha256": "2703391bdb200f98314a3e341522df5fa5fe644c6caabc8040c1e1a66c392169"
+      },
+      "generated/cuda_sparse_burn/aprox21_tabular4deosview.cu": {
+        "bytes": 991,
+        "sha256": "9276104f79963a99b7ee3effe3bc434195dd174be70063ee8ddab6ae1caeaae1"
+      },
+      "generated/cuda_sparse_burn/custom_audit31_helmeosview.cu": {
+        "bytes": 1022,
+        "sha256": "7ba0a771f273f87c98ed910121118faa84afb4e3ece3fee301fbda2544a3e56b"
+      },
+      "generated/cuda_sparse_burn/custom_audit31_idealgasview.cu": {
+        "bytes": 1025,
+        "sha256": "321f735abe7c75a2898f4219b123a96b7eb5541102198cea9d3b9eeffd39a41e"
+      },
+      "generated/cuda_sparse_burn/custom_audit31_tabular3deosview.cu": {
+        "bytes": 1037,
+        "sha256": "75d183bce9ee3fecaef1e263d6e6168b1e951f122e53a8ca3239cde1916d2cc1"
+      },
+      "generated/cuda_sparse_burn/custom_audit31_tabular4deosview.cu": {
+        "bytes": 1037,
+        "sha256": "3392de0f10b787b3372edd5f49b13cf15aff3a9e1ef6c6cc04d50f62f4454c24"
+      },
+      "generated/cuda_sparse_burn/custom_weak_urca_helmeosview.cu": {
+        "bytes": 1030,
+        "sha256": "0e1cc1cff1953d119f0c6700a15799eef5b1337737b4c302d100323234e5bf6f"
+      },
+      "generated/cuda_sparse_burn/custom_weak_urca_idealgasview.cu": {
+        "bytes": 1033,
+        "sha256": "f5cf2c95580dae27c2e7b2db8a8befaa5f514783a5bfbcf72645b665d394be3e"
+      },
+      "generated/cuda_sparse_burn/custom_weak_urca_tabular3deosview.cu": {
+        "bytes": 1045,
+        "sha256": "d3f203d0e3b9c2f9a5cc0b2fcd5d406af3fa4cff693a82f618a77def1c6a1bc7"
+      },
+      "generated/cuda_sparse_burn/custom_weak_urca_tabular4deosview.cu": {
+        "bytes": 1045,
+        "sha256": "6cd3a741bea79e00745c5995485cc8561e9e621c385b7a7071f3fb543d5bdcea"
+      },
+      "generated/cuda_sparse_burn/iso7_helmeosview.cu": {
+        "bytes": 964,
+        "sha256": "4026c8503c4c60f6ea3d5479bfb23aae09d14c182e54a2b73728c8207917463c"
+      },
+      "generated/cuda_sparse_burn/iso7_idealgasview.cu": {
+        "bytes": 967,
+        "sha256": "98bfd5f9521a8016948b790168be60b4d2085a007daa4f869a6af28bb7c55137"
+      },
+      "generated/cuda_sparse_burn/iso7_tabular3deosview.cu": {
+        "bytes": 979,
+        "sha256": "c04cdbe4d2e38e43b6f7071489013ad32af664aa935998e400f2858b6b39a273"
+      },
+      "generated/cuda_sparse_burn/iso7_tabular4deosview.cu": {
+        "bytes": 979,
+        "sha256": "7a194afe8296caa7efeac400965eabf44f46487166eb0beffa3c5e091930f9ff"
+      }
+    },
+    "job_pools": [
+      {
+        "bindings": {
+          "depth": "2"
+        },
+        "statement": "pool arch_cuda_heavy"
+      }
+    ],
+    "excluded": "CTest source-location backtraces and Ninja CMake regeneration edges; raw originals are retained."
+  },
+  "lightweight_checks": {
+    "cpu-configure": {
+      "returncode": 0,
+      "command": [
+        "env",
+        "OMP_NUM_THREADS=4",
+        "CCACHE_DIR=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/ccache",
+        "python3",
+        "-B",
+        "tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--pressure-guard",
+        "--log",
+        "build/cmake-maintenance-20260908/cpu-configure.log",
+        "--",
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "build/cmake-maintenance-20260908/cpu",
+        "-G",
+        "Ninja",
+        "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DARCH_ENABLE_CUDA=OFF",
+        "-DBUILD_TESTING=ON",
+        "-DARCH_ENABLE_KLU=OFF",
+        "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu/bin",
+        "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+        "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src"
+      ],
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu-configure.log",
+        "sha256": "23bde5c674278b83872121dea027295ed2680d2a109dd46270e586f863729bd9",
+        "bytes": 2810
+      },
+      "status": "PASS",
+      "log_text": "-- The C compiler identification is GNU 12.4.0\n-- The CXX compiler identification is GNU 12.4.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/gcc-12 - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /usr/bin/g++-12 - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- ===================================================================\n-- Configuring ARCH Framework\n-- C++ Standard: C++20 Required\n-- ===================================================================\n-- [OPT] Found ccache: /usr/bin/ccache\n-- [OPT] Build Type: Release\n-- [OPT] LTO enabled for optimized configurations\n-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed\n-- Performing Test CMAKE_HAVE_LIBC_PTHREAD\n-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success\n-- Found Threads: TRUE  \n-- Found Python3: /usr/bin/python3 (found version \"3.12.3\") found components: Interpreter \n-- Found OpenMP_CXX: -fopenmp (found version \"4.5\") \n-- Found OpenMP: TRUE (found version \"4.5\") found components: CXX \n-- [DEP] OpenMP enabled for target ARCH\n-- Found HDF5: /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.so;/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so;/usr/lib/x86_64-linux-gnu/libcrypto.so;/usr/lib/x86_64-linux-gnu/libcurl.so;/usr/lib/x86_64-linux-gnu/libpthread.a;/usr/lib/x86_64-linux-gnu/libsz.so;/usr/lib/x86_64-linux-gnu/libz.so;/usr/lib/x86_64-linux-gnu/libdl.a;/usr/lib/x86_64-linux-gnu/libm.so (found version \"1.10.10\") found components: CXX HL \n-- [DEP] HDF5 C++ libraries linked successfully\n-- [DEP] HighFive headers configured via FetchContent\n-- [DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable\n-- ===================================================================\n-- [SUCCESS] ARCH Framework build environment configured successfully!\n-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu/bin/ARCH\n-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/\n-- ===================================================================\n-- Configuring done (6.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu\nMEMORY_GUARD_RESULT min_available_kib=5482484 baseline_swap_kib=251440 peak_swap_kib=251440 guard_stopped=False peak_owned_rss_kib=33436 elapsed_seconds=7.013 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.576 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=8 complete=True\n",
+      "resource_observation": {
+        "memory": {
+          "min_available_kib": "5482484",
+          "baseline_swap_kib": "251440",
+          "peak_swap_kib": "251440",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "33436",
+          "elapsed_seconds": "7.013",
+          "stop_reason": "none"
+        },
+        "pressure": {
+          "scope": "linux_system",
+          "peak_memory_full_percent": "0.000",
+          "peak_io_full_percent": "0.576",
+          "peak_swap_in_mib_s": "0.000",
+          "peak_swap_out_mib_s": "0.000",
+          "memory_limit_percent": "20.0",
+          "io_limit_percent": "50.0",
+          "sustain_seconds": "10.0",
+          "samples": "8",
+          "complete": "True"
+        }
+      }
+    },
+    "application-configure": {
+      "returncode": 0,
+      "command": [
+        "env",
+        "OMP_NUM_THREADS=4",
+        "CCACHE_DIR=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/ccache",
+        "python3",
+        "-B",
+        "tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--pressure-guard",
+        "--log",
+        "build/cmake-maintenance-20260908/application-configure.log",
+        "--",
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "build/cmake-maintenance-20260908/cpu-application",
+        "-G",
+        "Ninja",
+        "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+        "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DARCH_ENABLE_CUDA=OFF",
+        "-DBUILD_TESTING=OFF",
+        "-DARCH_ENABLE_KLU=OFF",
+        "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu-application/bin",
+        "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+        "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src"
+      ],
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/application-configure.log",
+        "sha256": "4f0d76d74568443638e7a5bd0907e816b23e4617d20912a392414e1d814df87f",
+        "bytes": 2622
+      },
+      "status": "PASS",
+      "log_text": "-- The C compiler identification is GNU 12.4.0\n-- The CXX compiler identification is GNU 12.4.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/gcc-12 - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /usr/bin/g++-12 - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- ===================================================================\n-- Configuring ARCH Framework\n-- C++ Standard: C++20 Required\n-- ===================================================================\n-- [OPT] Found ccache: /usr/bin/ccache\n-- [OPT] Build Type: Release\n-- [OPT] LTO enabled for optimized configurations\n-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed\n-- Found OpenMP_CXX: -fopenmp (found version \"4.5\") \n-- Found OpenMP: TRUE (found version \"4.5\") found components: CXX \n-- [DEP] OpenMP enabled for target ARCH\n-- Found HDF5: /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.so;/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so;/usr/lib/x86_64-linux-gnu/libcrypto.so;/usr/lib/x86_64-linux-gnu/libcurl.so;/usr/lib/x86_64-linux-gnu/libpthread.a;/usr/lib/x86_64-linux-gnu/libsz.so;/usr/lib/x86_64-linux-gnu/libz.so;/usr/lib/x86_64-linux-gnu/libdl.a;/usr/lib/x86_64-linux-gnu/libm.so (found version \"1.10.10\") found components: CXX HL \n-- [DEP] HDF5 C++ libraries linked successfully\n-- [DEP] HighFive headers configured via FetchContent\n-- [DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable\n-- ===================================================================\n-- [SUCCESS] ARCH Framework build environment configured successfully!\n-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu-application/bin/ARCH\n-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/\n-- ===================================================================\n-- Configuring done (5.1s)\n-- Generating done (0.0s)\n-- Build files have been written to: /home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu-application\nMEMORY_GUARD_RESULT min_available_kib=5642224 baseline_swap_kib=251440 peak_swap_kib=251440 guard_stopped=False peak_owned_rss_kib=32896 elapsed_seconds=6.009 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.912 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True\n",
+      "resource_observation": {
+        "memory": {
+          "min_available_kib": "5642224",
+          "baseline_swap_kib": "251440",
+          "peak_swap_kib": "251440",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "32896",
+          "elapsed_seconds": "6.009",
+          "stop_reason": "none"
+        },
+        "pressure": {
+          "scope": "linux_system",
+          "peak_memory_full_percent": "0.000",
+          "peak_io_full_percent": "0.912",
+          "peak_swap_in_mib_s": "0.000",
+          "peak_swap_out_mib_s": "0.000",
+          "memory_limit_percent": "20.0",
+          "io_limit_percent": "50.0",
+          "sustain_seconds": "10.0",
+          "samples": "7",
+          "complete": "True"
+        }
+      }
+    },
+    "cpu-build": {
+      "returncode": 0,
+      "command": [
+        "env",
+        "OMP_NUM_THREADS=4",
+        "CCACHE_DIR=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/ccache",
+        "python3",
+        "-B",
+        "tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--pressure-guard",
+        "--log",
+        "build/cmake-maintenance-20260908/cpu-build.log",
+        "--",
+        "cmake",
+        "--build",
+        "build/cmake-maintenance-20260908/cpu",
+        "--target",
+        "arch_physical_constants",
+        "arch_compensated_sum",
+        "arch_curvilinear_metrics",
+        "--parallel",
+        "2"
+      ],
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu-build.log",
+        "sha256": "df7f29a9e0dc46fef44e510ae31a7618fdb4f2403d6a58fcd83a25ff96398c7e",
+        "bytes": 938
+      },
+      "status": "PASS",
+      "log_text": "[0/2] Re-checking globbed directories...\n[1/6] Building CXX object CMakeFiles/arch_physical_constants.dir/tests/host/test_physical_constants.cpp.o\n[2/6] Linking CXX executable arch_physical_constants\n[3/6] Building CXX object CMakeFiles/arch_compensated_sum.dir/tests/host/test_compensated_sum.cpp.o\n[4/6] Linking CXX executable arch_compensated_sum\n[5/6] Building CXX object CMakeFiles/arch_curvilinear_metrics.dir/tests/host/test_curvilinear_metrics.cpp.o\n[6/6] Linking CXX executable arch_curvilinear_metrics\nMEMORY_GUARD_RESULT min_available_kib=5415032 baseline_swap_kib=251440 peak_swap_kib=251440 guard_stopped=False peak_owned_rss_kib=350252 elapsed_seconds=6.015 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.165 peak_io_full_percent=1.946 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.012 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True\n",
+      "resource_observation": {
+        "memory": {
+          "min_available_kib": "5415032",
+          "baseline_swap_kib": "251440",
+          "peak_swap_kib": "251440",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "350252",
+          "elapsed_seconds": "6.015",
+          "stop_reason": "none"
+        },
+        "pressure": {
+          "scope": "linux_system",
+          "peak_memory_full_percent": "0.165",
+          "peak_io_full_percent": "1.946",
+          "peak_swap_in_mib_s": "0.000",
+          "peak_swap_out_mib_s": "0.012",
+          "memory_limit_percent": "20.0",
+          "io_limit_percent": "50.0",
+          "sustain_seconds": "10.0",
+          "samples": "7",
+          "complete": "True"
+        }
+      }
+    },
+    "cuda-configure": {
+      "returncode": 0,
+      "command": [
+        "env",
+        "OMP_NUM_THREADS=4",
+        "CCACHE_DIR=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/ccache",
+        "python3",
+        "-B",
+        "tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--pressure-guard",
+        "--log",
+        "build/cmake-maintenance-20260908/cuda-configure.log",
+        "--",
+        "cmake",
+        "-S",
+        ".",
+        "-B",
+        "build/maintenance-freeze-20260908/core"
+      ],
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cuda-configure.log",
+        "sha256": "9c664a6383336846269d3c5c87a708efaf8651e71d5b8c856f6c979594f1592f",
+        "bytes": 9027
+      },
+      "status": "PASS",
+      "log_text": "-- ===================================================================\n-- Configuring ARCH Framework\n-- C++ Standard: C++20 Required\n-- ===================================================================\n-- [OPT] Found ccache: /usr/bin/ccache\n-- [OPT] Build Type: Release\n-- [OPT] LTO enabled for optimized configurations\n-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed\n-- [NET] Registered custom:audit31\n-- [NET] Registered custom:weak_urca\n-- [CUDA] Compiled code images: 86\n-- [DEP] cuDSS found: /home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0\n-- [OPT] CUDA compiler cache enabled: /usr/bin/ccache\n-- [DEP] OpenMP enabled for target ARCH\n-- [DEP] HDF5 C++ libraries linked successfully\n-- [DEP] HighFive headers configured via FetchContent\n-- Source:           /home/shiroakane/ARCH \n-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core \n-- Install lib:      lib\n-- Install include:  include/suitesparse\n-- Install bin:      bin\n-- Install pkg-file: lib\n-- Install rpath:    $ORIGIN\n-- Build   rpath:    \n-- Build type:       Release \n-- Fortran:          not enabled\n-- CUDA:             not enabled\n-- Adding \"btf\" to the list of built targets.\n-- Adding \"suitesparse_config\" to the list of built targets.\n-- Building SuiteSparse_config version: v7.13.0 (Aug 10, 2026)\n-- Source:           /home/shiroakane/ARCH \n-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core \n-- Install lib:      lib\n-- Install include:  include/suitesparse\n-- Install bin:      bin\n-- Install pkg-file: lib\n-- Install rpath:    $ORIGIN\n-- Build   rpath:    \n-- Build type:       Release \n-- Fortran:          not enabled\n-- CUDA:             not enabled\n-- SuiteSparse_config has OpenMP: OFF\n-- Using clock_gettime without librt\n-- C to Fortran calling protocol: \n--     SUITESPARSE_HAS_FORTRAN  : OFF\n--     FortranCInterface_GLOBAL_MACRO  : (name,NAME) name##_\n--     FortranCInterface_GLOBAL__MACRO : (name,NAME) name##_\n-- ------------------------------------------------------------------------\n-- SuiteSparse CMAKE report for: SuiteSparseConfig\n-- ------------------------------------------------------------------------\n-- build type:           Release\n-- BUILD_SHARED_LIBS:    OFF\n-- BUILD_STATIC_LIBS:    ON\n-- C compiler:           /usr/bin/gcc-12 \n-- C flags:              \n-- C++ compiler:         /usr/bin/g++-12\n-- C++ flags:            \n-- C Flags release:      -O3 -DNDEBUG \n-- C++ Flags release:    -O3 -march=native -DNDEBUG \n-- Fortran compiler:     none\n-- compile definitions:  BLAS_Generic\n-- BLAS integer:         int32_t\n-- CUDA architectures:   86\n-- ------------------------------------------------------------------------\n-- CMAKE_SYSTEM_PROCESSOR: x86_64\n-- Building AMD version: v3.3.4 (July 25, 2025)\n-- Source:           /home/shiroakane/ARCH \n-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core \n-- Install lib:      lib\n-- Install include:  include/suitesparse\n-- Install bin:      bin\n-- Install pkg-file: lib\n-- Install rpath:    $ORIGIN\n-- Build   rpath:    \n-- Build type:       Release \n-- Fortran:          not enabled\n-- CUDA:             not enabled\n-- Skipping the demos in AMD/Demo\n-- ------------------------------------------------------------------------\n-- SuiteSparse CMAKE report for: AMD\n-- ------------------------------------------------------------------------\n-- build type:           Release\n-- BUILD_SHARED_LIBS:    OFF\n-- BUILD_STATIC_LIBS:    ON\n-- C compiler:           /usr/bin/gcc-12 \n-- C flags:              \n-- C++ compiler:         /usr/bin/g++-12\n-- C++ flags:            \n-- C Flags release:      -O3 -DNDEBUG \n-- C++ Flags release:    -O3 -march=native -DNDEBUG \n-- Fortran compiler:     none\n-- compile definitions:  \n-- CUDA architectures:   86\n-- ------------------------------------------------------------------------\n-- Building BTF version: v2.3.3 (July 25, 2025)\n-- Source:           /home/shiroakane/ARCH \n-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core \n-- Install lib:      lib\n-- Install include:  include/suitesparse\n-- Install bin:      bin\n-- Install pkg-file: lib\n-- Install rpath:    $ORIGIN\n-- Build   rpath:    \n-- Build type:       Release \n-- Fortran:          not enabled\n-- CUDA:             not enabled\n-- ------------------------------------------------------------------------\n-- SuiteSparse CMAKE report for: BTF\n-- ------------------------------------------------------------------------\n-- build type:           Release\n-- BUILD_SHARED_LIBS:    OFF\n-- BUILD_STATIC_LIBS:    ON\n-- C compiler:           /usr/bin/gcc-12 \n-- C flags:              \n-- C++ compiler:         /usr/bin/g++-12\n-- C++ flags:            \n-- C Flags release:      -O3 -DNDEBUG \n-- C++ Flags release:    -O3 -march=native -DNDEBUG \n-- Fortran compiler:     none\n-- compile definitions:  \n-- CUDA architectures:   86\n-- ------------------------------------------------------------------------\n-- Building COLAMD version: v3.3.5 (July 25, 2025)\n-- Source:           /home/shiroakane/ARCH \n-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core \n-- Install lib:      lib\n-- Install include:  include/suitesparse\n-- Install bin:      bin\n-- Install pkg-file: lib\n-- Install rpath:    $ORIGIN\n-- Build   rpath:    \n-- Build type:       Release \n-- Fortran:          not enabled\n-- CUDA:             not enabled\n-- Skipping the demos in COLAMD/Demo\n-- ------------------------------------------------------------------------\n-- SuiteSparse CMAKE report for: COLAMD\n-- ------------------------------------------------------------------------\n-- build type:           Release\n-- BUILD_SHARED_LIBS:    OFF\n-- BUILD_STATIC_LIBS:    ON\n-- C compiler:           /usr/bin/gcc-12 \n-- C flags:              \n-- C++ compiler:         /usr/bin/g++-12\n-- C++ flags:            \n-- C Flags release:      -O3 -DNDEBUG \n-- C++ Flags release:    -O3 -march=native -DNDEBUG \n-- Fortran compiler:     none\n-- compile definitions:  \n-- CUDA architectures:   86\n-- ------------------------------------------------------------------------\n-- Building KLU version: v2.3.6 (July 25, 2025)\n-- Source:           /home/shiroakane/ARCH \n-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core \n-- Install lib:      lib\n-- Install include:  include/suitesparse\n-- Install bin:      bin\n-- Install pkg-file: lib\n-- Install rpath:    $ORIGIN\n-- Build   rpath:    \n-- Build type:       Release \n-- Fortran:          not enabled\n-- CUDA:             not enabled\n-- CHOLMOD not found or not requested\n-- Skipping the demos in KLU/Demo\n-- ------------------------------------------------------------------------\n-- SuiteSparse CMAKE report for: KLU\n-- ------------------------------------------------------------------------\n-- build type:           Release\n-- BUILD_SHARED_LIBS:    OFF\n-- BUILD_STATIC_LIBS:    ON\n-- C compiler:           /usr/bin/gcc-12 \n-- C flags:              \n-- C++ compiler:         /usr/bin/g++-12\n-- C++ flags:            \n-- C Flags release:      -O3 -DNDEBUG \n-- C++ Flags release:    -O3 -march=native -DNDEBUG \n-- Fortran compiler:     none\n-- compile definitions:  NCHOLMOD\n-- CUDA architectures:   86\n-- ------------------------------------------------------------------------\n-- ------------------------------------------------------------------------\n-- SuiteSparse CMAKE report for: SuiteSparse\n-- ------------------------------------------------------------------------\n-- build type:           Release\n-- BUILD_SHARED_LIBS:    OFF\n-- BUILD_STATIC_LIBS:    ON\n-- C compiler:           /usr/bin/gcc-12 \n-- C flags:              \n-- C++ compiler:         /usr/bin/g++-12\n-- C++ flags:            \n-- C Flags release:      -O3 -DNDEBUG \n-- C++ Flags release:    -O3 -march=native -DNDEBUG \n-- Fortran compiler:     none\n-- compile definitions:  \n-- CUDA architectures:   86\n-- ------------------------------------------------------------------------\n-- [DEP] SuiteSparse KLU enabled for sparse reaction networks\n-- ===================================================================\n-- [SUCCESS] ARCH Framework build environment configured successfully!\n-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH\n-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/\n-- ===================================================================\n-- Configuring done (6.9s)\n-- Generating done (0.1s)\n-- Build files have been written to: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core\nMEMORY_GUARD_RESULT min_available_kib=5524460 baseline_swap_kib=251440 peak_swap_kib=251440 guard_stopped=False peak_owned_rss_kib=30228 elapsed_seconds=8.011 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.008 peak_io_full_percent=2.510 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True\n",
+      "resource_observation": {
+        "memory": {
+          "min_available_kib": "5524460",
+          "baseline_swap_kib": "251440",
+          "peak_swap_kib": "251440",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "30228",
+          "elapsed_seconds": "8.011",
+          "stop_reason": "none"
+        },
+        "pressure": {
+          "scope": "linux_system",
+          "peak_memory_full_percent": "0.008",
+          "peak_io_full_percent": "2.510",
+          "peak_swap_in_mib_s": "0.000",
+          "peak_swap_out_mib_s": "0.000",
+          "memory_limit_percent": "20.0",
+          "io_limit_percent": "50.0",
+          "sustain_seconds": "10.0",
+          "samples": "9",
+          "complete": "True"
+        }
+      }
+    },
+    "cuda-leaf-build": {
+      "returncode": 0,
+      "command": [
+        "env",
+        "OMP_NUM_THREADS=4",
+        "CCACHE_DIR=/home/shiroakane/ARCH/build/cmake-maintenance-20260908/ccache",
+        "python3",
+        "-B",
+        "tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--pressure-guard",
+        "--log",
+        "build/cmake-maintenance-20260908/cuda-leaf-build.log",
+        "--",
+        "cmake",
+        "--build",
+        "build/maintenance-freeze-20260908/core",
+        "--target",
+        "arch_cuda_compensated_sum",
+        "--parallel",
+        "1"
+      ],
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cuda-leaf-build.log",
+        "sha256": "f2b7407e96c2822c3067f5cc611e105bdfd7b1ad6177c7ac3a72b30ea83ebe8d",
+        "bytes": 487
+      },
+      "status": "PASS",
+      "log_text": "[0/2] Re-checking globbed directories...\nninja: no work to do.\nMEMORY_GUARD_RESULT min_available_kib=5726712 baseline_swap_kib=251440 peak_swap_kib=251440 guard_stopped=False peak_owned_rss_kib=1024 elapsed_seconds=1.003 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.014 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True\n",
+      "resource_observation": {
+        "memory": {
+          "min_available_kib": "5726712",
+          "baseline_swap_kib": "251440",
+          "peak_swap_kib": "251440",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "1024",
+          "elapsed_seconds": "1.003",
+          "stop_reason": "none"
+        },
+        "pressure": {
+          "scope": "linux_system",
+          "peak_memory_full_percent": "0.000",
+          "peak_io_full_percent": "0.014",
+          "peak_swap_in_mib_s": "0.000",
+          "peak_swap_out_mib_s": "0.000",
+          "memory_limit_percent": "20.0",
+          "io_limit_percent": "50.0",
+          "sustain_seconds": "10.0",
+          "samples": "2",
+          "complete": "True"
+        }
+      }
+    },
+    "tooling-tests": {
+      "returncode": 0,
+      "command": [
+        "env",
+        "OMP_NUM_THREADS=4",
+        "python3",
+        "-B",
+        "tools/run_memory_guarded.py",
+        "--min-available-mib",
+        "1536",
+        "--max-swap-growth-mib",
+        "256",
+        "--pressure-guard",
+        "--log",
+        "build/cmake-maintenance-20260908/tooling-tests.log",
+        "--",
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/tooling",
+        "-p",
+        "test_build_configuration.py"
+      ],
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/tooling-tests.log",
+        "sha256": "10c27310ed126a8d7aed923346701b7f629f28b5f06962ae6f21cdc4fd63b936",
+        "bytes": 533
+      },
+      "status": "PASS",
+      "log_text": ".......\n----------------------------------------------------------------------\nRan 7 tests in 11.585s\n\nOK\nMEMORY_GUARD_RESULT min_available_kib=5482120 baseline_swap_kib=251440 peak_swap_kib=251440 guard_stopped=False peak_owned_rss_kib=47488 elapsed_seconds=12.019 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.603 peak_io_full_percent=0.618 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=13 complete=True\n",
+      "resource_observation": {
+        "memory": {
+          "min_available_kib": "5482120",
+          "baseline_swap_kib": "251440",
+          "peak_swap_kib": "251440",
+          "guard_stopped": "False",
+          "peak_owned_rss_kib": "47488",
+          "elapsed_seconds": "12.019",
+          "stop_reason": "none"
+        },
+        "pressure": {
+          "scope": "linux_system",
+          "peak_memory_full_percent": "0.603",
+          "peak_io_full_percent": "0.618",
+          "peak_swap_in_mib_s": "0.000",
+          "peak_swap_out_mib_s": "0.000",
+          "memory_limit_percent": "20.0",
+          "io_limit_percent": "50.0",
+          "sustain_seconds": "10.0",
+          "samples": "13",
+          "complete": "True"
+        }
+      }
+    },
+    "cpu-ctest": {
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu",
+        "--output-on-failure",
+        "-R",
+        "^(physical_constants|compensated_sum|curvilinear_metrics)$"
+      ],
+      "working_directory": "/home/shiroakane/ARCH",
+      "returncode": 0,
+      "elapsed_seconds": 0.21516507399792317,
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu-ctest.log",
+        "sha256": "f7c5600c8caf963c1d93254a2ba60956fbf6f4d55882a754f03e217efc772de5",
+        "bytes": 559
+      },
+      "status": "PASS",
+      "log_text": "Internal ctest changing into directory: /home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu\nTest project /home/shiroakane/ARCH/build/cmake-maintenance-20260908/cpu\n    Start  8: physical_constants\n1/3 Test  #8: physical_constants ...............   Passed    0.00 sec\n    Start 10: curvilinear_metrics\n2/3 Test #10: curvilinear_metrics ..............   Passed    0.18 sec\n    Start 11: compensated_sum\n3/3 Test #11: compensated_sum ..................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 3\n\nTotal Test time (real) =   0.19 sec\n"
+    },
+    "architecture-unit": {
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/tooling",
+        "-p",
+        "test_audit_architecture.py"
+      ],
+      "working_directory": "/home/shiroakane/ARCH",
+      "returncode": 0,
+      "elapsed_seconds": 3.271728648003773,
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/architecture-unit.log",
+        "sha256": "8e5c95c16c96686dec1490a123107a3ba27ff793778c54162961073f74e3a48e",
+        "bytes": 194
+      },
+      "status": "PASS",
+      "log_text": "...............................................................................................\n----------------------------------------------------------------------\nRan 95 tests in 3.201s\n\nOK\n"
+    },
+    "architecture-audit": {
+      "command": [
+        "python3",
+        "-B",
+        "tools/audit_architecture.py",
+        "."
+      ],
+      "working_directory": "/home/shiroakane/ARCH",
+      "returncode": 0,
+      "elapsed_seconds": 1.7686108910056646,
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/architecture-audit.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "status": "PASS",
+      "log_text": ""
+    },
+    "allocation-lifetimes-selfcheck": {
+      "name": "allocation-lifetimes-selfcheck",
+      "command": "python3 -B validation/backend/results/device-memory-first-law-20260907/test_allocation_lifetimes.py",
+      "working_directory": "/home/shiroakane/ARCH",
+      "returncode": 0,
+      "observed_tool_wall_seconds": 0.058415836,
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/allocation-lifetimes-selfcheck.log",
+        "sha256": "94f7f87d6f8cbcd4fa58cd7f08e000039b850c645cbced8f3f2e36e5212b20d7",
+        "bytes": 118
+      },
+      "output": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.002s\n\nOK\n",
+      "status": "PASS",
+      "log_text": "...................\n----------------------------------------------------------------------\nRan 19 tests in 0.002s\n\nOK\n"
+    },
+    "process-identity-selfcheck": {
+      "name": "process-identity-selfcheck",
+      "command": "python3 -B validation/backend/results/device-memory-first-law-20260907/test_process_identity.py",
+      "working_directory": "/home/shiroakane/ARCH",
+      "returncode": 0,
+      "observed_tool_wall_seconds": 0.318471197,
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/process-identity-selfcheck.log",
+        "sha256": "e3ca4bd320b56fe11c179db496d585e979705480afb670aa65bd385cf666ff7c",
+        "bytes": 138
+      },
+      "output": ".......................................\n----------------------------------------------------------------------\nRan 39 tests in 0.211s\n\nOK\n",
+      "status": "PASS",
+      "log_text": ".......................................\n----------------------------------------------------------------------\nRan 39 tests in 0.211s\n\nOK\n"
+    }
+  },
+  "lightweight_source_before": {
+    "commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "3bc8f1ce79ef787f398128962a4b72dcec2339a3a2fc397816576e999cfb228e",
+    "dirty": true,
+    "modified_files": [
+      "CMakeLists.txt"
+    ],
+    "untracked_source_files": [
+      "cmake/Application.cmake",
+      "cmake/BuildOptions.cmake",
+      "cmake/CudaBackend.cmake",
+      "cmake/CustomNetworks.cmake",
+      "cmake/Dependencies.cmake",
+      "cmake/tests/CudaTests.cmake",
+      "cmake/tests/HostTests.cmake"
+    ]
+  },
+  "lightweight_source_after": {
+    "commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "3bc8f1ce79ef787f398128962a4b72dcec2339a3a2fc397816576e999cfb228e",
+    "dirty": true,
+    "modified_files": [
+      "CMakeLists.txt"
+    ],
+    "untracked_source_files": [
+      "cmake/Application.cmake",
+      "cmake/BuildOptions.cmake",
+      "cmake/CudaBackend.cmake",
+      "cmake/CustomNetworks.cmake",
+      "cmake/Dependencies.cmake",
+      "cmake/tests/CudaTests.cmake",
+      "cmake/tests/HostTests.cmake"
+    ]
+  },
+  "lightweight_source_verified": true,
+  "receipt_files": [
+    {
+      "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/execution-outcomes.json",
+      "sha256": "54e68eff8e2873c5c900ffa692ae293eb9c527d6f6b7879c3ba78092ed752cba",
+      "bytes": 5442
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/short-check-outcomes.json",
+      "sha256": "1e404d30344e374bb808a3a806326fd1f50a5eebb22ef0d7da675272d400939d",
+      "bytes": 4599
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/data-selfchecks.json",
+      "sha256": "a2ae3c70399774acbba0030915556d0220f87736f30f157a27c0b33622f37546",
+      "bytes": 1272
+    }
+  ],
+  "evidence_counts": {
+    "new_cpu_leaf_compilations": 3,
+    "new_cpu_ctest_passes": 3,
+    "build_configuration_unit_passes": 7,
+    "architecture_unit_passes": 95,
+    "architecture_audit_exit_code": 0,
+    "cuda_leaf_compilations": 0,
+    "full_ctest_rerun": false,
+    "separate_result_recipe_selfchecks": {
+      "allocation-lifetimes-selfcheck": 19,
+      "process-identity-selfcheck": 39
+    }
+  },
+  "historical_evidence": {
+    "runtime_record": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/runtime-review.json",
+      "sha256": "917930fe8db4862046bd407581b44d4b77477d6346ddc1b11b06f59f0ae3b388",
+      "bytes": 258243
+    },
+    "runtime_source": {
+      "commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf",
+      "dirty": true,
+      "modified_files": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "src/driver/SolverDispatch.cpp",
+        "src/driver/dispatch/DispatchImpl.h",
+        "tests/cuda/test_mainline_authority.cpp",
+        "tests/host/test_resolved_execution_plan.cpp"
+      ],
+      "untracked_source_files": [
+        "cmake/SelectIpoLinker.cmake",
+        "tests/tooling/test_build_configuration.py"
+      ]
+    },
+    "scientific_index": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/final-acceptance-20260907/release-73a9cf50/index-final-930/index.json",
+      "sha256": "2af13844b90959a57e4479fc269641cd87ce1b8c6ef2404f62f59c5f8f690b85",
+      "bytes": 1294222
+    },
+    "identity_boundary": "The existing runtime and scientific records retain the source identities they actually executed; current CMake equivalence does not relabel or rerun those campaigns."
+  },
+  "raw_data_policy": "Compact logs, identities and semantic digests only; no objects, executables, HDF5 or raw Ninja tree are included.",
+  "review_recipe": {
+    "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/archive_cmake_review.py",
+    "sha256": "b3a95667354d1ba9bc54289099ec2f1548e19fb670a436a93e117c9c38a43495",
+    "bytes": 16071
+  }
+}

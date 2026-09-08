@@ -9,6 +9,17 @@
 以下命令均从仓库根目录在 Linux 或 WSL2 中执行。工具测试、数值回归和完整程序短测
 各有用途；科学误差与验收预算统一见 [Validation](../validation/README.zh-CN.md)。
 
+完整测试套件的编译耗时与主机内存需求都高于只构建应用。
+`BUILD_TESTING=ON` 注册适用的测试目标，默认 `all` 构建会编译这些额外的可执行程序。
+启用 `ARCH_ENABLE_CUDA=ON` 后，CUDA 测试还会增加大量 NVCC 编译工作。
+这里的压力主要是主机内存，不是显存；显存需求在实际运行设备测试时才需要另行衡量。
+较大的生成网络和更多目标 GPU 架构会继续增加编译工作量。
+
+两个 Release 预设在首次应用构建中保持 `BUILD_TESTING=OFF`。新用户可以先用
+`cpu-release` 跑通应用和下方工具检查，再按需启用测试或选择 `cuda-release`。
+即使已启用测试，`cmake --build <build-dir> --target ARCH` 仍只构建应用及其依赖，
+不会编译独立测试。在 `.par` 中改为 CPU 运行，也不会消除 CUDA 构建的编译成本。
+
 ## 不需要 GPU 的工具检查
 
 使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。测试使用标准库和受控
@@ -97,5 +108,7 @@ mpmath 或 h5py，各 [Validation 模块](../validation/README.zh-CN.md)均列�
 - [fixtures/](fixtures/README.md)：独立参考数据和受控系统。
 - [smoke/](smoke/README.md)：短时完整程序检查。
 
-测试目标及其依赖条件见 [CMakeLists.txt](../CMakeLists.txt)。多个测试使用相同参考
+测试组由 [CMakeLists.txt](../CMakeLists.txt) 选择，目标声明及条件位于
+[HostTests.cmake](../cmake/tests/HostTests.cmake) 和
+[CudaTests.cmake](../cmake/tests/CudaTests.cmake)。多个测试使用相同参考
 数据时，共用一份即可。生产算法放在 `src/` 中，参考结果则应独立于被测函数计算。

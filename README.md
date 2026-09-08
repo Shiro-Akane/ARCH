@@ -47,6 +47,14 @@ Our included teaching cases are pre-configured with appropriate methods, so you 
 
 ARCH must be built in a Linux environment; Windows users should use a WSL2 Linux terminal. Choose either the CPU-only or the combined CPU/CUDA build below. Since the CUDA executable also supports CPU execution, there's no need to build both.
 
+For a first run, start with `cpu-release`; choose `cuda-release` when you need
+GPU execution. Enabling **`ARCH_ENABLE_CUDA=ON` significantly increases compile
+time**: NVCC builds device code in addition to the CPU application, with extra
+template instantiation and linking work. The compilation pressure is primarily
+on **host RAM**, not GPU memory. Larger generated networks and additional GPU
+target architectures add more work. Setting `compute_backend = cpu` in a `.par`
+file only selects the runtime backend; it does not remove CUDA build costs.
+
 ### Get the source
 
 Use `main` for the recommended user checkout:
@@ -92,14 +100,19 @@ cmake --build build-cpu --target ARCH --parallel 1
 ```
 
 This produces the executable at **`build-cpu/bin/ARCH`**. You can now skip to [First run](#first-run).
-Note that `BUILD_TESTING=OFF` simply skips compiling the test suite—it does not disable any simulation features.
+Both Release presets set `BUILD_TESTING=OFF`; simulation features remain enabled.
+Turning it `ON` registers additional test targets. Building the default target
+set then compiles extra executables, increasing build time and host-memory
+pressure, especially with CUDA. `--target ARCH` builds the application and its
+dependencies, not the standalone test suite. Enable tests when you need the
+[checkout checks](tests/README.md).
 The `--parallel 1` flag restricts compilation to a single job to conserve memory.
 
 ### Option B: CPU and CUDA
 
 Run this on the machine whose GPU will execute ARCH. The preset selects that
-GPU as the compilation target with `CMAKE_CUDA_ARCHITECTURES=native` and limits
-heavy compile jobs to one.
+GPU as the compilation target with `CMAKE_CUDA_ARCHITECTURES=native`, enables
+`ARCH_ENABLE_CUDA=ON` and limits heavy compile jobs to one.
 
 ```bash
 cmake --preset cuda-release
@@ -272,18 +285,40 @@ the [contributor guide](docs/development/README.md).
 The [source guide](src/README.md) links each implementation module. Local README
 files explain responsibilities and important entry points; the
 [contributor guide](docs/development/README.md) covers ownership and review work.
+The [build-module guide](cmake/README.md) explains how CMake assembles the
+application, optional backend and test groups.
 
 ```text
 ARCH/
-├── README.md                  # Entry point and first run
-├── LICENSE                    # MIT license for ARCH-authored material
-├── THIRD_PARTY_NOTICES.md     # Scientific-source provenance and terms
-├── LICENSES/                  # Retained third-party license texts
-├── CMakeLists.txt             # CPU/CUDA build and dispatch targets
-├── cmake/                    # Dependency discovery and generated build bindings
+├── README.md                 # Entry point and first run
+├── README.zh-CN.md           # Chinese guide
+├── LICENSE                   # MIT license for ARCH-authored material
+├── THIRD_PARTY_NOTICES.md    # Scientific-source provenance and terms
+├── LICENSES/                 # Retained third-party license texts
+├── CMakeLists.txt            # Build order and conditional module selection
+├── CMakePresets.json         # CPU/CUDA application and development presets
+├── cmake/                    # Build modules and CUDA binding helpers
+│   ├── BuildOptions.cmake    # User options, compilers and optimization policy
+│   ├── Application.cmake     # Application and shared numerical targets
+│   ├── CustomNetworks.cmake  # Generated-package contract and registry
+│   ├── CudaBackend.cmake     # CUDA/cuDSS discovery and backend targets
+│   ├── Dependencies.cmake    # OpenMP, HDF5, HighFive and KLU
+│   ├── tests/
+│   │   ├── HostTests.cmake   # Host and I/O regression targets
+│   │   └── CudaTests.cmake   # CUDA regression targets
+│   └── templates/            # Thin generated bindings, not copied physics
 ├── simulation/               # Case implementations and reusable example inputs
 ├── docs/                     # Guides, reference, physics notes, legal index
 ├── validation/               # Single V&V tree: inputs, records, metrics, figures
+├── tests/                    # Locally compiled checks and small references
+│   ├── host/                 # Host contracts and shared interfaces
+│   ├── cuda/                 # Device execution and CPU/CUDA agreement
+│   ├── math/                 # Shared numerical checks
+│   ├── fixtures/             # Independent references and controlled inputs
+│   ├── tooling/              # Python tests for validation/build tools
+│   └── smoke/                # Short complete-application checks
+├── tools/                    # Validation, source audits and resource guards
+│   └── network/              # pynucastro package generation
 ├── EOS_toolkit/              # Runtime EOS tables grouped by model
 ├── src/
 │   ├── core/                 # Parameter loading, case registry, public facade

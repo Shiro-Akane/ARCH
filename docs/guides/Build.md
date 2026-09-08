@@ -20,12 +20,26 @@ The presets in [CMakePresets.json](../../CMakePresets.json) keep output separate
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-All three use Ninja and OpenMP. The Release presets leave tests out of the
-first-build workflow; `cuda-debug` enables them for development. Both CUDA
+All three use Ninja and OpenMP. The Release presets set `BUILD_TESTING=OFF`;
+`cuda-debug` enables tests for development. Both CUDA
 presets target the visible GPU with `CMAKE_CUDA_ARCHITECTURES=native` and set
 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1`. They configure builds only: use the explicit
 build and memory-guard commands below to compile. Run `cmake --list-presets`
 to see the available choices.
+
+Start with `cpu-release` for a first simulation, then use `cuda-release` when
+you need GPU execution. The CUDA presets enable `ARCH_ENABLE_CUDA=ON`. This
+significantly increases compile time compared with the CPU-only build: NVCC
+must instantiate and compile device routes and complete their linking in
+addition to the host application. The extra compilation uses host CPU and
+RAM; having more free GPU memory does not remove that host-memory pressure.
+Larger generated networks and more GPU target architectures further increase
+the work. Actual duration depends on the selected targets, compiler cache,
+parallelism and machine, rather than a fixed CUDA build time.
+
+`compute_backend` in a `.par` file is a runtime choice. Selecting `cpu` there
+does not make an `ARCH_ENABLE_CUDA=ON` build CPU-only or skip its CUDA compilation.
+Use the CPU preset when you want a build without that work.
 
 Output separation comes from `ARCH_RUNTIME_OUTPUT_DIRECTORY`, set to each
 build directory's absolute `bin/` path. Without that option, the project writes
@@ -52,9 +66,12 @@ inside WSL without a Linux display driver. See
 Git and network access are needed when configuration first fetches HighFive
 2.9.0. KLU is enabled by default: CMake uses an installed KLU package or fetches
 SuiteSparse 7.13.0. If dependencies are already prepared locally, CMake's
-FetchContent source overrides can point to them; see the dependency declarations
-in [CMakeLists.txt](../../CMakeLists.txt). Git LFS supplies the EOS assets tracked
-through LFS; run `git lfs pull` before using those tables.
+FetchContent source overrides can point to them; the OpenMP, HDF5, HighFive and
+KLU declarations are in [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake).
+CUDA-specific provider discovery, including cuDSS, remains in
+[cmake/CudaBackend.cmake](../../cmake/CudaBackend.cmake), using
+[FindCuDSS.cmake](../../cmake/FindCuDSS.cmake). Git LFS supplies the EOS assets
+tracked through LFS; run `git lfs pull` before using those tables.
 
 Python **3.10 or newer** is needed for the build guard and test tooling, not for
 running the ARCH executable. Generated reaction networks have a separate Python
@@ -150,10 +167,18 @@ locally optimized executable is portable.
 
 ## Build tests only when you need them
 
-`BUILD_TESTING=OFF` in the quick start leaves the regression suite out of the
-normal application workflow. `--target ARCH` builds the application, not every
-available test executable. To enable and run one small host contract in the
-existing CPU build:
+`BUILD_TESTING=OFF` in both Release presets leaves the regression suite out of
+the normal application workflow without disabling simulation features.
+`BUILD_TESTING=ON` registers the applicable test targets during configuration;
+configuration itself does not compile them. The default `all` build then
+compiles extra standalone test executables, increasing time and host-memory
+pressure. CUDA-enabled test builds add further NVCC work on top of the CUDA
+application build.
+
+Even with tests enabled, `--target ARCH` builds only the application and its
+dependencies, not the standalone tests. Select a specific test target when
+you only need a focused check. For example, enable and run one small host
+contract in the existing CPU build:
 
 ```bash
 cmake -S . -B build-cpu -DBUILD_TESTING=ON

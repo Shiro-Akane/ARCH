@@ -40,6 +40,18 @@ also passes its field, conservation, workload and identity checks. CPU is faster
 at both measured sizes; the owner accepts integration as a functionally
 equivalent CPU/CUDA version with that result disclosed.
 
+The subsequent [CMake organization review](../maintenance-freeze-20260908/cmake-review.json)
+qualifies the build-file changes separately: the effective CUDA build graph,
+compile/link commands and generated contents are unchanged, and targeted host
+builds and checks pass. This is not another full NVCC build or runtime campaign.
+The source inventory records the new build-module identity while retaining the
+executed identities of the scientific, runtime and timing records.
+
+Source delivery includes the capacity reviewer's allocation-lifetime and
+process-identity self-test scripts beside its recipe. These two small inputs
+are required by the acceptance index's `--self-test`; their inclusion does not
+add the surrounding raw diagnostics, profiler outputs or HDF5 data.
+
 The archive manifest observes the current source and selected evidence directly.
 It must include the intentional interface, fixture and documentation changes;
 the earlier path-only surviving-source comparison does not establish equivalence

@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "scope": "Current compact source-delivery inventory; no new scientific qualification or publication action",
-  "recorded_utc": "2026-09-08T05:33:17.557596+00:00",
-  "candidate_branch": "CUDA_complete_v1",
-  "base_commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
+  "recorded_utc": "2026-09-08T06:03:38.120604+00:00",
+  "candidate_branch": "main",
+  "base_commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
   "previous_frozen_branch": "CUDA_complete_v1",
   "remote": "git@github.com:Shiro-Akane/ARCH.git",
   "publication_action": "none",
   "current_source": {
-    "commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
+    "commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
     "scope": "code-and-validation-inputs-v1",
     "scope_policy": {
       "directories": [
@@ -55,19 +55,19 @@
       ],
       "include_untracked_and_gitignored_source": true
     },
-    "worktree_sha256": "abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf",
+    "worktree_sha256": "3bc8f1ce79ef787f398128962a4b72dcec2339a3a2fc397816576e999cfb228e",
     "dirty": true,
     "modified_files": [
-      "CMakeLists.txt",
-      "CMakePresets.json",
-      "src/driver/SolverDispatch.cpp",
-      "src/driver/dispatch/DispatchImpl.h",
-      "tests/cuda/test_mainline_authority.cpp",
-      "tests/host/test_resolved_execution_plan.cpp"
+      "CMakeLists.txt"
     ],
     "untracked_source_files": [
-      "cmake/SelectIpoLinker.cmake",
-      "tests/tooling/test_build_configuration.py"
+      "cmake/Application.cmake",
+      "cmake/BuildOptions.cmake",
+      "cmake/CudaBackend.cmake",
+      "cmake/CustomNetworks.cmake",
+      "cmake/Dependencies.cmake",
+      "cmake/tests/CudaTests.cmake",
+      "cmake/tests/HostTests.cmake"
     ]
   },
   "current_evidence_roots": [
@@ -82,13 +82,17 @@
     {
       "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/runtime-review.json",
       "sha256": "917930fe8db4862046bd407581b44d4b77477d6346ddc1b11b06f59f0ae3b388"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
+      "sha256": "837d636d5315b04c57d51e28772c52bad0d6c181c34709c8bc1041a98c1c8247"
     }
   ],
   "evidence_selection": {
     "method": "Retain current compact scientific selection; add visible maintained source/docs and verified current maintenance artifacts.",
     "raw_data": "HDF5, compiled binaries, build caches, profiler databases and unreviewed large files are excluded.",
     "result_retention_record": "validation/backend/results/maintenance-freeze-20260908/freeze-review.json",
-    "selected_files": 4161,
+    "selected_files": 4172,
     "current_maintenance_patterns": [
       "*.json",
       "*.md",
@@ -114,12 +118,17 @@
       "restart-process/*/arch.stdout",
       "restart-process/*/arch.stderr"
     ],
-    "maintenance_replacement_receipt": {
-      "path": "/home/shiroakane/ARCH/build/compatibility-cleanup-20260908/maintenance-record-update-qwq1dt11/recovery.json",
-      "sha256": "fd450be4e2540d1a3829ab830717a034f69febf4b53e5495af47d509d1560220"
-    },
+    "maintenance_replacement_receipt": null,
     "explicit_large_files": [],
-    "previous_manifest_sha256": "440af3f28e5d8b05d432e8d44a8438a58c5ecb945be827b2b2d785785eabb4e2"
+    "previous_manifest_sha256": "7a2833e42cbe86a5fbb0971d0b6cf626ff8404568089efbe4f61d4094b05ee5c",
+    "reviewer_self_test_inputs": [
+      "validation/backend/results/device-memory-first-law-20260907/test_allocation_lifetimes.py",
+      "validation/backend/results/device-memory-first-law-20260907/test_process_identity.py"
+    ],
+    "cmake_only_review": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
+      "sha256": "837d636d5315b04c57d51e28772c52bad0d6c181c34709c8bc1041a98c1c8247"
+    }
   },
   "archive_copies": [
     {
@@ -153,8 +162,8 @@
     },
     {
       "path": "CMakeLists.txt",
-      "bytes": 94236,
-      "sha256": "6b080c0bc0c0e9bdb33406f6686bf3427468075c8eea8dbb509f8d60d084259c"
+      "bytes": 1370,
+      "sha256": "6a0598b976384a2075b1979b8b9f1dc72b53a78071968aa319c212b4d1609905"
     },
     {
       "path": "CMakePresets.json",
@@ -213,13 +222,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 20423,
-      "sha256": "685736391ff58b4f87c4f8bbedc70019e1416de5d51af4985706b37aa9f8f7c5"
+      "bytes": 22913,
+      "sha256": "224dc4ad1c2f767448090123e33174f0cf4a48e10be1d882edd372ec72e58dcf"
     },
     {
       "path": "README.zh-CN.md",
-      "bytes": 19093,
-      "sha256": "5abdcc93b22215ff1e2f3b7af17c96f17f742fed7a6a29ff2c954c86df6f156a"
+      "bytes": 21303,
+      "sha256": "01ae94b5ca3bfcfc6c0369ada2860b68db3100dc5207a5a43c368a2af4cadbcf"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -230,6 +239,21 @@
       "path": "THIRD_PARTY_NOTICES.zh-CN.md",
       "bytes": 6656,
       "sha256": "383ffac4e29b65b01254409da73661f2d73a85b8da90e36fd1876c802004fb30"
+    },
+    {
+      "path": "cmake/Application.cmake",
+      "bytes": 7083,
+      "sha256": "e19c12335d940c8230675fd9da9ce0833ef18f12a9041282add5f3106b1dbe38"
+    },
+    {
+      "path": "cmake/BuildOptions.cmake",
+      "bytes": 4990,
+      "sha256": "fd9d5f1ac92d1ef77f4ddd1d55eed5e99ca57bf514ae8ff96c4026b11d09be2b"
+    },
+    {
+      "path": "cmake/CudaBackend.cmake",
+      "bytes": 18773,
+      "sha256": "cab12b2447848638d1e15dfe572db74205b9e693aaeb66daa8ddb0a8b0f0585b"
     },
     {
       "path": "cmake/CudaBurnDenseRoutes.cmake",
@@ -257,14 +281,24 @@
       "sha256": "21ccc7cf6c6dcfc265232e539d88d56a4fac61d6fb6dd363e788f77058276efb"
     },
     {
+      "path": "cmake/CustomNetworks.cmake",
+      "bytes": 9181,
+      "sha256": "8c4eff66b61e53a46402bf32e158d900f4b91d9a2da141981cf72845e501f2bb"
+    },
+    {
+      "path": "cmake/Dependencies.cmake",
+      "bytes": 5687,
+      "sha256": "eca2b4c5dc0cc005101d6166094774462167cd9cab54827abb350fbb1911fd2e"
+    },
+    {
       "path": "cmake/FindCuDSS.cmake",
       "bytes": 903,
       "sha256": "5a2e9863e09abe14ef756feb51d53b0d4d70237fef8c6e7cca5b15a1bc352a7e"
     },
     {
       "path": "cmake/README.md",
-      "bytes": 1930,
-      "sha256": "f5d5cf6959e169ddf0eb585264d734faa8850cdfe02f81451157e2eebcd532a6"
+      "bytes": 3478,
+      "sha256": "e5053e3bedf0a52ab45067f81131757e984c952eb966e32f7e5ee5300cd65e4a"
     },
     {
       "path": "cmake/SelectIpoLinker.cmake",
@@ -285,6 +319,21 @@
       "path": "cmake/templates/README.md",
       "bytes": 1033,
       "sha256": "16ae51f323ca75ddaa0e752fe816c1d3dc1a79e8fc5cb709e42f645fd2489de5"
+    },
+    {
+      "path": "cmake/tests/CudaTests.cmake",
+      "bytes": 24028,
+      "sha256": "b2c8af81a7e052a182fc312bf9012dd2ab46f66cb1b38efe9ac6586f799fd8b9"
+    },
+    {
+      "path": "cmake/tests/HostTests.cmake",
+      "bytes": 8598,
+      "sha256": "0fc4e9c230cccafa145be58fd4c749a7e0a3ecc1f4af78f0d88744e2379d7758"
+    },
+    {
+      "path": "cmake/tests/README.md",
+      "bytes": 1137,
+      "sha256": "d1ec4b8a2a5f0e87b11546e473439944dddb9da7f6e6e3c5f8a5b3e67e0b28ff"
     },
     {
       "path": "docs/CudaBackendStatus.md",
@@ -353,13 +402,13 @@
     },
     {
       "path": "docs/guides/Build.md",
-      "bytes": 10072,
-      "sha256": "574b16da953a5e3c7c60732d4ec99c0cb4fb47d6e82cc3b7476ac22984459968"
+      "bytes": 11641,
+      "sha256": "3b31c21e77d5881fdd21bfa160cdb51b8ca78a76d9f8996d5ebd01c632256064"
     },
     {
       "path": "docs/guides/Build.zh-CN.md",
-      "bytes": 9814,
-      "sha256": "aaf1e2fdce0e2e2aff35babad4e34d214f70feea6fa7a89d1ea629ea300b69cf"
+      "bytes": 11249,
+      "sha256": "3ef068eca735427f1c8f739d851964316faf2d3184773cc3ca8535fd4228211d"
     },
     {
       "path": "docs/guides/README.md",
@@ -2138,13 +2187,13 @@
     },
     {
       "path": "tests/README.md",
-      "bytes": 5634,
-      "sha256": "2bdeb93ea45f2d2df23103768d00ba471fb23538f00c5cdd9f1b87a15e09995e"
+      "bytes": 6668,
+      "sha256": "16cb3cb0a1b22038cf593776cae17ff2d772385616478a33f8c43c6fdd077162"
     },
     {
       "path": "tests/README.zh-CN.md",
-      "bytes": 5257,
-      "sha256": "770f1baa1ba7f3c4e357824f0074c8098454b3a6a1f11c08b4958497fabc313e"
+      "bytes": 6262,
+      "sha256": "a1d24da6cc5db59967e58011a3a1a95ae2ea096e3bdb686a9bdb56fae32428dc"
     },
     {
       "path": "tests/cuda/GeneratedSparseBurnFactory.h",
@@ -11347,6 +11396,16 @@
       "sha256": "36437cb84a410b72bc2b8a33b325317d8384980515095ee9ddd9dbb0a4ff4936"
     },
     {
+      "path": "validation/backend/results/device-memory-first-law-20260907/test_allocation_lifetimes.py",
+      "bytes": 6322,
+      "sha256": "8dc01c8f7a7b3643f47d540143e410d94ad523844160aa596c81927ed3d15dbe"
+    },
+    {
+      "path": "validation/backend/results/device-memory-first-law-20260907/test_process_identity.py",
+      "bytes": 16322,
+      "sha256": "444967bc3e66f906e1c72c92b2cc3c83d8f217830c7141a3c3f359056e3aa9fe"
+    },
+    {
       "path": "validation/backend/results/final-acceptance-20260907/release-73a9cf50/README.md",
       "bytes": 6586,
       "sha256": "1db6337500f37fc008fa58f52ae97584f68f980d84f831fe2d3d768c76b7d232"
@@ -12323,13 +12382,13 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/README.md",
-      "bytes": 11619,
-      "sha256": "53556c4f2a2f89765c173867b1e2420b2f6bee66dd2fd5f7f61d10a8df49d41e"
+      "bytes": 13087,
+      "sha256": "0ceef2bb2d78d84a1958eca851696abe13248310c2e2b964d931bf330cbc78d7"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/README.zh-CN.md",
-      "bytes": 9902,
-      "sha256": "67f0114dfca1440e25ebf61abfbc296e9007e9584063a6492a67c1417f742452"
+      "bytes": 11248,
+      "sha256": "b166b6ebc6592f9cb211ab4fb6a22d09e71c449576f2e9ab010e6e5150372235"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/amr-timing-review.json",
@@ -12345,6 +12404,11 @@
       "path": "validation/backend/results/maintenance-freeze-20260908/build-review.json",
       "bytes": 31590,
       "sha256": "acc9bd01120e1e9480eb76b5fcf826897ed1bf16f6f0c28c9828f11e61b46044"
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
+      "bytes": 54024,
+      "sha256": "837d636d5315b04c57d51e28772c52bad0d6c181c34709c8bc1041a98c1c8247"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/document-baseline.json",
@@ -12673,8 +12737,8 @@
     },
     {
       "path": "validation/backend/results/source-publication-20260908/README.md",
-      "bytes": 4115,
-      "sha256": "0e60075baba47e8bdd72cf23002a7f005388f3dee3a065c423965841e1725de8"
+      "bytes": 4889,
+      "sha256": "e1d84eb0ec6b1e6f2f8fe85f331986e4c432acbf51ce0104716cbc0089768036"
     },
     {
       "path": "validation/backend/results/source-publication-20260908/archives/baseline-reviewed-documents.tar.gz",

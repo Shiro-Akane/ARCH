@@ -7,7 +7,7 @@ verification. The governing scope is the
 [release standard](../../../../docs/development/CudaReleaseStandard.md).
 The scientific acceptance measurements retain their own tested-source identities.
 
-Status: the current optimized CUDA build, all 289 Python controls, 98 Release
+Status: the latest full runtime campaign's optimized CUDA build, all 289 Python controls, 98 Release
 tests, ten development-smoke lanes and all four normal/instrumented restart
 suites pass. The matched local AMR timing also passes its consistency,
 conservation, dynamic-topology and identity checks; CPU is faster on both
@@ -17,10 +17,33 @@ existing [identity and verification record](freeze-review.json) is the single
 inventory for this maintenance work; it distinguishes new checks from the
 scientific and source-organization results cited below.
 
-The current runtime campaign tests source
+That runtime campaign tests source
 `abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf`.
 Its own execution and final source, binary and test-artifact checks pass; the
 results are not inherited from an earlier maintenance build.
+
+## Build-module organization
+
+The subsequent CMake-only cleanup is recorded in [cmake-review.json](cmake-review.json).
+The top-level file now describes build order; seven functional modules own
+options, application targets, generated networks, CUDA, dependencies and tests.
+Shared helpers and loops remove repeated settings while keeping special source
+languages, object ownership and provider checks explicit. KLU and cuDSS discovery
+and the numerical optimization flags remain unchanged.
+
+The configured CUDA graph matches the preceding build: 281 compile commands,
+698 effective build commands, 758 dependency edges, 98 CTest definitions,
+226 rule/global/pool declarations and 44 generated-file contents agree. CMake
+declaration locations and regeneration metadata are the only excluded fields.
+The record also contains the small host rebuild and focused checks; it does not
+claim another full NVCC build or another execution of the full runtime campaign.
+Mathematical, physical, simulation, test and tooling source bytes are unchanged.
+
+Two small acceptance-review self-test inputs are included in source delivery:
+[allocation lifetimes](../device-memory-first-law-20260907/test_allocation_lifetimes.py)
+and [process identity](../device-memory-first-law-20260907/test_process_identity.py).
+They support reviewer checks, not another scientific trajectory. The original
+scientific and runtime records below retain their actual execution identities.
 
 ## Current interface cleanup
 

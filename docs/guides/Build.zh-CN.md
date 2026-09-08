@@ -20,11 +20,22 @@
 | `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
 | `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-三个预设都使用 Ninja 与 OpenMP。Release 预设不在首次构建中启用测试套件；
+三个预设都使用 Ninja 与 OpenMP。Release 预设设置 `BUILD_TESTING=OFF`；
 `cuda-debug` 则启用测试，供开发使用。两个 CUDA 预设均通过
 `CMAKE_CUDA_ARCHITECTURES=native` 面向配置时可见的显卡，并设置
 `ARCH_CUDA_HEAVY_COMPILE_JOBS=1`。预设只负责配置，实际编译仍使用下方明确的
 构建与内存监控命令。运行 `cmake --list-presets` 可列出可用预设。
+
+第一次模拟建议从 `cpu-release` 开始，需要 GPU 执行时再使用 `cuda-release`。
+CUDA 预设启用 `ARCH_ENABLE_CUDA=ON`，相比纯 CPU 构建会显著增加编译时间：
+除了宿主应用，NVCC 还要实例化、编译设备执行路径并完成相应链接。
+这些编译工作消耗主机 CPU 和内存，更多空闲显存不能消除主机内存压力。
+较大的生成网络、更多目标 GPU 架构会进一步增加工作量；实际耗时取决于所选目标、
+编译缓存、并发和机器，并非固定需要某个时长。
+
+`.par` 中的 `compute_backend` 是运行时选项。这里选择 `cpu`，不会把
+`ARCH_ENABLE_CUDA=ON` 的构建变成纯 CPU，也不会跳过 CUDA 编译。
+希望省去这部分构建工作时，应使用 CPU 预设。
 
 产物分离通过 `ARCH_RUNTIME_OUTPUT_DIRECTORY` 实现，它指向各构建目录下 `bin/`
 的绝对路径。不设置该选项时，项目默认把可执行文件写入源码树的 `bin/`。
@@ -44,9 +55,11 @@ NVIDIA CUDA 工具链、该工具链支持的宿主编译器及兼容的 NVIDIA 
 
 首次配置会通过 Git 获取 HighFive 2.9.0，因此需要网络。KLU 默认启用：CMake
 优先使用已安装的 KLU，否则获取 SuiteSparse 7.13.0。已有本地依赖源码时，可以
-用 CMake 的 FetchContent 源码覆盖选项指定位置；依赖声明见
-[CMakeLists.txt](../../CMakeLists.txt)。通过 Git LFS 管理的 EOS 资源需要先执行
-`git lfs pull`，再使用相应表格。
+用 CMake 的 FetchContent 源码覆盖选项指定位置。OpenMP、HDF5、HighFive 和 KLU
+声明位于 [cmake/Dependencies.cmake](../../cmake/Dependencies.cmake)；CUDA 专用
+求解库（包括 cuDSS）的发现仍由 [cmake/CudaBackend.cmake](../../cmake/CudaBackend.cmake)
+通过 [FindCuDSS.cmake](../../cmake/FindCuDSS.cmake)等查找逻辑处理。
+通过 Git LFS 管理的 EOS 资源需要先执行 `git lfs pull`，再使用相应表格。
 
 构建监控和测试工具需要 **Python 3.10 或更高版本**，ARCH 可执行文件本身不依赖
 Python 运行。生成反应网络使用独立的 Python 环境，配置方法见
@@ -136,9 +149,14 @@ Release 的 CPU 代码还使用 `-march=native`，迁移到不同 CPU 架构时�
 
 ## 按需构建测试
 
-快速开始使用 `BUILD_TESTING=OFF`，不把回归测试放入首次运行流程。
-`--target ARCH` 只构建应用及其依赖，不会构建所有可用测试程序。例如，在已有
-CPU 构建中启用并运行一个小型宿主测试：
+两个 Release 预设均使用 `BUILD_TESTING=OFF`，不把回归测试放入首次运行流程，
+但不关闭模拟功能。`BUILD_TESTING=ON` 在配置阶段注册适用的测试目标，配置本身
+不会编译这些程序；随后默认的 `all` 构建会编译额外的独立测试可执行文件，增加
+耗时和主机内存压力。启用 CUDA 的测试构建，还会在 CUDA 应用之外增加 NVCC 工作。
+
+即使已启用测试，`--target ARCH` 也只构建应用及其依赖，不会构建独立测试。
+只需要定向检查时，可以直接选择对应测试目标。例如，在已有 CPU 构建中启用并
+运行一个小型宿主测试：
 
 ```bash
 cmake -S . -B build-cpu -DBUILD_TESTING=ON

@@ -47,6 +47,12 @@ ARCH 提供 SW 和 VL 通量矢量分裂，以及 Roe、HLL 和 HLLC 黎曼求�
 
 ARCH 必须在 Linux 环境中编译；Windows 用户请使用 WSL2 Linux 终端。你可以在下方选择构建纯 CPU 版本或 CPU/CUDA 双支持版本。由于 CUDA 可执行程序同时也支持在 CPU 上运行，因此不需要将两者都编译一遍。
 
+第一次运行建议从 `cpu-release` 开始，需要 GPU 执行时再选择 `cuda-release`。
+**启用 `ARCH_ENABLE_CUDA=ON` 会显著拉长编译时间**：除了 CPU 应用，还需要 NVCC
+编译设备代码，增加模板实例化与链接工作。编译压力主要落在**主机内存，而非显存**。
+较大的生成网络、更多目标 GPU 架构会进一步增加工作量。在 `.par` 中设置
+`compute_backend = cpu` 只选择运行后端，不会消除已启用 CUDA 的构建成本。
+
 ### 获取源码
 
 推荐用户拉取 `main` 分支：
@@ -88,13 +94,17 @@ cmake --build build-cpu --target ARCH --parallel 1
 ```
 
 这会将可执行程序生成在 **`build-cpu/bin/ARCH`**。现在你可以跳至[首次运行](#首次运行)部分。
-请注意，`BUILD_TESTING=OFF` 只是跳过编译测试套件——它绝不会关闭任何模拟功能。
+两个 Release 预设均设置 `BUILD_TESTING=OFF`，不影响模拟功能。
+改为 `ON` 会注册额外测试目标；构建默认目标集合时，会编译更多可执行程序，增加
+耗时与主机内存压力，CUDA 测试尤其明显。`--target ARCH` 只构建应用及其依赖，
+不会构建独立测试套件。需要[自验证](tests/README.zh-CN.md)时再启用测试即可。
 `--parallel 1` 标志将编译任务限制为单线程，以节省内存。
 
 ### 方案 B：同时支持 CPU 与 CUDA
 
 请在将要运行 ARCH 的 GPU 所在机器上执行。预设通过
-`CMAKE_CUDA_ARCHITECTURES=native` 为本机 GPU 编译，并将重型编译任务限制为一个。
+`CMAKE_CUDA_ARCHITECTURES=native` 为本机 GPU 编译，启用 `ARCH_ENABLE_CUDA=ON`，
+并将重型编译任务限制为一个。
 
 ```bash
 cmake --preset cuda-release
@@ -238,19 +248,39 @@ linear_solver = Auto
 
 [源码导览](src/README.md)按功能连接各实现模块。各模块 README 介绍职责与主要入口，
 [贡献者指南](docs/development/README.md)说明实现归属和审阅流程。
+[构建模块指南](cmake/README.md)解释 CMake 如何组合应用、可选后端和测试组。
 
 ```text
 ARCH/
-├── README.md                  # 英文入口与首次运行，规范文本
-├── README.zh-CN.md            # 中文辅助入口
-├── LICENSE                    # ARCH 自有内容的 MIT 许可证
-├── THIRD_PARTY_NOTICES.md     # 科学软件来源与第三方条款
-├── LICENSES/                  # 保留的第三方许可证文本
-├── CMakeLists.txt             # CPU/CUDA 构建与分发目标
-├── cmake/                    # 依赖发现与构建时生成的绑定
+├── README.md                 # 英文入口与首次运行，规范文本
+├── README.zh-CN.md           # 中文辅助入口
+├── LICENSE                   # ARCH 自有内容的 MIT 许可证
+├── THIRD_PARTY_NOTICES.md    # 科学软件来源与第三方条款
+├── LICENSES/                 # 保留的第三方许可证文本
+├── CMakeLists.txt            # 构建顺序与模块启用条件
+├── CMakePresets.json         # CPU/CUDA 应用及开发预设
+├── cmake/                    # 构建模块与 CUDA 绑定辅助工具
+│   ├── BuildOptions.cmake    # 用户选项、编译器和优化策略
+│   ├── Application.cmake     # 应用与共用数值目标
+│   ├── CustomNetworks.cmake  # 生成包契约及注册
+│   ├── CudaBackend.cmake     # CUDA/cuDSS 发现与后端目标
+│   ├── Dependencies.cmake    # OpenMP、HDF5、HighFive 与 KLU
+│   ├── tests/
+│   │   ├── HostTests.cmake   # 宿主与 IO 回归目标
+│   │   └── CudaTests.cmake   # CUDA 回归目标
+│   └── templates/            # 生成的轻量绑定，不复制物理实现
 ├── simulation/               # 算例实现与可复用示例输入
 ├── docs/                     # 指南、参考、物理说明和法律索引
 ├── validation/               # 唯一 V&V 目录：输入、记录、指标与图像
+├── tests/                    # 本地编译的检查与小型参考
+│   ├── host/                 # 宿主契约与共用接口
+│   ├── cuda/                 # 设备执行与 CPU/CUDA 一致性
+│   ├── math/                 # 共用数值检查
+│   ├── fixtures/             # 独立参考与受控输入
+│   ├── tooling/              # 验证和构建工具的 Python 测试
+│   └── smoke/                # 短时完整程序检查
+├── tools/                    # 验证、源码审查与资源保护
+│   └── network/              # pynucastro 包生成
 ├── EOS_toolkit/              # 按模型归类的运行时 EOS 表
 ├── src/
 │   ├── core/                 # 参数加载、算例注册、公共门面

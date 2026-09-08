@@ -12,6 +12,21 @@ All commands below run from the repository root in Linux or WSL2. Tool tests,
 numerical regressions and application smoke have different purposes;
 [Validation](../validation/README.md) records scientific comparisons and budgets.
 
+Compiling the full test suite costs more time and host RAM than building only
+the application. `BUILD_TESTING=ON` registers the applicable tests; the default
+`all` build compiles their extra executables. CUDA tests add substantial NVCC
+compilation when `ARCH_ENABLE_CUDA=ON`. This is primarily host-memory pressure,
+not GPU-memory use; GPU memory matters when the device tests actually run.
+Larger generated networks and additional GPU target architectures add more
+compilation work.
+
+Both Release presets keep `BUILD_TESTING=OFF` for a first application build.
+New users can start with `cpu-release` and the tool checks below, then enable
+tests or choose `cuda-release` as needed. With testing enabled,
+`cmake --build <build-dir> --target ARCH` still builds the application and its
+dependencies, not standalone tests. Changing a `.par` file to run on CPU does
+not remove the compile cost of a CUDA-enabled build.
+
 ## Check tools without a GPU
 
 Use Python 3.10 or newer and Git/CMake from the build setup. These checks use
@@ -113,6 +128,8 @@ Compute Sanitizer is needed only for instrumented checks.
 - [fixtures/](fixtures/README.md): independent data and controlled systems.
 - [smoke/](smoke/README.md): short complete-application checks.
 
-[CMakeLists.txt](../CMakeLists.txt) defines test targets and their optional
-dependencies. Keep one copy of shared test data and place production algorithms
+[CMakeLists.txt](../CMakeLists.txt) selects the test groups; target declarations
+and conditions live in [HostTests.cmake](../cmake/tests/HostTests.cmake) and
+[CudaTests.cmake](../cmake/tests/CudaTests.cmake).
+Keep one copy of shared test data and place production algorithms
 in `src/`. Derive reference results independently of the routines being tested.
