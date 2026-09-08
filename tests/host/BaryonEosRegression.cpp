@@ -135,7 +135,7 @@ void identities(const Tabular3DEOSHostView& eos, double rho, double T, double ye
     check(state.dp_de_rho,static_cast<double>(kappa),identity_budget,"single-potential kappa identity");
     check(state.sound_speed*state.sound_speed,static_cast<double>(acoustic),identity_budget,
           "single-potential sound-speed identity");
-    check(static_cast<double>(rho*rho*energy_rho),
+    check(static_cast<double>(static_cast<long double>(rho)*rho*energy_rho),
           static_cast<double>(pressure-T*pressure_T),identity_budget,
           "first-law density identity",state.pressure);
 }
