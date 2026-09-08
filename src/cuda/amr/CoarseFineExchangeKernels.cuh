@@ -8,7 +8,7 @@
 #include "amr/ConservativeRestriction.h"
 #include "amr/LimitedLinearProlongation.h"
 #include "cuda/common/DeviceStateFields.cuh"
-#include "cuda/runtime/CudaBackendExchange.h"
+#include "cuda/runtime/amr/CudaBackendExchange.h"
 
 #include <cuda_runtime.h>
 
@@ -17,75 +17,21 @@
 
 namespace arch::cuda {
 
-__device__ inline double prolong_device_field(
-    const double* values, const DeviceCoarseFineTransfer& transfer)
-{
-    double lower[3]{};
-    double upper[3]{};
-    for (int axis = 0; axis < transfer.prolongation_dimension; ++axis) {
-        lower[axis] = values[transfer.slope_cells[2 * axis]];
-        upper[axis] = values[transfer.slope_cells[2 * axis + 1]];
-    }
-    return amr::prolongation_math::limited_linear_value(
-        values[transfer.source_cells[0]], lower, upper,
-        transfer.fine_position, transfer.prolongation_dimension);
-}
-
-__device__ inline double prolong_device_species_density(
-    DeviceStateView source, const DeviceCoarseFineTransfer& transfer,
-    int species)
-{
-    const double* fractions = device_state_field(source, 6 + species);
-    double lower[3]{};
-    double upper[3]{};
-    for (int axis = 0; axis < transfer.prolongation_dimension; ++axis) {
-        const int lower_cell = transfer.slope_cells[2 * axis];
-        const int upper_cell = transfer.slope_cells[2 * axis + 1];
-        lower[axis] = source.rho[lower_cell] * fractions[lower_cell];
-        upper[axis] = source.rho[upper_cell] * fractions[upper_cell];
-    }
-    const int center = transfer.source_cells[0];
-    return amr::prolongation_math::limited_linear_value(
-        source.rho[center] * fractions[center], lower, upper,
-        transfer.fine_position, transfer.prolongation_dimension);
-}
-
-__device__ inline bool prolong_device_composition_is_admissible(
+__device__ inline amr::prolongation_math::CompositionStencilView
+prolong_device_stencil(
     DeviceStateView source, const DeviceCoarseFineTransfer& transfer,
     int species_count)
 {
-    const int sibling_count = 1 << transfer.prolongation_dimension;
-    DeviceCoarseFineTransfer sibling_transfer = transfer;
-    for (int sibling = 0; sibling < sibling_count; ++sibling) {
-        for (int axis = 0; axis < transfer.prolongation_dimension; ++axis)
-            sibling_transfer.fine_position[axis] =
-                (sibling & (1 << axis)) != 0 ? 0.25 : -0.25;
-        const double density = prolong_device_field(
-            source.rho, sibling_transfer);
-        bool admissible = amr::prolongation_math::finite_number(density)
-            && density > 0.0;
-        double partial = 0.0;
-        for (int species = 0; species + 1 < species_count && admissible;
-             ++species) {
-            const double candidate = prolong_device_species_density(
-                source, sibling_transfer, species);
-            admissible = amr::prolongation_math::finite_number(candidate)
-                && candidate >= 0.0;
-            partial += candidate;
-        }
-        const double closure = density - partial;
-        if (!admissible
-            || !amr::prolongation_math::finite_number(closure)
-            || closure < 0.0)
-            return false;
-    }
-    return true;
+    return {source.rho, source.mass_fractions,
+            static_cast<std::size_t>(source.total_size),
+            transfer.source_cells[0], transfer.slope_cells,
+            transfer.prolongation_dimension, species_count};
 }
 
 __global__ void gather_coarse_fine_exchange_kernel(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int field_count,
-    std::uint64_t work_count, double* scratch)
+    std::uint64_t work_count, double* scratch, int* status)
 {
     const std::uint64_t linear =
         static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -95,36 +41,24 @@ __global__ void gather_coarse_fine_exchange_kernel(
     const DeviceCoarseFineTransfer& transfer = transfers[transfer_index];
     const DeviceStateView source = blocks[transfer.source_block].state;
     if (transfer.prolongation_dimension != 0) {
-        if (field < 6) {
-            scratch[linear] = prolong_device_field(
-                device_state_field(source, field), transfer);
+        const auto stencil = prolong_device_stencil(
+            source, transfer, field_count - 6);
+        if (field > 0 && field < 6) {
+            scratch[linear] = amr::prolongation_math::reconstruct_field(
+                stencil, device_state_field(source, field), transfer.fine_position);
             return;
         }
-        const double density = prolong_device_field(source.rho, transfer);
-        const int species_count = field_count - 6;
-        const int species = field - 6;
-        const bool admissible =
-            prolong_device_composition_is_admissible(
-                source, transfer, species_count);
-        double species_density = 0.0;
-        if (species + 1 < species_count) {
-            species_density = prolong_device_species_density(
-                source, transfer, species);
-        } else {
-            species_density = density;
-            for (int component = 0; component + 1 < species_count;
-                 ++component)
-                species_density -= prolong_device_species_density(
-                    source, transfer, component);
+        const auto family =
+            amr::prolongation_math::classify_composition_family(stencil);
+        if (family == amr::prolongation_math::CompositionFamily::InvalidDensity) {
+            atomicExch(status, static_cast<int>(family));
+            return;
         }
-        scratch[linear] = admissible
-            ? species_density / density
-            : device_state_field(source, field)[transfer.source_cells[0]];
-        return;
-    }
-    if (transfer.source_count == 1) {
-        scratch[linear] =
-            device_state_field(source, field)[transfer.source_cells[0]];
+        const double density = amr::prolongation_math::reconstruct_field(
+            stencil, source.rho, transfer.fine_position);
+        scratch[linear] = field == 0 ? density
+            : amr::prolongation_math::reconstruct_mass_fraction(
+                stencil, family, density, field - 6, transfer.fine_position);
         return;
     }
     if (field < 6) {
@@ -132,9 +66,9 @@ __global__ void gather_coarse_fine_exchange_kernel(
         for (int cell = 0; cell < transfer.source_count; ++cell)
             integral += amr::restriction_math::weighted_conserved_value(
                 device_state_field(source, field)[transfer.source_cells[cell]],
-                1.0);
+                transfer.source_measures[cell]);
         scratch[linear] = amr::restriction_math::restricted_average(
-            integral, static_cast<double>(transfer.source_count));
+            integral, transfer.source_measure_sum);
         return;
     }
 
@@ -144,11 +78,11 @@ __global__ void gather_coarse_fine_exchange_kernel(
         const int source_cell = transfer.source_cells[cell];
         density_integral +=
             amr::restriction_math::weighted_conserved_value(
-                source.rho[source_cell], 1.0);
+                source.rho[source_cell], transfer.source_measures[cell]);
         species_density_integral +=
             amr::restriction_math::weighted_species_density(
                 source.rho[source_cell],
-                device_state_field(source, field)[source_cell], 1.0);
+                device_state_field(source, field)[source_cell], transfer.source_measures[cell]);
     }
     scratch[linear] = amr::restriction_math::restricted_mass_fraction(
         species_density_integral, density_integral);
@@ -157,8 +91,11 @@ __global__ void gather_coarse_fine_exchange_kernel(
 __global__ void scatter_coarse_fine_exchange_kernel(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int field_count,
-    std::uint64_t work_count, const double* scratch)
+    std::uint64_t work_count, const double* scratch, const int* status)
 {
+    // The preceding gather is complete on this stream.  Reject the entire
+    // plan before any destination write, just as the Host gather/throw path.
+    if (*status != 0) return;
     const std::uint64_t linear =
         static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (linear >= work_count) return;
@@ -174,10 +111,11 @@ __global__ void scatter_coarse_fine_exchange_kernel(
 inline cudaError_t launch_coarse_fine_exchange(
     const DeviceExchangeBlock* blocks,
     const DeviceCoarseFineTransfer* transfers, int transfer_count,
-    int field_count, double* scratch, cudaStream_t stream)
+    int field_count, double* scratch, int* status, cudaStream_t stream)
 {
     if (transfer_count == 0) return cudaSuccess;
     if (blocks == nullptr || transfers == nullptr || scratch == nullptr
+        || status == nullptr
         || transfer_count < 0 || field_count < 6)
         return cudaErrorInvalidValue;
     const std::uint64_t work = static_cast<std::uint64_t>(transfer_count)
@@ -188,14 +126,16 @@ inline cudaError_t launch_coarse_fine_exchange(
         || block_count > static_cast<std::uint64_t>(
             std::numeric_limits<unsigned int>::max()))
         return cudaErrorInvalidValue;
+    cudaError_t result = cudaMemsetAsync(status, 0, sizeof(int), stream);
+    if (result != cudaSuccess) return result;
     gather_coarse_fine_exchange_kernel
         <<<static_cast<unsigned int>(block_count), threads, 0, stream>>>(
-            blocks, transfers, field_count, work, scratch);
-    cudaError_t result = cudaGetLastError();
+            blocks, transfers, field_count, work, scratch, status);
+    result = cudaGetLastError();
     if (result != cudaSuccess) return result;
     scatter_coarse_fine_exchange_kernel
         <<<static_cast<unsigned int>(block_count), threads, 0, stream>>>(
-            blocks, transfers, field_count, work, scratch);
+            blocks, transfers, field_count, work, scratch, status);
     return cudaGetLastError();
 }
 

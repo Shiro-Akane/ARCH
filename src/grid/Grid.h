@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cmath>
+#include "physics/constant/PhysicalConstants.h"
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -120,15 +121,15 @@ private:
             if (dim == 2)
             {
                 // Two-dimensional spherical geometry uses the polar (r, phi) plane.
-                if ((x2_max - x2_min) > 2.0 * M_PI + eps)
+                if ((x2_max - x2_min) > 2.0 * arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
             }
             else if (dim == 3)
             {
                 // In 3D spherical coordinates, x2 is theta in [0,pi] and x3 is phi in [0,2pi].
-                if (x2_min < -eps || x2_max > M_PI + eps)
+                if (x2_min < -eps || x2_max > arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (Spherical): Polar angle theta (y bounds) must be within [0, pi].");
-                if ((x3_max - x3_min) > 2.0 * M_PI + eps)
+                if ((x3_max - x3_min) > 2.0 * arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (Spherical): Azimuthal angle phi range cannot exceed 2*pi.");
             }
         }
@@ -140,12 +141,12 @@ private:
             // In 2D spherical coordinates, x2 represents phi and may span 2pi.
             if (dim == 2)
             {
-                if ((x2_max - x2_min) > 2.0 * M_PI + eps)
+                if ((x2_max - x2_min) > 2.0 * arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (2D Polar): Azimuthal angle phi (y bounds) cannot exceed 2*pi.");
             }
             else if (dim == 3)
             {
-                if ((x3_max - x3_min) > 2.0 * M_PI + eps)
+                if ((x3_max - x3_min) > 2.0 * arch::constants::math::pi + eps)
                     throw std::invalid_argument("Domain Error (Cylindrical): Azimuthal angle phi (z bounds) cannot exceed 2*pi.");
             }
         }
@@ -229,7 +230,7 @@ public:
         // Supply deterministic inactive-coordinate values for 1D and 2D grids.
         if (dim == 1)
         {
-            cy = (geometry == "spherical") ? M_PI / 2.0 : 0.0;
+            cy = (geometry == "spherical") ? arch::constants::math::pi / 2.0 : 0.0;
         } // A 1D spherical radial line is represented in the equatorial plane.
         if (dim <= 2)
         {
@@ -258,7 +259,7 @@ public:
             // In two dimensions, cy is the azimuthal angle phi.
             if (dim == 2)
             {
-                coords.theta = M_PI / 2.0; // Two-dimensional spherical grids lie in the equatorial plane.
+                coords.theta = arch::constants::math::pi / 2.0; // Two-dimensional spherical grids lie in the equatorial plane.
                 coords.phi = cy;           // The second native coordinate is azimuth phi.
             }
             else

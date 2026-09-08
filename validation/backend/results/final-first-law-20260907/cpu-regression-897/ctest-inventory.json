@@ -1,0 +1,717 @@
+{
+  "backtraceGraph": {
+    "commands": [
+      "add_test"
+    ],
+    "files": [
+      "/home/shiroakane/ARCH/CMakeLists.txt"
+    ],
+    "nodes": [
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 429,
+        "parent": 0
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 434,
+        "parent": 2
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 437,
+        "parent": 4
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 441,
+        "parent": 6
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 445,
+        "parent": 8
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 450,
+        "parent": 10
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 455,
+        "parent": 12
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 463,
+        "parent": 14
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 463,
+        "parent": 16
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 463,
+        "parent": 18
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 467,
+        "parent": 20
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 470,
+        "parent": 22
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 473,
+        "parent": 24
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 479,
+        "parent": 26
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 487,
+        "parent": 28
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 493,
+        "parent": 30
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 499,
+        "parent": 32
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 508,
+        "parent": 34
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 514,
+        "parent": 36
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 521,
+        "parent": 38
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 529,
+        "parent": 40
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 536,
+        "parent": 42
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 543,
+        "parent": 44
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 553,
+        "parent": 46
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 567,
+        "parent": 48
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 577,
+        "parent": 50
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 583,
+        "parent": 52
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 592,
+        "parent": 54
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1669,
+        "parent": 56
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1686,
+        "parent": 58
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1696,
+        "parent": 60
+      }
+    ]
+  },
+  "kind": "ctestInfo",
+  "tests": [
+    {
+      "backtrace": 1,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_portable_network_generator.py"
+      ],
+      "name": "portable_network_generator",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 3,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_smoke_cuda_amr_runtime.py"
+      ],
+      "name": "cuda_amr_smoke_runner_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 5,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_curvilinear_manifest.py"
+      ],
+      "name": "curvilinear_manifest_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 7,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_run_memory_guarded.py"
+      ],
+      "name": "memory_guard_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 9,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_validate_backend_results.py"
+      ],
+      "name": "backend_validation_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 11,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_validation_provenance.py"
+      ],
+      "name": "validation_provenance_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 13,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_runtime_validation_inputs.py"
+      ],
+      "name": "runtime_validation_inputs_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 15,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_physical_constants"
+      ],
+      "name": "physical_constants",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 17,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_refinement_indicator_math"
+      ],
+      "name": "refinement_indicator_math",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 19,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_curvilinear_metrics"
+      ],
+      "name": "curvilinear_metrics",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 21,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_compensated_sum"
+      ],
+      "name": "compensated_sum",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 23,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_sparse_ode_continuation"
+      ],
+      "name": "sparse_ode_continuation",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 25,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_checkpoint_conservation_metrics"
+      ],
+      "name": "checkpoint_conservation_metrics",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 27,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_burn_mainline_reference"
+      ],
+      "name": "burn_mainline_reference",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 29,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_mainline_authority"
+      ],
+      "name": "mainline_authority",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 31,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_block_handle"
+      ],
+      "name": "block_handle",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 33,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_state_residency"
+      ],
+      "name": "state_residency",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 35,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_shared_stage_scheduler"
+      ],
+      "name": "shared_stage_scheduler",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 37,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_boundary_plan"
+      ],
+      "name": "boundary_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 39,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_same_level_exchange_plan"
+      ],
+      "name": "same_level_exchange_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 41,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_amr_operation_plans"
+      ],
+      "name": "amr_operation_plans",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 43,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_amr_flux_surface_plan"
+      ],
+      "name": "amr_flux_surface_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 45,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_topology_transaction"
+      ],
+      "name": "topology_transaction",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 47,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_resolved_execution_plan"
+      ],
+      "name": "resolved_execution_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 49,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_runtime_probe_capabilities"
+      ],
+      "name": "runtime_probe_and_capabilities",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 51,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_reduction_contract"
+      ],
+      "name": "reduction_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 53,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_compute_backend"
+      ],
+      "name": "compute_backend",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 55,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_device_block_store_lifecycle"
+      ],
+      "name": "device_block_store_lifecycle",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 57,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/arch_checkpoint_compatibility",
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/checkpoint-compatibility-data"
+      ],
+      "name": "checkpoint_compatibility",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 59,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/tabular_eos_regression",
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/tabular-eos-test-data"
+      ],
+      "name": "tabular_eos_ideal_gas",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 61,
+      "command": [
+        "/home/shiroakane/ARCH/build/release-cpu-only-20260907/sparse_klu_regression"
+      ],
+      "name": "sparse_klu_161_equations",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/release-cpu-only-20260907"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 0
+  }
+}

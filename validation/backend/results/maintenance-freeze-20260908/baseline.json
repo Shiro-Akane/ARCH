@@ -1,0 +1,2613 @@
+{
+  "schema": 1,
+  "scope": "pre-maintenance-source-snapshot",
+  "source": {
+    "commit": "2226456c1f87415a317dd6a2a96053a7e154b949",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171",
+    "dirty": true,
+    "modified_files": [
+      "CMakeLists.txt",
+      "simulation/Cellular/Cellular.cpp",
+      "simulation/DiffusionMode/DiffusionMode.cpp",
+      "simulation/GaussianPulse/Gaussian.cpp",
+      "simulation/GaussianPulse/Gaussian.par",
+      "simulation/RTinstability/RT_instab.cpp",
+      "simulation/Sedov/Sedov.cpp",
+      "simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "src/amr/AmrTree.h",
+      "src/amr/Block.h",
+      "src/amr/GhostExchange.h",
+      "src/amr/LimitedLinearProlongation.h",
+      "src/core/ArchPortability.h",
+      "src/core/CompensatedSum.h",
+      "src/core/ProblemHelper.cpp",
+      "src/core/ProblemHelper.h",
+      "src/core/RuntimeParams.h",
+      "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+      "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+      "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+      "src/cuda/common/CudaCommon.cuh",
+      "src/cuda/common/CudaLaunchConfig.h",
+      "src/cuda/common/DiffusionConfigViewAdapter.h",
+      "src/cuda/diffusion/DiffusionKernels.cuh",
+      "src/cuda/hydro/HydroFaceKernel.cuh",
+      "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+      "src/cuda/hydro/HydroStateKernels.cuh",
+      "src/cuda/microphysics/common.h",
+      "src/cuda/microphysics/helm_eos_device_owner.cpp",
+      "src/cuda/microphysics/helm_eos_device_owner.h",
+      "src/cuda/microphysics/microphysics_api.h",
+      "src/cuda/runtime/CudaBackend.h",
+      "src/cuda/runtime/CudaBackendAmrFlux.h",
+      "src/cuda/runtime/CudaBackendBurn.h",
+      "src/cuda/runtime/CudaBackendBurnAllNetworksImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnHelm.cu",
+      "src/cuda/runtime/CudaBackendBurnIdeal.cu",
+      "src/cuda/runtime/CudaBackendBurnImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnNetworkRouteImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnNetworkRoutes.h",
+      "src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu",
+      "src/cuda/runtime/CudaBackendDiffusion.cu",
+      "src/cuda/runtime/CudaBackendDiffusion.h",
+      "src/cuda/runtime/CudaBackendExchange.cu",
+      "src/cuda/runtime/CudaBackendExchange.h",
+      "src/cuda/runtime/CudaBackendFactory.cpp",
+      "src/cuda/runtime/CudaBackendHydro.h",
+      "src/cuda/runtime/CudaBackendHydroControl.cpp",
+      "src/cuda/runtime/CudaBackendHydroHelm.cu",
+      "src/cuda/runtime/CudaBackendHydroIdeal.cu",
+      "src/cuda/runtime/CudaBackendHydroInstantiation.cuh",
+      "src/cuda/runtime/CudaBackendHydroTabular3.cu",
+      "src/cuda/runtime/CudaBackendHydroTabular4.cu",
+      "src/cuda/runtime/CudaBackendInternal.h",
+      "src/cuda/runtime/CudaBackendMicrophysicsControl.cpp",
+      "src/cuda/runtime/CudaBackendResources.cpp",
+      "src/cuda/runtime/CudaBackendStore.cpp",
+      "src/cuda/runtime/CudaBurnNetworkTypes.h",
+      "src/data/GlobalDefs.h",
+      "src/driver/ComputeBackend.h",
+      "src/driver/Driver.h",
+      "src/driver/DriverBurn.h",
+      "src/driver/DriverUtils.h",
+      "src/driver/StateResidency.h",
+      "src/driver/dispatch/BackendCapabilities.h",
+      "src/driver/dispatch/PolicyDescriptor.h",
+      "src/driver/dispatch/RuntimeProbe.cpp",
+      "src/driver/dispatch/RuntimeProbe.h",
+      "src/grid/Grid.h",
+      "src/grid/GridMetrics.h",
+      "src/io/chk/ChkIO.cpp",
+      "src/io/hdf5/HDF5Writer.cpp",
+      "src/io/hdf5/HDF5Writer.h",
+      "src/numerics/burnsolver/BurnDispatch.h",
+      "src/numerics/burnsolver/BurnerHandle.h",
+      "src/numerics/burnsolver/odeFunction.h",
+      "src/numerics/burnsolver/ode_bd.h",
+      "src/numerics/burnsolver/ode_be-nr.h",
+      "src/numerics/burnsolver/ode_ros4.h",
+      "src/numerics/diffusion/DiffFlux.h",
+      "src/numerics/flux/FluxFunctions.h",
+      "src/numerics/flux/FluxHLL.h",
+      "src/numerics/flux/FluxHLLC.h",
+      "src/numerics/flux/FluxRoe.h",
+      "src/numerics/integrator/TimeIntegratorHelper.h",
+      "src/numerics/linalg/DenseWrap.h",
+      "src/physics/diagnostics/VelocityDiagnostics.h",
+      "src/physics/diffusionCoe/diffusion_math.hpp",
+      "src/physics/eos/HelmEos.h",
+      "src/physics/eos/IdealGas.h",
+      "src/physics/eos/Tabular3DEOS.h",
+      "src/physics/eos/Tabular4DEOS.h",
+      "src/physics/eos/TabularFreeEnergy.h",
+      "src/physics/eos/eos.h",
+      "src/physics/eos/eos_Utils.h",
+      "src/physics/gravity/ExternalGravity.h",
+      "src/physics/network/timmes_common/TimmesNetworkSupport.h",
+      "src/physics/nse/nse_solver.h",
+      "tests/cuda/test_boundary_plan_parity.cu",
+      "tests/cuda/test_burn_policy_parity.cu",
+      "tests/cuda/test_cuda_amr_exchange.cpp",
+      "tests/cuda/test_cuda_compile_probe.cu",
+      "tests/cuda/test_cuda_hydro_block.cu",
+      "tests/cuda/test_cuda_multiblock_hydro.cu",
+      "tests/cuda/test_cuda_policy_resolution.cu",
+      "tests/cuda/test_cuda_reduction_contract.cu",
+      "tests/cuda/test_cuda_single_level_validation.cpp",
+      "tests/cuda/test_diffusion_rkl_parity.cu",
+      "tests/cuda/test_eos_host_device_parity.cu",
+      "tests/cuda/test_hydro_leaf_parity.cu",
+      "tests/cuda/test_network_nse_device.cu",
+      "tests/test_amr_operation_plans.cpp",
+      "tests/test_checkpoint_compatibility.cpp",
+      "tests/test_reduction_contract.cpp",
+      "tests/test_resolved_execution_plan.cpp",
+      "tests/test_runtime_probe_and_capabilities.cpp",
+      "tests/test_shared_stage_scheduler.cpp",
+      "tests/test_state_residency.cpp",
+      "tests/test_topology_transaction.cpp",
+      "tests/test_validate_backend_results.py",
+      "tests/tooling/test_audit_combination_v2.py",
+      "tools/audit_combination_v2.py",
+      "tools/network/GenerateNetwork.py",
+      "tools/summarize_cuda_compile_memory.py",
+      "tools/validate_backend_results.py",
+      "tools/validate_cuda_amr_restart.py",
+      "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "validation/backend/cases.json"
+    ],
+    "untracked_source_files": [
+      "cmake/CudaBurnDenseRoutes.cmake",
+      "cmake/CudaBurnNetworks.cmake",
+      "cmake/CudaBurnSparseRoutes.cmake",
+      "cmake/CudaCodeImages.cmake",
+      "cmake/CudaCustomDenseRoute.cu.in",
+      "cmake/FindCuDSS.cmake",
+      "cmake/templates/CudaBurnDenseRoute.cu.in",
+      "cmake/templates/CudaBurnSparseOwner.cu.in",
+      "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "simulation/CooperativeHotspots/CooperativeHotspots.par",
+      "src/amr/RefinementIndicatorMath.h",
+      "src/amr/RegridExecutionPlan.h",
+      "src/amr/RegridTransferMath.h",
+      "src/cuda/amr/RefinementIndicators.cu",
+      "src/cuda/amr/RefinementIndicators.h",
+      "src/cuda/amr/RegridMigration.cu",
+      "src/cuda/amr/RegridMigration.h",
+      "src/cuda/common/DeviceAllocation.h",
+      "src/cuda/common/DeviceEosStatus.h",
+      "src/cuda/common/GridMetricsCache.cu",
+      "src/cuda/common/GridMetricsCache.h",
+      "src/cuda/hydro/CheckedHydroEos.cuh",
+      "src/cuda/hydro/GridGeometryAdapter.cuh",
+      "src/cuda/hydro/HydroSourceKernels.cuh",
+      "src/cuda/microphysics/CuDssSparseSolver.cpp",
+      "src/cuda/microphysics/CuDssSparseSolver.h",
+      "src/cuda/microphysics/SparseBeNrBatch.cuh",
+      "src/cuda/microphysics/SparseBurnCells.cuh",
+      "src/cuda/microphysics/SparseEquilibration.cu",
+      "src/cuda/microphysics/SparseEquilibration.h",
+      "src/cuda/microphysics/SparseOdeBatch.cuh",
+      "src/cuda/microphysics/device_network_owner.h",
+      "src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+      "src/cuda/runtime/CudaBackendBurnReduction.cuh",
+      "src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+      "src/cuda/runtime/CudaBackendBurnSparse.h",
+      "src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+      "src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+      "src/cuda/runtime/CudaBackendIndicators.cpp",
+      "src/cuda/runtime/CudaBackendMigration.cpp",
+      "src/cuda/runtime/CudaBurnOdeTypes.h",
+      "src/driver/DriverBurnPolicy.h",
+      "src/grid/GridGeometryView.h",
+      "src/numerics/burnsolver/BurnThermodynamics.h",
+      "src/numerics/burnsolver/NetworkDerivative.h",
+      "src/numerics/burnsolver/OdeContinuation.h",
+      "src/numerics/diffusion/DiffusionTypes.h",
+      "src/numerics/integrator/GeometricSources.h",
+      "src/numerics/linalg/CsrMatrixView.h",
+      "src/numerics/linalg/CsrPattern.h",
+      "src/numerics/linalg/LinearEquilibration.h",
+      "src/physics/constant/PhysicalConstants.h",
+      "src/physics/gravity/ExternalGravitySource.h",
+      "src/physics/network/WeakTableView.h",
+      "tests/amr_composition_test_cases.h",
+      "tests/checkpoint_conservation_metrics.h",
+      "tests/cuda/GeneratedSparseBurnFactory.h",
+      "tests/cuda/test_burn_controller_parity.cu",
+      "tests/cuda/test_burn_eos_failure.cu",
+      "tests/cuda/test_burn_thermal_math.cu",
+      "tests/cuda/test_compensated_sum.cu",
+      "tests/cuda/test_cuda_amr_composition.cu",
+      "tests/cuda/test_cuda_regrid_migration.cu",
+      "tests/cuda/test_cuda_regrid_transaction.cpp",
+      "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+      "tests/cuda/test_cudss_sparse_solver.cpp",
+      "tests/cuda/test_curvilinear_geometry_smoke.cu",
+      "tests/cuda/test_generated_network_math.cu",
+      "tests/cuda/test_generated_sparse_burn.cpp",
+      "tests/cuda/test_generated_sparse_burn_factory.cu",
+      "tests/cuda/test_generated_weak_factory.cu",
+      "tests/cuda/test_generated_weak_trajectory.cu",
+      "tests/cuda/test_grid_metrics_cache.cu",
+      "tests/cuda/test_hydro_dispatch.cu",
+      "tests/cuda/test_hydro_eos_failure.cu",
+      "tests/cuda/test_network_derivative.cu",
+      "tests/cuda/test_refinement_indicators.cpp",
+      "tests/cuda/test_sparse_be_nr_batch.cu",
+      "tests/fixtures/BurnMainlineReference.h",
+      "tests/fixtures/BurnTimeReference.h",
+      "tests/fixtures/HelmReference.h",
+      "tests/fixtures/NseReference.h",
+      "tests/fixtures/RoeFluxReference.h",
+      "tests/fixtures/SparseTransferNetwork.h",
+      "tests/math/BurnThermalCases.h",
+      "tests/math/CompensatedSumCases.h",
+      "tests/math/CurvilinearMetricCases.h",
+      "tests/math/DenseLuCases.h",
+      "tests/math/NetworkDerivativeCases.h",
+      "tests/math/RoeThermodynamicCases.h",
+      "tests/math/ViscousGeometryCases.h",
+      "tests/regrid_migration_fixture.h",
+      "tests/smoke/cuda_amr_cases.json",
+      "tests/test_burn_mainline_reference.cpp",
+      "tests/test_checkpoint_conservation_metrics.cpp",
+      "tests/test_compensated_sum.cpp",
+      "tests/test_curvilinear_manifest.py",
+      "tests/test_curvilinear_metrics.cpp",
+      "tests/test_generated_network_reference.cpp",
+      "tests/test_physical_constants.cpp",
+      "tests/test_portable_network_generator.py",
+      "tests/test_refinement_indicator_math.cpp",
+      "tests/test_run_memory_guarded.py",
+      "tests/test_runtime_validation_inputs.py",
+      "tests/test_smoke_cuda_amr_runtime.py",
+      "tests/test_sparse_ode_continuation.cpp",
+      "tests/test_validation_device_memory.py",
+      "tests/test_validation_provenance.py",
+      "tests/test_validation_subprocess_logs.py",
+      "tests/tooling/test_cuda_code_images.py",
+      "tests/tooling/test_cuda_compile_memory.py",
+      "tools/network/PortableAdapter.py",
+      "tools/network/PortableCxx.py",
+      "tools/network/WeakStorage.py",
+      "tools/network/WeakTables.py",
+      "tools/qualify_cuda_amr_evidence.py",
+      "tools/run_memory_guarded.py",
+      "tools/smoke_cuda_amr_runtime.py",
+      "tools/validation_device_memory.py",
+      "tools/validation_provenance.py",
+      "tools/validation_sanitizer.py",
+      "validation/amr/gaussian_reference.py",
+      "validation/amr/geometry_reference.py",
+      "validation/amr/gpu_curvilinear_cases.json",
+      "validation/burn/time_reference.py",
+      "validation/eos/helm_reference.py",
+      "validation/gravity/coupled_cases.json",
+      "validation/hydro/roe_reference.py",
+      "validation/hydro/sedov_reference.py",
+      "validation/hydro/time_reference.py",
+      "validation/network/inputs/weak_urca.py",
+      "validation/network/nse_reference.py",
+      "validation/network/run_sparse_validation.py",
+      "validation/network/run_weak_validation.py",
+      "validation/network/runtime_cases.json",
+      "validation/network/test_sparse_validation.py",
+      "validation/network/test_weak_reference.py",
+      "validation/network/weak_reference.py"
+    ]
+  },
+  "archive": {
+    "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/baseline-source.tar.gz",
+    "sha256": "0443bcf2b23ad01c5333b9de52f2f95a9c3603d555b0e727051331cfd5d7e239"
+  },
+  "files": [
+    {
+      "relative_path": "CMakeLists.txt",
+      "path": "/home/shiroakane/ARCH/CMakeLists.txt",
+      "sha256": "fb661cc64a831b71ba6bdba26a16d44607bd41520547c519b2c69110205fc7c7"
+    },
+    {
+      "relative_path": "CMakePresets.json",
+      "path": "/home/shiroakane/ARCH/CMakePresets.json",
+      "sha256": "38454c916d46a7a2658034c97f1b574278824bc9d6febc491e362ca11a7ee63f"
+    },
+    {
+      "relative_path": "cmake/CudaBurnDenseRoutes.cmake",
+      "path": "/home/shiroakane/ARCH/cmake/CudaBurnDenseRoutes.cmake",
+      "sha256": "31e4158938d75933c16b676a5f56cfb9141a658ab8127a6c7e7c2c313c560ede"
+    },
+    {
+      "relative_path": "cmake/CudaBurnNetworks.cmake",
+      "path": "/home/shiroakane/ARCH/cmake/CudaBurnNetworks.cmake",
+      "sha256": "ee3cd84ee8fff3c488090557f1121358f1f0be3609cb663cee86fa025db7911a"
+    },
+    {
+      "relative_path": "cmake/CudaBurnSparseRoutes.cmake",
+      "path": "/home/shiroakane/ARCH/cmake/CudaBurnSparseRoutes.cmake",
+      "sha256": "c8fe8d019db3326b91d8481cac3b232f14ea9d9ba48bfe0bab6ac6e57f83407a"
+    },
+    {
+      "relative_path": "cmake/CudaCodeImages.cmake",
+      "path": "/home/shiroakane/ARCH/cmake/CudaCodeImages.cmake",
+      "sha256": "9d79198d371bcaf4eedf538f060cfbf65759fa6b08663951849aa1cb48deb32c"
+    },
+    {
+      "relative_path": "cmake/CudaCustomDenseRoute.cu.in",
+      "path": "/home/shiroakane/ARCH/cmake/CudaCustomDenseRoute.cu.in",
+      "sha256": "e843549a715e3f81af50e8b50eb52b4634a9d23dd94a4daa4559e987ce7ed9d0"
+    },
+    {
+      "relative_path": "cmake/FindCuDSS.cmake",
+      "path": "/home/shiroakane/ARCH/cmake/FindCuDSS.cmake",
+      "sha256": "5a2e9863e09abe14ef756feb51d53b0d4d70237fef8c6e7cca5b15a1bc352a7e"
+    },
+    {
+      "relative_path": "cmake/templates/CudaBurnDenseRoute.cu.in",
+      "path": "/home/shiroakane/ARCH/cmake/templates/CudaBurnDenseRoute.cu.in",
+      "sha256": "62de07b0f9555349de70f0407597298bb161ec9dea18ce1594e5a65b9b9a7310"
+    },
+    {
+      "relative_path": "cmake/templates/CudaBurnSparseOwner.cu.in",
+      "path": "/home/shiroakane/ARCH/cmake/templates/CudaBurnSparseOwner.cu.in",
+      "sha256": "b430b5f3afeeddfca245b132800cd9f8c844cab0b5828e7504575e6f02b6df20"
+    },
+    {
+      "relative_path": "simulation/BurnGradient/BurnGradient.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/BurnGradient/BurnGradient.cpp",
+      "sha256": "2f92b39a31b8aaf1f0e58ff4d9f6ed6a1567ba23ebd07224022cfbc15d199e3c"
+    },
+    {
+      "relative_path": "simulation/BurnOneZone/BurnOneZone.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/BurnOneZone/BurnOneZone.cpp",
+      "sha256": "0b7bffe047fdbeb7bd38b0acf7470307b11ccb6a57000614cc6369ed91c8c15c"
+    },
+    {
+      "relative_path": "simulation/Cellular/Cellular.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/Cellular/Cellular.cpp",
+      "sha256": "91a5af7fea958eef367025a00b7bb4c67f759cc65d8ddfd36af6974583dce48b"
+    },
+    {
+      "relative_path": "simulation/Cellular/Cellular.par",
+      "path": "/home/shiroakane/ARCH/simulation/Cellular/Cellular.par",
+      "sha256": "a50af34a33e25d785c56aff1070c5187a5148c65cf4a68ee3703e2817dfc4122"
+    },
+    {
+      "relative_path": "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "sha256": "8774f66d02399613c09096be0f96b23af19494a15c414e98d8df715896bccc66"
+    },
+    {
+      "relative_path": "simulation/CooperativeHotspots/CooperativeHotspots.par",
+      "path": "/home/shiroakane/ARCH/simulation/CooperativeHotspots/CooperativeHotspots.par",
+      "sha256": "2a1c0f01d81c17cceb0e25aed9927c9f0927d4285cece478ac0c5bf51b0eb7f0"
+    },
+    {
+      "relative_path": "simulation/DiffusionMode/DiffusionMode.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/DiffusionMode/DiffusionMode.cpp",
+      "sha256": "79f97ebbcf95e5bb1e206c15dfad2a67812dc49af3a30e5ae191d2066205a1ae"
+    },
+    {
+      "relative_path": "simulation/ExternalGravity/ExternalGravity.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/ExternalGravity/ExternalGravity.cpp",
+      "sha256": "3dd790b982d6062c742d54c127956812c33fa1f9fe86ce902e541f7ac2268539"
+    },
+    {
+      "relative_path": "simulation/GaussianPulse/Gaussian.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/GaussianPulse/Gaussian.cpp",
+      "sha256": "e66ece80a3589000a71364ecb7ee64e4fa21f3624e3792c77b83ae9c0f7623fe"
+    },
+    {
+      "relative_path": "simulation/GaussianPulse/Gaussian.par",
+      "path": "/home/shiroakane/ARCH/simulation/GaussianPulse/Gaussian.par",
+      "sha256": "d04bb288782eb1ebdd7bca5b3569c0341d7fa10d8e20d8b6c1e3af93cbe27ce6"
+    },
+    {
+      "relative_path": "simulation/RTinstability/RT_instab.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/RTinstability/RT_instab.cpp",
+      "sha256": "56bebd751088265cbdfb5990773e5e72d9efadaba4e13e3f2b6c54d30d3dba71"
+    },
+    {
+      "relative_path": "simulation/RTinstability/RT_instab.par",
+      "path": "/home/shiroakane/ARCH/simulation/RTinstability/RT_instab.par",
+      "sha256": "bc0cc5f2e22e7a522700614817a05d480642e1367c8fbfb93703ec928b094ef5"
+    },
+    {
+      "relative_path": "simulation/Sedov/Sedov.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/Sedov/Sedov.cpp",
+      "sha256": "8d9082a8ca80f8b079ffa8bfeb7472e19277ad9607fcd0bd16d1d3b3c39a336c"
+    },
+    {
+      "relative_path": "simulation/Sedov/Sedov.par",
+      "path": "/home/shiroakane/ARCH/simulation/Sedov/Sedov.par",
+      "sha256": "75cbfc2c435f639dc290bb67a54d372093f470e4bb1fdcda09f70421d2f9e443"
+    },
+    {
+      "relative_path": "simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "sha256": "f0e7fa3f8969bfc03bffb2d484f8f78b350c3e735af02672eaaa993933a1a958"
+    },
+    {
+      "relative_path": "simulation/Sod/Sod.cpp",
+      "path": "/home/shiroakane/ARCH/simulation/Sod/Sod.cpp",
+      "sha256": "6dbaed253a4a915b294ab31d512af72768a73b806c96075e3a1becbbf9215671"
+    },
+    {
+      "relative_path": "simulation/Sod/Sod.par",
+      "path": "/home/shiroakane/ARCH/simulation/Sod/Sod.par",
+      "sha256": "cd54c4000a8bd3917f5b3fb658c2614f91bddc7ebd84e7e076f6c3bb79489284"
+    },
+    {
+      "relative_path": "simulation/Sod/Sod_beginner.par",
+      "path": "/home/shiroakane/ARCH/simulation/Sod/Sod_beginner.par",
+      "sha256": "ddb8466232d47dd7200f509d9237c426f6c45e38e2f1c2eedb0077aefa96d586"
+    },
+    {
+      "relative_path": "src/amr/AMRControl.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AMRControl.h",
+      "sha256": "07444c8f51b3707084e156f98687e0ad7ab9e1de42eaaa7164ea15152548d13e"
+    },
+    {
+      "relative_path": "src/amr/AMRFluxRegistering.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AMRFluxRegistering.h",
+      "sha256": "0ed8aaf0fd262bc396c068ac145b961dce54b2c86bddb2fd19302b1465a3dbb0"
+    },
+    {
+      "relative_path": "src/amr/AmrDefines.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AmrDefines.h",
+      "sha256": "ba810ff02ce2719f8ed3452b6ccab0d875a6a6403ef0ea511a3859bb68e81867"
+    },
+    {
+      "relative_path": "src/amr/AmrFluxExecutionPlan.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AmrFluxExecutionPlan.h",
+      "sha256": "d8ae0561db1106a9cf7c0e32caf852582a23fbd8088bab70388b89226e319e60"
+    },
+    {
+      "relative_path": "src/amr/AmrFluxMath.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AmrFluxMath.h",
+      "sha256": "db617cbcac9809006698882d95eaf20e72478011c7f4be7f9861b24d7fa84283"
+    },
+    {
+      "relative_path": "src/amr/AmrFluxPlan.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AmrFluxPlan.h",
+      "sha256": "12c7e635f016bc8293adf603d629c59ed89db0a911da91edc3bf67a898ab59ea"
+    },
+    {
+      "relative_path": "src/amr/AmrTransferPlans.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AmrTransferPlans.h",
+      "sha256": "a4a33e1d0dcd8c2429cc2d19719188032a3cb3118b042ad19c33bc3317d278dc"
+    },
+    {
+      "relative_path": "src/amr/AmrTree.h",
+      "path": "/home/shiroakane/ARCH/src/amr/AmrTree.h",
+      "sha256": "4e129441b59253ef8c7c92aa5970aeb7d88d352323542602d8bdf876c0a65d8d"
+    },
+    {
+      "relative_path": "src/amr/Block.h",
+      "path": "/home/shiroakane/ARCH/src/amr/Block.h",
+      "sha256": "249b62ca4c71bf8144c6b51fa0e03473b0ee5c2d54c0f8fde34ec147ed2c2832"
+    },
+    {
+      "relative_path": "src/amr/BlockHandle.h",
+      "path": "/home/shiroakane/ARCH/src/amr/BlockHandle.h",
+      "sha256": "69a55baca4a04178469efb37184b4620ae136b22af1b6b0bd63dad54aea96443"
+    },
+    {
+      "relative_path": "src/amr/BoundaryPlan.h",
+      "path": "/home/shiroakane/ARCH/src/amr/BoundaryPlan.h",
+      "sha256": "c622601bcdc17291b2750a4d06a4c35385a5b36c1c8a4284821c31eab0da31f4"
+    },
+    {
+      "relative_path": "src/amr/CoarseFineCellPlan.h",
+      "path": "/home/shiroakane/ARCH/src/amr/CoarseFineCellPlan.h",
+      "sha256": "a227f9ea71cc80db55ea405380596501e99afed725f0da73bc40e630420cf863"
+    },
+    {
+      "relative_path": "src/amr/ConservativeRestriction.h",
+      "path": "/home/shiroakane/ARCH/src/amr/ConservativeRestriction.h",
+      "sha256": "10d98f347a0e8c5d6ea017135c853c979e1d639ec70f4e701b1c458086137c9e"
+    },
+    {
+      "relative_path": "src/amr/ExchangePlan.h",
+      "path": "/home/shiroakane/ARCH/src/amr/ExchangePlan.h",
+      "sha256": "b92508bdc6e706bd827720c0d410eb29bd77aa1990e432da1281c4f7101391d2"
+    },
+    {
+      "relative_path": "src/amr/FluxRegister.h",
+      "path": "/home/shiroakane/ARCH/src/amr/FluxRegister.h",
+      "sha256": "a50f4d386cb52ff89cca5c92b7cb328145bfa0b0513fc975149ba42d0f91548e"
+    },
+    {
+      "relative_path": "src/amr/GhostExchange.h",
+      "path": "/home/shiroakane/ARCH/src/amr/GhostExchange.h",
+      "sha256": "0ffe9775b89573a183bb5a64ddcd3b19d508854a9c3f90f4101ac0bd4cb64b74"
+    },
+    {
+      "relative_path": "src/amr/LimitedLinearProlongation.h",
+      "path": "/home/shiroakane/ARCH/src/amr/LimitedLinearProlongation.h",
+      "sha256": "ecc720595b2d0a20060cf48a4f9a1ad5edc87a2f1814f670599e678288cfc7f7"
+    },
+    {
+      "relative_path": "src/amr/MemoryPool.h",
+      "path": "/home/shiroakane/ARCH/src/amr/MemoryPool.h",
+      "sha256": "4a3523cbaa2d05122391155e389c3c016eedaa8ca38fc673fd681640484cd960"
+    },
+    {
+      "relative_path": "src/amr/Morton.h",
+      "path": "/home/shiroakane/ARCH/src/amr/Morton.h",
+      "sha256": "9ff3a82de3355eeacd7c391b2b4262356b6af29aa18c3fc50a96e8a5e92a80fe"
+    },
+    {
+      "relative_path": "src/amr/RefinementIndicatorMath.h",
+      "path": "/home/shiroakane/ARCH/src/amr/RefinementIndicatorMath.h",
+      "sha256": "fccb9f3700561eef235b0bb2ebc043f4ace5dfb6ca6ce955482e760d9f084a42"
+    },
+    {
+      "relative_path": "src/amr/RegridExecutionPlan.h",
+      "path": "/home/shiroakane/ARCH/src/amr/RegridExecutionPlan.h",
+      "sha256": "08ccb61729055c45059bdbd8387b7d9abb2bb61dfc09d1aa808341297493f6cd"
+    },
+    {
+      "relative_path": "src/amr/RegridTransferMath.h",
+      "path": "/home/shiroakane/ARCH/src/amr/RegridTransferMath.h",
+      "sha256": "441c51896dd14c3b8ec2ae7f1b9e0263ffb4838a19d729ad6061514a2cdd28f6"
+    },
+    {
+      "relative_path": "src/amr/TopologyTransaction.h",
+      "path": "/home/shiroakane/ARCH/src/amr/TopologyTransaction.h",
+      "sha256": "7231083c7fb1fe217db528823d529d289ce5f8d398f76c7a388196e6b69655c2"
+    },
+    {
+      "relative_path": "src/core/ArchPortability.h",
+      "path": "/home/shiroakane/ARCH/src/core/ArchPortability.h",
+      "sha256": "4bb1e0e6f7b2bb56a5a92f88a93fe444e33d1a8fb3fe8b50067b1ad07a7db204"
+    },
+    {
+      "relative_path": "src/core/CompensatedSum.h",
+      "path": "/home/shiroakane/ARCH/src/core/CompensatedSum.h",
+      "sha256": "38342246ec1acda27ee7c17c65a5404d1593af37135d4cb2a42e9bf96f7c0d4c"
+    },
+    {
+      "relative_path": "src/core/FileFingerprint.cpp",
+      "path": "/home/shiroakane/ARCH/src/core/FileFingerprint.cpp",
+      "sha256": "06909d2447e7b01afead0a1782e54adeafe384646f5669d328c28e7fab933d88"
+    },
+    {
+      "relative_path": "src/core/FileFingerprint.h",
+      "path": "/home/shiroakane/ARCH/src/core/FileFingerprint.h",
+      "sha256": "7021d6b53f1fea66763c019fc870deb9a5f8676df811d8a22432068465222b7e"
+    },
+    {
+      "relative_path": "src/core/ProblemHelper.cpp",
+      "path": "/home/shiroakane/ARCH/src/core/ProblemHelper.cpp",
+      "sha256": "44584e3efc55fb52c0d848355879cf7c98d4f81db13a94cd30c3e7309f2b7ddf"
+    },
+    {
+      "relative_path": "src/core/ProblemHelper.h",
+      "path": "/home/shiroakane/ARCH/src/core/ProblemHelper.h",
+      "sha256": "e2b9762dc5f8ced61425d4218e9d10e3eceb5b4bffd25676ffd41bf5a60a268e"
+    },
+    {
+      "relative_path": "src/core/ProblemRegistry.h",
+      "path": "/home/shiroakane/ARCH/src/core/ProblemRegistry.h",
+      "sha256": "c7062ecf7742ced84014d349e507c569bd2ab25c3a2350cf77c4dabb4db923f3"
+    },
+    {
+      "relative_path": "src/core/RuntimeParams.h",
+      "path": "/home/shiroakane/ARCH/src/core/RuntimeParams.h",
+      "sha256": "a580a346b8267309be710765d881c1343ebe5628ca3e155ef429a21745d0f20a"
+    },
+    {
+      "relative_path": "src/core/UserInterface.h",
+      "path": "/home/shiroakane/ARCH/src/core/UserInterface.h",
+      "sha256": "337e823e7fcb9f7c767ac141d682f9454ef4df6551370d234d271436f760b60f"
+    },
+    {
+      "relative_path": "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+      "sha256": "649f7fa028a0651e1f9905aed7192c158b8c4ce4ee845e70ec7c833655f2fa7d"
+    },
+    {
+      "relative_path": "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+      "sha256": "5f89f63ff6065edcaf1ff65209a607a320c84ce6bad5942ec4db6691beba7141"
+    },
+    {
+      "relative_path": "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/CoarseFineExchangeKernels.cuh",
+      "sha256": "35556edb876fed67ed385874664e91d7870e5219d161a10793d39a79d6bb9cc8"
+    },
+    {
+      "relative_path": "src/cuda/amr/RefinementIndicators.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/RefinementIndicators.cu",
+      "sha256": "eb615aa3e7112103bac1c270cfe5f6917e4fa274a39c854d13cca08054d012d1"
+    },
+    {
+      "relative_path": "src/cuda/amr/RefinementIndicators.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/RefinementIndicators.h",
+      "sha256": "c3cc035a516d1723aa480913797d5620d6382edb54036d80cf19a8ea266ac1ea"
+    },
+    {
+      "relative_path": "src/cuda/amr/RegridMigration.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/RegridMigration.cu",
+      "sha256": "6a058b668e3a5afae57a53e9e889a68c7fb53b0157911e5cac32a016cf1aad64"
+    },
+    {
+      "relative_path": "src/cuda/amr/RegridMigration.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/amr/RegridMigration.h",
+      "sha256": "c0506098cf4fe0698b669bb66154be3e5d0bc39fabbaec80567d7d159c548e42"
+    },
+    {
+      "relative_path": "src/cuda/common/CudaCommon.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/CudaCommon.cuh",
+      "sha256": "5c5978a9c14b8dfc43b4cdca2dbb28f726d3925c1cbe57f8724910bf716d8e0d"
+    },
+    {
+      "relative_path": "src/cuda/common/CudaLaunchConfig.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/CudaLaunchConfig.h",
+      "sha256": "0f5510eaa3d5c6299f35f18e9290684aa99c81b4f1873fe30fb154119eb015de"
+    },
+    {
+      "relative_path": "src/cuda/common/DeviceAllocation.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/DeviceAllocation.h",
+      "sha256": "516be1e848220df9a73baa83180c5d3d2d1a02989bd6871df65f19398fd2c70f"
+    },
+    {
+      "relative_path": "src/cuda/common/DeviceEosStatus.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/DeviceEosStatus.h",
+      "sha256": "d66a58a51a99b5b9cda775376fa480be37ab36d1cd1933e49e5c2a26f3708de3"
+    },
+    {
+      "relative_path": "src/cuda/common/DeviceStateFields.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/DeviceStateFields.cuh",
+      "sha256": "bd6018e532333e8df888fb0d9cc263a9895f235c61f8d8106819b96984e60335"
+    },
+    {
+      "relative_path": "src/cuda/common/DiffusionConfigViewAdapter.h",
+      "status": "missing"
+    },
+    {
+      "relative_path": "src/cuda/common/GridMetricsCache.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/GridMetricsCache.cu",
+      "sha256": "5a794cc8a30556678c19be31026ac6edfd2183cb7f208b6a5ec84d9a60782448"
+    },
+    {
+      "relative_path": "src/cuda/common/GridMetricsCache.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/common/GridMetricsCache.h",
+      "sha256": "b9447d66458a91dbcb10e58633a9beaca8f6eba2cdbe57dc60def7ab4859c98a"
+    },
+    {
+      "relative_path": "src/cuda/diffusion/DiffusionKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/diffusion/DiffusionKernels.cuh",
+      "sha256": "27d6a33c4487786ee63e211b4dd6d30bf02dac4f4dc18bc8cb82e15f8128bcd8"
+    },
+    {
+      "relative_path": "src/cuda/diffusion/DiffusionSolver.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/diffusion/DiffusionSolver.cuh",
+      "sha256": "422314232a780864ee356f1cdffcdddd0ae90705bf8c50c76fd33d696ea52a6e"
+    },
+    {
+      "relative_path": "src/cuda/hydro/Boundary.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/Boundary.cuh",
+      "sha256": "116d7509e94cd7edcf4fd360d9b2449bfb1f475c796893f49bd4c7c39c6e274a"
+    },
+    {
+      "relative_path": "src/cuda/hydro/BoundaryPlan.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/BoundaryPlan.h",
+      "sha256": "f1e6b4797de976abb3f6ff47b19d4af1d8bca7fef26d1d4767f375bb6f812fc9"
+    },
+    {
+      "relative_path": "src/cuda/hydro/CheckedHydroEos.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/CheckedHydroEos.cuh",
+      "sha256": "4c9b2b5b1de6de61787677197a8fdc6852afdbb4dfdb9562940be6bf0a82d24b"
+    },
+    {
+      "relative_path": "src/cuda/hydro/ExchangeKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/ExchangeKernels.cuh",
+      "sha256": "5aa3d12b310763b235ab99b49d2b3bb890fc5e719a7082468036ae7f588cd139"
+    },
+    {
+      "relative_path": "src/cuda/hydro/GridGeometryAdapter.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/GridGeometryAdapter.cuh",
+      "sha256": "7d78242b59c1d32c2cd079bdc060520a74573c9c450cf2909c8aec25f67af2a6"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroFaceKernel.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroFaceKernel.cuh",
+      "sha256": "da3213789c38c7193ad40cd173967328552d3717b831f062fb66b84af7d32570"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroFluxPolicies.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroFluxPolicies.cuh",
+      "sha256": "da680565d51e5378eee6ffcb0aa472e9b1b8a13a59b642d9b315e4fccba17806"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroIntegratorPolicies.cuh",
+      "sha256": "ff30e9cb4a7376141b0de92360082db4f604dc75011d25dd0c1bb918475cfdc4"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroReconstructionPolicies.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroReconstructionPolicies.cuh",
+      "sha256": "bede5e1433dd0b284579d86fe30b87bba24e082fc7c2c20171b8c9225d03997b"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroSourceKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroSourceKernels.cuh",
+      "sha256": "1e57fb52b3aee514d6d1edb62551d2a7a55f364c467dd79ea8b40334c731c3b1"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroStageKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroStageKernels.cuh",
+      "sha256": "bd3828bf2d66bdcea34137eb92e3f5165251bf2db2accf9cddaa7d1a4aa47182"
+    },
+    {
+      "relative_path": "src/cuda/hydro/HydroStateKernels.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroStateKernels.cuh",
+      "sha256": "0509746d37339ccdb1a063dd3869615ddaf05f11e63c0fa26f124825cebca1c9"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/CuDssSparseSolver.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/CuDssSparseSolver.cpp",
+      "sha256": "b672a53a59ded42264dc7e19d2d65ca428599242fa3ee745110a0787eec35af7"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/CuDssSparseSolver.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/CuDssSparseSolver.h",
+      "sha256": "a6f2402adc18672aa6cb32993d2712fae53bbb2c84b67a74ceb3edd31a9a44d9"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/SparseBeNrBatch.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseBeNrBatch.cuh",
+      "sha256": "f206285c97e347282ba4ce6e742d7cf7ce977d3507fd6e78a14f565bcf4775f2"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/SparseBurnCells.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseBurnCells.cuh",
+      "sha256": "a2ab83c17990a4f508534d5cedebf14f289a51cea1e525b11a3ba825deff5816"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/SparseEquilibration.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseEquilibration.cu",
+      "sha256": "62cab6e403ead62f3ac810994313573b356f9ec30931fc163fc585322080d8a3"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/SparseEquilibration.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseEquilibration.h",
+      "sha256": "9292f94ab91bc902369fb87cd32a9dc6ee12a8c2452a76bfb8b8063e44d9d427"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/SparseOdeBatch.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseOdeBatch.cuh",
+      "sha256": "166d89429efafeccbd44c2adac188bf111c91050cd53a1f58971f5cbadc13903"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/common.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/common.h",
+      "sha256": "8611cf161fe78fe2e201deb36aa45bcb686a95d585fbab0adfb113756bc9ce23"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/device_eos_owner_utils.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/device_eos_owner_utils.cpp",
+      "sha256": "675206767d33f4c5a7f57dd1d5ecddeff1d925db3f2e22756baaacceb7722f2d"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/device_eos_owner_utils.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/device_eos_owner_utils.h",
+      "sha256": "044d2ebde48b58f05df908eeb4487b786e28ba262a3f8535b1ee025f6bec6b4b"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/device_network_owner.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/device_network_owner.h",
+      "sha256": "e56c77c5131895fda06ffa79e9c762cf06756cacaed6328c6c3b0e14af74f24c"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/device_species_owner.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/device_species_owner.cpp",
+      "sha256": "43faa4f245c304e3d3d8ceafe5f89e85d5cd06c4b1d500f347ef39cc2e739138"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/device_species_owner.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/device_species_owner.h",
+      "sha256": "9bbf68eadaa750d209706927e6399a9c51c442466db57b932f21a830ab02f736"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/helm_eos_device_owner.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/helm_eos_device_owner.cpp",
+      "sha256": "2fe56dd6c42ce3c07a68be6a554ce4d7b528b055636274eae49f0bcd7fbeab7c"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/helm_eos_device_owner.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/helm_eos_device_owner.h",
+      "sha256": "899e778a4a048c75c75898ba5a43bb9a9be434651ab58fb904229b991c631a37"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/helm_eos_loader.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/helm_eos_loader.h",
+      "sha256": "954f3748d171ed04d66512b77829c31b0041b984be00844c5057355b3f953c23"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/microphysics_api.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/microphysics_api.h",
+      "sha256": "9a8f193a91199839a326639391026559c541ded03d733f5ac0b183389e274e62"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+      "sha256": "b80eb901c67ae2eb5a6104f8acd8b43b7086aa449b040b55115099fb65beb65f"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/tabular3_eos_device_owner.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/tabular3_eos_device_owner.h",
+      "sha256": "9ed1020bcc075d40e3b5064735a51d11b7c79bd7921cc6013406bc8d8e52b826"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+      "sha256": "67be1cda95e7d19c5c187b3875f6541e954ac54496e161aaba7d06789697d93c"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/tabular4_eos_device_owner.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/tabular4_eos_device_owner.h",
+      "sha256": "3d79280a57ddae8c6f1c22d97524c2e7c5e77a64c68a50501a06a76b243cc61d"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackend.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackend.h",
+      "sha256": "055ff2b0cf8552a5142c853ea023ffce9008e8beafaef644291afc53289065f9"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendAmrFlux.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendAmrFlux.cu",
+      "sha256": "8e3ffebe6e9c1623453a1d6550670ac8f4a8ab96666a419be2881958fcfceac5"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendAmrFlux.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendAmrFlux.h",
+      "sha256": "95bd4db10dee928b00ef6b640e0f6751950ffd8de86263b29f19bb3752c19dd2"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurn.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurn.h",
+      "sha256": "1403ad93b6a5fb64b4a66dea67168915e8972f37e5f6d37ef75c35f21550e34a"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnAllNetworksImpl.cuh",
+      "status": "missing"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+      "sha256": "34017f083bb9d8460d1c8b69ad1d918c6f8ca5e72efeca98476c464bda14ea8d"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnHelm.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnHelm.cu",
+      "sha256": "7999c588f7a26ee18eba6dabfe6d6839c64a06171d97810092e9323274c0cd0f"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnIdeal.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnIdeal.cu",
+      "sha256": "905063013e39748fc7979a4a216de1a2cb9a56fe6263a1996fe996083c02712b"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnImpl.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnImpl.cuh",
+      "sha256": "3d2d82b2359ac9a8e080fc6b20ea35609ad0e1fdd68fc6cf16a94fb264c8e185"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnNetworkRouteImpl.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnNetworkRouteImpl.cuh",
+      "sha256": "861b7db0315b89fd1527a4714e16bffb8f24582984d5f6fe14a41488a82b92ee"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnNetworkRoutes.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnNetworkRoutes.h",
+      "sha256": "ff9f88791aca29524714811e733f7776b564b2f18e2a593c09fa296f0edcd63a"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnReduction.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnReduction.cuh",
+      "sha256": "cbda463b301f1d6c896139465f9908c38966c9010bba707734ff084756b73553"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+      "sha256": "da3eabc49f876692f3e570fc7b3db211cb210d6d0720a0568458ecbc24f7e896"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnSparse.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparse.h",
+      "sha256": "7f044080c809e4723b52ecb3dd22bae7d4a7cff3778e386af14085f83fcce5ad"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+      "sha256": "f18be61a6c731e290e80556088aad74771d2f7f6c068abd5024e6727770ac053"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+      "sha256": "37cb4ec32b54a9f78ae8e9181b354afb695187f9f74004f409eac788cac6d94f"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+      "sha256": "5d2370c71cb180c5cce0a308583eaa5eae0d211f46d6423133de4de73879897c"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+      "sha256": "f15d3f652571c781348e2b9f0acaee7d18e4752dbcacdb81077170e7784c6458"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu",
+      "sha256": "84527c5b9790099b3175957b14f5ab7c7148cc4e840f32770ce124973027fa5d"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu",
+      "sha256": "b2d9944e1ee3ab1b105e69b21f4cc43bb4d6758f869a1bd61f3f2fea1928a3d0"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu",
+      "sha256": "18fc0fb1d7dd602c087b39584adf48bc956f2e2dc3178abee22da9ed131c857b"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu",
+      "sha256": "048cf1235d4b91ed1960cbf36fe624c90c32ccf24d55a65fb8b89b35eff8c830"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+      "sha256": "156bc0dbd3b12b8ea6e6c9a806c6701428acd9bbdf5ecff246bb7b95e7f0722c"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu",
+      "sha256": "3c738039b7858e065c0157d299721d9afc46d81e6d7df4580c01621ba3377c84"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu",
+      "sha256": "fff47b8b5d3d83fc5a0b2f38931dd16bea4ef20e0d735872cfddf9705f935023"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu",
+      "sha256": "2ee444524da08ebe170f510a80775573a0cdf7e397fe0a209b517540a3850782"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu",
+      "sha256": "3e862307fa0b095c4d43e27bbf1f4c2aef5a31828f19076fda570b00cc312b36"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendCore.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendCore.cpp",
+      "sha256": "9e78685536966383e70c26b5f8af9fe3ad15f36ad1475b597bea0d4bc17c8542"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendDiffusion.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendDiffusion.cu",
+      "sha256": "61a0c6e819f0e7e0e363c6b8a291c220a0096c38f643a67a32ca72f44d8ccb50"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendDiffusion.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendDiffusion.h",
+      "sha256": "2c630431c77ae0ae58dc2d1184e357ea0744fb07964615c9990fec592baf450d"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendExchange.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendExchange.cu",
+      "sha256": "8772144a85011680b493f4ca15eba4ae539d5c7b7a43745e96c0da2afeb8f70f"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendExchange.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendExchange.h",
+      "sha256": "cebccd8473430019768933b36b9a033b438890fad3f2ee10f69c714f6230b181"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendFactory.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendFactory.cpp",
+      "sha256": "c3a6142ed9977ed1a7b13f4f4da5d3c296e0fddd0658ff049c106f9c0733addf"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydro.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydro.h",
+      "sha256": "8dffccad48c786ca538cbc8bfffb51ee7658a7b3ff3fa8bc701d848dea682bab"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydroControl.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydroControl.cpp",
+      "sha256": "3862b1a3dae2d33d187f5a5947127f6c7e629754077ae9002fd20a1a1288656f"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydroHelm.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydroHelm.cu",
+      "sha256": "55ec1944bb73cd87a105e160fb1ef81a93e57a7ebf87d8613ed46385c36730b2"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydroIdeal.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydroIdeal.cu",
+      "sha256": "ea4a8201befae6c773a5cb8a38bd2667b16aaf554fa24f70127c7eb9015a48ce"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydroInstantiation.cuh",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydroInstantiation.cuh",
+      "sha256": "59051fc66c0e8c7647be8dc067a5782a3d9ede68bbb3e571464e8a9cb1f12a04"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydroTabular3.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydroTabular3.cu",
+      "sha256": "211300889425b5a07f7c6d90b66031e7d5c9a449e443bca039d54acea2508f43"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendHydroTabular4.cu",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendHydroTabular4.cu",
+      "sha256": "ec62025b61b38d4e41be5634326b37fee3e81e0ccb9ee5b277273f16b4b34fa5"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendIndicators.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendIndicators.cpp",
+      "sha256": "1480f1eeb10b9c877719115e1b14829bf8bc0ece588fff406fb60c59ba8aab05"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendInternal.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendInternal.h",
+      "sha256": "60f6a5d4319fed84b9a501bca2b949cc6701e37fae7092551d24e7b5c9e89ebd"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendMicrophysicsControl.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendMicrophysicsControl.cpp",
+      "sha256": "f3ab4ce32d9238a6ca548a1196aeecf0760de2632c892f853fe15797b234b4d6"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendMigration.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendMigration.cpp",
+      "sha256": "4d61f074ba0f686803f048a2a49325338d905d84886b3f68c1e578631be4d098"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendResources.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendResources.cpp",
+      "sha256": "37902523830c692d76d85bcddc93d8c540d7c61be7b5b8c377e64bcf05edaa59"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendStore.cpp",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendStore.cpp",
+      "sha256": "5bf1708c2f71613ca2fb86d62b3127fe6524d6baa4a75e28f917f3208475db34"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBackendTypes.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendTypes.h",
+      "sha256": "1194ca7ab99c3f2e7850ac63f237db88b05bddb3a19deba89fd2ab787f163777"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBurnNetworkTypes.h",
+      "status": "missing"
+    },
+    {
+      "relative_path": "src/cuda/runtime/CudaBurnOdeTypes.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBurnOdeTypes.h",
+      "sha256": "b9b0f2c4c9800ac168cbb661320c903348f9f271f6282649fa17c4d5bda133e4"
+    },
+    {
+      "relative_path": "src/cuda/runtime/DeviceBlockStore.h",
+      "path": "/home/shiroakane/ARCH/src/cuda/runtime/DeviceBlockStore.h",
+      "sha256": "7a1230c451c4a35071b9f86b0f006a4176d29f63cd3cad8655d0353b9c718cd2"
+    },
+    {
+      "relative_path": "src/data/FluidState.h",
+      "path": "/home/shiroakane/ARCH/src/data/FluidState.h",
+      "sha256": "4eabb0158e8bd181d2093a536088e93d74b0ae7fe9c3d1ed43894f0d2e1f1560"
+    },
+    {
+      "relative_path": "src/data/GlobalDefs.h",
+      "path": "/home/shiroakane/ARCH/src/data/GlobalDefs.h",
+      "sha256": "9e34088421c0f23e6e642889e1e38782b5867387256cc1add8570aada28ca56a"
+    },
+    {
+      "relative_path": "src/data/UserTypes.h",
+      "path": "/home/shiroakane/ARCH/src/data/UserTypes.h",
+      "sha256": "359be36dd8f8f5152d500fac9620fbebfa068a4a6511d935e5bfba1c4a26ab1c"
+    },
+    {
+      "relative_path": "src/driver/ComputeBackend.h",
+      "path": "/home/shiroakane/ARCH/src/driver/ComputeBackend.h",
+      "sha256": "6e69e15312b053510f681e268564916666e6f126e5ef4eb1f4609653246f87cc"
+    },
+    {
+      "relative_path": "src/driver/Driver.h",
+      "path": "/home/shiroakane/ARCH/src/driver/Driver.h",
+      "sha256": "50e45bbfe5afbdd27889ec76400b804b01e1f17e2a6a9adc50c9eddb8581a105"
+    },
+    {
+      "relative_path": "src/driver/DriverBurn.h",
+      "path": "/home/shiroakane/ARCH/src/driver/DriverBurn.h",
+      "sha256": "cc9d5a42adb6a515c11e1bef41d6f17c27745ed751297c5fb4070ad91fdb8110"
+    },
+    {
+      "relative_path": "src/driver/DriverBurnPolicy.h",
+      "path": "/home/shiroakane/ARCH/src/driver/DriverBurnPolicy.h",
+      "sha256": "0233bf100f509a8ea93d46ce0b742c2c05b0c53ceea54699ca44649edf481c61"
+    },
+    {
+      "relative_path": "src/driver/DriverControl.h",
+      "path": "/home/shiroakane/ARCH/src/driver/DriverControl.h",
+      "sha256": "8f01d10fe8674380979b386e98e9b8c5315a1826d0cfb429f0cd500965ce92fb"
+    },
+    {
+      "relative_path": "src/driver/DriverUtils.h",
+      "path": "/home/shiroakane/ARCH/src/driver/DriverUtils.h",
+      "sha256": "f2bd8756eb19af70ce425106881ecbfbcc53d7c1e9ecf32c72445395dc4ccd40"
+    },
+    {
+      "relative_path": "src/driver/ReductionSpec.h",
+      "path": "/home/shiroakane/ARCH/src/driver/ReductionSpec.h",
+      "sha256": "90d046893902d1e22efbfdda416aec11e7ea81ea7541aaf3e5f10d52cc8cd5ae"
+    },
+    {
+      "relative_path": "src/driver/SolverDispatch.cpp",
+      "path": "/home/shiroakane/ARCH/src/driver/SolverDispatch.cpp",
+      "sha256": "fa89b75fed9f9795c33f5e3240557160feeb7c33e4fd2d5b1564e65eccdca940"
+    },
+    {
+      "relative_path": "src/driver/SolverDispatch.h",
+      "path": "/home/shiroakane/ARCH/src/driver/SolverDispatch.h",
+      "sha256": "32ed957afd0ff5ee04f6b6f229753a9a41eefa3e6e07d34508cf08e8b2645425"
+    },
+    {
+      "relative_path": "src/driver/StageScheduler.h",
+      "path": "/home/shiroakane/ARCH/src/driver/StageScheduler.h",
+      "sha256": "185b6e19b8259f10274ac7b19702ee2de6b9400e5bf2469003ae59d08fcd7329"
+    },
+    {
+      "relative_path": "src/driver/StateResidency.h",
+      "path": "/home/shiroakane/ARCH/src/driver/StateResidency.h",
+      "sha256": "30669e6ad715e3c18cd5d7fd3999ac67a523bec26b3273d0d64a5220cda40816"
+    },
+    {
+      "relative_path": "src/driver/TopologyIdentityRegistry.h",
+      "path": "/home/shiroakane/ARCH/src/driver/TopologyIdentityRegistry.h",
+      "sha256": "b87b16670e87b525bb1232a1d0cb6045d04a96c833c3a71228d83e222236f558"
+    },
+    {
+      "relative_path": "src/driver/dispatch/BackendCapabilities.h",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/BackendCapabilities.h",
+      "sha256": "2da7a6cff48c590291c03f8a8d469a3b61e012562216f29039cca0cb3201ff09"
+    },
+    {
+      "relative_path": "src/driver/dispatch/DispatchImpl.h",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/DispatchImpl.h",
+      "sha256": "eb51d34f12bf0b3eb1f9b6a617fa16ef52880656f478818aaa25c751b847d4b6"
+    },
+    {
+      "relative_path": "src/driver/dispatch/Dispatch_Euler.cpp",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/Dispatch_Euler.cpp",
+      "sha256": "de797c8f4428c88c0c5ac22a2be7f7d36ecca6e3c449a39034420a7a2e29d2f5"
+    },
+    {
+      "relative_path": "src/driver/dispatch/Dispatch_RK2.cpp",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/Dispatch_RK2.cpp",
+      "sha256": "baafc732eb9fa070daaac00d4db35f9b8b4e517a42ee85cb9d3e0bca4b058a9e"
+    },
+    {
+      "relative_path": "src/driver/dispatch/Dispatch_RK3.cpp",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/Dispatch_RK3.cpp",
+      "sha256": "9308e511c3cf5bec298f093a92adc619025df5dca96f982c62a2da091a243f95"
+    },
+    {
+      "relative_path": "src/driver/dispatch/PolicyDescriptor.h",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/PolicyDescriptor.h",
+      "sha256": "b0bd8d2f3662a4426d7067f867566bf09d56b938b2f03f8677faa729be1c37d9"
+    },
+    {
+      "relative_path": "src/driver/dispatch/ResolvedExecutionPlan.h",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/ResolvedExecutionPlan.h",
+      "sha256": "37ab005dfb8f5032b521fbec173d32e79ddf50e4240f7da26642c7ca1484d902"
+    },
+    {
+      "relative_path": "src/driver/dispatch/RuntimeProbe.cpp",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/RuntimeProbe.cpp",
+      "sha256": "c78c5594a467f84f62df864df38fed4074077f763a8e7208aaf10fdafa14a765"
+    },
+    {
+      "relative_path": "src/driver/dispatch/RuntimeProbe.h",
+      "path": "/home/shiroakane/ARCH/src/driver/dispatch/RuntimeProbe.h",
+      "sha256": "456bf81b751a6a9f8921f2f59f18ea7694055fc07410d037dedf8b7d52007950"
+    },
+    {
+      "relative_path": "src/grid/Grid.h",
+      "path": "/home/shiroakane/ARCH/src/grid/Grid.h",
+      "sha256": "a886d8a2c4b920b6a26a616280471de201dfc569208c92bf1a48e3b64755a431"
+    },
+    {
+      "relative_path": "src/grid/GridGeometryView.h",
+      "path": "/home/shiroakane/ARCH/src/grid/GridGeometryView.h",
+      "sha256": "246ae8acb446f49d9af5d6bbe0838b640395bbc6a546881c98af4f11c10c5d73"
+    },
+    {
+      "relative_path": "src/grid/GridMetrics.h",
+      "path": "/home/shiroakane/ARCH/src/grid/GridMetrics.h",
+      "sha256": "0b09b07cc3b744a3641536596a506942521bcd9b5e9ee62a5be84789b938802a"
+    },
+    {
+      "relative_path": "src/interface/GenericProblem.h",
+      "path": "/home/shiroakane/ARCH/src/interface/GenericProblem.h",
+      "sha256": "99b88331281c80ad95ff080356ee2c6e3ecd43bea0d02c8139f796d00b0be4cc"
+    },
+    {
+      "relative_path": "src/interface/ProblemGenerator.h",
+      "path": "/home/shiroakane/ARCH/src/interface/ProblemGenerator.h",
+      "sha256": "cd33446474a4f629224b60f8c5479d293d1aef420335470ea5d57e5f5a09699f"
+    },
+    {
+      "relative_path": "src/io/ConfigParser.h",
+      "path": "/home/shiroakane/ARCH/src/io/ConfigParser.h",
+      "sha256": "0921eab5fe13a89ef8f6f8a5b91b524ed7347f9fe39e47292de6b5dd8999b45d"
+    },
+    {
+      "relative_path": "src/io/IO.h",
+      "path": "/home/shiroakane/ARCH/src/io/IO.h",
+      "sha256": "f28f487235dd293ae283c3f1046bb693a79125075bb43fea52608dc32256a1c4"
+    },
+    {
+      "relative_path": "src/io/Logger.h",
+      "path": "/home/shiroakane/ARCH/src/io/Logger.h",
+      "sha256": "c514d55d78b0e38b915c71d296f26844955df33650a9a7c20ffbdcd761d135bb"
+    },
+    {
+      "relative_path": "src/io/chk/CheckpointCompatibility.cpp",
+      "path": "/home/shiroakane/ARCH/src/io/chk/CheckpointCompatibility.cpp",
+      "sha256": "c95ce30d19b4bbce3f090f4b70d37d337ca0b8fbbf2792a1b856641108af867f"
+    },
+    {
+      "relative_path": "src/io/chk/CheckpointCompatibility.h",
+      "path": "/home/shiroakane/ARCH/src/io/chk/CheckpointCompatibility.h",
+      "sha256": "2a50b707cf3afe2943b96faa435420f6d630707ef9e96b6655319d7f63476199"
+    },
+    {
+      "relative_path": "src/io/chk/ChkIO.cpp",
+      "path": "/home/shiroakane/ARCH/src/io/chk/ChkIO.cpp",
+      "sha256": "40e10be6dbe4ae0d9f3456a37364b3d89f3ffdc1e7ece4e8630b85e9f5089484"
+    },
+    {
+      "relative_path": "src/io/hdf5/HDF5Writer.cpp",
+      "path": "/home/shiroakane/ARCH/src/io/hdf5/HDF5Writer.cpp",
+      "sha256": "e67d611e5d4b78cbdee7b2a891e911c8ebf1583dd1c2d9b405a078699e5fc1d0"
+    },
+    {
+      "relative_path": "src/io/hdf5/HDF5Writer.h",
+      "path": "/home/shiroakane/ARCH/src/io/hdf5/HDF5Writer.h",
+      "sha256": "51fbf4d3e2bf2dca4145cf94d20c9c4e58ba732c5737cc51c1ddcefc73919334"
+    },
+    {
+      "relative_path": "src/io/plot/PlotIO.cpp",
+      "path": "/home/shiroakane/ARCH/src/io/plot/PlotIO.cpp",
+      "sha256": "13f4883b8564498641a67ff1c0fbda7d75a646e7c36cd3f141e9067687841559"
+    },
+    {
+      "relative_path": "src/main.cpp",
+      "path": "/home/shiroakane/ARCH/src/main.cpp",
+      "sha256": "5a520fef64d57dd40ab4a730f82ff84fcead2f768464485d854bd35dc4dbf09b"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/BurnDispatch.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/BurnDispatch.h",
+      "sha256": "d2933e139f755fccffe4c6bd3a98e6efc0ee4d0a0e51c19fe0def86ab8c8caa8"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/BurnThermodynamics.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/BurnThermodynamics.h",
+      "sha256": "3b8144e278964f6a78a922e476e4923fd75676c2ae4bc4a3bc0c7dde450add8e"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/BurnerHandle.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/BurnerHandle.h",
+      "sha256": "97de612eb3f384637dae61bbab2bd017b6b571da96b30408ca5b5e3baec76e09"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/NetworkDerivative.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/NetworkDerivative.h",
+      "sha256": "37b9cd6a38f91ec4af15258df1c0e971c8d2ac946f1dd154b09c0645d8018ac2"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/Networks.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/Networks.h",
+      "sha256": "c40d4c31595fdd954b404d650888816ccf25e3deaf730789ac29d7028c67700e"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/OdeContinuation.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/OdeContinuation.h",
+      "sha256": "ef2fed1a555f7b34bdc0f0a1e33b86de4302da99e2fb5755f7f520a7a119dfa8"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/odeFunction.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/odeFunction.h",
+      "sha256": "9e2779a9541bcf6d5d2146f12ea7f9716b733cfca4adb8ec26b3378088ed7cf4"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/ode_bd.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/ode_bd.h",
+      "sha256": "615d7dd8884c4c3a4879cb78103bebc65cdcdf72e965fae3a82fec249282c585"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/ode_be-nr.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/ode_be-nr.h",
+      "sha256": "c450640c9e07a83cff6d56b7c5c93be6f2ee2ee4e306053881e337370d8e0563"
+    },
+    {
+      "relative_path": "src/numerics/burnsolver/ode_ros4.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/ode_ros4.h",
+      "sha256": "abcd4bf2b588ee6b60c0875e3116ac202d364c7f9caf8deab88c9c086809196f"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/DiffDispatch.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffDispatch.h",
+      "sha256": "ffe7d3c99966ad1656b1a70adee2d0fa7b8aeaa54c70f38e4628f3880c82a057"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/DiffFlux.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffFlux.h",
+      "sha256": "22d87d7e6dfd19d1dad45467140ff1ed68b869ca83a5542808098535b7ec26e8"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/DiffFunction.cpp",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffFunction.cpp",
+      "sha256": "b76e274cc845a3ce2235394fc3773d893a1c994695c2374e461cc77c6a4e0d1f"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/DiffFunction.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffFunction.h",
+      "sha256": "226836b20daad9adc4d8f853ca20952caaaae4246c96f5fe4f236f28a3506278"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/DiffusionAMRStages.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffusionAMRStages.h",
+      "sha256": "e5a1dd598414f6db6a9bdacf521388e87a2162a391f5648ea68594893699036d"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/DiffusionTypes.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffusionTypes.h",
+      "sha256": "07087968744d73749b74cb6ba9b5ee1301df6fe191e2cea44755ca9323250039"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/RKL1TimeIntegrator.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/RKL1TimeIntegrator.h",
+      "sha256": "8528f0ce23023881b2a0231630608786e2e2c74b25ca9f730a47ba78ed7665af"
+    },
+    {
+      "relative_path": "src/numerics/diffusion/RKL2TimeIntegrator.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/diffusion/RKL2TimeIntegrator.h",
+      "sha256": "7e9656b7ec2fe8ea29b88dd767eeefde920be08b2f364171566fca7cb8f975f3"
+    },
+    {
+      "relative_path": "src/numerics/flux/FluxFunctions.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/flux/FluxFunctions.h",
+      "sha256": "17a6f68257cfed9513b0c19bad04cddd1952b7105d87da40af42181afab75ea4"
+    },
+    {
+      "relative_path": "src/numerics/flux/FluxHLL.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/flux/FluxHLL.h",
+      "sha256": "4d1c9b29f0f7dec400d86e6641c03dcb348ac5888fe5329e06e2d3ce0863e104"
+    },
+    {
+      "relative_path": "src/numerics/flux/FluxHLLC.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/flux/FluxHLLC.h",
+      "sha256": "3e3e64e362de68d7131fbfaef794ab0eb1e3bd140cfc8c20705ab4f627b50b0e"
+    },
+    {
+      "relative_path": "src/numerics/flux/FluxRoe.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/flux/FluxRoe.h",
+      "sha256": "4d228c98d0860d71fb5f210be58faca00100904b3be53de8f240d1ee941a51d1"
+    },
+    {
+      "relative_path": "src/numerics/flux/FluxSW.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/flux/FluxSW.h",
+      "sha256": "9407df402a8dd96ef1046d1263451c0fdbbc5de828e3b409d1be0a9da9db72ac"
+    },
+    {
+      "relative_path": "src/numerics/flux/FluxVL.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/flux/FluxVL.h",
+      "sha256": "00b1916530f0715c7e6545d9d2019513af059acdbe4d820f2f8c4f9614d0be02"
+    },
+    {
+      "relative_path": "src/numerics/integrator/GeometricSources.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/GeometricSources.h",
+      "sha256": "72a5fc5547506b34e75bfd19c28cef18e07a78503074bc05049e7bae77a92483"
+    },
+    {
+      "relative_path": "src/numerics/integrator/HydroSolverImpl.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/HydroSolverImpl.h",
+      "sha256": "f6d95b38aac7af0f95a963aa68f25c812589ff39303353918fe69af3b2373c7b"
+    },
+    {
+      "relative_path": "src/numerics/integrator/IHydroSolver.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/IHydroSolver.h",
+      "sha256": "b569ec680757f77a4784a456eb6e823f9cec43efb296b6061d02af92b5c96617"
+    },
+    {
+      "relative_path": "src/numerics/integrator/TimeIntegratorEuler.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/TimeIntegratorEuler.h",
+      "sha256": "31284a59f12d53991cf1fb29acbb1d7790cca95c27454292d6a90d5a022f1604"
+    },
+    {
+      "relative_path": "src/numerics/integrator/TimeIntegratorHelper.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/TimeIntegratorHelper.h",
+      "sha256": "7ae620ea6235322ec524bbe6cbb74a4d9f3195a926549003f90bfbc930d13e7c"
+    },
+    {
+      "relative_path": "src/numerics/integrator/TimeIntegratorRK2.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/TimeIntegratorRK2.h",
+      "sha256": "04befe8ab0a553bab0d13c69fe336b837a9e17fabd5ba7927d46212d7ce240b4"
+    },
+    {
+      "relative_path": "src/numerics/integrator/TimeIntegratorRK3.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/integrator/TimeIntegratorRK3.h",
+      "sha256": "639fe54fe1429d7e1499702af136300d4b8b46267efea01be76796503e032ffc"
+    },
+    {
+      "relative_path": "src/numerics/linalg/CsrMatrixView.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/linalg/CsrMatrixView.h",
+      "sha256": "2b0c7f2929acf653b6520fae489ae5db89235b6070f3a5b6052ff9645466a38f"
+    },
+    {
+      "relative_path": "src/numerics/linalg/CsrPattern.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/linalg/CsrPattern.h",
+      "sha256": "2a5218631086ef9f7c5bd1b24c0133d248ee5469ca946d43d55cdc1bdd2030b5"
+    },
+    {
+      "relative_path": "src/numerics/linalg/DenseWrap.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/linalg/DenseWrap.h",
+      "sha256": "9e05fe92565c80cbfca8fbe488fb39625104d9dbdd610db6427c6bcd4470817b"
+    },
+    {
+      "relative_path": "src/numerics/linalg/LinearEquilibration.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/linalg/LinearEquilibration.h",
+      "sha256": "883bdbff352165123849f8e584b8c12af4969c85131aa27ec792738778964bb4"
+    },
+    {
+      "relative_path": "src/numerics/linalg/SparseWrap.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/linalg/SparseWrap.h",
+      "sha256": "c1d3933de27f04741b35ba0aa070263e966c84e7a2e07c84dc611107abf13ee3"
+    },
+    {
+      "relative_path": "src/numerics/reconstruction/AMRInterfaceReconstruction.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/reconstruction/AMRInterfaceReconstruction.h",
+      "sha256": "103988a67508e0b517fbd9ab6be3a03334878a34f4ddeb7abd1d55c37ee4e1ba"
+    },
+    {
+      "relative_path": "src/numerics/reconstruction/AMRInterfaceStencil.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/reconstruction/AMRInterfaceStencil.h",
+      "sha256": "5142737db8ea238c1b581df3097f3239041e478964a4099e3f9ceaf8c7e98d8f"
+    },
+    {
+      "relative_path": "src/numerics/reconstruction/Limiters.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/reconstruction/Limiters.h",
+      "sha256": "da51b22d70da63ec7954a5895ffc36ceca0e10eeaa65af2fab42552df5752007"
+    },
+    {
+      "relative_path": "src/numerics/reconstruction/Reconstruction.h",
+      "path": "/home/shiroakane/ARCH/src/numerics/reconstruction/Reconstruction.h",
+      "sha256": "701b4fa9cd87ed7102ac1940b6ce071ee99123343af10ac85ac9a677a4ec9f23"
+    },
+    {
+      "relative_path": "src/physics/constant/PhysicalConstants.h",
+      "path": "/home/shiroakane/ARCH/src/physics/constant/PhysicalConstants.h",
+      "sha256": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e"
+    },
+    {
+      "relative_path": "src/physics/diagnostics/VelocityDiagnostics.h",
+      "path": "/home/shiroakane/ARCH/src/physics/diagnostics/VelocityDiagnostics.h",
+      "sha256": "c2f0b1a16fb9c771743c6c13b001700c48ff4d8a108b7d401df532d9da2a9ab9"
+    },
+    {
+      "relative_path": "src/physics/diffusionCoe/diffusion_math.hpp",
+      "path": "/home/shiroakane/ARCH/src/physics/diffusionCoe/diffusion_math.hpp",
+      "sha256": "d4b4f8024b5b65858e28336f76b3bd87747a9e10871ecf6d2d2d3aa6483506a7"
+    },
+    {
+      "relative_path": "src/physics/eos/HelmEos.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/HelmEos.h",
+      "sha256": "532e3ccc6e0e247576eec9af5d167358ef2a003326abe904b018f6b601ea13d1"
+    },
+    {
+      "relative_path": "src/physics/eos/IdealGas.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/IdealGas.h",
+      "sha256": "695b6d347fbd2d863fbcfd47633b3cb9257ba1a21c01874b7201de19deb1acb1"
+    },
+    {
+      "relative_path": "src/physics/eos/Tabular3DEOS.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/Tabular3DEOS.cpp",
+      "sha256": "01c5124c9eec1bba45c606fa1633eb5fbe651e68fad41dd0c14304a47ced3447"
+    },
+    {
+      "relative_path": "src/physics/eos/Tabular3DEOS.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/Tabular3DEOS.h",
+      "sha256": "317777c69fc550e127a4c7ed2c041cc875aee1213c39677b17d00aa0a38a67a7"
+    },
+    {
+      "relative_path": "src/physics/eos/Tabular4DEOS.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/Tabular4DEOS.cpp",
+      "sha256": "8cd2a397a83c118f63e2be955660775bd3ded471e246993a9c3d49864a36d920"
+    },
+    {
+      "relative_path": "src/physics/eos/Tabular4DEOS.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/Tabular4DEOS.h",
+      "sha256": "4c4a11c0ead34eb4b7ca0cc082fbb0f4b2a34f68595028a76b75576b6d3209b6"
+    },
+    {
+      "relative_path": "src/physics/eos/TabularFreeEnergy.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/TabularFreeEnergy.h",
+      "sha256": "2b63256704af64bf33a2fb91e268d0f806ea0b0b0746a4150e0d179b12918e9a"
+    },
+    {
+      "relative_path": "src/physics/eos/TabularLoaderUtils.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/TabularLoaderUtils.h",
+      "sha256": "34f184fe0c39de5468e2ddee00e194a8c917d9e41bb902222e11e7e08cdedf59"
+    },
+    {
+      "relative_path": "src/physics/eos/eos.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/eos.h",
+      "sha256": "fc3a9471d7f2ae1cffdc6c7e3aa7779a3ddc4a218bf8d8b1172c248afd1a3273"
+    },
+    {
+      "relative_path": "src/physics/eos/eos_Utils.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/eos_Utils.h",
+      "sha256": "23a2cb0edd964aa2e3c9260445f67fa707c7b6acc151060fd1604a95f36e515b"
+    },
+    {
+      "relative_path": "src/physics/eos/eos_state.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/eos_state.h",
+      "sha256": "0ce65a692c4a0261179f5234033b324533804aec2522e1946c506bff4d03da1b"
+    },
+    {
+      "relative_path": "src/physics/eos/eosdispatch.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/eosdispatch.cpp",
+      "sha256": "827047223ba8d903b8c3b9e211073c2ff16d4d53bbf89faefe22a49bbac03f33"
+    },
+    {
+      "relative_path": "src/physics/eos/eosdispatch.h",
+      "path": "/home/shiroakane/ARCH/src/physics/eos/eosdispatch.h",
+      "sha256": "1ea907470064cbe345ac1cfae0806c8001056207997425d9a87c62e5aef7cfe7"
+    },
+    {
+      "relative_path": "src/physics/gravity/ExternalGravity.h",
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/ExternalGravity.h",
+      "sha256": "eafa4b16b9ecd6b16f9f96afe5d43669ece3a327ceb4b46a0457ec202780e368"
+    },
+    {
+      "relative_path": "src/physics/gravity/ExternalGravitySource.h",
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/ExternalGravitySource.h",
+      "sha256": "2f31dcf7a74f18abb09a99b1fcb08c4d5d1618c6de995fbc724df04a82309ab1"
+    },
+    {
+      "relative_path": "src/physics/gravity/GravityDispatch.h",
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/GravityDispatch.h",
+      "sha256": "519de73500e9f493cd2fecd9a980a02f970ef02d56e64016adb47f244ecb6632"
+    },
+    {
+      "relative_path": "src/physics/gravity/GravityNone.h",
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/GravityNone.h",
+      "sha256": "e2dd0022585232c69bb718060051a41f17277b32496baaf313d26409dbfd4b15"
+    },
+    {
+      "relative_path": "src/physics/gravity/IGravityPolicy.h",
+      "path": "/home/shiroakane/ARCH/src/physics/gravity/IGravityPolicy.h",
+      "sha256": "2c1b17ae978cdb5a646d90f2b983e92d0907a1e540d747a401d7df0df052d891"
+    },
+    {
+      "relative_path": "src/physics/network/WeakTableView.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/WeakTableView.h",
+      "sha256": "e62b81dcf95bc73092433aaa08cfe80705c35b8f82ca65a9327172a6957ecc09"
+    },
+    {
+      "relative_path": "src/physics/network/aprox13/NetAprox13.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox13/NetAprox13.cpp",
+      "sha256": "601519c736b7751c80c81fe152254f98bf44a9e3cd1b0b52d05bc5e7cdab6f15"
+    },
+    {
+      "relative_path": "src/physics/network/aprox13/NetAprox13.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox13/NetAprox13.h",
+      "sha256": "b736664e9224792c44e7f5a2e1460a048fc06cc8a7db2bf9581e2ede8994de29"
+    },
+    {
+      "relative_path": "src/physics/network/aprox13/TimmesJacobian.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox13/TimmesJacobian.inc",
+      "sha256": "6c57b312d361f46496c959d8148bfa8ac43179140627d436cc6fcec020bce3c9"
+    },
+    {
+      "relative_path": "src/physics/network/aprox13/TimmesRateLibrary.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox13/TimmesRateLibrary.h",
+      "sha256": "60b91285f6b9a29fb3b4520856a3d68b27b25d14c65204490f5c3b38ff6b14e1"
+    },
+    {
+      "relative_path": "src/physics/network/aprox13/TimmesRhs.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox13/TimmesRhs.inc",
+      "sha256": "cf0cd8e1387b3cbab4ff4f3c90d103b8cb2a1d7f8e0223000aa3c53717595bde"
+    },
+    {
+      "relative_path": "src/physics/network/aprox19/NetAprox19.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox19/NetAprox19.cpp",
+      "sha256": "6d0abad938237c3b0fa4c0e0b5e413c8e053b0d1abf57e7029e96737bb329705"
+    },
+    {
+      "relative_path": "src/physics/network/aprox19/NetAprox19.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox19/NetAprox19.h",
+      "sha256": "7b005cf191aed2bbfca3db2cdb3605547f38eabb8c657ea204d9888c657a1d04"
+    },
+    {
+      "relative_path": "src/physics/network/aprox19/TimmesJacobian.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox19/TimmesJacobian.inc",
+      "sha256": "65fb94320c430d59c0b0f494e3c8b345e81a317e4b90cbc8d54514ecc01af0b3"
+    },
+    {
+      "relative_path": "src/physics/network/aprox19/TimmesRateLibrary.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox19/TimmesRateLibrary.h",
+      "sha256": "2e5dd6bccae945b03d94aee680a37a3820ee31ecbeaab35508cd233ff2982739"
+    },
+    {
+      "relative_path": "src/physics/network/aprox19/TimmesRhs.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox19/TimmesRhs.inc",
+      "sha256": "6465419e30f5f45573acd9ef6f48b6e71908f73db898e0c590da2dfe2cff5093"
+    },
+    {
+      "relative_path": "src/physics/network/aprox21/NetAprox21.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox21/NetAprox21.cpp",
+      "sha256": "1e12ea256211b8e42fe85d09be70ce1bde209ce34a2957fd33f1980c73b61991"
+    },
+    {
+      "relative_path": "src/physics/network/aprox21/NetAprox21.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox21/NetAprox21.h",
+      "sha256": "a30fd8495857e1d7e36ae23b86372704d768dd71fb118070ba6a2876b6c009c7"
+    },
+    {
+      "relative_path": "src/physics/network/aprox21/TimmesJacobian.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesJacobian.inc",
+      "sha256": "e4f2e8588de247b5b8d326e1aa5e471dcb494c8c5c9634e27acc7b740973341e"
+    },
+    {
+      "relative_path": "src/physics/network/aprox21/TimmesRateLibrary.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h",
+      "sha256": "80f71da0d72cd02afff36a93e2b764b23f9254c4b03835bbc2725159cc33d5db"
+    },
+    {
+      "relative_path": "src/physics/network/aprox21/TimmesRhs.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRhs.inc",
+      "sha256": "8be9059df69e2a82446ab4c4f190de596c74e1f1b6e1feea45a98a0f44fe1277"
+    },
+    {
+      "relative_path": "src/physics/network/iso7/NetIso7.cpp",
+      "path": "/home/shiroakane/ARCH/src/physics/network/iso7/NetIso7.cpp",
+      "sha256": "352162df64a6e0269dea7005b410afb53684aa88efec165e200f01dcce210ecd"
+    },
+    {
+      "relative_path": "src/physics/network/iso7/NetIso7.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/iso7/NetIso7.h",
+      "sha256": "4b03c2c59c7e06ef0f89d38780df13f1d0b460caf6005163de18900b4d1f0a5f"
+    },
+    {
+      "relative_path": "src/physics/network/iso7/TimmesRateLibrary.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h",
+      "sha256": "4b5df251a3da7362dffe176e19dd8f4c21651b08e7bcdd05b5632840fc6d6c48"
+    },
+    {
+      "relative_path": "src/physics/network/iso7/TimmesRhs.inc",
+      "path": "/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRhs.inc",
+      "sha256": "d2febc94ee2ce678c1cb14947ddb431c165091fae04a5861c7e3cb0860154618"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/AproxRateAssembly.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/AproxRateAssembly.h",
+      "sha256": "a39d0223130feb5a70047a4a3d67655716e0e551d6fc467a4e25202c71d63e79"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/Dual.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/Dual.h",
+      "sha256": "2b145518364eda4a0096351a158e191835f12acaab673f38820889c76edb4a89"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/Ecapnuc.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/Ecapnuc.h",
+      "sha256": "922962517fb412e49b278cc21aaed98b0a7fbe1df00884a1323b6329232e4be7"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/NuclearConstants.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/NuclearConstants.h",
+      "sha256": "26bfff92b4cbdc33ae39d47fe7d7a67b6aa48f88217526324b5cbf49efcca38e"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/RatePair.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/RatePair.h",
+      "sha256": "78d5dae03345f83e6910328a62312d508334878e612b6631e14acfe0895b0e16"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/ScreeningTimmes.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/ScreeningTimmes.h",
+      "sha256": "09de04fdf936a60ed6b7b44311de9c4195a1b280a758fddac0fd060a6cdb7001"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/TfactorsData.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/TfactorsData.h",
+      "sha256": "41edf0dd3208d599cb6e6129dbe87b7cd2d6838ac1c8ea22abda98277305d0bc"
+    },
+    {
+      "relative_path": "src/physics/network/timmes_common/TimmesNetworkSupport.h",
+      "path": "/home/shiroakane/ARCH/src/physics/network/timmes_common/TimmesNetworkSupport.h",
+      "sha256": "68621a20332e792407e5a668c2116ab62f917ac10561fe7793228e3e1f9742a6"
+    },
+    {
+      "relative_path": "src/physics/nse/nse_solver.h",
+      "path": "/home/shiroakane/ARCH/src/physics/nse/nse_solver.h",
+      "sha256": "f4196f03ba0f2409e086b739327926873d98b5d5e2c33fd2c7d002323d971bf9"
+    },
+    {
+      "relative_path": "src/physics/species/Species.h",
+      "path": "/home/shiroakane/ARCH/src/physics/species/Species.h",
+      "sha256": "8b84086b036428f2a67bfd5675c96a0e7870fafe123c842b27824c436798a4ff"
+    },
+    {
+      "relative_path": "tests/SparseKLURegression.cpp",
+      "path": "/home/shiroakane/ARCH/tests/SparseKLURegression.cpp",
+      "sha256": "b6bc7f772d70b28ef24a98c735b77160179bc2f33afbd28f048cd4f86dfedb55"
+    },
+    {
+      "relative_path": "tests/TabularEOSRegression.cpp",
+      "path": "/home/shiroakane/ARCH/tests/TabularEOSRegression.cpp",
+      "sha256": "ef19fee8efd2cb5362116de6d1933989a475aaab6ed4e2ad6ec9c6e1017bbb82"
+    },
+    {
+      "relative_path": "tests/amr_composition_test_cases.h",
+      "path": "/home/shiroakane/ARCH/tests/amr_composition_test_cases.h",
+      "sha256": "62cb4934baa0d554ac9926b2a3c7e2bac11326832ea73b1d8362395004d2b865"
+    },
+    {
+      "relative_path": "tests/checkpoint_conservation_metrics.h",
+      "path": "/home/shiroakane/ARCH/tests/checkpoint_conservation_metrics.h",
+      "sha256": "aeece5b26292b113a0bf2b67bcef9037564de460ee6bc0dc8f070f16c55a14d0"
+    },
+    {
+      "relative_path": "tests/cuda/GeneratedSparseBurnFactory.h",
+      "path": "/home/shiroakane/ARCH/tests/cuda/GeneratedSparseBurnFactory.h",
+      "sha256": "a7ca0b2a40731a80bcf707390a9678eedb11b052606b3147ca7944abd88df931"
+    },
+    {
+      "relative_path": "tests/cuda/test_boundary_plan_parity.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_boundary_plan_parity.cu",
+      "sha256": "17dc482ac9827033fc35bc28269314d4c08df79815e21e86a7c4301dfb919e73"
+    },
+    {
+      "relative_path": "tests/cuda/test_burn_controller_parity.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_controller_parity.cu",
+      "sha256": "6a060c0ad5e6b7319c5b25b600945461ae985828ddc82eba1ab937f155486a55"
+    },
+    {
+      "relative_path": "tests/cuda/test_burn_eos_failure.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_eos_failure.cu",
+      "sha256": "4e821b5f8370960181dddb7a80392d8949dd3b66e2c9a14e3f3aa35b194254ab"
+    },
+    {
+      "relative_path": "tests/cuda/test_burn_policy_parity.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_policy_parity.cu",
+      "sha256": "8fb589a42fb95912c84c4fa109a48301a9e90dae0626e049d5f2725834fba50a"
+    },
+    {
+      "relative_path": "tests/cuda/test_burn_thermal_math.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_thermal_math.cu",
+      "sha256": "bf89e3d456455bdd7005d22512dc121570b237091cca83f368e59942e813592a"
+    },
+    {
+      "relative_path": "tests/cuda/test_compensated_sum.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_compensated_sum.cu",
+      "sha256": "5a567fe427ba6ab6a8e64fe76168c54ff9487f7cc337b706846ea3ce3d82d9f6"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_amr_composition.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_amr_composition.cu",
+      "sha256": "a910fe1f31f5b57744d3c69587b5b3ee755d0bb6e1fdde502f284d0e4b03857a"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_amr_exchange.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_amr_exchange.cpp",
+      "sha256": "9dcd4e430ed08038028beedcde4b9eed557d7340276c79b2e911fb0efcb0e4d1"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_compile_probe.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_compile_probe.cu",
+      "sha256": "0a124f7c5efb50f17ee5c01a63c8c9bed2c183ea3c69f5b491bcc78f2f93fbb9"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_hydro_block.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_hydro_block.cu",
+      "sha256": "dbee650a87f029e04ffa6f09a36c5ae9246acbdcd6c27abae87af21c931e726e"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_multiblock_burn.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_multiblock_burn.cu",
+      "sha256": "f6f39687ade31ca4152953895036cac4686c0081964fdbc9727382ec61b02e32"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_multiblock_diffusion.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_multiblock_diffusion.cu",
+      "sha256": "42846dff447c5648a03f4b646f683c7079da687ebcb350e6facae0c1f60896fd"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_multiblock_hydro.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_multiblock_hydro.cu",
+      "sha256": "e0ad7f0fad8cb06f194b5d48ef8f9e35e842d8cddd6e21d90ba8835609cc3ba6"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_policy_resolution.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_policy_resolution.cu",
+      "sha256": "6b0012c31c77b8d7809b77168abb417185ed5f99fb4dfcf20016864da75da83d"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_reduction_contract.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_reduction_contract.cu",
+      "sha256": "ac4e318176cc3a31f06678dc3e872facc399a964789bf08810580210b2a37f53"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_regrid_migration.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_regrid_migration.cu",
+      "sha256": "7d59426ed281572e5567dda9caa1fcf7ba09186e3cc98d92132c4866cbae203a"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_regrid_transaction.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_regrid_transaction.cpp",
+      "sha256": "3fd983a16c505336e32284750ae85047f3d890b4811fc037fc67cbbb8e29f532"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_single_level_validation.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_single_level_validation.cpp",
+      "sha256": "24a3fd1b46054e97aa4c4375cbc74fe524146ac851d4651c8a9ed15ac33402a7"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_sparse_burn_factory.cpp",
+      "sha256": "351a39a3f1eb28d8e50e78214849c5f9b141afa73bba3348374818d13e2c5f3f"
+    },
+    {
+      "relative_path": "tests/cuda/test_cuda_store_lifecycle.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_store_lifecycle.cpp",
+      "sha256": "2af1bce73455737810b03786dfcc6195c4c094537e450a080261ff3ea2914af1"
+    },
+    {
+      "relative_path": "tests/cuda/test_cudss_sparse_solver.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_cudss_sparse_solver.cpp",
+      "sha256": "e136c7e22f8ed7ccdf1b01c7ef22ef6f8b41d82027495d9bad2e05eea00132c8"
+    },
+    {
+      "relative_path": "tests/cuda/test_curvilinear_geometry_smoke.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_curvilinear_geometry_smoke.cu",
+      "sha256": "e97438620d162ff35c54231976d7e14e474ff1758cdf53686d771f44ed6f0135"
+    },
+    {
+      "relative_path": "tests/cuda/test_diffusion_rkl_parity.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_diffusion_rkl_parity.cu",
+      "sha256": "78057b609970ec9a3b29b3670f350fd9b5b7922f58dfdc3ec114878c4b1c5120"
+    },
+    {
+      "relative_path": "tests/cuda/test_eos_host_device_parity.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_eos_host_device_parity.cu",
+      "sha256": "3def61b4b7bffaa19d0604f5eec16f3951fc193a9b3223783456fbc15c81b65e"
+    },
+    {
+      "relative_path": "tests/cuda/test_generated_network_math.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_network_math.cu",
+      "sha256": "7358f0970540589bd6b3b63d8e495be770146b950ea3203d6d3548a6f8948950"
+    },
+    {
+      "relative_path": "tests/cuda/test_generated_sparse_burn.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_sparse_burn.cpp",
+      "sha256": "71b7da2d622d3a01ec1c872099eeb118e4a76777e4fc39983726bc76554f7e25"
+    },
+    {
+      "relative_path": "tests/cuda/test_generated_sparse_burn_factory.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_sparse_burn_factory.cu",
+      "sha256": "5f1405b25c931052d7786917f7236c157b09014d3bbcf8045fbd5b7fd8ee8f48"
+    },
+    {
+      "relative_path": "tests/cuda/test_generated_weak_factory.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_weak_factory.cu",
+      "sha256": "04814688713053a4e4f700ae1c3a50afe926875d6847029d4d1f6d534e71f593"
+    },
+    {
+      "relative_path": "tests/cuda/test_generated_weak_trajectory.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_weak_trajectory.cu",
+      "sha256": "bcb60e7e8f5f485fbb83e09d1d991a923b154c381d6f018179afe74be3ec7e86"
+    },
+    {
+      "relative_path": "tests/cuda/test_grid_metrics_cache.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_grid_metrics_cache.cu",
+      "sha256": "5aa2667bd7dc169a9c1edac431deeb029589fe7dc53cb5baf901ffd6fb88d46c"
+    },
+    {
+      "relative_path": "tests/cuda/test_hydro_dispatch.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_hydro_dispatch.cu",
+      "sha256": "6fc1eed9edc44dd05d77690db1b4b61ca4eb2a77f3df5421f254da0b2dea639a"
+    },
+    {
+      "relative_path": "tests/cuda/test_hydro_eos_failure.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_hydro_eos_failure.cu",
+      "sha256": "6058207c85084862aeab7d2f2b841b5fde8c0ad4cce1b0c3b9fc75d5f0ea47eb"
+    },
+    {
+      "relative_path": "tests/cuda/test_hydro_leaf_parity.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_hydro_leaf_parity.cu",
+      "sha256": "4820e1795b4577ed863651ff1348db568369b3186f0666f1cce2f46e83c9f299"
+    },
+    {
+      "relative_path": "tests/cuda/test_mainline_authority.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_mainline_authority.cpp",
+      "sha256": "1c67639a4a3a4ce3fbe6ab633de0df7f489c95137ebdac4b130c1a9d26424c4d"
+    },
+    {
+      "relative_path": "tests/cuda/test_network_derivative.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_network_derivative.cu",
+      "sha256": "da1abead3effbe62ad5589fc48f638667cbc69056727e34aaff082b177a1dedf"
+    },
+    {
+      "relative_path": "tests/cuda/test_network_nse_device.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_network_nse_device.cu",
+      "sha256": "efa7624ba2139234c37e65e9fe1c15f4aa6fc5afec8af68e2accd752e78f9734"
+    },
+    {
+      "relative_path": "tests/cuda/test_refinement_indicators.cpp",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_refinement_indicators.cpp",
+      "sha256": "29aa657cd714b9fdde55e6af6c55c9ebdaa488bc34b1621592d208db2940626d"
+    },
+    {
+      "relative_path": "tests/cuda/test_sparse_be_nr_batch.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_sparse_be_nr_batch.cu",
+      "sha256": "4c7c73acce314ec22c562fcee869d4d705858287ea4bd154d49394aa280e4038"
+    },
+    {
+      "relative_path": "tests/cuda/test_tabular_free_energy_owner.cu",
+      "path": "/home/shiroakane/ARCH/tests/cuda/test_tabular_free_energy_owner.cu",
+      "sha256": "20652d8acacab79b7de198f30aaeefbb0a652fe6fa973be04341568861728e0d"
+    },
+    {
+      "relative_path": "tests/fixtures/BurnMainlineReference.h",
+      "path": "/home/shiroakane/ARCH/tests/fixtures/BurnMainlineReference.h",
+      "sha256": "0c51be365af4cab4e6fa5067d07b3ba6f319ef1d1e55d8fae483bf6dfee3dca4"
+    },
+    {
+      "relative_path": "tests/fixtures/BurnTimeReference.h",
+      "path": "/home/shiroakane/ARCH/tests/fixtures/BurnTimeReference.h",
+      "sha256": "93dea05a041563d4e4841f6ac0ea6c512e891dbae95ee595795209e664278ef9"
+    },
+    {
+      "relative_path": "tests/fixtures/HelmReference.h",
+      "path": "/home/shiroakane/ARCH/tests/fixtures/HelmReference.h",
+      "sha256": "205ff5d3eb3920a03a8d6f85d29829021c6af3743e142ab17fd75c5446d271bf"
+    },
+    {
+      "relative_path": "tests/fixtures/NseReference.h",
+      "path": "/home/shiroakane/ARCH/tests/fixtures/NseReference.h",
+      "sha256": "fbed88fcfbc33a38c68dcb38dbb82a088a3cda1143ed33220c3bdcdc5059a1a5"
+    },
+    {
+      "relative_path": "tests/fixtures/RoeFluxReference.h",
+      "path": "/home/shiroakane/ARCH/tests/fixtures/RoeFluxReference.h",
+      "sha256": "84c765e9b07842c8e0708d2026bd1f686a980b9700823a9fbb13a6cf8d387063"
+    },
+    {
+      "relative_path": "tests/fixtures/SparseTransferNetwork.h",
+      "path": "/home/shiroakane/ARCH/tests/fixtures/SparseTransferNetwork.h",
+      "sha256": "eb52f9212305b80c9c1b0b65cbf87aef89f0d548153fbdefe047c7f021160c70"
+    },
+    {
+      "relative_path": "tests/math/BurnThermalCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/BurnThermalCases.h",
+      "sha256": "56acee0d5077a54d7a030dee99112c844b068cacc1e513c9cebdb5e9547e6949"
+    },
+    {
+      "relative_path": "tests/math/CompensatedSumCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/CompensatedSumCases.h",
+      "sha256": "fea1d8610ba21e9ef3c5773f405ecd683465f62f8d44a261c9e01cf98b561880"
+    },
+    {
+      "relative_path": "tests/math/CurvilinearMetricCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/CurvilinearMetricCases.h",
+      "sha256": "2cc3c5d13086f1edf46fe1366301e800c9a3b1b348d5eddb83ee8486a9868119"
+    },
+    {
+      "relative_path": "tests/math/DenseLuCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/DenseLuCases.h",
+      "sha256": "4b251a8c1b63cf27520e96a6bf7439c29362a8cd141bbf376286cf7a42f347fb"
+    },
+    {
+      "relative_path": "tests/math/NetworkDerivativeCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/NetworkDerivativeCases.h",
+      "sha256": "3f47813eea5e309e2ab06d3eec434596e29f6a2105237fdb2a91bfab1d929191"
+    },
+    {
+      "relative_path": "tests/math/RoeThermodynamicCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/RoeThermodynamicCases.h",
+      "sha256": "cd939cfeb4a875a46853baa48192ac907b52c2ae6e71d059f0647d28e17be655"
+    },
+    {
+      "relative_path": "tests/math/ViscousGeometryCases.h",
+      "path": "/home/shiroakane/ARCH/tests/math/ViscousGeometryCases.h",
+      "sha256": "2d228f7e6d3e4922f014aa10691b170be4373adbc730be4429ecfebd7254178c"
+    },
+    {
+      "relative_path": "tests/regrid_migration_fixture.h",
+      "path": "/home/shiroakane/ARCH/tests/regrid_migration_fixture.h",
+      "sha256": "e2940747b890cca7a03204eac6841c0f54f9beded4a6c7bce3afaae62d931dbe"
+    },
+    {
+      "relative_path": "tests/smoke/cuda_amr_cases.json",
+      "path": "/home/shiroakane/ARCH/tests/smoke/cuda_amr_cases.json",
+      "sha256": "cd96c378f2cbaddd1633b439b7c4b70958b75b1b6b4dc2546572ed9c7f72118b"
+    },
+    {
+      "relative_path": "tests/test_amr_flux_surface_plan.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_amr_flux_surface_plan.cpp",
+      "sha256": "b995820010bc94f8f317cb80132dacf79fa7606a22f51eacafb742d8ac9df47c"
+    },
+    {
+      "relative_path": "tests/test_amr_operation_plans.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_amr_operation_plans.cpp",
+      "sha256": "930fa589d93bd00f5d169bb45443d4c74c30820eb5054c662c493612dac6d0df"
+    },
+    {
+      "relative_path": "tests/test_block_handle.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_block_handle.cpp",
+      "sha256": "bdc066c8bd9e713243fb208fea9050493ebe871c611d948e1abf2eb3c34e9397"
+    },
+    {
+      "relative_path": "tests/test_boundary_plan.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_boundary_plan.cpp",
+      "sha256": "66837e390952e33029f80b790f0f93c64bd484e051daffd9e7897d65b546ede6"
+    },
+    {
+      "relative_path": "tests/test_burn_mainline_reference.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_burn_mainline_reference.cpp",
+      "sha256": "a2811d88393251938bcc6e96a2865b5fc0ced2a7b5217cc6592b117758f5354c"
+    },
+    {
+      "relative_path": "tests/test_checkpoint_compatibility.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_checkpoint_compatibility.cpp",
+      "sha256": "845a74e5684c62b211576cb60a3e00fa0ca3b32c4225e33f5395ee15a25839aa"
+    },
+    {
+      "relative_path": "tests/test_checkpoint_conservation_metrics.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_checkpoint_conservation_metrics.cpp",
+      "sha256": "8c8e5f79e788ad02ff2977b91f31a62c09d684f0ef48eaa7b925201cf0bfc1ec"
+    },
+    {
+      "relative_path": "tests/test_compensated_sum.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_compensated_sum.cpp",
+      "sha256": "ece406035288e05e8004b1679fc2eb312656a10fc92eb8650db917ac0d0c7ef5"
+    },
+    {
+      "relative_path": "tests/test_compute_backend.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_compute_backend.cpp",
+      "sha256": "fc36ac4d176eacf0f3e3157a73a037a5259093eee3f2c32dad941ab0391dcffc"
+    },
+    {
+      "relative_path": "tests/test_curvilinear_manifest.py",
+      "path": "/home/shiroakane/ARCH/tests/test_curvilinear_manifest.py",
+      "sha256": "0fcf48d665a509e8b2c9de63a06b2262103b127bb2b019f57c06c468ca00d51d"
+    },
+    {
+      "relative_path": "tests/test_curvilinear_metrics.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_curvilinear_metrics.cpp",
+      "sha256": "3ff19ae270f3df4c5baa70be44f59a5d7c2aad592a35233cb00cb720cf064edb"
+    },
+    {
+      "relative_path": "tests/test_device_block_store_lifecycle.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_device_block_store_lifecycle.cpp",
+      "sha256": "32c805645e314b8606ca3dfe942beac4bfd4630c240ada3333af90a4b4842238"
+    },
+    {
+      "relative_path": "tests/test_generated_network_reference.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_generated_network_reference.cpp",
+      "sha256": "a186399534b980016e6378ee3317197863ec7609dbfba5ea1ecc598b5ac07335"
+    },
+    {
+      "relative_path": "tests/test_physical_constants.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_physical_constants.cpp",
+      "sha256": "0119fe4487eec5419d0d4a63b10e57496aa5db704cdf0e336c8222f0bcdffbd9"
+    },
+    {
+      "relative_path": "tests/test_portable_network_generator.py",
+      "path": "/home/shiroakane/ARCH/tests/test_portable_network_generator.py",
+      "sha256": "4e317df3da1da0b2555ca803d462597cb4f9634bdd66fd631350da4636361945"
+    },
+    {
+      "relative_path": "tests/test_reduction_contract.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_reduction_contract.cpp",
+      "sha256": "116d8e1a34dcdf2140a956c8e76ba447259abd6b619562ade7232650a3661f70"
+    },
+    {
+      "relative_path": "tests/test_refinement_indicator_math.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_refinement_indicator_math.cpp",
+      "sha256": "c7c0e1e9f8e5d57b3d86ceb710c5140e2e0c57f22a441de93a0a7d3ba3458e53"
+    },
+    {
+      "relative_path": "tests/test_resolved_execution_plan.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_resolved_execution_plan.cpp",
+      "sha256": "d3e410d2114383981d088b2a2a870aa997e0641f06b22893c59f2f448a03a421"
+    },
+    {
+      "relative_path": "tests/test_run_memory_guarded.py",
+      "path": "/home/shiroakane/ARCH/tests/test_run_memory_guarded.py",
+      "sha256": "062751808e84f14fd7dfd048f9435a8c3206213b7bdf26ee63f341218188c106"
+    },
+    {
+      "relative_path": "tests/test_runtime_probe_and_capabilities.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_runtime_probe_and_capabilities.cpp",
+      "sha256": "75eafe771f478a78da497a5931dc90322360931f2353258c452f51b89ea928ee"
+    },
+    {
+      "relative_path": "tests/test_runtime_validation_inputs.py",
+      "path": "/home/shiroakane/ARCH/tests/test_runtime_validation_inputs.py",
+      "sha256": "0830314b3c0acbebcb418ff61b56ae6fdcdce4c68063e78c217569d79444d1a4"
+    },
+    {
+      "relative_path": "tests/test_same_level_exchange_plan.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_same_level_exchange_plan.cpp",
+      "sha256": "4508fdad48c7935f20cd5df743bb74cfab41b13ba7eff3eb2ba400f83bdaf7e7"
+    },
+    {
+      "relative_path": "tests/test_shared_stage_scheduler.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_shared_stage_scheduler.cpp",
+      "sha256": "a1b842a06f7aa52094a9f54e3cd06e3ec2af8df75646f58bc90ae202f8bc5223"
+    },
+    {
+      "relative_path": "tests/test_smoke_cuda_amr_runtime.py",
+      "path": "/home/shiroakane/ARCH/tests/test_smoke_cuda_amr_runtime.py",
+      "sha256": "fc5fe93752533ab52d0faf3111b47d0b0ae5a508a85e6c2c0a1c5f4892844178"
+    },
+    {
+      "relative_path": "tests/test_sparse_ode_continuation.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_sparse_ode_continuation.cpp",
+      "sha256": "320675ba2bbd21cac3ff7dea3878bbf516ac69d4306ccd9d6f5ebd5b69611fa2"
+    },
+    {
+      "relative_path": "tests/test_state_residency.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_state_residency.cpp",
+      "sha256": "e582603fc62c6f3e3569aef038b7985a1c2978f45e26fc4f577dab7e05e9e98e"
+    },
+    {
+      "relative_path": "tests/test_topology_transaction.cpp",
+      "path": "/home/shiroakane/ARCH/tests/test_topology_transaction.cpp",
+      "sha256": "82d09d059a841474f74a322ca408f2e20d5c3aff0c6896099dc0375e5d719054"
+    },
+    {
+      "relative_path": "tests/test_validate_backend_results.py",
+      "path": "/home/shiroakane/ARCH/tests/test_validate_backend_results.py",
+      "sha256": "5e57fa51ab54c63533aa79e305c7cf76df93d32beccbfef9e4f24015332d18b4"
+    },
+    {
+      "relative_path": "tests/test_validation_device_memory.py",
+      "path": "/home/shiroakane/ARCH/tests/test_validation_device_memory.py",
+      "sha256": "b82a043e0a19ca0507112fb1c9a53ccdcebf9c43864983c67f0144a9294c6c73"
+    },
+    {
+      "relative_path": "tests/test_validation_provenance.py",
+      "path": "/home/shiroakane/ARCH/tests/test_validation_provenance.py",
+      "sha256": "42cb61127cdc486c2f9beb21eb42cdd309bab9a3791a7238a93b15722a0c3502"
+    },
+    {
+      "relative_path": "tests/test_validation_subprocess_logs.py",
+      "path": "/home/shiroakane/ARCH/tests/test_validation_subprocess_logs.py",
+      "sha256": "1165bb38bea87279ac85632de28f5622f28e60f20e1a67daaf2f22cc56b98dfc"
+    },
+    {
+      "relative_path": "tests/tooling/test_audit_combination_v2.py",
+      "path": "/home/shiroakane/ARCH/tests/tooling/test_audit_combination_v2.py",
+      "sha256": "5c511f11d66e4a9dea49044ce5ca75aa5b427db5e78161350ca675a1b1881d72"
+    },
+    {
+      "relative_path": "tests/tooling/test_cuda_code_images.py",
+      "path": "/home/shiroakane/ARCH/tests/tooling/test_cuda_code_images.py",
+      "sha256": "713818d2596d04e068894c9edd1cda3b930c262a25419b5bd846e84baa036321"
+    },
+    {
+      "relative_path": "tests/tooling/test_cuda_compile_memory.py",
+      "path": "/home/shiroakane/ARCH/tests/tooling/test_cuda_compile_memory.py",
+      "sha256": "dc8c7cd052352770191708d74ab1798be64fbef8e0297f41dbc977e468e60003"
+    },
+    {
+      "relative_path": "tools/audit_combination_v2.py",
+      "path": "/home/shiroakane/ARCH/tools/audit_combination_v2.py",
+      "sha256": "f6646b99d78e2fbe26f4e9f14add4afb748bd54fa74a0a505df1b81cade701a6"
+    },
+    {
+      "relative_path": "tools/network/GenerateNetwork.py",
+      "path": "/home/shiroakane/ARCH/tools/network/GenerateNetwork.py",
+      "sha256": "ced4fde476b49bae369241528a200c53c4c0609d4f774799dc5ac45e172fb2cc"
+    },
+    {
+      "relative_path": "tools/network/PortableAdapter.py",
+      "path": "/home/shiroakane/ARCH/tools/network/PortableAdapter.py",
+      "sha256": "a4e10ffc4eb841f52fef199eea23aa1bafae277f1864530c9342859920142f07"
+    },
+    {
+      "relative_path": "tools/network/PortableCxx.py",
+      "path": "/home/shiroakane/ARCH/tools/network/PortableCxx.py",
+      "sha256": "4d34d8db57a98c6c779a440291a86a60acd8bf6b3e4547da5ceca3b47fc36429"
+    },
+    {
+      "relative_path": "tools/network/WeakStorage.py",
+      "path": "/home/shiroakane/ARCH/tools/network/WeakStorage.py",
+      "sha256": "d26ca08e6828a0de0e7b4ad4b0d0902567c9f3985b67b29427a7d34c469520a3"
+    },
+    {
+      "relative_path": "tools/network/WeakTables.py",
+      "path": "/home/shiroakane/ARCH/tools/network/WeakTables.py",
+      "sha256": "b0510940b282051a524a2c193d1855978d5f968441b40085282282e83ba1cdd5"
+    },
+    {
+      "relative_path": "tools/qualify_cuda_amr_evidence.py",
+      "path": "/home/shiroakane/ARCH/tools/qualify_cuda_amr_evidence.py",
+      "sha256": "ced6f5daec641bc53beb35cd4285bd5c7e27ab21f10166c99bec97d3e52862e8"
+    },
+    {
+      "relative_path": "tools/run_memory_guarded.py",
+      "path": "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+      "sha256": "5dff04b041ee06edab108f78b4fdac294673c7e2cc61db9c334121794846b31b"
+    },
+    {
+      "relative_path": "tools/smoke_cuda_amr_runtime.py",
+      "path": "/home/shiroakane/ARCH/tools/smoke_cuda_amr_runtime.py",
+      "sha256": "6674659e224f8439f7cd93c6eb2ed6b254694cfe189960a9e8b1eb9319cdc258"
+    },
+    {
+      "relative_path": "tools/summarize_cuda_compile_memory.py",
+      "path": "/home/shiroakane/ARCH/tools/summarize_cuda_compile_memory.py",
+      "sha256": "777a17557cfbfe4bbde69fc29940991b01caffef8c607afa80cc0b78cc9772e5"
+    },
+    {
+      "relative_path": "tools/validate_backend_results.py",
+      "path": "/home/shiroakane/ARCH/tools/validate_backend_results.py",
+      "sha256": "2fac3532e4a78fa9621062d54257061ab929d89b2f57ef088159563b320f2d0d"
+    },
+    {
+      "relative_path": "tools/validate_cuda_amr_restart.py",
+      "path": "/home/shiroakane/ARCH/tools/validate_cuda_amr_restart.py",
+      "sha256": "1ed46949681864b2c47462ccbbbec575a9f2f3de3451e5c244d510fb3860a29a"
+    },
+    {
+      "relative_path": "tools/validation_device_memory.py",
+      "path": "/home/shiroakane/ARCH/tools/validation_device_memory.py",
+      "sha256": "758c556ad00dc2bd85a355da9d159544a178f1fc4c58e55274e285b766217fe4"
+    },
+    {
+      "relative_path": "tools/validation_provenance.py",
+      "path": "/home/shiroakane/ARCH/tools/validation_provenance.py",
+      "sha256": "2c12c19eb88d9fdcbf4ad06652f4f0164658147d02fe8385a405b59861cfe653"
+    },
+    {
+      "relative_path": "tools/validation_sanitizer.py",
+      "path": "/home/shiroakane/ARCH/tools/validation_sanitizer.py",
+      "sha256": "da08eceb2ae6b1f9abf1955e202ed2dda09975d749e3b566cebe3cbf0656026f"
+    },
+    {
+      "relative_path": "validation/amr/gaussian_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/amr/gaussian_reference.py",
+      "sha256": "7645c415a1e28b7f5e3615e2257cff5dcc2fd28560fd7fc5cba0bc6835a6005b"
+    },
+    {
+      "relative_path": "validation/amr/geometry_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/amr/geometry_reference.py",
+      "sha256": "5b641ff9885a8f8d5e92495edb38a709d49f20100b99df1b120ccc5fbd8b25ce"
+    },
+    {
+      "relative_path": "validation/amr/gpu_cases.json",
+      "path": "/home/shiroakane/ARCH/validation/amr/gpu_cases.json",
+      "sha256": "636c339ec9f5f1dd4cb72fa052a5909ddba258895b9c88cfde8edd0b6cc81abf"
+    },
+    {
+      "relative_path": "validation/amr/gpu_curvilinear_cases.json",
+      "path": "/home/shiroakane/ARCH/validation/amr/gpu_curvilinear_cases.json",
+      "sha256": "f6c55cabc26a48962055fe48d622fb11377574f8773325858ade1c62ef10f0b9"
+    },
+    {
+      "relative_path": "validation/amr/inputs/burn_enuc_amr.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/burn_enuc_amr.par",
+      "sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741"
+    },
+    {
+      "relative_path": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
+      "sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b"
+    },
+    {
+      "relative_path": "validation/amr/inputs/sedov_amr_3d.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/sedov_amr_3d.par",
+      "sha256": "c9b03f80ad1c312104f41faa2f205b173a40f97092aa2b4c09fe2b783deead8d"
+    },
+    {
+      "relative_path": "validation/amr/inputs/sedov_amr_species.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/sedov_amr_species.par",
+      "sha256": "7e146ac5cc90d602785d652b23e4243d648589bdff249a76f65c56da8512679e"
+    },
+    {
+      "relative_path": "validation/amr/inputs/smooth_amr80_l1.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/smooth_amr80_l1.par",
+      "sha256": "8862589ee39cebc912c3add4a1b88bf6adc7d924c9bf77d210e16a384cba54fe"
+    },
+    {
+      "relative_path": "validation/amr/inputs/smooth_uniform160.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/smooth_uniform160.par",
+      "sha256": "ce8e49d7b337350af2915913067b9d3420b96a8a9dbc1323d59b8456189bacb9"
+    },
+    {
+      "relative_path": "validation/amr/inputs/smooth_uniform80.par",
+      "path": "/home/shiroakane/ARCH/validation/amr/inputs/smooth_uniform80.par",
+      "sha256": "5407063c20003b91420302cccc4ce6d752a08bcbf6fe2ec2be45a717dac25bb9"
+    },
+    {
+      "relative_path": "validation/backend/cases.json",
+      "path": "/home/shiroakane/ARCH/validation/backend/cases.json",
+      "sha256": "33d35a4de82b5135e125557907a278b061ffacfb2c9954cb4763d8325012d877"
+    },
+    {
+      "relative_path": "validation/burn/inputs/bd.par",
+      "path": "/home/shiroakane/ARCH/validation/burn/inputs/bd.par",
+      "sha256": "0e79ba7c86c838b2ae35f5f8798cf3d1e43c7217c2553ca5a491671cfc48d7ff"
+    },
+    {
+      "relative_path": "validation/burn/inputs/be_nr_reference.par",
+      "path": "/home/shiroakane/ARCH/validation/burn/inputs/be_nr_reference.par",
+      "sha256": "623429caa572b33ce99fccd0e833c792a1b89098befa0832f3adbe7ff57469fc"
+    },
+    {
+      "relative_path": "validation/burn/inputs/ros4.par",
+      "path": "/home/shiroakane/ARCH/validation/burn/inputs/ros4.par",
+      "sha256": "d6b249af06afe413fead6593c6175cd62fc907ff206ef5e3cba987be33c254d2"
+    },
+    {
+      "relative_path": "validation/burn/time_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/burn/time_reference.py",
+      "sha256": "b5937df878330734fba8e053641f80985f218e40c8a2511e966b11b6545f781f"
+    },
+    {
+      "relative_path": "validation/diffusion/inputs/rkl1_n128.par",
+      "path": "/home/shiroakane/ARCH/validation/diffusion/inputs/rkl1_n128.par",
+      "sha256": "54e31b591b73c25421ff2fe431829c4c2cbda4b14b3109ce5f8fcc9fce6c1c95"
+    },
+    {
+      "relative_path": "validation/diffusion/inputs/rkl1_n256.par",
+      "path": "/home/shiroakane/ARCH/validation/diffusion/inputs/rkl1_n256.par",
+      "sha256": "9e154e35ed4c9d856d14d435caa088c55612074b2cafff46170ba3e13f95d9f3"
+    },
+    {
+      "relative_path": "validation/diffusion/inputs/rkl1_n64.par",
+      "path": "/home/shiroakane/ARCH/validation/diffusion/inputs/rkl1_n64.par",
+      "sha256": "84afe04bb7bde920c1fc2d7c5fda0b448438dd1a976a7a836703aa814f4f30eb"
+    },
+    {
+      "relative_path": "validation/diffusion/inputs/rkl2_n128.par",
+      "path": "/home/shiroakane/ARCH/validation/diffusion/inputs/rkl2_n128.par",
+      "sha256": "fc935f57a1596d2e88e913fbbb323d26f7ad6b0dd6f6a1203d602d0819e2aeaf"
+    },
+    {
+      "relative_path": "validation/diffusion/inputs/rkl2_n256.par",
+      "path": "/home/shiroakane/ARCH/validation/diffusion/inputs/rkl2_n256.par",
+      "sha256": "30feb0749f421ef02a48102146f8008e4bf54a0c61ba28de0f1f4c4e2caeb67f"
+    },
+    {
+      "relative_path": "validation/diffusion/inputs/rkl2_n64.par",
+      "path": "/home/shiroakane/ARCH/validation/diffusion/inputs/rkl2_n64.par",
+      "sha256": "e7f75f20deb6eac6b0caccd09d8a433950aa77ae48aa869aa666f29580a55d61"
+    },
+    {
+      "relative_path": "validation/eos/helm_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/eos/helm_reference.py",
+      "sha256": "cbd475b83cb27e928eab959949cbda52dff5d71d73d2590c12042aac7ab6b08f"
+    },
+    {
+      "relative_path": "validation/gravity/coupled_cases.json",
+      "path": "/home/shiroakane/ARCH/validation/gravity/coupled_cases.json",
+      "sha256": "ff9f397b44a281b6b69f170fbf1eae99a4a4643a9223763f42ba104a652183f7"
+    },
+    {
+      "relative_path": "validation/gravity/inputs/euler.par",
+      "path": "/home/shiroakane/ARCH/validation/gravity/inputs/euler.par",
+      "sha256": "bb86fa0d3c35a51a584e7c5237f60274321e1db1352e6930f8fc4de46b075c65"
+    },
+    {
+      "relative_path": "validation/gravity/inputs/rk2.par",
+      "path": "/home/shiroakane/ARCH/validation/gravity/inputs/rk2.par",
+      "sha256": "fd0411e57cb30983e8cf2dbb8edd652b66a24b39fb5f61b903f57b08bd6906a9"
+    },
+    {
+      "relative_path": "validation/gravity/inputs/rk3.par",
+      "path": "/home/shiroakane/ARCH/validation/gravity/inputs/rk3.par",
+      "sha256": "11ca4a484a2f749ce8053410cb85b1e88e241ca5d913aabafbc09c00ffa25a36"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/muscl_n128.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/muscl_n128.par",
+      "sha256": "08380cee07ee88a7fdd8111f38539a93a3cf8ac0cf028b44f8ab757def7481c0"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/muscl_n256.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/muscl_n256.par",
+      "sha256": "f901990699eb87b413e64eb989f8aaf5d7701db739a8870c5f1d08afb5224e78"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/muscl_n64.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/muscl_n64.par",
+      "sha256": "553167d5f6e8a87cbd09957228733c13352aa6e8caee94e92a91080d2f998804"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/pcm_n128.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/pcm_n128.par",
+      "sha256": "4b6f384474463b92b2e81e0da0c838812181b3ef9f6dadfb991f0002a198bfba"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/pcm_n256.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/pcm_n256.par",
+      "sha256": "ee690ba1800861d37d02396a3128bdc1cd0a6cfce69acc915252b504a42126d6"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/pcm_n64.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/pcm_n64.par",
+      "sha256": "e12789654aaf06134a016596e21280d448468df426f4acbd8e4eaff20af5cf59"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/ppm_n128.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/ppm_n128.par",
+      "sha256": "f1a612380a6782b74a5738437c40fb5b7dbbd7260693525014a4cc8472c483c0"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/ppm_n256.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/ppm_n256.par",
+      "sha256": "5a97bca5b3f9ffecb1949e03030bf20b4f18568af3f34011e8873e6da2d49202"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/ppm_n64.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/ppm_n64.par",
+      "sha256": "f4724934e91addfcad388eb90c6096f0b27a5b13db145de0923a9dd744cba67e"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/sod_ppm_n128.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/sod_ppm_n128.par",
+      "sha256": "70fae22e34dfef48590a66e9f432bf8b3c8dd98898d01dc04bf77e2f3f9b8877"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/sod_ppm_n256.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/sod_ppm_n256.par",
+      "sha256": "46d126792466fa5083b7e2d42f36a952cab16c6dcaf5e634d13d58590c087a80"
+    },
+    {
+      "relative_path": "validation/hydro/inputs/sod_ppm_n64.par",
+      "path": "/home/shiroakane/ARCH/validation/hydro/inputs/sod_ppm_n64.par",
+      "sha256": "1aa66de035bf1df8b0593b285c681bab2229421ef6f90044d2fd469677cbe04b"
+    },
+    {
+      "relative_path": "validation/hydro/roe_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/hydro/roe_reference.py",
+      "sha256": "3fa8ab6af96e5abe9a42bc6f8b1f7cb286e155f6c32918cd5025084bc268fa55"
+    },
+    {
+      "relative_path": "validation/hydro/sedov_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/hydro/sedov_reference.py",
+      "sha256": "7b45b7ffb80a4fa0277491a960513c8b3417ac06d9c31671b977ba963197912c"
+    },
+    {
+      "relative_path": "validation/hydro/time_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/hydro/time_reference.py",
+      "sha256": "729295a124e4d1918479cf07efa6fe42e435494ce510a6e01e517fb3dbfa7dbc"
+    },
+    {
+      "relative_path": "validation/network/inputs/audit150.py",
+      "path": "/home/shiroakane/ARCH/validation/network/inputs/audit150.py",
+      "sha256": "7478726324a65fd0bd3999f9f864b24182ca04f39c88ac74eb8aa790c6531f4b"
+    },
+    {
+      "relative_path": "validation/network/inputs/audit200.py",
+      "path": "/home/shiroakane/ARCH/validation/network/inputs/audit200.py",
+      "sha256": "4966e0112a14acb5e65e374149e30df6ea68b2ee6c0f9c3b1ef646809998d582"
+    },
+    {
+      "relative_path": "validation/network/inputs/audit31.py",
+      "path": "/home/shiroakane/ARCH/validation/network/inputs/audit31.py",
+      "sha256": "c5c8aba5b49ee7a85b8723b56119ea6ad1e819d9f61235f9e3d8df23dd4be449"
+    },
+    {
+      "relative_path": "validation/network/inputs/weak_urca.py",
+      "path": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+      "sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2"
+    },
+    {
+      "relative_path": "validation/network/nse_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/network/nse_reference.py",
+      "sha256": "d94a48ae9a0872353cf4e8a2a9835d8e96f84f4ed8fd39999d0161acbc7eec4e"
+    },
+    {
+      "relative_path": "validation/network/run_sparse_validation.py",
+      "path": "/home/shiroakane/ARCH/validation/network/run_sparse_validation.py",
+      "sha256": "1df210c56ee7253fbe4040689c03f8781b4d6895012119dcbc3c06b6eca727a6"
+    },
+    {
+      "relative_path": "validation/network/run_weak_validation.py",
+      "path": "/home/shiroakane/ARCH/validation/network/run_weak_validation.py",
+      "sha256": "af39fd2a5c0f06ca32832da6192c793fe6db0d3dbcdf5a80c01d4b5ddd261591"
+    },
+    {
+      "relative_path": "validation/network/runtime_cases.json",
+      "path": "/home/shiroakane/ARCH/validation/network/runtime_cases.json",
+      "sha256": "d1a310873df1349b9c3dda8eccd6bb7b172c86533d4ae2ce5d7bf5db35bd4caf"
+    },
+    {
+      "relative_path": "validation/network/test_sparse_validation.py",
+      "path": "/home/shiroakane/ARCH/validation/network/test_sparse_validation.py",
+      "sha256": "f298f89608213fe3a8b82e140df41e7caccca117b6a08bd253ab6af80a56bd91"
+    },
+    {
+      "relative_path": "validation/network/test_weak_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/network/test_weak_reference.py",
+      "sha256": "93c99cf763faf94fbdb16ab535a734ac0df41f4038d0a328a251cc40505e8b7e"
+    },
+    {
+      "relative_path": "validation/network/weak_reference.py",
+      "path": "/home/shiroakane/ARCH/validation/network/weak_reference.py",
+      "sha256": "9ffb068ec77e58dc8eabce32b1f96d5352a3bbc2b1219c025709bacbcd9edafb"
+    },
+    {
+      "relative_path": "validation/restart/inputs/burn_resumed.par",
+      "path": "/home/shiroakane/ARCH/validation/restart/inputs/burn_resumed.par",
+      "sha256": "b3a00890414df099ffc514bd30aad4a0c71fe668f399a12786e0752894e07030"
+    },
+    {
+      "relative_path": "validation/restart/inputs/burn_uninterrupted.par",
+      "path": "/home/shiroakane/ARCH/validation/restart/inputs/burn_uninterrupted.par",
+      "sha256": "6b8297092e7cd95c61ad053cc718daefe37c9034b0760dfb0dfa4559342e7b92"
+    },
+    {
+      "relative_path": "validation/restart/inputs/resumed.par",
+      "path": "/home/shiroakane/ARCH/validation/restart/inputs/resumed.par",
+      "sha256": "984225b8ee64a214196f35695348e1943534193b6329fdf910ff3b0c3b971bb7"
+    },
+    {
+      "relative_path": "validation/restart/inputs/uninterrupted.par",
+      "path": "/home/shiroakane/ARCH/validation/restart/inputs/uninterrupted.par",
+      "sha256": "878026561a9c0a2144c330679f4be108ad851cb08f4f1abec1b949de50574a30"
+    }
+  ]
+}

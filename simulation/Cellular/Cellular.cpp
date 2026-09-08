@@ -4,6 +4,7 @@
  */
 
 #include <cmath>
+#include "physics/constant/PhysicalConstants.h"
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -70,7 +71,7 @@ public:
         {
             // Use a macroscopic transverse perturbation to avoid numerical dissipation.
             // Assumes a domain transverse length of ~25.6 to fit 4 wavelengths.
-            double k_trans = 2.0 * M_PI / (25.6 / 4.0);
+            double k_trans = 2.0 * arch::constants::math::pi / (25.6 / 4.0);
 
             if (shock_dir == 0) {
                 noise = noise_amp * std::sin(k_trans * p.y) * std::cos(k_trans * p.z);

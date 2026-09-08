@@ -59,7 +59,27 @@ bool has_consistent_checkpoint_payload(const CheckpointData& checkpoint)
            (!checkpoint.has_enuc_rate ||
             checkpoint.enuc_rate.size() == cells) &&
            checkpoint.rhoX.size() ==
-               static_cast<size_t>(checkpoint.num_species) * cells;
+               static_cast<size_t>(checkpoint.num_species) * cells &&
+           (checkpoint.has_mass_fractions
+                ? checkpoint.mass_fractions.size() == checkpoint.rhoX.size()
+                : checkpoint.mass_fractions.empty());
+}
+
+bool has_consistent_checkpoint_composition(const CheckpointData& checkpoint)
+{
+    // Payload dimensions must be checked first. Preserve the native fraction
+    // and verify the redundant conserved representation without renormalizing.
+    if (!checkpoint.has_mass_fractions) return true;
+    const size_t cells = checkpoint.rho.size();
+    for (size_t entry = 0; entry < checkpoint.mass_fractions.size(); ++entry) {
+        const double rho = checkpoint.rho[entry % cells];
+        const double fraction = checkpoint.mass_fractions[entry];
+        const double rhoX = checkpoint.rhoX[entry];
+        if (!std::isfinite(rho) || !std::isfinite(fraction) || !std::isfinite(rhoX)
+            || rho * fraction != rhoX)
+            return false;
+    }
+    return true;
 }
 
 bool has_consistent_checkpoint_provenance(const CheckpointData& checkpoint)
@@ -160,13 +180,18 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
         throw std::invalid_argument(
             "Checkpoint ENUC restart state is unavailable.");
     }
+    if ((checkpoint.num_species > 0 && !checkpoint.has_mass_fractions)
+        || !has_consistent_checkpoint_composition(checkpoint)) {
+        throw std::invalid_argument(
+            "Checkpoint native mass fractions are missing or inconsistent with rhoX.");
+    }
     if (!has_consistent_checkpoint_provenance(checkpoint)) {
         throw std::invalid_argument(
             "Checkpoint scientific provenance is inconsistent.");
     }
     try {
         File file(filepath, File::ReadWrite | File::Create | File::Truncate);
-        file.createAttribute("checkpoint_version", 3);
+        file.createAttribute("checkpoint_version", checkpoint_format_version);
         file.createAttribute("time", checkpoint.time);
         file.createAttribute("dt_old", checkpoint.dt_old);
         file.createAttribute("dt_burn", checkpoint.dt_burn);
@@ -214,6 +239,8 @@ void write_hdf5_chk_impl(const std::string& filepath, const CheckpointData& chec
                 static_cast<size_t>(checkpoint.num_species), blocks, checkpoint.cells_per_block};
             DataSet dataset = data.createDataSet<double>("rhoX", DataSpace(dims));
             dataset.write_raw(checkpoint.rhoX.data());
+            DataSet fractions = data.createDataSet<double>("X", DataSpace(dims));
+            fractions.write_raw(checkpoint.mass_fractions.data());
             Group species = file.createGroup("Species");
             species.createDataSet("name", checkpoint.provenance.species_names);
             species.createDataSet("A", checkpoint.provenance.species_A);
@@ -235,7 +262,7 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         CheckpointData checkpoint;
         int version = 0;
         file.getAttribute("checkpoint_version").read(version);
-        if (version != 1 && version != 2 && version != 3)
+        if (version < 1 || version > checkpoint_format_version)
             throw std::runtime_error("Unsupported checkpoint format version.");
         file.getAttribute("time").read(checkpoint.time);
         if (version >= 2) {
@@ -316,9 +343,14 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             read_field("enuc_rate", field_dims, checkpoint.enuc_rate);
             checkpoint.has_enuc_rate = true;
         }
+        checkpoint.has_mass_fractions = version >= 4;
         if (checkpoint.num_species > 0) {
             read_field("rhoX", {static_cast<size_t>(checkpoint.num_species),
                                 blocks, checkpoint.cells_per_block}, checkpoint.rhoX);
+            if (checkpoint.has_mass_fractions) {
+                read_field("X", {static_cast<size_t>(checkpoint.num_species),
+                                 blocks, checkpoint.cells_per_block}, checkpoint.mass_fractions);
+            }
             if (version >= 3) {
                 Group species = file.getGroup("Species");
                 species.getDataSet("name").read(
@@ -334,6 +366,10 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
 
         if (!has_consistent_checkpoint_payload(checkpoint)) {
             throw std::runtime_error("Checkpoint datasets have inconsistent dimensions.");
+        }
+        if (!has_consistent_checkpoint_composition(checkpoint)) {
+            throw std::runtime_error(
+                "Checkpoint native mass fractions are inconsistent with rhoX.");
         }
         if (version >= 3 && !has_consistent_checkpoint_provenance(checkpoint)) {
             throw std::runtime_error(

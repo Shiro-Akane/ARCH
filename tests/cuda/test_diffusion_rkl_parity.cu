@@ -20,6 +20,8 @@
 #include "numerics/diffusion/DiffusionAMRStages.h"
 #include "physics/diffusionCoe/diffusion_math.hpp"
 #include "physics/eos/IdealGas.h"
+#include "physics/eos/Tabular3DEOS.h"
+#include "physics/eos/Tabular4DEOS.h"
 
 namespace {
 
@@ -424,6 +426,43 @@ SpeciesManager make_species()
     return species;
 }
 
+// Independent constant-transport, IdealGas mixture capacity reference. The
+// fixture's species have cv=(3.5,7.25); no EOS, face helper or production dt is
+// called here. Long-double face/cell ratios implement the scalar row diagonal.
+double cartesian_face_dt_reference(const FluidState& state, const Grid& grid, const SimConfig& config)
+{
+    const auto& diffusion = config.physics.diffusion;
+    long double maximum_rate = 0.;
+    const auto capacity = [&](int cell) {
+        return 3.5L*state.X(0,cell) + 7.25L*state.X(1,cell);
+    };
+    for (int k=grid.Ks(); k<grid.Ke(); ++k)
+    for (int j=grid.Js(); j<grid.Je(); ++j)
+    for (int i=grid.Is(); i<grid.Ie(); ++i) {
+        const int cell = grid.GetIndex(i,j,k);
+        const long double rho = state.rho[cell], cv = capacity(cell);
+        long double rate = 0.;
+        for (int direction=0; direction<grid.dim; ++direction) {
+            const int stride = direction == 0 ? 1 : direction == 1 ? grid.stride_y : grid.stride_z;
+            const long double h = direction == 0 ? grid.dx1 : direction == 1 ? grid.dx2 : grid.dx3;
+            for (int sign : {-1, 1}) {
+                const int adjacent = cell+sign*stride;
+                const long double rho_ratio = (rho+state.rho[adjacent])/(2*rho);
+                long double effective = 0.;
+                if (diffusion.use_viscous_diffusion) effective = diffusion.nu_visc*rho_ratio;
+                if (diffusion.use_species_diffusion)
+                    effective = std::max(effective, diffusion.D_spec*rho_ratio);
+                if (diffusion.use_thermal_diffusion)
+                    effective = std::max(effective, diffusion.alpha_therm*rho_ratio
+                        *(cv+capacity(adjacent))/(2*cv));
+                rate += effective/(h*h);
+            }
+        }
+        maximum_rate = std::max(maximum_rate, rate);
+    }
+    return maximum_rate > 0. ? static_cast<double>(std::min(1.e10L, 1/maximum_rate)) : 1.e10;
+}
+
 void verify_frozen_host_authority()
 {
     const double composition[3] = {0.2, 0.3, 0.5};
@@ -445,10 +484,15 @@ void verify_frozen_host_authority()
     for (int dimension = 1; dimension <= 3; ++dimension) {
         const Grid grid = make_grid(dimension);
         const FluidState state = make_state(grid, 2);
-        expect_close("cartesian.raw_fe",
+        const double spacing[]{grid.dx1, grid.dx2, grid.dx3};
+        // Original numbers describe uniform capacities; preserve that exact
+        // mathematical control, not the former varying-capacity dt mistake.
+        expect_bits("uniform_cartesian.raw_fe", DiffFlux::raw_forward_euler_candidate(.37, spacing, dimension),
+                    dt_bits[dimension-1]);
+        expect_close("cartesian.face_capacity_dt",
             DiffFlux::adaptive_dt_diff(
                 state, eos, grid, make_config(true, true, true), 1.0),
-            std::bit_cast<double>(dt_bits[dimension - 1]), 1.0e-9);
+            cartesian_face_dt_reference(state, grid, make_config(true, true, true)));
     }
 
     const Grid grid = make_grid(1);
@@ -525,31 +569,28 @@ void verify_frozen_host_authority()
     expect_bits("master_off.sentinel",
         DiffFlux::adaptive_dt_diff(state, eos, grid, disabled, 0.13),
         0x4202a05f20000000ULL);
-    expect_bits("raw_fe.multiplier_one",
+    expect_close("raw_fe.multiplier_one",
         DiffFlux::adaptive_dt_diff(
             state, eos, grid, make_config(true, true, true), 1.0),
-        0x3f21b661f8cde833ULL);
-    expect_bits("driver_cfl.applied_once",
+        cartesian_face_dt_reference(state, grid, make_config(true, true, true)));
+    expect_close("driver_cfl.applied_once",
         DiffFlux::adaptive_dt_diff(
             state, eos, grid, make_config(true, true, true), 0.73),
-        0x3f19dc32e103aa0dULL);
+        .73*cartesian_face_dt_reference(state, grid, make_config(true, true, true)));
 
     const auto below = std::nextafter(1.0e-12, 0.0);
     const auto above = std::nextafter(
         1.0e-12, std::numeric_limits<double>::infinity());
     SimConfig coefficient = make_config(true, false, false);
-    coefficient.physics.diffusion.alpha_therm = below;
-    expect_bits("coefficient_floor.below",
-        DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.0),
-        0x4202a05f20000000ULL);
-    coefficient.physics.diffusion.alpha_therm = 1.0e-12;
-    expect_bits("coefficient_floor.exact",
-        DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.0),
-        0x4202a05f20000000ULL);
-    coefficient.physics.diffusion.alpha_therm = above;
-    expect_bits("coefficient_floor.above",
-        DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.0),
-        0x4187d783ffffffffULL);
+    for (double positive : {below, 1.e-12, above}) {
+        coefficient.physics.diffusion.alpha_therm = positive;
+        expect_close("positive_transport_near_old_cutoff",
+            DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.0),
+            cartesian_face_dt_reference(state, grid, coefficient));
+    }
+    coefficient.physics.diffusion.alpha_therm = 0.;
+    expect_bits("zero_transport.sentinel", DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.),
+                0x4202a05f20000000ULL);
 }
 
 template <class T>
@@ -768,6 +809,100 @@ struct StellarOverrideProbeEos
     }
 };
 
+template<class Eos>
+void verify_tabular_diffusion_latch(Eos eos, int compositions)
+{
+    DeviceFixture fixture;
+    for (int cell = 0; cell < fixture.grid.GetTotalSize(); ++cell) {
+        fixture.host_state.rho[cell] = 1.0;
+        fixture.host_state.mom_u[cell] = fixture.host_state.mom_v[cell]
+            = fixture.host_state.mom_w[cell] = 0.0;
+        fixture.host_state.eng[cell] = 3.0;
+    }
+    fixture.state.upload(fixture.host_state);
+    const int extent = 4 * compositions;
+    const double jets[]{3.0, 2.0, 0.0, 0.0, 2.0, -3.0, 0.0, 0.0, 0.0};
+    std::vector<double> table(tabular_eos::FieldCount * extent);
+    DeviceArray<double> device_table(table.size());
+    eos.uses_free_energy = true;
+    const auto config = DiffFlux::make_diffusion_config_view(make_config(true, false, false));
+    double previous_dt = 0.0;
+    for (const bool invalid : {true, false, false}) {
+        for (int field = 0; field < tabular_eos::FieldCount; ++field)
+            std::fill_n(table.data() + field * extent, extent, jets[field]);
+        // The boundary energy query fails, but Newton's upper-knot query is
+        // valid and returns finite T=10. Constant coefficients then yield a
+        // finite dt and zero thermal flux. Final-output checks cannot detect
+        // this failure; only the shared Tabular boundary hook can report it.
+        if (invalid)
+            for (int rho = 0; rho < 2; ++rho)
+                std::fill_n(table.data() + tabular_eos::Fyy * extent
+                    + rho * 2 * compositions, compositions, 0.0);
+        Eos host = eos;
+        for (int field = 0; field < tabular_eos::FieldCount; ++field)
+            host.free_energy_fields[field] = table.data() + field * extent;
+        bool host_threw = false;
+        try { static_cast<void>(host.get_temperature(1.0, 3.0, nullptr)); }
+        catch (const std::runtime_error&) { host_threw = true; }
+        if (host_threw != invalid) fail("Diffusion Tabular fixture missed the Host failure boundary");
+        device_table.upload(table.data(), table.size());
+        for (int field = 0; field < tabular_eos::FieldCount; ++field)
+            eos.free_energy_fields[field] = device_table.pointer + field * extent;
+
+        const auto operation = arch::cuda::launch_diffusion_operator(
+            fixture.state.view, fixture.output.view, eos, fixture.eos.species,
+            fixture.device_grid, config, fixture.workspace, nullptr);
+        require_cuda(operation.error, "Tabular diffusion operator latch");
+        require_cuda(cudaDeviceSynchronize(), "Tabular diffusion operator sync");
+        int status = -1;
+        fixture.status.download(&status, 1);
+        if (status != (invalid ? 1 : 0))
+            fail("Diffusion operator concealed an intermediate EOS failure or failed to reset status");
+        const auto output = fixture.output.download();
+        for (int i = fixture.grid.Is(); i < fixture.grid.Ie(); ++i)
+            if (!std::isfinite(output.eng[fixture.grid.GetIndex(i, 0, 0)]))
+                fail("Diffusion fixture did not retain finite operator output");
+
+        const auto timestep = arch::cuda::launch_raw_diffusion_dt(
+            fixture.state.view, eos, fixture.eos.species, fixture.device_grid,
+            config, fixture.workspace, nullptr);
+        require_cuda(timestep.error, "Tabular diffusion dt latch");
+        require_cuda(cudaDeviceSynchronize(), "Tabular diffusion dt sync");
+        fixture.status.download(&status, 1);
+        double dt = 0.0;
+        fixture.result.download(&dt, 1);
+        if (status != (invalid ? 1 : 0) || !std::isfinite(dt))
+            fail("Diffusion dt reduction concealed an intermediate EOS failure or failed to reset status");
+        if (!invalid) {
+            // An invalid EOS payload is rejected by its status, not a physical
+            // timestep reference. Check recovery against the uniform-capacity
+            // analytic limit, then bitwise repeatability of two valid runs.
+            expect_close("Tabular recovered uniform-capacity dt", dt,
+                         fixture.grid.dx1*fixture.grid.dx1/(2.*config.alpha_therm));
+            if (previous_dt > 0. && std::bit_cast<std::uint64_t>(dt)
+                != std::bit_cast<std::uint64_t>(previous_dt))
+                fail("Tabular valid timestep is not repeatable after recovery");
+            previous_dt = dt;
+        }
+    }
+}
+
+void verify_tabular_diffusion_failures()
+{
+    Tabular3DEOSView eos3{};
+    eos3.n_rho = eos3.n_T = eos3.n_X = 2;
+    eos3.log_rho_max = eos3.log_T_max = eos3.dlog_rho = eos3.dlog_T = 1.0;
+    eos3.X_max = eos3.dX = 1.0;
+    eos3.target_species_id = -1;
+    verify_tabular_diffusion_latch(eos3, 2);
+    Tabular4DEOSView eos4{};
+    eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
+    eos4.log_rho_max = eos4.log_T_max = eos4.dlog_rho = eos4.dlog_T = 1.0;
+    eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
+    eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
+    verify_tabular_diffusion_latch(eos4, 4);
+}
+
 void compare_operator_state(
     const FluidState& device, const FluidState& host, const Grid& grid,
     std::array<ErrorEnvelope, 8>& envelopes)
@@ -836,10 +971,11 @@ void verify_device_conductivity_and_floor()
     expect_bits("rho floor below", values[0], 0x0ULL);
     expect_bits("rho floor exact", values[1], 0x3ff0000000000000ULL);
     expect_bits("rho floor above", values[2], 0x3ff0000000000000ULL);
-    expect_bits("coefficient floor below", values[3], 0x4202a05f20000000ULL);
-    expect_bits("coefficient floor exact", values[4], 0x4202a05f20000000ULL);
-    if (!(values[5] < DiffFlux::diffusion_dt_sentinel()))
-        fail("coefficient floor above did not activate diffusion");
+    const double positive_coefficients[]{std::nextafter(1.e-12, 0.), 1.e-12,
+        std::nextafter(1.e-12, std::numeric_limits<double>::infinity())};
+    for (int index=0; index<3; ++index)
+        expect_close("positive transport remains active", values[3+index],
+                     .01*.01/(2.*positive_coefficients[index]));
     expect_bits("inverse dt below floor", values[6], 0x4415af1d78b58c40ULL);
     expect_bits("inverse dt exact floor", values[7], 0x4415af1d78b58c40ULL);
     if (!(values[8] < std::bit_cast<double>(0x4415af1d78b58c40ULL)))
@@ -946,9 +1082,6 @@ void verify_device_dt_dimensions()
 {
     SpeciesManager host_species = make_species();
     IdealGas host_eos(1.37, host_species);
-    const std::uint64_t authority[3] = {
-        0x3f21b661f8cde833ULL, 0x3f11b661f8cde833ULL,
-        0x3f079dd7f667e044ULL};
     for (int dimension = 1; dimension <= 3; ++dimension) {
         const Grid grid = make_grid(dimension);
         const FluidState host_state = make_state(grid, 2);
@@ -982,7 +1115,7 @@ void verify_device_dt_dimensions()
         double actual = 0.0;
         result.download(&actual, 1);
         expect_close("dimension raw dt authority", actual,
-                     std::bit_cast<double>(authority[dimension - 1]));
+                     cartesian_face_dt_reference(host_state, grid, make_config(true, true, true)));
         int runtime_status = -1;
         status.download(&runtime_status, 1);
         if (runtime_status != 0)
@@ -1304,6 +1437,7 @@ int main()
     verify_frozen_host_authority();
     verify_device_conductivity_and_floor();
     verify_device_operator_and_dt();
+    verify_tabular_diffusion_failures();
     verify_device_dt_dimensions();
     verify_preflight_and_master_off();
     verify_buffer_initialization();

@@ -12,6 +12,11 @@
 #include <vector>
 
 #include "../../core/ArchPortability.h"
+#include "../../core/CompensatedSum.h"
+
+#if defined(__CUDACC__)
+#include <cuda_runtime.h>
+#endif
 
 namespace tabular_eos {
 
@@ -26,6 +31,7 @@ struct FreeEnergyState {
     double axx = 0.0;
     double axy = 0.0;
     double ayy = 0.0;
+    double ayyy = 0.0; // Only evaluated for a requested heat-capacity derivative.
 };
 
 struct ThermodynamicState {
@@ -101,11 +107,12 @@ ARCH_INLINE double polynomial_derivative(int endpoint, int derivative_order,
                                          double t, int order)
 {
     double result = 0.0;
-    for (int degree = order; degree <= 5; ++degree) {
+    // Horner evaluation of the same quintic derivative. General real powers
+    // inside every tensor contraction are unnecessary for integer degrees.
+    for (int degree = 5; degree >= order; --degree) {
         double factor = 1.0;
         for (int k = 0; k < order; ++k) factor *= degree - k;
-        result += quintic_coefficient(endpoint, derivative_order, degree) *
-                  factor * std::pow(t, degree - order);
+        result = result * t + quintic_coefficient(endpoint, derivative_order, degree) * factor;
     }
     return result;
 }
@@ -121,7 +128,11 @@ ARCH_INLINE double scaled_basis(int endpoint, int stored_derivative,
                                 int requested_derivative, double t,
                                 double spacing)
 {
-    return std::pow(spacing, stored_derivative - requested_derivative) *
+    const int exponent = stored_derivative - requested_derivative;
+    double scale = 1.0;
+    for (int i = 0; i < std::abs(exponent); ++i) scale *= spacing;
+    if (exponent < 0) scale = 1.0 / scale;
+    return scale *
            quintic_basis(endpoint, stored_derivative, t,
                          requested_derivative);
 }
@@ -129,35 +140,52 @@ ARCH_INLINE double scaled_basis(int endpoint, int stored_derivative,
 ARCH_INLINE FreeEnergyState interpolate_biquintic(
     const std::array<const double*, FieldCount>& fields,
     const std::array<std::size_t, 4>& corners,
-    double tx, double ty, double hx, double hy)
+    double tx, double ty, double hx, double hy,
+    bool thermal_derivatives = false)
 {
     FreeEnergyState state{};
+    // Basis values depend on the query, not on a corner, stored field or
+    // requested tensor output. Reuse one small local cache for all outputs.
+    double basis_x[2][3][3];
+    double basis_y[2][3][4];
+    for (int endpoint = 0; endpoint < 2; ++endpoint) {
+        for (int stored = 0; stored <= 2; ++stored) {
+            for (int query = 0; query <= 2; ++query)
+                basis_x[endpoint][stored][query] = scaled_basis(endpoint, stored, query, tx, hx);
+            for (int query = 0; query < (thermal_derivatives ? 4 : 3); ++query)
+                basis_y[endpoint][stored][query] = scaled_basis(endpoint, stored, query, ty, hy);
+        }
+    }
+    // A constant free-energy background has exactly zero derivatives.
+    // Subtract it before contraction, avoiding cancellation of large
+    // background terms multiplied by inverse cell widths.
+    const double background = fields[F][corners[0]];
     double* outputs[] = {
         &state.a, &state.ax, &state.ay,
-        &state.axx, &state.axy, &state.ayy
+        &state.axx, &state.axy, &state.ayy, &state.ayyy
     };
-    for (int output = 0; output < 6; ++output) {
+    for (int output = 0; output < (thermal_derivatives ? 7 : 6); ++output) {
         const int qx = output == 1 ? 1 : (output == 3 ? 2 :
                        (output == 4 ? 1 : 0));
         const int qy = output == 2 ? 1 : (output == 4 ? 1 :
-                       (output == 5 ? 2 : 0));
-        double value = 0.0;
+                       (output == 5 ? 2 : (output == 6 ? 3 : 0)));
+        arch::math::CompensatedSum value;
+        if (output == 0) value.add(background);
         for (int ex = 0; ex < 2; ++ex) {
             for (int ey = 0; ey < 2; ++ey) {
                 const std::size_t corner = corners[2 * ex + ey];
                 for (int dx = 0; dx <= 2; ++dx) {
-                    const double bx =
-                        scaled_basis(ex, dx, qx, tx, hx);
+                    const double bx = basis_x[ex][dx][qx];
                     for (int dy = 0; dy <= 2; ++dy) {
-                        const double by =
-                            scaled_basis(ey, dy, qy, ty, hy);
-                        value += bx * by *
-                                 fields[field_for_orders(dx, dy)][corner];
+                        const double by = basis_y[ey][dy][qy];
+                        const double datum = fields[field_for_orders(dx, dy)][corner]
+                            - ((dx == 0 && dy == 0) ? background : 0.0);
+                        value.add_product(bx * by, datum);
                     }
                 }
             }
         }
-        *outputs[output] = value;
+        *outputs[output] = value.value();
     }
     return state;
 }
@@ -173,6 +201,7 @@ ARCH_INLINE FreeEnergyState blend(const FreeEnergyState& lower,
     out.axx = lower.axx + fraction * (upper.axx - lower.axx);
     out.axy = lower.axy + fraction * (upper.axy - lower.axy);
     out.ayy = lower.ayy + fraction * (upper.ayy - lower.ayy);
+    out.ayyy = lower.ayyy + fraction * (upper.ayyy - lower.ayyy);
     return out;
 }
 
@@ -236,6 +265,26 @@ inline ThermodynamicState require_thermodynamics(const FreeEnergyResult& result)
             "Tabular EOS free energy produced non-positive sound speed squared");
     }
     throw std::runtime_error("Tabular EOS free energy produced an unknown error");
+}
+
+// The mathematical failure boundary is shared by every tabular query, including
+// intermediate temperature-inversion iterations.  A device caller may supply a
+// launch-owned sticky status: later clamps/fallbacks must not erase a failure
+// that throws immediately on the Host.  This does not change returned values or
+// the Host exception contract; an unbound device view retains its NaN sentinel.
+ARCH_INLINE ThermodynamicState checked_thermodynamics(
+    const FreeEnergyResult& result, int* device_error_status = nullptr)
+{
+#if defined(__CUDA_ARCH__)
+    if (result.status != FreeEnergyStatus::success) {
+        if (device_error_status != nullptr) atomicExch(device_error_status, 1);
+        return invalid_thermodynamic_state();
+    }
+    return result.state;
+#else
+    static_cast<void>(device_error_status);
+    return require_thermodynamics(result);
+#endif
 }
 
 inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,

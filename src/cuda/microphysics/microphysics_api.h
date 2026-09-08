@@ -13,20 +13,20 @@ template <typename NetType, template <typename, typename, typename> class Solver
 ARCH_INLINE void execute_ode_policy(
     BurnPolicyCell& cell,
     BurnOdeMatrixWorkspaceFor<MatrixExtent>& workspace,
-    const EosPolicy& eos, const BurnConfigView& burn_cfg)
+    const EosPolicy& eos, const BurnConfigView& burn_cfg, const NetType& network = {})
 {
     static_assert(MatrixExtent >= NetType::ODE_NEQ);
     cell.eint_old = DriverBurn::recover_burn_internal_energy(
-        cell.fluid.rho, cell.state[NetType::ODE_NEQ - 1], cell.state, eos);
+        cell.fluid.rho, cell.state[NetType::NUM_SPECIES], cell.state, eos);
     cell.dt_recommended = cell.burn_dt;
     cell.ode = Solver<NetType, DenseMatrixData<MatrixExtent>,
                       DenseLUSolver>::integrate_report(
         cell.state, cell.fluid.rho, cell.burn_dt, eos, burn_cfg,
-        workspace, cell.dt_recommended);
+        workspace, cell.dt_recommended, network);
     cell.ode.dt_recommended = cell.dt_recommended;
     if (cell.ode.success())
         cell.eint_new = DriverBurn::recover_burn_internal_energy(
-            cell.fluid.rho, cell.state[NetType::ODE_NEQ - 1], cell.state, eos);
+            cell.fluid.rho, cell.state[NetType::NUM_SPECIES], cell.state, eos);
 }
 
 template <typename NetType, template <typename, typename, typename> class Solver,
@@ -34,7 +34,7 @@ template <typename NetType, template <typename, typename, typename> class Solver
 ARCH_INLINE void execute_burn_policy_cell(
     BurnPolicyCell& cell,
     BurnOdeMatrixWorkspaceFor<MatrixExtent>& workspace,
-    const EosPolicy& eos, const BurnConfigView& burn_cfg)
+    const EosPolicy& eos, const BurnConfigView& burn_cfg, const NetType& network = {})
 {
     static_assert(MatrixExtent >= NetType::ODE_NEQ);
     cell.enuc_rate = 0.0;
@@ -61,7 +61,7 @@ ARCH_INLINE void execute_burn_policy_cell(
     cell.ode = Solver<NetType, DenseMatrixData<MatrixExtent>,
                       DenseLUSolver>::integrate_report(
         cell.state, cell.fluid.rho, burn_dt, eos, burn_cfg,
-        workspace, cell.dt_recommended);
+        workspace, cell.dt_recommended, network);
     cell.ode.dt_recommended = cell.dt_recommended;
     if (!cell.ode.success())
     {
@@ -73,7 +73,12 @@ ARCH_INLINE void execute_burn_policy_cell(
         cell.fluid, cell.state, NetType::NUM_SPECIES,
         prepared.internal_energy, prepared.kinetic_energy,
         burn_dt,
-        eos, burn_cfg);
+        eos, burn_cfg, cell.ode.energy_change);
+    if (!handoff.valid) {
+        cell.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
+        cell.ode.status = BurnOdeStatus::EosFailure;
+        return;
+    }
     DriverBurn::commit_burn_energy(cell.fluid, handoff);
     cell.eint_old = prepared.internal_energy;
     cell.eint_new = handoff.new_internal_energy;

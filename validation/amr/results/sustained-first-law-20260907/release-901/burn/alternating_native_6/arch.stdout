@@ -1,0 +1,16 @@
+[Info] Loaded 72 parameters from /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/alternating_segment_5/RestartAMR_alternating_segment_5.par
+[RuntimeParams] Restart Enabled. Target file: '/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/alternating_segment_4/RestartAMR_alternating_segment_4_chk_0005.h5'
+[IO] Restored CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/alternating_segment_5/RestartAMR_alternating_segment_5_chk_0006.h5 at step 12 with 8 AMR leaves.
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/alternating_native_6/host_chk_0006.h5 at step 12 with 8 AMR leaves.
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CFL_SNAPSHOT block=0 cpu=1.0780451187696594e-11 cuda=1.0780451187696594e-11 native_transfer_exact=true
+CFL_SNAPSHOT block=1 cpu=1.0780451187696589e-11 cuda=1.0780451187696589e-11 native_transfer_exact=true
+CFL_SNAPSHOT block=2 cpu=5.3889237665185603e-12 cuda=5.3889237665185644e-12 native_transfer_exact=true
+CFL_SNAPSHOT block=3 cpu=5.1743459439800838e-12 cuda=5.1743459439800838e-12 native_transfer_exact=true
+CFL_SNAPSHOT block=4 cpu=3.6809878367501963e-12 cuda=3.6809878367501963e-12 native_transfer_exact=true
+CFL_SNAPSHOT block=5 cpu=3.6809878367501947e-12 cuda=3.6809878367501947e-12 native_transfer_exact=true
+CFL_SNAPSHOT block=6 cpu=5.1743459439800806e-12 cuda=5.1743459439800806e-12 native_transfer_exact=true
+CFL_SNAPSHOT block=7 cpu=5.3889237665185555e-12 cuda=5.3889237665185555e-12 native_transfer_exact=true
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/alternating_native_6/cuda_chk_0006.h5 at step 12 with 8 AMR leaves.
+CFL_MIN cpu=3.6809878367501947e-12 cuda=3.6809878367501947e-12 relative_difference=0

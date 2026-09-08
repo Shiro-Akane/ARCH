@@ -15,7 +15,9 @@ ARCH 包含 Frank Timmes 所发布软件的 C++ 适配：
 | `src/physics/eos/HelmEos.h` | [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)中的 Helmholtz EOS 包 | C++ EOS 策略、严格表加载、状态耦合和诊断 |
 | `EOS_toolkit/tables/helmholtz/helm_table.dat` | 项目下载的 `helmholtz.tar.xz` 中的 `helm_table.dat` | 仅 Git LFS 打包；表数据不是 ARCH 自有作品 |
 
-Timmes 下载页面要求在使用这些代码、代码片段或修改版本时引用相关文献并联系作者。这些页面没有声明标准 SPDX 软件许可证。因此本项目不主张将 Timmes 派生内容重新许可为 ARCH 的 MIT 许可证。维护者应保留来源归属，并在公开发布前确认适用的重新分发条款。
+Timmes 下载页面请求在使用这些代码、代码片段或修改版本时引用相关文献；反应网络页面也欢迎就集成到其他软件的工作联系作者。这些页面没有声明标准 SPDX 软件许可证。因此本项目不主张将 Timmes 派生内容重新许可为 ARCH 的 MIT 许可证。维护者应保留来源归属，并在公开发布前确认适用的重新分发条款。
+
+本项目使用了 Timmes 的科学成果，目前尚未联系作者。维护者计划补充联系及重新分发条款的确认记录。这项发布行政事项仍待完成，与技术验证分别记录；来源标注或测试通过均不代表已获得授权。
 
 实现和验证细节见 [`docs/physics/TimmesNetworks.zh-CN.md`](docs/physics/TimmesNetworks.zh-CN.md)。
 
@@ -28,6 +30,20 @@ Timmes 下载页面要求在使用这些代码、代码片段或修改版本时�
 ## SuiteSparse KLU 稀疏求解器
 
 ARCH 可获取固定的 SuiteSparse v7.13.0，并静态链接 KLU 及其最小依赖 BTF、AMD、COLAMD 和 SuiteSparse_config。KLU 与 BTF 使用 LGPL-2.1-or-later；AMD、COLAMD 与 SuiteSparse_config 使用 BSD-3-Clause。保留的组件说明见 [`LICENSES/SuiteSparse-KLU.txt`](LICENSES/SuiteSparse-KLU.txt)，完整 LGPL-2.1 文本见 [`LICENSES/LGPL-2.1.txt`](LICENSES/LGPL-2.1.txt)。源码和二进制重新分发必须满足对应上游条款；ARCH 的 MIT 条款不会重新许可这些组件。
+
+## pynucastro 生成网络与核数据
+
+ARCH 在 [`tools/network/`](tools/network/) 中提供生成配方和可移植适配器。维护中的 [`audit31` 与 `weak_urca` 验证网络](validation/network/README.zh-CN.md)使用 pynucastro 2.12.0，由用户在本地生成网络包；ARCH 的适配工作不会将输出中的上游模板或核数据变成 ARCH 自有内容。
+
+pynucastro 2.12.0 使用其 [BSD-3-Clause 许可证](https://raw.githubusercontent.com/pynucastro/pynucastro/2.12.0/LICENSE)。SimpleCxx 输出包含上游模板，其中 `amrex_bridge.H` 的源码注释注明了 AMReX 和 Microphysics 的改编来源。重新分发生成包时，应保留这些来源及适用条款，包括 pynucastro 许可证和相关 [AMReX](https://raw.githubusercontent.com/AMReX-Codes/amrex/development/LICENSE)、Microphysics 说明。上文已有的 Microphysics 说明针对 ARCH 的传导适配，并不统一覆盖所有生成文件。源码分发须保留适用的版权声明、条件和免责声明；二进制分发须在随附材料中重现这些内容。pynucastro 的[引用指南](https://pynucastro.github.io/pynucastro/citing.html)请求引用其 2.0 论文和 Zenodo 软件记录。
+
+速率数据有各自的科学来源。`audit31` 使用 [JINA ReacLib 数据库](https://reaclib.jinaweb.org/index.php)，该数据库建议的引用为 Cyburt 等人，*ApJS* 189, 240 (2010)。`weak_urca` 使用 pynucastro 随包提供、来自 [Suzuki、Toki 和 Nomoto，*ApJ* 817, 163 (2016)](https://doi.org/10.3847/0004-637X/817/2/163) 的 Na-23/Ne-23 电子俘获和 β 衰变表。pynucastro 的[第三方数据指南](https://pynucastro.github.io/pynucastro/sources.html)列出了这些来源、Suzuki 作者数据页面，以及核属性和配分函数的参考文献。重新分发网络时，应一并保留所选速率、表数据来源和相关引用。本说明不将这些科学数据统一归入 ARCH 的 MIT 许可证或某一软件许可证。
+
+## NVIDIA cuDSS
+
+cuDSS 是可选、独立安装的 NVIDIA 稀疏求解器后端，ARCH 源码发行包不捆绑其二进制文件。本轮核阅的集成使用 0.8 API 和 `nvidia-cudss-cu12` 0.8.0.10 软件包。安装步骤见 NVIDIA 的 [cuDSS 指南](https://docs.nvidia.com/cuda/cudss/getting_started.html)。
+
+cuDSS 受 [NVIDIA Math Libraries SDK 许可协议](https://docs.nvidia.com/cuda/cudss/license.html)约束，不使用 ARCH 的 MIT 许可证。重新分发 SDK 组件须遵循对应版本软件包随附的协议和完整说明。本轮核阅软件包的 `LICENSE.txt` 还包含 AMD/COLAMD、METIS、fmt 和 HSL 说明，应保留该版本的完整说明，而不只摘录 NVIDIA 协议部分。
 
 ## 归属目录中的 ARCH 支撑代码
 

@@ -1,0 +1,33 @@
+// Generated dispatch-only delegate. Mathematical definitions remain shared.
+#include "@custom_eos_header@"
+#include "cuda/runtime/burn/CudaBackendBurnNetworkRoutes.h"
+#include "cuda/runtime/burn/CudaBackendBurnImpl.cuh"
+#include "@custom_header@"
+
+namespace arch::cuda::burn_detail {
+template <class Network>
+cudaError_t custom_dense_route(
+    const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
+    DeviceGridView grid, std::byte* workspace,
+    reduction::ReductionCandidate* candidates, int* statuses,
+    DeviceBurnSummary* summary, double dt, @custom_eos@ eos,
+    CudaBurnArguments config, cudaStream_t stream)
+{
+    if constexpr (BurnLimits::uses_compact_matrix(Network::ODE_NEQ))
+        return visit_ode_route<Network>(plan, state, grid, workspace,
+            candidates, statuses, summary, dt, eos, config, stream);
+    else
+        return cudaErrorInvalidValue; // Large networks resolve to the sparse owner.
+}
+
+cudaError_t launch_@custom_eos_tag@_Custom_@custom_id@_route(
+    const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
+    DeviceGridView grid, std::byte* workspace,
+    reduction::ReductionCandidate* candidates, int* statuses,
+    DeviceBurnSummary* summary, double dt, @custom_eos@ eos,
+    CudaBurnArguments config, cudaStream_t stream)
+{
+    return custom_dense_route<@custom_type@>(plan, state, grid, workspace,
+        candidates, statuses, summary, dt, eos, config, stream);
+}
+} // namespace arch::cuda::burn_detail

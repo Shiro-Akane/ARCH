@@ -4,6 +4,7 @@
 #include "physics/network/aprox21/NetAprox21.h"
 #include "physics/network/iso7/NetIso7.h"
 #include "physics/nse/nse_solver.h"
+#include "../fixtures/NseReference.h"
 
 #if defined(__CUDACC__)
 #include <cuda_runtime.h>
@@ -115,7 +116,7 @@ void compare_field(double actual, double expected, double abs_tol,
     const double budget = std::max(abs_tol, rel_tol * scale);
     if (error > budget) {
         std::cerr << std::setprecision(17) << field << '[' << index
-                  << "] device=" << actual << " host=" << expected
+                  << "] actual=" << actual << " reference=" << expected
                   << " absolute_error=" << error
                   << " relative_error=" << error / scale
                   << " absolute_budget=" << abs_tol
@@ -277,6 +278,81 @@ template <> struct NetworkTraits<NetIso7>
     }
 };
 
+struct NseFixedPointChecks {
+    bool repeated = false;
+    bool composition = false;
+    bool temperature = false;
+    bool density = false;
+    ARCH_INLINE bool passed() const {
+        return repeated && composition && temperature && density;
+    }
+};
+
+// The initial state is also checked against the independent 70/90-digit Saha
+// reference below. These are projector properties, not new sampled oracles:
+// preserve an accepted root exactly, but still respond to physical perturbations.
+template<class Network>
+ARCH_INLINE NseFixedPointChecks nse_fixed_point_checks(const double* equilibrium,
+                                                      double ye) {
+    constexpr int N = Network::NUM_SPECIES;
+    constexpr double temperature = 5.0e9, density = 1.0e7;
+    double state[N]{}, output[N]{};
+    NseFixedPointChecks result{};
+    result.repeated = true;
+    for (int i = 0; i < N; ++i) state[i] = equilibrium[i];
+    for (int repeat = 0; repeat < 16; ++repeat) {
+        double energy = 1.0;
+        if (!NSESolver<Network>::solve(temperature, density, ye, state, output, energy)
+            || energy != 0.0 || std::signbit(energy)) {
+            result.repeated = false;
+            break;
+        }
+        for (int i = 0; i < N; ++i) {
+            result.repeated = result.repeated && output[i] == equilibrium[i];
+            state[i] = output[i];
+        }
+    }
+    // Transfer between two equal-Z/A species: neither conservation equation
+    // alone can detect this deliberately non-equilibrium composition.
+    int first = -1, second = -1;
+    for (int i = 0; i < N && first < 0; ++i) {
+        if (Network::spin_weight(i) <= 0.0) continue;
+        for (int j = i + 1; j < N; ++j) {
+            if (Network::spin_weight(j) > 0.0
+                && Network::zion(i) / Network::aion(i)
+                   == Network::zion(j) / Network::aion(j)) {
+                first = i;
+                second = j;
+                break;
+            }
+        }
+    }
+    if (first >= 0) {
+        for (int i = 0; i < N; ++i) state[i] = equilibrium[i];
+        const double change = std::ldexp(std::min(state[first], state[second]), -8);
+        state[first] += change;
+        state[second] -= change;
+        double energy = 0.0;
+        result.composition = change > 0.0
+            && NSESolver<Network>::solve(temperature, density, ye, state, output, energy)
+            && std::isfinite(energy) && energy != 0.0;
+        for (int i = 0; i < N; ++i)
+            result.composition = result.composition && output[i] == equilibrium[i];
+    }
+    for (int parameter = 0; parameter < 2; ++parameter) {
+        const double changed_temperature = temperature * (parameter == 0 ? 1.001 : 1.0);
+        const double changed_density = density * (parameter == 1 ? 1.001 : 1.0);
+        double energy = 0.0;
+        bool changed = false;
+        bool valid = NSESolver<Network>::solve(changed_temperature, changed_density,
+            ye, equilibrium, output, energy) && std::isfinite(energy) && energy != 0.0;
+        for (int i = 0; i < N; ++i) changed = changed || output[i] != equilibrium[i];
+        if (parameter == 0) result.temperature = valid && changed;
+        else result.density = valid && changed;
+    }
+    return result;
+}
+
 template <int N, int R>
 struct NetworkProbe
 {
@@ -301,6 +377,7 @@ struct NetworkProbe
     bool nse_ok{};
     double nse_x[N]{};
     double nse_enuc{};
+    NseFixedPointChecks nse_fixed_point{};
     bool nse_invalid_status[kInvalidNseCases]{};
     bool nse_invalid_preserved[kInvalidNseCases]{};
     double nse_invalid_enuc[kInvalidNseCases]{};
@@ -391,6 +468,7 @@ ARCH_INLINE auto evaluate_network()
         ye += state[i] * Network::zion(i) / Network::aion(i);
     out.nse_ok = NSESolver<Network>::solve(
         5.0e9, 1.0e7, ye, state, out.nse_x, out.nse_enuc);
+    if (out.nse_ok) out.nse_fixed_point = nse_fixed_point_checks<Network>(out.nse_x, ye);
 
     int invalid = 0;
     auto record_invalid = [&](double temperature, double density,
@@ -556,14 +634,24 @@ void check_network_authority(
                 std::string(name) + ".frozen tolerance numeric extent");
     }
     std::size_t cursor = 0;
-    auto group = [&](const char* field, const double* values, int count) {
+    const auto& nse = NseReference::find(name);
+    require(nse.x.size() == N, "independent NSE reference extent");
+    auto group = [&](const char* field, const double* values, int count,
+                     const double* current_reference = nullptr) {
         const std::string full = std::string(name) + ".authority." + field;
         for (int i = 0; i < count; ++i) {
             const std::size_t field_index = cursor++;
             const std::uint64_t expected_bits = frozen_bits_at(
                 authority.numeric_bits, field_index);
             const double expected = std::bit_cast<double>(expected_bits);
-            if (exact_host_bits) {
+            if (current_reference) {
+                // The authorized constants unification changes equilibrium,
+                // not the reaction tables above. These independent Saha roots
+                // replace only constant-sensitive values; no data are sampled
+                // from the implementation. Keep the separate parity check below.
+                compare_field(values[i], current_reference[i], 0.0, 2.0e-12,
+                              full.c_str(), i);
+            } else if (exact_host_bits) {
                 require(std::bit_cast<std::uint64_t>(values[i]) == expected_bits,
                         full + " raw bit at " + std::to_string(i));
             } else {
@@ -610,10 +698,32 @@ void check_network_authority(
     group("frozen_rhs", actual.frozen_rhs, N);
     group("clamp_rhs", &actual.clamp_rhs[0][0], 3 * N);
     group("clamp_enuc", actual.clamp_enuc, 3);
-    group("nse_x", actual.nse_x, N);
-    group("nse_enuc", &actual.nse_enuc, 1);
-    group("invalid_enuc", actual.nse_invalid_enuc, kInvalidNseCases);
-    group("invalid_x", &actual.nse_invalid_x[0][0], kInvalidNseCases * N);
+    group("nse_x", actual.nse_x, N, nse.x.data());
+    group("nse_enuc", &actual.nse_enuc, 1, &nse.enuc);
+    require(actual.nse_fixed_point.passed(), std::string(name)
+        + ".NSE fixed-point controls: repeated=" + std::to_string(actual.nse_fixed_point.repeated)
+        + " composition=" + std::to_string(actual.nse_fixed_point.composition)
+        + " temperature=" + std::to_string(actual.nse_fixed_point.temperature)
+        + " density=" + std::to_string(actual.nse_fixed_point.density));
+    std::array<double, kInvalidNseCases> invalid_enuc{};
+    std::array<double, kInvalidNseCases * N> invalid_x{};
+    for (int which = 0; which < kInvalidNseCases; ++which) {
+        // Only the two accepted negative-abundance boundary probes change
+        // output; invalid arguments must still preserve every sentinel exactly.
+        const bool accepted = (authority.invalid_status_mask & (1u << which)) != 0;
+        invalid_enuc[which] = accepted ? nse.boundary_enuc : 0.0;
+        for (int i = 0; i < N; ++i)
+            invalid_x[which * N + i] = accepted ? nse.x[i] : 4096.0 + i;
+        if (!accepted) {
+            require(actual.nse_invalid_enuc[which] == 0.0,
+                    std::string(name) + ".invalid NSE energy was not reset");
+            for (int i = 0; i < N; ++i)
+                require(actual.nse_invalid_x[which][i] == 4096.0 + i,
+                        std::string(name) + ".invalid NSE modified output");
+        }
+    }
+    group("invalid_enuc", actual.nse_invalid_enuc, kInvalidNseCases, invalid_enuc.data());
+    group("invalid_x", &actual.nse_invalid_x[0][0], kInvalidNseCases * N, invalid_x.data());
     require(cursor == expected_values,
             std::string(name) + ".frozen authority cursor");
     require(actual.nse_ok == authority.nse_ok,
@@ -2957,6 +3067,7 @@ __global__ void network_nse_kernel(
         ye += state[i] * Network::zion(i) / Network::aion(i);
     out->nse_ok = NSESolver<Network>::solve(
         5.0e9, 1.0e7, ye, state, out->nse_x, out->nse_enuc);
+    if (out->nse_ok) out->nse_fixed_point = nse_fixed_point_checks<Network>(out->nse_x, ye);
 }
 
 template <typename Network>

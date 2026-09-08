@@ -2,6 +2,7 @@
 #include "amr/BoundaryPlan.h"
 #include "amr/ExchangePlan.h"
 #include "cuda/runtime/CudaBackend.h"
+#include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/species/Species.h"
 
@@ -346,10 +347,18 @@ void run_2d_corner_exchange()
     const auto plan = make_exchange_plan_2d(handles);
     const arch::state::CompletionToken completion{
         34, arch::state::CompletionState::Complete};
+    const auto before_exchange = backend->counters();
     require(backend->execute_same_level_exchange(
                 accesses, plan, arch::state::StateSlot::Current,
                 {10}, completion) == completion,
             "2D CUDA exchange completion token drifted");
+    const auto after_exchange = backend->counters();
+    const auto metadata_bytes = accesses.size() * sizeof(arch::cuda::DeviceExchangeBlock)
+        + plan.operations.size() * sizeof(arch::cuda::DeviceExchangeOperation);
+    require(after_exchange.bytes_h2d - before_exchange.bytes_h2d == metadata_bytes,
+            "same-level metadata uploads are missing from transfer counters");
+    require(after_exchange.bytes_d2h == before_exchange.bytes_d2h,
+            "same-level exchange unexpectedly downloads state");
 
     FluidState downloaded{};
     downloaded.Preallocate(blocks[3].grid.GetTotalSize());

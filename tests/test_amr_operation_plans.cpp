@@ -6,6 +6,7 @@
 #include "amr/GhostExchange.h"
 #include "amr/LimitedLinearProlongation.h"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
+#include "amr_composition_test_cases.h"
 
 #include <bit>
 #include <cmath>
@@ -91,6 +92,64 @@ void test_limited_linear_prolongation_math()
     expect(amr::prolongation_math::limited_linear_value(
                10.0, extremum_lower, extremum_upper, position, 1) == 10.0,
            "limited-linear prolongation did not flatten an extremum");
+}
+
+void test_shared_composition_prolongation()
+{
+    using namespace amr::prolongation_math;
+    for (int dimension = 1; dimension <= 3; ++dimension) {
+        for (const auto& example : amr::test::composition_cases()) {
+            const auto stencil = example.stencil(dimension);
+            const auto family = classify_composition_family(stencil);
+            expect(family == example.family, "composition family decision drifted");
+            std::array<double, amr::test::CompositionCase::species> integrals{};
+            for (int child = 0; child < (1 << dimension); ++child) {
+                double position[3]{};
+                for (int axis = 0; axis < dimension; ++axis)
+                    position[axis] = (child & (1 << axis)) != 0 ? 0.25 : -0.25;
+                const double density = reconstruct_field(
+                    stencil, stencil.density, position);
+                double sum = 0.0;
+                for (int species = 0; species < stencil.species_count; ++species) {
+                    const double fraction = reconstruct_mass_fraction(
+                        stencil, family, density, species, position);
+                    expect(std::isfinite(fraction) && fraction >= 0.0
+                               && fraction <= 1.0,
+                           "prolongation produced a negative/invalid species");
+                    if (family == CompositionFamily::Constant)
+                        expect(fraction == example.fractions[
+                                   species * amr::test::CompositionCase::cells],
+                               "fallback did not preserve parent composition");
+                    sum += fraction;
+                    integrals[species] += density * fraction;
+                }
+                expect(std::abs(sum - 1.0) <= 4.0e-16,
+                       "prolongation failed composition closure");
+            }
+            for (int species = 0; species < stencil.species_count; ++species) {
+                const double average = integrals[species] / (1 << dimension);
+                const double parent = example.density[0] * example.fractions[
+                    species * amr::test::CompositionCase::cells];
+                expect(std::abs(average - parent) <= 4.0e-16,
+                       "linear/fallback siblings did not conserve parent rhoX");
+            }
+        }
+    }
+    auto invalid = amr::test::composition_cases()[0];
+    for (const double density : {0.0, -1.0,
+                                std::numeric_limits<double>::quiet_NaN(),
+                                std::numeric_limits<double>::infinity()}) {
+        invalid.density.fill(density);
+        expect(classify_composition_family(invalid.stencil(3))
+                   == CompositionFamily::InvalidDensity,
+               "invalid density was silently treated as composition fallback");
+        auto no_species = invalid.stencil(1);
+        no_species.species_count = 0;
+        no_species.mass_fractions = nullptr;
+        expect(classify_composition_family(no_species)
+                   == CompositionFamily::InvalidDensity,
+               "zero-species prolongation accepted invalid density");
+    }
 }
 
 amr::AmrEndpoint endpoint(int level, std::uint32_t x,
@@ -621,6 +680,35 @@ void test_mixed_level_and_coarse_fine_execution()
            "mixed AMR fixture endpoints are missing");
     amr::Block& fine_before = pool->GetBlock(fine_id);
     amr::Block& coarse_before = pool->GetBlock(coarse_id);
+
+    // Invalid coarse density must reject the complete gather before either
+    // direction scatters, matching the CUDA status/abort transaction.
+    const auto original_density = coarse_before.fluid_state.rho;
+    std::fill(coarse_before.fluid_state.rho.begin(),
+              coarse_before.fluid_state.rho.end(), 0.0);
+    std::vector<FluidState> rejection_snapshot;
+    for (const int block_id : active)
+        rejection_snapshot.push_back(pool->GetBlock(block_id).fluid_state);
+    bool rejected_density = false;
+    try {
+        exchange.ExecuteCoarseFinePlan(
+            plan, pool, tree, 1, &amr::Block::fluid_state, handles);
+    } catch (const std::runtime_error& error) {
+        rejected_density = std::string(error.what())
+            == amr::prolongation_math::invalid_prolongation_density_message();
+    }
+    expect(rejected_density, "Host prolongation silently accepted invalid density");
+    for (std::size_t block = 0; block < active.size(); ++block) {
+        const auto& before = rejection_snapshot[block];
+        const auto& after = pool->GetBlock(active[block]).fluid_state;
+        expect(before.rho == after.rho && before.mom_u == after.mom_u
+                   && before.mom_v == after.mom_v && before.mom_w == after.mom_w
+                   && before.eng == after.eng && before.enuc_rate == after.enuc_rate
+                   && before.mass_fractions == after.mass_fractions,
+               "rejected Host AMR plan partially scattered");
+    }
+    coarse_before.fluid_state.rho = original_density;
+
     const int coarse_source = coarse_before.grid.GetIndex(
         coarse_before.grid.Is(), coarse_before.grid.Js(),
         coarse_before.grid.Ks());
@@ -908,6 +996,7 @@ int main()
         test_validation();
         test_conservative_restriction_math();
         test_limited_linear_prolongation_math();
+        test_shared_composition_prolongation();
         test_amr_interface_stencil_predicate();
         test_multidimensional_cell_lowering();
         test_curvilinear_host_restriction();

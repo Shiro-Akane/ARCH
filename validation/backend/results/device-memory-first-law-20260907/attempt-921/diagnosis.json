@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "scope": "read-only diagnosis of capacity attempt 921 process-name rejection",
+  "reviewed_utc": "2026-09-07T17:13:51+00:00",
+  "complete_capacity_gate_pass": false,
+  "original_attempt_status": "failed at audit31 process identity; final AMR application workload did not start",
+  "ordinary_sparse_gate_pass": true,
+  "ordinary_sparse_steps": 64,
+  "full_process_identity_recoverable_from_existing_records": false,
+  "artifacts": {
+    "original_recipe": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/attempt-921/replay.py",
+      "sha256": "abe8c5603d12c1bdabb71f9b6f9f23354b0a48e1e9c9c237f88bf69324f543e1"
+    },
+    "raw_local_profile": {
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-j266po2q/audit31_trajectory.sqlite",
+      "sha256": "0d381054f98a60b46f7bd77567c52986a2540848d4cb84e8184f9fa109e2c33d"
+    },
+    "guard_log": {
+      "path": "/home/shiroakane/ARCH/build/capacity-final-921.log",
+      "sha256": "8a8318c2c21c998825fc21b0876bc2bab31dc92916975a262b941ae612c14241"
+    },
+    "ordinary_sparse_evidence": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-921/sparse-validation/evidence.json",
+      "sha256": "87e14864147f1d5bacf119f893a5ba09ae7c75d0cc0a2146321e307879d03e36"
+    },
+    "stdout": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-921/audit31_trajectory/arch.stdout",
+      "sha256": "182c613c134e647afc9ece9d2b1862f60509f4cb72246fb4b4405ca945ff5a06"
+    },
+    "stderr": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-921/audit31_trajectory/arch.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "selected_identity_observations": {
+    "cuda_global_pid": 285365143339008,
+    "cuda_pid": 231872,
+    "nsight_process_name": "arch_cuda_gener",
+    "main_thread_name": "arch_cuda_gener",
+    "selected_process_stream_count": 0,
+    "capture_launch_command": "/home/shiroakane/miniconda3/envs/p311/bin/python",
+    "capture_process_0_pid": 0,
+    "capture_application_pid": 0,
+    "capture_child_command_records": 0,
+    "process_module_or_exec_tables": [],
+    "environment_values_read": false
+  },
+  "allocation_summary": {
+    "scope": "process-local CUDA allocator requests",
+    "physical_vram_measurement": false,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 16,
+    "note": "Pool reserves overlap requested bytes. Driver/context overhead and managed-memory residency are not inferred.",
+    "processes": [
+      {
+        "global_pid": 285365143339008,
+        "device": 0,
+        "events": 73744,
+        "allocations": 36880,
+        "deallocations": 36864,
+        "largest_allocation_bytes": 8388608,
+        "live_bytes_by_kind": {"device": 0, "device_static": 577},
+        "peak_bytes_by_kind": {"device": 9401860, "device_static": 577},
+        "peak_device_requested_bytes": 9402437,
+        "peak_device_time_ns": 181156754278,
+        "pool_reserved_peak_bytes": {},
+        "pid": 231872,
+        "executable": "arch_cuda_gener"
+      }
+    ]
+  }
+}

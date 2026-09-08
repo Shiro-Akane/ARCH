@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Safely generate and register an ARCH custom pynucastro SimpleCxx network."""
 from __future__ import annotations
-import argparse, hashlib, importlib.util, json, os, re, shutil, sys, tempfile
+import argparse, ast, hashlib, importlib.util, json, math, os, re, shutil, sys, tempfile
 from datetime import datetime, timezone
+from fractions import Fraction
 from pathlib import Path
+from PortableAdapter import adapt as make_portable_adapter
 
-GENERATOR_VERSION = 3
+GENERATOR_VERSION = 4
 ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,47}$")
 RESERVED = {"custom", "none", "null", "ideal", "helmholtz", "tabular"}
 
@@ -81,6 +83,118 @@ def validated_nuclei(network):
              ", ".join(incomplete))
     return nuclei
 
+def generated_energy_metadata(generated_dir, species_count):
+    """Read the upstream energy authority, never reconstruct nuclear masses.
+
+    SimpleCxx emits atomic masses using its own mass-unit convention. Converting
+    Nucleus.mass (MeV) again with another constants edition made the RHS and
+    Jacobian/accepted-step energy use different masses. Retain exact emitted
+    binary64 values and the emitted conversion expression's evaluation order.
+    Only literal arithmetic and references to declared constants are accepted.
+    """
+    def clean(name):
+        return re.sub(r'//[^\n]*|/\*.*?\*/', '',
+                      (generated_dir / name).read_text(encoding='utf-8'), flags=re.DOTALL)
+
+    arrays = re.findall(r'\bArray1D\s*<\s*Real\s*,[^>]+>\s+mion\s*\{([^{}]*)\}',
+                        clean('actual_network.H'))
+    if len(arrays) != 1:
+        raise ValueError('generated nuclear-mass storage is not recognized')
+    literals = [ast.literal_eval(token.strip().removesuffix('_rt'))
+                for token in arrays[0].split(',') if token.strip()]
+    if any(type(value) not in (int, float) for value in literals):
+        raise ValueError('generated nuclear masses must be numeric literals')
+    masses = [float(value) for value in literals]
+    if len(masses) != species_count or any(not math.isfinite(x) or x <= 0 for x in masses):
+        raise ValueError('generated nuclear masses have invalid values or extent')
+    declarations = dict(re.findall(r'\bconstexpr\s+Real\s+(\w+)\s*=\s*([^;]+);',
+                                   clean('fundamental_constants.H')))
+
+    def evaluate(node, stack=()):
+        if isinstance(node, ast.Constant) and type(node.value) in (int, float):
+            return float(node.value)
+        if isinstance(node, ast.Name) and node.id in declarations and node.id not in stack:
+            return evaluate(ast.parse(declarations[node.id].replace('_rt', ''), mode='eval').body,
+                            stack + (node.id,))
+        if isinstance(node, ast.UnaryOp) and isinstance(node.op, (ast.UAdd, ast.USub)):
+            value = evaluate(node.operand, stack)
+            return -value if isinstance(node.op, ast.USub) else value
+        if isinstance(node, ast.BinOp):
+            left, right = evaluate(node.left, stack), evaluate(node.right, stack)
+            if isinstance(node.op, ast.Add): return left + right
+            if isinstance(node.op, ast.Sub): return left - right
+            if isinstance(node.op, ast.Mult): return left * right
+            if isinstance(node.op, ast.Div): return left / right
+        raise ValueError('generated energy conversion is not literal constant arithmetic')
+
+    conversion = evaluate(ast.Name(id='enuc_conv2'))
+    if not math.isfinite(conversion) or conversion >= 0:
+        raise ValueError('generated nuclear-energy conversion is invalid')
+    return masses, conversion
+
+
+def stabilize_generated_energy_sum(generated_dir):
+    """Accumulate the upstream nuclear energy in the conserved-baryon gauge.
+
+    Reaction and screening expressions are untouched. Fail on an unfamiliar
+    energy body rather than silently retaining two accumulation conventions.
+    """
+    path = generated_dir / 'actual_rhs.H'
+    text = path.read_text(encoding='utf-8')
+    pattern = re.compile(
+        r'enuc\s*=\s*0\.0_rt\s*;\s*'
+        r'for\s*\(\s*int\s+n\s*=\s*1\s*;\s*n\s*<=\s*NumSpec\s*;\s*\+\+n\s*\)\s*\{\s*'
+        r'enuc\s*\+=\s*dydt\(n\)\s*\*\s*network::mion\(n\)\s*;\s*\}\s*'
+        r'enuc\s*\*=\s*C::enuc_conv2\s*;')
+    replacement = '''arch::math::CompensatedSum nuclear_mass;
+    for (int n = 1; n <= NumSpec; ++n) {
+        nuclear_mass.add_product(dydt(n), network::energy_mion(n));
+    }
+    enuc = nuclear_mass.value() * C::enuc_conv2;'''
+    text, count = pattern.subn(replacement, text)
+    if count != 1:
+        raise ValueError('generated nuclear-energy accumulation is not recognized')
+    path.write_text(text, encoding='utf-8')
+
+
+def install_conserved_energy_gauge(generated_dir, network, nuclei):
+    """Remove a common baryon rest mass before potentially cancelling sums.
+
+    For every admitted reaction sum(A*dY/dt)=0. Thus m_i may be replaced by
+    m_i-A_i*m0 without changing nuclear heating. Choose m0 from the same emitted
+    mass data, not another constants edition or a privileged isotope. Validate
+    the invariant from reaction stoichiometry, never from a sampled state.
+    The one emitted accessor is used by RHS, Jacobian and accepted-step energy.
+    """
+    masses, conversion = generated_energy_metadata(generated_dir, len(nuclei))
+    numbers = [n.A for n in nuclei]
+    if any(type(a) is not int or a <= 0 for a in numbers):
+        raise ValueError('nuclear baryon numbers must be positive integers')
+    for rate in network.rates:
+        if sum(n.A for n in rate.reactants) != sum(n.A for n in rate.products):
+            raise ValueError('reaction does not conserve baryon number; energy gauge is invalid')
+    origin = min(mass / number for mass, number in zip(masses, numbers))
+    # Correctly round exactly the same fused subtraction emitted below.
+    weights = [float(Fraction(mass) - number * Fraction(origin))
+               for mass, number in zip(masses, numbers)]
+    path = generated_dir / 'actual_network.H'
+    text = path.read_text(encoding='utf-8')
+    initializer = re.compile(r'\bArray1D\s*<\s*Real\s*,[^>]+>\s+mion\s*\{[^{}]*\}\s*;')
+    matches = list(initializer.finditer(text))
+    if len(matches) != 1 or re.search(r'\b(?:energy_mion|baryon_mass_origin)\b', text):
+        raise ValueError('generated energy-gauge insertion point is not recognized')
+    helper = f'''
+    // Equivalent energy reference: every generated reaction conserves baryons.
+    inline constexpr Real baryon_mass_origin = {origin:.17g};
+    inline Real energy_mion(int n) {{
+        return std::fma(-aion[n - 1], baryon_mass_origin, mion(n));
+    }}
+'''
+    end = matches[0].end()
+    path.write_text(text[:end] + helper + text[end:], encoding='utf-8')
+    return weights, conversion
+
+
 def write_adapter(stage, network_id, network):
     cls = f"NetCustom_{network_id}"
     detail = f"arch_custom_{network_id}_detail"
@@ -88,10 +202,7 @@ def write_adapter(stage, network_id, network):
     nuclei = validated_nuclei(network)
     names = [n.short_spec_name.lower() for n in nuclei]
     aion, zion = [n.A for n in nuclei], [n.Z for n in nuclei]
-    c_light = 2.99792458e10
-    mev_to_gram = 1.0e6 * 1.602176487e-12 / c_light**2
-    masses = [n.mass * mev_to_gram for n in nuclei]
-    conversion = -6.02214129e23 * c_light**2
+    masses, conversion = install_conserved_energy_gauge(stage / 'generated', network, nuclei)
     header_name, source_name = f"{cls}.h", f"{cls}.cpp"
 
     header = f'''/** Generated by tools/network/GenerateNetwork.py. Do not edit. */
@@ -102,8 +213,9 @@ def write_adapter(stage, network_id, network):
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include "core/RuntimeParams.h"
+#include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
+#include "numerics/burnsolver/NetworkDerivative.h"
 
 namespace {detail} {{
 void eval_rhs(const double*, double, double*, double&);
@@ -123,6 +235,8 @@ struct {cls} {{
     inline static constexpr std::array<double, NUM_SPECIES> ENERGY_WEIGHTS{{{cpp_array(masses)}}};
     static constexpr double ENERGY_CONVERSION = {conversion:.17g};
 
+    static double aion(int index) {{ return AION[index]; }}
+    static double energy_weight(int index) {{ return ENERGY_WEIGHTS[index]; }}
     static std::string get_network_name() {{ return NETWORK_NAME; }}
     static void RegisterSpecies(SpeciesManager& specs) {{
         for (int i = 0; i < NUM_SPECIES; ++i)
@@ -225,20 +339,16 @@ void eval_jacobian_entries(const double* state, double rho, std::vector<int>& ro
         }}
     }}
 }}
+struct CompleteRhs {{
+    ARCH_HOST_DEVICE void operator()(const double* state, double rho,
+                                    double* rhs, double& energy) const {{
+        eval_rhs(state, rho, rhs, energy);
+    }}
+}};
 void eval_temperature_derivative(const double* state, double rho,
                                  double* drhs_dT, double& denuc_dT) {{
-    const double temperature=state[Network::NUM_SPECIES];
-    const double delta=std::max(std::abs(temperature)*1.0e-4, 1.0);
-    std::vector<double> upper(state, state+Network::ODE_NEQ), lower=upper;
-    upper[Network::NUM_SPECIES]=temperature+delta;
-    lower[Network::NUM_SPECIES]=std::max(temperature-delta, 1.0);
-    std::vector<double> fr(Network::NUM_SPECIES), fl(Network::NUM_SPECIES);
-    double er=0.0, el=0.0;
-    eval_rhs(upper.data(), rho, fr.data(), er);
-    eval_rhs(lower.data(), rho, fl.data(), el);
-    const double inv=1.0/(upper[Network::NUM_SPECIES]-lower[Network::NUM_SPECIES]);
-    for (int i=0; i<Network::NUM_SPECIES; ++i) drhs_dT[i]=(fr[i]-fl[i])*inv;
-    denuc_dT=(er-el)*inv;
+    arch::burnmath::temperature_derivative<Network::NUM_SPECIES + 1>(
+        state, rho, drhs_dT, denuc_dT, CompleteRhs{{}});
 }}
 }}
 '''
@@ -264,12 +374,16 @@ def main():
     try: import pynucastro as pyna
     except ImportError: fail("run with: conda run -n p311 python tools/network/GenerateNetwork.py ...")
     recipe_hash=hashlib.sha256(recipe_path.read_bytes()).hexdigest()
+    generator_hash = hashlib.sha256(b"".join(
+        (Path(__file__).parent / name).read_bytes()
+        for name in ("GenerateNetwork.py", "PortableCxx.py", "PortableAdapter.py", "WeakTables.py", "WeakStorage.py"))).hexdigest()
     if target.exists() and not args.replace and not args.check:
         manifest_path=target/"manifest.json"
         if manifest_path.is_file():
             m=json.loads(manifest_path.read_text())
             if (m.get("recipe_sha256")==recipe_hash and m.get("pynucastro_version")==pyna.__version__
-                    and m.get("generator_version")==GENERATOR_VERSION):
+                    and m.get("generator_version")==GENERATOR_VERSION
+                    and m.get("generator_sha256")==generator_hash):
                 print(f"custom:{network_id} is already up to date; no files changed"); return
         fail(f"custom:{network_id} exists; choose another ID or pass --replace")
     network=(recipe.build_network(pyna) if hasattr(recipe, "build_network")
@@ -287,6 +401,7 @@ def main():
         generated_dir=stage/"generated"; generated_dir.mkdir()
         network.write_network(odir=generated_dir)
         rewrite_local_includes(generated_dir)
+        stabilize_generated_energy_sum(generated_dir)
         pruned_zero_jacobian_entries = prune_literal_zero_jacobian(generated_dir)
         if pruned_zero_jacobian_entries == 0:
             print(
@@ -296,15 +411,34 @@ def main():
                 file=sys.stderr,
             )
         cls, header, source=write_adapter(stage, network_id, network)
+        from WeakTables import enable_coordinate_derivatives, connect_weak_derivatives
+        weak_coordinate_derivatives = enable_coordinate_derivatives(stage, header)
+        device_callable = make_portable_adapter(stage, network_id, cls, header, source,
+                                                host_weak_math=weak_coordinate_derivatives)
+        if weak_coordinate_derivatives:
+            connect_weak_derivatives(stage, network_id, network)
+            from WeakStorage import promote_weak_storage
+            promote_weak_storage(stage, network_id)
+            # The same view is now bound by CPU entry points and CUDA dense /
+            # sparse owners. Promotion validates the complete table layout;
+            # failure aborts staged publication instead of advertising a route.
+            device_callable = True
         manifest={"schema_version":1, "generator_version":GENERATOR_VERSION,
+            "generator_sha256": generator_hash,
             "network_id":network_id, "runtime_name":f"custom:{network_id}",
             "class_name":cls, "header":header, "source":source,
             "pynucastro_version":pyna.__version__, "recipe":str(recipe_path),
             "recipe_sha256":recipe_hash, "species_count":len(network.unique_nuclei),
             "species":[n.short_spec_name.lower() for n in network.unique_nuclei],
             "rate_count":len(network.rates), "supports_nse":False,
+            "device_callable_math": device_callable,
+            "weak_table_coordinate_derivatives": weak_coordinate_derivatives,
+            "weak_composition_jacobian": weak_coordinate_derivatives,
+            "auxiliary_equations": int(weak_coordinate_derivatives),
+            "explicit_weak_storage": weak_coordinate_derivatives,
             "literal_zero_jacobian_entries_pruned":pruned_zero_jacobian_entries,
-            "temperature_jacobian":"centered finite difference, relative step 1e-4"}
+            "temperature_jacobian":"shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+            "energy_authority":"generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor"}
         (stage/"manifest.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
         (stage/"network.cmake").write_text(
             f'set(ARCH_CUSTOM_NETWORK_ID "{network_id}")\n'

@@ -29,6 +29,8 @@
 #include <vector>
 
 #include "AmrTransferPlans.h"
+#include "RegridExecutionPlan.h"
+#include "RefinementIndicatorMath.h"
 #include "MemoryPool.h"
 #include "Morton.h"
 
@@ -309,210 +311,56 @@ public:
      * and variables; thresholds consequently remain dimensionless and common
      * to DENS, species, EOS fields, and derivative diagnostics.
      */
+    std::span<const int> RefinementSpecies() const noexcept
+    {
+        return refinement_species_indices;
+    }
+
     void EvaluateRefinement(const SimConfig& config) {
-        constexpr double kLohnerEpsilon = 1.0e-2;
+        const auto selection = indicator::make_selection(
+            config.amr, root_grid.dim, refinement_species_indices);
         const bool needs_pressure = config.amr.refine_on_p || config.amr.refine_on_entropy;
         const bool needs_temperature = config.amr.refine_on_temp;
         const bool needs_gamma1 = config.amr.refine_on_entropy;
         const bool needs_thermodynamics = needs_pressure || needs_temperature || needs_gamma1;
-
-        if (config.amr.refine_on_jeans) {
-            throw std::runtime_error(
-                "AMR JENS requires a self-gravity potential solver; self gravity is not implemented in this build.");
-        }
-        if (needs_thermodynamics && !thermodynamic_evaluator) {
+        if (needs_thermodynamics && !thermodynamic_evaluator)
             throw std::runtime_error(
                 "EOS-backed AMR indicators require the thermodynamic evaluator before regridding.");
-        }
 
-        for (const int block_id : active_blocks) {
+        for (int block_id : active_blocks) {
             Block& block = pool->GetBlock(block_id);
             const Grid& grid = block.grid;
             const FluidState& state = block.fluid_state;
-            const int total_size = grid.GetTotalSize();
-            block.refine_flag = 0;
-
-            const auto max_loehner_error = [&](const std::vector<double>& values) {
-                if (static_cast<int>(values.size()) != total_size) {
-                    throw std::runtime_error("AMR indicator buffer does not match the compact block layout.");
-                }
-                double maximum = 0.0;
-                const auto directional_error = [&](int index_minus, int index, int index_plus) {
-                    const double qm = values[index_minus];
-                    const double q0 = values[index];
-                    const double qp = values[index_plus];
-                    if (!std::isfinite(qm) || !std::isfinite(q0) || !std::isfinite(qp)) {
-                        throw std::runtime_error("Non-finite AMR indicator value encountered.");
-                    }
-                    const double numerator = std::abs(qp - 2.0 * q0 + qm);
-                    const double denominator = std::abs(qp - q0) + std::abs(q0 - qm) +
-                        kLohnerEpsilon * (std::abs(qp) + 2.0 * std::abs(q0) + std::abs(qm)) +
-                        std::numeric_limits<double>::min();
-                    return std::min(1.0, numerator / denominator);
-                };
-
-                for (int k = grid.Ks(); k < grid.Ke(); ++k) {
-                    for (int j = grid.Js(); j < grid.Je(); ++j) {
-                        for (int i = grid.Is(); i < grid.Ie(); ++i) {
-                            const int index = grid.GetIndex(i, j, k);
-                            maximum = std::max(maximum, directional_error(
-                                grid.GetIndex(i - 1, j, k), index, grid.GetIndex(i + 1, j, k)));
-                            if (grid.dim >= 2) {
-                                maximum = std::max(maximum, directional_error(
-                                    grid.GetIndex(i, j - 1, k), index, grid.GetIndex(i, j + 1, k)));
-                            }
-                            if (grid.dim == 3) {
-                                maximum = std::max(maximum, directional_error(
-                                    grid.GetIndex(i, j, k - 1), index, grid.GetIndex(i, j, k + 1)));
-                            }
-                        }
-                    }
-                }
-                return maximum;
-            };
-
-            const auto primitive_velocity = [&](const std::vector<double>& momentum) {
-                std::vector<double> values(total_size, 0.0);
-                for (int index = 0; index < total_size; ++index) {
-                    const double rho = state.rho[index];
-                    values[index] = rho > config.numerics.sml_rho ? momentum[index] / rho : 0.0;
-                }
-                return values;
-            };
-
-            std::vector<double> pressure;
-            std::vector<double> temperature;
-            std::vector<double> gamma1;
+            const int total = grid.GetTotalSize();
+            std::vector<double> pressure, temperature, gamma1;
             if (needs_thermodynamics) {
                 thermodynamic_evaluator(state, needs_pressure ? &pressure : nullptr,
-                                        needs_temperature ? &temperature : nullptr,
-                                        needs_gamma1 ? &gamma1 : nullptr);
-                if (needs_pressure && static_cast<int>(pressure.size()) != total_size) {
-                    throw std::runtime_error("EOS pressure evaluator returned an invalid AMR buffer.");
-                }
-                if (needs_temperature && static_cast<int>(temperature.size()) != total_size) {
-                    throw std::runtime_error("EOS temperature evaluator returned an invalid AMR buffer.");
-                }
-                if (needs_gamma1 && static_cast<int>(gamma1.size()) != total_size) {
-                    throw std::runtime_error("EOS Gamma1 evaluator returned an invalid AMR buffer.");
-                }
+                    needs_temperature ? &temperature : nullptr, needs_gamma1 ? &gamma1 : nullptr);
+                if ((needs_pressure && pressure.size() != static_cast<std::size_t>(total))
+                    || (needs_temperature && temperature.size() != static_cast<std::size_t>(total))
+                    || (needs_gamma1 && gamma1.size() != static_cast<std::size_t>(total)))
+                    throw std::runtime_error("EOS evaluator returned an invalid AMR buffer.");
             }
-
-            double block_error = 0.0;
-            const auto include_indicator = [&](const std::vector<double>& values) {
-                block_error = std::max(block_error, max_loehner_error(values));
-            };
-
-            if (config.amr.refine_on_rho) include_indicator(state.rho);
-            if (config.amr.refine_on_p) include_indicator(pressure);
-            if (config.amr.refine_on_temp) include_indicator(temperature);
-            if (config.amr.refine_on_eng) include_indicator(state.eng);
-
-            std::vector<double> velocity_x;
-            std::vector<double> velocity_y;
-            std::vector<double> velocity_z;
-            const auto need_velocity = [&] {
-                return config.amr.refine_on_velx || config.amr.refine_on_vely ||
-                    config.amr.refine_on_velz || config.amr.refine_on_vorticity ||
-                    config.amr.refine_on_div_v;
-            };
-            if (need_velocity()) {
-                velocity_x = primitive_velocity(state.mom_u);
-                if (config.amr.refine_on_velx) include_indicator(velocity_x);
-                if (grid.dim >= 2 || config.amr.refine_on_vorticity) {
-                    velocity_y = primitive_velocity(state.mom_v);
-                    if (config.amr.refine_on_vely) include_indicator(velocity_y);
-                }
-                if (grid.dim == 3 || config.amr.refine_on_vorticity) {
-                    velocity_z = primitive_velocity(state.mom_w);
-                    if (config.amr.refine_on_velz) include_indicator(velocity_z);
-                }
-            }
-
-            if (config.amr.refine_on_vely && grid.dim < 2) {
-                throw std::invalid_argument("VELY AMR indicator requires at least two spatial dimensions.");
-            }
-            if (config.amr.refine_on_velz && grid.dim < 3) {
-                throw std::invalid_argument("VELZ AMR indicator requires three spatial dimensions.");
-            }
-
-            if (config.amr.refine_on_entropy) {
-                std::vector<double> entropy(total_size, 0.0);
-                const auto valid_gamma1 = [&](int index) {
-                    return std::isfinite(pressure[index]) && pressure[index] > 0.0 &&
-                        std::isfinite(gamma1[index]) && gamma1[index] > 0.0;
-                };
-                // A thermodynamic failure in a physical cell is fatal. Ghost cells,
-                // however, may sit outside an EOS table or across a coordinate-axis
-                // reflection. Extend the nearest physical scalar there; this is a
-                // boundary completion for the estimator, not a Gamma1 fallback.
-                for (int k = grid.Ks(); k < grid.Ke(); ++k) {
-                    for (int j = grid.Js(); j < grid.Je(); ++j) {
-                        for (int i = grid.Is(); i < grid.Ie(); ++i) {
-                            const int index = grid.GetIndex(i, j, k);
-                            if (!valid_gamma1(index)) {
-                                throw std::runtime_error(
-                                    "ENTR requires positive physical pressure and local EOS Gamma1 (rho*c_s^2/p).");
-                            }
-                        }
+            const indicator::StateView view{
+                state.rho.data(), {state.mom_u.data(), state.mom_v.data(), state.mom_w.data()},
+                state.eng.data(), state.enuc_rate.data(), state.mass_fractions.data(),
+                pressure.data(), temperature.data(), gamma1.data(), total,
+                grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(),
+                config.numerics.sml_rho, state.GetNumSpecies()};
+            const auto geometry = GridMetrics::make_geometry_view(grid);
+            double maximum = 0.0;
+            for (int k = grid.Ks(); k < grid.Ke(); ++k)
+                for (int j = grid.Js(); j < grid.Je(); ++j)
+                    for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                        const double error = indicator::cell_error(view, geometry,
+                            selection.data(), static_cast<int>(selection.size()), i, j, k);
+                        if (!std::isfinite(error))
+                            throw std::runtime_error("Non-finite AMR indicator value encountered.");
+                        maximum = std::max(maximum, error);
                     }
-                }
-                for (int k = 0; k < grid.GetTotalZ(); ++k) {
-                    for (int j = 0; j < grid.GetTotalY(); ++j) {
-                        for (int i = 0; i < grid.GetTotalX(); ++i) {
-                            const int index = grid.GetIndex(i, j, k);
-                            const int source_i = std::clamp(i, grid.Is(), grid.Ie() - 1);
-                            const int source_j = std::clamp(j, grid.Js(), grid.Je() - 1);
-                            const int source_k = std::clamp(k, grid.Ks(), grid.Ke() - 1);
-                            const int source_index = valid_gamma1(index)
-                                ? index : grid.GetIndex(source_i, source_j, source_k);
-                            entropy[index] = pressure[source_index] /
-                                std::pow(std::max(state.rho[source_index], config.numerics.sml_rho), gamma1[source_index]);
-                        }
-                    }
-                }
-                include_indicator(entropy);
-            }
-
-            if (config.amr.refine_on_enuc) {
-                include_indicator(state.enuc_rate);
-            }
-
-            if (config.amr.refine_on_species) {
-                for (const int species : refinement_species_indices) {
-                    std::vector<double> mass_fraction(total_size, 0.0);
-                    for (int index = 0; index < total_size; ++index) {
-                        mass_fraction[index] = state.X(species, index);
-                    }
-                    include_indicator(mass_fraction);
-                }
-            }
-
-            if (config.amr.refine_on_vorticity || config.amr.refine_on_div_v) {
-                if (velocity_y.empty()) velocity_y = primitive_velocity(state.mom_v);
-                if (velocity_z.empty()) velocity_z = primitive_velocity(state.mom_w);
-                std::vector<double> vorticity(total_size, 0.0);
-                std::vector<double> divergence(total_size, 0.0);
-                for (int k = grid.Ks() - (grid.dim == 3 ? 1 : 0); k <= grid.Ke() - (grid.dim == 3 ? 0 : 1); ++k) {
-                    for (int j = grid.Js() - (grid.dim >= 2 ? 1 : 0); j <= grid.Je() - (grid.dim >= 2 ? 0 : 1); ++j) {
-                        for (int i = grid.Is() - 1; i <= grid.Ie(); ++i) {
-                            const int index = grid.GetIndex(i, j, k);
-                            const VelocityDiagnostics::Values diagnostic =
-                                VelocityDiagnostics::evaluate(grid, velocity_x, velocity_y, velocity_z, i, j, k);
-                            divergence[index] = diagnostic.divergence;
-                            vorticity[index] = diagnostic.vorticity;
-                        }
-                    }
-                }
-                if (config.amr.refine_on_vorticity) include_indicator(vorticity);
-                if (config.amr.refine_on_div_v) include_indicator(divergence);
-            }
-
-            if (block_error > config.amr.refine_threshold && block.level < config.amr.lrefinemax) {
-                block.refine_flag = 1;
-            } else if (block_error < config.amr.derefine_threshold && block.level > config.amr.lrefinemin) {
-                block.refine_flag = -1;
-            }
+            block.refine_flag = indicator::refinement_flag(maximum, block.level,
+                config.amr.lrefinemin, config.amr.lrefinemax,
+                config.amr.refine_threshold, config.amr.derefine_threshold);
         }
     }
     void RippleCheck() {
@@ -632,19 +480,7 @@ public:
 
         void ExecuteMigration()
         {
-            require_owner();
-            if (!plans_built_ || migration_complete_)
-                throw std::logic_error("staged AMR migration is not executable");
-            const auto expected = make_migration_plans(prolongation_.scope);
-            if (expected.first.operations != prolongation_.operations
-                || expected.first.fingerprint != prolongation_.fingerprint
-                || expected.second.operations != restriction_.operations
-                || expected.second.fingerprint != restriction_.fingerprint)
-                throw std::invalid_argument("staged AMR migration plan drifted");
-
-            // All plans and endpoint lowering validate before the first write.
-            validate_amr_plan(prolongation_);
-            validate_amr_plan(restriction_);
+            ValidateMigrationPlans();
             std::map<BlockHandle, int> old_lowering;
             std::map<BlockHandle, int> proposed_lowering;
             for (std::size_t index = 0; index < old_active_.size(); ++index)
@@ -653,86 +489,29 @@ public:
                 proposed_lowering.emplace(
                     proposed_handles_[index], proposed_active_[index]);
 
-            // The logical plan, rather than the staging relations, is the
-            // execution authority.  Multiple field records for one endpoint
-            // pair collapse to the one existing all-field reconstruction leaf.
-            std::map<std::pair<BlockHandle, BlockHandle>, int>
-                prolongation_groups;
-            for (const auto& operation : prolongation_.operations) {
-                const int child_index =
-                    (operation.destination.logical.logical_x1 & 1U)
-                    | ((owner_->root_grid.dim >= 2
-                            ? operation.destination.logical.logical_x2 & 1U
-                            : 0U)
-                       << 1U)
-                    | ((owner_->root_grid.dim == 3
-                            ? operation.destination.logical.logical_x3 & 1U
-                            : 0U)
-                       << 2U);
-                const auto [entry, inserted] = prolongation_groups.emplace(
-                    std::pair{operation.source.handle,
-                              operation.destination.handle},
-                    child_index);
-                if (!inserted && entry->second != child_index)
-                    throw std::invalid_argument(
-                        "prolongation endpoint child index drifted");
-            }
-            for (const auto& [endpoints, child_index]
-                 : prolongation_groups) {
+            // Both backends lower the same validated all-field groups. Only
+            // the state/geometry adapters and execution location differ.
+            const auto groups = compile_regrid_execution_plan(
+                prolongation_, restriction_,
+                owner_->pool->GetBlock(old_active_.front()).fluid_state.GetNumSpecies());
+            for (const auto& group : groups.prolongations) {
                 const Block& parent = owner_->pool->GetBlock(
-                    old_lowering.at(endpoints.first));
+                    old_lowering.at(group.source.handle));
                 owner_->pool->GetBlock(
-                    proposed_lowering.at(endpoints.second))
+                    proposed_lowering.at(group.destination.handle))
                     .InterpolateFromCoarse(
-                        parent, child_index, owner_->root_grid.dim,
-                        config_.numerics.sml_rho,
-                        config_.numerics.min_eint);
+                        parent, group.child_index, owner_->root_grid.dim,
+                        config_.numerics.sml_rho, config_.numerics.min_eint);
             }
-
-            // Restriction needs the complete child group in geometric child
-            // order.  Recover that order from the logical source coordinates
-            // carried by the plan before invoking the shared averaging leaf.
-            std::map<BlockHandle, std::map<int, BlockHandle>>
-                restriction_groups;
-            for (const auto& operation : restriction_.operations) {
-                const int child_index =
-                    (operation.source.logical.logical_x1 & 1U)
-                    | ((owner_->root_grid.dim >= 2
-                            ? operation.source.logical.logical_x2 & 1U
-                            : 0U)
-                       << 1U)
-                    | ((owner_->root_grid.dim == 3
-                            ? operation.source.logical.logical_x3 & 1U
-                            : 0U)
-                       << 2U);
-                auto& children = restriction_groups[
-                    operation.destination.handle];
-                const auto [entry, inserted] = children.emplace(
-                    child_index, operation.source.handle);
-                if (!inserted && entry->second != operation.source.handle)
-                    throw std::invalid_argument(
-                        "restriction child endpoint drifted");
-            }
-            const int expected_children = 1 << owner_->root_grid.dim;
-            for (const auto& [destination, child_handles]
-                 : restriction_groups) {
-                if (static_cast<int>(child_handles.size())
-                    != expected_children)
-                    throw std::invalid_argument(
-                        "restriction plan has an incomplete child group");
+            for (const auto& group : groups.restrictions) {
                 const Block* children[8]{};
-                for (const auto& [child_index, handle] : child_handles) {
-                    if (child_index < 0 || child_index >= expected_children)
-                        throw std::invalid_argument(
-                            "restriction child index is out of range");
-                    children[child_index] = &owner_->pool->GetBlock(
-                        old_lowering.at(handle));
-                }
-                owner_->pool->GetBlock(proposed_lowering.at(destination))
+                for (int child = 0; child < (1 << owner_->root_grid.dim); ++child)
+                    children[child] = &owner_->pool->GetBlock(
+                        old_lowering.at(group.children[child].handle));
+                owner_->pool->GetBlock(proposed_lowering.at(group.destination.handle))
                     .AverageToCoarse(
                         children, owner_->root_grid.dim,
-                        config_.numerics.sml_rho,
-                        config_.numerics.min_eint);
+                        config_.numerics.sml_rho, config_.numerics.min_eint);
             }
             migration_complete_ = true;
         }
@@ -742,6 +521,48 @@ public:
             require_owner();
             if (!changed_ || !migration_complete_ || activated_ || published_)
                 throw std::logic_error("staged AMR topology is not activatable");
+            activate_topology();
+        }
+
+        // A device executor needs the proposed neighbor geometry before its
+        // private runtime is constructed. This changes metadata only: old
+        // accepted fields remain untouched and abort restores the old tree.
+        void ActivateForDeviceMigration()
+        {
+            ValidateMigrationPlans();
+            if (!changed_ || activated_)
+                throw std::logic_error("staged device topology is not activatable");
+            activate_topology();
+        }
+
+        // Call only after checked backend migration AND ghost completion. The
+        // Host arrays intentionally stay stale until an explicit IO consumer.
+        void CompleteDeviceMigration()
+        {
+            require_owner();
+            if (!plans_built_ || !activated_ || migration_complete_)
+                throw std::logic_error("staged device migration is not completable");
+            migration_complete_ = true;
+        }
+
+    private:
+        void ValidateMigrationPlans() const
+        {
+            require_owner();
+            if (!plans_built_ || migration_complete_ || activated_)
+                throw std::logic_error("staged AMR migration is not executable");
+            const auto expected = make_migration_plans(prolongation_.scope);
+            if (expected.first.operations != prolongation_.operations
+                || expected.first.fingerprint != prolongation_.fingerprint
+                || expected.second.operations != restriction_.operations
+                || expected.second.fingerprint != restriction_.fingerprint)
+                throw std::invalid_argument("staged AMR migration plan drifted");
+            validate_amr_plan(prolongation_);
+            validate_amr_plan(restriction_);
+        }
+
+        void activate_topology()
+        {
             owner_->active_blocks.swap(proposed_active_);
             try {
                 owner_->SortActiveBlocks();
@@ -755,9 +576,10 @@ public:
             }
         }
 
+    public:
         void PublishNoexcept() noexcept
         {
-            if (owner_ == nullptr || !activated_ || published_)
+            if (owner_ == nullptr || !activated_ || !migration_complete_ || published_)
                 std::terminate();
             published_ = true;
         }
@@ -950,10 +772,12 @@ public:
     PreparedRegrid PrepareRegrid(
         const SimConfig& config,
         const PreApplyRegridObserver& observer = {},
-        const StagedAllocationObserver& allocation_observer = {})
+        const StagedAllocationObserver& allocation_observer = {},
+        const std::function<void()>& evaluate_indicators = {})
     {
         PreparedRegrid prepared(*this, config);
-        EvaluateRefinement(config);
+        if (evaluate_indicators) evaluate_indicators();
+        else EvaluateRefinement(config);
         RippleCheck();
         if (observer) observer(*this);
 

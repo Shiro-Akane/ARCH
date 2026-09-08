@@ -11,10 +11,12 @@ This directory is the canonical entry point for maintained documentation.
   extend a case.
 - [Research and API reference](Reference.md): parameters, policies, and
   extension contracts.
-- [CUDA backend and GPU-AMR handoff status](CudaBackendStatus.md): verified,
-  pending-validation, and not-yet-implemented capability boundaries.
-- [Physics notes](physics/): implementation boundaries, provenance, and
-  numerical-alignment records.
+- [CUDA and GPU-AMR guide](CudaBackendStatus.md): supported features, shared
+  CPU/CUDA responsibilities, and backend selection.
+- [Simulation catalogue](../simulation/README.md): reusable problems and their
+  example inputs.
+- [Physics notes](physics/README.md): model provenance and the distinction
+  between maintained descriptions and historical numerical investigations.
 - [Verification and validation](../validation/README.md): executable claims,
   acceptance criteria, metrics, and backend parity.
 - [EOS runtime tables](../EOS_toolkit/README.md): table layout, provenance, and
@@ -22,10 +24,20 @@ This directory is the canonical entry point for maintained documentation.
 - [Legal and provenance index](legal/README.md): project and third-party
   licensing pointers.
 
+## For contributors and reviewers
+
+- [Contributor index](development/README.md): implementation ownership, the
+  maintenance freeze, and preserved development records.
+- [Tests](../tests/README.md) and [tools](../tools/README.md): focused regression
+  checks and shared build, generation, and validation utilities.
+- [Validation index](../validation/README.md): the combined acceptance decision;
+  module summaries explain scientific methods and link the recorded evidence.
+
 ## Directory contract
 
-- `guides/` contains task-oriented workflows.
-- `physics/` contains long-lived design, provenance, and mathematical notes.
+- [guides/](guides/README.md) contains task-oriented workflows.
+- `physics/` indexes model notes and labels historical investigations explicitly.
+- `development/` owns contributor decisions and execution records.
 - `legal/` is a discovery index; canonical license and notice files remain at
   the repository root for standard tooling.
 - `validation/` remains outside `docs/` because its records support explicit

@@ -34,8 +34,9 @@ struct IsentropicState {
 };
 
 /**
- * @brief Registers the selected built-in network and initializes its reference composition.
- * @throws std::runtime_error when network_name is not a maintained built-in network.
+ * @brief Registers a built-in/generated network and its initial composition.
+ * With network_name=none and burning disabled, leaves gas definitions to the
+ * problem. Unknown networks and burning without a network are rejected.
  */
 void SetupNetworkAndFractions(SimConfig& config, SpeciesManager& specs,
                               std::vector<double>& default_X);

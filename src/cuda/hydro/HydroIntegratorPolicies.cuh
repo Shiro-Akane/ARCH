@@ -6,6 +6,9 @@
 #pragma once
 
 #include "HydroStageKernels.cuh"
+#include "HydroSourceKernels.cuh"
+#include "cuda/runtime/amr/CudaBackendAmrFlux.h"
+#include "driver/StageScheduler.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 
 #include <type_traits>
@@ -51,50 +54,75 @@ template <> struct CudaFluxType<dispatch::CudaHllcBinding> {
     using type = CudaHllcFlux;
 };
 
+namespace detail {
+
+// NVCC 12.3 can corrupt template-parameter names when lowering nested explicit-
+// template lambdas to Host C++. Named visitors express the same registry walk
+// without relying on nested closure templates; they contain no physics policy.
+template <class Function, class Flux>
+struct HydroLimiterVisitor {
+    Function& function;
+    bool& invoked;
+
+    template <class Registration>
+    void operator()()
+    {
+        using Limiter = typename CudaLimiterType<
+            typename dispatch::PolicyRegistration<Registration>::CudaBinding>::type;
+        function.template operator()<CudaMusclReconstruction<Limiter>, Flux>();
+        invoked = true;
+    }
+};
+
+template <class Function, class Flux>
+struct HydroReconstructionVisitor {
+    const dispatch::ResolvedExecutionPlan& plan;
+    Function& function;
+    bool& invoked;
+
+    template <class Registration>
+    void operator()()
+    {
+        using Binding = typename dispatch::PolicyRegistration<Registration>::CudaBinding;
+        if constexpr (std::is_same_v<Binding, dispatch::CudaMusclBinding>) {
+            HydroLimiterVisitor<Function, Flux> visitor{function, invoked};
+            const bool found = dispatch::visit_policy<dispatch::LimiterPolicies>(plan.limiter, visitor);
+            invoked = invoked && found;
+        } else {
+            using Reconstruction = typename CudaReconstructionType<Binding>::type;
+            function.template operator()<Reconstruction, Flux>();
+            invoked = true;
+        }
+    }
+};
+
+template <class Function>
+struct HydroFluxVisitor {
+    const dispatch::ResolvedExecutionPlan& plan;
+    Function& function;
+    bool& invoked;
+
+    template <class Registration>
+    void operator()()
+    {
+        using Flux = typename CudaFluxType<
+            typename dispatch::PolicyRegistration<Registration>::CudaBinding>::type;
+        HydroReconstructionVisitor<Function, Flux> visitor{plan, function, invoked};
+        const bool found = dispatch::visit_policy<dispatch::ReconstructionPolicies>(plan.reconstruction, visitor);
+        invoked = invoked && found;
+    }
+};
+
+} // namespace detail
+
 template <class Function>
 bool visit_cuda_hydro_route(
     const dispatch::ResolvedExecutionPlan& plan, Function&& function)
 {
     bool invoked = false;
-    const bool flux_found = dispatch::visit_policy<dispatch::FluxPolicies>(
-        plan.flux, [&]<class FluxRegistration> {
-            using Flux = typename CudaFluxType<
-                typename dispatch::PolicyRegistration<
-                    FluxRegistration>::CudaBinding>::type;
-            const bool reconstruction_found =
-                dispatch::visit_policy<dispatch::ReconstructionPolicies>(
-                    plan.reconstruction,
-                    [&]<class ReconstructionRegistration> {
-                        using Binding = typename dispatch::PolicyRegistration<
-                            ReconstructionRegistration>::CudaBinding;
-                        if constexpr (std::is_same_v<
-                                          Binding,
-                                          dispatch::CudaMusclBinding>) {
-                            const bool limiter_found =
-                                dispatch::visit_policy<
-                                    dispatch::LimiterPolicies>(
-                                    plan.limiter,
-                                    [&]<class LimiterRegistration> {
-                                        using Limiter = typename CudaLimiterType<
-                                            typename dispatch::PolicyRegistration<
-                                                LimiterRegistration>::CudaBinding>::type;
-                                        using Reconstruction =
-                                            CudaMusclReconstruction<Limiter>;
-                                        function.template operator()<
-                                            Reconstruction, Flux>();
-                                        invoked = true;
-                                    });
-                            invoked = invoked && limiter_found;
-                        } else {
-                            using Reconstruction =
-                                typename CudaReconstructionType<Binding>::type;
-                            function.template operator()<Reconstruction, Flux>();
-                            invoked = true;
-                        }
-                    });
-            invoked = invoked && reconstruction_found;
-        });
-    return flux_found && invoked;
+    detail::HydroFluxVisitor<std::remove_reference_t<Function>> visitor{plan, function, invoked};
+    const bool found = dispatch::visit_policy<dispatch::FluxPolicies>(plan.flux, visitor);
+    return found && invoked;
 }
 
 template <class Reconstruction, class Flux, class EosView>
@@ -107,9 +135,12 @@ cudaError_t launch_bounded_hydro_stage(
     double maximum_internal_energy,
     const CudaAmrFluxDirectionRouteView* amr_routes,
     const scheduler::StageDescriptor& descriptor, double dt,
-    cudaStream_t stream, int& kernels_launched)
+    cudaStream_t stream, int& kernels_launched,
+    SpeciesWorkspaceView species_workspace = {}, Physical::Gravity::ExternalGravityView gravity = {})
 {
     kernels_launched = 0;
+    if (!valid_species_workspace(species_workspace, input.n_species, 4))
+        return cudaErrorInvalidValue;
     cudaError_t error = clear_hydro_buffer(delta, stream);
     if (error != cudaSuccess) return error;
     error = cudaMemsetAsync(
@@ -120,7 +151,7 @@ cudaError_t launch_bounded_hydro_stage(
         if (direction >= grid.dim) break;
         error = launch_hydro_faces<Reconstruction, Flux>(
             input, face_flux, grid, eos, direction,
-            entropy_fix_coefficient, stream);
+            entropy_fix_coefficient, stream, species_workspace);
         if (error != cudaSuccess) return error;
         ++kernels_launched;
         error = launch_hydro_divergence(
@@ -135,6 +166,12 @@ cudaError_t launch_bounded_hydro_stage(
                 return registration.error;
             kernels_launched += registration.kernels_launched;
         }
+    }
+    if (grid.geometry != static_cast<int>(DeviceGeometry::Cartesian) || gravity.enabled) {
+        error = launch_hydro_sources(input, delta, grid, eos, dt, stream,
+                                     species_workspace, gravity);
+        if (error != cudaSuccess) return error;
+        ++kernels_launched;
     }
     error = launch_hydro_single_stage_update(
         old_state, input, output, delta, grid,

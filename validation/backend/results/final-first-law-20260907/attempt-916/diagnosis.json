@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "attempt": "memcheck-916",
+  "status": "failed-incomplete",
+  "focused_gate_pass": false,
+  "release_qualified": false,
+  "category": "requested-monitoring-query-failure",
+  "summary": "The requested nvidia-smi memory query returned nonzero after three completed clean routes. The fourth route and the full focused suite did not produce completion evidence.",
+  "original_recipe": {
+    "path": "validation/backend/results/final-first-law-20260907/run_sanitizers.py",
+    "archive_path": "validation/backend/results/final-first-law-20260907/attempt-916/run_sanitizers.py",
+    "sha256": "a4c505dcf3e1507d5bb7888a90f1e7663d78040f11719993f228dc9fa2e32be8",
+    "archive_byte_identical": true,
+    "verification": "cmp returned 0; both SHA-256 values matched before any new campaign"
+  },
+  "guard_log": {
+    "path": "build/memcheck-final-916.log",
+    "sha256": "921820cc44392dff766ea5c8f76067a8b54f6243936ae442425edf775b21a5ee",
+    "error_line": "MEMORY_GUARD_ERROR RuntimeError: requested GPU memory query failed: ",
+    "elapsed_seconds": 10.027,
+    "min_available_kib": 6747692,
+    "peak_owned_rss_kib": 500476,
+    "baseline_swap_kib": 242944,
+    "peak_swap_kib": 242944,
+    "guard_stopped": false,
+    "stop_reason": "monitor_error",
+    "gpu_memory_observation": {
+      "scope": "whole_device",
+      "total_mib": 8192,
+      "baseline_used_mib": 1545,
+      "peak_used_mib": 1741,
+      "min_free_mib": 6284,
+      "samples": 10,
+      "complete": false
+    },
+    "system_pressure_observation": {
+      "scope": "linux_system",
+      "peak_memory_full_percent": 3.846,
+      "peak_io_full_percent": 3.52,
+      "peak_swap_in_mib_s": 0.109,
+      "peak_swap_out_mib_s": 0,
+      "samples": 10,
+      "complete": false
+    }
+  },
+  "cause_boundary": {
+    "guard_source": {
+      "path": "tools/run_memory_guarded.py",
+      "sha256": "5dff04b041ee06edab108f78b4fdac294673c7e2cc61db9c334121794846b31b",
+      "method": "GpuMemoryObservation.sample",
+      "line": 119
+    },
+    "observed_branch": "subprocess.run returned a nonzero returncode; the guard raised using result.stderr.strip()",
+    "exact_query_returncode": null,
+    "query_stdout": null,
+    "query_stderr_after_strip": "",
+    "unavailable_details": [
+      "The numeric query return code was not retained.",
+      "The original query stdout was not retained.",
+      "Empty text after strip does not establish whether stderr was empty or only whitespace.",
+      "The precise driver, utility or platform cause cannot be recovered from this log."
+    ],
+    "interpretation": "A monitoring failure is not a scientific or sanitizer failure verdict. It also cannot qualify the unfinished campaign; requested telemetry must remain enabled."
+  },
+  "inventory": {
+    "expected_routes": 23,
+    "completed_clean_routes": [
+      {
+        "name": "cuda_regrid_transaction",
+        "status": "completed-clean-route-only",
+        "sanitizer_errors": 0,
+        "leaked_bytes": 0,
+        "leaked_allocations": 0,
+        "stdout": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_regrid_transaction/arch.stdout",
+          "sha256": "0dbe79dc21986917cb8a11b49fa33bb6c991625521aabb80b09217d237751c59"
+        },
+        "stderr": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_regrid_transaction/arch.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sanitizer_log": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_regrid_transaction/sanitizer.log",
+          "sha256": "6a36bea630b130d690449139fa2fad9e7737e10fe64f74ccaf488344455aac1e"
+        }
+      },
+      {
+        "name": "cuda_regrid_migration",
+        "status": "completed-clean-route-only",
+        "sanitizer_errors": 0,
+        "leaked_bytes": 0,
+        "leaked_allocations": 0,
+        "stdout": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_regrid_migration/arch.stdout",
+          "sha256": "90d7f2412663aca4b82dff59dcfddd6313c3471d1680607a80350613d353ed79"
+        },
+        "stderr": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_regrid_migration/arch.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sanitizer_log": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_regrid_migration/sanitizer.log",
+          "sha256": "037ed59198d266d1d3e22de4f1908a3dfa1b28d6cb30650799833c9bc06544f0"
+        }
+      },
+      {
+        "name": "cuda_amr_composition",
+        "status": "completed-clean-route-only",
+        "sanitizer_errors": 0,
+        "leaked_bytes": 0,
+        "leaked_allocations": 0,
+        "stdout": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_amr_composition/arch.stdout",
+          "sha256": "30b12cb33758c8a1b7426fe00c38fef8aacf2b4b492d3a7ca0c691a123be604b"
+        },
+        "stderr": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_amr_composition/arch.stderr",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "sanitizer_log": {
+          "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_amr_composition/sanitizer.log",
+          "sha256": "1bfaa9f8e38fde5c3456cbd4ef4946537a8bbf8c22a36459ca34b894effeb4e2"
+        }
+      }
+    ],
+    "interrupted_route": {
+      "name": "cuda_amr_exchange",
+      "status": "incomplete-no-verdict",
+      "sanitizer_log": {
+        "path": "validation/backend/results/final-first-law-20260907/memcheck-916/cuda_amr_exchange/sanitizer.log",
+        "sha256": "9cc649c30f48fb884da0183ccbafebee62099ccdfe98b5c26aba3f99734fc17c"
+      },
+      "completion_summary_present": false,
+      "application_stdout_present": false,
+      "application_stderr_present": false
+    },
+    "not_started_routes": [
+      "cuda_curvilinear_geometry_smoke",
+      "cuda_refinement_indicators",
+      "cuda_single_level_smoke",
+      "cuda_cudss_sparse_solver",
+      "cuda_sparse_be_nr_batch",
+      "cuda_burn_eos_failure",
+      "cuda_hydro_eos_failure",
+      "eos_host_device_parity",
+      "network_nse_device",
+      "cuda_generated_math_audit31",
+      "cuda_generated_math_weak_urca",
+      "cuda_backend_burn_aprox19_be_nr",
+      "cuda_backend_burn_aprox19_bd",
+      "cuda_backend_burn_aprox19_ros4",
+      "cuda_burn_thermal_math",
+      "weak_constant_cv",
+      "weak_helmholtz",
+      "weak_owner_cells",
+      "audit31_sparse_cells"
+    ],
+    "final_evidence_present": false
+  },
+  "parent_reported_execution": {
+    "session_id": 92762,
+    "exit_code": 1,
+    "dependent_racecheck_attempt": "racecheck-903",
+    "dependent_racecheck_started": false,
+    "dependency": "Shell && chain did not launch racecheck after the failed memcheck guard."
+  },
+  "successor": {
+    "attempt": "memcheck-929",
+    "status_in_this_archive": "not-evaluated",
+    "recipe_sha256": "a4c505dcf3e1507d5bb7888a90f1e7663d78040f11719993f228dc9fa2e32be8",
+    "required_policy": "Rerun all 23 original routes with unchanged physical inputs, sanitizer, guard and requested GPU telemetry in a fresh output directory. Only a fully completed new campaign can pass. Racecheck-903 follows only on success.",
+    "does_not_retroactively_qualify_916": true
+  },
+  "archive_scope": "Results-only diagnosis and original recipe copy. No maintained guard, production source, numerical inputs, budgets or telemetry requirements changed."
+}

@@ -1,5 +1,14 @@
 #include "RuntimeProbe.h"
 
+#include <charconv>
+
+#ifndef ARCH_CUDA_CODE_IMAGES
+#define ARCH_CUDA_CODE_IMAGES ""
+#endif
+#ifndef ARCH_CUDA_PTX_VERSION
+#define ARCH_CUDA_PTX_VERSION 0
+#endif
+
 #if defined(_WIN32)
 #include <windows.h>
 #else
@@ -8,6 +17,35 @@
 
 namespace arch::dispatch
 {
+
+bool cuda_image_compatible(std::string_view images, int major, int minor,
+                           int driver_version, int ptx_version) noexcept
+{
+    if (major <= 0 || major > 99 || minor < 0 || minor > 9) return false;
+    const int device = major * 10 + minor;
+    bool compatible = false;
+    while (!images.empty()) {
+        const auto comma = images.find(',');
+        const auto image = images.substr(0, comma);
+        const auto dash = image.find('-');
+        const auto number = image.substr(0, dash);
+        int architecture = 0;
+        const auto parsed = std::from_chars(number.data(), number.data() + number.size(), architecture);
+        if (parsed.ec != std::errc{} || parsed.ptr != number.data() + number.size()
+            || architecture < 10 || architecture > 999) return false;
+        const auto kind = dash == std::string_view::npos ? std::string_view{} : image.substr(dash);
+        if (!kind.empty() && kind != "-real" && kind != "-virtual") return false;
+        const bool sass = kind != "-virtual" && architecture / 10 == major
+                       && device >= architecture;
+        const bool ptx = kind != "-real" && device >= architecture
+                      && ptx_version > 0 && driver_version >= ptx_version;
+        compatible = compatible || sass || ptx;
+        if (comma == std::string_view::npos) break;
+        images.remove_prefix(comma + 1);
+        if (images.empty()) return false;
+    }
+    return compatible;
+}
 
 namespace
 {
@@ -156,6 +194,9 @@ public:
             return unavailable(ProbeFailureCode::CapabilityQueryFailed);
         }
         result.device.primary_context_active_after = active_after != 0;
+        result.device.compiled_image_available = cuda_image_compatible(
+            ARCH_CUDA_CODE_IMAGES, result.device.compute_major,
+            result.device.compute_minor, result.device.driver_version, ARCH_CUDA_PTX_VERSION);
         close_library(runtime);
         close_library(driver);
         return result;

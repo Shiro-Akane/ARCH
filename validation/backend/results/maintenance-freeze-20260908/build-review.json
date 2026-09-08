@@ -1,0 +1,99 @@
+{
+  "schema": 1,
+  "scope": "isolated maintenance configure and rebuild, not a cold-build benchmark",
+  "configure_command": "env OMP_NUM_THREADS=4 python3 -B tools/run_memory_guarded.py --min-available-mib 1536 --max-swap-growth-mib 256 --pressure-guard --log build/maintenance-freeze-20260908/configure.log -- /usr/bin/cmake -S /home/shiroakane/ARCH -B /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core -G Ninja -DCMAKE_MAKE_PROGRAM=/usr/bin/ninja -DCMAKE_C_COMPILER=/usr/bin/gcc-12 -DCMAKE_CXX_COMPILER=/usr/bin/g++-12 -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-12 -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_OPENMP=ON -DCMAKE_CUDA_ARCHITECTURES=86 -DARCH_CUDA_HEAVY_COMPILE_JOBS=2 -DARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL=1 -DARCH_ENABLE_KLU=ON -DARCH_FETCH_SUITESPARSE=ON -DARCH_ENABLE_CUDSS=ON -DARCH_CUDSS_IR_STEPS=2 -DCuDSS_INCLUDE_DIR=/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include -DCuDSS_LIBRARY=/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0 -DARCH_CUSTOM_NETWORK_ROOT=/tmp/arch-release-inline-networks.zr6m6q '-DARCH_CUSTOM_NETWORKS=audit31;weak_urca' -DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin -DFETCHCONTENT_FULLY_DISCONNECTED=ON -DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src -DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src -DPython3_EXECUTABLE=/usr/bin/python3 -DHDF5_CXX_COMPILER_EXECUTABLE=/usr/bin/h5c++ -DCCACHE_PROGRAM=/usr/bin/ccache -DMOLD_LINKER=/usr/bin/mold -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DARCH_VERBOSE_BUILD=OFF",
+  "build_command": "env OMP_NUM_THREADS=4 python3 -B tools/run_memory_guarded.py --min-available-mib 1536 --max-swap-growth-mib 256 --pressure-guard --log build/maintenance-freeze-20260908/build.log -- cmake --build build/maintenance-freeze-20260908/core --parallel 4",
+  "compile_probe": {
+    "target": "arch_cuda_compile_probe",
+    "exit_code": 0,
+    "note": "Built and linked before the default build; runtime execution is in the configured regression."
+  },
+  "configure_exit_code": 0,
+  "build_exit_code": 0,
+  "cache_policy": "Existing dependency source trees reused read-only; compiler cache not cleared. Prior accepted build artifacts were not rebuilt.",
+  "metrics": {
+    "configure": {
+      "MEMORY_GUARD_RESULT": {
+        "min_available_kib": "7116032",
+        "baseline_swap_kib": "233216",
+        "peak_swap_kib": "233216",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "76884",
+        "elapsed_seconds": "13.049",
+        "stop_reason": "none"
+      },
+      "SYSTEM_PRESSURE_OBSERVATION": {
+        "scope": "linux_system",
+        "peak_memory_full_percent": "0.000",
+        "peak_io_full_percent": "5.432",
+        "peak_swap_in_mib_s": "0.000",
+        "peak_swap_out_mib_s": "0.000",
+        "memory_limit_percent": "20.0",
+        "io_limit_percent": "50.0",
+        "sustain_seconds": "10.0",
+        "samples": "14",
+        "complete": "True"
+      }
+    },
+    "compile-probe": {
+      "MEMORY_GUARD_RESULT": {
+        "min_available_kib": "6870592",
+        "baseline_swap_kib": "232448",
+        "peak_swap_kib": "232448",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "349364",
+        "elapsed_seconds": "4.027",
+        "stop_reason": "none"
+      },
+      "SYSTEM_PRESSURE_OBSERVATION": {
+        "scope": "linux_system",
+        "peak_memory_full_percent": "0.000",
+        "peak_io_full_percent": "0.786",
+        "peak_swap_in_mib_s": "1.359",
+        "peak_swap_out_mib_s": "0.000",
+        "memory_limit_percent": "20.0",
+        "io_limit_percent": "50.0",
+        "sustain_seconds": "10.0",
+        "samples": "5",
+        "complete": "True"
+      }
+    },
+    "build": {
+      "MEMORY_GUARD_RESULT": {
+        "min_available_kib": "3555656",
+        "baseline_swap_kib": "231168",
+        "peak_swap_kib": "231168",
+        "guard_stopped": "False",
+        "peak_owned_rss_kib": "3612128",
+        "elapsed_seconds": "2698.485",
+        "stop_reason": "none"
+      },
+      "SYSTEM_PRESSURE_OBSERVATION": {
+        "scope": "linux_system",
+        "peak_memory_full_percent": "0.050",
+        "peak_io_full_percent": "27.432",
+        "peak_swap_in_mib_s": "0.345",
+        "peak_swap_out_mib_s": "0.004",
+        "memory_limit_percent": "20.0",
+        "io_limit_percent": "50.0",
+        "sustain_seconds": "10.0",
+        "samples": "2679",
+        "complete": "True"
+      }
+    }
+  },
+  "logs": {
+    "configure": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/logs/configure.log",
+      "sha256": "d51679b097d2c6b9cc7ba612637213e8684d1341843c861a813ef5ebe86ecce4"
+    },
+    "compile-probe": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/logs/compile-probe.log",
+      "sha256": "743e48b2f68b5ac99dbbd8f46d939cc371bf4db2dc7d601649233c53082abd00"
+    },
+    "build": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/logs/build.log",
+      "sha256": "be8b0abd0b39937fc93440a08472f9fa897fd4bbdc8a08b66be8678896025823"
+    }
+  }
+}

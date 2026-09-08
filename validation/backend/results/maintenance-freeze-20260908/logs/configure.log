@@ -1,0 +1,238 @@
+-- The C compiler identification is GNU 12.4.0
+-- The CXX compiler identification is GNU 12.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/gcc-12 - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++-12 - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Found ccache: /usr/bin/ccache
+-- [OPT] Build Type: Release
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using mold linker for LTO
+-- [NET] Registered custom:audit31
+-- [NET] Registered custom:weak_urca
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found Python3: /usr/bin/python3 (found version "3.12.3") found components: Interpreter 
+-- The CUDA compiler identification is NVIDIA 12.3.107
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /usr/local/cuda/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Found CUDAToolkit: /usr/local/cuda/targets/x86_64-linux/include (found version "12.3.107") 
+-- [CUDA] Compiled code images: 86
+-- [DEP] cuDSS found: /home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0
+-- [OPT] CUDA compiler cache enabled: /usr/bin/ccache
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5") found components: CXX 
+-- [DEP] OpenMP enabled for target ARCH
+-- Found HDF5: /usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5_cpp.so;/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so;/usr/lib/x86_64-linux-gnu/libcrypto.so;/usr/lib/x86_64-linux-gnu/libcurl.so;/usr/lib/x86_64-linux-gnu/libpthread.a;/usr/lib/x86_64-linux-gnu/libsz.so;/usr/lib/x86_64-linux-gnu/libz.so;/usr/lib/x86_64-linux-gnu/libdl.a;/usr/lib/x86_64-linux-gnu/libm.so (found version "1.10.10") found components: CXX HL 
+-- [DEP] HDF5 C++ libraries linked successfully
+-- [DEP] HighFive headers configured via FetchContent
+-- Source:           /home/shiroakane/ARCH 
+-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core 
+-- Install lib:      lib
+-- Install include:  include/suitesparse
+-- Install bin:      bin
+-- Install pkg-file: lib
+-- Install rpath:    $ORIGIN
+-- Build   rpath:    
+-- Build type:       Release 
+-- Fortran:          not enabled
+-- CUDA:             not enabled
+-- Adding "btf" to the list of built targets.
+-- Adding "suitesparse_config" to the list of built targets.
+-- Building SuiteSparse_config version: v7.13.0 (Aug 10, 2026)
+-- Source:           /home/shiroakane/ARCH 
+-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core 
+-- Install lib:      lib
+-- Install include:  include/suitesparse
+-- Install bin:      bin
+-- Install pkg-file: lib
+-- Install rpath:    $ORIGIN
+-- Build   rpath:    
+-- Build type:       Release 
+-- Fortran:          not enabled
+-- CUDA:             not enabled
+-- SuiteSparse_config has OpenMP: OFF
+-- Looking for clock_gettime
+-- Looking for clock_gettime - found
+-- Using clock_gettime without librt
+-- C to Fortran calling protocol: 
+--     SUITESPARSE_HAS_FORTRAN  : OFF
+--     FortranCInterface_GLOBAL_MACRO  : (name,NAME) name##_
+--     FortranCInterface_GLOBAL__MACRO : (name,NAME) name##_
+-- Looking for fmax
+-- Looking for fmax - not found
+-- ------------------------------------------------------------------------
+-- SuiteSparse CMAKE report for: SuiteSparseConfig
+-- ------------------------------------------------------------------------
+-- build type:           Release
+-- BUILD_SHARED_LIBS:    OFF
+-- BUILD_STATIC_LIBS:    ON
+-- C compiler:           /usr/bin/gcc-12 
+-- C flags:              
+-- C++ compiler:         /usr/bin/g++-12
+-- C++ flags:            
+-- C Flags release:      -O3 -DNDEBUG 
+-- C++ Flags release:    -O3 -march=native -DNDEBUG 
+-- Fortran compiler:     none
+-- compile definitions:  BLAS_Generic
+-- BLAS integer:         int32_t
+-- CUDA architectures:   86
+-- ------------------------------------------------------------------------
+-- CMAKE_SYSTEM_PROCESSOR: x86_64
+-- Building AMD version: v3.3.4 (July 25, 2025)
+-- Source:           /home/shiroakane/ARCH 
+-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core 
+-- Install lib:      lib
+-- Install include:  include/suitesparse
+-- Install bin:      bin
+-- Install pkg-file: lib
+-- Install rpath:    $ORIGIN
+-- Build   rpath:    
+-- Build type:       Release 
+-- Fortran:          not enabled
+-- CUDA:             not enabled
+-- Skipping the demos in AMD/Demo
+-- ------------------------------------------------------------------------
+-- SuiteSparse CMAKE report for: AMD
+-- ------------------------------------------------------------------------
+-- build type:           Release
+-- BUILD_SHARED_LIBS:    OFF
+-- BUILD_STATIC_LIBS:    ON
+-- C compiler:           /usr/bin/gcc-12 
+-- C flags:              
+-- C++ compiler:         /usr/bin/g++-12
+-- C++ flags:            
+-- C Flags release:      -O3 -DNDEBUG 
+-- C++ Flags release:    -O3 -march=native -DNDEBUG 
+-- Fortran compiler:     none
+-- compile definitions:  
+-- CUDA architectures:   86
+-- ------------------------------------------------------------------------
+-- Building BTF version: v2.3.3 (July 25, 2025)
+-- Source:           /home/shiroakane/ARCH 
+-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core 
+-- Install lib:      lib
+-- Install include:  include/suitesparse
+-- Install bin:      bin
+-- Install pkg-file: lib
+-- Install rpath:    $ORIGIN
+-- Build   rpath:    
+-- Build type:       Release 
+-- Fortran:          not enabled
+-- CUDA:             not enabled
+-- ------------------------------------------------------------------------
+-- SuiteSparse CMAKE report for: BTF
+-- ------------------------------------------------------------------------
+-- build type:           Release
+-- BUILD_SHARED_LIBS:    OFF
+-- BUILD_STATIC_LIBS:    ON
+-- C compiler:           /usr/bin/gcc-12 
+-- C flags:              
+-- C++ compiler:         /usr/bin/g++-12
+-- C++ flags:            
+-- C Flags release:      -O3 -DNDEBUG 
+-- C++ Flags release:    -O3 -march=native -DNDEBUG 
+-- Fortran compiler:     none
+-- compile definitions:  
+-- CUDA architectures:   86
+-- ------------------------------------------------------------------------
+-- Building COLAMD version: v3.3.5 (July 25, 2025)
+-- Source:           /home/shiroakane/ARCH 
+-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core 
+-- Install lib:      lib
+-- Install include:  include/suitesparse
+-- Install bin:      bin
+-- Install pkg-file: lib
+-- Install rpath:    $ORIGIN
+-- Build   rpath:    
+-- Build type:       Release 
+-- Fortran:          not enabled
+-- CUDA:             not enabled
+-- Skipping the demos in COLAMD/Demo
+-- ------------------------------------------------------------------------
+-- SuiteSparse CMAKE report for: COLAMD
+-- ------------------------------------------------------------------------
+-- build type:           Release
+-- BUILD_SHARED_LIBS:    OFF
+-- BUILD_STATIC_LIBS:    ON
+-- C compiler:           /usr/bin/gcc-12 
+-- C flags:              
+-- C++ compiler:         /usr/bin/g++-12
+-- C++ flags:            
+-- C Flags release:      -O3 -DNDEBUG 
+-- C++ Flags release:    -O3 -march=native -DNDEBUG 
+-- Fortran compiler:     none
+-- compile definitions:  
+-- CUDA architectures:   86
+-- ------------------------------------------------------------------------
+-- Building KLU version: v2.3.6 (July 25, 2025)
+-- Source:           /home/shiroakane/ARCH 
+-- Build:            /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core 
+-- Install lib:      lib
+-- Install include:  include/suitesparse
+-- Install bin:      bin
+-- Install pkg-file: lib
+-- Install rpath:    $ORIGIN
+-- Build   rpath:    
+-- Build type:       Release 
+-- Fortran:          not enabled
+-- CUDA:             not enabled
+-- CHOLMOD not found or not requested
+-- Skipping the demos in KLU/Demo
+-- ------------------------------------------------------------------------
+-- SuiteSparse CMAKE report for: KLU
+-- ------------------------------------------------------------------------
+-- build type:           Release
+-- BUILD_SHARED_LIBS:    OFF
+-- BUILD_STATIC_LIBS:    ON
+-- C compiler:           /usr/bin/gcc-12 
+-- C flags:              
+-- C++ compiler:         /usr/bin/g++-12
+-- C++ flags:            
+-- C Flags release:      -O3 -DNDEBUG 
+-- C++ Flags release:    -O3 -march=native -DNDEBUG 
+-- Fortran compiler:     none
+-- compile definitions:  NCHOLMOD
+-- CUDA architectures:   86
+-- ------------------------------------------------------------------------
+-- ------------------------------------------------------------------------
+-- SuiteSparse CMAKE report for: SuiteSparse
+-- ------------------------------------------------------------------------
+-- build type:           Release
+-- BUILD_SHARED_LIBS:    OFF
+-- BUILD_STATIC_LIBS:    ON
+-- C compiler:           /usr/bin/gcc-12 
+-- C flags:              
+-- C++ compiler:         /usr/bin/g++-12
+-- C++ flags:            
+-- C Flags release:      -O3 -DNDEBUG 
+-- C++ Flags release:    -O3 -march=native -DNDEBUG 
+-- Fortran compiler:     none
+-- compile definitions:  
+-- CUDA architectures:   86
+-- ------------------------------------------------------------------------
+-- [DEP] SuiteSparse KLU enabled for sparse reaction networks
+-- ===================================================================
+-- [SUCCESS] ARCH Framework CPU build environment configured successfully!
+-- [SUCCESS] Executable : /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH
+-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
+-- ===================================================================
+-- Configuring done (12.3s)
+-- Generating done (0.2s)
+-- Build files have been written to: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core
+MEMORY_GUARD_RESULT min_available_kib=7116032 baseline_swap_kib=233216 peak_swap_kib=233216 guard_stopped=False peak_owned_rss_kib=76884 elapsed_seconds=13.049 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=5.432 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=14 complete=True

@@ -160,7 +160,8 @@ simulation/
 
 独立目录使每个基准只对应一个物理契约。
 
-CPU 验证输入也遵循每个算例一个目录的布局：
+以下[算例目录](../../simulation/README.md)定义 CPU/CUDA 共用的验证问题。
+对应的规范参数文件保存在所属模块的 `validation/<module>/inputs/` 中：
 
 | 目录 | 用途 |
 | --- | --- |
@@ -348,6 +349,7 @@ const ProblemHelper::IsentropicState compressed =
 - 将 EOS dispatch 辅助调用放在 `Setup` 中。
 - 算例侧 ARCH 头文件只保留 `UserInterface.h` 和 `GlobalDefs.h`；EOS 操作通过 `ProblemHelper` 访问。
 - 收敛研究中记录 floor、clamp 和 fallback 警告。
-- `main` 上使用 `compute_backend = cpu`。
+- 根据构建选择 `compute_backend = cpu`、`cuda` 或 `auto`；支持的组合见
+  [后端选择说明](../CudaBackendStatus.zh-CN.md)。
 
 所有精确可接受取值和扩展契约见 [docs/Reference.zh-CN.md](../Reference.zh-CN.md)。

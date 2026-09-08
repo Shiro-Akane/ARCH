@@ -1,9 +1,11 @@
 #include "physics/eos/IdealGas.h"
 
 #include "cuda/microphysics/helm_eos_loader.h"
+#include "cuda/common/DeviceAllocation.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/Tabular3DEOS.h"
 #include "physics/eos/Tabular4DEOS.h"
+#include "../fixtures/HelmReference.h"
 
 #include <cuda_runtime.h>
 
@@ -76,11 +78,11 @@ void close(double actual, double authority, double tolerance, const std::string 
     statistics.second = std::max(statistics.second, rel_error);
     if (rel_error > tolerance) {
         std::cerr << std::setprecision(17) << field
-                  << " device=" << actual << " host=" << authority
+                  << " actual=" << actual << " reference=" << authority
                   << " absolute_error=" << abs_error
                   << " relative_error=" << rel_error
                   << " tolerance=" << tolerance << '\n';
-        throw std::runtime_error(std::string(field) + " host/device mismatch");
+        throw std::runtime_error(std::string(field) + " value/reference mismatch");
     }
 }
 
@@ -108,22 +110,6 @@ void frozen_state(const eos_state_t &state,
     for (int index = 0; index < 9; ++index) {
         const std::string field = std::string(prefix) + "." + names[index];
         frozen_bits(values[index], authority[index], field.c_str());
-    }
-}
-
-void frozen_state_values(const eos_state_t &state,
-                         const std::array<std::uint64_t, 9> &authority,
-                         const std::array<double, 9> &tolerances,
-                         const char *prefix)
-{
-    const double values[9]{state.P, state.E, state.cv, state.sound_speed,
-                           state.dp_drho, state.dp_dT, state.pele, state.xne,
-                           state.eta};
-    const char *names[9]{"P", "E", "cv", "sound_speed", "dp_drho", "dp_dT",
-                         "pele", "xne", "eta"};
-    for (int index = 0; index < 9; ++index) {
-        const std::string field = std::string(prefix) + "." + names[index];
-        frozen_value(values[index], authority[index], tolerances[index], field.c_str());
     }
 }
 
@@ -222,15 +208,6 @@ constexpr FrozenProbe ideal_zero_probe{{
     0x0000000000000000ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
     0x0000000000000000ULL}, exact_authority_margins};
 
-constexpr FrozenProbe helm_probe{{
-    0x3ff6666666666666ULL, 0x41911dd5a315fad7ULL, 0x44a165b3bc685788ULL,
-    0x436de091017e8b86ULL, 0x4197d78400000003ULL, 0x44a165b3bc685788ULL,
-    0x41ae3615babd7d19ULL, 0x4361149de7c947aeULL, 0x412323beb6e55af3ULL,
-    0x44ac7e3dc9d0d2bfULL, 0x44a165b3bc685788ULL, 0x436de091017e8b86ULL,
-    0x41911dd5a315fad7ULL, 0x41ae3615babde9f0ULL, 0x436b44b837e87ae1ULL,
-    0x42c479c25640b780ULL, 0x449fdc71382b3f34ULL, 0x461300a5bbfb5453ULL,
-    0x4032f0e543b5126fULL}, helm_authority_margins};
-
 constexpr FrozenProbe tab3_table_probe{{
     0x3ffaaaaaaaaaaaabULL, 0x412e848000000000ULL, 0x42d87152d40e0000ULL,
     0x42d6bcc41e911f80ULL, 0x4197d78400000000ULL, 0x42d87152d40e0000ULL,
@@ -285,8 +262,8 @@ constexpr FrozenProbe tab4_fd_probe{{
     0x40c0f6f1e0aa64c3ULL, 0x0000000000000000ULL, 0x0000000000000000ULL,
     0x0000000000000000ULL}, tab4_fd_authority_margins};
 
-void frozen_probe(const Probe &actual, const FrozenProbe &authority,
-                  const char *prefix)
+void reference_probe(const Probe &actual, const std::array<double, 19>& authority,
+                     const std::array<double, 19>& margins, const char *prefix)
 {
     const double values[19]{
         actual.gamma, actual.cv, actual.pressure_rho_T, actual.eint,
@@ -302,10 +279,25 @@ void frozen_probe(const Probe &actual, const FrozenProbe &authority,
         "state.dp_drho", "state.dp_dT", "state.pele", "state.xne", "state.eta"};
     for (int index = 0; index < 19; ++index) {
         const std::string field = std::string(prefix) + "." + names[index];
-        frozen_value(values[index], authority.bits[index],
-                     authority.authority_margins[index],
-                     field.c_str());
+        close(values[index], authority[index], margins[index], field);
     }
+}
+
+void frozen_probe(const Probe &actual, const FrozenProbe &authority,
+                  const char *prefix)
+{
+    std::array<double, 19> values{};
+    for (int i = 0; i < 19; ++i) values[i] = std::bit_cast<double>(authority.bits[i]);
+    reference_probe(actual, values, authority.authority_margins, prefix);
+}
+
+// Independent fallback oracle, not a production constants/fallback invocation.
+double ion_pressure_reference(double rho, double temperature, double ion_fraction)
+{
+    constexpr long double boltzmann = 1.380649e-16L;
+    constexpr long double atomic_mass = 1.66053906892e-24L;
+    return static_cast<double>(static_cast<long double>(rho) * temperature
+                               * ion_fraction * boltzmann / atomic_mass);
 }
 
 void require_same_raw_probe(const Probe &wrapper, const Probe &leaf, const char *eos)
@@ -500,37 +492,45 @@ double run_pressure(View view, const std::vector<double>& Xi, double rho, double
 }
 
 template <class View>
-__global__ void state_dp_dT_kernel(View view, const double *Xi, double rho, double T,
-                                   double *result)
+__global__ void state_kernel(View view, const double *Xi, double rho, double T,
+                            eos_state_t *result)
 {
     eos_state_t state{};
     state.rho = rho; state.T = T; state.Xi = Xi;
     view.evaluate_state(state);
-    *result = state.dp_dT;
+    state.Xi = nullptr; // Do not export a device-only borrowed pointer to Host.
+    *result = state;
 }
 
 template <class View>
-double run_state_dp_dT(View view, const std::vector<double> &Xi,
-                       double rho, double T, cudaStream_t stream)
+eos_state_t run_state(View view, const std::vector<double> &Xi,
+                     double rho, double T, cudaStream_t stream)
 {
     double *device_Xi = nullptr;
-    double *device_result = nullptr;
+    eos_state_t *device_result = nullptr;
     cuda_check(cudaMalloc(reinterpret_cast<void **>(&device_Xi),
                           Xi.size() * sizeof(double)), "cudaMalloc dp_dT Xi");
-    cuda_check(cudaMalloc(reinterpret_cast<void **>(&device_result), sizeof(double)),
+    cuda_check(cudaMalloc(reinterpret_cast<void **>(&device_result), sizeof(eos_state_t)),
                "cudaMalloc dp_dT result");
     cuda_check(cudaMemcpyAsync(device_Xi, Xi.data(), Xi.size() * sizeof(double),
                                cudaMemcpyHostToDevice, stream), "copy dp_dT Xi");
-    state_dp_dT_kernel<<<1, 1, 0, stream>>>(
+    state_kernel<<<1, 1, 0, stream>>>(
         view, device_Xi, rho, T, device_result);
     cuda_check(cudaGetLastError(), "dp_dT launch");
-    double result = 0.0;
+    eos_state_t result{};
     cuda_check(cudaMemcpyAsync(&result, device_result, sizeof(result),
                                cudaMemcpyDeviceToHost, stream), "copy dp_dT result");
     cuda_check(cudaStreamSynchronize(stream), "dp_dT synchronize");
     cuda_check(cudaFree(device_result), "free dp_dT result");
     cuda_check(cudaFree(device_Xi), "free dp_dT Xi");
     return result;
+}
+
+template <class View>
+double run_state_dp_dT(View view, const std::vector<double>& Xi,
+                       double rho, double T, cudaStream_t stream)
+{
+    return run_state(view, Xi, rho, T, stream).dp_dT;
 }
 
 void assert_device_pointer(const void* pointer, const char* field)
@@ -649,6 +649,150 @@ Tabular4DEOSHostView make_tab4(
 }
 
 struct SixValues { double value[6]; };
+
+struct CompositionSample { double energy[2], cv[3], hessian[3]; };
+
+template <class View>
+ARCH_HOST_DEVICE CompositionSample composition_sample(View view, double rho, double T, double first)
+{
+    const double fractions[]{first, 1.0 - first}, flow[]{-0.4, 0.4};
+    CompositionSample result{};
+    view.template get_energy_composition_gradient<3>(rho, T, fractions, result.energy);
+    view.template get_cv_gradient<3>(rho, T, fractions, result.cv);
+    view.template get_energy_composition_hessian_action<3>(rho, T, fractions, flow, result.hessian);
+    return result;
+}
+
+template <class View>
+__global__ void composition_kernel(View view, double rho, double T, double first, CompositionSample* result)
+{ *result = composition_sample(view, rho, T, first); }
+
+// Independently manufactured tables: free energy is a polynomial in ln(rho),
+// ln(T) and the table composition coordinates. Value-format tables instead
+// prescribe independently tabulated E and cv, exercising their distinct slopes.
+template <bool FourDimensional>
+void test_tabular_composition(cudaStream_t stream)
+{
+    using Host = std::conditional_t<FourDimensional, Tabular4DEOSHostView, Tabular3DEOSHostView>;
+    using Owner = std::conditional_t<FourDimensional, arch::cuda::Tabular4DEOSDeviceOwner,
+                                                    arch::cuda::Tabular3DEOSDeviceOwner>;
+    SpeciesManager species;
+    species.add_species("a", 1.0, 1.0, 1.4, 700.0);
+    species.add_species("b", 4.0, 2.0, 1.6, 900.0);
+    for (const bool free_energy : {false, true}) {
+        Host host{};
+        host.n_rho = host.n_T = 3;
+        host.log_rho_min = host.log_T_min = 0.0;
+        host.log_rho_max = host.log_T_max = 0.4;
+        host.dlog_rho = host.dlog_T = 0.2;
+        host.specs = species.get_host_view();
+        if constexpr (FourDimensional) {
+            host.n_A = host.n_Z = 3;
+            host.A_min = 1.0; host.A_max = 4.0; host.dA = 1.5;
+            host.Z_min = 0.5; host.Z_max = 2.0; host.dZ = 0.75;
+        } else {
+            host.n_X = 3; host.X_min = 0.0; host.X_max = 1.0; host.dX = 0.5;
+            host.target_species_id = 1;
+        }
+        constexpr int count = FourDimensional ? 81 : 27;
+        std::array<std::vector<double>, 6> values;
+        std::array<std::vector<double>, tabular_eos::FieldCount> fields;
+        for (auto& v : values) v.resize(count);
+        for (auto& f : fields) f.resize(count);
+        for (int ir = 0; ir < 3; ++ir) for (int it = 0; it < 3; ++it)
+            for (int ia = 0; ia < 3; ++ia) for (int iz = 0; iz < (FourDimensional ? 3 : 1); ++iz) {
+                const int index = FourDimensional ? ((ir * 3 + it) * 3 + ia) * 3 + iz
+                                                  : (ir * 3 + it) * 3 + ia;
+                const double r = std::log(10.0) * 0.2 * ir, t = std::log(10.0) * 0.2 * it;
+                const double A = 1.0 + 1.5 * ia, Z = 0.5 + 0.75 * iz;
+                const double C = FourDimensional ? 2.0 + 0.25 * A + 0.5 * Z + 0.125 * A * Z
+                                                : 2.0 + 0.25 * ia;
+                const double jet[]{10.0 + 2.0 * r - 0.5 * C * t * t,
+                                   2.0, -C * t, 0.0, 0.0, -C, 0.0, 0.0, 0.0};
+                for (int f = 0; f < tabular_eos::FieldCount; ++f) fields[f][index] = jet[f];
+                values[0][index] = 2.0 * std::exp(r);
+                values[1][index] = 10.0 + 2.0 * r + C * t;
+                values[2][index] = 3.0;
+                values[3][index] = 3.0 + C * t;
+            }
+        host.uses_free_energy = free_energy;
+        if (!free_energy) {
+            host.table_P = values[0].data(); host.table_E = values[1].data();
+            host.table_cs = values[2].data(); host.table_cv = values[3].data();
+            host.table_extents = {count, count, count, count, 0, 0};
+        }
+        for (int f = 0; f < tabular_eos::FieldCount; ++f) {
+            host.free_energy_fields[f] = free_energy ? fields[f].data() : nullptr;
+            host.free_energy_extents[f] = free_energy ? count : 0;
+        }
+        // Include both explicit-X and Ye coordinates for 3D, cell interiors,
+        // temperature nodes, and the same analytic out-of-table fallback.
+        for (int coordinate = 0; coordinate < (FourDimensional ? 1 : 2); ++coordinate) {
+            if constexpr (!FourDimensional) host.target_species_id = coordinate == 0 ? 1 : -1;
+            Owner owner(host, stream);
+            arch::cuda::DeviceAllocation<CompositionSample> allocation;
+            allocation.allocate(1);
+            for (double first : {0.4, 0.6}) for (double T : {1.0, std::exp(0.25)})
+                for (double rho : {std::exp(0.1), 100.0}) {
+                    composition_kernel<<<1, 1, 0, stream>>>(owner.view(), rho, T, first, allocation.get());
+                    cuda_check(cudaGetLastError(), "tabular composition launch");
+                    CompositionSample device{};
+                    cuda_check(cudaMemcpyAsync(&device, allocation.get(), sizeof(device), cudaMemcpyDeviceToHost, stream),
+                               "tabular composition copy");
+                    cuda_check(cudaStreamSynchronize(stream), "tabular composition completion");
+                    const double y = first + (1.0 - first) / 4.0;
+                    const double z = first + (1.0 - first) / 2.0;
+                    const double t = std::log(T);
+                    double C, gradient[2], hessian[2];
+                    if constexpr (FourDimensional) {
+                        C = 2.0 + 0.25 / y + 0.5 * z / y + 0.125 * z / (y * y);
+                        const double cy = -0.25 / (y*y) - 0.5*z/(y*y) - 0.25*z/(y*y*y);
+                        const double cz = 0.5/y + 0.125/(y*y);
+                        const double cyy = 0.5/(y*y*y) + z/(y*y*y) + 0.75*z/(y*y*y*y);
+                        const double cyz = -0.5/(y*y) - 0.25/(y*y*y);
+                        gradient[0] = cy + cz; gradient[1] = cy/4.0 + cz/2.0;
+                        hessian[0] = -0.3*cyy - 0.5*cyz;
+                        hessian[1] = (-0.3*cyy - 0.2*cyz)/4.0 - 0.15*cyz;
+                    } else {
+                        C = 2.0 + 0.5 * (coordinate == 0 ? 1.0 - first : z);
+                        gradient[0] = coordinate == 0 ? 0.0 : 0.5;
+                        gradient[1] = coordinate == 0 ? 0.5 : 0.25;
+                        hessian[0] = hessian[1] = 0.0;
+                    }
+                    CompositionSample expected{};
+                    for (int i = 0; i < 2; ++i) {
+                        expected.energy[i] = gradient[i] * (free_energy ? t - 0.5*t*t : t);
+                        expected.cv[i] = gradient[i] * (free_energy ? (1.0-t)/T : t);
+                        expected.hessian[i] = hessian[i] * (free_energy ? t - 0.5*t*t : t);
+                    }
+                    expected.cv[2] = free_energy ? C*(t-2.0)/(T*T) : C/T;
+                    expected.hessian[2] = (-0.4*gradient[0] + 0.4*gradient[1]) * (free_energy ? (1.0-t)/T : 1.0/T);
+                    if (rho == 100.0) {
+                        const double coefficient = ion_pressure_reference(1.0, 1.0, 1.0) * 1.5;
+                        expected = {};
+                        expected.energy[0] = T*coefficient; expected.energy[1] = T*coefficient/4.0;
+                        expected.cv[0] = coefficient; expected.cv[1] = coefficient/4.0;
+                        expected.hessian[2] = -0.3*coefficient;
+                    }
+                    const auto check = [&](double actual, double reference, const char* field) {
+                        // The manufactured dimensionless polynomial contains exact
+                        // zero derivatives; an absolute + relative budget is needed.
+                        require(std::isfinite(actual), field);
+                        require(std::abs(actual-reference) <= 2e-10 * std::max(1.0, std::abs(reference)), field);
+                    };
+                    for (const auto& result : {composition_sample(host, rho, T, first), device}) {
+                        for (int i = 0; i < 2; ++i) check(result.energy[i], expected.energy[i], "tabular analytic energy composition");
+                        for (int i = 0; i < 3; ++i) {
+                            check(result.cv[i], expected.cv[i], "tabular analytic cv derivative");
+                            check(result.hessian[i], expected.hessian[i], "tabular analytic energy Hessian");
+                        }
+                    }
+                }
+        }
+    }
+    std::cout << "tabular_composition dimension=" << (FourDimensional ? 4 : 3)
+              << " value/free_energy CPU/CUDA analytic derivatives PASS\n";
+}
 
 __global__ void tab3_final_kernel(Tabular3DEOSView view, SixValues* out)
 {
@@ -974,6 +1118,252 @@ void test_ideal_and_lifetime(cudaStream_t stream)
     }
 }
 
+struct ElectronSample {
+    double rho, temperature, pressure, energy, cv;
+    double derivatives[6]{};
+};
+
+template <class View>
+ARCH_HOST_DEVICE void evaluate_electron_sample(const View& view, ElectronSample& sample)
+{
+    typename View::ThermodynamicDerivatives d;
+    view.interpolate_ele_pos(sample.rho, sample.temperature, 1.0,
+                             sample.pressure, sample.energy, &sample.cv, &d);
+    sample.derivatives[0] = d.pressure_density;
+    sample.derivatives[1] = d.pressure_temperature;
+    sample.derivatives[2] = d.energy_z;
+    sample.derivatives[3] = d.energy_zz;
+    sample.derivatives[4] = d.cv_z;
+    sample.derivatives[5] = d.cv_temperature;
+}
+
+__global__ void helm_polynomial_kernel(HelmEosView view, ElectronSample* samples,
+                                      int count)
+{
+    const int index = blockIdx.x * blockDim.x + threadIdx.x;
+    if (index >= count) return;
+    auto& sample = samples[index];
+    evaluate_electron_sample(view, sample);
+}
+
+// Independent monomial endpoint DATA exercise all 36 tensor-product degrees.
+// No production basis functions are used to construct expected derivatives.
+long double monomial(int degree, int derivative, long double x)
+{
+    if (degree < derivative) return 0.0L;
+    long double result = 1.0L;
+    for (int k = 0; k < derivative; ++k) result *= degree - k;
+    for (int k = 0; k < degree - derivative; ++k) result *= x;
+    return result;
+}
+
+struct TabularPolynomialData { double fields[tabular_eos::FieldCount][4]; };
+
+ARCH_HOST_DEVICE tabular_eos::FreeEnergyState tabular_polynomial_sample(
+    const TabularPolynomialData& data, int point)
+{
+    constexpr double coordinates[]{0.0, 0.125, 0.5, 0.875, 1.0};
+    std::array<const double*, tabular_eos::FieldCount> fields{};
+    for (int field = 0; field < tabular_eos::FieldCount; ++field) fields[field] = data.fields[field];
+    return tabular_eos::interpolate_biquintic(fields, {0, 1, 2, 3},
+        coordinates[point / 5], coordinates[point % 5], 0.125, 0.25, true);
+}
+
+__global__ void tabular_polynomial_kernel(TabularPolynomialData data,
+                                         tabular_eos::FreeEnergyState* output)
+{
+    const int index = threadIdx.x;
+    if (index < 25) output[index] = tabular_polynomial_sample(data, index);
+}
+
+// Reuse the independent monomial oracle, but exercise the tabular tensor
+// directly, including third temperature derivatives and constant backgrounds.
+void test_tabular_polynomials(cudaStream_t stream)
+{
+    arch::cuda::DeviceAllocation<tabular_eos::FreeEnergyState> device;
+    device.allocate(25);
+    double maximum = 0.0;
+    constexpr double coordinates[]{0.0, 0.125, 0.5, 0.875, 1.0};
+    constexpr int derivatives[7][2]{{0, 0}, {1, 0}, {0, 1}, {2, 0}, {1, 1}, {0, 2}, {0, 3}};
+    constexpr int field_derivatives[9][2]{{0, 0}, {1, 0}, {0, 1}, {2, 0}, {1, 1}, {0, 2},
+                                          {2, 1}, {1, 2}, {2, 2}};
+    for (int polynomial = 0; polynomial <= 36; ++polynomial) {
+        const bool background = polynomial == 36;
+        const int px = background ? 0 : polynomial / 6, py = background ? 0 : polynomial % 6;
+        const long double amplitude = background ? 0x1p60L : 1.0L;
+        TabularPolynomialData data{};
+        for (int field = 0; field < 9; ++field) {
+            const int dx = field_derivatives[field][0], dy = field_derivatives[field][1];
+            for (int corner = 0; corner < 4; ++corner)
+                data.fields[field][corner] = static_cast<double>(amplitude
+                    * monomial(px, dx, corner / 2) * monomial(py, dy, corner % 2)
+                    / (std::pow(0.125L, dx) * std::pow(0.25L, dy)));
+        }
+        tabular_polynomial_kernel<<<1, 32, 0, stream>>>(data, device.get());
+        cuda_check(cudaGetLastError(), "tabular polynomial launch");
+        std::array<tabular_eos::FreeEnergyState, 25> gpu{};
+        cuda_check(cudaMemcpyAsync(gpu.data(), device.get(), sizeof(gpu), cudaMemcpyDeviceToHost, stream),
+                   "tabular polynomial download");
+        cuda_check(cudaStreamSynchronize(stream), "tabular polynomial completion");
+        for (int point = 0; point < 25; ++point) {
+            const auto host = tabular_polynomial_sample(data, point);
+            for (const auto sample : {host, gpu[point]}) {
+                const double values[]{sample.a, sample.ax, sample.ay, sample.axx, sample.axy,
+                                      sample.ayy, sample.ayyy};
+                for (int field = 0; field < 7; ++field) {
+                    const int dx = derivatives[field][0], dy = derivatives[field][1];
+                    const long double expected = amplitude
+                        * monomial(px, dx, coordinates[point / 5]) * monomial(py, dy, coordinates[point % 5])
+                        / (std::pow(0.125L, dx) * std::pow(0.25L, dy));
+                    const double error = static_cast<double>(std::abs(values[field] - expected)
+                        / std::max(1.0L, std::abs(expected)));
+                    maximum = std::max(maximum, error);
+                    require(std::isfinite(values[field]) && error <= 2.e-12,
+                            "tabular interpolation failed independent polynomial derivative");
+                    if (background) require(values[field] == static_cast<double>(expected),
+                            "constant tabular background generated a derivative");
+                }
+            }
+        }
+    }
+    std::cout << "tabular_polynomials degrees=36 constant_background=exact points_per_case=25 max_scaled="
+              << std::setprecision(17) << maximum << '\n';
+}
+
+void test_helm_polynomials(const HelmEosHostView& source, cudaStream_t stream)
+{
+    constexpr int density_cell = 400, temperature_cell = 100;
+    constexpr int count = 9;
+    const std::size_t extent = HelmEosView::imax * HelmEosView::jmax;
+    const double dn = std::pow(10.0, source.dlo + density_cell * source.dstp);
+    const double tn = std::pow(10.0, source.tlo + temperature_cell * source.tstp);
+    const double dd = std::pow(10.0, source.dlo + (density_cell + 1) * source.dstp) - dn;
+    const double dt = std::pow(10.0, source.tlo + (temperature_cell + 1) * source.tstp) - tn;
+    constexpr int orders[9][2]{{0,0}, {1,0}, {0,1}, {2,0}, {0,2},
+                              {1,1}, {2,1}, {1,2}, {2,2}};
+    std::array<std::vector<double>, 9> fields;
+    auto host = source;
+    for (int k = 0; k < 9; ++k) {
+        fields[k].resize(extent);
+        host.f[k] = fields[k].data();
+    }
+    arch::cuda::DeviceAllocation<ElectronSample> device_samples;
+    device_samples.allocate(count);
+    double maximum_scaled_error = 0.0;
+    for (int polynomial = 0; polynomial <= 36; ++polynomial) {
+        const bool constant_background = polynomial == 36;
+        const int px = constant_background ? 0 : polynomial / 6;
+        const int py = constant_background ? 0 : polynomial % 6;
+        const double amplitude = constant_background ? 0x1p60 : 1.0;
+        for (int side_d = 0; side_d < 2; ++side_d)
+            for (int side_t = 0; side_t < 2; ++side_t)
+                for (int k = 0; k < 9; ++k) {
+                    const int dx = orders[k][0], dy = orders[k][1];
+                    const int index = (temperature_cell + side_t) * source.imax
+                                    + density_cell + side_d;
+                    fields[k][index] = static_cast<double>(amplitude
+                        * monomial(px, dx, side_d) * monomial(py, dy, side_t)
+                        / std::pow(static_cast<long double>(dd), dx)
+                        / std::pow(static_cast<long double>(dt), dy));
+                }
+        arch::cuda::HelmEosDeviceOwner owner(host, stream);
+        std::array<ElectronSample, count> cpu{}, gpu{};
+        int index = 0;
+        for (double x : {0.13, 0.47, 0.91})
+            for (double y : {0.19, 0.53, 0.87})
+                cpu[index++] = {dn + x * dd, tn + y * dt, 0.0, 0.0, 0.0};
+        cuda_check(cudaMemcpyAsync(device_samples.get(), cpu.data(), sizeof(cpu),
+            cudaMemcpyHostToDevice, stream), "copy polynomial inputs");
+        helm_polynomial_kernel<<<1, count, 0, stream>>>(owner.view(), device_samples.get(), count);
+        cuda_check(cudaGetLastError(), "polynomial launch");
+        cuda_check(cudaMemcpyAsync(gpu.data(), device_samples.get(), sizeof(gpu),
+            cudaMemcpyDeviceToHost, stream), "copy polynomial results");
+        cuda_check(cudaStreamSynchronize(stream), "polynomial completion");
+        for (int point = 0; point < count; ++point) {
+            auto& h = cpu[point];
+            evaluate_electron_sample(host, h);
+            const long double x = (static_cast<long double>(h.rho) - dn) / dd;
+            const long double y = (static_cast<long double>(h.temperature) - tn) / dt;
+            const long double t = static_cast<long double>(h.temperature) / dt;
+            const long double r = static_cast<long double>(h.rho) / dd;
+            const long double expected[3]{monomial(px, 1, x) * monomial(py, 0, y),
+                monomial(px, 0, x) * (monomial(py, 0, y) - t * monomial(py, 1, y)),
+                -t * monomial(px, 0, x) * monomial(py, 2, y)};
+            for (const auto& sample : {h, gpu[point]}) {
+                if (constant_background) {
+                    require(sample.pressure == 0.0 && sample.cv == 0.0
+                            && sample.energy == amplitude && sample.derivatives[2] == amplitude
+                            && sample.derivatives[0] == 0.0 && sample.derivatives[1] == 0.0
+                            && sample.derivatives[3] == 0.0 && sample.derivatives[4] == 0.0
+                            && sample.derivatives[5] == 0.0,
+                            "constant Helm background generated thermodynamic derivatives");
+                    continue;
+                }
+                const double actual[3]{sample.pressure * dd / (sample.rho * sample.rho),
+                                       sample.energy, sample.cv * dt};
+                for (int component = 0; component < 3; ++component) {
+                    const double error = static_cast<double>(std::abs(actual[component] - expected[component])
+                        / std::max(1.0L, std::abs(expected[component])));
+                    maximum_scaled_error = std::max(maximum_scaled_error, error);
+                    require(std::isfinite(error) && error <= 5.0e-11,
+                            "Helm interpolation failed independent monomial derivative");
+                }
+                const long double fx = monomial(px, 1, x), fxx = monomial(px, 2, x);
+                const long double f = monomial(px, 0, x), y0 = monomial(py, 0, y);
+                const long double yt = monomial(py, 1, y), ytt = monomial(py, 2, y);
+                const long double derivative_expected[]{
+                    (2 * fx + r * fxx) * y0, fx * yt,
+                    (f + r * fx) * (y0 - t * yt),
+                    (2 * fx + r * fxx) * (y0 - t * yt),
+                    -t * (f + r * fx) * ytt,
+                    -f * (ytt + t * monomial(py, 3, y))};
+                const double derivative_actual[]{sample.derivatives[0] * dd / sample.rho,
+                    sample.derivatives[1] * dd * dt / (sample.rho * sample.rho),
+                    sample.derivatives[2], sample.derivatives[3] * dd / sample.rho,
+                    sample.derivatives[4] * dt, sample.derivatives[5] * dt * dt};
+                for (int component = 0; component < 6; ++component) {
+                    const double error = static_cast<double>(std::abs(derivative_actual[component] - derivative_expected[component])
+                        / std::max(1.0L, std::abs(derivative_expected[component])));
+                    maximum_scaled_error = std::max(maximum_scaled_error, error);
+                    if (!(std::isfinite(error) && error <= 5e-11))
+                        std::cerr << "Helm monomial px=" << px << " py=" << py
+                                  << " point=" << point << " component=" << component
+                                  << " actual=" << derivative_actual[component]
+                                  << " expected=" << derivative_expected[component]
+                                  << " scaled_error=" << error << '\n';
+                    require(std::isfinite(error) && error <= 5e-11,
+                            "Helm analytic pressure/composition derivative failed independent polynomial");
+                }
+            }
+        }
+    }
+    std::cout << "helm_polynomials degrees=36 constant_background=exact points_per_case="
+              << count << " maximum_scaled_error=" << maximum_scaled_error << '\n';
+}
+
+struct HelmDifferentialsSample { double values[10], energy_gradient[2], cv_gradient[3], hessian_action[3]; };
+
+template <class View>
+ARCH_HOST_DEVICE HelmDifferentialsSample helm_differentials(const View& view, double rho, double temperature)
+{
+    const double x[]{0.25, 0.75}, flow[]{-0.4, 0.4};
+    double pressure, energy;
+    typename View::ThermodynamicDerivatives d;
+    view.calc_thermo_with_cv(rho, temperature, x, pressure, energy, nullptr, &d);
+    HelmDifferentialsSample result{{d.pressure_density, d.pressure_temperature, d.energy_y, d.energy_z,
+        d.energy_yy, d.energy_yz, d.energy_zz, d.cv_y, d.cv_z, d.cv_temperature}, {}, {}, {}};
+    view.template get_energy_composition_gradient<3>(rho, temperature, x, result.energy_gradient);
+    view.template get_cv_gradient<3>(rho, temperature, x, result.cv_gradient);
+    view.template get_energy_composition_hessian_action<3>(rho, temperature, x, flow, result.hessian_action);
+    return result;
+}
+
+__global__ void helm_differentials_kernel(HelmEosView view, double rho, double temperature,
+                                        HelmDifferentialsSample* result)
+{
+    *result = helm_differentials(view, rho, temperature);
+}
+
 void test_helm(cudaStream_t stream)
 {
     SpeciesManager species;
@@ -983,39 +1373,54 @@ void test_helm(cudaStream_t stream)
     HelmEos host(std::string(ARCH_SOURCE_DIR) +
                      "/EOS_toolkit/tables/helmholtz/helm_table.dat", &species);
     const auto host_view = host.get_view();
+    test_helm_polynomials(host_view, stream);
     eos_state_t frozen{};
     frozen.rho = 1.0e6; frozen.T = 1.0e8; frozen.Xi = Xi.data();
     host.evaluate_state(frozen);
-    frozen_state_values(
-        frozen, {0x44a165b3bc685788ULL, 0x436de091017e8b86ULL,
-                 0x41911dd5a315fad7ULL, 0x41ae3615babde9f0ULL,
-                 0x436b44b837e87ae1ULL, 0x42c479c25640b780ULL,
-                 0x449fdc71382b3f34ULL, 0x461300a5bbfb5453ULL,
-                 0x4032f0e543b5126fULL},
-        {8.0e-14, 1.5e-15, 0.0, 4.0e-10, 8.0e-10, 2.5e-11,
-         8.0e-14, 0.0, 1.5e-15}, "helm.state");
+    // Only constant-sensitive snapshots are superseded. The independent
+    // endpoint-fit reference retains the previous nonzero field budgets;
+    // cv/xne use rounding windows where a same-implementation bit oracle stood.
+    const double state_values[]{frozen.P, frozen.E, frozen.cv, frozen.sound_speed,
+        frozen.dp_drho, frozen.dp_dT, frozen.pele, frozen.xne, frozen.eta};
+    const double state_budgets[]{8.0e-14, 1.5e-15,
+        8 * std::numeric_limits<double>::epsilon(), 4.0e-10, 8.0e-10, 2.5e-11,
+        8.0e-14, 2 * std::numeric_limits<double>::epsilon(), 1.5e-15};
+    for (int i = 0; i < 9; ++i)
+        close(state_values[i], HelmReference::state[i], state_budgets[i],
+              "helm.independent_state." + std::to_string(i));
     frozen_bits(host.get_temperature(frozen.rho, frozen.E, Xi.data()),
                 0x4197d78400000000ULL, "helm.recovered_T");
     const double lower_rho = 1.0e-12 / species.calc_Ye(Xi.data());
     const double upper_rho = 1.0e15 / species.calc_Ye(Xi.data());
-    frozen_bits(host.get_pressure_from_rho_T(lower_rho, 1.0e3, Xi.data()),
-                0x3fc265fd3facd398ULL, "helm.lower_bound_P");
-    frozen_value(host.get_pressure_from_rho_T(upper_rho, 1.0e13, Xi.data()),
-                 0x47ca4f5939de4590ULL, 2.0e-14, "helm.upper_bound_P");
+    close(host.get_pressure_from_rho_T(lower_rho, 1.0e3, Xi.data()),
+          HelmReference::lower_bound_P, 2 * std::numeric_limits<double>::epsilon(),
+          "helm.independent_lower_bound_P");
+    close(host.get_pressure_from_rho_T(upper_rho, 1.0e13, Xi.data()),
+          HelmReference::upper_bound_P, 2.0e-14, "helm.independent_upper_bound_P");
     require_same_raw_probe(probe_host_wrapper(host, Xi.data(), 1.0e6, 1.0e8),
                            probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8), "Helm");
     const Probe expected = probe_leaf(host_view, Xi.data(), 1.0e6, 1.0e8);
-    frozen_probe(expected, helm_probe, "helm.probe");
+    auto independent_margins = helm_authority_margins;
+    independent_margins[1] = independent_margins[12] =
+        8 * std::numeric_limits<double>::epsilon();
+    independent_margins[17] = 2 * std::numeric_limits<double>::epsilon();
+    // Exact inverse energy includes reference-E rounding and iteration error;
+    // reuse the existing inverse-energy contract rather than a measured margin.
+    independent_margins[9] = 8.0e-15;
+    reference_probe(expected, HelmReference::probe, independent_margins,
+                    "helm.independent_probe");
     const auto isentrope = eos_utils::get_isentropic_state_at_pressure_factor(
         host, 1.0e6, 1.0e8, Xi.data(), 1.001);
-    frozen_value(isentrope.rho, 0x412e897ef769df7fULL, 8.0e-14,
-                 "helm.isentrope.rho");
-    frozen_value(isentrope.temperature, 0x4197d9f697f73064ULL, 3.0e-14,
-                 "helm.isentrope.temperature");
-    frozen_value(isentrope.pressure, 0x44a16a27e23a5dddULL, 8.0e-14,
-                 "helm.isentrope.pressure");
-    frozen_value(isentrope.sound_speed, 0x41ae37689d5f6548ULL, 1.2e-10,
-                 "helm.isentrope.sound_speed");
+    close(isentrope.rho, HelmReference::isentrope[0], 8.0e-14,
+          "helm.independent_isentrope.rho");
+    close(isentrope.temperature, HelmReference::isentrope[1], 3.0e-14,
+          "helm.independent_isentrope.temperature");
+    close(isentrope.pressure, HelmReference::isentrope[2], 8.0e-14,
+          "helm.independent_isentrope.pressure");
+    // Exact derivatives now replace the old finite-pressure stencil. Retain
+    // the independent state budget and original Host/Device budgets.
+    close(isentrope.sound_speed, HelmReference::isentrope[3], state_budgets[3],
+          "helm.independent_isentrope.sound_speed");
     require(Xi == std::vector<double>({0.25, 0.75}),
             "Helm isentrope changed composition");
     const std::size_t expected_extent =
@@ -1042,12 +1447,85 @@ void test_helm(cudaStream_t stream)
             [&] { arch::cuda::HelmEosDeviceOwner rejected(malformed, stream); },
             "Helm long ef descriptor was accepted");
     }
+    for (int axis = 0; axis < 2; ++axis) {
+        for (int difference : {-1, 1}) {
+            auto malformed = host_view;
+            malformed.node_extents[axis] += difference;
+            require_invalid_argument(
+                [&] { arch::cuda::HelmEosDeviceOwner rejected(malformed, stream); },
+                "Helm wrong grid descriptor length was accepted");
+        }
+        auto malformed = host_view;
+        if (axis == 0) malformed.density_nodes = nullptr;
+        else malformed.temperature_nodes = nullptr;
+        require_invalid_argument(
+            [&] { arch::cuda::HelmEosDeviceOwner rejected(malformed, stream); },
+            "Helm missing grid descriptor was accepted");
+    }
     auto missing_species = host_view;
     missing_species.specs = SpeciesHostView{};
     require_invalid_argument(
         [&] { arch::cuda::HelmEosDeviceOwner rejected(missing_species, stream); },
         "Helm descriptor without species metadata owner was accepted");
     arch::cuda::HelmEosDeviceOwner owner(host, stream);
+    assert_device_pointer(owner.view().density_nodes, "Helm density node pointer");
+    assert_device_pointer(owner.view().temperature_nodes, "Helm temperature node pointer");
+    for (int axis = 0; axis < 2; ++axis) {
+        const double* cpu_nodes = axis == 0 ? host_view.density_nodes : host_view.temperature_nodes;
+        const double* gpu_nodes = axis == 0 ? owner.view().density_nodes : owner.view().temperature_nodes;
+        std::vector<double> copy(host_view.node_extents[axis]);
+        cuda_check(cudaMemcpyAsync(copy.data(), gpu_nodes, copy.size() * sizeof(double),
+            cudaMemcpyDeviceToHost, stream), "copy Helm grid values");
+        cuda_check(cudaStreamSynchronize(stream), "Helm grid completion");
+        require(std::equal(copy.begin(), copy.end(), cpu_nodes), "Helm grid values changed on upload");
+    }
+    // Independent coverage includes strong Coulomb and radiation-dominated
+    // regimes, not merely backend agreement at the original single state.
+    for (const auto& point : HelmReference::points) {
+        eos_state_t cpu{};
+        cpu.rho = point.rho; cpu.T = point.temperature; cpu.Xi = Xi.data();
+        host.evaluate_state(cpu);
+        const auto gpu = run_state(owner.view(), Xi, point.rho, point.temperature, stream);
+        const double budgets[]{8e-14, 1.5e-15,
+            32 * std::numeric_limits<double>::epsilon(), 8e-14,
+            2 * std::numeric_limits<double>::epsilon(), 1.5e-15};
+        for (const auto& state : {cpu, gpu}) {
+            const double values[]{state.P, state.E, state.cv, state.pele, state.xne, state.eta};
+            for (int i = 0; i < 6; ++i)
+                close(values[i], point.values[i], budgets[i],
+                      "helm.independent_domain." + std::to_string(i));
+        }
+        arch::cuda::DeviceAllocation<HelmDifferentialsSample> device_differentials;
+        device_differentials.allocate(1);
+        helm_differentials_kernel<<<1, 1, 0, stream>>>(owner.view(), point.rho, point.temperature,
+                                                      device_differentials.get());
+        cuda_check(cudaGetLastError(), "Helm differential launch");
+        HelmDifferentialsSample device{};
+        cuda_check(cudaMemcpyAsync(&device, device_differentials.get(), sizeof(device),
+            cudaMemcpyDeviceToHost, stream), "copy Helm differentials");
+        cuda_check(cudaStreamSynchronize(stream), "complete Helm differentials");
+        for (const auto& d : {helm_differentials(host_view, point.rho, point.temperature), device}) {
+            for (int i = 0; i < 10; ++i)
+                close(d.values[i], point.derivatives[i], 2e-9,
+                      "helm.independent_differential." + std::to_string(i));
+            const auto& expected = point.derivatives;
+            // A={1,4}, Z={1,2}; the fixed tangent (-0.4,+0.4)
+            // has y'=-0.3, z'=-0.2, derived independently of the EOS adapters.
+            for (int i = 0; i < 2; ++i) {
+                const double a = i == 0 ? 1.0 : 0.25, z = i == 0 ? 1.0 : 0.5;
+                close(d.energy_gradient[i], a * expected[2] + z * expected[3], 2e-9,
+                      "helm.independent_energy_gradient");
+                close(d.cv_gradient[i], a * expected[7] + z * expected[8], 2e-9,
+                      "helm.independent_cv_gradient");
+                close(d.hessian_action[i], a * (-0.3 * expected[4] - 0.2 * expected[5])
+                    + z * (-0.3 * expected[5] - 0.2 * expected[6]), 2e-9,
+                      "helm.independent_composition_hessian");
+            }
+            close(d.cv_gradient[2], expected[9], 2e-9, "helm.independent_cv_temperature");
+            close(d.hessian_action[2], -0.3 * expected[7] - 0.2 * expected[8], 2e-9,
+                  "helm.independent_composition_hessian_temperature");
+        }
+    }
     for (int i = 0; i < 9; ++i) assert_device_pointer(owner.view().f[i], "Helm f pointer");
     for (int i = 0; i < 4; ++i) assert_device_pointer(owner.view().ef_table[i], "Helm ef pointer");
     compare(run_device(owner.view(), Xi, 1.0e6, 1.0e8, stream),
@@ -1080,17 +1558,24 @@ void test_helm(cudaStream_t stream)
     cuda_check(cudaFree(device_values), "free Helm finals");
 
     const double *original_f = owner.view().f[0];
+    const double *original_density_nodes = owner.view().density_nodes;
     auto moved = std::move(owner);
     require(owner.empty(), "moved-from Helm owner retained storage");
     compare(run_device(moved.view(), Xi, 1.0e6, 1.0e8, stream),
             expected, "Helm moved");
     arch::cuda::HelmEosDeviceOwner target(host, stream);
     const double *released_f = target.view().f[0];
+    const double *released_density_nodes = target.view().density_nodes;
+    const double *released_temperature_nodes = target.view().temperature_nodes;
     const double *released_helm_species = target.view().specs.A;
     target = std::move(moved);
     require(moved.empty(), "move-assigned Helm source retained storage");
     require(target.view().f[0] == original_f,
             "Helm move assignment changed allocation identity");
+    require(target.view().density_nodes == original_density_nodes,
+            "Helm move assignment changed grid allocation identity");
+    assert_released_device_pointer(released_density_nodes, "Helm move assignment leaked density grid");
+    assert_released_device_pointer(released_temperature_nodes, "Helm move assignment leaked temperature grid");
     assert_released_device_pointer(released_f,
                                    "Helm move assignment did not release target");
     assert_released_device_pointer(released_helm_species,
@@ -1147,8 +1632,9 @@ void test_tabular3(cudaStream_t stream)
     frozen_value(host.get_pressure_from_rho_T(
                      std::pow(10.0, 2.0 - 1.0e-6), 1.0e8, Xi.data()),
                  0x42d8ab87f9817000ULL, 3.0e-16, "tab3.upper_margin");
-    frozen_bits(host.get_pressure_from_rho_T(1.0e3, 1.0e8, Xi.data()),
-                0x43c93da2c04a9999ULL, "tab3.fallback");
+    close(host.get_pressure_from_rho_T(1.0e3, 1.0e8, Xi.data()),
+          ion_pressure_reference(1.0e3, 1.0e8, 7.0 / 16.0),
+          2 * std::numeric_limits<double>::epsilon(), "tab3.analytic_fallback");
     frozen_bits(host.get_pressure_from_rho_T(0.0, 1.0e8, Xi.data()),
                 0x0000000000000000ULL, "tab3.invalid");
     frozen_bits(host.get_temperature(frozen.rho, frozen.E, Xi.data()),
@@ -1213,8 +1699,8 @@ void test_tabular3(cudaStream_t stream)
     eos_state_t fallback{};
     fallback.rho = 1.0e3; fallback.T = 1.0e8; fallback.Xi = Xi.data();
     host.evaluate_state(fallback);
-    frozen_bits(fallback.dp_dT, 0x4220f0549183dcaaULL,
-                "tab3.fallback.dp_dT");
+    close(fallback.dp_dT, ion_pressure_reference(1.0e3, 1.0, 7.0 / 16.0),
+          2 * std::numeric_limits<double>::epsilon(), "tab3.analytic_fallback.dp_dT");
     close(run_state_dp_dT(view, Xi, 1.0e3, 1.0e8, stream), fallback.dp_dT,
           2.0e-16, "Tab3 analytic-fallback dp_dT BASE oracle");
     const double below = std::nextafter(1.0e-12, 0.0);
@@ -1222,13 +1708,13 @@ void test_tabular3(cudaStream_t stream)
     const double above = std::nextafter(
         1.0e-12, std::numeric_limits<double>::infinity());
     const double threshold_rho[3]{below, exact, above};
-    const std::uint64_t threshold_bits[3]{0x0000000000000000ULL,
-                                          0x0000000000000000ULL,
-                                          0x40ac6b27b3a9aad1ULL};
     for (int index = 0; index < 3; ++index) {
         const double authority = host.get_pressure_from_rho_T(
             threshold_rho[index], 1.0e8, Xi.data());
-        frozen_bits(authority, threshold_bits[index], "tab3.threshold");
+        const double expected_pressure = index < 2 ? 0.0 : ion_pressure_reference(
+            threshold_rho[index], 1.0e8, 7.0 / 16.0);
+        close(authority, expected_pressure, 2 * std::numeric_limits<double>::epsilon(),
+              "tab3.analytic_threshold");
         close(run_pressure(view, Xi, threshold_rho[index], 1.0e8, stream),
               authority, 2.0e-16, "Tab3 1e-12 threshold");
     }
@@ -1291,8 +1777,9 @@ void test_tabular4(cudaStream_t stream)
     frozen_value(host.get_pressure_from_rho_T(
                      std::pow(10.0, 2.0 - 1.0e-6), 1.0e8, Xi.data()),
                  0x42e7fce87f9db800ULL, 3.0e-16, "tab4.upper_margin");
-    frozen_bits(host.get_pressure_from_rho_T(1.0e3, 1.0e8, Xi.data()),
-                0x43d33b26aae38137ULL, "tab4.fallback");
+    close(host.get_pressure_from_rho_T(1.0e3, 1.0e8, Xi.data()),
+          ion_pressure_reference(1.0e3, 1.0e8, 2.0 / 3.0),
+          2 * std::numeric_limits<double>::epsilon(), "tab4.analytic_fallback");
     frozen_bits(host.get_pressure_from_rho_T(0.0, 1.0e8, Xi.data()),
                 0x0000000000000000ULL, "tab4.invalid");
     frozen_bits(host.get_temperature(frozen.rho, frozen.E, Xi.data()),
@@ -1356,8 +1843,8 @@ void test_tabular4(cudaStream_t stream)
     eos_state_t fallback{};
     fallback.rho = 1.0e3; fallback.T = 1.0e8; fallback.Xi = Xi.data();
     host.evaluate_state(fallback);
-    frozen_value(fallback.dp_dT, 0x4229cfbdd18bfaeaULL, 3.0e-16,
-                 "tab4.fallback.dp_dT");
+    close(fallback.dp_dT, ion_pressure_reference(1.0e3, 1.0, 2.0 / 3.0),
+          2 * std::numeric_limits<double>::epsilon(), "tab4.analytic_fallback.dp_dT");
     close(run_state_dp_dT(view, Xi, 1.0e3, 1.0e8, stream), fallback.dp_dT,
           2.0e-16, "Tab4 analytic-fallback dp_dT BASE oracle");
     const double below = std::nextafter(1.0e-12, 0.0);
@@ -1365,13 +1852,13 @@ void test_tabular4(cudaStream_t stream)
     const double above = std::nextafter(
         1.0e-12, std::numeric_limits<double>::infinity());
     const double threshold_rho[3]{below, exact, above};
-    const std::uint64_t threshold_bits[3]{0x0000000000000000ULL,
-                                          0x0000000000000000ULL,
-                                          0x40b5a6f9ad75146eULL};
     for (int index = 0; index < 3; ++index) {
         const double authority = host.get_pressure_from_rho_T(
             threshold_rho[index], 1.0e8, Xi.data());
-        frozen_value(authority, threshold_bits[index], 3.0e-16, "tab4.threshold");
+        const double expected_pressure = index < 2 ? 0.0 : ion_pressure_reference(
+            threshold_rho[index], 1.0e8, 2.0 / 3.0);
+        close(authority, expected_pressure, 2 * std::numeric_limits<double>::epsilon(),
+              "tab4.analytic_threshold");
         close(run_pressure(view, Xi, threshold_rho[index], 1.0e8, stream),
               authority, 2.0e-16, "Tab4 1e-12 threshold");
     }
@@ -1420,6 +1907,9 @@ int main()
         test_helm(stream);
         test_tabular3(stream);
         test_tabular4(stream);
+        test_tabular_composition<false>(stream);
+        test_tabular_composition<true>(stream);
+        test_tabular_polynomials(stream);
         cuda_check(cudaStreamDestroy(stream), "destroy stream");
         std::cout << "eos_host_device_parity max_abs=" << max_abs_error
                   << " max_rel=" << max_rel_error << "\n";

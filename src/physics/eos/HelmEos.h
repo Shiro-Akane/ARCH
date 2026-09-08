@@ -14,6 +14,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -22,7 +23,9 @@
 #include "eos_Utils.h"
 
 #include "../../data/FluidState.h"
+#include "../../core/CompensatedSum.h"
 #include "../species/Species.h"
+#include "../constant/PhysicalConstants.h"
 
 
 // Timmes Helmholtz EOS leaf parameterized by host or device species metadata.
@@ -43,158 +46,196 @@ struct BasicHelmEosView {
 
     const double *f[9]{};
     const double *ef_table[4]{};
+    const double *density_nodes = nullptr;
+    const double *temperature_nodes = nullptr;
     SpeciesView specs{};
 
+    // Fixed-composition pressure derivatives and composition coordinates
+    // y=sum(X/A), z=sum(X Z/A). These are derivatives of the SAME energy
+    // interpolant/corrections, not a second EOS or finite pressure stencil.
+    struct ThermodynamicDerivatives {
+        double pressure_density = 0.0, pressure_temperature = 0.0;
+        double energy_y = 0.0, energy_z = 0.0;
+        double energy_yy = 0.0, energy_yz = 0.0, energy_zz = 0.0;
+        double cv_y = 0.0, cv_z = 0.0, cv_temperature = 0.0;
+        bool charge_active = true;
+    };
+
+    struct AxisCell { int index; double spacing, coordinate; };
+
+    ARCH_INLINE AxisCell locate_axis(double value, const double* nodes,
+                                     int count, double log_lower,
+                                     double inverse_log_step) const {
+        const double log_value = std::max(log_lower,
+            std::min(std::log10(value), log_lower + (count - 1) / inverse_log_step));
+        int index = std::max(0, std::min(
+            static_cast<int>((log_value - log_lower) * inverse_log_step), count - 2));
+        // log10 only estimates the cell; the immutable node values decide
+        // ties on both backends, including roundoff at exact table nodes.
+        while (index > 0 && value < nodes[index]) --index;
+        while (index < count - 2 && value >= nodes[index + 1]) ++index;
+        const double spacing = nodes[index + 1] - nodes[index];
+        return {index, spacing, std::max((value - nodes[index]) / spacing, 0.0)};
+    }
+
     // Quintic Hermite polynomials
-    ARCH_INLINE double psi0(double z) const { return z * z * z * (z * (-6.0 * z + 15.0) - 10.0) + 1.0; }
-    ARCH_INLINE double dpsi0(double z) const { return z * z * (z * (-30.0 * z + 60.0) - 30.0); }
-    ARCH_INLINE double ddpsi0(double z) const { return z * (z * (-120.0 * z + 180.0) - 60.0); }
+    // Factored endpoint zeros avoid cancellation near z=1. These are the
+    // same quintic basis polynomials, not an EOS approximation or new table.
+    ARCH_INLINE double psi0(double z) const {
+        const double s = 1.0 - z;
+        return s*s*s * std::fma(z, std::fma(6.0, z, 3.0), 1.0);
+    }
+    ARCH_INLINE double dpsi0(double z) const {
+        const double s = 1.0 - z;
+        return -30.0*z*z*s*s;
+    }
+    ARCH_INLINE double ddpsi0(double z) const { return -60.0*z*(1.0 - z)*(1.0 - 2.0*z); }
 
-    ARCH_INLINE double psi1(double z) const { return z * (z * z * (z * (-3.0 * z + 8.0) - 6.0) + 1.0); }
-    ARCH_INLINE double dpsi1(double z) const { return z * z * (z * (-15.0 * z + 32.0) - 18.0) + 1.0; }
-    ARCH_INLINE double ddpsi1(double z) const { return z * (z * (-60.0 * z + 96.0) - 36.0); }
+    ARCH_INLINE double psi1(double z) const {
+        const double s = 1.0 - z;
+        return z*s*s*s * std::fma(3.0, z, 1.0);
+    }
+    ARCH_INLINE double dpsi1(double z) const {
+        const double s = 1.0 - z;
+        return s*s * std::fma(z, std::fma(-15.0, z, 2.0), 1.0);
+    }
+    ARCH_INLINE double ddpsi1(double z) const { return -12.0*z*(1.0 - z)*std::fma(-5.0, z, 3.0); }
 
-    ARCH_INLINE double psi2(double z) const { return 0.5 * z * z * (z * (z * (-z + 3.0) - 3.0) + 1.0); }
-    ARCH_INLINE double dpsi2(double z) const { return 0.5 * z * (z * (z * (-5.0 * z + 12.0) - 9.0) + 2.0); }
-    ARCH_INLINE double ddpsi2(double z) const { return 1.0 + z * (-9.0 + z * (18.0 - 10.0 * z)); }
+    ARCH_INLINE double psi2(double z) const {
+        const double s = 1.0 - z;
+        return 0.5*z*z*s*s*s;
+    }
+    ARCH_INLINE double dpsi2(double z) const {
+        const double s = 1.0 - z;
+        return 0.5*z*s*s*std::fma(-5.0, z, 2.0);
+    }
+    ARCH_INLINE double ddpsi2(double z) const { return (1.0 - z)*std::fma(z, std::fma(10.0, z, -8.0), 1.0); }
+    ARCH_INLINE double dddpsi0(double z) const { return -60.0 + z * (360.0 - 360.0 * z); }
+    ARCH_INLINE double dddpsi1(double z) const { return -36.0 + z * (192.0 - 180.0 * z); }
+    ARCH_INLINE double dddpsi2(double z) const { return -9.0 + z * (36.0 - 30.0 * z); }
 
-    // Physical Constants (matching helmholtz.f90)
-    static constexpr double kerg = 1.380650424e-16;
-    static constexpr double amu  = 1.66053878283e-24;
-    static constexpr double avo  = 6.0221417930e23;
-    static constexpr double clight = 2.99792458e10;
-    static constexpr double ssol = 5.6704e-5;
-    static constexpr double asol = 4.0 * ssol / clight;
-    static constexpr double m_p  = 1.67262163783e-24; // proton mass
+    // Contract one Hermite axis after removing its constant background.
+    // The two value bases sum to one (and their derivatives to zero).
+    // Enforcing that identity avoids subtracting large degenerate-electron
+    // energies when evaluating a small temperature derivative. Values are
+    // ordered as lower/upper value, first derivative, second derivative;
+    // weights[0] is one for a value query and zero for a derivative query.
+    ARCH_INLINE double hermite_row(const double (&values)[6],
+                                   const double (&weights)[6],
+                                   bool upper_is_difference = false) const {
+        arch::math::CompensatedSum sum;
+        sum.add_product(values[0], weights[0]);
+        sum.add_product(upper_is_difference ? values[1] : values[1] - values[0], weights[1]);
+        for (int k = 2; k < 6; ++k)
+            sum.add_product(values[k], weights[k]);
+        return sum.value();
+    }
 
-    ARCH_INLINE void interpolate_ele_pos(double rho, double T, double ye,
+    // Formula notation aliases the shared constants; table data are unchanged.
+    static constexpr double kerg = arch::constants::statistical::cgs::boltzmann;
+    static constexpr double avo = arch::constants::statistical::avogadro;
+    static constexpr double asol = arch::constants::radiation::cgs::energy_density;
+
+    ARCH_HEAVY_INLINE void interpolate_ele_pos(double rho, double T, double ye,
                              double& P_ele, double& E_ele,
-                             double* cv_ele = nullptr) const {
+                             double* cv_ele = nullptr,
+                             ThermodynamicDerivatives* derivatives = nullptr) const {
         double din = rho * ye;
-        double d_val = std::log10(din);
-        double t_val = std::log10(T);
+        const auto density = locate_axis(din, density_nodes, imax, dlo, dstpi);
+        const auto temperature = locate_axis(T, temperature_nodes, jmax, tlo, tstpi);
+        const int i = density.index, j = temperature.index;
+        const double dd = density.spacing, dth = temperature.spacing;
+        const double ddi = 1.0 / dd, dti = 1.0 / dth;
+        const double xd = density.coordinate, xt = temperature.coordinate;
 
-        // clamp
-        const double d_lower = dlo;
-        const double d_upper = dhi;
-        const double t_lower = tlo;
-        const double t_upper = thi;
-        d_val = std::max(d_lower, std::min(d_val, d_upper));
-        t_val = std::max(t_lower, std::min(t_val, t_upper));
+        const double wd[6]{1.0, psi0(1.0 - xd),
+            psi1(xd) * dd, -psi1(1.0 - xd) * dd,
+            psi2(xd) * dd * dd, psi2(1.0 - xd) * dd * dd};
+        const double wd_d[6]{0.0, -dpsi0(1.0 - xd) * ddi,
+            dpsi1(xd), dpsi1(1.0 - xd),
+            dpsi2(xd) * dd, -dpsi2(1.0 - xd) * dd};
+        const double wd_dd[6]{0.0, ddpsi0(1.0 - xd) * ddi * ddi,
+            ddpsi1(xd) * ddi, -ddpsi1(1.0 - xd) * ddi,
+            ddpsi2(xd), ddpsi2(1.0 - xd)};
+        const double wt[6]{1.0, psi0(1.0 - xt),
+            psi1(xt) * dth, -psi1(1.0 - xt) * dth,
+            psi2(xt) * dth * dth, psi2(1.0 - xt) * dth * dth};
+        const double wt_t[6]{0.0, -dpsi0(1.0 - xt) * dti,
+            dpsi1(xt), dpsi1(1.0 - xt),
+            dpsi2(xt) * dth, -dpsi2(1.0 - xt) * dth};
+        const double wt_tt[6]{0.0, ddpsi0(1.0 - xt) * dti * dti,
+            ddpsi1(xt) * dti, -ddpsi1(1.0 - xt) * dti,
+            ddpsi2(xt), ddpsi2(1.0 - xt)};
+        const double wt_ttt[6]{0.0, -dddpsi0(1.0 - xt) * dti * dti * dti,
+            dddpsi1(xt) * dti * dti, dddpsi1(1.0 - xt) * dti * dti,
+            dddpsi2(xt) * dti, -dddpsi2(1.0 - xt) * dti};
 
-        int i = static_cast<int>((d_val - dlo) * dstpi);
-        int j = static_cast<int>((t_val - tlo) * tstpi);
-
-        i = std::max(0, std::min(i, imax - 2));
-        j = std::max(0, std::min(j, jmax - 2));
-
-        double d_node = std::pow(10.0, dlo + i * dstp);
-        double d_next = std::pow(10.0, dlo + (i + 1) * dstp);
-        double dd = d_next - d_node;
-        double ddi = 1.0 / dd;
-
-        double t_node = std::pow(10.0, tlo + j * tstp);
-        double t_next = std::pow(10.0, tlo + (j + 1) * tstp);
-        double dth = t_next - t_node;
-        double dti = 1.0 / dth;
-
-        double xd = std::max( (din - d_node) * ddi, 0.0 );
-        double xt = std::max( (T - t_node) * dti, 0.0 );
-
-        double w0d = psi0(xd), w1d = psi1(xd) * dd, w2d = psi2(xd) * dd * dd;
-        double w0md = psi0(1.0 - xd), w1md = -psi1(1.0 - xd) * dd, w2md = psi2(1.0 - xd) * dd * dd;
-
-        double w0t = psi0(xt), w1t = psi1(xt) * dth, w2t = psi2(xt) * dth * dth;
-        double w0mt = psi0(1.0 - xt), w1mt = -psi1(1.0 - xt) * dth, w2mt = psi2(1.0 - xt) * dth * dth;
-
-        double fi[36];
-        int idx00 = j * imax + i;
-        int idx10 = j * imax + i + 1;
-        int idx01 = (j + 1) * imax + i;
-        int idx11 = (j + 1) * imax + i + 1;
-
-        int offset[9] = {0, 12, 4, 16, 8, 20, 24, 28, 32};
-
-        for (int k = 0; k < 9; ++k) {
-            int off = offset[k];
-            fi[off + 0] = f[k][idx00];
-            fi[off + 1] = f[k][idx10];
-            fi[off + 2] = f[k][idx01];
-            fi[off + 3] = f[k][idx11];
+        // Table slots for (density derivative, temperature derivative).
+        // First contract temperature at each density endpoint/derivative,
+        // then density. This is the same tensor-product quintic polynomial.
+        constexpr int field[3][3]{{0, 2, 4}, {1, 5, 7}, {3, 6, 8}};
+        double row[6], row_t[6], row_tt[6], row_ttt[6];
+        for (int dr = 0; dr < 3; ++dr) {
+            for (int side = 0; side < 2; ++side) {
+                const int lower = j * imax + i + side;
+                double values[6];
+                for (int dt = 0; dt < 3; ++dt) {
+                    values[2 * dt] = f[field[dr][dt]][lower];
+                    values[2 * dt + 1] = f[field[dr][dt]][lower + imax];
+                    if (dr == 0 && side == 1) {
+                        // Form the density-endpoint difference before the
+                        // temperature contraction rounds either large value.
+                        // This preserves the same tensor polynomial while
+                        // conditioning mixed and second-density derivatives.
+                        values[2 * dt] -= f[field[dr][dt]][lower - 1];
+                        values[2 * dt + 1] -= f[field[dr][dt]][lower + imax - 1];
+                    }
+                }
+                const int slot = 2 * dr + side;
+                row[slot] = hermite_row(values, wt);
+                row_t[slot] = hermite_row(values, wt_t);
+                if (cv_ele != nullptr || derivatives != nullptr)
+                    row_tt[slot] = hermite_row(values, wt_tt);
+                if (derivatives != nullptr)
+                    row_ttt[slot] = hermite_row(values, wt_ttt);
+            }
         }
-
-        double free_energy =
-             fi[0]*w0d*w0t   + fi[1]*w0md*w0t  + fi[2]*w0d*w0mt  + fi[3]*w0md*w0mt
-           + fi[4]*w0d*w1t   + fi[5]*w0md*w1t  + fi[6]*w0d*w1mt  + fi[7]*w0md*w1mt
-           + fi[8]*w0d*w2t   + fi[9]*w0md*w2t  + fi[10]*w0d*w2mt + fi[11]*w0md*w2mt
-           + fi[12]*w1d*w0t  + fi[13]*w1md*w0t + fi[14]*w1d*w0mt + fi[15]*w1md*w0mt
-           + fi[16]*w2d*w0t  + fi[17]*w2md*w0t + fi[18]*w2d*w0mt + fi[19]*w2md*w0mt
-           + fi[20]*w1d*w1t  + fi[21]*w1md*w1t + fi[22]*w1d*w1mt + fi[23]*w1md*w1mt
-           + fi[24]*w2d*w1t  + fi[25]*w2md*w1t + fi[26]*w2d*w1mt + fi[27]*w2md*w1mt
-           + fi[28]*w1d*w2t  + fi[29]*w1md*w2t + fi[30]*w1d*w2mt + fi[31]*w1md*w2mt
-           + fi[32]*w2d*w2t  + fi[33]*w2md*w2t + fi[34]*w2d*w2mt + fi[35]*w2md*w2mt;
-
-        double d0d = dpsi0(xd)*ddi, d1d = dpsi1(xd), d2d = dpsi2(xd)*dd;
-        double d0md = -dpsi0(1.0 - xd)*ddi, d1md = dpsi1(1.0 - xd), d2md = -dpsi2(1.0 - xd)*dd;
-
-        double df_d =
-             fi[0]*d0d*w0t  + fi[1]*d0md*w0t  + fi[2]*d0d*w0mt  + fi[3]*d0md*w0mt
-           + fi[4]*d0d*w1t  + fi[5]*d0md*w1t  + fi[6]*d0d*w1mt  + fi[7]*d0md*w1mt
-           + fi[8]*d0d*w2t  + fi[9]*d0md*w2t  + fi[10]*d0d*w2mt + fi[11]*d0md*w2mt
-           + fi[12]*d1d*w0t + fi[13]*d1md*w0t + fi[14]*d1d*w0mt + fi[15]*d1md*w0mt
-           + fi[16]*d2d*w0t + fi[17]*d2md*w0t + fi[18]*d2d*w0mt + fi[19]*d2md*w0mt
-           + fi[20]*d1d*w1t + fi[21]*d1md*w1t + fi[22]*d1d*w1mt + fi[23]*d1md*w1mt
-           + fi[24]*d2d*w1t + fi[25]*d2md*w1t + fi[26]*d2d*w1mt + fi[27]*d2md*w1mt
-           + fi[28]*d1d*w2t + fi[29]*d1md*w2t + fi[30]*d1d*w2mt + fi[31]*d1md*w2mt
-           + fi[32]*d2d*w2t + fi[33]*d2md*w2t + fi[34]*d2d*w2mt + fi[35]*d2md*w2mt;
-
-        double d0t = dpsi0(xt)*dti, d1t = dpsi1(xt), d2t = dpsi2(xt)*dth;
-        double d0mt = -dpsi0(1.0 - xt)*dti, d1mt = dpsi1(1.0 - xt), d2mt = -dpsi2(1.0 - xt)*dth;
-
-        double df_t =
-             fi[0]*w0d*d0t  + fi[1]*w0md*d0t  + fi[2]*w0d*d0mt  + fi[3]*w0md*d0mt
-           + fi[4]*w0d*d1t  + fi[5]*w0md*d1t  + fi[6]*w0d*d1mt  + fi[7]*w0md*d1mt
-           + fi[8]*w0d*d2t  + fi[9]*w0md*d2t  + fi[10]*w0d*d2mt + fi[11]*w0md*d2mt
-           + fi[12]*w1d*d0t + fi[13]*w1md*d0t + fi[14]*w1d*d0mt + fi[15]*w1md*d0mt
-           + fi[16]*w2d*d0t + fi[17]*w2md*d0t + fi[18]*w2d*d0mt + fi[19]*w2md*d0mt
-           + fi[20]*w1d*d1t + fi[21]*w1md*d1t + fi[22]*w1d*d1mt + fi[23]*w1md*d1mt
-           + fi[24]*w2d*d1t + fi[25]*w2md*d1t + fi[26]*w2d*d1mt + fi[27]*w2md*d1mt
-           + fi[28]*w1d*d2t + fi[29]*w1md*d2t + fi[30]*w1d*d2mt + fi[31]*w1md*d2mt
-           + fi[32]*w2d*d2t + fi[33]*w2md*d2t + fi[34]*w2d*d2mt + fi[35]*w2md*d2mt;
+        const double free_energy = hermite_row(row, wd, true);
+        const double df_d = hermite_row(row, wd_d, true);
+        const double df_t = hermite_row(row_t, wd, true);
 
         P_ele = din * din * df_d;
         double sele = -df_t * ye;
         E_ele = ye * free_energy + T * sele;
 
         if (cv_ele != nullptr) {
-            const double dti2 = dti * dti;
-            const std::array<double, 6> wd{
-                w0d, w0md, w1d, w1md, w2d, w2md};
-            const std::array<double, 6> wt{
-                ddpsi0(xt) * dti2,
-                ddpsi0(1.0 - xt) * dti2,
-                ddpsi1(xt) * dti,
-                -ddpsi1(1.0 - xt) * dti,
-                ddpsi2(xt),
-                ddpsi2(1.0 - xt)};
-            static constexpr int d_order[9]{0, 1, 0, 2, 0, 1, 2, 1, 2};
-            static constexpr int t_order[9]{0, 0, 1, 0, 2, 1, 1, 2, 2};
-            double df_tt = 0.0;
-            for (int k = 0; k < 9; ++k) {
-                for (int jd = 0; jd < 2; ++jd) {
-                    for (int jt = 0; jt < 2; ++jt) {
-                        const int idx = (j + jt) * imax + i + jd;
-                        df_tt += f[k][idx] * wd[2 * d_order[k] + jd]
-                                             * wt[2 * t_order[k] + jt];
-                    }
-                }
-            }
-            *cv_ele = -ye * T * df_tt;
+            *cv_ele = -ye * T * hermite_row(row_tt, wd, true);
+        }
+        if (derivatives != nullptr) {
+            const double df_dd = hermite_row(row, wd_dd, true);
+            const double df_dt = hermite_row(row_t, wd_d, true);
+            const double df_ddt = hermite_row(row_t, wd_dd, true);
+            const double df_tt = hermite_row(row_tt, wd, true);
+            // Differentiate z*F_TT as one linear functional. Separately
+            // rounding F_TT and d*F_dTT loses their small residual when
+            // electron/positron pairs dominate the heat capacity.
+            double density_product_weights[6];
+            for (int k = 0; k < 6; ++k)
+                density_product_weights[k] = std::fma(din, wd_d[k], wd[k]);
+            *derivatives = {};
+            derivatives->pressure_density = ye * (2.0 * din * df_d + din * din * df_dd);
+            derivatives->pressure_temperature = din * din * df_dt;
+            derivatives->energy_z = free_energy - T * df_t + din * (df_d - T * df_dt);
+            derivatives->energy_zz = rho * (2.0 * (df_d - T * df_dt)
+                                          + din * (df_dd - T * df_ddt));
+            derivatives->cv_z = -T * hermite_row(row_tt, density_product_weights, true);
+            derivatives->cv_temperature = -ye * (df_tt + T * hermite_row(row_ttt, wd, true));
         }
     }
 
-    ARCH_INLINE void calc_thermo_with_cv(double rho, double T, const double* X,
-                             double& P, double& E, double* cv) const {
+    ARCH_HEAVY_INLINE void calc_thermo_with_cv(double rho, double T, const double* X,
+                             double& P, double& E, double* cv,
+                             ThermodynamicDerivatives* derivatives = nullptr) const {
         // Timmes variables: ytot = sum(X/A), Abar = 1/ytot,
         // Zbar = sum(X Z/A)/ytot, and Ye = Zbar/Abar = sum(X Z/A).
         double ytot = 0.0;
@@ -204,12 +245,13 @@ struct BasicHelmEosView {
             ytot += X[k] * inv_A;
             ye += X[k] * specs.get_Z(k) * inv_A;
         }
+        const bool charge_active = ye > 1.0e-16;
         ye = std::max(1.0e-16, ye);
 
         // 1. Electron/Positron from table
         double P_ele, E_ele, cv_ele = 0.0;
         interpolate_ele_pos(rho, T, ye, P_ele, E_ele,
-                            cv != nullptr ? &cv_ele : nullptr);
+                            cv != nullptr ? &cv_ele : nullptr, derivatives);
 
         // 2. Ions (Ideal Gas)
         double n_ion = rho * ytot * avo;
@@ -223,8 +265,9 @@ struct BasicHelmEosView {
         // 4. Timmes uniform-background Coulomb correction (Yakovlev &
         // Shalybkov 1989).  This is part of the original Helmholtz support
         // system and contributes to pressure, energy, and cv.
-        constexpr double pi = 3.141592653589793238462643383279502884;
-        constexpr double qe = 4.8032042712e-10;
+        constexpr double pi = arch::constants::math::pi;
+        constexpr double qe_squared =
+            arch::constants::electromagnetic::cgs::elementary_charge_squared;
         constexpr double a1 = -0.898004;
         constexpr double b1 = 0.96786;
         constexpr double c1 = 0.220703;
@@ -237,13 +280,14 @@ struct BasicHelmEosView {
         const double zbar = ye / ytot;
         const double mean_ion_spacing =
             1.0 / std::cbrt((4.0 / 3.0) * pi * n_ion);
-        const double coupling = zbar * zbar * qe * qe
+        const double coupling = zbar * zbar * qe_squared
                               / (kerg * T * mean_ion_spacing);
         const double dcoupling_dT = -coupling / T;
 
         double P_coul = 0.0;
         double E_coul = 0.0;
         double dE_coul_dT = 0.0;
+        double coupling_f_first = 0.0, coupling_squared_f_second = 0.0;
         if (coupling >= 1.0) {
             const double g14 = std::pow(coupling, 0.25);
             const double coefficient = avo * ytot * kerg;
@@ -253,6 +297,10 @@ struct BasicHelmEosView {
             const double dE_dg = coefficient * T
                 * (a1 + 0.25 / coupling * (b1 * g14 - c1 / g14));
             dE_coul_dT = dE_dg * dcoupling_dT + E_coul / T;
+            if (derivatives != nullptr) {
+                coupling_f_first = a1 * coupling + 0.25 * (b1 * g14 - c1 / g14);
+                coupling_squared_f_second = (-3.0 * b1 * g14 + 5.0 * c1 / g14) / 16.0;
+            }
         } else {
             const double g32 = coupling * std::sqrt(coupling);
             const double gb2 = std::pow(coupling, b2);
@@ -266,6 +314,10 @@ struct BasicHelmEosView {
                 -(P_ion / T) * correction
                 - P_ion * dcorrection_dg * dcoupling_dT;
             dE_coul_dT = 3.0 * dP_coul_dT / rho;
+            if (derivatives != nullptr) {
+                coupling_f_first = -4.5 * c2 * g32 + b2 * a2 * gb2;
+                coupling_squared_f_second = -2.25 * c2 * g32 + b2 * (b2 - 1.0) * a2 * gb2;
+            }
         }
 
         // Match Timmes' bomb-proofing: disable the correction if it would
@@ -275,6 +327,7 @@ struct BasicHelmEosView {
             P_coul = 0.0;
             E_coul = 0.0;
             dE_coul_dT = 0.0;
+            coupling_f_first = coupling_squared_f_second = 0.0;
         }
 
         P = P_ele + P_ion + P_rad + P_coul;
@@ -283,6 +336,24 @@ struct BasicHelmEosView {
         if (cv != nullptr) {
             *cv = cv_ele + 1.5 * avo * kerg * ytot
                 + 4.0 * asol * T * T * T / rho + dE_coul_dT;
+        }
+        if (derivatives != nullptr) {
+            auto& d = *derivatives;
+            const double coefficient = avo * kerg;
+            const double first_energy = coefficient * T * ytot * coupling_f_first;
+            const double second_energy = coefficient * T * ytot * coupling_squared_f_second;
+            d.pressure_density += P_ion / rho + E_coul / 3.0 + first_energy / 9.0;
+            d.pressure_temperature += P_ion / T + 4.0 * P_rad / T + rho * dE_coul_dT / 3.0;
+            // Gamma is proportional to z^2 y^(-5/3) / T at fixed rho.
+            d.energy_y = 1.5 * coefficient * T + (E_coul - (5.0 / 3.0) * first_energy) / ytot;
+            d.energy_z += 2.0 * first_energy / ye;
+            d.energy_yy = (10.0 * first_energy + 25.0 * second_energy) / (9.0 * ytot * ytot);
+            d.energy_yz = -(4.0 * first_energy + 10.0 * second_energy) / (3.0 * ytot * ye);
+            d.energy_zz += (2.0 * first_energy + 4.0 * second_energy) / (ye * ye);
+            d.cv_y = 1.5 * coefficient + (E_coul - first_energy + (5.0 / 3.0) * second_energy) / (T * ytot);
+            d.cv_z -= 2.0 * second_energy / (T * ye);
+            d.cv_temperature += 12.0 * asol * T * T / rho + second_energy / (T * T);
+            d.charge_active = charge_active;
         }
     }
 
@@ -304,33 +375,11 @@ struct BasicHelmEosView {
         ye = std::max(1.0e-16, ye);
 
         double din = rho * ye;
-        double d_val = std::log10(din);
-        double t_val = std::log10(T);
-
-        // clamp
-        const double d_lower = dlo;
-        const double d_upper = dhi;
-        const double t_lower = tlo;
-        const double t_upper = thi;
-        d_val = std::max(d_lower, std::min(d_val, d_upper));
-        t_val = std::max(t_lower, std::min(t_val, t_upper));
-
-        int i = static_cast<int>((d_val - dlo) * dstpi);
-        int j = static_cast<int>((t_val - tlo) * tstpi);
-
-        i = std::max(0, std::min(i, imax - 2));
-        j = std::max(0, std::min(j, jmax - 2));
-
-        double d_node = std::pow(10.0, dlo + i * dstp);
-        double d_next = std::pow(10.0, dlo + (i + 1) * dstp);
-        double dd = d_next - d_node;
-
-        double t_node = std::pow(10.0, tlo + j * tstp);
-        double t_next = std::pow(10.0, tlo + (j + 1) * tstp);
-        double dth = t_next - t_node;
-
-        double xd = std::max( (din - d_node) / dd, 0.0 );
-        double xt = std::max( (T - t_node) / dth, 0.0 );
+        const auto density = locate_axis(din, density_nodes, imax, dlo, dstpi);
+        const auto temperature = locate_axis(T, temperature_nodes, jmax, tlo, tstpi);
+        const int i = density.index, j = temperature.index;
+        const double dd = density.spacing, dth = temperature.spacing;
+        const double xd = density.coordinate, xt = temperature.coordinate;
 
         // Bicubic Hermite interpolation basis functions
         auto h00 = [](double z) { return (2.0 * z * z * z - 3.0 * z * z + 1.0); };
@@ -384,7 +433,7 @@ struct BasicHelmEosView {
         return get_temperature(rho, e, Xi);
     }
 
-    ARCH_INLINE double get_temperature(double rho, double e, const double* Xi) const {
+    ARCH_HEAVY_INLINE double get_temperature(double rho, double e, const double* Xi) const {
         double T_guess = 1e8;
         for (int i = 0; i < 50; ++i) {
             double P, E;
@@ -408,28 +457,67 @@ struct BasicHelmEosView {
         return T_guess;
     }
 
-    ARCH_INLINE double get_sound_speed(const FluidVector& U, double p, const double* Xi) const {
-        double rho = U.rho;
-        double e = eos_utils::extract_specific_internal_energy(U);
-        double T = get_temperature(U, Xi);
+    ARCH_INLINE double sound_speed(double rho, double T, double cv,
+                                    const ThermodynamicDerivatives& d) const {
+        // Fixed-composition first law: c_s^2 = P_rho + T P_T^2/(rho^2 cv).
+        if (!(cv > 0.0)) return std::numeric_limits<double>::quiet_NaN();
+        return std::sqrt(d.pressure_density
+            + T * d.pressure_temperature * d.pressure_temperature / (rho * rho * cv));
+    }
 
-        // c_s^2 = dp/drho |_S = dp/drho |_T + (dp/dT |_rho)^2 * T / (rho^2 cv)
+    ARCH_INLINE double get_sound_speed(const FluidVector& U, double, const double* Xi) const {
+        const double T = get_temperature(U, Xi);
+        double P, E, cv;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(U.rho, T, Xi, P, E, &cv, &d);
+        return sound_speed(U.rho, T, cv, d);
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(
+        double rho, double T, const double* X, double* gradient) const {
         double P, E;
-        calc_thermo(rho, T, Xi, P, E);
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        for (int i = 0; i < Equations - 1; ++i) {
+            const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
+            const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
+            gradient[i] = inverse_a * (d.energy_y + charge * d.energy_z);
+        }
+    }
 
-        double drho = rho * 1e-4;
-        double P_rho, E_rho;
-        calc_thermo(rho + drho, T, Xi, P_rho, E_rho);
-        double dp_drho = (P_rho - P) / drho;
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(
+        double rho, double T, const double* X, const double* flow, double* action) const {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        arch::math::CompensatedSum y_flow, z_flow;
+        for (int i = 0; i < Equations - 1 && i < specs.count; ++i) {
+            y_flow.add(flow[i] / specs.get_A(i));
+            if (d.charge_active) z_flow.add(flow[i] * specs.get_Z(i) / specs.get_A(i));
+        }
+        const double hy = d.energy_yy * y_flow.value() + d.energy_yz * z_flow.value();
+        const double hz = d.energy_yz * y_flow.value() + d.energy_zz * z_flow.value();
+        for (int i = 0; i < Equations - 1; ++i) {
+            const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
+            const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
+            action[i] = inverse_a * (hy + charge * hz);
+        }
+        action[Equations - 1] = d.cv_y * y_flow.value() + d.cv_z * z_flow.value();
+    }
 
-        double dT = T * 1e-4;
-        double P_T, E_T;
-        calc_thermo(rho, T + dT, Xi, P_T, E_T);
-        double dp_dT = (P_T - P) / dT;
-        double cv = get_cv(rho, T, Xi);
-
-        double cs2 = dp_drho + dp_dT * dp_dT * T / (rho * rho * cv);
-        return std::sqrt(std::max(1e-10, cs2));
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient(double rho, double T, const double* X, double* gradient) const {
+        double P, E;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, X, P, E, nullptr, &d);
+        for (int i = 0; i < Equations - 1; ++i) {
+            const double inverse_a = i < specs.count ? 1.0 / specs.get_A(i) : 0.0;
+            const double charge = i < specs.count && d.charge_active ? specs.get_Z(i) : 0.0;
+            gradient[i] = inverse_a * (d.cv_y + charge * d.cv_z);
+        }
+        gradient[Equations - 1] = d.cv_temperature;
     }
 
     ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double* Xi) const {
@@ -462,43 +550,36 @@ struct BasicHelmEosView {
     }
 
     ARCH_INLINE double get_dp_drho_e(double rho, double e, const double* Xi) const {
-        // dp/drho |_e
-        double P1 = get_pressure_from_rho_e(rho, e, Xi);
-        double drho = rho * 1e-4;
-        double P2 = get_pressure_from_rho_e(rho + drho, e, Xi);
-        return (P2 - P1) / drho;
+        const double T = get_temperature(rho, e, Xi);
+        double P, E, cv;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+        const double energy_density = (P - T * d.pressure_temperature) / (rho * rho);
+        return d.pressure_density - d.pressure_temperature * energy_density / cv;
     }
 
     ARCH_INLINE double get_dp_de_rho(double rho, double e, const double* Xi) const {
-        // dp/de |_rho
-        double P1 = get_pressure_from_rho_e(rho, e, Xi);
-        double de = e * 1e-4;
-        double P2 = get_pressure_from_rho_e(rho, e + de, Xi);
-        return (P2 - P1) / de;
+        const double T = get_temperature(rho, e, Xi);
+        double P, E, cv;
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(rho, T, Xi, P, E, &cv, &d);
+        return d.pressure_temperature / cv;
     }
 
     // Pipeline: evaluate_state
     ARCH_INLINE void evaluate_state(eos_state_t& state) const {
         // 1. Core Thermodynamics (P, E, cv)
         double P, E, cv;
-        calc_thermo_with_cv(state.rho, state.T, state.Xi, P, E, &cv);
+        ThermodynamicDerivatives d;
+        calc_thermo_with_cv(state.rho, state.T, state.Xi, P, E, &cv, &d);
         state.P = P;
         state.E = E;
         state.cv = cv;
 
         // 2. Derivatives and Sound Speed
-        double drho = state.rho * 1e-4;
-        double P_rho, E_rho;
-        calc_thermo(state.rho + drho, state.T, state.Xi, P_rho, E_rho);
-        state.dp_drho = (P_rho - P) / drho;
-
-        double dT_val = state.T * 1e-4;
-        double P_T, E_T;
-        calc_thermo(state.rho, state.T + dT_val, state.Xi, P_T, E_T);
-        state.dp_dT = (P_T - P) / dT_val;
-
-        double cv_val = std::max(cv, 1e-12);
-        state.sound_speed = std::sqrt(std::max(0.0, state.dp_drho + state.dp_dT * state.dp_dT * state.T / (state.rho * state.rho * cv_val)));
+        state.dp_drho = d.pressure_density;
+        state.dp_dT = d.pressure_temperature;
+        state.sound_speed = sound_speed(state.rho, state.T, cv, d);
 
         // 3. Deep Physical Variables (eta, pele, xne)
         state.eta = get_eta(state.rho, state.T, state.Xi);
@@ -515,17 +596,17 @@ struct BasicHelmEosView {
         double pele, E_ele;
         interpolate_ele_pos(state.rho, state.T, ye, pele, E_ele, nullptr);
         state.pele = pele;
-        state.xne = state.rho * ye * 6.0221417930e23; // n_A from Timmes
+        state.xne = state.rho * ye * avo;
     }
 
 };
 
-using HelmEosView = BasicHelmEosView<SpeciesPODView>;
 
 struct HelmEosHostView : BasicHelmEosView<SpeciesHostView>
 {
     std::array<std::size_t, 9> f_extents{};
     std::array<std::size_t, 4> ef_extents{};
+    std::array<std::size_t, 2> node_extents{};
     const SpeciesManager *get_species_manager() const { return specs.host_owner; }
 };
 
@@ -534,6 +615,8 @@ class HelmEos : public EOSBase, public HelmEosHostView
 {
     std::vector<double> host_f[9];
     std::vector<double> host_ef_table[4];
+    std::array<double, imax> host_density_nodes{};
+    std::array<double, jmax> host_temperature_nodes{};
 
 public:
     HelmEos(const std::string &table_path, const SpeciesManager *species_owner)
@@ -591,6 +674,21 @@ public:
             ef_table[k] = host_ef_table[k].data();
             ef_extents[k] = host_ef_table[k].size();
         }
+        // Materialize the documented grid once. Device owners copy these
+        // values with the table; libm/libdevice pow rounding must not move
+        // physical interpolation endpoints or be paid on every EOS query.
+        // Construct the decimal exponent before the final binary64 rounding.
+        // Rounding i*0.05 first shifts some nodes by several ULPs; second
+        // derivatives amplify that coordinate error in pair-dominated states.
+        for (int i = 0; i < imax; ++i)
+            host_density_nodes[i] = static_cast<double>(std::pow(10.0L,
+                static_cast<long double>(dlo) + static_cast<long double>(i) / dstpi));
+        for (int j = 0; j < jmax; ++j)
+            host_temperature_nodes[j] = static_cast<double>(std::pow(10.0L,
+                static_cast<long double>(tlo) + static_cast<long double>(j) / tstpi));
+        density_nodes = host_density_nodes.data();
+        temperature_nodes = host_temperature_nodes.data();
+        node_extents = {host_density_nodes.size(), host_temperature_nodes.size()};
         specs = species_owner ? species_owner->get_host_view() : SpeciesHostView{};
     }
 

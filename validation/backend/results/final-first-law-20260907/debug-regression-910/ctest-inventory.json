@@ -1,0 +1,2377 @@
+{
+  "backtraceGraph": {
+    "commands": [
+      "add_test"
+    ],
+    "files": [
+      "/home/shiroakane/ARCH/CMakeLists.txt"
+    ],
+    "nodes": [
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 429,
+        "parent": 0
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 434,
+        "parent": 2
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 437,
+        "parent": 4
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 441,
+        "parent": 6
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 445,
+        "parent": 8
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 450,
+        "parent": 10
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 455,
+        "parent": 12
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 463,
+        "parent": 14
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 463,
+        "parent": 16
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 463,
+        "parent": 18
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 467,
+        "parent": 20
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 470,
+        "parent": 22
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 473,
+        "parent": 24
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 479,
+        "parent": 26
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 487,
+        "parent": 28
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 493,
+        "parent": 30
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 499,
+        "parent": 32
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 508,
+        "parent": 34
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 514,
+        "parent": 36
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 521,
+        "parent": 38
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 529,
+        "parent": 40
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 536,
+        "parent": 42
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 543,
+        "parent": 44
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 553,
+        "parent": 46
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 567,
+        "parent": 48
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 577,
+        "parent": 50
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 583,
+        "parent": 52
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 592,
+        "parent": 54
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 992,
+        "parent": 56
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 992,
+        "parent": 58
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1050,
+        "parent": 60
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1070,
+        "parent": 62
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1075,
+        "parent": 64
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1083,
+        "parent": 66
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1087,
+        "parent": 68
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1098,
+        "parent": 70
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1109,
+        "parent": 72
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1119,
+        "parent": 74
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1130,
+        "parent": 76
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1144,
+        "parent": 78
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1150,
+        "parent": 80
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1161,
+        "parent": 82
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1172,
+        "parent": 84
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1278,
+        "parent": 86
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1288,
+        "parent": 88
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1298,
+        "parent": 90
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1375,
+        "parent": 92
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1451,
+        "parent": 94
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1452,
+        "parent": 96
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1453,
+        "parent": 98
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1454,
+        "parent": 100
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1458,
+        "parent": 102
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1459,
+        "parent": 104
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1461,
+        "parent": 106
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1463,
+        "parent": 108
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1465,
+        "parent": 110
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1467,
+        "parent": 112
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1473,
+        "parent": 114
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1474,
+        "parent": 116
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1476,
+        "parent": 118
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1478,
+        "parent": 120
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1480,
+        "parent": 122
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1484,
+        "parent": 124
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1487,
+        "parent": 126
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1489,
+        "parent": 128
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1491,
+        "parent": 130
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1493,
+        "parent": 132
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1495,
+        "parent": 134
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 136
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 138
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 140
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 142
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 144
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 146
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 148
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 150
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 152
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 154
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 156
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1503,
+        "parent": 158
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1507,
+        "parent": 160
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1507,
+        "parent": 162
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1507,
+        "parent": 164
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 166
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 168
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 170
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 172
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 174
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 176
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 178
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 180
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 182
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 184
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 186
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1516,
+        "parent": 188
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1669,
+        "parent": 190
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1686,
+        "parent": 192
+      },
+      {
+        "file": 0
+      },
+      {
+        "command": 0,
+        "file": 0,
+        "line": 1696,
+        "parent": 194
+      }
+    ]
+  },
+  "kind": "ctestInfo",
+  "tests": [
+    {
+      "backtrace": 1,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_portable_network_generator.py"
+      ],
+      "name": "portable_network_generator",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 3,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_smoke_cuda_amr_runtime.py"
+      ],
+      "name": "cuda_amr_smoke_runner_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 5,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_curvilinear_manifest.py"
+      ],
+      "name": "curvilinear_manifest_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 7,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_run_memory_guarded.py"
+      ],
+      "name": "memory_guard_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 9,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_validate_backend_results.py"
+      ],
+      "name": "backend_validation_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 11,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_validation_provenance.py"
+      ],
+      "name": "validation_provenance_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 13,
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/test_runtime_validation_inputs.py"
+      ],
+      "name": "runtime_validation_inputs_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace": 15,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_physical_constants"
+      ],
+      "name": "physical_constants",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 17,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_refinement_indicator_math"
+      ],
+      "name": "refinement_indicator_math",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 19,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_curvilinear_metrics"
+      ],
+      "name": "curvilinear_metrics",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 21,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_compensated_sum"
+      ],
+      "name": "compensated_sum",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 23,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_sparse_ode_continuation"
+      ],
+      "name": "sparse_ode_continuation",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 25,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_checkpoint_conservation_metrics"
+      ],
+      "name": "checkpoint_conservation_metrics",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 27,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_burn_mainline_reference"
+      ],
+      "name": "burn_mainline_reference",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 29,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_mainline_authority"
+      ],
+      "name": "mainline_authority",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 31,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_block_handle"
+      ],
+      "name": "block_handle",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 33,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_state_residency"
+      ],
+      "name": "state_residency",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 35,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_shared_stage_scheduler"
+      ],
+      "name": "shared_stage_scheduler",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 37,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_boundary_plan"
+      ],
+      "name": "boundary_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 39,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_same_level_exchange_plan"
+      ],
+      "name": "same_level_exchange_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 41,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_amr_operation_plans"
+      ],
+      "name": "amr_operation_plans",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 43,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_amr_flux_surface_plan"
+      ],
+      "name": "amr_flux_surface_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 45,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_topology_transaction"
+      ],
+      "name": "topology_transaction",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 47,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_resolved_execution_plan"
+      ],
+      "name": "resolved_execution_plan",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 49,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_runtime_probe_capabilities"
+      ],
+      "name": "runtime_probe_and_capabilities",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 51,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_reduction_contract"
+      ],
+      "name": "reduction_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 53,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_compute_backend"
+      ],
+      "name": "compute_backend",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 55,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_device_block_store_lifecycle"
+      ],
+      "name": "device_block_store_lifecycle",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 57,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_generated_math_audit31"
+      ],
+      "name": "cuda_generated_math_audit31",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 59,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_generated_math_weak_urca"
+      ],
+      "name": "cuda_generated_math_weak_urca",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 61,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_regrid_transaction"
+      ],
+      "name": "cuda_regrid_transaction",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 63,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_grid_metrics_cache"
+      ],
+      "name": "cuda_grid_metrics_cache",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 65,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_sparse_burn_factory"
+      ],
+      "name": "cuda_sparse_burn_factory",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 67,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_sparse_be_nr_batch"
+      ],
+      "name": "cuda_sparse_be_nr_batch",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 69,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_cudss_sparse_solver"
+      ],
+      "name": "cuda_cudss_sparse_solver",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 71,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_eos_failure"
+      ],
+      "name": "cuda_burn_eos_failure",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 73,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_regrid_migration"
+      ],
+      "name": "cuda_regrid_migration",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 75,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_curvilinear_geometry_smoke"
+      ],
+      "name": "cuda_curvilinear_geometry_smoke",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 77,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_eos_failure"
+      ],
+      "name": "cuda_hydro_eos_failure",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 79,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_dispatch"
+      ],
+      "name": "cuda_hydro_dispatch",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 81,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_refinement_indicators"
+      ],
+      "name": "cuda_refinement_indicators",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 83,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_compensated_sum"
+      ],
+      "name": "cuda_compensated_sum",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 85,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_amr_composition"
+      ],
+      "name": "cuda_amr_composition",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 87,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_controller_parity"
+      ],
+      "name": "burn_controller_parity",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 89,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_network_derivative"
+      ],
+      "name": "cuda_network_derivative",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 91,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_thermal_math"
+      ],
+      "name": "cuda_burn_thermal_math",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 93,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_single_level_validation",
+        "--test-time-comparison"
+      ],
+      "name": "checkpoint_temporal_comparison",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 95,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_compile_probe"
+      ],
+      "name": "cuda_compile_probe",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 97,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_leaf_parity"
+      ],
+      "name": "hydro_leaf_parity",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 99,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_eos_host_device_parity"
+      ],
+      "name": "eos_host_device_parity",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 101,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_tabular_free_energy_owner"
+      ],
+      "name": "tabular_free_energy_owner",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 103,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_network_nse_device"
+      ],
+      "name": "network_nse_device",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 105,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "helpers"
+      ],
+      "name": "burn_policy_parity_helpers",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 107,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_diffusion_rkl_parity"
+      ],
+      "name": "diffusion_rkl_parity",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 109,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_boundary_plan_parity"
+      ],
+      "name": "boundary_plan_parity",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 111,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_policy_resolution"
+      ],
+      "name": "cuda_policy_resolution",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 113,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_reduction_contract"
+      ],
+      "name": "cuda_reduction_contract",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 115,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block"
+      ],
+      "name": "cuda_single_level_smoke",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 117,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_multiblock_hydro"
+      ],
+      "name": "cuda_multiblock_hydro",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 119,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_multiblock_diffusion"
+      ],
+      "name": "cuda_multiblock_diffusion",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 121,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_multiblock_burn"
+      ],
+      "name": "cuda_multiblock_burn",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 123,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_store_lifecycle"
+      ],
+      "name": "cuda_store_lifecycle",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 125,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_amr_exchange"
+      ],
+      "name": "cuda_amr_exchange",
+      "properties": [
+        {
+          "name": "SKIP_RETURN_CODE",
+          "value": 77
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 127,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "hydro-matrix"
+      ],
+      "name": "cuda_hydro_route_matrix",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 129,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "hydro-integrators"
+      ],
+      "name": "cuda_hydro_integrator_matrix",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 131,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "eos-matrix"
+      ],
+      "name": "cuda_backend_eos_owner_matrix",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 133,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "rkl1"
+      ],
+      "name": "cuda_backend_diffusion_rkl1",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 135,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "rkl2"
+      ],
+      "name": "cuda_backend_diffusion_rkl2",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 137,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox13.be_nr"
+      ],
+      "name": "cuda_backend_burn_aprox13_be_nr",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 139,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox13.bd"
+      ],
+      "name": "cuda_backend_burn_aprox13_bd",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 141,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox13.ros4"
+      ],
+      "name": "cuda_backend_burn_aprox13_ros4",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 143,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox19.be_nr"
+      ],
+      "name": "cuda_backend_burn_aprox19_be_nr",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 145,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox19.bd"
+      ],
+      "name": "cuda_backend_burn_aprox19_bd",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 147,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox19.ros4"
+      ],
+      "name": "cuda_backend_burn_aprox19_ros4",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 149,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox21.be_nr"
+      ],
+      "name": "cuda_backend_burn_aprox21_be_nr",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 151,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox21.bd"
+      ],
+      "name": "cuda_backend_burn_aprox21_bd",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 153,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "aprox21.ros4"
+      ],
+      "name": "cuda_backend_burn_aprox21_ros4",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 155,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "iso7.be_nr"
+      ],
+      "name": "cuda_backend_burn_iso7_be_nr",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 157,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "iso7.bd"
+      ],
+      "name": "cuda_backend_burn_iso7_bd",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 159,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_hydro_block",
+        "iso7.ros4"
+      ],
+      "name": "cuda_backend_burn_iso7_ros4",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 161,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "status.be_nr"
+      ],
+      "name": "burn_policy_parity_status_be_nr",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 163,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "status.bd"
+      ],
+      "name": "burn_policy_parity_status_bd",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 165,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "status.ros4"
+      ],
+      "name": "burn_policy_parity_status_ros4",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 167,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox13.be_nr"
+      ],
+      "name": "burn_policy_parity_aprox13_be_nr",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 169,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox13.bd"
+      ],
+      "name": "burn_policy_parity_aprox13_bd",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 171,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox13.ros4"
+      ],
+      "name": "burn_policy_parity_aprox13_ros4",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 173,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox19.be_nr"
+      ],
+      "name": "burn_policy_parity_aprox19_be_nr",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 175,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox19.bd"
+      ],
+      "name": "burn_policy_parity_aprox19_bd",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 177,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox19.ros4"
+      ],
+      "name": "burn_policy_parity_aprox19_ros4",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 179,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox21.be_nr"
+      ],
+      "name": "burn_policy_parity_aprox21_be_nr",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 181,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox21.bd"
+      ],
+      "name": "burn_policy_parity_aprox21_bd",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 183,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "aprox21.ros4"
+      ],
+      "name": "burn_policy_parity_aprox21_ros4",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 185,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "iso7.be_nr"
+      ],
+      "name": "burn_policy_parity_iso7_be_nr",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 187,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "iso7.bd"
+      ],
+      "name": "burn_policy_parity_iso7_bd",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 189,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_cuda_burn_policy_parity",
+        "iso7.ros4"
+      ],
+      "name": "burn_policy_parity_iso7_ros4",
+      "properties": [
+        {
+          "name": "DEPENDS",
+          "value": [
+            "burn_mainline_reference"
+          ]
+        },
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 191,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/arch_checkpoint_compatibility",
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/checkpoint-compatibility-data"
+      ],
+      "name": "checkpoint_compatibility",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 193,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/tabular_eos_regression",
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/tabular-eos-test-data"
+      ],
+      "name": "tabular_eos_ideal_gas",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    },
+    {
+      "backtrace": 195,
+      "command": [
+        "/home/shiroakane/ARCH/build/debug-release-profile-20260907/sparse_klu_regression"
+      ],
+      "name": "sparse_klu_161_equations",
+      "properties": [
+        {
+          "name": "WORKING_DIRECTORY",
+          "value": "/home/shiroakane/ARCH/build/debug-release-profile-20260907"
+        }
+      ]
+    }
+  ],
+  "version": {
+    "major": 1,
+    "minor": 0
+  }
+}

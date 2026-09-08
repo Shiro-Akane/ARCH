@@ -1,13 +1,13 @@
 /**
  * @file ode_ros4.h
- * @brief Four-stage L-stable ROS4 integrator with a shared diagonal matrix.
+ * @brief Shared four-stage ROS4 continuation and synchronous linear executor.
  */
 #pragma once
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 
-#include "Networks.h"
+#include "OdeContinuation.h"
 #include "odeFunction.h"
 
 template <typename NetType, typename MatrixType, typename LinearSolver>
@@ -16,6 +16,7 @@ struct Solver_ROS4
     static constexpr int NEQ = NetType::ODE_NEQ;
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES;
     static constexpr int MAX_N = NEQ;
+    static constexpr bool USES_JACOBIAN_WORKSPACE = true;
 
     // Four-stage, fourth-order, L-stable ROS4 tableau.  The coefficients are
     // a matched set; changing gamma independently violates the order conditions.
@@ -41,215 +42,290 @@ struct Solver_ROS4
     static constexpr double e3 = -0.1082196201495311;
     static constexpr double e4 = -1.093502252409163;
 
-    template <typename EOSType>
-    static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
-                          const BurnConfig &burn_cfg, double &dt_rec)
+    enum class Phase : unsigned char
     {
-        return integrate_report(X_ODE, rho, dt_target, eos,
-                                make_burn_config_view(burn_cfg), dt_rec).success();
-    }
-
-    template <typename EOSType>
-    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
-        double *X_ODE, double rho, double dt_target, const EOSType &eos,
-        const BurnConfigView &burn_cfg, double &dt_rec)
+        BeginSubstep, AwaitFactor, FactorReady, AwaitSolve, SolveReady, Complete
+    };
+    struct Continuation
     {
-        MatrixType J_mat, A;
-        return integrate_report_with_matrices(
-            X_ODE, rho, dt_target, eos, burn_cfg, J_mat, A, dt_rec);
-    }
-
-    template <typename EOSType>
-    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
-        double *X_ODE, double rho, double dt_target, const EOSType &eos,
-        const BurnConfigView &burn_cfg,
-        OdeMatrixWorkspace<MatrixType>& workspace, double &dt_rec)
-    {
-        return integrate_report_with_matrices(
-            X_ODE, rho, dt_target, eos, burn_cfg,
-            workspace.jacobian, workspace.system, dt_rec);
-    }
-
-private:
-    template <typename EOSType>
-    ARCH_HOST_DEVICE static BurnOdeReport integrate_report_with_matrices(
-        double *X_ODE, double rho, double dt_target, const EOSType &eos,
-        const BurnConfigView &burn_cfg,
-        MatrixType& J_mat, MatrixType& A, double &dt_rec)
-    {
-        BurnOdeReport report{};
-        report.dt_recommended = dt_rec;
-        if (X_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin)
-        {
-            return report;
-        }
-
+        [[no_unique_address]] NetType network{};
+        OdeMath::AcceptedState<NEQ> accepted;
+        arch::math::CompensatedSum accepted_energy;
         double X_old[MAX_N], X_k[MAX_N], X_trial[MAX_N];
         double RHS[MAX_N], b[MAX_N], W[MAX_N], X_err[MAX_N];
         double u1[MAX_N], u2[MAX_N], u3[MAX_N], u4[MAX_N];
+        BurnOdeReport report{};
+        double rho = 0.0, dt_target = 0.0, dt_recommended = 0.0;
+        double t_current = 0.0, dt = 0.0, err_prev = 1.0;
+        int stage = 0;
+        bool nse_attempted = false, linear_success = false, solve_failed = false;
+        Phase phase = Phase::Complete;
+    };
 
-        const double rtol = burn_cfg.odeconfig.rtol;
-        const double atol = burn_cfg.odeconfig.atol;
+    ARCH_HOST_DEVICE static void begin(
+        Continuation& c, const double* X_ODE, double rho, double dt_target,
+        const BurnConfigView& cfg, double dt_rec, const NetType& network = {})
+    {
+        c.network = network;
+        c.accepted.initialize(X_ODE);
+        c.accepted_energy = {};
+        c.report = {};
+        c.report.dt_recommended = dt_rec;
+        c.rho = rho; c.dt_target = dt_target; c.dt_recommended = dt_rec;
+        c.t_current = 0.0;
+        c.dt = std::min(dt_target, dt_target * cfg.odeconfig.initial_dt_frac);
+        c.err_prev = 1.0;
+        c.stage = 0;
+        c.nse_attempted = false; c.linear_success = false; c.solve_failed = false;
+        c.phase = X_ODE[NUM_SPEC] < cfg.nuclearTempMin || rho < cfg.nuclearDensMin
+            ? Phase::Complete : Phase::BeginSubstep;
+    }
+
+    ARCH_HOST_DEVICE static bool complete_linear_solve(Continuation& c, bool success)
+    {
+        if (c.phase == Phase::AwaitFactor) c.phase = Phase::FactorReady;
+        else if (c.phase == Phase::AwaitSolve) c.phase = Phase::SolveReady;
+        else return false;
+        c.linear_success = success;
+        return true;
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static OdeLinearRequest advance(
+        Continuation& c, MatrixType& J_mat, MatrixType& A, double* X_ODE,
+        const EOSType& eos, const BurnConfigView& burn_cfg)
+    {
+        // These aliases keep the production expressions and operation order
+        // unchanged while making every value surviving a solve explicit.
+        auto& report = c.report;
+        auto& dt = c.dt;
+        auto& dt_rec = c.dt_recommended;
+        auto& t_current = c.t_current;
+        auto& nse_attempted = c.nse_attempted;
+        auto& X_old = c.X_old;
+        const double rho = c.rho, dt_target = c.dt_target;
         const int max_substeps = burn_cfg.odeconfig.max_substeps;
-
-        double t_current = 0.0;
-        double dt = std::min(dt_target, dt_target * burn_cfg.odeconfig.initial_dt_frac);
-        double err_prev = 1.0;
-        int substep_count = 0;
-
-        bool nse_attempted = false;
-
-        // Full RHS evaluation for each Rosenbrock stage.
-        auto eval_full_rhs = [&](const double* Y, double* out_RHS) {
-            double enuc = 0.0;
-            double eta = eos.get_eta(rho, Y[NEQ - 1], Y);
-            NetType::eval_rhs(Y, rho, eta, out_RHS, enuc);
-            double cv = OdeMath::burn_cv_floor(
-                eos.get_cv(rho, Y[NEQ - 1], Y));
-            out_RHS[NEQ - 1] = enuc / cv;
-        };
-
-        // Bound intermediate stage states before RHS evaluation.
-        auto sanitize_state = [&](double* Y_state) {
-#pragma omp simd
-            for (int i = 0; i < NUM_SPEC; ++i) {
-                if (Y_state[i] < burn_cfg.smallx) Y_state[i] = burn_cfg.smallx;
-                else if (Y_state[i] > 1.0) Y_state[i] = 1.0;
-            }
-            if (Y_state[NEQ - 1] < burn_cfg.nuclearTempMin) {
-                Y_state[NEQ - 1] = burn_cfg.nuclearTempMin;
-            }
-        };
-
-        // Advance with adaptive internal substeps.
-        while (t_current < dt_target)
-        {
-            if constexpr (NetType::SUPPORTS_NSE) {
-            if (!nse_attempted && burn_cfg.use_nse
-                && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold
-                && rho > burn_cfg.nseDensThreshold)
-            {
-                nse_attempted = true;
-                ++report.nse_attempts;
-                if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos,
-                                                        burn_cfg, dt_rec)) {
-                    report.status = BurnOdeStatus::NseSuccess;
+        for (;;) {
+            switch (c.phase) {
+            case Phase::Complete: return OdeLinearRequest::Complete;
+            case Phase::AwaitFactor: return OdeLinearRequest::Factorize;
+            case Phase::AwaitSolve: return OdeLinearRequest::SolveWithFactors;
+            case Phase::BeginSubstep: {
+                if (!(t_current < dt_target)) {
+                    dt_rec = dt;
+                    report.status = BurnOdeStatus::OdeSuccess;
                     report.dt_recommended = dt_rec;
-                    return report;
+                    c.phase = Phase::Complete;
+                    continue;
                 }
-                ++report.nse_failures;
-            }
-            }
+                if constexpr (NetType::SUPPORTS_NSE) {
+                    if (!nse_attempted && burn_cfg.use_nse
+                        && X_ODE[NUM_SPEC] > burn_cfg.nseTempThreshold
+                        && rho > burn_cfg.nseDensThreshold)
+                    {
+                        nse_attempted = true;
+                        ++report.nse_attempts;
+                        double nse_energy = 0.0;
+                        if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos,
+                                                                        burn_cfg, dt_rec, &nse_energy)) {
+                            OdeMath::record_accepted_energy(c.accepted_energy, report, nse_energy);
+                            report.status = BurnOdeStatus::NseSuccess;
+                            report.dt_recommended = dt_rec;
+                            c.phase = Phase::Complete;
+                            return OdeLinearRequest::Complete;
+                        }
+                        ++report.nse_failures;
+                    }
+                }
 
-            substep_count++;
-            report.attempted_substeps = substep_count;
-            if (substep_count > max_substeps)
-            {
+                ++report.attempted_substeps;
+                const int substep_count = report.attempted_substeps;
+                if (substep_count > max_substeps)
+                {
 #if !defined(__CUDA_ARCH__)
-                std::cerr << "[ROS4] Fatal Error: Exceeded max substeps (" << max_substeps << ")" << std::endl;
+                    std::cerr << "[ROS4] Fatal Error: Exceeded max substeps (" << max_substeps << ")" << std::endl;
 #endif
-                report.status = BurnOdeStatus::MaxSubsteps;
-                return report;
+                    report.status = BurnOdeStatus::MaxSubsteps;
+                    c.phase = Phase::Complete;
+                    return OdeLinearRequest::Complete;
+                }
+
+                if (t_current + dt > dt_target) dt = dt_target - t_current;
+
+#pragma omp simd
+                for (int i = 0; i < NEQ; ++i) X_old[i] = X_ODE[i];
+
+                assemble(c, J_mat, A, eos);
+                c.solve_failed = false;
+                c.phase = Phase::AwaitFactor;
+                return OdeLinearRequest::Factorize;
             }
-
-            if (t_current + dt > dt_target) dt = dt_target - t_current;
-
+            case Phase::FactorReady:
+                if (!c.linear_success) {
+                    // A failed factorization rejects the same trial as a
+                    // failed stage solve: share its rollback, stall check and
+                    // NSE retry reset. No uncomputed stage may be consumed.
+                    c.solve_failed = true;
+                    finish_trial(c, X_ODE, eos, burn_cfg);
+                    continue;
+                }
 #pragma omp simd
-            for (int i = 0; i < NEQ; ++i) X_old[i] = X_ODE[i];
-
-            // Evaluate f(y_0).
-            eval_full_rhs(X_old, RHS);
-
-            // Assemble the analytic Jacobian, including temperature coupling.
-            J_mat.zero();
-            double T_current = X_old[NEQ - 1];
-            double denuc_dX[MAX_N]{};
-            double dRHS_dT[MAX_N]{};
-            double denuc_dT = 0.0;
-            double eta_jac = eos.get_eta(rho, T_current, X_old);
-            NetType::eval_jacobian(X_old, rho, eta_jac, J_mat, denuc_dX);
-            NetType::eval_temperature_derivative(X_old, rho, eta_jac, dRHS_dT, denuc_dT);
-
-            const double cv = OdeMath::burn_cv_floor(
-                eos.get_cv(rho, T_current, X_old));
-            const double inv_cv = 1.0 / cv;
-
+                for (int i = 0; i < NEQ; ++i) c.b[i] = gamma * c.dt * c.RHS[i];
+                c.stage = 0;
+                c.phase = Phase::AwaitSolve;
+                return OdeLinearRequest::SolveWithFactors;
+            case Phase::SolveReady: {
+                double* stage_values = c.stage == 0 ? c.u1 : c.stage == 1 ? c.u2
+                    : c.stage == 2 ? c.u3 : c.u4;
+                c.solve_failed = !c.linear_success;
 #pragma omp simd
-            for (int i = 0; i < NUM_SPEC; ++i) J_mat.set(i + 1, NEQ, dRHS_dT[i]);
+                for (int i = 0; i < NEQ; ++i) {
+                    stage_values[i] = c.b[i];
+                    if (!std::isfinite(stage_values[i])) c.solve_failed = true;
+                }
+                if (c.solve_failed || c.stage == 3) {
+                    finish_trial(c, X_ODE, eos, burn_cfg);
+                    continue;
+                }
+                // Stage RHS expressions are the original matched ROS4 tableau.
+                if (c.stage == 0) {
 #pragma omp simd
-            for (int j = 0; j < NUM_SPEC; ++j) J_mat.set(NEQ, j + 1, denuc_dX[j] * inv_cv);
-            J_mat.set(NEQ, NEQ, denuc_dT * inv_cv);
-
-            // The normalized form of (I / (gamma*dt) - J) uses
-            // A = I - gamma*dt*J and scales every stage right-hand side by gamma.
-            A.set_shifted_identity_from(J_mat, -gamma * dt);
-
-            // Factor the shared stage matrix once for this substep.
-            int p[MAX_N];
-            bool step_converged = false;
-            double current_err = 0.0;
-
-            if (!LinearSolver::template factorize<NEQ, MAX_N>(A, p))
-            {
-                // A singular shared matrix rejects the trial stiffness scale;
-                // a factor-of-four reduction moves the retry well below it.
-                dt *= 0.25;
-                report.rejected_substeps += 1;
-                continue;
+                    for (int i = 0; i < NEQ; ++i) c.X_k[i] = stage_state_sum(c, i, a21).value();
+                } else if (c.stage == 1) {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) c.X_k[i] = stage_state_sum(c, i, a31, a32).value();
+                } else {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) c.X_k[i] = stage_state_sum(c, i, a41, a42, a43).value();
+                }
+                sanitize_state(c.X_k, burn_cfg);
+                OdeMath::eval_burn_rhs<NetType>(c.X_k, c.rho, eos, c.RHS, c.network);
+                if (c.stage == 0) {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) c.b[i] = gamma * (c.dt * c.RHS[i] + c21 * c.u1[i]);
+                } else if (c.stage == 1) {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) c.b[i] = gamma * (c.dt * c.RHS[i] + c31 * c.u1[i] + c32 * c.u2[i]);
+                } else {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) c.b[i] = gamma * (c.dt * c.RHS[i] + c41 * c.u1[i] + c42 * c.u2[i] + c43 * c.u3[i]);
+                }
+                ++c.stage;
+                c.phase = Phase::AwaitSolve;
+                return OdeLinearRequest::SolveWithFactors;
             }
-
-            bool solve_failed = false;
-
-            // Stage 1.
-#pragma omp simd
-            for (int i = 0; i < NEQ; ++i) b[i] = gamma * dt * RHS[i];
-            LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-#pragma omp simd
-            for (int i = 0; i < NEQ; ++i) { u1[i] = b[i]; if (!std::isfinite(u1[i])) solve_failed = true; }
-
-            // Stage 2.
-            if (!solve_failed) {
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) X_k[i] = X_old[i] + a21 * u1[i];
-                sanitize_state(X_k);
-                eval_full_rhs(X_k, RHS);
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i)
-                    b[i] = gamma * (dt * RHS[i] + c21 * u1[i]);
-                LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) { u2[i] = b[i]; if (!std::isfinite(u2[i])) solve_failed = true; }
             }
+        }
+    }
 
-            // Stage 3.
-            if (!solve_failed) {
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) X_k[i] = X_old[i] + a31 * u1[i] + a32 * u2[i];
-                sanitize_state(X_k);
-                eval_full_rhs(X_k, RHS);
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i)
-                    b[i] = gamma * (dt * RHS[i] + c31 * u1[i] + c32 * u2[i]);
-                LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) { u3[i] = b[i]; if (!std::isfinite(u3[i])) solve_failed = true; }
-            }
+    template <typename EOSType>
+    static bool integrate(double* X_ODE, double rho, double dt_target, const EOSType& eos,
+                          const BurnConfig& cfg, double& dt_rec, double* energy_change = nullptr)
+    {
+        const auto report = integrate_report(X_ODE, rho, dt_target, eos, make_burn_config_view(cfg),
+                                             dt_rec, make_host_burn_network<NetType>());
+        if (report.success() && energy_change) *energy_change = report.energy_change;
+        return report.success();
+    }
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double* X_ODE, double rho, double dt_target, const EOSType& eos,
+        const BurnConfigView& cfg, double& dt_rec, const NetType& network = {})
+    {
+        MatrixType jacobian, system;
+        return integrate_report_with_matrices(X_ODE, rho, dt_target, eos, cfg, jacobian, system, dt_rec, network);
+    }
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double* X_ODE, double rho, double dt_target, const EOSType& eos,
+        const BurnConfigView& cfg, OdeMatrixWorkspace<MatrixType>& workspace, double& dt_rec,
+        const NetType& network = {})
+    {
+        return integrate_report_with_matrices(X_ODE, rho, dt_target, eos, cfg,
+                                              workspace.jacobian, workspace.system, dt_rec, network);
+    }
 
-            // Stage 4.
-            if (!solve_failed) {
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) X_k[i] = X_old[i] + a41 * u1[i] + a42 * u2[i] + a43 * u3[i];
-                sanitize_state(X_k);
-                eval_full_rhs(X_k, RHS);
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i)
-                    b[i] = gamma * (dt * RHS[i] + c41 * u1[i] + c42 * u2[i]
-                                               + c43 * u3[i]);
-                LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) { u4[i] = b[i]; if (!std::isfinite(u4[i])) solve_failed = true; }
-            }
+private:
+    // One affine stage-state authority. Preserve small thermal/source changes
+    // on a large background using the shared compensated arithmetic; the ROS4
+    // tableau, error weights and physical projection are unchanged. Zero
+    // coefficients must not read stages that have not yet been computed.
+    ARCH_HOST_DEVICE static void add_weighted_stages(
+        arch::math::CompensatedSum& sum, const Continuation& c, int i,
+        double w1, double w2, double w3, double w4)
+    {
+        sum.add_product(w1, c.u1[i]);
+        if (w2 != 0.0) sum.add_product(w2, c.u2[i]);
+        if (w3 != 0.0) sum.add_product(w3, c.u3[i]);
+        if (w4 != 0.0) sum.add_product(w4, c.u4[i]);
+    }
 
+    ARCH_HOST_DEVICE static arch::math::CompensatedSum stage_state_sum(
+        const Continuation& c, int i, double w1, double w2 = 0.0,
+        double w3 = 0.0, double w4 = 0.0)
+    {
+        auto sum = c.accepted.sum(i);
+        add_weighted_stages(sum, c, i, w1, w2, w3, w4);
+        return sum;
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report_with_matrices(
+        double* X_ODE, double rho, double dt_target, const EOSType& eos,
+        const BurnConfigView& cfg, MatrixType& jacobian, MatrixType& system, double& dt_rec,
+        const NetType& network)
+    {
+        Continuation context;
+        int pivots[MAX_N];
+        begin(context, X_ODE, rho, dt_target, cfg, dt_rec, network);
+        for (;;) {
+            const auto request = advance(context, jacobian, system, X_ODE, eos, cfg);
+            if (request == OdeLinearRequest::Complete) break;
+            bool success = true;
+            if (request == OdeLinearRequest::Factorize)
+                success = LinearSolver::template factorize<NEQ, MAX_N>(system, pivots);
+            else
+                LinearSolver::template solve_with_factors<NEQ, MAX_N>(system, pivots, context.b);
+            complete_linear_solve(context, success);
+        }
+        dt_rec = context.dt_recommended;
+        return context.report;
+    }
+
+    ARCH_HOST_DEVICE static void sanitize_state(double* Y_state, const BurnConfigView& burn_cfg)
+    {
+#pragma omp simd
+        for (int i = 0; i < NUM_SPEC; ++i) {
+            if (Y_state[i] < burn_cfg.smallx) Y_state[i] = burn_cfg.smallx;
+            else if (Y_state[i] > 1.0) Y_state[i] = 1.0;
+        }
+        if (Y_state[NUM_SPEC] < burn_cfg.nuclearTempMin) Y_state[NUM_SPEC] = burn_cfg.nuclearTempMin;
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static void assemble(
+        Continuation& c, MatrixType& J_mat, MatrixType& A, const EOSType& eos)
+    {
+        OdeMath::assemble_burn_jacobian<NetType>(c.X_old, c.rho, eos, J_mat, c.RHS, c.network);
+        // The normalized form of (I / (gamma*dt) - J) uses
+        // A = I - gamma*dt*J and scales every stage right-hand side by gamma.
+        A.set_shifted_identity_from(J_mat, -gamma * c.dt);
+    }
+
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static void finish_trial(
+        Continuation& c, double* X_ODE, const EOSType& eos, const BurnConfigView& burn_cfg)
+    {
+        auto& X_old = c.X_old; auto& X_trial = c.X_trial;
+        auto& X_err = c.X_err; auto& W = c.W;
+        auto& u1 = c.u1; auto& u2 = c.u2; auto& u3 = c.u3; auto& u4 = c.u4;
+        auto& dt = c.dt; auto& t_current = c.t_current; auto& err_prev = c.err_prev;
+        auto& nse_attempted = c.nse_attempted; auto& report = c.report;
+        const bool solve_failed = c.solve_failed;
+        const double rho = c.rho, rtol = burn_cfg.odeconfig.rtol, atol = burn_cfg.odeconfig.atol;
+        bool step_converged = false;
+        double current_err = 0.0;
+        double trial_energy = 0.0;
             // Assemble the trial state and enforce physical admissibility.
             if (!solve_failed)
             {
@@ -258,7 +334,7 @@ private:
 
 #pragma omp simd
                 for (int i = 0; i < NUM_SPEC; ++i) {
-                    X_trial[i] = X_old[i] + m1 * u1[i] + m2 * u2[i] + m3 * u3[i] + m4 * u4[i];
+                    X_trial[i] = stage_state_sum(c, i, m1, m2, m3, m4).value();
                     X_err[i]   = e1 * u1[i] + e2 * u2[i] + e3 * u3[i] + e4 * u4[i];
 
                     if (!std::isfinite(X_trial[i])) {
@@ -274,12 +350,17 @@ private:
                     mass_sum += X_trial[i];
                 }
 
-                X_trial[NEQ - 1] = X_old[NEQ - 1] + m1 * u1[NEQ - 1] + m2 * u2[NEQ - 1] + m3 * u3[NEQ - 1] + m4 * u4[NEQ - 1];
-                X_err[NEQ - 1]   = e1 * u1[NEQ - 1] + e2 * u2[NEQ - 1] + e3 * u3[NEQ - 1] + e4 * u4[NEQ - 1];
+                // Apply the same stages and error weights to the passive
+                // integral as to temperature; never clamp it as an abundance.
+                for (int i = NUM_SPEC; i < NEQ; ++i) {
+                    X_trial[i] = stage_state_sum(c, i, m1, m2, m3, m4).value();
+                    X_err[i] = e1 * u1[i] + e2 * u2[i] + e3 * u3[i] + e4 * u4[i];
+                    if (!std::isfinite(X_trial[i])) admissible = false;
+                }
 
                 // The 1e11 K upper guard bounds the Timmes EOS/network domain
                 // used by the burn solvers; smallt supplies the lower guard.
-                if (!std::isfinite(X_trial[NEQ - 1]) || X_trial[NEQ - 1] < burn_cfg.smallt || X_trial[NEQ - 1] > 1.0e11
+                if (!std::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt || X_trial[NUM_SPEC] > 1.0e11
                     || !std::isfinite(mass_sum) || mass_sum <= 0.0) {
                     admissible = false;
                 }
@@ -303,18 +384,18 @@ private:
 #pragma omp simd
                         for (int i = 0; i < NUM_SPEC; ++i) X_trial[i] *= inv_projected_sum;
 
-                        // Evaluate the nuclear/thermal energy closure.
-                        arch::math::CompensatedSum nuclear_mass_delta;
-                        for (int i = 0; i < NUM_SPEC; ++i) {
-                            const double molar_delta =
-                                (X_trial[i] - X_old[i]) / NetType::aion(i);
-                            nuclear_mass_delta.add(
-                                molar_delta * NetType::energy_weight(i));
+                        // Error scratch is no longer live after its norm. Use
+                        // the actual stage increment for closure and handoff;
+                        // endpoint subtraction can erase a sub-ULP transfer.
+                        for (int i = 0; i < NEQ; ++i) {
+                            arch::math::CompensatedSum increment;
+                            add_weighted_stages(increment, c, i, m1, m2, m3, m4);
+                            X_err[i] = increment.value();
                         }
-                        const double integrated_enuc = NetType::ENERGY_CONVERSION
-                            * nuclear_mass_delta.value();
-                        const double old_eint = eos.get_eint_from_T(rho, X_old[NEQ - 1], X_old);
-                        const double new_eint = eos.get_eint_from_T(rho, X_trial[NEQ - 1], X_trial);
+                        trial_energy = OdeMath::integrated_burn_increment_energy<NetType>(X_err);
+                        const double integrated_enuc = trial_energy;
+                        const double old_eint = eos.get_eint_from_T(rho, X_old[NUM_SPEC], X_old);
+                        const double new_eint = eos.get_eint_from_T(rho, X_trial[NUM_SPEC], X_trial);
                         const double thermal_delta = new_eint - old_eint;
 
                         // Resolve changes below the internal-energy comparison scale.
@@ -342,9 +423,11 @@ private:
             // Accept the state or reduce the internal step.
             if (step_converged)
             {
+                OdeMath::record_accepted_energy(c.accepted_energy, report, trial_energy);
                 t_current += dt;
 #pragma omp simd
-                for (int i = 0; i < NEQ; ++i) X_ODE[i] = X_trial[i];
+                for (int i = 0; i < NEQ; ++i)
+                    X_ODE[i] = c.accepted.commit(i, stage_state_sum(c, i, m1, m2, m3, m4), X_trial[i]);
 
                 double dt_new = OdeMath::pi_controller(current_err, err_prev, dt, 4,
                                                        burn_cfg.odeconfig.dt_safe_factor,
@@ -368,14 +451,10 @@ private:
                     std::cerr << "[ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
 #endif
                     report.status = BurnOdeStatus::Stalled;
-                    return report;
+                    c.phase = Phase::Complete;
+                    return;
                 }
             }
-        }
-
-        dt_rec = dt;
-        report.status = BurnOdeStatus::OdeSuccess;
-        report.dt_recommended = dt_rec;
-        return report;
+        c.phase = Phase::BeginSubstep;
     }
 };

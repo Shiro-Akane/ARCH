@@ -13,10 +13,8 @@
 #include "NuclearConstants.h"
 #include "RatePair.h"
 
-#include "../../../core/RuntimeParams.h"
+#include "../../../data/GlobalDefs.h"
 #include "../../../core/CompensatedSum.h"
-#include "../../../numerics/linalg/DenseWrap.h"
-#include "../../../numerics/linalg/SparseWrap.h"
 #include "../../species/Species.h"
 
 namespace timmes {
@@ -60,7 +58,7 @@ struct TimmesNetworkSupport {
         }
     }
 
-    TIMMES_HD static void eval_rhs(const double* state, double rho, double eta,
+    ARCH_HEAVY_INLINE static void eval_rhs(const double* state, double rho, double eta,
                                    double* rhs, double& enuc)
     {
         constexpr int N = Derived::NUM_SPECIES;
@@ -85,7 +83,7 @@ struct TimmesNetworkSupport {
     }
 
     template <typename MatrixType>
-    TIMMES_HD static void eval_jacobian(const double* state, double rho,
+    ARCH_HEAVY_INLINE static void eval_jacobian(const double* state, double rho,
                                         double eta, MatrixType& jac,
                                         double* denuc_dX = nullptr)
     {
@@ -124,7 +122,7 @@ struct TimmesNetworkSupport {
         }
     }
 
-    TIMMES_HD static void eval_temperature_derivative(
+    ARCH_HEAVY_INLINE static void eval_temperature_derivative(
         const double* state, double rho, double eta,
         double* drhs_dT, double& denuc_dT)
     {

@@ -10,8 +10,8 @@
 #include "../../core/ArchPortability.h"
 
 /**
- * Dense storage is deliberately limited by dispatch to networks with at most
- * BurnLimits::MAX_SPECIES nuclei. N remains a template parameter so a compact
+ * Dispatch limits dense storage by BurnLimits::MAX_ODE_NEQ, including thermal
+ * and auxiliary equations. N remains a template parameter so a compact
  * network only clears and factors its active extent.
  */
 template <int N>
@@ -81,20 +81,40 @@ struct DenseLUSolver
         DenseMatrixData<STORAGE_N> &A, int p[MAX_N])
     {
         static_assert(STORAGE_N >= ACTIVE_N);
+        // Mass fractions and temperature have different units. Absolute
+        // partial pivoting can replace a composition identity row with the
+        // temperature row, then recover a tiny abundance increment by
+        // subtracting two thermal-size terms. Scale pivot comparisons by the
+        // ORIGINAL row norm; elimination and RHS storage stay unscaled and
+        // every backend consumes the same factorization policy.
+        double row_scale[ACTIVE_N];
+        for (int i = 0; i < ACTIVE_N; ++i) {
+            double scale = 0.0;
+            for (int j = 0; j < ACTIVE_N; ++j) {
+                if (!std::isfinite(A.data[i][j])) return false;
+                scale = std::max(scale, std::abs(A.data[i][j]));
+            }
+            if (scale == 0.0) return false;
+            row_scale[i] = scale;
+        }
 #pragma omp simd
         for (int i = 0; i < ACTIVE_N; ++i) p[i] = i;
 
         for (int i = 0; i < ACTIVE_N; ++i) {
             double max_value = 0.0;
+            double max_scaled = -1.0;
             int pivot_row = i;
             for (int j = i; j < ACTIVE_N; ++j) {
                 const double value = std::abs(A.data[p[j]][i]);
-                if (value > max_value) {
+                if (!std::isfinite(value)) return false;
+                const double scaled = value / row_scale[p[j]];
+                if (scaled > max_scaled) {
                     max_value = value;
+                    max_scaled = scaled;
                     pivot_row = j;
                 }
             }
-            if (max_value < 1.0e-20) return false;
+            if (!std::isfinite(max_value) || max_value < 1.0e-20) return false;
             std::swap(p[i], p[pivot_row]);
 
             const double pivot_inverse = 1.0 / A.data[p[i]][i];

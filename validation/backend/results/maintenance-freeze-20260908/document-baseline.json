@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "scope": "preserved-reviewed-documents-before-maintenance-edits",
+  "original_review": {
+    "path": "/home/shiroakane/ARCH/validation/backend/results/final-acceptance-20260907/release-73a9cf50/delivery-review.json",
+    "sha256": "9bf9f7de57fd4616bbf7dfe6ebeda508132df2162ed510e3fc4e96a483904857"
+  },
+  "archive": {
+    "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/baseline-reviewed-documents.tar.gz",
+    "sha256": "9ae1a3ba402b21a27e0c547d60569dedc2401f8cebfc3093bb7f1e02baef1e8f"
+  },
+  "files": [
+    {
+      "path": "/home/shiroakane/ARCH/README.md",
+      "sha256": "f4d6c054849dd255f808a316868a5ba3acecb5e3a0013d9da59d2f998d373d7c"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/README.zh-CN.md",
+      "sha256": "e487635adb8f2f5f96f6fb4012035fd550d5486239cd63fa96a26ec6b36971f5"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/docs/Reference.md",
+      "sha256": "b69325422a4e77caf38dce68848afad8277a94db768325d59116646154510bfd"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/docs/Reference.zh-CN.md",
+      "sha256": "e6079bd8ea2459058ebfea2cca187fef2b92250be4c34df6da9d9ce4c5530ee4"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/docs/CudaBackendStatus.md",
+      "sha256": "2ab2a31734fd6f5d01a27c60ecbe149033f1e251f76f55df5cf4c9bd46b691bd"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/docs/CudaBackendStatus.zh-CN.md",
+      "sha256": "24ab5edd229ddba69aa2d0040f8be6c4e79ddf996641da168c26b2e2cd97bf23"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/README.md",
+      "sha256": "b2bfdc68830799a4ad73740a1dae0f5c34276f880778f0039b4c7a4250716263"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/README.zh-CN.md",
+      "sha256": "4087758d7fd889ff8883b273333de72ecb98769650bb7da566100e6ad690c2c4"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/amr/README.md",
+      "sha256": "7db4ecb8631bef743cf5efa6b8d8414224871927cd21ac116a2b6d3f802ed035"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/amr/README.zh-CN.md",
+      "sha256": "71cc04a462fce1d60adb59bf98d915c9e17b0ba9e79e4e76be15581b38ce75be"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/burn/README.md",
+      "sha256": "7970efa85a288d3f368de69f393bc6083a8a8b2c33d837db261c912ffd5d0072"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/burn/README.zh-CN.md",
+      "sha256": "8242d9f68dbf9643b527c41407444ef859ea99fde9d734bd9e995f68ac81ffae"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/diffusion/README.md",
+      "sha256": "a08a35dcd78cd40237c38313a4c45cbdd6e9320f9729fc5c016185c9f4f5c15a"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/diffusion/README.zh-CN.md",
+      "sha256": "6b6ead64cea67e1e0337c45d6a135fe67c0085404d064e98a96812f177a3d507"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/eos/README.md",
+      "sha256": "1157fe426b47f9a4395d0cfa0baeff2259e405da7325a7a2ae6716e266a7e00f"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/eos/README.zh-CN.md",
+      "sha256": "7524de36713c4c15930857b2ac8c8c97793e24565c6208481b27519372460a51"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/gravity/README.md",
+      "sha256": "1f63f71f6b456382a730a6909d2d01700e9a52665f359a1721b397ce2fa6d924"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/gravity/README.zh-CN.md",
+      "sha256": "fad77200c03d017061dec1814a4a83b1afefd4e6be0da8f34072bc08149b82b7"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/hydro/README.md",
+      "sha256": "9866b0a40093b694661f27c921cfbfe3073fb351009390a82326a5e12cce8b88"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/hydro/README.zh-CN.md",
+      "sha256": "489af16f639eaf00fe1ad9dd764c934ba50c89184e73cde8710b4bc9a840d701"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/network/README.md",
+      "sha256": "702b674261f2c06e27b5cbd0ed2ba1a08a9f00e53a8868129d02b1e4f2f33cf2"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/network/README.zh-CN.md",
+      "sha256": "71b847eb6ec6843f086baa49e386c51c49fb0a9f3d5cf1598371336fc92da2b9"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/restart/README.md",
+      "sha256": "2d9c9093f982ea2c131431362b8486bd14d1867f76fafbdbed923e6b14d2e84b"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/restart/README.zh-CN.md",
+      "sha256": "ffbfaff52c5bbf19c061d1070ab9f77d7731aeb7799a9010842c32b10d9135a7"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/THIRD_PARTY_NOTICES.md",
+      "sha256": "471d1a028427ad2789f328012eb41c4f5a94a6fc75b460d43b4ca0e014fdf8b3"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/THIRD_PARTY_NOTICES.zh-CN.md",
+      "sha256": "fbe93de164f8510f306c84465d5ecabd88e9a762951955cd9d933baeb58a0dd2"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/cold-core-first-law-20260907/release-909/README.md",
+      "sha256": "c2de9e25bda9edea1886afe66c5692c976cb72ce4586582b14a1c8a9eeab76c3"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md",
+      "sha256": "f18c4dca3988240b4752f30d381dc836abb23549b57417812591aaafc009935a"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/README.md",
+      "sha256": "99f145170d54702a230bb7b595bffe1299aee26a4ecfc253c766318ad9f2bf87"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/README.zh-CN.md",
+      "sha256": "e54ddd89c34ba4fc59face86435229ecf35b3c93af1fb889cfad79d8281a8fbe"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/final-first-law-20260907/README.md",
+      "sha256": "5aa3161f601fa3386c6a73ff8944dcd33603aa95dc2c38f9d0ebc189dbd92aba"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/final-first-law-20260907/README.zh-CN.md",
+      "sha256": "25fd99b647679002c2dc112b5500337b8ae7e7aef599dc0d0942c3b86aba7ee7"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/README.md",
+      "sha256": "b5b2eeca89b5715ed9e624ebdd39e1be77c11200e6c01283bfcb4c9b41773f65"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/README.zh-CN.md",
+      "sha256": "40f69e01901fa3eb080d33d920a4ff69cb09be58a09f0be5e27466233a21d0f1"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/src/physics/network/custom/README.md",
+      "sha256": "c7422d8a2437dedcc431e6e8dcce8f35978df6f6f860e0203c74646043c24eb3"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/src/physics/eos/TabularEOS.md",
+      "sha256": "dde1001f741fd94dadaabb07ccaca39f21f7eea5bdf8be1ee2f3b08efa6698ca"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/src/physics/eos/TabularEOS.zh-CN.md",
+      "sha256": "f1e198933e39cef5f4249294f9318e9f7d6f05366582bc31d1ea1c32d1d389cd"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/src/physics/constant/README.md",
+      "sha256": "74ca87a2437665734322821095cf8cba534115a709e7f342bb80005d4aafd459"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/docs/development/ImplementationOwnership.md",
+      "sha256": "8354b5c7d62144a794564f476b9d337778e5cc1f834984f37a911de3e7056357"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/final-acceptance-20260907/release-73a9cf50/delivery-assets-README.md",
+      "sha256": "8572d3bc4bd8a5a1be353e9bb2abc6beff0e69f3cfa0d61e1c1ecbb55053fdca"
+    }
+  ]
+}

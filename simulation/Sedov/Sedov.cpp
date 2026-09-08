@@ -9,6 +9,7 @@
  */
 
 #include <cmath>
+#include "physics/constant/PhysicalConstants.h"
 #include <iostream>
 #include <numbers>
 #include <stdexcept>
@@ -58,7 +59,7 @@ public:
         }
 
         double injection_measure = 2.0 * deposit_radius_;
-        const double pi = std::numbers::pi_v<double>;
+        const double pi = arch::constants::math::pi;
         if (dim_ == 2) {
             // Energy per unit depth for a Cartesian circular blast.
             injection_measure = pi * deposit_radius_ * deposit_radius_;

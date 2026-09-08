@@ -37,7 +37,7 @@ ARCH 暴露两个接口层级：
 | Experimental | 已实现，但验证或接口稳定化尚未完成。 |
 | Reserved | 已解析或命名，留待未来实现。 |
 
-ARCH 构建一个可执行文件和一个内部 object target，其扩展契约工作在源码层。
+ARCH 构建一个可执行文件，内部 object target 按功能拆分；其扩展契约工作在源码层。
 
 科学来源与接口稳定性分开记录。反应网络、NSE 公式和 Helmholtz EOS 可追溯到 Frank Timmes；恒星热传导数学的直接软件来源为 AMReX-Astro Microphysics。逐文件边界和保留条款见 [`THIRD_PARTY_NOTICES.zh-CN.md`](../THIRD_PARTY_NOTICES.zh-CN.md)。除非文件头或该说明明确指出，其他模块不声明外部来源。
 
@@ -48,14 +48,22 @@ ARCH 构建一个可执行文件和一个内部 object target，其扩展契约�
 | 功能 | 接受值或接口 | 当前状态 | 说明 |
 | --- | --- | --- | --- |
 | Host 执行 | `compute_backend = cpu` | 支持 | OpenMP 在构建时配置。 |
-| CUDA 执行 | `compute_backend = cuda/auto` | 实验性 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
+| CUDA 执行 | `compute_backend = cuda/auto` | 支持 | 使用 `ARCH_ENABLE_CUDA=ON` 构建；显式 CUDA fail-closed，`auto` 只能在构造前回退。 |
 | 维度 | 正的 `nblockx1`；尾部 block 数可为零 | 支持 | `nblockx2=0,nblockx3=0` 为 1D；`nblockx3=0` 为 2D。 |
-| 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 支持 | enum-like 输入不区分大小写并规范保存；CUDA 仅接受 Cartesian。 |
-| AMR | `lrefinemax >= 0` | CPU 支持；CUDA 实验性 | 每个活动维固定 16 个单元的 block 尺寸。CUDA 将 topology、Morton 与守恒 migration 保持为 Host 权威，在 device 执行 ghost 与 reflux。 |
+| 几何 | `cartesian`、`cylindrical`、`spherical` | CPU 与 CUDA 均支持 | 名称不区分大小写并规范保存。两后端共用物理单元体积、面面积、CFL 长度、扩散间距和几何源项。 |
+| AMR | `lrefinemax >= 0` | CPU 与 CUDA 均支持 | 每个活动维固定 16 个单元的 block 尺寸。topology/Morton 决策留在 Host；指标、守恒 migration、ghost 与 reflux 在 device 调用共用数值叶子。 |
 | 自重力 | `gravity_type = self` | 不可用 | capability gate 会在策略构造前拒绝。 |
 | Jeans 场 | `JENS` | 预留 | 解析器警告并关闭。 |
 
-CUDA 能力被刻意限制为 CPU 能力的子集：支持 Cartesian 1D/2D/3D hydro、已注册的 flux/reconstruction/time-integrator 组合、Ideal/Helmholtz/Tabular3D/Tabular4D EOS、使用 DenseLU 与 NSE 的内置燃烧网络、Cartesian RKL1/RKL2 扩散、静态与动态 multiblock 交换、Host 权威动态 regrid 与 device store transaction、紧凑 Hydro/RKL reflux、通过共用 Host checkpoint schema 的 restart，以及共用 host writer 的 plot/checkpoint 写出。重力、非 Cartesian 几何、生成网络与 SparseKLU 会被拒绝。当前已注册不区分大小写的 `cuDSS` request 以便 capability routing，但尚未实现 CUDA cuDSS provider；CUDA 超过 30 核素和生成式 CUDA 网络的 gate 也仍然存在。因此 cuDSS 执行会 fail closed，仅安装该库不会启用它。若干已实现 CUDA 路径的验证状态仍是 `pending`，不能作为生产级声明。
+CUDA 已实现笛卡尔、柱坐标和球坐标下的一维、二维与三维流体计算，支持已注册的通量、重构和时间推进组合，以及 Ideal/Helmholtz/Tabular3D/Tabular4D EOS 和 RKL1/RKL2 扩散；这些模块使用共用几何定义。二维球坐标采用 ARCH 的极坐标 `(r,phi)` 约定。运行期组分临时存储去掉了被动输运与 AMR 的 30 组分存储上限；DenseLU 独立受 31 个总 ODE 方程的限制。动态 AMR 由主机制定拓扑计划，设备计算指标、事务性迁移状态，并执行多块交换与流体/扩散通量修正。重启采用共用检查点格式；输出所需状态显式同步到主机后，由共用写入器处理。
+
+四个内置燃烧网络支持 DenseLU 和可选的 cuDSS 求解，并保留 NSE。清单中声明
+`device_callable_math=true` 的版本 4 生成网络包在 CPU 与 CUDA 上使用同一套数学。
+已识别的内嵌弱反应率表由各后端分别保存为只读数据。版本 3 或尚未转换为设备端
+实现的网络包仍只能在 CPU 上运行。cuDSS 要求实际链接其可选求解库，KLU 仅用于
+CPU；不兼容的显式后端／求解器组合会被拒绝。外部重力在两端调用同一个逐阶段
+源项算子。[后端指南](CudaBackendStatus.zh-CN.md)说明执行职责；
+[验证索引](../validation/README.zh-CN.md)记录数值检查、应用结果与发布验收状态。
 
 ### 数值策略
 
@@ -66,11 +74,11 @@ CUDA 能力被刻意限制为 CPU 能力的子集：支持 Cartesian 1D/2D/3D hy
 | MUSCL limiter | `minmod`、`superbee`、`vanleer`、`mc` | 已 dispatch；包括 `none` 在内的未知值回退到 MinMod |
 | 流体时间推进 | `Euler`、`RK1`；`RK2`、`SSPRK2`；`RK3`、`SSPRK3` | Euler、SSPRK2、SSPRK3 |
 | 扩散时间推进 | `RKL2`（默认）、`RKL1` | 独立扩散算子中 RKL2 为二阶；RKL1 是可选一阶方法 |
-| EOS | `ideal`、`tabular`、`helmholtz` | CPU 与实验性 CUDA 后端均已 dispatch |
-| 重力 | `none`、`external` | CPU 支持；未知字符串与 `self` 会在构造前被拒绝 |
+| EOS | `ideal`、`tabular`、`helmholtz` | CPU 与 CUDA 均已 dispatch |
+| 重力 | `none`、`external` | CPU/CUDA 共用逐阶段源项；未知字符串与 `self` 会在构造前被拒绝 |
 | 网络 | `aprox13`、`aprox19`、`aprox21`、`iso7`；`custom:<id>` | 内置网络及 CMake 自动发现的生成网络 |
 | 燃烧 ODE | `BE_NR`、`ROS4`、`BD` | 均已 dispatch，并由单区 CPU 回归覆盖 |
-| 线性求解 | `Auto`、`DenseLU`、`SparseKLU`、`cuDSS` | 不区分大小写；接受 `dense_lu`、`sparse_klu`、`cu_dss` alias。`Auto` 对不超过 30 个核素具体化为 DenseLU；超过 30 时，CPU candidate 为 SparseKLU、CUDA candidate 为 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在 backend 构造前被拒绝。当前 cuDSS provider 与 CUDA >30/生成网络路径不可用，因此 cuDSS 执行 fail closed。 |
+| 线性求解 | `Auto`、`DenseLU`、`SparseKLU`、`cuDSS` | 不区分大小写；接受 `dense_lu`、`sparse_klu`、`cu_dss` 别名。`Auto` 对不超过 31 个总 ODE 方程选择 DenseLU，计数包含温度及可选辅助能量状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA；不兼容的显式组合会在后端构造前报错，不替换求解器。缺少求解库或已注册的 CUDA 网络执行代码时也会明确报错。 |
 
 策略名称按 ASCII 大小写不敏感；但不同 dispatcher 接受的 alias 与 fallback 行为仍不一致。
 
@@ -145,9 +153,9 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 
 ### 构建复现性与编译期妥协
 
-Release 编译使用 `-O3 -march=native -ffast-math -DNDEBUG`。验证记录应包含编译器、flags、OpenMP 线程数、硬件和数值容差。
+Release 保留优化和 `-march=native`，但共用构建契约在支持的 GNU/Clang host 编译器上显式关闭 fast-math 与浮点收缩（`-fno-fast-math -ffp-contract=off`），NVIDIA CUDA 则使用 `--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`。Host 链接选项也阻止 fast-math 启动状态。这维护补偿求和与冻结算术策略，不保证跨机器逐位复现。验证记录应包含编译器、flags、OpenMP 线程数、硬件和数值容差。
 
-dispatch 翻译单元以 `-O1` 编译，并关闭 LTO、使用 `-fno-inline-functions-called-once`，因为积分器 × 通量 × 重构 × EOS 模板矩阵原本会让单个翻译单元消耗数 GB 内存。燃烧策略在进入完整通量矩阵前通过 `BurnerHandle` 类型擦除，减少 network/ODE 在流体实例中的乘法组合。性能和正确性都需要实测。
+CPU dispatch 翻译单元使用 `-O1` 和 `-fno-inline-functions-called-once`，控制积分器、通量、重构与 EOS 组合带来的编译内存开销。工具链支持时，Release 仍启用 LTO。燃烧策略在进入完整通量矩阵前通过 `BurnerHandle` 类型擦除，减少各流体路径重复实例化网络和 ODE 的开销。CUDA 按同样的功能职责拆分，并单独控制后端编译任务的并发数。
 
 ## 构建、注册和命令行
 
@@ -155,10 +163,14 @@ dispatch 翻译单元以 `-O1` 编译，并关闭 LTO、使用 `-fno-inline-func
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
+cmake --build build --parallel 1
 ```
 
 CMake 在配置时获取 HighFive，并链接 HDF5 C++/HL 库。KLU 默认启用：CMake 先查找已安装的 KLU package；若不存在，则获取固定的 SuiteSparse v7.13.0，只构建 KLU、BTF、AMD、COLAMD 与 SuiteSparse_config。EOS `.dat`/`.h5` 资源可能需要 Git LFS。
+
+CUDA 稀疏燃烧额外通过默认开启的 `ARCH_ENABLE_CUDSS=ON` 可选发现 cuDSS，可用 `CUDSS_ROOT` 指向安装前缀，用户目录安装也受支持。provider 要求已审查的 0.8 API 与匹配的运行库版本，只有已注册网络/EOS 路由与库实际链接时才公布能力。缺少 cuDSS 不妨碍只用 dense 的 CUDA 构建，但会拒绝稀疏请求。[README 构建示例](../README.zh-CN.md#构建)展示了隔离可执行文件输出与 `tools/run_memory_guarded.py`。不确定可用内存时先使用 `--parallel 1`，再按测量结果调整重型任务与总任务的并发上限。保护工具允许有限的 swap 增长，在内存或 I/O 持续停顿时停止编译。模拟容量按具体工作负载另行测量。
+
+`ARCH_CUDSS_IR_STEPS` 是非负整数 CMake 选项（默认 `2`），控制 cuDSS 在设备端执行的线性解精化轮数；设为 `0` 可供诊断关闭。它只影响线性 backend，不修改 ODE 容差或 Auto 阈值：不超过 31 个总方程使用 DenseLU；30 个核素加温度和弱能量积分已经是 32 阶系统。provider 保持 cuDSS `IR_TOL=0`，求解后仍使用 ARCH 原有的原矩阵逐分量残差检查，不能仅凭库返回成功就接受修正量。该选项仅作用于 Host provider 的编译，不重新实例化 CUDA 网络/EOS kernel。参见 [cuDSS 精化契约](https://docs.nvidia.com/cuda/cudss/types.html#cudssconfigparam-t)。
 
 相关 cache 选项为 `ARCH_ENABLE_KLU`（默认 `ON`）、`ARCH_FETCH_SUITESPARSE`（默认 `ON`）、`ARCH_CUSTOM_NETWORK_ROOT`（生成 package 根目录）和 `ARCH_CUSTOM_NETWORKS`（可选的分号分隔 custom ID 列表）。`BUILD_TESTING=ON` 注册维护中的理想气体 tabular EOS 与 161 方程 KLU 回归；restart、AMR、真实来源表和生成式网络的审计证据统一保留在 `validation/`，不为每次审计新增 test target。
 
@@ -329,6 +341,8 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `tstep_change_factor` | custom double | `1.2` | 第一步后的最大宏步增长 |
 
 `ROS4` 使用匹配的四 stage、四阶、L-stable tableau。每个内部步计算一次 Jacobian，分解一次 `I - gamma*dt*J` 并由全部 stage 复用。在 aprox13/Helmholtz 单区测试中，它通过当前 BE_NR 跨求解器容差。生产研究仍需给出子步/容差收敛序列，并比较核素和能量历史，尤其是在扩展网络或 EOS 耦合时。
+
+BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE 误差尺度的十分之一，再以 backward-Euler 与梯形端点更新之差估计二阶局部误差；接受的解仍是一阶 backward Euler。`ode_rtol`/`ode_atol` 控制该局部估计，不构成全局相对误差上界。三种 ODE 共用固定密度第一定律的 RHS 与 Jacobian，包含 EOS 内能的组分依赖和比热导数。具体方程与能量交接见[网络技术说明](physics/TimmesNetworks.zh-CN.md#4-温度方程jacobian-与-lhs-约定)，独立时间/能量检查见[燃烧验证](../validation/burn/README.zh-CN.md)。
 
 最后三个参数是 custom-map 控制项。`xc12` 等网络专用初始分数由所选网络的 setup 实现消费。
 
@@ -580,6 +594,15 @@ virtual void update_patch(
 
 ### EOS 策略 — Source extension
 
+项目自有物理常数由
+[`PhysicalConstants.h`](../src/physics/constant/PhysicalConstants.h)
+提供唯一的 CPU/CUDA 定义，按学科组织并明确单位。当前统一采用 SI 定义值和
+CODATA 2022，不再按 EOS 分别维护数值版本。π 引用 C++20 `<numbers>`，辐射和
+Gaussian 电荷的派生量复用基础常数。新增常数前请查看
+[常数与数据边界](../src/physics/constant/README.md)：修改该头文件不会重生成外部
+EOS 表或本轮暂缓处理的核反应网络数据，也不隐式转换任意 code units。
+采用其他常数的旧逐位快照须以独立参考重新验证，不能作为当前版本的直接验收依据。
+
 EOS dispatch 使用静态 duck typing。`src/physics/eos/eos.h` 列出期望表面。流体、初始化、燃烧、扩散和诊断会使用：
 
 ```cpp
@@ -644,15 +667,69 @@ struct Solver_NEW {
 };
 ```
 
-四个 Timmes 派生内置网络仍直接注册。custom pynucastro 网络由用户维护 recipe `examples/network/CustomNetworkRecipe.py`，并交给安全边界固定的 `tools/network/GenerateNetwork.py` 生成。每个合法的小写 `NETWORK_ID` 在 `src/physics/network/custom/<id>/` 下形成隔离 package。`aprox` 或 `iso` 开头的 ID 保留。已有 ID 的替换需要 `--replace`，旧版本先保存在 `.backup/`。CMake 可发现任意多个共存 package，C++ dispatch 由生成注册表统一处理。一次运行用 `network_name = custom:<id>` 选择其中一个。
+四个 Timmes 派生内置网络仍直接注册。用户以
+`examples/network/CustomNetworkRecipe.py` 为模板维护自定义 pynucastro 网络配方，
+再交给 `tools/network/GenerateNetwork.py` 生成。每个合法的小写 `NETWORK_ID`
+在 `src/physics/network/custom/<id>/` 下形成独立网络包。`aprox` 或 `iso` 开头的
+ID 保留给内置网络。替换已有 ID 需要 `--replace`，旧网络包先保存在 `.backup/`。
+CMake 通过生成注册表发现多个共存网络包，一次运行用 `network_name = custom:<id>`
+选择其中一个。
 
-adapter 将 pynucastro 的 molar RHS/Jacobian 转为 ARCH 质量分数形式，把核能与弱中微子能量写入 ODE RHS，并隔离 SimpleCxx header namespace。energy Jacobian 当前不含弱中微子能量对组分的导数。custom 网络设置 `SUPPORTS_NSE=false`，温度 Jacobian 列采用相对步长 `1e-4` 的中心差分。生成器版本 3 只删除编译期字面零 Jacobian 调用；运行值为零的结构项仍保留，以保证 KLU refactor 安全。默认 `NUCLEI` 路径会把没有连通反应的请求核素保留为 inert species，并拒绝重复项。CMake 会校验 manifest，并拒绝缺少版本 3 防呆的旧 package。弱中微子能量占主导的网络尚不在已接受契约内，因为其组分导数和 burn solver 的积分弱能闭合仍待实现。生产验收覆盖这些边界。
+本文的生成流程和验证配方使用 pynucastro 2.12.0。配套 Python 环境与
+构建命令见[网络准备步骤](../validation/network/README.zh-CN.md#复现这些记录)。
 
-矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 30 核素（`BurnLimits::MAX_SPECIES`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号模式，并调用 KLU analyze/factor/refactor/solve。解析阶段保留 `linear_solver = Auto`，直到分别形成具体的 CPU 与 CUDA candidate：不超过 30 核素时两者均为 DenseLU；超过 30 时 CPU candidate 为 SparseKLU，CUDA candidate 为 cuDSS。显式 SparseKLU 仅适用于 CPU，显式 cuDSS 仅适用于 CUDA。显式 CPU+cuDSS 或 CUDA+SparseKLU 会在 capability resolution 阶段、backend 构造前被拒绝；因此当 `compute_backend = auto` 时，显式 solver 只能选择与其兼容的 backend。显式 DenseLU 会拒绝大型网络。
+适配层将 pynucastro 的摩尔丰度 RHS/Jacobian 转为 ARCH 质量分数形式，把核能与
+弱中微子能量写入 ODE RHS，并隔离 SimpleCxx 头文件的命名空间。已识别的弱表
+包含 rho*Ye 的组分链式导数及有符号能量源梯度。自定义网络设置
+`SUPPORTS_NSE=false`；完整 RHS 的温度 Jacobian 列使用共用四阶差分策略、
+精度导出的步长及边界模板。生成器版本 3 只删除编译期字面零 Jacobian 调用；
+运行值为零的结构项仍保留，以保证 KLU 安全地复用结构并重新分解。
+默认 `NUCLEI` 路径会把没有连通反应的指定核素保留为不参与反应的组分，并拒绝
+重复项。CMake 会校验清单，并拒绝缺少版本 3 安全检查的旧网络包。
+需要积分有符号弱反应损失的网络增加一个源项状态，使用同一套 BE_NR/BD/ROS4
+阶段、误差控制与回滚；接受步能量包含核能与该积分。受控 Urca 轨迹已在固定热容
+及 Helmholtz 闭合下通过独立参考检查；代表性的生成网络 Helmholtz 应用也已在
+两端通过。测试范围、原误差预算与复现命令见[网络验证](../validation/network/README.zh-CN.md)，
+AMR 与重启则有各自的[应用验收记录](../validation/amr/README.zh-CN.md)。
 
-SparseKLU 要求构建时启用 KLU。cuDSS 当前只是可解析但 fail-closed 的 request：尚未提交 CUDA provider，CUDA 仍拒绝超过 30 核素与生成网络，仅安装 cuDSS 库不会改变这些 gate。稀疏数值采用 CSC 存储，但当前 entry-to-slot 查询仍分配 `N*N` 个整数；保留证据覆盖到 200 核素，不构成无界规模保证。
+生成器版本 4 增加一个可移植数学头文件，供普通 C++ 适配层与 CUDA 实例化共用，
+保留原反应表达式及核数据约定。能量权重来自生成的核质量与转换因子，通过守恒
+重子质量偏移改善点积条件。已识别的小型不可变元数据可在设备端调用，不解引用
+主机全局数组。两个后端通过显式视图访问内嵌弱表：CPU 借用主机数据，CUDA
+存储管理器上传设备数据，并在网格存储变化时保留它们。插值、反应和 ODE 数学
+均只维护一套。各网络包使用独立的头文件保护和局部作用域的屏蔽宏，允许多个网络包共存。
+符号 Jacobian 结构来自声明的写入（先删除字面零），而不是采样数值非零；
+无法识别的写入下标会被拒绝。只有生成器版本至少为 4 且清单声明
+`device_callable_math=true` 时，CMake 才启用 CUDA 执行。版本 3 与尚未转换为
+设备端实现的网络包仍只能在 CPU 上运行；无法识别的弱表布局会在写入最终网络包
+之前被拒绝。可移植生成不改变前述科学验收要求或自定义网络的 NSE 限制，
+数学／求解器短测也不能替代完整轨迹验收。
 
-生成或替换 package 后必须重新执行 CMake。写入前先用 `--check`；可用 `-DARCH_CUSTOM_NETWORKS="id1;id2"` 限制昂贵构建。通用源码扫描排除整个 custom 子树，因此只编译被选择的 adapter。pynucastro 只在生成时需要，ARCH 运行时不依赖 Python。多规模生成式网络兼容证据统一见 [validation/network](../validation/network/README.zh-CN.md)。
+矩阵和线性求解器是独立模板参数。`DenseWrap` 是不超过 31 个总 ODE 方程
+（`BurnLimits::MAX_ODE_NEQ`）的固定尺寸专用后端；`SparseWrap` 保留 CSC 符号
+模式，并调用 KLU analyze/factor/refactor/solve。解析阶段保留
+`linear_solver = Auto`，各后端在检查支持能力时确定具体求解器：不超过 31 个
+总方程时均选择 DenseLU；超过 31 时 CPU 选择 SparseKLU，CUDA 选择 cuDSS。
+计数必须包含核素、温度和辅助源项状态：无源积分时最多 30 核素，含一个源积分
+时最多 29 核素，不能仅按核素数判断。显式 SparseKLU 仅适用于 CPU，显式 cuDSS
+仅适用于 CUDA。显式 CPU+cuDSS 或 CUDA+SparseKLU 会在能力检查阶段、后端构造
+前报错；因此当 `compute_backend = auto` 时，显式求解器只能选择与其兼容的后端。
+显式 DenseLU 会拒绝超过方程数限制的系统。
+
+SparseKLU 要求构建时启用 KLU。CUDA cuDSS 要求实际链接可选的 0.8 版求解库，
+且网络已注册设备端执行代码。CUDA 执行器复用共用的 BE_NR/ROS4/BD ODE 续算
+接口，只有内存、批量执行和稀疏库操作按后端区分。CUDA 使用声明的 CSR 结构
+和有界的逐单元临时工作空间，在内存预算内保留分解结果，不使用稠密的 `N*N`
+矩阵位置查询表。CPU `SparseWrap` 继续使用 CSC 数值及原有 `N*N` 整数查询表。
+内存需求取决于稀疏分解填充和实际工作负载。对于超大网络，模型的科学可靠性
+取决于核素集合、反应数据和适用范围；当前覆盖见
+[网络验证](../validation/network/README.zh-CN.md)。
+
+生成或替换网络包后必须重新执行 CMake。写入前先用 `--check`；可用
+`-DARCH_CUSTOM_NETWORKS="id1;id2"` 限定本次构建的网络。通用源码扫描排除整个
+custom 子树，因此只编译所选网络的适配代码。pynucastro 只在生成时需要，ARCH
+运行时不依赖 Python。多规模生成网络兼容证据统一见
+[validation/network](../validation/network/README.zh-CN.md)。
 
 ### 扩散 — Source extension/Experimental
 
@@ -702,7 +779,7 @@ Data/<requested field>       [block, z?, y?, x] 内部单元数组
 
 `HDF5Writer` 记录 PLT 写入失败，但继续运行模拟。
 
-### Checkpoint 文件版本 3
+### Checkpoint 文件版本 4
 
 属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn`、`resume_after_regrid`、`eos_type`、`ideal_gamma`、`burn_enabled`、`active_network`、`nse_enabled`、`eos_table_path` 和 `eos_table_sha256`。checkpoint 中的 `eos_type` 记录已解析的规范策略（`ideal`、`helmholtz`、`tabular3d` 或 `tabular4d`），因此自动识别出的表 rank 属于 restart 身份，而不是沿用配置中的原始 `tabular` 拼写。燃烧关闭时 `active_network` 必须为 `none`。时间步字段分别恢复增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。表路径仅用于审计；兼容性按 SHA-256 内容身份判断，因此同一份表可以在不同安装位置之间移动。表加载器会在加载前后计算摘要，并将缓存 owner 绑定到该摘要；传给每次 checkpoint 的不可变身份描述的是 EOS owner 实际驻留的字节，而不是稍后重新读取路径的结果。
 
@@ -712,15 +789,18 @@ Data/<requested field>       [block, z?, y?, x] 内部单元数组
 Blocks/level
 Blocks/logical_x1, logical_x2, logical_x3
 Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng, Data/enuc_rate
-Data/rhoX    [species, block, interior cell]
+Data/rhoX, Data/X    [species, block, interior cell]
 Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
+
+`Data/X` 保存两端实际演化的原始质量分数。读取器检查它与保存的 `rhoX` 是否一致，并直接恢复质量分数，避免先乘密度再除密度造成的舍入损失。版本 3 仍可读取，其中的物理配置身份和 ENUC 状态保持有效，但质量分数需要从 `rhoX` 重建。新文件同时保存两种表示。
 
 重启兼容性检查维度、几何、每 block 单元数、EOS 策略、适用时的理想气体 gamma、反应网络身份、EOS 表内容、燃烧与 NSE 开关，以及每个按顺序排列的核素名称和热力学属性。`ENUC` 在驱动动态细化时属于重启相关状态，因此会被持久化。结构错误或已有来源身份不匹配会在发布层次结构前抛出异常。版本 1 和版本 2 仍可读取，但由于缺少有序科学身份与 `ENUC`，会明确报告为 legacy/unverified；版本 1 还没有控制器状态，因此流体重新计算 CFL，燃烧从 `dt_init` 保守恢复。step-zero 与已经到达终点的 restart 不会重复写初始/最终文件。CPU/CUDA 读写完全相同的 Host schema；后端名称刻意不参与兼容性判断。
 
 ## 已知限制
 
-- CUDA 是实验性的 Cartesian 后端，尚不能作为生产级 CPU parity 声明。动态 AMR 与 restart 已实现，但仍需真实 device 上的守恒与 split-run 资格验证。重力、非 Cartesian 几何、生成网络与 device 稀疏求解仍不可用；两个后端都尚未实现自重力与 Jeans 指标。
+- 验证结果对应[验证索引](../validation/README.zh-CN.md)注明的受测工作负载与配置；整体验收状态也由该索引统一记录。
+- CUDA 生成网络要求具备设备数学接口的版本 4 生成包。旧版 CPU-only 包需要重新生成，未转换的布局不支持 CUDA。两后端均未实现自重力、Jeans 指标或自定义网络 NSE。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据以及完整的构建/运行来源（参数文件、编译器、求解器设置、边界与 commit）仍位于 HDF5 外部。版本 3 已内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 仍无法保证跨机器逐位复现。
@@ -729,6 +809,9 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 - Sedov 在单元中心沉积归一化的连续有限半径 profile，因此离散注入能量随分辨率变化。
 
 ## 源码索引
+
+按模块浏览请从[源码导览](../src/README.md)开始；CUDA 内部的功能分组见
+[runtime 索引](../src/cuda/runtime/README.md)。下表列出共用接口，不重复各目录的文件清单。
 
 | 区域 | 主要文件 |
 | --- | --- |

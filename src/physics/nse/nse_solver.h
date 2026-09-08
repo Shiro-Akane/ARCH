@@ -18,6 +18,7 @@
 
 #include "../../core/ArchPortability.h"
 #include "../../core/CompensatedSum.h"
+#include "../constant/PhysicalConstants.h"
 
 namespace arch::nse_detail {
 
@@ -78,7 +79,7 @@ struct NSESolver
      * @return true only after Newton convergence and an independent
      *         mass/charge-conservation check
      */
-    ARCH_HOST_DEVICE static bool solve(double T, double rho, double Ye,
+    ARCH_HEAVY_INLINE static bool solve(double T, double rho, double Ye,
                                        const double* X_old, double* X_out,
                                        double& enuc)
     {
@@ -145,6 +146,19 @@ struct NSESolver
         bool converged = false;
         const double q_span = q_max - q_min;
 
+        // A nonlinear projection must leave an already converged input fixed.
+        // Re-solving it from a cold guess can change a few composition ulps;
+        // dividing that artificial binding change by a tiny burn interval
+        // then manufactures a source. Accept the INPUT only when it satisfies
+        // every Saha relation and the original conservation tolerances. This
+        // is a residual test, not a small-energy or small-delta-X cutoff.
+        for (int i = 0; i < NUM_SPEC; ++i) solution[i] = X_old[i];
+        if (check_conservation(solution, Ye)
+            && input_is_equilibrium(log_base, solution, q_span)) {
+            for (int i = 0; i < NUM_SPEC; ++i) X_out[i] = solution[i];
+            return true; // enuc was initialized to exactly zero.
+        }
+
         // Alpha-chain networks have Z/A = 1/2 for every species.  Their two
         // conservation equations are linearly dependent, so the 2x2
         // Jacobian is singular even though the restricted NSE composition is
@@ -183,14 +197,14 @@ struct NSESolver
     }
 
 private:
-    // Constants intentionally reproduce public_nse.tbz/const.dek so the C++
-    // implementation can be compared directly with the reference Fortran.
-    static constexpr double two_pi = 6.283185307179586476925286766559;
-    static constexpr double planck = 6.6260755e-27;       // erg s
-    static constexpr double avogadro = 6.0221367e23;      // mol^-1
-    static constexpr double k_boltzmann = 1.380658e-16;   // erg K^-1
-    static constexpr double atomic_mass_unit = 1.6605402e-24; // g
-    static constexpr double mev_to_erg = 1.602e-6;
+    // Shared current physical constants; network binding data retain their own
+    // declared conversion below, rather than silently reinterpreting the data.
+    static constexpr double two_pi = arch::constants::math::two_pi;
+    static constexpr double planck = arch::constants::quantum::cgs::planck;
+    static constexpr double avogadro = arch::constants::statistical::avogadro;
+    static constexpr double k_boltzmann = arch::constants::statistical::cgs::boltzmann;
+    static constexpr double atomic_mass_unit = arch::constants::atomic::cgs::atomic_mass_unit;
+    static constexpr double mev_to_erg = arch::constants::units::erg_per_mev;
 
     static constexpr int max_iterations = 100;
     static constexpr int max_line_search = 24;
@@ -222,6 +236,66 @@ private:
         }
     }
 
+    ARCH_HOST_DEVICE static double log_mass_fraction(
+        const std::array<double, NUM_SPEC>& log_base, int i,
+        double eta_n, double eta_p)
+    {
+        return log_base[i] + (NetType::aion(i) - NetType::zion(i)) * eta_n
+             + NetType::zion(i) * eta_p;
+    }
+
+    ARCH_HOST_DEVICE static bool input_is_equilibrium(
+        const std::array<double, NUM_SPEC>& log_base,
+        const std::array<double, NUM_SPEC>& x, double q_span)
+    {
+        int anchor = -1;
+        for (int i = 0; i < NUM_SPEC; ++i) {
+            if (NetType::spin_weight(i) <= 0.0) {
+                if (x[i] != 0.0) return false;
+            } else {
+                // An underflowed active abundance cannot certify a logarithmic
+                // residual. Use the ordinary safeguarded solver in that case.
+                if (!(x[i] > 0.0)) return false;
+                if (anchor < 0 || x[i] > x[anchor]) anchor = i;
+            }
+        }
+        if (anchor < 0) return false;
+        const double anchor_q = NetType::zion(anchor) / NetType::aion(anchor);
+        const double anchor_potential = (std::log(x[anchor]) - log_base[anchor])
+                                      / NetType::aion(anchor);
+        double eta_n = anchor_potential, eta_p = anchor_potential;
+        if (q_span > charge_degeneracy_tol) {
+            int partner = -1;
+            double best_weight = 0.0;
+            for (int i = 0; i < NUM_SPEC; ++i) {
+                if (NetType::spin_weight(i) <= 0.0) continue;
+                const double q = NetType::zion(i) / NetType::aion(i);
+                const double weight = x[i] * std::abs(q - anchor_q);
+                if (weight > best_weight) {
+                    best_weight = weight;
+                    partner = i;
+                }
+            }
+            if (partner < 0) return false;
+            const double partner_q = NetType::zion(partner) / NetType::aion(partner);
+            const double partner_potential = (std::log(x[partner]) - log_base[partner])
+                                           / NetType::aion(partner);
+            const double charge_potential = (partner_potential - anchor_potential)
+                                          / (partner_q - anchor_q);
+            eta_n = anchor_potential - anchor_q * charge_potential;
+            eta_p = eta_n + charge_potential;
+        }
+        if (!std::isfinite(eta_n) || !std::isfinite(eta_p)) return false;
+        for (int i = 0; i < NUM_SPEC; ++i) {
+            if (NetType::spin_weight(i) <= 0.0) continue;
+            const double residual = std::log(x[i])
+                                  - log_mass_fraction(log_base, i, eta_n, eta_p);
+            if (!std::isfinite(residual) || std::abs(residual) > residual_tol)
+                return false;
+        }
+        return true;
+    }
+
     ARCH_HOST_DEVICE static bool evaluate(
         const std::array<double, NUM_SPEC>& log_base,
         double eta_n, double eta_p, double Ye, Evaluation& out)
@@ -232,9 +306,7 @@ private:
 #pragma omp simd reduction(max:max_log_x)
         for (int i = 0; i < NUM_SPEC; ++i) {
             if (NetType::spin_weight(i) > 0.0) {
-                const double neutron_number = NetType::aion(i) - NetType::zion(i);
-                log_x[i] = log_base[i] + neutron_number * eta_n
-                         + NetType::zion(i) * eta_p;
+                log_x[i] = log_mass_fraction(log_base, i, eta_n, eta_p);
                 max_log_x = std::max(max_log_x, log_x[i]);
             } else {
                 log_x[i] = -std::numeric_limits<double>::infinity();

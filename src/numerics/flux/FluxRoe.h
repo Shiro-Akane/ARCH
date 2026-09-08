@@ -60,7 +60,8 @@ struct FluxRoe
 
         // Construct the Roe-Glaister averaged state.
         RoeGlaisterState roe_state = calc_glaister_state(
-            U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Xi_L, eos);
+            U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R,
+            Xi_L, Xi_R, n_spec, species_flux_out, eos);
 
         // Assemble the Roe flux and entropy-corrected dissipation.
         FluidVector roe_flux = calc_roe_flux_hydro(

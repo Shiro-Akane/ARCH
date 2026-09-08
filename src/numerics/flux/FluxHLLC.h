@@ -26,10 +26,13 @@ struct FluxHLLC
     static std::string name() { return "HLLC + " + ReconstructPolicy::name(); }
     static constexpr int NG = ReconstructPolicy::NG;
 
-    // Construct the HLLC star state U*.
+    // Construct the flux in an HLLC star region from its contact speed and
+    // pressure. This is algebraically F_K + S_K*(U*_K - U_K), but avoids
+    // subtracting large terms to obtain a stationary contact's zero mass and
+    // energy flux. The same Rankine-Hugoniot state serves every backend.
     // Ref: Toro, "Riemann Solvers and Numerical Methods for Fluid Dynamics"
     // U_K^* = rho_K * ((S_K - u_K) / (S_K - S_*)) * [1, S_*, E_K/rho_K + ...]
-    static ARCH_INLINE FluidVector calc_star_state(
+    static ARCH_INLINE FluidVector calc_star_flux(
         const FluidVector &U_K, double rho_K, double un_K, double ut1_K, double ut2_K,
         double p_K, double E_K,
         double S_K, double S_star, int dir)
@@ -37,7 +40,7 @@ struct FluxHLLC
         // scaling factor: omega = (S_K - u_K) / (S_K - S_*)
         double denom = S_K - S_star;
         if (std::abs(denom) < 1e-12)
-            return U_K; // The 1e-12 threshold protects the star-state denominator.
+            return get_flux(U_K, p_K, dir); // Existing degenerate-state fallback.
 
         double omega = (S_K - un_K) / denom;
 
@@ -60,8 +63,17 @@ struct FluxHLLC
 
         double eng_star = rho_star * (specific_E_K + term);
 
-        // Map local normal/tangential components back through the shared helper.
-        return set_flux_vector(rho_star, rho_star * un_star, rho_star * ut1_K, rho_star * ut2_K, eng_star, dir);
+        if (std::abs(sk_minus_u) <= 1e-12) {
+            // Retain the existing guarded pressure-term limit; that modified
+            // state need not satisfy the unmodified contact-pressure identity.
+            const auto star = set_flux_vector(rho_star, rho_star * un_star,
+                rho_star * ut1_K, rho_star * ut2_K, eng_star, dir);
+            return get_flux(U_K, p_K, dir) + S_K * (star - U_K);
+        }
+        const double pressure_star = p_K + rho_K * sk_minus_u * (S_star - un_K);
+        const double mass_flux = rho_star * S_star;
+        return set_flux_vector(mass_flux, mass_flux * S_star + pressure_star,
+            mass_flux * ut1_K, mass_flux * ut2_K, S_star * (eng_star + pressure_star), dir);
     }
 
     template <typename EosType>
@@ -104,7 +116,8 @@ struct FluxHLLC
 
         // Roe Average (Used for S_L, S_R estimates)
         RoeGlaisterState roe_state = calc_glaister_state(
-            U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R, Xi_L, eos);
+            U_L, U_R, p_L, p_R, e_L, e_R, H_L, H_R,
+            Xi_L, Xi_R, n_spec, species_flux_out, eos);
 
         double S_L, S_R;
         calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);
@@ -135,9 +148,8 @@ struct FluxHLLC
             // Branch 2: Left Star Region (S_L < 0 <= S_*)
             if (S_star >= 0.0)
             {
-                FluidVector U_L_star = calc_star_state(U_L, rho_L, un_L, ut1_L, ut2_L, p_L, U_L.eng, S_L, S_star, dir);
-                // Formula: F_L* = F_L + S_L * (U_L* - U_L)
-                hllc_flux = F_L + S_L * (U_L_star - U_L);
+                hllc_flux = calc_star_flux(U_L, rho_L, un_L, ut1_L, ut2_L,
+                    p_L, U_L.eng, S_L, S_star, dir);
 
                 // The left star region carries the left composition.
                 chosen_Xi = Xi_L;
@@ -145,9 +157,8 @@ struct FluxHLLC
             // Branch 3: Right Star Region (S_* < 0 < S_R)
             else
             {
-                FluidVector U_R_star = calc_star_state(U_R, rho_R, un_R, ut1_R, ut2_R, p_R, U_R.eng, S_R, S_star, dir);
-                // Formula: F_R* = F_R + S_R * (U_R* - U_R)
-                hllc_flux = F_R + S_R * (U_R_star - U_R);
+                hllc_flux = calc_star_flux(U_R, rho_R, un_R, ut1_R, ut2_R,
+                    p_R, U_R.eng, S_R, S_star, dir);
 
                 // The right star region carries the right composition.
                 chosen_Xi = Xi_R;

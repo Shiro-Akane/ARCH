@@ -3,28 +3,99 @@
   "description": "Canonical CPU/CUDA uniform-backend parity and qualification cases",
   "cases": [
     {
+      "id": "external_gravity_rk2",
+      "problem": "ExternalGravity",
+      "input": "validation/gravity/inputs/rk2.par",
+      "accepted_steps": [1, 5],
+      "scientific_time": 0.1,
+      "plan_policy": {"eos": "ideal", "time": "rk2"},
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "constant_external_acceleration", "linf_max": 1e-12}
+    },
+    {
+      "id": "external_gravity_rk3",
+      "problem": "ExternalGravity",
+      "input": "validation/gravity/inputs/rk3.par",
+      "accepted_steps": [1, 5],
+      "scientific_time": 0.1,
+      "plan_policy": {"eos": "ideal", "time": "rk3"},
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "constant_external_acceleration", "linf_max": 1e-12}
+    },
+    {
+      "id": "hydro_pcm_n64", "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/pcm_n64.par",
+      "accepted_steps": [1, 5], "scientific_time": 0.1,
+      "resolution": 64, "qualification_group": "smooth_pcm",
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "periodic_entropy_wave", "mass_relative_drift_max": 1e-12, "minimum_l1_order": 0.9, "convergence_pairs": "final"}
+    },
+    {
+      "id": "hydro_pcm_n128", "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/pcm_n128.par",
+      "accepted_steps": [1, 5], "scientific_time": 0.1,
+      "resolution": 128, "qualification_group": "smooth_pcm",
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "periodic_entropy_wave", "mass_relative_drift_max": 1e-12, "minimum_l1_order": 0.9, "convergence_pairs": "final"}
+    },
+    {
+      "id": "hydro_pcm_n256", "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/pcm_n256.par",
+      "accepted_steps": [1, 5], "scientific_time": 0.1,
+      "resolution": 256, "qualification_group": "smooth_pcm",
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "periodic_entropy_wave", "mass_relative_drift_max": 1e-12, "minimum_l1_order": 0.9, "convergence_pairs": "final"}
+    },
+    {
+      "id": "hydro_muscl_n64", "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/muscl_n64.par",
+      "accepted_steps": [1, 5], "scientific_time": 0.1,
+      "resolution": 64, "qualification_group": "smooth_muscl",
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "periodic_entropy_wave", "mass_relative_drift_max": 1e-12, "minimum_l1_order": 1.8, "convergence_pairs": "final"}
+    },
+    {
+      "id": "hydro_muscl_n128", "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/muscl_n128.par",
+      "accepted_steps": [1, 5], "scientific_time": 0.1,
+      "resolution": 128, "qualification_group": "smooth_muscl",
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "periodic_entropy_wave", "mass_relative_drift_max": 1e-12, "minimum_l1_order": 1.8, "convergence_pairs": "final"}
+    },
+    {
+      "id": "hydro_muscl_n256", "problem": "SmoothAdvection",
+      "input": "validation/hydro/inputs/muscl_n256.par",
+      "accepted_steps": [1, 5], "scientific_time": 0.1,
+      "resolution": 256, "qualification_group": "smooth_muscl",
+      "reduction_policy": {"rtol": 2e-10, "atol": 2e-12},
+      "qualification": {"reference": "periodic_entropy_wave", "mass_relative_drift_max": 1e-12, "minimum_l1_order": 1.8, "convergence_pairs": "final"}
+    },
+    {
       "id": "hydro_ppm_n64",
       "problem": "SmoothAdvection",
       "input": "validation/hydro/inputs/ppm_n64.par",
+      "scientific_time": 0.1, "resolution": 64, "qualification_group": "smooth_ppm",
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 2e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng"]},
-      "qualification": {"reference": "periodic_entropy_wave", "positive": ["rho", "eng"], "l1_max": 1e-4, "mass_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_entropy_wave", "positive": ["rho", "eng"], "l1_max": 1e-4, "mass_relative_drift_max": 1e-12, "minimum_l1_order": 2.7, "convergence_pairs": "final"}
     },
     {
       "id": "hydro_ppm_n128",
       "problem": "SmoothAdvection",
       "input": "validation/hydro/inputs/ppm_n128.par",
+      "scientific_time": 0.1, "resolution": 128, "qualification_group": "smooth_ppm",
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 2e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng"]},
-      "qualification": {"reference": "periodic_entropy_wave", "positive": ["rho", "eng"], "l1_max": 1e-4, "mass_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_entropy_wave", "positive": ["rho", "eng"], "l1_max": 1e-4, "mass_relative_drift_max": 1e-12, "minimum_l1_order": 2.7, "convergence_pairs": "final"}
     },
     {
       "id": "hydro_ppm_n256",
       "problem": "SmoothAdvection",
       "input": "validation/hydro/inputs/ppm_n256.par",
+      "scientific_time": 0.1, "resolution": 256, "qualification_group": "smooth_ppm",
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 2e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng"]},
-      "qualification": {"reference": "periodic_entropy_wave", "positive": ["rho", "eng"], "l1_max": 1e-4, "mass_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_entropy_wave", "positive": ["rho", "eng"], "l1_max": 1e-4, "mass_relative_drift_max": 1e-12, "minimum_l1_order": 2.7, "convergence_pairs": "final"}
     },
     {
       "id": "sod_ppm_n64",
@@ -66,49 +137,55 @@
       "id": "diffusion_rkl1_n64",
       "problem": "DiffusionMode",
       "input": "validation/diffusion/inputs/rkl1_n64.par",
+      "scientific_time": 0.1,
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 5e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]},
-      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "linf_max": 1e-5, "mean_relative_drift_max": 1e-12}
     },
     {
       "id": "diffusion_rkl1_n128",
       "problem": "DiffusionMode",
       "input": "validation/diffusion/inputs/rkl1_n128.par",
+      "scientific_time": 0.1,
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 5e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]},
-      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "linf_max": 1e-5, "mean_relative_drift_max": 1e-12}
     },
     {
       "id": "diffusion_rkl1_n256",
       "problem": "DiffusionMode",
       "input": "validation/diffusion/inputs/rkl1_n256.par",
+      "scientific_time": 0.1,
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 5e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]},
-      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "linf_max": 1e-5, "mean_relative_drift_max": 1e-12}
     },
     {
       "id": "diffusion_rkl2_n64",
       "problem": "DiffusionMode",
       "input": "validation/diffusion/inputs/rkl2_n64.par",
+      "scientific_time": 0.1, "resolution": 64, "qualification_group": "diffusion_rkl2",
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 5e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]},
-      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12, "minimum_l1_order": 1.8, "convergence_pairs": "final"}
     },
     {
       "id": "diffusion_rkl2_n128",
       "problem": "DiffusionMode",
       "input": "validation/diffusion/inputs/rkl2_n128.par",
+      "scientific_time": 0.1, "resolution": 128, "qualification_group": "diffusion_rkl2",
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 5e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]},
-      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12, "minimum_l1_order": 1.8, "convergence_pairs": "final"}
     },
     {
       "id": "diffusion_rkl2_n256",
       "problem": "DiffusionMode",
       "input": "validation/diffusion/inputs/rkl2_n256.par",
+      "scientific_time": 0.1, "resolution": 256, "qualification_group": "diffusion_rkl2",
       "accepted_steps": [1, 2, 5, 10],
       "reduction_policy": {"rtol": 5e-10, "atol": 2e-12, "fields": ["rho", "mom_u", "mom_v", "mom_w", "eng", "rhoX"]},
-      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12}
+      "qualification": {"reference": "periodic_diffusion_mode", "fraction_bounds": [0.0, 1.0], "l1_max": 1e-5, "mean_relative_drift_max": 1e-12, "minimum_l1_order": 1.8, "convergence_pairs": "final"}
     },
     {
       "id": "burn_bd_two_block",

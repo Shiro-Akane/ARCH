@@ -140,6 +140,14 @@ public:
     void prepare_amr_flux_plan(
         const amr::AmrFluxTopologyPlan& topology,
         const amr::RefluxPlan& reflux) override;
+    void migrate_staged_current(
+        backend::BackendTopologyStoreTransaction&,
+        std::span<const backend::BackendStateAccess>,
+        const amr::ProlongationPlan&, const amr::RestrictionPlan&) override;
+    void complete_staged_current_ghosts(
+        backend::BackendTopologyStoreTransaction&,
+        std::span<const amr::SameLevelExchangePlan>,
+        const amr::CoarseFineTransferPlan&) override;
     void stage_amr_flux_plan(
         backend::BackendTopologyStoreTransaction& transaction,
         const amr::AmrFluxTopologyPlan& topology,
@@ -158,6 +166,10 @@ public:
     std::span<const backend::BackendTraceRecord>
     trace_snapshot() const noexcept override;
 
+    std::vector<double> evaluate_refinement_indicators(
+        std::span<const backend::BackendStateAccess>, const AmrConfig&, double,
+        std::span<const int>) override;
+
     StoreTransaction begin_store_transaction(
         amr::AmrPlanScope scope,
         std::span<const CudaBlockBinding> bindings);
@@ -167,6 +179,12 @@ public:
     void enqueue_upload_staged_current(
         StoreTransaction& transaction, DeviceMigrationAccess access,
         state::StateRegion region, backend::HostStateTransferView host);
+    void migrate_staged_current(
+        StoreTransaction&, std::span<const backend::BackendStateAccess>,
+        const amr::ProlongationPlan&, const amr::RestrictionPlan&);
+    void complete_staged_current_ghosts(
+        StoreTransaction&, std::span<const amr::SameLevelExchangePlan>,
+        const amr::CoarseFineTransferPlan&);
     void abort_store_transaction(StoreTransaction&& transaction);
     void publish_store_transaction(
         StoreTransaction&& transaction, DeviceRetirementFence fence);
@@ -174,8 +192,8 @@ public:
     void complete_store_retirement(DeviceRetirementFence fence);
     CudaStoreSnapshot store_snapshot() const noexcept;
 
-    // Dynamic AMR keeps topology/Morton/prolongation authority on the Host;
-    // CUDA owns only the staged store, compact face data, and leaf kernels.
+    // Dynamic AMR keeps topology/Morton authority on the Host. Numerical
+    // migration and ghosts use shared mathematical leaves on device storage.
     static constexpr bool cuda_amr_execution_available() noexcept
     {
         return true;

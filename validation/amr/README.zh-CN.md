@@ -1,82 +1,180 @@
-# AMR 守恒与细化行为
+# AMR 守恒与细化
 
-英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
+英文原文：[README.md](README.md)。英文版是规范文本。
 
-> 当前状态（2026-09-03）：守恒 limited-linear prolongation、体积加权 restriction、动态 regrid/reflux 与 restart 互操作均已实现。16 GiB、零 swap 的 clean Debug CUDA 构建和 H100 生产级 CPU/CUDA AMR 矩阵均已通过。证据见 [SM90 验收目录](results/h100-sm90-20260903/README.md)。
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
+及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
-本记录将守恒与细化效率分开验收。下方历史 CPU 数据建立了原始基线；当前 AMR 路径已用一套共享、守恒的 limited-linear 重构替换旧有 coarse-to-fine 分片常数填充，并保留了能够暴露旧版伪细化信号的聚焦回归测试。
+ARCH 的 CPU 与 CUDA 后端共用细化指标、守恒迁移、几何测度和通量修正。
+CPU 管理拓扑与 Morton 排序，CUDA 将场数据迁移和数值更新保留在 GPU 上。
+整体发布验收状态统一见[验证索引](../README.zh-CN.md)。
 
-## 固定算例
+## 测试覆盖
 
-已提交四份输入：
+| 测试组 | 覆盖内容 |
+|---|---|
+| [笛卡尔应用矩阵](gpu_cases.json) | 10 个案例：Euler/RK2/RK3、RKL1/RKL2、一至三维、跨层场比较、守恒及完整的一维细化／合并循环 |
+| [三维运行期拓扑循环](results/dynamic-3d-final-20260907/release-919/evidence.json) | 笛卡尔 Sedov 演化中的完整八子块细化与粗化，覆盖七个检查点、十四次 CPU/CUDA 执行 |
+| [曲线坐标应用矩阵](gpu_curvilinear_cases.json) | 24 个案例：圆柱／球坐标、一至三维、RKL1/RKL2、单独组分扩散与热／黏性／组分耦合扩散 |
+| [曲线二维运行期循环](results/dynamic-curved-final-20260907/release-923/evidence.json) | 圆柱、球坐标的 RKL1 组分扩散，覆盖完整父块／四子块细化与粗化，每种几何五个检查点 |
+| Gaussian 参考 | 两种曲线坐标及全部三个维度的独立初值；相同时间与拓扑下的热扩散开关对照 |
+| [重启](../restart/README.zh-CN.md) | 光滑平流和 ENUC 驱动燃烧的四个 CPU/CUDA 恢复方向，同时覆盖重网格后的中间检查点和终态检查点 |
+| 几何与迁移专项 | 独立几何／扩散参考、原点平衡、物理体积加权限制、组分、全部坐标方向及三个状态槽 |
 
-- `smooth_uniform80.par`：80 单元均匀网格对照；
-- `smooth_uniform160.par`：具有 AMR 最细间距的均匀网格参考；
-- `smooth_amr80_l1.par`：80 单元根网格和一级细化，光滑熵波穿越移动粗细界面；
-- `sedov_amr_species.par`：带一个输运核素的正则化二维 Sedov 爆炸。
+PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性与 AMR 整体空间
+精度分开测量。二维球坐标沿用项目的极坐标 `(r,phi)` 约定。
 
-所有算例均使用 Cartesian 几何、理想气体 EOS、HLLC 和 RK3。光滑算例使用 MUSCL-MC，每两步 regrid；Sedov 使用 PPM，并覆盖多维 regrid、reflux 和核素通量。
+## 发布候选版本已完成的检查
 
-## 历史 CPU 审计环境
+[笛卡尔应用记录](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
+通过十个案例、54 次 CPU/CUDA 执行和 27 次比较。最大绝对场差为 `1.332e-15`，
+最大能量相对漂移为 `3.730e-15`。重网格循环案例在第 1、5、10、20 步的叶块数
+依次为 6、7、9、8，覆盖细化与粗化。全部拓扑、场和守恒检查满足各案例的原有预算。
 
-被审计工作树以 `affde827fcbf317382ed45372912b562652a71c5` 为基线，并包含本页
-记录的改动；测试使用 GCC 13.3.0、CPU backend、Release flags
-`-O3 -march=native -ffast-math -DNDEBUG` 和两个 OpenMP 线程；硬件为 x86_64
-WSL2 下的 Intel Core i7-10700。
+[三维运行期记录](results/dynamic-3d-final-20260907/release-919/evidence.json)
+补充至第 80 步的七个检查点、十四次 CPU/CUDA 执行，核验第 20 至 40 步的完整
+八子块细化、第 40 至 41 步的粗化，以及第 41 至 80 步的再次细化。两个后端各自
+记录十三次运行期拓扑变化，初始化另行计数。最大绝对场差为 `4.235e-21`，满足
+原定 `rtol=2e-8`、`atol=2e-11` 预算，拓扑与守恒检查也全部通过。三维完整程序的
+普通运行拓扑循环检查已完成。
 
-## 定量结果
+三维的 [memcheck 记录](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
+与 [racecheck 记录](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+各自在同一候选版本上通过全部七次 CUDA 执行和七次 CPU 参考运行。每份 memcheck
+报告均为零错误、零泄漏字节及零泄漏分配；每份 racecheck 报告均为零隐患、零错误
+和零警告。两组均保留完整八子块的细化／粗化／再次细化转换，并通过原有场与守恒
+预算。racecheck 快照中，同样的六个父块在第 40 至 41 步间完成粗化，到第 80 步
+再次拥有完整子块集合。
 
-范数使用物理单元体积。AMR 与均匀网格比较时，先把 160 单元参考限制到 AMR 叶网格覆盖，再在该公共网格上计算误差。
+笛卡尔守恒使用按层级加权的和，乘以根单元体积即为物理体积积分。
+相对预算仍为 `2e-12`；一维、二维、三维案例的绝对预算依次为
+`2e-11`、`2e-10`、`1e-9`。场比较预算仍按清单中的各案例规定。
 
-| 算例 | 测量量 | 结果 | 判定 |
-| --- | ---: | ---: | --- |
-| 光滑 AMR | 最大质量漂移 | `7.33e-15` | 通过 |
-| 光滑 AMR | 最大动量漂移 | `7.33e-15` | 通过 |
-| 光滑 AMR | 最大能量漂移 | `2.22e-14` | 通过 |
-| 光滑 AMR | 压力 Linf 偏差 | `1.41e-14` | 通过 |
-| 光滑 AMR | 密度相对解析解 L1 / L2 / Linf | `7.04e-5 / 1.19e-4 / 4.56e-4` | 通过 |
-| 均匀 160 | 密度相对解析解 L1 / L2 / Linf | `2.47e-5 / 5.13e-5 / 2.58e-4` | 参考 |
-| AMR 对限制后的均匀 160 | 密度 L1 / L2 / Linf | `5.32e-5 / 1.01e-4 / 4.43e-4` | 通过 |
-| Sedov AMR | 质量 / 核素质量漂移 | `1.11e-16 / 1.11e-16` | 通过 |
-| Sedov AMR | x/y 动量漂移 | `1.00e-18 / 1.00e-18` | 通过 |
-| Sedov AMR | 能量漂移、相对漂移 | `3.55e-15`、`3.43e-15` | 通过 |
-| Sedov AMR | 能量质心 | `(0.499924, 0.499924)` | 通过 |
-| Sedov AMR | 径向各向异性 | `6.14e-6` | 通过 |
+[曲线坐标应用记录](results/curved-native-20260907/release-873/backend-validation-evidence.json)
+通过 24 个案例、96 次 CPU/CUDA 执行和 48 次比较，包含混合层级下的热、黏性及
+组分耦合。最大绝对场差为 `2.309e-14`；质量、能量和组分的物理体积积分最大相对
+漂移分别为 `1.332e-15`、`3.730e-15` 和 `1.737e-15`，均满足下文保留的原预算。
+二维 RKL1 案例还记录了两种曲线几何的运行期细化，包含单独组分扩散和热／黏性
+耦合情形。
 
-Sedov 拓扑在整个运行中保持 12 个 0 级和 16 个 1 级叶 block。注入能量在单元中心采样，因此守恒量是相对数值初始化能量 `1.0361899940878605` 的漂移，而不是强制等于连续输入值 `1.0`。
+曲线耦合的 [memcheck 记录](results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
+与 [racecheck 记录](results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+各自通过三维球坐标热／黏性／组分案例的第 2、5 步检查。两次 memcheck CUDA 执行
+均报告零错误、零泄漏字节及零泄漏分配；两次 racecheck 执行均报告零隐患、零错误
+和零警告。实际 CUDA 路径与 CPU 使用相同的 RK2、理想气体 EOS
+及五阶段 RKL2，没有后端回退。最大绝对场差为 `2.220e-14`，最大能量相对漂移为
+`6.626e-16`；两组的原有场、物理体积守恒、RKL2 缓存和传输轨迹检查全部通过。
+这些检查点保持初始化时形成的 144 个混合层级叶块，运行期细化／粗化由单独的拓扑循环记录覆盖。
 
-一次独立 transfer 审计（不作为仓库 test target 提交）覆盖流体守恒变量及两个 `rho X` 字段。Cartesian 1D/2D/3D 的 prolongation 积分误差分别为 `2.60e-18`、`3.33e-16`、`2.61e-14`，cylindrical 2D 与 spherical 3D 分别为 `2.22e-16`、`1.11e-15`；对应 restriction 误差为 `1.71e-16`、`9.00e-19`、`5.55e-17`、`1.11e-16`、`1.11e-16`，曲线坐标检查使用物理体积。细单元组分闭合误差不超过 `3.33e-16`。一个修复前 `sum(X)` 偏差可达 `0.321` 的强梯度算例，现在同时把核素积分、非负性和闭合保持到 `1.11e-16`。
+[曲线运行期循环记录](results/dynamic-curved-final-20260907/release-923/evidence.json)
+补充圆柱、球坐标的二维组分扩散案例。每种几何采样第 2、5、20、80、160 步，
+各十次 CPU/CUDA 执行，共二十次，均核验完整父块／四子块的细化与粗化。
+运行至第 160 步时，每种几何的两个后端各记录九次运行期拓扑变化，初始化另计；
+最多观察到 64 个叶块，块容量仍为 128。最大绝对场差为 `8.882e-16`。
+场比较保留 `rtol=1e-8`、`atol=5e-12`，物理体积守恒保留 `rtol=2e-12`、
+`atol=2e-11`，原有四阶段 RKL1 检查全部通过。该记录与上方笛卡尔三维循环分别列出。
 
-同一 probe 还包含一个独立分量 limiter 会产生 `-0.605` 内能密度的对抗 Euler 状态。共同凸限制器把所有细单元保持在 `min_eint = 1e-10` 以上，最小比内能为 `1.000036e-10`；五个守恒量的物理体积平均在 Cartesian 下变化为零，在非均匀体积 cylindrical 检查中为 `4.44e-16`。
+[Gaussian 初值与热扩散检查](results/gaussian-final-20260907/release-871/evidence.json)
+独立核验全部六种曲线坐标初值，最大场误差为 `4.441e-16`，低于 `2e-12`。
+相同时间与拓扑下，热扩散开关使两个后端的能量均产生 `1.058e-2` 的相对变化，
+超过 `256` 倍机器精度的活动判据。这项检查确认热输运确实改变解，收敛性另行验证。
 
-## 细化问题修复状态
+这些报告使用同一源码、程序、比较工具和依赖库，并核对它们在运行期间保持不变。
+下文的独立几何记录另外检查同一份候选源码。重启验收见[重启指南](../restart/README.zh-CN.md)，
+持续 AMR 检查汇总在下方。
 
-旧审计发现，piecewise-constant coarse-to-fine ghost fill 会把界面 Lohner 指标从 `0.00775/0.00954` 抬高到 `0.06727/0.04230`。该实现现已替换为共享的 limited-linear 守恒变量重构：先重构 `rho X` 再恢复组分，使用统一凸物理状态 limiter，并对 fine-to-coarse restriction 采用体积权重。
+网格交换测试覆盖笛卡尔、圆柱、球坐标各自的一至三维，
+覆盖 `Current`、`Next`、`Scratch` 三个状态槽。两端的粗细网格限制操作
+都使用物理体积权重和同一套限制函数；无效延拓输入会在写入目标场前被拒绝。
 
-保留的 transfer 与 AMR exchange 测试现覆盖 Cartesian 1D/2D/3D、Host 曲线坐标体积加权、X/Y/Z 面、粗细界面两侧及 `Current`/`Next`/`Scratch`。CUDA 只消费 Host-lowered plan 和相同标量插值数学，不维护第二套公式。
+## 独立几何与扩散检查
 
-Checkpoint v3 持久化 ENUC，两个后端均在 regrid 中迁移它。真实设备上的 `refine_var = ENUC` restart 矩阵已通过连续运行和四条 split-run backend route。旧 v1/v2 checkpoint 仍会将 ENUC 初始化为零，因此不能用于建立 ENUC split-run 等价性。
+[当前候选版本的几何记录](results/geometry-native-20260907/release-880/evidence.json)
+通过 12 组薄壳与极点附近单元的参考检查，参考值由独立的 70/90 位精度积分核验。
+空间收敛测试覆盖全部坐标与维度的热／组分扩散，以及黏性动量通量和功通量。
+CPU 和 CUDA 测试程序使用同一份候选源码，各自的程序身份保存在报告中。
+
+每个后端的黏性测试包含 30 组场、三档网格间距，覆盖均匀笛卡尔速度、二次函数、
+变密度及径向流。最细网格的最大归一化误差为 `7.26751e-5`，满足 `1e-4` 门槛。
+热／组分测试包含 54 个两端配对样本，共 108 次后端计算，最细网格的最大绝对
+误差为 `1.14163e-7`，满足 `1e-6` 门槛。标量误差和高于 `1e-10` 的黏性误差
+均满足原定要求：网格间距减半时，误差至少缩小 3.5 倍。
+
+每个后端均通过 18 个原点平衡样本、六个径向稳定性矩阵及九个密度比为
+1、10、100 的矩阵检查。最大原点残差为 `2.93099e-14`，低于 `2e-11`。
+Euler 更新矩阵的元素非负，最大行和不超过 1，满足原定 `2e-12` 舍入容差。
+
+## 持续重网格与续算
+
+[当前候选版本的持续记录](results/sustained-first-law-20260907/release-901/evidence.json)
+通过两个后端的 500 步一维流体与 100 步五阶段 RKL2 扩散运行。包含初始化在内，
+分别记录了 501 和 101 次重网格检查。流体发生 490 次拓扑变化，明确覆盖细化和
+粗化转换；扩散在各采样检查点保持六个混合层级叶块。两组矩阵共包含 22 次执行
+和十一次后端比较。
+
+流体与扩散的最大绝对场差分别为 `1.510e-14` 和 `1.776e-15`。流体质量与能量的
+相对漂移分别低于 `2.931e-14` 和 `2.878e-14`；扩散中最大的组分积分相对漂移为
+`5.286e-15`。守恒检查沿用前述笛卡尔层级加权和，预算仍为 `rtol=2e-12`、
+`atol=2e-11`。场比较保留 `atol=5e-12`，流体与扩散的 `rtol` 分别为 `5e-9`
+和 `1e-8`。
+
+同一记录还通过十二次交替后端平流恢复，以及 CPU、CUDA、交替后端三条燃烧链
+各十二个循环。72 次 Host/CUDA 原生燃烧状态回放的场与控制器差异均为零，
+七次指定物理时刻的燃烧比较也全部通过。[重启指南](../restart/README.zh-CN.md#持续原生状态恢复)
+分别说明精确恢复、向前步诊断和物理时刻验收。设备安全检查、构建与
+容量验证仍是独立的验收项目。
+
+## 曲线坐标应用矩阵
+
+两端使用[同一份 Gaussian 输入](inputs/gaussian_diffusion_amr.par)及清单中声明的
+科学参数。圆柱／球坐标环域与楔形域采用 0–1 级细化和反射边界。组分用例保持
+均匀压力和零速度；耦合用例增加压力脉冲和本地速度分量，同时启用热、黏性、
+组分输运。
+
+RKL1/RKL2 分别运行至第 2、5 个接受步，启用流体 RK2 并每步检查重网格。
+矩阵检查混合层级、两个 Strang 半步、四阶段 RKL1 与五阶段 RKL2。
+上方独立记录覆盖笛卡尔三维和曲线二维的运行期细化／粗化，重启连续性由单独套件检查。
+
+守恒量采用质量、能量和各 `rhoX` 的物理体积积分。径向动量受几何源项和壁面力
+影响，因此进行两端场比较，但不作为全局不变量。守恒门槛为
+`rtol = 2e-12`、`atol = 2e-11`；场比较为 `rtol = 1e-8`、
+`atol = 5e-12`。验证器读取各次运行的实际参数，通过共同几何库重建物理体积。
 
 ## 复现
 
-~~~bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
-export OMP_NUM_THREADS=2
+在启用测试的 CUDA 构建中准备 `ARCH`、`arch_cuda_single_level_validation`、
+`arch_curvilinear_metrics` 和 `arch_cuda_curvilinear_geometry_smoke`。
+依赖和带内存保护的编译方法见[构建指南](../../README.zh-CN.md#构建)。
+Python 检查需要 NumPy、h5py；独立几何参考另需 mpmath。
+[英文命令](README.md#reproduce-the-checks)从仓库根目录运行，每组结果使用新目录；
+曲线坐标矩阵将清单替换为 `validation/amr/gpu_curvilinear_cases.json`。
+恢复检查见[重启指南](../restart/README.zh-CN.md)。
+三维曲线耦合案例的 memcheck 命令也列在上述英文复现段落中：指定已安装的
+Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插桩仍执行全部原有数值检查。
+另选新目录并改用 `--sanitizer-tool racecheck` 即可执行对应竞争检查。插桩耗时不作为性能基准。
 
-./bin/ARCH SmoothAdvection validation/amr/inputs/smooth_uniform80.par
-./bin/ARCH SmoothAdvection validation/amr/inputs/smooth_uniform160.par
-./bin/ARCH SmoothAdvection validation/amr/inputs/smooth_amr80_l1.par
-./bin/ARCH Sedov validation/amr/inputs/sedov_amr_species.par
-~~~
+## 最终产物验收
 
-标量结果保留在 [metrics.csv](metrics.csv)，原始 HDF5 输出不纳入版本控制。已有历史图仅保留为定性诊断，不参与本次验收。
+采集一组验收结果时，保持源码、构建选项、外部表、生成网络和可执行文件不变。
+共享工具在运行前后核对内容哈希，保存解析后的执行策略、数值指标和执行轨迹。
 
-| 历史算例 | 可见模块 | 档案 |
-| --- | --- | --- |
-| Sedov | 流体、激波驱动细化 | [图像](figures/legacy/sedov.png) |
-| Gaussian | 扩散、移动细化模式 | [图像](figures/legacy/gaussian.png) |
-| Rayleigh--Taylor | 流体、重力、扩散 | [图像](figures/legacy/rayleigh_taylor.png) |
-| Cellular burn | 流体、燃烧 | [图像](figures/legacy/cellular_burn.png) |
+`tools/qualify_cuda_amr_evidence.py --profile full-runtime` 检查笛卡尔、
+曲线坐标、均匀网格、生成网络四组矩阵及两份重启报告是否来自同一构建，并包含
+全部必要比较。[验证索引](../README.zh-CN.md)将这些应用结果与独立科学参考、
+内存安全和容量检查统一汇总。
 
-PPM 在粗细面使用 MUSCL-MinMod，因此本记录不声明 AMR 全域三阶空间收敛。
+## 历史记录
+
+早期[笛卡尔](results/cartesian-native-20260907/release-768/backend-validation-evidence.json)
+和[曲线坐标](results/curved-native-20260907/release-764/backend-validation-evidence.json)
+应用记录保留原有的源码与程序身份。
+早期[平流](results/restart-smooth-native-20260907/release-758/restart-validation-evidence.json)
+和[燃烧／ENUC](results/restart-burn-native-20260907/release-757/restart-validation-evidence.json)
+重启记录通过了中间及终点检查点的四种后端方向；
+[早期持续运行记录](results/sustained-first-law-20260907/release-763/evidence.json)通过
+500 步流体与 100 步扩散。这些结果与当前候选版本的验收记录分别归档。
+
+早期 CPU 守恒数据、迁移诊断、图像和详细审计命令保留在
+[发布前记录](results/pre-release-notes-20260907/README.zh-CN.md)中；
+早期 GPU 结果保留在[设备档案](results/h100-sm90-20260903/README.md)中。
+原始输入与测量值均未删除。

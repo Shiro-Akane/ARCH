@@ -46,6 +46,9 @@ plt_variables = DENS, PRES, SPECIES
 
 eos_type = ideal
 gamma = 1.4
+# Ordinary passive gases with positive heat capacity; no nuclear network.
+network_name = none
+gas_cv = 717.5
 gravity_type = none
 use_burn = false
 

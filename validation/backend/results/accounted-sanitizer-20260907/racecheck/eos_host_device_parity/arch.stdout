@@ -1,0 +1,509 @@
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+helm_polynomials degrees=36 constant_background=exact points_per_case=9 maximum_scaled_error=2.27278e-13
+eos_host_device_parity max_abs=9.44473e+21 max_rel=1.79889e-10
+field=Helm ef final element max_abs=0 max_rel=0
+field=Helm exact lower bound max_abs=0 max_rel=0
+field=Helm exact upper bound max_abs=0 max_rel=0
+field=Helm f final element max_abs=0 max_rel=0
+field=Helm immediate destruction did not synchronize consumer stream max_abs=0 max_rel=0
+field=Helm move-assigned target.cv max_abs=0 max_rel=0
+field=Helm move-assigned target.dp_de max_abs=0 max_rel=0
+field=Helm move-assigned target.dp_drho max_abs=0 max_rel=0
+field=Helm move-assigned target.eint max_abs=0 max_rel=0
+field=Helm move-assigned target.gamma max_abs=0 max_rel=0
+field=Helm move-assigned target.pressure_rho_T max_abs=0 max_rel=0
+field=Helm move-assigned target.pressure_rho_e max_abs=0 max_rel=0
+field=Helm move-assigned target.sound_speed max_abs=0 max_rel=0
+field=Helm move-assigned target.state.E max_abs=0 max_rel=0
+field=Helm move-assigned target.state.P max_abs=0 max_rel=0
+field=Helm move-assigned target.state.cv max_abs=0 max_rel=0
+field=Helm move-assigned target.state.dp_dT max_abs=0 max_rel=0
+field=Helm move-assigned target.state.dp_drho max_abs=0 max_rel=0
+field=Helm move-assigned target.state.eta max_abs=0 max_rel=0
+field=Helm move-assigned target.state.pele max_abs=0 max_rel=0
+field=Helm move-assigned target.state.sound_speed max_abs=0 max_rel=0
+field=Helm move-assigned target.state.xne max_abs=0 max_rel=0
+field=Helm move-assigned target.temperature max_abs=0 max_rel=0
+field=Helm move-assigned target.total_energy max_abs=0 max_rel=0
+field=Helm moved.cv max_abs=0 max_rel=0
+field=Helm moved.dp_de max_abs=0 max_rel=0
+field=Helm moved.dp_drho max_abs=0 max_rel=0
+field=Helm moved.eint max_abs=0 max_rel=0
+field=Helm moved.gamma max_abs=0 max_rel=0
+field=Helm moved.pressure_rho_T max_abs=0 max_rel=0
+field=Helm moved.pressure_rho_e max_abs=0 max_rel=0
+field=Helm moved.sound_speed max_abs=0 max_rel=0
+field=Helm moved.state.E max_abs=0 max_rel=0
+field=Helm moved.state.P max_abs=0 max_rel=0
+field=Helm moved.state.cv max_abs=0 max_rel=0
+field=Helm moved.state.dp_dT max_abs=0 max_rel=0
+field=Helm moved.state.dp_drho max_abs=0 max_rel=0
+field=Helm moved.state.eta max_abs=0 max_rel=0
+field=Helm moved.state.pele max_abs=0 max_rel=0
+field=Helm moved.state.sound_speed max_abs=0 max_rel=0
+field=Helm moved.state.xne max_abs=0 max_rel=0
+field=Helm moved.temperature max_abs=0 max_rel=0
+field=Helm moved.total_energy max_abs=0 max_rel=0
+field=Helm.cv max_abs=0 max_rel=0
+field=Helm.dp_de max_abs=0 max_rel=0
+field=Helm.dp_drho max_abs=0 max_rel=0
+field=Helm.eint max_abs=0 max_rel=0
+field=Helm.gamma max_abs=0 max_rel=0
+field=Helm.pressure_rho_T max_abs=0 max_rel=0
+field=Helm.pressure_rho_e max_abs=0 max_rel=0
+field=Helm.sound_speed max_abs=0 max_rel=0
+field=Helm.state.E max_abs=0 max_rel=0
+field=Helm.state.P max_abs=0 max_rel=0
+field=Helm.state.cv max_abs=0 max_rel=0
+field=Helm.state.dp_dT max_abs=0 max_rel=0
+field=Helm.state.dp_drho max_abs=0 max_rel=0
+field=Helm.state.eta max_abs=0 max_rel=0
+field=Helm.state.pele max_abs=0 max_rel=0
+field=Helm.state.sound_speed max_abs=0 max_rel=0
+field=Helm.state.xne max_abs=0 max_rel=0
+field=Helm.temperature max_abs=0 max_rel=0
+field=Helm.total_energy max_abs=0 max_rel=0
+field=Ideal default.cv max_abs=0 max_rel=0
+field=Ideal default.dp_de max_abs=0 max_rel=0
+field=Ideal default.dp_drho max_abs=0 max_rel=0
+field=Ideal default.eint max_abs=0 max_rel=0
+field=Ideal default.gamma max_abs=0 max_rel=0
+field=Ideal default.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal default.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal default.sound_speed max_abs=0 max_rel=0
+field=Ideal default.state.E max_abs=0 max_rel=0
+field=Ideal default.state.P max_abs=0 max_rel=0
+field=Ideal default.state.cv max_abs=0 max_rel=0
+field=Ideal default.state.dp_dT max_abs=0 max_rel=0
+field=Ideal default.state.dp_drho max_abs=0 max_rel=0
+field=Ideal default.state.sound_speed max_abs=0 max_rel=0
+field=Ideal default.temperature max_abs=0 max_rel=0
+field=Ideal default.total_energy max_abs=0 max_rel=0
+field=Ideal move-assigned target.cv max_abs=0 max_rel=0
+field=Ideal move-assigned target.dp_de max_abs=0 max_rel=0
+field=Ideal move-assigned target.dp_drho max_abs=0 max_rel=0
+field=Ideal move-assigned target.eint max_abs=0 max_rel=0
+field=Ideal move-assigned target.gamma max_abs=0 max_rel=0
+field=Ideal move-assigned target.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal move-assigned target.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal move-assigned target.sound_speed max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.E max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.P max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.cv max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.dp_dT max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.dp_drho max_abs=0 max_rel=0
+field=Ideal move-assigned target.state.sound_speed max_abs=0 max_rel=0
+field=Ideal move-assigned target.temperature max_abs=0 max_rel=0
+field=Ideal move-assigned target.total_energy max_abs=0 max_rel=0
+field=Ideal moved.cv max_abs=0 max_rel=0
+field=Ideal moved.dp_de max_abs=0 max_rel=0
+field=Ideal moved.dp_drho max_abs=0 max_rel=0
+field=Ideal moved.eint max_abs=0 max_rel=0
+field=Ideal moved.gamma max_abs=0 max_rel=0
+field=Ideal moved.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal moved.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal moved.sound_speed max_abs=0 max_rel=0
+field=Ideal moved.state.E max_abs=0 max_rel=0
+field=Ideal moved.state.P max_abs=0 max_rel=0
+field=Ideal moved.state.cv max_abs=0 max_rel=0
+field=Ideal moved.state.dp_dT max_abs=0 max_rel=0
+field=Ideal moved.state.dp_drho max_abs=0 max_rel=0
+field=Ideal moved.state.sound_speed max_abs=0 max_rel=0
+field=Ideal moved.temperature max_abs=0 max_rel=0
+field=Ideal moved.total_energy max_abs=0 max_rel=0
+field=Ideal nonfinite/threshold pressure policy max_abs=0 max_rel=0
+field=Ideal repeated.cv max_abs=0 max_rel=0
+field=Ideal repeated.dp_de max_abs=0 max_rel=0
+field=Ideal repeated.dp_drho max_abs=0 max_rel=0
+field=Ideal repeated.eint max_abs=0 max_rel=0
+field=Ideal repeated.gamma max_abs=0 max_rel=0
+field=Ideal repeated.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal repeated.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal repeated.sound_speed max_abs=0 max_rel=0
+field=Ideal repeated.state.E max_abs=0 max_rel=0
+field=Ideal repeated.state.P max_abs=0 max_rel=0
+field=Ideal repeated.state.cv max_abs=0 max_rel=0
+field=Ideal repeated.state.dp_dT max_abs=0 max_rel=0
+field=Ideal repeated.state.dp_drho max_abs=0 max_rel=0
+field=Ideal repeated.state.sound_speed max_abs=0 max_rel=0
+field=Ideal repeated.temperature max_abs=0 max_rel=0
+field=Ideal repeated.total_energy max_abs=0 max_rel=0
+field=Ideal zero composition.dp_de max_abs=0 max_rel=0
+field=Ideal zero composition.gamma max_abs=0 max_rel=0
+field=Ideal zero composition.total_energy max_abs=0 max_rel=0
+field=Ideal.cv max_abs=0 max_rel=0
+field=Ideal.dp_de max_abs=0 max_rel=0
+field=Ideal.dp_drho max_abs=0 max_rel=0
+field=Ideal.eint max_abs=0 max_rel=0
+field=Ideal.gamma max_abs=0 max_rel=0
+field=Ideal.pressure_rho_T max_abs=0 max_rel=0
+field=Ideal.pressure_rho_e max_abs=0 max_rel=0
+field=Ideal.sound_speed max_abs=0 max_rel=0
+field=Ideal.state.E max_abs=0 max_rel=0
+field=Ideal.state.P max_abs=0 max_rel=0
+field=Ideal.state.cv max_abs=0 max_rel=0
+field=Ideal.state.dp_dT max_abs=0 max_rel=0
+field=Ideal.state.dp_drho max_abs=0 max_rel=0
+field=Ideal.state.sound_speed max_abs=0 max_rel=0
+field=Ideal.temperature max_abs=0 max_rel=0
+field=Ideal.total_energy max_abs=0 max_rel=0
+field=Tab3 1e-12 threshold max_abs=0 max_rel=0
+field=Tab3 analytic-fallback dp_dT BASE oracle max_abs=0 max_rel=0
+field=Tab3 fallback branch max_abs=0 max_rel=0
+field=Tab3 finite difference.cv max_abs=0 max_rel=0
+field=Tab3 finite difference.dp_de max_abs=5.46875e-13 max_rel=5.46875e-13
+field=Tab3 finite difference.dp_drho max_abs=0.78125 max_rel=1.79889e-11
+field=Tab3 finite difference.eint max_abs=0 max_rel=0
+field=Tab3 finite difference.gamma max_abs=0 max_rel=0
+field=Tab3 finite difference.pressure_rho_T max_abs=0 max_rel=0
+field=Tab3 finite difference.pressure_rho_e max_abs=0 max_rel=0
+field=Tab3 finite difference.sound_speed max_abs=0 max_rel=0
+field=Tab3 finite difference.state.E max_abs=0 max_rel=0
+field=Tab3 finite difference.state.P max_abs=0 max_rel=0
+field=Tab3 finite difference.state.cv max_abs=0 max_rel=0
+field=Tab3 finite difference.state.dp_dT max_abs=0 max_rel=0
+field=Tab3 finite difference.state.dp_drho max_abs=0.78125 max_rel=1.79889e-11
+field=Tab3 finite difference.state.sound_speed max_abs=0 max_rel=0
+field=Tab3 finite difference.temperature max_abs=0 max_rel=0
+field=Tab3 finite difference.total_energy max_abs=6083 max_rel=6.083e-12
+field=Tab3 finite-difference dp_dT BASE oracle max_abs=0 max_rel=0
+field=Tab3 immediate destruction did not synchronize consumer stream max_abs=0 max_rel=0
+field=Tab3 iteration identity.cv max_abs=0 max_rel=0
+field=Tab3 iteration identity.dp_de max_abs=0 max_rel=0
+field=Tab3 iteration identity.dp_drho max_abs=0 max_rel=0
+field=Tab3 iteration identity.eint max_abs=0 max_rel=0
+field=Tab3 iteration identity.gamma max_abs=0 max_rel=0
+field=Tab3 iteration identity.pressure_rho_T max_abs=0 max_rel=0
+field=Tab3 iteration identity.pressure_rho_e max_abs=0 max_rel=0
+field=Tab3 iteration identity.sound_speed max_abs=0 max_rel=0
+field=Tab3 iteration identity.state.E max_abs=0 max_rel=0
+field=Tab3 iteration identity.state.P max_abs=0 max_rel=0
+field=Tab3 iteration identity.state.cv max_abs=0 max_rel=0
+field=Tab3 iteration identity.state.dp_dT max_abs=0 max_rel=0
+field=Tab3 iteration identity.state.dp_drho max_abs=0 max_rel=0
+field=Tab3 iteration identity.state.sound_speed max_abs=0 max_rel=0
+field=Tab3 iteration identity.temperature max_abs=0 max_rel=0
+field=Tab3 iteration identity.total_energy max_abs=0.125 max_rel=3.78693e-16
+field=Tab3 lower bound max_abs=0 max_rel=0
+field=Tab3 move-assigned target.cv max_abs=0 max_rel=0
+field=Tab3 move-assigned target.dp_de max_abs=0 max_rel=0
+field=Tab3 move-assigned target.dp_drho max_abs=0 max_rel=0
+field=Tab3 move-assigned target.eint max_abs=0 max_rel=0
+field=Tab3 move-assigned target.gamma max_abs=0 max_rel=0
+field=Tab3 move-assigned target.pressure_rho_T max_abs=0 max_rel=0
+field=Tab3 move-assigned target.pressure_rho_e max_abs=0 max_rel=0
+field=Tab3 move-assigned target.sound_speed max_abs=0 max_rel=0
+field=Tab3 move-assigned target.state.E max_abs=0 max_rel=0
+field=Tab3 move-assigned target.state.P max_abs=0 max_rel=0
+field=Tab3 move-assigned target.state.cv max_abs=0 max_rel=0
+field=Tab3 move-assigned target.state.dp_dT max_abs=0 max_rel=0
+field=Tab3 move-assigned target.state.dp_drho max_abs=0 max_rel=0
+field=Tab3 move-assigned target.state.sound_speed max_abs=0 max_rel=0
+field=Tab3 move-assigned target.temperature max_abs=0 max_rel=0
+field=Tab3 move-assigned target.total_energy max_abs=1.9375 max_rel=6.34484e-15
+field=Tab3 moved.cv max_abs=0 max_rel=0
+field=Tab3 moved.dp_de max_abs=0 max_rel=0
+field=Tab3 moved.dp_drho max_abs=0 max_rel=0
+field=Tab3 moved.eint max_abs=0 max_rel=0
+field=Tab3 moved.gamma max_abs=0 max_rel=0
+field=Tab3 moved.pressure_rho_T max_abs=0 max_rel=0
+field=Tab3 moved.pressure_rho_e max_abs=0 max_rel=0
+field=Tab3 moved.sound_speed max_abs=0 max_rel=0
+field=Tab3 moved.state.E max_abs=0 max_rel=0
+field=Tab3 moved.state.P max_abs=0 max_rel=0
+field=Tab3 moved.state.cv max_abs=0 max_rel=0
+field=Tab3 moved.state.dp_dT max_abs=0 max_rel=0
+field=Tab3 moved.state.dp_drho max_abs=0 max_rel=0
+field=Tab3 moved.state.sound_speed max_abs=0 max_rel=0
+field=Tab3 moved.temperature max_abs=0 max_rel=0
+field=Tab3 moved.total_energy max_abs=1.9375 max_rel=6.34484e-15
+field=Tab3 table dp_dT BASE oracle max_abs=0 max_rel=0
+field=Tab3 table.cv max_abs=0 max_rel=0
+field=Tab3 table.dp_de max_abs=0 max_rel=0
+field=Tab3 table.dp_drho max_abs=0 max_rel=0
+field=Tab3 table.eint max_abs=0 max_rel=0
+field=Tab3 table.gamma max_abs=0 max_rel=0
+field=Tab3 table.pressure_rho_T max_abs=0 max_rel=0
+field=Tab3 table.pressure_rho_e max_abs=0 max_rel=0
+field=Tab3 table.sound_speed max_abs=0 max_rel=0
+field=Tab3 table.state.E max_abs=0 max_rel=0
+field=Tab3 table.state.P max_abs=0 max_rel=0
+field=Tab3 table.state.cv max_abs=0 max_rel=0
+field=Tab3 table.state.dp_dT max_abs=0 max_rel=0
+field=Tab3 table.state.dp_drho max_abs=0 max_rel=0
+field=Tab3 table.state.sound_speed max_abs=0 max_rel=0
+field=Tab3 table.temperature max_abs=0 max_rel=0
+field=Tab3 table.total_energy max_abs=1.9375 max_rel=6.34484e-15
+field=Tab3 upper margin max_abs=0 max_rel=0
+field=Tab4 1e-12 threshold max_abs=0 max_rel=0
+field=Tab4 analytic-fallback dp_dT BASE oracle max_abs=0 max_rel=0
+field=Tab4 fallback branch max_abs=0 max_rel=0
+field=Tab4 finite difference.cv max_abs=0 max_rel=0
+field=Tab4 finite difference.dp_de max_abs=3.125e-13 max_rel=3.125e-13
+field=Tab4 finite difference.dp_drho max_abs=0 max_rel=0
+field=Tab4 finite difference.eint max_abs=0 max_rel=0
+field=Tab4 finite difference.gamma max_abs=0 max_rel=0
+field=Tab4 finite difference.pressure_rho_T max_abs=0 max_rel=0
+field=Tab4 finite difference.pressure_rho_e max_abs=0 max_rel=0
+field=Tab4 finite difference.sound_speed max_abs=0 max_rel=0
+field=Tab4 finite difference.state.E max_abs=0 max_rel=0
+field=Tab4 finite difference.state.P max_abs=0 max_rel=0
+field=Tab4 finite difference.state.cv max_abs=0 max_rel=0
+field=Tab4 finite difference.state.dp_dT max_abs=0 max_rel=0
+field=Tab4 finite difference.state.dp_drho max_abs=0 max_rel=0
+field=Tab4 finite difference.state.sound_speed max_abs=0 max_rel=0
+field=Tab4 finite difference.temperature max_abs=0 max_rel=0
+field=Tab4 finite difference.total_energy max_abs=82.875 max_rel=8.2875e-14
+field=Tab4 finite-difference dp_dT BASE oracle max_abs=1.5625e-06 max_rel=1.79889e-10
+field=Tab4 immediate destruction did not synchronize consumer stream max_abs=0 max_rel=0
+field=Tab4 iteration identity.cv max_abs=0 max_rel=0
+field=Tab4 iteration identity.dp_de max_abs=0 max_rel=0
+field=Tab4 iteration identity.dp_drho max_abs=0 max_rel=0
+field=Tab4 iteration identity.eint max_abs=0 max_rel=0
+field=Tab4 iteration identity.gamma max_abs=0 max_rel=0
+field=Tab4 iteration identity.pressure_rho_T max_abs=0 max_rel=0
+field=Tab4 iteration identity.pressure_rho_e max_abs=0.03125 max_rel=1.48136e-16
+field=Tab4 iteration identity.sound_speed max_abs=0 max_rel=0
+field=Tab4 iteration identity.state.E max_abs=0 max_rel=0
+field=Tab4 iteration identity.state.P max_abs=0 max_rel=0
+field=Tab4 iteration identity.state.cv max_abs=0 max_rel=0
+field=Tab4 iteration identity.state.dp_dT max_abs=0 max_rel=0
+field=Tab4 iteration identity.state.dp_drho max_abs=0 max_rel=0
+field=Tab4 iteration identity.state.sound_speed max_abs=0 max_rel=0
+field=Tab4 iteration identity.temperature max_abs=1.78814e-06 max_rel=5.96046e-15
+field=Tab4 iteration identity.total_energy max_abs=0 max_rel=0
+field=Tab4 lower bound max_abs=0 max_rel=0
+field=Tab4 move-assigned target.cv max_abs=0 max_rel=0
+field=Tab4 move-assigned target.dp_de max_abs=0 max_rel=0
+field=Tab4 move-assigned target.dp_drho max_abs=0 max_rel=0
+field=Tab4 move-assigned target.eint max_abs=0 max_rel=0
+field=Tab4 move-assigned target.gamma max_abs=0 max_rel=0
+field=Tab4 move-assigned target.pressure_rho_T max_abs=0 max_rel=0
+field=Tab4 move-assigned target.pressure_rho_e max_abs=0 max_rel=0
+field=Tab4 move-assigned target.sound_speed max_abs=0 max_rel=0
+field=Tab4 move-assigned target.state.E max_abs=0 max_rel=0
+field=Tab4 move-assigned target.state.P max_abs=0 max_rel=0
+field=Tab4 move-assigned target.state.cv max_abs=0 max_rel=0
+field=Tab4 move-assigned target.state.dp_dT max_abs=0 max_rel=0
+field=Tab4 move-assigned target.state.dp_drho max_abs=0 max_rel=0
+field=Tab4 move-assigned target.state.sound_speed max_abs=0 max_rel=0
+field=Tab4 move-assigned target.temperature max_abs=0 max_rel=0
+field=Tab4 move-assigned target.total_energy max_abs=0.125 max_rel=2.29151e-16
+field=Tab4 moved.cv max_abs=0 max_rel=0
+field=Tab4 moved.dp_de max_abs=0 max_rel=0
+field=Tab4 moved.dp_drho max_abs=0 max_rel=0
+field=Tab4 moved.eint max_abs=0 max_rel=0
+field=Tab4 moved.gamma max_abs=0 max_rel=0
+field=Tab4 moved.pressure_rho_T max_abs=0 max_rel=0
+field=Tab4 moved.pressure_rho_e max_abs=0 max_rel=0
+field=Tab4 moved.sound_speed max_abs=0 max_rel=0
+field=Tab4 moved.state.E max_abs=0 max_rel=0
+field=Tab4 moved.state.P max_abs=0 max_rel=0
+field=Tab4 moved.state.cv max_abs=0 max_rel=0
+field=Tab4 moved.state.dp_dT max_abs=0 max_rel=0
+field=Tab4 moved.state.dp_drho max_abs=0 max_rel=0
+field=Tab4 moved.state.sound_speed max_abs=0 max_rel=0
+field=Tab4 moved.temperature max_abs=0 max_rel=0
+field=Tab4 moved.total_energy max_abs=0.125 max_rel=2.29151e-16
+field=Tab4 table dp_dT BASE oracle max_abs=0 max_rel=0
+field=Tab4 table.cv max_abs=0 max_rel=0
+field=Tab4 table.dp_de max_abs=0 max_rel=0
+field=Tab4 table.dp_drho max_abs=0 max_rel=0
+field=Tab4 table.eint max_abs=0 max_rel=0
+field=Tab4 table.gamma max_abs=0 max_rel=0
+field=Tab4 table.pressure_rho_T max_abs=0 max_rel=0
+field=Tab4 table.pressure_rho_e max_abs=0 max_rel=0
+field=Tab4 table.sound_speed max_abs=0 max_rel=0
+field=Tab4 table.state.E max_abs=0 max_rel=0
+field=Tab4 table.state.P max_abs=0 max_rel=0
+field=Tab4 table.state.cv max_abs=0 max_rel=0
+field=Tab4 table.state.dp_dT max_abs=0 max_rel=0
+field=Tab4 table.state.dp_drho max_abs=0 max_rel=0
+field=Tab4 table.state.sound_speed max_abs=0 max_rel=0
+field=Tab4 table.temperature max_abs=0 max_rel=0
+field=Tab4 table.total_energy max_abs=0.125 max_rel=2.29151e-16
+field=Tab4 upper margin max_abs=0 max_rel=0
+field=finite comparison policy max_abs=0 max_rel=0
+field=helm.independent_domain.0 max_abs=1.92415e+12 max_rel=2.95023e-15
+field=helm.independent_domain.1 max_abs=1.09951e+12 max_rel=9.51284e-16
+field=helm.independent_domain.2 max_abs=8192 max_rel=3.40652e-15
+field=helm.independent_domain.3 max_abs=1.92415e+12 max_rel=3.01067e-15
+field=helm.independent_domain.4 max_abs=64 max_rel=1.70039e-16
+field=helm.independent_domain.5 max_abs=2.91038e-11 max_rel=9.37837e-16
+field=helm.independent_isentrope.pressure max_abs=8.38861e+07 max_rel=2.04007e-15
+field=helm.independent_isentrope.rho max_abs=0 max_rel=0
+field=helm.independent_isentrope.sound_speed max_abs=0.00088495 max_rel=3.49129e-12
+field=helm.independent_isentrope.temperature max_abs=0 max_rel=0
+field=helm.independent_lower_bound_P max_abs=0 max_rel=0
+field=helm.independent_probe.cv max_abs=0 max_rel=0
+field=helm.independent_probe.dp_de max_abs=1.89408e-07 max_rel=3.02005e-13
+field=helm.independent_probe.dp_drho max_abs=906824 max_rel=2.35772e-11
+field=helm.independent_probe.eint max_abs=64 max_rel=9.51284e-16
+field=helm.independent_probe.gamma max_abs=0 max_rel=0
+field=helm.independent_probe.pressure_rho_T max_abs=1.09052e+08 max_rel=2.65474e-15
+field=helm.independent_probe.pressure_rho_e max_abs=1.09052e+08 max_rel=2.65474e-15
+field=helm.independent_probe.sound_speed max_abs=0.00183359 max_rel=7.23507e-12
+field=helm.independent_probe.state.E max_abs=64 max_rel=9.51284e-16
+field=helm.independent_probe.state.P max_abs=1.09052e+08 max_rel=2.65474e-15
+field=helm.independent_probe.state.cv max_abs=0 max_rel=0
+field=helm.independent_probe.state.dp_dT max_abs=696.922 max_rel=1.54781e-11
+field=helm.independent_probe.state.dp_drho max_abs=841960 max_rel=1.3712e-11
+field=helm.independent_probe.state.eta max_abs=1.77636e-14 max_rel=9.37837e-16
+field=helm.independent_probe.state.pele max_abs=1.13246e+08 max_rel=3.01067e-15
+field=helm.independent_probe.state.sound_speed max_abs=0.00183359 max_rel=7.23507e-12
+field=helm.independent_probe.state.xne max_abs=0 max_rel=0
+field=helm.independent_probe.temperature max_abs=0 max_rel=0
+field=helm.independent_probe.total_energy max_abs=1.76161e+08 max_rel=2.61842e-15
+field=helm.independent_state.0 max_abs=1.09052e+08 max_rel=2.65474e-15
+field=helm.independent_state.1 max_abs=64 max_rel=9.51284e-16
+field=helm.independent_state.2 max_abs=0 max_rel=0
+field=helm.independent_state.3 max_abs=0.00183359 max_rel=7.23507e-12
+field=helm.independent_state.4 max_abs=841960 max_rel=1.3712e-11
+field=helm.independent_state.5 max_abs=696.922 max_rel=1.54781e-11
+field=helm.independent_state.6 max_abs=1.13246e+08 max_rel=3.01067e-15
+field=helm.independent_state.7 max_abs=0 max_rel=0
+field=helm.independent_state.8 max_abs=1.77636e-14 max_rel=9.37837e-16
+field=helm.independent_upper_bound_P max_abs=9.44473e+21 max_rel=1.35033e-16
+field=ideal BASE nonfinite/threshold pressure max_abs=6.93889e-18 max_rel=6.93889e-18
+field=ideal.default.probe.cv max_abs=0 max_rel=0
+field=ideal.default.probe.dp_de max_abs=0 max_rel=0
+field=ideal.default.probe.dp_drho max_abs=0 max_rel=0
+field=ideal.default.probe.eint max_abs=0 max_rel=0
+field=ideal.default.probe.gamma max_abs=0 max_rel=0
+field=ideal.default.probe.pressure_rho_T max_abs=0 max_rel=0
+field=ideal.default.probe.pressure_rho_e max_abs=0 max_rel=0
+field=ideal.default.probe.sound_speed max_abs=0 max_rel=0
+field=ideal.default.probe.state.E max_abs=0 max_rel=0
+field=ideal.default.probe.state.P max_abs=0 max_rel=0
+field=ideal.default.probe.state.cv max_abs=0 max_rel=0
+field=ideal.default.probe.state.dp_dT max_abs=0 max_rel=0
+field=ideal.default.probe.state.dp_drho max_abs=0 max_rel=0
+field=ideal.default.probe.state.sound_speed max_abs=0 max_rel=0
+field=ideal.default.probe.temperature max_abs=0 max_rel=0
+field=ideal.default.probe.total_energy max_abs=0 max_rel=0
+field=ideal.strict.probe.cv max_abs=0 max_rel=0
+field=ideal.strict.probe.dp_de max_abs=0 max_rel=0
+field=ideal.strict.probe.dp_drho max_abs=0 max_rel=0
+field=ideal.strict.probe.eint max_abs=0 max_rel=0
+field=ideal.strict.probe.gamma max_abs=0 max_rel=0
+field=ideal.strict.probe.pressure_rho_T max_abs=0 max_rel=0
+field=ideal.strict.probe.pressure_rho_e max_abs=0 max_rel=0
+field=ideal.strict.probe.sound_speed max_abs=0 max_rel=0
+field=ideal.strict.probe.state.E max_abs=0 max_rel=0
+field=ideal.strict.probe.state.P max_abs=0 max_rel=0
+field=ideal.strict.probe.state.cv max_abs=0 max_rel=0
+field=ideal.strict.probe.state.dp_dT max_abs=0 max_rel=0
+field=ideal.strict.probe.state.dp_drho max_abs=0 max_rel=0
+field=ideal.strict.probe.state.sound_speed max_abs=0 max_rel=0
+field=ideal.strict.probe.temperature max_abs=0 max_rel=0
+field=ideal.strict.probe.total_energy max_abs=0 max_rel=0
+field=ideal.zero.probe.dp_de max_abs=0 max_rel=0
+field=ideal.zero.probe.gamma max_abs=0 max_rel=0
+field=ideal.zero.probe.total_energy max_abs=0 max_rel=0
+field=owner destruction did not synchronize pending kernel max_abs=0 max_rel=0
+field=tab3.analytic_fallback max_abs=512 max_rel=1.40753e-16
+field=tab3.analytic_fallback.dp_dT max_abs=0 max_rel=0
+field=tab3.analytic_threshold max_abs=4.54747e-13 max_rel=1.25014e-16
+field=tab3.finite_difference.probe.cv max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.dp_de max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.dp_drho max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.eint max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.gamma max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.pressure_rho_T max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.pressure_rho_e max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.sound_speed max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.state.E max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.state.P max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.state.cv max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.state.dp_dT max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.state.dp_drho max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.state.sound_speed max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.temperature max_abs=0 max_rel=0
+field=tab3.finite_difference.probe.total_energy max_abs=0 max_rel=0
+field=tab3.iteration.probe.cv max_abs=0 max_rel=0
+field=tab3.iteration.probe.dp_de max_abs=0 max_rel=0
+field=tab3.iteration.probe.dp_drho max_abs=0 max_rel=0
+field=tab3.iteration.probe.eint max_abs=0 max_rel=0
+field=tab3.iteration.probe.gamma max_abs=0 max_rel=0
+field=tab3.iteration.probe.pressure_rho_T max_abs=0 max_rel=0
+field=tab3.iteration.probe.pressure_rho_e max_abs=0 max_rel=0
+field=tab3.iteration.probe.sound_speed max_abs=0 max_rel=0
+field=tab3.iteration.probe.state.E max_abs=0 max_rel=0
+field=tab3.iteration.probe.state.P max_abs=0 max_rel=0
+field=tab3.iteration.probe.state.cv max_abs=0 max_rel=0
+field=tab3.iteration.probe.state.dp_dT max_abs=0 max_rel=0
+field=tab3.iteration.probe.state.dp_drho max_abs=0 max_rel=0
+field=tab3.iteration.probe.state.sound_speed max_abs=0 max_rel=0
+field=tab3.iteration.probe.temperature max_abs=0 max_rel=0
+field=tab3.iteration.probe.total_energy max_abs=0 max_rel=0
+field=tab3.table.probe.cv max_abs=0 max_rel=0
+field=tab3.table.probe.dp_de max_abs=0 max_rel=0
+field=tab3.table.probe.dp_drho max_abs=0 max_rel=0
+field=tab3.table.probe.eint max_abs=0 max_rel=0
+field=tab3.table.probe.gamma max_abs=0 max_rel=0
+field=tab3.table.probe.pressure_rho_T max_abs=0 max_rel=0
+field=tab3.table.probe.pressure_rho_e max_abs=0 max_rel=0
+field=tab3.table.probe.sound_speed max_abs=0 max_rel=0
+field=tab3.table.probe.state.E max_abs=0 max_rel=0
+field=tab3.table.probe.state.P max_abs=0 max_rel=0
+field=tab3.table.probe.state.cv max_abs=0 max_rel=0
+field=tab3.table.probe.state.dp_dT max_abs=0 max_rel=0
+field=tab3.table.probe.state.dp_drho max_abs=0 max_rel=0
+field=tab3.table.probe.state.sound_speed max_abs=0 max_rel=0
+field=tab3.table.probe.temperature max_abs=0 max_rel=0
+field=tab3.table.probe.total_energy max_abs=0 max_rel=0
+field=tab3.upper_margin max_abs=0 max_rel=0
+field=tab4.analytic_fallback max_abs=0 max_rel=0
+field=tab4.analytic_fallback.dp_dT max_abs=0 max_rel=0
+field=tab4.analytic_threshold max_abs=9.09495e-13 max_rel=1.64081e-16
+field=tab4.finite_difference.probe.cv max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.dp_de max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.dp_drho max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.eint max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.gamma max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.pressure_rho_T max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.pressure_rho_e max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.sound_speed max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.state.E max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.state.P max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.state.cv max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.state.dp_dT max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.state.dp_drho max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.state.sound_speed max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.temperature max_abs=0 max_rel=0
+field=tab4.finite_difference.probe.total_energy max_abs=0 max_rel=0
+field=tab4.iteration.probe.cv max_abs=0 max_rel=0
+field=tab4.iteration.probe.dp_de max_abs=0 max_rel=0
+field=tab4.iteration.probe.dp_drho max_abs=0 max_rel=0
+field=tab4.iteration.probe.eint max_abs=0 max_rel=0
+field=tab4.iteration.probe.gamma max_abs=0 max_rel=0
+field=tab4.iteration.probe.pressure_rho_T max_abs=0 max_rel=0
+field=tab4.iteration.probe.pressure_rho_e max_abs=0 max_rel=0
+field=tab4.iteration.probe.sound_speed max_abs=0 max_rel=0
+field=tab4.iteration.probe.state.E max_abs=0 max_rel=0
+field=tab4.iteration.probe.state.P max_abs=0 max_rel=0
+field=tab4.iteration.probe.state.cv max_abs=0 max_rel=0
+field=tab4.iteration.probe.state.dp_dT max_abs=0 max_rel=0
+field=tab4.iteration.probe.state.dp_drho max_abs=0 max_rel=0
+field=tab4.iteration.probe.state.sound_speed max_abs=0 max_rel=0
+field=tab4.iteration.probe.temperature max_abs=0 max_rel=0
+field=tab4.iteration.probe.total_energy max_abs=0 max_rel=0
+field=tab4.table.probe.cv max_abs=0 max_rel=0
+field=tab4.table.probe.dp_de max_abs=0 max_rel=0
+field=tab4.table.probe.dp_drho max_abs=0 max_rel=0
+field=tab4.table.probe.eint max_abs=0 max_rel=0
+field=tab4.table.probe.gamma max_abs=0 max_rel=0
+field=tab4.table.probe.pressure_rho_T max_abs=0 max_rel=0
+field=tab4.table.probe.pressure_rho_e max_abs=0 max_rel=0
+field=tab4.table.probe.sound_speed max_abs=0 max_rel=0
+field=tab4.table.probe.state.E max_abs=0 max_rel=0
+field=tab4.table.probe.state.P max_abs=0 max_rel=0
+field=tab4.table.probe.state.cv max_abs=0 max_rel=0
+field=tab4.table.probe.state.dp_dT max_abs=0 max_rel=0
+field=tab4.table.probe.state.dp_drho max_abs=0 max_rel=0
+field=tab4.table.probe.state.sound_speed max_abs=0 max_rel=0
+field=tab4.table.probe.temperature max_abs=0 max_rel=0
+field=tab4.table.probe.total_energy max_abs=0 max_rel=0
+field=tab4.upper_margin max_abs=0 max_rel=0
+field=tabular final element max_abs=0 max_rel=0

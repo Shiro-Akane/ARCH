@@ -1576,12 +1576,21 @@ void test_production_lane_fingerprints_and_authority_absence()
                               "MonotonicSchedulerClock scheduler_clock;")
                == 1,
            "Driver owns one run-persistent scheduler clock");
-    expect(source_occurrences(driver, "register_block(") == 2,
-           "Driver has only initial and changed-topology registration paths");
+    expect(source_occurrences(driver, "register_block(") == 3,
+           "Driver registers initial Host, regridded Host and staged Device authority");
     expect(source_occurrences(driver, "initial_witness.completion") == 1
                && source_occurrences(driver,
-                                     "topology_witness.completion") == 1,
-           "initial/topology registration each fan out one batch token");
+                                     "topology_witness.completion") == 3,
+           "each regrid authority fans out its batch token; Device also publishes migrated ghosts");
+    const auto migration_complete = driver.find("prepared.CompleteDeviceMigration()");
+    const auto device_registration = driver.find("payload.ledger->register_block(");
+    const auto device_ghost = driver.find("payload.ledger->publish_ghost(");
+    const auto ready = driver.find("transaction.mark_ready()", device_ghost);
+    expect(migration_complete < device_registration && device_registration < device_ghost
+               && device_ghost < ready && ready != std::string::npos
+               && driver.find("payload.topology_witness.completion, ExecutionSide::Device)")
+                      != std::string::npos,
+           "completed device migration publishes Device interiors/ghosts before transactional commit");
     expect(driver.find("handle.uid.value") == std::string::npos,
            "registration batch witnesses never depend on handle identity");
     expect(driver.find("scheduler_clock =") == std::string::npos,

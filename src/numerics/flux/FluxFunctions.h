@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
 #include <vector>
 
 #include "../../data/FluidState.h"
@@ -352,7 +354,11 @@ struct RoeGlaisterState
  * @param e_R Right specific internal energy.
  * @param H_L Left total enthalpy.
  * @param H_R Right total enthalpy.
- * @param Xi_avg Averaged mass fractions passed to the EOS.
+ * @param Xi_L Left mass fractions.
+ * @param Xi_R Right mass fractions.
+ * @param n_spec Number of species.
+ * @param Xi_scratch Non-aliasing output workspace for the averaged composition;
+ *        the caller subsequently overwrites it with the species flux.
  * @param eos EOS object providing pressure inversion and both derivatives.
  */
 template <typename EosType>
@@ -361,7 +367,7 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     double P_L, double P_R,
     double e_L, double e_R,
     double H_L, double H_R,
-    const double *Xi_avg,
+    const double *Xi_L, const double *Xi_R, int n_spec, double *Xi_scratch,
     const EosType &eos)
 {
     RoeGlaisterState res;
@@ -382,8 +388,30 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     res.w_hat = (sq_rho_L * (U_L.mom_w / rho_L) + sq_rho_R * (U_R.mom_w / rho_R)) * inv_denom;
     res.H_hat = (sq_rho_L * H_L + sq_rho_R * H_R) * inv_denom;
 
-    // Choose chi and kappa so the pressure difference matches the state jump.
+    // Freeze composition at the symmetric Roe-weighted face mixture. Never
+    // attribute a composition jump to a vanishing density/energy denominator.
+    // Equal compositions reuse the already evaluated endpoint pressures.
+    bool same_composition = true;
+    for (int s = 0; s < n_spec; ++s)
+        same_composition = same_composition && Xi_L[s] == Xi_R[s];
+    const double* Xi_avg = Xi_L;
+    if (!same_composition) {
+        for (int s = 0; s < n_spec; ++s)
+            Xi_scratch[s] = (sq_rho_L * Xi_L[s] + sq_rho_R * Xi_R[s]) * inv_denom;
+        Xi_avg = Xi_scratch;
+    }
+    const double p_ll = same_composition ? P_L
+        : eos.get_pressure_from_rho_e(rho_L, e_L, Xi_avg);
+    const double p_rr = same_composition ? P_R
+        : eos.get_pressure_from_rho_e(rho_R, e_R, Xi_avg);
+    const double p_rl = eos.get_pressure_from_rho_e(rho_R, e_L, Xi_avg);
+    const double p_lr = eos.get_pressure_from_rho_e(rho_L, e_R, Xi_avg);
 
+    // Both rectangular paths reproduce the fixed-mixture pressure jump.
+    // Weight the e_L path by sqrt(rho_L), the e_R path by sqrt(rho_R).
+    // Besides reflection symmetry, this recovers chi=(gamma-1)*e_hat and
+    // kappa=(gamma-1)*rho_hat exactly for an ideal gas. One directed path
+    // instead yields different acoustic speeds when left/right are swapped.
     double d_rho = rho_R - rho_L;
     double d_e = e_R - e_L;
 
@@ -392,40 +420,51 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     // implementation switches to an EOS derivative.
     double epsilon = std::max(1e-7 * (rho_L + rho_R), 1e-10);
 
-    // p*=p(rho_R,e_L) decomposes the pressure jump into density and internal-
-    // energy contributions.
-    double p_star = eos.get_pressure_from_rho_e(rho_R, e_L, Xi_avg);
-
     // chi=(∂p/∂rho)_e.
     if (std::abs(d_rho) > epsilon)
     {
-        // Finite difference across density.
-        res.chi = (p_star - P_L) / d_rho;
+        res.chi = (sq_rho_L * ((p_rl - p_ll) / d_rho)
+                 + sq_rho_R * ((p_rr - p_lr) / d_rho)) * inv_denom;
     }
     else
     {
-        // Analytic derivative at the left state.
-        res.chi = eos.get_dp_drho_e(rho_L, e_L, Xi_avg);
+        res.chi = (sq_rho_L * eos.get_dp_drho_e(rho_L, e_L, Xi_avg)
+                 + sq_rho_R * eos.get_dp_drho_e(rho_R, e_R, Xi_avg)) * inv_denom;
     }
 
-    // kappa=(∂p/∂e)_rho. The 1e-10 threshold protects subtraction of
-    // nearly equal specific internal energies.
-    if (std::abs(d_e) > 1e-10)
+    // kappa=(∂p/∂e)_rho. Pressure subtraction loses relative precision when
+    // the energy interval is small compared with either endpoint, even if
+    // its dimensional value exceeds the existing 1e-10 near-zero floor.
+    // sqrt(machine epsilon) balances subtraction error against the local
+    // derivative limit; retain that limit instead of dividing rounded ulps.
+    const double relative_energy_resolution =
+        std::sqrt(std::numeric_limits<double>::epsilon());
+    const double energy_resolution = std::max(1e-10,
+        relative_energy_resolution * std::abs(e_L)
+        + relative_energy_resolution * std::abs(e_R));
+    if (std::abs(d_e) > energy_resolution)
     { // Use a finite difference only when the energy interval is resolvable.
-        res.kappa = (P_R - p_star) / d_e;
+        res.kappa = (sq_rho_L * ((p_rr - p_rl) / d_e)
+                   + sq_rho_R * ((p_lr - p_ll) / d_e)) * inv_denom;
     }
     else
     {
-        // Analytic derivative at the right state.
-        res.kappa = eos.get_dp_de_rho(rho_R, e_R, Xi_avg);
+        res.kappa = (sq_rho_L * eos.get_dp_de_rho(rho_R, e_R, Xi_avg)
+                   + sq_rho_R * eos.get_dp_de_rho(rho_L, e_L, Xi_avg)) * inv_denom;
     }
 
     if (res.kappa < 1e-12)
         res.kappa = 1e-12;
 
-    // General-EOS sound speed: c^2=chi+kappa*p/rho^2.
-    double p_ref = 0.5 * (P_L + P_R);
-    double term2 = (res.kappa * p_ref) / (res.rho_hat * res.rho_hat + 1e-20);
+    // The Roe pressure is rho_hat*(H_hat-e_hat-|u_hat|^2/2), not the
+    // arithmetic mean of endpoint pressures. This follows from the exact
+    // conservative jump identity d(rho*e)=e_hat*d(rho)+rho_hat*d(e).
+    const double e_hat = (sq_rho_L * e_L + sq_rho_R * e_R) * inv_denom;
+    const double kinetic_hat = .5 * (res.u_hat * res.u_hat
+        + res.v_hat * res.v_hat + res.w_hat * res.w_hat);
+    const double pressure_over_density = res.H_hat - e_hat - kinetic_hat;
+    const double p_ref = res.rho_hat * pressure_over_density;
+    const double term2 = res.kappa * pressure_over_density / res.rho_hat;
     double c2 = res.chi + term2;
 
     if (c2 < 0.0 || std::isnan(c2))
@@ -493,7 +532,7 @@ ARCH_INLINE FluidVector calc_roe_flux_hydro(
 
     // Scale the entropy-fix width by the local spectral radius. The 1e-12
     // floor remains nonzero in a stationary state.
-    double spectral_radius = std::abs(rs.u_hat) + rs.c_hat;
+    double spectral_radius = std::abs(un_hat) + rs.c_hat;
     double epsilon_val = fix_coeff * spectral_radius;
     epsilon_val = std::max(epsilon_val, 1e-12);
 

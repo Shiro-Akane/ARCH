@@ -16,6 +16,8 @@
 
 namespace io {
 
+inline constexpr int checkpoint_format_version = 4;
+
 /** Scientific/state-layout identity required for a verified restart. */
 struct CheckpointProvenance {
     bool available = false;
@@ -48,10 +50,14 @@ struct CheckpointData {
     bool has_timestep_state = false;
     bool resume_after_regrid = false;
     bool has_enuc_rate = false;
+    bool has_mass_fractions = false;
     CheckpointProvenance provenance;
     std::vector<int> levels;
     std::vector<uint32_t> logical_x1, logical_x2, logical_x3;
     std::vector<double> rho, mom_u, mom_v, mom_w, eng, enuc_rate, rhoX;
+    // Native evolved composition. rhoX alone cannot preserve X bit-for-bit:
+    // division after a rounded multiplication is not an inverse operation.
+    std::vector<double> mass_fractions;
 };
 
 void write_hdf5_plt_impl(const std::string& filepath, double current_time, int dim, const std::string& geom,

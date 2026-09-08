@@ -1,0 +1,76 @@
+# Uniform aprox13/Helmholtz burn verification: BD.
+# VALIDATION INPUT: owned by validation/burn/README.md; keep synchronized with metrics.csv.
+geometry = cartesian
+nblockx1 = 2
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 8
+x1_min = 0.0
+x1_max = 1.0e8
+x2_min = 0.0
+x2_max = 1.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = periodic
+x1r_boundary_type = periodic
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = muscl
+limiter = mc
+time_integrator = RK2
+cfl = 0.4
+sml_rho = 1e-12
+max_eint = 1e22
+compute_backend = cpu
+
+lrefinemin = 0
+lrefinemax = 0
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.8
+derefine_threshold = 0.2
+
+tmax = 1e99
+max_steps = 5
+restart = false
+out_dir = /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/burn_bd_two_block/step-5/cpu
+base_name = burn_bd_two_block_cpu_s5
+plt_dt = -1
+plt_dstep = -1
+chk_dt = -1
+chk_dstep = 5
+plt_variables = DENS, TEMP, PRES, ENER, ENUC, SPECIES
+
+eos_type = helmholtz
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
+gravity_type = none
+use_diffusion = false
+
+use_burn = true
+network_name = aprox13
+burn_verbose_level = 0
+nuclearTempMin = 1e8
+nuclearDensMin = 1e-10
+smallt = 1e5
+smallx = 1e-20
+use_nse = false
+dt_init = 1e-16
+dt_min = 1e-24
+tstep_change_factor = 2.0
+enucDtFactor = 1e30
+ode_solver = BD
+linear_solver = DenseLU
+ode_rtol = 1e-6
+ode_atol = 1e-10
+ode_max_substeps = 100000
+ode_initial_dt_frac = 1e-3
+
+rho0 = 1e7
+temperature0 = 3e9
+xhe4 = 0.0
+xc12 = 0.5
+xo16 = 0.5

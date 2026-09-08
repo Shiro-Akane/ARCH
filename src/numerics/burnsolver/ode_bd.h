@@ -1,13 +1,13 @@
 /**
  * @file ode_bd.h
- * @brief Unified concept for ODE Integrators using Bader-Deuflhard Semi-Implicit Extrapolation.
+ * @brief Shared Bader-Deuflhard continuation and synchronous linear executor.
  */
 #pragma once
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 
-#include "Networks.h"
+#include "OdeContinuation.h"
 #include "odeFunction.h"
 
 template <typename NetType, typename MatrixType, typename LinearSolver>
@@ -16,6 +16,7 @@ struct Solver_BD
     static constexpr int NEQ = NetType::ODE_NEQ;
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES;
     static constexpr int MAX_N = NEQ;
+    static constexpr bool USES_JACOBIAN_WORKSPACE = true;
 
     // Seven extrapolation levels limit high-order polynomial oscillation while
     // covering the useful compact-network accuracy range.
@@ -48,216 +49,313 @@ struct Solver_BD
         }
     }
 
-    template <typename EOSType>
-    static bool integrate(double *X_ODE, double rho, double dt_target, const EOSType &eos,
-                          const BurnConfig &burn_cfg, double &dt_rec)
+    enum class Phase : unsigned char
     {
-        return integrate_report(X_ODE, rho, dt_target, eos,
-                                make_burn_config_view(burn_cfg), dt_rec).success();
+        BeginMacro, BeginLevel, AwaitFactor, FactorReady, AwaitSolve, SolveReady,
+        AssessLevel, FinishMacro, Complete
+    };
+    struct Continuation
+    {
+        [[no_unique_address]] NetType network{};
+        OdeMath::AcceptedState<NEQ> accepted;
+        arch::math::CompensatedSum accepted_energy;
+        // GPU execution places this O(NEQ) tableau in a bounded global pool,
+        // never an unbounded per-cell dense-matrix or device-stack allocation.
+        // Extrapolate changes from the macro-step state, not large absolute
+        // temperatures/energy integrals whose subtraction erases small heating.
+        double T_extrap[MAX_K][MAX_K][NEQ], err_fac[MAX_K];
+        double W[MAX_N], X_err[MAX_N], X_trial[MAX_N];
+        double RHS[MAX_N], b[MAX_N], delta[MAX_N], increment[MAX_N], X_j[MAX_N];
+        int n_seq[MAX_K];
+        BurnOdeReport report{};
+        double rho = 0.0, dt_target = 0.0, dt_recommended = 0.0;
+        double t_current = 0.0, H = 0.0, h = 0.0, current_err = 0.0;
+        int k = 0, j = 0, m = 0, stage = 0, optimal_k = 0;
+        bool nse_attempted = false, linear_success = false, step_converged = false;
+        Phase phase = Phase::Complete;
+    };
+
+    ARCH_HOST_DEVICE static void begin(
+        Continuation& c, const double* X_ODE, double rho, double dt_target,
+        const BurnConfigView& cfg, double dt_rec, const NetType& network = {})
+    {
+        c.network = network;
+        c.accepted.initialize(X_ODE);
+        c.accepted_energy = {};
+        c.report = {};
+        c.report.dt_recommended = dt_rec;
+        c.rho = rho; c.dt_target = dt_target; c.dt_recommended = dt_rec;
+        c.t_current = 0.0;
+        c.H = std::min(dt_target, dt_target * cfg.odeconfig.initial_dt_frac);
+        c.h = 0.0; c.current_err = 0.0;
+        c.k = c.j = c.m = c.stage = c.optimal_k = 0;
+        c.nse_attempted = false; c.linear_success = false; c.step_converged = false;
+        for (int level = 0; level < MAX_K; ++level) c.n_seq[level] = sequence_value(level);
+        c.phase = X_ODE[NUM_SPEC] < cfg.nuclearTempMin || rho < cfg.nuclearDensMin
+            ? Phase::Complete : Phase::BeginMacro;
+    }
+
+    ARCH_HOST_DEVICE static bool complete_linear_solve(Continuation& c, bool success)
+    {
+        if (c.phase == Phase::AwaitFactor) c.phase = Phase::FactorReady;
+        else if (c.phase == Phase::AwaitSolve) c.phase = Phase::SolveReady;
+        else return false;
+        c.linear_success = success;
+        return true;
+    }
+
+    /** Select a next step using only error factors actually computed this step.
+     * The higher-order candidate has an ESTIMATED factor, not err_fac[k+1].
+     * The current work table does not select a higher order for positive finite
+     * inputs, but this must remain correct if that table is refined in future.
+     */
+    ARCH_HOST_DEVICE static double recommend_macro_step(
+        double H, const double* err_fac, int optimal_k, const BurnConfigView& cfg)
+    {
+        int sequence[MAX_K];
+        double work[MAX_K];
+        for (int order = 0; order < MAX_K; ++order) {
+            sequence[order] = sequence_value(order);
+            work[order] = work_cost_value(order);
+        }
+        return OdeMath::bd_recommend_macro_step<MAX_K>(H, err_fac, optimal_k,
+            sequence, work, cfg.odeconfig.dt_fac_min, cfg.odeconfig.dt_fac_max);
     }
 
     template <typename EOSType>
-    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
-        double *X_ODE, double rho, double dt_target, const EOSType &eos,
-        const BurnConfigView &burn_cfg, double &dt_rec)
+    ARCH_HOST_DEVICE static OdeLinearRequest advance(
+        Continuation& c, MatrixType& J_mat, MatrixType& A, double* X_ODE,
+        const EOSType& eos, const BurnConfigView& burn_cfg)
     {
-        MatrixType J_mat, A;
-        return integrate_report_with_matrices(
-            X_ODE, rho, dt_target, eos, burn_cfg, J_mat, A, dt_rec);
+        auto& report = c.report;
+        auto& dt_rec = c.dt_recommended; auto& t_current = c.t_current; auto& H = c.H;
+        auto& nse_attempted = c.nse_attempted;
+        const double rho = c.rho, dt_target = c.dt_target;
+        const int max_substeps = burn_cfg.odeconfig.max_substeps;
+        for (;;) {
+            switch (c.phase) {
+            case Phase::Complete: return OdeLinearRequest::Complete;
+            case Phase::AwaitFactor: return OdeLinearRequest::Factorize;
+            case Phase::AwaitSolve: return OdeLinearRequest::SolveWithFactors;
+            case Phase::BeginMacro: {
+                if (!(t_current < dt_target)) {
+                    dt_rec = H;
+                    report.status = BurnOdeStatus::OdeSuccess;
+                    report.dt_recommended = dt_rec;
+                    c.phase = Phase::Complete;
+                    continue;
+                }
+                if constexpr (NetType::SUPPORTS_NSE) {
+                    if (!nse_attempted && burn_cfg.use_nse && X_ODE[NUM_SPEC] > burn_cfg.nseTempThreshold && rho > burn_cfg.nseDensThreshold) {
+                        nse_attempted = true;
+                        ++report.nse_attempts;
+                        double nse_energy = 0.0;
+                        if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos, burn_cfg, dt_rec, &nse_energy)) {
+                            OdeMath::record_accepted_energy(c.accepted_energy, report, nse_energy);
+                            report.status = BurnOdeStatus::NseSuccess;
+                            report.dt_recommended = dt_rec;
+                            c.phase = Phase::Complete;
+                            return OdeLinearRequest::Complete;
+                        }
+                        ++report.nse_failures;
+                    }
+                }
+
+                ++report.attempted_substeps;
+                const int substep_count = report.attempted_substeps;
+                if (substep_count > max_substeps) {
+#if !defined(__CUDA_ARCH__)
+                    std::cerr << "[BD] Fatal Error: Exceeded max substeps." << std::endl;
+#endif
+                    report.status = BurnOdeStatus::MaxSubsteps;
+                    c.phase = Phase::Complete;
+                    return OdeLinearRequest::Complete;
+                }
+
+                if (t_current + H > dt_target) H = dt_target - t_current;
+
+                assemble(c, J_mat, X_ODE, eos, burn_cfg);
+                c.step_converged = false;
+                c.optimal_k = 0;
+                c.current_err = 0.0;
+                c.k = 0;
+                c.phase = Phase::BeginLevel;
+                continue;
+            }
+            case Phase::BeginLevel:
+                if (c.k == MAX_K) {
+                    c.phase = Phase::FinishMacro;
+                    continue;
+                }
+                c.m = c.n_seq[c.k];
+                c.h = c.H / c.m;
+                A.set_shifted_identity_from(J_mat, -c.h);
+                c.phase = Phase::AwaitFactor;
+                return OdeLinearRequest::Factorize;
+            case Phase::FactorReady:
+                if (!c.linear_success) {
+                    c.phase = Phase::FinishMacro;
+                    continue;
+                }
+#pragma omp simd
+                for (int i = 0; i < NEQ; ++i) {
+                    c.b[i] = c.h * c.RHS[i];
+                    c.X_j[i] = X_ODE[i];
+                }
+                c.stage = 0;
+                c.phase = Phase::AwaitSolve;
+                return OdeLinearRequest::SolveWithFactors;
+            case Phase::SolveReady: {
+                if (!c.linear_success) {
+                    c.phase = Phase::FinishMacro;
+                    continue;
+                }
+                if (c.stage == 0) {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) {
+                        c.delta[i] = c.b[i];
+                        c.increment[i] = c.delta[i];
+                    }
+                    materialize_midpoint_state(c, X_ODE, burn_cfg);
+                    c.j = 1;
+                } else if (c.stage == 1) {
+                    bool simpr_failed = false;
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i) {
+                        if (!std::isfinite(c.b[i])) simpr_failed = true;
+                        c.increment[i] += c.delta[i] + 2.0 * c.b[i];
+                        c.delta[i] += 2.0 * c.b[i];
+                    }
+                    if (simpr_failed) {
+                        c.phase = Phase::FinishMacro;
+                        continue;
+                    }
+                    materialize_midpoint_state(c, X_ODE, burn_cfg);
+                    ++c.j;
+                } else {
+#pragma omp simd
+                    for (int i = 0; i < NEQ; ++i)
+                        c.T_extrap[c.k][0][i] = c.increment[i] + c.b[i];
+                    c.phase = Phase::AssessLevel;
+                    continue;
+                }
+                // Midpoint updates and endpoint smoothing share h*f-delta.
+                // Only consumption of the solved correction differs.
+                midpoint_rhs(c, eos);
+                c.stage = c.j < c.m ? 1 : 2;
+                c.phase = Phase::AwaitSolve;
+                return OdeLinearRequest::SolveWithFactors;
+            }
+            case Phase::AssessLevel:
+                assess_level(c, X_ODE, eos, burn_cfg);
+                continue;
+            case Phase::FinishMacro:
+                finish_macro(c, X_ODE, burn_cfg);
+                continue;
+            }
+        }
     }
 
     template <typename EOSType>
-    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
-        double *X_ODE, double rho, double dt_target, const EOSType &eos,
-        const BurnConfigView &burn_cfg,
-        OdeMatrixWorkspace<MatrixType>& workspace, double &dt_rec)
+    static bool integrate(double* X_ODE, double rho, double dt_target, const EOSType& eos,
+                          const BurnConfig& cfg, double& dt_rec, double* energy_change = nullptr)
     {
-        return integrate_report_with_matrices(
-            X_ODE, rho, dt_target, eos, burn_cfg,
-            workspace.jacobian, workspace.system, dt_rec);
+        const auto report = integrate_report(X_ODE, rho, dt_target, eos, make_burn_config_view(cfg),
+                                             dt_rec, make_host_burn_network<NetType>());
+        if (report.success() && energy_change) *energy_change = report.energy_change;
+        return report.success();
+    }
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double* X_ODE, double rho, double dt_target, const EOSType& eos,
+        const BurnConfigView& cfg, double& dt_rec, const NetType& network = {})
+    {
+        MatrixType jacobian, system;
+        return integrate_report_with_matrices(X_ODE, rho, dt_target, eos, cfg, jacobian, system, dt_rec, network);
+    }
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static BurnOdeReport integrate_report(
+        double* X_ODE, double rho, double dt_target, const EOSType& eos,
+        const BurnConfigView& cfg, OdeMatrixWorkspace<MatrixType>& workspace, double& dt_rec,
+        const NetType& network = {})
+    {
+        return integrate_report_with_matrices(X_ODE, rho, dt_target, eos, cfg,
+                                              workspace.jacobian, workspace.system, dt_rec, network);
     }
 
 private:
     template <typename EOSType>
     ARCH_HOST_DEVICE static BurnOdeReport integrate_report_with_matrices(
-        double *X_ODE, double rho, double dt_target, const EOSType &eos,
-        const BurnConfigView &burn_cfg,
-        MatrixType& J_mat, MatrixType& A, double &dt_rec)
+        double* X_ODE, double rho, double dt_target, const EOSType& eos,
+        const BurnConfigView& cfg, MatrixType& jacobian, MatrixType& system, double& dt_rec,
+        const NetType& network)
     {
-        BurnOdeReport report{};
-        report.dt_recommended = dt_rec;
-        if (X_ODE[NEQ - 1] < burn_cfg.nuclearTempMin || rho < burn_cfg.nuclearDensMin) {
-            return report;
+        Continuation context;
+        int pivots[MAX_N];
+        begin(context, X_ODE, rho, dt_target, cfg, dt_rec, network);
+        for (;;) {
+            const auto request = advance(context, jacobian, system, X_ODE, eos, cfg);
+            if (request == OdeLinearRequest::Complete) break;
+            bool success = true;
+            if (request == OdeLinearRequest::Factorize)
+                success = LinearSolver::template factorize<NEQ, MAX_N>(system, pivots);
+            else
+                LinearSolver::template solve_with_factors<NEQ, MAX_N>(system, pivots, context.b);
+            complete_linear_solve(context, success);
         }
+        dt_rec = context.dt_recommended;
+        return context.report;
+    }
 
-        const double rtol = burn_cfg.odeconfig.rtol;
-        const double atol = burn_cfg.odeconfig.atol;
-        const int max_substeps = burn_cfg.odeconfig.max_substeps;
-
-        double t_current = 0.0;
-        double H = std::min(dt_target, dt_target * burn_cfg.odeconfig.initial_dt_frac);
-        int substep_count = 0;
-        bool nse_attempted = false;
-        int n_seq[MAX_K];
-        for (int level = 0; level < MAX_K; ++level)
-            n_seq[level] = sequence_value(level);
-
-        // Bader-Deuflhard extrapolation tableau and error workspace.
-        double T_extrap[MAX_K][MAX_K][NEQ];
-        double err_fac[MAX_K];
-        double W[MAX_N], X_err[MAX_N], X_trial[MAX_N];
-        double RHS[MAX_N], b[MAX_N], delta[MAX_N], x_j[MAX_N], X_j[MAX_N];
-        int p[MAX_N]; // Row-pivot indices for the LU factorization.
-
-        auto sanitize_state = [&](double* Y_state) {
-            for (int i = 0; i < NUM_SPEC; ++i) {
-                if (Y_state[i] < burn_cfg.smallx) Y_state[i] = burn_cfg.smallx;
-                else if (Y_state[i] > 1.0) Y_state[i] = 1.0;
+    ARCH_HOST_DEVICE static void materialize_midpoint_state(
+        Continuation& c, const double* initial, const BurnConfigView& burn_cfg)
+    {
+        for (int i = 0; i < NEQ; ++i) {
+            const double candidate = c.accepted.incremented(i, c.increment[i]).value();
+            double bounded = candidate;
+            if (i < NUM_SPEC) {
+                if (bounded < burn_cfg.smallx) bounded = burn_cfg.smallx;
+                else if (bounded > 1.0) bounded = 1.0;
+            } else if (i == NUM_SPEC && bounded < burn_cfg.nuclearTempMin) {
+                bounded = burn_cfg.nuclearTempMin;
             }
-            if (Y_state[NEQ - 1] < burn_cfg.nuclearTempMin) {
-                Y_state[NEQ - 1] = burn_cfg.nuclearTempMin;
-            }
-        };
+            c.X_j[i] = bounded;
+            // Preserve the original stage projection. Only a real clamp resets
+            // the increment; subtracting the baseline on every stage would
+            // reintroduce the very cancellation this representation avoids.
+            if (bounded != candidate) c.increment[i] = bounded - initial[i];
+        }
+    }
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static void assemble(
+        Continuation& c, MatrixType& J_mat, double* X_ODE,
+        const EOSType& eos, const BurnConfigView& burn_cfg)
+    {
+        // One shared Jacobian at the start of this macro step.
+        OdeMath::assemble_burn_jacobian<NetType>(X_ODE, c.rho, eos, J_mat, c.RHS, c.network);
+        OdeMath::calc_weights<NEQ>(X_ODE, burn_cfg.odeconfig.rtol, burn_cfg.odeconfig.atol, c.W);
+    }
 
-        // Advance the requested interval with adaptive macro steps H.
-        while (t_current < dt_target)
-        {
-            if constexpr (NetType::SUPPORTS_NSE) {
-            if (!nse_attempted && burn_cfg.use_nse && X_ODE[NEQ - 1] > burn_cfg.nseTempThreshold && rho > burn_cfg.nseDensThreshold) {
-                nse_attempted = true;
-                ++report.nse_attempts;
-                if (OdeMath::integrate_nse_state<NetType, EOSType>(X_ODE, rho, dt_target, eos, burn_cfg, dt_rec)) {
-                    report.status = BurnOdeStatus::NseSuccess;
-                    report.dt_recommended = dt_rec;
-                    return report;
-                }
-                ++report.nse_failures;
-            }
-            }
-
-            substep_count++;
-            report.attempted_substeps = substep_count;
-            if (substep_count > max_substeps) {
-#if !defined(__CUDA_ARCH__)
-                std::cerr << "[BD] Fatal Error: Exceeded max substeps." << std::endl;
-#endif
-                report.status = BurnOdeStatus::MaxSubsteps;
-                return report;
-            }
-
-            if (t_current + H > dt_target) H = dt_target - t_current;
-
-            // Evaluate one global Jacobian for this macro step.
-            double enuc = 0.0;
-            double T_current = X_ODE[NEQ - 1];
-            double eta = eos.get_eta(rho, T_current, X_ODE);
-            NetType::eval_rhs(X_ODE, rho, eta, RHS, enuc);
-
-            J_mat.zero();
-            double denuc_dX[MAX_N]{};
-            double dRHS_dT[MAX_N]{};
-            double denuc_dT = 0.0;
-            double eta_jac = eos.get_eta(rho, T_current, X_ODE);
-            NetType::eval_jacobian(X_ODE, rho, eta_jac, J_mat, denuc_dX);
-            NetType::eval_temperature_derivative(X_ODE, rho, eta_jac, dRHS_dT, denuc_dT);
-
-            const double cv = OdeMath::burn_cv_floor(
-                eos.get_cv(rho, T_current, X_ODE));
-            const double inv_cv = 1.0 / cv;
-            RHS[NEQ - 1] = enuc * inv_cv;
-
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static void midpoint_rhs(Continuation& c, const EOSType& eos)
+    {
+        double stage_RHS[MAX_N];
+        OdeMath::eval_burn_rhs<NetType>(c.X_j, c.rho, eos, stage_RHS, c.network);
 #pragma omp simd
-            for (int i = 0; i < NUM_SPEC; ++i) J_mat.set(i + 1, NEQ, dRHS_dT[i]);
-#pragma omp simd
-            for (int j = 0; j < NUM_SPEC; ++j) J_mat.set(NEQ, j + 1, denuc_dX[j] * inv_cv);
-            J_mat.set(NEQ, NEQ, denuc_dT * inv_cv);
+        for (int i = 0; i < NEQ; ++i) c.b[i] = c.h * stage_RHS[i] - c.delta[i];
+    }
 
-            OdeMath::calc_weights<NEQ>(X_ODE, rtol, atol, W);
-
-            bool step_converged = false;
-            int optimal_k = 0;
-            double current_err = 0.0;
-
-            // Build one extrapolation row for each candidate order k.
-            for (int k = 0; k < MAX_K; ++k)
-            {
-                int m = n_seq[k];
-                double h = H / m;
-
-                // Semi-implicit midpoint matrix A=I-h*J.
-                A.set_shifted_identity_from(J_mat, -h);
-
-                if (!LinearSolver::template factorize<NEQ, MAX_N>(A, p)) {
-                    // A singular factorization indicates that the current H is
-                    // too large for this level; leave the order loop and reduce H.
-                    break;
-                }
-
-                // Semi-implicit midpoint recurrence.
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) {
-                    b[i] = h * RHS[i];
-                    X_j[i] = X_ODE[i];
-                }
-                LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) {
-                    delta[i] = b[i];
-                    X_j[i] += delta[i];
-                }
-                sanitize_state(X_j); // Bound an internal stage before evaluating its RHS.
-
-                // March through the remaining midpoint substeps.
-                bool simpr_failed = false;
-                for (int j = 1; j < m; ++j)
-                {
-                    double stage_enuc = 0.0;
-                    double stage_RHS[MAX_N];
-                    double eta = eos.get_eta(rho, X_j[NEQ - 1], X_j);
-                    NetType::eval_rhs(X_j, rho, eta, stage_RHS, stage_enuc);
-                    double stage_cv = OdeMath::burn_cv_floor(
-                        eos.get_cv(rho, X_j[NEQ - 1], X_j));
-                    stage_RHS[NEQ - 1] = stage_enuc / stage_cv;
-
-#pragma omp simd
-                    for (int i = 0; i < NEQ; ++i) {
-                        b[i] = h * stage_RHS[i] - delta[i];
-                    }
-                    LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-
-#pragma omp simd
-                    for (int i = 0; i < NEQ; ++i) {
-                        x_j[i] = b[i];
-                        if (!std::isfinite(x_j[i])) simpr_failed = true;
-                        X_j[i] += delta[i] + 2.0 * x_j[i];
-                        delta[i] += 2.0 * x_j[i];
-                    }
-                    if (simpr_failed) break;
-                    sanitize_state(X_j);
-                }
-                if (simpr_failed) break;
-
-                // Apply the midpoint endpoint smoothing formula.
-                double end_enuc = 0.0;
-                double end_RHS[MAX_N];
-                double eta = eos.get_eta(rho, X_j[NEQ - 1], X_j);
-                NetType::eval_rhs(X_j, rho, eta, end_RHS, end_enuc);
-                double end_cv = OdeMath::burn_cv_floor(
-                    eos.get_cv(rho, X_j[NEQ - 1], X_j));
-                end_RHS[NEQ - 1] = end_enuc / end_cv;
-
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) {
-                    b[i] = h * end_RHS[i] - delta[i];
-                }
-                LinearSolver::template solve_with_factors<NEQ, MAX_N>(A, p, b);
-
-#pragma omp simd
-                for (int i = 0; i < NEQ; ++i) {
-                    T_extrap[k][0][i] = X_j[i] + b[i]; // Seed this extrapolation row.
-                }
-
+    template <typename EOSType>
+    ARCH_HOST_DEVICE static void assess_level(
+        Continuation& c, const double* X_ODE, const EOSType& eos, const BurnConfigView& burn_cfg)
+    {
+        auto& T_extrap = c.T_extrap; auto& X_err = c.X_err; auto& W = c.W;
+        auto& X_trial = c.X_trial; auto& err_fac = c.err_fac;
+        auto& current_err = c.current_err; auto& step_converged = c.step_converged;
+        auto& optimal_k = c.optimal_k;
+        const auto& n_seq = c.n_seq;
+        const int k = c.k;
+        const double rho = c.rho, rtol = burn_cfg.odeconfig.rtol, atol = burn_cfg.odeconfig.atol;
                 // Extrapolate the midpoint result and obtain its truncation estimate.
                 OdeMath::bd_extrapolate<NEQ, MAX_K>(k, n_seq, T_extrap, X_err);
 
@@ -268,7 +366,8 @@ private:
 
                     // Load the extrapolated candidate for physical checks.
 #pragma omp simd
-                    for(int i=0; i<NEQ; ++i) X_trial[i] = T_extrap[k][k][i];
+                    for(int i=0; i<NEQ; ++i)
+                        X_trial[i] = c.accepted.incremented(i, T_extrap[k][k][i]).value();
 
                     bool physically_sound = true;
                     double mass_sum = 0.0;
@@ -279,7 +378,9 @@ private:
                         mass_sum += std::max(X_trial[i], burn_cfg.smallx);
                     }
                     // smallt is the configured lower boundary of the EOS burn state.
-                    if(!std::isfinite(X_trial[NEQ - 1]) || X_trial[NEQ - 1] < burn_cfg.smallt) physically_sound = false;
+                    if(!std::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt) physically_sound = false;
+                    for (int i = NUM_SPEC + 1; i < NEQ; ++i)
+                        if (!std::isfinite(X_trial[i])) physically_sound = false;
 
                     // Run the more expensive EOS energy-closure check only for
                     // finite states whose normalized mathematical error passes.
@@ -289,17 +390,10 @@ private:
 #pragma omp simd
                         for (int i = 0; i < NUM_SPEC; ++i) X_trial[i] = std::max(X_trial[i], burn_cfg.smallx) * inv_sum;
 
-                        arch::math::CompensatedSum nuclear_mass_delta;
-                        for (int i = 0; i < NUM_SPEC; ++i) {
-                            const double molar_delta =
-                                (X_trial[i] - X_ODE[i]) / NetType::aion(i);
-                            nuclear_mass_delta.add(
-                                molar_delta * NetType::energy_weight(i));
-                        }
-                        const double integrated_enuc = NetType::ENERGY_CONVERSION
-                            * nuclear_mass_delta.value();
-                        const double old_eint = eos.get_eint_from_T(rho, X_ODE[NEQ - 1], X_ODE);
-                        const double new_eint = eos.get_eint_from_T(rho, X_trial[NEQ - 1], X_trial);
+                        const double integrated_enuc = OdeMath::integrated_burn_increment_energy<NetType>(
+                            T_extrap[k][k]);
+                        const double old_eint = eos.get_eint_from_T(rho, X_ODE[NUM_SPEC], X_ODE);
+                        const double new_eint = eos.get_eint_from_T(rho, X_trial[NUM_SPEC], X_trial);
                         const double thermal_delta = new_eint - old_eint;
 
                         const double epsilon_eint = std::max(1.0e-12 * std::abs(old_eint), 1.0e-12);
@@ -325,7 +419,8 @@ private:
 
                     if (step_converged) {
                         optimal_k = k;
-                        break; // The first accepted order completes this macro step.
+                        c.phase = Phase::FinishMacro;
+                        return; // The first accepted order completes this macro step.
                     }
                     else if (k > 1 && k + 1 < MAX_K
                              && current_err > std::pow(
@@ -333,69 +428,39 @@ private:
                         // Deuflhard's early-rejection heuristic stops raising
                         // order when the error already exceeds the improvement
                         // expected from the next substep-count ratio.
-                        break;
+                        c.phase = Phase::FinishMacro;
+                        return;
                     }
                 }
-            }
+        ++c.k;
+        c.phase = Phase::BeginLevel;
+    }
 
-            // Accept the state and select the next order and macro step.
-            if (step_converged)
-            {
-                t_current += H;
+    ARCH_HOST_DEVICE static void finish_macro(
+        Continuation& c, double* X_ODE, const BurnConfigView& cfg)
+    {
+        if (c.step_converged) {
+            OdeMath::record_accepted_energy(c.accepted_energy, c.report,
+                OdeMath::integrated_burn_increment_energy<NetType>(c.T_extrap[c.optimal_k][c.optimal_k]));
+            c.t_current += c.H;
 #pragma omp simd
-                for (int i = 0; i < NEQ; ++i) X_ODE[i] = X_trial[i];
-
-                // Select the order that minimizes estimated work per unit
-                // accepted time, equivalent to maximizing step size per work.
-                double work_min = 1.0e20;
-                int k_next = optimal_k;
-
-                // Compare all accepted lower orders.
-                for (int k = 1; k <= optimal_k; ++k) {
-                    double step_for_k = H * err_fac[k] * 0.9; // 0.9 is the extrapolation safety factor.
-                    double work_k = work_cost_value(k) / step_for_k;
-                    if (work_k < work_min) {
-                        work_min = work_k;
-                        k_next = k;
-                    }
-                }
-
-                // Estimate whether one higher order would reduce future work.
-                if (optimal_k < MAX_K - 1) {
-                    double err_est = err_fac[optimal_k] * (static_cast<double>(n_seq[optimal_k + 1]) / n_seq[optimal_k]);
-                    double step_higher = H * err_est * 0.9;
-                    double work_higher = work_cost_value(optimal_k + 1) / step_higher;
-                    if (work_higher < work_min) {
-                        k_next = optimal_k + 1;
-                    }
-                }
-
-                // Form the next macro step and apply the configured growth bounds.
-                double H_new = H * err_fac[k_next] * 0.9;
-                H_new = std::max(H * burn_cfg.odeconfig.dt_fac_min, std::min(H * burn_cfg.odeconfig.dt_fac_max, H_new));
-                H = H_new;
-            }
-            else
-            {
-                // If every candidate order fails mathematical or physical
-                // acceptance, quarter H to leave the rejected stiffness scale.
-                H *= 0.25;
-                nse_attempted = false;
-                report.rejected_substeps += 1;
-                if (H < 1e-22)
-                {
+            for (int i = 0; i < NEQ; ++i)
+                X_ODE[i] = c.accepted.commit(i,
+                    c.accepted.incremented(i, c.T_extrap[c.optimal_k][c.optimal_k][i]), c.X_trial[i]);
+            c.H = recommend_macro_step(c.H, c.err_fac, c.optimal_k, cfg);
+        } else {
+            c.H *= 0.25;
+            c.nse_attempted = false;
+            ++c.report.rejected_substeps;
+            if (c.H < 1e-22) {
 #if !defined(__CUDA_ARCH__)
-                    std::cerr << "[BD] Fatal Error: Stiff ODE stalled. H < 1e-22" << std::endl;
+                std::cerr << "[BD] Fatal Error: Stiff ODE stalled. H < 1e-22" << std::endl;
 #endif
-                    report.status = BurnOdeStatus::Stalled;
-                    return report;
-                }
+                c.report.status = BurnOdeStatus::Stalled;
+                c.phase = Phase::Complete;
+                return;
             }
         }
-
-        dt_rec = H;
-        report.status = BurnOdeStatus::OdeSuccess;
-        report.dt_recommended = dt_rec;
-        return report;
+        c.phase = Phase::BeginMacro;
     }
 };

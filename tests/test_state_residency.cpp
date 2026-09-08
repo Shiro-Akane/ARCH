@@ -698,6 +698,22 @@ void test_cpu_executor_contract_witness()
 
 int main()
 {
+    run_case("device-authoritative migration registration", [] {
+        const auto block = handle(17, 9);
+        StateResidencyLedger ledger({9});
+        ledger.register_block(block, version(10), complete(20), ExecutionSide::Device);
+        ledger.publish_ghost(key(block, StateSlot::Current), ExecutionSide::Device,
+                             version(10), complete(20));
+        ledger.require_readable(key(block, StateSlot::Current),
+                                {ExecutionSide::Device, version(10), true, true});
+        expect_throws([&] {
+            ledger.require_readable(key(block, StateSlot::Current),
+                                    {ExecutionSide::Host, version(10), true, true});
+        }, "device migration must not advertise stale Host Current");
+        expect(ledger.inspect(key(block, StateSlot::Next)).interior.residency
+                   == StateResidency::Invalid,
+               "migration does not initialize unrelated state slots");
+    });
     run_case("value contract and helpers", test_value_contract_and_helpers);
     run_case("registration snapshots and reads", test_registration_snapshots_and_reads);
     run_case("publication and region versions", test_publication_and_region_versions);

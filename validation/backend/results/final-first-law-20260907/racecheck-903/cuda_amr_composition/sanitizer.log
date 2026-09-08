@@ -1,0 +1,13 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             373765
+========= Created:                2026-Sep-08 04:02:03
+========= System OS:              Linux
+========= OS build:               #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025
+========= System CPU:             Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz
+========= CPU architecture:       x86_64
+========= Computer Name:          Shiro-Akane
+========= Target application:     /home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_amr_composition
+========= CUDA version:           13.3
+========= Display Driver version: 610.47
+========= 
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

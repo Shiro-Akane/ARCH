@@ -9,13 +9,16 @@
  */
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <string>
 #include <type_traits>
 #include <vector>
 
 #include "../core/ArchPortability.h"
+#include "../physics/constant/PhysicalConstants.h"
 
 // Grid and domain configuration.
 struct GridConfig
@@ -98,8 +101,21 @@ struct OdeConfig
 
 struct BurnLimits
 {
-    static constexpr int MAX_SPECIES = 30;              ///< Maximum number of species supported by dense matrix network
-    static constexpr int MAX_ODE_NEQ = MAX_SPECIES + 1; ///< Maximum ODE system size (species + temperature)
+    static constexpr int MAX_ODE_NEQ = 31; ///< Compact matrix limit, including thermal and auxiliary equations
+    static constexpr int MAX_SPECIES = MAX_ODE_NEQ - 1; ///< Maximum with temperature and no auxiliary state
+
+    static constexpr bool uses_compact_matrix(std::size_t equations) noexcept
+    {
+        return equations > 0 && equations <= MAX_ODE_NEQ;
+    }
+
+    static constexpr std::size_t equation_count(
+        std::size_t species, std::size_t auxiliary = 0) noexcept
+    {
+        const auto maximum = std::numeric_limits<std::size_t>::max();
+        return auxiliary >= maximum || species >= maximum - auxiliary
+            ? maximum : species + 1 + auxiliary;
+    }
 };
 
 /**
@@ -144,7 +160,8 @@ enum class BurnOdeStatus : std::uint8_t
     NseSuccess,
     OdeSuccess,
     MaxSubsteps,
-    Stalled
+    Stalled,
+    EosFailure // Backend-retained shared EOS error; never an adaptive retry.
 };
 
 struct BurnOdeReport
@@ -155,6 +172,9 @@ struct BurnOdeReport
     int nse_attempts = 0;
     int nse_failures = 0;
     double dt_recommended = 0.0;
+    // Signed specific energy from accepted ODE increments / NSE projection.
+    // This is an integration result, not another ODE unknown.
+    double energy_change = 0.0;
 
     ARCH_HOST_DEVICE constexpr bool success() const
     {
@@ -230,7 +250,7 @@ struct GravityConfig
     double g_x = 0.0;
     double g_y = 0.0;
     double g_z = 0.0;
-    double G_const = 6.6743e-8; // for self-gravity, in cgs units (cm^3 g^-1 s^-2)
+    double G_const = arch::constants::gravity::cgs::gravitational_constant;
 };
 
 // Diffusion configuration.

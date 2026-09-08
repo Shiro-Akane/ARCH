@@ -379,22 +379,14 @@ public:
         for (const CompiledTransfer& transfer : compiled) {
             const FluidState& source =
                 pool->GetBlock(transfer.source_id).*state_ptr;
-            const auto prolong_field_at = [&](auto getter,
-                                               const double position[3]) {
-                const int center = transfer.source_cells[0];
-                double lower[3]{};
-                double upper[3]{};
-                for (int axis = 0; axis < plan.dimension; ++axis) {
-                    lower[axis] = getter(transfer.slope_cells[2 * axis]);
-                    upper[axis] = getter(transfer.slope_cells[2 * axis + 1]);
-                }
-                return prolongation_math::limited_linear_value(
-                    getter(center), lower, upper, position, plan.dimension);
-            };
+            const prolongation_math::CompositionStencilView stencil{
+                source.rho.data(), source.mass_fractions.data(),
+                source.rho.size(), transfer.source_cells[0],
+                transfer.slope_cells.data(), plan.dimension, species_count};
             const auto transfer_field = [&](const std::vector<double>& field) {
                 if (transfer.rule == RefinementRule::CoarseGhostInjection)
-                    return prolong_field_at(
-                        [&](int cell) { return field[cell]; },
+                    return prolongation_math::reconstruct_field(
+                        stencil, field.data(),
                         transfer.fine_position.data());
                 double integral = 0.0;
                 for (std::size_t cell = 0;
@@ -424,73 +416,16 @@ public:
                 static_cast<std::size_t>(species_count));
             if (transfer.rule == RefinementRule::CoarseGhostInjection) {
                 const double fine_density = values.fields[0];
-                if (!prolongation_math::finite_number(fine_density)
-                    || fine_density <= 0.0)
+                const auto family =
+                    prolongation_math::classify_composition_family(stencil);
+                if (family == prolongation_math::CompositionFamily::InvalidDensity)
                     throw std::runtime_error(
-                        "coarse-fine prolongation produced invalid density");
-
-                // A fallback decision belongs to the whole sibling family,
-                // not to one fine cell.  Otherwise one rejected child would
-                // destroy the conservative cancellation of the symmetric
-                // limited-linear reconstruction.
-                bool use_linear_composition = true;
-                const int sibling_count = 1 << plan.dimension;
-                for (int sibling = 0;
-                     sibling < sibling_count && use_linear_composition;
-                     ++sibling) {
-                    double position[3]{};
-                    for (int axis = 0; axis < plan.dimension; ++axis)
-                        position[axis] = (sibling & (1 << axis)) != 0
-                            ? 0.25 : -0.25;
-                    const double sibling_density = prolong_field_at(
-                        [&](int cell) { return source.rho[cell]; }, position);
-                    double partial = 0.0;
-                    use_linear_composition =
-                        prolongation_math::finite_number(sibling_density)
-                        && sibling_density > 0.0;
-                    for (int species = 0;
-                         species + 1 < species_count
-                         && use_linear_composition; ++species) {
-                        const double candidate = prolong_field_at(
-                            [&](int cell) {
-                                return source.rho[cell]
-                                    * source.X(species, cell);
-                            }, position);
-                        use_linear_composition =
-                            prolongation_math::finite_number(candidate)
-                            && candidate >= 0.0;
-                        partial += candidate;
-                    }
-                    const double closure = sibling_density - partial;
-                    use_linear_composition = use_linear_composition
-                        && prolongation_math::finite_number(closure)
-                        && closure >= 0.0;
-                }
-
-                std::vector<double> fine_species(
-                    static_cast<std::size_t>(species_count), 0.0);
-                if (use_linear_composition) {
-                    double partial = 0.0;
-                    for (int species = 0; species + 1 < species_count;
-                         ++species) {
-                        fine_species[species] = prolong_field_at(
-                            [&](int cell) {
-                                return source.rho[cell]
-                                    * source.X(species, cell);
-                            }, transfer.fine_position.data());
-                        partial += fine_species[species];
-                    }
-                    if (species_count > 0)
-                        fine_species.back() = fine_density - partial;
-                } else {
-                    const int center = transfer.source_cells[0];
-                    for (int species = 0; species < species_count; ++species)
-                        fine_species[species] = fine_density
-                            * source.X(species, center);
-                }
+                        prolongation_math::invalid_prolongation_density_message());
                 for (int species = 0; species < species_count; ++species)
                     values.mass_fractions[species] =
-                        fine_species[species] / fine_density;
+                        prolongation_math::reconstruct_mass_fraction(
+                            stencil, family, fine_density, species,
+                            transfer.fine_position.data());
             } else {
                 for (int species = 0; species < species_count; ++species) {
                     double species_density_integral = 0.0;

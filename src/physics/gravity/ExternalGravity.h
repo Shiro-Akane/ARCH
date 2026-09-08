@@ -16,6 +16,7 @@
 
 #pragma once
 #include "IGravityPolicy.h"
+#include "ExternalGravitySource.h"
 
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
@@ -46,19 +47,8 @@ struct ExternalGravity : public IGravityPolicy
             for (int i = grid.Is(); i < grid.Ie(); ++i)
             {
                 int idx = grid.GetIndex(i, j, k);
-                double rho = state.rho[idx];
-
-                if (rho < 1e-12)
-                    continue;
-
-                double vx = state.mom_u[idx] / rho;
-                double vy = state.mom_v[idx] / rho;
-                double vz = state.mom_w[idx] / rho;
-
-                dU[idx].mom_u += dt * rho * g_x;
-                dU[idx].mom_v += dt * rho * g_y;
-                dU[idx].mom_w += dt * rho * g_z;
-                dU[idx].eng += dt * rho * (vx * g_x + vy * g_y + vz * g_z);
+                add_external_gravity_source_cell(
+                    state.get(idx), {g_x, g_y, g_z, true}, dt, dU[idx]);
             }
         }
     }

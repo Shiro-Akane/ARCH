@@ -22,6 +22,10 @@ SpeciesHostView validate_helm_upload(const HelmEosHostView &host)
         owner_detail::validate_required_upload(
             host.ef_table[index], host.ef_extents[index], expected,
             "Helm ef table");
+    owner_detail::validate_required_upload(host.density_nodes, host.node_extents[0],
+                                           HelmEosView::imax, "Helm density nodes");
+    owner_detail::validate_required_upload(host.temperature_nodes, host.node_extents[1],
+                                           HelmEosView::jmax, "Helm temperature nodes");
     if (host.specs.host_owner == nullptr)
         throw std::invalid_argument(
             "Helm upload requires species metadata ownership.");
@@ -61,6 +65,15 @@ HelmEosDeviceOwner::HelmEosDeviceOwner(const HelmEosHostView &source,
                 "upload Helm ef");
             device_view_.ef_table[index] = device_ef_[index];
         }
+        const double* nodes[]{source.density_nodes, source.temperature_nodes};
+        for (int axis = 0; axis < 2; ++axis) {
+            owner_detail::stage_required(staging_nodes_[axis], nodes[axis],
+                                         source.node_extents[axis], "Helm axis nodes");
+            owner_detail::allocate_and_copy(device_nodes_[axis], staging_nodes_[axis],
+                                            stream_, "upload Helm axis nodes");
+        }
+        device_view_.density_nodes = device_nodes_[0];
+        device_view_.temperature_nodes = device_nodes_[1];
         device_view_.specs = species_.view();
     } catch (...) {
         release_after_sync();
@@ -77,12 +90,15 @@ HelmEosDeviceOwner::HelmEosDeviceOwner(HelmEosDeviceOwner &&other) noexcept
     : stream_(std::exchange(other.stream_, nullptr)),
       species_(std::move(other.species_)), device_view_(other.device_view_),
       device_f_(other.device_f_), device_ef_(other.device_ef_),
+      device_nodes_(other.device_nodes_),
       staging_f_(std::move(other.staging_f_)),
-      staging_ef_(std::move(other.staging_ef_))
+      staging_ef_(std::move(other.staging_ef_)),
+      staging_nodes_(std::move(other.staging_nodes_))
 {
     other.device_view_ = {};
     other.device_f_.fill(nullptr);
     other.device_ef_.fill(nullptr);
+    other.device_nodes_.fill(nullptr);
 }
 
 HelmEosDeviceOwner &HelmEosDeviceOwner::operator=(
@@ -98,8 +114,11 @@ HelmEosDeviceOwner &HelmEosDeviceOwner::operator=(
     other.device_f_.fill(nullptr);
     device_ef_ = other.device_ef_;
     other.device_ef_.fill(nullptr);
+    device_nodes_ = other.device_nodes_;
+    other.device_nodes_.fill(nullptr);
     staging_f_ = std::move(other.staging_f_);
     staging_ef_ = std::move(other.staging_ef_);
+    staging_nodes_ = std::move(other.staging_nodes_);
     return *this;
 }
 
@@ -110,12 +129,18 @@ void HelmEosDeviceOwner::release_after_sync() noexcept
         has_storage = has_storage || pointer != nullptr;
     for (double *pointer : device_ef_)
         has_storage = has_storage || pointer != nullptr;
+    for (double *pointer : device_nodes_)
+        has_storage = has_storage || pointer != nullptr;
     if (has_storage) cudaStreamSynchronize(stream_);
     for (double *&pointer : device_f_) {
         if (pointer != nullptr) cudaFree(pointer);
         pointer = nullptr;
     }
     for (double *&pointer : device_ef_) {
+        if (pointer != nullptr) cudaFree(pointer);
+        pointer = nullptr;
+    }
+    for (double *&pointer : device_nodes_) {
         if (pointer != nullptr) cudaFree(pointer);
         pointer = nullptr;
     }

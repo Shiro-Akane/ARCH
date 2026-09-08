@@ -8,6 +8,12 @@ bin/
 # 模拟数据 (一定要屏蔽，否则传不上去)
 output/
 
+# Validation summaries, inputs and logs belong in Git. Generated checkpoints
+# and plots stay beside them locally, or in a separately published data archive.
+# This does not exclude EOS inputs or remove already tracked reference data.
+/validation/**/results/**/*.h5
+__pycache__/
+
 # 系统与编辑器文件
 .vscode/
 .DS_Store

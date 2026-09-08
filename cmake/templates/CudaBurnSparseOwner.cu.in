@@ -1,0 +1,17 @@
+// Generated build binding only. Numerical methods live in shared ARCH headers.
+#include "@ARCH_SPARSE_EOS_HEADER@"
+#include "cuda/runtime/burn/CudaBackendBurnSparseRoutes.h"
+#include "@ARCH_SPARSE_NETWORK_HEADER@"
+#include "cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh"
+
+namespace arch::cuda::burn_detail {
+template<>
+std::unique_ptr<CudaSparseBurnOwner>
+make_sparse_burn_owner_route<dispatch::@ARCH_SPARSE_BINDING@, @ARCH_SPARSE_EOS@>(
+    const dispatch::ResolvedExecutionPlan& plan, @ARCH_SPARSE_EOS@ eos,
+    int max_cells, cudaStream_t stream)
+{
+    using Network = @ARCH_SPARSE_NETWORK_TYPE@;
+    return make_sparse_burn_owner_for_network<Network>(plan, eos, max_cells, stream);
+}
+} // namespace arch::cuda::burn_detail

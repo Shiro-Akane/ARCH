@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "scope": "read-only diagnosis of capacity attempt 908 allocation-lifetime rejection",
+  "reviewed_utc": "2026-09-07T16:20:00+00:00",
+  "original_attempt_status": "failed after the first workload; later workloads were not started",
+  "complete_capacity_gate_pass": false,
+  "reclassification_only": true,
+  "successor_output": "validation/backend/results/device-memory-first-law-20260907/release-921",
+  "artifacts": {
+    "original_recipe": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/attempt-908/replay.py",
+      "sha256": "07f9552a9bb17b9e0caf3b3a869d71893c1f4cabede5d896a829a73de6e719b4"
+    },
+    "raw_local_profile": {
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-x3eca6w0/regrid_transaction.sqlite",
+      "sha256": "c835ccf4ae67bbe1821c44985cb1c5b8fecf8932f6d97175f6348f730f259a39"
+    },
+    "stdout": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-908/regrid_transaction/arch.stdout",
+      "sha256": "79e298ee3012262905fc796c90d745b2bda8006f9ed81d61bd8336597392a694"
+    },
+    "stderr": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-908/regrid_transaction/arch.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "selected_sql_observations": {
+    "successful_cuda_malloc_calls": 1321,
+    "successful_cuda_free_calls": 1321,
+    "explicit_device_allocation_bytes": 1253400,
+    "explicit_device_release_bytes": 1253400,
+    "dynamic_events_without_successful_runtime_correlation": 0,
+    "runtime_api_nonzero_return_count": 0,
+    "static_symbols": [
+      {
+        "name": "__cudart_sin_cos_coeffs",
+        "bytes": 128,
+        "memory_kind": "CUDA_MEMOPR_MEMORY_KIND_DEVICE_STATIC",
+        "start_ns": 1350726166,
+        "context_id": 0,
+        "correlation_id": 0
+      },
+      {
+        "name": "__cudart_i2opi_d",
+        "bytes": 144,
+        "memory_kind": "CUDA_MEMOPR_MEMORY_KIND_DEVICE_STATIC",
+        "start_ns": 1350727468,
+        "context_id": 0,
+        "correlation_id": 0
+      }
+    ],
+    "final_runtime_api": {
+      "name": "cudaStreamDestroy_v5050",
+      "start_ns": 1446902724,
+      "end_ns": 1446907128,
+      "return_value": 0,
+      "correlation_id": 6535
+    }
+  },
+  "allocation_summary": {
+    "scope": "process-local CUDA allocator requests",
+    "physical_vram_measurement": false,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 2,
+    "note": "Pool reserves overlap requested bytes. Driver/context overhead and managed-memory residency are not inferred.",
+    "processes": [
+      {
+        "global_pid": 285153817526272,
+        "device": 0,
+        "events": 2644,
+        "allocations": 1323,
+        "deallocations": 1321,
+        "largest_allocation_bytes": 52480,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 272
+        },
+        "peak_bytes_by_kind": {
+          "device": 531212,
+          "device_static": 272
+        },
+        "peak_device_requested_bytes": 531484,
+        "peak_device_time_ns": 1391323109,
+        "pool_reserved_peak_bytes": {},
+        "pid": 219276,
+        "executable": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_regrid_transaction"
+      }
+    ]
+  },
+  "allocation_lifetimes": {
+    "schema": 1,
+    "all_dynamic_allocations_released": true,
+    "dynamic_device_allocation_coverage": true,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 2,
+    "processes": [
+      {
+        "global_pid": 285153817526272,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 272
+        }
+      }
+    ],
+    "note": "Static residuals are retained as observed; their release at context/program teardown is not inferred. This classification does not measure physical VRAM."
+  }
+}

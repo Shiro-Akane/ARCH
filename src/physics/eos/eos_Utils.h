@@ -5,11 +5,13 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
 
 #include "../../core/ArchPortability.h"
+#include "../../core/CompensatedSum.h"
 #include "eos.h" // Provides FluidVector through the EOS policy surface.
 
 #ifndef EOS_INLINE
@@ -18,6 +20,66 @@
 
 namespace eos_utils
 {
+    // Derivatives in two linear composition coordinates q_a=sum(w_ai X_i).
+    // The EOS owns its coordinates/interpolation; the chain rule is shared.
+    struct LinearCompositionDerivatives
+    {
+        std::array<double, 2> energy{}, energy_temperature{}, cv{};
+        std::array<double, 3> energy_hessian{}; // 00, 01, 11
+        double cv_temperature = 0.0;
+    };
+
+    struct BilinearValue
+    {
+        double value, first, second, mixed;
+    };
+
+    ARCH_INLINE BilinearValue bilinear_value(
+        double f00, double f01, double f10, double f11,
+        double first_fraction, double second_fraction,
+        double first_spacing, double second_spacing)
+    {
+        const double lower = f00 + second_fraction * (f01 - f00);
+        const double upper = f10 + second_fraction * (f11 - f10);
+        return {lower + first_fraction * (upper - lower),
+                (upper - lower) / first_spacing,
+                ((f01 - f00) * (1.0 - first_fraction) + (f11 - f10) * first_fraction) / second_spacing,
+                ((f11 - f10) - (f01 - f00)) / (first_spacing * second_spacing)};
+    }
+
+    enum class CompositionQuery { energy_gradient, cv_gradient, energy_hessian_action };
+
+    template <int Equations, CompositionQuery Query, class View>
+    ARCH_HEAVY_INLINE void composition_derivative_query(
+        const View& view, double rho, double temperature, const double* fractions,
+        double* output, const double* flow = nullptr)
+    {
+        const auto d = view.composition_derivatives(rho, temperature, fractions);
+        std::array<double, 2> coefficients{};
+        if constexpr (Query == CompositionQuery::energy_gradient) {
+            coefficients = d.energy;
+        } else if constexpr (Query == CompositionQuery::cv_gradient) {
+            coefficients = d.cv;
+            output[Equations - 1] = d.cv_temperature;
+        } else {
+            arch::math::CompensatedSum first, second;
+            for (int i = 0; i < Equations - 1; ++i) {
+                const auto weights = view.composition_weights(i);
+                first.add_product(weights[0], flow[i]);
+                second.add_product(weights[1], flow[i]);
+            }
+            coefficients = {
+                d.energy_hessian[0] * first.value() + d.energy_hessian[1] * second.value(),
+                d.energy_hessian[1] * first.value() + d.energy_hessian[2] * second.value()};
+            output[Equations - 1] = d.energy_temperature[0] * first.value()
+                                  + d.energy_temperature[1] * second.value();
+        }
+        for (int i = 0; i < Equations - 1; ++i) {
+            const auto weights = view.composition_weights(i);
+            output[i] = coefficients[0] * weights[0] + coefficients[1] * weights[1];
+        }
+    }
+
     /** Thermodynamic point reached along a fixed-composition isentrope. */
     struct IsentropicState
     {

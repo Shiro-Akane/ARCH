@@ -1,4 +1,4 @@
-#include "CudaBackendInternal.h"
+#include "cuda/runtime/control/CudaBackendInternal.h"
 
 namespace arch::cuda {
 namespace {
@@ -30,8 +30,8 @@ constexpr dispatch::EosId host_eos_id(
 void CudaBackend::Impl::initialize_eos(
     const IdealGas& host, const SpeciesManager& species)
 {
-    if (immutable_owner_constructions != 0)
-        throw std::logic_error("CUDA immutable owner already exists");
+    if (!std::holds_alternative<std::monostate>(eos))
+        throw std::logic_error("CUDA EOS owner already exists");
     species_owner = std::make_unique<DeviceSpeciesOwner>(
         species, stream.get());
     species_view = species_owner->view();
@@ -43,8 +43,8 @@ void CudaBackend::Impl::initialize_eos(
 void CudaBackend::Impl::initialize_eos(
     const HelmEos& host, const SpeciesManager&)
 {
-    if (immutable_owner_constructions != 0)
-        throw std::logic_error("CUDA immutable owner already exists");
+    if (!std::holds_alternative<std::monostate>(eos))
+        throw std::logic_error("CUDA EOS owner already exists");
     helm_owner = std::make_unique<HelmEosDeviceOwner>(host, stream.get());
     const HelmEosView view = helm_owner->view();
     species_view = view.specs;
@@ -56,8 +56,8 @@ void CudaBackend::Impl::initialize_eos(
 void CudaBackend::Impl::initialize_eos(
     const Tabular3DEOSHostView& host, const SpeciesManager&)
 {
-    if (immutable_owner_constructions != 0)
-        throw std::logic_error("CUDA immutable owner already exists");
+    if (!std::holds_alternative<std::monostate>(eos))
+        throw std::logic_error("CUDA EOS owner already exists");
     tabular3_owner = std::make_unique<Tabular3DEOSDeviceOwner>(
         host, stream.get());
     const Tabular3DEOSView view = tabular3_owner->view();
@@ -70,8 +70,8 @@ void CudaBackend::Impl::initialize_eos(
 void CudaBackend::Impl::initialize_eos(
     const Tabular4DEOSHostView& host, const SpeciesManager&)
 {
-    if (immutable_owner_constructions != 0)
-        throw std::logic_error("CUDA immutable owner already exists");
+    if (!std::holds_alternative<std::monostate>(eos))
+        throw std::logic_error("CUDA EOS owner already exists");
     tabular4_owner = std::make_unique<Tabular4DEOSDeviceOwner>(
         host, stream.get());
     const Tabular4DEOSView view = tabular4_owner->view();

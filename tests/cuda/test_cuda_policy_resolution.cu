@@ -5,6 +5,7 @@
 #include "cuda/hydro/HydroReconstructionPolicies.cuh"
 #include "cuda/hydro/HydroStageKernels.cuh"
 #include "cuda/microphysics/microphysics_api.h"
+#include "numerics/burnsolver/Networks.h"
 #include "numerics/burnsolver/ode_bd.h"
 #include "numerics/burnsolver/ode_be-nr.h"
 #include "numerics/burnsolver/ode_ros4.h"
@@ -13,9 +14,11 @@
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/Tabular3DEOS.h"
 #include "physics/eos/Tabular4DEOS.h"
+#include "../fixtures/RoeFluxReference.h"
 
 #include <cuda_runtime.h>
 
+#include <algorithm>
 #include <bit>
 #include <cstdint>
 #include <cmath>
@@ -28,6 +31,20 @@ namespace {
 
 using namespace arch::dispatch;
 
+// This witness executes device-callable mathematical bindings. Generated
+// networks and the Host-mediated cuDSS provider have their own real generated-
+// math/trajectory/provider tests; do not invent a scalar kernel for either.
+template<class Binding> inline constexpr bool external_execution = false;
+template<> inline constexpr bool external_execution<CudaCuDssBinding> = true;
+#define ARCH_EXTERNAL_NETWORK_WITNESS(TAG, VALUE, NAME, TYPE) \
+    template<> inline constexpr bool external_execution<Cuda##TAG##Binding> = true;
+ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(ARCH_EXTERNAL_NETWORK_WITNESS)
+#undef ARCH_EXTERNAL_NETWORK_WITNESS
+
+constexpr double ode_interval = 0.5;
+constexpr double ode_initial_fraction = 0.75;
+constexpr double ode_initial_temperature = 2.0;
+
 struct OdeRouteFingerprint
 {
     std::uint64_t state_hash{};
@@ -35,6 +52,7 @@ struct OdeRouteFingerprint
     int status{};
     int attempted_substeps{};
     int rejected_substeps{};
+    double first_species{}, species_sum{}, temperature{};
 };
 
 struct OdeProbeEos
@@ -52,6 +70,7 @@ struct OdeProbeNet
     static constexpr int ODE_NEQ = 3;
     static constexpr bool SUPPORTS_NSE = false;
     static constexpr double ENERGY_CONVERSION = 1.0;
+    static constexpr double decay_rate = 0.02;
 
     ARCH_INLINE static constexpr double aion(int) { return 1.0; }
     ARCH_INLINE static constexpr double zion(int) { return 0.5; }
@@ -62,8 +81,8 @@ struct OdeProbeNet
     ARCH_INLINE static void eval_rhs(
         const double* state, double, double, double* rhs, double& enuc)
     {
-        rhs[0] = -0.02 * state[0];
-        rhs[1] = 0.02 * state[0];
+        rhs[0] = -decay_rate * state[0];
+        rhs[1] = decay_rate * state[0];
         enuc = 0.0;
     }
 
@@ -71,8 +90,8 @@ struct OdeProbeNet
     ARCH_INLINE static void eval_jacobian(
         const double*, double, double, Matrix& matrix, double* denuc)
     {
-        matrix.set(1, 1, -0.02);
-        matrix.set(2, 1, 0.02);
+        matrix.set(1, 1, -decay_rate);
+        matrix.set(2, 1, decay_rate);
         denuc[0] = 0.0;
         denuc[1] = 0.0;
     }
@@ -90,7 +109,7 @@ ARCH_INLINE BurnConfigView ode_probe_config()
 {
     return {true, 0.1, 0.1, 0.1, 1.0e-30, 1.0e30,
             false, 1.0e20, 1.0e20, true,
-            {1.0e-8, 1.0e-12, 50, 20, 0.9, 2.0, 0.1, 1.0,
+            {1.0e-8, 1.0e-12, 50, 10000, 0.9, 2.0, 0.1, 1.0,
              false, false}};
 }
 
@@ -102,6 +121,19 @@ ARCH_INLINE std::uint64_t ode_state_hash(const double* values, int count)
         hash *= 1099511628211ULL;
     }
     return hash;
+}
+
+ARCH_INLINE double flux_witness(double mass, double normal_momentum, double energy)
+{
+    return mass + 0.13 * normal_momentum + 0.017 * energy;
+}
+
+bool independent_flux_witness_matches(double actual, double expected)
+{
+    // The existing independent hydro budget is separate from the exact
+    // Host/Device policy-binding fingerprint comparison below.
+    return std::isfinite(actual) && std::isfinite(expected)
+        && std::abs(actual - expected) <= 3e-14 * std::max(1.0, std::abs(expected));
 }
 
 template <class Binding>
@@ -126,7 +158,7 @@ ARCH_INLINE double policy_witness(
         const FluidVector left{1.0, 0.7, 0.1, -0.05, 3.4};
         const FluidVector right{0.42, -0.08, 0.02, 0.03, 1.1};
         Flux::compute(left, right, nullptr, nullptr, 0, eos, 0, 0.9, flux, nullptr);
-        return flux.rho + 0.13 * flux.mom_u + 0.017 * flux.eng;
+        return flux_witness(flux.rho, flux.mom_u, flux.eng);
     } else if constexpr (std::is_same_v<Binding, CudaPcmBinding>
                          || std::is_same_v<Binding, CudaMusclBinding>
                          || std::is_same_v<Binding, CudaPpmBinding>) {
@@ -207,10 +239,10 @@ ARCH_INLINE double policy_witness(
                          || std::is_same_v<Binding, CudaRos4Binding>) {
         arch::cuda::BurnPolicyCell cell{};
         cell.fluid.rho = 1.0;
-        cell.state[0] = 0.75;
-        cell.state[1] = 0.25;
-        cell.state[2] = 2.0;
-        cell.burn_dt = 0.5;
+        cell.state[0] = ode_initial_fraction;
+        cell.state[1] = 1.0 - ode_initial_fraction;
+        cell.state[2] = ode_initial_temperature;
+        cell.burn_dt = ode_interval;
         if constexpr (std::is_same_v<Binding, CudaBeNrBinding>)
             arch::cuda::execute_ode_policy<OdeProbeNet, Solver_BE_NR>(
                 cell, ode_workspace, OdeProbeEos{}, ode_probe_config());
@@ -226,6 +258,9 @@ ARCH_INLINE double policy_witness(
         ode_fingerprint.status = static_cast<int>(cell.ode.status);
         ode_fingerprint.attempted_substeps = cell.ode.attempted_substeps;
         ode_fingerprint.rejected_substeps = cell.ode.rejected_substeps;
+        ode_fingerprint.first_species = cell.state[0];
+        ode_fingerprint.species_sum = cell.state[0] + cell.state[1];
+        ode_fingerprint.temperature = cell.state[2];
         return cell.state[0] + 0.1 * cell.state[1]
             + 0.001 * cell.dt_recommended
             + 0.0001 * cell.ode.attempted_substeps
@@ -276,6 +311,11 @@ struct ListLauncher;
 template <class Id, UnknownPolicyBehavior Behavior, class... Registrations>
 struct ListLauncher<TypeList<Id, Behavior, Registrations...>>
 {
+    static constexpr int device_count = (0 + ... +
+        static_cast<int>(!std::is_same_v<typename PolicyRegistration<Registrations>::CudaBinding, AbsentBinding>
+            && !external_execution<typename PolicyRegistration<Registrations>::CudaBinding>));
+    static constexpr int external_count = (0 + ... +
+        static_cast<int>(external_execution<typename PolicyRegistration<Registrations>::CudaBinding>));
     static void launch(
         int* ids, double* values, double* storage,
         arch::cuda::BurnOdeMatrixWorkspace* ode_workspaces,
@@ -283,10 +323,26 @@ struct ListLauncher<TypeList<Id, Behavior, Registrations...>>
     {
         ([&] {
             using Binding = typename PolicyRegistration<Registrations>::CudaBinding;
-            if constexpr (!std::is_same_v<Binding, AbsentBinding>) {
+            if constexpr (!std::is_same_v<Binding, AbsentBinding> && !external_execution<Binding>) {
                 route_kernel<Registrations><<<1, 1>>>(
                     ids, values, storage, ode_workspaces,
                     ode_fingerprints, index++);
+            }
+        }(), ...);
+    }
+
+    // Small flux and analytic ODE policy groups have independent mathematical
+    // acceptance below as well as this exact Host/Device binding comparison.
+    static void host_reference(double* values, OdeRouteFingerprint* fingerprints)
+    {
+        int index = 0;
+        double storage[48]{};
+        arch::cuda::BurnOdeMatrixWorkspace workspace{};
+        ([&] {
+            using Binding = typename PolicyRegistration<Registrations>::CudaBinding;
+            if constexpr (!std::is_same_v<Binding, AbsentBinding> && !external_execution<Binding>) {
+                values[index] = policy_witness<Binding>(storage, workspace, fingerprints[index]);
+                ++index;
             }
         }(), ...);
     }
@@ -304,7 +360,24 @@ void check(cudaError_t error, const char* operation)
 
 int main()
 {
-    constexpr int maximum_routes = 40;
+    constexpr int group_sizes[] = {
+        ListLauncher<FluxPolicies>::device_count,
+        ListLauncher<ReconstructionPolicies>::device_count,
+        ListLauncher<LimiterPolicies>::device_count,
+        ListLauncher<TimeIntegratorPolicies>::device_count,
+        ListLauncher<EosPolicies>::device_count,
+        ListLauncher<NetworkPolicies>::device_count,
+        ListLauncher<OdeSolverPolicies>::device_count,
+        ListLauncher<LinearSolverPolicies>::device_count,
+        ListLauncher<DiffusionIntegratorPolicies>::device_count};
+    constexpr int maximum_routes = [&] { int count = 0;
+        for (const auto size : group_sizes) count += size; return count; }();
+    constexpr int ode_begin = ListLauncher<FluxPolicies>::device_count
+        + ListLauncher<ReconstructionPolicies>::device_count
+        + ListLauncher<LimiterPolicies>::device_count
+        + ListLauncher<TimeIntegratorPolicies>::device_count
+        + ListLauncher<EosPolicies>::device_count
+        + ListLauncher<NetworkPolicies>::device_count;
     int* device_ids = nullptr;
     double* device_values = nullptr;
     double* device_storage = nullptr;
@@ -350,11 +423,14 @@ int main()
     check(cudaFree(device_values), "cudaFree(values)");
     check(cudaFree(device_ids), "cudaFree(ids)");
 
-    if (count != 33) {
+    if (count != maximum_routes) {
         std::fprintf(stderr, "route count mismatch: %d\n", count);
         return 1;
     }
-    constexpr double expected_values[] = {
+    // Preserve historical snapshots, including the three invalidated Roe-
+    // family values as negative controls. Only those slots and the ODE slots
+    // receive shared Host witnesses, with separate independent acceptance.
+    double expected_values[] = {
         0.90457253867564613, 1.013305618008822, 1.0233133021289982,
         1.0385394119668141, 1.0148855113826238,
         1.6069000000000002, 1.6451000000000002, 1.6475335300217602,
@@ -365,12 +441,57 @@ int main()
         2.9133333333333331,
         -0.5, 92.176080000000013, 7.7373900000000004,
         7.7394099999999995, 92.170020000000008,
-        -0.5, 0.76931683168316833, 0.76928363778068864,
-        0.76898601719931348,
+        -0.5, 0.0, 0.0, 0.0,
         -0.5, 2.2999999999999998,
         -0.5, 1.3280000000000001, 1.349};
-    static_assert(std::size(expected_values) == 33);
-    for (int i = 25; i <= 27; ++i)
+    static_assert(std::size(expected_values) == maximum_routes,
+                  "new device mathematical binding needs a discriminating witness");
+    double host_flux_values[ListLauncher<FluxPolicies>::device_count]{};
+    OdeRouteFingerprint unused_flux_fingerprints[ListLauncher<FluxPolicies>::device_count]{};
+    ListLauncher<FluxPolicies>::host_reference(host_flux_values, unused_flux_fingerprints);
+    constexpr FluxId roe_family_fluxes[] = {FluxId::Roe, FluxId::Hll, FluxId::Hllc};
+    static_assert(std::size(roe_family_fluxes) == std::size(RoeFluxReference::policy_flux));
+    double independent_flux_values[std::size(roe_family_fluxes)]{};
+    for (std::size_t i = 0; i < std::size(roe_family_fluxes); ++i) {
+        const int expected_id = static_cast<int>(roe_family_fluxes[i]);
+        int index = -1;
+        for (int slot = 0; slot < ListLauncher<FluxPolicies>::device_count; ++slot) {
+            if (ids[slot] != expected_id) continue;
+            if (index >= 0) {
+                std::fprintf(stderr, "duplicate flux route id=%d\n", expected_id);
+                return 1;
+            }
+            index = slot;
+        }
+        if (index < 0) {
+            std::fprintf(stderr, "missing flux route id=%d\n", expected_id);
+            return 1;
+        }
+        const auto& reference = RoeFluxReference::policy_flux[i];
+        const double independent = flux_witness(reference[0], reference[1], reference[4]);
+        independent_flux_values[i] = independent;
+        if (!independent_flux_witness_matches(host_flux_values[index], independent)
+            || !independent_flux_witness_matches(values[index], independent)) {
+            std::fprintf(stderr, "flux route %d failed independent Euler/RH witness: expected=%.17g host=%.17g device=%.17g\n",
+                         index, independent, host_flux_values[index], values[index]);
+            return 1;
+        }
+        if (independent_flux_witness_matches(expected_values[index], independent)) {
+            std::fprintf(stderr, "flux route %d no longer rejects its invalidated historical fingerprint\n", index);
+            return 1;
+        }
+        expected_values[index] = host_flux_values[index];
+    }
+    for (std::size_t i = 0; i < std::size(roe_family_fluxes); ++i)
+        for (std::size_t j = i + 1; j < std::size(roe_family_fluxes); ++j)
+            if (independent_flux_witness_matches(independent_flux_values[i], independent_flux_values[j])) {
+                std::fprintf(stderr, "independent flux witnesses cannot distinguish bindings %zu and %zu\n", i, j);
+                return 1;
+            }
+    OdeRouteFingerprint host_fingerprints[ListLauncher<OdeSolverPolicies>::device_count]{};
+    ListLauncher<OdeSolverPolicies>::host_reference(expected_values + ode_begin, host_fingerprints);
+    const int ode_end = ode_begin + ListLauncher<OdeSolverPolicies>::device_count;
+    for (int i = ode_begin + 1; i < ode_end; ++i)
         std::printf("ode[%d] state=%016llx dt=%016llx status=%d attempts=%d rejected=%d\n",
                     i,
                     static_cast<unsigned long long>(ode_fingerprints[i].state_hash),
@@ -378,7 +499,7 @@ int main()
                     ode_fingerprints[i].status,
                     ode_fingerprints[i].attempted_substeps,
                     ode_fingerprints[i].rejected_substeps);
-    for (int i = 25; i <= 27; ++i)
+    for (int i = ode_begin + 1; i < ode_end; ++i)
         std::printf("ode_route_value[%d]=%.17g\n", i, values[i]);
     for (int i = 0; i < count; ++i) {
         if (!std::isfinite(values[i]) || values[i] == -999.0) {
@@ -395,14 +516,9 @@ int main()
         }
         std::printf("route[%d] id=%d value=%.17g\n", i, ids[i], values[i]);
     }
-    constexpr OdeRouteFingerprint expected_ode_fingerprints[] = {
-        {0xa79735bc40a33a77ULL, 0x3feccccccccccccdULL, 2, 1, 0},
-        {0x857e1d0cc493fe93ULL, 0x3feccccccccccccdULL, 2, 1, 0},
-        {0xd4884a9984a087d0ULL, 0x3fe346b134cf6d63ULL, 2, 1, 0},
-    };
-    for (int i = 25; i <= 27; ++i) {
+    for (int i = ode_begin + 1; i < ode_end; ++i) {
         const OdeRouteFingerprint& actual = ode_fingerprints[i];
-        const OdeRouteFingerprint& expected = expected_ode_fingerprints[i - 25];
+        const OdeRouteFingerprint& expected = host_fingerprints[i - ode_begin];
         if (actual.state_hash != expected.state_hash
             || actual.dt_bits != expected.dt_bits
             || actual.status != expected.status
@@ -413,8 +529,18 @@ int main()
                          i);
             return 1;
         }
+        // Independent analytic witness: no-op, failed-but-matching backends,
+        // lost composition or spurious heating must not pass a bit comparison.
+        const double exact = ode_initial_fraction * std::exp(-OdeProbeNet::decay_rate * ode_interval);
+        if (actual.status != static_cast<int>(BurnOdeStatus::OdeSuccess)
+            || actual.attempted_substeps <= 0 || !std::isfinite(actual.first_species)
+            || std::abs(actual.first_species - exact) > 1.0e-6
+            || std::abs(actual.species_sum - 1.0) > 1.0e-12
+            || actual.temperature != ode_initial_temperature) {
+            std::fprintf(stderr, "ODE route %d failed independent decay/closure control\n", i);
+            return 1;
+        }
     }
-    constexpr int group_sizes[] = {5, 3, 4, 3, 4, 5, 4, 2, 3};
     int group_offset = 0;
     for (int group_size : group_sizes) {
         for (int i = 0; i < group_size; ++i) {
@@ -435,11 +561,10 @@ int main()
         }
         group_offset += group_size;
     }
-    constexpr auto linear = make_policy_descriptors<LinearSolverPolicies>();
-    if (linear[2].cuda_supported) {
-        std::fprintf(stderr, "SparseKLU route unexpectedly generated\n");
-        return 1;
-    }
+    static_assert(std::is_same_v<PolicyRegistration<SparseKluPolicy>::CudaBinding, AbsentBinding>);
+    static_assert(std::is_same_v<PolicyRegistration<CuDssPolicy>::CpuBinding, AbsentBinding>);
+    std::printf("external execution requires separate generated/provider tests: networks=%d providers=%d\n",
+        ListLauncher<NetworkPolicies>::external_count, ListLauncher<LinearSolverPolicies>::external_count);
     std::printf("cuda_policy_resolution routes=%d first=%.17g last=%.17g\n",
                 count, values[0], values[count - 1]);
 }

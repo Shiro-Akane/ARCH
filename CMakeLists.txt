@@ -1,4 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
+if(POLICY CMP0144)
+    cmake_policy(SET CMP0144 NEW)
+endif()
 
 # ==============================================================================
 # Project Configuration
@@ -34,8 +37,9 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "[OPT] Build Type: ${CMAKE_BUILD_TYPE}")
 
-# Optimization flags for Release mode
-set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ffast-math -DNDEBUG")
+# Optimization must preserve the shared physics library's ordered reductions,
+# finite-value checks, and CPU/device operation boundaries in every build type.
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -DNDEBUG")
 
 # Enable LTO only for optimized configurations.  Applying IPO globally also
 # adds -flto to Debug objects and makes the already template-heavy CUDA build
@@ -43,6 +47,21 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3 -march=native -ffast-math -DNDEBUG")
 include(CheckIPOSupported)
 check_ipo_supported(RESULT ipo_supported OUTPUT error)
 if(ipo_supported)
+    # Dependencies built in this tree (notably KLU) also carry LTO bytecode.
+    # Separate per-language IPO probes cannot diagnose cross-version linking.
+    if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU"
+       AND CMAKE_BUILD_TYPE MATCHES "^(Release|RelWithDebInfo)$")
+        string(REGEX MATCH "^[0-9]+" arch_c_major "${CMAKE_C_COMPILER_VERSION}")
+        string(REGEX MATCH "^[0-9]+" arch_cxx_major "${CMAKE_CXX_COMPILER_VERSION}")
+        if(NOT arch_c_major STREQUAL arch_cxx_major)
+            message(FATAL_ERROR
+                "Release LTO requires matching GCC C/C++ major versions. Selected "
+                "${CMAKE_C_COMPILER} (${CMAKE_C_COMPILER_VERSION}) and "
+                "${CMAKE_CXX_COMPILER} (${CMAKE_CXX_COMPILER_VERSION}). Configure "
+                "CMAKE_C_COMPILER and CMAKE_CXX_COMPILER from the same GCC installation; "
+                "use that C++ compiler for CMAKE_CUDA_HOST_COMPILER as well.")
+        endif()
+    endif()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     message(STATUS "[OPT] LTO enabled for optimized configurations")
@@ -68,6 +87,19 @@ set(ARCH_CUSTOM_NETWORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/src/physics/network/cu
 # This seam is deliberately opt-in: a normal CPU configure must neither enable
 # CUDA nor discover a toolkit or nvcc.
 option(ARCH_ENABLE_CUDA "Build the CUDA execution backend and focused validation targets" OFF)
+set(ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL "1" CACHE STRING
+    "CUDA Debug assembler optimization (0-3); bounds optimizer cost without changing shared physics")
+set_property(CACHE ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL PROPERTY STRINGS 0 1 2 3)
+if(NOT ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL MATCHES "^[0-3]$")
+    message(FATAL_ERROR "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL must be 0, 1, 2, or 3")
+endif()
+option(ARCH_ENABLE_CUDSS "Discover cuDSS for the CUDA sparse solver" ON)
+set(ARCH_CUDA_HEAVY_COMPILE_JOBS "1" CACHE STRING
+    "Concurrent heavy CUDA/dispatch compiles in Ninja; increase only after memory-guarded measurements")
+if(NOT ARCH_CUDA_HEAVY_COMPILE_JOBS MATCHES "^[1-9][0-9]*$")
+    message(FATAL_ERROR "ARCH_CUDA_HEAVY_COMPILE_JOBS must be a positive integer")
+endif()
+set(CUDSS_ROOT "" CACHE PATH "Optional cuDSS installation prefix")
 
 set(ARCH_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin" CACHE PATH "Directory for ARCH executables from this build tree")
 set(CMAKE_VERBOSE_MAKEFILE ${ARCH_VERBOSE_BUILD})
@@ -136,9 +168,13 @@ set(ARCH_CUSTOM_ALL "#define ARCH_FOR_EACH_CUSTOM_NETWORK(M)")
 set(ARCH_CUSTOM_CPU_ONLY
     "#define ARCH_FOR_EACH_CPU_ONLY_CUSTOM_NETWORK(M)")
 set(ARCH_CUSTOM_CUDA "#define ARCH_FOR_EACH_CUDA_CUSTOM_NETWORK(M)")
+set(ARCH_CUSTOM_LAYOUT "#define ARCH_FOR_EACH_CUSTOM_NETWORK_LAYOUT(M)")
 set(ARCH_CUSTOM_DISCOVERED_IDS "")
 set(ARCH_CUSTOM_DISCOVERY_COUNT 0)
 set(ARCH_CUSTOM_COUNT 0)
+set(ARCH_CUSTOM_CPU_ONLY_COUNT 0)
+set(ARCH_CUSTOM_CUDA_COUNT 0)
+set(ARCH_CUSTOM_CUDA_IDS "")
 set(ARCH_CUSTOM_RESERVED_IDS custom none null ideal helmholtz tabular)
 file(GLOB ARCH_CUSTOM_NETWORK_CONFIGS CONFIGURE_DEPENDS
     "${ARCH_CUSTOM_NETWORK_ROOT}/*/network.cmake")
@@ -219,18 +255,54 @@ foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
             continue()
         endif()
     endif()
+    string(JSON custom_species ERROR_VARIABLE custom_species_error
+        GET "${custom_manifest_json}" species_count)
+    string(JSON custom_auxiliary ERROR_VARIABLE custom_auxiliary_error
+        GET "${custom_manifest_json}" auxiliary_equations)
+    if(NOT custom_auxiliary_error STREQUAL "NOTFOUND")
+        set(custom_auxiliary 0) # Packages predating integrated source states.
+    endif()
+    if(NOT custom_species_error STREQUAL "NOTFOUND"
+       OR NOT custom_species MATCHES "^[1-9][0-9]*$"
+       OR NOT custom_auxiliary MATCHES "^[01]$")
+        message(FATAL_ERROR "Invalid custom network ODE layout: ${custom_manifest}")
+    endif()
     string(APPEND ARCH_CUSTOM_TYPES_CONTENT
-        "#include \"${ARCH_CUSTOM_NETWORK_HEADER}\"\n")
+        "#include \"${ARCH_CUSTOM_NETWORK_HEADER}\"\n"
+        "static_assert(${ARCH_CUSTOM_NETWORK_TYPE}::NUM_SPECIES == ${custom_species}, \"Network species metadata mismatch\");\n"
+        "static_assert(${ARCH_CUSTOM_NETWORK_TYPE}::ODE_NEQ == ${custom_species} + 1 + ${custom_auxiliary}, \"Network ODE metadata mismatch\");\n")
     set(custom_token "Custom_${ARCH_CUSTOM_NETWORK_ID}")
+    string(APPEND ARCH_CUSTOM_LAYOUT " \\")
+    string(APPEND ARCH_CUSTOM_LAYOUT
+        "\n    M(${custom_token}, ${custom_species}, ${custom_auxiliary})")
     set(custom_entry
         "M(${custom_token}, ${custom_numeric_id}, \"custom:${ARCH_CUSTOM_NETWORK_ID}\", ${ARCH_CUSTOM_NETWORK_TYPE})")
     string(APPEND ARCH_CUSTOM_ALL " \\")
     string(APPEND ARCH_CUSTOM_ALL "\n    ${custom_entry}")
-    # Generator-v3 adapters intentionally use host-only containers in their
-    # Jacobian bridge.  They remain CPU-only until a future manifest version
-    # explicitly certifies a device binding.
-    string(APPEND ARCH_CUSTOM_CPU_ONLY " \\")
-    string(APPEND ARCH_CUSTOM_CPU_ONLY "\n    ${custom_entry}")
+    # v4 emits a single host/device mathematical body only for packages whose
+    # immutable tables and Jacobian structure were successfully lowered. Older
+    # adapters and runtime-loaded weak-rate tables retain their CPU-only route.
+    string(JSON custom_device_math ERROR_VARIABLE custom_device_error
+        GET "${custom_manifest_json}" device_callable_math)
+    string(JSON custom_device_type ERROR_VARIABLE custom_device_type_error
+        TYPE "${custom_manifest_json}" device_callable_math)
+    if(custom_generator_version GREATER_EQUAL 4
+       AND custom_device_error STREQUAL "NOTFOUND"
+       AND custom_device_type STREQUAL "BOOLEAN" AND custom_device_math)
+        string(APPEND ARCH_CUSTOM_CUDA " \\")
+        string(APPEND ARCH_CUSTOM_CUDA "\n    ${custom_entry}")
+        list(APPEND ARCH_CUSTOM_CUDA_IDS "${ARCH_CUSTOM_NETWORK_ID}")
+        set(ARCH_CUSTOM_TYPE_${ARCH_CUSTOM_NETWORK_ID} "${ARCH_CUSTOM_NETWORK_TYPE}")
+        set(ARCH_CUSTOM_HEADER_${ARCH_CUSTOM_NETWORK_ID} "${ARCH_CUSTOM_NETWORK_HEADER}")
+        set(ARCH_CUSTOM_AUXILIARY_${ARCH_CUSTOM_NETWORK_ID} "${custom_auxiliary}")
+        math(EXPR ARCH_CUSTOM_EQUATIONS_${ARCH_CUSTOM_NETWORK_ID}
+            "${custom_species} + 1 + ${custom_auxiliary}")
+        math(EXPR ARCH_CUSTOM_CUDA_COUNT "${ARCH_CUSTOM_CUDA_COUNT} + 1")
+    else()
+        string(APPEND ARCH_CUSTOM_CPU_ONLY " \\")
+        string(APPEND ARCH_CUSTOM_CPU_ONLY "\n    ${custom_entry}")
+        math(EXPR ARCH_CUSTOM_CPU_ONLY_COUNT "${ARCH_CUSTOM_CPU_ONLY_COUNT} + 1")
+    endif()
     list(APPEND ARCH_APPLICATION_SOURCES "${ARCH_CUSTOM_NETWORK_SOURCE}")
     math(EXPR ARCH_CUSTOM_COUNT "${ARCH_CUSTOM_COUNT} + 1")
     message(STATUS "[NET] Registered custom:${ARCH_CUSTOM_NETWORK_ID}")
@@ -245,9 +317,9 @@ foreach(requested_custom_id IN LISTS ARCH_CUSTOM_NETWORKS)
 endforeach()
 string(APPEND ARCH_CUSTOM_REGISTRY_CONTENT
     "#define ARCH_CUSTOM_NETWORK_COUNT ${ARCH_CUSTOM_COUNT}\n"
-    "#define ARCH_CUSTOM_CPU_ONLY_NETWORK_COUNT ${ARCH_CUSTOM_COUNT}\n"
-    "#define ARCH_CUSTOM_CUDA_NETWORK_COUNT 0\n"
-    "${ARCH_CUSTOM_ALL}\n${ARCH_CUSTOM_CPU_ONLY}\n${ARCH_CUSTOM_CUDA}\n")
+    "#define ARCH_CUSTOM_CPU_ONLY_NETWORK_COUNT ${ARCH_CUSTOM_CPU_ONLY_COUNT}\n"
+    "#define ARCH_CUSTOM_CUDA_NETWORK_COUNT ${ARCH_CUSTOM_CUDA_COUNT}\n"
+    "${ARCH_CUSTOM_ALL}\n${ARCH_CUSTOM_CPU_ONLY}\n${ARCH_CUSTOM_CUDA}\n${ARCH_CUSTOM_LAYOUT}\n")
 file(CONFIGURE OUTPUT "${ARCH_CUSTOM_REGISTRY_HEADER}"
     CONTENT "${ARCH_CUSTOM_REGISTRY_CONTENT}" @ONLY NEWLINE_STYLE UNIX)
 file(CONFIGURE OUTPUT "${ARCH_CUSTOM_TYPES_HEADER}"
@@ -280,6 +352,19 @@ target_include_directories(arch_build_contract INTERFACE
     ${ARCH_CUSTOM_REGISTRY_DIR})
 target_compile_definitions(arch_build_contract INTERFACE
     ARCH_CUDA_BUILD_ENABLED=$<BOOL:${ARCH_ENABLE_CUDA}>)
+# One floating-point contract for all users of the shared mathematical headers.
+# In particular, reassociation can optimize compensated sums back into naive
+# sums.  CUDA host compilation must obey the same contract as ordinary C++;
+# these flags change compilation semantics, not the mathematical implementation.
+target_compile_options(arch_build_contract INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-Xptxas=-O${ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL}>
+    $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--fmad=false;--ftz=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-fno-fast-math,-ffp-contract=off>)
+# Global/toolchain fast-math flags can also cause GCC to link crtfastmath.o,
+# enabling process-wide FTZ/DAZ even when individual files compiled strictly.
+target_link_options(arch_build_contract INTERFACE
+    $<$<LINK_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-fno-fast-math;-ffp-contract=off>
+    $<$<LINK_LANG_AND_ID:CUDA,NVIDIA>:$<HOST_LINK:-fno-fast-math;-ffp-contract=off>>)
 # Every ARCH target declared below consumes headers whose policy layout depends
 # on this generated registry and the build-feature macros populated later.
 # Keep one directory-wide contract instead of maintaining a fragile target list.
@@ -318,18 +403,17 @@ target_precompile_headers(arch_solver_dispatch PRIVATE
 # ==============================================================================
 # Dispatch Target: Memory-aware compile flags
 # ==============================================================================
-# Each Dispatch_*.cpp TU expands to ~120k preprocessed lines and instantiates
-# a large template matrix (TimeIntegrator × Flux × Recon × EOS × Burner).
-# At -O3, each TU can consume >4 GB of RAM; with -j8 this causes WSL OOM.
-# Using -O1 here drops per-TU RSS to ~1 GB while keeping correctness.
-# The hot inner loops in these TUs are inlined at call sites anyway.
-# LTO is also disabled for this target to avoid the linker memory spike.
+# Each Dispatch_*.cpp TU instantiates a large policy matrix. Preserve main's
+# reduced frontend optimization here; the numerical and Release IPO contracts
+# remain shared. Measure actual compile/link commands and runtime before changing
+# this boundary rather than inferring cost from the number of source files.
 target_compile_options(arch_solver_dispatch PRIVATE
     $<$<CONFIG:Release>:-O1>           # Intentionally lower than main -O3 flags
     -fno-inline-functions-called-once  # Prevents explosive inline expansion
 )
-# Disable LTO for this target at the CMake level (overrides CMAKE_INTERPROCEDURAL_OPTIMIZATION)
-# LTO would force the linker to process huge bitcode files for the entire template matrix.
+# Preserve the unsuffixed baseline property. Configuration-specific Release /
+# RelWithDebInfo IPO above takes precedence when supported, so these optimized
+# dispatch objects still carry LTO; this is not a no-LTO compilation boundary.
 set_target_properties(arch_solver_dispatch PROPERTIES
     INTERPROCEDURAL_OPTIMIZATION FALSE
 )
@@ -342,11 +426,57 @@ include(CTest)
 if(BUILD_TESTING)
     find_package(Threads REQUIRED)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME portable_network_generator
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_portable_network_generator.py)
+    set_tests_properties(portable_network_generator PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME cuda_amr_smoke_runner_contract
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_smoke_cuda_amr_runtime.py)
+    add_test(NAME curvilinear_manifest_contract
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_curvilinear_manifest.py)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_test(NAME memory_guard_contract
+            COMMAND ${Python3_EXECUTABLE} -B
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_run_memory_guarded.py)
+    endif()
     add_test(NAME backend_validation_contract
-        COMMAND ${Python3_EXECUTABLE}
+        COMMAND ${Python3_EXECUTABLE} -B
             ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validate_backend_results.py)
     set_tests_properties(backend_validation_contract PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME validation_provenance_contract
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validation_provenance.py)
+    set_tests_properties(validation_provenance_contract PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_test(NAME runtime_validation_inputs_contract
+        COMMAND ${Python3_EXECUTABLE} -B
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_validation_inputs.py)
+    set_tests_properties(runtime_validation_inputs_contract PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    foreach(contract IN ITEMS physical_constants refinement_indicator_math curvilinear_metrics)
+        add_executable(arch_${contract} tests/test_${contract}.cpp)
+        target_link_libraries(arch_${contract} PRIVATE arch_build_contract)
+        add_test(NAME ${contract} COMMAND arch_${contract})
+    endforeach()
+    add_executable(arch_compensated_sum tests/test_compensated_sum.cpp)
+    target_compile_features(arch_compensated_sum PRIVATE cxx_std_20)
+    add_test(NAME compensated_sum COMMAND arch_compensated_sum)
+    add_executable(arch_sparse_ode_continuation tests/test_sparse_ode_continuation.cpp)
+    target_link_libraries(arch_sparse_ode_continuation PRIVATE arch_build_contract)
+    add_test(NAME sparse_ode_continuation COMMAND arch_sparse_ode_continuation)
+    add_executable(arch_checkpoint_conservation_metrics tests/test_checkpoint_conservation_metrics.cpp)
+    target_link_libraries(arch_checkpoint_conservation_metrics PRIVATE arch_build_contract)
+    add_test(NAME checkpoint_conservation_metrics COMMAND arch_checkpoint_conservation_metrics)
+    add_executable(arch_burn_mainline_reference
+        tests/test_burn_mainline_reference.cpp src/core/FileFingerprint.cpp)
+    target_compile_features(arch_burn_mainline_reference PRIVATE cxx_std_20)
+    target_compile_definitions(arch_burn_mainline_reference PRIVATE
+        ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+    add_test(NAME burn_mainline_reference COMMAND arch_burn_mainline_reference)
     add_executable(arch_mainline_authority tests/cuda/test_mainline_authority.cpp)
     target_compile_features(arch_mainline_authority PRIVATE cxx_std_20)
     target_include_directories(arch_mainline_authority PRIVATE
@@ -466,6 +596,49 @@ endif()
 if(ARCH_ENABLE_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
+    include(cmake/CudaCodeImages.cmake)
+    arch_resolve_cuda_code_images(CMAKE_CUDA_ARCHITECTURES)
+    string(JOIN "," arch_cuda_code_images ${CMAKE_CUDA_ARCHITECTURES})
+    string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" arch_cuda_compiler_version "${CMAKE_CUDA_COMPILER_VERSION}")
+    math(EXPR arch_cuda_ptx_version "${CMAKE_MATCH_1} * 1000 + ${CMAKE_MATCH_2} * 10")
+    # Source-private metadata: changing image targets must not introduce CUDA
+    # headers or another compile definition into the common physics templates.
+    set_property(SOURCE src/driver/dispatch/RuntimeProbe.cpp APPEND PROPERTY
+        COMPILE_DEFINITIONS "ARCH_CUDA_CODE_IMAGES=\"${arch_cuda_code_images}\""
+                            "ARCH_CUDA_PTX_VERSION=${arch_cuda_ptx_version}")
+    message(STATUS "[CUDA] Compiled code images: ${CMAKE_CUDA_ARCHITECTURES}")
+    if(ARCH_ENABLE_CUDSS)
+        list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+        find_package(CuDSS QUIET)
+        if(CuDSS_FOUND)
+            message(STATUS "[DEP] cuDSS found: ${CuDSS_LIBRARY}")
+            # Backend numerical refinement, not an ODE tolerance or network-size
+            # switch. Keep it private to the Host provider so tuning it does not
+            # reinstantiate the CUDA network/EOS matrix.
+            set(ARCH_CUDSS_IR_STEPS "2" CACHE STRING
+                "cuDSS correction passes before ARCH's original-matrix residual check (0 disables)")
+            string(LENGTH "${ARCH_CUDSS_IR_STEPS}" arch_cudss_ir_length)
+            if(NOT ARCH_CUDSS_IR_STEPS MATCHES "^(0|[1-9][0-9]*)$"
+               OR arch_cudss_ir_length GREATER 10
+               OR ARCH_CUDSS_IR_STEPS GREATER 2147483647)
+                message(FATAL_ERROR "ARCH_CUDSS_IR_STEPS must be a nonnegative cuDSS int")
+            endif()
+            add_library(arch_cuda_sparse_provider STATIC
+                src/cuda/microphysics/CuDssSparseSolver.cpp
+                src/cuda/microphysics/SparseEquilibration.cu)
+            target_compile_definitions(arch_cuda_sparse_provider PRIVATE
+                ARCH_CUDSS_IR_STEPS=${ARCH_CUDSS_IR_STEPS})
+            target_compile_options(arch_cuda_sparse_provider PRIVATE
+                $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+            target_link_libraries(arch_cuda_sparse_provider PUBLIC
+                arch_build_contract CuDSS::cudss)
+            set_target_properties(arch_cuda_sparse_provider PROPERTIES
+                CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON
+                INTERPROCEDURAL_OPTIMIZATION OFF)
+        else()
+            message(STATUS "[DEP] cuDSS not found; CUDA sparse solver unavailable")
+        endif()
+    endif()
 
     # ccache 4.x understands NVCC dependency/output modes.  Apply the same
     # launcher used by Host C++ to the split CUDA matrix so a small dispatcher
@@ -473,19 +646,29 @@ if(ARCH_ENABLE_CUDA)
     # again.  This stays CUDA-opt-in because the language is enabled above.
     if(CCACHE_PROGRAM)
         set(CMAKE_CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        if(TARGET arch_cuda_sparse_provider)
+            set_property(TARGET arch_cuda_sparse_provider PROPERTY
+                CUDA_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+        endif()
         message(STATUS "[OPT] CUDA compiler cache enabled: ${CCACHE_PROGRAM}")
     endif()
 
     # Ninja may otherwise start every independent object edge even when its
     # logical target participates in an add_dependencies chain.  Put all CUDA
     # backend frontends (NVCC and the table-heavy Host owners) in one named
-    # compile pool.  `cmake --build ... --parallel 6` can still use its other
-    # five jobs for the lightweight graph, while this lane has a hard peak of
-    # one compiler process.  Non-Ninja generators retain the target ordering
+    # compile pool. Top-level parallelism may use the remaining jobs for the
+    # lightweight graph, while this lane is bounded by the configured slot
+    # count (conservative default 1). Slot count is not a RAM guarantee;
+    # measure the actual workload with the memory guard before raising it.
+    # Non-Ninja generators retain the target ordering
     # below and simply ignore this optional scheduling refinement.
     if(CMAKE_GENERATOR MATCHES "Ninja")
-        set_property(GLOBAL APPEND PROPERTY JOB_POOLS arch_cuda_heavy=1)
+        set_property(GLOBAL APPEND PROPERTY JOB_POOLS arch_cuda_heavy=${ARCH_CUDA_HEAVY_COMPILE_JOBS})
         set(ARCH_CUDA_HEAVY_JOB_POOL arch_cuda_heavy)
+        if(TARGET arch_cuda_sparse_provider)
+            set_property(TARGET arch_cuda_sparse_provider PROPERTY
+                JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endif()
     endif()
 
     # add_dependencies() alone only creates an object-order phony edge for
@@ -505,7 +688,7 @@ if(ARCH_ENABLE_CUDA)
         add_custom_target(${barrier} DEPENDS "${stamp}")
     endfunction()
 
-    # Put every NVCC frontend in one serial lane.  Burn/EOS, hydro, and
+    # Put every NVCC frontend in the same bounded lane. Burn/EOS, hydro, and
     # diffusion instantiate large device templates, and even the small
     # exchange wrapper can push an 8 GiB WSL guest over its limit when it
     # overlaps a memory-heavy host-control phase.
@@ -516,7 +699,7 @@ if(ARCH_ENABLE_CUDA)
         target_include_directories(${target} PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_compile_options(${target} PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native>)
         set_target_properties(${target} PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON
@@ -528,46 +711,52 @@ if(ARCH_ENABLE_CUDA)
     endfunction()
 
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_ideal
-        src/cuda/runtime/CudaBackendBurnIdeal.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_helm
-        src/cuda/runtime/CudaBackendBurnHelm.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d
-        src/cuda/runtime/CudaBackendBurnTabular3D.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_aprox13
-        src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_aprox19
-        src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_aprox21
-        src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular3d_iso7
-        src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d
-        src/cuda/runtime/CudaBackendBurnTabular4D.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox13
-        src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox19
-        src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_aprox21
-        src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_burn_tabular4d_iso7
-        src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu)
+        src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu)
     # Hydro owns one shared template implementation and one canonical source
     # owner per EOS.  Heavy tabular interpolation call boundaries keep NVCC
     # Debug frontend memory bounded without duplicating physics or routes.
     arch_configure_cuda_backend_object(arch_cuda_backend_hydro_ideal
-        src/cuda/runtime/CudaBackendHydroIdeal.cu)
+        src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_hydro_helm
-        src/cuda/runtime/CudaBackendHydroHelm.cu)
+        src/cuda/runtime/hydro/CudaBackendHydroHelm.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular3
-        src/cuda/runtime/CudaBackendHydroTabular3.cu)
+        src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_hydro_tabular4
-        src/cuda/runtime/CudaBackendHydroTabular4.cu)
+        src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_diffusion
-        src/cuda/runtime/CudaBackendDiffusion.cu)
+        src/cuda/runtime/diffusion/CudaBackendDiffusion.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_exchange
-        src/cuda/runtime/CudaBackendExchange.cu)
+        src/cuda/runtime/amr/CudaBackendExchange.cu)
     arch_configure_cuda_backend_object(arch_cuda_backend_amr_flux
-        src/cuda/runtime/CudaBackendAmrFlux.cu)
+        src/cuda/runtime/amr/CudaBackendAmrFlux.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_amr_indicators
+        src/cuda/amr/RefinementIndicators.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_amr_migration
+        src/cuda/amr/RegridMigration.cu)
+    arch_configure_cuda_backend_object(arch_cuda_backend_grid_metrics
+        src/cuda/common/GridMetricsCache.cu)
     add_dependencies(arch_cuda_backend_burn_helm
         arch_cuda_backend_burn_ideal)
     add_dependencies(arch_cuda_backend_burn_tabular3d
@@ -647,17 +836,21 @@ if(ARCH_ENABLE_CUDA)
     arch_configure_cuda_host_object(arch_cuda_backend_eos_tabular4
         src/cuda/microphysics/tabular4_eos_device_owner.cpp -g0)
     arch_configure_cuda_host_object(arch_cuda_backend_resources
-        src/cuda/runtime/CudaBackendResources.cpp -g1)
+        src/cuda/runtime/control/CudaBackendResources.cpp -g1)
     arch_configure_cuda_host_object(arch_cuda_backend_core
-        src/cuda/runtime/CudaBackendCore.cpp -g1)
+        src/cuda/runtime/control/CudaBackendCore.cpp -g1)
     arch_configure_cuda_host_object(arch_cuda_backend_factory
         src/cuda/runtime/CudaBackendFactory.cpp -g1)
     arch_configure_cuda_host_object(arch_cuda_backend_hydro_control
-        src/cuda/runtime/CudaBackendHydroControl.cpp -g1)
+        src/cuda/runtime/hydro/CudaBackendHydroControl.cpp -g1)
     arch_configure_cuda_host_object(arch_cuda_backend_microphysics_control
-        src/cuda/runtime/CudaBackendMicrophysicsControl.cpp -g1)
+        src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp -g1)
     arch_configure_cuda_host_object(arch_cuda_backend_store
-        src/cuda/runtime/CudaBackendStore.cpp -g1)
+        src/cuda/runtime/control/CudaBackendStore.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_indicators
+        src/cuda/runtime/amr/CudaBackendIndicators.cpp -g1)
+    arch_configure_cuda_host_object(arch_cuda_backend_migration
+        src/cuda/runtime/amr/CudaBackendMigration.cpp -g1)
 
     add_dependencies(arch_cuda_backend_eos_species
         arch_cuda_backend_eos_utils)
@@ -680,14 +873,19 @@ if(ARCH_ENABLE_CUDA)
     add_dependencies(arch_cuda_backend_store
         arch_cuda_backend_microphysics_control)
 
-    # Finish the inexpensive host-control phase before entering the serial
-    # device-template lane.  A clean `--parallel 6` build otherwise overlaps
-    # one multi-gigabyte NVCC frontend with five LTO C++ frontends and can
-    # exhaust an 8 GiB WSL guest even though the NVCC targets are serialized.
+    # Finish host control before the bounded device-template pool. Broad outer
+    # parallelism can otherwise overlap several large host/device frontends.
+    # The phase barrier is not a memory guarantee; measure the selected heavy
+    # pool limit and retain system headroom under the build memory guard.
     add_dependencies(arch_cuda_backend_burn_ideal
         arch_cuda_backend_store)
 
     add_library(arch_cuda_backend STATIC
+        $<TARGET_OBJECTS:arch_cuda_backend_grid_metrics>
+        $<TARGET_OBJECTS:arch_cuda_backend_migration>
+        $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>
+        $<TARGET_OBJECTS:arch_cuda_backend_amr_indicators>
+        $<TARGET_OBJECTS:arch_cuda_backend_indicators>
         $<TARGET_OBJECTS:arch_cuda_backend_eos_utils>
         $<TARGET_OBJECTS:arch_cuda_backend_eos_species>
         $<TARGET_OBJECTS:arch_cuda_backend_eos_helm>
@@ -726,16 +924,38 @@ if(ARCH_ENABLE_CUDA)
         PUBLIC arch_build_contract
         PRIVATE arch_diffusion_math CUDA::cudart)
     target_compile_options(arch_cuda_backend PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native>)
     set_target_properties(arch_cuda_backend PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON
         INTERPROCEDURAL_OPTIMIZATION OFF)
     target_link_libraries(ARCH PRIVATE arch_cuda_backend)
+    foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
+        set(custom_type "${ARCH_CUSTOM_TYPE_${custom_id}}")
+        set(custom_header "${ARCH_CUSTOM_HEADER_${custom_id}}")
+        foreach(custom_eos_tag tabular3d tabular4d)
+            if(custom_eos_tag STREQUAL "tabular3d")
+                set(custom_eos Tabular3DEOSView)
+                set(custom_eos_header "physics/eos/Tabular3DEOS.h")
+            else()
+                set(custom_eos Tabular4DEOSView)
+                set(custom_eos_header "physics/eos/Tabular4DEOS.h")
+            endif()
+            set(custom_route "${ARCH_CUSTOM_REGISTRY_DIR}/burn_${custom_eos_tag}_${custom_id}.cu")
+            configure_file(cmake/CudaCustomDenseRoute.cu.in "${custom_route}" @ONLY)
+            set(custom_target "arch_cuda_burn_${custom_eos_tag}_${custom_id}")
+            arch_configure_cuda_backend_object(${custom_target} "${custom_route}")
+            target_sources(arch_cuda_backend PRIVATE $<TARGET_OBJECTS:${custom_target}>)
+        endforeach()
+    endforeach()
+    include(cmake/CudaBurnDenseRoutes.cmake)
+    arch_register_cuda_dense_burn_routes()
+    include(cmake/CudaBurnSparseRoutes.cmake)
+    arch_register_cuda_sparse_burn_routes()
     # A full CUDA build has three explicit phases: backend archive, dispatch
     # archive, and then the application.  The file-backed barriers are stronger
-    # than target-level object ordering under Ninja and therefore make
-    # `cmake --build ... --parallel 6` safe on an 8 GiB WSL guest.
+    # than target-level object ordering under Ninja and prevent unplanned
+    # overlap between these phases. They do not replace memory measurements.
     arch_add_completion_barrier(
         arch_cuda_backend_complete arch_cuda_backend)
     add_dependencies(arch_solver_dispatch arch_cuda_backend_complete)
@@ -755,10 +975,208 @@ if(ARCH_ENABLE_CUDA)
 
     if(BUILD_TESTING)
     # Focused CUDA targets never enter a production testing-off graph.
+    foreach(custom_id IN LISTS ARCH_CUSTOM_CUDA_IDS)
+        set(custom_test "arch_cuda_generated_math_${custom_id}")
+        add_executable(${custom_test} tests/cuda/test_generated_network_math.cu)
+        target_compile_options(${custom_test} PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+            "-include" "${ARCH_CUSTOM_HEADER_${custom_id}}")
+        target_compile_definitions(${custom_test} PRIVATE
+            ARCH_TEST_NETWORK_TYPE=${ARCH_CUSTOM_TYPE_${custom_id}})
+        target_link_libraries(${custom_test} PRIVATE CUDA::cudart)
+        set_target_properties(${custom_test} PROPERTIES CUDA_STANDARD 20
+            CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+        if(ARCH_CUDA_HEAVY_JOB_POOL)
+            set_property(TARGET ${custom_test} PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endif()
+        add_test(NAME cuda_generated_math_${custom_id} COMMAND ${custom_test})
+        set_tests_properties(cuda_generated_math_${custom_id} PROPERTIES SKIP_RETURN_CODE 77)
+        if(ARCH_CUSTOM_EQUATIONS_${custom_id} GREATER 31
+           AND ARCH_ENABLE_KLU AND TARGET arch_cuda_sparse_provider)
+            # Real generated trajectories through the production sparse owner.
+            # State/duration/composition are validation inputs, never network-ID
+            # dependent defaults or a substitute manufactured matrix.
+            set(sparse_test "arch_cuda_generated_sparse_burn_${custom_id}")
+            add_executable(${sparse_test}
+                tests/cuda/test_generated_sparse_burn.cpp
+                tests/cuda/test_generated_sparse_burn_factory.cu)
+            target_compile_options(${sparse_test} PRIVATE
+                $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+                "-include" "${ARCH_CUSTOM_HEADER_${custom_id}}")
+            target_compile_definitions(${sparse_test} PRIVATE
+                ARCH_TEST_NETWORK_TYPE=${ARCH_CUSTOM_TYPE_${custom_id}})
+            target_link_libraries(${sparse_test} PRIVATE arch_build_contract arch_cuda_sparse_provider)
+            set_target_properties(${sparse_test} PROPERTIES CUDA_STANDARD 20
+                CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+            if(ARCH_CUDA_HEAVY_JOB_POOL)
+                set_property(TARGET ${sparse_test} PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+            endif()
+        endif()
+        if(ARCH_CUSTOM_AUXILIARY_${custom_id} EQUAL 1
+           AND ARCH_CUSTOM_EQUATIONS_${custom_id} LESS_EQUAL 31)
+            # These controls require explicit physical state arguments supplied
+            # by the module's validation recipe, not arbitrary universal CTest
+            # defaults for every possible user-generated reaction network.
+            foreach(weak_control trajectory factory)
+                set(weak_test "arch_cuda_generated_weak_${weak_control}_${custom_id}")
+                add_executable(${weak_test}
+                    "tests/cuda/test_generated_weak_${weak_control}.cu")
+                target_compile_options(${weak_test} PRIVATE
+                    $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>
+                    "-include" "${ARCH_CUSTOM_HEADER_${custom_id}}")
+                target_compile_definitions(${weak_test} PRIVATE
+                    ARCH_TEST_NETWORK_TYPE=${ARCH_CUSTOM_TYPE_${custom_id}})
+                target_link_libraries(${weak_test} PRIVATE arch_build_contract CUDA::cudart)
+                if(weak_control STREQUAL "trajectory")
+                    # Consume table owners through their canonical archive;
+                    # do not publish the same OBJECT ownership in a second target.
+                    target_link_libraries(${weak_test} PRIVATE arch_cuda_backend)
+                    target_compile_definitions(${weak_test} PRIVATE ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+                endif()
+                if(weak_control STREQUAL "factory" AND TARGET arch_cuda_sparse_provider)
+                    target_link_libraries(${weak_test} PRIVATE arch_cuda_sparse_provider)
+                endif()
+                set_target_properties(${weak_test} PROPERTIES CUDA_STANDARD 20
+                    CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+                if(ARCH_CUDA_HEAVY_JOB_POOL)
+                    set_property(TARGET ${weak_test} PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+                endif()
+            endforeach()
+        endif()
+    endforeach()
+    add_executable(arch_cuda_regrid_transaction tests/cuda/test_cuda_regrid_transaction.cpp)
+    target_link_libraries(arch_cuda_regrid_transaction PRIVATE
+        arch_cuda_backend CUDA::cudart)
+    add_test(NAME cuda_regrid_transaction COMMAND arch_cuda_regrid_transaction)
+    set_tests_properties(cuda_regrid_transaction PROPERTIES SKIP_RETURN_CODE 77)
+    # Exercise the same setup kernel owned by the production backend without
+    # compiling its unrelated hydro/burn instantiation matrix.
+    add_executable(arch_cuda_grid_metrics_cache
+        tests/cuda/test_grid_metrics_cache.cu
+        $<TARGET_OBJECTS:arch_cuda_backend_grid_metrics>)
+    target_link_libraries(arch_cuda_grid_metrics_cache PRIVATE
+        arch_build_contract CUDA::cudart)
+    target_compile_options(arch_cuda_grid_metrics_cache PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_grid_metrics_cache PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON
+        INTERPROCEDURAL_OPTIMIZATION OFF)
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        set_property(TARGET arch_cuda_grid_metrics_cache PROPERTY
+            JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+        set_property(TARGET arch_cuda_grid_metrics_cache PROPERTY
+            JOB_POOL_LINK ${ARCH_CUDA_HEAVY_JOB_POOL})
+    endif()
+    add_test(NAME cuda_grid_metrics_cache COMMAND arch_cuda_grid_metrics_cache)
+    set_tests_properties(cuda_grid_metrics_cache PROPERTIES SKIP_RETURN_CODE 77)
+    if(TARGET arch_cuda_sparse_provider)
+        add_executable(arch_cuda_sparse_burn_factory tests/cuda/test_cuda_sparse_burn_factory.cpp)
+        target_link_libraries(arch_cuda_sparse_burn_factory PRIVATE arch_cuda_backend CUDA::cudart)
+        add_test(NAME cuda_sparse_burn_factory COMMAND arch_cuda_sparse_burn_factory)
+        set_tests_properties(cuda_sparse_burn_factory PROPERTIES SKIP_RETURN_CODE 77)
+        add_executable(arch_cuda_sparse_be_nr_batch tests/cuda/test_sparse_be_nr_batch.cu)
+        target_link_libraries(arch_cuda_sparse_be_nr_batch PRIVATE arch_cuda_sparse_provider)
+        target_compile_options(arch_cuda_sparse_be_nr_batch PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_sparse_be_nr_batch PROPERTIES
+            CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+        add_test(NAME cuda_sparse_be_nr_batch COMMAND arch_cuda_sparse_be_nr_batch)
+        set_tests_properties(cuda_sparse_be_nr_batch PROPERTIES SKIP_RETURN_CODE 77)
+        add_executable(arch_cuda_cudss_sparse_solver tests/cuda/test_cudss_sparse_solver.cpp)
+        target_link_libraries(arch_cuda_cudss_sparse_solver PRIVATE arch_cuda_sparse_provider)
+        add_test(NAME cuda_cudss_sparse_solver COMMAND arch_cuda_cudss_sparse_solver)
+        set_tests_properties(cuda_cudss_sparse_solver PROPERTIES SKIP_RETURN_CODE 77)
+        add_executable(arch_cuda_burn_eos_failure tests/cuda/test_burn_eos_failure.cu)
+        target_link_libraries(arch_cuda_burn_eos_failure PRIVATE arch_cuda_sparse_provider)
+        target_compile_options(arch_cuda_burn_eos_failure PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_burn_eos_failure PROPERTIES
+            CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+        if(ARCH_CUDA_HEAVY_JOB_POOL)
+            set_property(TARGET arch_cuda_burn_eos_failure PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+        endif()
+        add_test(NAME cuda_burn_eos_failure COMMAND arch_cuda_burn_eos_failure)
+        set_tests_properties(cuda_burn_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
+    endif()
+    add_executable(arch_cuda_regrid_migration
+        tests/cuda/test_cuda_regrid_migration.cu
+        $<TARGET_OBJECTS:arch_cuda_backend_amr_migration>)
+    target_link_libraries(arch_cuda_regrid_migration PRIVATE arch_build_contract CUDA::cudart)
+    target_compile_options(arch_cuda_regrid_migration PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_regrid_migration PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+    add_test(NAME cuda_regrid_migration COMMAND arch_cuda_regrid_migration)
+    set_tests_properties(cuda_regrid_migration PROPERTIES SKIP_RETURN_CODE 77)
+    add_executable(arch_cuda_curvilinear_geometry_smoke
+        tests/cuda/test_curvilinear_geometry_smoke.cu)
+    target_link_libraries(arch_cuda_curvilinear_geometry_smoke PRIVATE
+        arch_build_contract CUDA::cudart arch_diffusion_math)
+    target_compile_options(arch_cuda_curvilinear_geometry_smoke PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_curvilinear_geometry_smoke PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+    add_test(NAME cuda_curvilinear_geometry_smoke COMMAND arch_cuda_curvilinear_geometry_smoke)
+    set_tests_properties(cuda_curvilinear_geometry_smoke PROPERTIES SKIP_RETURN_CODE 77)
+    add_executable(arch_cuda_hydro_eos_failure tests/cuda/test_hydro_eos_failure.cu)
+    target_link_libraries(arch_cuda_hydro_eos_failure PRIVATE arch_build_contract CUDA::cudart)
+    target_compile_options(arch_cuda_hydro_eos_failure PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_hydro_eos_failure PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        set_property(TARGET arch_cuda_hydro_eos_failure PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+    endif()
+    add_test(NAME cuda_hydro_eos_failure COMMAND arch_cuda_hydro_eos_failure)
+    set_tests_properties(cuda_hydro_eos_failure PROPERTIES SKIP_RETURN_CODE 77)
+    # Host-only registry execution compiled by NVCC: catches closure-lowering
+    # regressions without instantiating the full Hydro numerical route matrix.
+    add_executable(arch_cuda_hydro_dispatch tests/cuda/test_hydro_dispatch.cu)
+    target_link_libraries(arch_cuda_hydro_dispatch PRIVATE arch_build_contract CUDA::cudart)
+    target_compile_options(arch_cuda_hydro_dispatch PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_hydro_dispatch PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON INTERPROCEDURAL_OPTIMIZATION OFF)
+    if(ARCH_CUDA_HEAVY_JOB_POOL)
+        set_property(TARGET arch_cuda_hydro_dispatch PROPERTY JOB_POOL_COMPILE ${ARCH_CUDA_HEAVY_JOB_POOL})
+        set_property(TARGET arch_cuda_hydro_dispatch PROPERTY JOB_POOL_LINK ${ARCH_CUDA_HEAVY_JOB_POOL})
+    endif()
+    add_test(NAME cuda_hydro_dispatch COMMAND arch_cuda_hydro_dispatch)
+    add_executable(arch_cuda_refinement_indicators
+        tests/cuda/test_refinement_indicators.cpp
+        $<TARGET_OBJECTS:arch_cuda_backend_amr_indicators>)
+    target_link_libraries(arch_cuda_refinement_indicators PRIVATE
+        arch_build_contract CUDA::cudart)
+    add_test(NAME cuda_refinement_indicators COMMAND arch_cuda_refinement_indicators)
+    set_tests_properties(cuda_refinement_indicators PROPERTIES SKIP_RETURN_CODE 77)
+    # These mathematical regressions use the same build contract as production
+    # without requiring the complete template-heavy backend archive.
+    add_executable(arch_cuda_compensated_sum tests/cuda/test_compensated_sum.cu)
+    target_compile_features(arch_cuda_compensated_sum PRIVATE cxx_std_20)
+    target_compile_options(arch_cuda_compensated_sum PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    set_target_properties(arch_cuda_compensated_sum PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON
+        INTERPROCEDURAL_OPTIMIZATION OFF)
+    add_test(NAME cuda_compensated_sum COMMAND arch_cuda_compensated_sum)
+    set_tests_properties(cuda_compensated_sum PROPERTIES SKIP_RETURN_CODE 77)
+    add_executable(arch_cuda_amr_composition
+        tests/cuda/test_cuda_amr_composition.cu)
+    target_compile_features(arch_cuda_amr_composition PRIVATE cxx_std_20)
+    target_compile_options(arch_cuda_amr_composition PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+    target_link_libraries(arch_cuda_amr_composition PRIVATE CUDA::cudart)
+    set_target_properties(arch_cuda_amr_composition PROPERTIES
+        CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON
+        INTERPROCEDURAL_OPTIMIZATION OFF)
+    add_test(NAME cuda_amr_composition COMMAND arch_cuda_amr_composition)
+    set_tests_properties(cuda_amr_composition PROPERTIES SKIP_RETURN_CODE 77)
     add_executable(arch_cuda_compile_probe tests/cuda/test_cuda_compile_probe.cu)
     target_compile_features(arch_cuda_compile_probe PRIVATE cxx_std_20)
     target_include_directories(arch_cuda_compile_probe PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_compile_options(arch_cuda_compile_probe PRIVATE
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     set_target_properties(arch_cuda_compile_probe PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
@@ -770,7 +1188,7 @@ if(ARCH_ENABLE_CUDA)
     target_compile_definitions(arch_cuda_eos_host_device_parity PRIVATE
         ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_options(arch_cuda_eos_host_device_parity PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     set_target_properties(arch_cuda_eos_host_device_parity PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
@@ -783,7 +1201,7 @@ if(ARCH_ENABLE_CUDA)
     target_include_directories(arch_cuda_tabular_free_energy_owner PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_compile_options(arch_cuda_tabular_free_energy_owner PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     set_target_properties(arch_cuda_tabular_free_energy_owner PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
@@ -795,7 +1213,7 @@ if(ARCH_ENABLE_CUDA)
     target_include_directories(arch_cuda_network_nse_device PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_compile_options(arch_cuda_network_nse_device PRIVATE
-        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-ffast-math>)
+        $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
     set_target_properties(arch_cuda_network_nse_device PROPERTIES
         CUDA_STANDARD 20
         CUDA_STANDARD_REQUIRED ON)
@@ -822,19 +1240,63 @@ if(ARCH_ENABLE_CUDA)
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
         add_executable(arch_cuda_burn_policy_parity
-            tests/cuda/test_burn_policy_parity.cu)
+            tests/cuda/test_burn_policy_parity.cu
+            src/core/FileFingerprint.cpp)
         target_compile_features(arch_cuda_burn_policy_parity PRIVATE cxx_std_20)
         target_include_directories(arch_cuda_burn_policy_parity PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_compile_definitions(arch_cuda_burn_policy_parity PRIVATE
             ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         target_compile_options(arch_cuda_burn_policy_parity PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-fno-inline,-fno-tree-vectorize,-fno-tree-slp-vectorize>)
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native,-fno-inline,-fno-tree-vectorize,-fno-tree-slp-vectorize>)
         set_target_properties(arch_cuda_burn_policy_parity PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
+        # This mathematical policy witness instantiates the shared headers and
+        # needs only the production immutable Helmholtz resource owners. Reuse
+        # their actual objects without requiring the unrelated runtime/Hydro
+        # matrix or compiling a second copy of any owner implementation.
         target_link_libraries(arch_cuda_burn_policy_parity PRIVATE
-            arch_cuda_backend)
+            arch_cuda_backend_eos_helm
+            arch_cuda_backend_eos_species
+            arch_cuda_backend_eos_utils
+            arch_build_contract CUDA::cudart)
+        add_executable(arch_cuda_burn_controller_parity
+            tests/cuda/test_burn_controller_parity.cu)
+        target_compile_features(arch_cuda_burn_controller_parity PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_burn_controller_parity PRIVATE
+            "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_definitions(arch_cuda_burn_controller_parity PRIVATE
+            ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+        target_compile_options(arch_cuda_burn_controller_parity PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_burn_controller_parity PROPERTIES
+            CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_burn_controller_parity PRIVATE
+            arch_cuda_backend_eos_helm arch_cuda_backend_eos_species
+            arch_cuda_backend_eos_utils arch_build_contract CUDA::cudart)
+        add_test(NAME burn_controller_parity COMMAND arch_cuda_burn_controller_parity)
+        set_tests_properties(burn_controller_parity PROPERTIES SKIP_RETURN_CODE 77)
+        add_executable(arch_cuda_network_derivative tests/cuda/test_network_derivative.cu)
+        target_compile_features(arch_cuda_network_derivative PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_network_derivative PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(arch_cuda_network_derivative PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_network_derivative PROPERTIES
+            CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_network_derivative PRIVATE arch_build_contract CUDA::cudart)
+        add_test(NAME cuda_network_derivative COMMAND arch_cuda_network_derivative)
+        set_tests_properties(cuda_network_derivative PROPERTIES SKIP_RETURN_CODE 77)
+        add_executable(arch_cuda_burn_thermal_math tests/cuda/test_burn_thermal_math.cu)
+        target_compile_features(arch_cuda_burn_thermal_math PRIVATE cxx_std_20)
+        target_include_directories(arch_cuda_burn_thermal_math PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+        target_compile_options(arch_cuda_burn_thermal_math PRIVATE
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        set_target_properties(arch_cuda_burn_thermal_math PROPERTIES
+            CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
+        target_link_libraries(arch_cuda_burn_thermal_math PRIVATE arch_build_contract CUDA::cudart)
+        add_test(NAME cuda_burn_thermal_math COMMAND arch_cuda_burn_thermal_math)
+        set_tests_properties(cuda_burn_thermal_math PROPERTIES SKIP_RETURN_CODE 77)
         add_executable(arch_cuda_hydro_block
             tests/cuda/test_cuda_hydro_block.cu)
         # This is a Host scheduler/controller witness linked to the one
@@ -851,12 +1313,12 @@ if(ARCH_ENABLE_CUDA)
         target_compile_definitions(arch_cuda_hydro_block PRIVATE
             ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
         target_compile_options(arch_cuda_hydro_block PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native>)
         set_target_properties(arch_cuda_hydro_block PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
         target_link_libraries(arch_cuda_hydro_block PRIVATE
-            arch_cuda_backend arch_solver_dispatch)
+            arch_cuda_backend arch_solver_dispatch CUDA::cudart)
         add_executable(arch_cuda_multiblock_hydro
             tests/cuda/test_cuda_multiblock_hydro.cu)
         set_source_files_properties(tests/cuda/test_cuda_multiblock_hydro.cu
@@ -867,7 +1329,7 @@ if(ARCH_ENABLE_CUDA)
         set_target_properties(arch_cuda_multiblock_hydro PROPERTIES
             CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON)
         target_link_libraries(arch_cuda_multiblock_hydro PRIVATE
-            arch_cuda_backend arch_solver_dispatch)
+            arch_cuda_backend arch_solver_dispatch CUDA::cudart)
         add_executable(arch_cuda_multiblock_diffusion
             tests/cuda/test_cuda_multiblock_diffusion.cu)
         set_source_files_properties(tests/cuda/test_cuda_multiblock_diffusion.cu
@@ -910,13 +1372,15 @@ if(ARCH_ENABLE_CUDA)
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_link_libraries(arch_cuda_single_level_validation PRIVATE
             arch_cuda_backend)
+        add_test(NAME checkpoint_temporal_comparison
+            COMMAND arch_cuda_single_level_validation --test-time-comparison)
         add_executable(arch_cuda_diffusion_rkl_parity
             tests/cuda/test_diffusion_rkl_parity.cu)
         target_compile_features(arch_cuda_diffusion_rkl_parity PRIVATE cxx_std_20)
         target_include_directories(arch_cuda_diffusion_rkl_parity PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")
         target_compile_options(arch_cuda_diffusion_rkl_parity PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true;-Xcompiler=-march=native,-ffast-math>)
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;-Xcompiler=-march=native>)
         set_target_properties(arch_cuda_diffusion_rkl_parity PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
@@ -940,17 +1404,20 @@ if(ARCH_ENABLE_CUDA)
         target_link_libraries(arch_cuda_policy_resolution PRIVATE
             arch_build_contract)
         target_compile_options(arch_cuda_policy_resolution PRIVATE
-            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr;--fmad=false;--prec-div=true;--prec-sqrt=true>)
+            $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
         set_target_properties(arch_cuda_policy_resolution PROPERTIES
             CUDA_STANDARD 20
             CUDA_STANDARD_REQUIRED ON)
         if(ARCH_CUDA_HEAVY_JOB_POOL)
             # Focused CUDA validation is outside the production ARCH target,
             # but a default test build may schedule it at the same time.  Use
-            # the same single-slot lane for every CUDA-facing test compiler and
+            # the same bounded lane for every CUDA-facing test compiler and
             # linker.  In testing builds ARCH joins that lane as well, avoiding
             # an ordinary application compile alongside a multi-GiB NVCC edge.
             foreach(target IN ITEMS
+                    arch_burn_mainline_reference
+                    arch_cuda_compensated_sum
+                    arch_cuda_amr_composition
                     arch_cuda_compile_probe
                     arch_cuda_eos_host_device_parity
                     arch_cuda_tabular_free_energy_owner
@@ -958,6 +1425,9 @@ if(ARCH_ENABLE_CUDA)
                     arch_cuda_hydro_leaf_parity
                     arch_cuda_reduction_contract
                     arch_cuda_burn_policy_parity
+                    arch_cuda_burn_controller_parity
+                    arch_cuda_network_derivative
+                    arch_cuda_burn_thermal_math
                     arch_cuda_hydro_block
                     arch_cuda_multiblock_hydro
                     arch_cuda_multiblock_diffusion
@@ -1045,6 +1515,8 @@ if(ARCH_ENABLE_CUDA)
             string(REPLACE "." "_" route_test "${route}")
             add_test(NAME "burn_policy_parity_${route_test}"
                 COMMAND arch_cuda_burn_policy_parity "${route}")
+            set_tests_properties("burn_policy_parity_${route_test}" PROPERTIES
+                DEPENDS burn_mainline_reference)
         endforeach()
     endif()
 endif()
@@ -1152,7 +1624,13 @@ if(ARCH_ENABLE_KLU)
             GIT_TAG v7.13.0
             GIT_SHALLOW TRUE
         )
+        # ARCH's directory-wide contract applies to our targets, not upstream
+        # dependencies. Inheriting it into KLU creates the cycle
+        # arch_build_contract -> KLU -> arch_build_contract and breaks exports.
+        get_property(arch_saved_directory_links DIRECTORY PROPERTY LINK_LIBRARIES)
+        set_property(DIRECTORY PROPERTY LINK_LIBRARIES "")
         FetchContent_MakeAvailable(suitesparse)
+        set_property(DIRECTORY PROPERTY LINK_LIBRARIES "${arch_saved_directory_links}")
         set(ARCH_KLU_TARGET SuiteSparse::KLU)
     endif()
 endif()

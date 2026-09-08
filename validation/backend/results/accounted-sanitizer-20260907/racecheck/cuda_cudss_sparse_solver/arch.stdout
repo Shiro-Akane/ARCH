@@ -1,0 +1,8 @@
+cuDSS N=32: solve/reuse/refactor and negative contracts passed
+cuDSS N=151: solve/reuse/refactor and negative contracts passed
+cuDSS N=201: solve/reuse/refactor and negative contracts passed
+cuDSS multiscale N=32 integrated source=0 trace chain=0 disconnected/rescaled=0: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS multiscale N=32 integrated source=1 trace chain=0 disconnected/rescaled=0: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS multiscale N=32 integrated source=0 trace chain=1 disconnected/rescaled=0: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS multiscale N=32 integrated source=0 trace chain=1 disconnected/rescaled=1: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS compiled API version 800

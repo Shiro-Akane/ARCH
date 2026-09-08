@@ -146,8 +146,10 @@ public:
 
     void register_block(amr::BlockHandle block,
                         StateVersion current_version,
-                        CompletionToken completed_initialization)
+                        CompletionToken completed_initialization,
+                        ExecutionSide initial_side = ExecutionSide::Host)
     {
+        validate_side(initial_side);
         validate_handle_epoch(block);
         if (!is_valid(current_version))
             throw std::invalid_argument("initial state version must be nonzero");
@@ -163,7 +165,7 @@ public:
             Entry entry{};
             if (slot == StateSlot::Current) {
                 entry.coherence.interior = {
-                    StateResidency::HostValid,
+                    residency_for(initial_side),
                     current_version,
                     completed_initialization,
                     PendingTransferPhase::None};

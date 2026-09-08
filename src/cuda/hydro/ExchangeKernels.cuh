@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "cuda/runtime/CudaBackendExchange.h"
+#include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "cuda/common/DeviceStateFields.cuh"
 
 #include <cuda_runtime.h>

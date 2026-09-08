@@ -5,7 +5,6 @@
 
 #pragma once
 
-#include "amr/AmrFluxExecutionPlan.h"
 #include "cuda/common/CudaCommon.cuh"
 
 #include <array>
@@ -85,7 +84,6 @@ inline bool valid_amr_flux_surface(
     const DeviceAmrFluxSurfaceView& view) noexcept
 {
     return view.cell_count > 0 && view.species_count >= 0
-        && view.species_count <= kMaxDeviceSpecies
         && view.rho != nullptr && view.mom_u != nullptr
         && view.mom_v != nullptr && view.mom_w != nullptr
         && view.eng != nullptr

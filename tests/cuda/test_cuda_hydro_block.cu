@@ -1,5 +1,6 @@
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
+#include "cuda/hydro/BoundaryPlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/StageScheduler.h"
 #include "numerics/diffusion/DiffFunction.h"
@@ -52,6 +53,18 @@ arch::boundary::BoundaryPlan make_boundary_plan()
     input.faces[face_index(BoundaryAxis::X1, BoundarySide::Upper)] =
         BoundaryType::Outflow;
     return arch::boundary::make_boundary_plan(input);
+}
+
+void require_metadata_only_construction(
+    const arch::cuda::CudaBackend& backend,
+    const arch::boundary::BoundaryPlan& boundary)
+{
+    const auto construction = backend.counters();
+    const auto boundary_metadata_bytes = boundary.operations().size()
+        * sizeof(arch::cuda::DeviceBoundaryTransfer);
+    require(construction.bytes_h2d == boundary_metadata_bytes
+                && construction.bytes_d2h == 0 && construction.kernel_count == 1,
+            "CUDA construction must upload only boundary metadata and generate grid metrics");
 }
 
 amr::Block make_block()
@@ -755,9 +768,7 @@ void run_lifetime_and_hydro_witness()
     require(backend->block_handle() == amr::BlockHandle{{1}, {1}}
                 && backend->storage_generation().value == 1,
             "CUDA backend identity drifted");
-    require(backend->counters().bytes_h2d == 0
-                && backend->counters().bytes_d2h == 0,
-            "CUDA construction uploaded FluidState");
+    require_metadata_only_construction(*backend, make_boundary_plan());
 
     const arch::backend::BackendStateAccess current{
         {{1}, {1}}, {1}, arch::state::StateSlot::Current};
@@ -920,8 +931,7 @@ void run_lifetime_and_hydro_witness()
     require_failure(
         [&] { (void)replacement->compute_hydro_dt(current, 0.8); },
         "reconstructed CUDA storage accepted the destroyed generation");
-    require(replacement->counters().bytes_h2d == 0,
-            "reconstructed backend uploaded FluidState during construction");
+    require_metadata_only_construction(*replacement, make_boundary_plan());
     std::cout << "CUDA_HYDRO_BLOCK_PASS dt=" << dt
               << " rho=" << downloaded.rho[active] << '\n';
 }

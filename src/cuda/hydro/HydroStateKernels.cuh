@@ -5,6 +5,7 @@
 #include "../common/CudaCommon.cuh"
 #include "../../driver/DriverUtils.h"
 #include "../../numerics/integrator/TimeIntegratorHelper.h"
+#include "GridGeometryAdapter.cuh"
 
 namespace arch::cuda
 {
@@ -13,24 +14,28 @@ namespace detail
 template <typename EosView>
 __global__ void hydro_cfl_candidates_kernel(
     DeviceStateView state, DeviceGridView grid, EosView eos,
-    double* candidates)
+    double* candidates, SpeciesWorkspaceView workspace = {})
 {
-    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     const int count = grid.active_cell_count();
-    if (linear >= count)
-        return;
-    const int cell = grid.active_cell(linear);
-    const FluidVector value = state.load(cell);
-    if (!is_cfl_cell_active(value)) {
-        candidates[linear] = cfl_inactive_cell_dt();
-        return;
+    SpeciesLaneScratch<1> scratch(workspace, lane);
+    double* composition = scratch.array(0);
+    for (int linear = lane; linear < count; linear += blockDim.x * gridDim.x) {
+        const int cell = grid.active_cell(linear);
+        const FluidVector value = state.load(cell);
+        if (!is_cfl_cell_active(value)) {
+            candidates[linear] = cfl_inactive_cell_dt();
+            continue;
+        }
+        for (int species = 0; species < state.n_species; ++species)
+            composition[species] = state.species(species, cell);
+        const int k = cell / grid.stride_z;
+        const int j = (cell - k * grid.stride_z) / grid.stride_y;
+        const int i = cell - k * grid.stride_z - j * grid.stride_y;
+        candidates[linear] = evaluate_cfl_cell_dt(
+            value, state.n_species > 0 ? composition : nullptr, eos,
+            make_grid_geometry_view(grid), i, j);
     }
-    double composition[kMaxDeviceSpecies];
-    for (int species = 0; species < state.n_species; ++species)
-        composition[species] = state.species(species, cell);
-    candidates[linear] = evaluate_cfl_cell_dt(
-        value, state.n_species > 0 ? composition : nullptr, eos,
-        grid.dim, grid.dx1, grid.dx2, grid.dx3);
 }
 
 static __global__ void hydro_cfl_reduce_kernel(
@@ -39,6 +44,14 @@ static __global__ void hydro_cfl_reduce_kernel(
 {
     if (blockIdx.x != 0 || threadIdx.x != 0)
         return;
+    // Candidate queries may have failed before a shared EOS/flux recovery
+    // returned a finite value.  The preceding kernel's sticky latch takes
+    // precedence over an otherwise successful reduction.
+    if (*status != 0) {
+        *status = static_cast<int>(arch::reduction::ReductionStatus::NanRejected);
+        *result = std::numeric_limits<double>::quiet_NaN();
+        return;
+    }
     auto spec = arch::reduction::minimum_spec(
         cfl_inactive_cell_dt());
     // Host tabular free-energy evaluation throws on an invalid
@@ -137,19 +150,23 @@ inline cudaError_t launch_compute_hydro_dt(
     CudaHydroWorkspaceView workspace, cudaStream_t stream)
 {
     if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
+        || !valid_species_workspace(workspace.species_workspace, state.n_species, 1)
         || state.total_size != grid.total_size
         || workspace.cfl_candidates == nullptr
         || workspace.cfl_result == nullptr
         || workspace.cfl_status == nullptr)
         return cudaErrorInvalidValue;
-    constexpr int threads = 128;
+    const int threads = detail::species_launch_threads(workspace.species_workspace);
     const int count = grid.active_cell_count();
     if (count <= 0)
         return cudaErrorInvalidValue;
+    cudaError_t error = cudaMemsetAsync(workspace.cfl_status, 0, sizeof(int), stream);
+    if (error != cudaSuccess)
+        return error;
     detail::hydro_cfl_candidates_kernel
-        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
-            state, grid, eos, workspace.cfl_candidates);
-    cudaError_t error = cudaGetLastError();
+        <<<detail::species_launch_blocks(count, workspace.species_workspace), threads, 0, stream>>>(
+            state, grid, eos, workspace.cfl_candidates, workspace.species_workspace);
+    error = cudaGetLastError();
     if (error != cudaSuccess)
         return error;
     detail::hydro_cfl_reduce_kernel<<<1, 1, 0, stream>>>(

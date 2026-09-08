@@ -18,12 +18,17 @@ chooses:
 `NETWORK_ID` must match `^[a-z][a-z0-9_]{0,47}$`. Names beginning with
 `aprox` or `iso` and other runtime-reserved names are rejected.
 
+First prepare a Python/pynucastro environment using the
+[network setup](../../../../validation/network/README.md#reproduce-the-records).
+The commands below use a named Conda environment; adjust that launcher to match
+your own environment.
+
 ~~~bash
 cp examples/network/CustomNetworkRecipe.py MyNetwork.py
 conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py --check
 conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py
 cmake -S . -B build
-cmake --build build --parallel 4
+cmake --build build --parallel 1
 ~~~
 
 `--check` imports pynucastro and constructs/validates the network without
@@ -49,33 +54,71 @@ recipe/pynucastro/generator version is a no-op. A changed recipe requires
 activate the staged package restores that backup. Two variants that remain
 selectable in one executable use distinct IDs.
 
-Set `linear_solver = Auto`. Requests are case-insensitive. `Auto` retains the
-dedicated DenseLU backend through 30 isotopes; above 30 it forms a SuiteSparse
-KLU CPU candidate and a cuDSS CUDA candidate. Generated packages are currently
-CPU-only, so their usable large-network route is KLU. SparseKLU is CPU-only and
-cuDSS is CUDA-only, and an incompatible explicit backend/solver pair is rejected
-before backend construction. The cuDSS provider and CUDA generated-network/
-large-network paths are not implemented; installing cuDSS alone does not enable
-them. Sparse matrix values use CSC storage, but the current entry-to-slot lookup
-allocates `N*N` integers. The retained compatibility audit reaches 200 isotopes;
-substantially larger packages require their own memory qualification.
+Set `linear_solver = Auto`. Solver names are case-insensitive. `Auto` selects
+DenseLU for up to 31 total ODE equations, counting species, temperature
+and any auxiliary energy state. Larger systems use SuiteSparse KLU on CPU
+or cuDSS on CUDA. SparseKLU is CPU-only and cuDSS
+is CUDA-only; an incompatible explicit backend/solver pair is rejected before
+backend construction, without silent solver replacement. Explicit DenseLU
+rejects more than 31 total equations. That solver limit is independent of the runtime
+species scratch used by CUDA transport and AMR.
+
+Version-4 packages declaring `device_callable_math=true` in `manifest.json`
+are registered for CUDA execution. Each backend stores recognized embedded weak
+tables as read-only data and accesses them through explicit borrowed views.
+Version-3 packages and packages not converted for device execution remain
+CPU-only; regenerate them to use the current shared interfaces.
+CUDA sparse burning additionally requires the
+optional cuDSS library: configure with `ARCH_ENABLE_CUDA=ON`,
+`ARCH_ENABLE_CUDSS=ON`, and, if needed, `CUDSS_ROOT` pointing to an installed
+prefix (which may be user-local). The adapter requires the cuDSS 0.8 API and
+checks the runtime version. Sparse CUDA burning is available only when the
+library and code for the selected network/EOS combination are linked;
+otherwise that configuration is rejected.
+
+CPU sparse values use CSC storage, with the existing `N*N` integer
+entry-to-slot lookup. CUDA uses the declared CSR structure, bounded per-lane
+workspace and cuDSS factor storage within a memory budget, while sharing the
+BE_NR/ROS4/BD continuations. Memory requirements depend on sparse fill-in and
+the active workload. For very large networks, a model's scientific reliability
+depends on its isotope set, reaction data and range of applicability. See
+[network validation](../../../../validation/network/README.md) for coverage and
+capacity records. Start expensive builds with `--parallel 1` and the
+[memory guard](../../../../README.md#build), then tune concurrency from measured
+compiler memory usage.
 
 ## Adapter boundary
 
-Generated SimpleCxx code is namespace-isolated. ARCH converts pynucastro's molar
+Generated SimpleCxx code is namespace-isolated. Version 4 places the original
+reaction expressions and immutable lookup data in one math header consumed by
+the ordinary C++ adapter and CUDA instantiations. It preserves numerical
+constants and the original adapter energy weights, rather than substituting a
+different nuclear-mass convention. Device code does not dereference Host
+global arrays. Include guards are package-specific, and screening macros are
+scoped so screened and unscreened packages can coexist without contamination.
+
+ARCH converts pynucastro's molar
 RHS/Jacobian to mass-fraction form, includes nuclear and weak-neutrino energy in
-the RHS, and evaluates the temperature Jacobian column by a centered relative
-`1e-4` finite difference. The energy Jacobian excludes the weak-neutrino
-composition derivative. Generator version 3 removes only literal
+the RHS, and evaluates the complete temperature Jacobian column through the
+shared fourth-order difference policy with a precision-derived step and boundary
+stencil. Recognized weak tables include their rho*Ye composition chain rule and
+signed energy-source gradient. Generator version 3 removes only literal
 `jac.set(..., 0.0)` calls emitted by pynucastro; runtime numerical zeros remain
-in the structural pattern so KLU refactorization is safe. Generated packages
+in the structural pattern so KLU refactorization is safe. Version 4 derives the
+declared symbolic Jacobian structure from those writes, not by sampling
+numerical nonzeros, and rejects unrecognized write indices instead of silently
+omitting structure. Generated packages
 set `SUPPORTS_NSE=false` for the Timmes NSE projection. Production
 qualification for each generated network covers its RHS/Jacobian, tolerances,
 conservation, energy, and trajectory behavior. Pynucastro is a generation-time
-dependency only. Multi-size compatibility evidence is centralized in
+dependency only. Focused device math/solver smoke checks do not qualify a full
+burn trajectory or the final executable. Multi-size compatibility evidence is centralized in
 [`validation/network`](../../../../validation/network/README.md).
 
-Weak-neutrino energy is present in the RHS, but its composition derivative and
-time-integrated contribution to the burn solver's acceptance closure are not
-yet represented. Networks in which weak losses are material therefore require
-solver work before production qualification.
+Recognized weak networks integrate a signed energy source as an additional ODE
+state, using the same BE_NR/BD/ROS4 stages, error control and rollback. Nuclear
+energy and the source integral enter the common accepted-energy accounting.
+CPU functions borrow host data; CUDA storage managers upload read-only tables
+once and retain them across grid-storage changes. No second interpolator or ODE is maintained.
+Independent scientific weak trajectories and final application qualification
+remain required; focused math/factory controls do not close those gates.

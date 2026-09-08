@@ -1,7 +1,9 @@
 #include "amr/AMRControl.h"
 #include "amr/BoundaryPlan.h"
+#include "amr/CoarseFineCellPlan.h"
 #include "amr/GhostExchange.h"
 #include "cuda/runtime/CudaBackend.h"
+#include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/species/Species.h"
 
@@ -98,8 +100,9 @@ void fill_block(amr::Block& block)
         block.fluid_state.eng[index] = 10.0 + 0.05 * value;
         block.fluid_state.enuc_rate[index] = -2.0 + 0.006 * value;
         block.fluid_state.X(0, index) = 0.2 + 1.0e-5 * value;
-        block.fluid_state.X(1, index) =
-            1.0 - block.fluid_state.X(0, index);
+        block.fluid_state.X(1, index) = 0.7 - block.fluid_state.X(0, index);
+        block.fluid_state.X(2, index) = 0.3;
+        block.fluid_state.X(3, index) = 0.0;
     }
     block.state_next = block.fluid_state;
     block.state_scratch = block.fluid_state;
@@ -195,12 +198,27 @@ void compare_state(const FluidState& expected, const FluidState& actual,
     compare_field(expected.enuc_rate, actual.enuc_rate, "enuc", dimension, slot, block);
     compare_field(expected.mass_fractions, actual.mass_fractions, "X",
                   dimension, slot, block);
+    for (const double fraction : actual.mass_fractions)
+        require(std::isfinite(fraction) && fraction >= 0.0 && fraction <= 1.0,
+                "CUDA AMR exchange produced a negative/invalid species");
 }
 
-void run_dimension(int dimension)
+void run_dimension(int dimension, const std::string& geometry)
 {
     SimConfig config{};
     config.grid.dim = dimension;
+    config.grid.geometry = geometry;
+    if (geometry != "cartesian") {
+        // An annulus/wedge keeps all ghost volumes positive and away from
+        // coordinate singularities. Existing manufactured metric tests cover
+        // the poles/origin separately; this fixture targets transfer weights.
+        config.grid.x1_min = 1.0;
+        config.grid.x1_max = 2.0;
+        config.grid.x2_min = 0.4;
+        config.grid.x2_max = 0.8;
+        config.grid.x3_min = 0.1;
+        config.grid.x3_max = 0.5;
+    }
     config.grid.nblockx1 = 2;
     config.grid.nblockx2 = dimension >= 2 ? 2 : 0;
     config.grid.nblockx3 = dimension == 3 ? 2 : 0;
@@ -211,7 +229,7 @@ void run_dimension(int dimension)
     amr::AMRControl control(64, dimension);
     const LeafGrid leaves = mixed_corner_grid(dimension);
     control.tree->LoadLeafGrid(
-        config, 2, leaves.level, leaves.x, leaves.y, leaves.z);
+        config, 4, leaves.level, leaves.x, leaves.y, leaves.z);
     const auto& active = control.tree->GetActiveBlocks();
     require(active.size() == leaves.level.size(),
             "mixed-corner hierarchy leaf count drifted");
@@ -236,6 +254,8 @@ void run_dimension(int dimension)
     SpeciesManager species;
     species.add_species("light", 1.0, 1.0, 1.4, 1.0);
     species.add_species("heavy", 4.0, 2.0, 1.4, 1.0);
+    species.add_species("trace", 12.0, 6.0, 1.4, 1.0);
+    species.add_species("zero", 16.0, 8.0, 1.4, 1.0);
     IdealGas eos(1.4, species);
     std::vector<arch::cuda::CudaBlockBinding> bindings;
     bindings.reserve(active.size());
@@ -268,9 +288,19 @@ void run_dimension(int dimension)
         }
         const arch::state::CompletionToken completed{
             1, arch::state::CompletionState::Complete};
+        const auto before_exchange = backend->counters();
         require(backend->execute_coarse_fine_exchange(
                     accesses, plan, slot, {1}, completed) == completed,
                 "CUDA AMR exchange completion token drifted");
+        const auto after_exchange = backend->counters();
+        const auto compiled = amr::compile_coarse_fine_cell_plan(plan, species.count());
+        const auto metadata_bytes = accesses.size() * sizeof(arch::cuda::DeviceExchangeBlock)
+            + compiled.transfers.size() * sizeof(arch::cuda::DeviceCoarseFineTransfer);
+        require(after_exchange.bytes_h2d - before_exchange.bytes_h2d == metadata_bytes,
+                "CUDA coarse-fine metadata uploads are missing from transfer counters");
+        require(after_exchange.bytes_d2h - before_exchange.bytes_d2h == sizeof(int)
+                    && after_exchange.kernel_count - before_exchange.kernel_count == 2,
+                "CUDA coarse-fine exchange must download only its status and launch two kernels");
 
         const arch::state::SlotRotation expose_slot{
             slot,
@@ -325,9 +355,78 @@ void run_dimension(int dimension)
                 state_for(control.pool->GetBlock(active[index]), slot),
                 actual[index], dimension, slot, index);
         }
+
+        if (slot == arch::state::StateSlot::Current) {
+            // Exercise the public backend boundary, not only the kernel:
+            // device status download, quiesce, exception propagation, and
+            // whole-plan rejection must leave every destination unchanged.
+            auto rejection_snapshot = actual;
+            bool poisoned_coarse = false;
+            for (std::size_t index = 0; index < active.size(); ++index) {
+                auto& state = rejection_snapshot[index];
+                // Different block constants make a mistaken partial scatter
+                // observable even when earlier exchanges were idempotent.
+                std::fill(state.mom_u.begin(), state.mom_u.end(),
+                          -12345.0 - static_cast<double>(index));
+                if (!poisoned_coarse
+                    && control.pool->GetBlock(active[index]).level == 0) {
+                    std::fill(state.rho.begin(), state.rho.end(), 0.0);
+                    poisoned_coarse = true;
+                }
+                backend->enqueue_upload_slot(
+                    accesses[index], arch::state::StateRegion::Interior,
+                    transfer_view(state));
+                backend->enqueue_upload_slot(
+                    accesses[index], arch::state::StateRegion::Ghost,
+                    transfer_view(state));
+            }
+            require(poisoned_coarse, "invalid-density test has no coarse source");
+            bool rejected = false;
+            try {
+                static_cast<void>(backend->execute_coarse_fine_exchange(
+                    accesses, plan, slot, {1}, completed));
+            } catch (const std::runtime_error& error) {
+                rejected = std::string_view(error.what())
+                    == amr::prolongation_math::invalid_prolongation_density_message();
+            }
+            require(rejected,
+                    "CUDA backend did not propagate shared invalid-density error");
+
+            auto after_rejection = rejection_snapshot;
+            for (std::size_t index = 0; index < active.size(); ++index) {
+                backend->enqueue_materialize_host_current(
+                    accesses[index], arch::state::StateRegion::Interior,
+                    transfer_view(after_rejection[index]));
+                backend->enqueue_materialize_host_current(
+                    accesses[index], arch::state::StateRegion::Ghost,
+                    transfer_view(after_rejection[index]));
+            }
+            backend->quiesce();
+            for (std::size_t index = 0; index < active.size(); ++index) {
+                const auto& before = rejection_snapshot[index];
+                const auto& after = after_rejection[index];
+                require(before.rho == after.rho && before.mom_u == after.mom_u
+                            && before.mom_v == after.mom_v && before.mom_w == after.mom_w
+                            && before.eng == after.eng && before.enuc_rate == after.enuc_rate
+                            && before.mass_fractions == after.mass_fractions,
+                        "CUDA backend partially scattered a rejected AMR plan");
+                // Restore Current before exercising the other slot routes.
+                backend->enqueue_upload_slot(
+                    accesses[index], arch::state::StateRegion::Interior,
+                    transfer_view(actual[index]));
+                backend->enqueue_upload_slot(
+                    accesses[index], arch::state::StateRegion::Ghost,
+                    transfer_view(actual[index]));
+            }
+            // Upload views refer to local vectors; complete before destroying
+            // their storage or continuing into another slot's transaction.
+            backend->quiesce();
+            std::cout << "CUDA_AMR_REJECTION_PASS dimension=" << dimension << '\n';
+        }
     }
 
     std::cout << "CUDA_AMR_EXCHANGE_PASS dimension=" << dimension
+              << " geometry=" << geometry
               << " blocks=" << active.size()
               << " operations=" << plan.operations.size() << '\n';
 }
@@ -338,15 +437,18 @@ int main()
 {
     int device_count = 0;
     const cudaError_t probe = cudaGetDeviceCount(&device_count);
-    if (probe != cudaSuccess || device_count == 0) {
+    if (probe == cudaErrorNoDevice || probe == cudaErrorInsufficientDriver
+        || (probe == cudaSuccess && device_count == 0)) {
         std::cout << "SKIP: CUDA runtime device unavailable\n";
         static_cast<void>(cudaGetLastError());
         return 77;
     }
     try {
-        run_dimension(1);
-        run_dimension(2);
-        run_dimension(3);
+        if (probe != cudaSuccess)
+            throw std::runtime_error(cudaGetErrorString(probe));
+        for (const std::string geometry : {"cartesian", "cylindrical", "spherical"})
+            for (int dimension = 1; dimension <= 3; ++dimension)
+                run_dimension(dimension, geometry);
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';

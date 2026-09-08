@@ -96,3 +96,12 @@ rho0 = 1e6
 p0 = 1e23
 amp = 0.5
 width = 0.1
+# Pulse centre uses physical Cartesian coordinates; xc is set above.
+yc = 0.0
+zc = 0.0
+# Optional coupled perturbations use the same Gaussian envelope.
+# Pressure amplitude is fractional; u/v/w are native orthonormal velocities.
+pressure_amplitude = 0.0
+u_amplitude = 0.0
+v_amplitude = 0.0
+w_amplitude = 0.0

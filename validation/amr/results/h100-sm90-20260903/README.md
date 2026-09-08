@@ -1,8 +1,29 @@
-# H100 SM90 GPU-AMR qualification evidence
+# H100 SM90 GPU-AMR historical evidence
 
 This directory records the qualification run begun on 2026-09-03 and closed on
 2026-09-05. JSON files are the
 machine-readable authority; Markdown summarizes them without replacing them.
+
+## Audit correction: not final-artifact qualification
+
+The three archived AMR/restart JSON reports all record `binary_sha256` as
+`d42711fa4a19357713be49df77cd3ab714faf4ccfe89c5d9bb16efa09231490b`.
+The last linked executable in `final-artifacts.sha256` instead records
+`e903232e298ee9ea2cc958a404fe370a305463c8008ec5969b4adb9430f4f8e2`.
+Therefore the successful matrix/restart results below apply to their earlier
+recorded binary, **not** the final linked artifact, nor the later shared-math
+and Release-floating-point fixes. The historical build/test logs remain useful
+but do not close that gap. All raw JSON, hashes and logs are preserved unchanged.
+
+Current qualification requires fresh Debug and Release final artifacts, each
+with a complete matrix and both restart suites, using the required `--build-dir`
+and the same source/build identity and application/comparator hashes throughout.
+Run `tools/qualify_cuda_amr_evidence.py` after the runtime validators as described
+in [the current AMR qualification procedure](../../README.md#final-artifact-qualification).
+It rejects the mismatch above and also rejects historical reports with matching
+application hashes but incomplete provenance. Its checked-in regression is
+`python3 -B tests/test_validation_provenance.py` (run from the repository root).
+New focused tests do not mean the complete historical workload has been rerun.
 
 ## Environment
 

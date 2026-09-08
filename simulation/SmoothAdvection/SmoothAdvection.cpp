@@ -4,6 +4,7 @@
  */
 
 #include <cmath>
+#include "physics/constant/PhysicalConstants.h"
 #include <iostream>
 #include <stdexcept>
 
@@ -42,7 +43,7 @@ public:
         }
 
         const double cell_width = ProblemHelper::GetRootCellWidth(config, 1);
-        const double half_cell_phase = M_PI * mode_ * cell_width / length_;
+        const double half_cell_phase = arch::constants::math::pi * mode_ * cell_width / length_;
         cell_average_factor_ = std::sin(half_cell_phase) / half_cell_phase;
 
         std::cout << "[Problem] Smooth entropy wave: rho=" << rho_mean_
@@ -52,7 +53,7 @@ public:
 
     void Init(const PointCoords& point, PrimitiveData& state) const
     {
-        const double phase = 2.0 * M_PI * mode_ * (point.x - x_min_) / length_;
+        const double phase = 2.0 * arch::constants::math::pi * mode_ * (point.x - x_min_) / length_;
         state.rho = rho_mean_ + rho_amplitude_ * cell_average_factor_ * std::sin(phase);
         state.p = pressure_;
         state.u = velocity_;

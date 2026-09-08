@@ -1,0 +1,158 @@
+[0/2] Re-checking globbed directories...
+[1/5] Building CUDA object CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(62): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(62): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+ARCH_COMPILE_METRIC elapsed_seconds=20.94 peak_rss_kib=355072 exit_code=0 command=/usr/bin/ccache /usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-12 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_CUDSS_PROVIDER=1 -DARCH_HAS_KLU=1 -I/home/shiroakane/ARCH/src -I/home/shiroakane/ARCH/cases -I/home/shiroakane/ARCH/build/release-cold-core-20260907/generated -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/AMD/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/SuiteSparse_config -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/COLAMD/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/BTF/Include -isystem /usr/local/cuda/targets/x86_64-linux/include -O3 -DNDEBUG -std=c++20 --generate-code=arch=compute_86,code=[compute_86,sm_86] --expt-relaxed-constexpr -Xcompiler=-march=native --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o -MF CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o.d -x cu -c /home/shiroakane/ARCH/build/release-cold-core-20260907/generated/cuda_dense_burn/ideal_iso7.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o
+[2/5] Building CUDA object CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(62): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(62): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/iso7/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+ARCH_COMPILE_METRIC elapsed_seconds=21.29 peak_rss_kib=373760 exit_code=0 command=/usr/bin/ccache /usr/local/cuda/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-12 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_CUDSS_PROVIDER=1 -DARCH_HAS_KLU=1 -I/home/shiroakane/ARCH/src -I/home/shiroakane/ARCH/cases -I/home/shiroakane/ARCH/build/release-cold-core-20260907/generated -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/AMD/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/SuiteSparse_config -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/COLAMD/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/BTF/Include -isystem /usr/local/cuda/targets/x86_64-linux/include -O3 -DNDEBUG -std=c++20 --generate-code=arch=compute_86,code=[compute_86,sm_86] --expt-relaxed-constexpr -Xcompiler=-march=native --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o -MF CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o.d -x cu -c /home/shiroakane/ARCH/build/release-cold-core-20260907/generated/cuda_dense_burn/helm_iso7.cu -o CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o
+[3/5] Linking CXX static library libarch_cuda_backend.a
+[4/5] Completing arch_cuda_backend before the next heavy phase
+[5/5] Linking CXX executable bin/ARCH
+MEMORY_GUARD_RESULT min_available_kib=6491080 baseline_swap_kib=184424 peak_swap_kib=184424 guard_stopped=False peak_owned_rss_kib=1018000 elapsed_seconds=31.312 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.547 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=32 complete=True

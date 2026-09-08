@@ -484,8 +484,20 @@ void verify_real_diffusion_owner()
     result.download(&value, 1);
     status.download(&device_status, 1);
     if (device_status != 0) fail("real diffusion candidate status");
-    if (std::bit_cast<std::uint64_t>(value) != 0x3f21b661f8cde833ULL)
-        fail("real diffusion reduction raw authority");
+    // Verify the reduction itself against a serial host minimum of the actual
+    // device candidates. The old snapshot encoded the retired cell-only
+    // diffusion limit. Independent operator/convergence and cell parity tests
+    // own the physics, rather than blessing another observed bit pattern here.
+    std::vector<double> host_candidates(count);
+    candidates.download(host_candidates.data(), host_candidates.size());
+    double expected = DiffFlux::diffusion_dt_sentinel();
+    for (const double item : host_candidates) {
+        if (!std::isfinite(item) || item <= 0.0)
+            fail("real diffusion candidate is not finite and positive");
+        expected = std::min(expected, item);
+    }
+    if (std::bit_cast<std::uint64_t>(value) != std::bit_cast<std::uint64_t>(expected))
+        fail("real diffusion reduction differs from serial candidate minimum");
 
     const Grid finite_seed_grid = make_diffusion_grid(1.0);
     const FluidState finite_seed_state = make_diffusion_state(finite_seed_grid);
@@ -554,14 +566,11 @@ int main()
     int device_count = 0;
     require_cuda(cudaGetDeviceCount(&device_count), "cudaGetDeviceCount");
     if (device_count <= 0) {
-        fail("H100 device unavailable");
-    } else {
-        cudaDeviceProp properties{};
-        require_cuda(cudaGetDeviceProperties(&properties, 0),
-                     "cudaGetDeviceProperties");
-        if (properties.major != 9 || properties.minor != 0)
-            fail("device is not sm_90");
+        fail("CUDA device unavailable");
+        return 1;
     }
+    // The actual launches below validate the compiled image. These reductions
+    // need no device-model or exact compute-capability restriction.
     verify_device_edges();
     verify_real_hydro_owner();
     verify_real_diffusion_owner();

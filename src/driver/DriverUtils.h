@@ -24,6 +24,7 @@
 #include "../core/RuntimeParams.h"
 
 #include "../grid/Grid.h"
+#include "../grid/GridMetrics.h"
 
 #include <bit>
 #include <cstdint>
@@ -474,6 +475,17 @@ ARCH_INLINE double evaluate_cfl_cell_dt(
     return compute_cfl_cell_dt(U, sound_speed, dim, dx1, dx2, dx3);
 }
 
+template <typename EosType>
+ARCH_INLINE double evaluate_cfl_cell_dt(
+    const FluidVector& U, const double* composition, const EosType& eos,
+    const GridMetrics::GeometryView& grid, int i, int j)
+{
+    return evaluate_cfl_cell_dt(U, composition, eos, grid.dim,
+        GridMetrics::PhysicalSpacing(grid, 0, i, j),
+        grid.dim >= 2 ? GridMetrics::PhysicalSpacing(grid, 1, i, j) : grid.dx2,
+        grid.dim == 3 ? GridMetrics::PhysicalSpacing(grid, 2, i, j) : grid.dx3);
+}
+
 ARCH_INLINE bool cfl_value_is_nan(double value)
 {
 #if defined(__CUDA_ARCH__)
@@ -543,8 +555,7 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
                     for (int s = 0; s < n_species; ++s)
                         Xi_cache[s] = state.X(s, idx);
                     cell_dt = evaluate_cfl_cell_dt(
-                        U, Xi_cache.data(), eos, grid.dim,
-                        grid.dx1, grid.dx2, grid.dx3);
+                        U, Xi_cache.data(), eos, GridMetrics::make_geometry_view(grid), i, j);
                 }
                 amr::CellLogicalKey cell_key{};
                 cell_key.logical_i = i;

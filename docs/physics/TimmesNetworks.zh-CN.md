@@ -2,7 +2,8 @@
 
 英文原文：[TimmesNetworks.md](TimmesNetworks.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-> 状态：CPU/OpenMP 实现已完成原 Fortran 对照验证。本文面向后续使用者和维护者，说明网络来源、数值约定、误差、并行方式以及当前限制。
+四个内置网络在 CPU 与 CUDA 上共用反应、ODE 和 NSE 数学实现。当前验证包括独立
+时间积分、能量检查和耦合 NSE 主程序测试；原 Fortran 对照作为转写记录保留。
 
 ## 1. 来源与实现边界
 
@@ -15,9 +16,10 @@
 - 网络代码位于 `src/physics/network/`，由 C++ 直接编译；
 - 运行时依赖中不含 Fortran、Python 和 pynucastro；
 - Helmholtz EOS 仍需运行参数指定真实的 Helmholtz 表；
-- 物理验收以原 Fortran 在相同状态、相同 EOS 表下的输出为判据。
+- 网络转写兼容性通过相同状态、相同 EOS 表下的 C++ 与原 Fortran 输出进行检查。
 
-当前版本的物理验收依据是第 5 节列出的原 Fortran 数值对照。
+第 5 节保留最初的转写对照基准。当前时间积分与热力学验收见
+[燃烧验证](../../validation/burn/README.zh-CN.md)。
 
 ## 2. 网络及核素顺序
 
@@ -52,25 +54,35 @@ ODE 状态为
 U = [X_1, X_2, ..., X_N, T]^T
 ```
 
-自热温度方程与原 Timmes 实现保持一致：
+固定密度燃烧子步使用所选 EOS 的比内能 `e(rho,T,X)` 与 `cv`。
+记组分变化率为 `f_i=dX_i/dt`、净比加热率为 `enuc`，热力学第一定律给出：
 
 ```text
-dT/dt = enuc / cv
+f_T = dT/dt = (enuc - sum_i e_i * f_i) / cv
+e_i = (partial e / partial X_i)_(rho,T)
 ```
 
-其中 `cv` 由 Helmholtz EOS 解析计算。完整 Jacobian 使用原 Timmes 的支撑体系：
+组分变化在固定温度下也会改变 EOS 内能，因此必须计入温度方程。
+对任意状态变量 `U_j`，完整热方程 Jacobian 为：
 
 ```text
 J(i,j) = d(dX_i/dt) / dX_j
 J(i,T) = d(dX_i/dt) / dT
-J(T,j) = (d enuc / dX_j) / cv
-J(T,T) = (d enuc / dT) / cv
+J(T,j) = (partial_j enuc - sum_i e_i * J(i,j)
+          - sum_i (partial_j e_i) * f_i - f_T * partial_j cv) / cv
 ```
 
-Jacobian 采用以下约定：
+三种 ODE 与 CPU/CUDA 共用这套装配。Ideal、Helmholtz 和表格 EOS 提供解析
+热力学/组分导数；其他 duck-typed EOS 可使用同一数值求导适配器。
+反应率导数保留网络声明的筛选约定。生成式弱网络另携带有符号能量源积分，
+与接受步的组分变化共同决定交回流体模块的能量。
 
-- 温度列使用反应率的解析温度导数；
-- 温度行省略 `d(cv)/dX` 和 `d(cv)/dT` 的商法则项，与原 Timmes Jacobian 一致。
+每个被接受的子步都用网络的核反应能量权重计算组分增量对应的释能，再加上有符号
+的外部能量源增量，累计得到比内能变化 `delta_e`。流体模块向守恒能量加入
+`rho * delta_e`，输出 `ENUC = delta_e / dt`，燃烧时间步限制器也使用同一积分。
+计算直接使用求解器中的增量，在增量舍入到最终状态之前完成，因此较大的热能
+背景不会淹没微小释能。被拒绝的试算不贡献能量；最终 EOS 查询检查热力学状态，
+NSE 则提供被接受投影的能量。CPU 与 CUDA 共用这套核算。
 
 Backward Euler + Newton-Raphson 的线性系统为：
 
@@ -83,7 +95,7 @@ LHS * delta_U = U_old - U_k + dt * RHS(U_k)
 
 ## 5. 原 Fortran 数值验证
 
-验证使用真实 Helmholtz 表，在以下 6 个状态进行：
+历史转写对照使用当时的温度方程约定和真实 Helmholtz 表，在以下 6 个状态进行：
 
 ```text
 T   = 1e9, 2e9, 5e9 K
@@ -128,6 +140,7 @@ sum_i (Z_i/A_i) X_i = Ye
 - `aprox19`/`aprox21` 同时含有物理量子态相同的 `h1` 和 `prot` 记账条目。NSE 统计和中排除重复的 `h1`，平衡自由质子写入 `prot`，避免重复计算质子简并度。
 
 求解结果是当前网络核素集合上的“网络受限 NSE”。`iso7`/`aprox13` 缺少自由核子和中子丰核素，只支持 `Ye=0.5` 的受限解，在高温低密度下可能偏离完整 NSE。完整物理 NSE 需要覆盖充分的独立核素集合及守恒映射。
+CPU 与 CUDA 对四个内置网络使用同一求解器；生成网络包不支持在线 NSE。
 
 NSE 投影联立求解：
 
@@ -137,7 +150,16 @@ e_EOS(rho, T_new, X_NSE(T_new)) - e_old - enuc(X_old -> X_NSE) = 0
 
 快速路径使用 EOS `cv` 和后续割线斜率，失败时使用有界二分。组分守恒与相对能量闭包均达到 `1e-12` 后接受状态。投影失败时保留原状态并回到常规 ODE 路径。
 
-数值验证结果：
+迭代前，求解器会按同一精度标准检查输入是否已经满足 Saha 关系及质量、电荷约束。满足条件的状态保持不变，避免重复平衡投影因舍入误差产生数值热量。温度、密度或组分的变化一旦使平衡残差超标，仍会进入正常的非线性求解。
+
+当前 [NSE 主程序验证](../../validation/burn/results/nse-application-native-20260907/release-890/evidence.json)
+已通过覆盖四个内置网络的 16 个单区案例，共检查 32 个 CPU/CUDA 固定物理时间端点。
+每个网络分别通过 BE_NR、BD 和 ROS4 执行 NSE，并设置关闭 NSE 的 BE_NR 对照。
+测试核对后端一致性、状态正性、组分归一化，以及启用 NSE 后可明确分辨的组分变化。
+独立结合能收支检查交回流体模块的能量；相对能量闭合误差与绝对电荷漂移均满足
+`1e-12`。
+
+以下历史对照记录保留原实现及其数值约定：
 
 - 以 47 核素 `public_nse.f90` 严格残差副本为基准，在 `T=2.5e9--1e10 K`、`rho=1e6--1e9 g cm^-3`、`Ye=0.47--0.55` 的 8 个状态逐核素比较，最大质量分数绝对误差为 `4.897193761622e-13`；
 - 四网络在 `T=4.5e9、5e9、7e9、1e10 K` 与 `rho=1e6、1e7、1e9 g cm^-3` 的 48 个组合全部收敛，`sum(X)` 与 `Ye` 均通过 `1e-12` 检查；
@@ -175,11 +197,11 @@ HelmEos::evaluate
 
 [扩散系数对齐报告](DiffusionCoefficientAlignment.zh-CN.md)记录了 `aprox19`、10,000 个以上随机状态的十六进制浮点比较；测试范围内的最大绝对误差和最大相对误差均为 `0.0`。第 5 节的反应网络 ODE 验证覆盖独立的 RHS、Jacobian 和 LHS 路径。
 
-## 9. ODE 求解器 (BD 与 ROS4) CPU 验证状态
+## 9. 历史 CPU 求解器对照
 
-使用真实 Helmholtz 表、当前四个 Timmes 网络和 8 × 2 Cellular 单步进行了 ODE 分发回归。BD 在 `dt=1e-14 s` 下完成 iso7、aprox13、aprox19、aprox21 四种矩阵维度，所有输出有限，species count 分别为 7、13、19、21，最终 `max|sum(X)-1| <= 2.2204e-16`。aprox13 的 BD 与 BE_NR 对照中，能量相对差约 `3.51e-15`、压力相对差约 `7.34e-15`，C12/He4 等主组分绝对差不超过 `1.23e-15`。接近零的 trace species 同时报告绝对误差和相对误差。
+早期 ODE 分发回归使用真实 Helmholtz 表、四个 Timmes 网络和 8 × 2 Cellular 单步。BD 在 `dt=1e-14 s` 下完成 iso7、aprox13、aprox19、aprox21 四种矩阵维度，所有输出有限，species count 分别为 7、13、19、21，最终 `max|sum(X)-1| <= 2.2204e-16`。aprox13 的 BD 与 BE_NR 对照中，能量相对差约 `3.51e-15`、压力相对差约 `7.34e-15`，C12/He4 等主组分绝对差不超过 `1.23e-15`。接近零的 trace species 同时报告绝对误差和相对误差。
 
-BD 的最高阶提前退出条件使用 `k + 1 < MAX_K` 保护 `n_seq[k+1]`。`BE_NR`、`BD` 和 `ROS4` 均可通过 `ode_solver` 选择。ROS4 使用配套的四阶段 L-stable 系数，每个内部步只构造和分解一次 `I - gamma*dt*J`。在 Helmholtz/aprox13 单区回归中，ROS4 相对严格 BE_NR 参考的 species Linf 为 `3.281e-11`，总能量相对误差为 `1.517e-11`，通过当前 `1e-8` 标准。完整输入、Helmholtz 表身份与指标见 [燃烧验证记录](../../validation/burn/README.zh-CN.md)。新网络或生产状态仍需进行步长/容差收敛，并比较组分和能量轨迹。
+BD 的最高阶提前退出条件使用 `k + 1 < MAX_K` 保护 `n_seq[k+1]`。`BE_NR`、`BD` 和 `ROS4` 均可通过 `ode_solver` 选择。ROS4 使用配套的四阶段 L-stable 系数，每个内部步只构造和分解一次 `I - gamma*dt*J`。在 Helmholtz/aprox13 单区对照中，以内部收敛的 BE_NR 运行为参照，ROS4 的 species Linf 为 `3.281e-11`，总能量相对误差为 `1.517e-11`，通过该记录的 `1e-8` 标准。完整输入、Helmholtz 表身份与指标见 [燃烧验证记录](../../validation/burn/README.zh-CN.md)。第 12 节说明当前的独立时间积分验收。新网络或生产状态需要进行步长/容差收敛，并比较组分和能量轨迹。
 
 ## 10. 使用方法
 
@@ -197,10 +219,13 @@ eos_type = helmholtz
 eos_table_path = /absolute/path/to/helm_table.dat
 ```
 
-pynucastro 生成 package 的工作流见 [custom 网络本地契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。线性求解器 request 不区分大小写。`Auto` 对不超过 30 个核素具体化为 DenseLU；超过 30 时形成 SuiteSparse KLU 的 CPU candidate 和 cuDSS 的 CUDA candidate。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在 backend 构造前被拒绝。cuDSS provider 与 CUDA 生成网络/大型网络路径仍不可用，因此 CUDA 稀疏执行 fail closed。生成 package 设置 `SUPPORTS_NSE=false`，其生产验收范围包括求解容差与组分/能量轨迹。
-生成式网络的生成、dispatch 与稀疏求解兼容记录见 [validation/network](../../validation/network/README.zh-CN.md)；它属于接口 smoke test，不构成物理轨迹资格。
+pynucastro 生成网络包的工作流见 [custom 网络契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。线性求解器名称不区分大小写。`Auto` 对不超过 31 个 ODE 方程的系统选择 DenseLU，这一计数包含温度和辅助能量变量；更大的系统在 CPU 上使用 SuiteSparse KLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在后端构造前被拒绝。可选 cuDSS 0.8 通过 CMake/`CUDSS_ROOT` 发现，只有求解器与相应网络/EOS 路由实际链接时才开放；缺少依赖会明确报错。
 
-CMake 通过 `find_package(OpenMP REQUIRED)` 要求 OpenMP。运行时可用环境变量控制线程数，例如：
+生成器版本 4 为 manifest 声明 `device_callable_math=true` 的网络包注册 CUDA 路由。CPU 与 CUDA 使用同一数学头文件、常数与 Jacobian 结构。已支持的内嵌弱反应率表由各后端持有不可变存储，并通过显式视图传给共同数学库。版本 3 或尚未完成转换的网络包仅支持 CPU，可重新生成以采用当前接口。CUDA 稀疏计算使用共用的 BE_NR/ROS4/BD 状态机，由后端专用 CSR/cuDSS 执行器处理线性求解。
+
+生成网络仍设置 `SUPPORTS_NSE=false`。已支持的弱反应网络使用相同 ODE 阶段、误差控制和回滚机制积分带符号的能量源，并将其与核反应能量一起纳入共同的接受步能量核算。[网络验证](../../validation/network/README.zh-CN.md)分别记录生成数学库、求解器兼容、独立物理轨迹和完整程序验证。模型的科学可靠性取决于其核素集合、反应数据和适用范围。
+
+OpenMP 默认开启，可通过 `-DARCH_ENABLE_OPENMP=OFF` 关闭。使用 OpenMP 编译时，可用环境变量控制运行线程数，例如：
 
 ```bash
 OMP_NUM_THREADS=16 <build-dir>/bin/ARCH CellularDet case.par
@@ -213,6 +238,40 @@ OMP_NUM_THREADS=16 <build-dir>/bin/ARCH CellularDet case.par
 1. **输运计算顺序**：`HelmEos` 先填充 `eos_state_t`，`SpeciesManager` 再提供 $A_{ion}^{-1}$ 和 $Z_{ion}$，随后调用 `diffusion_math`。
 2. **弱反应与电子化学势**：`aprox19`/`aprox21` 中依赖 Helmholtz 电子化学势 `eta_e` 的弱反应入口当前为零；启用该路径需要经过验证的反应率实现和接口映射。
 3. **网络受限 NSE**：在线 Saha NSE 使用所选小网络。`iso7`/`aprox13` 仅支持 `Ye=0.5` 的受限解；完整 NSE 需要独立核素集合和守恒映射。
-4. **验证要求**：修改反应率、核素顺序、能量权重、EOS `cv` 或 ODE 投影逻辑后，重新运行四网络的 Fortran RHS/Jacobian/LHS 对照和十六进制浮点微观物理基准，最大相对误差阈值为 `< 1e-12`。
+4. **验证要求**：修改反应率、核素顺序或能量数据后，重新运行相应的原 Fortran 网络对照。EOS 或积分器修改需要独立热力学、时间收敛和能量闭合检查，再执行 CPU/CUDA 主程序验证。历史温度方程/LHS 对照与当前第一定律模型分开记录。
 
-最后更新：2026-08-20。
+## 12. 积分精度与验证
+
+第 4 节的共用第一定律方程使用解析反应与 EOS 模型验证，包含组分相关内能和比热。
+测试核对能量变化率、完整 Jacobian，以及 CPU/CUDA 上 ROS4 的四阶收敛。
+匹配的 [KPP ROS4 公式](https://kpp.readthedocs.io/en/stable/num_methods/rosenbrock-methods.html)
+使用这套 RHS 的 Jacobian。内置网络与查表 Urca 网络另以独立 DOP853/Radau
+轨迹核对时间积分。
+
+当前[内置网络独立复核](../../validation/burn/results/independent-time-final-20260907/release-888/evidence.json)
+已通过四个网络的 DOP853 与 Radau 对照，两种积分器各采用两档最大时间步，共得到
+16 条独立积分轨迹。复核只查询共同的反应/EOS RHS，不使用 ARCH 的 ODE 算法或
+Jacobian。另以 60 位和 80 位精度的 Helmholtz 计算核对端点内能，并通过独立积分
+检查第一定律收支。这些检查验证时间积分和热力学一致性；反应数据的验证仍以所引
+核数据和原网络对照为依据。
+
+历史上随积分方法而变化的端点快照保持不变，作为回归记录保留。当前积分精度使用
+独立积分参考验收，不把旧求解器的输出当作精确解。
+
+BE_NR 将局部时间误差估计与 Newton 收敛分开：线性/Newton 方程解到机器精度，
+并不代表时间积分准确。共用控制器在收紧容差后改善积分误差，解析容差细化对照
+对此进行检查。
+
+这些 ODE 修改没有更换反应率、EOS 表、NSE、接受态的组分能量定义或物理闭合预算。
+生成式网络的能量求和先扣除共同的守恒重子质量基准，数据仅来自上游输出质量，
+且检查每个反应的重子数守恒；它改变能量零点，不引入另一套核质量约定。
+[燃烧](../../validation/burn/README.zh-CN.md)和
+[网络](../../validation/network/README.zh-CN.md)验证记录分别列出这些科学检查、
+主程序验证、持续运行和 sanitizer 验收。
+
+项目自有 EOS 解析项、输运和 NSE 常数使用 CPU/CUDA 共用的一套 SI/CODATA 2022
+数值。Timmes 反应数据与 pynucastro 生成资产保留各自声明的数据约定。参考计算
+应采用对应的常数和数据；旧十六进制快照保留其历史背景。
+详见[唯一常数定义](../../src/physics/constant/README.md)。
+
+最后更新：2026-09-07。

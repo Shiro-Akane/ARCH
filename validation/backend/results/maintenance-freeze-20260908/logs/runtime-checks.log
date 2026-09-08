@@ -1,0 +1,3 @@
+{"status": "PASS", "regression_passed": 98, "smoke_lanes_passed": 10, "report": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/runtime-review.json"}
+MEMORY_GUARD_RESULT min_available_kib=6672996 baseline_swap_kib=229376 peak_swap_kib=229376 guard_stopped=False peak_owned_rss_kib=526184 elapsed_seconds=296.099 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=1.328 peak_swap_in_mib_s=0.004 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=296 complete=True

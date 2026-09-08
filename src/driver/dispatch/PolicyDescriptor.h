@@ -5,6 +5,7 @@
 
 #include <array>
 #include <cstddef>
+#include <limits>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -152,6 +153,17 @@ ARCH_DECLARE_NSE_NETWORK_METADATA(Iso7Policy);
 ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_DECLARE_CUSTOM_NETWORK_METADATA)
 #undef ARCH_DECLARE_CUSTOM_NETWORK_METADATA
 
+// Plain generated metadata only: dispatch must not include reaction bodies.
+template <class PolicyTag>
+struct NetworkAuxiliaryState : std::integral_constant<std::size_t, 0> {};
+#ifdef ARCH_FOR_EACH_CUSTOM_NETWORK_LAYOUT
+#define ARCH_DECLARE_NETWORK_LAYOUT(TAG, SPECIES, AUXILIARY) \
+    template <> struct NetworkAuxiliaryState<TAG##Policy> \
+        : std::integral_constant<std::size_t, AUXILIARY> {};
+ARCH_FOR_EACH_CUSTOM_NETWORK_LAYOUT(ARCH_DECLARE_NETWORK_LAYOUT)
+#undef ARCH_DECLARE_NETWORK_LAYOUT
+#endif
+
 struct StaticRequirements
 {
     int ghost_depth;
@@ -172,7 +184,7 @@ struct PolicyRegistration;
         static constexpr bool is_default = DEFAULT_VALUE; \
         using CpuBinding = CPU_BINDING; \
         using CudaBinding = CUDA_BINDING; \
-        static constexpr StaticRequirements requirements{GHOST, LAYOUT, 8, 6}; \
+        static constexpr StaticRequirements requirements{GHOST, LAYOUT, 0, 0}; \
     }
 
 ARCH_REGISTER_POLICY(VlPolicy, FluxId, FluxId::Vl, false, CpuVlBinding, CudaVlBinding,
@@ -234,7 +246,7 @@ template <> struct PolicyRegistration<Tabular3DPolicy> {
     using CpuBinding = CpuTabular3DBinding;
     using CudaBinding = CudaTabular3DBinding;
     static constexpr StaticRequirements requirements{
-        0, StateLayoutRequirement::HydroConserved, 8, 6};
+        0, StateLayoutRequirement::HydroConserved, 0, 0};
 };
 template <> struct PolicyRegistration<Tabular4DPolicy> {
     using IdType = EosId;
@@ -245,7 +257,7 @@ template <> struct PolicyRegistration<Tabular4DPolicy> {
     using CpuBinding = CpuTabular4DBinding;
     using CudaBinding = CudaTabular4DBinding;
     static constexpr StaticRequirements requirements{
-        0, StateLayoutRequirement::HydroConserved, 8, 6};
+        0, StateLayoutRequirement::HydroConserved, 0, 0};
 };
 
 ARCH_REGISTER_POLICY(NoNetworkPolicy, NetworkId, NetworkId::None, true,
@@ -368,6 +380,7 @@ struct PolicyDescriptor
     bool cpu_supported;
     bool cuda_supported;
     bool supports_nse;
+    std::size_t auxiliary_equations;
     StaticRequirements requirements;
 };
 
@@ -380,6 +393,7 @@ consteval auto describe_policy()
         !std::is_same_v<typename Data::CpuBinding, AbsentBinding>,
         !std::is_same_v<typename Data::CudaBinding, AbsentBinding>,
         NetworkPolicyMetadata<Registration>::supports_nse,
+        NetworkAuxiliaryState<Registration>::value,
         Data::requirements};
 }
 
@@ -527,6 +541,15 @@ constexpr bool network_supports_nse(NetworkId id) noexcept
     for (const auto& descriptor : descriptors)
         if (descriptor.id == id) return descriptor.supports_nse;
     return false;
+}
+
+constexpr std::size_t network_ode_equations(NetworkId id, std::size_t species) noexcept
+{
+    constexpr auto descriptors = make_policy_descriptors<NetworkPolicies>();
+    for (const auto& descriptor : descriptors)
+        if (descriptor.id == id)
+            return BurnLimits::equation_count(species, descriptor.auxiliary_equations);
+    return std::numeric_limits<std::size_t>::max();
 }
 
 template <class List>
@@ -697,7 +720,8 @@ inline ParseResult<ResolvedExecutionPlan> materialize_execution_plan(
         result.value.linear_solver = LinearSolverId::None;
         break;
     case LinearSolverRequest::Auto:
-        result.value.linear_solver = species_count <= BurnLimits::MAX_SPECIES
+        result.value.linear_solver = BurnLimits::uses_compact_matrix(
+                network_ode_equations(request.network, species_count))
             ? LinearSolverId::DenseLu
             : (backend == ComputeBackend::Cpu
                    ? LinearSolverId::SparseKlu

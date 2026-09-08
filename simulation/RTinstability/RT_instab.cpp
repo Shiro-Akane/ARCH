@@ -12,6 +12,7 @@
  */
 
 #include <cmath>
+#include "physics/constant/PhysicalConstants.h"
 #include <iostream>
 #include <vector>
 
@@ -85,11 +86,11 @@ public:
         // A cosine mode seeds the instability. The exponential envelope confines
         // the perturbation to the material interface; 15 sets its inverse width.
         double decay = std::exp(-15.0 * std::abs(p.y - g_y_int));
-        double pert_x = std::cos(2.0 * M_PI * p.x / g_Lx);
+        double pert_x = std::cos(2.0 * arch::constants::math::pi * p.x / g_Lx);
 
         if (g_is_3d)
         {
-            double pert_z = std::cos(2.0 * M_PI * p.z / g_Lz);
+            double pert_z = std::cos(2.0 * arch::constants::math::pi * p.z / g_Lz);
             out.v = g_amp * pert_x * pert_z * decay;
         }
         else // If 2D planar

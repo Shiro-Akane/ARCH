@@ -1,0 +1,674 @@
+{
+  "schema": 1,
+  "scope": "WSL restart generated-package reconstruction",
+  "prior_evidence": {
+    "path": "/home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/diagnostic-829/evidence.json",
+    "sha256": "4b031491e55ccceb488015caea2a94222aa40a5e9fb76db5b80559191d10e388"
+  },
+  "records": [
+    {
+      "package": "audit31",
+      "files": [
+        {
+          "name": "NetCustom_audit31.cpp",
+          "prior_sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.cpp",
+            "sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.cpp",
+            "sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "NetCustom_audit31.h",
+          "prior_sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.h",
+            "sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.h",
+            "sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "NetCustom_audit31.math.h",
+          "prior_sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.math.h",
+            "sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.math.h",
+            "sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/GNUmakefile",
+          "prior_sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/GNUmakefile",
+            "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/GNUmakefile",
+            "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/actual_network.H",
+          "prior_sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/actual_network.H",
+            "sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_network.H",
+            "sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/actual_rhs.H",
+          "prior_sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/actual_rhs.H",
+            "sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_rhs.H",
+            "sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/amrex_bridge.H",
+          "prior_sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/amrex_bridge.H",
+            "sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/amrex_bridge.H",
+            "sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/approximate_rates.H",
+          "prior_sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/approximate_rates.H",
+            "sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/approximate_rates.H",
+            "sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/burn_type.H",
+          "prior_sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/burn_type.H",
+            "sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/burn_type.H",
+            "sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/derived_rates.H",
+          "prior_sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/derived_rates.H",
+            "sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/derived_rates.H",
+            "sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/fundamental_constants.H",
+          "prior_sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/fundamental_constants.H",
+            "sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/fundamental_constants.H",
+            "sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/interp_tools.H",
+          "prior_sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/interp_tools.H",
+            "sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/interp_tools.H",
+            "sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/main.cpp",
+          "prior_sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/main.cpp",
+            "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/main.cpp",
+            "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/modified_rates.H",
+          "prior_sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/modified_rates.H",
+            "sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/modified_rates.H",
+            "sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/network_properties.H",
+          "prior_sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/network_properties.H",
+            "sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/network_properties.H",
+            "sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/partition_functions.H",
+          "prior_sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/partition_functions.H",
+            "sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/partition_functions.H",
+            "sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/pynucastro-info.txt",
+          "prior_sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/pynucastro-info.txt",
+            "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/pynucastro-info.txt",
+            "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/rate_type.H",
+          "prior_sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/rate_type.H",
+            "sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/rate_type.H",
+            "sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/reaclib_rates.H",
+          "prior_sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/reaclib_rates.H",
+            "sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/reaclib_rates.H",
+            "sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/screen.H",
+          "prior_sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/screen.H",
+            "sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen.H",
+            "sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/screen_data.H",
+          "prior_sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/screen_data.H",
+            "sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen_data.H",
+            "sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/table_rates.H",
+          "prior_sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/table_rates.H",
+            "sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/table_rates.H",
+            "sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/tfactors.H",
+          "prior_sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/tfactors.H",
+            "sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/tfactors.H",
+            "sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "manifest.json",
+          "prior_sha256": "fb1eeaf774a6640462e25a0bce790b45b9efe2235fb054ec9f508ad896245c9f",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/manifest.json",
+            "sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/manifest.json",
+            "sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7"
+          },
+          "same_bytes_as_prior": false
+        },
+        {
+          "name": "network.cmake",
+          "prior_sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/network.cmake",
+            "sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/network.cmake",
+            "sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4"
+          },
+          "same_bytes_as_prior": true
+        }
+      ],
+      "mathematical_and_data_files_identical_to_prior": true
+    },
+    {
+      "package": "weak_urca",
+      "files": [
+        {
+          "name": "NetCustom_weak_urca.cpp",
+          "prior_sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.cpp",
+            "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.cpp",
+            "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "NetCustom_weak_urca.h",
+          "prior_sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.h",
+            "sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.h",
+            "sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "NetCustom_weak_urca.math.h",
+          "prior_sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.math.h",
+            "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.math.h",
+            "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/GNUmakefile",
+          "prior_sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/GNUmakefile",
+            "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/GNUmakefile",
+            "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/actual_network.H",
+          "prior_sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/actual_network.H",
+            "sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_network.H",
+            "sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/actual_rhs.H",
+          "prior_sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/actual_rhs.H",
+            "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_rhs.H",
+            "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/amrex_bridge.H",
+          "prior_sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/amrex_bridge.H",
+            "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/amrex_bridge.H",
+            "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/approximate_rates.H",
+          "prior_sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/approximate_rates.H",
+            "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/approximate_rates.H",
+            "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/burn_type.H",
+          "prior_sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/burn_type.H",
+            "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/burn_type.H",
+            "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/derived_rates.H",
+          "prior_sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/derived_rates.H",
+            "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/derived_rates.H",
+            "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/fundamental_constants.H",
+          "prior_sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/fundamental_constants.H",
+            "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/fundamental_constants.H",
+            "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/interp_tools.H",
+          "prior_sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/interp_tools.H",
+            "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/interp_tools.H",
+            "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/main.cpp",
+          "prior_sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/main.cpp",
+            "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/main.cpp",
+            "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/modified_rates.H",
+          "prior_sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/modified_rates.H",
+            "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/modified_rates.H",
+            "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/network_properties.H",
+          "prior_sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/network_properties.H",
+            "sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/network_properties.H",
+            "sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/partition_functions.H",
+          "prior_sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/partition_functions.H",
+            "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/partition_functions.H",
+            "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/pynucastro-info.txt",
+          "prior_sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/pynucastro-info.txt",
+            "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/pynucastro-info.txt",
+            "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/rate_type.H",
+          "prior_sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/rate_type.H",
+            "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/rate_type.H",
+            "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/reaclib_rates.H",
+          "prior_sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/reaclib_rates.H",
+            "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/reaclib_rates.H",
+            "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/screen.H",
+          "prior_sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/screen.H",
+            "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen.H",
+            "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/screen_data.H",
+          "prior_sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/screen_data.H",
+            "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen_data.H",
+            "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/table_rates.H",
+          "prior_sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/table_rates.H",
+            "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/table_rates.H",
+            "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "generated/tfactors.H",
+          "prior_sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/tfactors.H",
+            "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/tfactors.H",
+            "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "manifest.json",
+          "prior_sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/manifest.json",
+            "sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/manifest.json",
+            "sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4"
+          },
+          "same_bytes_as_prior": true
+        },
+        {
+          "name": "network.cmake",
+          "prior_sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e",
+          "durable": {
+            "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/network.cmake",
+            "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+          },
+          "installed": {
+            "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/network.cmake",
+            "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+          },
+          "same_bytes_as_prior": true
+        }
+      ],
+      "mathematical_and_data_files_identical_to_prior": true
+    }
+  ],
+  "note": "Both packages were regenerated from retained recipes with the current generator. All emitted math, adapters and data match the prior record byte for byte. Only audit31 manifest generator_sha256 changed; retain its truthful new generator identity. Durable copies live inside the ignored build tree; the configured external root is restored separately. Prior evidence is not relabeled as final acceptance.",
+  "release_qualified": false
+}

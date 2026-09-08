@@ -1,2 +1,6 @@
 *.h5 filter=lfs diff=lfs merge=lfs -text
 *.dat filter=lfs diff=lfs merge=lfs -text
+
+# Runtime text logs are immutable evidence, not scientific table assets.
+# Keep their exact bytes in ordinary Git; retain LFS for the EOS tables above.
+/validation/**/results/**/*_log.dat -filter diff merge -text

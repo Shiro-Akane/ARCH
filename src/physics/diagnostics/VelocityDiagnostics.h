@@ -34,8 +34,9 @@ struct Values {
  * Logical-grid indices are materialized once because this routine is called in the
  * AMR and PLT inner loops; the component derivatives then reuse the same stencil.
  */
-inline Values evaluate(const Grid& grid, const std::vector<double>& vel_x,
-                       const std::vector<double>& vel_y, const std::vector<double>& vel_z,
+template<class GridView, class Component>
+ARCH_INLINE Values evaluate(const GridView& grid, const Component& vel_x,
+                       const Component& vel_y, const Component& vel_z,
                        int i, int j, int k)
 {
     const int center = grid.GetIndex(i, j, k);
@@ -46,20 +47,20 @@ inline Values evaluate(const Grid& grid, const std::vector<double>& vel_x,
     const int z_minus = grid.dim == 3 ? grid.GetIndex(i, j, k - 1) : center;
     const int z_plus = grid.dim == 3 ? grid.GetIndex(i, j, k + 1) : center;
 
-    const auto centered_difference = [](const std::vector<double>& component,
+    const auto centered_difference = [](const Component& component,
                                         int low, int high, double spacing) {
         return (component[high] - component[low]) / (2.0 * spacing);
     };
-    const auto ddx = [&](const std::vector<double>& component) {
+    const auto ddx = [&](const Component& component) {
         return centered_difference(component, x_minus, x_plus, grid.dx1);
     };
-    const auto ddy = [&](const std::vector<double>& component) {
+    const auto ddy = [&](const Component& component) {
         return grid.dim >= 2 ? centered_difference(component, y_minus, y_plus, grid.dx2) : 0.0;
     };
-    const auto ddz = [&](const std::vector<double>& component) {
+    const auto ddz = [&](const Component& component) {
         return grid.dim == 3 ? centered_difference(component, z_minus, z_plus, grid.dx3) : 0.0;
     };
-    const auto face_velocity = [&](const std::vector<double>& component, int neighbour) {
+    const auto face_velocity = [&](const Component& component, int neighbour) {
         return 0.5 * (component[center] + component[neighbour]);
     };
 
@@ -69,7 +70,7 @@ inline Values evaluate(const Grid& grid, const std::vector<double>& vel_x,
     Values result;
     const double volume = GridMetrics::CellVolume(grid, i, j, k);
     double face_flux = 0.0;
-    const auto add_face_flux = [&](int direction, const std::vector<double>& component,
+    const auto add_face_flux = [&](int direction, const Component& component,
                                    int low, int high) {
         face_flux += GridMetrics::FaceArea(grid, direction, i, j, k, true) *
                          face_velocity(component, high) -
@@ -81,7 +82,7 @@ inline Values evaluate(const Grid& grid, const std::vector<double>& vel_x,
     if (grid.dim == 3) add_face_flux(2, vel_z, z_minus, z_plus);
     result.divergence = volume > 0.0 ? face_flux / volume : 0.0;
 
-    if (grid.geometry == "cartesian") {
+    if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cartesian) {
         const double omega_x = ddy(vel_z) - ddz(vel_y);
         const double omega_y = ddz(vel_x) - ddx(vel_z);
         const double omega_z = ddx(vel_y) - ddy(vel_x);
@@ -98,7 +99,7 @@ inline Values evaluate(const Grid& grid, const std::vector<double>& vel_x,
         return result;
     }
 
-    if (grid.geometry == "cylindrical") {
+    if (GridMetrics::geometry_kind(grid) == GridMetrics::Geometry::Cylindrical) {
         // Logical axes are (r, z, phi), with stored components (v_r, v_z, v_phi).
         const double omega_r = ddz(vel_y) / radius - ddy(vel_z);
         const double omega_phi = ddy(vel_x) - ddx(vel_y);

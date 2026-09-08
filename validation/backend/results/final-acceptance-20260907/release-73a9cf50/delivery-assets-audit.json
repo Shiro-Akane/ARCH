@@ -1,0 +1,2888 @@
+{
+  "schema": 1,
+  "scope": "read-only-delivery-assets-observations",
+  "reviewed_utc": "2026-09-07T18:49:05.403977+00:00",
+  "finished_utc": "2026-09-07T18:55:01+00:00",
+  "release_qualified": false,
+  "manual_gate_declaration": false,
+  "source": {
+    "commit": "2226456c1f87415a317dd6a2a96053a7e154b949",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171",
+    "dirty": true,
+    "modified_files": [
+      "CMakeLists.txt",
+      "simulation/Cellular/Cellular.cpp",
+      "simulation/DiffusionMode/DiffusionMode.cpp",
+      "simulation/GaussianPulse/Gaussian.cpp",
+      "simulation/GaussianPulse/Gaussian.par",
+      "simulation/RTinstability/RT_instab.cpp",
+      "simulation/Sedov/Sedov.cpp",
+      "simulation/SmoothAdvection/SmoothAdvection.cpp",
+      "src/amr/AmrTree.h",
+      "src/amr/Block.h",
+      "src/amr/GhostExchange.h",
+      "src/amr/LimitedLinearProlongation.h",
+      "src/core/ArchPortability.h",
+      "src/core/CompensatedSum.h",
+      "src/core/ProblemHelper.cpp",
+      "src/core/ProblemHelper.h",
+      "src/core/RuntimeParams.h",
+      "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+      "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+      "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+      "src/cuda/common/CudaCommon.cuh",
+      "src/cuda/common/CudaLaunchConfig.h",
+      "src/cuda/common/DiffusionConfigViewAdapter.h",
+      "src/cuda/diffusion/DiffusionKernels.cuh",
+      "src/cuda/hydro/HydroFaceKernel.cuh",
+      "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+      "src/cuda/hydro/HydroStateKernels.cuh",
+      "src/cuda/microphysics/common.h",
+      "src/cuda/microphysics/helm_eos_device_owner.cpp",
+      "src/cuda/microphysics/helm_eos_device_owner.h",
+      "src/cuda/microphysics/microphysics_api.h",
+      "src/cuda/runtime/CudaBackend.h",
+      "src/cuda/runtime/CudaBackendAmrFlux.h",
+      "src/cuda/runtime/CudaBackendBurn.h",
+      "src/cuda/runtime/CudaBackendBurnAllNetworksImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnHelm.cu",
+      "src/cuda/runtime/CudaBackendBurnIdeal.cu",
+      "src/cuda/runtime/CudaBackendBurnImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnNetworkRouteImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnNetworkRoutes.h",
+      "src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu",
+      "src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu",
+      "src/cuda/runtime/CudaBackendDiffusion.cu",
+      "src/cuda/runtime/CudaBackendDiffusion.h",
+      "src/cuda/runtime/CudaBackendExchange.cu",
+      "src/cuda/runtime/CudaBackendExchange.h",
+      "src/cuda/runtime/CudaBackendFactory.cpp",
+      "src/cuda/runtime/CudaBackendHydro.h",
+      "src/cuda/runtime/CudaBackendHydroControl.cpp",
+      "src/cuda/runtime/CudaBackendHydroHelm.cu",
+      "src/cuda/runtime/CudaBackendHydroIdeal.cu",
+      "src/cuda/runtime/CudaBackendHydroInstantiation.cuh",
+      "src/cuda/runtime/CudaBackendHydroTabular3.cu",
+      "src/cuda/runtime/CudaBackendHydroTabular4.cu",
+      "src/cuda/runtime/CudaBackendInternal.h",
+      "src/cuda/runtime/CudaBackendMicrophysicsControl.cpp",
+      "src/cuda/runtime/CudaBackendResources.cpp",
+      "src/cuda/runtime/CudaBackendStore.cpp",
+      "src/cuda/runtime/CudaBurnNetworkTypes.h",
+      "src/data/GlobalDefs.h",
+      "src/driver/ComputeBackend.h",
+      "src/driver/Driver.h",
+      "src/driver/DriverBurn.h",
+      "src/driver/DriverUtils.h",
+      "src/driver/StateResidency.h",
+      "src/driver/dispatch/BackendCapabilities.h",
+      "src/driver/dispatch/PolicyDescriptor.h",
+      "src/driver/dispatch/RuntimeProbe.cpp",
+      "src/driver/dispatch/RuntimeProbe.h",
+      "src/grid/Grid.h",
+      "src/grid/GridMetrics.h",
+      "src/io/chk/ChkIO.cpp",
+      "src/io/hdf5/HDF5Writer.cpp",
+      "src/io/hdf5/HDF5Writer.h",
+      "src/numerics/burnsolver/BurnDispatch.h",
+      "src/numerics/burnsolver/BurnerHandle.h",
+      "src/numerics/burnsolver/odeFunction.h",
+      "src/numerics/burnsolver/ode_bd.h",
+      "src/numerics/burnsolver/ode_be-nr.h",
+      "src/numerics/burnsolver/ode_ros4.h",
+      "src/numerics/diffusion/DiffFlux.h",
+      "src/numerics/flux/FluxFunctions.h",
+      "src/numerics/flux/FluxHLL.h",
+      "src/numerics/flux/FluxHLLC.h",
+      "src/numerics/flux/FluxRoe.h",
+      "src/numerics/integrator/TimeIntegratorHelper.h",
+      "src/numerics/linalg/DenseWrap.h",
+      "src/physics/diagnostics/VelocityDiagnostics.h",
+      "src/physics/diffusionCoe/diffusion_math.hpp",
+      "src/physics/eos/HelmEos.h",
+      "src/physics/eos/IdealGas.h",
+      "src/physics/eos/Tabular3DEOS.h",
+      "src/physics/eos/Tabular4DEOS.h",
+      "src/physics/eos/TabularFreeEnergy.h",
+      "src/physics/eos/eos.h",
+      "src/physics/eos/eos_Utils.h",
+      "src/physics/gravity/ExternalGravity.h",
+      "src/physics/network/timmes_common/TimmesNetworkSupport.h",
+      "src/physics/nse/nse_solver.h",
+      "tests/cuda/test_boundary_plan_parity.cu",
+      "tests/cuda/test_burn_policy_parity.cu",
+      "tests/cuda/test_cuda_amr_exchange.cpp",
+      "tests/cuda/test_cuda_compile_probe.cu",
+      "tests/cuda/test_cuda_hydro_block.cu",
+      "tests/cuda/test_cuda_multiblock_hydro.cu",
+      "tests/cuda/test_cuda_policy_resolution.cu",
+      "tests/cuda/test_cuda_reduction_contract.cu",
+      "tests/cuda/test_cuda_single_level_validation.cpp",
+      "tests/cuda/test_diffusion_rkl_parity.cu",
+      "tests/cuda/test_eos_host_device_parity.cu",
+      "tests/cuda/test_hydro_leaf_parity.cu",
+      "tests/cuda/test_network_nse_device.cu",
+      "tests/test_amr_operation_plans.cpp",
+      "tests/test_checkpoint_compatibility.cpp",
+      "tests/test_reduction_contract.cpp",
+      "tests/test_resolved_execution_plan.cpp",
+      "tests/test_runtime_probe_and_capabilities.cpp",
+      "tests/test_shared_stage_scheduler.cpp",
+      "tests/test_state_residency.cpp",
+      "tests/test_topology_transaction.cpp",
+      "tests/test_validate_backend_results.py",
+      "tests/tooling/test_audit_combination_v2.py",
+      "tools/audit_combination_v2.py",
+      "tools/network/GenerateNetwork.py",
+      "tools/summarize_cuda_compile_memory.py",
+      "tools/validate_backend_results.py",
+      "tools/validate_cuda_amr_restart.py",
+      "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "validation/backend/cases.json"
+    ],
+    "untracked_source_files": [
+      "cmake/CudaBurnDenseRoutes.cmake",
+      "cmake/CudaBurnNetworks.cmake",
+      "cmake/CudaBurnSparseRoutes.cmake",
+      "cmake/CudaCodeImages.cmake",
+      "cmake/CudaCustomDenseRoute.cu.in",
+      "cmake/FindCuDSS.cmake",
+      "cmake/templates/CudaBurnDenseRoute.cu.in",
+      "cmake/templates/CudaBurnSparseOwner.cu.in",
+      "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+      "simulation/CooperativeHotspots/CooperativeHotspots.par",
+      "src/amr/RefinementIndicatorMath.h",
+      "src/amr/RegridExecutionPlan.h",
+      "src/amr/RegridTransferMath.h",
+      "src/cuda/amr/RefinementIndicators.cu",
+      "src/cuda/amr/RefinementIndicators.h",
+      "src/cuda/amr/RegridMigration.cu",
+      "src/cuda/amr/RegridMigration.h",
+      "src/cuda/common/DeviceAllocation.h",
+      "src/cuda/common/DeviceEosStatus.h",
+      "src/cuda/common/GridMetricsCache.cu",
+      "src/cuda/common/GridMetricsCache.h",
+      "src/cuda/hydro/CheckedHydroEos.cuh",
+      "src/cuda/hydro/GridGeometryAdapter.cuh",
+      "src/cuda/hydro/HydroSourceKernels.cuh",
+      "src/cuda/microphysics/CuDssSparseSolver.cpp",
+      "src/cuda/microphysics/CuDssSparseSolver.h",
+      "src/cuda/microphysics/SparseBeNrBatch.cuh",
+      "src/cuda/microphysics/SparseBurnCells.cuh",
+      "src/cuda/microphysics/SparseEquilibration.cu",
+      "src/cuda/microphysics/SparseEquilibration.h",
+      "src/cuda/microphysics/SparseOdeBatch.cuh",
+      "src/cuda/microphysics/device_network_owner.h",
+      "src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+      "src/cuda/runtime/CudaBackendBurnReduction.cuh",
+      "src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+      "src/cuda/runtime/CudaBackendBurnSparse.h",
+      "src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+      "src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+      "src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+      "src/cuda/runtime/CudaBackendIndicators.cpp",
+      "src/cuda/runtime/CudaBackendMigration.cpp",
+      "src/cuda/runtime/CudaBurnOdeTypes.h",
+      "src/driver/DriverBurnPolicy.h",
+      "src/grid/GridGeometryView.h",
+      "src/numerics/burnsolver/BurnThermodynamics.h",
+      "src/numerics/burnsolver/NetworkDerivative.h",
+      "src/numerics/burnsolver/OdeContinuation.h",
+      "src/numerics/diffusion/DiffusionTypes.h",
+      "src/numerics/integrator/GeometricSources.h",
+      "src/numerics/linalg/CsrMatrixView.h",
+      "src/numerics/linalg/CsrPattern.h",
+      "src/numerics/linalg/LinearEquilibration.h",
+      "src/physics/constant/PhysicalConstants.h",
+      "src/physics/gravity/ExternalGravitySource.h",
+      "src/physics/network/WeakTableView.h",
+      "tests/amr_composition_test_cases.h",
+      "tests/checkpoint_conservation_metrics.h",
+      "tests/cuda/GeneratedSparseBurnFactory.h",
+      "tests/cuda/test_burn_controller_parity.cu",
+      "tests/cuda/test_burn_eos_failure.cu",
+      "tests/cuda/test_burn_thermal_math.cu",
+      "tests/cuda/test_compensated_sum.cu",
+      "tests/cuda/test_cuda_amr_composition.cu",
+      "tests/cuda/test_cuda_regrid_migration.cu",
+      "tests/cuda/test_cuda_regrid_transaction.cpp",
+      "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+      "tests/cuda/test_cudss_sparse_solver.cpp",
+      "tests/cuda/test_curvilinear_geometry_smoke.cu",
+      "tests/cuda/test_generated_network_math.cu",
+      "tests/cuda/test_generated_sparse_burn.cpp",
+      "tests/cuda/test_generated_sparse_burn_factory.cu",
+      "tests/cuda/test_generated_weak_factory.cu",
+      "tests/cuda/test_generated_weak_trajectory.cu",
+      "tests/cuda/test_grid_metrics_cache.cu",
+      "tests/cuda/test_hydro_dispatch.cu",
+      "tests/cuda/test_hydro_eos_failure.cu",
+      "tests/cuda/test_network_derivative.cu",
+      "tests/cuda/test_refinement_indicators.cpp",
+      "tests/cuda/test_sparse_be_nr_batch.cu",
+      "tests/fixtures/BurnMainlineReference.h",
+      "tests/fixtures/BurnTimeReference.h",
+      "tests/fixtures/HelmReference.h",
+      "tests/fixtures/NseReference.h",
+      "tests/fixtures/RoeFluxReference.h",
+      "tests/fixtures/SparseTransferNetwork.h",
+      "tests/math/BurnThermalCases.h",
+      "tests/math/CompensatedSumCases.h",
+      "tests/math/CurvilinearMetricCases.h",
+      "tests/math/DenseLuCases.h",
+      "tests/math/NetworkDerivativeCases.h",
+      "tests/math/RoeThermodynamicCases.h",
+      "tests/math/ViscousGeometryCases.h",
+      "tests/regrid_migration_fixture.h",
+      "tests/smoke/cuda_amr_cases.json",
+      "tests/test_burn_mainline_reference.cpp",
+      "tests/test_checkpoint_conservation_metrics.cpp",
+      "tests/test_compensated_sum.cpp",
+      "tests/test_curvilinear_manifest.py",
+      "tests/test_curvilinear_metrics.cpp",
+      "tests/test_generated_network_reference.cpp",
+      "tests/test_physical_constants.cpp",
+      "tests/test_portable_network_generator.py",
+      "tests/test_refinement_indicator_math.cpp",
+      "tests/test_run_memory_guarded.py",
+      "tests/test_runtime_validation_inputs.py",
+      "tests/test_smoke_cuda_amr_runtime.py",
+      "tests/test_sparse_ode_continuation.cpp",
+      "tests/test_validation_device_memory.py",
+      "tests/test_validation_provenance.py",
+      "tests/test_validation_subprocess_logs.py",
+      "tests/tooling/test_cuda_code_images.py",
+      "tests/tooling/test_cuda_compile_memory.py",
+      "tools/network/PortableAdapter.py",
+      "tools/network/PortableCxx.py",
+      "tools/network/WeakStorage.py",
+      "tools/network/WeakTables.py",
+      "tools/qualify_cuda_amr_evidence.py",
+      "tools/run_memory_guarded.py",
+      "tools/smoke_cuda_amr_runtime.py",
+      "tools/validation_device_memory.py",
+      "tools/validation_provenance.py",
+      "tools/validation_sanitizer.py",
+      "validation/amr/gaussian_reference.py",
+      "validation/amr/geometry_reference.py",
+      "validation/amr/gpu_curvilinear_cases.json",
+      "validation/burn/time_reference.py",
+      "validation/eos/helm_reference.py",
+      "validation/gravity/coupled_cases.json",
+      "validation/hydro/roe_reference.py",
+      "validation/hydro/sedov_reference.py",
+      "validation/hydro/time_reference.py",
+      "validation/network/inputs/weak_urca.py",
+      "validation/network/nse_reference.py",
+      "validation/network/run_sparse_validation.py",
+      "validation/network/run_weak_validation.py",
+      "validation/network/runtime_cases.json",
+      "validation/network/test_sparse_validation.py",
+      "validation/network/test_weak_reference.py",
+      "validation/network/weak_reference.py"
+    ]
+  },
+  "source_verified_unchanged": true,
+  "expected_source_worktree_sha256": "73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171",
+  "source_matches_expected": true,
+  "maintained_inputs": {
+    "policy_helper": {
+      "relative_path": "tools/validation_provenance.py",
+      "bytes": 22879,
+      "path": "/home/shiroakane/ARCH/tools/validation_provenance.py",
+      "sha256": "2c12c19eb88d9fdcbf4ad06652f4f0164658147d02fe8385a405b59861cfe653"
+    },
+    "tracked_count": 316,
+    "untracked_count": 139,
+    "present_count": 452,
+    "counts_by_directory": {
+      "CMakeLists.txt": 1,
+      "CMakePresets.json": 1,
+      "cmake": 8,
+      "simulation": 18,
+      "src": 259,
+      "tests": 93,
+      "tools": 15,
+      "validation": 57
+    },
+    "untracked_counts_by_directory": {
+      "validation": 17,
+      "tools": 10,
+      "src": 45,
+      "tests": 57,
+      "cmake": 8,
+      "simulation": 2
+    },
+    "untracked_files": [
+      {
+        "relative_path": "cmake/CudaBurnDenseRoutes.cmake",
+        "bytes": 3040,
+        "path": "/home/shiroakane/ARCH/cmake/CudaBurnDenseRoutes.cmake",
+        "sha256": "31e4158938d75933c16b676a5f56cfb9141a658ab8127a6c7e7c2c313c560ede"
+      },
+      {
+        "relative_path": "cmake/CudaBurnNetworks.cmake",
+        "bytes": 1370,
+        "path": "/home/shiroakane/ARCH/cmake/CudaBurnNetworks.cmake",
+        "sha256": "ee3cd84ee8fff3c488090557f1121358f1f0be3609cb663cee86fa025db7911a"
+      },
+      {
+        "relative_path": "cmake/CudaBurnSparseRoutes.cmake",
+        "bytes": 4037,
+        "path": "/home/shiroakane/ARCH/cmake/CudaBurnSparseRoutes.cmake",
+        "sha256": "c8fe8d019db3326b91d8481cac3b232f14ea9d9ba48bfe0bab6ac6e57f83407a"
+      },
+      {
+        "relative_path": "cmake/CudaCodeImages.cmake",
+        "bytes": 1839,
+        "path": "/home/shiroakane/ARCH/cmake/CudaCodeImages.cmake",
+        "sha256": "9d79198d371bcaf4eedf538f060cfbf65759fa6b08663951849aa1cb48deb32c"
+      },
+      {
+        "relative_path": "cmake/CudaCustomDenseRoute.cu.in",
+        "bytes": 1470,
+        "path": "/home/shiroakane/ARCH/cmake/CudaCustomDenseRoute.cu.in",
+        "sha256": "e843549a715e3f81af50e8b50eb52b4634a9d23dd94a4daa4559e987ce7ed9d0"
+      },
+      {
+        "relative_path": "cmake/FindCuDSS.cmake",
+        "bytes": 903,
+        "path": "/home/shiroakane/ARCH/cmake/FindCuDSS.cmake",
+        "sha256": "5a2e9863e09abe14ef756feb51d53b0d4d70237fef8c6e7cca5b15a1bc352a7e"
+      },
+      {
+        "relative_path": "cmake/templates/CudaBurnDenseRoute.cu.in",
+        "bytes": 1686,
+        "path": "/home/shiroakane/ARCH/cmake/templates/CudaBurnDenseRoute.cu.in",
+        "sha256": "62de07b0f9555349de70f0407597298bb161ec9dea18ce1594e5a65b9b9a7310"
+      },
+      {
+        "relative_path": "cmake/templates/CudaBurnSparseOwner.cu.in",
+        "bytes": 720,
+        "path": "/home/shiroakane/ARCH/cmake/templates/CudaBurnSparseOwner.cu.in",
+        "sha256": "b430b5f3afeeddfca245b132800cd9f8c844cab0b5828e7504575e6f02b6df20"
+      },
+      {
+        "relative_path": "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+        "bytes": 7190,
+        "path": "/home/shiroakane/ARCH/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+        "sha256": "8774f66d02399613c09096be0f96b23af19494a15c414e98d8df715896bccc66"
+      },
+      {
+        "relative_path": "simulation/CooperativeHotspots/CooperativeHotspots.par",
+        "bytes": 1596,
+        "path": "/home/shiroakane/ARCH/simulation/CooperativeHotspots/CooperativeHotspots.par",
+        "sha256": "2a1c0f01d81c17cceb0e25aed9927c9f0927d4285cece478ac0c5bf51b0eb7f0"
+      },
+      {
+        "relative_path": "src/amr/RefinementIndicatorMath.h",
+        "bytes": 9173,
+        "path": "/home/shiroakane/ARCH/src/amr/RefinementIndicatorMath.h",
+        "sha256": "fccb9f3700561eef235b0bb2ebc043f4ace5dfb6ca6ce955482e760d9f084a42"
+      },
+      {
+        "relative_path": "src/amr/RegridExecutionPlan.h",
+        "bytes": 4794,
+        "path": "/home/shiroakane/ARCH/src/amr/RegridExecutionPlan.h",
+        "sha256": "08ccb61729055c45059bdbd8387b7d9abb2bb61dfc09d1aa808341297493f6cd"
+      },
+      {
+        "relative_path": "src/amr/RegridTransferMath.h",
+        "bytes": 16614,
+        "path": "/home/shiroakane/ARCH/src/amr/RegridTransferMath.h",
+        "sha256": "441c51896dd14c3b8ec2ae7f1b9e0263ffb4838a19d729ad6061514a2cdd28f6"
+      },
+      {
+        "relative_path": "src/cuda/amr/RefinementIndicators.cu",
+        "bytes": 5549,
+        "path": "/home/shiroakane/ARCH/src/cuda/amr/RefinementIndicators.cu",
+        "sha256": "eb615aa3e7112103bac1c270cfe5f6917e4fa274a39c854d13cca08054d012d1"
+      },
+      {
+        "relative_path": "src/cuda/amr/RefinementIndicators.h",
+        "bytes": 1151,
+        "path": "/home/shiroakane/ARCH/src/cuda/amr/RefinementIndicators.h",
+        "sha256": "c3cc035a516d1723aa480913797d5620d6382edb54036d80cf19a8ea266ac1ea"
+      },
+      {
+        "relative_path": "src/cuda/amr/RegridMigration.cu",
+        "bytes": 10897,
+        "path": "/home/shiroakane/ARCH/src/cuda/amr/RegridMigration.cu",
+        "sha256": "6a058b668e3a5afae57a53e9e889a68c7fb53b0157911e5cac32a016cf1aad64"
+      },
+      {
+        "relative_path": "src/cuda/amr/RegridMigration.h",
+        "bytes": 1688,
+        "path": "/home/shiroakane/ARCH/src/cuda/amr/RegridMigration.h",
+        "sha256": "c0506098cf4fe0698b669bb66154be3e5d0bc39fabbaec80567d7d159c548e42"
+      },
+      {
+        "relative_path": "src/cuda/common/DeviceAllocation.h",
+        "bytes": 2673,
+        "path": "/home/shiroakane/ARCH/src/cuda/common/DeviceAllocation.h",
+        "sha256": "516be1e848220df9a73baa83180c5d3d2d1a02989bd6871df65f19398fd2c70f"
+      },
+      {
+        "relative_path": "src/cuda/common/DeviceEosStatus.h",
+        "bytes": 633,
+        "path": "/home/shiroakane/ARCH/src/cuda/common/DeviceEosStatus.h",
+        "sha256": "d66a58a51a99b5b9cda775376fa480be37ab36d1cd1933e49e5c2a26f3708de3"
+      },
+      {
+        "relative_path": "src/cuda/common/GridMetricsCache.cu",
+        "bytes": 4665,
+        "path": "/home/shiroakane/ARCH/src/cuda/common/GridMetricsCache.cu",
+        "sha256": "5a794cc8a30556678c19be31026ac6edfd2183cb7f208b6a5ec84d9a60782448"
+      },
+      {
+        "relative_path": "src/cuda/common/GridMetricsCache.h",
+        "bytes": 1567,
+        "path": "/home/shiroakane/ARCH/src/cuda/common/GridMetricsCache.h",
+        "sha256": "b9447d66458a91dbcb10e58633a9beaca8f6eba2cdbe57dc60def7ab4859c98a"
+      },
+      {
+        "relative_path": "src/cuda/hydro/CheckedHydroEos.cuh",
+        "bytes": 2635,
+        "path": "/home/shiroakane/ARCH/src/cuda/hydro/CheckedHydroEos.cuh",
+        "sha256": "4c9b2b5b1de6de61787677197a8fdc6852afdbb4dfdb9562940be6bf0a82d24b"
+      },
+      {
+        "relative_path": "src/cuda/hydro/GridGeometryAdapter.cuh",
+        "bytes": 962,
+        "path": "/home/shiroakane/ARCH/src/cuda/hydro/GridGeometryAdapter.cuh",
+        "sha256": "7d78242b59c1d32c2cd079bdc060520a74573c9c450cf2909c8aec25f67af2a6"
+      },
+      {
+        "relative_path": "src/cuda/hydro/HydroSourceKernels.cuh",
+        "bytes": 2618,
+        "path": "/home/shiroakane/ARCH/src/cuda/hydro/HydroSourceKernels.cuh",
+        "sha256": "1e57fb52b3aee514d6d1edb62551d2a7a55f364c467dd79ea8b40334c731c3b1"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/CuDssSparseSolver.cpp",
+        "bytes": 18581,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/CuDssSparseSolver.cpp",
+        "sha256": "b672a53a59ded42264dc7e19d2d65ca428599242fa3ee745110a0787eec35af7"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/CuDssSparseSolver.h",
+        "bytes": 2845,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/CuDssSparseSolver.h",
+        "sha256": "a6f2402adc18672aa6cb32993d2712fae53bbb2c84b67a74ceb3edd31a9a44d9"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/SparseBeNrBatch.cuh",
+        "bytes": 461,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseBeNrBatch.cuh",
+        "sha256": "f206285c97e347282ba4ce6e742d7cf7ce977d3507fd6e78a14f565bcf4775f2"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/SparseBurnCells.cuh",
+        "bytes": 7413,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseBurnCells.cuh",
+        "sha256": "a2ab83c17990a4f508534d5cedebf14f289a51cea1e525b11a3ba825deff5816"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/SparseEquilibration.cu",
+        "bytes": 4129,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseEquilibration.cu",
+        "sha256": "62cab6e403ead62f3ac810994313573b356f9ec30931fc163fc585322080d8a3"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/SparseEquilibration.h",
+        "bytes": 693,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseEquilibration.h",
+        "sha256": "9292f94ab91bc902369fb87cd32a9dc6ee12a8c2452a76bfb8b8063e44d9d427"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/SparseOdeBatch.cuh",
+        "bytes": 14910,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/SparseOdeBatch.cuh",
+        "sha256": "166d89429efafeccbd44c2adac188bf111c91050cd53a1f58971f5cbadc13903"
+      },
+      {
+        "relative_path": "src/cuda/microphysics/device_network_owner.h",
+        "bytes": 2588,
+        "path": "/home/shiroakane/ARCH/src/cuda/microphysics/device_network_owner.h",
+        "sha256": "e56c77c5131895fda06ffa79e9c762cf06756cacaed6328c6c3b0e14af74f24c"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+        "bytes": 2081,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+        "sha256": "34017f083bb9d8460d1c8b69ad1d918c6f8ca5e72efeca98476c464bda14ea8d"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnReduction.cuh",
+        "bytes": 1753,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnReduction.cuh",
+        "sha256": "cbda463b301f1d6c896139465f9908c38966c9010bba707734ff084756b73553"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+        "bytes": 1664,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+        "sha256": "da3eabc49f876692f3e570fc7b3db211cb210d6d0720a0568458ecbc24f7e896"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnSparse.h",
+        "bytes": 1962,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparse.h",
+        "sha256": "7f044080c809e4723b52ecb3dd22bae7d4a7cff3778e386af14085f83fcce5ad"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+        "bytes": 2600,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+        "sha256": "f18be61a6c731e290e80556088aad74771d2f7f6c068abd5024e6727770ac053"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+        "bytes": 9626,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+        "sha256": "37cb4ec32b54a9f78ae8e9181b354afb695187f9f74004f409eac788cac6d94f"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+        "bytes": 1668,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+        "sha256": "5d2370c71cb180c5cce0a308583eaa5eae0d211f46d6423133de4de73879897c"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendIndicators.cpp",
+        "bytes": 4443,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendIndicators.cpp",
+        "sha256": "1480f1eeb10b9c877719115e1b14829bf8bc0ece588fff406fb60c59ba8aab05"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBackendMigration.cpp",
+        "bytes": 12630,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendMigration.cpp",
+        "sha256": "4d61f074ba0f686803f048a2a49325338d905d84886b3f68c1e578631be4d098"
+      },
+      {
+        "relative_path": "src/cuda/runtime/CudaBurnOdeTypes.h",
+        "bytes": 894,
+        "path": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBurnOdeTypes.h",
+        "sha256": "b9b0f2c4c9800ac168cbb661320c903348f9f271f6282649fa17c4d5bda133e4"
+      },
+      {
+        "relative_path": "src/driver/DriverBurnPolicy.h",
+        "bytes": 6526,
+        "path": "/home/shiroakane/ARCH/src/driver/DriverBurnPolicy.h",
+        "sha256": "0233bf100f509a8ea93d46ce0b742c2c05b0c53ceea54699ca44649edf481c61"
+      },
+      {
+        "relative_path": "src/grid/GridGeometryView.h",
+        "bytes": 2064,
+        "path": "/home/shiroakane/ARCH/src/grid/GridGeometryView.h",
+        "sha256": "246ae8acb446f49d9af5d6bbe0838b640395bbc6a546881c98af4f11c10c5d73"
+      },
+      {
+        "relative_path": "src/numerics/burnsolver/BurnThermodynamics.h",
+        "bytes": 4609,
+        "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/BurnThermodynamics.h",
+        "sha256": "3b8144e278964f6a78a922e476e4923fd75676c2ae4bc4a3bc0c7dde450add8e"
+      },
+      {
+        "relative_path": "src/numerics/burnsolver/NetworkDerivative.h",
+        "bytes": 3660,
+        "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/NetworkDerivative.h",
+        "sha256": "37b9cd6a38f91ec4af15258df1c0e971c8d2ac946f1dd154b09c0645d8018ac2"
+      },
+      {
+        "relative_path": "src/numerics/burnsolver/OdeContinuation.h",
+        "bytes": 1049,
+        "path": "/home/shiroakane/ARCH/src/numerics/burnsolver/OdeContinuation.h",
+        "sha256": "ef2fed1a555f7b34bdc0f0a1e33b86de4302da99e2fb5755f7f520a7a119dfa8"
+      },
+      {
+        "relative_path": "src/numerics/diffusion/DiffusionTypes.h",
+        "bytes": 1920,
+        "path": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffusionTypes.h",
+        "sha256": "07087968744d73749b74cb6ba9b5ee1301df6fe191e2cea44755ca9323250039"
+      },
+      {
+        "relative_path": "src/numerics/integrator/GeometricSources.h",
+        "bytes": 2368,
+        "path": "/home/shiroakane/ARCH/src/numerics/integrator/GeometricSources.h",
+        "sha256": "72a5fc5547506b34e75bfd19c28cef18e07a78503074bc05049e7bae77a92483"
+      },
+      {
+        "relative_path": "src/numerics/linalg/CsrMatrixView.h",
+        "bytes": 4902,
+        "path": "/home/shiroakane/ARCH/src/numerics/linalg/CsrMatrixView.h",
+        "sha256": "2b0c7f2929acf653b6520fae489ae5db89235b6070f3a5b6052ff9645466a38f"
+      },
+      {
+        "relative_path": "src/numerics/linalg/CsrPattern.h",
+        "bytes": 2881,
+        "path": "/home/shiroakane/ARCH/src/numerics/linalg/CsrPattern.h",
+        "sha256": "2a5218631086ef9f7c5bd1b24c0133d248ee5469ca946d43d55cdc1bdd2030b5"
+      },
+      {
+        "relative_path": "src/numerics/linalg/LinearEquilibration.h",
+        "bytes": 1844,
+        "path": "/home/shiroakane/ARCH/src/numerics/linalg/LinearEquilibration.h",
+        "sha256": "883bdbff352165123849f8e584b8c12af4969c85131aa27ec792738778964bb4"
+      },
+      {
+        "relative_path": "src/physics/constant/PhysicalConstants.h",
+        "bytes": 2560,
+        "path": "/home/shiroakane/ARCH/src/physics/constant/PhysicalConstants.h",
+        "sha256": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e"
+      },
+      {
+        "relative_path": "src/physics/gravity/ExternalGravitySource.h",
+        "bytes": 940,
+        "path": "/home/shiroakane/ARCH/src/physics/gravity/ExternalGravitySource.h",
+        "sha256": "2f31dcf7a74f18abb09a99b1fcb08c4d5d1618c6de995fbc724df04a82309ab1"
+      },
+      {
+        "relative_path": "src/physics/network/WeakTableView.h",
+        "bytes": 1835,
+        "path": "/home/shiroakane/ARCH/src/physics/network/WeakTableView.h",
+        "sha256": "e62b81dcf95bc73092433aaa08cfe80705c35b8f82ca65a9327172a6957ecc09"
+      },
+      {
+        "relative_path": "tests/amr_composition_test_cases.h",
+        "bytes": 1978,
+        "path": "/home/shiroakane/ARCH/tests/amr_composition_test_cases.h",
+        "sha256": "62cb4934baa0d554ac9926b2a3c7e2bac11326832ea73b1d8362395004d2b865"
+      },
+      {
+        "relative_path": "tests/checkpoint_conservation_metrics.h",
+        "bytes": 7812,
+        "path": "/home/shiroakane/ARCH/tests/checkpoint_conservation_metrics.h",
+        "sha256": "aeece5b26292b113a0bf2b67bcef9037564de460ee6bc0dc8f070f16c55a14d0"
+      },
+      {
+        "relative_path": "tests/cuda/GeneratedSparseBurnFactory.h",
+        "bytes": 468,
+        "path": "/home/shiroakane/ARCH/tests/cuda/GeneratedSparseBurnFactory.h",
+        "sha256": "a7ca0b2a40731a80bcf707390a9678eedb11b052606b3147ca7944abd88df931"
+      },
+      {
+        "relative_path": "tests/cuda/test_burn_controller_parity.cu",
+        "bytes": 6535,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_controller_parity.cu",
+        "sha256": "6a060c0ad5e6b7319c5b25b600945461ae985828ddc82eba1ab937f155486a55"
+      },
+      {
+        "relative_path": "tests/cuda/test_burn_eos_failure.cu",
+        "bytes": 12047,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_eos_failure.cu",
+        "sha256": "4e821b5f8370960181dddb7a80392d8949dd3b66e2c9a14e3f3aa35b194254ab"
+      },
+      {
+        "relative_path": "tests/cuda/test_burn_thermal_math.cu",
+        "bytes": 10743,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_burn_thermal_math.cu",
+        "sha256": "bf89e3d456455bdd7005d22512dc121570b237091cca83f368e59942e813592a"
+      },
+      {
+        "relative_path": "tests/cuda/test_compensated_sum.cu",
+        "bytes": 2467,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_compensated_sum.cu",
+        "sha256": "5a567fe427ba6ab6a8e64fe76168c54ff9487f7cc337b706846ea3ce3d82d9f6"
+      },
+      {
+        "relative_path": "tests/cuda/test_cuda_amr_composition.cu",
+        "bytes": 8509,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_amr_composition.cu",
+        "sha256": "a910fe1f31f5b57744d3c69587b5b3ee755d0bb6e1fdde502f284d0e4b03857a"
+      },
+      {
+        "relative_path": "tests/cuda/test_cuda_regrid_migration.cu",
+        "bytes": 8572,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_regrid_migration.cu",
+        "sha256": "7d59426ed281572e5567dda9caa1fcf7ba09186e3cc98d92132c4866cbae203a"
+      },
+      {
+        "relative_path": "tests/cuda/test_cuda_regrid_transaction.cpp",
+        "bytes": 15118,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_regrid_transaction.cpp",
+        "sha256": "3fd983a16c505336e32284750ae85047f3d890b4811fc037fc67cbbb8e29f532"
+      },
+      {
+        "relative_path": "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+        "bytes": 26833,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_cuda_sparse_burn_factory.cpp",
+        "sha256": "351a39a3f1eb28d8e50e78214849c5f9b141afa73bba3348374818d13e2c5f3f"
+      },
+      {
+        "relative_path": "tests/cuda/test_cudss_sparse_solver.cpp",
+        "bytes": 21751,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_cudss_sparse_solver.cpp",
+        "sha256": "e136c7e22f8ed7ccdf1b01c7ef22ef6f8b41d82027495d9bad2e05eea00132c8"
+      },
+      {
+        "relative_path": "tests/cuda/test_curvilinear_geometry_smoke.cu",
+        "bytes": 32245,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_curvilinear_geometry_smoke.cu",
+        "sha256": "e97438620d162ff35c54231976d7e14e474ff1758cdf53686d771f44ed6f0135"
+      },
+      {
+        "relative_path": "tests/cuda/test_generated_network_math.cu",
+        "bytes": 6546,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_network_math.cu",
+        "sha256": "7358f0970540589bd6b3b63d8e495be770146b950ea3203d6d3548a6f8948950"
+      },
+      {
+        "relative_path": "tests/cuda/test_generated_sparse_burn.cpp",
+        "bytes": 16193,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_sparse_burn.cpp",
+        "sha256": "71b7da2d622d3a01ec1c872099eeb118e4a76777e4fc39983726bc76554f7e25"
+      },
+      {
+        "relative_path": "tests/cuda/test_generated_sparse_burn_factory.cu",
+        "bytes": 569,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_sparse_burn_factory.cu",
+        "sha256": "5f1405b25c931052d7786917f7236c157b09014d3bbcf8045fbd5b7fd8ee8f48"
+      },
+      {
+        "relative_path": "tests/cuda/test_generated_weak_factory.cu",
+        "bytes": 11212,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_weak_factory.cu",
+        "sha256": "04814688713053a4e4f700ae1c3a50afe926875d6847029d4d1f6d534e71f593"
+      },
+      {
+        "relative_path": "tests/cuda/test_generated_weak_trajectory.cu",
+        "bytes": 9935,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_generated_weak_trajectory.cu",
+        "sha256": "bcb60e7e8f5f485fbb83e09d1d991a923b154c381d6f018179afe74be3ec7e86"
+      },
+      {
+        "relative_path": "tests/cuda/test_grid_metrics_cache.cu",
+        "bytes": 10119,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_grid_metrics_cache.cu",
+        "sha256": "5aa2667bd7dc169a9c1edac431deeb029589fe7dc53cb5baf901ffd6fb88d46c"
+      },
+      {
+        "relative_path": "tests/cuda/test_hydro_dispatch.cu",
+        "bytes": 4813,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_hydro_dispatch.cu",
+        "sha256": "6fc1eed9edc44dd05d77690db1b4b61ca4eb2a77f3df5421f254da0b2dea639a"
+      },
+      {
+        "relative_path": "tests/cuda/test_hydro_eos_failure.cu",
+        "bytes": 16399,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_hydro_eos_failure.cu",
+        "sha256": "6058207c85084862aeab7d2f2b841b5fde8c0ad4cce1b0c3b9fc75d5f0ea47eb"
+      },
+      {
+        "relative_path": "tests/cuda/test_network_derivative.cu",
+        "bytes": 1049,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_network_derivative.cu",
+        "sha256": "da1abead3effbe62ad5589fc48f638667cbc69056727e34aaff082b177a1dedf"
+      },
+      {
+        "relative_path": "tests/cuda/test_refinement_indicators.cpp",
+        "bytes": 12377,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_refinement_indicators.cpp",
+        "sha256": "29aa657cd714b9fdde55e6af6c55c9ebdaa488bc34b1621592d208db2940626d"
+      },
+      {
+        "relative_path": "tests/cuda/test_sparse_be_nr_batch.cu",
+        "bytes": 16751,
+        "path": "/home/shiroakane/ARCH/tests/cuda/test_sparse_be_nr_batch.cu",
+        "sha256": "4c7c73acce314ec22c562fcee869d4d705858287ea4bd154d49394aa280e4038"
+      },
+      {
+        "relative_path": "tests/fixtures/BurnMainlineReference.h",
+        "bytes": 13563,
+        "path": "/home/shiroakane/ARCH/tests/fixtures/BurnMainlineReference.h",
+        "sha256": "0c51be365af4cab4e6fa5067d07b3ba6f319ef1d1e55d8fae483bf6dfee3dca4"
+      },
+      {
+        "relative_path": "tests/fixtures/BurnTimeReference.h",
+        "bytes": 7099,
+        "path": "/home/shiroakane/ARCH/tests/fixtures/BurnTimeReference.h",
+        "sha256": "93dea05a041563d4e4841f6ac0ea6c512e891dbae95ee595795209e664278ef9"
+      },
+      {
+        "relative_path": "tests/fixtures/HelmReference.h",
+        "bytes": 3721,
+        "path": "/home/shiroakane/ARCH/tests/fixtures/HelmReference.h",
+        "sha256": "205ff5d3eb3920a03a8d6f85d29829021c6af3743e142ab17fd75c5446d271bf"
+      },
+      {
+        "relative_path": "tests/fixtures/NseReference.h",
+        "bytes": 3283,
+        "path": "/home/shiroakane/ARCH/tests/fixtures/NseReference.h",
+        "sha256": "fbed88fcfbc33a38c68dcb38dbb82a088a3cda1143ed33220c3bdcdc5059a1a5"
+      },
+      {
+        "relative_path": "tests/fixtures/RoeFluxReference.h",
+        "bytes": 4562,
+        "path": "/home/shiroakane/ARCH/tests/fixtures/RoeFluxReference.h",
+        "sha256": "84c765e9b07842c8e0708d2026bd1f686a980b9700823a9fbb13a6cf8d387063"
+      },
+      {
+        "relative_path": "tests/fixtures/SparseTransferNetwork.h",
+        "bytes": 3118,
+        "path": "/home/shiroakane/ARCH/tests/fixtures/SparseTransferNetwork.h",
+        "sha256": "eb52f9212305b80c9c1b0b65cbf87aef89f0d548153fbdefe047c7f021160c70"
+      },
+      {
+        "relative_path": "tests/math/BurnThermalCases.h",
+        "bytes": 27345,
+        "path": "/home/shiroakane/ARCH/tests/math/BurnThermalCases.h",
+        "sha256": "56acee0d5077a54d7a030dee99112c844b068cacc1e513c9cebdb5e9547e6949"
+      },
+      {
+        "relative_path": "tests/math/CompensatedSumCases.h",
+        "bytes": 1931,
+        "path": "/home/shiroakane/ARCH/tests/math/CompensatedSumCases.h",
+        "sha256": "fea1d8610ba21e9ef3c5773f405ecd683465f62f8d44a261c9e01cf98b561880"
+      },
+      {
+        "relative_path": "tests/math/CurvilinearMetricCases.h",
+        "bytes": 3796,
+        "path": "/home/shiroakane/ARCH/tests/math/CurvilinearMetricCases.h",
+        "sha256": "2cc3c5d13086f1edf46fe1366301e800c9a3b1b348d5eddb83ee8486a9868119"
+      },
+      {
+        "relative_path": "tests/math/DenseLuCases.h",
+        "bytes": 2857,
+        "path": "/home/shiroakane/ARCH/tests/math/DenseLuCases.h",
+        "sha256": "4b251a8c1b63cf27520e96a6bf7439c29362a8cd141bbf376286cf7a42f347fb"
+      },
+      {
+        "relative_path": "tests/math/NetworkDerivativeCases.h",
+        "bytes": 3316,
+        "path": "/home/shiroakane/ARCH/tests/math/NetworkDerivativeCases.h",
+        "sha256": "3f47813eea5e309e2ab06d3eec434596e29f6a2105237fdb2a91bfab1d929191"
+      },
+      {
+        "relative_path": "tests/math/RoeThermodynamicCases.h",
+        "bytes": 9474,
+        "path": "/home/shiroakane/ARCH/tests/math/RoeThermodynamicCases.h",
+        "sha256": "cd939cfeb4a875a46853baa48192ac907b52c2ae6e71d059f0647d28e17be655"
+      },
+      {
+        "relative_path": "tests/math/ViscousGeometryCases.h",
+        "bytes": 11379,
+        "path": "/home/shiroakane/ARCH/tests/math/ViscousGeometryCases.h",
+        "sha256": "2d228f7e6d3e4922f014aa10691b170be4373adbc730be4429ecfebd7254178c"
+      },
+      {
+        "relative_path": "tests/regrid_migration_fixture.h",
+        "bytes": 2704,
+        "path": "/home/shiroakane/ARCH/tests/regrid_migration_fixture.h",
+        "sha256": "e2940747b890cca7a03204eac6841c0f54f9beded4a6c7bce3afaae62d931dbe"
+      },
+      {
+        "relative_path": "tests/smoke/cuda_amr_cases.json",
+        "bytes": 1288,
+        "path": "/home/shiroakane/ARCH/tests/smoke/cuda_amr_cases.json",
+        "sha256": "cd96c378f2cbaddd1633b439b7c4b70958b75b1b6b4dc2546572ed9c7f72118b"
+      },
+      {
+        "relative_path": "tests/test_burn_mainline_reference.cpp",
+        "bytes": 8043,
+        "path": "/home/shiroakane/ARCH/tests/test_burn_mainline_reference.cpp",
+        "sha256": "a2811d88393251938bcc6e96a2865b5fc0ced2a7b5217cc6592b117758f5354c"
+      },
+      {
+        "relative_path": "tests/test_checkpoint_conservation_metrics.cpp",
+        "bytes": 5528,
+        "path": "/home/shiroakane/ARCH/tests/test_checkpoint_conservation_metrics.cpp",
+        "sha256": "8c8e5f79e788ad02ff2977b91f31a62c09d684f0ef48eaa7b925201cf0bfc1ec"
+      },
+      {
+        "relative_path": "tests/test_compensated_sum.cpp",
+        "bytes": 535,
+        "path": "/home/shiroakane/ARCH/tests/test_compensated_sum.cpp",
+        "sha256": "ece406035288e05e8004b1679fc2eb312656a10fc92eb8650db917ac0d0c7ef5"
+      },
+      {
+        "relative_path": "tests/test_curvilinear_manifest.py",
+        "bytes": 11316,
+        "path": "/home/shiroakane/ARCH/tests/test_curvilinear_manifest.py",
+        "sha256": "0fcf48d665a509e8b2c9de63a06b2262103b127bb2b019f57c06c468ca00d51d"
+      },
+      {
+        "relative_path": "tests/test_curvilinear_metrics.cpp",
+        "bytes": 4770,
+        "path": "/home/shiroakane/ARCH/tests/test_curvilinear_metrics.cpp",
+        "sha256": "3ff19ae270f3df4c5baa70be44f59a5d7c2aad592a35233cb00cb720cf064edb"
+      },
+      {
+        "relative_path": "tests/test_generated_network_reference.cpp",
+        "bytes": 1327,
+        "path": "/home/shiroakane/ARCH/tests/test_generated_network_reference.cpp",
+        "sha256": "a186399534b980016e6378ee3317197863ec7609dbfba5ea1ecc598b5ac07335"
+      },
+      {
+        "relative_path": "tests/test_physical_constants.cpp",
+        "bytes": 1823,
+        "path": "/home/shiroakane/ARCH/tests/test_physical_constants.cpp",
+        "sha256": "0119fe4487eec5419d0d4a63b10e57496aa5db704cdf0e336c8222f0bcdffbd9"
+      },
+      {
+        "relative_path": "tests/test_portable_network_generator.py",
+        "bytes": 37389,
+        "path": "/home/shiroakane/ARCH/tests/test_portable_network_generator.py",
+        "sha256": "4e317df3da1da0b2555ca803d462597cb4f9634bdd66fd631350da4636361945"
+      },
+      {
+        "relative_path": "tests/test_refinement_indicator_math.cpp",
+        "bytes": 2450,
+        "path": "/home/shiroakane/ARCH/tests/test_refinement_indicator_math.cpp",
+        "sha256": "c7c0e1e9f8e5d57b3d86ceb710c5140e2e0c57f22a441de93a0a7d3ba3458e53"
+      },
+      {
+        "relative_path": "tests/test_run_memory_guarded.py",
+        "bytes": 16525,
+        "path": "/home/shiroakane/ARCH/tests/test_run_memory_guarded.py",
+        "sha256": "062751808e84f14fd7dfd048f9435a8c3206213b7bdf26ee63f341218188c106"
+      },
+      {
+        "relative_path": "tests/test_runtime_validation_inputs.py",
+        "bytes": 11290,
+        "path": "/home/shiroakane/ARCH/tests/test_runtime_validation_inputs.py",
+        "sha256": "0830314b3c0acbebcb418ff61b56ae6fdcdce4c68063e78c217569d79444d1a4"
+      },
+      {
+        "relative_path": "tests/test_smoke_cuda_amr_runtime.py",
+        "bytes": 10775,
+        "path": "/home/shiroakane/ARCH/tests/test_smoke_cuda_amr_runtime.py",
+        "sha256": "fc5fe93752533ab52d0faf3111b47d0b0ae5a508a85e6c2c0a1c5f4892844178"
+      },
+      {
+        "relative_path": "tests/test_sparse_ode_continuation.cpp",
+        "bytes": 16171,
+        "path": "/home/shiroakane/ARCH/tests/test_sparse_ode_continuation.cpp",
+        "sha256": "320675ba2bbd21cac3ff7dea3878bbf516ac69d4306ccd9d6f5ebd5b69611fa2"
+      },
+      {
+        "relative_path": "tests/test_validation_device_memory.py",
+        "bytes": 4704,
+        "path": "/home/shiroakane/ARCH/tests/test_validation_device_memory.py",
+        "sha256": "b82a043e0a19ca0507112fb1c9a53ccdcebf9c43864983c67f0144a9294c6c73"
+      },
+      {
+        "relative_path": "tests/test_validation_provenance.py",
+        "bytes": 37849,
+        "path": "/home/shiroakane/ARCH/tests/test_validation_provenance.py",
+        "sha256": "42cb61127cdc486c2f9beb21eb42cdd309bab9a3791a7238a93b15722a0c3502"
+      },
+      {
+        "relative_path": "tests/test_validation_subprocess_logs.py",
+        "bytes": 9302,
+        "path": "/home/shiroakane/ARCH/tests/test_validation_subprocess_logs.py",
+        "sha256": "1165bb38bea87279ac85632de28f5622f28e60f20e1a67daaf2f22cc56b98dfc"
+      },
+      {
+        "relative_path": "tests/tooling/test_cuda_code_images.py",
+        "bytes": 2388,
+        "path": "/home/shiroakane/ARCH/tests/tooling/test_cuda_code_images.py",
+        "sha256": "713818d2596d04e068894c9edd1cda3b930c262a25419b5bd846e84baa036321"
+      },
+      {
+        "relative_path": "tests/tooling/test_cuda_compile_memory.py",
+        "bytes": 3377,
+        "path": "/home/shiroakane/ARCH/tests/tooling/test_cuda_compile_memory.py",
+        "sha256": "dc8c7cd052352770191708d74ab1798be64fbef8e0297f41dbc977e468e60003"
+      },
+      {
+        "relative_path": "tools/network/PortableAdapter.py",
+        "bytes": 6081,
+        "path": "/home/shiroakane/ARCH/tools/network/PortableAdapter.py",
+        "sha256": "a4e10ffc4eb841f52fef199eea23aa1bafae277f1864530c9342859920142f07"
+      },
+      {
+        "relative_path": "tools/network/PortableCxx.py",
+        "bytes": 13148,
+        "path": "/home/shiroakane/ARCH/tools/network/PortableCxx.py",
+        "sha256": "4d34d8db57a98c6c779a440291a86a60acd8bf6b3e4547da5ceca3b47fc36429"
+      },
+      {
+        "relative_path": "tools/network/WeakStorage.py",
+        "bytes": 10189,
+        "path": "/home/shiroakane/ARCH/tools/network/WeakStorage.py",
+        "sha256": "d26ca08e6828a0de0e7b4ad4b0d0902567c9f3985b67b29427a7d34c469520a3"
+      },
+      {
+        "relative_path": "tools/network/WeakTables.py",
+        "bytes": 13426,
+        "path": "/home/shiroakane/ARCH/tools/network/WeakTables.py",
+        "sha256": "b0510940b282051a524a2c193d1855978d5f968441b40085282282e83ba1cdd5"
+      },
+      {
+        "relative_path": "tools/qualify_cuda_amr_evidence.py",
+        "bytes": 24818,
+        "path": "/home/shiroakane/ARCH/tools/qualify_cuda_amr_evidence.py",
+        "sha256": "ced6f5daec641bc53beb35cd4285bd5c7e27ab21f10166c99bec97d3e52862e8"
+      },
+      {
+        "relative_path": "tools/run_memory_guarded.py",
+        "bytes": 19806,
+        "path": "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+        "sha256": "5dff04b041ee06edab108f78b4fdac294673c7e2cc61db9c334121794846b31b"
+      },
+      {
+        "relative_path": "tools/smoke_cuda_amr_runtime.py",
+        "bytes": 12851,
+        "path": "/home/shiroakane/ARCH/tools/smoke_cuda_amr_runtime.py",
+        "sha256": "6674659e224f8439f7cd93c6eb2ed6b254694cfe189960a9e8b1eb9319cdc258"
+      },
+      {
+        "relative_path": "tools/validation_device_memory.py",
+        "bytes": 5944,
+        "path": "/home/shiroakane/ARCH/tools/validation_device_memory.py",
+        "sha256": "758c556ad00dc2bd85a355da9d159544a178f1fc4c58e55274e285b766217fe4"
+      },
+      {
+        "relative_path": "tools/validation_provenance.py",
+        "bytes": 22879,
+        "path": "/home/shiroakane/ARCH/tools/validation_provenance.py",
+        "sha256": "2c12c19eb88d9fdcbf4ad06652f4f0164658147d02fe8385a405b59861cfe653"
+      },
+      {
+        "relative_path": "tools/validation_sanitizer.py",
+        "bytes": 3129,
+        "path": "/home/shiroakane/ARCH/tools/validation_sanitizer.py",
+        "sha256": "da08eceb2ae6b1f9abf1955e202ed2dda09975d749e3b566cebe3cbf0656026f"
+      },
+      {
+        "relative_path": "validation/amr/gaussian_reference.py",
+        "bytes": 8989,
+        "path": "/home/shiroakane/ARCH/validation/amr/gaussian_reference.py",
+        "sha256": "7645c415a1e28b7f5e3615e2257cff5dcc2fd28560fd7fc5cba0bc6835a6005b"
+      },
+      {
+        "relative_path": "validation/amr/geometry_reference.py",
+        "bytes": 10741,
+        "path": "/home/shiroakane/ARCH/validation/amr/geometry_reference.py",
+        "sha256": "5b641ff9885a8f8d5e92495edb38a709d49f20100b99df1b120ccc5fbd8b25ce"
+      },
+      {
+        "relative_path": "validation/amr/gpu_curvilinear_cases.json",
+        "bytes": 35264,
+        "path": "/home/shiroakane/ARCH/validation/amr/gpu_curvilinear_cases.json",
+        "sha256": "f6c55cabc26a48962055fe48d622fb11377574f8773325858ade1c62ef10f0b9"
+      },
+      {
+        "relative_path": "validation/burn/time_reference.py",
+        "bytes": 9325,
+        "path": "/home/shiroakane/ARCH/validation/burn/time_reference.py",
+        "sha256": "b5937df878330734fba8e053641f80985f218e40c8a2511e966b11b6545f781f"
+      },
+      {
+        "relative_path": "validation/eos/helm_reference.py",
+        "bytes": 13959,
+        "path": "/home/shiroakane/ARCH/validation/eos/helm_reference.py",
+        "sha256": "cbd475b83cb27e928eab959949cbda52dff5d71d73d2590c12042aac7ab6b08f"
+      },
+      {
+        "relative_path": "validation/gravity/coupled_cases.json",
+        "bytes": 4778,
+        "path": "/home/shiroakane/ARCH/validation/gravity/coupled_cases.json",
+        "sha256": "ff9f397b44a281b6b69f170fbf1eae99a4a4643a9223763f42ba104a652183f7"
+      },
+      {
+        "relative_path": "validation/hydro/roe_reference.py",
+        "bytes": 8523,
+        "path": "/home/shiroakane/ARCH/validation/hydro/roe_reference.py",
+        "sha256": "3fa8ab6af96e5abe9a42bc6f8b1f7cb286e155f6c32918cd5025084bc268fa55"
+      },
+      {
+        "relative_path": "validation/hydro/sedov_reference.py",
+        "bytes": 16856,
+        "path": "/home/shiroakane/ARCH/validation/hydro/sedov_reference.py",
+        "sha256": "7b45b7ffb80a4fa0277491a960513c8b3417ac06d9c31671b977ba963197912c"
+      },
+      {
+        "relative_path": "validation/hydro/time_reference.py",
+        "bytes": 6972,
+        "path": "/home/shiroakane/ARCH/validation/hydro/time_reference.py",
+        "sha256": "729295a124e4d1918479cf07efa6fe42e435494ce510a6e01e517fb3dbfa7dbc"
+      },
+      {
+        "relative_path": "validation/network/inputs/weak_urca.py",
+        "bytes": 648,
+        "path": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+        "sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2"
+      },
+      {
+        "relative_path": "validation/network/nse_reference.py",
+        "bytes": 7600,
+        "path": "/home/shiroakane/ARCH/validation/network/nse_reference.py",
+        "sha256": "d94a48ae9a0872353cf4e8a2a9835d8e96f84f4ed8fd39999d0161acbc7eec4e"
+      },
+      {
+        "relative_path": "validation/network/run_sparse_validation.py",
+        "bytes": 8609,
+        "path": "/home/shiroakane/ARCH/validation/network/run_sparse_validation.py",
+        "sha256": "1df210c56ee7253fbe4040689c03f8781b4d6895012119dcbc3c06b6eca727a6"
+      },
+      {
+        "relative_path": "validation/network/run_weak_validation.py",
+        "bytes": 4998,
+        "path": "/home/shiroakane/ARCH/validation/network/run_weak_validation.py",
+        "sha256": "af39fd2a5c0f06ca32832da6192c793fe6db0d3dbcdf5a80c01d4b5ddd261591"
+      },
+      {
+        "relative_path": "validation/network/runtime_cases.json",
+        "bytes": 7081,
+        "path": "/home/shiroakane/ARCH/validation/network/runtime_cases.json",
+        "sha256": "d1a310873df1349b9c3dda8eccd6bb7b172c86533d4ae2ce5d7bf5db35bd4caf"
+      },
+      {
+        "relative_path": "validation/network/test_sparse_validation.py",
+        "bytes": 4603,
+        "path": "/home/shiroakane/ARCH/validation/network/test_sparse_validation.py",
+        "sha256": "f298f89608213fe3a8b82e140df41e7caccca117b6a08bd253ab6af80a56bd91"
+      },
+      {
+        "relative_path": "validation/network/test_weak_reference.py",
+        "bytes": 4700,
+        "path": "/home/shiroakane/ARCH/validation/network/test_weak_reference.py",
+        "sha256": "93c99cf763faf94fbdb16ab535a734ac0df41f4038d0a328a251cc40505e8b7e"
+      },
+      {
+        "relative_path": "validation/network/weak_reference.py",
+        "bytes": 13799,
+        "path": "/home/shiroakane/ARCH/validation/network/weak_reference.py",
+        "sha256": "9ffb068ec77e58dc8eabce32b1f96d5352a3bbc2b1219c025709bacbcd9edafb"
+      }
+    ],
+    "missing_untracked": [],
+    "ignored_untracked": [],
+    "missing_tracked": [
+      {
+        "path": "src/cuda/common/DiffusionConfigViewAdapter.h",
+        "tracked": true,
+        "present": false,
+        "head_bytes": 525,
+        "head_sha256": "659615316035ac2463e19959647fcc73d2805b0260cee734fdfc467c49b21d5d",
+        "classification": "retired CUDA header"
+      },
+      {
+        "path": "src/cuda/runtime/CudaBackendBurnAllNetworksImpl.cuh",
+        "tracked": true,
+        "present": false,
+        "head_bytes": 2241,
+        "head_sha256": "66284a22aa72e6eda42fc63c263d018a85f8c40e293f7ccc83cea31bb4344a79",
+        "classification": "retired CUDA header"
+      },
+      {
+        "path": "src/cuda/runtime/CudaBurnNetworkTypes.h",
+        "tracked": true,
+        "present": false,
+        "head_bytes": 1033,
+        "head_sha256": "81c9cd858aa512aaf27a3a7f1fe82abda0db84dffd1c7b2e1c6a26739741b3cd",
+        "classification": "retired CUDA header"
+      }
+    ],
+    "deleted_outside_source_scope": [
+      "validation/network/metrics.csv"
+    ],
+    "source_scope_exclusions": [
+      "validation/**/results/**",
+      "**/__pycache__/**"
+    ]
+  },
+  "retired_header_search": {
+    "command": [
+      "rg",
+      "-n",
+      "DiffusionConfigViewAdapter|CudaBackendBurnAllNetworksImpl|CudaBurnNetworkTypes",
+      "CMakeLists.txt",
+      "cmake",
+      "src",
+      "simulation",
+      "tests",
+      "tools",
+      "validation",
+      "-g",
+      "!**/results/**"
+    ],
+    "returncode": 0,
+    "matches": [
+      "tests/tooling/test_audit_combination_v2.py:232:            \"src/cuda/common/DiffusionConfigViewAdapter.h\":",
+      "tests/tooling/test_audit_combination_v2.py:240:            \"src/cuda/common/DiffusionConfigViewAdapter.h\","
+    ],
+    "active_build_or_include_consumers": [],
+    "explanation": "The two remaining name mentions are negative audit-test fixture paths in tests/tooling/test_audit_combination_v2.py; they create synthetic retired-adapter files to verify rejection, not an include/build dependency.",
+    "reviewed_consumer_fixture": {
+      "relative_path": "tests/tooling/test_audit_combination_v2.py",
+      "bytes": 48703,
+      "path": "/home/shiroakane/ARCH/tests/tooling/test_audit_combination_v2.py",
+      "sha256": "5c511f11d66e4a9dea49044ce5ca75aa5b427db5e78161350ca675a1b1881d72"
+    }
+  },
+  "helm_table": {
+    "actual": {
+      "relative_path": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "bytes": 60242514,
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+    },
+    "index_pointer": "version https://git-lfs.github.com/spec/v1\noid sha256:c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1\nsize 60242514\n",
+    "head_pointer_matches_index": true,
+    "pointer_oid": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+    "pointer_size": 60242514,
+    "actual_matches_pointer": true,
+    "git_filter_attribute": "EOS_toolkit/tables/helmholtz/helm_table.dat: filter: lfs",
+    "role": "Git-LFS scientific input; actual table bytes, not just a pointer, are required at runtime"
+  },
+  "generated_networks": {
+    "recovery_evidence": {
+      "relative_path": "validation/network/results/asset-recovery-20260907/evidence.json",
+      "bytes": 34722,
+      "path": "/home/shiroakane/ARCH/validation/network/results/asset-recovery-20260907/evidence.json",
+      "sha256": "455edd52e7ac91d1ded0e6242f1fa733bc076f58ca72f3ebf3d72bcb70a09eb8"
+    },
+    "configured_inventory": {
+      "relative_path": "build/release-core-throughput-cmake/generated/CustomNetworks.generated.h",
+      "bytes": 584,
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/generated/CustomNetworks.generated.h",
+      "sha256": "d2bd8e9c1cb5355c6390a11dd3e18dd5c031a67fdd4f316d87db884408cf7f05"
+    },
+    "configuration": {
+      "ARCH_CUSTOM_NETWORKS": "audit31;weak_urca",
+      "ARCH_CUSTOM_NETWORK_ROOT": "/tmp/arch-release-inline-networks.zr6m6q",
+      "ARCH_ENABLE_CUDSS": "ON",
+      "ARCH_ENABLE_KLU": "ON",
+      "CMAKE_BUILD_TYPE": "Release",
+      "CMAKE_CUDA_ARCHITECTURES": "86",
+      "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+      "CUDSS_ROOT": "",
+      "CuDSS_INCLUDE_DIR": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include",
+      "CuDSS_LIBRARY": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0"
+    },
+    "packages": [
+      {
+        "package": "audit31",
+        "manifest": {
+          "auxiliary_equations": 0,
+          "class_name": "NetCustom_audit31",
+          "device_callable_math": true,
+          "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+          "explicit_weak_storage": false,
+          "generator_sha256": "1e1c32172e9321fda5874ebd7b326f434e716028ce08ca3811660e53917e3a08",
+          "generator_version": 4,
+          "header": "NetCustom_audit31.h",
+          "literal_zero_jacobian_entries_pruned": 538,
+          "network_id": "audit31",
+          "pynucastro_version": "2.12.0",
+          "rate_count": 229,
+          "recipe": "/home/shiroakane/ARCH/validation/network/inputs/audit31.py",
+          "recipe_sha256": "c5c8aba5b49ee7a85b8723b56119ea6ad1e819d9f61235f9e3d8df23dd4be449",
+          "runtime_name": "custom:audit31",
+          "schema_version": 1,
+          "source": "NetCustom_audit31.cpp",
+          "species": [
+            "n",
+            "h1",
+            "he4",
+            "c12",
+            "c13",
+            "n13",
+            "n14",
+            "n15",
+            "o14",
+            "o15",
+            "o16",
+            "o17",
+            "o18",
+            "f17",
+            "f18",
+            "f19",
+            "ne18",
+            "ne19",
+            "ne20",
+            "ne21",
+            "ne22",
+            "na21",
+            "na22",
+            "na23",
+            "mg22",
+            "mg23",
+            "mg24",
+            "mg25",
+            "mg26",
+            "al25",
+            "si28"
+          ],
+          "species_count": 31,
+          "supports_nse": false,
+          "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+          "weak_composition_jacobian": false,
+          "weak_table_coordinate_derivatives": false
+        },
+        "files": [
+          {
+            "name": "NetCustom_audit31.cpp",
+            "installed": {
+              "relative_path": null,
+              "bytes": 31,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.cpp",
+              "sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.cpp",
+              "bytes": 31,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.cpp",
+              "sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3"
+            },
+            "expected_installed_sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3",
+            "expected_durable_sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "NetCustom_audit31.h",
+            "installed": {
+              "relative_path": null,
+              "bytes": 4762,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.h",
+              "sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.h",
+              "bytes": 4762,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.h",
+              "sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9"
+            },
+            "expected_installed_sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9",
+            "expected_durable_sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "NetCustom_audit31.math.h",
+            "installed": {
+              "relative_path": null,
+              "bytes": 44276,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.math.h",
+              "sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.math.h",
+              "bytes": 44276,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/NetCustom_audit31.math.h",
+              "sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0"
+            },
+            "expected_installed_sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0",
+            "expected_durable_sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/GNUmakefile",
+            "installed": {
+              "relative_path": null,
+              "bytes": 308,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/GNUmakefile",
+              "bytes": 308,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            "expected_installed_sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+            "expected_durable_sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/actual_network.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 23774,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_network.H",
+              "sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/actual_network.H",
+              "bytes": 23774,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/actual_network.H",
+              "sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5"
+            },
+            "expected_installed_sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5",
+            "expected_durable_sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/actual_rhs.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 176687,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_rhs.H",
+              "sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/actual_rhs.H",
+              "bytes": 176687,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/actual_rhs.H",
+              "sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1"
+            },
+            "expected_installed_sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1",
+            "expected_durable_sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/amrex_bridge.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6647,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/amrex_bridge.H",
+              "sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/amrex_bridge.H",
+              "bytes": 6647,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/amrex_bridge.H",
+              "sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36"
+            },
+            "expected_installed_sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36",
+            "expected_durable_sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/approximate_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 637,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/approximate_rates.H",
+              "sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/approximate_rates.H",
+              "bytes": 637,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/approximate_rates.H",
+              "sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b"
+            },
+            "expected_installed_sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b",
+            "expected_durable_sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/burn_type.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 432,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/burn_type.H",
+              "sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/burn_type.H",
+              "bytes": 432,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/burn_type.H",
+              "sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039"
+            },
+            "expected_installed_sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039",
+            "expected_durable_sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/derived_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 508,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/derived_rates.H",
+              "sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/derived_rates.H",
+              "bytes": 508,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/derived_rates.H",
+              "sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378"
+            },
+            "expected_installed_sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378",
+            "expected_durable_sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/fundamental_constants.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 1586,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/fundamental_constants.H",
+              "sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/fundamental_constants.H",
+              "bytes": 1586,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/fundamental_constants.H",
+              "sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2"
+            },
+            "expected_installed_sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2",
+            "expected_durable_sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/interp_tools.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6646,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/interp_tools.H",
+              "sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/interp_tools.H",
+              "bytes": 6646,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/interp_tools.H",
+              "sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60"
+            },
+            "expected_installed_sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60",
+            "expected_durable_sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/main.cpp",
+            "installed": {
+              "relative_path": null,
+              "bytes": 3150,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/main.cpp",
+              "bytes": 3150,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            "expected_installed_sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+            "expected_durable_sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/modified_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 539,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/modified_rates.H",
+              "sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/modified_rates.H",
+              "bytes": 539,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/modified_rates.H",
+              "sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248"
+            },
+            "expected_installed_sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248",
+            "expected_durable_sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/network_properties.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6045,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/network_properties.H",
+              "sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/network_properties.H",
+              "bytes": 6045,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/network_properties.H",
+              "sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2"
+            },
+            "expected_installed_sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2",
+            "expected_durable_sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/partition_functions.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 5780,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/partition_functions.H",
+              "sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/partition_functions.H",
+              "bytes": 5780,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/partition_functions.H",
+              "sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81"
+            },
+            "expected_installed_sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81",
+            "expected_durable_sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/pynucastro-info.txt",
+            "installed": {
+              "relative_path": null,
+              "bytes": 27,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/pynucastro-info.txt",
+              "bytes": 27,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            "expected_installed_sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+            "expected_durable_sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/rate_type.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 610,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/rate_type.H",
+              "sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/rate_type.H",
+              "bytes": 610,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/rate_type.H",
+              "sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b"
+            },
+            "expected_installed_sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b",
+            "expected_durable_sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/reaclib_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 533058,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/reaclib_rates.H",
+              "sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/reaclib_rates.H",
+              "bytes": 533058,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/reaclib_rates.H",
+              "sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e"
+            },
+            "expected_installed_sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e",
+            "expected_durable_sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/screen.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6677,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen.H",
+              "sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/screen.H",
+              "bytes": 6677,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/screen.H",
+              "sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250"
+            },
+            "expected_installed_sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250",
+            "expected_durable_sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/screen_data.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 978,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen_data.H",
+              "sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/screen_data.H",
+              "bytes": 978,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/screen_data.H",
+              "sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599"
+            },
+            "expected_installed_sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599",
+            "expected_durable_sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/table_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 12193,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/table_rates.H",
+              "sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/table_rates.H",
+              "bytes": 12193,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/table_rates.H",
+              "sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823"
+            },
+            "expected_installed_sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823",
+            "expected_durable_sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/tfactors.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 668,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/tfactors.H",
+              "sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/generated/tfactors.H",
+              "bytes": 668,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/generated/tfactors.H",
+              "sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3"
+            },
+            "expected_installed_sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3",
+            "expected_durable_sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "manifest.json",
+            "installed": {
+              "relative_path": null,
+              "bytes": 1420,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/manifest.json",
+              "sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/manifest.json",
+              "bytes": 1420,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/manifest.json",
+              "sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7"
+            },
+            "expected_installed_sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7",
+            "expected_durable_sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "network.cmake",
+            "installed": {
+              "relative_path": null,
+              "bytes": 250,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/network.cmake",
+              "sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/audit31/network.cmake",
+              "bytes": 250,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/audit31/network.cmake",
+              "sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4"
+            },
+            "expected_installed_sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4",
+            "expected_durable_sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          }
+        ],
+        "registered_inventory_matches_record": true,
+        "durable_inventory_matches_record": true,
+        "unexpected_installed_files": [],
+        "missing_installed_files": [],
+        "unexpected_durable_files": [],
+        "missing_durable_files": []
+      },
+      {
+        "package": "weak_urca",
+        "manifest": {
+          "auxiliary_equations": 1,
+          "class_name": "NetCustom_weak_urca",
+          "device_callable_math": true,
+          "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+          "explicit_weak_storage": true,
+          "generator_sha256": "1e1c32172e9321fda5874ebd7b326f434e716028ce08ca3811660e53917e3a08",
+          "generator_version": 4,
+          "header": "NetCustom_weak_urca.h",
+          "literal_zero_jacobian_entries_pruned": 0,
+          "network_id": "weak_urca",
+          "pynucastro_version": "2.12.0",
+          "rate_count": 2,
+          "recipe": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+          "recipe_sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2",
+          "runtime_name": "custom:weak_urca",
+          "schema_version": 1,
+          "source": "NetCustom_weak_urca.cpp",
+          "species": [
+            "ne23",
+            "na23"
+          ],
+          "species_count": 2,
+          "supports_nse": false,
+          "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+          "weak_composition_jacobian": true,
+          "weak_table_coordinate_derivatives": true
+        },
+        "files": [
+          {
+            "name": "NetCustom_weak_urca.cpp",
+            "installed": {
+              "relative_path": null,
+              "bytes": 33,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.cpp",
+              "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.cpp",
+              "bytes": 33,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.cpp",
+              "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+            },
+            "expected_installed_sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5",
+            "expected_durable_sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "NetCustom_weak_urca.h",
+            "installed": {
+              "relative_path": null,
+              "bytes": 5055,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.h",
+              "sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.h",
+              "bytes": 5055,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.h",
+              "sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a"
+            },
+            "expected_installed_sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a",
+            "expected_durable_sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "NetCustom_weak_urca.math.h",
+            "installed": {
+              "relative_path": null,
+              "bytes": 9202,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.math.h",
+              "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.math.h",
+              "bytes": 9202,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/NetCustom_weak_urca.math.h",
+              "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+            },
+            "expected_installed_sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417",
+            "expected_durable_sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/GNUmakefile",
+            "installed": {
+              "relative_path": null,
+              "bytes": 308,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/GNUmakefile",
+              "bytes": 308,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            "expected_installed_sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+            "expected_durable_sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/actual_network.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 1928,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_network.H",
+              "sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/actual_network.H",
+              "bytes": 1928,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/actual_network.H",
+              "sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f"
+            },
+            "expected_installed_sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f",
+            "expected_durable_sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/actual_rhs.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6753,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_rhs.H",
+              "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/actual_rhs.H",
+              "bytes": 6753,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/actual_rhs.H",
+              "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+            },
+            "expected_installed_sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69",
+            "expected_durable_sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/amrex_bridge.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6651,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/amrex_bridge.H",
+              "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/amrex_bridge.H",
+              "bytes": 6651,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/amrex_bridge.H",
+              "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+            },
+            "expected_installed_sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326",
+            "expected_durable_sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/approximate_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 641,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/approximate_rates.H",
+              "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/approximate_rates.H",
+              "bytes": 641,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/approximate_rates.H",
+              "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+            },
+            "expected_installed_sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c",
+            "expected_durable_sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/burn_type.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 436,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/burn_type.H",
+              "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/burn_type.H",
+              "bytes": 436,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/burn_type.H",
+              "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+            },
+            "expected_installed_sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9",
+            "expected_durable_sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/derived_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 512,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/derived_rates.H",
+              "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/derived_rates.H",
+              "bytes": 512,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/derived_rates.H",
+              "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+            },
+            "expected_installed_sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2",
+            "expected_durable_sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/fundamental_constants.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 1590,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/fundamental_constants.H",
+              "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/fundamental_constants.H",
+              "bytes": 1590,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/fundamental_constants.H",
+              "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+            },
+            "expected_installed_sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708",
+            "expected_durable_sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/interp_tools.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6650,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/interp_tools.H",
+              "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/interp_tools.H",
+              "bytes": 6650,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/interp_tools.H",
+              "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+            },
+            "expected_installed_sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f",
+            "expected_durable_sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/main.cpp",
+            "installed": {
+              "relative_path": null,
+              "bytes": 3150,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/main.cpp",
+              "bytes": 3150,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            "expected_installed_sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+            "expected_durable_sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/modified_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 543,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/modified_rates.H",
+              "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/modified_rates.H",
+              "bytes": 543,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/modified_rates.H",
+              "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+            },
+            "expected_installed_sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880",
+            "expected_durable_sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/network_properties.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 2538,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/network_properties.H",
+              "sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/network_properties.H",
+              "bytes": 2538,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/network_properties.H",
+              "sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0"
+            },
+            "expected_installed_sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0",
+            "expected_durable_sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/partition_functions.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 4927,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/partition_functions.H",
+              "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/partition_functions.H",
+              "bytes": 4927,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/partition_functions.H",
+              "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+            },
+            "expected_installed_sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2",
+            "expected_durable_sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/pynucastro-info.txt",
+            "installed": {
+              "relative_path": null,
+              "bytes": 27,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/pynucastro-info.txt",
+              "bytes": 27,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            "expected_installed_sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+            "expected_durable_sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/rate_type.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 614,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/rate_type.H",
+              "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/rate_type.H",
+              "bytes": 614,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/rate_type.H",
+              "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+            },
+            "expected_installed_sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a",
+            "expected_durable_sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/reaclib_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 421,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/reaclib_rates.H",
+              "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/reaclib_rates.H",
+              "bytes": 421,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/reaclib_rates.H",
+              "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+            },
+            "expected_installed_sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74",
+            "expected_durable_sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/screen.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 6681,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen.H",
+              "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/screen.H",
+              "bytes": 6681,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/screen.H",
+              "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+            },
+            "expected_installed_sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d",
+            "expected_durable_sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/screen_data.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 982,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen_data.H",
+              "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/screen_data.H",
+              "bytes": 982,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/screen_data.H",
+              "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+            },
+            "expected_installed_sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3",
+            "expected_durable_sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/table_rates.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 379882,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/table_rates.H",
+              "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/table_rates.H",
+              "bytes": 379882,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/table_rates.H",
+              "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+            },
+            "expected_installed_sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3",
+            "expected_durable_sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "generated/tfactors.H",
+            "installed": {
+              "relative_path": null,
+              "bytes": 672,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/tfactors.H",
+              "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/generated/tfactors.H",
+              "bytes": 672,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/generated/tfactors.H",
+              "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+            },
+            "expected_installed_sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a",
+            "expected_durable_sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "manifest.json",
+            "installed": {
+              "relative_path": null,
+              "bytes": 1095,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/manifest.json",
+              "sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/manifest.json",
+              "bytes": 1095,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/manifest.json",
+              "sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4"
+            },
+            "expected_installed_sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4",
+            "expected_durable_sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          },
+          {
+            "name": "network.cmake",
+            "installed": {
+              "relative_path": null,
+              "bytes": 258,
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/network.cmake",
+              "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+            },
+            "durable": {
+              "relative_path": "build/release-assets-recovery-20260907/networks/weak_urca/network.cmake",
+              "bytes": 258,
+              "path": "/home/shiroakane/ARCH/build/release-assets-recovery-20260907/networks/weak_urca/network.cmake",
+              "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+            },
+            "expected_installed_sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e",
+            "expected_durable_sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e",
+            "installed_matches_record": true,
+            "durable_matches_record": true,
+            "pair_byte_identical": true
+          }
+        ],
+        "registered_inventory_matches_record": true,
+        "durable_inventory_matches_record": true,
+        "unexpected_installed_files": [],
+        "missing_installed_files": [],
+        "unexpected_durable_files": [],
+        "missing_durable_files": []
+      }
+    ],
+    "total_files": 50,
+    "separation": "Configured generated packages are external runtime/build dependencies, not maintained ARCH source. Durable recovery copies remain inside ignored build output; retained recipes and generator are source-delivery inputs. Their presence here does not put generated packages or provider binaries in a Git source archive.",
+    "generator_identity": {
+      "ordered_modules": [
+        "GenerateNetwork.py",
+        "PortableCxx.py",
+        "PortableAdapter.py",
+        "WeakTables.py",
+        "WeakStorage.py"
+      ],
+      "combined_sha256": "1e1c32172e9321fda5874ebd7b326f434e716028ce08ca3811660e53917e3a08"
+    },
+    "manifests_match_current_generator": true,
+    "prior_recovery_exceptions": [
+      {
+        "package": "audit31",
+        "name": "manifest.json",
+        "prior_sha256": "fb1eeaf774a6640462e25a0bce790b45b9efe2235fb054ec9f508ad896245c9f",
+        "current_sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7"
+      }
+    ],
+    "default_package_root_entries": [
+      ".gitignore",
+      "README.md",
+      "cmake_probe"
+    ],
+    "empty_default_probe_directory": {
+      "path": "src/physics/network/custom/cmake_probe",
+      "is_directory": true,
+      "entries": [],
+      "interpretation": "Empty non-package directory; no network.cmake or generated source to register."
+    }
+  },
+  "reviewed_files": [
+    {
+      "relative_path": ".gitignore",
+      "bytes": 436,
+      "path": "/home/shiroakane/ARCH/.gitignore",
+      "sha256": "2dd290c4dddf46b39e37c69089c060cf76937ecffecc171c41e3b86dc015aff0"
+    },
+    {
+      "relative_path": ".gitattributes",
+      "bytes": 83,
+      "path": "/home/shiroakane/ARCH/.gitattributes",
+      "sha256": "3275fc195e1bb0cb4f1bec4f0b220841c9b6d78d3aeecdf2da14047c345b4612"
+    },
+    {
+      "relative_path": "CMakeLists.txt",
+      "bytes": 93896,
+      "path": "/home/shiroakane/ARCH/CMakeLists.txt",
+      "sha256": "fb661cc64a831b71ba6bdba26a16d44607bd41520547c519b2c69110205fc7c7"
+    },
+    {
+      "relative_path": "README.md",
+      "bytes": 16923,
+      "path": "/home/shiroakane/ARCH/README.md",
+      "sha256": "dfe700a68107c3b6f4bc6007b95d6bc422e208478c078d1cdfe41b9569ab6b52"
+    },
+    {
+      "relative_path": "README.zh-CN.md",
+      "bytes": 15847,
+      "path": "/home/shiroakane/ARCH/README.zh-CN.md",
+      "sha256": "2469f30dd8d1da6aea97c22145b7dcc285f328a3eb4503347ace84053c8ddbe8"
+    },
+    {
+      "relative_path": "docs/Reference.md",
+      "bytes": 54957,
+      "path": "/home/shiroakane/ARCH/docs/Reference.md",
+      "sha256": "7fbc7ec48002302afaccfd118deec9b9f0a513654280f17ac9c2e3033bf2793b"
+    },
+    {
+      "relative_path": "docs/Reference.zh-CN.md",
+      "bytes": 49989,
+      "path": "/home/shiroakane/ARCH/docs/Reference.zh-CN.md",
+      "sha256": "87cb5be30015f5485ac6c96efa188e4d57464dd011b18cc9833161791233b376"
+    },
+    {
+      "relative_path": "THIRD_PARTY_NOTICES.md",
+      "bytes": 7324,
+      "path": "/home/shiroakane/ARCH/THIRD_PARTY_NOTICES.md",
+      "sha256": "471d1a028427ad2789f328012eb41c4f5a94a6fc75b460d43b4ca0e014fdf8b3"
+    },
+    {
+      "relative_path": "THIRD_PARTY_NOTICES.zh-CN.md",
+      "bytes": 6519,
+      "path": "/home/shiroakane/ARCH/THIRD_PARTY_NOTICES.zh-CN.md",
+      "sha256": "fbe93de164f8510f306c84465d5ecabd88e9a762951955cd9d933baeb58a0dd2"
+    },
+    {
+      "relative_path": "src/physics/network/custom/README.md",
+      "bytes": 6644,
+      "path": "/home/shiroakane/ARCH/src/physics/network/custom/README.md",
+      "sha256": "2d90b139a33154776a82e5cc61c5cf3bf150d9769822e5e8a7547488d7ba569d"
+    },
+    {
+      "relative_path": "validation/network/README.md",
+      "bytes": 11513,
+      "path": "/home/shiroakane/ARCH/validation/network/README.md",
+      "sha256": "7adc75508e223d3c145c196906d7dd24c5d3fc8ee0f8e79321fa77ccc9465422"
+    },
+    {
+      "relative_path": "validation/network/README.zh-CN.md",
+      "bytes": 10650,
+      "path": "/home/shiroakane/ARCH/validation/network/README.zh-CN.md",
+      "sha256": "7221769f5327a301e587ca502cdaf359595b183f2bfee51e814f255b4fe5d55b"
+    },
+    {
+      "relative_path": "examples/network/CustomNetworkRecipe.py",
+      "bytes": 657,
+      "path": "/home/shiroakane/ARCH/examples/network/CustomNetworkRecipe.py",
+      "sha256": "53e60573c734d726e4b6d4373cd21b3ab5085529aff7b1b6db495710dae1b96e"
+    },
+    {
+      "relative_path": "validation/network/inputs/audit31.py",
+      "bytes": 439,
+      "path": "/home/shiroakane/ARCH/validation/network/inputs/audit31.py",
+      "sha256": "c5c8aba5b49ee7a85b8723b56119ea6ad1e819d9f61235f9e3d8df23dd4be449"
+    },
+    {
+      "relative_path": "validation/network/inputs/weak_urca.py",
+      "bytes": 648,
+      "path": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+      "sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2"
+    },
+    {
+      "relative_path": "tools/network/GenerateNetwork.py",
+      "bytes": 23553,
+      "path": "/home/shiroakane/ARCH/tools/network/GenerateNetwork.py",
+      "sha256": "ced4fde476b49bae369241528a200c53c4c0609d4f774799dc5ac45e172fb2cc"
+    },
+    {
+      "relative_path": "tools/network/PortableAdapter.py",
+      "bytes": 6081,
+      "path": "/home/shiroakane/ARCH/tools/network/PortableAdapter.py",
+      "sha256": "a4e10ffc4eb841f52fef199eea23aa1bafae277f1864530c9342859920142f07"
+    },
+    {
+      "relative_path": "tools/network/PortableCxx.py",
+      "bytes": 13148,
+      "path": "/home/shiroakane/ARCH/tools/network/PortableCxx.py",
+      "sha256": "4d34d8db57a98c6c779a440291a86a60acd8bf6b3e4547da5ceca3b47fc36429"
+    },
+    {
+      "relative_path": "tools/network/WeakStorage.py",
+      "bytes": 10189,
+      "path": "/home/shiroakane/ARCH/tools/network/WeakStorage.py",
+      "sha256": "d26ca08e6828a0de0e7b4ad4b0d0902567c9f3985b67b29427a7d34c469520a3"
+    },
+    {
+      "relative_path": "tools/network/WeakTables.py",
+      "bytes": 13426,
+      "path": "/home/shiroakane/ARCH/tools/network/WeakTables.py",
+      "sha256": "b0510940b282051a524a2c193d1855978d5f968441b40085282282e83ba1cdd5"
+    },
+    {
+      "relative_path": "tools/run_memory_guarded.py",
+      "bytes": 19806,
+      "path": "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+      "sha256": "5dff04b041ee06edab108f78b4fdac294673c7e2cc61db9c334121794846b31b"
+    },
+    {
+      "relative_path": "tools/validation_provenance.py",
+      "bytes": 22879,
+      "path": "/home/shiroakane/ARCH/tools/validation_provenance.py",
+      "sha256": "2c12c19eb88d9fdcbf4ad06652f4f0164658147d02fe8385a405b59861cfe653"
+    },
+    {
+      "relative_path": "cmake/FindCuDSS.cmake",
+      "bytes": 903,
+      "path": "/home/shiroakane/ARCH/cmake/FindCuDSS.cmake",
+      "sha256": "5a2e9863e09abe14ef756feb51d53b0d4d70237fef8c6e7cca5b15a1bc352a7e"
+    },
+    {
+      "relative_path": "cmake/CudaBurnNetworks.cmake",
+      "bytes": 1370,
+      "path": "/home/shiroakane/ARCH/cmake/CudaBurnNetworks.cmake",
+      "sha256": "ee3cd84ee8fff3c488090557f1121358f1f0be3609cb663cee86fa025db7911a"
+    },
+    {
+      "relative_path": "cmake/CudaBurnDenseRoutes.cmake",
+      "bytes": 3040,
+      "path": "/home/shiroakane/ARCH/cmake/CudaBurnDenseRoutes.cmake",
+      "sha256": "31e4158938d75933c16b676a5f56cfb9141a658ab8127a6c7e7c2c313c560ede"
+    },
+    {
+      "relative_path": "cmake/CudaBurnSparseRoutes.cmake",
+      "bytes": 4037,
+      "path": "/home/shiroakane/ARCH/cmake/CudaBurnSparseRoutes.cmake",
+      "sha256": "c8fe8d019db3326b91d8481cac3b232f14ea9d9ba48bfe0bab6ac6e57f83407a"
+    },
+    {
+      "relative_path": "cmake/CudaCodeImages.cmake",
+      "bytes": 1839,
+      "path": "/home/shiroakane/ARCH/cmake/CudaCodeImages.cmake",
+      "sha256": "9d79198d371bcaf4eedf538f060cfbf65759fa6b08663951849aa1cb48deb32c"
+    },
+    {
+      "relative_path": "cmake/CudaCustomDenseRoute.cu.in",
+      "bytes": 1470,
+      "path": "/home/shiroakane/ARCH/cmake/CudaCustomDenseRoute.cu.in",
+      "sha256": "e843549a715e3f81af50e8b50eb52b4634a9d23dd94a4daa4559e987ce7ed9d0"
+    },
+    {
+      "relative_path": "cmake/templates/CudaBurnDenseRoute.cu.in",
+      "bytes": 1686,
+      "path": "/home/shiroakane/ARCH/cmake/templates/CudaBurnDenseRoute.cu.in",
+      "sha256": "62de07b0f9555349de70f0407597298bb161ec9dea18ce1594e5a65b9b9a7310"
+    },
+    {
+      "relative_path": "cmake/templates/CudaBurnSparseOwner.cu.in",
+      "bytes": 720,
+      "path": "/home/shiroakane/ARCH/cmake/templates/CudaBurnSparseOwner.cu.in",
+      "sha256": "b430b5f3afeeddfca245b132800cd9f8c844cab0b5828e7504575e6f02b6df20"
+    },
+    {
+      "relative_path": "validation/network/run_weak_validation.py",
+      "bytes": 4998,
+      "path": "/home/shiroakane/ARCH/validation/network/run_weak_validation.py",
+      "sha256": "af39fd2a5c0f06ca32832da6192c793fe6db0d3dbcdf5a80c01d4b5ddd261591"
+    },
+    {
+      "relative_path": "validation/network/run_sparse_validation.py",
+      "bytes": 8609,
+      "path": "/home/shiroakane/ARCH/validation/network/run_sparse_validation.py",
+      "sha256": "1df210c56ee7253fbe4040689c03f8781b4d6895012119dcbc3c06b6eca727a6"
+    },
+    {
+      "relative_path": "validation/network/runtime_cases.json",
+      "bytes": 7081,
+      "path": "/home/shiroakane/ARCH/validation/network/runtime_cases.json",
+      "sha256": "d1a310873df1349b9c3dda8eccd6bb7b172c86533d4ae2ce5d7bf5db35bd4caf"
+    },
+    {
+      "relative_path": "src/physics/eos/TabularEOS.md",
+      "bytes": 9264,
+      "path": "/home/shiroakane/ARCH/src/physics/eos/TabularEOS.md",
+      "sha256": "dde1001f741fd94dadaabb07ccaca39f21f7eea5bdf8be1ee2f3b08efa6698ca"
+    },
+    {
+      "relative_path": "LICENSE",
+      "bytes": 1577,
+      "path": "/home/shiroakane/ARCH/LICENSE",
+      "sha256": "3ba654131eb496eb3879e53a20270639ca688a05bd404a564ed971714d6189e9"
+    },
+    {
+      "relative_path": "LICENSES/AMReX-Astro-Microphysics.txt",
+      "bytes": 1857,
+      "path": "/home/shiroakane/ARCH/LICENSES/AMReX-Astro-Microphysics.txt",
+      "sha256": "b1aa5f20ff0afe62d42587a3a1c005e3bdac00ceaf04526063cb01c14f59a125"
+    },
+    {
+      "relative_path": "LICENSES/SuiteSparse-KLU.txt",
+      "bytes": 6231,
+      "path": "/home/shiroakane/ARCH/LICENSES/SuiteSparse-KLU.txt",
+      "sha256": "f34add437e507b255c7256bcd2a4b6d766bf0d37f315575b0088eeadd0bec6ce"
+    },
+    {
+      "relative_path": "LICENSES/LGPL-2.1.txt",
+      "bytes": 26530,
+      "path": "/home/shiroakane/ARCH/LICENSES/LGPL-2.1.txt",
+      "sha256": "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551"
+    },
+    {
+      "relative_path": "EOS_toolkit/README.md",
+      "bytes": 1198,
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/README.md",
+      "sha256": "b5b2eeca89b5715ed9e624ebdd39e1be77c11200e6c01283bfcb4c9b41773f65"
+    },
+    {
+      "relative_path": "EOS_toolkit/README.zh-CN.md",
+      "bytes": 1158,
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/README.zh-CN.md",
+      "sha256": "40f69e01901fa3eb080d33d920a4ff69cb09be58a09f0be5e27466233a21d0f1"
+    },
+    {
+      "relative_path": "src/physics/network/custom/.gitignore",
+      "bytes": 24,
+      "path": "/home/shiroakane/ARCH/src/physics/network/custom/.gitignore",
+      "sha256": "9cf7196d4fe318e7c3edcde08bb75beaa78a769cbb1b7d57cb106436430004ce"
+    },
+    {
+      "relative_path": "src/cuda/microphysics/CuDssSparseSolver.cpp",
+      "bytes": 18581,
+      "path": "/home/shiroakane/ARCH/src/cuda/microphysics/CuDssSparseSolver.cpp",
+      "sha256": "b672a53a59ded42264dc7e19d2d65ca428599242fa3ee745110a0787eec35af7"
+    },
+    {
+      "relative_path": "build/release-core-throughput-cmake/CMakeCache.txt",
+      "bytes": 51178,
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/CMakeCache.txt",
+      "sha256": "dc174e4e6baf518b2e2af6bba7d89654d7851752806a8d1442635ad611362fd7"
+    },
+    {
+      "relative_path": "build/release-core-throughput-cmake/compile_commands.json",
+      "bytes": 363314,
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/compile_commands.json",
+      "sha256": "5b40fb251d0de24053b6a7a0bbfb32f29ab6c4ed71c0e6609165e43ce7ed1e3c"
+    },
+    {
+      "relative_path": "build/dependencies/cudss-cu12/nvidia/cu12/include/cudss.h",
+      "bytes": 9759,
+      "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include/cudss.h",
+      "sha256": "d328a3bec10ad702174c61c7701daada7aa78db3bda265b30751ff485de62b50"
+    },
+    {
+      "relative_path": "build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+      "bytes": 149210177,
+      "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+      "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+    },
+    {
+      "relative_path": "build/dependencies/cudss-cu12/nvidia_cudss_cu12-0.8.0.10.dist-info/licenses/LICENSE.txt",
+      "bytes": 24274,
+      "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia_cudss_cu12-0.8.0.10.dist-info/licenses/LICENSE.txt",
+      "sha256": "b18d5dd4bd2c3d4ba535a8c34c7434610345fe5c487d5f2773b6a23035e559c7"
+    },
+    {
+      "relative_path": "build/release-core-throughput-cmake/build.ninja",
+      "bytes": 762585,
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/build.ninja",
+      "sha256": "bed52ff1f765889beea125fb7cf6ff43a0ed6a24a3e2f9111ab71a56f512efe7"
+    }
+  ],
+  "observations_only": true,
+  "build_delivery_observations": {
+    "compile_inventory": {
+      "entries": 280,
+      "entries_with_march_native": 159,
+      "first_native_source": "/home/shiroakane/ARCH/src/numerics/diffusion/DiffFunction.cpp"
+    },
+    "configured_documented_targets": [
+      {
+        "target": "ARCH",
+        "present": true,
+        "declarations": [
+          {
+            "line": 6794,
+            "rule": "phony",
+            "declaration_sha256": "3c3b7a8bbfcd9775dc40dbade367db75d3050bd90be7e4253c3d1f830e6847f5"
+          }
+        ]
+      },
+      {
+        "target": "arch_cuda_single_level_validation",
+        "present": true,
+        "declarations": [
+          {
+            "line": 4804,
+            "rule": "CXX_EXECUTABLE_LINKER__arch_cuda_single_level_validation_Release",
+            "declaration_sha256": "93e04917d47982356fa7393280c4199629c2d304f86a3dec317dae1cd94be8bf"
+          }
+        ]
+      },
+      {
+        "target": "arch_cuda_generated_weak_trajectory_weak_urca",
+        "present": true,
+        "declarations": [
+          {
+            "line": 3605,
+            "rule": "CXX_EXECUTABLE_LINKER__arch_cuda_generated_weak_trajectory_weak_urca_Release",
+            "declaration_sha256": "37092df856408372fd58373f2c8d1a1634a95e0e1f8ff5bf3f3b369f30ebba6c"
+          }
+        ]
+      },
+      {
+        "target": "arch_cuda_generated_weak_factory_weak_urca",
+        "present": true,
+        "declarations": [
+          {
+            "line": 3643,
+            "rule": "CXX_EXECUTABLE_LINKER__arch_cuda_generated_weak_factory_weak_urca_Release",
+            "declaration_sha256": "fbbdd71f15ba7c39195131eba6db86fcfbb12e60420a44597449feac87e8c226"
+          }
+        ]
+      },
+      {
+        "target": "arch_cuda_generated_sparse_burn_audit31",
+        "present": true,
+        "declarations": [
+          {
+            "line": 3530,
+            "rule": "CXX_EXECUTABLE_LINKER__arch_cuda_generated_sparse_burn_audit31_Release",
+            "declaration_sha256": "87609ce47c64270e3a6f40864d531d9da2f779ce24031122eeffb264aef03c56"
+          }
+        ]
+      }
+    ],
+    "portability": "The observed reference configuration targets CUDA architecture 86 and native CPU optimization. These local executables are not a portable binary release; source recipients select compatible CUDA code images, toolchain and target CPU and rebuild. cuDSS is separately installed and not bundled by this source audit.",
+    "runtime_provider": "The configured cuDSS header reports API 0.8 and the library and complete package license are present. This is a file-level availability check, not a new provider runtime test.",
+    "generator": "Ninja",
+    "build_manifest": {
+      "relative_path": "build/release-core-throughput-cmake/build.ninja",
+      "bytes": 762585,
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/build.ninja",
+      "sha256": "bed52ff1f765889beea125fb7cf6ff43a0ed6a24a3e2f9111ab71a56f512efe7"
+    }
+  },
+  "setup_review": [
+    {
+      "documents": [
+        "README.md",
+        "README.zh-CN.md"
+      ],
+      "subject": "CPU/CUDA build and provider discovery",
+      "observed_dependencies": [
+        "CMakeLists.txt",
+        "cmake/FindCuDSS.cmake",
+        "cmake/CudaCodeImages.cmake",
+        "tools/run_memory_guarded.py"
+      ],
+      "explanation": "Documented flags exist; CMake includes the available CUDA code-image module and adds cmake to CMAKE_MODULE_PATH before finding cuDSS. CPU KLU remains enabled by default and the CUDA example enables optional cuDSS. The explicit runtime output directory matches the documented binary path."
+    },
+    {
+      "documents": [
+        "validation/network/README.md",
+        "validation/network/README.zh-CN.md",
+        "src/physics/network/custom/README.md"
+      ],
+      "subject": "Generated-network reproduction",
+      "observed_dependencies": [
+        "tools/network/GenerateNetwork.py",
+        "tools/network/PortableAdapter.py",
+        "tools/network/PortableCxx.py",
+        "tools/network/WeakTables.py",
+        "tools/network/WeakStorage.py",
+        "validation/network/inputs/audit31.py",
+        "validation/network/inputs/weak_urca.py",
+        "examples/network/CustomNetworkRecipe.py"
+      ],
+      "explanation": "Maintained reproduction names Python 3.11 and pynucastro 2.12.0, both recipes, the actual shared generator modules and five configured targets. Source delivery carries generation inputs; external installed packages and ignored recovery copies are inventoried separately."
+    },
+    {
+      "documents": [
+        "EOS_toolkit/README.md",
+        "EOS_toolkit/README.zh-CN.md",
+        "docs/Reference.md",
+        "docs/Reference.zh-CN.md"
+      ],
+      "subject": "EOS runtime table",
+      "observed_dependencies": [
+        ".gitattributes",
+        "EOS_toolkit/tables/helmholtz/helm_table.dat"
+      ],
+      "explanation": "The documented Helmholtz path exists as actual table bytes and agrees with the indexed LFS object size and SHA. A pointer-only checkout still requires git lfs pull."
+    }
+  ],
+  "delivery_boundaries": {
+    "worktree_not_git_publication": "139 maintained source/validation files are presently untracked but not ignored. They must accompany any source delivery; a HEAD-only archive would omit them. This audit performs no staging, commit, push or packaging.",
+    "generated_packages": "The configured external package root is under /tmp; byte-identical recovery copies are under ignored build/. Neither location is guaranteed in a Git source archive. Maintained recipes and generator modules support local regeneration. An exact generated-package archive would need the complete 25-file package sets plus applicable upstream notices and data provenance.",
+    "excluded_assets": "Stored results, generated checkpoints/plots, build outputs, Python caches, external packages and provider binaries are not silently treated as maintained code. The removed validation/network/metrics.csv is outside the code/input fingerprint and does not substitute for current JSON evidence.",
+    "binary_distribution": "Native CPU flags and CUDA architecture 86 describe this local build only. Target code images, compatible runtime/provider libraries and third-party obligations must be addressed separately for a binary distribution.",
+    "third_party_contact": {
+      "status": "pending",
+      "notice": "THIRD_PARTY_NOTICES.md",
+      "statement": "The project attributes the Timmes-derived networks, NSE, Helmholtz code and table and states that the author has not yet been contacted. Contact and redistribution confirmation remain pending. Attribution, LFS materialization, this file audit and successful tests do not establish permission."
+    },
+    "unperformed_checks": [
+      "No new compilation or GPU execution.",
+      "No full release index or final scientific/sanitizer acceptance.",
+      "No clean-clone or fresh-generation run.",
+      "No redistribution authorization or publication decision."
+    ]
+  },
+  "collection_notes": [
+    "Source identity was read twice during the initial inventory and matched exactly; subsequent supplemental reads checked documentation dependencies and existing build manifests only.",
+    "No build, executable, profiler, generator or full acceptance index was run by this asset audit.",
+    "The audit JSON records file-level observations, not an explicit manual.delivery_assets PASS declaration."
+  ]
+}

@@ -1,5 +1,7 @@
 #include "cuda/runtime/CudaBackend.h"
 #include "io/hdf5/HDF5Writer.h"
+#include "core/RuntimeParams.h"
+#include "../checkpoint_conservation_metrics.h"
 
 #include <algorithm>
 #include <array>
@@ -414,11 +416,85 @@ void validate_burn_rkl_trace(const std::filesystem::path& trace_path,
     require(cursor == rows.size(), "Burn+RKL trace has trailing operations");
 }
 
+enum class CheckpointComparison { Reproducibility, StepDiagnostic, PhysicalTime };
+
+const char* comparison_name(CheckpointComparison mode)
+{
+    switch (mode) {
+    case CheckpointComparison::Reproducibility: return "reproducibility";
+    case CheckpointComparison::StepDiagnostic: return "step-diagnostic";
+    case CheckpointComparison::PhysicalTime: return "physical-time";
+    }
+    throw std::invalid_argument("unknown checkpoint comparison mode");
+}
+
+void check_evolution_timing(const io::CheckpointData& reference,
+                            const io::CheckpointData& candidate,
+                            CheckpointComparison mode, double target_time)
+{
+    for (const auto* state : {&reference, &candidate}) {
+        require(state->step_count >= 0 && std::isfinite(state->time)
+                    && state->time >= 0.0 && state->has_timestep_state
+                    && std::isfinite(state->dt_old) && state->dt_old >= 0.0
+                    && std::isfinite(state->dt_burn) && state->dt_burn >= 0.0,
+                "checkpoint evolution metadata is invalid");
+    }
+    if (mode == CheckpointComparison::PhysicalTime) {
+        // The driver caps the final step at this prescribed binary64 time.
+        // Verify the actual saved state; never rewrite its timestamp or borrow
+        // a field tolerance for the independent variable.
+        require(std::isfinite(target_time) && target_time > 0.0
+                    && reference.time == target_time && candidate.time == target_time,
+                "checkpoint prescribed physical-time mismatch");
+    } else {
+        require(reference.step_count == candidate.step_count,
+                "checkpoint accepted-step mismatch");
+        if (mode == CheckpointComparison::Reproducibility)
+            require(within_checkpoint_time_budget(
+                        reference.time, candidate.time, reference.step_count),
+                    "checkpoint physical-time mismatch");
+    }
+}
+
+void test_evolution_timing()
+{
+    io::CheckpointData a, b;
+    a.step_count = b.step_count = 5;
+    a.time = b.time = 0.01;
+    a.has_timestep_state = b.has_timestep_state = true;
+    a.dt_old = b.dt_old = a.dt_burn = b.dt_burn = 1e-4;
+    const auto reject = [](auto&& action) {
+        bool failed = false;
+        try { action(); } catch (const std::runtime_error&) { failed = true; }
+        require(failed, "invalid temporal comparison was accepted");
+    };
+    check_evolution_timing(a, b, CheckpointComparison::Reproducibility, 0.0);
+    b.step_count = 6;
+    b.dt_old *= 0.5;
+    check_evolution_timing(a, b, CheckpointComparison::PhysicalTime, 0.01);
+    reject([&] { check_evolution_timing(a, b, CheckpointComparison::Reproducibility, 0.0); });
+    b.step_count = 5;
+    b.time -= 1e-15;
+    check_evolution_timing(a, b, CheckpointComparison::StepDiagnostic, 0.0);
+    reject([&] { check_evolution_timing(a, b, CheckpointComparison::PhysicalTime, 0.01); });
+    reject([&] { check_evolution_timing(a, b, CheckpointComparison::Reproducibility, 0.0); });
+    b.time = std::numeric_limits<double>::quiet_NaN();
+    reject([&] { check_evolution_timing(a, b, CheckpointComparison::StepDiagnostic, 0.0); });
+    b.time = a.time;
+    b.dt_burn = std::numeric_limits<double>::infinity();
+    reject([&] { check_evolution_timing(a, b, CheckpointComparison::PhysicalTime, a.time); });
+    std::cout << "checkpoint temporal comparison controls passed\n";
+}
+
 void compare_real_checkpoints(const std::filesystem::path& reference_path,
                               const std::filesystem::path& candidate_path,
                               double rtol, double atol,
                               double enuc_scale_rtol,
-                              double dt_burn_rtol)
+                              double dt_burn_rtol,
+                              const std::filesystem::path& intermediate_source = {},
+                              const std::filesystem::path& terminal_source = {},
+                              CheckpointComparison mode = CheckpointComparison::Reproducibility,
+                              double target_time = 0.0)
 {
     require(std::isfinite(rtol) && rtol >= 0.0
                 && std::isfinite(atol) && atol >= 0.0
@@ -430,32 +506,53 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
         io::read_hdf5_chk_impl(reference_path.string());
     const io::CheckpointData candidate =
         io::read_hdf5_chk_impl(candidate_path.string());
-    require(reference.step_count == candidate.step_count,
-            "checkpoint accepted-step mismatch");
-    require(within_checkpoint_time_budget(
-                reference.time, candidate.time, reference.step_count),
-            "checkpoint physical-time mismatch");
+    check_evolution_timing(reference, candidate, mode, target_time);
     const double dt_burn_scale = std::max(
         std::abs(reference.dt_burn), std::abs(candidate.dt_burn));
     const double dt_burn_absolute = std::abs(
         reference.dt_burn - candidate.dt_burn);
     const double dt_burn_relative = dt_burn_scale == 0.0
         ? 0.0 : dt_burn_absolute / dt_burn_scale;
-    require(reference.has_timestep_state && candidate.has_timestep_state
-                && within_checkpoint_time_budget(
+    const bool controller_matches = within_checkpoint_time_budget(
                     reference.dt_old, candidate.dt_old,
                     reference.step_count)
                 && (within_checkpoint_time_budget(
                         reference.dt_burn, candidate.dt_burn,
                         reference.step_count)
                     || dt_burn_absolute
-                           <= atol + dt_burn_rtol * dt_burn_scale),
-            "checkpoint timestep-controller state mismatch");
-    require(reference.chk_file_index == candidate.chk_file_index
-                && reference.plt_file_index == candidate.plt_file_index
+                           <= atol + dt_burn_rtol * dt_burn_scale);
+    if (mode == CheckpointComparison::Reproducibility)
+        require(controller_matches, "checkpoint timestep-controller state mismatch");
+    // A stop/restart has one additional forced CHK/PLT output compared with
+    // the uninterrupted run. Derive that history from the actual source pair;
+    // never reset counters or accept an arbitrary caller-supplied offset.
+    std::int64_t chk_offset = 0, plt_offset = 0;
+    require(intermediate_source.empty() == terminal_source.empty(),
+            "terminal restart requires both source checkpoints");
+    if (!terminal_source.empty()) {
+        require(mode == CheckpointComparison::Reproducibility,
+                "restart requires strict reproducibility comparison");
+        const auto before = io::read_hdf5_chk_impl(intermediate_source.string());
+        const auto stopped = io::read_hdf5_chk_impl(terminal_source.string());
+        require(before.resume_after_regrid && !stopped.resume_after_regrid
+                    && before.step_count < stopped.step_count
+                    && stopped.step_count < candidate.step_count,
+                "terminal restart source step/phase history is invalid");
+        chk_offset = std::int64_t(stopped.chk_file_index) - before.chk_file_index;
+        plt_offset = std::int64_t(stopped.plt_file_index) - before.plt_file_index;
+        require(chk_offset == 1 && plt_offset == 1,
+                "terminal source must add exactly one forced checkpoint/plot");
+    }
+    const bool output_indices_match =
+                std::int64_t(reference.chk_file_index) + chk_offset == candidate.chk_file_index
+                && std::int64_t(reference.plt_file_index) + plt_offset == candidate.plt_file_index
                 && reference.resume_after_regrid
-                    == candidate.resume_after_regrid,
-            "checkpoint output index or loop phase mismatch");
+                    == candidate.resume_after_regrid;
+    require(reference.chk_file_index >= 0 && candidate.chk_file_index >= 0
+                && reference.plt_file_index >= 0 && candidate.plt_file_index >= 0,
+            "checkpoint output index is invalid");
+    if (mode != CheckpointComparison::PhysicalTime)
+        require(output_indices_match, "checkpoint output index or loop phase mismatch");
     require(reference.dim == candidate.dim
                 && reference.geometry == candidate.geometry
                 && reference.num_species == candidate.num_species
@@ -506,12 +603,19 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
         FieldView{"eng", &reference.eng, &candidate.eng},
         FieldView{"enuc_rate", &reference.enuc_rate,
                   &candidate.enuc_rate},
-        FieldView{"rhoX", &reference.rhoX, &candidate.rhoX}};
+        FieldView{"rhoX", &reference.rhoX, &candidate.rhoX},
+        FieldView{"X", &reference.mass_fractions, &candidate.mass_fractions}};
+    const bool native_composition_compared =
+        reference.has_mass_fractions && candidate.has_mass_fractions;
     double global_max_abs = 0.0;
     double global_max_rel = 0.0;
     double global_max_field_normalized = 0.0;
     double max_enuc_normalized = 0.0;
     for (const auto& field : fields) {
+        // Older checkpoints contain only species densities. When both files
+        // preserve the native state, apply the same field policy to it too.
+        if (std::string_view(field.name) == "X" && !native_composition_compared)
+            continue;
         require(field.reference->size() == field.candidate->size(),
                 "checkpoint field shape mismatch");
         double field_scale = 0.0;
@@ -562,6 +666,17 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
     }
     std::cout << "{\"status\":\"pass\",\"step\":"
               << reference.step_count << ",\"time\":" << reference.time
+              << ",\"candidate_step\":" << candidate.step_count
+              << ",\"candidate_time\":" << candidate.time
+              << ",\"comparison_mode\":\"" << comparison_name(mode) << '"'
+              << ",\"target_time\":" << target_time
+              << ",\"time_roundoff_matches\":"
+              << (within_checkpoint_time_budget(reference.time, candidate.time,
+                                                reference.step_count) ? "true" : "false")
+              << ",\"controller_matches\":" << (controller_matches ? "true" : "false")
+              << ",\"output_indices_match\":" << (output_indices_match ? "true" : "false")
+              << ",\"native_composition_compared\":"
+              << (native_composition_compared ? "true" : "false")
               << ",\"dimension\":" << reference.dim
               << ",\"blocks\":" << reference.levels.size()
               << ",\"min_level\":"
@@ -571,11 +686,16 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
               << *std::max_element(reference.levels.begin(),
                                    reference.levels.end())
               << ",\"dt_old\":" << reference.dt_old
+              << ",\"candidate_dt_old\":" << candidate.dt_old
               << ",\"dt_burn\":" << reference.dt_burn
               << ",\"candidate_dt_burn\":" << candidate.dt_burn
               << ",\"dt_burn_relative\":" << dt_burn_relative
               << ",\"chk_file_index\":" << reference.chk_file_index
               << ",\"plt_file_index\":" << reference.plt_file_index
+              << ",\"candidate_chk_file_index\":" << candidate.chk_file_index
+              << ",\"candidate_plt_file_index\":" << candidate.plt_file_index
+              << ",\"output_index_offsets\":{\"checkpoint\":" << chk_offset
+              << ",\"plot\":" << plt_offset << '}'
               << ",\"resume_after_regrid\":"
               << (reference.resume_after_regrid ? "true" : "false")
               << ",\"topology\":[";
@@ -595,68 +715,38 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
               << max_enuc_normalized << "}\n";
 }
 
-void print_conservation_metrics(const std::filesystem::path& checkpoint_path)
+void print_conservation_metrics(const std::filesystem::path& checkpoint_path,
+                                const char* parameter_path = nullptr)
 {
     const io::CheckpointData checkpoint =
         io::read_hdf5_chk_impl(checkpoint_path.string());
-    require(checkpoint.geometry == "cartesian"
-                && checkpoint.dim >= 1 && checkpoint.dim <= 3
-                && !checkpoint.levels.empty(),
-            "conservation metrics require a Cartesian AMR checkpoint");
     const std::size_t blocks = checkpoint.levels.size();
-    const std::size_t cells = blocks * checkpoint.cells_per_block;
-    require(checkpoint.rho.size() == cells
-                && checkpoint.mom_u.size() == cells
-                && checkpoint.mom_v.size() == cells
-                && checkpoint.mom_w.size() == cells
-                && checkpoint.eng.size() == cells
-                && checkpoint.rhoX.size()
-                    == static_cast<std::size_t>(checkpoint.num_species)
-                        * cells,
-            "conservation checkpoint field shape drifted");
-
-    long double mass = 0.0L;
-    long double mom_u = 0.0L;
-    long double mom_v = 0.0L;
-    long double mom_w = 0.0L;
-    long double energy = 0.0L;
-    std::vector<long double> species(
-        static_cast<std::size_t>(checkpoint.num_species), 0.0L);
-    for (std::size_t block = 0; block < blocks; ++block) {
-        const int exponent = -checkpoint.dim * checkpoint.levels[block];
-        const long double measure = std::ldexp(1.0L, exponent);
-        require(std::isfinite(measure) && measure > 0.0L,
-                "conservation checkpoint level is invalid");
-        for (std::size_t local = 0; local < checkpoint.cells_per_block;
-             ++local) {
-            const std::size_t index =
-                block * checkpoint.cells_per_block + local;
-            mass += measure * checkpoint.rho[index];
-            mom_u += measure * checkpoint.mom_u[index];
-            mom_v += measure * checkpoint.mom_v[index];
-            mom_w += measure * checkpoint.mom_w[index];
-            energy += measure * checkpoint.eng[index];
-            for (std::size_t component = 0; component < species.size();
-                 ++component)
-                species[component] += measure * checkpoint.rhoX[
-                    component * cells + index];
-        }
-    }
+    const SimConfig config = parameter_path == nullptr
+        ? SimConfig{} : RuntimeParams::Load(parameter_path);
+    const auto totals = checkpoint_metrics::compute(
+        checkpoint, parameter_path == nullptr ? nullptr : &config.grid);
     std::cout << std::setprecision(17)
               << "{\"step\":" << checkpoint.step_count
               << ",\"time\":" << checkpoint.time
+              << ",\"resume_after_regrid\":" << (checkpoint.resume_after_regrid ? "true" : "false")
+              << ",\"chk_file_index\":" << checkpoint.chk_file_index
+              << ",\"plt_file_index\":" << checkpoint.plt_file_index
               << ",\"blocks\":" << blocks
-              << ",\"mass\":" << static_cast<double>(mass)
-              << ",\"mom_u\":" << static_cast<double>(mom_u)
-              << ",\"mom_v\":" << static_cast<double>(mom_v)
-              << ",\"mom_w\":" << static_cast<double>(mom_w)
-              << ",\"energy\":" << static_cast<double>(energy)
+              << ",\"mass\":" << static_cast<double>(totals.mass)
+              << ",\"mom_u\":" << static_cast<double>(totals.mom_u)
+              << ",\"mom_v\":" << static_cast<double>(totals.mom_v)
+              << ",\"mom_w\":" << static_cast<double>(totals.mom_w)
+              << ",\"energy\":" << static_cast<double>(totals.energy)
               << ",\"rhoX\":[";
-    for (std::size_t component = 0; component < species.size(); ++component) {
+    for (std::size_t component = 0; component < totals.species.size(); ++component) {
         if (component != 0) std::cout << ',';
-        std::cout << static_cast<double>(species[component]);
+        std::cout << static_cast<double>(totals.species[component]);
     }
-    std::cout << "]}\n";
+    std::cout << ']';
+    if (parameter_path != nullptr)
+        std::cout << ",\"measure\":\"physical_cell_volume\",\"geometry\":\""
+                  << checkpoint.geometry << '\"';
+    std::cout << "}\n";
 }
 
 struct SodPrimitive {
@@ -976,8 +1066,51 @@ void qualify_sod_checkpoint(const io::CheckpointData& checkpoint)
               << ",\"species_sum_error\":0}\n";
 }
 
+void qualify_gravity_checkpoint(const io::CheckpointData& checkpoint, const char* parameter_path)
+{
+    require(parameter_path != nullptr, "gravity reference requires actual run parameters");
+    const auto config = RuntimeParams::Load(parameter_path);
+    require(config.physics.gravity.type == "external" && config.physics.eos_type == "ideal"
+                && config.grid.geometry == "cartesian",
+            "gravity reference requires Cartesian constant external acceleration and ideal gas");
+    const double rho0 = config.Get<double>("rho0", 1.0);
+    const double pressure0 = config.Get<double>("pressure0", 1.0);
+    const double gamma = config.physics.gamma;
+    const std::array velocity{
+        config.Get<double>("velocity_x0", 0.0) + config.physics.gravity.g_x * checkpoint.time,
+        config.physics.gravity.g_y * checkpoint.time,
+        config.physics.gravity.g_z * checkpoint.time};
+    const double energy = pressure0 / (gamma - 1.0)
+        + 0.5 * rho0 * (velocity[0]*velocity[0] + velocity[1]*velocity[1] + velocity[2]*velocity[2]);
+    require(rho0 > 0.0 && pressure0 > 0.0 && gamma > 1.0 && std::isfinite(energy),
+            "invalid external-gravity reference controls");
+    const std::array expected{rho0, velocity[0], velocity[1], velocity[2], pressure0, energy};
+    std::array<double, expected.size()> errors{};
+    double minimum_rho = std::numeric_limits<double>::infinity();
+    double minimum_eng = std::numeric_limits<double>::infinity();
+    for (std::size_t cell = 0; cell < checkpoint.rho.size(); ++cell) {
+        const double rho = checkpoint.rho[cell];
+        require(std::isfinite(rho) && rho > 0.0, "gravity density is not positive finite");
+        const double kinetic = 0.5 * (checkpoint.mom_u[cell]*checkpoint.mom_u[cell]
+            + checkpoint.mom_v[cell]*checkpoint.mom_v[cell] + checkpoint.mom_w[cell]*checkpoint.mom_w[cell]) / rho;
+        const std::array observed{rho, checkpoint.mom_u[cell]/rho, checkpoint.mom_v[cell]/rho,
+            checkpoint.mom_w[cell]/rho, (gamma - 1.0)*(checkpoint.eng[cell] - kinetic), checkpoint.eng[cell]};
+        for (std::size_t field = 0; field < errors.size(); ++field) {
+            require(std::isfinite(observed[field]), "gravity field is nonfinite");
+            errors[field] = std::max(errors[field], std::abs(observed[field] - expected[field]));
+        }
+        minimum_rho = std::min(minimum_rho, rho);
+        minimum_eng = std::min(minimum_eng, checkpoint.eng[cell]);
+    }
+    std::cout << "{\"status\":\"pass\",\"mode\":\"gravity\",\"step\":" << checkpoint.step_count
+              << ",\"time\":" << checkpoint.time << ",\"min_rho\":" << minimum_rho
+              << ",\"min_eng\":" << minimum_eng << ",\"rho_linf\":" << errors[0]
+              << ",\"velocity_linf\":" << std::max({errors[1], errors[2], errors[3]})
+              << ",\"pressure_linf\":" << errors[4] << ",\"energy_linf\":" << errors[5] << "}\n";
+}
+
 void qualify_real_checkpoint(const std::filesystem::path& checkpoint_path,
-                             const std::string& mode)
+                             const std::string& mode, const char* parameter_path = nullptr)
 {
     const io::CheckpointData checkpoint =
         io::read_hdf5_chk_impl(checkpoint_path.string());
@@ -986,9 +1119,6 @@ void qualify_real_checkpoint(const std::filesystem::path& checkpoint_path,
                 && checkpoint.levels.size() == checkpoint.logical_x1.size()
                 && !checkpoint.levels.empty(),
             "qualification checkpoint topology is unsupported");
-    require(std::all_of(checkpoint.levels.begin(), checkpoint.levels.end(),
-                        [](int level) { return level == 0; }),
-            "uniform qualification received an AMR checkpoint");
     const std::size_t blocks = checkpoint.levels.size();
     const std::size_t cells = blocks * checkpoint.cells_per_block;
     require(checkpoint.rho.size() == cells && checkpoint.mom_u.size() == cells
@@ -996,6 +1126,15 @@ void qualify_real_checkpoint(const std::filesystem::path& checkpoint_path,
                 && checkpoint.mom_w.size() == cells
                 && checkpoint.eng.size() == cells,
             "qualification checkpoint field shape drifted");
+    // A spatially uniform accelerating state has the same exact value in
+    // every AMR cell. The spatial-profile references below require level zero.
+    if (mode == "gravity") {
+        qualify_gravity_checkpoint(checkpoint, parameter_path);
+        return;
+    }
+    require(std::all_of(checkpoint.levels.begin(), checkpoint.levels.end(),
+                        [](int level) { return level == 0; }),
+            "uniform qualification received an AMR checkpoint");
     if (mode == "sod") {
         qualify_sod_checkpoint(checkpoint);
         return;
@@ -1108,8 +1247,9 @@ void qualify_real_checkpoint(const std::filesystem::path& checkpoint_path,
 
 } // namespace
 
-int main(int argc, char** argv)
+int run_validation(int argc, char** argv)
 {
+    std::cout << std::setprecision(17);
     static_assert(std::is_base_of_v<arch::backend::ComputeBackend,
                                     arch::cuda::CudaBackend>);
     static_assert(!std::is_copy_constructible_v<arch::cuda::CudaBackend>);
@@ -1120,6 +1260,21 @@ int main(int argc, char** argv)
                "trace or checkpoint operation\n";
         return 2;
     }
+    if (argc == 2 && std::string(argv[1]) == "--test-time-comparison") {
+        test_evolution_timing();
+        return 0;
+    }
+    if (argc == 8 && std::string(argv[1]) == "--compare-step-diagnostic") {
+        compare_real_checkpoints(argv[2], argv[3], std::stod(argv[4]), std::stod(argv[5]),
+            std::stod(argv[6]), std::stod(argv[7]), {}, {}, CheckpointComparison::StepDiagnostic);
+        return 0;
+    }
+    if (argc == 9 && std::string(argv[1]) == "--compare-physical-time") {
+        compare_real_checkpoints(argv[2], argv[3], std::stod(argv[4]), std::stod(argv[5]),
+            std::stod(argv[6]), std::stod(argv[7]), {}, {}, CheckpointComparison::PhysicalTime,
+            std::stod(argv[8]));
+        return 0;
+    }
     if ((argc >= 6 && argc <= 8)
         && std::string(argv[1]) == "--compare") {
         compare_real_checkpoints(
@@ -1128,12 +1283,26 @@ int main(int argc, char** argv)
             argc == 8 ? std::stod(argv[7]) : std::stod(argv[4]));
         return 0;
     }
+    if (argc == 10 && std::string(argv[1]) == "--compare-terminal-restart") {
+        compare_real_checkpoints(argv[2], argv[3], std::stod(argv[4]), std::stod(argv[5]),
+            std::stod(argv[6]), std::stod(argv[7]), argv[8], argv[9]);
+        return 0;
+    }
     if (argc == 3 && std::string(argv[1]) == "--metrics") {
         print_conservation_metrics(argv[2]);
         return 0;
     }
+    if (argc == 5 && std::string(argv[1]) == "--metrics"
+            && std::string(argv[3]) == "--parameters") {
+        print_conservation_metrics(argv[2], argv[4]);
+        return 0;
+    }
     if (argc == 4 && std::string(argv[1]) == "--qualify") {
         qualify_real_checkpoint(argv[2], argv[3]);
+        return 0;
+    }
+    if (argc == 6 && std::string(argv[1]) == "--qualify" && std::string(argv[4]) == "--parameters") {
+        qualify_real_checkpoint(argv[2], argv[3], argv[5]);
         return 0;
     }
     if (argc == 3) {
@@ -1149,8 +1318,22 @@ int main(int argc, char** argv)
         "usage: arch_cuda_single_level_validation --compare "
         "CPU_CHECKPOINT CUDA_CHECKPOINT "
         "RTOL ATOL [ENUC_PEAK_RTOL [DT_BURN_RTOL]] | "
-        "--qualify CHECKPOINT {smooth|diffusion|burn} | "
-        "--metrics CHECKPOINT | "
+        "--compare-step-diagnostic REFERENCE CANDIDATE RTOL ATOL ENUC_RTOL DT_BURN_RTOL | "
+        "--compare-physical-time REFERENCE CANDIDATE RTOL ATOL ENUC_RTOL DT_BURN_RTOL TARGET_TIME | "
+        "--compare-terminal-restart REFERENCE CANDIDATE RTOL ATOL ENUC_RTOL DT_BURN_RTOL "
+        "INTERMEDIATE_SOURCE TERMINAL_SOURCE | "
+        "--qualify CHECKPOINT {smooth|diffusion|sod|burn|gravity} [--parameters ACTUAL_RUN.par] | "
+        "--metrics CHECKPOINT [--parameters ACTUAL_RUN.par] | "
         "TRACE STEPS | "
         "TRACE PLAN {rkl1|rkl2} STEPS");
+}
+
+int main(int argc, char** argv)
+{
+    try {
+        return run_validation(argc, argv);
+    } catch (const std::exception& error) {
+        std::cerr << "checkpoint validation failed: " << error.what() << '\n';
+        return 1;
+    }
 }

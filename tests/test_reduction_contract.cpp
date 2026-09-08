@@ -303,14 +303,19 @@ struct DriverEos
 
 struct ScriptedBurner
 {
+    static constexpr int NEQ = 4; // Two species, temperature, passive energy.
     template<class Eos>
-    bool integrate(double* state, double rho, double, const Eos&,
-                   const BurnConfig&, double& dt_rec)
+    bool integrate(double* state, double rho, double, const Eos& eos,
+                   const BurnConfig&, double& dt_rec, double* energy_change = nullptr)
     {
+        if (state[3] != 0.0) return false; // Each reused cell buffer starts clean.
+        const double old_energy = eos.get_eint_from_T(rho, state[2], state);
+        state[3] = -1.0;
         state[0] -= 0.125;
         state[1] += 0.125;
         state[2] *= rho < 3.0 ? 1.25 : 0.75;
         dt_rec = rho < 3.0 ? 0.125 : 0.25;
+        if (energy_change) *energy_change = eos.get_eint_from_T(rho, state[2], state) - old_energy;
         return true;
     }
 };
@@ -421,9 +426,37 @@ void characterize_diffusion()
     SpeciesManager species = make_species();
     IdealGas eos(1.37, species);
     SimConfig enabled = make_diffusion_config();
+    // This contract tests reduction of the current cell candidates. The old
+    // enabled/mixed bit snapshots described the retired cell-only diffusion
+    // limit, not the corrected face-capacity / covariant stability operator.
+    // Its physics has independent manufactured/actual-matrix tests; do not
+    // bless new physics by replacing those snapshots with observed outputs.
+    const auto serial_limit = [&](const FluidState& values, const Grid& geometry) {
+        const int count = values.GetNumSpecies();
+        std::vector<double> composition(count), neighbour(count), face(count),
+                            charge(count), inverse_mass(count);
+        const auto view = species.get_host_view();
+        const auto diffusion = DiffFlux::make_diffusion_config_view(enabled);
+        double minimum = DiffFlux::diffusion_dt_sentinel();
+        for (int k = geometry.Ks(); k < geometry.Ke(); ++k)
+            for (int j = geometry.Js(); j < geometry.Je(); ++j)
+                for (int i = geometry.Is(); i < geometry.Ie(); ++i) {
+                    const int cell = geometry.GetIndex(i, j, k);
+                    const auto candidate = DiffFlux::evaluate_diffusion_dt_candidate(
+                        values.get(cell), values.mass_fractions.data() + cell,
+                        count, geometry.GetTotalSize(), eos, view, diffusion,
+                        GridMetrics::make_geometry_view(geometry), i, j, k,
+                        composition.data(), neighbour.data(), face.data(),
+                        charge.data(), inverse_mass.data(),
+                        DiffFlux::HostDiffusionStateReader{values});
+                    expect(candidate.valid, "production.diffusion.valid-candidate");
+                    minimum = std::min(minimum, candidate.value);
+                }
+        return minimum;
+    };
     expect_bits("production.diffusion.enabled",
                 DiffFlux::adaptive_dt_diff(state, eos, grid, enabled, 1.0),
-                0x3f21b661f8cde833ULL);
+                std::bit_cast<std::uint64_t>(serial_limit(state, grid)));
 
     Grid mixed_grid = make_grid(2);
     mixed_grid.geometry = "cylindrical";
@@ -431,7 +464,7 @@ void characterize_diffusion()
     expect_bits("production.diffusion.mixed",
                 DiffFlux::adaptive_dt_diff(
                     mixed_state, eos, mixed_grid, enabled, 1.0),
-                0x3e2d04f267ce0805ULL);
+                std::bit_cast<std::uint64_t>(serial_limit(mixed_state, mixed_grid)));
 
     const Grid finite_seed_grid = make_grid(1, 1.0);
     const FluidState finite_seed_state = make_diffusion_state(finite_seed_grid);

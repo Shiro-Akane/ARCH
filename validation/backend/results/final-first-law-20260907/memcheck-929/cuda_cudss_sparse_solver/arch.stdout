@@ -1,0 +1,11 @@
+CUDSS_MEMORY rows=32 nonzeros=94 factor_and_equilibration_estimated_peak_bytes=351972
+cuDSS N=32: solve/reuse/refactor and negative contracts passed
+CUDSS_MEMORY rows=151 nonzeros=451 factor_and_equilibration_estimated_peak_bytes=1668572
+cuDSS N=151: solve/reuse/refactor and negative contracts passed
+CUDSS_MEMORY rows=201 nonzeros=601 factor_and_equilibration_estimated_peak_bytes=2221836
+cuDSS N=201: solve/reuse/refactor and negative contracts passed
+cuDSS multiscale N=32 integrated source=0 trace chain=0 disconnected/rescaled=0: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS multiscale N=32 integrated source=1 trace chain=0 disconnected/rescaled=0: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS multiscale N=32 integrated source=0 trace chain=1 disconnected/rescaled=0: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS multiscale N=32 integrated source=0 trace chain=1 disconnected/rescaled=1: analytic solution, componentwise residual, factor reuse and perturbation rejection passed
+cuDSS compiled API version 800

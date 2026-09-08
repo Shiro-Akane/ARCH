@@ -3,9 +3,10 @@
 Chinese translation: [TimmesNetworks.zh-CN.md](TimmesNetworks.zh-CN.md).
 The English file is the authoritative source text.
 
-> Status: the CPU/OpenMP implementation has passed comparison against the
-> original Fortran programs. This note records the source, numerical
-> conventions, validation error, parallel model, and maintenance boundaries.
+The four built-in networks share their reaction, ODE and NSE mathematics on
+CPU and CUDA. Current validation includes independent time-integration and
+energy checks, together with coupled NSE application tests. The original
+Fortran comparisons are retained as translation records.
 
 ## 1. Source and implementation boundary
 
@@ -30,10 +31,11 @@ The runtime contract is:
 - network code lives in `src/physics/network/` and is compiled directly as C++;
 - the runtime has no Fortran, Python, or pynucastro dependency;
 - Helmholtz EOS runs require an actual Helmholtz table selected by the parameter file;
-- physical acceptance compares C++ and original Fortran output at identical
-  states with the same EOS table.
+- reaction-network compatibility compares C++ and original Fortran output at
+  identical states with the same EOS table.
 
-The numerical comparisons in Section 5 define the current physical baseline.
+Section 5 preserves the original translation baseline. Current time-integration
+and thermodynamic acceptance are recorded in [burn validation](../../validation/burn/README.md).
 
 ## 2. Networks and species order
 
@@ -74,24 +76,43 @@ The ODE state is
 U = [X_1, X_2, ..., X_N, T]^T
 ```
 
-The self-heating temperature equation follows the Timmes implementation:
+During the fixed-density burn substep, the selected EOS supplies specific
+internal energy `e(rho,T,X)` and `cv`. With species rates `f_i=dX_i/dt` and
+net specific heating `enuc`, the first law gives:
 
 ```text
-dT/dt = enuc / cv
+f_T = dT/dt = (enuc - sum_i e_i * f_i) / cv
+e_i = (partial e / partial X_i)_(rho,T)
 ```
 
-The Helmholtz EOS supplies `cv`. The complete Jacobian uses:
+Composition changes can change EOS energy even at fixed temperature, so that
+energy change must be included in the thermal equation. For any state variable
+`U_j`, the complete thermal Jacobian row is:
 
 ```text
 J(i,j) = d(dX_i/dt) / dX_j
 J(i,T) = d(dX_i/dt) / dT
-J(T,j) = (d enuc / dX_j) / cv
-J(T,T) = (d enuc / dT) / cv
+J(T,j) = (partial_j enuc - sum_i e_i * J(i,j)
+          - sum_i (partial_j e_i) * f_i - f_T * partial_j cv) / cv
 ```
 
-The temperature column uses analytic rate derivatives. The temperature row
-omits the quotient-rule terms `d(cv)/dX` and `d(cv)/dT`, matching the original
-Timmes Jacobian.
+All three ODE methods and both backends use this assembly. Ideal, Helmholtz and
+tabular EOS views provide analytic thermal/composition derivatives; a common
+numerical adapter supports other duck-typed EOS views. Reaction-rate derivatives
+keep their network's declared screening convention. Generated weak networks
+also carry a signed energy-source integral, used with the accepted composition
+change when handing energy back to hydrodynamics.
+
+For each accepted substep, the solver contracts its composition increment with
+the network's nuclear-energy weights and adds any signed external-source
+increment. These contributions accumulate into the specific energy change
+`delta_e`. Hydrodynamics adds `rho * delta_e` to conserved energy and reports
+`ENUC = delta_e / dt`; its burn time limiter uses that same integral. The
+calculation uses the solver increments before rounding them into the endpoint
+state, so small heat releases remain measurable against a large thermal
+background. Rejected trials contribute no energy. The final EOS query checks
+the thermodynamic state, and NSE supplies the energy of its accepted projection.
+CPU and CUDA use the same accounting.
 
 Backward Euler with Newton-Raphson solves:
 
@@ -106,7 +127,8 @@ Jacobian, LHS, and validation baseline together.
 
 ## 5. Original-Fortran numerical comparison
 
-Validation uses the real Helmholtz table at six states:
+The historical translation comparison used the original thermal convention
+and real Helmholtz table at six states:
 
 ```text
 T   = 1e9, 2e9, 5e9 K
@@ -176,6 +198,8 @@ The result is network-constrained NSE over the selected species set. `iso7` and
 `aprox13` omit free nucleons and neutron-rich nuclei and support only the
 `Ye=0.5` constrained solution. Full physical NSE requires an independent,
 sufficiently broad species set and conservation mapping.
+CPU and CUDA use the same solver for the four built-in networks. Generated
+network packages do not support online NSE.
 
 NSE projection solves:
 
@@ -188,7 +212,23 @@ fallback. A state is accepted only when composition conservation and relative
 energy closure both reach `1e-12`. Failure preserves the original state and
 returns to the ordinary ODE path.
 
-Numerical validation records:
+Before iterating, the solver checks whether the input already satisfies the
+Saha relations and mass/charge constraints at these same tolerances. Such a
+state is preserved exactly, so repeated equilibrium projection does not create
+heat from roundoff. Changes in temperature, density or composition that violate
+the equilibrium residuals trigger the ordinary nonlinear solve.
+
+The current [NSE application validation](../../validation/burn/results/nse-application-native-20260907/release-890/evidence.json)
+passes sixteen one-zone cases across all four built-in networks, with
+thirty-two CPU/CUDA endpoints at the prescribed physical time. Each network
+exercises NSE through BE_NR, BD and ROS4, alongside an NSE-disabled BE_NR
+control. The tests check backend agreement, positive states, species
+normalization and a resolved composition change when NSE is enabled. An
+independent binding-energy balance checks the energy returned to the fluid;
+relative energy closure and absolute charge drift both meet `1e-12`.
+
+The following historical comparisons document the original implementation
+and its numerical conventions:
 
 - against a strict-residual copy of the 47-species `public_nse.f90`, eight
   states over `T=2.5e9--1e10 K`, `rho=1e6--1e9 g cm^-3`, and
@@ -250,10 +290,10 @@ reports hexadecimal floating-point comparison for more than 10,000 randomized
 `aprox19` states. Maximum absolute and relative errors are both `0.0` over the
 tested range. Section 5 separately covers network RHS, Jacobian, and LHS paths.
 
-## 9. CPU validation status of BD and ROS4
+## 9. Historical CPU solver comparisons
 
-ODE-dispatch regression uses the real Helmholtz table, all four Timmes networks,
-and one 8 x 2 Cellular step. At `dt=1e-14 s`, BD completes all matrix sizes for
+An earlier ODE-dispatch regression used the real Helmholtz table, all four Timmes
+networks, and one 8 x 2 Cellular step. At `dt=1e-14 s`, BD completed all matrix sizes for
 `iso7`, `aprox13`, `aprox19`, and `aprox21`; every output is finite and
 `max|sum(X)-1| <= 2.2204e-16`. In the `aprox13` BD-to-BE_NR comparison,
 relative energy difference is about `3.51e-15`, relative pressure difference
@@ -265,12 +305,13 @@ BD guards its highest-order early-exit lookup with `k + 1 < MAX_K` before
 accessing `n_seq[k+1]`. `BE_NR`, `BD`, and `ROS4` are selectable through
 `ode_solver`. ROS4 uses a matched four-stage L-stable coefficient set and
 constructs and factors `I - gamma*dt*J` once per internal step. In the
-Helmholtz/aprox13 one-zone regression, ROS4 relative to the strict BE_NR
-reference has species Linf `3.281e-11` and relative total-energy error
-`1.517e-11`, passing the current `1e-8` criterion. Inputs, table identity, and
+Helmholtz/aprox13 one-zone comparison, ROS4 relative to an internally converged
+BE_NR run had species Linf `3.281e-11` and relative total-energy error
+`1.517e-11`, passing that record's `1e-8` criterion. Inputs, table identity, and
 metrics are recorded in the [burn validation](../../validation/burn/README.md).
-New networks and production states still require step-size and tolerance
-convergence with species and energy trajectory comparison.
+Section 12 describes current independent time-integration acceptance. New
+networks and production states require step-size and tolerance convergence
+with species and energy trajectory comparison.
 
 ## 10. Usage
 
@@ -288,13 +329,37 @@ eos_type = helmholtz
 eos_table_path = /absolute/path/to/helm_table.dat
 ```
 
-Generated pynucastro packages are documented in the [custom-network local contract](../../src/physics/network/custom/README.md) and the [Reference](../Reference.md). Linear-solver requests are case-insensitive. `Auto` becomes DenseLU through 30 isotopes; above 30 it forms a SuiteSparse KLU CPU candidate and a cuDSS CUDA candidate. SparseKLU is CPU-only and cuDSS is CUDA-only, with incompatible explicit pairs rejected before backend construction. The cuDSS provider and CUDA generated-network/large-network paths remain unavailable, so CUDA sparse execution fails closed. Generated packages set `SUPPORTS_NSE=false`. Their production qualification covers solver tolerances and composition/energy trajectories.
-The generated-network generation, dispatch, and sparse-solver compatibility
-record is under [validation/network](../../validation/network/README.md);
-it is an interface smoke test rather than a physical trajectory qualification.
+Generated pynucastro packages are documented in the
+[custom-network local contract](../../src/physics/network/custom/README.md)
+and the [Reference](../Reference.md). Linear-solver requests are
+case-insensitive. `Auto` selects DenseLU through 31 total ODE equations,
+including temperature and any auxiliary energy state. Larger systems use
+SuiteSparse KLU on CPU or cuDSS on CUDA. SparseKLU is
+CPU-only and cuDSS is CUDA-only, with incompatible explicit pairs rejected
+before backend construction rather than substituted. The optional cuDSS 0.8
+provider is discovered through CMake/`CUDSS_ROOT` and enabled only when linked
+with the registered network/EOS routes. Missing providers fail closed.
 
-CMake requires OpenMP through `find_package(OpenMP REQUIRED)`. Control the
-runtime thread count with an environment variable, for example:
+Generator version 4 registers device-callable packages only when their manifest
+declares `device_callable_math=true`. CPU and CUDA then consume the same math
+header, constants, and declared Jacobian structure. Recognized embedded weak
+tables have backend-owned immutable storage and explicit borrowed views;
+version-3 or unlowered packages remain CPU-only and can be regenerated for the
+current contract. CUDA sparse execution reuses
+the shared BE_NR/ROS4/BD continuations with a backend-specific CSR/cuDSS
+executor, not a second set of network or ODE physics. Generated packages still
+set `SUPPORTS_NSE=false`. Recognized weak networks integrate their signed energy
+source with the same ODE stages, error control and rollback as composition and
+temperature. Nuclear energy and that source integral enter the common
+accepted-energy accounting.
+The [network validation](../../validation/network/README.md) records distinguish
+generated math, solver compatibility, independent scientific trajectories and
+whole-application coverage. A model's scientific reliability depends on its
+isotope set, reaction data and range of applicability.
+
+OpenMP is enabled by default and can be disabled with
+`-DARCH_ENABLE_OPENMP=OFF`. For an OpenMP build, control the runtime thread count
+with an environment variable, for example:
 
 ```bash
 OMP_NUM_THREADS=16 <build-dir>/bin/ARCH CellularDet case.par
@@ -313,9 +378,55 @@ Startup output reports the resolved `Species Count` and
 3. **Network-constrained NSE:** online Saha NSE uses the selected compact
    network. `iso7` and `aprox13` support only the `Ye=0.5` constrained solution;
    full NSE requires an independent species set and conservation mapping.
-4. **Required revalidation:** changes to rates, species order, energy weights,
-   EOS `cv`, or ODE projection logic require the four-network Fortran
-   RHS/Jacobian/LHS comparison and hexadecimal microphysics baseline, with a
-   maximum relative-error threshold below `1e-12`.
+4. **Required revalidation:** rate/species/energy-data changes require the
+   corresponding original-Fortran network comparisons. EOS or integration
+   changes require independent thermodynamic, time-convergence and energy-
+   closure checks, followed by CPU/CUDA application validation. Retain the
+   historical thermal/LHS comparison separately from the current first-law model.
 
-Last updated: 2026-08-20.
+## 12. Integration accuracy and verification
+
+The shared first-law equation in Section 4 is tested with analytic reaction
+and EOS models, including composition-dependent energy and heat capacity.
+The controls check energy rate, the complete Jacobian and fourth-order ROS4
+convergence on CPU and CUDA. The matched
+[KPP ROS4 formulation](https://kpp.readthedocs.io/en/stable/num_methods/rosenbrock-methods.html)
+uses that RHS Jacobian. Independent DOP853/Radau trajectories provide a separate
+time-integration reference for the built-ins and the tabulated Urca network.
+
+The current [independent built-in review](../../validation/burn/results/independent-time-final-20260907/release-888/evidence.json)
+passes all four networks with both DOP853 and Radau, each at two maximum
+time-step sizes: sixteen independent trajectories in total. It queries the
+shared reaction/EOS RHS without using ARCH's ODE algorithm or Jacobian.
+Separate 60- and 80-digit Helmholtz evaluations check endpoint energy, while
+independent quadrature checks the first-law balance. The review validates
+time integration and thermodynamic consistency; reaction-data validation
+remains tied to the cited nuclear data and original network comparisons.
+
+Historical method-dependent endpoint snapshots remain unchanged as regression
+records. Current integration accuracy is judged against the independently
+integrated references, not by treating those older solver outputs as exact
+solutions.
+
+BE_NR estimates local time error separately from Newton convergence. An
+exact linear/Newton solve alone cannot establish integration accuracy. The
+shared controller reduces error when the tolerance is tightened, as checked
+by the analytic tolerance-refinement control.
+
+These ODE changes do not replace reaction rates, EOS tables, NSE, the accepted
+composition-energy definition or physical closure budgets. Generated-network
+energy now removes a common conserved baryon mass before summation, using only
+the emitted mass data and validated reaction stoichiometry. This changes the
+energy reference without changing the nuclear-mass convention. The
+[burn](../../validation/burn/README.md) and
+[network](../../validation/network/README.md) validation records distinguish
+these scientific checks from application, sustained and sanitizer acceptance.
+
+Project-owned analytic EOS, transport and NSE constants use one SI/CODATA 2022
+set shared by both backends. Timmes reaction data and generated pynucastro
+assets keep their own declared data conventions. Reference calculations must
+use the corresponding constants and data; older hexadecimal snapshots retain
+their historical context. See the
+[constants authority](../../src/physics/constant/README.md).
+
+Last updated: 2026-09-07.

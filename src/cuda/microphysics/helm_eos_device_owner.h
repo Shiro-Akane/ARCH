@@ -34,8 +34,10 @@ private:
     HelmEosView device_view_{};
     std::array<double *, 9> device_f_{};
     std::array<double *, 4> device_ef_{};
+    std::array<double *, 2> device_nodes_{};
     std::array<std::vector<double>, 9> staging_f_{};
     std::array<std::vector<double>, 4> staging_ef_{};
+    std::array<std::vector<double>, 2> staging_nodes_{};
 };
 
 } // namespace arch::cuda

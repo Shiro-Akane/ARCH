@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -19,6 +20,7 @@ enum class BackendCapabilityCode : std::uint16_t
     BuildDisabled,
     RuntimeUnavailable,
     ComputeCapabilityTooLow,
+    CudaImageUnavailable,
     UnsupportedBinding,
     SparseKluRequiresCpu,
     CuDssRequiresCuda,
@@ -219,6 +221,8 @@ constexpr std::string_view capability_name(BackendCapabilityCode code) noexcept
     case BackendCapabilityCode::BuildDisabled: return "CUDA build disabled";
     case BackendCapabilityCode::RuntimeUnavailable: return "CUDA runtime unavailable";
     case BackendCapabilityCode::ComputeCapabilityTooLow: return "compute capability too low";
+    case BackendCapabilityCode::CudaImageUnavailable:
+        return "this ARCH binary has no usable CUDA image for the selected device/driver; rebuild with matching CMAKE_CUDA_ARCHITECTURES or update the driver for PTX";
     case BackendCapabilityCode::UnsupportedBinding: return "policy binding unavailable";
     case BackendCapabilityCode::SparseKluRequiresCpu:
         return "SparseKLU requires compute_backend = cpu";
@@ -277,6 +281,12 @@ inline CapabilityResult query_support(
     } else if (result.cpu_supported && !cpu_nse_requirements_valid) {
         result.cpu_supported = false;
         result.cpu_code = BackendCapabilityCode::UnsupportedNse;
+    } else if (result.cpu_supported && requirements.burn
+               && cpu_plan.linear_solver == LinearSolverId::DenseLu
+               && !BurnLimits::uses_compact_matrix(network_ode_equations(
+                   cpu_plan.network, requirements.species_count))) {
+        result.cpu_supported = false;
+        result.cpu_code = BackendCapabilityCode::UnsupportedSpeciesCount;
     }
 
     const auto reject_cuda = [&](BackendCapabilityCode code) {
@@ -292,6 +302,8 @@ inline CapabilityResult query_support(
         return reject_cuda(BackendCapabilityCode::RuntimeUnavailable);
     if (!detail::selected_minimum_compute_capability(cuda_plan, probe.device))
         return reject_cuda(BackendCapabilityCode::ComputeCapabilityTooLow);
+    if (!probe.device.compiled_image_available)
+        return reject_cuda(BackendCapabilityCode::CudaImageUnavailable);
     const StaticRequirements selected =
         detail::selected_static_requirements(cuda_plan);
     if (requirements.dimension < 1 || requirements.dimension > 3)
@@ -310,9 +322,11 @@ inline CapabilityResult query_support(
     if (!valid_root_topology
         || requirements.uniform_multiblock != is_uniform_multiblock)
         return reject_cuda(BackendCapabilityCode::UnsupportedRootTopology);
-    if (requirements.gravity != GravityId::None)
+    if (requirements.gravity != GravityId::None && requirements.gravity != GravityId::External)
         return reject_cuda(BackendCapabilityCode::UnsupportedGravity);
-    if (requirements.geometry != GeometryId::Cartesian)
+    if (requirements.geometry != GeometryId::Cartesian
+        && requirements.geometry != GeometryId::Cylindrical
+        && requirements.geometry != GeometryId::Spherical)
         return reject_cuda(BackendCapabilityCode::UnsupportedGeometry);
     const bool cuda_nse_requirements_valid = !requirements.use_nse
         || (requirements.burn && network_supports_nse(cuda_plan.network));
@@ -333,14 +347,25 @@ inline CapabilityResult query_support(
             != (cuda_plan.diffusion_integrator
                 != DiffusionIntegratorId::None)))
         return reject_cuda(BackendCapabilityCode::UnsupportedDiffusionMode);
-    if (requirements.species_count > BurnLimits::MAX_SPECIES)
+    // Transport and AMR use runtime composition views/workspace. Their bound
+    // is the integer state index representation, not DenseLU's small-network
+    // algorithm threshold; per-block extent/allocation checks follow later.
+    if (requirements.species_count
+        > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         return reject_cuda(BackendCapabilityCode::UnsupportedSpeciesCount);
     if (!detail::cuda_bindings_exist(cuda_plan)) {
         return reject_cuda(
             cuda_plan.linear_solver == LinearSolverId::CuDss
+                && !policy_cuda_supported<LinearSolverPolicies>(LinearSolverId::CuDss)
                 ? BackendCapabilityCode::CuDssProviderUnavailable
                 : BackendCapabilityCode::UnsupportedBinding);
     }
+    // Compact DenseLU's algorithm limit is not the sparse backend's state
+    // extent. The registry/provider checks above still reject an unbuilt route.
+    if (requirements.burn && !BurnLimits::uses_compact_matrix(
+            network_ode_equations(cuda_plan.network, requirements.species_count))
+        && cuda_plan.linear_solver != LinearSolverId::CuDss)
+        return reject_cuda(BackendCapabilityCode::UnsupportedSpeciesCount);
     if (requirements.required_ghost_depth < selected.ghost_depth
         || requirements.required_ghost_depth > 3)
         return reject_cuda(BackendCapabilityCode::UnsupportedGhostDepth);
@@ -351,7 +376,7 @@ inline CapabilityResult query_support(
         || !has_layout(requirements.state_layout,
                        StateLayoutRequirement::HydroConserved)
         || !has_layout(requirements.state_layout, selected.state_layout)
-        || (requirements.species_diffusion
+        || ((requirements.species_count > 0 || requirements.species_diffusion)
             && !has_layout(requirements.state_layout,
                            StateLayoutRequirement::SpeciesMassFractions)))
         return reject_cuda(BackendCapabilityCode::UnsupportedStateLayout);

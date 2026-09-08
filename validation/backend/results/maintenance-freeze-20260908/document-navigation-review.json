@@ -1,0 +1,1727 @@
+{
+  "schema": 1,
+  "scope": "maintenance-document-navigation-review",
+  "reviewed_at_utc": "2026-09-07T22:54:41.899172+00:00",
+  "reviewer": "release_docs_audit",
+  "workspace_root": "/home/shiroakane/ARCH",
+  "status": "pass",
+  "meaning": "Point-in-time documentation navigation and functional-directory coverage review only. This is not a scientific qualification, legal authorization, publication, staging or commit certificate.",
+  "discovery": {
+    "command": [
+      "rg",
+      "--files",
+      "-g",
+      "*.md",
+      "-g",
+      "!validation/**/results/**"
+    ],
+    "working_directory": "/home/shiroakane/ARCH",
+    "discovered_markdown_count": 136,
+    "explicit_additions": [
+      "validation/backend/results/maintenance-freeze-20260908/README.md",
+      "validation/backend/results/maintenance-freeze-20260908/README.zh-CN.md"
+    ],
+    "total_file_count": 138,
+    "rg_default_ignore_rules_respected": true
+  },
+  "exclusions": [
+    "validation/**/results/** except the two explicitly added maintenance READMEs",
+    "Ignored build, output, generated-package and third-party trees omitted by rg default rules",
+    "External URLs are recorded but not fetched",
+    "Historical prose is preserved: local navigation is checked, but dated source paths and interim findings are not rewritten or presented as current capabilities",
+    "No GPU, compilation, numerical rerun, source edit, staging, commit, push or permission validation"
+  ],
+  "expected_follow_up_edits": [
+    "docs/development/CudaReleaseStandard.md",
+    "validation/backend/results/maintenance-freeze-20260908/README.md",
+    "validation/backend/results/maintenance-freeze-20260908/README.zh-CN.md"
+  ],
+  "snapshot_note": "Hashes describe the bytes read for this review. The parent will finalize completion prose in the three declared follow-up documents; those later bytes require their own final identity and must not be attributed to these hashes.",
+  "checks": {
+    "local_links": {
+      "status": "pass",
+      "count": 1318,
+      "broken": []
+    },
+    "local_markdown_anchors": {
+      "status": "pass",
+      "count": 59,
+      "missing": [],
+      "non_markdown_fragments_not_validated": []
+    },
+    "external_links": {
+      "count": 67,
+      "status": "not_fetched"
+    },
+    "functional_directory_readmes": {
+      "status": "pass",
+      "rule": "All file-backed src/cmake/runtime-table directories; top-level and secondary simulation/tests/tools/examples/docs/LICENSES directories; validation root, modules, existing inputs and explicitly designated assets. Empty obsolete EOS placeholders, generated output and individual results directories are not required.",
+      "count": 99,
+      "missing": [],
+      "directories": [
+        {
+          "directory": ".",
+          "readme": "README.md",
+          "exists": true
+        },
+        {
+          "directory": "EOS_toolkit",
+          "readme": "EOS_toolkit/README.md",
+          "exists": true
+        },
+        {
+          "directory": "EOS_toolkit/tables",
+          "readme": "EOS_toolkit/tables/README.md",
+          "exists": true
+        },
+        {
+          "directory": "EOS_toolkit/tables/helmholtz",
+          "readme": "EOS_toolkit/tables/helmholtz/README.md",
+          "exists": true
+        },
+        {
+          "directory": "LICENSES",
+          "readme": "LICENSES/README.md",
+          "exists": true
+        },
+        {
+          "directory": "cmake",
+          "readme": "cmake/README.md",
+          "exists": true
+        },
+        {
+          "directory": "cmake/templates",
+          "readme": "cmake/templates/README.md",
+          "exists": true
+        },
+        {
+          "directory": "docs",
+          "readme": "docs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "docs/development",
+          "readme": "docs/development/README.md",
+          "exists": true
+        },
+        {
+          "directory": "docs/guides",
+          "readme": "docs/guides/README.md",
+          "exists": true
+        },
+        {
+          "directory": "docs/legal",
+          "readme": "docs/legal/README.md",
+          "exists": true
+        },
+        {
+          "directory": "docs/physics",
+          "readme": "docs/physics/README.md",
+          "exists": true
+        },
+        {
+          "directory": "examples",
+          "readme": "examples/README.md",
+          "exists": true
+        },
+        {
+          "directory": "examples/network",
+          "readme": "examples/network/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation",
+          "readme": "simulation/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/BurnGradient",
+          "readme": "simulation/BurnGradient/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/BurnOneZone",
+          "readme": "simulation/BurnOneZone/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/Cellular",
+          "readme": "simulation/Cellular/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/CooperativeHotspots",
+          "readme": "simulation/CooperativeHotspots/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/DiffusionMode",
+          "readme": "simulation/DiffusionMode/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/ExternalGravity",
+          "readme": "simulation/ExternalGravity/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/GaussianPulse",
+          "readme": "simulation/GaussianPulse/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/RTinstability",
+          "readme": "simulation/RTinstability/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/Sedov",
+          "readme": "simulation/Sedov/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/SmoothAdvection",
+          "readme": "simulation/SmoothAdvection/README.md",
+          "exists": true
+        },
+        {
+          "directory": "simulation/Sod",
+          "readme": "simulation/Sod/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src",
+          "readme": "src/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/amr",
+          "readme": "src/amr/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/core",
+          "readme": "src/core/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda",
+          "readme": "src/cuda/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/amr",
+          "readme": "src/cuda/amr/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/common",
+          "readme": "src/cuda/common/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/diffusion",
+          "readme": "src/cuda/diffusion/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/hydro",
+          "readme": "src/cuda/hydro/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/microphysics",
+          "readme": "src/cuda/microphysics/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime",
+          "readme": "src/cuda/runtime/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime/amr",
+          "readme": "src/cuda/runtime/amr/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime/burn",
+          "readme": "src/cuda/runtime/burn/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime/burn/routes",
+          "readme": "src/cuda/runtime/burn/routes/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime/control",
+          "readme": "src/cuda/runtime/control/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime/diffusion",
+          "readme": "src/cuda/runtime/diffusion/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/cuda/runtime/hydro",
+          "readme": "src/cuda/runtime/hydro/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/data",
+          "readme": "src/data/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/driver",
+          "readme": "src/driver/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/driver/dispatch",
+          "readme": "src/driver/dispatch/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/grid",
+          "readme": "src/grid/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/interface",
+          "readme": "src/interface/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/io",
+          "readme": "src/io/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/io/chk",
+          "readme": "src/io/chk/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/io/hdf5",
+          "readme": "src/io/hdf5/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/io/plot",
+          "readme": "src/io/plot/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics",
+          "readme": "src/numerics/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics/burnsolver",
+          "readme": "src/numerics/burnsolver/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics/diffusion",
+          "readme": "src/numerics/diffusion/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics/flux",
+          "readme": "src/numerics/flux/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics/integrator",
+          "readme": "src/numerics/integrator/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics/linalg",
+          "readme": "src/numerics/linalg/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/numerics/reconstruction",
+          "readme": "src/numerics/reconstruction/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics",
+          "readme": "src/physics/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/constant",
+          "readme": "src/physics/constant/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/diagnostics",
+          "readme": "src/physics/diagnostics/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/diffusionCoe",
+          "readme": "src/physics/diffusionCoe/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/eos",
+          "readme": "src/physics/eos/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/gravity",
+          "readme": "src/physics/gravity/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network",
+          "readme": "src/physics/network/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network/aprox13",
+          "readme": "src/physics/network/aprox13/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network/aprox19",
+          "readme": "src/physics/network/aprox19/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network/aprox21",
+          "readme": "src/physics/network/aprox21/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network/custom",
+          "readme": "src/physics/network/custom/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network/iso7",
+          "readme": "src/physics/network/iso7/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/network/timmes_common",
+          "readme": "src/physics/network/timmes_common/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/nse",
+          "readme": "src/physics/nse/README.md",
+          "exists": true
+        },
+        {
+          "directory": "src/physics/species",
+          "readme": "src/physics/species/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tests",
+          "readme": "tests/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tests/cuda",
+          "readme": "tests/cuda/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tests/fixtures",
+          "readme": "tests/fixtures/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tests/math",
+          "readme": "tests/math/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tests/smoke",
+          "readme": "tests/smoke/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tests/tooling",
+          "readme": "tests/tooling/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tools",
+          "readme": "tools/README.md",
+          "exists": true
+        },
+        {
+          "directory": "tools/network",
+          "readme": "tools/network/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation",
+          "readme": "validation/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/amr",
+          "readme": "validation/amr/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/amr/inputs",
+          "readme": "validation/amr/inputs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/assets",
+          "readme": "validation/assets/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/backend",
+          "readme": "validation/backend/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/burn",
+          "readme": "validation/burn/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/burn/inputs",
+          "readme": "validation/burn/inputs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/diffusion",
+          "readme": "validation/diffusion/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/diffusion/inputs",
+          "readme": "validation/diffusion/inputs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/eos",
+          "readme": "validation/eos/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/gravity",
+          "readme": "validation/gravity/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/gravity/inputs",
+          "readme": "validation/gravity/inputs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/hydro",
+          "readme": "validation/hydro/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/hydro/inputs",
+          "readme": "validation/hydro/inputs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/network",
+          "readme": "validation/network/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/network/inputs",
+          "readme": "validation/network/inputs/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/restart",
+          "readme": "validation/restart/README.md",
+          "exists": true
+        },
+        {
+          "directory": "validation/restart/inputs",
+          "readme": "validation/restart/inputs/README.md",
+          "exists": true
+        }
+      ]
+    },
+    "snapshot_stability": {
+      "status": "pass",
+      "changed_during_review": []
+    },
+    "maintained_runtime_file_references": {
+      "status": "pass",
+      "broken_old_flat_paths": [],
+      "historical_prose_excluded": [
+        "docs/development/CudaBackendEvidence.md",
+        "docs/development/CudaBackendEvidence.zh-CN.md",
+        "docs/development/CudaRefactorSmoke.md",
+        "docs/development/CudaReleaseStandard.md",
+        "docs/development/ImplementationOwnership.md",
+        "docs/physics/AmrIndicatorNoiseReview.md",
+        "docs/physics/CurvilinearMetricReview.md",
+        "docs/physics/DiffusionCoefficientAlignment.md",
+        "docs/physics/DiffusionCoefficientAlignment.zh-CN.md",
+        "simulation/CooperativeHotspots/README.zh-CN.md"
+      ]
+    }
+  },
+  "manual_scope_notes": [
+    "User entry points are the root README and docs index; developer navigation uses source and contributor guides; combined numerical acceptance is owned by the central Validation index.",
+    "Module summaries distinguish the central scientific acceptance version from later directory maintenance and new-build checks; result metrics and historical evidence are not relabeled.",
+    "CUDA runtime navigation follows control/hydro/burn/amr/diffusion and burn/routes; generated wrappers remain described as bindings to shared mathematics.",
+    "Simulation registration names and owned input locations are indexed separately from canonical validation inputs; generated networks and runtime EOS tables keep their existing owners.",
+    "Timmes author contact and redistribution confirmation remain an administrative item documented by the owner; this navigation check supplies no authorization."
+  ],
+  "files": [
+    {
+      "path": "EOS_toolkit/README.md",
+      "sha256": "b5b2eeca89b5715ed9e624ebdd39e1be77c11200e6c01283bfcb4c9b41773f65",
+      "bytes": 1198,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "EOS_toolkit/README.zh-CN.md",
+      "sha256": "40f69e01901fa3eb080d33d920a4ff69cb09be58a09f0be5e27466233a21d0f1",
+      "bytes": 1158,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "EOS_toolkit/tables/README.md",
+      "sha256": "46f16368792f63dd8f053e7f9e73034d0227b6b075afd3810dccaa1832336480",
+      "bytes": 630,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "EOS_toolkit/tables/helmholtz/README.md",
+      "sha256": "39a6a4b5df796802e9c1e74f937443c052ce1d3e3e722b28cd4ebc8962294de7",
+      "bytes": 668,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "LICENSES/README.md",
+      "sha256": "c49c965022e4252fd19ba958aad78fda6959226e791548f5576c56d6aa186072",
+      "bytes": 756,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "README.md",
+      "sha256": "54391adbe6baa04bd763e49213e3ef24f45df827429a9710b96d89fec9146543",
+      "bytes": 17243,
+      "counts": {
+        "local_links": 21,
+        "external_links_not_fetched": 6,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "README.zh-CN.md",
+      "sha256": "edc0b557db91660e8e2adf498b2dea9bcb3d0a6d36226d10527d42f2970995bb",
+      "bytes": 16128,
+      "counts": {
+        "local_links": 21,
+        "external_links_not_fetched": 6,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "sha256": "471d1a028427ad2789f328012eb41c4f5a94a6fc75b460d43b4ca0e014fdf8b3",
+      "bytes": 7324,
+      "counts": {
+        "local_links": 8,
+        "external_links_not_fetched": 12
+      }
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.zh-CN.md",
+      "sha256": "fbe93de164f8510f306c84465d5ecabd88e9a762951955cd9d933baeb58a0dd2",
+      "bytes": 6519,
+      "counts": {
+        "local_links": 8,
+        "external_links_not_fetched": 12
+      }
+    },
+    {
+      "path": "cmake/README.md",
+      "sha256": "c21c7ba1bb212872eb41db10139bd0a97ac9e1c796d5c70adc4f76186333bb2c",
+      "bytes": 1687,
+      "counts": {
+        "local_links": 10
+      }
+    },
+    {
+      "path": "cmake/templates/README.md",
+      "sha256": "b78d6e424b1500a59f9f13a226600c7c3f949bdea9c071572037672395ebd4ec",
+      "bytes": 929,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "docs/CudaBackendStatus.md",
+      "sha256": "a9e94c18c44184b8e22beff864c7d918a62b0138924d60774e7e45fd5ede5bde",
+      "bytes": 5734,
+      "counts": {
+        "local_links": 9
+      }
+    },
+    {
+      "path": "docs/CudaBackendStatus.zh-CN.md",
+      "sha256": "7added51fb1a8baa48d0040235d66b073921d8bf3d31e71619ff5c821a68fbc7",
+      "bytes": 4963,
+      "counts": {
+        "local_links": 9
+      }
+    },
+    {
+      "path": "docs/README.md",
+      "sha256": "aeca64a06320ba2b8ebf5c23516cdabf58cf02fecf0f24cc5924cdec06e418be",
+      "bytes": 2402,
+      "counts": {
+        "local_links": 14
+      }
+    },
+    {
+      "path": "docs/README.zh-CN.md",
+      "sha256": "483efcf96f08e6a3a1c60f94e91fb08fc21ca0c1aa9962f573b68902bb61a85c",
+      "bytes": 2149,
+      "counts": {
+        "local_links": 14
+      }
+    },
+    {
+      "path": "docs/Reference.md",
+      "sha256": "5dce851374b15c581fcc468e1452773310a76c812530a3a995f512b8104203d9",
+      "bytes": 55293,
+      "counts": {
+        "local_links": 34,
+        "local_anchor_links": 16,
+        "external_links_not_fetched": 2
+      }
+    },
+    {
+      "path": "docs/Reference.zh-CN.md",
+      "sha256": "1feeb3225fe932a34a8c78836d4be3ae4d16372b847be432a11967d7d8c1fee7",
+      "bytes": 50500,
+      "counts": {
+        "local_links": 34,
+        "local_anchor_links": 16,
+        "external_links_not_fetched": 2
+      }
+    },
+    {
+      "path": "docs/development/CudaBackendEvidence.md",
+      "sha256": "689b6489d4fd848ab4a3c0bc639a8b32c5dc2b1a1aff7ab56ff38d521b9747df",
+      "bytes": 12790,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "docs/development/CudaBackendEvidence.zh-CN.md",
+      "sha256": "b10a065d1d07e5332db2ccfb2099d2b78dbe402d508a56f9cb4ca33bc7dd3a10",
+      "bytes": 11127,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "docs/development/CudaRefactorSmoke.md",
+      "sha256": "abd7c5592b104ba4bd33256c12210f8866491c78ddfcd76177eaeec39fa7c136",
+      "bytes": 20040,
+      "counts": {
+        "local_links": 4,
+        "external_links_not_fetched": 1
+      }
+    },
+    {
+      "path": "docs/development/CudaReleaseStandard.md",
+      "sha256": "e06da422fd6a2aa0bdf932dd09ed122e37ca54a0fb9d2a0384c8a58318484552",
+      "bytes": 267205,
+      "counts": {
+        "local_links": 4,
+        "external_links_not_fetched": 5
+      }
+    },
+    {
+      "path": "docs/development/ImplementationOwnership.md",
+      "sha256": "0f958c0dae4195e37fa4f845f8579067475f0f8a0d04c94d7c435a7ec5af8250",
+      "bytes": 86471,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "docs/development/README.md",
+      "sha256": "f5a4b0ab58fecd766daf533dbb6b9b1d05e08c9b1db384826060c6c11055f568",
+      "bytes": 2524,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "docs/guides/README.md",
+      "sha256": "7b161bd5d4e68f62d38547004c8b2ec26fa399b8147fafc36fff5147e2647d8c",
+      "bytes": 707,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "docs/guides/SimulationCase.md",
+      "sha256": "9440ee1575d9ba15009109e7c7b25d0488d5cba3bf14801e89ca89774cdb4426",
+      "bytes": 13988,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "docs/guides/SimulationCase.zh-CN.md",
+      "sha256": "49d0ce46710fba41a2883008759c30111647bd4fbcebdee036e4c9e2ad329003",
+      "bytes": 13058,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "docs/legal/README.md",
+      "sha256": "d6f09ab96fcfafd1c054da6b5244bbf74a52ca12db98c90c99be8037bc3a3970",
+      "bytes": 705,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "docs/legal/README.zh-CN.md",
+      "sha256": "3c27b465cdb4ff1c0538e7cf157cc77e4f998bd1b708e3ff307cd7a1d0d8bb5b",
+      "bytes": 743,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "docs/physics/AmrIndicatorNoiseReview.md",
+      "sha256": "aa1adcb6d16391a642b677ac9dc69596db93c0c463a2c5135090a58e9b6e6d7b",
+      "bytes": 4233,
+      "counts": {
+        "local_links": 1
+      }
+    },
+    {
+      "path": "docs/physics/CurvilinearMetricReview.md",
+      "sha256": "f0fd4b7de45648a5ffe05416cf2c64f5ad5d89a64b8810a32df40082c9e9c126",
+      "bytes": 10084,
+      "counts": {
+        "external_links_not_fetched": 2,
+        "local_links": 2
+      }
+    },
+    {
+      "path": "docs/physics/DiffusionCoefficientAlignment.md",
+      "sha256": "4d297ad0ee978cd0c701e133840cd9ee5f6df944c3f61b2b32e1f527fd79e0ef",
+      "bytes": 1894,
+      "counts": {
+        "local_links": 2,
+        "external_links_not_fetched": 1
+      }
+    },
+    {
+      "path": "docs/physics/DiffusionCoefficientAlignment.zh-CN.md",
+      "sha256": "255379c05188f4c39cfeb7bc71a930c45e66eac0b88d3ead4457e312ceadf300",
+      "bytes": 1694,
+      "counts": {
+        "local_links": 2,
+        "external_links_not_fetched": 1
+      }
+    },
+    {
+      "path": "docs/physics/README.md",
+      "sha256": "cc4a288daad4f069ba71e6307b2b61a02106e3822549b0624b7df2ac89a9c93c",
+      "bytes": 1885,
+      "counts": {
+        "local_links": 15
+      }
+    },
+    {
+      "path": "docs/physics/TimmesNetworks.md",
+      "sha256": "cea8a4b6684f63ddb9e5ba18e1d90977efea5a85a030491827bcf81bb388723b",
+      "bytes": 21700,
+      "counts": {
+        "local_links": 13,
+        "external_links_not_fetched": 2
+      }
+    },
+    {
+      "path": "docs/physics/TimmesNetworks.zh-CN.md",
+      "sha256": "95c193a4f6111face712413f6316b63fdbc7ea0a1187aed85fa0dd89fc7f836d",
+      "bytes": 19361,
+      "counts": {
+        "local_links": 13,
+        "external_links_not_fetched": 2
+      }
+    },
+    {
+      "path": "examples/README.md",
+      "sha256": "8dd391f10ee2317c50011fdb5da527db1ac4c9d3c6ccdfef7da0a35ddb5fd3bd",
+      "bytes": 456,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "examples/network/README.md",
+      "sha256": "c6db01f4f8df89f5052347f79f09c7488c44f116a3ace69ff86e68777f395cb9",
+      "bytes": 787,
+      "counts": {
+        "local_links": 4,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "simulation/BurnGradient/README.md",
+      "sha256": "12fcff352c7060e6fe4579b9461d2e5d01dd3c4281bda97b3de29968d636c002",
+      "bytes": 684,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "simulation/BurnOneZone/README.md",
+      "sha256": "82cc173b82f8b86340c652728d7a397859619688cd66a70917daa1d490cf3fdb",
+      "bytes": 718,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "simulation/Cellular/README.md",
+      "sha256": "69ab111ad18cf6efe6c79d9f1a0262646834b7a237acd8f26edd9b11df520178",
+      "bytes": 689,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "simulation/CooperativeHotspots/README.md",
+      "sha256": "df08bdbe0dbe0a801675daf7081ec52b4d6bde4f5ec82b9d3d2cdbad97f020a8",
+      "bytes": 745,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "simulation/CooperativeHotspots/README.zh-CN.md",
+      "sha256": "3805422d2c6425b636bbc3c6b293684ef40e55fc925eb7c9c9f3ed52916edfd0",
+      "bytes": 4463,
+      "counts": {}
+    },
+    {
+      "path": "simulation/DiffusionMode/README.md",
+      "sha256": "ae79be4e0bdf942afcfe1a566325fa298c3d77d66296f842e598c4aabe714ddf",
+      "bytes": 612,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "simulation/ExternalGravity/README.md",
+      "sha256": "eccb28a790ccfb604da901001a89d69e7932bd1b9289e2bf2fbbaedeac0f49d9",
+      "bytes": 621,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "simulation/GaussianPulse/README.md",
+      "sha256": "6e20c6c5e076d735cca463fc228329096ebb1081b2c887a8312ad69dc30f2726",
+      "bytes": 734,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "simulation/README.md",
+      "sha256": "2730c68846fdbae3a78159af848aacb080239149855bd40e1a16a076a47a2642",
+      "bytes": 2432,
+      "counts": {
+        "local_links": 15
+      }
+    },
+    {
+      "path": "simulation/RTinstability/README.md",
+      "sha256": "bb1dc0c045ddfaab9ba095cefc8e3ba6112270c47475308b5e40069d2e3e3301",
+      "bytes": 662,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "simulation/Sedov/README.md",
+      "sha256": "ffbb2f8cfed440f1e98144a78c5871b7585a2e25e8cb42a328ed5136103efdde",
+      "bytes": 593,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "simulation/SmoothAdvection/README.md",
+      "sha256": "5059c21f6689cb8a8b84b74546dfa093c588e88a2d46e9b514dc416d9800f0f3",
+      "bytes": 666,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "simulation/Sod/README.md",
+      "sha256": "41484eb56608f3ba2c4ebb941ff3f889b9e0dabfbe2a964367a88c95e9c24986",
+      "bytes": 666,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "src/README.md",
+      "sha256": "9833b8f55df06f26a6574839af384d57bd1be123760880c3ed90a3434eac3317",
+      "bytes": 1281,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "src/amr/README.md",
+      "sha256": "0f8745ce4f61b47941363b741d17ba96825207c8345bd705543557ef29629bf6",
+      "bytes": 1728,
+      "counts": {
+        "local_links": 25
+      }
+    },
+    {
+      "path": "src/core/README.md",
+      "sha256": "9e155e251a70804dd8582f62115be58fd1ed61f7adc26444e1add878e95f0bfd",
+      "bytes": 805,
+      "counts": {
+        "local_links": 9
+      }
+    },
+    {
+      "path": "src/cuda/README.md",
+      "sha256": "0583847c958612d6ffe534f9a137a96b82ec8484c5994895688fb1e24b54d8d8",
+      "bytes": 1135,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "src/cuda/amr/README.md",
+      "sha256": "94840a95d7346b61503579a5f186dc1811ea56044975c6a87f77f28f0747fc11",
+      "bytes": 880,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "src/cuda/common/README.md",
+      "sha256": "e4c90c8f0cdd3301bcb5f9092abb21cc7e9163b4facb840d594e82ebe8253ec8",
+      "bytes": 819,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "src/cuda/diffusion/README.md",
+      "sha256": "aeb0fe97062fd643396e201417b07cc8bcf9f7664fe5049fa8d6c9f7dad28655",
+      "bytes": 520,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "src/cuda/hydro/README.md",
+      "sha256": "685eca55676d5b6353e03981b2aa942175bd56193735f66fca20810b3403cdbd",
+      "bytes": 848,
+      "counts": {
+        "local_links": 10
+      }
+    },
+    {
+      "path": "src/cuda/microphysics/README.md",
+      "sha256": "70800557e4220cb11fd505eed6b0a76580a3e96509505f8a879cf8ce4f9a45fa",
+      "bytes": 1526,
+      "counts": {
+        "local_links": 17
+      }
+    },
+    {
+      "path": "src/cuda/runtime/README.md",
+      "sha256": "b6494476e2675324c3148108ddda9fc4d2e1768cf463cca429462f9fd49d54b8",
+      "bytes": 1530,
+      "counts": {
+        "local_links": 11
+      }
+    },
+    {
+      "path": "src/cuda/runtime/amr/README.md",
+      "sha256": "0023c0d01ad979058ba2cb03c0eb8ba77e8289043bc79c4737fdf96639a63535",
+      "bytes": 791,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "src/cuda/runtime/burn/README.md",
+      "sha256": "28821cb90af8a8ea8bf575f24234fa10835b583de8394de8d5f7351a777f2200",
+      "bytes": 1416,
+      "counts": {
+        "local_links": 16
+      }
+    },
+    {
+      "path": "src/cuda/runtime/burn/routes/README.md",
+      "sha256": "bf630729927035f7b0e37fafcc7e0f404e85f8f6c34aeeaf6038b1d90b76995f",
+      "bytes": 665,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "src/cuda/runtime/control/README.md",
+      "sha256": "e8a9de8d1adf4106f4da0719ba81ccd822b494bcd83e3633a02fb12c07cfd053",
+      "bytes": 842,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "src/cuda/runtime/diffusion/README.md",
+      "sha256": "125a33ee7e54154a1a4e912410f642e3eacf64875ac33a3ab2aabef8c9d3ee13",
+      "bytes": 581,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "src/cuda/runtime/hydro/README.md",
+      "sha256": "9d7f035200d696b3cfd59f9caeebc1a1a3bf099667a1290c001c62011564c39e",
+      "bytes": 688,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "src/data/README.md",
+      "sha256": "3c0c827d14ae56be82e48f57c6e45e603705d953b044b028d6c1d1831abf91cc",
+      "bytes": 588,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "src/driver/README.md",
+      "sha256": "10253e1f3f0b9fd16bafc29980d30009896745c6f5cf97f06e719612e828648f",
+      "bytes": 1001,
+      "counts": {
+        "local_links": 10
+      }
+    },
+    {
+      "path": "src/driver/dispatch/README.md",
+      "sha256": "7763621de15b08bdc66c9008a9d5747afbbb1561c4c3bba4885084f83e5b3bd4",
+      "bytes": 748,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "src/grid/README.md",
+      "sha256": "a57320c8f94e9b73f36be65ee0bcb2b192122efaebde645e64a78e110c5f40b9",
+      "bytes": 535,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "src/interface/README.md",
+      "sha256": "c872d48effa2b52531035aa6617146e8d9b3d1929ebba51455dd7560effee42b",
+      "bytes": 543,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "src/io/README.md",
+      "sha256": "5268fd8aee3f5dc3efb89e740ff91ea4a187ff72a9f29e74fdddd8d4caa55d50",
+      "bytes": 607,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "src/io/chk/README.md",
+      "sha256": "c0d545c50c7ec83bbe98b9e545b1dfb256ed67cd94f8f3394a3090ba4fda7399",
+      "bytes": 626,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "src/io/hdf5/README.md",
+      "sha256": "7db3e55b3880ed063d1040ed5045a5d83fac1ed487eb870e34c108de56c180b1",
+      "bytes": 467,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "src/io/plot/README.md",
+      "sha256": "a703f905511d2d525624828cf4a6426cd28e7bfcb71b96c705516272169f374e",
+      "bytes": 388,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "src/numerics/README.md",
+      "sha256": "b65b877da47c0774ba5c6911f60cdaa8fa338885fa6343d247a6b1815c114e61",
+      "bytes": 1116,
+      "counts": {
+        "local_links": 9
+      }
+    },
+    {
+      "path": "src/numerics/burnsolver/README.md",
+      "sha256": "ddacb9d79037cff8868367b9ace65814ff2da6c40d3148d01de9706aead51e7e",
+      "bytes": 1235,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "src/numerics/diffusion/README.md",
+      "sha256": "32ae4b6537a8bf08947a619c493d7c30555b30495b0a1ac3d13109517a17201f",
+      "bytes": 1193,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "src/numerics/flux/README.md",
+      "sha256": "ee20b0ed8dd96d3d5fac0318ca81b827b8ad9b230916157c2c03636fdea14e10",
+      "bytes": 871,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "src/numerics/integrator/README.md",
+      "sha256": "23784d636793dd989ab4862c7ac38bae3e49cd0646b1740cfdbc4501b31534bf",
+      "bytes": 1099,
+      "counts": {
+        "local_links": 11
+      }
+    },
+    {
+      "path": "src/numerics/linalg/README.md",
+      "sha256": "5a4d055c48d30c9e1fbde799376b30b1f8039241733d203309bc643c3e9fb010",
+      "bytes": 1084,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "src/numerics/reconstruction/README.md",
+      "sha256": "9bb2e63460c7f93d2dda7d3e1422152393bf107699afa3ab4d7c4f986a43dfb1",
+      "bytes": 886,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "src/physics/README.md",
+      "sha256": "e1ce0478bf820df65c9cc8b97754e0e4ab3f6a6f99bfd6c3499c2ed8b154468a",
+      "bytes": 1181,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "src/physics/constant/README.md",
+      "sha256": "372d4e00a8f462bd2535e9bac9d4f56009349c265e9b8359baa4dacc7ba7c789",
+      "bytes": 4752,
+      "counts": {
+        "external_links_not_fetched": 1,
+        "local_links": 1
+      }
+    },
+    {
+      "path": "src/physics/diagnostics/README.md",
+      "sha256": "b2fdb3c847efc4effbce95796e7467aca358445b72a744670e3979bb7eb6f652",
+      "bytes": 635,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "src/physics/diffusionCoe/README.md",
+      "sha256": "8c004c436860029ef5f37a37b2cacf66d44e05e0dd77ad25fa005d11a20366c5",
+      "bytes": 805,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "src/physics/eos/README.md",
+      "sha256": "79abe7b7c26359100a0eaa27aca7217d9bc253ebbd13559a7e92069a070bae04",
+      "bytes": 1159,
+      "counts": {
+        "local_links": 14
+      }
+    },
+    {
+      "path": "src/physics/eos/TabularEOS.md",
+      "sha256": "dde1001f741fd94dadaabb07ccaca39f21f7eea5bdf8be1ee2f3b08efa6698ca",
+      "bytes": 9264,
+      "counts": {
+        "local_links": 3,
+        "external_links_not_fetched": 3
+      }
+    },
+    {
+      "path": "src/physics/eos/TabularEOS.zh-CN.md",
+      "sha256": "f1e198933e39cef5f4249294f9318e9f7d6f05366582bc31d1ea1c32d1d389cd",
+      "bytes": 8060,
+      "counts": {
+        "local_links": 3,
+        "external_links_not_fetched": 3
+      }
+    },
+    {
+      "path": "src/physics/gravity/README.md",
+      "sha256": "56f7fadf154af31eedee710d2297b5d92bff68528090d69701518f147dd08a69",
+      "bytes": 835,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "src/physics/network/README.md",
+      "sha256": "a3c01efad8d2fceff2c2e205c7b1477a7c18e8e02e4d856aa54f09928b736495",
+      "bytes": 1153,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "src/physics/network/aprox13/README.md",
+      "sha256": "4122eaf04de47ad9d9d615544aa10a6d455fdacf50bc740a1adc6936487c35cf",
+      "bytes": 1103,
+      "counts": {
+        "local_links": 11
+      }
+    },
+    {
+      "path": "src/physics/network/aprox19/README.md",
+      "sha256": "f1978a25c1bce53e4777cf3a2314eb68174f67c72193c63f925ccfcdc18ed619",
+      "bytes": 1103,
+      "counts": {
+        "local_links": 11
+      }
+    },
+    {
+      "path": "src/physics/network/aprox21/README.md",
+      "sha256": "dc82fff92a559091bd035c3b3d51dcf3ed9571da056fd6fc5ae8ad5a0cc255d5",
+      "bytes": 1103,
+      "counts": {
+        "local_links": 11
+      }
+    },
+    {
+      "path": "src/physics/network/custom/README.md",
+      "sha256": "c7422d8a2437dedcc431e6e8dcce8f35978df6f6f860e0203c74646043c24eb3",
+      "bytes": 6971,
+      "counts": {
+        "local_links": 4,
+        "local_anchor_links": 2
+      }
+    },
+    {
+      "path": "src/physics/network/iso7/README.md",
+      "sha256": "17bc628545fc35ae349aef0066498ae582b65a4f0f9d3a49efaa2f3a831b5c39",
+      "bytes": 1064,
+      "counts": {
+        "local_links": 10
+      }
+    },
+    {
+      "path": "src/physics/network/timmes_common/README.md",
+      "sha256": "537a96a69c0b8c0aa114d6a2a1ac98868d3fc4c4d821b0cbc8c4f01426825f74",
+      "bytes": 1121,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "src/physics/nse/README.md",
+      "sha256": "5fa2d66f0ba69803f1c95894ec223e01000c8ab0aa7e9dd5ceaa4bf49f3db6fb",
+      "bytes": 933,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "src/physics/species/README.md",
+      "sha256": "21e2ea27ace4598544b9b1bea09214fb311a08dbfb1128abe2f611c54444ccc4",
+      "bytes": 793,
+      "counts": {
+        "local_links": 4
+      }
+    },
+    {
+      "path": "tests/README.md",
+      "sha256": "2bf473515cab84ca8b05353876a7397c37a11047827fcff9f7d15868cb5cc102",
+      "bytes": 1630,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "tests/cuda/README.md",
+      "sha256": "8a9269266cb0d1acfc7c5b4cb759852a311f90e6822c93a61edefa4f21f8224d",
+      "bytes": 2948,
+      "counts": {
+        "local_links": 42
+      }
+    },
+    {
+      "path": "tests/fixtures/README.md",
+      "sha256": "7cc9d99bb265686d84d463b91323aafd0fb7e4194a0fae2a30543c5fa2613597",
+      "bytes": 1129,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "tests/math/README.md",
+      "sha256": "de2f31a15ca413267fd0b3b51025dfab4c8ded45ed987f7de7a6d03fda216aee",
+      "bytes": 1044,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "tests/smoke/README.md",
+      "sha256": "bc791edca6df933220de7e7c30fc78adc153238cf691ddb6f71ca2060907b463",
+      "bytes": 3028,
+      "counts": {
+        "local_links": 1,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "tests/tooling/README.md",
+      "sha256": "36b08c6da6cdbd8d7127d45c7aedb711db9383fbfce80690a2752585603425e4",
+      "bytes": 752,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "tools/README.md",
+      "sha256": "7dcce98b79a363ec7ad917ef6d7faad5cf83e05439924065cef15d3e43dc983e",
+      "bytes": 2093,
+      "counts": {
+        "local_links": 14
+      }
+    },
+    {
+      "path": "tools/network/README.md",
+      "sha256": "5c75c3d01c67fb2f1096324903f637b25a91429605ca31f6c9005a2ec3d97da6",
+      "bytes": 1268,
+      "counts": {
+        "local_links": 9,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "validation/CASE_TEMPLATE.md",
+      "sha256": "4f8ddfc20b5292db8501cba8b5c69b969e5036b22cd22651d9c8c41bc9feaef8",
+      "bytes": 1368,
+      "counts": {
+        "local_links": 1
+      }
+    },
+    {
+      "path": "validation/CASE_TEMPLATE.zh-CN.md",
+      "sha256": "adcb41abd62f2c6d2253ec42ff6734ef1a323d9c47dd75cd4828743a25592a6d",
+      "bytes": 1267,
+      "counts": {
+        "local_links": 1
+      }
+    },
+    {
+      "path": "validation/README.md",
+      "sha256": "fdbd1d2d20d54a27c131f49dc33164101de97ed95dd37cc65b4ef335a25598d2",
+      "bytes": 13054,
+      "counts": {
+        "local_links": 39,
+        "local_anchor_links": 5
+      }
+    },
+    {
+      "path": "validation/README.zh-CN.md",
+      "sha256": "8df749ed9c92b7f3ae4dcdbd8a012f59f6889938008c125a8b233a625c922888",
+      "bytes": 11605,
+      "counts": {
+        "local_links": 39,
+        "local_anchor_links": 5
+      }
+    },
+    {
+      "path": "validation/amr/README.md",
+      "sha256": "3ca11c21dec41727314158c357c7d6aa38aaf0e957dd2c89616b47cf0767dac3",
+      "bytes": 15928,
+      "counts": {
+        "local_links": 33,
+        "local_anchor_links": 2
+      }
+    },
+    {
+      "path": "validation/amr/README.zh-CN.md",
+      "sha256": "a044c15a64f52d5d744e9bdb44932fd54af58c98202b99fa228af50ec04441eb",
+      "bytes": 13121,
+      "counts": {
+        "local_links": 34,
+        "local_anchor_links": 3
+      }
+    },
+    {
+      "path": "validation/amr/inputs/README.md",
+      "sha256": "58c0490a79843529ed5fe1bf401c18c7ec4b260e8a0d9c814ce977a2362dbb1d",
+      "bytes": 974,
+      "counts": {
+        "local_links": 10
+      }
+    },
+    {
+      "path": "validation/assets/README.md",
+      "sha256": "62ed1166b851032f4d65dbf8f44c725fd34ac87acbda0eac171dcd0a3648df6b",
+      "bytes": 782,
+      "counts": {
+        "local_links": 3
+      }
+    },
+    {
+      "path": "validation/backend/README.md",
+      "sha256": "81a6d108732dddce7af54a49515e7515ad6980f6ee153195a42cdc20fa13a13f",
+      "bytes": 1114,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/README.md",
+      "sha256": "2a1668e89a77bb338959ed45c030f1410de48ad0dc35084ecfbda6b13b7f6c16",
+      "bytes": 4107,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/README.zh-CN.md",
+      "sha256": "dff31b45a0348cbbf219abfec0dbb5782beda74dc2f263271a372ac3a976740e",
+      "bytes": 2923,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "validation/burn/README.md",
+      "sha256": "9d7d07c5e3687ce4b4507b572e8ffa077141de5e61f46725f604912da59e5ac9",
+      "bytes": 6963,
+      "counts": {
+        "local_links": 13,
+        "external_links_not_fetched": 3
+      }
+    },
+    {
+      "path": "validation/burn/README.zh-CN.md",
+      "sha256": "c23fa5792a1a9a3575c51f3ce76cd8f101419adc57b1b7a1d9bf84312414ffb4",
+      "bytes": 6271,
+      "counts": {
+        "local_links": 13,
+        "external_links_not_fetched": 3
+      }
+    },
+    {
+      "path": "validation/burn/inputs/README.md",
+      "sha256": "9c9612f660dbb8a078c16d70963c033b0892c2f344929363883907f93428777e",
+      "bytes": 761,
+      "counts": {
+        "local_links": 6
+      }
+    },
+    {
+      "path": "validation/diffusion/README.md",
+      "sha256": "e464d8ed72ab652638af7a163ca908153633926b23aded3c916535dc4323d5d2",
+      "bytes": 3307,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "validation/diffusion/README.zh-CN.md",
+      "sha256": "29e4fc8095f541fbf710fa51af49bb4e03214f9b8f2ecb07699e1bab3515a275",
+      "bytes": 2979,
+      "counts": {
+        "local_links": 8
+      }
+    },
+    {
+      "path": "validation/diffusion/inputs/README.md",
+      "sha256": "c203ea2702a8e1ea973542bd878fe88884200262ada8c999afca04e2eca42fbd",
+      "bytes": 677,
+      "counts": {
+        "local_links": 5
+      }
+    },
+    {
+      "path": "validation/eos/README.md",
+      "sha256": "a132dc9de45e5d249fae47440eddf7467802b6f1ee44bf97e37a14f96c24f438",
+      "bytes": 5429,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "validation/eos/README.zh-CN.md",
+      "sha256": "4f399c25fa1fc1b09bd8f76c90e7e58d06f62ecb4d0ba96f2043a17b77ecf426",
+      "bytes": 4725,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "validation/gravity/README.md",
+      "sha256": "8b955006a37cf9e017d9463c5307b45330616929ebfcfd391b73b4677646c02d",
+      "bytes": 5636,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "validation/gravity/README.zh-CN.md",
+      "sha256": "0d898e48b24ec249fb24af8603894a6d97591c651e5956e2bbb80dc0edc5ab07",
+      "bytes": 5075,
+      "counts": {
+        "local_links": 12
+      }
+    },
+    {
+      "path": "validation/gravity/inputs/README.md",
+      "sha256": "8b5065c32903c719b87b9662154d0ddc859e548b9fdcc59c2a2f54397cec254f",
+      "bytes": 635,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "validation/hydro/README.md",
+      "sha256": "b7df7e17283c91518652d54c3f013325d3159ae866d55b0d051c5d07371fba25",
+      "bytes": 9619,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "validation/hydro/README.zh-CN.md",
+      "sha256": "3b6d6903652ed32af6b675b78d02b852254e57704f1a2c688e95bf4a9a36ec8d",
+      "bytes": 9074,
+      "counts": {
+        "local_links": 13
+      }
+    },
+    {
+      "path": "validation/hydro/inputs/README.md",
+      "sha256": "62d75044cde5e6cdbc046fd2ab3035c9f163bb2d3a71706ef70386fc24bc71f6",
+      "bytes": 822,
+      "counts": {
+        "local_links": 7
+      }
+    },
+    {
+      "path": "validation/network/README.md",
+      "sha256": "fbf80c4d2fea069a03f375fccd72a4bacc9d8096efca6e5373c5c29c52fb4a14",
+      "bytes": 13635,
+      "counts": {
+        "local_links": 27,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "validation/network/README.zh-CN.md",
+      "sha256": "45307dbce0a28e132bc826e04f6766ae838783870ef1b3b83bcece4607a9cf10",
+      "bytes": 12454,
+      "counts": {
+        "local_links": 27,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "validation/network/inputs/README.md",
+      "sha256": "c8a3e8f84a8044c3685ff5d5aacbccd6c8bd92342e3026682f5a6bb44e9ad8be",
+      "bytes": 1091,
+      "counts": {
+        "local_links": 7,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "validation/restart/README.md",
+      "sha256": "bb27751059def13670608db5f2197e5dcec2e3ef67fd5dfa5a39f30fa8cbc50c",
+      "bytes": 8783,
+      "counts": {
+        "local_links": 15,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "validation/restart/README.zh-CN.md",
+      "sha256": "ddef72092fb0b27146495a1f4f61991aa106fbae9ca8cb32694212a825f8f98e",
+      "bytes": 7744,
+      "counts": {
+        "local_links": 15,
+        "local_anchor_links": 1
+      }
+    },
+    {
+      "path": "validation/restart/inputs/README.md",
+      "sha256": "8eab52626a5cebf9af0cd558b894e9637676817166190ec6e2fa752bd361f6a2",
+      "bytes": 852,
+      "counts": {
+        "local_links": 6
+      }
+    }
+  ],
+  "method": "Read-only ripgrep discovery and Python standard-library checks. Parse local inline and explicit-reference Markdown links outside fenced code; URL-decode local paths/fragments; verify target existence and ATX heading or explicit HTML anchors. Record external URLs without network requests. Determine only real functional directories by the stated coverage rule and check their README.md files."
+}

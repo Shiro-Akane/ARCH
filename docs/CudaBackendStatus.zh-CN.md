@@ -1,112 +1,73 @@
-# CUDA 后端与 GPU-AMR 验收状态
+# CUDA 后端与 GPU-AMR 能力
 
 英文原文：[CudaBackendStatus.md](CudaBackendStatus.md)。英文版是规范文本。
 
-状态日期：2026-09-05。本工作树基于 GPU-AMR 交接提交 `21d6b2c`，并包含下述收尾与验收改动。
+CUDA 后端在 GPU 上执行流体与自适应网格数值工作。CPU/CUDA 共用数学和物理
+实现；设备内存、计算核、执行流和线性求解库由各后端管理。
+两个后端均支持下述功能范围。受测配置、技术结果和整体验收状态统一记录在
+[验证索引](../validation/README.zh-CN.md)中。
 
-## 验收摘要
+## 共用功能范围
 
-- 保持 CPU-authoritative topology / Host-lowered CUDA 架构；CUDA 专属代码仅限 kernel、device storage、stream、fence、资源退休与 launch routing。
-- 在强制 16 GiB 内存、禁用 swap 的环境中，clean Debug CUDA backend archive 和完整 `ARCH` 可执行文件均已编译、链接成功。
-- NVIDIA H100-20C（SM90）上的 10 个生产级 CPU/CUDA AMR 算例、27 个比较检查点全部通过；CPU/CUDA 最大 field-normalized 差异为 `9.99201e-16`。
-- Smooth 与 ENUC 驱动的 restart 矩阵均通过 CPU→CPU、CUDA→CUDA、CPU→CUDA、CUDA→CPU，以及 CPU/CUDA 连续运行对比。
-- 五个聚焦 CUDA AMR 测试在 `CUDA_LAUNCH_BLOCKING=1` 下全部通过。
-- 首次完整 65 项 CUDA CTest 在外部 GPU 争用下通过 52 项；显存隔离后的首轮重跑通过 10/13，并暴露出三个确定性的 burn CPU/CUDA 精度问题。统一补偿 `double` 求和、按实测误差校准单一路由预算后，Burn policy 16/16、原 13 项 13/13、完整 CTest 65/65 均已通过；工具测试 72/72 通过。
-- 当前 NVIDIA vGPU 禁用了 GPU debugging，`compute-sanitizer` memcheck/racecheck 无法插桩。尝试日志已经保存，本状态不宣称 sanitizer 通过。
+| 模块 | 已有实现范围 |
+|---|---|
+| 流体 | Van Leer、Steger-Warming、Roe、HLL、HLLC；PCM/MUSCL/PPM；MinMod/MC/SuperBee/Van Leer 限制器；Euler/SSPRK2/SSPRK3 |
+| 网格与几何 | 一、二、三维块网格；笛卡尔、柱坐标与球坐标，采用两端共用的坐标约定 |
+| 边界 | 周期、流出、反射 |
+| 动态 AMR | 细化指标、守恒插值与限制、跨层交换、流体／扩散通量修正和事务式状态迁移 |
+| EOS | 理想气体、Helmholtz、规范化 Tabular3D/Tabular4D 数据布局 |
+| 扩散 | 组分、热、黏性模式及 RKL1/RKL2 |
+| 重力 | 使用共用分阶段源项的外部重力 |
+| 内置燃烧 | iso7、aprox13、aprox19、aprox21；BE_NR、BD、ROS4 和网络受限 NSE |
+| 生成网络燃烧 | 已注册且数学实现可在设备端运行的网络；支持已识别的内嵌弱反应率表，各后端分别保存只读数据；按下述规则执行稠密或稀疏求解 |
+| 输出与恢复 | 共用 HDF5/checkpoint 设施，在 IO 边界同步状态，并提供 CPU/CUDA 重启路径 |
 
-机器可读证据、精确构建记录和测试日志位于
-[`validation/amr/results/h100-sm90-20260903/`](../validation/amr/results/h100-sm90-20260903/)。
+策略名称、别名和能力判定来自同一注册系统；EOS／网络采用编译期鸭子类型
+（duck typing）接口。后端适配层只连接存储或求解器，不另建物理模型。具体配置见
+[API 与参数参考](Reference.zh-CN.md)。
 
-## 已完成实现
+## GPU-AMR 执行方式
 
-### 共享 AMR 数学
+实现入口见 [CUDA runtime](../src/cuda/runtime/README.md)和[共用 AMR 模块](../src/amr/README.md)。
 
-- 混合层 exchange 支持 1D/2D/3D、X/Y/Z 面及 `Current`、`Next`、`Scratch`。
-- coarse→fine 使用一套共享的守恒 limited-linear prolongation；组分先重构 `rho X`，fine→coarse restriction 保持守恒，Host 路径使用物理单元体积。
-- PPM 在粗细界面退化为 MUSCL-MinMod；CPU/CUDA 使用同一套界面判据与重构数学。
-- ENUC 与五个流体守恒场均参与 exchange 和 topology migration。
+CPU 负责拓扑、Morton 排序和细化/合并决策。GPU 计算单元指标，仅向 CPU 回传
+每块一个汇总值；场数据的守恒迁移在设备缓冲区上执行，复用 CPU 的数值公式。
+因此，网格决策由 CPU 控制，大批量的场计算与迁移留在 GPU。
+写出检查点或绘图数据时，所需字段会复制到共用的主机写入器。
 
-### Reflux 与时间推进
+## 稠密与稀疏燃烧求解
 
-- Hydro reflux 覆盖 Euler、RK2、RK3，stage 权重分别为 `1`、`1/2, 1/2`、`1/6, 1/6, 2/3`。
-- RKL1/RKL2 每个 stage 都登记并 reflux，包含负 `gamma`；RKL2 的 `F(Y0)` 使用紧凑 surface cache，且不会跨时间步复用。
-- Flux register 为面规模；flux scratch 覆盖前完成登记，最终 slot rotation 后对 `Current` reflux。
+ODE 方程数为核素数加温度方程；需要积分有符号弱反应损失的网络另含一个能量源状态。
+`linear_solver = Auto` 下，总数不超过 31 个方程使用共用 DenseLU
+（不含辅助状态时最多 30 核素，含该状态时最多 29 核素）；更大系统选择 CPU KLU 或 GPU cuDSS。
+相应求解库及网络／EOS 执行代码必须已构建。显式指定 CPU+cuDSS 或 CUDA+KLU
+会被拒绝；显式 CUDA 不会静默回退到 CPU 物理计算。
+`compute_backend = auto` 可在启动时选择可用且支持该配置的后端并报告选择，
+进入构造后不再切换。
 
-### 动态 topology 与生命周期安全
+CUDA 稀疏执行器让数值状态和 CSR 矩阵保留在 GPU，主机调用 cuDSS API 并交换
+执行请求和响应。矩阵分解的存储设有上限，内存需求取决于分解产生的非零项和实际工作负载。
+当前适配层使用 cuDSS 0.8 API 和非对称 BTF/COLAMD 排序，并对原始矩阵
+检查修正量残差。原生执行/资源错误会明确报告，不伪装成 ODE 重试。
 
-- refine/derefine、Morton topology、邻居与迁移计划保持 CPU-authoritative。
-- CUDA 在上传 quiesce 后，将 topology、device blocks、handle、reflux plan 作为同一 staged generation 发布；失败时旧 generation 保持有效，旧存储只在 fence 后退休。
-- failure injection、stale handle 和 store lifecycle 已有 CUDA 测试覆盖。
+ARCH 支持 pynucastro 生成的反应网络，并通过 CPU KLU / GPU cuDSS 提供稀疏求解。
+对于超大网络，具体模型的科学可靠性取决于核素集合、反应数据和适用范围；
+资源需求随网络与网格规模增长。
 
-### EOS、burn、network 与 restart
+## 网络和表格数据的选择
 
-- 自由能插值和热力学闭合集中在 `TabularFreeEnergyMath.h`；Host 负责 HDF5、导数表与所有权，CUDA 只负责上传和 view 生命周期。
-- 3D/4D 表格 EOS 温度迭代现以当前温度尺度判断 Newton 增量；Direct 和 free-energy EOS 使用有限的 CPU/CUDA 容差，没有复制 device 数学。
-- 内置 burn/network 使用统一注册表；不可用或不具 device 能力的 route fail-closed。外部 KLU 仍为 CPU-only。
-- Ye、Timmes RHS/Jacobian/温度能量、ODE 能量闭合及 NSE 守恒量统一使用固定顺序的补偿 `double` 求和，消除了 Host `long double` 与 CUDA `double` 的隐式分歧；仅 aprox19 ROS4 使用逐字段、基于实测最大误差加 25% 余量的预算，没有全局放宽容差。
-- checkpoint schema v3 为 CPU/GPU 共用，保存 ENUC、EOS/table SHA-256、burn/network/NSE 状态和 species metadata；CUDA 先 materialize `Current`，再调用 Host writer。
+- 生成的弱反应率表在两侧共用插值、导数和能量积分。生成器会检查表格布局并
+  报告不支持的输入。版本 3 或尚未转换为设备端实现的网络包仍只能在 CPU 上运行；
+  CUDA 需要版本 4 网络包，并在清单中声明 `device_callable_math=true`。
+  旧网络包需使用当前生成器重新生成，才能使用其支持的 CUDA 接口。
+  独立 Urca 轨迹结果见[网络验证](../validation/network/README.zh-CN.md)。
+- 自引力、自定义网络 NSE 均不是两端现有生产功能。内置 NSE 受所选核素集合限制，
+  alpha-chain 网络不能替代通用 NSE 网络。
+- ARCH 规范化 EOS 表不能直接替换为任意原生核物质表；单位、热力学分量与能量
+  零点必须满足[表格契约](../src/physics/eos/TabularEOS.zh-CN.md)。
+- 本地发布验证使用有代表性的生成网络和弱反应网络。更大模型的轨迹和资源
+  测量安排在适合其规模的机器上。ARCH 当前采用单机 CPU 或单 GPU CUDA 执行。
 
-## 已验证环境与构建边界
-
-| 项目 | 记录值 |
-| --- | --- |
-| GPU | NVIDIA H100-20C，compute capability 9.0，20,480 MiB |
-| Driver / CUDA toolkit | 570.133.20 / 12.8.93 |
-| Host compiler | GCC 11.4.0（该主机没有 `g++-12`） |
-| 构建工具 | CMake 4.4.0、Ninja 1.13.2 |
-| 内存边界 | systemd user scope，`MemoryMax=16G`、`MemorySwapMax=0` |
-| CUDA archive | 176,691,142 bytes；SHA-256 `9fa494d579c5450265789b19a16e83c4c2ba380785980a4fef8a11a9f81a4eb8` |
-| `ARCH` executable | 204,248,832 bytes；SHA-256 `e903232e298ee9ea2cc958a404fe370a305463c8008ec5969b4adb9430f4f8e2` |
-
-原始串行 clean archive 用时 `1:11:37`，最大记录 RSS `4,466,132 KiB`；补偿求和改动后的串行 backend 重编译用时 `1:13:21`，最大 RSS `4,752,228 KiB`；最终增量 `ARCH` 链接用时 `1:06.81`，最大 RSS `1,206,036 KiB`；全部 CUDA 测试 target 的原始编译用时 `20:31.74`，最大 RSS `4,807,348 KiB`。所有记录的 swap 均为零。`tu-memory-samples.csv` 保存按 1 秒采样、归因到活跃 CUDA TU 的 cgroup 内存；它包含构建 scope 开销，不能解释为单一编译器进程的独占 RSS。
-
-要求的 `--parallel 1` 基线已经完成。Clean `--parallel 6` 属于吞吐优化，不是已建立的安全内存基线，本页不宣称其已通过。
-
-## 真实 GPU 验证矩阵
-
-生产 manifest 覆盖：
-
-- 1D Hydro AMR 的 Euler、RK2、RK3；
-- 多步 refine/derefine topology cycle；
-- RKL1 及 RKL2 的 2、3、5 stage diffusion AMR；
-- RKL2 负 `gamma` 和 `F(Y0)` cache 生命周期；
-- 2D、3D RK3 AMR；
-- 每个选定步的 CPU/CUDA checkpoint parity 与守恒检查。
-
-独立 CUDA 测试覆盖所有维度、面方向、粗细两侧及 `Current` / `Next` / `Scratch` exchange。生产 manifest 与合成 kernel 测试的证据分开保存。
-
-Restart 验证同时覆盖 SmoothAdvection 与 `refine_var = ENUC`。Smooth 的五条 route 在所报比较点位完全相等；ENUC 矩阵通过预先声明的 scale-aware tolerance，最大 normalized field/ENUC 差异为 `6.71411e-4`。
-
-## 尚未闭合的资格项
-
-1. 在 bare-metal 或开放 CUDA debugging 的 vGPU profile 上执行 memcheck/racecheck；当前 H100 vGPU 无法满足此项。
-2. 仅在需要并行构建吞吐数据时记录 clean `--parallel 6`；不得削弱 16 GiB、零 swap 验收边界。
-
-这些是资格边界，不改变 AMR 数学，也不允许跳过网络、使用假 validator 或放宽容差。
-
-## 明确不纳入本轮 GPU-AMR 收尾
-
-以下属于后续 CUDA 能力扩展，不阻塞 Cartesian GPU-AMR：cuDSS provider、超过 30 核素的 CUDA burn、generated custom CUDA networks、CUDA external gravity、CUDA cylindrical/spherical geometry、self-gravity/Jeans indicator 和 WENO5 注册。
-
-## 复现
-
-~~~bash
-cmake -S . -B build-cuda -G Ninja \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DARCH_ENABLE_CUDA=ON \
-  -DBUILD_TESTING=OFF \
-  -DARCH_ENABLE_KLU=OFF \
-  -DARCH_FETCH_SUITESPARSE=OFF \
-  -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-11 \
-  -DCMAKE_CUDA_ARCHITECTURES=90
-
-cmake --build build-cuda --target arch_cuda_backend --parallel 1
-cmake --build build-cuda --target ARCH --parallel 1
-
-python3 tools/validate_backend_results.py \
-  --manifest validation/amr/gpu_cases.json \
-  --arch ./bin/ARCH \
-  --checkpoint-validator ./build-cuda/arch_cuda_single_level_validation \
-  --source-root . \
-  --output-root /tmp/arch-gpu-amr-validation
-~~~
+[验证索引](../validation/README.zh-CN.md)区分数值结果与实现声明，并提供可复现的
+输入和指标。贡献者实验日志和机型相关证据单独保留在
+[开发记录](development/README.md)，不混入本功能指南。

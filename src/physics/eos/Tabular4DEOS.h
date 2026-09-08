@@ -1,14 +1,14 @@
 /**
  * @file Tabular4DEOS.h
- * @brief 4D Tabular Equation of State reading from HDF5 (rho, e, A_bar, Z_bar).
- * Designed specifically for Non-NSE astrophysical environments (e.g., Helmholtz EOS).
+ * @brief 4D Tabular Equation of State reading from HDF5 (rho, T, A_bar, Z_bar).
+ * Host and device views share interpolation and thermodynamic closure.
  */
 
 /**
  * Workflow:
  * 1. Construct or query the configured thermodynamic closure from canonical state variables.
  * 2. Return pressure, temperature, and transport quantities with validated bounds.
- * 3. Keep host and future device views consistent through one dispatch contract.
+ * 3. Keep host and device views consistent through one shared mathematical implementation.
  */
 #pragma once
 
@@ -24,23 +24,20 @@
 #include "TabularFreeEnergy.h"
 
 #include "../species/Species.h"
+#include "../constant/PhysicalConstants.h"
 
 // Keep the two large interpolation routines as explicit device call
 // boundaries.  Force-inlining them into every reconstruction/flux query makes
 // NVCC materialize the same 4-D/free-energy expression graph many times in a
 // single Hydro kernel and can exceed a 16 GiB Debug-build worker.  The formula
 // remains shared by Host and CUDA; only the CUDA compilation boundary differs.
-#if defined(__CUDACC__)
-#define ARCH_TABULAR4_HEAVY_CALL ARCH_HOST_DEVICE __noinline__
-#else
-#define ARCH_TABULAR4_HEAVY_CALL inline
-#endif
+// ARCH_HEAVY_INLINE is owned by core/ArchPortability.h, shared with other EOS.
 
 // One mathematical implementation parameterized by host or device species metadata.
 template <class SpeciesView>
 struct BasicTabular4DEOSView
 {
-    // Table dimensions and coordinate bounds for rho, energy, Abar, and Zbar.
+    // Table dimensions and coordinate bounds for rho, temperature, Abar, and Zbar.
     int n_rho, n_T, n_A, n_Z;
     double log_rho_min, log_rho_max, dlog_rho;
     double log_T_min, log_T_max, dlog_T;
@@ -60,8 +57,12 @@ struct BasicTabular4DEOSView
     std::array<const double*, tabular_eos::FieldCount> free_energy_fields{};
     SpeciesView specs{};
 
-    static constexpr double k_B_cgs = 1.380649e-16; // erg/K
-    static constexpr double m_u_cgs = 1.660539e-24; // g
+    // Optional non-owning device error latch, bound only on a per-launch view
+    // copy.  Owners and Host views leave this null; Host failures still throw.
+    int* device_error_status = nullptr;
+
+    static constexpr double k_B_cgs = arch::constants::statistical::cgs::boltzmann;
+    static constexpr double m_u_cgs = arch::constants::atomic::cgs::atomic_mass_unit;
 
     // Domain check and analytic ideal-gas fallback.
     ARCH_INLINE bool is_out_of_bounds(double log_rho, double log_T, double A, double Z) const
@@ -93,8 +94,9 @@ struct BasicTabular4DEOSView
     }
 
     // Quadrilinear interpolation.
-    ARCH_TABULAR4_HEAVY_CALL double interpolate_4d(
-        const double *table, double rho, double T, double A, double Z) const
+    ARCH_HEAVY_INLINE double interpolate_4d(
+        const double *table, double rho, double T, double A, double Z,
+        eos_utils::LinearCompositionDerivatives* derivatives = nullptr) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -123,32 +125,30 @@ struct BasicTabular4DEOSView
         double tu = (u - (A_min + k * dA)) / dA;
         double tv = (v - (Z_min + l * dZ)) / dZ;
 
-// Flatten (i,j,k,l) as i*(n_T*n_A*n_Z)+j*(n_A*n_Z)+k*n_Z+l.
-#define IDX(ii, jj, kk, ll) ((ii) * n_T * n_A * n_Z + (jj) * n_A * n_Z + (kk) * n_Z + (ll))
-
-        // Collapse 16 vertices to 8 along Zbar.
-        double c000 = table[IDX(i, j, k, l)] * (1.0 - tv) + table[IDX(i, j, k, l + 1)] * tv;
-        double c100 = table[IDX(i + 1, j, k, l)] * (1.0 - tv) + table[IDX(i + 1, j, k, l + 1)] * tv;
-        double c010 = table[IDX(i, j + 1, k, l)] * (1.0 - tv) + table[IDX(i, j + 1, k, l + 1)] * tv;
-        double c110 = table[IDX(i + 1, j + 1, k, l)] * (1.0 - tv) + table[IDX(i + 1, j + 1, k, l + 1)] * tv;
-        double c001 = table[IDX(i, j, k + 1, l)] * (1.0 - tv) + table[IDX(i, j, k + 1, l + 1)] * tv;
-        double c101 = table[IDX(i + 1, j, k + 1, l)] * (1.0 - tv) + table[IDX(i + 1, j, k + 1, l + 1)] * tv;
-        double c011 = table[IDX(i, j + 1, k + 1, l)] * (1.0 - tv) + table[IDX(i, j + 1, k + 1, l + 1)] * tv;
-        double c111 = table[IDX(i + 1, j + 1, k + 1, l)] * (1.0 - tv) + table[IDX(i + 1, j + 1, k + 1, l + 1)] * tv;
-#undef IDX
-
-        // Collapse 8 values to 4 along Abar.
-        double c00 = c000 * (1.0 - tu) + c001 * tu;
-        double c10 = c100 * (1.0 - tu) + c101 * tu;
-        double c01 = c010 * (1.0 - tu) + c011 * tu;
-        double c11 = c110 * (1.0 - tu) + c111 * tu;
-
-        // Collapse 4 values to 2 along specific internal energy.
-        double c0 = c00 * (1.0 - ty) + c01 * ty;
-        double c1 = c10 * (1.0 - ty) + c11 * ty;
-
-        // Collapse the final pair along density.
-        return c0 * (1.0 - tx) + c1 * tx;
+        // First evaluate rho/T at the four composition corners. Values and
+        // analytic derivatives then use this same bilinear composition patch.
+        double value[2][2], thermal[2][2];
+        for (int da = 0; da < 2; ++da) {
+            for (int dz = 0; dz < 2; ++dz) {
+                const double lower = table[free_energy_index(i, j, k + da, l + dz)] * (1.0 - tx)
+                    + table[free_energy_index(i + 1, j, k + da, l + dz)] * tx;
+                const double upper = table[free_energy_index(i, j + 1, k + da, l + dz)] * (1.0 - tx)
+                    + table[free_energy_index(i + 1, j + 1, k + da, l + dz)] * tx;
+                value[da][dz] = lower * (1.0 - ty) + upper * ty;
+                if (derivatives) thermal[da][dz] = (upper - lower) / (std::log(10.0) * dlog_T * T);
+            }
+        }
+        const auto patch = eos_utils::bilinear_value(value[0][0], value[0][1], value[1][0], value[1][1], tu, tv, dA, dZ);
+        if (derivatives) {
+            const auto derivative = eos_utils::bilinear_value(thermal[0][0], thermal[0][1], thermal[1][0], thermal[1][1], tu, tv, dA, dZ);
+            *derivatives = {};
+            derivatives->energy = {patch.first, patch.second};
+            derivatives->energy_hessian[1] = patch.mixed;
+            derivatives->energy_temperature = {derivative.first, derivative.second};
+            // For a cv-table call these same field derivatives become cv_X/cv_T.
+            derivatives->cv_temperature = derivative.value;
+        }
+        return patch.value;
     }
 
     ARCH_INLINE std::size_t free_energy_index(
@@ -163,8 +163,9 @@ struct BasicTabular4DEOSView
                static_cast<std::size_t>(iz);
     }
 
-    ARCH_TABULAR4_HEAVY_CALL tabular_eos::FreeEnergyState interpolate_free_energy(
-        double rho, double T, double A, double Z) const
+    ARCH_HEAVY_INLINE tabular_eos::FreeEnergyState interpolate_free_energy(
+        double rho, double T, double A, double Z,
+        eos_utils::LinearCompositionDerivatives* derivatives = nullptr) const
     {
         const double log_rho = std::log10(rho);
         const double log_temperature = std::log10(T);
@@ -206,16 +207,31 @@ struct BasicTabular4DEOSView
             free_energy_index(i + 1, j, k + 1, l + 1),
             free_energy_index(i + 1, j + 1, k + 1, l + 1)};
         const auto state_00 = tabular_eos::interpolate_biquintic(
-            free_energy_fields, corners_00, tx, ty, hx, hy);
+            free_energy_fields, corners_00, tx, ty, hx, hy, derivatives != nullptr);
         const auto state_01 = tabular_eos::interpolate_biquintic(
-            free_energy_fields, corners_01, tx, ty, hx, hy);
+            free_energy_fields, corners_01, tx, ty, hx, hy, derivatives != nullptr);
         const auto state_10 = tabular_eos::interpolate_biquintic(
-            free_energy_fields, corners_10, tx, ty, hx, hy);
+            free_energy_fields, corners_10, tx, ty, hx, hy, derivatives != nullptr);
         const auto state_11 = tabular_eos::interpolate_biquintic(
-            free_energy_fields, corners_11, tx, ty, hx, hy);
+            free_energy_fields, corners_11, tx, ty, hx, hy, derivatives != nullptr);
         const auto lower_A = tabular_eos::blend(state_00, state_01, tz);
         const auto upper_A = tabular_eos::blend(state_10, state_11, tz);
-        return tabular_eos::blend(lower_A, upper_A, ta);
+        const auto state = tabular_eos::blend(lower_A, upper_A, ta);
+        if (derivatives) {
+            const auto energy = eos_utils::bilinear_value(
+                state_00.a - state_00.ay, state_01.a - state_01.ay,
+                state_10.a - state_10.ay, state_11.a - state_11.ay, ta, tz, dA, dZ);
+            const auto capacity = eos_utils::bilinear_value(
+                (state_00.ay - state_00.ayy) / T, (state_01.ay - state_01.ayy) / T,
+                (state_10.ay - state_10.ayy) / T, (state_11.ay - state_11.ayy) / T, ta, tz, dA, dZ);
+            *derivatives = {};
+            derivatives->energy = {energy.first, energy.second};
+            derivatives->energy_hessian[1] = energy.mixed;
+            derivatives->cv = {capacity.first, capacity.second};
+            derivatives->energy_temperature = derivatives->cv;
+            derivatives->cv_temperature = (2.0 * state.ayy - state.ay - state.ayyy) / (T * T);
+        }
+        return state;
     }
 
     ARCH_INLINE tabular_eos::FreeEnergyResult free_energy_result(
@@ -225,16 +241,11 @@ struct BasicTabular4DEOSView
             interpolate_free_energy(rho, T, A, Z), rho, T);
     }
 
-    ARCH_TABULAR4_HEAVY_CALL tabular_eos::ThermodynamicState free_energy_state(
+    ARCH_HEAVY_INLINE tabular_eos::ThermodynamicState free_energy_state(
         double rho, double T, double A, double Z) const
     {
         const auto result = free_energy_result(rho, T, A, Z);
-#if defined(__CUDA_ARCH__)
-        return result.status == tabular_eos::FreeEnergyStatus::success
-            ? result.state : tabular_eos::invalid_thermodynamic_state();
-#else
-        return tabular_eos::require_thermodynamics(result);
-#endif
+        return tabular_eos::checked_thermodynamics(result, device_error_status);
     }
 
     // Composition coordinates Abar and Zbar.
@@ -252,6 +263,69 @@ struct BasicTabular4DEOSView
             return specs.calc_Zbar(Xi);
         return 7.0; // Matches the pure-nitrogen Abar fallback above.
     }
+
+    // Linear composition coordinates y=sum(X/A), z=Ye. Table coordinates
+    // Abar=1/y and Zbar=z/y are differentiated here, before the species map.
+    ARCH_INLINE std::array<double, 2> composition_weights(int species) const
+    {
+        if (species >= specs.count) return {};
+        const double inverse_a = 1.0 / specs.get_A(species);
+        return {inverse_a, specs.get_Z(species) * inverse_a};
+    }
+
+    ARCH_HEAVY_INLINE eos_utils::LinearCompositionDerivatives composition_derivatives(
+        double rho, double T, const double* Xi) const
+    {
+        eos_utils::LinearCompositionDerivatives d{};
+        if (rho <= 1e-12 || T <= 1e-12) return d;
+        const double A = get_Abar(Xi), Z = get_Zbar(Xi);
+        double y = 0.0;
+        for (int i = 0; i < specs.count; ++i) y += Xi[i] / specs.get_A(i);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), A, Z)) {
+            if (y > 1e-16) {
+                d.cv[0] = k_B_cgs / (m_u_cgs * (fallback_gamma() - 1.0));
+                d.energy[0] = T * d.cv[0];
+                d.energy_temperature[0] = d.cv[0];
+            }
+            return d;
+        }
+        if (uses_free_energy) {
+            const auto f = interpolate_free_energy(rho, T, A, Z, &d);
+            const auto state = tabular_eos::checked_thermodynamics(
+                tabular_eos::evaluate_thermodynamics(f, rho, T), device_error_status);
+            if (!std::isfinite(state.energy)) d.energy.fill(state.energy);
+        } else {
+            interpolate_4d(table_E, rho, T, A, Z, &d);
+            eos_utils::LinearCompositionDerivatives capacity{};
+            interpolate_4d(table_cv, rho, T, A, Z, &capacity);
+            d.cv = capacity.energy;
+            d.cv_temperature = capacity.cv_temperature;
+        }
+        const auto table = d;
+        const double a_y = y > 1e-16 ? -A * A : 0.0;
+        const double z_y = y > 1e-16 ? -A * Z : 0.0;
+        d.energy = {table.energy[0] * a_y + table.energy[1] * z_y, table.energy[1] * A};
+        d.energy_temperature = {table.energy_temperature[0] * a_y + table.energy_temperature[1] * z_y,
+                                table.energy_temperature[1] * A};
+        d.cv = {table.cv[0] * a_y + table.cv[1] * z_y, table.cv[1] * A};
+        d.energy_hessian = {};
+        if (y > 1e-16) {
+            d.energy_hessian[0] = 2.0 * A * A * (A * table.energy[0] + Z * table.energy[1])
+                                + 2.0 * table.energy_hessian[1] * a_y * z_y;
+            d.energy_hessian[1] = -A * A * (table.energy[1] + A * table.energy_hessian[1]);
+        }
+        return d;
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(double rho, double T, const double* X, double* result) const
+    { eos_utils::composition_derivative_query<Equations, eos_utils::CompositionQuery::energy_gradient>(*this, rho, T, X, result); }
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient(double rho, double T, const double* X, double* result) const
+    { eos_utils::composition_derivative_query<Equations, eos_utils::CompositionQuery::cv_gradient>(*this, rho, T, X, result); }
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(double rho, double T, const double* X, const double* flow, double* result) const
+    { eos_utils::composition_derivative_query<Equations, eos_utils::CompositionQuery::energy_hessian_action>(*this, rho, T, X, result, flow); }
 
     ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     {
@@ -311,7 +385,7 @@ struct BasicTabular4DEOSView
                interpolate_4d(table_cv, rho, T_target, A, Z);
     }
 
-    ARCH_TABULAR4_HEAVY_CALL double get_temperature(
+    ARCH_HEAVY_INLINE double get_temperature(
         double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
@@ -343,10 +417,15 @@ struct BasicTabular4DEOSView
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
 
-            double e_eval = uses_free_energy ? free_energy_state(rho, T_guess, A, Z).energy :
-                            interpolate_4d(table_E, rho, T_guess, A, Z);
-            double cv_eval = uses_free_energy ? free_energy_state(rho, T_guess, A, Z).cv :
-                             interpolate_4d(table_cv, rho, T_guess, A, Z);
+            double e_eval, cv_eval;
+            if (uses_free_energy) {
+                const auto thermal = free_energy_state(rho, T_guess, A, Z);
+                e_eval = thermal.energy;
+                cv_eval = thermal.cv;
+            } else {
+                e_eval = interpolate_4d(table_E, rho, T_guess, A, Z);
+                cv_eval = interpolate_4d(table_cv, rho, T_guess, A, Z);
+            }
 
             if (cv_eval <= 0.0) {
                 // Finite difference fallback
@@ -514,9 +593,8 @@ struct BasicTabular4DEOSView
 
 };
 
-#undef ARCH_TABULAR4_HEAVY_CALL
 
-using Tabular4DEOSView = BasicTabular4DEOSView<SpeciesPODView>;
+
 
 struct Tabular4DEOSHostView : BasicTabular4DEOSView<SpeciesHostView>
 {

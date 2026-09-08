@@ -2,16 +2,81 @@
 
 #include <cuda_runtime.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <type_traits>
 
 #include "../../data/FluidState.h"
-#include "../../grid/Grid.h"
 
 namespace arch::cuda
 {
-inline constexpr int kMaxDeviceSpecies = 30;
+// A storage fast path, not an algorithm/network limit. Larger compositions use
+// stream-owned workspace with the same numerical kernel and grid-stride loop.
+inline constexpr int kLocalSpeciesScratchCapacity = 30;
+inline constexpr int kSpeciesKernelThreads = 128;
+
+struct SpeciesWorkspaceView
+{
+    double* values = nullptr;
+    std::size_t capacity = 0; // doubles, not bytes
+    int lanes = 0;
+    int species = 0;
+    int arrays = 0;
+};
+
+inline bool valid_species_workspace(
+    SpeciesWorkspaceView workspace, int species, int arrays)
+{
+    if (species < 0 || arrays < 1) return false;
+    if (workspace.values == nullptr)
+        return workspace.capacity == 0 && workspace.lanes == 0
+            && workspace.species == 0 && workspace.arrays == 0
+            && species <= kLocalSpeciesScratchCapacity;
+    if (workspace.species != species || workspace.lanes < 1
+        || workspace.arrays < arrays || species == 0)
+        return false;
+    const std::size_t width = static_cast<std::size_t>(workspace.lanes)
+        * static_cast<std::size_t>(species);
+    return width / static_cast<std::size_t>(species)
+            == static_cast<std::size_t>(workspace.lanes)
+        && static_cast<std::size_t>(workspace.arrays)
+            <= std::numeric_limits<std::size_t>::max() / width
+        && workspace.capacity >= width * static_cast<std::size_t>(workspace.arrays);
+}
+
+namespace detail {
+inline int species_launch_threads(SpeciesWorkspaceView workspace)
+{
+    return workspace.values != nullptr && workspace.lanes < kSpeciesKernelThreads
+        ? workspace.lanes : kSpeciesKernelThreads;
+}
+inline int species_launch_blocks(int count, SpeciesWorkspaceView workspace)
+{
+    const int threads = species_launch_threads(workspace);
+    const int requested = (count - 1) / threads + 1;
+    const int available = workspace.values != nullptr
+        ? workspace.lanes / threads : requested;
+    return requested < available ? requested : available;
+}
+
+template <int Arrays> struct SpeciesLaneScratch
+{
+    SpeciesWorkspaceView workspace;
+    int lane;
+    double local[Arrays][kLocalSpeciesScratchCapacity];
+
+    ARCH_DEVICE SpeciesLaneScratch(SpeciesWorkspaceView view, int index)
+        : workspace(view), lane(index) {}
+    ARCH_DEVICE double* array(int index)
+    {
+        return workspace.values != nullptr
+            ? workspace.values + (static_cast<std::size_t>(index) * workspace.lanes
+                + lane) * workspace.species
+            : local[index];
+    }
+};
+} // namespace detail
 
 namespace detail
 {
@@ -131,13 +196,13 @@ struct CudaHydroWorkspaceView
     double* cfl_candidates;
     double* cfl_result;
     int* cfl_status;
+    SpeciesWorkspaceView species_workspace{};
 };
 
 inline bool valid_hydro_view(const DeviceStateView& view)
 {
     if (!(view.total_size > 0
         && view.n_species >= 0
-        && view.n_species <= kMaxDeviceSpecies
         && view.rho != nullptr
         && view.mom_u != nullptr
         && view.mom_v != nullptr
@@ -185,8 +250,13 @@ static_assert(std::is_standard_layout_v<DeviceGridView>);
 static_assert(std::is_trivially_copyable_v<DeviceGridView>);
 static_assert(std::is_standard_layout_v<CudaHydroWorkspaceView>);
 static_assert(std::is_trivially_copyable_v<CudaHydroWorkspaceView>);
+static_assert(std::is_standard_layout_v<SpeciesWorkspaceView>);
+static_assert(std::is_trivially_copyable_v<SpeciesWorkspaceView>);
 
-inline DeviceGridView make_device_grid_view(const Grid& grid)
+// Host-only POD binding. The caller owns the concrete grid; raw device views
+// and launch declarations must not include the host topology implementation.
+template <class HostGrid>
+inline DeviceGridView make_device_grid_view(const HostGrid& grid)
 {
     int geometry = static_cast<int>(DeviceGeometry::Cartesian);
     if (grid.geometry == "cylindrical")

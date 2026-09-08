@@ -1,0 +1,38 @@
+// Generated network/EOS binding only. Numerical methods are maintained once.
+#include "@ARCH_DENSE_EOS_HEADER@"
+#include "cuda/runtime/burn/CudaBackendBurnDenseRoutes.h"
+#include "@ARCH_DENSE_NETWORK_HEADER@"
+#include "cuda/runtime/burn/CudaBackendBurnImpl.cuh"
+
+namespace arch::cuda::burn_detail {
+namespace {
+template<class Network, class Eos>
+cudaError_t launch_compact_registered_network(
+    const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
+    DeviceGridView grid, std::byte* workspace_storage,
+    reduction::ReductionCandidate* candidates, int* statuses,
+    DeviceBurnSummary* summary, double burn_dt, Eos eos,
+    CudaBurnArguments config, cudaStream_t stream)
+{
+    if constexpr (BurnLimits::uses_compact_matrix(Network::ODE_NEQ))
+        return visit_ode_route<Network>(plan, state, grid, workspace_storage,
+            candidates, statuses, summary, burn_dt, eos, config, stream);
+    else
+        return cudaErrorInvalidValue; // Large networks require the sparse owner.
+}
+} // namespace
+
+template<>
+cudaError_t launch_dense_burn_network_route<
+    dispatch::@ARCH_DENSE_BINDING@, @ARCH_DENSE_EOS@>(
+    const dispatch::ResolvedExecutionPlan& plan, DeviceStateView state,
+    DeviceGridView grid, std::byte* workspace_storage,
+    reduction::ReductionCandidate* candidates, int* statuses,
+    DeviceBurnSummary* summary, double burn_dt, @ARCH_DENSE_EOS@ eos,
+    CudaBurnArguments config, cudaStream_t stream)
+{
+    using Network = @ARCH_DENSE_NETWORK_TYPE@;
+    return launch_compact_registered_network<Network>(plan, state, grid,
+        workspace_storage, candidates, statuses, summary, burn_dt, eos, config, stream);
+}
+} // namespace arch::cuda::burn_detail

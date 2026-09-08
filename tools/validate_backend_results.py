@@ -8,7 +8,6 @@ always comes from ARCH plan/trace sidecars and project HDF5 checkpoints.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 from pathlib import Path
@@ -16,6 +15,9 @@ import re
 import subprocess
 import sys
 from typing import Any
+
+import validation_provenance as provenance
+import validation_sanitizer
 
 
 PARAMETER_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$")
@@ -37,7 +39,19 @@ def load_manifest(path: Path) -> dict[str, Any]:
         policy = case.get("reduction_policy")
         if not isinstance(policy, dict) or "rtol" not in policy or "atol" not in policy:
             raise RuntimeError("case reduction policy is incomplete")
+        checkpoint_comparison_mode(case)
     return manifest
+
+
+def checkpoint_comparison_mode(case: dict[str, Any]) -> str:
+    mode = case.get("checkpoint_comparison", "reproducibility")
+    if mode not in {"reproducibility", "step-diagnostic"}:
+        raise RuntimeError("invalid checkpoint comparison mode")
+    if mode == "step-diagnostic":
+        target = float(case.get("scientific_time", 0.0))
+        if not math.isfinite(target) or target <= 0.0:
+            raise RuntimeError("step diagnostics require prescribed physical-time acceptance")
+    return mode
 
 
 def select_cases(manifest: dict[str, Any], requested: list[str]) -> list[dict[str, Any]]:
@@ -59,6 +73,15 @@ def read_parameter_map(path: Path) -> dict[str, str]:
         if match:
             result[match.group(1)] = match.group(2)
     return result
+
+
+def runtime_case_inputs(cases: list[dict[str, Any]], source_root: Path) -> dict[str, Any]:
+    return {
+        case["id"]: provenance.runtime_inputs(
+            parameter_file=source_root / case["input"], working_directory=source_root,
+            parameter_reader=read_parameter_map, scientific_overrides=case.get("overrides"))
+        for case in cases
+    }
 
 
 def render_parameter_file(
@@ -156,8 +179,19 @@ def read_plan(path: Path) -> dict[str, str]:
     return result
 
 
-def validate_resolved_plan(path: Path, expected_backend: str) -> dict[str, str]:
+def validate_resolved_plan(
+    path: Path, expected_backend: str,
+    expected_policies: dict[str, Any] | None = None,
+) -> dict[str, str]:
     plan = read_plan(path)
+    validate_plan_values(plan, expected_backend, expected_policies)
+    return plan
+
+
+def validate_plan_values(
+    plan: dict[str, str], expected_backend: str,
+    expected_policies: dict[str, Any] | None = None,
+) -> None:
     requested = plan.get("requested")
     resolved = plan.get("resolved")
     fallback = plan.get("fallback_reason", "")
@@ -166,7 +200,18 @@ def validate_resolved_plan(path: Path, expected_backend: str) -> dict[str, str]:
             f"resolved CUDA/backend mismatch: requested={requested}, resolved={resolved}")
     if expected_backend == "cuda" and fallback:
         raise RuntimeError(f"CUDA lane used fallback: {fallback}")
-    return plan
+    if expected_policies is not None and not isinstance(expected_policies, dict):
+        raise RuntimeError("expected plan policies must be a mapping")
+    for field, expected in (expected_policies or {}).items():
+        if isinstance(expected, dict):
+            if set(expected) != {"cpu", "cuda"}:
+                raise RuntimeError("backend-specific plan policy must cover CPU and CUDA")
+            expected = expected[expected_backend]
+        if not isinstance(expected, str) or not expected:
+            raise RuntimeError("expected plan policy must name a resolved registration")
+        if plan.get(field) != expected:
+            raise RuntimeError(
+                f"resolved policy mismatch: {field} expected={expected}, actual={plan.get(field)}")
 
 
 def read_synthetic_checkpoint(path: Path, *, unit_test: bool) -> dict[str, Any]:
@@ -227,13 +272,29 @@ def compare_numeric_fields(
 
 def compare_hdf5_checkpoints(
     reference: Path, candidate: Path, policy: dict[str, Any],
-    checkpoint_validator: Path
+    checkpoint_validator: Path, *, terminal_source_pair: tuple[Path, Path] | None = None,
+    comparison_mode: str = "reproducibility", target_time: float | None = None,
 ) -> dict[str, Any]:
+    operations = {"reproducibility": "--compare", "step-diagnostic": "--compare-step-diagnostic",
+                  "physical-time": "--compare-physical-time"}
+    if comparison_mode not in operations or (terminal_source_pair and comparison_mode != "reproducibility"):
+        raise RuntimeError("invalid checkpoint comparison operation")
+    if comparison_mode == "physical-time":
+        if target_time is None or not math.isfinite(target_time) or target_time <= 0.0:
+            raise RuntimeError("physical comparison requires a prescribed time")
+    elif target_time is not None:
+        raise RuntimeError("target time is only valid for a physical comparison")
+    command = [str(checkpoint_validator),
+               "--compare-terminal-restart" if terminal_source_pair else operations[comparison_mode],
+               str(reference), str(candidate), str(policy["rtol"]), str(policy["atol"]),
+               str(policy.get("enuc_scale_rtol", policy["rtol"])),
+               str(policy.get("dt_burn_rtol", policy["rtol"]))]
+    if terminal_source_pair:
+        command.extend(str(path) for path in terminal_source_pair)
+    if target_time is not None:
+        command.append(str(target_time))
     completed = subprocess.run(
-        [str(checkpoint_validator), "--compare", str(reference), str(candidate),
-         str(policy["rtol"]), str(policy["atol"]),
-         str(policy.get("enuc_scale_rtol", policy["rtol"])),
-         str(policy.get("dt_burn_rtol", policy["rtol"]))],
+        command,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         timeout=120, check=False)
     if completed.returncode != 0:
@@ -249,14 +310,20 @@ def compare_hdf5_checkpoints(
         raise RuntimeError("checkpoint validator produced no JSON summary")
     result = json.loads(lines[-1])
     result["passed"] = result.get("status") == "pass"
+    result["tolerance"] = dict(policy)
     return result
 
 
 def read_conservation_metrics(
-    checkpoint_validator: Path, checkpoint: Path
+    checkpoint_validator: Path, checkpoint: Path, parameter_file: Path | None = None
 ) -> dict[str, Any]:
+    command = [str(checkpoint_validator), "--metrics", str(checkpoint)]
+    parameter_sha256 = None
+    if parameter_file is not None:
+        parameter_sha256 = _sha256(parameter_file)
+        command.extend(["--parameters", str(parameter_file)])
     completed = subprocess.run(
-        [str(checkpoint_validator), "--metrics", str(checkpoint)],
+        command,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         timeout=120, check=False)
     if completed.returncode != 0:
@@ -265,15 +332,85 @@ def read_conservation_metrics(
     lines = [line for line in completed.stdout.splitlines() if line.startswith("{")]
     if not lines:
         raise RuntimeError("checkpoint metrics produced no JSON summary")
-    return json.loads(lines[-1])
+    result = json.loads(lines[-1])
+    if parameter_file is not None:
+        if _sha256(parameter_file) != parameter_sha256:
+            raise RuntimeError("conservation parameter file changed while computing metrics")
+        if result.get("measure") != "physical_cell_volume":
+            raise RuntimeError("checkpoint validator did not provide physical cell-volume metrics")
+        result["parameter_sha256"] = parameter_sha256
+    else:
+        if result.get("measure", "legacy_level_normalized") != "legacy_level_normalized":
+            raise RuntimeError("legacy conservation metric measure changed")
+        result["measure"] = "legacy_level_normalized"
+    return result
+
+
+def checkpoint_metadata(*, validator: Path, checkpoint: Path,
+                        parameters: Path, expected_steps: int | None) -> dict[str, Any]:
+    """Read actual HDF5 metadata with the project's existing comparator.
+
+    File indices and process stdout cannot establish the checkpoint's step.
+    Parameter-bound metrics also work for the annular checkpoint geometry.
+    This checks continuation identity, not conservation/scientific accuracy.
+    """
+    identity = provenance.sha256(checkpoint)
+    metrics = read_conservation_metrics(validator, checkpoint, parameters)
+    step = metrics.get("step")
+    if type(step) is not int or step < 0 or (expected_steps is not None and step != expected_steps):
+        raise RuntimeError(
+            f"checkpoint metadata step mismatch: expected {expected_steps}, got {step!r}")
+    if provenance.sha256(checkpoint) != identity:
+        raise RuntimeError("checkpoint changed while inspecting metadata")
+    return {"step": step, "time": metrics.get("time"),
+            "resume_after_regrid": metrics.get("resume_after_regrid"),
+            "chk_file_index": metrics.get("chk_file_index"),
+            "plt_file_index": metrics.get("plt_file_index"),
+            "measure": metrics["measure"], "geometry": metrics.get("geometry"),
+            "parameter_sha256": metrics["parameter_sha256"], "checkpoint_sha256": identity,
+            "command": [str(validator), "--metrics", str(checkpoint),
+                        "--parameters", str(parameters)]}
 
 
 def validate_conservation(
     checkpoint_validator: Path, initial: Path, final: Path,
-    policy: dict[str, Any]
+    policy: dict[str, Any], *, parameter_file: Path | None = None,
+    parameter_sha256: str | None = None,
 ) -> dict[str, Any]:
-    before = read_conservation_metrics(checkpoint_validator, initial)
-    after = read_conservation_metrics(checkpoint_validator, final)
+    measure = policy.get("measure", "legacy_level_normalized")
+    if measure not in ("legacy_level_normalized", "physical_cell_volume"):
+        raise RuntimeError(f"unsupported conservation measure: {measure}")
+    if measure == "physical_cell_volume":
+        if parameter_file is None or parameter_sha256 is None:
+            raise RuntimeError("physical conservation metrics require actual run parameter identity")
+        if _sha256(parameter_file) != parameter_sha256:
+            raise RuntimeError("conservation parameters differ from actual run")
+    else:
+        # Keep historical Cartesian totals AND absolute-budget units unchanged.
+        parameter_file = None
+    before = read_conservation_metrics(checkpoint_validator, initial, parameter_file)
+    after = read_conservation_metrics(checkpoint_validator, final, parameter_file)
+    if parameter_file is not None and (
+            before["parameter_sha256"] != parameter_sha256
+            or after["parameter_sha256"] != parameter_sha256):
+        raise RuntimeError("conservation parameters differ from actual run")
+    return validate_conservation_metrics(before, after, policy)
+
+
+def validate_conservation_metrics(
+    before: dict[str, Any], after: dict[str, Any], policy: dict[str, Any]
+) -> dict[str, Any]:
+    measure = policy.get("measure", "legacy_level_normalized")
+    if measure not in ("legacy_level_normalized", "physical_cell_volume"):
+        raise RuntimeError(f"unsupported conservation measure: {measure}")
+    if any(metrics.get("measure", "legacy_level_normalized") != measure for metrics in (before, after)):
+        raise RuntimeError("conservation metric measure differs from declared policy")
+    if measure == "physical_cell_volume":
+        if before.get("geometry") not in ("cartesian", "cylindrical", "spherical") \
+                or before.get("geometry") != after.get("geometry") \
+                or re.fullmatch(r"[0-9a-f]{64}", before.get("parameter_sha256", "")) is None \
+                or before.get("parameter_sha256") != after.get("parameter_sha256"):
+            raise RuntimeError("physical conservation metrics lack matching geometry/parameter identity")
     rtol = float(policy.get("rtol", 0.0))
     atol = float(policy.get("atol", 0.0))
     requested = policy.get(
@@ -286,6 +423,8 @@ def validate_conservation(
             raise RuntimeError(f"conservation field shape drifted: {field}")
         field_errors = []
         for left, right in zip(left_values, right_values):
+            if not math.isfinite(float(left)) or not math.isfinite(float(right)):
+                raise RuntimeError(f"conservation field is nonfinite: {field}")
             absolute = abs(float(right) - float(left))
             relative = absolute / max(
                 abs(float(left)), float.fromhex("0x1p-1022"))
@@ -296,6 +435,24 @@ def validate_conservation(
             field_errors.append({"absolute": absolute, "relative": relative})
         errors[field] = field_errors if field == "rhoX" else field_errors[0]
     return {"before": before, "after": after, "errors": errors}
+
+
+def validate_topology_policy(
+    observed: list[dict[str, Any]], policy: dict[str, Any], identifier: str
+) -> dict[str, bool] | None:
+    if policy.get("require_refined") and not any(int(item["max_level"]) > 0 for item in observed):
+        raise RuntimeError(f"{identifier} never produced a refined leaf")
+    if policy.get("require_mixed") and not any(
+        int(item["min_level"]) < int(item["max_level"]) for item in observed
+    ):
+        raise RuntimeError(f"{identifier} never produced a mixed-level hierarchy")
+    if policy.get("require_count_change") and len({int(item["blocks"]) for item in observed}) < 2:
+        raise RuntimeError(f"{identifier} leaf count never changed")
+    if policy.get("require_refine_transition") or policy.get("require_derefine_transition"):
+        return validate_topology_transitions(
+            observed, require_refine=bool(policy.get("require_refine_transition")),
+            require_derefine=bool(policy.get("require_derefine_transition")))
+    return None
 
 
 def validate_topology_transitions(
@@ -370,6 +527,8 @@ def validate_qualification_metrics(
                 raise RuntimeError(
                     f"hydro conservation gate failed for {field}: {drift}")
     elif mode == "diffusion":
+        if "linf_max" in qualification and metrics["linf"] > qualification["linf_max"]:
+            raise RuntimeError("diffusion Linf gate failed")
         drift = abs(metrics["mean"] - 0.5)
         if drift > qualification["mean_relative_drift_max"]:
             raise RuntimeError(f"diffusion mean drift gate failed: {drift}")
@@ -384,6 +543,12 @@ def validate_qualification_metrics(
             if metrics["shock_position_error_cells"] \
                     > qualification["shock_position_cells_max"]:
                 raise RuntimeError("Sod shock-position gate failed")
+    elif mode == "gravity":
+        for field in ('rho', 'velocity', 'pressure', 'energy'):
+            error = metrics.get(field + '_linf')
+            if not isinstance(error, (int, float)) or not math.isfinite(error) \
+                    or error < 0 or error > qualification['linf_max']:
+                raise RuntimeError(f'constant-acceleration analytic gate failed for {field}')
     elif metrics["species_sum_error"] > qualification["species_sum_atol"]:
         raise RuntimeError("burn species normalization gate failed")
 
@@ -407,8 +572,21 @@ def validate_resolution_groups(
         ):
             raise RuntimeError(f"{group} convergence resolutions are invalid")
         qualification = members[0]["qualification"]
-        minimum_l1 = float(qualification["minimum_l1_order"])
-        minimum_l2 = float(qualification["minimum_l2_order"])
+        minimum_orders = {field: float(qualification["minimum_" + field + "_order"])
+                          for field in ("l1", "l2") if "minimum_" + field + "_order" in qualification}
+        pairs = qualification.get("convergence_pairs", "all")
+        target_time = members[0].get("scientific_time")
+        if not minimum_orders or any(not math.isfinite(value) or value <= 0 for value in minimum_orders.values()) \
+                or pairs not in ("all", "final") or not isinstance(target_time, (int, float)) \
+                or not math.isfinite(target_time) or target_time <= 0 \
+                or any(item.get("scientific_time") != target_time for item in members):
+            raise RuntimeError(f"{group} convergence time/order contract is invalid")
+        for item in members:
+            policy = item["qualification"]
+            if policy.get("convergence_pairs", "all") != pairs or any(
+                    policy.get("minimum_" + field + "_order") != qualification.get("minimum_" + field + "_order")
+                    for field in ("l1", "l2")):
+                raise RuntimeError(f"{group} convergence budget differs between resolutions")
         orders: dict[str, dict[str, list[float]]] = {}
         for backend in ("cpu", "cuda"):
             metrics = [
@@ -416,7 +594,8 @@ def validate_resolution_groups(
                 for item in members
             ]
             backend_orders = {"l1": [], "l2": []}
-            for field, minimum in (("l1", minimum_l1), ("l2", minimum_l2)):
+            for field in ("l1", "l2"):
+                minimum = minimum_orders.get(field)
                 errors = [float(metric[field]) for metric in metrics]
                 if not all(math.isfinite(error) and error > 0.0 for error in errors):
                     raise RuntimeError(f"{group} {backend} {field.upper()} is invalid")
@@ -424,7 +603,7 @@ def validate_resolution_groups(
                     order = math.log(errors[index] / errors[index + 1]) / math.log(
                         resolutions[index + 1] / resolutions[index])
                     backend_orders[field].append(order)
-                    if order < minimum:
+                    if minimum is not None and (pairs == "all" or index == len(errors) - 2) and order < minimum:
                         raise RuntimeError(
                             f"{group} {backend} {field.upper()} convergence gate failed: "
                             f"{order} < {minimum}")
@@ -435,24 +614,19 @@ def validate_resolution_groups(
 
 def qualify_checkpoint(
     checkpoint_validator: Path, checkpoint: Path, case: dict[str, Any],
-    *, scientific: bool = False
+    *, scientific: bool = False, parameter_file: Path | None = None
 ) -> dict[str, Any]:
     qualification = case.get("qualification")
     if not qualification:
         return {"status": "not-requested"}
-    reference = qualification["reference"]
-    if reference == "periodic_entropy_wave":
-        mode = "smooth"
-    elif reference == "periodic_diffusion_mode":
-        mode = "diffusion"
-    elif reference == "sod_exact_riemann":
-        mode = "sod"
-    elif reference == "cpu_and_network_conservation":
-        mode = "burn"
-    else:
-        raise RuntimeError(f"unknown independent reference: {reference}")
+    mode = qualification_mode(qualification)
+    command = [str(checkpoint_validator), "--qualify", str(checkpoint), mode]
+    if mode == 'gravity':
+        if parameter_file is None:
+            raise RuntimeError('gravity reference requires actual run parameters')
+        command += ['--parameters', str(parameter_file)]
     completed = subprocess.run(
-        [str(checkpoint_validator), "--qualify", str(checkpoint), mode],
+        command,
         text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
         timeout=120, check=False)
     if completed.returncode != 0:
@@ -465,6 +639,23 @@ def qualify_checkpoint(
     validate_qualification_metrics(
         metrics, qualification, mode, scientific=scientific)
     return metrics
+
+
+def qualification_mode(qualification: dict[str, Any]) -> str:
+    reference = qualification["reference"]
+    if reference == "periodic_entropy_wave":
+        mode = "smooth"
+    elif reference == "periodic_diffusion_mode":
+        mode = "diffusion"
+    elif reference == "sod_exact_riemann":
+        mode = "sod"
+    elif reference == "cpu_and_network_conservation":
+        mode = "burn"
+    elif reference == "constant_external_acceleration":
+        mode = "gravity"
+    else:
+        raise RuntimeError(f"unknown independent reference: {reference}")
+    return mode
 
 
 def validate_cuda_trace(path: Path, expected_steps: int) -> dict[str, int]:
@@ -487,7 +678,72 @@ def validate_cuda_trace(path: Path, expected_steps: int) -> dict[str, int]:
         ghost = int(row["ghost_version"])
         if ghost and ghost != int(row["ghost_source_version"]):
             raise RuntimeError("CUDA backend trace contains a stale ghost publication")
-    return {"records": len(rows)}
+    summary = {"records": len(rows),
+               "max_macro_step": max(int(row["macro_step"]) for row in rows),
+               "unfinished_transfers": 0, "stale_ghost_publications": 0}
+    validate_cuda_trace_summary(summary, expected_steps)
+    return summary
+
+
+def validate_cuda_trace_summary(summary: dict[str, Any], expected_steps: int) -> None:
+    if int(summary["records"]) <= 0 or int(summary["max_macro_step"]) < expected_steps \
+            or summary["unfinished_transfers"] != 0 or summary["stale_ghost_publications"] != 0:
+        raise RuntimeError("CUDA trace summary failed completion/ghost validity gates")
+
+
+def summarize_regrids(records: list[dict[str, Any]], backend: str, expected_steps: int) -> dict[str, Any]:
+    """Whole transaction costs, not an addition to overlapping backend traces."""
+    if backend not in ('cpu', 'cuda') or not records:
+        raise RuntimeError('missing regrid measurement coverage')
+    counters = ('bytes_h2d', 'bytes_d2h', 'kernel_count', 'stream_sync_count')
+    integer_fields = ('macro_step', 'old_blocks', 'new_blocks', 'topology_changed', *counters)
+    previous = None
+    for record in records:
+        if set(record) != {'backend', 'physical_time', 'wall_seconds', *integer_fields} \
+                or record['backend'] != backend \
+                or any(type(record[key]) is not int or record[key] < 0 for key in integer_fields) \
+                or any(type(record[key]) not in (int, float) or not math.isfinite(record[key])
+                       or record[key] < 0 for key in ('physical_time', 'wall_seconds')) \
+                or record['macro_step'] >= expected_steps \
+                or min(record['old_blocks'], record['new_blocks']) < 1 \
+                or record['topology_changed'] not in (0, 1) \
+                or (not record['topology_changed'] and record['old_blocks'] != record['new_blocks']) \
+                or (backend == 'cpu' and any(record[key] for key in counters)):
+            raise RuntimeError('invalid regrid measurement')
+        if previous and (record['macro_step'] < previous['macro_step']
+                         or record['physical_time'] < previous['physical_time']
+                         or record['old_blocks'] != previous['new_blocks']):
+            raise RuntimeError('regrid measurement sequence is discontinuous')
+        previous = record
+    return {'records': len(records),
+            'topology_changes': sum(row['topology_changed'] for row in records),
+            'wall_seconds': math.fsum(row['wall_seconds'] for row in records),
+            **{key: sum(row[key] for row in records) for key in counters},
+            'overlaps_backend_trace': True}
+
+
+def read_regrid_metrics(path: Path, backend: str, expected_steps: int) -> dict[str, Any]:
+    if not path.is_file():
+        raise RuntimeError('ARCH lane did not produce whole-regrid measurements')
+    lines = path.read_text().splitlines()
+    if len(lines) < 2:
+        raise RuntimeError('regrid measurement file is empty')
+    header = lines[0].split('\t')
+    if len(set(header)) != len(header):
+        raise RuntimeError('duplicate regrid measurement fields')
+    records = []
+    for line in lines[1:]:
+        values = line.split('\t')
+        if len(values) != len(header):
+            raise RuntimeError('incomplete regrid measurement row')
+        try:
+            records.append({key: (value if key == 'backend' else
+                float(value) if key in ('physical_time', 'wall_seconds') else int(value))
+                for key, value in zip(header, values)})
+        except ValueError as error:
+            raise RuntimeError('malformed regrid measurement value') from error
+    return {'file': provenance.file_identity(path), 'records': records,
+            'summary': summarize_regrids(records, backend, expected_steps)}
 
 
 def validate_cuda_diffusion_schedule(
@@ -548,7 +804,7 @@ def validate_cuda_diffusion_schedule(
     if observed_macro_steps != expected_macro_steps:
         raise RuntimeError(
             "CUDA diffusion schedule macro-step/lane ordering drifted")
-    return {
+    summary = {
         "records": len(rows),
         "order": expected_order,
         "stages": expected_stages,
@@ -556,15 +812,31 @@ def validate_cuda_diffusion_schedule(
             int(row["negative_gamma_stages"]) > 0 for row in rows),
         "cache_generations": generations,
         "macro_steps": observed_macro_steps,
+        "valid_timestep_records": len(rows),
+        "initial_operator_records": sum(int(row["captures_initial_operator"]) for row in rows),
     }
+    validate_cuda_diffusion_summary(summary, expected_steps, policy)
+    return summary
+
+
+def validate_cuda_diffusion_summary(
+    summary: dict[str, Any], expected_steps: int, policy: dict[str, Any]
+) -> None:
+    lanes = int(policy.get("lanes_per_step", 2))
+    records = expected_steps * lanes
+    order = int(policy["order"])
+    if summary["records"] != records or summary["order"] != order \
+            or summary["stages"] != int(policy["stages"]) \
+            or summary["valid_timestep_records"] != records \
+            or summary["negative_gamma_records"] != (records if order == 2 else 0) \
+            or summary["initial_operator_records"] != (records if order == 2 else 0) \
+            or summary["cache_generations"] != list(range(1, records + 1)) \
+            or summary["macro_steps"] != [step for step in range(expected_steps) for _ in range(lanes)]:
+        raise RuntimeError("CUDA diffusion summary failed schedule/cache/timestep gates")
 
 
 def _sha256(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    return provenance.sha256(path)
 
 
 def require_empty_output_root(path: Path) -> None:
@@ -572,9 +844,41 @@ def require_empty_output_root(path: Path) -> None:
         raise RuntimeError(f"release evidence root must be empty: {path}")
 
 
+def run_arch_with_logs(command: list[str], *, source_root: Path,
+                       lane_root: Path, timeout: float,
+                       sanitizer: validation_sanitizer.CudaSanitizer | None = None) -> subprocess.CompletedProcess:
+    """Retain diagnostic streams on success, failure and process timeout.
+
+    TimeoutExpired may expose bytes even with text=True. Persist them before
+    re-raising the original timeout; no incomplete run can become evidence.
+    Both formal runtime validators use this one process/logging boundary.
+    """
+    def save(stdout, stderr) -> None:
+        for name, value in (("arch.stdout", stdout), ("arch.stderr", stderr)):
+            if isinstance(value, bytes):
+                value = value.decode("utf-8", errors="replace")
+            (lane_root / name).write_text(value or "", encoding="utf-8")
+
+    if sanitizer is not None:
+        command = sanitizer.command(command, lane_root)
+    try:
+        completed = subprocess.run(
+            command, cwd=source_root, text=True,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            timeout=timeout, check=False)
+    except subprocess.TimeoutExpired as error:
+        save(error.stdout, error.stderr)
+        raise
+    save(completed.stdout, completed.stderr)
+    if completed.returncode == 0 and sanitizer is not None:
+        sanitizer.evidence(lane_root)  # Exit zero alone does not prove instrumentation ran.
+    return completed
+
+
 def run_arch_lane(
     arch: Path, source_root: Path, case: dict[str, Any], backend: str,
-    steps: int, output_root: Path
+    steps: int, output_root: Path,
+    sanitizer: validation_sanitizer.CudaSanitizer | None = None
 ) -> dict[str, Any]:
     lane_root = output_root / case["id"] / f"step-{steps}" / backend
     lane_root.mkdir(parents=True, exist_ok=True)
@@ -584,12 +888,13 @@ def run_arch_lane(
         source_root / case["input"], parameter, backend=backend,
         output_dir=lane_root, base_name=base_name, accepted_steps=steps,
         scientific_overrides=case.get("overrides", {}))
-    completed = subprocess.run(
-        [str(arch), case["problem"], str(parameter)], cwd=source_root,
-        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        timeout=int(case.get("timeout_seconds", 600)), check=False)
-    (lane_root / "arch.stdout").write_text(completed.stdout, encoding="utf-8")
-    (lane_root / "arch.stderr").write_text(completed.stderr, encoding="utf-8")
+    parameter_sha256 = _sha256(parameter)
+    completed = run_arch_with_logs(
+        [str(arch), case["problem"], str(parameter)], source_root=source_root,
+        lane_root=lane_root, timeout=int(case.get("timeout_seconds", 600)),
+        sanitizer=sanitizer if backend == "cuda" else None)
+    if _sha256(parameter) != parameter_sha256:
+        raise RuntimeError("actual run parameter file changed during ARCH execution")
     if completed.returncode != 0:
         raise RuntimeError(
             f"{case['id']} {backend} step {steps} failed: {completed.returncode}")
@@ -600,7 +905,7 @@ def run_arch_lane(
     plan = prefix.with_name(prefix.name + "_backend_plan.txt")
     initial_checkpoint = prefix.with_name(prefix.name + "_chk_0000.h5")
     checkpoint = prefix.with_name(prefix.name + "_chk_0001.h5")
-    validate_resolved_plan(plan, backend)
+    resolved_plan = validate_resolved_plan(plan, backend, case.get("plan_policy"))
     trace = prefix.with_name(prefix.name + "_backend_trace.tsv")
     trace_summary = validate_cuda_trace(trace, steps) if backend == "cuda" else None
     schedule = prefix.with_name(prefix.name + "_diffusion_schedule.tsv")
@@ -613,20 +918,27 @@ def run_arch_lane(
     return {
         "backend": backend,
         "steps": steps,
+        "parameter_file": parameter,
+        "parameter_sha256": parameter_sha256,
         "initial_checkpoint": initial_checkpoint,
+        "initial_checkpoint_sha256": _sha256(initial_checkpoint),
         "checkpoint": checkpoint,
         "checkpoint_sha256": _sha256(checkpoint),
         "plan": plan,
+        "resolved_plan": resolved_plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
+        "regrid": read_regrid_metrics(prefix.with_name(prefix.name + "_regrid.tsv"), backend, steps),
         "diffusion_schedule": schedule if schedule_summary else None,
         "diffusion_schedule_summary": schedule_summary,
+        "sanitizer": sanitizer.evidence(lane_root) if sanitizer and backend == "cuda" else None,
     }
 
 
 def run_arch_terminal_lane(
     arch: Path, source_root: Path, case: dict[str, Any], backend: str,
-    terminal_time: float, output_root: Path
+    terminal_time: float, output_root: Path,
+    sanitizer: validation_sanitizer.CudaSanitizer | None = None
 ) -> dict[str, Any]:
     lane_root = output_root / case["id"] / "scientific" / backend
     lane_root.mkdir(parents=True, exist_ok=True)
@@ -637,12 +949,11 @@ def run_arch_terminal_lane(
         output_dir=lane_root, base_name=base_name,
         terminal_time=terminal_time,
         scientific_overrides=case.get("overrides", {}))
-    completed = subprocess.run(
-        [str(arch), case["problem"], str(parameter)], cwd=source_root,
-        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        timeout=int(case.get("timeout_seconds", 600)), check=False)
-    (lane_root / "arch.stdout").write_text(completed.stdout, encoding="utf-8")
-    (lane_root / "arch.stderr").write_text(completed.stderr, encoding="utf-8")
+    parameter_sha256 = _sha256(parameter)
+    completed = run_arch_with_logs(
+        [str(arch), case["problem"], str(parameter)], source_root=source_root,
+        lane_root=lane_root, timeout=int(case.get("timeout_seconds", 600)),
+        sanitizer=sanitizer if backend == "cuda" else None)
     if completed.returncode != 0:
         raise RuntimeError(
             f"{case['id']} {backend} scientific run failed: {completed.returncode}")
@@ -653,63 +964,74 @@ def run_arch_terminal_lane(
     prefix = lane_root / base_name
     plan = prefix.with_name(prefix.name + "_backend_plan.txt")
     checkpoint = prefix.with_name(prefix.name + "_chk_0001.h5")
-    validate_resolved_plan(plan, backend)
+    resolved_plan = validate_resolved_plan(plan, backend, case.get("plan_policy"))
     trace = prefix.with_name(prefix.name + "_backend_trace.tsv")
     trace_summary = (
         validate_cuda_trace(trace, accepted_steps) if backend == "cuda" else None)
     if not checkpoint.is_file():
         raise RuntimeError(f"missing scientific HDF5 checkpoint: {checkpoint}")
+    if _sha256(parameter) != parameter_sha256:
+        raise RuntimeError("scientific parameter file changed during execution")
     return {
         "backend": backend,
         "steps": accepted_steps,
         "terminal_time": terminal_time,
+        "parameter_file": parameter,
+        "parameter_sha256": parameter_sha256,
         "checkpoint": checkpoint,
         "checkpoint_sha256": _sha256(checkpoint),
         "plan": plan,
+        "resolved_plan": resolved_plan,
         "trace": trace if backend == "cuda" else None,
         "trace_summary": trace_summary,
+        "regrid": read_regrid_metrics(prefix.with_name(prefix.name + "_regrid.tsv"), backend, accepted_steps),
+        "sanitizer": sanitizer.evidence(lane_root) if sanitizer and backend == "cuda" else None,
     }
 
 
 def validate_scientific_steps(
     cpu: dict[str, Any], cuda: dict[str, Any], case: dict[str, Any]
 ) -> None:
-    if int(cpu["steps"]) != int(cuda["steps"]):
-        raise RuntimeError(
-            f"{case['id']} scientific accepted-step count drifted")
-    minimum = int(case.get("minimum_scientific_steps", 0))
-    if int(cpu["steps"]) < minimum:
-        raise RuntimeError(
-            f"{case['id']} scientific minimum accepted steps not reached")
+    # Internal adaptive step counts are diagnostics; each executor must still
+    # do the declared minimum work and reach the separately checked target time.
+    minimum = max(1, int(case.get("minimum_scientific_steps", 0)))
+    for lane in (cpu, cuda):
+        if type(lane.get("steps")) is not int or lane["steps"] < minimum:
+            raise RuntimeError(f"{case['id']} scientific minimum accepted steps not reached")
 
 
 def run_case(
     arch: Path, checkpoint_validator: Path, source_root: Path,
-    case: dict[str, Any], output_root: Path
+    case: dict[str, Any], output_root: Path,
+    sanitizer: validation_sanitizer.CudaSanitizer | None = None
 ) -> dict[str, Any]:
     result = {"id": case["id"], "checkpoints": []}
     for steps in case["accepted_steps"]:
         cpu = run_arch_lane(arch, source_root, case, "cpu", int(steps), output_root)
-        cuda = run_arch_lane(arch, source_root, case, "cuda", int(steps), output_root)
+        cuda = run_arch_lane(arch, source_root, case, "cuda", int(steps), output_root, sanitizer)
         parity = compare_hdf5_checkpoints(
             cpu["checkpoint"], cuda["checkpoint"], case["reduction_policy"],
-            checkpoint_validator)
+            checkpoint_validator, comparison_mode=checkpoint_comparison_mode(case))
         if not parity["passed"]:
             raise RuntimeError(
                 f"{case['id']} step {steps} first mismatch: {parity['first_mismatch']}")
         cpu_qualification = qualify_checkpoint(
-            checkpoint_validator, cpu["checkpoint"], case)
+            checkpoint_validator, cpu["checkpoint"], case, parameter_file=cpu.get('parameter_file'))
         cuda_qualification = qualify_checkpoint(
-            checkpoint_validator, cuda["checkpoint"], case)
+            checkpoint_validator, cuda["checkpoint"], case, parameter_file=cuda.get('parameter_file'))
         conservation_policy = case.get("conservation_policy")
         cpu_conservation = cuda_conservation = {"status": "not-requested"}
         if conservation_policy:
             cpu_conservation = validate_conservation(
                 checkpoint_validator, cpu["initial_checkpoint"],
-                cpu["checkpoint"], conservation_policy)
+                cpu["checkpoint"], conservation_policy,
+                parameter_file=cpu.get("parameter_file"),
+                parameter_sha256=cpu.get("parameter_sha256"))
             cuda_conservation = validate_conservation(
                 checkpoint_validator, cuda["initial_checkpoint"],
-                cuda["checkpoint"], conservation_policy)
+                cuda["checkpoint"], conservation_policy,
+                parameter_file=cuda.get("parameter_file"),
+                parameter_sha256=cuda.get("parameter_sha256"))
         result["checkpoints"].append({
             "cpu": cpu, "cuda": cuda, "parity": parity,
             "cpu_qualification": cpu_qualification,
@@ -721,21 +1043,32 @@ def run_case(
         cpu = run_arch_terminal_lane(
             arch, source_root, case, "cpu", terminal_time, output_root)
         cuda = run_arch_terminal_lane(
-            arch, source_root, case, "cuda", terminal_time, output_root)
+            arch, source_root, case, "cuda", terminal_time, output_root, sanitizer)
         validate_scientific_steps(cpu, cuda, case)
         parity = compare_hdf5_checkpoints(
             cpu["checkpoint"], cuda["checkpoint"], case["reduction_policy"],
-            checkpoint_validator)
+            checkpoint_validator, comparison_mode="physical-time", target_time=terminal_time)
         if not parity["passed"]:
             raise RuntimeError(
                 f"{case['id']} scientific first mismatch: {parity['first_mismatch']}")
         cpu_qualification = qualify_checkpoint(
-            checkpoint_validator, cpu["checkpoint"], case, scientific=True)
+            checkpoint_validator, cpu["checkpoint"], case, scientific=True, parameter_file=cpu.get('parameter_file'))
         cuda_qualification = qualify_checkpoint(
-            checkpoint_validator, cuda["checkpoint"], case, scientific=True)
-        for metrics in (cpu_qualification, cuda_qualification):
-            if abs(float(metrics["time"]) - terminal_time) > 1.0e-14:
+            checkpoint_validator, cuda["checkpoint"], case, scientific=True, parameter_file=cuda.get('parameter_file'))
+        # Reaching the requested time is a checkpoint fact, independent of
+        # whether this case has a scientific oracle. A parity-only case must
+        # still prove its terminal state, not crash on "not-requested" or skip
+        # the check. Reuse the shared, parameter-bound metadata reader.
+        for lane in (cpu, cuda):
+            metrics = checkpoint_metadata(
+                validator=checkpoint_validator, checkpoint=lane["checkpoint"],
+                parameters=lane["parameter_file"], expected_steps=int(lane["steps"]))
+            if metrics["parameter_sha256"] != lane["parameter_sha256"]:
+                raise RuntimeError("scientific parameter identity drifted")
+            actual_time = float(metrics["time"])
+            if not math.isfinite(actual_time) or actual_time != terminal_time:
                 raise RuntimeError(f"{case['id']} scientific terminal time drifted")
+            lane["checkpoint_metadata"] = metrics
         result["scientific"] = {
             "cpu": cpu, "cuda": cuda, "parity": parity,
             "cpu_qualification": cpu_qualification,
@@ -744,27 +1077,9 @@ def run_case(
     topology_policy = case.get("topology_policy", {})
     if topology_policy:
         observed = [entry["parity"] for entry in result["checkpoints"]]
-        if topology_policy.get("require_refined") and not any(
-            int(item.get("max_level", 0)) > 0 for item in observed
-        ):
-            raise RuntimeError(f"{case['id']} never produced a refined leaf")
-        if topology_policy.get("require_mixed") and not any(
-            int(item.get("min_level", 0)) < int(item.get("max_level", 0))
-            for item in observed
-        ):
-            raise RuntimeError(f"{case['id']} never produced a mixed-level hierarchy")
-        if topology_policy.get("require_count_change"):
-            counts = {int(item.get("blocks", 0)) for item in observed}
-            if len(counts) < 2:
-                raise RuntimeError(f"{case['id']} leaf count never changed")
-        if topology_policy.get("require_refine_transition") \
-                or topology_policy.get("require_derefine_transition"):
-            result["topology_transitions"] = validate_topology_transitions(
-                observed,
-                require_refine=bool(topology_policy.get(
-                    "require_refine_transition")),
-                require_derefine=bool(topology_policy.get(
-                    "require_derefine_transition")))
+        transitions = validate_topology_policy(observed, topology_policy, case["id"])
+        if transitions is not None:
+            result["topology_transitions"] = transitions
     return result
 
 
@@ -775,35 +1090,59 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--arch", type=Path)
     parser.add_argument("--checkpoint-validator", type=Path)
     parser.add_argument("--source-root", type=Path, default=Path.cwd())
+    parser.add_argument("--build-dir", type=Path)
+    parser.add_argument("--configuration", help="required for multi-config builds")
     parser.add_argument("--output-root", type=Path)
     parser.add_argument("--unit-test", action="store_true")
+    validation_sanitizer.add_arguments(parser)
     args = parser.parse_args(argv)
     manifest = load_manifest(args.manifest)
     if args.unit_test:
         print(json.dumps({"schema": manifest["schema"], "cases": len(manifest["cases"])}))
         return 0
-    if args.arch is None or args.checkpoint_validator is None or args.output_root is None:
+    if args.arch is None or args.checkpoint_validator is None \
+            or args.output_root is None or args.build_dir is None:
         parser.error(
-            "release validation requires --arch, --checkpoint-validator and --output-root")
+            "release validation requires --arch, --checkpoint-validator, --build-dir and --output-root")
     selected = set(args.case)
     cases = select_cases(manifest, args.case)
     require_empty_output_root(args.output_root)
+    identity_arguments = {
+        "arch": args.arch.resolve(),
+        "checkpoint_validator": args.checkpoint_validator.resolve(),
+        "source_root": args.source_root.resolve(),
+        "build_dir": args.build_dir.resolve(),
+        "configuration": args.configuration,
+    }
+    identity = provenance.capture(**identity_arguments)
+    sanitizer = validation_sanitizer.from_arguments(args)
     evidence = {
         "schema": 1,
         "manifest_sha256": _sha256(args.manifest),
-        "binary_sha256": _sha256(args.arch),
+        "input_sha256": {
+            case["input"]: _sha256(args.source_root / case["input"])
+            for case in cases
+        },
+        "runtime_inputs": runtime_case_inputs(cases, args.source_root.resolve()),
         "cases": [],
     }
     for case in cases:
         evidence["cases"].append(run_case(
             args.arch.resolve(), args.checkpoint_validator.resolve(),
             args.source_root.resolve(), case,
-            args.output_root.resolve()))
+            args.output_root.resolve(), sanitizer))
     evidence["resolution_groups"] = (
         {} if selected else validate_resolution_groups(cases, evidence["cases"]))
     args.output_root.mkdir(parents=True, exist_ok=True)
     evidence_path = args.output_root / "backend-validation-evidence.json"
-    evidence_path.write_text(json.dumps(evidence, indent=2, default=str) + "\n", encoding="utf-8")
+    if evidence["manifest_sha256"] != _sha256(args.manifest) or any(
+        value != _sha256(args.source_root / name)
+        for name, value in evidence["input_sha256"].items()
+    ):
+        raise RuntimeError("validation manifest or input changed during execution")
+    if evidence["runtime_inputs"] != runtime_case_inputs(cases, args.source_root.resolve()):
+        raise RuntimeError("runtime validation dependencies changed during execution")
+    provenance.write_evidence(evidence_path, evidence, identity, **identity_arguments)
     print(json.dumps({"status": "pass", "cases": len(cases), "evidence": str(evidence_path)}))
     return 0
 

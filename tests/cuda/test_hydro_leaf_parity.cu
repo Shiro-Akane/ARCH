@@ -21,6 +21,8 @@
 #include "numerics/flux/FluxVL.h"
 #include "numerics/integrator/TimeIntegratorHelper.h"
 #include "numerics/reconstruction/Reconstruction.h"
+#include "../fixtures/RoeFluxReference.h"
+#include "../math/RoeThermodynamicCases.h"
 
 #if defined(__CUDACC__)
 #include "cuda/hydro/HydroFluxPolicies.cuh"
@@ -78,8 +80,11 @@ struct FaceResult
     double species[2];
 };
 
+bool vector_near(const FluidVector& actual, const FluidVector& expected);
+
 struct DeviceLeafResult
 {
+    RoeThermodynamicCases::Result roe_identities;
     FluidVector hll;
     FluidVector hllc;
     FluidVector roe;
@@ -102,6 +107,7 @@ struct DeviceLeafResult
 
 ARCH_INLINE void evaluate_device_leaves(DeviceLeafResult* output)
 {
+    output->roe_identities = RoeThermodynamicCases::evaluate();
     const FluidVector left{1.0, 0.75, -0.2, 0.1, 2.80625};
     const FluidVector right{0.8, -0.2, 0.24, -0.12, 1.82};
     const double species_left[2] = {0.4, 0.6};
@@ -186,6 +192,8 @@ struct RouteFingerprint
     std::uint64_t reconstruction_hash;
     std::uint64_t flux_hash;
     std::uint64_t stage_hash;
+    FluidVector flux{};
+    FluidVector stage{};
 };
 
 ARCH_INLINE std::uint64_t route_mix(std::uint64_t hash, double value)
@@ -295,7 +303,7 @@ __global__ void route_matrix_kernel(RouteFingerprint* output, int index)
             FluxRegistration>::id),
         static_cast<int>(arch::dispatch::PolicyRegistration<
             StageRegistration>::id),
-        limiter_hash, reconstruction_hash, flux_hash, stage_hash};
+        limiter_hash, reconstruction_hash, flux_hash, stage_hash, flux, stage};
 }
 
 template<class LimiterRegistration, class FluxRegistration, class List>
@@ -375,7 +383,7 @@ int run_route_matrix()
         || sync_error != cudaSuccess || copy_error != cudaSuccess)
         return 181;
 
-    static constexpr RouteFingerprint expected[route_count] = {
+    static const RouteFingerprint expected[route_count] = {
         {0,0,0,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xfd3f95c86181ce2aULL,0xd523883fde34fa8fULL},
         {0,0,1,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xfd3f95c86181ce2aULL,0x358b4526db819e36ULL},
         {0,0,2,0x8deed829162d1fe9ULL,0x3fc0ee771b5ae663ULL,0xfd3f95c86181ce2aULL,0x82900bc8432a2dbcULL},
@@ -441,11 +449,26 @@ int run_route_matrix()
     for (int i = 0; i < route_count; ++i) {
         const RouteFingerprint& a = actual[i];
         const RouteFingerprint& e = expected[i];
+        // Keep unrelated fingerprints exact. Roe-family physical values use
+        // independently derived fixtures; never refresh an output hash from
+        // the implementation whose thermodynamic defect is being corrected.
+        bool numerical_match = a.flux_hash == e.flux_hash && a.stage_hash == e.stage_hash;
+        if (e.flux_id >= 2 && e.flux_id <= 4) {
+            const auto& f = RoeFluxReference::route_flux[e.limiter_id][e.flux_id-2];
+            const auto& states = RoeFluxReference::route_state[e.limiter_id];
+            const double old_weights[3]{0., .5, .75};
+            const double w = old_weights[e.stage_id];
+            double stage[5]{};
+            for (int field = 0; field < 5; ++field)
+                stage[field] = w*states[0][field] + (1-w)*(states[1][field]+f[field]);
+            numerical_match = vector_near(a.flux, {f[0], f[1], f[2], f[3], f[4]})
+                && vector_near(a.stage, {stage[0], stage[1], stage[2], stage[3], stage[4]});
+        }
         const bool route_matches = a.limiter_id == e.limiter_id
             && a.flux_id == e.flux_id && a.stage_id == e.stage_id
             && a.limiter_hash == e.limiter_hash
             && a.reconstruction_hash == e.reconstruction_hash
-            && a.flux_hash == e.flux_hash && a.stage_hash == e.stage_hash;
+            && numerical_match;
         if (!route_matches) {
             matches = false;
         }
@@ -533,6 +556,20 @@ bool scalar_near(double actual, double expected)
         <= 3e-14 * std::max(1.0, std::abs(expected));
 }
 
+FaceResult independent_face_result(const double (&values)[7])
+{
+    return {{values[0], values[1], values[2], values[3], values[4]},
+            {values[5], values[6]}};
+}
+
+bool independent_face_matches(const FaceResult& actual, const double (&values)[7])
+{
+    const auto expected = independent_face_result(values);
+    return vector_near(actual.flux, expected.flux)
+        && scalar_near(actual.species[0], expected.species[0])
+        && scalar_near(actual.species[1], expected.species[1]);
+}
+
 FaceResult frozen_face_result(
     std::uint64_t rho, std::uint64_t mom_u, std::uint64_t mom_v,
     std::uint64_t mom_w, std::uint64_t eng,
@@ -581,18 +618,9 @@ bool validate_characterized_host_paths()
     const FaceResult roe = characterize_face<FluxRoe>(0.1);
     const FaceResult sw = characterize_face<FluxSW>(0.1);
     const FaceResult vl = characterize_face<FluxVL>(0.0);
-    return vector_bits(hll.flux,
-                       0x3fdfe0fa91402e76ULL, 0x3ffc59d9bcfbe631ULL,
-                       0xbfd6c55f025c1539ULL, 0x3fc6c55f025c1539ULL,
-                       0x40008c51d5581401ULL)
-        && vector_bits(hllc.flux,
-                       0x3fe03e732de72443ULL, 0x3ffc695d1bdcbc59ULL,
-                       0xbfb9fd85163ea06cULL, 0x3fa9fd85163ea06cULL,
-                       0x4000b6f9c9e9bf2cULL)
-        && vector_bits(roe.flux,
-                       0x3fe0468a0283dcb1ULL, 0x3ffc65ce3bd35266ULL,
-                       0xbfc4507df7b36b44ULL, 0x3fb4507df7b36b44ULL,
-                       0x4000bdaf3bd85012ULL)
+    return independent_face_matches(hll, RoeFluxReference::hll)
+        && independent_face_matches(hllc, RoeFluxReference::hllc)
+        && independent_face_matches(roe, RoeFluxReference::roe)
         && vector_bits(sw.flux,
                        0x3fdd6f579bdceca1ULL, 0x4000492c964085f2ULL,
                        0xbfd41edd0ad3fc16ULL, 0x3fc41edd0ad3fc16ULL,
@@ -601,9 +629,6 @@ bool validate_characterized_host_paths()
                        0x3fdd3f7f1d3b7d98ULL, 0x40006dfb578715e0ULL,
                        0xbfd07e985324a906ULL, 0x3fc07e985324a906ULL,
                        0x3ffff6d62a7013d3ULL)
-        && exact_bits(hll.species[0], 0x3fc980c87433585fULL)
-        && exact_bits(hllc.species[0], 0x3fc9fd85163ea06cULL)
-        && exact_bits(roe.species[0], 0x3fca0a766a6c944fULL)
         && exact_bits(sw.species[0], 0x3fa9dee10cbc3d20ULL)
         && exact_bits(vl.species[0], 0x3fb53fc3c72dfef2ULL);
 }
@@ -840,18 +865,9 @@ bool rejects_all_directional_divergence_upper_edges(
 
 bool device_leaf_result_matches(const DeviceLeafResult& actual)
 {
-    const FluidVector hll = frozen_vector(
-        0x3fdfe0fa91402e76ULL, 0x3ffc59d9bcfbe631ULL,
-        0xbfd6c55f025c1539ULL, 0x3fc6c55f025c1539ULL,
-        0x40008c51d5581401ULL);
-    const FluidVector hllc = frozen_vector(
-        0x3fe03e732de72443ULL, 0x3ffc695d1bdcbc59ULL,
-        0xbfb9fd85163ea06cULL, 0x3fa9fd85163ea06cULL,
-        0x4000b6f9c9e9bf2cULL);
-    const FluidVector roe = frozen_vector(
-        0x3fe0468a0283dcb1ULL, 0x3ffc65ce3bd35266ULL,
-        0xbfc4507df7b36b44ULL, 0x3fb4507df7b36b44ULL,
-        0x4000bdaf3bd85012ULL);
+    const auto hll = independent_face_result(RoeFluxReference::hll);
+    const auto hllc = independent_face_result(RoeFluxReference::hllc);
+    const auto roe = independent_face_result(RoeFluxReference::roe);
     const FluidVector sw = frozen_vector(
         0x3fdd6f579bdceca1ULL, 0x4000492c964085f2ULL,
         0xbfd41edd0ad3fc16ULL, 0x3fc41edd0ad3fc16ULL,
@@ -860,20 +876,24 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         0x3fdd3f7f1d3b7d98ULL, 0x40006dfb578715e0ULL,
         0xbfd07e985324a906ULL, 0x3fc07e985324a906ULL,
         0x3ffff6d62a7013d3ULL);
-    const std::uint64_t species_bits[10] = {
-        0x3fc980c87433585fULL, 0x3fd3209657268247ULL,
-        0x3fc9fd85163ea06cULL, 0x3fd37e23d0aef850ULL,
-        0x3fca0a766a6c944fULL, 0x3fd387d8cfd16f3bULL,
+    const std::uint64_t species_bits[4] = {
         0x3fa9dee10cbc3d20ULL, 0x3fda337b7a4564feULL,
         0x3fb53fc3c72dfef2ULL, 0x3fd7ef8e2b6ffddcULL};
     bool species_match = true;
-    for (int species = 0; species < 10; ++species)
+    const double independent_species[6] = {
+        hll.species[0], hll.species[1], hllc.species[0], hllc.species[1],
+        roe.species[0], roe.species[1]};
+    for (int species = 0; species < 6; ++species)
+        species_match = species_match
+            && scalar_near(actual.species[species], independent_species[species]);
+    for (int species = 6; species < 10; ++species)
         species_match = species_match
             && scalar_near(actual.species[species],
-                           frozen_double(species_bits[species]));
-    const bool matches = vector_near(actual.hll, hll)
-        && vector_near(actual.hllc, hllc)
-        && vector_near(actual.roe, roe)
+                           frozen_double(species_bits[species-6]));
+    const bool matches = actual.roe_identities.passed()
+        && vector_near(actual.hll, hll.flux)
+        && vector_near(actual.hllc, hllc.flux)
+        && vector_near(actual.roe, roe.flux)
         && vector_near(actual.sw, sw)
         && vector_near(actual.vl, vl)
         && vector_bits(actual.pcm_left,
@@ -910,6 +930,10 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
                       << std::bit_cast<std::uint64_t>(value) << std::dec << '\n';
         };
         show("limiter", actual.limiter);
+        show("roe.reflection", actual.roe_identities.reflection);
+        show("roe.rotation", actual.roe_identities.rotation);
+        show("roe.ideal_sound_speed", actual.roe_identities.ideal_sound_speed);
+        show("roe.ideal_pressure_jump", actual.roe_identities.ideal_pressure_jump);
         show("limiter_negzero", actual.limiter_negzero);
         show("slope", actual.slope);
         show("slope_below", actual.slope_below);
@@ -974,21 +998,9 @@ int run_device_primitives()
     grid.dx2 = 1.0;
     grid.dx3 = 1.0;
 
-    const FaceResult expected_hll = frozen_face_result(
-        0x3fdfe0fa91402e76ULL, 0x3ffc59d9bcfbe631ULL,
-        0xbfd6c55f025c1539ULL, 0x3fc6c55f025c1539ULL,
-        0x40008c51d5581401ULL, 0x3fc980c87433585fULL,
-        0x3fd3209657268247ULL);
-    const FaceResult expected_hllc = frozen_face_result(
-        0x3fe03e732de72443ULL, 0x3ffc695d1bdcbc59ULL,
-        0xbfb9fd85163ea06cULL, 0x3fa9fd85163ea06cULL,
-        0x4000b6f9c9e9bf2cULL, 0x3fc9fd85163ea06cULL,
-        0x3fd37e23d0aef850ULL);
-    const FaceResult expected_roe = frozen_face_result(
-        0x3fe0468a0283dcb1ULL, 0x3ffc65ce3bd35266ULL,
-        0xbfc4507df7b36b44ULL, 0x3fb4507df7b36b44ULL,
-        0x4000bdaf3bd85012ULL, 0x3fca0a766a6c944fULL,
-        0x3fd387d8cfd16f3bULL);
+    const auto expected_hll = independent_face_result(RoeFluxReference::hll);
+    const auto expected_hllc = independent_face_result(RoeFluxReference::hllc);
+    const auto expected_roe = independent_face_result(RoeFluxReference::roe);
     const FaceResult expected_sw = frozen_face_result(
         0x3fdd6f579bdceca1ULL, 0x4000492c964085f2ULL,
         0xbfd41edd0ad3fc16ULL, 0x3fc41edd0ad3fc16ULL,
@@ -1046,11 +1058,7 @@ int run_device_primitives()
     }
     if (!state.upload())
         return 107;
-    const FaceResult expected_pcm = frozen_face_result(
-        0x3fc72b82e6be8729ULL, 0x3ff3b19b7775ba24ULL,
-        0x3f9ad40e51097a6cULL, 0xbf3a0335634151afULL,
-        0x3fea454fc5825daaULL, 0x3fb0380ed4b891d0ULL,
-        0x3fbe1ef6f8c47c82ULL);
+    const auto expected_pcm = independent_face_result(RoeFluxReference::linear_pcm);
     const FaceResult expected_muscl = frozen_face_result(
         0x3fcb851eb851eb86ULL, 0x3ff40ece37f720f0ULL,
         0x3f9467b2e014c79cULL, 0x3f89c65b35ff4cf9ULL,
@@ -1113,7 +1121,7 @@ int run_device_primitives()
     if (!pcm_face_error(bad_state, flux.view, grid, 0))
         return 118;
     bad_state = state.view;
-    bad_state.n_species = kMaxDeviceSpecies + 1;
+    bad_state.n_species = kLocalSpeciesScratchCapacity + 1;
     if (!pcm_face_error(bad_state, flux.view, grid, 0))
         return 119;
     bad_flux = flux.view;
@@ -1121,7 +1129,7 @@ int run_device_primitives()
     if (!pcm_face_error(state.view, bad_flux, grid, 0))
         return 120;
     bad_flux = flux.view;
-    bad_flux.n_species = kMaxDeviceSpecies + 1;
+    bad_flux.n_species = kLocalSpeciesScratchCapacity + 1;
     if (!pcm_face_error(state.view, bad_flux, grid, 0))
         return 121;
     bad_flux = flux.view;
@@ -1290,7 +1298,7 @@ int run_device_primitives()
     if (!divergence_error(flux.view, bad_delta, grid, 0))
         return 133;
     bad_delta = delta.view;
-    bad_delta.n_species = kMaxDeviceSpecies + 1;
+    bad_delta.n_species = kLocalSpeciesScratchCapacity + 1;
     if (!divergence_error(flux.view, bad_delta, grid, 0))
         return 134;
     DeviceStateView bad_input_flux = flux.view;
@@ -1298,7 +1306,7 @@ int run_device_primitives()
     if (!divergence_error(bad_input_flux, delta.view, grid, 0))
         return 135;
     bad_input_flux = flux.view;
-    bad_input_flux.n_species = kMaxDeviceSpecies + 1;
+    bad_input_flux.n_species = kLocalSpeciesScratchCapacity + 1;
     if (!divergence_error(bad_input_flux, delta.view, grid, 0))
         return 136;
     bad_delta = delta.view;
@@ -1447,7 +1455,7 @@ int run_device_primitives()
                      stage_delta.view, grid))
         return 153;
     bad_old_state = old_state.view;
-    bad_old_state.n_species = kMaxDeviceSpecies + 1;
+    bad_old_state.n_species = kLocalSpeciesScratchCapacity + 1;
     if (!stage_error(bad_old_state, current_state.view, destination.view,
                      stage_delta.view, grid))
         return 154;
@@ -1544,7 +1552,7 @@ int run_device_primitives()
     if (!cfl_error(bad_state, grid, workspace))
         return 163;
     bad_state = state.view;
-    bad_state.n_species = kMaxDeviceSpecies + 1;
+    bad_state.n_species = kLocalSpeciesScratchCapacity + 1;
     if (!cfl_error(bad_state, grid, workspace))
         return 164;
     bad_state = state.view;
@@ -1610,6 +1618,14 @@ int run_device_primitives()
 
 int main()
 {
+    const auto identities = RoeThermodynamicCases::evaluate();
+    std::cout << "Roe identities reflection=" << identities.reflection
+              << " rotation=" << identities.rotation
+              << " ideal_sound_speed=" << identities.ideal_sound_speed
+              << " ideal_pressure_jump=" << identities.ideal_pressure_jump
+              << " stationary_transport=" << identities.stationary_transport << '\n';
+    if (!identities.passed())
+        return 2;
     if (!validate_characterized_host_paths())
         return 1;
     print_double("limiter.minmod.negzero", MinMod::calc(-0.0));

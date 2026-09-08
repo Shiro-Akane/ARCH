@@ -1,0 +1,2 @@
+CUDA_REGRID_TRANSACTION_PASS species=4 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
+CUDA_REGRID_TRANSACTION_PASS species=41 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1

@@ -1,0 +1,4 @@
+macro_step	physical_time	backend	old_blocks	new_blocks	topology_changed	wall_seconds	bytes_h2d	bytes_d2h	kernel_count	stream_sync_count
+0	0	cpu	4	6	1	0.00021034999999999999	0	0	0	0
+0	0	cpu	6	6	0	0.000136506	0	0	0	0
+1	0.00073241448239969714	cpu	6	6	0	7.2665999999999998e-05	0	0	0	0

@@ -71,6 +71,7 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = resume_after_regrid;
     checkpoint.has_enuc_rate = true;
+    checkpoint.has_mass_fractions = true;
     checkpoint.provenance = provenance;
     checkpoint.num_species = amr_ctrl.pool->GetBlock(active_blocks.front()).fluid_state.GetNumSpecies();
     if (checkpoint.num_species != specs.count())
@@ -87,6 +88,7 @@ void write_chk(amr::AMRControl &amr_ctrl,
     checkpoint.eng.resize(field_size);
     checkpoint.enuc_rate.resize(field_size);
     checkpoint.rhoX.resize(static_cast<size_t>(checkpoint.num_species) * field_size);
+    checkpoint.mass_fractions.resize(checkpoint.rhoX.size());
 
     for (size_t block_index = 0; block_index < active_blocks.size(); ++block_index) {
         const amr::Block& block = amr_ctrl.pool->GetBlock(active_blocks[block_index]);
@@ -110,9 +112,12 @@ void write_chk(amr::AMRControl &amr_ctrl,
                     checkpoint.eng[offset] = block.fluid_state.eng[cell];
                     checkpoint.enuc_rate[offset] =
                         block.fluid_state.enuc_rate[cell];
-                    for (int species = 0; species < checkpoint.num_species; ++species)
-                        checkpoint.rhoX[static_cast<size_t>(species) * field_size + offset] =
-                            block.fluid_state.rho[cell] * block.fluid_state.X(species, cell);
+                    for (int species = 0; species < checkpoint.num_species; ++species) {
+                        const size_t entry = static_cast<size_t>(species) * field_size + offset;
+                        checkpoint.mass_fractions[entry] = block.fluid_state.X(species, cell);
+                        checkpoint.rhoX[entry] =
+                            block.fluid_state.rho[cell] * checkpoint.mass_fractions[entry];
+                    }
                 }
             }
         }
@@ -171,7 +176,9 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
                     for (int species = 0; species < expected_species; ++species) {
                         const double rho = checkpoint.rho[offset];
                         const double rhoX = checkpoint.rhoX[static_cast<size_t>(species) * field_size + offset];
-                        block.fluid_state.X(species, cell) = rho > 0.0 ? rhoX / rho : 0.0;
+                        block.fluid_state.X(species, cell) = checkpoint.has_mass_fractions
+                            ? checkpoint.mass_fractions[static_cast<size_t>(species) * field_size + offset]
+                            : (rho > 0.0 ? rhoX / rho : 0.0);
                     }
                 }
             }
@@ -197,7 +204,12 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
         std::cout << "[IO] Legacy checkpoint has no ENUC restart field; "
                      "the diagnostic is initialized to zero. ENUC-based "
                      "dynamic-AMR split-run parity is not verifiable until "
-                     "a version-3 checkpoint is written."
+                     "a current-format checkpoint is written."
+                  << std::endl;
+    }
+    if (expected_species > 0 && !checkpoint.has_mass_fractions) {
+        std::cout << "[IO] Checkpoint composition is reconstructed from rhoX. "
+                     "New checkpoints also preserve the original mass fractions."
                   << std::endl;
     }
     std::cout << "[IO] Restored CHK: " << filepath << " at step " << run_state.step

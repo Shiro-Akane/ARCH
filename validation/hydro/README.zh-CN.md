@@ -1,34 +1,102 @@
-# 光滑流体重构
+# 流体力学验证
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-> CPU 状态：PCM、MUSCL 和 PPM 通过。CUDA：待完成。
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
+及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+
+当前候选版本已在 CPU 和 CUDA 上通过光滑波空间与时间精度、Sod、持续周期平流以及平面 Sedov 检验。整体验收状态统一见[验证索引](../README.zh-CN.md)。
+
+## 光滑波空间精度
 
 `SmoothAdvection` 实现仍位于 `simulation/SmoothAdvection/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们对周期 entropy wave \(\rho=1+0.2\sin(2\pi x)\)、\(u=1\)、\(p=1\) 平流至 \(t=0.1\)。初始和位移后的参考均为精确有限体积单元平均值。固定 HLLC 和 SSPRK3，分别在 64、128 和 256 单元上运行 PCM、MUSCL-MC 与 PPM。
 
-## 复现
+### 复现
 
-基线于 2026-08-20 从工作树基准 `50323fa4cf35adf7bf4e5a711adba93acd5448db` 运行，使用 GCC 13.3.0、Release/OpenMP、WSL2 x86-64、`OMP_NUM_THREADS=2` 和 `compute_backend=cpu`。公共 Release flags 为 `-O3 -march=native -ffast-math -DNDEBUG`；solver-dispatch 翻译单元另加 `-O1 -fno-inline-functions-called-once`。这些记录是开发基线；变更提交后，应以最终 commit 替换该 base hash。
+[当前候选版本的主程序验证记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)保存了实际受测源码、程序、依赖和构建设置。在相同物理终止时刻，两侧分别与解析解比较，再进行 CPU/CUDA 对照。使用启用了测试目标的 CUDA 构建，从仓库根目录运行：
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 2
-export OMP_NUM_THREADS=2
-for p in validation/hydro/inputs/*.par; do
-  ./bin/ARCH SmoothAdvection "$p"
-done
+export OMP_NUM_THREADS=4
+python3 tools/validate_backend_results.py \
+  --manifest validation/backend/cases.json \
+  --arch build-cuda/bin/ARCH \
+  --checkpoint-validator build-cuda/arch_cuda_single_level_validation \
+  --build-dir build-cuda --source-root . \
+  --output-root validation/backend/results/uniform-new
 ```
 
-将最终 `DENS` 单元平均值与由 \(ut\) 平移的解析波比较。`metrics.csv` 保留 L1/L2/Linf、观测 L1 阶数和相对质量漂移。验收要求最后一对分辨率的 L1 阶数：PCM 至少 0.9、MUSCL 至少 1.8、PPM 至少 2.7，且质量漂移不超过 \(10^{-12}\)。
+将最终密度单元平均值与由 \(ut\) 平移的解析波比较。[metrics.csv](metrics.csv) 保留两个后端的 L1/L2/Linf、观测 L1 阶数和相对质量漂移。18 份固定时刻结果全部通过。验收要求最后一对分辨率的 L1 阶数：PCM 至少 0.9、MUSCL 至少 1.8、PPM 至少 2.7，且质量漂移不超过 \(10^{-12}\)。PPM 还须在每档分辨率上保持密度和能量为正，L1 不超过 \(10^{-4}\)。CPU/CUDA 对照也通过了 \(2\times10^{-10}\) 相对容差和 \(2\times10^{-12}\) 绝对容差的检查。
 
-| 方法 | N=256 的 L1 | 最终 L1 阶数 | 最大质量漂移 | 结果 |
+| 方法（CPU 与 CUDA） | N=256 的 L1 | 最终 L1 阶数 | 最大质量漂移 | 结果 |
 | --- | ---: | ---: | ---: | --- |
-| PCM | 9.780e-4 | 0.994 | 1.23e-14 | 通过 |
-| MUSCL-MC | 9.314e-6 | 2.040 | 1.22e-14 | 通过 |
+| PCM | 9.780e-4 | 0.994 | 1.22e-14 | 通过 |
+| MUSCL-MC | 9.314e-6 | 2.040 | 1.23e-14 | 通过 |
 | PPM | 9.731e-10 | 3.993 | 1.22e-14 | 通过 |
 
 ![流体收敛](figures/convergence.svg)
 
 PPM 在通过所选 EOS 重构压力并保留光滑极值后超过 2.7 验收阶数。接近四阶的结果只属于该光滑常压接触测试，不构成通用四阶声明。此状态不应触发正性或核素修复。
 
-CUDA 必须使用相同九个参数文件，并报告相对解析解及 CPU 输出的场 L1/L2；目前没有记录 CUDA 结果。
+## Sod 激波管
+
+[同一份当前候选版本记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)中，两个后端均在 \(t=0.2\) 通过 Sod 检验。测试采用 64、128 和 256 单元的均匀笛卡尔网格，以及 HLLC、PPM 和 SSPRK3。理想气体的 \(\gamma=1.4\)，初始左右状态分别为 \((\rho,u,p)=(1,0,1)\) 和 \((0.125,0,0.1)\)，间断面位于单位区间的 \(x=0.5\)，两端使用流出边界。
+
+参考值来自独立的精确 Euler Riemann 解。积分在各个波的边界处分段，计算解析密度、速度、压力和总能量密度的单元平均值。下表中的验收范数针对密度，报告同时保留另外三个物理量的剖面误差。
+
+| 单元数 | 密度 L1 | 密度 L2 | 原定 L1 / L2 上限 | 激波误差（单元数） |
+| --- | ---: | ---: | ---: | ---: |
+| 64 | 4.616e-3 | 9.837e-3 | 0.05 / 0.10 | 0.428 |
+| 128 | 2.480e-3 | 6.630e-3 | 0.03 / 0.08 | 0.145 |
+| 256 | 1.151e-3 | 4.220e-3 | 0.02 / 0.06 | 0.290 |
+
+CPU 与 CUDA 在所示精度内一致。两对相邻分辨率的密度 L1 阶数为 0.897 和 1.107，L2 阶数为 0.569 和 0.652，均超过原定的 0.7 和 0.3 下限。两个后端均保持密度和能量为正，并在指定终止时刻满足 2.5 个单元的激波位置预算。场量对照通过了 \(5\times10^{-9}\) 相对容差和 \(5\times10^{-12}\) 绝对容差的检查。前面的均匀网格矩阵命令可复现本组测试及下面的持续平流测试。
+
+## 持续周期平流
+
+记录中的 `hydro_periodic_1000` 案例将 64 单元、采用 HLLC/PPM/SSPRK3 的熵波推进至 \(t=2.05\)，两个后端各完成 1,016 步。密度 L1 为 \(5.071\times10^{-6}\)，满足原定 \(10^{-3}\) 预算。质量、纵向动量和总能量的绝对漂移分别为 \(6.273\times10^{-14}\)、\(6.284\times10^{-14}\) 和 \(1.821\times10^{-13}\)，均低于 \(10^{-11}\)，横向动量保持为零。密度和能量保持为正。CPU/CUDA 场量对照通过了与 Sod 相同的容差检查，CUDA 发布记录中没有未完成传输或陈旧的幽灵区数据。该案例检查均匀网格上超过两个波周期的累计误差与守恒。
+
+## 独立时间积分检验
+
+[time_reference.py](time_reference.py) 使用 PCM 推进同一周期接触波，将实际 ARCH 输出与半离散迎风算子的精确傅里叶指数解比较。固定网格使时间误差与空间误差分离，参考值不调用生产代码中的时间积分器。
+
+[当前候选版本的 18 次运行记录](results/time-native-20260907/release-879/evidence.json)在 CFL 为 0.4、0.2、0.1 时全部通过，物理终止时刻均为 \(t=0.1\)。CPU 与 CUDA 得到相同的时间误差和收敛阶：
+
+| 积分器 | 观测 L1 阶数 | 最低要求 | 结果 |
+| --- | --- | ---: | --- |
+| Euler | 1.001566、0.999922 | 0.9 | 通过 |
+| SSPRK2 | 1.999972、1.999229 | 1.8 | 通过 |
+| SSPRK3 | 3.000604、2.999841 | 2.7 | 通过 |
+
+最大质量漂移、压力误差和速度误差分别为 \(9.215\times10^{-15}\)、\(1.288\times10^{-14}\) 和 \(2.887\times10^{-15}\)，均满足原定的 \(10^{-12}\) 不变量预算。使用安装了 NumPy 和 h5py 的 Python 环境复现：
+
+```bash
+python3 validation/hydro/time_reference.py --build-dir build-cuda \
+  --output-dir validation/hydro/results/time-new
+```
+
+## 平面 Sedov 爆炸波
+
+[当前候选版本的记录](results/sedov-first-law-20260907/release-889/evidence.json)显示，两个后端均通过了同一套独立强激波检验。测试采用 128、256 和 512 单元的一维均匀笛卡尔网格，模拟向两侧传播的爆炸波；数值方法为 HLLC、PPM 和 SSPRK3，状态方程为 \(\gamma=1.4\) 的理想气体。在测试所用单位下，环境密度为 1、环境压力为 \(10^{-5}\)、沉积能量为 1，比较时刻为 0.1。每档分辨率的初始能量都沉积在两个单元内，因此随网格细化逐步趋近点爆炸极限。
+
+[sedov_reference.py](sedov_reference.py) 独立计算 Sedov 自相似解，不调用 ARCH 的流体、EOS 或时间积分实现。参考解本身通过已发表的剖面数值、强激波跃迁条件、扫掠质量以及独立积分得到的能量归一化检验。比较采用守恒量的有限体积单元平均值，再由这些平均值计算速度和压力。检验覆盖密度、速度、压力和总能量密度剖面，同时检查激波位置、镜像对称性、质量与能量守恒，以及初始沉积能量。
+
+四个剖面的误差分别以激波后密度、激波速度、\(\rho_0 D_s^2\) 和 \(E_0/(2R_s)\) 归一化，其中 \(D_s\) 和 \(R_s\) 是自相似解的激波速度与半径。原定验收标准为：所有物理量在每档分辨率上的 L1 不超过 0.04、L2 不超过 0.10，激波位置误差不超过三个单元，256 到 512 单元之间的 L1 收敛阶至少为 0.5。质量、能量和沉积能量的相对误差、归一化对称性误差以及参考解积分误差均不得超过 \(10^{-10}\)。密度和压力须保持为正，横向动量须为零。CPU/CUDA 对照另采用 \(2\times10^{-8}\) 的相对容差和 \(10^{-12}\) 的绝对容差。
+
+全部检查通过，CPU 和 CUDA 在下表精度内一致：
+
+| 物理量 | N=512 的归一化 L1 | N=512 的归一化 L2 | 最终 L1 阶数 |
+| --- | ---: | ---: | ---: |
+| 密度 | 2.188e-3 | 8.697e-3 | 0.602 |
+| 速度 | 1.958e-3 | 1.137e-2 | 0.737 |
+| 压力 | 2.034e-3 | 1.223e-2 | 0.813 |
+| 总能量密度 | 7.399e-3 | 5.420e-2 | 0.615 |
+
+三档分辨率中，最大的激波位置误差为 0.253 个单元。质量和能量的相对漂移分别低于 \(1.80\times10^{-14}\) 和 \(6.53\times10^{-14}\)，沉积能量误差低于 \(10^{-15}\)。测得的镜像误差为零，参考解积分误差低于 \(2.22\times10^{-12}\)。这里的收敛阶描述含激波、且沉积区域随网格缩小的爆炸波问题，与前面的光滑波精度检验分别考察不同的数值性质。
+
+复现需要启用了测试目标的 CUDA 构建，以及安装了 NumPy、SciPy 和 h5py 的 Python 环境。从仓库根目录先检查独立参考解，再将两个后端的运行结果写入新的输出目录：
+
+```bash
+python3 validation/hydro/sedov_reference.py --oracle-only
+python3 validation/hydro/sedov_reference.py --build-dir build-cuda \
+  --output-dir validation/hydro/results/sedov-new
+```

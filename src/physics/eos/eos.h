@@ -14,6 +14,17 @@
 #include "../../data/FluidState.h"
 #include "../species/Species.h"
 
+// Canonical view declarations for runtime ABIs. Declaring a function that
+// accepts a view does not require any interpolation or thermodynamic body.
+// Concrete callers/owners include the selected EOS implementation directly.
+struct IdealGasView;
+template <class SpeciesView> struct BasicHelmEosView;
+template <class SpeciesView> struct BasicTabular3DEOSView;
+template <class SpeciesView> struct BasicTabular4DEOSView;
+using HelmEosView = BasicHelmEosView<SpeciesPODView>;
+using Tabular3DEOSView = BasicTabular3DEOSView<SpeciesPODView>;
+using Tabular4DEOSView = BasicTabular4DEOSView<SpeciesPODView>;
+
 // Empty marker base for equation-of-state policies.
 struct EOSBase
 {

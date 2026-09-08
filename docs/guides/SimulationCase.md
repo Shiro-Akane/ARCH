@@ -189,7 +189,9 @@ simulation/
 
 Separate directories give each benchmark one physical contract.
 
-The CPU verification inputs follow the same one-case-per-directory layout:
+The following [simulation directories](../../simulation/README.md) define
+verification problems shared by CPU and CUDA. Their canonical parameter files
+live under the owning `validation/<module>/inputs/` directory:
 
 | Directory | Purpose |
 | --- | --- |
@@ -413,7 +415,8 @@ energy must match the specified temperature exactly.
 - Keep the case-facing ARCH includes limited to `UserInterface.h` and
   `GlobalDefs.h`; access EOS operations through `ProblemHelper`.
 - Record floors, clamps, and fallback warnings in convergence studies.
-- Use `compute_backend = cpu` on `main`.
+- Select `compute_backend = cpu`, `cuda` or `auto` for the configured build;
+  see [backend selection](../CudaBackendStatus.md) for supported combinations.
 
 For all exact accepted values and extension contracts, continue with
 [docs/Reference.md](../Reference.md).

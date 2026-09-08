@@ -30,6 +30,7 @@ RuntimeProbeResult available(int major = 9, int minor = 0)
     result.device.compute_minor = minor;
     result.device.runtime_version = 12080;
     result.device.driver_version = 12080;
+    result.device.compiled_image_available = true;
     std::strncpy(result.device.device_name.data(), "fake", result.device.device_name.size() - 1);
     return result;
 }
@@ -116,6 +117,43 @@ void test_probe_matrix_and_failures()
     }
 }
 
+void test_code_image_contract()
+{
+    struct Case { const char* images; int major, minor, driver, compiler; bool expected; };
+    const Case cases[]{
+        {"86-real", 8, 6, 12030, 12030, true},
+        {"80-real", 8, 6, 12020, 12030, true},
+        {"86-real", 8, 0, 12030, 12030, false},
+        {"86-real", 9, 0, 12030, 12030, false},
+        {"86-virtual", 9, 0, 12030, 12030, true},
+        {"86-virtual", 8, 0, 12030, 12030, false},
+        {"86-virtual", 9, 0, 12020, 12030, false},
+        {"80-real,90-real", 9, 0, 12030, 12030, true},
+        {"86", 9, 0, 12030, 12030, true},
+        {"86", 8, 6, 12020, 12030, true},
+        {"86-virtual", 9, 0, 12030, 0, false},
+        {"", 8, 6, 12030, 12030, false},
+        {"86-real,", 8, 6, 12030, 12030, false},
+        {"86-real,90a", 8, 6, 12030, 12030, false},
+        {"native", 8, 6, 12030, 12030, false},
+        {"86-real", 0, 0, 12030, 12030, false},
+    };
+    for (const auto& c : cases)
+        expect(cuda_image_compatible(c.images, c.major, c.minor, c.driver, c.compiler) == c.expected,
+               std::string("CUDA image compatibility: ") + c.images);
+    const auto plan = supported_plan();
+    auto probe = available();
+    probe.device.compiled_image_available = false;
+    const auto support = query_support(plan, supported_requirements(), probe);
+    expect(resolve_backend(ComputeBackend::Auto, support, probe,
+               StartupPhase::BeforeConstruction).resolved_backend == ComputeBackend::Cpu,
+           "Auto may resolve missing images to CPU before construction");
+    bool threw = false;
+    try { (void)resolve_backend(ComputeBackend::Cuda, support, probe, StartupPhase::BeforeConstruction); }
+    catch (const std::runtime_error&) { threw = true; }
+    expect(threw, "explicit CUDA must reject an incompatible image");
+}
+
 void test_all_requirement_codes()
 {
     const auto plan = supported_plan();
@@ -126,8 +164,12 @@ void test_all_requirement_codes()
            && support.cpu_code == BackendCapabilityCode::Supported
            && support.cuda_code == BackendCapabilityCode::Supported,
            "supported CPU/CUDA cell");
-    expect_cuda_code(plan, requirements, available(7, 5),
-                     BackendCapabilityCode::ComputeCapabilityTooLow, "sm75 rejection");
+    auto missing_image = available(7, 5);
+    missing_image.device.compiled_image_available = false;
+    expect_cuda_code(plan, requirements, missing_image,
+                     BackendCapabilityCode::CudaImageUnavailable, "missing image rejection");
+    expect(query_support(plan, requirements, available(8, 0)).cuda_supported,
+           "sm80 with a usable image must not be rejected by a local sm86 floor");
     expect(query_support(plan, requirements, available(8, 6)).cuda_supported,
            "sm86 acceptance");
     expect(query_support(plan, requirements, available(9, 0)).cuda_supported,
@@ -214,7 +256,8 @@ void test_all_requirement_codes()
     r = requirements; r.gravity = GravityId::External;
     expect(query_support(plan, r, probe).cpu_supported,
            "CPU external gravity remains supported");
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "external gravity");
+    expect(query_support(plan, r, probe).cuda_supported,
+           "CUDA external gravity uses the common source authority");
     r = requirements; r.gravity = GravityId::Self;
     expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity,
                     "CPU self gravity");
@@ -226,9 +269,11 @@ void test_all_requirement_codes()
     expect(query_support(plan, r, probe).cuda_supported,
            "CUDA restart with a dynamic AMR leaf hierarchy");
     r = requirements; r.geometry = GeometryId::Cylindrical;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGeometry, "cylindrical");
+    expect(query_support(plan, r, probe).cuda_supported, "shared cylindrical geometry");
     r = requirements; r.geometry = GeometryId::Spherical;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGeometry, "spherical");
+    expect(query_support(plan, r, probe).cuda_supported, "shared spherical geometry");
+    r = requirements; r.geometry = static_cast<GeometryId>(255);
+    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGeometry, "unknown geometry");
     r = requirements; r.burn = true;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::InvalidPlan, "burn plan mismatch");
     r = requirements; r.diffusion = true;
@@ -248,7 +293,10 @@ void test_all_requirement_codes()
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedDiffusionMode,
                      "inactive viscous diffusion");
     r = requirements; r.species_count = BurnLimits::MAX_SPECIES + 1;
-    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedSpeciesCount, "species maximum");
+    r.state_layout |= StateLayoutRequirement::SpeciesMassFractions;
+    expect(query_support(plan, r, probe).cuda_supported, "passive species exceed dense solver threshold");
+    r = requirements; r.species_count = std::numeric_limits<std::size_t>::max();
+    expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedSpeciesCount, "species index overflow");
     r = requirements; r.required_ghost_depth = 4;
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGhostDepth, "ghost maximum");
     r = requirements; r.required_ghost_depth = 0;
@@ -274,6 +322,11 @@ void test_all_requirement_codes()
     support = query_support(burn_plan, r, probe);
     expect(support.cpu_supported && support.cuda_supported,
            "burn and NSE supported route");
+    auto large_burn = r;
+    large_burn.species_count = BurnLimits::MAX_SPECIES + 1;
+    expect_cuda_code(burn_plan, large_burn, probe,
+                     BackendCapabilityCode::UnsupportedSpeciesCount,
+                     "large transport does not open unconnected large burn");
     p = burn_plan; p.network = NetworkId::None;
     expect_cpu_code(p, r, probe, BackendCapabilityCode::UnsupportedNse,
                     "CPU NSE requires a compatible network");
@@ -381,6 +434,38 @@ void test_all_requirement_codes()
         burn_plan.time_integrator, burn_plan.eos, burn_plan.network,
         burn_plan.ode_solver, LinearSolverRequest::Auto,
         burn_plan.diffusion_integrator};
+    // Count temperature AND any passive source integral at the matrix boundary.
+    static_assert(BurnLimits::MAX_ODE_NEQ == BurnLimits::MAX_SPECIES + 1);
+    static_assert(BurnLimits::equation_count(29, 1) == 31);
+    static_assert(BurnLimits::equation_count(30, 1) == 32);
+    static_assert(!BurnLimits::uses_compact_matrix(
+        BurnLimits::equation_count(std::numeric_limits<std::size_t>::max(), 1)));
+    constexpr auto networks = make_policy_descriptors<NetworkPolicies>();
+    for (const auto& network : networks) {
+        if (network.id == NetworkId::None) continue;
+        auto request = automatic_request;
+        request.network = network.id;
+        const auto largest_species = BurnLimits::MAX_ODE_NEQ - 1 - network.auxiliary_equations;
+        for (const ComputeBackend backend : {ComputeBackend::Cpu, ComputeBackend::Cuda}) {
+            const auto compact = materialize_execution_plan(request, backend, largest_species);
+            const auto sparse = materialize_execution_plan(request, backend, largest_species + 1);
+            expect(compact.ok && compact.value.linear_solver == LinearSolverId::DenseLu
+                && network_ode_equations(network.id, largest_species) == BurnLimits::MAX_ODE_NEQ,
+                "registered auxiliary state must be counted at the compact matrix boundary");
+            expect(sparse.ok && sparse.value.linear_solver == (backend == ComputeBackend::Cpu
+                    ? LinearSolverId::SparseKlu : LinearSolverId::CuDss),
+                "registered auxiliary state must move the first oversized system to sparse Auto");
+        }
+    }
+    for (const int species_count : {BurnLimits::MAX_SPECIES - 1,
+                                    BurnLimits::MAX_SPECIES}) {
+        for (const ComputeBackend backend : {ComputeBackend::Cpu, ComputeBackend::Cuda}) {
+            const auto dense = materialize_execution_plan(
+                automatic_request, backend, species_count);
+            expect(dense.ok && dense.value.linear_solver == LinearSolverId::DenseLu,
+                   "Auto includes the maximum dense ODE matrix on both backends");
+        }
+    }
     const auto large_cpu = materialize_execution_plan(
         automatic_request, ComputeBackend::Cpu,
         BurnLimits::MAX_SPECIES + 1);
@@ -391,15 +476,51 @@ void test_all_requirement_codes()
                && large_cpu.value.linear_solver
                    == LinearSolverId::SparseKlu
                && large_cuda.value.linear_solver == LinearSolverId::CuDss,
-           "large-network Auto materializes KLU/CuDSS candidates");
+           "Auto switches to CPU KLU/CUDA cuDSS at the first equation above the dense limit");
+    struct ExplicitLinearChoice {
+        LinearSolverRequest request;
+        LinearSolverId expected;
+    };
+    for (const ExplicitLinearChoice choice : {
+             ExplicitLinearChoice{LinearSolverRequest::DenseLu, LinearSolverId::DenseLu},
+             ExplicitLinearChoice{LinearSolverRequest::SparseKlu, LinearSolverId::SparseKlu},
+             ExplicitLinearChoice{LinearSolverRequest::CuDss, LinearSolverId::CuDss}}) {
+        auto explicit_request = automatic_request;
+        explicit_request.linear_solver = choice.request;
+        for (const int species_count : {BurnLimits::MAX_SPECIES,
+                                        BurnLimits::MAX_SPECIES + 1}) {
+            for (const ComputeBackend backend : {ComputeBackend::Cpu, ComputeBackend::Cuda}) {
+                const auto explicit_plan = materialize_execution_plan(
+                    explicit_request, backend, species_count);
+                expect(explicit_plan.ok && explicit_plan.value.linear_solver == choice.expected,
+                       "explicit debug solver selection must not use Auto's size/backend heuristic");
+            }
+        }
+    }
+    // Materialization preserves explicit requests; the capability checks above
+    // separately reject CPU+cuDSS, CUDA+KLU, and unavailable providers.
     auto large_requirements = r;
     large_requirements.species_count = BurnLimits::MAX_SPECIES + 1;
+    // This synthetic capability-only probe isolates the linear-solver extent
+    // contract using a known registered network. It is not an iso7(31) runtime
+    // fixture: the typed production owner separately validates species order
+    // and extent, and generated-network integration tests supply real metadata.
     support = query_support(
         large_cpu.value, large_cuda.value, large_requirements, probe);
+#if ARCH_HAS_CUDSS_PROVIDER
+    expect(support.cuda_supported,
+           "registered sparse CUDA route is not limited by DenseLU's small-network threshold");
+    const auto large_resolution = resolve_backend(
+        ComputeBackend::Cuda, support, probe, StartupPhase::BeforeConstruction);
+    expect(large_resolution.resolved_backend == ComputeBackend::Cuda
+               && large_resolution.fallback_reason.empty(),
+           "explicit large sparse CUDA route never silently falls back to CPU");
+#else
     expect(!support.cuda_supported
                && support.cuda_code
-                   == BackendCapabilityCode::UnsupportedSpeciesCount,
-           "cuDSS candidate does not bypass the current CUDA species gate");
+                   == BackendCapabilityCode::CuDssProviderUnavailable,
+           "large cuDSS candidate fails closed when the production provider is absent");
+#endif
 
     auto diffusion_plan = plan;
     diffusion_plan.diffusion_integrator = DiffusionIntegratorId::Rkl1;
@@ -491,8 +612,8 @@ void test_native_probe()
     if (native.state != RuntimeProbeState::Available)
         std::cerr << "native_probe_state=" << static_cast<int>(native.state)
                   << " failure=" << static_cast<int>(native.failure) << '\n';
-    expect(native.state == RuntimeProbeState::Available, "H100 native probe availability");
-    expect(native.device.compute_major >= 8, "H100 native compute capability");
+    expect(native.state == RuntimeProbeState::Available, "native CUDA probe availability");
+    expect(native.device.compiled_image_available, "native compatible CUDA code image");
     expect(native.device.primary_context_active_before
                == native.device.primary_context_active_after,
            "native probe must not activate primary context");
@@ -505,12 +626,42 @@ void test_native_probe()
 #endif
 }
 
+void test_curvilinear_large_passive_capabilities()
+{
+    auto plan = supported_plan();
+    plan.diffusion_integrator = DiffusionIntegratorId::Rkl2;
+    for (GeometryId geometry : {GeometryId::Cartesian, GeometryId::Cylindrical,
+                                GeometryId::Spherical}) {
+        for (int dimension = 1; dimension <= 3; ++dimension) {
+            auto requirements = supported_requirements();
+            requirements.geometry = geometry;
+            requirements.dimension = dimension;
+            requirements.root_blocks_x2 = dimension >= 2 ? 1 : 0;
+            requirements.root_blocks_x3 = dimension >= 3 ? 1 : 0;
+            requirements.species_count = 41;
+            requirements.state_layout |= StateLayoutRequirement::SpeciesMassFractions;
+            requirements.amr = requirements.restart = true;
+            requirements.diffusion = requirements.thermal_diffusion = true;
+            requirements.viscous_diffusion = requirements.species_diffusion = true;
+            const auto support = query_support(plan, requirements, available());
+            expect(support.cpu_supported && support.cuda_supported,
+                   "known geometry + large passive species + diffusion + AMR/restart");
+            requirements.state_layout = StateLayoutRequirement::HydroConserved;
+            expect_cuda_code(plan, requirements, available(),
+                             BackendCapabilityCode::UnsupportedStateLayout,
+                             "large transport requires composition state storage");
+        }
+    }
+}
+
 } // namespace
 
 int main()
 {
     test_probe_matrix_and_failures();
+    test_code_image_contract();
     test_all_requirement_codes();
+    test_curvilinear_large_passive_capabilities();
     test_resolver_and_startup_order();
     test_native_probe();
     std::cout << "runtime_probe_and_capabilities: ok\n";

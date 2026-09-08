@@ -1,0 +1,78 @@
+# Controlled first-pass test for cooperative ignition of helium-rich hotspots.
+# hotspot_mode: single, double, equal_energy, elongated.
+
+geometry = cartesian
+nblockx1 = 4
+nblockx2 = 3
+nblockx3 = 0
+max_blocks = 256
+x1_min = 0.0
+x1_max = 64.0
+x2_min = -24.0
+x2_max = 24.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = outflow
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = muscl
+limiter = mc
+time_integrator = RK2
+cfl = 0.4
+EntropyFix = true
+EntropyFixCoefficient = 0.1
+sml_rho = 1e-2
+max_eint = 1e19
+
+# Keep the discovery scan uniform-grid; AMR is introduced only after a signal.
+lrefinemin = 0
+lrefinemax = 0
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.8
+derefine_threshold = 0.2
+
+tmax = 4.1e-9
+max_steps = 200
+out_dir = output/cooperative_hotspots
+base_name = cooperative_hotspots
+plt_dt = -1
+plt_dstep = -1
+chk_dt = -1
+chk_dstep = -1
+plt_variables = DENS,PRES,TEMP,VELX,VELY,ENER,ENUC,SPECIES
+
+eos_type = helmholtz
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
+gravity_type = none
+use_diffusion = false
+
+use_burn = true
+network_name = aprox13
+use_nse = false
+nuclearTempMin = 5.0e8
+nuclearDensMin = 1.0e-10
+ode_solver = ROS4
+linear_solver = DenseLU
+ode_rtol = 1.0e-6
+ode_atol = 1.0e-10
+dt_init = 1.0e-14
+dt_min = 1.0e-20
+tstep_change_factor = 1.5
+enucDtFactor = 0.05
+
+ambient_density = 4.0e7
+ambient_temperature = 2.0e8
+hotspot_temperature = 4.0e9
+hotspot_center_x = 32.0
+hotspot_center_y = 0.0
+hotspot_radius = 6.0
+hotspot_separation = 14.0
+hotspot_mode = single
+
+xhe4 = 0.8
+xc12 = 0.2
+xo16 = 0.0

@@ -47,8 +47,8 @@ Stability labels in this document mean:
 | Experimental | Implemented, but validation or interface stabilization is incomplete. |
 | Reserved | Parsed or named for future work. |
 
-ARCH builds one executable and one internal object target. Its extension
-contracts operate at source level.
+ARCH builds one executable with internal, functionally split object targets.
+Its extension contracts operate at source level.
 
 Scientific provenance is recorded separately from interface stability. The
 reaction networks, NSE formulation, and Helmholtz EOS trace to Frank Timmes;
@@ -64,27 +64,35 @@ external provenance claim unless their file header or that notice says so.
 | Feature | Accepted value or interface | Current status | Notes |
 | --- | --- | --- | --- |
 | Host execution | `compute_backend = cpu` | supported | OpenMP is configured at build time. |
-| CUDA execution | `compute_backend = cuda/auto` | experimental | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
+| CUDA execution | `compute_backend = cuda/auto` | supported | Built with `ARCH_ENABLE_CUDA=ON`; explicit CUDA is fail-closed and `auto` may fall back only before construction. |
 | Dimension | positive `nblockx1`; zero trailing block counts | supported | `nblockx2=0,nblockx3=0` is 1D; `nblockx3=0` is 2D. |
-| Geometry | `cartesian`, `cylindrical`, `spherical` | CPU supported | Enum-like input is case-insensitive and stored canonically; CUDA accepts Cartesian only. |
-| AMR | `lrefinemax >= 0` | CPU supported; CUDA experimental | Fixed 16-cell block extent per active dimension. CUDA keeps topology, Morton, and conservative migration on the Host and executes ghosts and reflux on the device. |
+| Geometry | `cartesian`, `cylindrical`, `spherical` | supported on CPU and CUDA | Names are case-insensitive and stored canonically. Both backends share physical cell volumes, face areas, CFL lengths, diffusion spacing and geometric source terms. |
+| AMR | `lrefinemax >= 0` | supported on CPU and CUDA | Fixed 16-cell block extent per active dimension. Topology/Morton decisions remain on the Host; indicators, conservative migration, ghosts, and reflux execute on the device using shared numerical leaves. |
 | Self gravity | `gravity_type = self` | unavailable | The capability gate rejects it before policy construction. |
 | Jeans field | `JENS` | reserved | Parser warns and disables it. |
 
-The CUDA capability is intentionally narrower than the CPU capability. It
-supports Cartesian 1D/2D/3D hydro, the registered flux/reconstruction/
-time-integrator matrix, Ideal/Helmholtz/Tabular3D/Tabular4D EOS, built-in burn
-networks with DenseLU and NSE, Cartesian diffusion with RKL1/RKL2, static
-and dynamic multiblock exchange, Host-authoritative dynamic regrid with device
-store transactions, compact Hydro/RKL reflux, restart through the shared Host
-checkpoint schema, and plot/checkpoint writes through the shared host writer.
-Gravity, non-Cartesian geometry, generated networks and SparseKLU are rejected.
-The case-insensitive `cuDSS`
-request is registered for capability routing, but no CUDA cuDSS provider is
-implemented; CUDA networks above 30 species and generated CUDA networks remain
-gated as well. Consequently cuDSS execution fails closed, and installing the
-library alone does not enable it. Several implemented CUDA paths still have
-validation status `pending` and are not production claims.
+CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
+flux/reconstruction/time-integrator matrix, Ideal/Helmholtz/Tabular3D/Tabular4D
+EOS, and RKL1/RKL2 diffusion through the common geometry definitions. Two-dimensional
+spherical grids use ARCH's polar `(r,phi)` convention. Runtime
+species scratch removes the 30-species storage ceiling for passive transport
+and AMR; DenseLU independently remains limited to 31 total ODE equations. Dynamic
+AMR uses Host topology plans and device numerical indicators/migration, staged
+device-store transactions, multiblock exchange, and compact Hydro/RKL reflux.
+Restart uses the shared Host checkpoint schema, and output uses the shared
+host writer after explicit materialization.
+
+The four built-in burn networks support DenseLU and optional cuDSS solving and
+retain NSE. Version-4 generated packages declaring `device_callable_math=true`
+use the same math on CPU and CUDA. Recognized embedded weak tables have separate
+read-only storage on each backend. Version-3 packages and packages not converted
+for device execution remain CPU-only. cuDSS requires its optional library to be
+linked; KLU is CPU-only, and incompatible explicit backend/solver choices are
+rejected. External gravity uses
+one per-stage source operator on both backends. The
+[backend guide](CudaBackendStatus.md) explains execution responsibilities;
+the [validation index](../validation/README.md) records numerical checks,
+application results and release acceptance.
 
 ### Numerical policies
 
@@ -95,11 +103,11 @@ validation status `pending` and are not production claims.
 | MUSCL limiter | `minmod`, `superbee`, `vanleer`, `mc` | dispatched; unknown values, including `none`, fall back to MinMod |
 | Hydro time | `Euler`, `RK1`; `RK2`, `SSPRK2`; `RK3`, `SSPRK3` | Euler, SSPRK2, SSPRK3 |
 | Diffusion time | `RKL2` (default), `RKL1` | RKL2 is second order for the isolated diffusion operator; RKL1 is the optional first-order variant |
-| EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and the experimental CUDA backend |
-| Gravity | `none`, `external` | CPU supported; unknown strings and `self` are rejected before construction |
+| EOS | `ideal`, `tabular`, `helmholtz` | dispatched on CPU and CUDA |
+| Gravity | `none`, `external` | shared CPU/CUDA stage source; unknown strings and `self` are rejected before construction |
 | Network | `aprox13`, `aprox19`, `aprox21`, `iso7`; `custom:<id>` | built-ins plus generated custom packages discovered by CMake |
 | Burn ODE | `BE_NR`, `ROS4`, `BD` | all dispatched and covered by the one-zone CPU regression |
-| Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` becomes DenseLU for <=30 isotopes; above 30 it becomes SparseKLU for the CPU candidate and cuDSS for the CUDA candidate. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction. The current cuDSS provider and CUDA >30/generated-network paths are unavailable, so cuDSS execution fails closed. |
+| Linear solve | `Auto`, `DenseLU`, `SparseKLU`, `cuDSS` | Case-insensitive; aliases `dense_lu`, `sparse_klu`, and `cu_dss` are accepted. `Auto` selects DenseLU for up to 31 total ODE equations, including temperature and any auxiliary energy states. Larger systems use SparseKLU on CPU or cuDSS on CUDA. SparseKLU is CPU-only, cuDSS is CUDA-only, and incompatible explicit pairs are rejected before backend construction without solver substitution. Missing solver libraries or registered CUDA network code also cause rejection. |
 
 Policy names are ASCII case-insensitive, but accepted aliases and fallback
 behavior still vary by dispatcher.
@@ -192,16 +200,22 @@ pressure, bounds species to `[0,1]`, and renormalizes interface compositions.
 
 ### Build reproducibility and compile-time compromise
 
-Release compilation uses `-O3 -march=native -ffast-math -DNDEBUG`. Validation
-records include compiler, flags, OpenMP thread count, hardware, and numerical
-tolerances.
+Release compilation uses optimization and `-march=native`, but the shared
+build contract explicitly disables fast-math and contraction for supported
+GNU/Clang host compilers (`-fno-fast-math -ffp-contract=off`) and NVIDIA CUDA
+(`--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`). Host link options
+also prevent fast-math startup state. This preserves the intended compensated
+sums and frozen arithmetic policy, not cross-machine bitwise reproducibility.
+Validation records include compiler, flags, OpenMP thread count, hardware, and
+numerical tolerances.
 
-The dispatch translation units are compiled at `-O1`, with LTO disabled and
-`-fno-inline-functions-called-once`, because the integrator × flux ×
-reconstruction × EOS template matrix otherwise consumes several GB per
-translation unit. Burner policies are type-erased behind `BurnerHandle` before
-the full flux matrix, limiting network/ODE multiplication across hydro
-instantiations. Performance and correctness require measurement.
+The CPU dispatch translation units use `-O1` and
+`-fno-inline-functions-called-once` to limit compiler memory for the
+integrator, flux, reconstruction and EOS combinations. Release LTO remains
+enabled when the toolchain supports it. Burner policies are type-erased behind
+`BurnerHandle` before the full flux matrix, limiting repeated network/ODE
+instantiation across hydro routes. CUDA splits follow the same functional
+boundaries, with separate backend compile pools.
 
 ## Build, registration, and command line
 
@@ -209,13 +223,36 @@ instantiations. Performance and correctness require measurement.
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
+cmake --build build --parallel 1
 ```
 
 CMake fetches HighFive during configuration and links HDF5 C++/HL libraries.
 KLU is enabled by default: CMake first looks for an installed KLU package and,
 if absent, fetches pinned SuiteSparse v7.13.0 and builds only KLU, BTF, AMD,
 COLAMD, and SuiteSparse_config. EOS `.dat`/`.h5` assets may require Git LFS.
+
+CUDA sparse burning additionally uses optional cuDSS discovery with
+`ARCH_ENABLE_CUDSS=ON` (default) and `CUDSS_ROOT` for an installed prefix; a
+user-local installation is supported. The provider requires the reviewed 0.8
+API and a matching runtime version. It is advertised only after its registered
+network/EOS routes and library are linked. Missing cuDSS does not prevent a
+dense-only CUDA build, but sparse requests are rejected. See the
+[README build example](../README.md#build) for isolated executable output and
+`tools/run_memory_guarded.py`. Start with `--parallel 1` when available memory
+is uncertain, then choose the heavy-pool and total-job limits from measurements.
+The guard allows bounded swap growth and stops sustained memory or I/O stalls.
+Simulation capacity is measured separately for the selected workload.
+
+`ARCH_CUDSS_IR_STEPS` is a nonnegative integer CMake setting (default `2`)
+for cuDSS's device-side iterative-refinement passes. `0` disables them for
+diagnostics. It changes only the linear provider, not the ODE tolerances or
+the Auto cutoff: at most 31 total equations use DenseLU. Thirty isotopes plus
+temperature and a weak-energy integral already form a 32-equation system.
+The provider keeps cuDSS `IR_TOL=0` and applies ARCH's unchanged original-matrix
+componentwise residual gate after the solve; a successful library status alone
+does not prove an accurate correction. This setting is private to the Host
+provider compilation and does not reinstantiate CUDA network/EOS kernels.
+See the [cuDSS refinement contract](https://docs.nvidia.com/cuda/cudss/types.html#cudssconfigparam-t).
 
 Relevant cache controls are `ARCH_ENABLE_KLU` (default `ON`),
 `ARCH_FETCH_SUITESPARSE` (default `ON`), `ARCH_CUSTOM_NETWORK_ROOT` (the
@@ -435,6 +472,17 @@ factors for all stages. Its aprox13/Helmholtz one-zone result passes the current
 BE_NR cross-solver tolerance. Production studies still report a
 substep/tolerance convergence series and compare species and energy histories,
 especially when extending the network or EOS coupling.
+
+The current correctness revision separates BE_NR's nonlinear convergence from
+time accuracy: the Newton correction must fit one tenth of the ODE error scale,
+then a backward-Euler/trapezoidal endpoint difference estimates the second-order
+local error. The accepted solution remains first-order backward Euler. Tightening
+`ode_rtol`/`ode_atol` now controls that local estimate, not merely the linear/Newton
+solve; it is not a promised global relative-error bound. All three ODEs share
+the fixed-density first-law RHS and Jacobian assembly, including composition-
+dependent EOS energy and heat-capacity derivatives. The equations and energy
+handoff are described in the [network technical note](physics/TimmesNetworks.md#4-temperature-equation-jacobian-and-lhs-conventions).
+Independent time/energy checks are recorded in [burn validation](../validation/burn/README.md).
 
 The last three are custom-map controls.
 Network-specific initial fractions such as `xc12` are consumed by the selected
@@ -739,6 +787,17 @@ must match the RK quadrature and flux registration.
 
 ### EOS policy — Source extension
 
+Project-owned physical constants have one CPU/CUDA definition in
+[`PhysicalConstants.h`](../src/physics/constant/PhysicalConstants.h), organized
+by discipline with explicit units. The current set uses SI definitions and
+CODATA 2022, not a different constant profile per EOS. Pi delegates to C++20
+`<numbers>` and derived radiation/Gaussian-charge quantities reuse the shared
+fundamentals. See the [constants and data boundaries](../src/physics/constant/README.md)
+before adding values: external tables and deferred reaction-network data are
+not regenerated by changing this header. Arbitrary code units are not
+automatically converted. Historical raw-bit results using other constants
+require independent requalification for the current release.
+
 EOS dispatch uses static duck typing. `src/physics/eos/eos.h` lists the expected
 surface. Methods exercised across hydro, initialization, burn, diffusion, and
 diagnostics include:
@@ -826,8 +885,8 @@ struct Solver_NEW {
 ```
 
 The four Timmes-derived built-ins remain registered directly. Custom
-pynucastro networks use the user-owned recipe
-`examples/network/CustomNetworkRecipe.py` and the safety-owned generator
+pynucastro networks use a user-maintained recipe based on
+`examples/network/CustomNetworkRecipe.py` and the generator
 `tools/network/GenerateNetwork.py`. Each valid lowercase `NETWORK_ID` creates
 an isolated package under `src/physics/network/custom/<id>/`. IDs beginning
 with `aprox` or `iso` are reserved. Existing-ID replacement requires
@@ -835,38 +894,75 @@ with `aprox` or `iso` are reserved. Existing-ID replacement requires
 discovers any number of coexisting packages through its generated registry.
 A run selects exactly one with `network_name = custom:<id>`.
 
+The documented generator and validation recipes use pynucastro 2.12.0. See
+the [network setup](../validation/network/README.md#reproduce-the-records) for
+the matching Python environment and build commands.
+
 The adapter converts pynucastro molar RHS/Jacobian entries to ARCH mass-fraction
 form, carries nuclear/weak-neutrino energy into the ODE RHS, and namespaces the
-generated SimpleCxx headers. The energy Jacobian currently excludes the weak-neutrino composition
-derivative. Custom networks set `SUPPORTS_NSE=false` and calculate the
-temperature Jacobian column by a centered relative `1e-4` finite difference.
+generated SimpleCxx headers. Recognized weak tables include the rho*Ye
+composition chain rule and signed energy-source gradient. Custom networks set
+`SUPPORTS_NSE=false`; the complete-RHS temperature Jacobian uses the shared
+fourth-order difference policy with a precision-derived step and boundary stencil.
 Generator version 3 removes only compile-time literal-zero Jacobian calls;
 runtime numerical zeros remain structural entries for safe KLU refactorization.
 The default `NUCLEI` path retains disconnected requested nuclei as inert
 species and rejects duplicates. CMake validates each manifest and rejects
-packages that predate these version-3 safeguards. Weak-neutrino-dominated
-networks remain outside the accepted contract because the composition
-derivative and the burn solver's integrated weak-energy closure are pending.
-Production qualification covers these boundaries.
+packages that predate these version-3 safeguards. Networks that integrate signed
+weak losses add a source-integral state using the same BE_NR/BD/ROS4 stages, error control and
+rollback; accepted energy includes both nuclear energy and that integral.
+Controlled Urca trajectories pass independent reference checks with both
+constant-cv and Helmholtz closure. Representative generated-network Helmholtz
+applications also pass on both backends; their workload scope, original error
+budgets and reproduction commands are in [network validation](../validation/network/README.md).
+AMR and restart have their own [application acceptance records](../validation/amr/README.md).
+
+Generator version 4 adds one portable math header used by both the
+ordinary C++ adapter and CUDA instantiations. It preserves the original
+reaction expressions and their nuclear-data convention. Energy weights derive
+from the emitted masses/conversion, with a conserved-baryon mass offset to
+condition their dot product. Recognized small immutable metadata is
+device-callable without dereferencing Host globals. Explicit views give both
+backends access to embedded weak tables: CPU functions borrow host data, while
+CUDA storage managers upload and retain device data across grid-storage changes. Interpolation and
+reaction/ODE math are maintained once.
+Per-package include guards and scoped screening macros allow packages to
+coexist. The symbolic Jacobian structure comes from declared writes (after
+literal-zero pruning), not from sampling numerical nonzeros; unrecognized
+write indices are rejected. CMake enables CUDA execution only for manifests
+with generator version at least 4 and `device_callable_math=true`. Version-3
+packages and layouts not converted for device execution stay CPU-only;
+unrecognized weak layouts are rejected before writing the final package.
+Portable generation does not remove the
+scientific qualification or custom NSE limitations above,
+and focused math/solver smoke checks do not qualify an integrated trajectory.
 
 Matrix and solver policies are independent template parameters. `DenseWrap` is
-the dedicated fixed-size backend for at most 30 isotopes
-(`BurnLimits::MAX_SPECIES`); `SparseWrap` retains a CSC symbolic pattern and
-uses KLU analyze/factor/refactor/solve. Parsing preserves
-`linear_solver = Auto` until concrete CPU and CUDA candidates are formed. At or
-below 30 isotopes both candidates use DenseLU; above 30 the CPU candidate uses
-SparseKLU and the CUDA candidate uses cuDSS. Explicit SparseKLU is CPU-only and
+the dedicated fixed-size backend for at most 31 total ODE equations
+(`BurnLimits::MAX_ODE_NEQ`); `SparseWrap` retains a CSC symbolic pattern and
+uses KLU analyze/factor/refactor/solve. Parsing leaves `linear_solver = Auto`
+unchanged; each backend resolves it during capability checks. At or below 31
+total equations both backends select DenseLU; above 31, CPU selects SparseKLU
+and CUDA selects cuDSS. Explicit SparseKLU is CPU-only and
 explicit cuDSS is CUDA-only. An explicit CPU+cuDSS or CUDA+SparseKLU pair is
 rejected during capability resolution, before backend construction; with
 `compute_backend = auto`, an explicit solver can therefore select only its
-compatible backend. Explicit DenseLU rejects a larger network.
+compatible backend. Explicit DenseLU rejects a larger system. Count all species,
+temperature and auxiliary source states: the isotope limit is 30 without a
+source integral, 29 with one, not an unconditional species-only cutoff.
 
-SparseKLU requires a KLU-enabled build. cuDSS is currently a parseable,
-fail-closed request only: no CUDA provider has been committed, CUDA still
-rejects more than 30 species and generated networks, and installing the cuDSS
-library alone does not change those gates. Sparse values use CSC storage, while
-the current entry-to-slot lookup still allocates `N*N` integers; the retained
-evidence covers up to 200 isotopes and is not an unbounded-size guarantee.
+SparseKLU requires a KLU-enabled build. CUDA cuDSS requires the optional 0.8
+library to be linked and the network to be registered for device execution.
+The CUDA executor reuses the
+shared BE_NR/ROS4/BD ODE continuations; only memory, batched execution, and
+library-specific sparse operations are backend-specific. The CUDA route uses a
+declared CSR pattern, bounded per-lane workspace and memory-budgeted factor
+storage. It does not use a dense `N*N` entry-to-slot table. CPU `SparseWrap`
+continues to store CSC values and its existing `N*N` integer lookup. Memory
+requirements depend on sparse fill-in and the active workload. For very large
+networks, model reliability depends on the isotope set, reaction data and their
+range of applicability; current coverage is recorded in
+[network validation](../validation/network/README.md).
 
 After generating or replacing a package, rerun CMake. Use `--check` before
 writing, and use `-DARCH_CUSTOM_NETWORKS="id1;id2"` to restrict expensive builds.
@@ -932,7 +1028,7 @@ searches for `X_` prefixes, creating a composition auto-selection mismatch.
 
 `HDF5Writer` logs PLT write failures and continues the simulation.
 
-### Checkpoint file version 3
+### Checkpoint file version 4
 
 Attributes include `checkpoint_version`, `time`, `step`, `chk_index`,
 `plt_index`, `dim`, `geometry`, `num_species`, `cells_per_block`, `dt_old`,
@@ -956,9 +1052,15 @@ Datasets:
 Blocks/level
 Blocks/logical_x1, logical_x2, logical_x3
 Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng, Data/enuc_rate
-Data/rhoX    [species, block, interior cell]
+Data/rhoX, Data/X    [species, block, interior cell]
 Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
+
+`Data/X` preserves the native mass fractions used by both backends. The reader
+checks that they reproduce the stored `rhoX`; restoring them directly avoids
+roundoff from multiplying and then dividing by density. Version-3 files remain
+readable with their scientific identity and ENUC state, but reconstruct mass
+fractions from `rhoX`. New files preserve both representations.
 
 Restart compatibility checks dimension, geometry, cells per block, EOS policy,
 ideal-gas gamma where applicable, reaction-network identity, EOS-table content,
@@ -975,11 +1077,13 @@ schema; the backend name is intentionally not part of compatibility.
 
 ## Known limitations
 
-- CUDA is an experimental Cartesian backend, not yet a production parity
-  claim. Dynamic AMR and restart are implemented but still need real-device
-  conservation and split-run qualification. Gravity, non-Cartesian geometry,
-  generated networks, and sparse device solves remain unavailable. Self
-  gravity and the Jeans indicator are not implemented on either backend.
+- Verification results apply to the tested workloads and configurations
+  described in the [validation index](../validation/README.md), which also
+  records combined acceptance status.
+- Generated CUDA networks require a device-callable version-4 package.
+  Regenerate older CPU-only packages; unlowered layouts are not supported on
+  CUDA. Neither backend implements self-gravity, the Jeans indicator or
+  custom-network NSE.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict
@@ -997,6 +1101,11 @@ schema; the backend name is intentionally not part of compatibility.
   so its discrete injected energy remains resolution dependent.
 
 ## Source map
+
+Use the [source guide](../src/README.md) for module-level navigation and the
+[runtime index](../src/cuda/runtime/README.md) for CUDA's functional groups.
+The table below points to the shared interfaces rather than duplicating the
+directory inventories.
 
 | Area | Primary files |
 | --- | --- |

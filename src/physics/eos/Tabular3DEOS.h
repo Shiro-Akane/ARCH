@@ -9,7 +9,7 @@
  * Workflow:
  * 1. Construct or query the configured thermodynamic closure from canonical state variables.
  * 2. Return pressure, temperature, and transport quantities with validated bounds.
- * 3. Keep host and future device views consistent through one dispatch contract.
+ * 3. Keep host and device views consistent through one shared mathematical implementation.
  */
 #pragma once
 
@@ -25,15 +25,9 @@
 #include "TabularFreeEnergy.h"
 
 #include "../species/Species.h"
+#include "../constant/PhysicalConstants.h"
 
-// Preserve one Host/CUDA mathematical implementation while preventing NVCC
-// from force-inlining the full table/free-energy graph into every Hydro policy
-// instantiation.  These are compilation boundaries, not CUDA formula copies.
-#if defined(__CUDACC__)
-#define ARCH_TABULAR3_HEAVY_CALL ARCH_HOST_DEVICE __noinline__
-#else
-#define ARCH_TABULAR3_HEAVY_CALL inline
-#endif
+// Heavy shared leaves use the portability authority's compilation boundary.
 
 // One mathematical implementation parameterized by host or device species metadata.
 template <class SpeciesView>
@@ -60,9 +54,13 @@ struct BasicTabular3DEOSView
 
     int target_species_id;
 
+    // Optional non-owning device error latch, bound only on a per-launch view
+    // copy.  Owners and Host views leave this null; Host failures still throw.
+    int* device_error_status = nullptr;
+
     // Boltzmann constant in CGS units, erg/K.
-    static constexpr double k_B_cgs = 1.380649e-16; // erg/K
-    static constexpr double m_u_cgs = 1.660539e-24; // g
+    static constexpr double k_B_cgs = arch::constants::statistical::cgs::boltzmann;
+    static constexpr double m_u_cgs = arch::constants::atomic::cgs::atomic_mass_unit;
 
     // Domain checks and analytic ideal-gas fallback.
 
@@ -95,8 +93,10 @@ struct BasicTabular3DEOSView
     }
 
     // Trilinear interpolation in log(rho), log(T), and composition coordinate.
-    ARCH_TABULAR3_HEAVY_CALL double interpolate_3d(
-        const double *table, double rho, double T, double X) const
+    ARCH_HEAVY_INLINE double interpolate_3d(
+        const double *table, double rho, double T, double X,
+        double* composition_slope = nullptr, double* temperature_slope = nullptr,
+        double* mixed_slope = nullptr) const
     {
         if (rho <= 1e-12 || T <= 1e-12)
             return 0.0;
@@ -144,6 +144,15 @@ struct BasicTabular3DEOSView
         double c0 = c00 * (1.0 - ty) + c10 * ty;
         double c1 = c01 * (1.0 - ty) + c11 * ty;
 
+        if (composition_slope) *composition_slope = (c1 - c0) / dX;
+        if (temperature_slope || mixed_slope) {
+            const double inverse_temperature_spacing = 1.0 / (std::log(10.0) * dlog_T * T);
+            if (temperature_slope) *temperature_slope =
+                ((c10 - c00) * (1.0 - tz) + (c11 - c01) * tz) * inverse_temperature_spacing;
+            if (mixed_slope) *mixed_slope =
+                ((c11 - c01) - (c10 - c00)) * inverse_temperature_spacing / dX;
+        }
+
         // Interpolate along composition to obtain the final value.
         return c0 * (1.0 - tz) + c1 * tz;
     }
@@ -157,8 +166,9 @@ struct BasicTabular3DEOSView
                static_cast<std::size_t>(icomposition);
     }
 
-    ARCH_TABULAR3_HEAVY_CALL tabular_eos::FreeEnergyState interpolate_free_energy(
-        double rho, double T, double composition) const
+    ARCH_HEAVY_INLINE tabular_eos::FreeEnergyState interpolate_free_energy(
+        double rho, double T, double composition,
+        eos_utils::LinearCompositionDerivatives* derivatives = nullptr) const
     {
         const double log_rho = std::log10(rho);
         const double log_temperature = std::log10(T);
@@ -187,10 +197,18 @@ struct BasicTabular3DEOSView
         const double hx = std::log(10.0) * dlog_rho;
         const double hy = std::log(10.0) * dlog_T;
         const auto lower = tabular_eos::interpolate_biquintic(
-            free_energy_fields, lower_corners, tx, ty, hx, hy);
+            free_energy_fields, lower_corners, tx, ty, hx, hy, derivatives != nullptr);
         const auto upper = tabular_eos::interpolate_biquintic(
-            free_energy_fields, upper_corners, tx, ty, hx, hy);
-        return tabular_eos::blend(lower, upper, tc);
+            free_energy_fields, upper_corners, tx, ty, hx, hy, derivatives != nullptr);
+        const auto state = tabular_eos::blend(lower, upper, tc);
+        if (derivatives) {
+            *derivatives = {};
+            derivatives->energy[0] = ((upper.a - upper.ay) - (lower.a - lower.ay)) / dX;
+            derivatives->cv[0] = ((upper.ay - upper.ayy) - (lower.ay - lower.ayy)) / (T * dX);
+            derivatives->energy_temperature[0] = derivatives->cv[0];
+            derivatives->cv_temperature = (2.0 * state.ayy - state.ay - state.ayyy) / (T * T);
+        }
+        return state;
     }
 
     ARCH_INLINE tabular_eos::FreeEnergyResult free_energy_result(
@@ -200,16 +218,11 @@ struct BasicTabular3DEOSView
             interpolate_free_energy(rho, T, composition), rho, T);
     }
 
-    ARCH_TABULAR3_HEAVY_CALL tabular_eos::ThermodynamicState free_energy_state(
+    ARCH_HEAVY_INLINE tabular_eos::ThermodynamicState free_energy_state(
         double rho, double T, double composition) const
     {
         const auto result = free_energy_result(rho, T, composition);
-#if defined(__CUDA_ARCH__)
-        return result.status == tabular_eos::FreeEnergyStatus::success
-            ? result.state : tabular_eos::invalid_thermodynamic_state();
-#else
-        return tabular_eos::require_thermodynamics(result);
-#endif
+        return tabular_eos::checked_thermodynamics(result, device_error_status);
     }
 
     // Composition-coordinate query used by generated network interfaces.
@@ -231,6 +244,52 @@ struct BasicTabular3DEOSView
         // Ye=0.5 is the neutral symmetric-matter fallback without metadata.
         return 0.5;
     }
+
+    // Linear coordinates are the selected table composition and sum(X/A).
+    // The latter supplies the declared out-of-table ideal-gas closure.
+    ARCH_INLINE std::array<double, 2> composition_weights(int species) const
+    {
+        const double inverse_a = species < specs.count ? 1.0 / specs.get_A(species) : 0.0;
+        const double table_weight = target_species_id >= 0 ? double(species == target_species_id)
+            : (species < specs.count ? specs.get_Z(species) * inverse_a : 0.0);
+        return {table_weight, inverse_a};
+    }
+
+    ARCH_HEAVY_INLINE eos_utils::LinearCompositionDerivatives composition_derivatives(
+        double rho, double T, const double* Xi) const
+    {
+        eos_utils::LinearCompositionDerivatives d{};
+        if (rho <= 1e-12 || T <= 1e-12) return d;
+        const double X = get_target_X(Xi);
+        if (is_out_of_bounds(std::log10(rho), std::log10(T), X)) {
+            double y = 0.0;
+            for (int i = 0; i < specs.count; ++i) y += Xi[i] / specs.get_A(i);
+            if (y > 1e-16) {
+                d.cv[1] = k_B_cgs / (m_u_cgs * (fallback_gamma() - 1.0));
+                d.energy[1] = T * d.cv[1];
+                d.energy_temperature[1] = d.cv[1];
+            }
+        } else if (uses_free_energy) {
+            const auto f = interpolate_free_energy(rho, T, X, &d);
+            const auto state = tabular_eos::checked_thermodynamics(
+                tabular_eos::evaluate_thermodynamics(f, rho, T), device_error_status);
+            if (!std::isfinite(state.energy)) d.energy.fill(state.energy);
+        } else {
+            interpolate_3d(table_E, rho, T, X, &d.energy[0], nullptr, &d.energy_temperature[0]);
+            interpolate_3d(table_cv, rho, T, X, &d.cv[0], &d.cv_temperature);
+        }
+        return d;
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(double rho, double T, const double* X, double* result) const
+    { eos_utils::composition_derivative_query<Equations, eos_utils::CompositionQuery::energy_gradient>(*this, rho, T, X, result); }
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient(double rho, double T, const double* X, double* result) const
+    { eos_utils::composition_derivative_query<Equations, eos_utils::CompositionQuery::cv_gradient>(*this, rho, T, X, result); }
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(double rho, double T, const double* X, const double* flow, double* result) const
+    { eos_utils::composition_derivative_query<Equations, eos_utils::CompositionQuery::energy_hessian_action>(*this, rho, T, X, result, flow); }
 
     ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     {
@@ -290,7 +349,7 @@ struct BasicTabular3DEOSView
                interpolate_3d(table_cv, rho, T_target, X);
     }
 
-    ARCH_TABULAR3_HEAVY_CALL double get_temperature(
+    ARCH_HEAVY_INLINE double get_temperature(
         double rho, double e, const double *Xi) const
     {
         if (rho <= 1e-12 || e <= 1e-12)
@@ -322,10 +381,15 @@ struct BasicTabular3DEOSView
         for (int i = 0; i < max_iters; ++i) {
             T_guess = std::max(T_min, std::min(T_guess, T_max));
 
-            double e_eval = uses_free_energy ? free_energy_state(rho, T_guess, X).energy :
-                            interpolate_3d(table_E, rho, T_guess, X);
-            double cv_eval = uses_free_energy ? free_energy_state(rho, T_guess, X).cv :
-                             interpolate_3d(table_cv, rho, T_guess, X);
+            double e_eval, cv_eval;
+            if (uses_free_energy) {
+                const auto thermal = free_energy_state(rho, T_guess, X);
+                e_eval = thermal.energy;
+                cv_eval = thermal.cv;
+            } else {
+                e_eval = interpolate_3d(table_E, rho, T_guess, X);
+                cv_eval = interpolate_3d(table_cv, rho, T_guess, X);
+            }
 
             if (cv_eval <= 0.0) {
                 // Finite difference fallback
@@ -495,9 +559,8 @@ struct BasicTabular3DEOSView
 
 };
 
-#undef ARCH_TABULAR3_HEAVY_CALL
 
-using Tabular3DEOSView = BasicTabular3DEOSView<SpeciesPODView>;
+
 
 struct Tabular3DEOSHostView : BasicTabular3DEOSView<SpeciesHostView>
 {

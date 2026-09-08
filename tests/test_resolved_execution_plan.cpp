@@ -116,9 +116,9 @@ void test_plain_cpp_contracts()
     for (const auto& descriptor : flux) {
         expect(descriptor.cpu_supported && descriptor.cuda_supported,
                "flux support must derive from committed bindings");
-        expect(descriptor.requirements.minimum_cuda_cc_major == 8
-               && descriptor.requirements.minimum_cuda_cc_minor == 6,
-               "sm_86 static minimum");
+        expect(descriptor.requirements.minimum_cuda_cc_major == 0
+               && descriptor.requirements.minimum_cuda_cc_minor == 0,
+               "ordinary flux has no model-derived sm_86 feature floor");
     }
     const auto expect_supported = []<class List>() {
         constexpr auto descriptors = make_policy_descriptors<List>();
@@ -470,12 +470,17 @@ void test_factory_routes_preserved()
     config.physics.burn.odeconfig.ode_solver = "BE_NR";
     config.physics.burn.odeconfig.linear_solver = "SparseKLU";
     threw = false;
-    try { BurnDispatcher::dispatch(config, [](auto) {}); }
+    bool sparse_dispatched = false;
+    try { BurnDispatcher::dispatch(config, [&](auto) { sparse_dispatched = true; }); }
     catch (const std::runtime_error& error) {
         threw = std::string(error.what())
             == "SparseKLU was selected, but this ARCH build has KLU disabled.";
     }
-    expect(threw, "burn factory reports the build-time SparseKLU capability");
+#if ARCH_HAS_KLU
+    expect(!threw && sparse_dispatched, "burn factory exposes its enabled SparseKLU provider");
+#else
+    expect(threw && !sparse_dispatched, "burn factory reports its disabled SparseKLU provider");
+#endif
     config.physics.burn.odeconfig.linear_solver = "cUdSs";
     threw = false;
     try { BurnDispatcher::dispatch(config, [](auto) {}); }

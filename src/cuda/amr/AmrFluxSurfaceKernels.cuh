@@ -6,6 +6,7 @@
 #pragma once
 
 #include "amr/AmrFluxMath.h"
+#include "amr/AmrFluxExecutionPlan.h"
 #include "cuda/amr/AmrFluxSurfaceTypes.cuh"
 
 namespace arch::cuda::amr_flux_kernel_detail {

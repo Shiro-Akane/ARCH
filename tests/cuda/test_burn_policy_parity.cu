@@ -1,10 +1,13 @@
-#include "cuda/microphysics/helm_eos_loader.h"
+#include "cuda/microphysics/helm_eos_device_owner.h"
 #include "cuda/microphysics/microphysics_api.h"
+#include "core/FileFingerprint.h"
 #include "driver/DriverBurn.h"
+#include "numerics/burnsolver/Networks.h"
 #include "numerics/burnsolver/ode_bd.h"
 #include "numerics/burnsolver/ode_be-nr.h"
 #include "numerics/burnsolver/ode_ros4.h"
 #include "physics/eos/HelmEos.h"
+#include "../fixtures/BurnMainlineReference.h"
 
 #include <cuda_runtime.h>
 
@@ -27,11 +30,6 @@ int numerical_mismatches = 0;
 
 struct RouteAuthority {
     const char* name;
-    std::uint64_t state_hash;
-    std::uint64_t dt_bits;
-    std::uint64_t old_eint_bits;
-    std::uint64_t new_eint_bits;
-    int changed_fields;
     std::array<double, BurnLimits::MAX_ODE_NEQ> state_budgets;
     double old_eint_budget;
     double new_eint_budget;
@@ -46,34 +44,34 @@ make_state_budgets(Values... values)
 }
 
 constexpr RouteAuthority kAuthorities[]{
-    {"aprox13.be_nr", 0x4943003f6ab3cb2dULL, 0x3ca9f0d3ef0faf29ULL, 0x4391413e4687cfdbULL, 0x4391413e4687d1d1ULL, 14,
+    {"aprox13.be_nr",
         make_state_budgets(), 1.1e-15, 6.0e-15},
-    {"aprox13.bd",    0x1a52639606be9948ULL, 0x3ca9f0d3ef0faf29ULL, 0x4391413e4687cfdbULL, 0x4391413e4687d1f4ULL, 14,
+    {"aprox13.bd",
         make_state_budgets(), 1.1e-15, 1.7e-14},
-    {"aprox13.ros4",  0x502d6fca059f57ffULL, 0x3ca9f0d3ef0faf29ULL, 0x4391413e4687cfdbULL, 0x4391413e4687d1f4ULL, 11,
+    {"aprox13.ros4",
         make_state_budgets(), 1.1e-15, 1.6e-14},
-    {"aprox19.be_nr", 0xfeff3a8f8ded2dd1ULL, 0x3ca9f0d3ef0faf29ULL, 0x43944a49f2149211ULL, 0x43944a4b4b159ae4ULL, 20,
+    {"aprox19.be_nr",
         make_state_budgets(
             1.20e-14, 1.33e-16, 1.96e-16, 2.56e-16, 3.21e-16,
             3.91e-16, 4.43e-16, 5.12e-16, 5.73e-16, 6.42e-16,
             7.03e-16, 7.81e-16, 8.33e-16, 8.85e-16, 9.72e-16,
             1.02e-15, 1.09e-15, 1.15e-15, 1.23e-15, 0.0),
         3.9e-15, 1.6e-14},
-    {"aprox19.bd",    0x89a1b5f5417c267dULL, 0x3ca9f0d3ef0faf29ULL, 0x43944a49f2149211ULL, 0x43944a4b4b15e043ULL, 20,
+    {"aprox19.bd",
         make_state_budgets(
             1.09e-14, 1.37e-16, 1.74e-16, 2.35e-16, 2.95e-16,
             3.47e-16, 4.17e-16, 4.69e-16, 5.21e-16, 5.90e-16,
             6.42e-16, 6.94e-16, 7.46e-16, 8.33e-16, 8.85e-16,
             9.37e-16, 9.89e-16, 1.04e-15, 1.11e-15, 0.0),
         3.9e-15, 2.4e-14},
-    {"aprox19.ros4",  0xacdac9832a94cb34ULL, 0x3ca9f0d3ef0faf29ULL, 0x43944a49f2149211ULL, 0x43944a4b4b15e18dULL, 20,
+    {"aprox19.ros4",
         make_state_budgets(
             1.53e-14, 1.70e-16, 2.45e-16, 3.26e-16, 4.00e-16,
             4.87e-16, 5.65e-16, 6.52e-16, 7.20e-16, 8.00e-16,
             8.86e-16, 9.73e-16, 1.05e-15, 1.13e-15, 1.20e-15,
             1.31e-15, 1.38e-15, 1.45e-15, 1.53e-15, 0.0),
         3.9e-15, 1.43e-14},
-    {"aprox21.be_nr", 0x5f371a72a6128b2bULL, 0x3ca9f0d3ef0faf29ULL, 0x4393dd63fe723809ULL, 0x4393dd6bcaa70f6bULL, 22,
+    {"aprox21.be_nr",
         make_state_budgets(
             5.28e-14, 4.28e-16, 6.90e-16, 9.16e-16, 1.15e-15,
             1.38e-15, 1.61e-15, 1.84e-15, 2.07e-15, 2.30e-15,
@@ -81,7 +79,7 @@ constexpr RouteAuthority kAuthorities[]{
             3.67e-15, 3.89e-15, 4.13e-15, 4.36e-15, 4.60e-15,
             4.83e-15, 0.0),
         1.2e-15, 6.2e-14},
-    {"aprox21.bd",    0x759fb3f8f7eea959ULL, 0x3ca9f0d3ef0faf29ULL, 0x4393dd63fe723809ULL, 0x4393dd6bcab3e05bULL, 22,
+    {"aprox21.bd",
         make_state_budgets(
             5.26e-15, 1.89e-16, 6.51e-17, 8.68e-17, 1.09e-16,
             1.31e-16, 1.52e-16, 1.74e-16, 2.00e-16, 2.17e-16,
@@ -89,7 +87,7 @@ constexpr RouteAuthority kAuthorities[]{
             3.47e-16, 3.47e-16, 3.99e-16, 4.17e-16, 4.34e-16,
             4.52e-16, 0.0),
         1.2e-15, 1.7e-14},
-    {"aprox21.ros4",  0x41e4d2caf71c8ef8ULL, 0x3ca9f0d3ef0faf29ULL, 0x4393dd63fe723809ULL, 0x4393dd6bcab4040fULL, 22,
+    {"aprox21.ros4",
         make_state_budgets(
             9.08e-14, 8.94e-16, 1.18e-15, 1.58e-15, 1.97e-15,
             2.37e-15, 2.76e-15, 3.16e-15, 3.55e-15, 3.94e-15,
@@ -97,11 +95,11 @@ constexpr RouteAuthority kAuthorities[]{
             6.32e-15, 6.74e-15, 7.10e-15, 7.48e-15, 7.88e-15,
             8.28e-15, 0.0),
         1.2e-15, 9.1e-14},
-    {"iso7.be_nr",    0xbb6ba1b9dab1bffcULL, 0x3ca9f0d3ef0faf29ULL, 0x43919fb3f2f86bcaULL, 0x43919fb3f2f87d9cULL, 7,
+    {"iso7.be_nr",
         make_state_budgets(), 5.7e-15, 8.0e-15},
-    {"iso7.bd",       0xd251d19740ab1a8aULL, 0x3ca9f0d3ef0faf29ULL, 0x43919fb3f2f86bcaULL, 0x43919fb3f2f87d6fULL, 7,
+    {"iso7.bd",
         make_state_budgets(), 5.7e-15, 1.5e-14},
-    {"iso7.ros4",     0x27ef02d4d0bb4bffULL, 0x3ca9f0d3ef0faf29ULL, 0x43919fb3f2f86bcaULL, 0x43919fb3f2f87d6cULL, 7,
+    {"iso7.ros4",
         make_state_budgets(), 5.7e-15, 1.55e-14},
 };
 
@@ -111,17 +109,6 @@ void cuda_check(cudaError_t error, const char* operation)
         throw std::runtime_error(std::string(operation) + ": "
                                  + cudaGetErrorString(error));
 }
-
-std::uint64_t state_hash(const double* values, int count)
-{
-    std::uint64_t hash = 1469598103934665603ULL;
-    for (int i = 0; i < count; ++i) {
-        hash ^= std::bit_cast<std::uint64_t>(values[i]);
-        hash *= 1099511628211ULL;
-    }
-    return hash;
-}
-
 void require_close(double actual, double expected, double relative,
                    const std::string& label)
 {
@@ -130,6 +117,11 @@ void require_close(double actual, double expected, double relative,
             std::cerr << label << " NaN mismatch\n";
             ++numerical_mismatches;
         }
+        return;
+    }
+    if (std::isnan(actual)) {
+        std::cerr << label << " unexpected NaN\n";
+        ++numerical_mismatches;
         return;
     }
     if (std::isinf(expected) || std::isinf(actual)) {
@@ -159,46 +151,8 @@ void require_close(double actual, double expected, double relative,
     }
 }
 
-BurnConfig make_config()
-{
-    BurnConfig config{};
-    config.use_burn = true;
-    config.use_nse = false;
-    config.nuclearTempMin = 1.0e8;
-    config.nuclearDensMin = 1.0;
-    config.smallt = 1.0e5;
-    config.smallx = 1.0e-30;
-    config.enucDtFactor = 0.5;
-    config.odeconfig.rtol = 1.0e-4;
-    config.odeconfig.atol = 1.0e-8;
-    config.odeconfig.max_newton_iter = 50;
-    config.odeconfig.max_substeps = 100;
-    config.odeconfig.initial_dt_frac = 1.0;
-    config.odeconfig.dt_safe_factor = 0.9;
-    config.odeconfig.dt_fac_min = 0.1;
-    config.odeconfig.dt_fac_max = 2.0;
-    return config;
-}
-
-template<class Net>
-std::array<double, BurnLimits::MAX_ODE_NEQ> make_state(int variant)
-{
-    std::array<double, BurnLimits::MAX_ODE_NEQ> state{};
-    const double denominator =
-        static_cast<double>(Net::NUM_SPECIES * (Net::NUM_SPECIES + 1) / 2);
-    double sum = 0.0;
-    std::uint32_t seed = 0x9e3779b9U ^ static_cast<std::uint32_t>(variant + 1);
-    for (int i = 0; i < Net::NUM_SPECIES; ++i) {
-        seed = 1664525U * seed + 1013904223U;
-        const double perturbation = 1.0
-            + 1.0e-5 * static_cast<double>(static_cast<int>(seed % 9U) - 4);
-        state[i] = static_cast<double>(i + 1) / denominator * perturbation;
-        sum += state[i];
-    }
-    for (int i = 0; i < Net::NUM_SPECIES; ++i) state[i] /= sum;
-    state[Net::ODE_NEQ - 1] = 2.0e9 + 1.0e6 * variant;
-    return state;
-}
+using BurnMainlineReference::make_config;
+using BurnMainlineReference::make_state;
 
 template<class Net, template<class, class, class> class Solver>
 __global__ void policy_kernel(arch::cuda::BurnPolicyCell* result,
@@ -233,7 +187,11 @@ void check_route(const RouteAuthority& authority, int variant,
     for (int i = 0; i < Net::ODE_NEQ; ++i)
         changed += std::bit_cast<std::uint64_t>(host[i])
                 != std::bit_cast<std::uint64_t>(initial[i]);
-    if (changed != authority.changed_fields || changed == 0)
+    // Bit-change counts depend on compiler rounding, not on physical accuracy.
+    // The separate burn_mainline_reference CTest checks the longer independent
+    // time-integration endpoints. This test owns strict short-step BACKEND
+    // parity, not scientific accuracy against an approximate main snapshot.
+    if (changed == 0)
         throw std::runtime_error(std::string(authority.name)
                                  + " is not a discriminating route fixture");
 
@@ -347,14 +305,18 @@ struct NseAcceptNet : NseRejectNet {
     ARCH_INLINE static constexpr double spin_weight(int) { return 1.0; }
 };
 
-template<class, class MatrixType, class>
+template<class Net, class MatrixType, class>
 struct RhoSensitiveSolver {
     template<class Eos>
     ARCH_INLINE static BurnOdeReport integrate_report(
-        double* state, double rho, double, const Eos&,
+        double* state, double rho, double, const Eos& eos,
         const BurnConfigView&, OdeMatrixWorkspace<MatrixType>& workspace,
-        double& dt_rec)
+        double& dt_rec, const Net& = {})
     {
+        // This scripted test solver prescribes a thermodynamic endpoint, not
+        // a reaction RHS. Report its prescribed energy explicitly so the
+        // driver oracle keeps testing the same signed energy/limiter values.
+        const double initial_energy = eos.get_eint_from_T(rho, state[Net::NUM_SPECIES], state);
         state[0] -= 0.125;
         state[1] += 0.125;
         state[2] *= rho < 3.0 ? 1.25 : 0.75;
@@ -365,6 +327,7 @@ struct RhoSensitiveSolver {
         report.status = BurnOdeStatus::OdeSuccess;
         report.attempted_substeps = 1;
         report.dt_recommended = dt_rec;
+        report.energy_change = eos.get_eint_from_T(rho, state[Net::NUM_SPECIES], state) - initial_energy;
         return report;
     }
 };
@@ -522,17 +485,25 @@ __global__ void handoff_threshold_kernel(
     state[1] = 5.0e-21;
     output[0] = DriverBurn::compute_burn_energy_handoff(
         fluid, state, 1, 4.0e-21, 0.0, 1.0,
-        HandoffEos{}, config);
+        HandoffEos{}, config, 5.0e-21 - 4.0e-21);
     state[1] = 1.0;
     output[1] = DriverBurn::compute_burn_energy_handoff(
         fluid, state, 1, 0.0, 0.0, 1.0e31,
-        HandoffEos{}, config);
+        HandoffEos{}, config, 1.0);
+    state[1] = 0x1p80;
+    output[2] = DriverBurn::compute_burn_energy_handoff(
+        fluid, state, 1, state[1], 0.0, 0.5, HandoffEos{}, config, 1.0);
+    output[3] = DriverBurn::compute_burn_energy_handoff(
+        fluid, state, 1, state[1], 0.0, 0.5, HandoffEos{}, config, -1.0);
+    output[4] = DriverBurn::compute_burn_energy_handoff(
+        fluid, state, 1, state[1], 0.0, 0.5, HandoffEos{}, config,
+        std::numeric_limits<double>::infinity());
 }
 
 void check_handoff_thresholds(cudaStream_t stream)
 {
     BurnConfig config = make_config();
-    std::array<DriverBurn::BurnEnergyHandoff, 2> values{};
+    std::array<DriverBurn::BurnEnergyHandoff, 5> values{};
     DriverBurn::BurnEnergyHandoff* device = nullptr;
     cuda_check(cudaMalloc(&device, sizeof(values)), "cudaMalloc handoff thresholds");
     handoff_threshold_kernel<<<1, 1, 0, stream>>>(
@@ -542,6 +513,14 @@ void check_handoff_thresholds(cudaStream_t stream)
                                cudaMemcpyDeviceToHost, stream), "download handoff thresholds");
     cuda_check(cudaStreamSynchronize(stream), "sync handoff thresholds");
     cuda_check(cudaFree(device), "cudaFree handoff thresholds");
+
+    if (!values[2].valid || !values[3].valid || values[4].valid
+        || values[2].new_internal_energy != 0x1p80
+        || values[3].new_internal_energy != 0x1p80
+        || values[2].enuc_rate != 2.0 || values[3].enuc_rate != -2.0
+        || values[2].limiter_candidate != config.enucDtFactor * 0x1p79
+        || values[3].limiter_candidate != values[2].limiter_candidate)
+        throw std::runtime_error("accepted sub-ULP source energy was lost or invalid heat accepted");
 
     const double frozen_delta = std::abs(5.0e-21 - 4.0e-21);
     const double expected_floor_limiter = config.enucDtFactor
@@ -710,6 +689,14 @@ void check_helper_thresholds(cudaStream_t stream)
 
 void check_workspace_contract()
 {
+    const auto sizes = arch::cuda::burn_workspace_size_table(
+        std::make_index_sequence<BurnLimits::MAX_ODE_NEQ>{});
+    for (int equations = 1; equations <= BurnLimits::MAX_ODE_NEQ; ++equations)
+        if (arch::cuda::compact_burn_workspace_bytes_per_cell(equations) != sizes[equations - 1])
+            throw std::runtime_error("runtime compact workspace extent drifted");
+    if (arch::cuda::compact_burn_workspace_bytes_per_cell(0) != 0
+        || arch::cuda::compact_burn_workspace_bytes_per_cell(BurnLimits::MAX_ODE_NEQ + 1) != 0)
+        throw std::runtime_error("unsupported compact workspace extent accepted");
     alignas(arch::cuda::BurnOdeMatrixWorkspace)
         std::array<std::byte,
                    sizeof(arch::cuda::BurnOdeMatrixWorkspace) * 2 + 1> storage{};
@@ -735,7 +722,11 @@ void run_route(const RouteAuthority& authority, int variant,
     Net::RegisterSpecies(species);
     const std::string path = std::string(ARCH_SOURCE_DIR)
         + "/EOS_toolkit/tables/helmholtz/helm_table.dat";
+    if (arch::core::file_sha256(path) != BurnMainlineReference::kTableSha256)
+        throw std::runtime_error("frozen-main Helmholtz table SHA-256 mismatch");
     HelmEos eos(path, &species);
+    // Shared scientific acceptance is run once by burn_mainline_reference;
+    // do not repeat its expensive first-order accuracy integration per GPU route.
     arch::cuda::HelmEosDeviceOwner owner(eos, stream);
     check_route<Net, Solver>(authority, variant, eos, owner.view(), stream);
     std::cout << authority.name << " passed\n";

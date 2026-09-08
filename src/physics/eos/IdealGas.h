@@ -23,6 +23,8 @@
 
 struct IdealGasView
 {
+    // Air-like model fallback in J/(kg K), not a universal physical constant.
+    static constexpr double default_specific_heat_cv = 718.0;
     SpeciesPODView species{};
     double global_gamma = 1.4;
 
@@ -57,7 +59,7 @@ struct IdealGasView
     ARCH_INLINE double get_mixture_Cv(const double *Xi) const
     {
         if (species.count == 0)
-            return 718.0; // Air-like Cv fallback in J/(kg K) when no species exist.
+            return default_specific_heat_cv;
 
         double cv_mix = 0.0;
         for (int k = 0; k < species.count; ++k)
@@ -101,7 +103,36 @@ struct IdealGasView
         return get_mixture_Cv(Xi);
     }
 
+    template <int Equations>
+    ARCH_INLINE void get_cv_gradient(double, double, const double*, double* gradient) const
+    {
+        // The same immutable coefficients as get_mixture_Cv; no EOS sampling
+        // is needed for this linear mixture, even for large reaction networks.
+        for (int i = 0; i < Equations - 1; ++i)
+            gradient[i] = i < species.count ? species.get_Cv_ref(i) : 0.0;
+        gradient[Equations - 1] = 0.0;
+    }
+
     ARCH_INLINE double get_eta(double rho, double T, const double* Xi) const { return 0.0; }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(
+        double, double T, const double*, double* gradient) const
+    {
+        for (int i = 0; i < Equations - 1; ++i)
+            gradient[i] = i < species.count ? T * species.get_Cv_ref(i) : 0.0;
+    }
+
+    template <int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(
+        double, double, const double*, const double* flow, double* action) const
+    {
+        action[Equations - 1] = 0.0;
+        for (int i = 0; i < Equations - 1; ++i) {
+            action[i] = 0.0;
+            if (i < species.count) action[Equations - 1] += species.get_Cv_ref(i) * flow[i];
+        }
+    }
 
     ARCH_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
     {
@@ -216,6 +247,19 @@ public:
     { return get_view().get_eint_from_T(rho, T, Xi); }
     double get_cv(double rho, double T, const double *Xi) const
     { return get_view().get_cv(rho, T, Xi); }
+
+    template <int Equations>
+    void get_cv_gradient(double rho, double T, const double* Xi, double* gradient) const
+    { get_view().template get_cv_gradient<Equations>(rho, T, Xi, gradient); }
+
+    template <int Equations>
+    void get_energy_composition_gradient(double rho, double T, const double* Xi, double* gradient) const
+    { get_view().template get_energy_composition_gradient<Equations>(rho, T, Xi, gradient); }
+
+    template <int Equations>
+    void get_energy_composition_hessian_action(
+        double rho, double T, const double* Xi, const double* flow, double* action) const
+    { get_view().template get_energy_composition_hessian_action<Equations>(rho, T, Xi, flow, action); }
     double get_eta(double rho, double T, const double *Xi) const
     { return get_view().get_eta(rho, T, Xi); }
     double get_pressure(const FluidVector &U, const double *Xi) const

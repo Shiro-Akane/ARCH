@@ -7,8 +7,10 @@
 #include <type_traits>
 
 #include "../common/CudaCommon.cuh"
+#include "../common/DeviceEosStatus.h"
 #include "../hydro/HydroStateKernels.cuh"
-#include "../runtime/CudaBackendAmrFlux.h"
+#include "../hydro/GridGeometryAdapter.cuh"
+#include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "../../numerics/diffusion/DiffFlux.h"
 #include "../../numerics/diffusion/DiffusionAMRStages.h"
 #include "../../physics/species/Species.h"
@@ -37,6 +39,7 @@ struct DiffusionWorkspaceView
     double* dt_candidates = nullptr;
     double* dt_result = nullptr;
     int* status = nullptr;
+    SpeciesWorkspaceView species_workspace{};
 };
 
 static_assert(std::is_standard_layout_v<DiffusionLaunchResult>);
@@ -116,10 +119,10 @@ inline bool matching_state_shape(
         && left.n_species == right.n_species;
 }
 
-inline bool valid_cartesian_diffusion_grid(const DeviceGridView& grid)
+inline bool valid_diffusion_grid(const DeviceGridView& grid)
 {
     if (!valid_hydro_grid(grid)
-        || grid.geometry != static_cast<int>(DeviceGeometry::Cartesian))
+        || make_grid_geometry_view(grid).geometry == GridMetrics::Geometry::Unsupported)
         return false;
     if (grid.is < 1 || grid.ie >= grid.total_x) return false;
     if (grid.dim >= 2 && (grid.js < 1 || grid.je >= grid.total_y)) return false;
@@ -162,65 +165,127 @@ template <typename EosView>
 __global__ void diffusion_face_kernel(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     EosView eos, SpeciesPODView species,
-    DiffFlux::DiffusionConfigView config, int direction, int* status)
+    DiffFlux::DiffusionConfigView config, int direction, int* status,
+    SpeciesWorkspaceView workspace = {})
 {
-    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     const int count = diffusion_face_count(grid, direction);
-    if (linear >= count) return;
-    const int right_cell = diffusion_face_cell(grid, direction, linear);
-    const int left_cell = right_cell - grid.stride(direction);
+    SpeciesLaneScratch<5> scratch(workspace, lane);
+    double* left_species = scratch.array(0);
+    double* right_species = scratch.array(1);
+    double* face_species = scratch.array(2);
+    double* charge = scratch.array(3);
+    double* inverse_mass = scratch.array(4);
+    for (int linear = lane; linear < count; linear += blockDim.x * gridDim.x) {
+        const int right_cell = diffusion_face_cell(grid, direction, linear);
+        const int left_cell = right_cell - grid.stride(direction);
 
-    double left_species[kMaxDeviceSpecies];
-    double right_species[kMaxDeviceSpecies];
-    double face_species[kMaxDeviceSpecies];
-    double charge[kMaxDeviceSpecies];
-    double inverse_mass[kMaxDeviceSpecies];
-    FluidVector face_flux{};
-    const double spacing = direction == 0
-        ? grid.dx1 : (direction == 1 ? grid.dx2 : grid.dx3);
-    const DiffFlux::DiffusionFaceStatus face_status =
-        DiffFlux::evaluate_diffusion_face(
-            state.load(left_cell), state.load(right_cell),
-            state.n_species > 0
-                ? state.mass_fractions + left_cell : nullptr,
-            state.n_species > 0
-                ? state.mass_fractions + right_cell : nullptr,
-            state.n_species, state.total_size, spacing, eos, species, config,
-            left_species, right_species, face_species, charge, inverse_mass,
-            face_flux,
-            state.n_species > 0
-                ? flux.mass_fractions + right_cell : nullptr,
-            flux.total_size);
-    if (!face_status.valid) {
-        atomicExch(status, 1);
-        return;
+        FluidVector face_flux{};
+        const auto geometry = make_grid_geometry_view(grid);
+        const int ni = grid.ie - grid.is + (direction == 0 ? 1 : 0);
+        const int nj = grid.je - grid.js + (direction == 1 ? 1 : 0);
+        const int i = grid.is + linear % ni;
+        const int j = grid.js + (linear / ni) % nj;
+        const double spacing = DiffFlux::diffusion_face_spacing(
+            geometry.geometry, grid.dim, direction, grid.dx1, grid.dx2, grid.dx3,
+            geometry.GetCellCenterX(i), geometry.GetCellCenterY(j));
+        const DiffFlux::DiffusionFaceStatus face_status =
+            DiffFlux::evaluate_diffusion_face(
+                state.load(left_cell), state.load(right_cell),
+                state.n_species > 0
+                    ? state.mass_fractions + left_cell : nullptr,
+                state.n_species > 0
+                    ? state.mass_fractions + right_cell : nullptr,
+                state.n_species, state.total_size, spacing, eos, species, config,
+                left_species, right_species, face_species, charge, inverse_mass,
+                face_flux,
+                state.n_species > 0
+                    ? flux.mass_fractions + right_cell : nullptr,
+                flux.total_size, config.use_viscous_diffusion
+                    ? DiffFlux::viscous_basis_rotation(geometry, direction, i, j)
+                    : DiffFlux::ViscousBasisRotation{});
+        if (!face_status.valid) {
+            atomicExch(status, 1);
+            continue;
+        }
+        if (face_status.active) flux.store(right_cell, face_flux);
     }
-    if (face_status.active) flux.store(right_cell, face_flux);
 }
+
+struct DiffusionStateReader {
+    DeviceStateView state;
+    ARCH_INLINE FluidVector operator()(int cell) const { return state.load(cell); }
+    ARCH_INLINE double fraction(int species, int cell) const
+    { return state.mass_fractions[species * state.total_size + cell]; }
+};
 
 template <typename EosView>
 __global__ void diffusion_dt_candidates_kernel(
     DeviceStateView state, DeviceGridView grid, EosView eos,
     SpeciesPODView species, DiffFlux::DiffusionConfigView config,
-    double* candidates, int* status)
+    double* candidates, int* status, SpeciesWorkspaceView workspace = {})
 {
-    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     const int count = grid.active_cell_count();
-    if (linear >= count) return;
-    const int cell = grid.active_cell(linear);
-    double composition[kMaxDeviceSpecies];
-    double charge[kMaxDeviceSpecies];
-    double inverse_mass[kMaxDeviceSpecies];
-    const DiffFlux::DiffusionDtCandidate candidate =
-        DiffFlux::evaluate_diffusion_dt_candidate(
-            state.load(cell),
-            state.n_species > 0 ? state.mass_fractions + cell : nullptr,
-            state.n_species, state.total_size, eos, species, config,
-            grid.dim, DiffFlux::DiffusionGeometry::Cartesian,
-            grid.dx1, grid.dx2, grid.dx3, 0.0, 0.0,
-            composition, charge, inverse_mass);
-    if (!candidate.valid) atomicExch(status, 1);
-    candidates[linear] = candidate.value;
+    SpeciesLaneScratch<5> scratch(workspace, lane);
+    double* composition = scratch.array(0);
+    double* neighbour_composition = scratch.array(1);
+    double* face_composition = scratch.array(2);
+    double* charge = scratch.array(3);
+    double* inverse_mass = scratch.array(4);
+    for (int linear = lane; linear < count; linear += blockDim.x * gridDim.x) {
+        const int cell = grid.active_cell(linear);
+        const auto geometry = make_grid_geometry_view(grid);
+        const int ni = grid.ie - grid.is;
+        const int nj = grid.je - grid.js;
+        const int i = grid.is + linear % ni;
+        const int j = grid.js + (linear / ni) % nj;
+        const int k = grid.ks + linear / (ni * nj);
+        const DiffFlux::DiffusionDtCandidate candidate =
+            DiffFlux::evaluate_diffusion_dt_candidate(
+                state.load(cell),
+                state.n_species > 0 ? state.mass_fractions + cell : nullptr,
+                state.n_species, state.total_size, eos, species, config,
+                geometry, i, j, k,
+                composition, neighbour_composition, face_composition,
+                charge, inverse_mass, DiffusionStateReader{state});
+        if (!candidate.valid) atomicExch(status, 1);
+        candidates[linear] = candidate.value;
+    }
+}
+
+template <typename EosView>
+__global__ void diffusion_geometric_source_kernel(
+    DeviceStateView state, DeviceStateView output, DeviceGridView grid,
+    EosView eos, SpeciesPODView species, DiffFlux::DiffusionConfigView config,
+    int* status, SpeciesWorkspaceView workspace = {})
+{
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    SpeciesLaneScratch<3> scratch(workspace, lane);
+    double* composition = scratch.array(0);
+    double* charge = scratch.array(1);
+    double* inverse_mass = scratch.array(2);
+    for (int linear = lane; linear < grid.active_cell_count();
+         linear += blockDim.x * gridDim.x) {
+        const int cell = grid.active_cell(linear);
+        const int ni = grid.ie - grid.is;
+        const int nj = grid.je - grid.js;
+        const int i = grid.is + linear % ni;
+        const int j = grid.js + (linear / ni) % nj;
+        const int k = grid.ks + linear / (ni * nj);
+        for (int species_index = 0; species_index < state.n_species; ++species_index)
+            composition[species_index] = state.species(species_index, cell);
+        FluidVector delta = output.load(cell);
+        const auto result = DiffFlux::evaluate_geometric_diffusion_cell(
+            state.load(cell), state.n_species > 0 ? composition : nullptr,
+            eos, species, config, make_grid_geometry_view(grid), i, j, k, 1.0,
+            charge, inverse_mass, delta, DiffusionStateReader{state});
+        if (!result.valid) {
+            atomicExch(status, 1);
+            continue;
+        }
+        if (result.active) output.store(cell, delta);
+    }
 }
 
 static __global__ void diffusion_dt_reduce_kernel(
@@ -323,7 +388,7 @@ inline bool valid_stage_views(
     return valid_hydro_view(state_n)
         && valid_hydro_view(increment)
         && valid_hydro_view(destination)
-        && valid_cartesian_diffusion_grid(grid)
+        && valid_diffusion_grid(grid)
         && state_n.total_size == grid.total_size
         && matching_state_shape(state_n, increment)
         && matching_state_shape(state_n, destination);
@@ -345,8 +410,9 @@ inline DiffusionLaunchResult launch_diffusion_operator(
     if (!config.use_diffusion || !DiffFlux::diffusion_routes_enabled(config))
         return result;
     if (!valid_hydro_view(state) || !valid_hydro_view(output)
+        || !valid_species_workspace(workspace.species_workspace, state.n_species, 5)
         || !valid_hydro_view(workspace.face_flux)
-        || !detail::valid_cartesian_diffusion_grid(grid)
+        || !detail::valid_diffusion_grid(grid)
         || state.total_size != grid.total_size
         || !detail::matching_state_shape(state, output)
         || !detail::matching_state_shape(state, workspace.face_flux)
@@ -364,16 +430,17 @@ inline DiffusionLaunchResult launch_diffusion_operator(
         result.error = clear_hydro_buffer(output, stream);
     if (result.error != cudaSuccess) return result;
 
-    constexpr int threads = 128;
+    const auto bound_eos = bind_device_eos_status(eos, workspace.status);
+    const int threads = detail::species_launch_threads(workspace.species_workspace);
     for (int direction = 0; direction < grid.dim; ++direction) {
         result.error = clear_hydro_buffer(workspace.face_flux, stream);
         if (result.error != cudaSuccess) return result;
         const int face_count = detail::diffusion_face_count(grid, direction);
         detail::diffusion_face_kernel
-            <<<detail::hydro_launch_blocks(face_count, threads),
+            <<<detail::species_launch_blocks(face_count, workspace.species_workspace),
                threads, 0, stream>>>(
-                state, workspace.face_flux, grid, eos, species,
-                config, direction, workspace.status);
+                state, workspace.face_flux, grid, bound_eos, species,
+                config, direction, workspace.status, workspace.species_workspace);
         result.error = cudaGetLastError();
         if (result.error != cudaSuccess) return result;
         ++result.kernels_launched;
@@ -400,6 +467,15 @@ inline DiffusionLaunchResult launch_diffusion_operator(
             }
             result.kernels_launched += registration.kernels_launched;
         }
+    }
+    if (config.use_viscous_diffusion
+        && grid.geometry != static_cast<int>(DeviceGeometry::Cartesian)) {
+        detail::diffusion_geometric_source_kernel
+            <<<detail::species_launch_blocks(grid.active_cell_count(), workspace.species_workspace), threads, 0, stream>>>(
+                state, output, grid, bound_eos, species, config, workspace.status, workspace.species_workspace);
+        result.error = cudaGetLastError();
+        if (result.error != cudaSuccess) return result;
+        ++result.kernels_launched;
     }
     result.effect = DiffusionWriteEffect::InteriorWritten;
     return result;
@@ -430,7 +506,8 @@ inline DiffusionLaunchResult launch_raw_diffusion_dt(
         return result;
     }
     if (!valid_hydro_view(state)
-        || !detail::valid_cartesian_diffusion_grid(grid)
+        || !valid_species_workspace(workspace.species_workspace, state.n_species, 5)
+        || !detail::valid_diffusion_grid(grid)
         || state.total_size != grid.total_size
         || species.size() != state.n_species
         || workspace.dt_candidates == nullptr
@@ -440,12 +517,12 @@ inline DiffusionLaunchResult launch_raw_diffusion_dt(
     }
     result.error = cudaMemsetAsync(workspace.status, 0, sizeof(int), stream);
     if (result.error != cudaSuccess) return result;
-    constexpr int threads = 128;
+    const int threads = detail::species_launch_threads(workspace.species_workspace);
     const int count = grid.active_cell_count();
     detail::diffusion_dt_candidates_kernel
-        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
-            state, grid, eos, species, config,
-            workspace.dt_candidates, workspace.status);
+        <<<detail::species_launch_blocks(count, workspace.species_workspace), threads, 0, stream>>>(
+            state, grid, bind_device_eos_status(eos, workspace.status), species, config,
+            workspace.dt_candidates, workspace.status, workspace.species_workspace);
     result.error = cudaGetLastError();
     if (result.error != cudaSuccess) return result;
     ++result.kernels_launched;

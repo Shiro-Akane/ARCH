@@ -1,0 +1,59 @@
+# Compact Cartesian 3D Sedov case for X/Y/Z GPU-AMR validation.
+geometry = cartesian
+nblockx1 = 3
+nblockx2 = 3
+nblockx3 = 3
+max_blocks = 128
+x1_min = 0.0
+x1_max = 1.0
+x2_min = 0.0
+x2_max = 1.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = outflow
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = ppm
+limiter = mc
+time_integrator = RK3
+cfl = 0.35
+sml_rho = 1e-12
+max_eint = 1e9
+compute_backend = cpu
+
+lrefinemin = 0
+lrefinemax = 1
+regrid_interval = 1
+refine_var = PRES
+refine_threshold = 0.2
+derefine_threshold = 0.04
+
+tmax = 1e99
+max_steps = 41
+restart = false
+out_dir = /home/shiroakane/ARCH/validation/amr/results/dynamic-3d-final-20260907/racecheck-915/runs/hydro_amr_regrid_cycle_3d/step-41/cpu
+base_name = hydro_amr_regrid_cycle_3d_cpu_s41
+plt_dt = -1
+plt_dstep = -1
+chk_dt = -1
+chk_dstep = 41
+plt_variables = DENS, PRES, VELX, VELY, VELZ, ENER, SPECIES
+
+eos_type = ideal
+gamma = 1.4
+gravity_type = none
+use_burn = false
+use_diffusion = false
+
+center_x = 0.5
+center_y = 0.5
+center_z = 0.5
+deposit_radius = 0.10
+ambient_density = 1.0
+ambient_pressure = 1.0e-5
+explosion_energy = 0.01

@@ -1,0 +1,1645 @@
+{
+  "schema": 1,
+  "scope": "focused-backend-sanitizer",
+  "tool": "racecheck",
+  "focused_gate_pass": true,
+  "release_qualified": false,
+  "identity": {
+    "schema": 1,
+    "source": {
+      "commit": "2226456c1f87415a317dd6a2a96053a7e154b949",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "2e176734e9e7cecf9f1089873462f253cf74534ddca16b56984fb0d6950d19d9",
+      "dirty": true,
+      "modified_files": [
+        "CMakeLists.txt",
+        "simulation/Cellular/Cellular.cpp",
+        "simulation/DiffusionMode/DiffusionMode.cpp",
+        "simulation/GaussianPulse/Gaussian.cpp",
+        "simulation/GaussianPulse/Gaussian.par",
+        "simulation/RTinstability/RT_instab.cpp",
+        "simulation/Sedov/Sedov.cpp",
+        "simulation/SmoothAdvection/SmoothAdvection.cpp",
+        "src/amr/AmrTree.h",
+        "src/amr/Block.h",
+        "src/amr/GhostExchange.h",
+        "src/amr/LimitedLinearProlongation.h",
+        "src/core/ArchPortability.h",
+        "src/core/CompensatedSum.h",
+        "src/core/ProblemHelper.cpp",
+        "src/core/ProblemHelper.h",
+        "src/core/RuntimeParams.h",
+        "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+        "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+        "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+        "src/cuda/common/CudaCommon.cuh",
+        "src/cuda/common/CudaLaunchConfig.h",
+        "src/cuda/common/DiffusionConfigViewAdapter.h",
+        "src/cuda/diffusion/DiffusionKernels.cuh",
+        "src/cuda/hydro/HydroFaceKernel.cuh",
+        "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+        "src/cuda/hydro/HydroStateKernels.cuh",
+        "src/cuda/microphysics/common.h",
+        "src/cuda/microphysics/helm_eos_device_owner.cpp",
+        "src/cuda/microphysics/helm_eos_device_owner.h",
+        "src/cuda/microphysics/microphysics_api.h",
+        "src/cuda/runtime/CudaBackend.h",
+        "src/cuda/runtime/CudaBackendAmrFlux.h",
+        "src/cuda/runtime/CudaBackendBurn.h",
+        "src/cuda/runtime/CudaBackendBurnAllNetworksImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnHelm.cu",
+        "src/cuda/runtime/CudaBackendBurnIdeal.cu",
+        "src/cuda/runtime/CudaBackendBurnImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnNetworkRouteImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnNetworkRoutes.h",
+        "src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu",
+        "src/cuda/runtime/CudaBackendDiffusion.cu",
+        "src/cuda/runtime/CudaBackendDiffusion.h",
+        "src/cuda/runtime/CudaBackendExchange.cu",
+        "src/cuda/runtime/CudaBackendExchange.h",
+        "src/cuda/runtime/CudaBackendFactory.cpp",
+        "src/cuda/runtime/CudaBackendHydro.h",
+        "src/cuda/runtime/CudaBackendHydroControl.cpp",
+        "src/cuda/runtime/CudaBackendHydroHelm.cu",
+        "src/cuda/runtime/CudaBackendHydroIdeal.cu",
+        "src/cuda/runtime/CudaBackendHydroInstantiation.cuh",
+        "src/cuda/runtime/CudaBackendHydroTabular3.cu",
+        "src/cuda/runtime/CudaBackendHydroTabular4.cu",
+        "src/cuda/runtime/CudaBackendInternal.h",
+        "src/cuda/runtime/CudaBackendMicrophysicsControl.cpp",
+        "src/cuda/runtime/CudaBackendResources.cpp",
+        "src/cuda/runtime/CudaBackendStore.cpp",
+        "src/cuda/runtime/CudaBurnNetworkTypes.h",
+        "src/data/GlobalDefs.h",
+        "src/driver/ComputeBackend.h",
+        "src/driver/Driver.h",
+        "src/driver/DriverBurn.h",
+        "src/driver/DriverUtils.h",
+        "src/driver/StateResidency.h",
+        "src/driver/dispatch/BackendCapabilities.h",
+        "src/driver/dispatch/PolicyDescriptor.h",
+        "src/driver/dispatch/RuntimeProbe.cpp",
+        "src/driver/dispatch/RuntimeProbe.h",
+        "src/grid/Grid.h",
+        "src/grid/GridMetrics.h",
+        "src/numerics/burnsolver/BurnDispatch.h",
+        "src/numerics/burnsolver/BurnerHandle.h",
+        "src/numerics/burnsolver/odeFunction.h",
+        "src/numerics/burnsolver/ode_bd.h",
+        "src/numerics/burnsolver/ode_be-nr.h",
+        "src/numerics/burnsolver/ode_ros4.h",
+        "src/numerics/diffusion/DiffFlux.h",
+        "src/numerics/integrator/TimeIntegratorHelper.h",
+        "src/numerics/linalg/DenseWrap.h",
+        "src/physics/diagnostics/VelocityDiagnostics.h",
+        "src/physics/diffusionCoe/diffusion_math.hpp",
+        "src/physics/eos/HelmEos.h",
+        "src/physics/eos/IdealGas.h",
+        "src/physics/eos/Tabular3DEOS.h",
+        "src/physics/eos/Tabular4DEOS.h",
+        "src/physics/eos/TabularFreeEnergy.h",
+        "src/physics/eos/eos.h",
+        "src/physics/gravity/ExternalGravity.h",
+        "src/physics/network/timmes_common/TimmesNetworkSupport.h",
+        "src/physics/nse/nse_solver.h",
+        "tests/cuda/test_boundary_plan_parity.cu",
+        "tests/cuda/test_burn_policy_parity.cu",
+        "tests/cuda/test_cuda_amr_exchange.cpp",
+        "tests/cuda/test_cuda_compile_probe.cu",
+        "tests/cuda/test_cuda_hydro_block.cu",
+        "tests/cuda/test_cuda_multiblock_hydro.cu",
+        "tests/cuda/test_cuda_policy_resolution.cu",
+        "tests/cuda/test_cuda_reduction_contract.cu",
+        "tests/cuda/test_cuda_single_level_validation.cpp",
+        "tests/cuda/test_diffusion_rkl_parity.cu",
+        "tests/cuda/test_eos_host_device_parity.cu",
+        "tests/cuda/test_hydro_leaf_parity.cu",
+        "tests/cuda/test_network_nse_device.cu",
+        "tests/test_amr_operation_plans.cpp",
+        "tests/test_reduction_contract.cpp",
+        "tests/test_resolved_execution_plan.cpp",
+        "tests/test_runtime_probe_and_capabilities.cpp",
+        "tests/test_shared_stage_scheduler.cpp",
+        "tests/test_state_residency.cpp",
+        "tests/test_topology_transaction.cpp",
+        "tests/test_validate_backend_results.py",
+        "tests/tooling/test_audit_combination_v2.py",
+        "tools/audit_combination_v2.py",
+        "tools/network/GenerateNetwork.py",
+        "tools/summarize_cuda_compile_memory.py",
+        "tools/validate_backend_results.py",
+        "tools/validate_cuda_amr_restart.py",
+        "validation/amr/inputs/gaussian_diffusion_amr.par"
+      ],
+      "untracked_source_files": [
+        "cmake/CudaBurnDenseRoutes.cmake",
+        "cmake/CudaBurnNetworks.cmake",
+        "cmake/CudaBurnSparseRoutes.cmake",
+        "cmake/CudaCodeImages.cmake",
+        "cmake/CudaCustomDenseRoute.cu.in",
+        "cmake/FindCuDSS.cmake",
+        "cmake/templates/CudaBurnDenseRoute.cu.in",
+        "cmake/templates/CudaBurnSparseOwner.cu.in",
+        "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+        "simulation/CooperativeHotspots/CooperativeHotspots.par",
+        "src/amr/RefinementIndicatorMath.h",
+        "src/amr/RegridExecutionPlan.h",
+        "src/amr/RegridTransferMath.h",
+        "src/cuda/amr/RefinementIndicators.cu",
+        "src/cuda/amr/RefinementIndicators.h",
+        "src/cuda/amr/RegridMigration.cu",
+        "src/cuda/amr/RegridMigration.h",
+        "src/cuda/common/DeviceAllocation.h",
+        "src/cuda/common/DeviceEosStatus.h",
+        "src/cuda/common/GridMetricsCache.cu",
+        "src/cuda/common/GridMetricsCache.h",
+        "src/cuda/hydro/CheckedHydroEos.cuh",
+        "src/cuda/hydro/GridGeometryAdapter.cuh",
+        "src/cuda/hydro/HydroSourceKernels.cuh",
+        "src/cuda/microphysics/CuDssSparseSolver.cpp",
+        "src/cuda/microphysics/CuDssSparseSolver.h",
+        "src/cuda/microphysics/SparseBeNrBatch.cuh",
+        "src/cuda/microphysics/SparseBurnCells.cuh",
+        "src/cuda/microphysics/SparseEquilibration.cu",
+        "src/cuda/microphysics/SparseEquilibration.h",
+        "src/cuda/microphysics/SparseOdeBatch.cuh",
+        "src/cuda/microphysics/device_network_owner.h",
+        "src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+        "src/cuda/runtime/CudaBackendBurnReduction.cuh",
+        "src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+        "src/cuda/runtime/CudaBackendBurnSparse.h",
+        "src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+        "src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+        "src/cuda/runtime/CudaBackendIndicators.cpp",
+        "src/cuda/runtime/CudaBackendMigration.cpp",
+        "src/cuda/runtime/CudaBurnOdeTypes.h",
+        "src/driver/DriverBurnPolicy.h",
+        "src/grid/GridGeometryView.h",
+        "src/numerics/burnsolver/NetworkDerivative.h",
+        "src/numerics/burnsolver/OdeContinuation.h",
+        "src/numerics/diffusion/DiffusionTypes.h",
+        "src/numerics/integrator/GeometricSources.h",
+        "src/numerics/linalg/CsrMatrixView.h",
+        "src/numerics/linalg/CsrPattern.h",
+        "src/numerics/linalg/LinearEquilibration.h",
+        "src/physics/constant/PhysicalConstants.h",
+        "src/physics/gravity/ExternalGravitySource.h",
+        "src/physics/network/WeakTableView.h",
+        "tests/amr_composition_test_cases.h",
+        "tests/checkpoint_conservation_metrics.h",
+        "tests/cuda/GeneratedSparseBurnFactory.h",
+        "tests/cuda/test_burn_controller_parity.cu",
+        "tests/cuda/test_burn_eos_failure.cu",
+        "tests/cuda/test_burn_thermal_math.cu",
+        "tests/cuda/test_compensated_sum.cu",
+        "tests/cuda/test_cuda_amr_composition.cu",
+        "tests/cuda/test_cuda_regrid_migration.cu",
+        "tests/cuda/test_cuda_regrid_transaction.cpp",
+        "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+        "tests/cuda/test_cudss_sparse_solver.cpp",
+        "tests/cuda/test_curvilinear_geometry_smoke.cu",
+        "tests/cuda/test_generated_network_math.cu",
+        "tests/cuda/test_generated_sparse_burn.cpp",
+        "tests/cuda/test_generated_sparse_burn_factory.cu",
+        "tests/cuda/test_generated_weak_factory.cu",
+        "tests/cuda/test_generated_weak_trajectory.cu",
+        "tests/cuda/test_grid_metrics_cache.cu",
+        "tests/cuda/test_hydro_dispatch.cu",
+        "tests/cuda/test_hydro_eos_failure.cu",
+        "tests/cuda/test_network_derivative.cu",
+        "tests/cuda/test_refinement_indicators.cpp",
+        "tests/cuda/test_sparse_be_nr_batch.cu",
+        "tests/fixtures/BurnMainlineReference.h",
+        "tests/fixtures/BurnTimeReference.h",
+        "tests/fixtures/HelmReference.h",
+        "tests/fixtures/NseReference.h",
+        "tests/fixtures/SparseTransferNetwork.h",
+        "tests/math/BurnThermalCases.h",
+        "tests/math/CompensatedSumCases.h",
+        "tests/math/CurvilinearMetricCases.h",
+        "tests/math/DenseLuCases.h",
+        "tests/math/NetworkDerivativeCases.h",
+        "tests/math/ViscousGeometryCases.h",
+        "tests/regrid_migration_fixture.h",
+        "tests/smoke/cuda_amr_cases.json",
+        "tests/test_burn_mainline_reference.cpp",
+        "tests/test_checkpoint_conservation_metrics.cpp",
+        "tests/test_compensated_sum.cpp",
+        "tests/test_curvilinear_manifest.py",
+        "tests/test_curvilinear_metrics.cpp",
+        "tests/test_generated_network_reference.cpp",
+        "tests/test_physical_constants.cpp",
+        "tests/test_portable_network_generator.py",
+        "tests/test_refinement_indicator_math.cpp",
+        "tests/test_run_memory_guarded.py",
+        "tests/test_runtime_validation_inputs.py",
+        "tests/test_smoke_cuda_amr_runtime.py",
+        "tests/test_sparse_ode_continuation.cpp",
+        "tests/test_validation_provenance.py",
+        "tests/test_validation_subprocess_logs.py",
+        "tests/tooling/test_cuda_code_images.py",
+        "tests/tooling/test_cuda_compile_memory.py",
+        "tools/network/PortableAdapter.py",
+        "tools/network/PortableCxx.py",
+        "tools/network/WeakStorage.py",
+        "tools/network/WeakTables.py",
+        "tools/qualify_cuda_amr_evidence.py",
+        "tools/run_memory_guarded.py",
+        "tools/smoke_cuda_amr_runtime.py",
+        "tools/validation_provenance.py",
+        "validation/amr/gaussian_reference.py",
+        "validation/amr/geometry_reference.py",
+        "validation/amr/gpu_curvilinear_cases.json",
+        "validation/burn/time_reference.py",
+        "validation/eos/helm_reference.py",
+        "validation/network/inputs/weak_urca.py",
+        "validation/network/nse_reference.py",
+        "validation/network/run_sparse_validation.py",
+        "validation/network/run_weak_validation.py",
+        "validation/network/runtime_cases.json",
+        "validation/network/test_sparse_validation.py",
+        "validation/network/test_weak_reference.py",
+        "validation/network/weak_reference.py"
+      ]
+    },
+    "build": {
+      "source_directory": "/home/shiroakane/ARCH",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "dc174e4e6baf518b2e2af6bba7d89654d7851752806a8d1442635ad611362fd7",
+      "compile_commands_sha256": "243e0bcd24a0f133423fa6cfdaecca32c33344b5a80cab8fc125474926bc1f3a",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build/release-core-throughput-cmake",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "2",
+        "ARCH_CUDSS_IR_STEPS": "2",
+        "ARCH_CUSTOM_NETWORKS": "audit31;weak_urca",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/tmp/arch-release-inline-networks.zr6m6q",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "ON",
+        "ARCH_ENABLE_KLU": "ON",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "ON",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin",
+        "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_BINDIR": "bin",
+        "CMAKE_INSTALL_DATADIR": "",
+        "CMAKE_INSTALL_DATAROOTDIR": "share",
+        "CMAKE_INSTALL_DOCDIR": "",
+        "CMAKE_INSTALL_INCLUDEDIR": "include",
+        "CMAKE_INSTALL_INFODIR": "",
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_INSTALL_LIBEXECDIR": "libexec",
+        "CMAKE_INSTALL_LOCALEDIR": "",
+        "CMAKE_INSTALL_LOCALSTATEDIR": "var",
+        "CMAKE_INSTALL_MANDIR": "",
+        "CMAKE_INSTALL_OLDINCLUDEDIR": "/usr/include",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_INSTALL_RUNSTATEDIR": "",
+        "CMAKE_INSTALL_SBINDIR": "sbin",
+        "CMAKE_INSTALL_SHAREDSTATEDIR": "com",
+        "CMAKE_INSTALL_SYSCONFDIR": "etc",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_INCLUDE": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/CompileMetrics.cmake",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_VERSION": "7.13.0",
+        "CMAKE_PROJECT_VERSION_MAJOR": "7",
+        "CMAKE_PROJECT_VERSION_MINOR": "13",
+        "CMAKE_PROJECT_VERSION_PATCH": "0",
+        "CMAKE_PROJECT_VERSION_TWEAK": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CuDSS_INCLUDE_DIR": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include",
+        "CuDSS_LIBRARY": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+        "KLU_BINARY_DIR": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/_deps/suitesparse-build/KLU",
+        "KLU_DIR": "KLU_DIR-NOTFOUND",
+        "KLU_IS_TOP_LEVEL": "OFF",
+        "KLU_SOURCE_DIR": "/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU",
+        "KLU_USE_CHOLMOD": "OFF",
+        "KLU_VERSION_MAJOR": "2",
+        "KLU_VERSION_MINOR": "3",
+        "KLU_VERSION_SUB": "6",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [
+        {
+          "package": "audit31",
+          "root": "/tmp/arch-release-inline-networks.zr6m6q/audit31",
+          "manifest": {
+            "auxiliary_equations": 0,
+            "class_name": "NetCustom_audit31",
+            "device_callable_math": true,
+            "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+            "explicit_weak_storage": false,
+            "generator_sha256": "230d588024243545681d9f4df753076da7146ef411f7656b52675ab854fb1a17",
+            "generator_version": 4,
+            "header": "NetCustom_audit31.h",
+            "literal_zero_jacobian_entries_pruned": 538,
+            "network_id": "audit31",
+            "pynucastro_version": "2.12.0",
+            "rate_count": 229,
+            "recipe": "/home/shiroakane/ARCH/validation/network/inputs/audit31.py",
+            "recipe_sha256": "c5c8aba5b49ee7a85b8723b56119ea6ad1e819d9f61235f9e3d8df23dd4be449",
+            "runtime_name": "custom:audit31",
+            "schema_version": 1,
+            "source": "NetCustom_audit31.cpp",
+            "species": [
+              "n",
+              "h1",
+              "he4",
+              "c12",
+              "c13",
+              "n13",
+              "n14",
+              "n15",
+              "o14",
+              "o15",
+              "o16",
+              "o17",
+              "o18",
+              "f17",
+              "f18",
+              "f19",
+              "ne18",
+              "ne19",
+              "ne20",
+              "ne21",
+              "ne22",
+              "na21",
+              "na22",
+              "na23",
+              "mg22",
+              "mg23",
+              "mg24",
+              "mg25",
+              "mg26",
+              "al25",
+              "si28"
+            ],
+            "species_count": 31,
+            "supports_nse": false,
+            "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+            "weak_composition_jacobian": false,
+            "weak_table_coordinate_derivatives": false
+          },
+          "files": [
+            {
+              "name": "NetCustom_audit31.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.cpp",
+              "sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3"
+            },
+            {
+              "name": "NetCustom_audit31.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.h",
+              "sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9"
+            },
+            {
+              "name": "NetCustom_audit31.math.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.math.h",
+              "sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0"
+            },
+            {
+              "name": "generated/GNUmakefile",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            {
+              "name": "generated/actual_network.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_network.H",
+              "sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5"
+            },
+            {
+              "name": "generated/actual_rhs.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_rhs.H",
+              "sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1"
+            },
+            {
+              "name": "generated/amrex_bridge.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/amrex_bridge.H",
+              "sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36"
+            },
+            {
+              "name": "generated/approximate_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/approximate_rates.H",
+              "sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b"
+            },
+            {
+              "name": "generated/burn_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/burn_type.H",
+              "sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039"
+            },
+            {
+              "name": "generated/derived_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/derived_rates.H",
+              "sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378"
+            },
+            {
+              "name": "generated/fundamental_constants.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/fundamental_constants.H",
+              "sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2"
+            },
+            {
+              "name": "generated/interp_tools.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/interp_tools.H",
+              "sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60"
+            },
+            {
+              "name": "generated/main.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            {
+              "name": "generated/modified_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/modified_rates.H",
+              "sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248"
+            },
+            {
+              "name": "generated/network_properties.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/network_properties.H",
+              "sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2"
+            },
+            {
+              "name": "generated/partition_functions.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/partition_functions.H",
+              "sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81"
+            },
+            {
+              "name": "generated/pynucastro-info.txt",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            {
+              "name": "generated/rate_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/rate_type.H",
+              "sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b"
+            },
+            {
+              "name": "generated/reaclib_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/reaclib_rates.H",
+              "sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e"
+            },
+            {
+              "name": "generated/screen.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen.H",
+              "sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250"
+            },
+            {
+              "name": "generated/screen_data.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen_data.H",
+              "sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599"
+            },
+            {
+              "name": "generated/table_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/table_rates.H",
+              "sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823"
+            },
+            {
+              "name": "generated/tfactors.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/tfactors.H",
+              "sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3"
+            },
+            {
+              "name": "manifest.json",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/manifest.json",
+              "sha256": "fb1eeaf774a6640462e25a0bce790b45b9efe2235fb054ec9f508ad896245c9f"
+            },
+            {
+              "name": "network.cmake",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/network.cmake",
+              "sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4"
+            }
+          ]
+        },
+        {
+          "package": "weak_urca",
+          "root": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca",
+          "manifest": {
+            "auxiliary_equations": 1,
+            "class_name": "NetCustom_weak_urca",
+            "device_callable_math": true,
+            "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+            "explicit_weak_storage": true,
+            "generator_sha256": "230d588024243545681d9f4df753076da7146ef411f7656b52675ab854fb1a17",
+            "generator_version": 4,
+            "header": "NetCustom_weak_urca.h",
+            "literal_zero_jacobian_entries_pruned": 0,
+            "network_id": "weak_urca",
+            "pynucastro_version": "2.12.0",
+            "rate_count": 2,
+            "recipe": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+            "recipe_sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2",
+            "runtime_name": "custom:weak_urca",
+            "schema_version": 1,
+            "source": "NetCustom_weak_urca.cpp",
+            "species": [
+              "ne23",
+              "na23"
+            ],
+            "species_count": 2,
+            "supports_nse": false,
+            "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+            "weak_composition_jacobian": true,
+            "weak_table_coordinate_derivatives": true
+          },
+          "files": [
+            {
+              "name": "NetCustom_weak_urca.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.cpp",
+              "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+            },
+            {
+              "name": "NetCustom_weak_urca.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.h",
+              "sha256": "35c36e96d5773eea357f1fe714717aabeada9f22902e8e268e65377416015832"
+            },
+            {
+              "name": "NetCustom_weak_urca.math.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.math.h",
+              "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+            },
+            {
+              "name": "generated/GNUmakefile",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            {
+              "name": "generated/actual_network.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_network.H",
+              "sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f"
+            },
+            {
+              "name": "generated/actual_rhs.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_rhs.H",
+              "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+            },
+            {
+              "name": "generated/amrex_bridge.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/amrex_bridge.H",
+              "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+            },
+            {
+              "name": "generated/approximate_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/approximate_rates.H",
+              "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+            },
+            {
+              "name": "generated/burn_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/burn_type.H",
+              "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+            },
+            {
+              "name": "generated/derived_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/derived_rates.H",
+              "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+            },
+            {
+              "name": "generated/fundamental_constants.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/fundamental_constants.H",
+              "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+            },
+            {
+              "name": "generated/interp_tools.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/interp_tools.H",
+              "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+            },
+            {
+              "name": "generated/main.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            {
+              "name": "generated/modified_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/modified_rates.H",
+              "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+            },
+            {
+              "name": "generated/network_properties.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/network_properties.H",
+              "sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0"
+            },
+            {
+              "name": "generated/partition_functions.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/partition_functions.H",
+              "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+            },
+            {
+              "name": "generated/pynucastro-info.txt",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            {
+              "name": "generated/rate_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/rate_type.H",
+              "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+            },
+            {
+              "name": "generated/reaclib_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/reaclib_rates.H",
+              "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+            },
+            {
+              "name": "generated/screen.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen.H",
+              "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+            },
+            {
+              "name": "generated/screen_data.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen_data.H",
+              "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+            },
+            {
+              "name": "generated/table_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/table_rates.H",
+              "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+            },
+            {
+              "name": "generated/tfactors.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/tfactors.H",
+              "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+            },
+            {
+              "name": "manifest.json",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/manifest.json",
+              "sha256": "74b5c62bd3d1a7108ba8d187e05294a220071d64efe7fe3b2fbc1c4104fe4bf0"
+            },
+            {
+              "name": "network.cmake",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/network.cmake",
+              "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+            }
+          ]
+        }
+      ],
+      "sparse_link": {
+        "required_providers": [
+          "cudss",
+          "klu"
+        ],
+        "link_command_sha256": "5dc687734e57735f95f917a13de4ada46931c078d943bca858f8c0411970ad51",
+        "libraries": [
+          {
+            "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+            "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/_deps/suitesparse-build/AMD/libamd.a",
+            "sha256": "189b018b9acc6867c6949986d26d590c49c712eef5454bab58bf9f12f654cdfa"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/_deps/suitesparse-build/BTF/libbtf.a",
+            "sha256": "dbc856c955a0bf18bfd3cecb92e81e648135337fd5071194d1650a0c9f500c2f"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/_deps/suitesparse-build/COLAMD/libcolamd.a",
+            "sha256": "682f3337af564e0c57a655e3f155baa0ca955024450a29309d7c73eb3a428e82"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/_deps/suitesparse-build/KLU/libklu.a",
+            "sha256": "66dd19216247e293a6adbd4357fc9ccf902adc51589af2aa73047b77f2a93de4"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+            "sha256": "b6b275ead85698173f0abf7ca700937accff155723110c2ec9fb00816677d6d2"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublas.so.12.3.4.1",
+            "sha256": "8bdbda040980c430fc07dd853fdebc578e51951015284e4f109de5ee345a22e6"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublasLt.so.12.3.4.1",
+            "sha256": "4776affac4b3d78f1e5076d39bd046637672f54682bd2b3f40824f9dfac37708"
+          }
+        ]
+      },
+      "configured_sparse_libraries": {
+        "CuDSS_LIBRARY": {
+          "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+          "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+        }
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": "4",
+      "OMP_DYNAMIC": null,
+      "OMP_PROC_BIND": null,
+      "OMP_PLACES": null,
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "cuda_regrid_transaction": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_regrid_transaction",
+        "sha256": "467943994e6e0f4b5443ff8b4aaf9e7b69768be914a932ca8d71c35e335287d6"
+      },
+      "cuda_regrid_migration": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_regrid_migration",
+        "sha256": "43f67061708cf3979c84e0be5ed8054297991617e638ef170952baa099776bb1"
+      },
+      "cuda_amr_composition": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_amr_composition",
+        "sha256": "bbe8d0b33e064e42c1b4650dc2864bf8dbbfc7a54325f965b2133ae42de78a7c"
+      },
+      "cuda_amr_exchange": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_amr_exchange",
+        "sha256": "0b8216e2ba68bd4b6b67bed1162b926e4e01f5b9873a06534362ad424bfe1271"
+      },
+      "cuda_curvilinear_geometry_smoke": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_curvilinear_geometry_smoke",
+        "sha256": "07dffb1134a06c5645bfd7b3647fa2eefcd59ec89c39bc7b45ed62be4afc5152"
+      },
+      "cuda_refinement_indicators": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_refinement_indicators",
+        "sha256": "c33150cb7af83422d6232c1c8a6e2db44821525e4def5856b040f04228c1ecb2"
+      },
+      "cuda_single_level_smoke": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "sha256": "532d97f99ba7230362de1e9555c529f2bd1324cf4b8d988a2ace56327fa578dd"
+      },
+      "cuda_cudss_sparse_solver": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_cudss_sparse_solver",
+        "sha256": "c1714ecf842e27a23ddb1ab3755dd1c6a15f2467666bff798fe5f59105c7b836"
+      },
+      "cuda_sparse_be_nr_batch": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_sparse_be_nr_batch",
+        "sha256": "9fa244a15da32ee3274c473d016e077854531e8796b0823752d60c80a4c008db"
+      },
+      "cuda_burn_eos_failure": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_burn_eos_failure",
+        "sha256": "eeb6d635cde75c8b38c02faa3093ee6e59d120956c030792a06f36e0e6d9e6a5"
+      },
+      "cuda_hydro_eos_failure": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_eos_failure",
+        "sha256": "991e49d679aab3b3b286d7f6af7e38e90985f137e1e05aa0d9ea05d445e5b0bb"
+      },
+      "eos_host_device_parity": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_eos_host_device_parity",
+        "sha256": "94eec0aa70acd8a85af13c1365e5f1e5818e78476cba4dd6fcccd6090b1330cb"
+      },
+      "network_nse_device": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_network_nse_device",
+        "sha256": "1f5370d623e81b932705f21bfafd2127346ec812e9b651c4d11956447135c542"
+      },
+      "cuda_generated_math_audit31": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_math_audit31",
+        "sha256": "433d0b1c53ac10b34ddeedb09abdea5377f10034a755e6013cb297c7295a0868"
+      },
+      "cuda_generated_math_weak_urca": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_math_weak_urca",
+        "sha256": "56529b7176ba26f4b09459826f2c64548c7529a71010d05bd19ff775bdbe90da"
+      },
+      "cuda_backend_burn_aprox19_be_nr": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "sha256": "532d97f99ba7230362de1e9555c529f2bd1324cf4b8d988a2ace56327fa578dd"
+      },
+      "cuda_backend_burn_aprox19_bd": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "sha256": "532d97f99ba7230362de1e9555c529f2bd1324cf4b8d988a2ace56327fa578dd"
+      },
+      "cuda_backend_burn_aprox19_ros4": {
+        "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "sha256": "532d97f99ba7230362de1e9555c529f2bd1324cf4b8d988a2ace56327fa578dd"
+      }
+    },
+    "artifact_observation": {
+      "cuda_regrid_transaction": [
+        2096,
+        529277,
+        295648376,
+        1788731366992723781,
+        1788731367012344361
+      ],
+      "cuda_regrid_migration": [
+        2096,
+        529286,
+        237528,
+        1788725346729056228,
+        1788725346729056228
+      ],
+      "cuda_amr_composition": [
+        2096,
+        529420,
+        201768,
+        1788728917385420572,
+        1788728917393194264
+      ],
+      "cuda_amr_exchange": [
+        2096,
+        529496,
+        295492800,
+        1788731381960106701,
+        1788731381987167937
+      ],
+      "cuda_curvilinear_geometry_smoke": [
+        2096,
+        523272,
+        719864,
+        1788725362927199657,
+        1788725362927199657
+      ],
+      "cuda_refinement_indicators": [
+        2096,
+        529386,
+        1191160,
+        1788725369799880934,
+        1788725369799880934
+      ],
+      "cuda_single_level_smoke": [
+        2096,
+        529472,
+        295608256,
+        1788732553893664685,
+        1788732553909186598
+      ],
+      "cuda_cudss_sparse_solver": [
+        2096,
+        529270,
+        120368,
+        1788725326815083508,
+        1788725326815083508
+      ],
+      "cuda_sparse_be_nr_batch": [
+        2096,
+        529279,
+        2156760,
+        1788725342083849045,
+        1788725342087742877
+      ],
+      "cuda_burn_eos_failure": [
+        2096,
+        529288,
+        5525296,
+        1788725353137988725,
+        1788725353137988725
+      ],
+      "cuda_hydro_eos_failure": [
+        2096,
+        529303,
+        647816,
+        1788725367537540447,
+        1788725367537540447
+      ],
+      "eos_host_device_parity": [
+        2096,
+        526893,
+        3978184,
+        1788731364033940323,
+        1788731364033940323
+      ],
+      "network_nse_device": [
+        2096,
+        529446,
+        13199560,
+        1788725646646216299,
+        1788725646646216299
+      ],
+      "cuda_generated_math_audit31": [
+        2096,
+        529125,
+        1776376,
+        1788725271459501403,
+        1788725271459501403
+      ],
+      "cuda_generated_math_weak_urca": [
+        2096,
+        529129,
+        567016,
+        1788725278331399249,
+        1788725278331399249
+      ],
+      "cuda_backend_burn_aprox19_be_nr": [
+        2096,
+        529472,
+        295608256,
+        1788732553893664685,
+        1788732553909186598
+      ],
+      "cuda_backend_burn_aprox19_bd": [
+        2096,
+        529472,
+        295608256,
+        1788732553893664685,
+        1788732553909186598
+      ],
+      "cuda_backend_burn_aprox19_ros4": [
+        2096,
+        529472,
+        295608256,
+        1788732553893664685,
+        1788732553909186598
+      ]
+    }
+  },
+  "identity_verified_after_run": true,
+  "sanitizer": {
+    "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+    "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+  },
+  "recipe": {
+    "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/replay.py",
+    "sha256": "07117547c6b5de46c86231d6a62fc74af38a296d7cab7884f8035a885a5a8976"
+  },
+  "started_utc": "2026-09-06T22:18:43.221634+00:00",
+  "finished_utc": "2026-09-06T22:38:17.195878+00:00",
+  "cases": [
+    {
+      "name": "cuda_regrid_transaction",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_transaction/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_regrid_transaction"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_transaction/sanitizer.log",
+        "sha256": "b58b3a9acc9b986d08544b818b4265dab491ff56293b7ed51f2479169f1e0d81"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_transaction/arch.stdout",
+        "sha256": "42d0075c827f8cb9da9fc3665264fe5f79926d3451005707bc4bd46fc07e13e7"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_transaction/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_regrid_migration",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_migration/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_regrid_migration"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_migration/sanitizer.log",
+        "sha256": "e264a53ce9f25d041845f07486a361805e3c424530aae55ab20665de7012b2d3"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_migration/arch.stdout",
+        "sha256": "90d7f2412663aca4b82dff59dcfddd6313c3471d1680607a80350613d353ed79"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_regrid_migration/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_amr_composition",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_composition/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_amr_composition"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_composition/sanitizer.log",
+        "sha256": "881474b35664b61226617100380774d383c013dfe4651f5c80941f428d8f0498"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_composition/arch.stdout",
+        "sha256": "30b12cb33758c8a1b7426fe00c38fef8aacf2b4b492d3a7ca0c691a123be604b"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_composition/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_amr_exchange",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_exchange/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_amr_exchange"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_exchange/sanitizer.log",
+        "sha256": "3b11fe6b4f47e07aa4e06f91bc3db378862a3d0d786eda8b2eb49855d098cfbe"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_exchange/arch.stdout",
+        "sha256": "6eb65eec0d77554464e5c07aab453cc6c889f9d7d201956f2245c0fa4aeac03b"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_amr_exchange/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_curvilinear_geometry_smoke",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_curvilinear_geometry_smoke/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_curvilinear_geometry_smoke"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_curvilinear_geometry_smoke/sanitizer.log",
+        "sha256": "61ca836916fe53c0bce446202ddb8ad5d4499f38c3921a97e179d96480d440bd"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_curvilinear_geometry_smoke/arch.stdout",
+        "sha256": "8606967e16c3b82a1997b1c62a161b4e8463580b67b7411928e8fb9113ac88e7"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_curvilinear_geometry_smoke/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_refinement_indicators",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_refinement_indicators/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_refinement_indicators"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_refinement_indicators/sanitizer.log",
+        "sha256": "90728e64b9982058a978a0dbd88271db83934fa0241fddf185da8219fec3d438"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_refinement_indicators/arch.stdout",
+        "sha256": "af8259ba1c4c31c993b03562412e1f7bf32b73088ec35271e59c983a3b9ffe55"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_refinement_indicators/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_single_level_smoke",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_single_level_smoke/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_single_level_smoke/sanitizer.log",
+        "sha256": "323439d60f74bcdd981cd67926c8ced2a94e25ca5d73c714e0660c49f35d03e9"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_single_level_smoke/arch.stdout",
+        "sha256": "75bfe48ae298b2d0efd77dcb9521aa1fa970db26545ce52b31fcebf43a89cc18"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_single_level_smoke/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_cudss_sparse_solver",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_cudss_sparse_solver/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_cudss_sparse_solver"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_cudss_sparse_solver/sanitizer.log",
+        "sha256": "acb5966466eb4f40c6e540e317d07562f074bba8725ae07236e0b1a69784db26"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_cudss_sparse_solver/arch.stdout",
+        "sha256": "25138342550ebb79d0156869e5db4571c91154615afb477800d573134545e99d"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_cudss_sparse_solver/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_sparse_be_nr_batch",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_sparse_be_nr_batch/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_sparse_be_nr_batch"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_sparse_be_nr_batch/sanitizer.log",
+        "sha256": "98d590ad4b537ee7b19e8c0701b1e8674d83f1fe8614b6d8d8da80ccbc94e213"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_sparse_be_nr_batch/arch.stdout",
+        "sha256": "fe93424936a2e25466d8bbf621ba276bbf2c4d1f6ae9cafcbb04ed4ebf3b25ee"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_sparse_be_nr_batch/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_burn_eos_failure",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_burn_eos_failure/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_burn_eos_failure"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_burn_eos_failure/sanitizer.log",
+        "sha256": "8301c5f12614f1b73277f2223362fef06b02957e5ee37406f21c1aaf7b7822f0"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_burn_eos_failure/arch.stdout",
+        "sha256": "4cbd7adba4783e4aa2c86291159191aaa60fd6f58bc8ce448995081933b6300a"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_burn_eos_failure/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_hydro_eos_failure",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_hydro_eos_failure/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_eos_failure"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_hydro_eos_failure/sanitizer.log",
+        "sha256": "917a7b3ec48352dc93f27363176a2a62c0cffbc6a08dd0ac83872ee5f4a055df"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_hydro_eos_failure/arch.stdout",
+        "sha256": "b8e8fa169aa9de559895d2ff5be72a1b77433ea6384ed825fa2485918168168d"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_hydro_eos_failure/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "eos_host_device_parity",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/eos_host_device_parity/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_eos_host_device_parity"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/eos_host_device_parity/sanitizer.log",
+        "sha256": "55d41c0409b385bb3b67c57188c32fa06b2cd3f28c9bbf8578d37591713576c8"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/eos_host_device_parity/arch.stdout",
+        "sha256": "b6a7fe4d07902739f8ab66a89473ba745e7ac14cfa56692cf952bf9d3dea2d4e"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/eos_host_device_parity/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "network_nse_device",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/network_nse_device/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_network_nse_device"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/network_nse_device/sanitizer.log",
+        "sha256": "bbeade84a8da7bda40da47d11259d468d078e319afc1aac241adadd9fc832fe4"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/network_nse_device/arch.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/network_nse_device/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_generated_math_audit31",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_audit31/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_math_audit31"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_audit31/sanitizer.log",
+        "sha256": "bf451e7e4962e0e5a160ea4b10f82d257e36ab80d63716309e64b122da9d5955"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_audit31/arch.stdout",
+        "sha256": "6d3814808f835adc21cad0b3aa7c07cda9e58d1acaf00d65eee842a3f474320c"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_audit31/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_generated_math_weak_urca",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_weak_urca/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_math_weak_urca"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_weak_urca/sanitizer.log",
+        "sha256": "021d408f2dfc8b40c084f881bbd6c96c637d5168f52693e0e08941961ba45ae0"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_weak_urca/arch.stdout",
+        "sha256": "747755af96df1fa58fcfaaff74ab1792e8d5b19b9fc9df014687f69bcaf697da"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_generated_math_weak_urca/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_backend_burn_aprox19_be_nr",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_be_nr/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "aprox19.be_nr"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_be_nr/sanitizer.log",
+        "sha256": "ce18c811dc30b266612a9055f375d58ce695629476963b36fa98b1a648c61cf9"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_be_nr/arch.stdout",
+        "sha256": "497fac3394b2e3354973338d8f0125222e11a1a9834cd14ea65037efafd3d450"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_be_nr/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_backend_burn_aprox19_bd",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_bd/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "aprox19.bd"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_bd/sanitizer.log",
+        "sha256": "451f942cea9e4bb4ae3a89b36e50c0251e72c26940a042ada314f95a3b6401ab"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_bd/arch.stdout",
+        "sha256": "28dcf1673f7225e0934357aea5550b269fbdd302fdd8cec2d3b7ec98eede404f"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_bd/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    },
+    {
+      "name": "cuda_backend_burn_aprox19_ros4",
+      "command": [
+        "/usr/local/cuda-12.3/bin/compute-sanitizer",
+        "--tool",
+        "racecheck",
+        "--print-session-details",
+        "--require-cuda-init",
+        "yes",
+        "--error-exitcode",
+        "86",
+        "--log-file",
+        "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_ros4/sanitizer.log",
+        "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_hydro_block",
+        "aprox19.ros4"
+      ],
+      "returncode": 0,
+      "report": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_ros4/sanitizer.log",
+        "sha256": "0b0721444dd6aa5de8b00fb3e61ae7b27425dbd8d7b3bcb8a5e9993dc9810fb0"
+      },
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_ros4/arch.stdout",
+        "sha256": "c5df5a51b08dd425f34fb00cca53a7ad731e8210c6328701e5fb5c02045c17ed"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/accounted-sanitizer-20260907/racecheck/cuda_backend_burn_aprox19_ros4/arch.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "summaries": [
+        "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+      ]
+    }
+  ]
+}

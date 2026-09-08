@@ -298,7 +298,9 @@ void require_raw_equal(
     }
 }
 
-void run_cuda_lowering_and_execution(int dimension, int species_count)
+void run_cuda_lowering_and_execution(
+    int dimension, int species_count,
+    arch::cuda::DeviceGeometry geometry = arch::cuda::DeviceGeometry::Cartesian)
 {
     static_assert(std::is_standard_layout_v<arch::cuda::DeviceBoundaryTransfer>);
     static_assert(std::is_trivially_copyable_v<arch::cuda::DeviceBoundaryTransfer>);
@@ -309,7 +311,8 @@ void run_cuda_lowering_and_execution(int dimension, int species_count)
         UINT64_C(0x559c7d610a5606b6)};
     constexpr std::array<std::size_t, 3> operation_counts{8, 320, 9728};
     const auto plan = make_plan(dimension);
-    const auto grid = make_device_grid(dimension);
+    auto grid = make_device_grid(dimension);
+    grid.geometry = static_cast<int>(geometry);
     const auto device_compiled = arch::cuda::compile_boundary_plan(plan, grid);
     const auto host_compiled = arch::boundary::host::compile(
         plan, host_layout(grid));
@@ -411,7 +414,7 @@ void run_cuda_lowering_and_execution(int dimension, int species_count)
 void test_cuda_lowering_and_execution()
 {
     constexpr std::array species_counts{
-        0, 2, arch::cuda::kMaxDeviceSpecies};
+        0, 2, arch::cuda::kLocalSpeciesScratchCapacity};
     int cases = 0;
     unsigned species_mask = 0;
     for (int dimension = 1; dimension <= 3; ++dimension) {
@@ -420,13 +423,17 @@ void test_cuda_lowering_and_execution()
             species_mask |= species_count == 0 ? 1U
                 : (species_count == 2 ? 2U
                                       : (species_count
-                                                == arch::cuda::kMaxDeviceSpecies
+                                                == arch::cuda::kLocalSpeciesScratchCapacity
                                             ? 4U : 0U));
             ++cases;
         }
     }
     require(cases == 9 && species_mask == 7U,
             "CUDA boundary dimension/species matrix is incomplete");
+    for (const auto geometry : {arch::cuda::DeviceGeometry::Cylindrical,
+                                arch::cuda::DeviceGeometry::Spherical})
+        for (int dimension = 1; dimension <= 3; ++dimension)
+            run_cuda_lowering_and_execution(dimension, 2, geometry);
 }
 
 void test_invalid_cuda_inputs()

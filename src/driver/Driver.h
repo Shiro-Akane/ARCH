@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <filesystem>
@@ -194,20 +195,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         for (int index = 0; index < total_size; ++index) {
             for (int species = 0; species < n_species; ++species)
                 Xi[species] = state.X(species, index);
-            const FluidVector U = state.get(index);
-            const double pressure_value = (pressure || gamma1) ? eos.get_pressure(U, Xi.data()) : 0.0;
-            if (pressure) (*pressure)[index] = pressure_value;
-            if (temperature && U.rho > 0.0) {
-                const double kinetic = 0.5 * (U.mom_u * U.mom_u + U.mom_v * U.mom_v +
-                                               U.mom_w * U.mom_w) / U.rho;
-                (*temperature)[index] = eos.get_temperature(U.rho, (U.eng - kinetic) / U.rho, Xi.data());
-            }
-            if (gamma1 && U.rho > 0.0 && pressure_value > 0.0) {
-                const double sound_speed = eos.get_sound_speed(U, pressure_value, Xi.data());
-                if (std::isfinite(sound_speed) && sound_speed > 0.0) {
-                    (*gamma1)[index] = U.rho * sound_speed * sound_speed / pressure_value;
-                }
-            }
+            const auto values = amr::indicator::thermodynamics(
+                state.get(index), Xi.data(), eos,
+                pressure != nullptr, temperature != nullptr, gamma1 != nullptr);
+            if (pressure) (*pressure)[index] = values.pressure;
+            if (temperature) (*temperature)[index] = values.temperature;
+            if (gamma1) (*gamma1)[index] = values.gamma1;
         }
     });
 
@@ -427,10 +420,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         throw std::logic_error("initial topology commit result mismatch");
     amr_ctrl.BindActiveHandles(stage_handles);
 
-    // One topology coordinator serves both execution sides.  The Host remains
-    // the AMR math authority; a device backend contributes only its staged
-    // storage/upload/publication transaction.
-    const auto perform_regrid = [&](int step, double time) {
+    // One topology coordinator and mathematical library serve both sides.
+    // Host owns topology/Morton decisions; the backend owns numerical execution
+    // and transactional state migration in its allocation namespace.
+    const auto execute_regrid = [&](int step, double time) {
         const auto make_regrid_ledger = [] (
             amr::TopologyEpoch epoch,
             std::span<const amr::BlockHandle> handles,
@@ -445,9 +438,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         };
         topology_registry.validate_committed_snapshot(observe_topology());
 
-        // Freeze one complete, readable Host source topology before staging.
-        // This is also the rollback authority for the old hierarchy.
-        synchronize_fluid_ghosts();
+        // Topology decisions consume compact device-computed indicators, not
+        // a Host copy of every conserved/species field.
+        if (!compute_backend) synchronize_fluid_ghosts();
         const std::vector<int> old_active(
             amr_ctrl.tree->GetActiveBlocks().begin(),
             amr_ctrl.tree->GetActiveBlocks().end());
@@ -464,7 +457,27 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
 #endif
 
-        auto prepared = prepare_regrid(step, time);
+        const auto evaluate_device_indicators = [&] {
+            complete_device_boundary(StateSlot::Current);
+            std::vector<arch::backend::BackendStateAccess> accesses;
+            accesses.reserve(stage_handles.size());
+            for (std::size_t index = 0; index < stage_handles.size(); ++index)
+                accesses.push_back(backend_access(index, StateSlot::Current));
+            const auto errors = compute_backend->evaluate_refinement_indicators(
+                accesses, config.amr, config.numerics.sml_rho,
+                amr_ctrl.tree->RefinementSpecies());
+            if (errors.size() != old_active.size())
+                throw std::logic_error("backend AMR indicator count mismatch");
+            for (std::size_t index = 0; index < errors.size(); ++index) {
+                auto& block = amr_ctrl.pool->GetBlock(old_active[index]);
+                block.refine_flag = amr::indicator::refinement_flag(errors[index],
+                    block.level, config.amr.lrefinemin, config.amr.lrefinemax,
+                    config.amr.refine_threshold, config.amr.derefine_threshold);
+            }
+        };
+        auto prepared = compute_backend
+            ? amr_ctrl.tree->PrepareRegrid(config, {}, {}, evaluate_device_indicators)
+            : prepare_regrid(step, time);
         auto topology_candidate = topology_registry.stage_reconciliation(
             observe_blocks(prepared.proposed_active_blocks()));
         const auto& proposed = topology_candidate.reconciliation();
@@ -497,258 +510,121 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         transaction.begin_migration();
         transaction.require_scope(prepared.prolongation_plan());
         transaction.require_scope(prepared.restriction_plan());
-        prepared.ExecuteMigration();
-        transaction.mark_ready();
-
 #if ARCH_CUDA_BUILD_ENABLED
         if (compute_backend) {
-            struct HostStateBackup {
-                int pool_index = -1;
-                FluidState state;
-            };
             struct DeviceRegridPublication {
                 std::unique_ptr<StateResidencyLedger> ledger;
                 std::vector<amr::BlockHandle> handles;
                 std::vector<arch::backend::StorageGeneration> storage;
                 std::vector<arch::backend::BackendTopologyBinding> bindings;
-                std::vector<HostStateBackup> source_backups;
-                std::unique_ptr<
-                    arch::backend::BackendTopologyStoreTransaction>
+                std::unique_ptr<arch::backend::BackendTopologyStoreTransaction>
                     store_transaction;
                 arch::scheduler::PublicationWitness topology_witness{};
-            };
-            static_assert(std::is_nothrow_swappable_v<FluidState>);
-
+            } payload;
             bool store_published = false;
             try {
+                payload.handles = proposed.handles_in_observation_order;
+                if (payload.handles.empty()
+                    || payload.handles.size() != prepared.proposed_active_blocks().size())
+                    throw std::logic_error("CUDA AMR proposed topology is empty or mismatched");
+                payload.topology_witness = scheduler_clock.next_publication();
+                payload.storage.reserve(payload.handles.size());
+                payload.bindings.reserve(payload.handles.size());
+                for (std::size_t index = 0; index < payload.handles.size(); ++index) {
+                    const auto storage = storage_generation_issuer.issue();
+                    payload.storage.push_back(storage);
+                    payload.bindings.push_back({
+                        &amr_ctrl.pool->GetBlock(prepared.proposed_active_blocks()[index]),
+                        payload.handles[index], storage, &bc_handler.logical_plan()});
+                }
+                std::vector<arch::backend::BackendStateAccess> source_accesses;
+                source_accesses.reserve(stage_handles.size());
+                for (std::size_t index = 0; index < stage_handles.size(); ++index)
+                    source_accesses.push_back(backend_access(index, StateSlot::Current));
+
+                // Activate only Host topology/neighbor metadata. Old accepted
+                // device sources remain immutable throughout this transaction.
+                prepared.ActivateForDeviceMigration();
+                payload.store_transaction =
+                    compute_backend->begin_topology_store_transaction(scope, payload.bindings);
+                const auto staged_flux_plan = amr::build_amr_flux_topology_plan(
+                    *amr_ctrl.pool, amr_ctrl.tree->GetActiveBlocks(), payload.handles,
+                    config.grid.dim, specs.count());
+                const auto staged_reflux_plan =
+                    amr::build_amr_reflux_topology_plan(*amr_ctrl.pool, staged_flux_plan);
+                compute_backend->stage_amr_flux_plan(
+                    *payload.store_transaction, staged_flux_plan, staged_reflux_plan);
+
+                // The same logical plans and complete mathematical leaves as
+                // CPU migration now execute against private device storage.
+                compute_backend->migrate_staged_current(*payload.store_transaction,
+                    source_accesses, prepared.prolongation_plan(), prepared.restriction_plan());
+                const auto staged_same_level =
+                    amr_ctrl.ghost_exchange.BuildSameLevelPlans(amr_ctrl.pool, amr_ctrl.tree,
+                        config.grid.dim, payload.handles);
+                const auto staged_coarse_fine =
+                    amr_ctrl.ghost_exchange.BuildCoarseFinePlan(amr_ctrl.pool, amr_ctrl.tree,
+                        config.grid.dim, payload.handles);
+                compute_backend->complete_staged_current_ghosts(
+                    *payload.store_transaction, staged_same_level, staged_coarse_fine);
+                prepared.CompleteDeviceMigration();
+
+                // No field H2D transfer occurred: publish the actual authority of
+                // these reconstructed fields. Host arrays are deliberately
+                // stale and materialize only for an explicit Host consumer.
+                payload.ledger = std::make_unique<StateResidencyLedger>(scope.to_epoch);
+                for (const auto handle : payload.handles) {
+                    payload.ledger->register_block(handle, payload.topology_witness.version,
+                        payload.topology_witness.completion, ExecutionSide::Device);
+                    payload.ledger->publish_ghost({handle, StateSlot::Current},
+                        ExecutionSide::Device, payload.topology_witness.version,
+                        payload.topology_witness.completion);
+                }
+                transaction.mark_ready();
+
                 (void)topology_registry.commit_after_success(
                     std::move(topology_candidate),
                     [&](const auto& committed_topology) {
+                        if (committed_topology.epoch != scope.to_epoch
+                            || committed_topology.handles_in_observation_order != payload.handles)
+                            throw std::logic_error("CUDA AMR publication scope drifted");
                         transaction.commit_after_success(
-                            [&](const amr::AmrPlanScope& transaction_scope) {
-                                if (transaction_scope != scope
-                                    || committed_topology.epoch
-                                        != transaction_scope.to_epoch) {
-                                    throw std::logic_error(
-                                        "CUDA AMR publication scope drifted");
-                                }
-
-                                DeviceRegridPublication payload;
-                                payload.handles = committed_topology
-                                    .handles_in_observation_order;
-                                if (payload.handles.empty()
-                                    || payload.handles.size()
-                                        != prepared.proposed_active_blocks()
-                                               .size()) {
-                                    throw std::logic_error(
-                                        "CUDA AMR proposed topology is empty or mismatched");
-                                }
-                                payload.topology_witness =
-                                    scheduler_clock.next_publication();
-                                payload.ledger = make_regrid_ledger(
-                                    committed_topology.epoch, payload.handles,
-                                    payload.topology_witness);
-                                payload.storage.reserve(payload.handles.size());
-                                payload.bindings.reserve(payload.handles.size());
-                                for (std::size_t index = 0;
-                                     index < payload.handles.size(); ++index) {
-                                    const auto storage =
-                                        storage_generation_issuer.issue();
-                                    payload.storage.push_back(storage);
-                                    payload.bindings.push_back({
-                                        &amr_ctrl.pool->GetBlock(
-                                            prepared.proposed_active_blocks()[index]),
-                                        payload.handles[index], storage,
-                                        &bc_handler.logical_plan()});
-                                }
-                                payload.source_backups.reserve(old_active.size());
-                                for (const int pool_index : old_active) {
-                                    payload.source_backups.push_back({
-                                        pool_index,
-                                        amr_ctrl.pool->GetBlock(pool_index)
-                                            .fluid_state});
-                                }
-                                return payload;
+                            [&](const amr::AmrPlanScope&) { return std::move(payload); },
+                            [&](const amr::AmrPlanScope&, DeviceRegridPublication& ready) {
+                                // Last throwing action: backend publication
+                                // records a checked retirement fence first.
+                                compute_backend->publish_topology_store_transaction(
+                                    std::move(ready.store_transaction));
+                                store_published = true;
                             },
-                            [&](const amr::AmrPlanScope& transaction_scope,
-                                DeviceRegridPublication& payload) {
-                                const auto restore_source_states = [&]() noexcept {
-                                    for (auto& backup : payload.source_backups) {
-                                        using std::swap;
-                                        swap(amr_ctrl.pool
-                                                 ->GetBlock(backup.pool_index)
-                                                 .fluid_state,
-                                             backup.state);
-                                    }
-                                };
-                                try {
-                                    if (transaction_scope != scope)
-                                        throw std::logic_error(
-                                            "CUDA AMR finalizer scope drifted");
-
-                                    // Morton/topology decisions and all
-                                    // prolongation/restriction math have
-                                    // already run on the Host.  Activate the
-                                    // proposed hierarchy only long enough to
-                                    // compile neighbors and complete its
-                                    // physical/same/coarse-fine ghosts.
-                                    prepared.ActivateForFinalization();
-#pragma omp parallel for schedule(dynamic, 1)
-                                    for (std::size_t index = 0;
-                                         index < amr_ctrl.tree
-                                                     ->GetActiveBlocks()
-                                                     .size(); ++index) {
-                                        amr::Block& block = amr_ctrl.pool->GetBlock(
-                                            amr_ctrl.tree
-                                                ->GetActiveBlocks()[index]);
-                                        bc_handler.apply(
-                                            block.fluid_state, block.grid);
-                                    }
-                                    amr_ctrl.ghost_exchange.ExecuteExchange(
-                                        amr_ctrl.pool, amr_ctrl.tree,
-                                        config.grid.dim,
-                                        &amr::Block::fluid_state,
-                                        payload.handles);
-                                    StageExecutionContext staged_context{
-                                        ExecutionSide::Host, *payload.ledger,
-                                        scheduler_clock};
-                                    (void)arch::scheduler::complete_boundary(
-                                        staged_context, payload.handles,
-                                        StateSlot::Current,
-                                        payload.topology_witness.version,
-                                        [](StateSlot,
-                                           arch::state::StateVersion,
-                                           arch::state::CompletionToken token) {
-                                            return token;
-                                        });
-
-                                    // Runtime construction happens after
-                                    // UpdateNeighbors so DeviceGridView sees
-                                    // the final six coarse/fine face flags.
-                                    payload.store_transaction =
-                                        compute_backend
-                                            ->begin_topology_store_transaction(
-                                                scope, payload.bindings);
-                                    // The Host hierarchy is the only AMR
-                                    // topology authority.  Lower the proposed
-                                    // epoch directly from its unpublished
-                                    // handles: AMRControl still publishes the
-                                    // old handle span until the transaction's
-                                    // no-throw commit tail.
-                                    const auto staged_flux_plan =
-                                        amr::build_amr_flux_topology_plan(
-                                            *amr_ctrl.pool,
-                                            amr_ctrl.tree->GetActiveBlocks(),
-                                            payload.handles, config.grid.dim,
-                                            specs.count());
-                                    const auto staged_reflux_plan =
-                                        amr::build_amr_reflux_topology_plan(
-                                            *amr_ctrl.pool,
-                                            staged_flux_plan);
-                                    compute_backend->stage_amr_flux_plan(
-                                        *payload.store_transaction,
-                                        staged_flux_plan,
-                                        staged_reflux_plan);
-
-                                    const auto upload_completed =
-                                        scheduler_clock.next_completion();
-                                    const arch::state::CompletionToken
-                                        upload_pending{
-                                            upload_completed.value,
-                                            arch::state::CompletionState::Pending};
-                                    constexpr std::array<
-                                        arch::state::StateRegion, 2> regions{
-                                        arch::state::StateRegion::Interior,
-                                        arch::state::StateRegion::Ghost};
-                                    for (std::size_t index = 0;
-                                         index < payload.handles.size(); ++index) {
-                                        const auto key = arch::state::StateKey{
-                                            payload.handles[index],
-                                            StateSlot::Current};
-                                        const auto access =
-                                            arch::backend::BackendStateAccess{
-                                                payload.handles[index],
-                                                payload.storage[index],
-                                                StateSlot::Current};
-                                        const auto host = host_transfer_view(
-                                            const_cast<amr::Block*>(
-                                                payload.bindings[index].block)
-                                                ->fluid_state);
-                                        for (const auto region : regions) {
-                                            payload.ledger->begin_transfer(
-                                                key, region,
-                                                arch::state::PendingTransferPhase::
-                                                    PendingH2D,
-                                                upload_pending);
-                                            compute_backend
-                                                ->enqueue_upload_staged_current(
-                                                    *payload.store_transaction,
-                                                    access, region, host);
-                                        }
-                                    }
-                                    compute_backend->quiesce();
-                                    for (const auto handle : payload.handles) {
-                                        const auto key = arch::state::StateKey{
-                                            handle, StateSlot::Current};
-                                        for (const auto region : regions)
-                                            payload.ledger->complete_transfer(
-                                                key, region, upload_completed);
-                                        payload.ledger->require_readable(
-                                            key,
-                                            {ExecutionSide::Device,
-                                             payload.topology_witness.version,
-                                             true, true});
-                                    }
-
-                                    // This is deliberately the last operation
-                                    // in the finalizer that may throw.  Its
-                                    // implementation records the retirement
-                                    // event before changing logical visibility.
-                                    compute_backend
-                                        ->publish_topology_store_transaction(
-                                            std::move(
-                                                payload.store_transaction));
-                                    store_published = true;
-                                } catch (...) {
-                                    if (store_published)
-                                        std::terminate();
-                                    // Quiesce and abort the staged device
-                                    // namespace before any Host buffer is
-                                    // restored or returned to MemoryPool.
-                                    payload.store_transaction.reset();
-                                    restore_source_states();
-                                    prepared.AbortNoexcept();
-                                    throw;
-                                }
-                            },
-                            [&](DeviceRegridPublication&& payload) noexcept {
+                            [&](DeviceRegridPublication&& ready) noexcept {
                                 prepared.PublishNoexcept();
-                                static_assert(noexcept(stage_handles.swap(
-                                    payload.handles)));
-                                static_assert(noexcept(backend_storage.swap(
-                                    payload.storage)));
-                                static_assert(noexcept(residency_ledger.swap(
-                                    payload.ledger)));
-                                stage_handles.swap(payload.handles);
-                                backend_storage.swap(payload.storage);
-                                residency_ledger.swap(payload.ledger);
-                                amr_ctrl.PublishActiveHandlesNoexcept(
-                                    stage_handles);
+                                static_assert(noexcept(stage_handles.swap(ready.handles)));
+                                static_assert(noexcept(backend_storage.swap(ready.storage)));
+                                static_assert(noexcept(residency_ledger.swap(ready.ledger)));
+                                stage_handles.swap(ready.handles);
+                                backend_storage.swap(ready.storage);
+                                residency_ledger.swap(ready.ledger);
+                                amr_ctrl.PublishActiveHandlesNoexcept(stage_handles);
                             });
                     });
             } catch (...) {
-                if (transaction.state()
-                    != amr::TopologyTransactionState::Committed) {
-                    transaction.abort(
-                        [&]() noexcept { prepared.AbortNoexcept(); });
-                }
+                if (store_published) std::terminate();
+                // Quiesce the unpublished namespace before topology rollback
+                // can return new Host blocks to MemoryPool. No old fluid data
+                // was overwritten, so field snapshots/restores are unnecessary.
+                payload.store_transaction.reset();
+                if (transaction.state() != amr::TopologyTransactionState::Committed)
+                    transaction.abort([&]() noexcept { prepared.AbortNoexcept(); });
                 throw;
             }
-
             prepared.ReleaseRetiredNoexcept();
             return true;
         }
 #endif
+
+        prepared.ExecuteMigration();
+        transaction.mark_ready();
 
         struct HostStateBackup {
             int pool_index = -1;
@@ -874,6 +750,36 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         amr_ctrl.BindActiveHandles(stage_handles);
         prepared.ReleaseRetiredNoexcept();
         return true;
+    };
+
+    // Whole-operation measurements are separate from per-block backend traces:
+    // boundary records nested in regrid must not be counted a second time.
+    // Existing indicator/migration/publication fences complete device work
+    // before execute_regrid returns; measurement adds no synchronization.
+    struct RegridMeasurement {
+        int step;
+        double time;
+        std::size_t old_blocks, new_blocks;
+        bool changed;
+        double elapsed_seconds;
+        arch::backend::BackendCounters operations;
+    };
+    std::vector<RegridMeasurement> regrid_measurements;
+    const auto perform_regrid = [&](int step, double time) {
+        const auto started = std::chrono::steady_clock::now();
+        const auto before = compute_backend ? compute_backend->counters()
+            : arch::backend::BackendCounters{};
+        const auto old_blocks = stage_handles.size();
+        const bool changed = execute_regrid(step, time);
+        const auto after = compute_backend ? compute_backend->counters()
+            : arch::backend::BackendCounters{};
+        regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count(),
+            {after.kernel_count - before.kernel_count, after.bytes_h2d - before.bytes_h2d,
+             after.bytes_d2h - before.bytes_d2h,
+             after.stream_sync_count - before.stream_sync_count,
+             after.getter_count - before.getter_count}});
+        return changed;
     };
 
     // Complete deferred thermodynamic regrids through the same transaction
@@ -1066,6 +972,10 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         double dt_diff_fe = 1e99;
         double dt_diff_sts_limit = 1e99;
         if (has_diff) {
+            // Face transport depends on the neighbouring rho/T/composition.
+            // Reuse backend-local exchange; CUDA does not materialize Host fields.
+            if (compute_backend) complete_device_boundary(StateSlot::Current);
+            else synchronize_fluid_ghosts();
             std::vector<arch::reduction::ReductionCandidate>
                 diffusion_dt_candidates;
             diffusion_dt_candidates.reserve(active_blocks.size());
@@ -1489,6 +1399,24 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         synchronize_fluid_ghosts();
         write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
         write_checkpoint(false);
+    }
+
+    if (!regrid_measurements.empty()) {
+        const std::filesystem::path directory = config.Get<std::string>("log_dir", config.io.out_dir);
+        std::filesystem::create_directories(directory);
+        std::ofstream output(directory / (config.io.base_name + "_regrid.tsv"));
+        if (!output) throw std::runtime_error("cannot write regrid measurements");
+        output << "macro_step\tphysical_time\tbackend\told_blocks\tnew_blocks\ttopology_changed"
+                  "\twall_seconds\tbytes_h2d\tbytes_d2h\tkernel_count\tstream_sync_count\n"
+               << std::setprecision(17);
+        for (const auto& record : regrid_measurements) {
+            output << record.step << '\t' << record.time << '\t'
+                   << (compute_backend ? "cuda" : "cpu") << '\t' << record.old_blocks << '\t'
+                   << record.new_blocks << '\t' << record.changed << '\t' << record.elapsed_seconds << '\t'
+                   << record.operations.bytes_h2d << '\t' << record.operations.bytes_d2h << '\t'
+                   << record.operations.kernel_count << '\t' << record.operations.stream_sync_count << '\n';
+        }
+        if (!output) throw std::runtime_error("failed writing regrid measurements");
     }
 
     if (compute_backend) {

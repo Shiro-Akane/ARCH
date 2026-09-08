@@ -7,14 +7,13 @@ change.
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
 [![CPU backend](https://img.shields.io/badge/backend-CPU-success.svg)]()
-[![CUDA](https://img.shields.io/badge/CUDA-experimental-yellow.svg)]()
+[![CUDA](https://img.shields.io/badge/CUDA-supported-success.svg)](docs/CudaBackendStatus.md)
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
 
 ARCH is a block-adaptive finite-volume framework for compressible and reactive
-hydrodynamics. The CPU backend is the scientific authority. An
-`ARCH_ENABLE_CUDA=ON` build also provides an experimental Cartesian block
-backend that reuses the same registered policies and allocation-free physics
-mathematics.
+hydrodynamics. CPU and CUDA execution share the same mathematical and physical
+implementations. Enable `ARCH_ENABLE_CUDA=ON` to build the CUDA backend, then
+select the backend in your case configuration.
 
 The project is intended for two groups:
 
@@ -24,22 +23,28 @@ The project is intended for two groups:
 
 ## Project status
 
-| Capability | CPU backend | CUDA backend |
-| --- | --- | --- |
-| 1D/2D/3D hydrodynamics | supported | experimental; Cartesian grids, including dynamic block hierarchies |
-| Dynamic block AMR | supported | implemented experimentally: Host-authoritative regrid/migration, device ghost exchange, compact flux registration, and reflux; runtime parity validation pending |
-| Ideal, tabular, and Helmholtz EOS | supported | implemented; device qualification remains pending for several table paths |
-| Diffusion with RKL1/RKL2 | supported | implemented for Cartesian grids |
-| Gravity | none and external | none only; external/self are rejected |
-| Nuclear networks and NSE | built-in and generated networks; NSE only for the four built-ins; DenseLU/optional KLU | four built-in networks with NSE and DenseLU (at most 30 species); no generated networks or sparse solve |
-| Plot/checkpoint write | shared host writer | same writer; device-authoritative state is explicitly materialized first |
-| Checkpoint restart | shared version-3 Host schema with ENUC and EOS/table/network/ordered-species identity | same schema restore followed by device upload; runtime parity validation pending |
-| Quantitative validation suite | CPU baselines recorded | CPU/CUDA parity remains pending |
+CPU and CUDA support the features below. The release profile has passed its
+numerical, application, device-safety, build and resource checks.
+[Validation](validation/README.md) records the tested configurations and final
+delivery-review status.
+
+| Capability | Shared behavior and backend choices |
+| --- | --- |
+| Hydrodynamics | 1D, 2D and 3D Cartesian, cylindrical and spherical grids |
+| Dynamic block AMR | Conservative refinement, coarsening, ghost exchange and flux correction. CUDA computes indicators and transfers cell data on the GPU; the CPU manages the mesh tree. |
+| Equations of state | Ideal gas, Helmholtz and 3D/4D tabular EOS |
+| Diffusion | Thermal, viscous and species diffusion with RKL1/RKL2 time stepping |
+| Gravity | Prescribed external gravity |
+| Nuclear burning | Four built-in networks and generated pynucastro networks; NSE projection for the built-ins. CUDA uses device-callable version-4 generated packages. |
+| Linear solvers | DenseLU for small systems; KLU on CPU and cuDSS on CUDA for sparse systems |
+| Output and restart | HDF5 plots and checkpoints use the same format on both backends, including the AMR hierarchy, burn energy and timestep-controller state. |
 
 Version-1/2 checkpoints remain readable as legacy/unverified inputs. They lack
 the ordered scientific identity and `ENUC`; version 1 also lacks the timestep
 controller state. Version 3 records the active burn/network/NSE identity and
-the digest of the table actually loaded by the EOS owner. CPU and CUDA use the
+the digest of the table actually loaded by the EOS owner. Version 4 also stores
+native mass fractions, avoiding a lossy reconstruction from species densities.
+CPU and CUDA use the
 same schema, and backend selection is intentionally not a restart-compatibility
 field.
 
@@ -49,10 +54,12 @@ only at that pre-construction boundary when the requested run is outside the
 CUDA capability matrix or no usable device is available, and only when the CPU
 capability gate accepts the same run.
 
-The backend split is deliberately narrow: policy registration, AMR decisions,
-host-only Morton/topology mathematics, EOS/network/solver mathematics,
-scheduling, and HDF5 schemas are shared. CUDA-specific code owns kernels, device storage,
-transfers, streams, and retirement fences.
+The backend split is deliberately narrow: policy registration, AMR indicator
+and transfer mathematics, geometry, EOS/network/solver mathematics, scheduling,
+and HDF5 schemas are shared. Morton/topology decisions stay host-only; CUDA
+executes the shared numerical leaves for indicators and conservative migration
+on the device. CUDA-specific code owns kernels, device storage, transfers,
+streams, sparse-library adapters, and retirement fences.
 
 ## Implemented capabilities
 
@@ -62,7 +69,7 @@ transfers, streams, and retirement fences.
 - SW, VL, Roe, HLL, and HLLC flux policies;
 - PCM, MUSCL/PLM, and PPM reconstruction with Euler, SSPRK2, or SSPRK3 time stepping;
 - ideal, automatically ranked 3D/4D tabular (including normalized free-energy tables), and Timmes Helmholtz equations of state;
-- external gravity, built-in or generated pynucastro nuclear burning, DenseLU/KLU linear solves, NSE projection, and RKL1/RKL2 super-time-stepping diffusion;
+- shared external gravity, built-in or generated pynucastro nuclear burning, DenseLU/optional CPU KLU or CUDA cuDSS linear solves, NSE projection, and RKL1/RKL2 super-time-stepping diffusion;
 - HDF5 plot and checkpoint files, including restart of the AMR leaf hierarchy.
 
 ## Build
@@ -71,7 +78,8 @@ ARCH targets a Linux/WSL-style C++ environment. Required tools and
 libraries are:
 
 - a C++20 compiler;
-- CMake 3.22 or newer;
+- CMake 3.22 or newer for CPU builds (CUDA requirements are listed below);
+- Python 3.10 or newer for the default testing configuration and validation tools;
 - OpenMP unless configured off;
 - HDF5 C++ and HL libraries;
 - Git and network access during configuration, because CMake fetches HighFive and, when no installed KLU package is found, pinned SuiteSparse;
@@ -82,30 +90,76 @@ Configure and build from the repository root:
 ```bash
 git lfs pull
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
+cmake --build build --parallel 1
 ```
 
-For the experimental CUDA backend, use a CUDA toolkit and a device with compute
-capability 8.6 or newer:
+For the CUDA backend, use CMake 3.25.2 or newer, NVCC 12.0 or newer and a host
+compiler supported by that toolkit. These versions provide the required
+[CUDA C++20 language support](https://cmake.org/cmake/help/latest/release/3.25.html);
+the reference build uses CMake 3.28 and CUDA 12.3. Select code images with
+`CMAKE_CUDA_ARCHITECTURES`: `native` for a local build, or an explicit list such
+as `80;86;90` for several device generations.
+Startup checks the compiled images and driver before selecting the backend.
+The following example uses Ninja for separate heavy-compile job limits; install
+Ninja and use a fresh build directory when changing generators.
 
 ```bash
-cmake -S . -B build-cuda -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_KLU=OFF
-cmake --build build-cuda --target arch_cuda_backend --parallel 6
-cmake --build build-cuda --target ARCH --parallel 2
+cmake -S . -B build-cuda -G Ninja -DARCH_ENABLE_CUDA=ON \
+  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=native \
+  -DARCH_CUDA_HEAVY_COMPILE_JOBS=2 \
+  -DARCH_ENABLE_CUDSS=ON -DCUDSS_ROOT=/path/to/cudss \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cuda/bin"
+python3 tools/run_memory_guarded.py --min-available-mib 1536 \
+  --max-swap-growth-mib 256 --pressure-guard -- \
+  cmake --build build-cuda --target ARCH --parallel 4
 ```
 
-The first build command above is a controlled production-backend compile; it
-does not build the full validation suite. KLU remains a CPU-only optional
-backend. `cuDSS` is accepted as a case-insensitive solver request, but the CUDA
-cuDSS provider is not implemented. Installing the cuDSS library alone does not
-enable that execution path.
+This example retains the default CPU KLU library and adds CUDA cuDSS, so the
+same build can run sparse burning on either backend.
+It builds the executable, not the full validation suite. The ARCH executable
+does not require Python at runtime. cuDSS is optional:
+omit `CUDSS_ROOT` when discovery already finds it, or use
+`-DARCH_ENABLE_CUDSS=OFF` for a build without sparse CUDA burning. A user-local
+installation prefix is sufficient. The cuDSS adapter requires the 0.8 API and
+checks the runtime version. Sparse CUDA burning is available only when the
+library and code for the selected network/EOS combination are linked;
+otherwise the configuration is rejected. KLU remains CPU-only; cuDSS remains CUDA-only.
 
-The dispatch translation units instantiate a large template matrix. Very high
-parallel build counts can exhaust memory even though the dispatch target is
-compiled at a reduced optimization level. Increase `--parallel` only after
-checking available RAM.
+The build guard leaves 1.5 GiB of available RAM and allows up to 256 MiB of
+additional swap in this example. With `--pressure-guard`, it also watches Linux
+memory and I/O stalls and stops its build if pressure stays high. This option
+requires Linux memory and I/O PSI full counters. The guard also needs working
+pidfd and child-subreaper support and readable `/proc` data; it checks these
+capabilities before starting the build. Current WSL2 provides them.
+Use `Ctrl+C` or `SIGTERM` to stop a guarded build and its compiler children.
 
-The executable is written to `bin/ARCH`. KLU is enabled by default; CMake
+When selecting GCC explicitly, use matching versions for `CMAKE_C_COMPILER`,
+`CMAKE_CXX_COMPILER` and `CMAKE_CUDA_HOST_COMPILER`. Release builds retain LTO,
+which also requires compatible compiler versions for locally built dependencies.
+
+With Ninja, `ARCH_CUDA_HEAVY_COMPILE_JOBS` controls the heavy compile pool
+(default `1`), independently of the overall `--parallel` ceiling. For the
+mid-range reference below, we recommend `ARCH_CUDA_HEAVY_COMPILE_JOBS=2` with
+`--parallel 4`, as used in the [completed core-build measurements](validation/backend/results/cold-core-first-law-20260907/release-909/README.md).
+This is a measured reference configuration, not a minimum requirement or a
+universal optimum. Use lower limits when less memory is available; larger
+systems can raise them while checking the guard's measurements. Numerical
+methods and Release optimization remain unchanged.
+Contributor-only measurements and refactor records are in
+[development documentation](docs/development/README.md).
+
+Local build measurements use WSL2, an i7-10700-class CPU, 16 GB system RAM and
+an RTX 3060 Ti-class 8 GB GPU as the mid-range reference. Choose simulation
+memory for your mesh, refinement levels, species count and sparse solver
+workspace. Check WSL's assigned memory separately and leave room for Windows.
+The numerical methods and accuracy settings are the same on every machine.
+
+Release builds optimize for the local CPU, so rebuild when moving to a different
+CPU architecture. Set `CMAKE_CUDA_ARCHITECTURES` for the GPUs that will run the
+executable, using a toolkit that supports those targets.
+
+The default executable is `bin/ARCH`; the isolated CUDA example above writes
+`build-cuda/bin/ARCH`, avoiding cross-build overwrite. KLU is enabled by default; CMake
 uses an installed package or fetches pinned SuiteSparse v7.13.0.
 
 ## Tabular EOS and custom networks
@@ -124,15 +178,18 @@ CompOSE files require a family-specific converter to that contract. No external
 EOS converter is currently bundled; the real Shen source-table assessment is
 recorded in [validation/eos](validation/eos/README.md).
 
-To generate a custom reaction network, copy and edit the example recipe—choose
-a unique folder/`NETWORK_ID` and the required nuclei—then run:
+Use pynucastro 2.12.0 for the documented network-generation workflow. The
+[network validation guide](validation/network/README.md#reproduce-the-records)
+shows the Python environment and complete build setup.
+Copy and edit the example recipe, choosing a unique `NETWORK_ID` and the required
+nuclei, then run:
 
 ~~~bash
 cp examples/network/CustomNetworkRecipe.py MyNetwork.py
-conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py --check
-conda run -n p311 python tools/network/GenerateNetwork.py MyNetwork.py
+python3 tools/network/GenerateNetwork.py MyNetwork.py --check
+python3 tools/network/GenerateNetwork.py MyNetwork.py
 cmake -S . -B build
-cmake --build build --parallel 4
+cmake --build build --parallel 1
 ~~~
 
 Each generated package occupies `src/physics/network/custom/<id>/`. CMake
@@ -147,16 +204,26 @@ use_nse = false
 linear_solver = Auto
 ~~~
 
-Generated networks are currently CPU-only and do not implement the Timmes NSE
-projection. Linear-solver requests are case-insensitive. `Auto` materializes as
-DenseLU through 30 isotopes; above 30 it produces a SparseKLU CPU candidate and
-a cuDSS CUDA candidate. Explicit SparseKLU is CPU-only and explicit cuDSS is
-CUDA-only; an incompatible backend/solver pair is rejected before backend
-construction. The cuDSS provider and CUDA generated-network/large-network paths
-remain unavailable, so those CUDA candidates fail closed. The complete contract
-and generator limitations are in the
+Generator version 4 enables CUDA only for packages whose manifest declares
+`device_callable_math=true`. Both backends then use the same generated math
+header and declared Jacobian structure. For recognized embedded weak tables,
+each backend manages its own read-only storage while sharing the interpolation,
+derivatives and signed energy integration. Version-3 packages and packages not
+converted for device execution remain CPU-only. Generated networks do not
+support the Timmes NSE projection.
+
+Linear-solver names are case-insensitive. `Auto` selects DenseLU for systems of
+up to 31 total ODE equations, counting species, temperature and any auxiliary
+state. Larger systems use SparseKLU on CPU or cuDSS on CUDA, provided the
+required library and network/EOS code were built. Explicit SparseKLU is CPU-only
+and explicit cuDSS is CUDA-only; incompatible combinations are rejected before
+backend construction, without silently substituting another solver. cuDSS is
+an optional dependency, required for sparse CUDA burning. Independent weak trajectories and real
+generated-network applications are recorded in
+[network validation](validation/network/README.md). The complete contract
+and generator requirements are in the
 [Research and API Reference](docs/Reference.md); multi-size compatibility
-evidence is centralized in [validation/network](validation/network/README.md).
+records are kept with the same validation results.
 
 ## First run
 
@@ -194,17 +261,19 @@ extension contracts, and known compromises, use the single searchable
 The [documentation index](docs/README.md) groups learning guides, physics
 notes, API reference material, and legal-document pointers by audience.
 
-The current implementation, validation, and remaining-work boundaries for the
-CUDA backend and GPU-AMR are recorded in the
-[CUDA/GPU-AMR handoff status](docs/CudaBackendStatus.md).
+The [CUDA and GPU-AMR guide](docs/CudaBackendStatus.md) describes supported
+features, backend responsibilities and solver selection.
 
-Quantitative status, CPU results, known failures, and CUDA placeholders are
-indexed in [validation/README.md](validation/README.md). The
-[AMR status page](validation/amr/README.md) integrates the historical figures
-with quantitative conservation baselines and the remaining local
-refinement-retention limitation.
+The [validation index](validation/README.md) summarizes numerical results and
+release acceptance. The [AMR validation page](validation/amr/README.md) covers
+mesh adaptation, conservation, geometry and restart checks, with links to their
+reproducible records.
 
 ## Repository map
+
+The [source guide](src/README.md) links each implementation module. Local README
+files explain responsibilities and important entry points; the
+[contributor guide](docs/development/README.md) covers ownership and review work.
 
 ```text
 ARCH/
@@ -212,7 +281,8 @@ ARCH/
 ├── LICENSE                    # MIT license for ARCH-authored material
 ├── THIRD_PARTY_NOTICES.md     # Scientific-source provenance and terms
 ├── LICENSES/                  # Retained third-party license texts
-├── CMakeLists.txt             # CPU build and template-dispatch targets
+├── CMakeLists.txt             # CPU/CUDA build and dispatch targets
+├── cmake/                    # Dependency discovery and generated build bindings
 ├── simulation/               # Case implementations and reusable example inputs
 ├── docs/                     # Guides, reference, physics notes, legal index
 ├── validation/               # Single V&V tree: inputs, records, metrics, figures
@@ -224,6 +294,7 @@ ARCH/
 │   ├── grid/                 # Coordinates and finite-volume metrics
 │   ├── amr/                  # Hierarchy, pool, exchange, flux registers
 │   ├── driver/               # Runtime dispatch and operator sequence
+│   ├── cuda/                 # Device kernels, storage and provider adapters
 │   ├── numerics/             # Flux, reconstruction, integration, burn, diffusion
 │   ├── physics/              # EOS, gravity, species, networks, NSE, diagnostics
 │   ├── io/                   # Parameters, logging, HDF5 plot/checkpoint IO
@@ -241,13 +312,9 @@ ARCH/
 - Coarse-fine AMR faces use MUSCL-MinMod in place of PPM's wide stencil;
 - Density, velocity, internal-energy, and species safeguards can modify the
   conservative update in invalid or near-vacuum states;
-- Quantitative CUDA parity, including dynamic-AMR and restart split-run tests,
-  remains pending on real hardware. Non-Cartesian CUDA geometry, CUDA gravity,
-  generated CUDA networks, and CUDA sparse solves remain unavailable; current
-  KLU and generated-network evidence is CPU-only and indexed under
-  `validation/network`;
-- Release builds use `-march=native` and `-ffast-math`, which favor performance
-  over cross-machine bitwise reproducibility;
+- The shared build contract disables fast-math and floating-point contraction
+  on supported GNU/Clang/NVIDIA toolchains. Release still uses `-march=native`;
+  bitwise-identical results across machines are not guaranteed;
 - ARCH currently exposes source-extension interfaces rather than an installed
   public library ABI.
 

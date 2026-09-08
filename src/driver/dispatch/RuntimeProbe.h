@@ -4,6 +4,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 
 namespace arch::dispatch
 {
@@ -36,6 +37,7 @@ struct DeviceCapability
     std::array<char, 128> device_name{};
     bool primary_context_active_before{};
     bool primary_context_active_after{};
+    bool compiled_image_available{};
 };
 
 struct RuntimeProbeRequest
@@ -64,5 +66,10 @@ RuntimeProbeResult probe_runtime(
 
 RuntimeProbeResult probe_runtime_native(
     RuntimeProbeRequest request) noexcept;
+
+// Ordinary numeric SASS/PTX images only. The configured compiler's PTX needs
+// a driver that understands that toolkit version; native SASS has no JIT gate.
+bool cuda_image_compatible(std::string_view images, int major, int minor,
+                           int driver_version, int ptx_version) noexcept;
 
 } // namespace arch::dispatch

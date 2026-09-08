@@ -23,16 +23,17 @@
 #include <vector>
 
 #include "../../core/ArchPortability.h"
+#include "../constant/PhysicalConstants.h"
 
 namespace ConductivityMath {
 
     // Transport-fit constants retained from the AMReX-Astro stellar
     // conductivity implementation, expressed in cgs units.
     namespace Constants {
-        constexpr double c_light = 29979245800.0;
-        constexpr double sigma_SB = 5.670374419184432e-05;
-        constexpr double a_rad = 4.0 * sigma_SB / c_light;
-        constexpr double n_A = 6.02214076e+23;
+        constexpr double c_light = arch::constants::relativity::cgs::speed_of_light;
+        constexpr double sigma_SB = arch::constants::radiation::cgs::stefan_boltzmann;
+        constexpr double a_rad = arch::constants::radiation::cgs::energy_density;
+        constexpr double n_A = arch::constants::statistical::avogadro;
 
         constexpr double third  = 1.0 / 3.0;
         constexpr double twoth  = 2.0 * third;
@@ -47,7 +48,7 @@ namespace ConductivityMath {
         constexpr double con2   = 1.07726359439811217e-7;
         constexpr double t6_switch1 = 0.5;
         constexpr double t6_switch2 = 0.9;
-        constexpr double PI = 3.14159265358979323846;
+        constexpr double PI = arch::constants::math::pi;
     }
 
     // Thermal-conductivity evaluation.

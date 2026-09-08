@@ -22,6 +22,7 @@
 #include "../../grid/Grid.h"
 #include "../../grid/GridMetrics.h"
 #include "../../physics/gravity/IGravityPolicy.h"
+#include "GeometricSources.h"
 
 namespace TimeIntegration
 {
@@ -97,6 +98,7 @@ namespace TimeIntegration
             return;
 
         int n_spec = state.GetNumSpecies();
+        const auto geometry = GridMetrics::make_geometry_view(grid);
         const int ks = grid.Ks(), ke = grid.Ke();
         const int js = grid.Js(), je = grid.Je();
         const int nk = ke - ks, nj = je - js;
@@ -112,59 +114,9 @@ namespace TimeIntegration
                 for (int i = grid.Is(); i < grid.Ie(); ++i)
                 {
                     int idx = grid.GetIndex(i, j, k);
-                    PointCoords coords = grid.GetPhysicalCoords(i, j, k);
-                    double r = coords.r;
-                    if (grid.geometry == "cylindrical") r = coords.r_cy;
-
-                    if (r < 1e-14)
-                        continue;
-
                     state.get_species_to_buffer(idx, Xi.data());
-                    FluidVector U = state.get(idx);
-                    double p = eos.get_pressure(U, Xi.data());
-
-                    double rho = std::max(U.rho, 1e-12);
-                    double v_x = U.mom_u / rho;
-                    double v_y = U.mom_v / rho;
-                    double v_z = U.mom_w / rho;
-
-                    if (grid.geometry == "cylindrical")
-                    {
-                        // mom_u = v_r. 2D mom_v = v_phi. 3D mom_w = v_phi
-                        double v_phi = (grid.dim == 2) ? v_y : ((grid.dim == 3) ? v_z : 0.0);
-
-                        dU[idx].mom_u += dt * (rho * v_phi * v_phi + p) / r;
-
-                        if (grid.dim == 2) {
-                            dU[idx].mom_v += dt * (-rho * v_x * v_y) / r;
-                        } else if (grid.dim == 3) {
-                            dU[idx].mom_w += dt * (-rho * v_x * v_z) / r;
-                        }
-                    }
-                    else if (grid.geometry == "spherical")
-                    {
-                        // mom_u = v_r. 2D mom_v = v_phi.
-                        // 3D mom_v = v_theta, mom_w = v_phi.
-                        if (grid.dim == 1) {
-                            dU[idx].mom_u += dt * 2.0 * p / r;
-                        }
-                        else if (grid.dim == 2) {
-                            // 2D Spherical falls back to Polar (r, phi)
-                            double v_phi = v_y;
-                            dU[idx].mom_u += dt * (rho * v_phi * v_phi + p) / r;
-                            dU[idx].mom_v += dt * (-rho * v_x * v_y) / r;
-                        }
-                        else if (grid.dim == 3) {
-                            double v_theta = v_y;
-                            double v_phi = v_z;
-                            double theta = coords.theta;
-                            double cot_theta = std::cos(theta) / std::max(std::sin(theta), 1e-14); // Avoid div zero at poles
-
-                            dU[idx].mom_u += dt * (rho * (v_theta * v_theta + v_phi * v_phi) + 2.0 * p) / r;
-                            dU[idx].mom_v += dt * (rho * v_phi * v_phi * cot_theta + p * cot_theta - rho * v_x * v_theta) / r;
-                            dU[idx].mom_w += dt * (-rho * v_x * v_phi - rho * v_theta * v_phi * cot_theta) / r;
-                        }
-                    }
+                    add_geometric_source_cell(
+                        state.get(idx), Xi.data(), eos, geometry, i, j, dt, dU[idx]);
                 }
             }
         }

@@ -1,0 +1,522 @@
+{
+  "schema": 1,
+  "workload": "amr_application",
+  "status": "passed",
+  "release_qualified": false,
+  "recipe": {
+    "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/replay.py",
+    "sha256": "36437cb84a410b72bc2b8a33b325317d8384980515095ee9ddd9dbb0a4ff4936"
+  },
+  "command": [
+    "/opt/nvidia/nsight-systems/2023.3.3/target-linux-x64/nsys",
+    "profile",
+    "--sample=none",
+    "--cpuctxsw=none",
+    "--trace=cuda",
+    "--cuda-memory-usage=true",
+    "--export=sqlite",
+    "--force-overwrite=false",
+    "--output=/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-3jttwb9k/amr_application",
+    "/usr/bin/python3",
+    "-B",
+    "/home/shiroakane/ARCH/tools/validate_backend_results.py",
+    "--manifest",
+    "/home/shiroakane/ARCH/validation/amr/gpu_cases.json",
+    "--arch",
+    "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+    "--checkpoint-validator",
+    "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+    "--source-root",
+    "/home/shiroakane/ARCH",
+    "--build-dir",
+    "/home/shiroakane/ARCH/build/release-core-throughput-cmake",
+    "--output-root",
+    "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-926/amr-validation",
+    "--case",
+    "hydro_amr_rk3_3d",
+    "--case",
+    "diffusion_amr_rkl2_5stage"
+  ],
+  "allocation_summary": {
+    "scope": "process-local CUDA allocator requests",
+    "physical_vram_measurement": false,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 36,
+    "note": "Pool reserves overlap requested bytes. Driver/context overhead and managed-memory residency are not inferred.",
+    "processes": [
+      {
+        "global_pid": 286148605771776,
+        "device": 0,
+        "events": 1132,
+        "allocations": 570,
+        "deallocations": 562,
+        "largest_allocation_bytes": 6000,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 1088
+        },
+        "peak_bytes_by_kind": {
+          "device": 112012,
+          "device_static": 1088
+        },
+        "peak_device_requested_bytes": 113100,
+        "peak_device_time_ns": 3544881642,
+        "pool_reserved_peak_bytes": {},
+        "pid": 278570,
+        "executable": "ARCH"
+      },
+      {
+        "global_pid": 286148991647744,
+        "device": 0,
+        "events": 1452,
+        "allocations": 730,
+        "deallocations": 722,
+        "largest_allocation_bytes": 6000,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 1088
+        },
+        "peak_bytes_by_kind": {
+          "device": 112012,
+          "device_static": 1088
+        },
+        "peak_device_requested_bytes": 113100,
+        "peak_device_time_ns": 4327166260,
+        "pool_reserved_peak_bytes": {},
+        "pid": 278593,
+        "executable": "ARCH"
+      },
+      {
+        "global_pid": 286149377523712,
+        "device": 0,
+        "events": 2412,
+        "allocations": 1210,
+        "deallocations": 1202,
+        "largest_allocation_bytes": 6000,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 1088
+        },
+        "peak_bytes_by_kind": {
+          "device": 112012,
+          "device_static": 1088
+        },
+        "peak_device_requested_bytes": 113100,
+        "peak_device_time_ns": 5185458359,
+        "pool_reserved_peak_bytes": {},
+        "pid": 278616,
+        "executable": "ARCH"
+      },
+      {
+        "global_pid": 286149796954112,
+        "device": 0,
+        "events": 4626,
+        "allocations": 2316,
+        "deallocations": 2310,
+        "largest_allocation_bytes": 5406720,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 816
+        },
+        "peak_bytes_by_kind": {
+          "device": 300773640,
+          "device_static": 816
+        },
+        "peak_device_requested_bytes": 300774456,
+        "peak_device_time_ns": 10937479650,
+        "pool_reserved_peak_bytes": {},
+        "pid": 278641,
+        "executable": "ARCH"
+      },
+      {
+        "global_pid": 286151692779520,
+        "device": 0,
+        "events": 4770,
+        "allocations": 2388,
+        "deallocations": 2382,
+        "largest_allocation_bytes": 5406720,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 816
+        },
+        "peak_bytes_by_kind": {
+          "device": 300773640,
+          "device_static": 816
+        },
+        "peak_device_requested_bytes": 300774456,
+        "peak_device_time_ns": 26685275970,
+        "pool_reserved_peak_bytes": {},
+        "pid": 278754,
+        "executable": "ARCH"
+      }
+    ]
+  },
+  "selected_process_capture": {
+    "schema": 1,
+    "complete": true,
+    "poll_interval_seconds": 0.05,
+    "observations": [
+      {
+        "pid": 278570,
+        "start_time_ticks": 1697847,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16978529990605,
+        "last_observed_monotonic_ns": 16979277223402,
+        "samples": 15
+      },
+      {
+        "pid": 278593,
+        "start_time_ticks": 1697951,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16979544985593,
+        "last_observed_monotonic_ns": 16980077541178,
+        "samples": 11
+      },
+      {
+        "pid": 278616,
+        "start_time_ticks": 1698032,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16980348306993,
+        "last_observed_monotonic_ns": 16981045136875,
+        "samples": 14
+      },
+      {
+        "pid": 278641,
+        "start_time_ticks": 1698230,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16982327178325,
+        "last_observed_monotonic_ns": 16995825701901,
+        "samples": 246
+      },
+      {
+        "pid": 278754,
+        "start_time_ticks": 1699774,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16997797218541,
+        "last_observed_monotonic_ns": 17012209470960,
+        "samples": 267
+      }
+    ],
+    "selected_counts": [
+      {
+        "pid": 278570,
+        "image_count": 1,
+        "sample_count": 15
+      },
+      {
+        "pid": 278593,
+        "image_count": 1,
+        "sample_count": 11
+      },
+      {
+        "pid": 278616,
+        "image_count": 1,
+        "sample_count": 14
+      },
+      {
+        "pid": 278641,
+        "image_count": 1,
+        "sample_count": 246
+      },
+      {
+        "pid": 278754,
+        "image_count": 1,
+        "sample_count": 267
+      }
+    ],
+    "scope": "selected CUDA process observations only; not executable identity qualification"
+  },
+  "instrumentation": {
+    "profiler": {
+      "artifact": {
+        "path": "/opt/nvidia/nsight-systems/2023.3.3/target-linux-x64/nsys",
+        "sha256": "2021f63441541763a8a55699e1a4a8f97c3d782ebe2dc0143c478fed35bd2280"
+      },
+      "artifact_observation": [
+        2096,
+        252698,
+        43990024,
+        1693946998000000000,
+        1769226087023324562
+      ]
+    },
+    "launcher": {
+      "artifact": {
+        "path": "/opt/nvidia/nsight-systems/2023.3.3/target-linux-x64/nsys-launcher",
+        "sha256": "1a2ec10e422dbc222b6674f4c140edec5eaabd33c6255942237a4dcdd1c480ca"
+      },
+      "artifact_observation": [
+        2096,
+        252838,
+        1468256,
+        1693945942000000000,
+        1769226087047472216
+      ]
+    }
+  },
+  "expected_artifacts": {
+    "arch": {
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+      "sha256": "9bba8f657a46ccfdf5b264387b9269566b6a7e724759027f63e4cd45aa7fe3ba"
+    }
+  },
+  "expected_artifact_observations": {
+    "arch": [
+      2096,
+      523763,
+      306382840,
+      1788787475693421458,
+      1788787475712437104
+    ]
+  },
+  "raw_local_profile": {
+    "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-3jttwb9k/amr_application.sqlite",
+    "sha256": "205dac51c7ed02e3ddc2e64ae9bee45daff6eaa76278f9ddc81a721145f092ec"
+  },
+  "allocation_lifetimes": {
+    "schema": 1,
+    "all_dynamic_allocations_released": true,
+    "dynamic_device_allocation_coverage": true,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 36,
+    "processes": [
+      {
+        "global_pid": 286148605771776,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 1088
+        }
+      },
+      {
+        "global_pid": 286148991647744,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 1088
+        }
+      },
+      {
+        "global_pid": 286149377523712,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 1088
+        }
+      },
+      {
+        "global_pid": 286149796954112,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 816
+        }
+      },
+      {
+        "global_pid": 286151692779520,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 816
+        }
+      }
+    ],
+    "note": "Static residuals are retained as observed; their release at context/program teardown is not inferred. This classification does not measure physical VRAM."
+  },
+  "process_identity_evidence": {
+    "schema": 1,
+    "complete": true,
+    "poll_interval_seconds": 0.05,
+    "observations": [
+      {
+        "pid": 278570,
+        "start_time_ticks": 1697847,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16978529990605,
+        "last_observed_monotonic_ns": 16979277223402,
+        "samples": 15
+      },
+      {
+        "pid": 278593,
+        "start_time_ticks": 1697951,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16979544985593,
+        "last_observed_monotonic_ns": 16980077541178,
+        "samples": 11
+      },
+      {
+        "pid": 278616,
+        "start_time_ticks": 1698032,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16980348306993,
+        "last_observed_monotonic_ns": 16981045136875,
+        "samples": 14
+      },
+      {
+        "pid": 278641,
+        "start_time_ticks": 1698230,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16982327178325,
+        "last_observed_monotonic_ns": 16995825701901,
+        "samples": 246
+      },
+      {
+        "pid": 278754,
+        "start_time_ticks": 1699774,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+        "artifact_observation": [
+          2096,
+          523763,
+          306382840,
+          1788787475693421458,
+          1788787475712437104
+        ],
+        "first_observed_monotonic_ns": 16997797218541,
+        "last_observed_monotonic_ns": 17012209470960,
+        "samples": 267
+      }
+    ],
+    "processes": [
+      {
+        "global_pid": 286148605771776,
+        "pid": 278570,
+        "nsight_process_name": "ARCH",
+        "artifact_key": "arch",
+        "executable": {
+          "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+          "sha256": "9bba8f657a46ccfdf5b264387b9269566b6a7e724759027f63e4cd45aa7fe3ba"
+        },
+        "start_time_ticks": 1697847,
+        "launch_mode": "direct",
+        "instrumentation_launcher": null
+      },
+      {
+        "global_pid": 286148991647744,
+        "pid": 278593,
+        "nsight_process_name": "ARCH",
+        "artifact_key": "arch",
+        "executable": {
+          "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+          "sha256": "9bba8f657a46ccfdf5b264387b9269566b6a7e724759027f63e4cd45aa7fe3ba"
+        },
+        "start_time_ticks": 1697951,
+        "launch_mode": "direct",
+        "instrumentation_launcher": null
+      },
+      {
+        "global_pid": 286149377523712,
+        "pid": 278616,
+        "nsight_process_name": "ARCH",
+        "artifact_key": "arch",
+        "executable": {
+          "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+          "sha256": "9bba8f657a46ccfdf5b264387b9269566b6a7e724759027f63e4cd45aa7fe3ba"
+        },
+        "start_time_ticks": 1698032,
+        "launch_mode": "direct",
+        "instrumentation_launcher": null
+      },
+      {
+        "global_pid": 286149796954112,
+        "pid": 278641,
+        "nsight_process_name": "ARCH",
+        "artifact_key": "arch",
+        "executable": {
+          "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+          "sha256": "9bba8f657a46ccfdf5b264387b9269566b6a7e724759027f63e4cd45aa7fe3ba"
+        },
+        "start_time_ticks": 1698230,
+        "launch_mode": "direct",
+        "instrumentation_launcher": null
+      },
+      {
+        "global_pid": 286151692779520,
+        "pid": 278754,
+        "nsight_process_name": "ARCH",
+        "artifact_key": "arch",
+        "executable": {
+          "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/bin/ARCH",
+          "sha256": "9bba8f657a46ccfdf5b264387b9269566b6a7e724759027f63e4cd45aa7fe3ba"
+        },
+        "start_time_ticks": 1699774,
+        "launch_mode": "direct",
+        "instrumentation_launcher": null
+      }
+    ],
+    "scope": "selected CUDA PID to observed /proc/exe object and frozen artifact SHA-256",
+    "note": "Nsight process names are retained verbatim and are not used as executable paths. Frozen executable hashes are bound through inode/stat observations and checked again after the campaign."
+  }
+}

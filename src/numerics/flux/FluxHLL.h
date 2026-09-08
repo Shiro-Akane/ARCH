@@ -66,7 +66,8 @@ struct FluxHLL
 
         // Reuse the Roe average required by the Einfeldt bounds.
         RoeGlaisterState roe_state = calc_glaister_state(
-            U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R, Xi_L, eos);
+            U_L, U_R, P_L, P_R, e_L, e_R, H_L, H_R,
+            Xi_L, Xi_R, n_spec, species_flux_out, eos);
 
         double S_L, S_R;
         calc_hll_wave_speeds(un_L, c_L, un_R, c_R, roe_state, dir, S_L, S_R);

@@ -283,6 +283,39 @@ void test_dimension_plan_cardinality()
     }
 }
 
+void test_device_migration_metadata_rollback()
+{
+    const SimConfig config = regrid_config(0.01);
+    std::shared_ptr<amr::MemoryPool> pool;
+    auto tree = make_regrid_tree(config, pool);
+    const auto old_active = tree->GetActiveBlocks();
+    const auto old_state = pool->GetBlock(old_active.front()).fluid_state;
+    auto prepared = tree->PrepareRegrid(config);
+    const std::vector<amr::BlockHandle> old_handles{{{1}, {31}}};
+    const std::vector<amr::BlockHandle> new_handles{{{2}, {32}}, {{3}, {32}}};
+    prepared.BuildMigrationPlans(old_handles, new_handles, {71, {31}, {32}});
+    expect_rejected([&] { prepared.CompleteDeviceMigration(); },
+                  "device migration completed before metadata activation");
+    auto incomplete = prepared.prolongation_plan();
+    incomplete.operations.pop_back();
+    amr::finalize_amr_plan(incomplete);
+    expect_rejected([&] {
+        amr::compile_regrid_execution_plan(incomplete, prepared.restriction_plan(), 1);
+    }, "incomplete all-field device group was accepted");
+    prepared.ActivateForDeviceMigration();
+    expect(tree->GetActiveBlocks().size() == 2,
+           "device migration failed to activate proposed neighbor metadata");
+    expect_rejected([&] { prepared.ExecuteMigration(); },
+                  "Host migration ran after device metadata activation");
+    expect(pool->GetBlock(old_active.front()).fluid_state.rho == old_state.rho,
+           "device topology activation wrote old accepted fields");
+    prepared.AbortNoexcept();
+    expect(tree->GetActiveBlocks() == old_active && pool->GetNumActiveBlocks() == 1,
+           "failed device migration did not restore topology/allocation ownership");
+    expect(pool->GetBlock(old_active.front()).fluid_state.rho == old_state.rho,
+           "device migration rollback changed old accepted fields");
+}
+
 void test_prepared_regrid_commit_and_abort()
 {
     const SimConfig config = regrid_config(0.01);
@@ -667,6 +700,7 @@ int main()
         test_move_poison_and_reentrancy();
         test_scope_validation();
         test_dimension_plan_cardinality();
+        test_device_migration_metadata_rollback();
         test_prepared_regrid_commit_and_abort();
         test_staged_allocation_failure_rollback();
         test_identity_and_residency_rollback();

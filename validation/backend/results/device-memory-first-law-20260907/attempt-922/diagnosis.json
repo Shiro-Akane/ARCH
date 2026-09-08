@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "scope": "retained diagnosis of capacity attempt 922 observed-image cardinality failure",
+  "complete_capacity_gate_pass": false,
+  "original_attempt_status": "failed after the first regrid workload; later workloads did not start",
+  "ordinary_regrid_markers_pass": true,
+  "error_type": "ValueError",
+  "error": "CUDA PID 254728 lacks a unique observed executable image",
+  "observed_image_capture_retained": false,
+  "observed_image_count": null,
+  "cause": "undetermined: the original message covered both zero and multiple observations",
+  "successor_output": "validation/backend/results/device-memory-first-law-20260907/release-925",
+  "artifacts": {
+    "original_recipe": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/attempt-922/replay.py",
+      "sha256": "222973323737304fbf189d89f040a47aac84305344aa8a7e95935b425ae3b928"
+    },
+    "raw_local_profile": {
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-aa61xoh3/regrid_transaction.sqlite",
+      "sha256": "500f58cd112601a95eb3d9bfeb47f234bfe3c0b05e03f57ba59c5b5bd8b90dde"
+    },
+    "guard_log": {
+      "path": "/home/shiroakane/ARCH/build/capacity-final-922.log",
+      "sha256": "63773dafd8951acb25ccca4d5d7f0a3c0f34379a4f7fa79c92db35fd62018c2e"
+    },
+    "stdout": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-922/regrid_transaction/arch.stdout",
+      "sha256": "3f276e69d54b4ac8a162151c45271de461734395e4503593b419ba6569188ec4"
+    },
+    "stderr": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-922/regrid_transaction/arch.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "selected_cuda_event_interval": {
+    "first_ns": 1690181259,
+    "last_ns": 1783837004,
+    "duration_ns": 93655745
+  },
+  "allocation_summary": {
+    "scope": "process-local CUDA allocator requests",
+    "physical_vram_measurement": false,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 2,
+    "note": "Pool reserves overlap requested bytes. Driver/context overhead and managed-memory residency are not inferred.",
+    "processes": [
+      {
+        "global_pid": 285748603387904,
+        "device": 0,
+        "events": 2644,
+        "allocations": 1323,
+        "deallocations": 1321,
+        "largest_allocation_bytes": 52480,
+        "live_bytes_by_kind": {"device": 0, "device_static": 272},
+        "peak_bytes_by_kind": {"device": 531212, "device_static": 272},
+        "peak_device_requested_bytes": 531484,
+        "peak_device_time_ns": 1732062625,
+        "pool_reserved_peak_bytes": {},
+        "pid": 254728,
+        "executable": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_regrid_transaction"
+      }
+    ]
+  }
+}

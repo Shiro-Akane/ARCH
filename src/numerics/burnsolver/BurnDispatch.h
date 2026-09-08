@@ -30,8 +30,10 @@ struct DummyBurner
 {
     template <typename EOSViewType>
     bool integrate(double * /*X_ODE*/, double /*rho*/, double /*dt_target*/,
-                   const EOSViewType & /*eos*/, const BurnConfig & /*burn_cfg*/, double & /*dt_rec*/) const
+                   const EOSViewType & /*eos*/, const BurnConfig & /*burn_cfg*/, double & /*dt_rec*/,
+                   double *energy_change = nullptr) const
     {
+        if (energy_change) *energy_change = 0.0;
         return true; // The compiler removes this empty policy from specialized drivers.
     }
 };
@@ -46,7 +48,7 @@ struct CudaHostBurnGuard
     [[noreturn]] bool integrate(
         double* /*X_ODE*/, double /*rho*/, double /*dt_target*/,
         const EOSViewType& /*eos*/, const BurnConfig& /*burn_cfg*/,
-        double& /*dt_rec*/) const
+        double& /*dt_rec*/, double* /*energy_change*/ = nullptr) const
     {
         throw std::logic_error(
             "active CUDA burn was invoked through the host burner handle");
@@ -312,7 +314,7 @@ private:
         const bool automatic = ascii_iequals(lin_type, "auto");
         LinearSolverId selected_id = LinearSolverId::None;
         if (automatic) {
-            selected_id = NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES
+            selected_id = BurnLimits::uses_compact_matrix(NetType::ODE_NEQ)
                 ? LinearSolverId::DenseLu : LinearSolverId::SparseKlu;
         } else {
             const auto selected =
@@ -326,7 +328,7 @@ private:
 
         if (selected_id == LinearSolverId::DenseLu)
         {
-            if constexpr (NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES) {
+            if constexpr (BurnLimits::uses_compact_matrix(NetType::ODE_NEQ)) {
                 std::cout << "[Burn Dispatch] Matrix backend: DenseLU (N="
                           << NetType::ODE_NEQ << ")" << std::endl;
                 using Matrix = DenseMatrixData<NetType::ODE_NEQ>;
@@ -335,9 +337,9 @@ private:
                 return;
             } else {
                 throw std::runtime_error(
-                    "DenseLU is reserved for networks with at most " +
-                    std::to_string(BurnLimits::MAX_SPECIES) +
-                    " isotopes; select linear_solver = SparseKLU or Auto.");
+                    "DenseLU is reserved for systems with at most " +
+                    std::to_string(BurnLimits::MAX_ODE_NEQ) +
+                    " equations; select linear_solver = SparseKLU or Auto.");
             }
         }
         if (selected_id == LinearSolverId::SparseKlu)
@@ -369,7 +371,7 @@ private:
     {
         using namespace arch::dispatch;
         if (linear == LinearSolverId::DenseLu) {
-            if constexpr (NetType::NUM_SPECIES <= BurnLimits::MAX_SPECIES) {
+            if constexpr (BurnLimits::uses_compact_matrix(NetType::ODE_NEQ)) {
                 std::cout << "[Burn Dispatch] Matrix backend: DenseLU (N="
                           << NetType::ODE_NEQ << ")" << std::endl;
                 using Matrix = DenseMatrixData<NetType::ODE_NEQ>;
@@ -378,9 +380,9 @@ private:
                 return;
             }
             throw std::runtime_error(
-                "DenseLU is reserved for networks with at most "
-                + std::to_string(BurnLimits::MAX_SPECIES)
-                + " isotopes; select linear_solver = SparseKLU or Auto.");
+                "DenseLU is reserved for systems with at most "
+                + std::to_string(BurnLimits::MAX_ODE_NEQ)
+                + " equations; select linear_solver = SparseKLU or Auto.");
         }
         if (linear == LinearSolverId::SparseKlu) {
 #if !ARCH_HAS_KLU

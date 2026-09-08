@@ -1,0 +1,68 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/release-cpu-only-20260907
+Test project /home/shiroakane/ARCH/build/release-cpu-only-20260907
+      Start  1: portable_network_generator
+ 1/31 Test  #1: portable_network_generator ...........   Passed    0.15 sec
+      Start  2: cuda_amr_smoke_runner_contract
+ 2/31 Test  #2: cuda_amr_smoke_runner_contract .......   Passed    0.12 sec
+      Start  3: curvilinear_manifest_contract
+ 3/31 Test  #3: curvilinear_manifest_contract ........   Passed    0.09 sec
+      Start  4: memory_guard_contract
+ 4/31 Test  #4: memory_guard_contract ................   Passed    2.16 sec
+      Start  5: backend_validation_contract
+ 5/31 Test  #5: backend_validation_contract ..........   Passed    0.37 sec
+      Start  6: validation_provenance_contract
+ 6/31 Test  #6: validation_provenance_contract .......   Passed    1.87 sec
+      Start  7: runtime_validation_inputs_contract
+ 7/31 Test  #7: runtime_validation_inputs_contract ...   Passed    0.11 sec
+      Start  8: physical_constants
+ 8/31 Test  #8: physical_constants ...................   Passed    0.00 sec
+      Start  9: refinement_indicator_math
+ 9/31 Test  #9: refinement_indicator_math ............   Passed    0.00 sec
+      Start 10: curvilinear_metrics
+10/31 Test #10: curvilinear_metrics ..................   Passed    0.18 sec
+      Start 11: compensated_sum
+11/31 Test #11: compensated_sum ......................   Passed    0.00 sec
+      Start 12: sparse_ode_continuation
+12/31 Test #12: sparse_ode_continuation ..............   Passed    0.01 sec
+      Start 13: checkpoint_conservation_metrics
+13/31 Test #13: checkpoint_conservation_metrics ......   Passed    0.00 sec
+      Start 14: burn_mainline_reference
+14/31 Test #14: burn_mainline_reference ..............   Passed  112.52 sec
+      Start 15: mainline_authority
+15/31 Test #15: mainline_authority ...................   Passed    0.01 sec
+      Start 16: block_handle
+16/31 Test #16: block_handle .........................   Passed    0.00 sec
+      Start 17: state_residency
+17/31 Test #17: state_residency ......................   Passed    0.00 sec
+      Start 18: shared_stage_scheduler
+18/31 Test #18: shared_stage_scheduler ...............   Passed    0.00 sec
+      Start 19: boundary_plan
+19/31 Test #19: boundary_plan ........................   Passed    0.02 sec
+      Start 20: same_level_exchange_plan
+20/31 Test #20: same_level_exchange_plan .............   Passed    0.00 sec
+      Start 21: amr_operation_plans
+21/31 Test #21: amr_operation_plans ..................   Passed    0.00 sec
+      Start 22: amr_flux_surface_plan
+22/31 Test #22: amr_flux_surface_plan ................   Passed    0.00 sec
+      Start 23: topology_transaction
+23/31 Test #23: topology_transaction .................   Passed    0.03 sec
+      Start 24: resolved_execution_plan
+24/31 Test #24: resolved_execution_plan ..............   Passed    0.00 sec
+      Start 25: runtime_probe_and_capabilities
+25/31 Test #25: runtime_probe_and_capabilities .......   Passed    0.00 sec
+      Start 26: reduction_contract
+26/31 Test #26: reduction_contract ...................   Passed    0.00 sec
+      Start 27: compute_backend
+27/31 Test #27: compute_backend ......................   Passed    0.00 sec
+      Start 28: device_block_store_lifecycle
+28/31 Test #28: device_block_store_lifecycle .........   Passed    0.00 sec
+      Start 29: checkpoint_compatibility
+29/31 Test #29: checkpoint_compatibility .............   Passed    0.02 sec
+      Start 30: tabular_eos_ideal_gas
+30/31 Test #30: tabular_eos_ideal_gas ................   Passed    0.13 sec
+      Start 31: sparse_klu_161_equations
+31/31 Test #31: sparse_klu_161_equations .............   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 31
+
+Total Test time (real) = 117.83 sec

@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -32,6 +33,8 @@ void expect_rejected(Function&& function, const std::string& message)
     try {
         function();
     } catch (const std::runtime_error&) {
+        rejected = true;
+    } catch (const std::invalid_argument&) {
         rejected = true;
     }
     expect(rejected, message);
@@ -100,6 +103,7 @@ io::CheckpointData make_checkpoint(
     checkpoint.has_timestep_state = true;
     checkpoint.resume_after_regrid = true;
     checkpoint.has_enuc_rate = true;
+    checkpoint.has_mass_fractions = true;
     checkpoint.provenance = provenance;
     checkpoint.levels = {0};
     checkpoint.logical_x1 = {0};
@@ -112,6 +116,7 @@ io::CheckpointData make_checkpoint(
     checkpoint.eng = {10.0, 20.0};
     checkpoint.enuc_rate = {-3.5, 8.25};
     checkpoint.rhoX = {0.5, 1.0, 1.5, 3.0};
+    checkpoint.mass_fractions = {0.25, 0.25, 0.75, 0.75};
     return checkpoint;
 }
 
@@ -271,10 +276,10 @@ void test_identity_and_digest(const std::filesystem::path& directory)
            "legacy checkpoint was presented as provenance-verified");
 }
 
-void test_hdf5_v3_round_trip(const std::filesystem::path& directory)
+void test_hdf5_round_trip(const std::filesystem::path& directory)
 {
     const auto table = directory / "round-trip-table.bin";
-    const auto checkpoint_path = directory / "checkpoint-v3.h5";
+    const auto checkpoint_path = directory / "checkpoint-v4.h5";
     write_bytes(table, "checkpoint table identity");
     SpeciesManager species = make_species();
     SimConfig config;
@@ -292,12 +297,15 @@ void test_hdf5_v3_round_trip(const std::filesystem::path& directory)
     const auto restored = io::read_hdf5_chk_impl(checkpoint_path.string());
     expect(restored.has_enuc_rate
                && restored.enuc_rate == checkpoint.enuc_rate,
-           "v3 checkpoint did not preserve ENUC state");
+           "checkpoint did not preserve ENUC state");
     expect(restored.rhoX == checkpoint.rhoX,
-           "v3 checkpoint changed species conserved state");
+           "checkpoint changed species conserved state");
+    expect(restored.has_mass_fractions
+               && restored.mass_fractions == checkpoint.mass_fractions,
+           "checkpoint changed native composition");
     expect(io::require_checkpoint_provenance_compatible(
                restored.provenance, expected),
-           "v3 checkpoint lost its scientific identity");
+           "checkpoint lost its scientific identity");
     expect(restored.provenance.eos_table_sha256
                != arch::core::file_sha256(table.string()),
            "checkpoint output re-fingerprinted the table path instead of "
@@ -305,7 +313,7 @@ void test_hdf5_v3_round_trip(const std::filesystem::path& directory)
     expect(restored.provenance.burn_enabled
                && restored.provenance.active_network == "aprox19"
                && restored.provenance.nse_enabled,
-           "v3 checkpoint lost its active burn/NSE identity");
+           "checkpoint lost its active burn/NSE identity");
 
     {
         HighFive::File file(checkpoint_path.string(), HighFive::File::ReadWrite);
@@ -319,16 +327,25 @@ void test_hdf5_v3_round_trip(const std::filesystem::path& directory)
         file.getAttribute("burn_enabled").write(1);
     }
 
-    // A v1/v2 reader contract deliberately ignores fields introduced later.
+    // Older readers deliberately ignore fields introduced later.
     // Downgrading only the version marker is enough to exercise that branch;
     // real legacy files simply omit the ignored extra objects as well.
+    {
+        HighFive::File file(checkpoint_path.string(), HighFive::File::ReadWrite);
+        file.getAttribute("checkpoint_version").write(3);
+    }
+    const auto v3 = io::read_hdf5_chk_impl(checkpoint_path.string());
+    expect(v3.has_enuc_rate && v3.provenance.available
+               && !v3.has_mass_fractions && v3.mass_fractions.empty()
+               && v3.rhoX == checkpoint.rhoX,
+           "v3 composition compatibility changed");
     {
         HighFive::File file(checkpoint_path.string(), HighFive::File::ReadWrite);
         file.getAttribute("checkpoint_version").write(2);
     }
     const auto legacy = io::read_hdf5_chk_impl(checkpoint_path.string());
     expect(!legacy.has_enuc_rate && !legacy.provenance.available
-               && legacy.enuc_rate.empty(),
+               && legacy.enuc_rate.empty() && !legacy.has_mass_fractions,
            "v2 checkpoint was incorrectly marked v3-compatible");
 
     SimConfig ideal_config;
@@ -346,13 +363,77 @@ void test_hdf5_v3_round_trip(const std::filesystem::path& directory)
                 expected.eos_table_sha256);
         },
         "ideal-gas provenance accepted a table digest");
-    const auto ideal_path = directory / "checkpoint-v3-ideal.h5";
+    const auto ideal_path = directory / "checkpoint-v4-ideal.h5";
     io::write_hdf5_chk_impl(
         ideal_path.string(), make_checkpoint(ideal_identity));
     const auto ideal = io::read_hdf5_chk_impl(ideal_path.string());
     expect(io::require_checkpoint_provenance_compatible(
                ideal.provenance, ideal_identity),
-           "ideal-gas v3 identity did not round trip");
+           "ideal-gas identity did not round trip");
+}
+
+void test_native_composition(const std::filesystem::path& directory)
+{
+    SimConfig config;
+    const auto species = make_species();
+    const auto identity = io::inspect_checkpoint_provenance(
+        config, species, EosId::Ideal, false, "none", false);
+    auto checkpoint = make_checkpoint(identity);
+    // Actual BurnGradient witness: binary64 multiplication/division changes
+    // the original fraction by one ULP despite preserving ordinary budgets.
+    checkpoint.rho[0] = 0x1.312cfcc31ba75p+23;
+    checkpoint.mass_fractions[0] = 0x1.ffffffffdd789p-2;
+    checkpoint.mass_fractions[2] = 1.0 - checkpoint.mass_fractions[0];
+    for (size_t entry = 0; entry < checkpoint.rhoX.size(); ++entry)
+        checkpoint.rhoX[entry] = checkpoint.rho[entry % checkpoint.rho.size()]
+                              * checkpoint.mass_fractions[entry];
+    expect(checkpoint.rhoX[0] / checkpoint.rho[0] != checkpoint.mass_fractions[0],
+           "native-composition fixture does not expose lossy rhoX reconstruction");
+
+    const auto path = directory / "native-composition.h5";
+    io::write_hdf5_chk_impl(path.string(), checkpoint);
+    const auto restored = io::read_hdf5_chk_impl(path.string());
+    expect(restored.has_mass_fractions && restored.mass_fractions == checkpoint.mass_fractions,
+           "native mass fractions did not round trip exactly");
+    expect(restored.rhoX == checkpoint.rhoX, "conserved composition changed");
+    {
+        HighFive::File file(path.string(), HighFive::File::ReadOnly);
+        int version = 0;
+        file.getAttribute("checkpoint_version").read(version);
+        expect(version == 4, "native composition lacks its explicit format version");
+    }
+    auto bad = checkpoint;
+    bad.has_mass_fractions = false;
+    bad.mass_fractions.clear();
+    expect_rejected([&] { io::write_hdf5_chk_impl(path.string(), bad); },
+                    "writer accepted missing native composition");
+    bad = checkpoint;
+    bad.mass_fractions.pop_back();
+    expect_rejected([&] { io::write_hdf5_chk_impl(path.string(), bad); },
+                    "writer accepted malformed native composition dimensions");
+    for (const double corrupted : {0.0, std::numeric_limits<double>::quiet_NaN()}) {
+        auto fractions = checkpoint.mass_fractions;
+        fractions[0] = corrupted;
+        {
+            HighFive::File file(path.string(), HighFive::File::ReadWrite);
+            file.getDataSet("Data/X").write_raw(fractions.data());
+        }
+        expect_rejected([&] { (void)io::read_hdf5_chk_impl(path.string()); },
+                        "reader accepted inconsistent or nonfinite native composition");
+    }
+    {
+        HighFive::File file(path.string(), HighFive::File::ReadWrite);
+        file.unlink("Data/X");
+    }
+    expect_rejected([&] { (void)io::read_hdf5_chk_impl(path.string()); },
+                    "v4 reader accepted a missing native-composition dataset");
+    {
+        HighFive::File file(path.string(), HighFive::File::ReadWrite);
+        file.getAttribute("checkpoint_version").write(3);
+    }
+    const auto older = io::read_hdf5_chk_impl(path.string());
+    expect(!older.has_mass_fractions && older.rhoX == checkpoint.rhoX,
+           "real v3 conserved-composition payload is no longer readable");
 }
 
 } // namespace
@@ -366,7 +447,8 @@ int main(int argc, char** argv)
         std::filesystem::create_directories(directory);
         test_sha256_padding_boundaries(directory);
         test_identity_and_digest(directory);
-        test_hdf5_v3_round_trip(directory);
+        test_hdf5_round_trip(directory);
+        test_native_composition(directory);
         std::cout << "checkpoint compatibility tests passed\n";
         return 0;
     } catch (const std::exception& error) {

@@ -36,7 +36,8 @@ ARCH_INLINE void reconstruct_amr_face(
 template <typename Reconstruction, typename Flux, typename EosView>
 __global__ void hydro_face_kernel(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
-    EosView eos, int direction, double coefficient)
+    EosView eos, int direction, double coefficient,
+    SpeciesWorkspaceView workspace = {})
 {
     int i_begin = grid.is;
     int j_begin = grid.js;
@@ -50,40 +51,42 @@ __global__ void hydro_face_kernel(
     const int ni = grid.ie - i_begin;
     const int nj = grid.je - j_begin;
     const int nk = grid.ke - k_begin;
-    int linear = blockIdx.x * blockDim.x + threadIdx.x;
-    if (linear >= ni * nj * nk)
-        return;
-    const int i = i_begin + linear % ni;
-    linear /= ni;
-    const int j = j_begin + linear % nj;
-    const int k = k_begin + linear / nj;
-    const int cell = grid.index(i, j, k);
-    const int stride = grid.stride(direction);
+    const int lane = blockIdx.x * blockDim.x + threadIdx.x;
+    SpeciesLaneScratch<4> scratch(workspace, lane);
+    double* species_left = scratch.array(0);
+    double* species_right = scratch.array(1);
+    double* species_cell = scratch.array(2);
+    double* face_species_flux = scratch.array(3);
+    for (int linear = lane; linear < ni * nj * nk;
+         linear += blockDim.x * gridDim.x) {
+        const int i = i_begin + linear % ni;
+        const int j = j_begin + (linear / ni) % nj;
+        const int k = k_begin + linear / (ni * nj);
+        const int cell = grid.index(i, j, k);
+        const int stride = grid.stride(direction);
 
-    double species_left[kMaxDeviceSpecies];
-    double species_right[kMaxDeviceSpecies];
-    double species_cell[kMaxDeviceSpecies];
-    double face_species_flux[kMaxDeviceSpecies];
-    FluidVector left;
-    FluidVector right;
-    reconstruct_amr_face<Reconstruction>(
-        state, grid, direction, i, j, k, cell, stride, eos, left, right,
-        species_left, species_right, species_cell);
-    FluidVector face_flux;
-    Flux::compute(
-        left, right, species_left, species_right, state.n_species, eos,
-        direction, coefficient, face_flux, face_species_flux);
-    const int face = cell + stride;
-    flux.store(face, face_flux);
-    for (int species = 0; species < state.n_species; ++species)
-        flux.set_species(species, face, face_species_flux[species]);
+        FluidVector left;
+        FluidVector right;
+        reconstruct_amr_face<Reconstruction>(
+            state, grid, direction, i, j, k, cell, stride, eos, left, right,
+            species_left, species_right, species_cell);
+        FluidVector face_flux;
+        Flux::compute(
+            left, right, species_left, species_right, state.n_species, eos,
+            direction, coefficient, face_flux, face_species_flux);
+        const int face = cell + stride;
+        flux.store(face, face_flux);
+        for (int species = 0; species < state.n_species; ++species)
+            flux.set_species(species, face, face_species_flux[species]);
+    }
 }
 } // namespace detail
 
 template <typename Reconstruction, typename Flux, typename EosView>
 inline cudaError_t launch_hydro_faces(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
-    const EosView& eos, int direction, double coefficient, cudaStream_t stream)
+    const EosView& eos, int direction, double coefficient, cudaStream_t stream,
+    SpeciesWorkspaceView workspace = {})
 {
     const int directional_begin = direction == 0 ? grid.is
         : (direction == 1 ? grid.js : grid.ks);
@@ -92,6 +95,7 @@ inline cudaError_t launch_hydro_faces(
     const int directional_extent = direction == 0 ? grid.total_x
         : (direction == 1 ? grid.total_y : grid.total_z);
     if (!valid_hydro_view(state) || !valid_hydro_view(flux)
+        || !valid_species_workspace(workspace, state.n_species, 4)
         || state.n_species != flux.n_species
         || state.total_size != flux.total_size
         || state.total_size != grid.total_size
@@ -111,13 +115,13 @@ inline cudaError_t launch_hydro_faces(
         ++nj;
     else
         ++nk;
-    constexpr int threads = 128;
+    const int threads = detail::species_launch_threads(workspace);
     const int count = ni * nj * nk;
     if (count <= 0)
         return cudaSuccess;
     detail::hydro_face_kernel<Reconstruction, Flux>
-        <<<detail::hydro_launch_blocks(count, threads), threads, 0, stream>>>(
-            state, flux, grid, eos, direction, coefficient);
+        <<<detail::species_launch_blocks(count, workspace), threads, 0, stream>>>(
+            state, flux, grid, eos, direction, coefficient, workspace);
     return cudaGetLastError();
 }
 } // namespace arch::cuda

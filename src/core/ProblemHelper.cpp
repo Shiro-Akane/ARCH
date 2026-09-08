@@ -35,9 +35,15 @@ namespace ProblemHelper
         const auto selected = parse_registered_policy<NetworkPolicies>(
             net_type);
 
-        if (!selected.ok || selected.value == NetworkId::None)
+        if (!selected.ok)
             throw std::runtime_error(
                 "Unknown network_name in SetupNetworkAndFractions: " + net_type);
+        if (selected.value == NetworkId::None) {
+            if (config.physics.burn.use_burn)
+                throw std::runtime_error("Burning requires a registered reaction network");
+            // A nonreacting problem supplies its own gas species and fractions.
+            return;
+        }
         bool setup = false;
         const bool registered = visit_policy<NetworkPolicies>(
             selected.value, [&]<class Registration> {

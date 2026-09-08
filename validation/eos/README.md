@@ -1,136 +1,105 @@
-# Tabular EOS interpolation and Shen source-table assessment
+# EOS validation
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
-the authoritative source text.
+Chinese translation: [README.zh-CN.md](README.zh-CN.md). English is authoritative.
 
-> CPU status: normalized rank-3/rank-4 smooth free-energy tables pass the
-> spacing sweep. Two real Shen assets were acquired and audited but are not
-> accepted as directly loadable ARCH tables. CUDA: pending.
+The results on this page refer to the scientific acceptance version identified
+in the [central Validation index](../README.md); subsequent directory maintenance
+and new-build checks are recorded separately in the
+[maintenance record](../backend/results/maintenance-freeze-20260908/).
 
-## Normalized HDF5 sweep
+EOS verification combines independent thermodynamic references with actual
+hydrodynamic and burning applications. Ideal gas, Helmholtz and normalized
+Tabular3D/Tabular4D share their mathematics between CPU and CUDA; backend owners
+provide table storage and lifetime management.
 
-An isolated audit derived from the tabular EOS regression wrote analytic
-ideal-gas Helmholtz free energy into both normalized rank-3 and rank-4 HDF5
-layouts at five resolutions. Rank selection was automatic and both policies
-were sampled at 100 interior thermodynamic points and the four `rho`/`T`
-corners at each policy's fixed test composition. The scalar results are retained
-here; the multi-resolution audit source is not a committed test target.
+## Coupled application results
 
-The C++ sweep used a working tree based on
-`affde827fcbf317382ed45372912b562652a71c5` plus the changes recorded here,
-GCC 13.3.0, the CPU backend,
-Release flags `-O3 -march=native -ffast-math -DNDEBUG`, and the same
-Intel Core i7-10700 x86_64 WSL2 host used for the external-table analyses.
-The regression itself is serial; `OMP_NUM_THREADS=2` was set for the surrounding
-ARCH build.
+The [Release application record](results/application-native-20260907/release-891/evidence.json)
+passes twelve cases and 96 CPU/CUDA executions. The
+[independent endpoint record](results/application-native-20260907/endpoints-892/evidence.json)
+checks all 24 physical endpoints. Both records identify the same source,
+executable, comparator and dependencies and verify that they stayed unchanged.
 
-| nodes per thermodynamic axis | spacing (dex) | full maximum relative error | interior maximum |
-| ---: | ---: | ---: | ---: |
-| 17 | 0.125 | 0.516063 | 0.118984 |
-| 33 | 0.0625 | 0.0494655 | 0.0132374 |
-| 65 | 0.03125 | 0.00542707 | 0.00153701 |
-| 129 | 0.015625 | 0.000696707 | 0.000194342 |
-| 161 | 0.0125 | 0.000361253 | 0.0000942008 |
+Analytic ideal-gas data populate direct-field and free-energy tables of both
+ranks. Four cases evolve an entropy wave on a mixed-level adaptive mesh to
+`t=1e-9`; density is compared with exact finite-volume wave averages. Eight
+cases evolve aprox13 burning at fixed density to `t=1e-10`, using BE_NR, BD and
+ROS4 with free-energy tables and BD with direct-field tables. These burning
+cases disable NSE. Intermediate step checks supplement the prescribed-time
+physical comparisons.
 
-The 129- and 161-node tables meet the `1e-3` full-domain criterion. A smooth
-new table should therefore start near 0.015 dex or finer when its outer nodes
-are queried. Guard nodes reduce boundary-stencil error, but every production
-table still requires axis-halving, especially near rapid curvature or phase
-boundaries. The analytic free energy is composition independent, so this test
-verifies 3D/4D rank detection and layout but not nonlinear composition-axis
-accuracy.
-
-An additional nonideal direct-table probe omitted both derivative datasets and
-used `e = cv T + alpha rho`, `P = R rho T + K rho^2`, for which constant-energy
-and constant-temperature density derivatives differ. At `rho = 10` and
-`T = 1e7`, both rank-3 and rank-4 policies returned
-`2.5001704121322535e15`, bitwise equal to an independent constant-energy finite
-difference. The analytic value is `2.5e15` (relative interpolation error
-`6.82e-5`); the constant-temperature result differs by `16.67%`. The same
-one-off probe confirmed rejection of an unknown/missing modern schema version
-and a clean dispatcher cache after failed construction.
-
-## Official Shen EOS4
-
-The official EOS4 archive was obtained from
-[Zenodo record 3612487](https://zenodo.org/records/3612487) under CC BY 4.0.
-
-| Asset | Bytes | SHA256 |
+| Check | Largest recorded error | Acceptance budget |
 | --- | ---: | --- |
-| `eos4.tab.zip` | 29,344,007 | `1c47911219a72862a27d4eb3eec765cd38857564f91249d886cb1b8295a8d720` |
-| `eos4.tab` | 143,167,115 | `5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34` |
+| Analytic pressure, free-energy tables | relative `2.975e-10` | `1e-3` |
+| Analytic pressure, direct-field tables | relative `3.236e-4` | `1e-3` |
+| Entropy-wave density | L1 / mean density `9.190e-5` | `1e-3` |
+| Hydro mass, momentum and energy conservation | relative `2.065e-15` | `rtol=2e-12`, `atol=2e-11` |
+| Burn source-aware energy closure | relative `3.713e-15` | `1e-12` |
 
-The table has 650,650 states: 110 density points at 0.1 dex, 91 temperature
-points at 0.04 dex, and 65 proton-fraction points at 0.01 spacing. It provides a
-baryonic free energy in MeV per baryon relative to 938 MeV. Matching its
-internal-energy zero requires adding 6.506 MeV per baryon before converting to
-ARCH specific free energy. Treating its proton fraction as `Ye` additionally
-assumes charge neutrality. The source is a baryonic table; constructing the
-total EOS expected by ARCH also requires a documented electron/positron and
-photon component model.
+CPU/CUDA fields pass `rtol=2e-8`, `atol=1e-12`; burning mass fractions satisfy
+the `1e-12` sum budget. Hydro conservation uses physical cell volumes. The
+independent burn check computes nuclear binding-energy release from native
+mass fractions and compares it with conserved-energy change; expected energy
+does not come from a production EOS or time integrator.
 
-Applying ARCH's five-point derivative reconstruction directly to that baryonic
-potential gives median/90th/99th pressure relative errors of
-`3.89e-5 / 1.20e-3 / 0.1215`; internal-energy errors are
-`3.53e-5 / 0.05097 / 0.4295`. The source contains 78,335 negative-pressure
-states. Reconstructed `P`, `cv`, or `cs2` is non-positive or non-finite in
-98,867 states. These are not silently clipped: a baryon-only table is
-incompatible with the current total-EOS positivity contract until a documented
-component model and valid/phase domain are supplied.
+The tables and trajectories define the scope of these results. Validity of a
+user-supplied EOS table follows its documented thermodynamic domain and data
+contract. The [validation index](../README.md) records overall acceptance,
+combining these results with full regression, restart, sanitizer, sustained
+execution and capacity evidence.
 
-## StellarCollapse HShen HDF5
+## Independent mathematical checks
 
-The EOSDriver-format HShen table was obtained from the
-[StellarCollapse EOS collection](https://stellarcollapse.org/equationofstate.html).
-Its CC BY-NC-SA terms are incompatible with ordinary bundling under the project
-MIT license, so it remains an external validation asset.
+- The EOS tests compare Host/Device values, table ownership and error paths.
+  Manufactured polynomials check interpolation, composition gradients,
+  Hessian actions and heat-capacity derivatives.
+- Helmholtz state, temperature inversion and a short isentropic path use
+  independent references. Weak/strong Coulomb and radiation-dominated states
+  additionally test pressure, energy, heat capacity and electron quantities.
+- [helm_reference.py](helm_reference.py) reconstructs the table interpolant
+  from independent endpoint constraints at two high precisions. It uses the
+  original table data and documented constants, without calling production
+  EOS code. Sound speed and pressure derivatives follow independent
+  thermodynamic identities.
 
-| Asset | Bytes | SHA256 |
-| --- | ---: | --- |
-| compressed H5 | 282,075,158 | `4ae597f50149afa6dc53eb2cf58dd8118f5a40cbbbe011daff405b08219ec3a0` |
-| decompressed H5 | 391,264,384 | `3b7c598bf56ec12d734e13a97daf1eeb1f58f59849c5f65c4f9f72dd292b177c` |
+[Earlier focused records](results/current-constants-20260906/README.md) retain
+their original test artifacts and reference criteria. They are separate from
+the application records above.
 
-Its shape is `(Ye,T,rho) = (65,180,220)`. It stores `logpress`, shifted
-`logenergy`, entropy, `dedt`, `cs2`, and pressure derivatives, but no Helmholtz
-free energy. The audit reversed its `2.49119e18 erg/g` energy shift and
-converted the MeV temperature and entropy in `k_B` per baryon consistently to
-erg/g before reconstructing `a = e - T s`. Applying the ARCH finite differences
-then gives the following relative-error quantiles against the native fields:
+## Reproduce
 
-| field | q50 | q90 | q99 | reconstructed non-positive count |
-| --- | ---: | ---: | ---: | ---: |
-| pressure | `6.90e-5` | `1.388e-2` | `0.21696` | 3,863 |
-| cv | `1.043e-2` | `0.6377` | `9.136` | 41,874 |
-| cs2 | `1.337e-3` | `0.1509` | `7.177` | 32,514 |
-| energy | `1.312e-4` | `1.622e-2` | `0.6151` | — |
+Run the [application recipe](results/application-native-20260907/replay.py)
+with `--build-dir` and a new `--output-dir`. It creates the manufactured tables
+and runs both backends through the common application validator. Then run the
+[endpoint checker](results/application-native-20260907/check_terminal.py)
+with the same `--build-dir`, `--report` pointing to the application `evidence.json`,
+and another new `--output-dir`. These scripts require NumPy and h5py and retain
+inputs, scientific budgets and artifact identities in their reports.
 
-Mapping this file to the legacy direct layout would also change its semantics:
-EOSDriver interpolates `logP` and shifted `logE`, whereas ARCH direct tables
-currently interpolate the physical fields linearly. The source also contains
-7,998 non-positive `dedt` and 1,443 non-positive `cs2` states. It is therefore
-recorded as assessed/not accepted, not as a failed download or a supported EOS.
+Use a CUDA-enabled build configured as described in the
+[build guide](../../README.md). Select build concurrency according to available
+memory. The mathematical tests can also be run separately:
 
-## Converter boundary
+```bash
+cmake --build build --target arch_cuda_eos_host_device_parity
+ctest --test-dir build -R '^eos_host_device_parity$' --output-on-failure
+python validation/eos/helm_reference.py
+```
 
-A production converter for these families needs explicit coordinate arrays and
-units, energy-zero and shift metadata, baryon/lepton/photon scope, `Ye`/`Yp`
-semantics, native free-energy derivatives where available, valid/phase masks,
-per-field `linear`/`log10`/`shifted_log10` transforms, and source/version/license
-provenance. Current schema v1 remains valid for smooth uniformly spaced
-Helmholtz tables; this assessment defines the extension work required before a
-real nuclear-matter table can be claimed.
+The independent script requires NumPy, SciPy and mpmath. Its output is a
+reference calculation, not an automatic fixture update. The normalized CPU
+table regression can also be run with:
 
-## Maintained smoke
-
-~~~bash
-cmake -S . -B build -DBUILD_TESTING=ON
+```bash
 cmake --build build --target tabular_eos_regression
-ctest --test-dir build -R tabular_eos_ideal_gas --output-on-failure
-~~~
+ctest --test-dir build -R '^tabular_eos_ideal_gas$' --output-on-failure
+```
 
-This command checks the 161-node normalized 3D/4D tables and the legacy direct
-path. It does not rerun the complete five-resolution audit above.
+## Table formats and follow-up work
 
-The large external assets and exploratory conversion data are deliberately not
-committed. Their checksums are listed above; selected scalar results are
-retained in [metrics.csv](metrics.csv).
+Production tabular EOS inputs follow the normalized 3D/4D HDF5
+[data contract](../../src/physics/eos/TabularEOS.md). Converting native Shen
+EOS4/EOSDriver data is a separate future extension that must document units,
+energy zero, thermodynamic components and valid domains. The
+[historical source-table assessment](results/tabular-assessment-archive.md)
+retains the original spacing study and source-data analysis.

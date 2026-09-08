@@ -7,6 +7,7 @@
 
 #include "amr/AmrTransferPlans.h"
 #include "amr/BlockHandle.h"
+#include "data/GlobalDefs.h"
 #include "driver/StageScheduler.h"
 
 #include <cstddef>
@@ -71,8 +72,8 @@ struct BackendStateAccess {
 
 /**
  * Backend-neutral description of one block in an unpublished topology.
- * Topology and state reconstruction remain Host-owned; a device backend uses
- * this only to stage its private allocation namespace.
+ * Topology remains Host-owned; numerical reconstruction executes the shared
+ * AMR leaves on the selected backend inside its private staged namespace.
  */
 struct BackendTopologyBinding {
     const amr::Block* block = nullptr;
@@ -287,6 +288,12 @@ public:
     {
         return false;
     }
+    virtual std::vector<double> evaluate_refinement_indicators(
+        std::span<const BackendStateAccess>, const AmrConfig&, double,
+        std::span<const int>)
+    {
+        throw std::logic_error("backend AMR indicators are unavailable");
+    }
     virtual std::unique_ptr<BackendTopologyStoreTransaction>
     begin_topology_store_transaction(
         const amr::AmrPlanScope&,
@@ -301,6 +308,22 @@ public:
     {
         throw std::logic_error(
             "backend staged Current upload is unavailable");
+    }
+    /** Reconstruct staged interiors from immutable old-device sources. */
+    virtual void migrate_staged_current(
+        BackendTopologyStoreTransaction&,
+        std::span<const BackendStateAccess>, const amr::ProlongationPlan&,
+        const amr::RestrictionPlan&)
+    {
+        throw std::logic_error("backend device regrid migration is unavailable");
+    }
+    /** Complete physical and shared logical ghost plans in the staged store. */
+    virtual void complete_staged_current_ghosts(
+        BackendTopologyStoreTransaction&,
+        std::span<const amr::SameLevelExchangePlan>,
+        const amr::CoarseFineTransferPlan&)
+    {
+        throw std::logic_error("backend staged device ghosts are unavailable");
     }
     /** Prepare all throwing AMR flux allocations for the active topology. */
     virtual void prepare_amr_flux_plan(

@@ -1,78 +1,86 @@
-# 表格 EOS 插值与 Shen 来源表评估
+# EOS 验证
 
-英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
+英文原文：[README.md](README.md)。英文版为规范文本。
 
-> CPU 状态：规范化 3D/4D 平滑自由能表通过间隔 sweep；两份真实 Shen 资产已下载并审计，但未被接受为可直接载入的 ARCH 表。CUDA 待验证。
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
+及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
-## 规范化 HDF5 sweep
+EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、Helmholtz 和
+规范化 Tabular3D/Tabular4D 在 CPU 与 CUDA 上共用数学实现；后端负责表格
+存储及其生命周期管理。
 
-一次由 tabular EOS 回归派生的独立审计，把解析理想气体 Helmholtz 自由能按五种分辨率分别写入规范化 3D 和 4D HDF5 布局，自动选择 rank，并在各 policy 的固定测试组分下采样 100 个热力学内部点和四个 `rho`/`T` 角点。这里统一保留标量结果；多分辨率审计源码不作为仓库 test target 提交。
+## 耦合应用结果
 
-C++ sweep 使用以 `affde827fcbf317382ed45372912b562652a71c5` 为基线、并包含本页
-记录改动的工作树，以及 GCC 13.3.0、CPU backend、Release flags
-`-O3 -march=native -ffast-math -DNDEBUG`，外部来源表分析也在同一台 x86_64
-WSL2 Intel Core i7-10700 上完成。该回归本身为串行；周边 ARCH 构建设置了
-`OMP_NUM_THREADS=2`。
+[Release 应用记录](results/application-native-20260907/release-891/evidence.json)
+通过了十二个案例、96 次 CPU/CUDA 执行。
+[独立端点记录](results/application-native-20260907/endpoints-892/evidence.json)
+检查了全部 24 个物理时刻端点。两份记录使用相同的源码、程序、比较工具和依赖库，
+并检查它们在执行期间保持不变。
 
-| 每条热力学轴节点数 | 间隔 (dex) | 全域最大相对误差 | 内部最大误差 |
-| ---: | ---: | ---: | ---: |
-| 17 | 0.125 | 0.516063 | 0.118984 |
-| 33 | 0.0625 | 0.0494655 | 0.0132374 |
-| 65 | 0.03125 | 0.00542707 | 0.00153701 |
-| 129 | 0.015625 | 0.000696707 | 0.000194342 |
-| 161 | 0.0125 | 0.000361253 | 0.0000942008 |
+两种表格维数都使用解析理想气体数据，分别构建直接物理量表与自由能表。
+四个案例在混合层级的自适应网格上演化熵波至 `t=1e-9`，将密度与精确有限体积
+波形平均值比较。八个案例在固定密度下演化 aprox13 燃烧至 `t=1e-10`：
+自由能表覆盖 BE_NR、BD 和 ROS4，直接物理量表使用 BD；这些燃烧案例关闭 NSE。
+中间步检查补充固定物理时刻的解对比。
 
-129 与 161 节点表满足全域 `1e-3` 判据。因此，当会查询最外节点时，新的平滑表应从约 0.015 dex 或更细开始。Guard node 能降低边界模板误差，但所有生产表仍必须逐轴减半，尤其要检查大曲率和相边界。该解析自由能与组分无关，所以测试验证 3D/4D 自动识别与布局，但不证明非线性组分轴精度。
-
-另一份非理想 direct-table probe 省略两个导数 dataset，并采用 `e = cv T + alpha rho`、`P = R rho T + K rho^2`，使定能与定温密度导数明确不同。在 `rho = 10`、`T = 1e7` 时，rank-3 与 rank-4 policy 都返回 `2.5001704121322535e15`，与独立定能有限差分逐位一致。解析值为 `2.5e15`（插值相对误差 `6.82e-5`），而定温结果与其相差 `16.67%`。同一份一次性 probe 还确认未知或缺失的现代 schema 版本会被拒绝，构造失败后 dispatch cache 保持干净。
-
-## 官方 Shen EOS4
-
-官方 EOS4 档案来自采用 CC BY 4.0 的 [Zenodo 3612487](https://zenodo.org/records/3612487)。
-
-| 资产 | 字节数 | SHA256 |
+| 检查 | 已记录的最大误差 | 验收预算 |
 | --- | ---: | --- |
-| `eos4.tab.zip` | 29,344,007 | `1c47911219a72862a27d4eb3eec765cd38857564f91249d886cb1b8295a8d720` |
-| `eos4.tab` | 143,167,115 | `5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34` |
+| 解析压力，自由能表 | 相对误差 `2.975e-10` | `1e-3` |
+| 解析压力，直接物理量表 | 相对误差 `3.236e-4` | `1e-3` |
+| 熵波密度 | L1 / 平均密度 `9.190e-5` | `1e-3` |
+| 流体质量、动量和能量守恒 | 相对误差 `2.065e-15` | `rtol=2e-12`、`atol=2e-11` |
+| 燃烧源项能量闭合 | 相对误差 `3.713e-15` | `1e-12` |
 
-该表共有 650,650 个状态：密度 110 点、间隔 0.1 dex；温度 91 点、间隔 0.04 dex；质子分数 65 点、间隔 0.01。其重子自由能以 MeV/baryon 表示并相对 938 MeV；若要与表内能量零点一致，转换为 ARCH 比自由能前必须增加 6.506 MeV/baryon。把质子分数视为 `Ye` 还需要电中性假设。源文件本身是重子表；构造 ARCH 所需的总 EOS 还必须明确加入电子/正电子和光子分量模型。
+CPU/CUDA 场通过 `rtol=2e-8`、`atol=1e-12` 的对比；燃烧质量分数满足 `1e-12`
+的归一化预算。流体守恒使用物理单元体积。独立燃烧检查从原始质量分数计算核结合能
+释放，并与守恒能量的变化比较；期望能量不调用生产 EOS 或时间积分器取得。
 
-直接对该重子势使用 ARCH 五点导数重构，压力相对误差中位数/90%/99% 分位为 `3.89e-5 / 1.20e-3 / 0.1215`，内能误差为 `3.53e-5 / 0.05097 / 0.4295`。源表有 78,335 个负压力状态；重构后 `P`、`cv` 或 `cs2` 非正或非有限的并集为 98,867 个状态。这里不做静默裁零：在提供明确的分量模型与有效区/相区以前，仅重子表不满足当前总 EOS 正值契约。
+这些结果的覆盖范围由受测表格与轨迹确定。用户自备 EOS 表的有效性遵循其声明的
+热力学定义域与数据契约。[验证索引](../README.zh-CN.md)统一记录整体验收状态，
+汇总这些结果及完整回归、重启、设备安全检查、持续运行和容量证据。
 
-## StellarCollapse HShen HDF5
+## 独立数学检查
 
-EOSDriver 格式 HShen 表来自 [StellarCollapse EOS 集合](https://stellarcollapse.org/equationofstate.html)。其 CC BY-NC-SA 条款不适合在 MIT 项目中普通捆绑，因此只作为外部验证资产。
+- EOS 测试比较 Host/Device 数值，并覆盖表格存储管理与错误路径。
+  人工构造的多项式检查插值、组分梯度、Hessian 作用量与比热导数。
+- Helmholtz 状态、温度反演和短等熵路径使用独立参考。弱／强库仑与辐射主导状态
+  另行检查压力、能量、比热和电子量。
+- [helm_reference.py](helm_reference.py) 根据独立端点约束，以两档高精度重建
+  表格插值；它使用原始表数据和注明的常数，不调用生产 EOS 代码。
+  声速与压力导数通过独立热力学关系核对。
 
-| 资产 | 字节数 | SHA256 |
-| --- | ---: | --- |
-| 压缩 H5 | 282,075,158 | `4ae597f50149afa6dc53eb2cf58dd8118f5a40cbbbe011daff405b08219ec3a0` |
-| 解压 H5 | 391,264,384 | `3b7c598bf56ec12d734e13a97daf1eeb1f58f59849c5f65c4f9f72dd292b177c` |
+[早期定向记录](results/current-constants-20260906/README.md)保留原有测试程序
+与参考判据，与上面的应用记录分开归档。
 
-其 shape 为 `(Ye,T,rho) = (65,180,220)`，包含 `logpress`、带 shift 的 `logenergy`、entropy、`dedt`、`cs2` 和压力导数，但没有 Helmholtz 自由能。审计先撤销 `2.49119e18 erg/g` 能量 shift，并把 MeV 温度与 `k_B`/baryon entropy 一致地换算为 erg/g，再用 `a = e - T s` 构造自由能并执行 ARCH 差分。相对原生字段的误差为：
+## 复现
 
-| 字段 | q50 | q90 | q99 | 重构非正数量 |
-| --- | ---: | ---: | ---: | ---: |
-| pressure | `6.90e-5` | `1.388e-2` | `0.21696` | 3,863 |
-| cv | `1.043e-2` | `0.6377` | `9.136` | 41,874 |
-| cs2 | `1.337e-3` | `0.1509` | `7.177` | 32,514 |
-| energy | `1.312e-4` | `1.622e-2` | `0.6151` | — |
+运行[应用脚本](results/application-native-20260907/replay.py)，指定 `--build-dir`
+和新的 `--output-dir`。它生成验证表格，再通过共用应用验证器运行两个后端。
+随后运行[端点检查器](results/application-native-20260907/check_terminal.py)，使用
+相同的 `--build-dir`，以 `--report` 指向应用的 `evidence.json`，并选择另一个新的
+`--output-dir`。这些脚本需要 NumPy 和 h5py，报告保留输入、科学预算及程序身份。
 
-把该文件映射到旧 direct 布局同样会改变语义：EOSDriver 插值 `logP` 和 shifted `logE`，而 ARCH direct 当前线性插值物理字段。源表本身还有 7,998 个非正 `dedt` 和 1,443 个非正 `cs2` 状态。因此本结果标为“已评估/未接受”，而不是下载失败或已支持 EOS。
+按[构建指南](../../README.zh-CN.md) 配置启用 CUDA 的构建目录。
+并行数应按可用内存选择。数学测试也可单独执行：
 
-## 转换器边界
+```bash
+cmake --build build --target arch_cuda_eos_host_device_parity
+ctest --test-dir build -R '^eos_host_device_parity$' --output-on-failure
+python validation/eos/helm_reference.py
+```
 
-这些表族的生产转换器至少需要显式坐标数组与单位、能量零点和 shift 元数据、baryon/lepton/photon 范围、`Ye`/`Yp` 语义、可用时的原生自由能导数、有效区/相区 mask、逐字段 `linear`/`log10`/`shifted_log10` 变换，以及来源/版本/许可信息。当前 schema v1 对平滑、等间隔的 Helmholtz 表仍有效；本次评估明确了真实核物质表接入前所需的扩展工作。
+独立脚本需要 NumPy、SciPy 和 mpmath，只输出参考计算，不自动更新测试数据。
+规范化 CPU 表格回归也可单独运行：
 
-## 维护中的 smoke
-
-~~~bash
-cmake -S . -B build -DBUILD_TESTING=ON
+```bash
 cmake --build build --target tabular_eos_regression
-ctest --test-dir build -R tabular_eos_ideal_gas --output-on-failure
-~~~
+ctest --test-dir build -R '^tabular_eos_ideal_gas$' --output-on-failure
+```
 
-该命令检查 161 节点的规范化 3D/4D 表以及旧 direct 路径，不会重跑上面的完整
-五分辨率审计。
+## 表格式与后续工作
 
-大型外部资产与探索性转换数据不纳入仓库；checksum 列于上文，选定的标量结果
-记录在 [metrics.csv](metrics.csv)。
+生产表格 EOS 输入遵循规范化 3D/4D HDF5
+[数据契约](../../src/physics/eos/TabularEOS.zh-CN.md)。原生 Shen EOS4/EOSDriver
+数据转换属于独立的后续扩展，需要明确单位、能量零点、热力学组成和有效范围。
+[历史来源表评估](results/tabular-assessment-archive.zh-CN.md)保留了原始间距试验
+与源数据分析。

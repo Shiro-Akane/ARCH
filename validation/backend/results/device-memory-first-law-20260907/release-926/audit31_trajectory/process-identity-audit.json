@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "workload": "audit31_trajectory",
+  "status": "passed",
+  "release_qualified": false,
+  "recipe": {
+    "path": "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/replay.py",
+    "sha256": "36437cb84a410b72bc2b8a33b325317d8384980515095ee9ddd9dbb0a4ff4936"
+  },
+  "command": [
+    "/opt/nvidia/nsight-systems/2023.3.3/target-linux-x64/nsys",
+    "profile",
+    "--sample=none",
+    "--cpuctxsw=none",
+    "--trace=cuda",
+    "--cuda-memory-usage=true",
+    "--export=sqlite",
+    "--force-overwrite=false",
+    "--output=/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-3jttwb9k/audit31_trajectory",
+    "/home/shiroakane/miniconda3/envs/p311/bin/python",
+    "-B",
+    "/home/shiroakane/ARCH/validation/network/run_sparse_validation.py",
+    "--build-dir",
+    "/home/shiroakane/ARCH/build/release-core-throughput-cmake",
+    "--output-dir",
+    "/home/shiroakane/ARCH/validation/backend/results/device-memory-first-law-20260907/release-926/sparse-validation",
+    "--network-id",
+    "audit31",
+    "--rho",
+    "1e7",
+    "--temperature",
+    "3e9",
+    "--interval",
+    "1e-10",
+    "--cv",
+    "1e8",
+    "--rtol",
+    "1e-7",
+    "--steps",
+    "64",
+    "--timeout",
+    "1800",
+    "--composition",
+    "c12=0.5",
+    "o16=0.5"
+  ],
+  "allocation_summary": {
+    "scope": "process-local CUDA allocator requests",
+    "physical_vram_measurement": false,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 16,
+    "note": "Pool reserves overlap requested bytes. Driver/context overhead and managed-memory residency are not inferred.",
+    "processes": [
+      {
+        "global_pid": 286095505883136,
+        "device": 0,
+        "events": 73744,
+        "allocations": 36880,
+        "deallocations": 36864,
+        "largest_allocation_bytes": 8388608,
+        "live_bytes_by_kind": {
+          "device": 0,
+          "device_static": 577
+        },
+        "peak_bytes_by_kind": {
+          "device": 9401860,
+          "device_static": 577
+        },
+        "peak_device_requested_bytes": 9402437,
+        "peak_device_time_ns": 189606750960,
+        "pool_reserved_peak_bytes": {},
+        "pid": 275405,
+        "executable": "arch_cuda_gener"
+      }
+    ]
+  },
+  "selected_process_capture": {
+    "schema": 1,
+    "complete": true,
+    "poll_interval_seconds": 0.05,
+    "observations": [
+      {
+        "pid": 275405,
+        "start_time_ticks": 1674785,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_sparse_burn_audit31",
+        "artifact_observation": [
+          2096,
+          529169,
+          5139704,
+          1788787294163191056,
+          1788787294163191056
+        ],
+        "first_observed_monotonic_ns": 16747893424410,
+        "last_observed_monotonic_ns": 16949039905442,
+        "samples": 3762
+      }
+    ],
+    "selected_counts": [
+      {
+        "pid": 275405,
+        "image_count": 1,
+        "sample_count": 3762
+      }
+    ],
+    "scope": "selected CUDA process observations only; not executable identity qualification"
+  },
+  "instrumentation": {
+    "profiler": {
+      "artifact": {
+        "path": "/opt/nvidia/nsight-systems/2023.3.3/target-linux-x64/nsys",
+        "sha256": "2021f63441541763a8a55699e1a4a8f97c3d782ebe2dc0143c478fed35bd2280"
+      },
+      "artifact_observation": [
+        2096,
+        252698,
+        43990024,
+        1693946998000000000,
+        1769226087023324562
+      ]
+    },
+    "launcher": {
+      "artifact": {
+        "path": "/opt/nvidia/nsight-systems/2023.3.3/target-linux-x64/nsys-launcher",
+        "sha256": "1a2ec10e422dbc222b6674f4c140edec5eaabd33c6255942237a4dcdd1c480ca"
+      },
+      "artifact_observation": [
+        2096,
+        252838,
+        1468256,
+        1693945942000000000,
+        1769226087047472216
+      ]
+    }
+  },
+  "expected_artifacts": {
+    "sparse": {
+      "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_sparse_burn_audit31",
+      "sha256": "0325a43a3c413255f87c629ba5b7973442daef680b430f5775004a42432fc6f1"
+    }
+  },
+  "expected_artifact_observations": {
+    "sparse": [
+      2096,
+      529169,
+      5139704,
+      1788787294163191056,
+      1788787294163191056
+    ]
+  },
+  "raw_local_profile": {
+    "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-3jttwb9k/audit31_trajectory.sqlite",
+    "sha256": "e68e00ebfd546b0fc43425b4d437a5ad47a7bc51865bede7dfdd4bedb67b8839"
+  },
+  "allocation_lifetimes": {
+    "schema": 1,
+    "all_dynamic_allocations_released": true,
+    "dynamic_device_allocation_coverage": true,
+    "all_allocations_released": false,
+    "unmatched_live_allocations": 16,
+    "processes": [
+      {
+        "global_pid": 286095505883136,
+        "device": 0,
+        "dynamic_live_bytes_by_kind": {
+          "device": 0
+        },
+        "static_live_bytes_by_kind": {
+          "device_static": 577
+        }
+      }
+    ],
+    "note": "Static residuals are retained as observed; their release at context/program teardown is not inferred. This classification does not measure physical VRAM."
+  },
+  "process_identity_evidence": {
+    "schema": 1,
+    "complete": true,
+    "poll_interval_seconds": 0.05,
+    "observations": [
+      {
+        "pid": 275405,
+        "start_time_ticks": 1674785,
+        "executable_path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_sparse_burn_audit31",
+        "artifact_observation": [
+          2096,
+          529169,
+          5139704,
+          1788787294163191056,
+          1788787294163191056
+        ],
+        "first_observed_monotonic_ns": 16747893424410,
+        "last_observed_monotonic_ns": 16949039905442,
+        "samples": 3762
+      }
+    ],
+    "processes": [
+      {
+        "global_pid": 286095505883136,
+        "pid": 275405,
+        "nsight_process_name": "arch_cuda_gener",
+        "artifact_key": "sparse",
+        "executable": {
+          "path": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_generated_sparse_burn_audit31",
+          "sha256": "0325a43a3c413255f87c629ba5b7973442daef680b430f5775004a42432fc6f1"
+        },
+        "start_time_ticks": 1674785,
+        "launch_mode": "direct",
+        "instrumentation_launcher": null
+      }
+    ],
+    "scope": "selected CUDA PID to observed /proc/exe object and frozen artifact SHA-256",
+    "note": "Nsight process names are retained verbatim and are not used as executable paths. Frozen executable hashes are bound through inode/stat observations and checked again after the campaign."
+  }
+}

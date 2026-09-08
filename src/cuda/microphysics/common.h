@@ -5,12 +5,14 @@
 #pragma once
 
 #include "data/FluidState.h"
-#include "driver/DriverBurn.h"
-#include "numerics/burnsolver/odeFunction.h"
+#include "driver/DriverBurnPolicy.h"
+#include "numerics/burnsolver/OdeContinuation.h"
 #include "numerics/linalg/DenseWrap.h"
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
+#include <utility>
 
 namespace arch::cuda
 {
@@ -22,6 +24,23 @@ using BurnOdeMatrixWorkspaceFor =
 // storage is allocated with BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>.
 using BurnOdeMatrixWorkspace =
     BurnOdeMatrixWorkspaceFor<BurnLimits::MAX_ODE_NEQ>;
+
+// Host allocation needs the matrix ABI, not every network's reaction body.
+// Count the actual ODE equations, including any integrated source term.
+template <std::size_t... Index>
+constexpr auto burn_workspace_size_table(std::index_sequence<Index...>)
+{
+    return std::array<std::size_t, sizeof...(Index)>{
+        sizeof(BurnOdeMatrixWorkspaceFor<static_cast<int>(Index + 1)>)...};
+}
+
+inline std::size_t compact_burn_workspace_bytes_per_cell(std::size_t equations)
+{
+    if (!BurnLimits::uses_compact_matrix(equations)) return 0;
+    static constexpr auto sizes = burn_workspace_size_table(
+        std::make_index_sequence<BurnLimits::MAX_ODE_NEQ>{});
+    return sizes[equations - 1];
+}
 
 template <int N>
 ARCH_INLINE bool burn_ode_workspace_preflight(

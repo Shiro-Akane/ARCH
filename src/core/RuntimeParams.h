@@ -72,8 +72,7 @@ private:
             }
         }
 
-        // M_PI supplies the platform's double-precision value of pi.
-        double pi_val = M_PI;
+        double pi_val = arch::constants::math::pi;
 
         if (str == "pi")
             return pi_val;
@@ -286,7 +285,8 @@ public:
         }
         else if (grav_type == "self")
         {
-            cfg.physics.gravity.G_const = ParseMathExpr(parser.GetString("gravity_G", "6.6743e-8"));
+            if (parser.HasKey("gravity_G"))
+                cfg.physics.gravity.G_const = ParseMathExpr(parser.GetString("gravity_G", ""));
         }
 
         // --- AMR (Adaptive Mesh Refinement) ---
