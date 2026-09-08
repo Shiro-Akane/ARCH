@@ -129,7 +129,7 @@
     },
     "explicit_repository_policy_files": [
       ".github/CODEOWNERS",
-      ".github/README.md",
+      ".github/MAINTENANCE.md",
       ".gitleaks.toml",
       "SECURITY.md",
       "SECURITY.zh-CN.md"
@@ -169,7 +169,7 @@
       "sha256": "12868aa40f68be4968a1f7b5be6eea4c1ea369305c3ce04823452c7261a4c685"
     },
     {
-      "path": ".github/README.md",
+      "path": ".github/MAINTENANCE.md",
       "bytes": 847,
       "sha256": "ae88f76a49f2276cbfdd1b8094e7cbd5cd5749469f021c279466abeb931b7194"
     },
