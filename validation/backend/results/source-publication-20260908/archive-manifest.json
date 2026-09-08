@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "scope": "Current compact source-delivery inventory; no new scientific qualification or publication action",
-  "recorded_utc": "2026-09-08T04:06:07.517264+00:00",
+  "recorded_utc": "2026-09-08T05:33:17.557596+00:00",
   "candidate_branch": "CUDA_complete_v1",
-  "base_commit": "1829d27e28f237f08b0a42bd0a7cac7bdf71c309",
+  "base_commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
   "previous_frozen_branch": "CUDA_complete_v1",
   "remote": "git@github.com:Shiro-Akane/ARCH.git",
   "publication_action": "none",
   "current_source": {
-    "commit": "1829d27e28f237f08b0a42bd0a7cac7bdf71c309",
+    "commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
     "scope": "code-and-validation-inputs-v1",
     "scope_policy": {
       "directories": [
@@ -55,339 +55,19 @@
       ],
       "include_untracked_and_gitignored_source": true
     },
-    "worktree_sha256": "02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781",
+    "worktree_sha256": "abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf",
     "dirty": true,
     "modified_files": [
       "CMakeLists.txt",
-      "cmake/CudaBurnDenseRoutes.cmake",
-      "cmake/CudaBurnSparseRoutes.cmake",
-      "cmake/CudaCustomDenseRoute.cu.in",
-      "cmake/templates/CudaBurnDenseRoute.cu.in",
-      "cmake/templates/CudaBurnSparseOwner.cu.in",
-      "simulation/BurnGradient/BurnGradient.cpp",
-      "simulation/BurnOneZone/BurnOneZone.cpp",
-      "simulation/Cellular/Cellular.cpp",
-      "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
-      "simulation/DiffusionMode/DiffusionMode.cpp",
-      "simulation/ExternalGravity/ExternalGravity.cpp",
-      "simulation/GaussianPulse/Gaussian.cpp",
-      "simulation/RTinstability/RT_instab.cpp",
-      "simulation/Sedov/Sedov.cpp",
-      "simulation/SmoothAdvection/SmoothAdvection.cpp",
-      "simulation/Sod/Sod.cpp",
-      "src/amr/AMRControl.h",
-      "src/amr/AMRFluxRegistering.h",
-      "src/amr/AmrDefines.h",
-      "src/amr/AmrFluxMath.h",
-      "src/amr/AmrTree.h",
-      "src/amr/Block.h",
-      "src/amr/BlockHandle.h",
-      "src/amr/BoundaryPlan.h",
-      "src/amr/ConservativeRestriction.h",
-      "src/amr/FluxRegister.h",
-      "src/amr/GhostExchange.h",
-      "src/amr/LimitedLinearProlongation.h",
-      "src/amr/MemoryPool.h",
-      "src/amr/Morton.h",
-      "src/amr/RefinementIndicatorMath.h",
-      "src/amr/RegridExecutionPlan.h",
-      "src/amr/RegridTransferMath.h",
-      "src/amr/TopologyTransaction.h",
-      "src/core/ProblemHelper.cpp",
-      "src/core/RuntimeParams.h",
-      "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
-      "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
-      "src/cuda/amr/CoarseFineExchangeKernels.cuh",
-      "src/cuda/amr/RefinementIndicators.cu",
-      "src/cuda/amr/RefinementIndicators.h",
-      "src/cuda/amr/RegridMigration.cu",
-      "src/cuda/amr/RegridMigration.h",
-      "src/cuda/common/CudaCommon.cuh",
-      "src/cuda/common/CudaLaunchConfig.h",
-      "src/cuda/common/DeviceAllocation.h",
-      "src/cuda/common/DeviceEosStatus.h",
-      "src/cuda/common/GridMetricsCache.cu",
-      "src/cuda/common/GridMetricsCache.h",
-      "src/cuda/diffusion/DiffusionKernels.cuh",
-      "src/cuda/diffusion/DiffusionSolver.cuh",
-      "src/cuda/hydro/Boundary.cuh",
-      "src/cuda/hydro/BoundaryPlan.h",
-      "src/cuda/hydro/CheckedHydroEos.cuh",
-      "src/cuda/hydro/ExchangeKernels.cuh",
-      "src/cuda/hydro/GridGeometryAdapter.cuh",
-      "src/cuda/hydro/HydroFaceKernel.cuh",
-      "src/cuda/hydro/HydroFluxPolicies.cuh",
-      "src/cuda/hydro/HydroIntegratorPolicies.cuh",
-      "src/cuda/hydro/HydroReconstructionPolicies.cuh",
-      "src/cuda/hydro/HydroSourceKernels.cuh",
-      "src/cuda/hydro/HydroStageKernels.cuh",
-      "src/cuda/hydro/HydroStateKernels.cuh",
-      "src/cuda/microphysics/CuDssSparseSolver.cpp",
-      "src/cuda/microphysics/CuDssSparseSolver.h",
-      "src/cuda/microphysics/SparseBeNrBatch.cuh",
-      "src/cuda/microphysics/SparseBurnCells.cuh",
-      "src/cuda/microphysics/SparseEquilibration.cu",
-      "src/cuda/microphysics/SparseEquilibration.h",
-      "src/cuda/microphysics/SparseOdeBatch.cuh",
-      "src/cuda/microphysics/common.h",
-      "src/cuda/microphysics/device_eos_owner_utils.cpp",
-      "src/cuda/microphysics/device_eos_owner_utils.h",
-      "src/cuda/microphysics/device_network_owner.h",
-      "src/cuda/microphysics/device_species_owner.cpp",
-      "src/cuda/microphysics/device_species_owner.h",
-      "src/cuda/microphysics/helm_eos_device_owner.cpp",
-      "src/cuda/microphysics/helm_eos_device_owner.h",
-      "src/cuda/microphysics/helm_eos_loader.h",
-      "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
-      "src/cuda/microphysics/tabular3_eos_device_owner.h",
-      "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
-      "src/cuda/microphysics/tabular4_eos_device_owner.h",
-      "src/cuda/runtime/CudaBackend.h",
-      "src/cuda/runtime/CudaBackendFactory.cpp",
-      "src/cuda/runtime/DeviceBlockStore.h",
-      "src/cuda/runtime/amr/CudaBackendAmrFlux.cu",
-      "src/cuda/runtime/amr/CudaBackendAmrFlux.h",
-      "src/cuda/runtime/amr/CudaBackendExchange.cu",
-      "src/cuda/runtime/amr/CudaBackendExchange.h",
-      "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
-      "src/cuda/runtime/amr/CudaBackendMigration.cpp",
-      "src/cuda/runtime/burn/CudaBackendBurn.h",
-      "src/cuda/runtime/burn/CudaBackendBurnDenseRoutes.h",
-      "src/cuda/runtime/burn/CudaBackendBurnImpl.cuh",
-      "src/cuda/runtime/burn/CudaBackendBurnReduction.cuh",
-      "src/cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h",
-      "src/cuda/runtime/burn/CudaBackendBurnSparse.h",
-      "src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp",
-      "src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh",
-      "src/cuda/runtime/burn/CudaBackendBurnSparseRoutes.h",
-      "src/cuda/runtime/burn/CudaBurnOdeTypes.h",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu",
-      "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu",
-      "src/cuda/runtime/control/CudaBackendCore.cpp",
-      "src/cuda/runtime/control/CudaBackendInternal.h",
-      "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
-      "src/cuda/runtime/control/CudaBackendResources.cpp",
-      "src/cuda/runtime/control/CudaBackendStore.cpp",
-      "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu",
-      "src/cuda/runtime/diffusion/CudaBackendDiffusion.h",
-      "src/cuda/runtime/hydro/CudaBackendHydro.h",
-      "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
-      "src/cuda/runtime/hydro/CudaBackendHydroHelm.cu",
-      "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu",
-      "src/cuda/runtime/hydro/CudaBackendHydroInstantiation.cuh",
-      "src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu",
-      "src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu",
-      "src/data/FluidState.h",
-      "src/data/GlobalDefs.h",
-      "src/data/UserTypes.h",
-      "src/driver/ComputeBackend.h",
-      "src/driver/Driver.h",
-      "src/driver/DriverBurn.h",
-      "src/driver/DriverBurnPolicy.h",
-      "src/driver/DriverControl.h",
-      "src/driver/DriverUtils.h",
-      "src/driver/ReductionSpec.h",
+      "CMakePresets.json",
       "src/driver/SolverDispatch.cpp",
-      "src/driver/SolverDispatch.h",
-      "src/driver/StageScheduler.h",
-      "src/driver/StateResidency.h",
-      "src/driver/TopologyIdentityRegistry.h",
-      "src/driver/dispatch/BackendCapabilities.h",
       "src/driver/dispatch/DispatchImpl.h",
-      "src/driver/dispatch/Dispatch_Euler.cpp",
-      "src/driver/dispatch/Dispatch_RK2.cpp",
-      "src/driver/dispatch/Dispatch_RK3.cpp",
-      "src/driver/dispatch/PolicyDescriptor.h",
-      "src/driver/dispatch/ResolvedExecutionPlan.h",
-      "src/driver/dispatch/RuntimeProbe.cpp",
-      "src/driver/dispatch/RuntimeProbe.h",
-      "src/grid/Grid.h",
-      "src/grid/GridMetrics.h",
-      "src/interface/GenericProblem.h",
-      "src/interface/ProblemGenerator.h",
-      "src/io/IO.h",
-      "src/io/chk/CheckpointCompatibility.h",
-      "src/io/chk/ChkIO.cpp",
-      "src/io/hdf5/HDF5Writer.cpp",
-      "src/io/hdf5/HDF5Writer.h",
-      "src/io/plot/PlotIO.cpp",
-      "src/numerics/burnsolver/BurnDispatch.h",
-      "src/numerics/burnsolver/BurnThermodynamics.h",
-      "src/numerics/burnsolver/BurnerHandle.h",
-      "src/numerics/burnsolver/NetworkDerivative.h",
-      "src/numerics/burnsolver/OdeContinuation.h",
-      "src/numerics/burnsolver/odeFunction.h",
-      "src/numerics/burnsolver/ode_bd.h",
-      "src/numerics/burnsolver/ode_ros4.h",
-      "src/numerics/diffusion/DiffDispatch.h",
-      "src/numerics/diffusion/DiffusionAMRStages.h",
-      "src/numerics/diffusion/DiffusionTypes.h",
-      "src/numerics/flux/FluxFunctions.h",
-      "src/numerics/flux/FluxHLL.h",
-      "src/numerics/flux/FluxHLLC.h",
-      "src/numerics/flux/FluxRoe.h",
-      "src/numerics/flux/FluxSW.h",
-      "src/numerics/flux/FluxVL.h",
-      "src/numerics/integrator/GeometricSources.h",
-      "src/numerics/integrator/HydroSolverImpl.h",
-      "src/numerics/integrator/IHydroSolver.h",
-      "src/numerics/integrator/TimeIntegratorEuler.h",
-      "src/numerics/integrator/TimeIntegratorHelper.h",
-      "src/numerics/integrator/TimeIntegratorRK2.h",
-      "src/numerics/integrator/TimeIntegratorRK3.h",
-      "src/numerics/linalg/CsrMatrixView.h",
-      "src/numerics/linalg/DenseWrap.h",
-      "src/numerics/linalg/LinearEquilibration.h",
-      "src/numerics/linalg/SparseWrap.h",
-      "src/numerics/reconstruction/Limiters.h",
-      "src/numerics/reconstruction/Reconstruction.h",
-      "src/physics/eos/IdealGas.h",
-      "src/physics/eos/Tabular4DEOS.h",
-      "src/physics/eos/TabularFreeEnergy.h",
-      "src/physics/eos/eos.h",
-      "src/physics/eos/eos_Utils.h",
-      "src/physics/eos/eos_state.h",
-      "src/physics/eos/eosdispatch.cpp",
-      "src/physics/eos/eosdispatch.h",
-      "src/physics/gravity/ExternalGravity.h",
-      "src/physics/gravity/ExternalGravitySource.h",
-      "src/physics/gravity/GravityDispatch.h",
-      "src/physics/gravity/GravityNone.h",
-      "src/physics/gravity/IGravityPolicy.h",
-      "src/physics/network/WeakTableView.h",
-      "src/physics/species/Species.h",
-      "tests/SparseKLURegression.cpp",
-      "tests/TabularEOSRegression.cpp",
-      "tests/amr_composition_test_cases.h",
-      "tests/checkpoint_conservation_metrics.h",
-      "tests/cuda/test_boundary_plan_parity.cu",
-      "tests/cuda/test_burn_policy_parity.cu",
-      "tests/cuda/test_burn_thermal_math.cu",
-      "tests/cuda/test_compensated_sum.cu",
-      "tests/cuda/test_cuda_amr_composition.cu",
-      "tests/cuda/test_cuda_amr_exchange.cpp",
-      "tests/cuda/test_cuda_compile_probe.cu",
-      "tests/cuda/test_cuda_hydro_block.cu",
-      "tests/cuda/test_cuda_multiblock_burn.cu",
-      "tests/cuda/test_cuda_multiblock_diffusion.cu",
-      "tests/cuda/test_cuda_multiblock_hydro.cu",
-      "tests/cuda/test_cuda_policy_resolution.cu",
-      "tests/cuda/test_cuda_reduction_contract.cu",
-      "tests/cuda/test_cuda_regrid_migration.cu",
-      "tests/cuda/test_cuda_regrid_transaction.cpp",
-      "tests/cuda/test_cuda_single_level_validation.cpp",
-      "tests/cuda/test_cuda_sparse_burn_factory.cpp",
-      "tests/cuda/test_cuda_store_lifecycle.cpp",
-      "tests/cuda/test_curvilinear_geometry_smoke.cu",
-      "tests/cuda/test_diffusion_rkl_parity.cu",
-      "tests/cuda/test_eos_host_device_parity.cu",
-      "tests/cuda/test_grid_metrics_cache.cu",
-      "tests/cuda/test_hydro_leaf_parity.cu",
       "tests/cuda/test_mainline_authority.cpp",
-      "tests/cuda/test_network_derivative.cu",
-      "tests/cuda/test_network_nse_device.cu",
-      "tests/cuda/test_refinement_indicators.cpp",
-      "tests/cuda/test_tabular_free_energy_owner.cu",
-      "tests/fixtures/BurnTimeReference.h",
-      "tests/fixtures/NseReference.h",
-      "tests/fixtures/SparseTransferNetwork.h",
-      "tests/math/CompensatedSumCases.h",
-      "tests/math/DenseLuCases.h",
-      "tests/math/NetworkDerivativeCases.h",
-      "tests/regrid_migration_fixture.h",
-      "tests/test_amr_flux_surface_plan.cpp",
-      "tests/test_amr_operation_plans.cpp",
-      "tests/test_block_handle.cpp",
-      "tests/test_boundary_plan.cpp",
-      "tests/test_burn_mainline_reference.cpp",
-      "tests/test_checkpoint_compatibility.cpp",
-      "tests/test_checkpoint_conservation_metrics.cpp",
-      "tests/test_compensated_sum.cpp",
-      "tests/test_compute_backend.cpp",
-      "tests/test_curvilinear_manifest.py",
-      "tests/test_curvilinear_metrics.cpp",
-      "tests/test_device_block_store_lifecycle.cpp",
-      "tests/test_generated_network_reference.cpp",
-      "tests/test_physical_constants.cpp",
-      "tests/test_portable_network_generator.py",
-      "tests/test_reduction_contract.cpp",
-      "tests/test_refinement_indicator_math.cpp",
-      "tests/test_resolved_execution_plan.cpp",
-      "tests/test_run_memory_guarded.py",
-      "tests/test_runtime_probe_and_capabilities.cpp",
-      "tests/test_runtime_validation_inputs.py",
-      "tests/test_same_level_exchange_plan.cpp",
-      "tests/test_shared_stage_scheduler.cpp",
-      "tests/test_smoke_cuda_amr_runtime.py",
-      "tests/test_sparse_ode_continuation.cpp",
-      "tests/test_state_residency.cpp",
-      "tests/test_topology_transaction.cpp",
-      "tests/test_validate_backend_results.py",
-      "tests/test_validation_device_memory.py",
-      "tests/test_validation_provenance.py",
-      "tests/test_validation_subprocess_logs.py",
-      "tests/tooling/test_audit_combination_v2.py",
-      "tools/audit_combination_v2.py",
-      "tools/network/GenerateNetwork.py",
-      "tools/qualify_cuda_amr_evidence.py",
-      "tools/run_memory_guarded.py",
-      "tools/smoke_cuda_amr_runtime.py",
-      "tools/summarize_cuda_compile_memory.py",
-      "tools/validate_backend_results.py",
-      "tools/validate_cuda_amr_restart.py"
+      "tests/host/test_resolved_execution_plan.cpp"
     ],
     "untracked_source_files": [
-      "tests/fixtures/amr_composition_test_cases.h",
-      "tests/fixtures/checkpoint_conservation_metrics.h",
-      "tests/fixtures/regrid_migration_fixture.h",
-      "tests/fixtures/validation_provenance/backend-validation-evidence.json",
-      "tests/fixtures/validation_provenance/restart-enuc-evidence.json",
-      "tests/fixtures/validation_provenance/restart-smooth-evidence.json",
-      "tests/host/SparseKLURegression.cpp",
-      "tests/host/TabularEOSRegression.cpp",
-      "tests/host/test_amr_flux_surface_plan.cpp",
-      "tests/host/test_amr_operation_plans.cpp",
-      "tests/host/test_block_handle.cpp",
-      "tests/host/test_boundary_plan.cpp",
-      "tests/host/test_burn_mainline_reference.cpp",
-      "tests/host/test_checkpoint_compatibility.cpp",
-      "tests/host/test_checkpoint_conservation_metrics.cpp",
-      "tests/host/test_compensated_sum.cpp",
-      "tests/host/test_compute_backend.cpp",
-      "tests/host/test_curvilinear_metrics.cpp",
-      "tests/host/test_device_block_store_lifecycle.cpp",
-      "tests/host/test_generated_network_reference.cpp",
-      "tests/host/test_physical_constants.cpp",
-      "tests/host/test_reduction_contract.cpp",
-      "tests/host/test_refinement_indicator_math.cpp",
-      "tests/host/test_resolved_execution_plan.cpp",
-      "tests/host/test_runtime_probe_and_capabilities.cpp",
-      "tests/host/test_same_level_exchange_plan.cpp",
-      "tests/host/test_shared_stage_scheduler.cpp",
-      "tests/host/test_sparse_ode_continuation.cpp",
-      "tests/host/test_state_residency.cpp",
-      "tests/host/test_topology_transaction.cpp",
-      "tests/tooling/test_audit_architecture.py",
-      "tests/tooling/test_curvilinear_manifest.py",
-      "tests/tooling/test_portable_network_generator.py",
-      "tests/tooling/test_run_memory_guarded.py",
-      "tests/tooling/test_runtime_validation_inputs.py",
-      "tests/tooling/test_smoke_cuda_amr_runtime.py",
-      "tests/tooling/test_validate_backend_results.py",
-      "tests/tooling/test_validation_device_memory.py",
-      "tests/tooling/test_validation_provenance.py",
-      "tests/tooling/test_validation_subprocess_logs.py",
-      "tools/audit_architecture.py"
+      "cmake/SelectIpoLinker.cmake",
+      "tests/tooling/test_build_configuration.py"
     ]
   },
   "current_evidence_roots": [
@@ -397,18 +77,18 @@
     },
     {
       "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/freeze-review.json",
-      "sha256": "7ed591529818a17047fac947b0e7781c0fdf7ed78a5b509fd75218dd74352480"
+      "sha256": "c14d9a6081e2edaa6be5d0580b5caef00edea37e791c5336aa95bd280da5b049"
     },
     {
       "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/runtime-review.json",
-      "sha256": "0e30f8a31e4799210c9ce9fddc8dde00f2c28eeb61e504a2994a199a85d7b327"
+      "sha256": "917930fe8db4862046bd407581b44d4b77477d6346ddc1b11b06f59f0ae3b388"
     }
   ],
   "evidence_selection": {
     "method": "Retain current compact scientific selection; add visible maintained source/docs and verified current maintenance artifacts.",
     "raw_data": "HDF5, compiled binaries, build caches, profiler databases and unreviewed large files are excluded.",
     "result_retention_record": "validation/backend/results/maintenance-freeze-20260908/freeze-review.json",
-    "selected_files": 4158,
+    "selected_files": 4161,
     "current_maintenance_patterns": [
       "*.json",
       "*.md",
@@ -419,6 +99,7 @@
       "regression/ctest.xml",
       "regression/ctest-inventory.json",
       "regression/reference-inventory.json",
+      "regression/python-inventory.json",
       "regression/arch.stdout",
       "regression/arch.stderr",
       "regression/inventory/arch.stdout",
@@ -434,11 +115,11 @@
       "restart-process/*/arch.stderr"
     ],
     "maintenance_replacement_receipt": {
-      "path": "/home/shiroakane/ARCH/build/compatibility-cleanup-20260908/maintenance-record-update-0stfw9iv/recovery.json",
-      "sha256": "37dcdb9cecb6f27d8a232921e86f40ef83d9fc3a8e0364d5488a7d51ce08d43f"
+      "path": "/home/shiroakane/ARCH/build/compatibility-cleanup-20260908/maintenance-record-update-qwq1dt11/recovery.json",
+      "sha256": "fd450be4e2540d1a3829ab830717a034f69febf4b53e5495af47d509d1560220"
     },
     "explicit_large_files": [],
-    "previous_manifest_sha256": "967c014ac9fc7787d5aaa8ad239b2848626908a95b6228ee6895c388f03194f5"
+    "previous_manifest_sha256": "440af3f28e5d8b05d432e8d44a8438a58c5ecb945be827b2b2d785785eabb4e2"
   },
   "archive_copies": [
     {
@@ -472,13 +153,13 @@
     },
     {
       "path": "CMakeLists.txt",
-      "bytes": 94306,
-      "sha256": "0e74012cfe92d79cbdee12d61a91db8a42857a32b0412eb1a57b821a1a74941f"
+      "bytes": 94236,
+      "sha256": "6b080c0bc0c0e9bdb33406f6686bf3427468075c8eea8dbb509f8d60d084259c"
     },
     {
       "path": "CMakePresets.json",
-      "bytes": 928,
-      "sha256": "38454c916d46a7a2658034c97f1b574278824bc9d6febc491e362ca11a7ee63f"
+      "bytes": 1580,
+      "sha256": "c848363aacbc2df10e0f1cd4f7f9d11e5f50136df282b638f5d0002fc1b57369"
     },
     {
       "path": "EOS_toolkit/README.md",
@@ -532,13 +213,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 20050,
-      "sha256": "34fff4e0cd8119cbd446a4273f6558119270fa6fbba7e5dd0e318abe5ca8e8fc"
+      "bytes": 20423,
+      "sha256": "685736391ff58b4f87c4f8bbedc70019e1416de5d51af4985706b37aa9f8f7c5"
     },
     {
       "path": "README.zh-CN.md",
-      "bytes": 18774,
-      "sha256": "e4cc05ccde67d5fbe73ba858183b6caf377d587c50258ba795db61f4ee2d02d9"
+      "bytes": 19093,
+      "sha256": "5abdcc93b22215ff1e2f3b7af17c96f17f742fed7a6a29ff2c954c86df6f156a"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -582,8 +263,13 @@
     },
     {
       "path": "cmake/README.md",
-      "bytes": 1772,
-      "sha256": "947155674aa0b10f62059619eb215b9b625e2313d022e347ba448e8102558f7b"
+      "bytes": 1930,
+      "sha256": "f5d5cf6959e169ddf0eb585264d734faa8850cdfe02f81451157e2eebcd532a6"
+    },
+    {
+      "path": "cmake/SelectIpoLinker.cmake",
+      "bytes": 3974,
+      "sha256": "2053e17ce8b39c421a5f09f5b127759faa20af687fc5eff092c4d75ec27bd11c"
     },
     {
       "path": "cmake/templates/CudaBurnDenseRoute.cu.in",
@@ -602,13 +288,13 @@
     },
     {
       "path": "docs/CudaBackendStatus.md",
-      "bytes": 7407,
-      "sha256": "97c5c3aa04f00b1d6724ab40c3ed00c4f789e4f5ada68f32adb9b6b33c0f67eb"
+      "bytes": 8762,
+      "sha256": "a8a1598102565a5031cc12d66bd278089a7a7674af449e28b60fac0372888757"
     },
     {
       "path": "docs/CudaBackendStatus.zh-CN.md",
-      "bytes": 6367,
-      "sha256": "d48dae4ecc03f1045aa02e9549a5e44feedac9c24846306375fed10144a9d082"
+      "bytes": 7535,
+      "sha256": "2fef22860e5e308c1e61c7df556cd4436bcdb6f9aac147fc7672177c69d0b814"
     },
     {
       "path": "docs/README.md",
@@ -652,13 +338,13 @@
     },
     {
       "path": "docs/development/CudaReleaseStandard.md",
-      "bytes": 24905,
-      "sha256": "e9f942288f50f72b1fa305ad1f9c573561c2894d7e6a159498891c6d6b2f582a"
+      "bytes": 27637,
+      "sha256": "3839d06d7e9345a5dbfd2ab7af621dec39009c3abce6668f490bfd72f3628bfa"
     },
     {
       "path": "docs/development/ImplementationOwnership.md",
-      "bytes": 37020,
-      "sha256": "5a90cc9d2f11bf2747e69affadb777e788c40feb375241af5146440f07e7f167"
+      "bytes": 37872,
+      "sha256": "b8e5db42d23eb1652ef5eeec241719b52a98583b712ce11d38466dd5111ab379"
     },
     {
       "path": "docs/development/README.md",
@@ -667,13 +353,13 @@
     },
     {
       "path": "docs/guides/Build.md",
-      "bytes": 9367,
-      "sha256": "c4e74b3193214486c74c3fdf8b2d2b521f8bdd839aa384764f81497f9ed14185"
+      "bytes": 10072,
+      "sha256": "574b16da953a5e3c7c60732d4ec99c0cb4fb47d6e82cc3b7476ac22984459968"
     },
     {
       "path": "docs/guides/Build.zh-CN.md",
-      "bytes": 9125,
-      "sha256": "3f0c0f3928d2f5e1b61c54ec30261f00979584e33c60d50f7b7e61e99c74c209"
+      "bytes": 9814,
+      "sha256": "aaf1e2fdce0e2e2aff35babad4e34d214f70feea6fa7a89d1ea629ea300b69cf"
     },
     {
       "path": "docs/guides/README.md",
@@ -1692,8 +1378,8 @@
     },
     {
       "path": "src/driver/SolverDispatch.cpp",
-      "bytes": 13863,
-      "sha256": "ac6bf05c3a4601a277d47cb54f794560b9f5907fdb6d88d29205e9c184262325"
+      "bytes": 13861,
+      "sha256": "530880230e1562a196bb7c1395b8d8b65a738e7f45ce5f5fb3ca417ccbffd27e"
     },
     {
       "path": "src/driver/SolverDispatch.h",
@@ -1722,8 +1408,8 @@
     },
     {
       "path": "src/driver/dispatch/DispatchImpl.h",
-      "bytes": 11514,
-      "sha256": "60a31615c2ced676c5ad8dd8a08dcf8c25afcadf20c777d81acf33ab2f3ed8d5"
+      "bytes": 7443,
+      "sha256": "2d8d68137eb07ed5f37c00f29737536641d5920b20cfc66506f2ed1c2eac10e2"
     },
     {
       "path": "src/driver/dispatch/Dispatch_Euler.cpp",
@@ -2637,8 +2323,8 @@
     },
     {
       "path": "tests/cuda/test_mainline_authority.cpp",
-      "bytes": 18094,
-      "sha256": "245626ca1260884f9384d79dcd059b2bd0e4098c3a4c987ffb374cd1eeb31bea"
+      "bytes": 19239,
+      "sha256": "7ef81b535d8969d9ff55fc7b51bf968ab31f09e6fcf5005eefdec0fceaf28b28"
     },
     {
       "path": "tests/cuda/test_network_derivative.cu",
@@ -2832,8 +2518,8 @@
     },
     {
       "path": "tests/host/test_resolved_execution_plan.cpp",
-      "bytes": 38785,
-      "sha256": "8aca9d3eaed01f4e4d188cdbbae048e62829b35b43a17cacd8d4d0174949fa4e"
+      "bytes": 40466,
+      "sha256": "ed72d3a0b10936d130be001066237110340b04a56e65b01660bb5a2552c3dfdb"
     },
     {
       "path": "tests/host/test_runtime_probe_and_capabilities.cpp",
@@ -2926,6 +2612,11 @@
       "sha256": "327500f2628d85ed7b60a89da26f74b89695926b12213687bc3221ff5a289424"
     },
     {
+      "path": "tests/tooling/test_build_configuration.py",
+      "bytes": 7518,
+      "sha256": "9ff282d2b14dcff743e70b1685dafededa53b00ebc1a916cf99f18504eaf2820"
+    },
+    {
       "path": "tests/tooling/test_cuda_code_images.py",
       "bytes": 2388,
       "sha256": "713818d2596d04e068894c9edd1cda3b930c262a25419b5bd846e84baa036321"
@@ -2982,13 +2673,13 @@
     },
     {
       "path": "tools/README.md",
-      "bytes": 4473,
-      "sha256": "214e4be2534a04c366cf8046c01dbcb51e62cce8ebe8b2101dd9315744b92ace"
+      "bytes": 4624,
+      "sha256": "92274c2bc63387abe5e9a45073fc63e6be533479f6cc0e43a5abd5efbf1d38af"
     },
     {
       "path": "tools/README.zh-CN.md",
-      "bytes": 3895,
-      "sha256": "e4515b6ba9c2c604ff64e1929c49090e9079ee727e9357d9f811bb8885244e4b"
+      "bytes": 4020,
+      "sha256": "ba50ce31134ee08ff91ff998c530cd60f994b423d7c435b2edf05ac45bfc3244"
     },
     {
       "path": "tools/audit_architecture.py",
@@ -3082,13 +2773,13 @@
     },
     {
       "path": "validation/README.md",
-      "bytes": 14198,
-      "sha256": "b86ed3e7045cdf9968bbec471f1592461403e50f120060da41485208b9bd7b37"
+      "bytes": 14670,
+      "sha256": "d44148717684a3169427cb484f21ed2b00373d9b279c82a0e2d6bcfb6b6d692e"
     },
     {
       "path": "validation/README.zh-CN.md",
-      "bytes": 12585,
-      "sha256": "16f598add89ccb5b071c40483282df0331e318c464606bad6dc404b417f95a0d"
+      "bytes": 12971,
+      "sha256": "6e8d44b7c947a3f373a18d8af00dd610281c2067081c5665b4b25df79630c7e8"
     },
     {
       "path": "validation/amr/README.md",
@@ -12632,13 +12323,18 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/README.md",
-      "bytes": 8414,
-      "sha256": "38d5baf4ff8a9d747df993c89937bc11fa629ea8bdacde9c22a11562fcdda00e"
+      "bytes": 11619,
+      "sha256": "53556c4f2a2f89765c173867b1e2420b2f6bee66dd2fd5f7f61d10a8df49d41e"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/README.zh-CN.md",
-      "bytes": 7061,
-      "sha256": "fcbd0f2b55d200922d2621057ca3ad41481596c3fde75e92513ba24163fcdb9a"
+      "bytes": 9902,
+      "sha256": "67f0114dfca1440e25ebf61abfbc296e9007e9584063a6492a67c1417f742452"
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/amr-timing-review.json",
+      "bytes": 46614,
+      "sha256": "1a0cac5e99f36a84d14e8e5be8801095f63e0cd0cea6f9ba67958a54e471ce11"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/baseline.json",
@@ -12647,8 +12343,8 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/build-review.json",
-      "bytes": 53413,
-      "sha256": "b0af92ee50c327b01d685fb5df84bc2b3f9b15a1b796664505eb1d1ee2bc12b4"
+      "bytes": 31590,
+      "sha256": "acc9bd01120e1e9480eb76b5fcf826897ed1bf16f6f0c28c9828f11e61b46044"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/document-baseline.json",
@@ -12662,58 +12358,38 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/freeze-review.json",
-      "bytes": 667969,
-      "sha256": "7ed591529818a17047fac947b0e7781c0fdf7ed78a5b509fd75218dd74352480"
+      "bytes": 909159,
+      "sha256": "c14d9a6081e2edaa6be5d0580b5caef00edea37e791c5336aa95bd280da5b049"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/logs/build-confirm.log",
       "bytes": 487,
-      "sha256": "60b94143d05c89bf8ec51b1032bc61518d6f662e4282207f432dca41de3f932a"
-    },
-    {
-      "path": "validation/backend/results/maintenance-freeze-20260908/logs/build-first-attempt.log",
-      "bytes": 47632,
-      "sha256": "16576400499f93f16323edb9b26b8dcf3e4d353e2b6d6611cb206e8a9301e65f"
-    },
-    {
-      "path": "validation/backend/results/maintenance-freeze-20260908/logs/build-reduced-partial.log",
-      "bytes": 414860,
-      "sha256": "a36f9c95d9d97ac8b71d75aef2a52344de8557d51373ecf0d0aeead0bacf0d01"
+      "sha256": "dfb9d788f8f85155ce9af5ffa7a50c43270338e8585264ccc14450b54cbdf356"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/logs/build.log",
-      "bytes": 498911,
-      "sha256": "f950ee76987cdbea02104ea2362bac79c7569c3560d5ca4791b2f2a8ffd02ace"
+      "bytes": 1783,
+      "sha256": "c8281eb97d2c47e6705b345f7111fac107749bf8f69d83e666579abc8a5aa94e"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/logs/command-outcomes.json",
-      "bytes": 4495,
-      "sha256": "accc06f957666a7b8273ffc1749b2d9ac7e8c01fd69964ea709077d2f1c8572d"
-    },
-    {
-      "path": "validation/backend/results/maintenance-freeze-20260908/logs/configure-adaptive.log",
-      "bytes": 8997,
-      "sha256": "78f074ad826bc53ef5fa4fef57dca681bcf558ace16d696d841bb70768841a9b"
-    },
-    {
-      "path": "validation/backend/results/maintenance-freeze-20260908/logs/configure-reduced.log",
-      "bytes": 8997,
-      "sha256": "64790df74fbef522c2be288efbd7caf0fddf4415c7240e458a70cdfca9843385"
+      "bytes": 2708,
+      "sha256": "9b7d7f75cd4c1088751020fc430569afab35cdfcfda1cc72087ce61015cab748"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/logs/configure.log",
-      "bytes": 8997,
-      "sha256": "bff43af8a13171de0a49b7b613e6c99c3abdf9c131c216fe0b879aa964a4461b"
+      "bytes": 9031,
+      "sha256": "1e848d8651b1cfce3f6aeb1af33719d31f8f33f531ca6544a124f643c5c421a2"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/logs/python-tests.log",
-      "bytes": 909,
-      "sha256": "84969f75882987fcc12ca5e18a3eaad05dc7e2b3f21f5e1dfe2da9049492afac"
+      "bytes": 918,
+      "sha256": "1e4b55e38393e123625eacef331d21f042b05c60de895487e95fe3688f7fc480"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/logs/runtime.log",
-      "bytes": 680,
-      "sha256": "899ac64590314b5b5cafb8571b306dfffba80a292a116677ab8f9f58d475b3e8"
+      "bytes": 690,
+      "sha256": "2fa8fc522d36ae261a1f9322fb9f601824eff6f386c7f5bd8a464749effad7a2"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/preservation-review.json",
@@ -12728,17 +12404,17 @@
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/arch.stdout",
       "bytes": 11785,
-      "sha256": "fffbd9ae07ad54342dbce81aa9620f5352d94f7fae5b4ecd6e169693ce52c05d"
+      "sha256": "39f02ffcd6e90f307ab78eeba0bb00b5a0fcab31831e340204db97bb1fe57028"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/ctest-inventory.json",
       "bytes": 59908,
-      "sha256": "63268170fdf2777d8d99328f5a818e208c23f4aa8dcea2b8e87edfe8664f92a1"
+      "sha256": "811e0b8e270d172d637c423111234f64aaae55b7f61cff47f8846d58d9b6bf8c"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/ctest.xml",
-      "bytes": 51831,
-      "sha256": "609700b38f0ebac358a37bba7594063bd66ab6a393a079e21bf98ebc5e3ddde3"
+      "bytes": 51846,
+      "sha256": "0616b166d7e906ba3d2923fc65143772c83e367953a1a62de08762ddd21dccd2"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/inventory-after/arch.stderr",
@@ -12748,7 +12424,7 @@
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/inventory-after/arch.stdout",
       "bytes": 59908,
-      "sha256": "63268170fdf2777d8d99328f5a818e208c23f4aa8dcea2b8e87edfe8664f92a1"
+      "sha256": "811e0b8e270d172d637c423111234f64aaae55b7f61cff47f8846d58d9b6bf8c"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/inventory/arch.stderr",
@@ -12758,7 +12434,12 @@
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/inventory/arch.stdout",
       "bytes": 59908,
-      "sha256": "63268170fdf2777d8d99328f5a818e208c23f4aa8dcea2b8e87edfe8664f92a1"
+      "sha256": "811e0b8e270d172d637c423111234f64aaae55b7f61cff47f8846d58d9b6bf8c"
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/regression/python-inventory.json",
+      "bytes": 135168,
+      "sha256": "3fb692816b12c0af3c676a863578606b93e8a588d23b7a2c79c6ab9cc4072c31"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/regression/reference-inventory.json",
@@ -12777,8 +12458,8 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/burn-memcheck/arch.stdout",
-      "bytes": 161,
-      "sha256": "7cff4d6b93abaaa3c6292c5b702b033b9b1dd3a69340844cc0784ae0d44c15b6"
+      "bytes": 170,
+      "sha256": "361ccb6283570503f7258efa52fb8ecd48cf4c02b4d0b0694e240499ba96217e"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/burn-racecheck/arch.stderr",
@@ -12787,8 +12468,8 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/burn-racecheck/arch.stdout",
-      "bytes": 162,
-      "sha256": "1881e15442ba076af99b45e731ed53530dba3a1fe044b8ffefba1f85cce8fc1b"
+      "bytes": 171,
+      "sha256": "3370c759d191f3c3d687a7a04600521b2c181a9416b849781df388826751d9c2"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/burn/arch.stderr",
@@ -12797,8 +12478,8 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/burn/arch.stdout",
-      "bytes": 152,
-      "sha256": "c16f89df2901ab7d6df58ca7d67d538c97323690701894daa4c41559ad5e6ee8"
+      "bytes": 161,
+      "sha256": "99d737888f4dc9417f85714f8a3c7bd6ef2faab6eea8fd101e1ba4a5ce2b6ee8"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/smooth/arch.stderr",
@@ -12807,88 +12488,88 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart-process/smooth/arch.stdout",
-      "bytes": 154,
-      "sha256": "fa268048f6058d3cda682f0144c5747e89dbb6643108fc9f710338dd65d96603"
+      "bytes": 163,
+      "sha256": "e55349dbe0dce43bfc4a01a8f21cd43848f2d672f5384718940d08cf5b9df03e"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/cpu_to_cuda/sanitizer.log",
-      "bytes": 843,
-      "sha256": "96d3ee0d0ce15cf9ed3104945db7b3e73a19f2e83370062a669a5a013e9d7f70"
+      "bytes": 852,
+      "sha256": "281306f1ee4e5b5a479df4494700212e8a27189614d0320f869f6c85231df0ea"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/cpu_to_cuda_terminal/sanitizer.log",
-      "bytes": 861,
-      "sha256": "2cd2dc9aecbdd2973abd9c676ffe6c3e180e1a49db2fe4ae5ec833938b6188ec"
+      "bytes": 870,
+      "sha256": "164e92f1be90d6f2fa61aa333ae0cc3f7bc563d0f6689e4a9ad9797811def027"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/cuda_continuous/sanitizer.log",
-      "bytes": 851,
-      "sha256": "4dad5c9e1ef8d20c584ce5aa3b0f8b7fa49d8a0d9d2ac8fd0932dc80be22a690"
+      "bytes": 860,
+      "sha256": "eaae51f5952e79a2cfa237fb3548546d7f612ac96000cc37efb70c665391d0ff"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/cuda_source/sanitizer.log",
-      "bytes": 843,
-      "sha256": "62bc4bb85ad8a5b1c25b7acd08855d8db616ea092dd746c8192aa48c2952e23a"
+      "bytes": 852,
+      "sha256": "cf55eb19941f1b07759f78bb778ab3f9437fe0bec9582ee8da002771b79cbba0"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/cuda_to_cuda/sanitizer.log",
-      "bytes": 845,
-      "sha256": "dcd4e7ceeb77d7fa908247643da2a31ca0c18c9cb051a8e9ecde6a569ee2e2b1"
+      "bytes": 854,
+      "sha256": "a33bc7dfcf52a587159949a318b6613f5f8c51b6ba03ff11c62ed06c7d6a1ebd"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/cuda_to_cuda_terminal/sanitizer.log",
-      "bytes": 863,
-      "sha256": "46b58b23025006c5d2a8840a1d196d4f913822bc9dd2a948736be307ca3237cd"
+      "bytes": 872,
+      "sha256": "3c05998ca6f5e808f2e9e02ccd640e91fa684142d1f651a6e7afa70f5198e159"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-memcheck/restart-validation-evidence.json",
-      "bytes": 106572,
-      "sha256": "3c747374ec64d602ca58741bf74f54b97ddfc67161734e14b350f39cf1f77453"
+      "bytes": 91531,
+      "sha256": "a40d329aace78afd8f4d2e813dbad4d9b7ba01d4a0fa23ce1eaedfb4caf1e3c2"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/cpu_to_cuda/sanitizer.log",
-      "bytes": 826,
-      "sha256": "7ec4dbc38c0479058b763f274da8d49058efde80a2141dc04e2dd578706c268b"
+      "bytes": 835,
+      "sha256": "7b79055b94f925031cb8763d70979e78064c498bf21971325a25c95deff01fad"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/cpu_to_cuda_terminal/sanitizer.log",
-      "bytes": 844,
-      "sha256": "17de0bf8966f410f7804a51b140022bdfbe2dbe11b12e3d9c3dbb6604d841df0"
+      "bytes": 853,
+      "sha256": "aec2d687c412cd0e984d40e5a10b8eaeed5fe60b5d3b99ebba97ab78ff5ddc81"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/cuda_continuous/sanitizer.log",
-      "bytes": 834,
-      "sha256": "ffb1dbbfe9867d6de8756c01e511b5114d3b2121e0f665092bb590fb96ea51a1"
+      "bytes": 843,
+      "sha256": "e4117640d53432358b208835aadc50555d280bcf02b36363492c2c2b78d446f1"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/cuda_source/sanitizer.log",
-      "bytes": 826,
-      "sha256": "a6d8a5f417e520f85134e887d395f47d918ba96ef127749c825b84d5d8519824"
+      "bytes": 835,
+      "sha256": "fe1ea525962bad0b2b4c37e9351d1c7d1b03cca83335a5c400f6e647956fe59d"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/cuda_to_cuda/sanitizer.log",
-      "bytes": 828,
-      "sha256": "9a8ac45f0d259362cc3a02838f4a6b4d61f9b499ca4308c81560d58fbec407d2"
+      "bytes": 837,
+      "sha256": "be606c314b63219326df5304b28a8a19f328a9c8d50b0d70ab279f27d18ab261"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/cuda_to_cuda_terminal/sanitizer.log",
-      "bytes": 846,
-      "sha256": "238265a307c41eec07251cec5c87e68f2aeb795f65608421301d07f2f2480a14"
+      "bytes": 855,
+      "sha256": "aaa846d1c8203ca992d5163c2c5abad17f0ff40037a0f0566f70f744f7427e74"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn-racecheck/restart-validation-evidence.json",
-      "bytes": 106556,
-      "sha256": "49478b3815112fba266775397e3e4715f1989d7e0cd82b76b8603d1c0ed71232"
+      "bytes": 91515,
+      "sha256": "29bee002983b2cdb5957fd10f4372507ee4a25f898a932c2cdee1d61fb305e3b"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/burn/restart-validation-evidence.json",
-      "bytes": 102030,
-      "sha256": "7794a94c30ee712b00d4b0d620b27b290688496bcf94eb1d01978ea88bd00f27"
+      "bytes": 86935,
+      "sha256": "59ccdbe4b2cc3f7598bc034155605c60ef33cda9888107dffd9e542bc07e132c"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/restart/smooth/restart-validation-evidence.json",
-      "bytes": 101382,
-      "sha256": "8b064b0d5c8d505f112e372f57309f1487c7a59fac01797cf92f859413577293"
+      "bytes": 86592,
+      "sha256": "1d1a81ab50471115c082251eae1ddc77760f40612d6d3c61a3745adac5007e05"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/review_relocation.py",
@@ -12901,14 +12582,29 @@
       "sha256": "6949ec779013d1a2b457a2b0a6bc7f5ce700b01a9b1b603d33bd8fe7ef7855a4"
     },
     {
+      "path": "validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py",
+      "bytes": 19165,
+      "sha256": "d365827721ea99e14ac085a285a24c26ec12a8376d19fdb80b59f5af9a616363"
+    },
+    {
       "path": "validation/backend/results/maintenance-freeze-20260908/runtime-path-map.json",
       "bytes": 4763,
       "sha256": "60a776611d9023ab11958b1842ad83de9b6b88b4350600fb095416befbb1c658"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/runtime-review.json",
-      "bytes": 304624,
-      "sha256": "0e30f8a31e4799210c9ce9fddc8dde00f2c28eeb61e504a2994a199a85d7b327"
+      "bytes": 258243,
+      "sha256": "917930fe8db4862046bd407581b44d4b77477d6346ddc1b11b06f59f0ae3b388"
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/sedov-timing-medium.json",
+      "bytes": 2217400,
+      "sha256": "43e72331ff4ad1d881a377b45d42e568be6bb01b0bf7aec9a5199829eabb277a"
+    },
+    {
+      "path": "validation/backend/results/maintenance-freeze-20260908/sedov-timing-small.json",
+      "bytes": 1156570,
+      "sha256": "1ebddd9d36c0df361bf6ad0e7a6862600c90b59884dac12fd37cf695af9643da"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke-process/arch.stderr",
@@ -12917,68 +12613,68 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke-process/arch.stdout",
-      "bytes": 579,
-      "sha256": "14154b09006481ff625348a5ee050362dac36866eff1ff86411ab69a079f655c"
+      "bytes": 588,
+      "sha256": "04e3bf9f71e80d1f53e33265fc8f0d88af1046c9297be75815801e6090755156"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source/run.par",
-      "bytes": 1355,
-      "sha256": "decc713b8773fd3d8a9fa9d108fc8ca7932d4b725b9c4510dbc73b482c6c6e2e"
+      "bytes": 1373,
+      "sha256": "c5837b3ca0219a8c7c759bbfbd316f46c08ed1dc71b9d305da64be4d754ac6ec"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source/run.par",
-      "bytes": 1359,
-      "sha256": "e72b6099e5ee9c84046aba1f0d913285ec816c3e89a2194499d0a6fd096817a7"
+      "bytes": 1377,
+      "sha256": "53cf0549202ad11c2788b1a614a05f3ed04a78f0fb2776001af3af26e04fef0d"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume/run.par",
-      "bytes": 1659,
-      "sha256": "0687faf1ac0d0c5959b69e18b6a1a8c5c43956701ac5415e97b0975ff46ec031"
+      "bytes": 1686,
+      "sha256": "2817f37e46af62470e074209d9d655dce03a3cd40363b3d52774a3b455435e3b"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/run.par",
-      "bytes": 1481,
-      "sha256": "c186a98cfda89e7ad3ce080273aa20d6c0220ab5cb284f76070b08c03c6be5f2"
+      "bytes": 1499,
+      "sha256": "19bbeb9c0855646efba861cf33fe214d89d26207712dcfc43ab41747390399ee"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume/run.par",
-      "bytes": 1665,
-      "sha256": "41214f239cf03527c3713bf0e3170844887a4f39e1be0e45069feb6384f4dc6a"
+      "bytes": 1692,
+      "sha256": "f04bce44f21362fca8443b4afff36e4418a9a82b4eeec8f20128727134bc9119"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/run.par",
-      "bytes": 1485,
-      "sha256": "600dc5ea75ead1da47c4c187771e8b61d03ca90abe7de9dcae1890f94d1a61d9"
+      "bytes": 1503,
+      "sha256": "f8fead9d22d6184f3be9dd0f24b9d1a5c13a33be6609763ce012977f3dc21536"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/smoke-report.json",
-      "bytes": 58486,
-      "sha256": "6a18d86b6194d9c752557830c714ad200fd25916176d7177222ed0fa554eefaa"
+      "bytes": 59385,
+      "sha256": "966be38064a96bf8e0f0d08aeeb2ce949618021b606ef86f4761fb2fbe257416"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume/run.par",
-      "bytes": 1647,
-      "sha256": "e5d7c3d213613bb0eb40ec4b2959f429d273f8706e9f4509e7444ca3320517b6"
+      "bytes": 1674,
+      "sha256": "785c1876eed9b9546f0c1139bfb12c0afc7336e64e2962e3fe54331e2f0a67cb"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/run.par",
-      "bytes": 1473,
-      "sha256": "5141a54b33d5ad17973a4cf934b713ca8f0b72a8dcf4fe246e2939aba6f6f5a7"
+      "bytes": 1491,
+      "sha256": "ab40baae001e7d3b0e9abaee5077f758f25cdf87ec06472259cbc26c8524f7fc"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume/run.par",
-      "bytes": 1653,
-      "sha256": "fb7e38fb5684f2cbdf716b54ff5fc351adf53eaf80fabf73ba3793ec9ea97c89"
+      "bytes": 1680,
+      "sha256": "6fca36af3b56b2286bb5242587ed11e32b318c0a46853f8f59e682d2dffc0aa5"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/run.par",
-      "bytes": 1477,
-      "sha256": "e6b65e4424cbec510b9dbb78816758a3cdf0fcfb11bc426c9c96656a77c4effe"
+      "bytes": 1495,
+      "sha256": "b12eae15793c2fa37cd47f445acc684f26defd9083b0b82827b82bc3559f1c14"
     },
     {
       "path": "validation/backend/results/source-publication-20260908/README.md",
-      "bytes": 3455,
-      "sha256": "a9699cdaec768a3bee3f79b202f203dad8190633da4adf2787e123d1db355a4c"
+      "bytes": 4115,
+      "sha256": "0e60075baba47e8bdd72cf23002a7f005388f3dee3a065c423965841e1725de8"
     },
     {
       "path": "validation/backend/results/source-publication-20260908/archives/baseline-reviewed-documents.tar.gz",
@@ -21212,13 +20908,13 @@
     },
     {
       "path": "validation/restart/README.md",
-      "bytes": 8925,
-      "sha256": "16c5f3513039f1c0d4dc53a6b36e90a38320264cbb04ae94fa9c512c595426ae"
+      "bytes": 9023,
+      "sha256": "83c9b39bc97615bf2cae13c9711696cdb6e70d76eca4bdb34c38d62800ee4aca"
     },
     {
       "path": "validation/restart/README.zh-CN.md",
-      "bytes": 7890,
-      "sha256": "88cd234203f3922d1a30eb5cda7419bf0fc16dfa886e3850f1febe6a4dbcbd10"
+      "bytes": 7969,
+      "sha256": "21bcd089be2badf0865ec90b3629de6b8e6f0a9edffd4caa7a014cb5dac36fcb"
     },
     {
       "path": "validation/restart/inputs/README.md",

@@ -112,6 +112,8 @@ place when responsibilities change.
 | Checkpoint input and restoration | One ARCH checkpoint reader and writer. Missing identity, ENUC, native composition or controller state is an error. Keep the existing payload, field-consistency checks and physical-identity checks; fresh simulations initialize their own `RunState`. |
 | Solver selection | Remove unused `NumericsConfig::riemann_solver` and `ProblemGenerator::GetSolverName`, whose adapters returned empty strings. Keep the active policy selection path. |
 | Factory entry points | Remove config/string overloads in `BurnDispatch`, `DiffDispatch` and `GravityDispatch`. Resolve names and backend eligibility once, then pass IDs to the concrete factories. Tests follow the same path. |
+| Hydro launch boundary | `launch_resolved_run` visits the registered route once; `launch_run` requires the plan, requirements, backend, startup state and checkpoint identity by reference. No config-only selector chain remains. |
+| Coordinate display | Two-dimensional curved-grid startup labels use the shared polar angle name `phi`. This changes presentation only; physical coordinates and metric operators remain unchanged. |
 
 The removed factory entry points duplicated configuration interpretation and
 construction selection, not reaction equations, ODE methods, diffusion operators
@@ -143,11 +145,16 @@ records 41 required passes and two owner-deferred large-network workloads for
 its identified source. The
 [maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md)
 separates the current interface checks from the referenced full scientific and
-source-organization runs. The final local CUDA build, configured regression and
-strict restart recheck pass under the [active plan](CudaReleaseStandard.md#active-execution-contract),
-including burning-restart memcheck/racecheck and final identity checks.
+source-organization runs. The current optimized CUDA build, all 98 configured
+Release tests, ten development-smoke lanes and all four strict
+normal/instrumented restart suites pass, including final source and artifact
+identity checks. The [matched local AMR timing](../../validation/backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
+passes the existing field, conservation, workload and identity checks at both
+sizes. CUDA is slower on these measured Sedov workloads. This is an execution
+performance follow-up, not a reason to fork the shared mathematics or change
+the accepted scientific budgets; the owner accepts functional-parity integration.
 
-The passing 98-test Release inventory includes the interface controls
+The configured 98-test Release inventory includes the interface controls
 `checkpoint_compatibility`, `resolved_execution_plan`,
 `shared_stage_scheduler`, `boundary_plan`, `amr_operation_plans` and
 `state_residency`. They check the changed input and dispatch contracts within
@@ -162,8 +169,8 @@ aliases and the supported registration interfaces remain intact.
 
 Commands, observed identities and resource measurements belong to the existing
 [maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md).
-The 282 Python tooling and architecture controls pass with
-zero skips, and the standalone architecture audit passes. Fixed provenance
+The 289 Python tooling and architecture controls pass with
+zero skips, including seven configure-helper controls. Fixed provenance
 protocol inputs now belong to the [test fixtures](../../tests/fixtures/validation_provenance/README.md),
 not the current scientific result set. These are actual separate checks, not
 results inferred from C++ regression.

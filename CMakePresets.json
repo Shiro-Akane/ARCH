@@ -2,34 +2,51 @@
   "version": 1,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 19,
+    "minor": 22,
     "patch": 0
   },
   "configurePresets": [
     {
-      "name": "cuda-dev-sm86",
-      "displayName": "CUDA development (sm86)",
-      "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build/cuda-dev-sm86",
+      "name": "cpu-release",
+      "displayName": "CPU application (Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-cpu",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ARCH_ENABLE_CUDA": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "BUILD_TESTING": "OFF",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build-cpu/bin"
+      }
+    },
+    {
+      "name": "cuda-release",
+      "displayName": "CUDA application (Release, visible GPU)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-cuda",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "BUILD_TESTING": "OFF",
+        "CMAKE_CUDA_ARCHITECTURES": "native",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build-cuda/bin"
+      }
+    },
+    {
+      "name": "cuda-debug",
+      "displayName": "CUDA development (Debug, visible GPU)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-cuda-debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "ARCH_ENABLE_CUDA": "ON",
         "ARCH_ENABLE_OPENMP": "ON",
         "BUILD_TESTING": "ON",
-        "CMAKE_CUDA_ARCHITECTURES": "86"
-      }
-    },
-    {
-      "name": "cuda-release-sm90",
-      "displayName": "CUDA release (sm90)",
-      "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build/cuda-release-sm90",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "ARCH_ENABLE_CUDA": "ON",
-        "ARCH_ENABLE_OPENMP": "ON",
-        "BUILD_TESTING": "ON",
-        "CMAKE_CUDA_ARCHITECTURES": "90"
+        "CMAKE_CUDA_ARCHITECTURES": "native",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "${sourceDir}/build-cuda-debug/bin"
       }
     }
   ]

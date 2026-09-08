@@ -33,6 +33,10 @@ CPU 与 CUDA 后端均完整支持以下功能。当前的发布版本已顺利�
 
 检查点（Checkpoint）保存了无缝恢复模拟所需的所有状态信息（包括网格和流体组分）。由于 CPU 和 CUDA 后端使用完全相同的文件格式，你可以自由地在不同的后端之间进行重启。[参考手册](docs/Reference.zh-CN.md)详细列出了保存的字段，以及恢复模拟时必须保持一致的物理设置。
 
+较小的 AMR 工作负载可以先使用 CPU，再通过代表性算例判断 CUDA 是否更快。
+[后端性能指南](docs/CudaBackendStatus.zh-CN.md#按性能选择后端)说明了已测的 CPU/CUDA
+对照结果及其适用范围。
+
 ## 已实现功能
 
 ARCH 提供 SW 和 VL 通量矢量分裂，以及 Roe、HLL 和 HLLC 黎曼求解器，用于估计跨越单元边界的输运。在单元面的空间重构方面，支持 PCM、MUSCL/PLM 和 PPM。时间积分由 Euler、SSPRK2 或 SSPRK3 方案处理，而扩散过程则采用 RKL1 或 RKL2 超时间步方法。所有这些数值方法的选择都完全独立于 CPU/CUDA 后端。
@@ -42,6 +46,18 @@ ARCH 提供 SW 和 VL 通量矢量分裂，以及 Roe、HLL 和 HLLC 黎曼求�
 ## 构建
 
 ARCH 必须在 Linux 环境中编译；Windows 用户请使用 WSL2 Linux 终端。你可以在下方选择构建纯 CPU 版本或 CPU/CUDA 双支持版本。由于 CUDA 可执行程序同时也支持在 CPU 上运行，因此不需要将两者都编译一遍。
+
+### 获取源码
+
+推荐用户拉取 `main` 分支：
+
+```bash
+git clone --branch main --single-branch https://github.com/Shiro-Akane/ARCH.git
+cd ARCH
+```
+
+更新已有的 `main` 工作目录时，先保存自己的修改，再在仓库目录内运行
+`git pull --ff-only`。如果不能直接更新，Git 会停止，不会重置你的工作。
 
 ### 准备工具
 
@@ -60,17 +76,14 @@ ARCH 必须在 Linux 环境中编译；Windows 用户请使用 WSL2 Linux 终端
 CMake 会在配置时下载 HighFive。CPU 稀疏求解器 KLU 默认启用：程序优先使用
 已安装的库，否则下载固定版本的 SuiteSparse v7.13.0。因此，配置阶段需要联网。
 
-下方命令都在仓库根目录执行。`cmake -S ... -B ...` 检查依赖并准备构建目录，
-`cmake --build ...` 才开始编译。这里使用 Ninja 执行编译任务，不需要再运行
-`make`。如果同名构建目录已配置过其他编译器或构建工具，请换一个空目录。
+下方命令都在仓库根目录执行。`cmake --preset ...` 使用项目保存的配置检查依赖
+并准备构建目录，`cmake --build ...` 才开始编译。预设使用 Ninja 执行编译任务，
+不需要再运行 `make`。如果同名构建目录已配置过其他编译器或构建工具，请换一个空目录。
 
 ### 方案 A：使用 CPU
 
 ```bash
-cmake -S . -B build-cpu -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-  -DARCH_ENABLE_CUDA=OFF -DARCH_ENABLE_OPENMP=ON \
-  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cpu/bin"
+cmake --preset cpu-release
 cmake --build build-cpu --target ARCH --parallel 1
 ```
 
@@ -80,13 +93,11 @@ cmake --build build-cpu --target ARCH --parallel 1
 
 ### 方案 B：同时支持 CPU 与 CUDA
 
-请在将要运行 ARCH 的 GPU 所在机器上执行；`native` 表示为本机 GPU 编译。
+请在将要运行 ARCH 的 GPU 所在机器上执行。预设通过
+`CMAKE_CUDA_ARCHITECTURES=native` 为本机 GPU 编译，并将重型编译任务限制为一个。
 
 ```bash
-cmake -S . -B build-cuda -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-  -DARCH_ENABLE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=native \
-  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cuda/bin"
+cmake --preset cuda-release
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
   cmake --build build-cuda --target ARCH --parallel 1
@@ -192,11 +203,11 @@ use_nse = false
 linear_solver = Auto
 ~~~
 
-使用 CUDA 时，生成网络包的清单需声明 `device_callable_math=true` 和 `generator_version >= 4`。
-两个后端使用同一个生成数学头文件及清单声明的 Jacobian 结构。对于已识别的
-内嵌弱反应率表，各后端分别管理只读数据，共用插值、导数和有符号能量积分。
-采用生成格式 3 或不具备设备数学接口的网络包仅支持 CPU。这些编号表示生成包的
-接口格式，不是 ARCH 的发布版本。生成网络不支持 Timmes NSE 投影。
+使用 CUDA 时，通过随附生成器创建具备设备端数学能力的网络包。清单会声明
+这项能力，CMake 在注册 CUDA 执行组合前检查所需的包接口。两个后端使用同一个
+生成数学头文件及清单声明的 Jacobian 结构。对于已识别的内嵌弱反应率表，各后端
+分别管理只读数据，共用插值、导数和有符号能量积分。仅提供 CPU 接口的网络包
+仍可在 CPU 上运行。生成网络不支持 Timmes NSE 投影。
 
 线性求解器名称不区分大小写。`Auto` 在 ODE 方程总数不超过 31 时选择 DenseLU，
 计数包含核素、温度和可选辅助状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA

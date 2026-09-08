@@ -26,19 +26,30 @@ The [scientific acceptance](../final-acceptance-20260907/release-73a9cf50/README
 retains its recorded source identity and 41 required passes. The
 [maintenance review](../maintenance-freeze-20260908/README.md) records the current
 ARCH checkpoint reader, unified factory interfaces, test/tool organization and
-actual local verification. The optimized CUDA build, all 98 configured Release
-tests, ten development-smoke lanes, smooth/burning restart, burning-restart
-memcheck/racecheck and all 282 Python controls pass. The runtime campaign checks
-source, executable and test-artifact identities before and after execution.
-Its source fingerprint is
-`02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781`;
-the independent scientific measurements retain their own source identity.
+actual local verification. The narrow dispatch cleanup preserves the active
+registry mappings and numerical implementations. The optimized incremental CUDA
+build, all 289 Python controls, 98 Release tests, ten development-smoke lanes
+and all four normal/instrumented restart suites pass.
+
+The current runtime campaign records source
+`abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf`;
+its final source, binary and test-artifact identity checks pass. Independent
+scientific measurements retain their original source identity. The
+[matched AMR timing](../maintenance-freeze-20260908/README.md#matched-local-amr-timing)
+also passes its field, conservation, workload and identity checks. CPU is faster
+at both measured sizes; the owner accepts integration as a functionally
+equivalent CPU/CUDA version with that result disclosed.
 
 The archive manifest observes the current source and selected evidence directly.
 It must include the intentional interface, fixture and documentation changes;
 the earlier path-only surviving-source comparison does not establish equivalence
 for this cleanup. Recorded scientific inputs, budgets and measurements are not
 renamed to match a later Git commit.
+
+The selected source and reviewed technical results are ready for the
+owner-authorized fast-forward integration. Final local-link and inventory
+checks guard the selected commit. Git refs and push receipts establish the
+actual integration state; this record does not claim that a push has occurred.
 
 ## Updating effective validation records
 

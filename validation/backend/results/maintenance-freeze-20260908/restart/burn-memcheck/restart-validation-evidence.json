@@ -31,20 +31,20 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e8689630119113fee64fa3ebd0d069036b059ab8f7424dca39ac43dd0ceb4e75",
-        "checkpoint_sha256": "56adb6e340c84d748e1edf1907c8fbd75d58b2c36c7617ba2ade19d9ed2ff138",
+        "parameter_sha256": "018055b72180f4a885077297dd780d59a3c13918b5ab75ca567594c3097b5bb0",
+        "checkpoint_sha256": "c3dada6e824bbc260bc509ebda4ee32b5ec9d6fda6229d81b8e65dfa68b004b1",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
-      "checkpoint_sha256": "56adb6e340c84d748e1edf1907c8fbd75d58b2c36c7617ba2ade19d9ed2ff138",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+      "checkpoint_sha256": "c3dada6e824bbc260bc509ebda4ee32b5ec9d6fda6229d81b8e65dfa68b004b1",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_continuous/RestartAMR_cpu_continuous_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cpu",
@@ -81,20 +81,20 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "012374dbb38c947c0c76edbb0d5df3f8f7a592c79371a4a36c261dfc638735af",
-        "checkpoint_sha256": "cbf55aa62d00afd72a1cd363555ff37d6271d63218255e1cc7261559226f1070",
+        "parameter_sha256": "9aefaa04f9215584fb7a292039d214a646d1ce11281d3fd9d969774e3692adcc",
+        "checkpoint_sha256": "4a3410d18c8df5349bd28f33b70f870284b30fcc9fd6721da270281d796cf1d7",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
-      "checkpoint_sha256": "cbf55aa62d00afd72a1cd363555ff37d6271d63218255e1cc7261559226f1070",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+      "checkpoint_sha256": "4a3410d18c8df5349bd28f33b70f870284b30fcc9fd6721da270281d796cf1d7",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cuda",
@@ -123,8 +123,8 @@
           "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
         },
         "report": {
-          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/sanitizer.log",
-          "sha256": "4dad5c9e1ef8d20c584ce5aa3b0f8b7fa49d8a0d9d2ac8fd0932dc80be22a690"
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/sanitizer.log",
+          "sha256": "eaae51f5952e79a2cfa237fb3548546d7f612ac96000cc37efb70c665391d0ff"
         },
         "summaries": [
           "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
@@ -147,20 +147,20 @@
         "plt_file_index": 1,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2095dea246fa85ecaa2c4f15939598903ee977db62dce773730659df82b036d8",
-        "checkpoint_sha256": "7560471a86b83a5867950d9dcd7ec4715a13b9352019bc7ebc7eda90992f53cb",
+        "parameter_sha256": "6e5efc2ccac708c415127206ba4edab7922444e83bc3473c3b72d11149b7efe3",
+        "checkpoint_sha256": "8fedc6aca9d4ae8e7988c76683a11c891fb8eb8065d928ddc373c48aeb45f3e8",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
-      "checkpoint_sha256": "7560471a86b83a5867950d9dcd7ec4715a13b9352019bc7ebc7eda90992f53cb",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+      "checkpoint_sha256": "8fedc6aca9d4ae8e7988c76683a11c891fb8eb8065d928ddc373c48aeb45f3e8",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cpu",
@@ -183,7 +183,7 @@
         "diffusion": "none"
       },
       "sanitizer": null,
-      "terminal_checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+      "terminal_checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
       "terminal_metadata": {
         "step": 3,
         "time": 6.999999999999999e-16,
@@ -192,14 +192,14 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2095dea246fa85ecaa2c4f15939598903ee977db62dce773730659df82b036d8",
-        "checkpoint_sha256": "2791c086401d3287f8a69f38b477f2d9159f0f67682191ebc1b14b649667b04d",
+        "parameter_sha256": "6e5efc2ccac708c415127206ba4edab7922444e83bc3473c3b72d11149b7efe3",
+        "checkpoint_sha256": "b6c571fc48cbeddf3791858fdf9ae20263298001652ac3c0a46bf50f753f232c",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
         ]
       }
     },
@@ -216,20 +216,20 @@
         "plt_file_index": 1,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e9a77c9204e299e581ad3e47216bf0c4b176be6f0e467cdc1665c63db6b26577",
-        "checkpoint_sha256": "f329a1162c208015e36699ea36d25e10e2dad89f1053b898e7f9218afe2fc607",
+        "parameter_sha256": "bbb130dc54f499c95f6931a405faf9ffc62d25f52f6a22a784d2183db8b309a0",
+        "checkpoint_sha256": "ac9d5b8e289ad27255cef9df7cf90256dd61406ca0b306b2fc39ee1c366f473d",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
-      "checkpoint_sha256": "f329a1162c208015e36699ea36d25e10e2dad89f1053b898e7f9218afe2fc607",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+      "checkpoint_sha256": "ac9d5b8e289ad27255cef9df7cf90256dd61406ca0b306b2fc39ee1c366f473d",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cuda",
@@ -258,15 +258,15 @@
           "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
         },
         "report": {
-          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/sanitizer.log",
-          "sha256": "62bc4bb85ad8a5b1c25b7acd08855d8db616ea092dd746c8192aa48c2952e23a"
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/sanitizer.log",
+          "sha256": "cf55eb19941f1b07759f78bb778ab3f9437fe0bec9582ee8da002771b79cbba0"
         },
         "summaries": [
           "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
           "ERROR SUMMARY: 0 errors"
         ]
       },
-      "terminal_checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+      "terminal_checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
       "terminal_metadata": {
         "step": 3,
         "time": 6.999999999999999e-16,
@@ -275,14 +275,14 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e9a77c9204e299e581ad3e47216bf0c4b176be6f0e467cdc1665c63db6b26577",
-        "checkpoint_sha256": "0ee4828966e2940f8879d8ade00bb02246ffb50098140a5518331c3a106d5ff2",
+        "parameter_sha256": "bbb130dc54f499c95f6931a405faf9ffc62d25f52f6a22a784d2183db8b309a0",
+        "checkpoint_sha256": "fe3984d8ade09b7492908404a33c8a3fec97056ebe4b291fcce09658298ff8ee",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
         ]
       }
     }
@@ -301,20 +301,20 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "823fe77833e42863b6d9bdec6ca7a0fc7b31ebc045a68d09ad38100e6089d4cc",
-        "checkpoint_sha256": "8158d2dfb2f2c7f1302e2f2fa8746d1816adcfbb1ff7775367c58a9c3a6d44fd",
+        "parameter_sha256": "c0c93c7dec75cccfccde03f5d8a266e61f1ebefa742abc9ea675e5aa50d0465e",
+        "checkpoint_sha256": "e70dc31b8d2d0b729a9e21902786f34191002492afb9a325e8d64ae54a3a8b88",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
-      "checkpoint_sha256": "8158d2dfb2f2c7f1302e2f2fa8746d1816adcfbb1ff7775367c58a9c3a6d44fd",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "e70dc31b8d2d0b729a9e21902786f34191002492afb9a325e8d64ae54a3a8b88",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cpu",
@@ -338,8 +338,8 @@
       },
       "sanitizer": null,
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
         "step": 2,
         "time": 3e-16,
         "resume_after_regrid": true,
@@ -347,14 +347,14 @@
         "plt_file_index": 1,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2095dea246fa85ecaa2c4f15939598903ee977db62dce773730659df82b036d8",
-        "checkpoint_sha256": "7560471a86b83a5867950d9dcd7ec4715a13b9352019bc7ebc7eda90992f53cb",
+        "parameter_sha256": "6e5efc2ccac708c415127206ba4edab7922444e83bc3473c3b72d11149b7efe3",
+        "checkpoint_sha256": "8fedc6aca9d4ae8e7988c76683a11c891fb8eb8065d928ddc373c48aeb45f3e8",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
         ]
       },
       "restore_confirmed": true
@@ -372,20 +372,20 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "f7b82de5355853318e24a7ad4c8845d6b66cd9bcb4b66dead2e4103806fba6ad",
-        "checkpoint_sha256": "16e943eedb9a727a214ec2103322f6ec91291dd26c824282ae1e89431cdf4265",
+        "parameter_sha256": "00acf9374055c7e2123afd96879236f9803951f097e3b939e577369750ace5dc",
+        "checkpoint_sha256": "54f348e8ad77ea5941d0090cbce409cfb22aadce1cf50d153d5582bf3d01b1d5",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
-      "checkpoint_sha256": "16e943eedb9a727a214ec2103322f6ec91291dd26c824282ae1e89431cdf4265",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "54f348e8ad77ea5941d0090cbce409cfb22aadce1cf50d153d5582bf3d01b1d5",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cuda",
@@ -414,8 +414,8 @@
           "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
         },
         "report": {
-          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda/sanitizer.log",
-          "sha256": "dcd4e7ceeb77d7fa908247643da2a31ca0c18c9cb051a8e9ecde6a569ee2e2b1"
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda/sanitizer.log",
+          "sha256": "a33bc7dfcf52a587159949a318b6613f5f8c51b6ba03ff11c62ed06c7d6a1ebd"
         },
         "summaries": [
           "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
@@ -423,8 +423,8 @@
         ]
       },
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
         "step": 2,
         "time": 3e-16,
         "resume_after_regrid": true,
@@ -432,14 +432,14 @@
         "plt_file_index": 1,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e9a77c9204e299e581ad3e47216bf0c4b176be6f0e467cdc1665c63db6b26577",
-        "checkpoint_sha256": "f329a1162c208015e36699ea36d25e10e2dad89f1053b898e7f9218afe2fc607",
+        "parameter_sha256": "bbb130dc54f499c95f6931a405faf9ffc62d25f52f6a22a784d2183db8b309a0",
+        "checkpoint_sha256": "ac9d5b8e289ad27255cef9df7cf90256dd61406ca0b306b2fc39ee1c366f473d",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
         ]
       },
       "restore_confirmed": true
@@ -457,20 +457,20 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "7a13a8c357231e280579386dc454bb4a7f34b63de9b76a10f2fb07175da6116d",
-        "checkpoint_sha256": "40875a7c4ac5ec0b6a5ce7bdcf8f8cbc5330acf5ec1dac1918e3fdb9a8ff8c3e",
+        "parameter_sha256": "c5d3c81fd27a996cb15aa952a29a3ed0a772475ddcf1f86b65598b5fc0bc42a6",
+        "checkpoint_sha256": "a1b9e6d4219507bc04263fbfb85e34c0916c106b4f9985bee9ee8c67477b7e58",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
-      "checkpoint_sha256": "40875a7c4ac5ec0b6a5ce7bdcf8f8cbc5330acf5ec1dac1918e3fdb9a8ff8c3e",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "a1b9e6d4219507bc04263fbfb85e34c0916c106b4f9985bee9ee8c67477b7e58",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cuda",
@@ -499,8 +499,8 @@
           "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
         },
         "report": {
-          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda/sanitizer.log",
-          "sha256": "96d3ee0d0ce15cf9ed3104945db7b3e73a19f2e83370062a669a5a013e9d7f70"
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda/sanitizer.log",
+          "sha256": "281306f1ee4e5b5a479df4494700212e8a27189614d0320f869f6c85231df0ea"
         },
         "summaries": [
           "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
@@ -508,8 +508,8 @@
         ]
       },
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
         "step": 2,
         "time": 3e-16,
         "resume_after_regrid": true,
@@ -517,14 +517,14 @@
         "plt_file_index": 1,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2095dea246fa85ecaa2c4f15939598903ee977db62dce773730659df82b036d8",
-        "checkpoint_sha256": "7560471a86b83a5867950d9dcd7ec4715a13b9352019bc7ebc7eda90992f53cb",
+        "parameter_sha256": "6e5efc2ccac708c415127206ba4edab7922444e83bc3473c3b72d11149b7efe3",
+        "checkpoint_sha256": "8fedc6aca9d4ae8e7988c76683a11c891fb8eb8065d928ddc373c48aeb45f3e8",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
         ]
       },
       "restore_confirmed": true
@@ -542,20 +542,20 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2ce858f9347b67be08cd4d8c843a3ddc4c92be16edc3efe7a8524c631a550e1e",
-        "checkpoint_sha256": "35a8fddb7086e7e5a6b3cc36dea26541d0d2c44724bb00f1e4d6c84e40a8820e",
+        "parameter_sha256": "c074f55b39477d2d9125d627040639c488aa1ea4685fa75cb83dea42c0997741",
+        "checkpoint_sha256": "d1bea0044d13fb1897443b57f98cc80452b8b8e1e106012918698501beadb6d4",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
-      "checkpoint_sha256": "35a8fddb7086e7e5a6b3cc36dea26541d0d2c44724bb00f1e4d6c84e40a8820e",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "d1bea0044d13fb1897443b57f98cc80452b8b8e1e106012918698501beadb6d4",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cpu",
@@ -579,8 +579,8 @@
       },
       "sanitizer": null,
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
         "step": 2,
         "time": 3e-16,
         "resume_after_regrid": true,
@@ -588,14 +588,14 @@
         "plt_file_index": 1,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e9a77c9204e299e581ad3e47216bf0c4b176be6f0e467cdc1665c63db6b26577",
-        "checkpoint_sha256": "f329a1162c208015e36699ea36d25e10e2dad89f1053b898e7f9218afe2fc607",
+        "parameter_sha256": "bbb130dc54f499c95f6931a405faf9ffc62d25f52f6a22a784d2183db8b309a0",
+        "checkpoint_sha256": "ac9d5b8e289ad27255cef9df7cf90256dd61406ca0b306b2fc39ee1c366f473d",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
         ]
       },
       "restore_confirmed": true
@@ -613,20 +613,20 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2bc2b96082192a598583fb62d66cf54564926e110332fe00ed7fd3bfca821d45",
-        "checkpoint_sha256": "50d6ff6f78c4cd7f10cf6645cc5bb05806637eea5537ffcc6fe373e9cdbabb48",
+        "parameter_sha256": "bf71b5ab7a219136bf38dc9f139db3c35b389a901f976eb626cbb8f753c5f98a",
+        "checkpoint_sha256": "68a23dba3f209437278db4a09a8e866e4c61956478e8e6fd2492026b0403829c",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
-      "checkpoint_sha256": "50d6ff6f78c4cd7f10cf6645cc5bb05806637eea5537ffcc6fe373e9cdbabb48",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
+      "checkpoint_sha256": "68a23dba3f209437278db4a09a8e866e4c61956478e8e6fd2492026b0403829c",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cpu",
@@ -650,8 +650,8 @@
       },
       "sanitizer": null,
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
         "step": 3,
         "time": 6.999999999999999e-16,
         "resume_after_regrid": false,
@@ -659,14 +659,14 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2095dea246fa85ecaa2c4f15939598903ee977db62dce773730659df82b036d8",
-        "checkpoint_sha256": "2791c086401d3287f8a69f38b477f2d9159f0f67682191ebc1b14b649667b04d",
+        "parameter_sha256": "6e5efc2ccac708c415127206ba4edab7922444e83bc3473c3b72d11149b7efe3",
+        "checkpoint_sha256": "b6c571fc48cbeddf3791858fdf9ae20263298001652ac3c0a46bf50f753f232c",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
         ]
       },
       "restore_confirmed": true
@@ -684,20 +684,20 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "5ad598928939c6d6571e68d73d103722cc891a9ffdc8590458c05829d19a4bb8",
-        "checkpoint_sha256": "9b08953eefc6fb4ffa2f8ee2dc0b0e465b2e0985ba6c67207e4359caf6edec6f",
+        "parameter_sha256": "84896d49548fe7baf369bb5d2bab965b04369b93f210bc2f7ccfbd153450a8e2",
+        "checkpoint_sha256": "1432a5c41f2b7f2e109d9a3a74265072632230ec37e6d6b6058dc7c807a47e4a",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
-      "checkpoint_sha256": "9b08953eefc6fb4ffa2f8ee2dc0b0e465b2e0985ba6c67207e4359caf6edec6f",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
+      "checkpoint_sha256": "1432a5c41f2b7f2e109d9a3a74265072632230ec37e6d6b6058dc7c807a47e4a",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cuda",
@@ -726,8 +726,8 @@
           "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
         },
         "report": {
-          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cuda_terminal/sanitizer.log",
-          "sha256": "46b58b23025006c5d2a8840a1d196d4f913822bc9dd2a948736be307ca3237cd"
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cuda_terminal/sanitizer.log",
+          "sha256": "3c05998ca6f5e808f2e9e02ccd640e91fa684142d1f651a6e7afa70f5198e159"
         },
         "summaries": [
           "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
@@ -735,8 +735,8 @@
         ]
       },
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
         "step": 3,
         "time": 6.999999999999999e-16,
         "resume_after_regrid": false,
@@ -744,14 +744,14 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e9a77c9204e299e581ad3e47216bf0c4b176be6f0e467cdc1665c63db6b26577",
-        "checkpoint_sha256": "0ee4828966e2940f8879d8ade00bb02246ffb50098140a5518331c3a106d5ff2",
+        "parameter_sha256": "bbb130dc54f499c95f6931a405faf9ffc62d25f52f6a22a784d2183db8b309a0",
+        "checkpoint_sha256": "fe3984d8ade09b7492908404a33c8a3fec97056ebe4b291fcce09658298ff8ee",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
         ]
       },
       "restore_confirmed": true
@@ -769,20 +769,20 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "868e7163a3dd4972a1be5ee798d5dc2f805444b218c91de1ffe0f294ed595851",
-        "checkpoint_sha256": "b5c924b5b934e06e09a34fd50b006ff234cebea0df4527d25bf54a9e9eb6cae4",
+        "parameter_sha256": "59845c22fe6768e673bc5a1c7bdf016b6e12f947c86bf23f265f061fb6750960",
+        "checkpoint_sha256": "2dc5af67da3e3e1adc056c4e63fc73c4a0de5ad86180ca429fcedd443884fd46",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
-      "checkpoint_sha256": "b5c924b5b934e06e09a34fd50b006ff234cebea0df4527d25bf54a9e9eb6cae4",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
+      "checkpoint_sha256": "2dc5af67da3e3e1adc056c4e63fc73c4a0de5ad86180ca429fcedd443884fd46",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cuda",
@@ -811,8 +811,8 @@
           "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
         },
         "report": {
-          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_to_cuda_terminal/sanitizer.log",
-          "sha256": "2cd2dc9aecbdd2973abd9c676ffe6c3e180e1a49db2fe4ae5ec833938b6188ec"
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_to_cuda_terminal/sanitizer.log",
+          "sha256": "164e92f1be90d6f2fa61aa333ae0cc3f7bc563d0f6689e4a9ad9797811def027"
         },
         "summaries": [
           "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
@@ -820,8 +820,8 @@
         ]
       },
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par",
         "step": 3,
         "time": 6.999999999999999e-16,
         "resume_after_regrid": false,
@@ -829,14 +829,14 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "2095dea246fa85ecaa2c4f15939598903ee977db62dce773730659df82b036d8",
-        "checkpoint_sha256": "2791c086401d3287f8a69f38b477f2d9159f0f67682191ebc1b14b649667b04d",
+        "parameter_sha256": "6e5efc2ccac708c415127206ba4edab7922444e83bc3473c3b72d11149b7efe3",
+        "checkpoint_sha256": "b6c571fc48cbeddf3791858fdf9ae20263298001652ac3c0a46bf50f753f232c",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cpu_source/RestartAMR_cpu_source.par"
         ]
       },
       "restore_confirmed": true
@@ -854,20 +854,20 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "d5220d74c39ed4c03c7717688f8b26e31bc44642b2a4c82b8d68323d538b28e6",
-        "checkpoint_sha256": "7fd9d03cafd3dd280b1c79268b23d219029e4b72f498208e335bfdfe12745cb6",
+        "parameter_sha256": "e1ff2115b95d1645428df883e821ec4494aae05d489e412a2f9d4a75db49b367",
+        "checkpoint_sha256": "46e3d2cb0b77143042dcda4241bcc51b3e1c1c1af390667592cd701fff522526",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par"
         ]
       },
-      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par",
-      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
-      "checkpoint_sha256": "7fd9d03cafd3dd280b1c79268b23d219029e4b72f498208e335bfdfe12745cb6",
-      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_backend_plan.txt",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
+      "checkpoint_sha256": "46e3d2cb0b77143042dcda4241bcc51b3e1c1c1af390667592cd701fff522526",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_backend_plan.txt",
       "resolved_plan": {
         "schema": "1",
         "requested": "cpu",
@@ -891,8 +891,8 @@
       },
       "sanitizer": null,
       "restored_from": {
-        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
-        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par",
         "step": 3,
         "time": 6.999999999999999e-16,
         "resume_after_regrid": false,
@@ -900,14 +900,14 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "e9a77c9204e299e581ad3e47216bf0c4b176be6f0e467cdc1665c63db6b26577",
-        "checkpoint_sha256": "0ee4828966e2940f8879d8ade00bb02246ffb50098140a5518331c3a106d5ff2",
+        "parameter_sha256": "bbb130dc54f499c95f6931a405faf9ffc62d25f52f6a22a784d2183db8b309a0",
+        "checkpoint_sha256": "fe3984d8ade09b7492908404a33c8a3fec97056ebe4b291fcce09658298ff8ee",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par"
         ]
       },
       "restore_confirmed": true
@@ -1845,7 +1845,7 @@
   "provenance": {
     "schema": 1,
     "source": {
-      "commit": "1829d27e28f237f08b0a42bd0a7cac7bdf71c309",
+      "commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
       "scope": "code-and-validation-inputs-v1",
       "scope_policy": {
         "directories": [
@@ -1892,339 +1892,19 @@
         ],
         "include_untracked_and_gitignored_source": true
       },
-      "worktree_sha256": "02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781",
+      "worktree_sha256": "abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf",
       "dirty": true,
       "modified_files": [
         "CMakeLists.txt",
-        "cmake/CudaBurnDenseRoutes.cmake",
-        "cmake/CudaBurnSparseRoutes.cmake",
-        "cmake/CudaCustomDenseRoute.cu.in",
-        "cmake/templates/CudaBurnDenseRoute.cu.in",
-        "cmake/templates/CudaBurnSparseOwner.cu.in",
-        "simulation/BurnGradient/BurnGradient.cpp",
-        "simulation/BurnOneZone/BurnOneZone.cpp",
-        "simulation/Cellular/Cellular.cpp",
-        "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
-        "simulation/DiffusionMode/DiffusionMode.cpp",
-        "simulation/ExternalGravity/ExternalGravity.cpp",
-        "simulation/GaussianPulse/Gaussian.cpp",
-        "simulation/RTinstability/RT_instab.cpp",
-        "simulation/Sedov/Sedov.cpp",
-        "simulation/SmoothAdvection/SmoothAdvection.cpp",
-        "simulation/Sod/Sod.cpp",
-        "src/amr/AMRControl.h",
-        "src/amr/AMRFluxRegistering.h",
-        "src/amr/AmrDefines.h",
-        "src/amr/AmrFluxMath.h",
-        "src/amr/AmrTree.h",
-        "src/amr/Block.h",
-        "src/amr/BlockHandle.h",
-        "src/amr/BoundaryPlan.h",
-        "src/amr/ConservativeRestriction.h",
-        "src/amr/FluxRegister.h",
-        "src/amr/GhostExchange.h",
-        "src/amr/LimitedLinearProlongation.h",
-        "src/amr/MemoryPool.h",
-        "src/amr/Morton.h",
-        "src/amr/RefinementIndicatorMath.h",
-        "src/amr/RegridExecutionPlan.h",
-        "src/amr/RegridTransferMath.h",
-        "src/amr/TopologyTransaction.h",
-        "src/core/ProblemHelper.cpp",
-        "src/core/RuntimeParams.h",
-        "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
-        "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
-        "src/cuda/amr/CoarseFineExchangeKernels.cuh",
-        "src/cuda/amr/RefinementIndicators.cu",
-        "src/cuda/amr/RefinementIndicators.h",
-        "src/cuda/amr/RegridMigration.cu",
-        "src/cuda/amr/RegridMigration.h",
-        "src/cuda/common/CudaCommon.cuh",
-        "src/cuda/common/CudaLaunchConfig.h",
-        "src/cuda/common/DeviceAllocation.h",
-        "src/cuda/common/DeviceEosStatus.h",
-        "src/cuda/common/GridMetricsCache.cu",
-        "src/cuda/common/GridMetricsCache.h",
-        "src/cuda/diffusion/DiffusionKernels.cuh",
-        "src/cuda/diffusion/DiffusionSolver.cuh",
-        "src/cuda/hydro/Boundary.cuh",
-        "src/cuda/hydro/BoundaryPlan.h",
-        "src/cuda/hydro/CheckedHydroEos.cuh",
-        "src/cuda/hydro/ExchangeKernels.cuh",
-        "src/cuda/hydro/GridGeometryAdapter.cuh",
-        "src/cuda/hydro/HydroFaceKernel.cuh",
-        "src/cuda/hydro/HydroFluxPolicies.cuh",
-        "src/cuda/hydro/HydroIntegratorPolicies.cuh",
-        "src/cuda/hydro/HydroReconstructionPolicies.cuh",
-        "src/cuda/hydro/HydroSourceKernels.cuh",
-        "src/cuda/hydro/HydroStageKernels.cuh",
-        "src/cuda/hydro/HydroStateKernels.cuh",
-        "src/cuda/microphysics/CuDssSparseSolver.cpp",
-        "src/cuda/microphysics/CuDssSparseSolver.h",
-        "src/cuda/microphysics/SparseBeNrBatch.cuh",
-        "src/cuda/microphysics/SparseBurnCells.cuh",
-        "src/cuda/microphysics/SparseEquilibration.cu",
-        "src/cuda/microphysics/SparseEquilibration.h",
-        "src/cuda/microphysics/SparseOdeBatch.cuh",
-        "src/cuda/microphysics/common.h",
-        "src/cuda/microphysics/device_eos_owner_utils.cpp",
-        "src/cuda/microphysics/device_eos_owner_utils.h",
-        "src/cuda/microphysics/device_network_owner.h",
-        "src/cuda/microphysics/device_species_owner.cpp",
-        "src/cuda/microphysics/device_species_owner.h",
-        "src/cuda/microphysics/helm_eos_device_owner.cpp",
-        "src/cuda/microphysics/helm_eos_device_owner.h",
-        "src/cuda/microphysics/helm_eos_loader.h",
-        "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
-        "src/cuda/microphysics/tabular3_eos_device_owner.h",
-        "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
-        "src/cuda/microphysics/tabular4_eos_device_owner.h",
-        "src/cuda/runtime/CudaBackend.h",
-        "src/cuda/runtime/CudaBackendFactory.cpp",
-        "src/cuda/runtime/DeviceBlockStore.h",
-        "src/cuda/runtime/amr/CudaBackendAmrFlux.cu",
-        "src/cuda/runtime/amr/CudaBackendAmrFlux.h",
-        "src/cuda/runtime/amr/CudaBackendExchange.cu",
-        "src/cuda/runtime/amr/CudaBackendExchange.h",
-        "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
-        "src/cuda/runtime/amr/CudaBackendMigration.cpp",
-        "src/cuda/runtime/burn/CudaBackendBurn.h",
-        "src/cuda/runtime/burn/CudaBackendBurnDenseRoutes.h",
-        "src/cuda/runtime/burn/CudaBackendBurnImpl.cuh",
-        "src/cuda/runtime/burn/CudaBackendBurnReduction.cuh",
-        "src/cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h",
-        "src/cuda/runtime/burn/CudaBackendBurnSparse.h",
-        "src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp",
-        "src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh",
-        "src/cuda/runtime/burn/CudaBackendBurnSparseRoutes.h",
-        "src/cuda/runtime/burn/CudaBurnOdeTypes.h",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu",
-        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu",
-        "src/cuda/runtime/control/CudaBackendCore.cpp",
-        "src/cuda/runtime/control/CudaBackendInternal.h",
-        "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
-        "src/cuda/runtime/control/CudaBackendResources.cpp",
-        "src/cuda/runtime/control/CudaBackendStore.cpp",
-        "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu",
-        "src/cuda/runtime/diffusion/CudaBackendDiffusion.h",
-        "src/cuda/runtime/hydro/CudaBackendHydro.h",
-        "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
-        "src/cuda/runtime/hydro/CudaBackendHydroHelm.cu",
-        "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu",
-        "src/cuda/runtime/hydro/CudaBackendHydroInstantiation.cuh",
-        "src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu",
-        "src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu",
-        "src/data/FluidState.h",
-        "src/data/GlobalDefs.h",
-        "src/data/UserTypes.h",
-        "src/driver/ComputeBackend.h",
-        "src/driver/Driver.h",
-        "src/driver/DriverBurn.h",
-        "src/driver/DriverBurnPolicy.h",
-        "src/driver/DriverControl.h",
-        "src/driver/DriverUtils.h",
-        "src/driver/ReductionSpec.h",
+        "CMakePresets.json",
         "src/driver/SolverDispatch.cpp",
-        "src/driver/SolverDispatch.h",
-        "src/driver/StageScheduler.h",
-        "src/driver/StateResidency.h",
-        "src/driver/TopologyIdentityRegistry.h",
-        "src/driver/dispatch/BackendCapabilities.h",
         "src/driver/dispatch/DispatchImpl.h",
-        "src/driver/dispatch/Dispatch_Euler.cpp",
-        "src/driver/dispatch/Dispatch_RK2.cpp",
-        "src/driver/dispatch/Dispatch_RK3.cpp",
-        "src/driver/dispatch/PolicyDescriptor.h",
-        "src/driver/dispatch/ResolvedExecutionPlan.h",
-        "src/driver/dispatch/RuntimeProbe.cpp",
-        "src/driver/dispatch/RuntimeProbe.h",
-        "src/grid/Grid.h",
-        "src/grid/GridMetrics.h",
-        "src/interface/GenericProblem.h",
-        "src/interface/ProblemGenerator.h",
-        "src/io/IO.h",
-        "src/io/chk/CheckpointCompatibility.h",
-        "src/io/chk/ChkIO.cpp",
-        "src/io/hdf5/HDF5Writer.cpp",
-        "src/io/hdf5/HDF5Writer.h",
-        "src/io/plot/PlotIO.cpp",
-        "src/numerics/burnsolver/BurnDispatch.h",
-        "src/numerics/burnsolver/BurnThermodynamics.h",
-        "src/numerics/burnsolver/BurnerHandle.h",
-        "src/numerics/burnsolver/NetworkDerivative.h",
-        "src/numerics/burnsolver/OdeContinuation.h",
-        "src/numerics/burnsolver/odeFunction.h",
-        "src/numerics/burnsolver/ode_bd.h",
-        "src/numerics/burnsolver/ode_ros4.h",
-        "src/numerics/diffusion/DiffDispatch.h",
-        "src/numerics/diffusion/DiffusionAMRStages.h",
-        "src/numerics/diffusion/DiffusionTypes.h",
-        "src/numerics/flux/FluxFunctions.h",
-        "src/numerics/flux/FluxHLL.h",
-        "src/numerics/flux/FluxHLLC.h",
-        "src/numerics/flux/FluxRoe.h",
-        "src/numerics/flux/FluxSW.h",
-        "src/numerics/flux/FluxVL.h",
-        "src/numerics/integrator/GeometricSources.h",
-        "src/numerics/integrator/HydroSolverImpl.h",
-        "src/numerics/integrator/IHydroSolver.h",
-        "src/numerics/integrator/TimeIntegratorEuler.h",
-        "src/numerics/integrator/TimeIntegratorHelper.h",
-        "src/numerics/integrator/TimeIntegratorRK2.h",
-        "src/numerics/integrator/TimeIntegratorRK3.h",
-        "src/numerics/linalg/CsrMatrixView.h",
-        "src/numerics/linalg/DenseWrap.h",
-        "src/numerics/linalg/LinearEquilibration.h",
-        "src/numerics/linalg/SparseWrap.h",
-        "src/numerics/reconstruction/Limiters.h",
-        "src/numerics/reconstruction/Reconstruction.h",
-        "src/physics/eos/IdealGas.h",
-        "src/physics/eos/Tabular4DEOS.h",
-        "src/physics/eos/TabularFreeEnergy.h",
-        "src/physics/eos/eos.h",
-        "src/physics/eos/eos_Utils.h",
-        "src/physics/eos/eos_state.h",
-        "src/physics/eos/eosdispatch.cpp",
-        "src/physics/eos/eosdispatch.h",
-        "src/physics/gravity/ExternalGravity.h",
-        "src/physics/gravity/ExternalGravitySource.h",
-        "src/physics/gravity/GravityDispatch.h",
-        "src/physics/gravity/GravityNone.h",
-        "src/physics/gravity/IGravityPolicy.h",
-        "src/physics/network/WeakTableView.h",
-        "src/physics/species/Species.h",
-        "tests/SparseKLURegression.cpp",
-        "tests/TabularEOSRegression.cpp",
-        "tests/amr_composition_test_cases.h",
-        "tests/checkpoint_conservation_metrics.h",
-        "tests/cuda/test_boundary_plan_parity.cu",
-        "tests/cuda/test_burn_policy_parity.cu",
-        "tests/cuda/test_burn_thermal_math.cu",
-        "tests/cuda/test_compensated_sum.cu",
-        "tests/cuda/test_cuda_amr_composition.cu",
-        "tests/cuda/test_cuda_amr_exchange.cpp",
-        "tests/cuda/test_cuda_compile_probe.cu",
-        "tests/cuda/test_cuda_hydro_block.cu",
-        "tests/cuda/test_cuda_multiblock_burn.cu",
-        "tests/cuda/test_cuda_multiblock_diffusion.cu",
-        "tests/cuda/test_cuda_multiblock_hydro.cu",
-        "tests/cuda/test_cuda_policy_resolution.cu",
-        "tests/cuda/test_cuda_reduction_contract.cu",
-        "tests/cuda/test_cuda_regrid_migration.cu",
-        "tests/cuda/test_cuda_regrid_transaction.cpp",
-        "tests/cuda/test_cuda_single_level_validation.cpp",
-        "tests/cuda/test_cuda_sparse_burn_factory.cpp",
-        "tests/cuda/test_cuda_store_lifecycle.cpp",
-        "tests/cuda/test_curvilinear_geometry_smoke.cu",
-        "tests/cuda/test_diffusion_rkl_parity.cu",
-        "tests/cuda/test_eos_host_device_parity.cu",
-        "tests/cuda/test_grid_metrics_cache.cu",
-        "tests/cuda/test_hydro_leaf_parity.cu",
         "tests/cuda/test_mainline_authority.cpp",
-        "tests/cuda/test_network_derivative.cu",
-        "tests/cuda/test_network_nse_device.cu",
-        "tests/cuda/test_refinement_indicators.cpp",
-        "tests/cuda/test_tabular_free_energy_owner.cu",
-        "tests/fixtures/BurnTimeReference.h",
-        "tests/fixtures/NseReference.h",
-        "tests/fixtures/SparseTransferNetwork.h",
-        "tests/math/CompensatedSumCases.h",
-        "tests/math/DenseLuCases.h",
-        "tests/math/NetworkDerivativeCases.h",
-        "tests/regrid_migration_fixture.h",
-        "tests/test_amr_flux_surface_plan.cpp",
-        "tests/test_amr_operation_plans.cpp",
-        "tests/test_block_handle.cpp",
-        "tests/test_boundary_plan.cpp",
-        "tests/test_burn_mainline_reference.cpp",
-        "tests/test_checkpoint_compatibility.cpp",
-        "tests/test_checkpoint_conservation_metrics.cpp",
-        "tests/test_compensated_sum.cpp",
-        "tests/test_compute_backend.cpp",
-        "tests/test_curvilinear_manifest.py",
-        "tests/test_curvilinear_metrics.cpp",
-        "tests/test_device_block_store_lifecycle.cpp",
-        "tests/test_generated_network_reference.cpp",
-        "tests/test_physical_constants.cpp",
-        "tests/test_portable_network_generator.py",
-        "tests/test_reduction_contract.cpp",
-        "tests/test_refinement_indicator_math.cpp",
-        "tests/test_resolved_execution_plan.cpp",
-        "tests/test_run_memory_guarded.py",
-        "tests/test_runtime_probe_and_capabilities.cpp",
-        "tests/test_runtime_validation_inputs.py",
-        "tests/test_same_level_exchange_plan.cpp",
-        "tests/test_shared_stage_scheduler.cpp",
-        "tests/test_smoke_cuda_amr_runtime.py",
-        "tests/test_sparse_ode_continuation.cpp",
-        "tests/test_state_residency.cpp",
-        "tests/test_topology_transaction.cpp",
-        "tests/test_validate_backend_results.py",
-        "tests/test_validation_device_memory.py",
-        "tests/test_validation_provenance.py",
-        "tests/test_validation_subprocess_logs.py",
-        "tests/tooling/test_audit_combination_v2.py",
-        "tools/audit_combination_v2.py",
-        "tools/network/GenerateNetwork.py",
-        "tools/qualify_cuda_amr_evidence.py",
-        "tools/run_memory_guarded.py",
-        "tools/smoke_cuda_amr_runtime.py",
-        "tools/summarize_cuda_compile_memory.py",
-        "tools/validate_backend_results.py",
-        "tools/validate_cuda_amr_restart.py"
+        "tests/host/test_resolved_execution_plan.cpp"
       ],
       "untracked_source_files": [
-        "tests/fixtures/amr_composition_test_cases.h",
-        "tests/fixtures/checkpoint_conservation_metrics.h",
-        "tests/fixtures/regrid_migration_fixture.h",
-        "tests/fixtures/validation_provenance/backend-validation-evidence.json",
-        "tests/fixtures/validation_provenance/restart-enuc-evidence.json",
-        "tests/fixtures/validation_provenance/restart-smooth-evidence.json",
-        "tests/host/SparseKLURegression.cpp",
-        "tests/host/TabularEOSRegression.cpp",
-        "tests/host/test_amr_flux_surface_plan.cpp",
-        "tests/host/test_amr_operation_plans.cpp",
-        "tests/host/test_block_handle.cpp",
-        "tests/host/test_boundary_plan.cpp",
-        "tests/host/test_burn_mainline_reference.cpp",
-        "tests/host/test_checkpoint_compatibility.cpp",
-        "tests/host/test_checkpoint_conservation_metrics.cpp",
-        "tests/host/test_compensated_sum.cpp",
-        "tests/host/test_compute_backend.cpp",
-        "tests/host/test_curvilinear_metrics.cpp",
-        "tests/host/test_device_block_store_lifecycle.cpp",
-        "tests/host/test_generated_network_reference.cpp",
-        "tests/host/test_physical_constants.cpp",
-        "tests/host/test_reduction_contract.cpp",
-        "tests/host/test_refinement_indicator_math.cpp",
-        "tests/host/test_resolved_execution_plan.cpp",
-        "tests/host/test_runtime_probe_and_capabilities.cpp",
-        "tests/host/test_same_level_exchange_plan.cpp",
-        "tests/host/test_shared_stage_scheduler.cpp",
-        "tests/host/test_sparse_ode_continuation.cpp",
-        "tests/host/test_state_residency.cpp",
-        "tests/host/test_topology_transaction.cpp",
-        "tests/tooling/test_audit_architecture.py",
-        "tests/tooling/test_curvilinear_manifest.py",
-        "tests/tooling/test_portable_network_generator.py",
-        "tests/tooling/test_run_memory_guarded.py",
-        "tests/tooling/test_runtime_validation_inputs.py",
-        "tests/tooling/test_smoke_cuda_amr_runtime.py",
-        "tests/tooling/test_validate_backend_results.py",
-        "tests/tooling/test_validation_device_memory.py",
-        "tests/tooling/test_validation_provenance.py",
-        "tests/tooling/test_validation_subprocess_logs.py",
-        "tools/audit_architecture.py"
+        "cmake/SelectIpoLinker.cmake",
+        "tests/tooling/test_build_configuration.py"
       ]
     },
     "build": {
@@ -2761,16 +2441,16 @@
       "CUDA_MODULE_LOADING": null
     },
     "artifacts": {
-      "arch_sha256": "d32b7eb0473e5c8ffb2dfb683bd4d644ae7e78d7c5cc93866c9d9d8755201090",
+      "arch_sha256": "6016ea9d12c5839d5f54a59aa0989afe837b05bd8229ee68e8046e75586fdd3f",
       "checkpoint_validator_sha256": "1fe1a701d5a4ea7fe813242ea255b5254addbb3e44a3e5635ca59a2f0548e9b5"
     },
     "artifact_observation": {
       "arch": [
         2096,
         683574,
-        306379832,
-        1788838416109908712,
-        1788838416129908782
+        306350288,
+        1788841862041940666,
+        1788841862061940661
       ],
       "checkpoint_validator": [
         2096,
@@ -2781,6 +2461,6 @@
       ]
     }
   },
-  "binary_sha256": "d32b7eb0473e5c8ffb2dfb683bd4d644ae7e78d7c5cc93866c9d9d8755201090",
+  "binary_sha256": "6016ea9d12c5839d5f54a59aa0989afe837b05bd8229ee68e8046e75586fdd3f",
   "identity_verified_after_run": true
 }

@@ -8,20 +8,27 @@
 
 ## 先配置，再编译
 
-`cmake -S . -B build-cpu -G Ninja ...` 执行**配置**步骤：它会定位你的编译器和依赖项，将你的选项保存至 `build-cpu/CMakeCache.txt`，并生成相应的 Ninja 构建规则。请注意，这个步骤尚未实际编译出 ARCH 的可执行文件。
+`cmake --preset cpu-release` 执行**配置**步骤：它会定位编译器和依赖项，将选项保存至 `build-cpu/CMakeCache.txt`，并生成相应的 Ninja 构建规则。这个步骤尚未编译 ARCH 可执行文件。预设提供常用选项，也可以通过 `cmake -S . -B build-cpu -G Ninja ...` 逐项指定。
 
 `cmake --build build-cpu --target ARCH --parallel 1` 才会**编译并链接**应用及其依赖。CMake 会自动为你调用 Ninja，因此你不需要再执行独立的 `make` 步骤。当你修改源码后，只需重复这条构建命令即可，Ninja 会智能地仅重新编译受影响的对象和链接。若需要修改构建选项，请先重新执行配置步骤。当更换编译器或构建生成器时，请务必使用一个全新的构建目录。
 
-快速开始将 CPU 和 CUDA 的产物分开放置：
+项目在 [CMakePresets.json](../../CMakePresets.json) 中提供以下预设，将产物分开放置：
 
-| 构建目录 | CUDA 选项 | 可执行文件 |
+| 配置命令 | 构建目录 | 可执行文件 |
 | --- | --- | --- |
-| `build-cpu` | `ARCH_ENABLE_CUDA=OFF` | `build-cpu/bin/ARCH` |
-| `build-cuda` | `ARCH_ENABLE_CUDA=ON` | `build-cuda/bin/ARCH` |
+| `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
+| `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
+| `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-这是配置时将 `ARCH_RUNTIME_OUTPUT_DIRECTORY` 指向绝对路径
-`$PWD/build-cpu/bin` 或 `$PWD/build-cuda/bin` 的结果。不设置该选项时，项目默认
-把可执行文件写入源码树的 `bin/`，不同构建可能写到同一位置。
+三个预设都使用 Ninja 与 OpenMP。Release 预设不在首次构建中启用测试套件；
+`cuda-debug` 则启用测试，供开发使用。两个 CUDA 预设均通过
+`CMAKE_CUDA_ARCHITECTURES=native` 面向配置时可见的显卡，并设置
+`ARCH_CUDA_HEAVY_COMPILE_JOBS=1`。预设只负责配置，实际编译仍使用下方明确的
+构建与内存监控命令。运行 `cmake --list-presets` 可列出可用预设。
+
+产物分离通过 `ARCH_RUNTIME_OUTPUT_DIRECTORY` 实现，它指向各构建目录下 `bin/`
+的绝对路径。不设置该选项时，项目默认把可执行文件写入源码树的 `bin/`。
+需要覆盖预设中的编译器、CUDA 架构等选项时，在配置命令后追加 `-D名称=值` 即可。
 
 ## 工具与依赖
 

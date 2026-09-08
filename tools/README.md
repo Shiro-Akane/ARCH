@@ -39,7 +39,9 @@ trajectory or replace field comparisons.
 
 Use a testing-enabled build containing ARCH and
 `arch_cuda_single_level_validation`. CUDA tests require a usable GPU; sparse
-CUDA burning additionally needs cuDSS and a registered generated package.
+CUDA burning additionally needs cuDSS and compiled support for the selected
+network/EOS combination. A generated package is needed only when the case uses
+a custom network; built-in networks can also use the sparse provider.
 See [test setup](../tests/README.md#add-cuda-and-its-sparse-provider).
 
 - [smoke_cuda_amr_runtime.py](smoke_cuda_amr_runtime.py): short complete-program

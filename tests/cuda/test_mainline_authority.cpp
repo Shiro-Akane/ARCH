@@ -30,6 +30,7 @@
 #include "core/RuntimeParams.h"
 #include "driver/DriverControl.h"
 #include "driver/dispatch/PolicyDescriptor.h"
+#include "grid/Grid.h"
 #include "io/ConfigParser.h"
 #include "physics/diffusionCoe/diffusion_math.hpp"
 #include "physics/eos/eos_Utils.h"
@@ -440,6 +441,30 @@ void test_canonical_helm_paths()
 
 }
 
+void test_resolved_dispatch_source_boundary()
+{
+    const std::filesystem::path root = ARCH_SOURCE_DIR;
+    const auto dispatch = root / "src/driver/dispatch/DispatchImpl.h";
+    for (const char* removed_entry : {
+             "parse_flux_selection(", "select_flux(",
+             "select_reconstruction(", "select_limiter("}) {
+        require_not_contains(dispatch, removed_entry);
+    }
+
+    // The startup display uses the same polar angle as the shared grid names.
+    // Inspect this presentation-only branch; no duplicate geometry is evaluated.
+    require_contains(root / "src/driver/SolverDispatch.cpp",
+                     "if (config.grid.dim == 2) return \"phi\";");
+    Grid grid;
+    grid.dim = 2;
+    grid.geometry = "spherical";
+    require(grid.GetAxisNames() == std::vector<std::string>{"r", "phi"},
+            "spherical 2D display must name the polar angle phi");
+    grid.geometry = "cylindrical";
+    require(grid.GetAxisNames() == std::vector<std::string>{"r_cy", "phi_cy"},
+            "cylindrical 2D display must name the polar angle phi");
+}
+
 } // namespace
 
 int main()
@@ -453,6 +478,7 @@ int main()
         test_terminal_time_alignment();
         test_shared_fixed_composition_isentrope();
         test_canonical_helm_paths();
+        test_resolved_dispatch_source_boundary();
         std::cout << "latest-main authority: PASS\n";
         return 0;
     } catch (const std::exception& error) {

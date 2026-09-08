@@ -7,17 +7,20 @@ verification. The governing scope is the
 [release standard](../../../../docs/development/CudaReleaseStandard.md).
 The scientific acceptance measurements retain their own tested-source identities.
 
-Status: the optimized CUDA build, all 98 configured Release tests, ten CPU/CUDA
-development-smoke lanes, both normal restart suites and burning-restart
-memcheck/racecheck pass. The 282 Python controls, architecture audit and focused
-interface checks also pass. The
+Status: the current optimized CUDA build, all 289 Python controls, 98 Release
+tests, ten development-smoke lanes and all four normal/instrumented restart
+suites pass. The matched local AMR timing also passes its consistency,
+conservation, dynamic-topology and identity checks; CPU is faster on both
+measured sizes. This is a functionally verified source selection for the
+owner-authorized integration, not a claim of GPU speedup. The
 existing [identity and verification record](freeze-review.json) is the single
 inventory for this maintenance work; it distinguishes new checks from the
 scientific and source-organization results cited below.
 
-The completed runtime campaign verifies unchanged source, application,
-comparator and test-artifact identities before and after execution. Its source
-fingerprint is `02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781`.
+The current runtime campaign tests source
+`abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf`.
+Its own execution and final source, binary and test-artifact checks pass; the
+results are not inherited from an earlier maintenance build.
 
 ## Current interface cleanup
 
@@ -35,15 +38,21 @@ representations and generated-package CPU/CUDA eligibility remain supported.
 The [ownership index](../../../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
 records these boundaries without introducing another audit document.
 
-The passing 98-test Release inventory includes `checkpoint_compatibility`,
+The hydro launcher now requires its resolved plan, requirements, backend,
+startup state and checkpoint identity by reference. The unused config-parsing
+selector chain has been removed; the registry mappings and active route visitor
+are unchanged. The two-dimensional curved-grid startup display names its angle
+`phi`, matching the shared grid convention. No numerical or physical formula changes.
+
+The configured Release inventory includes `checkpoint_compatibility`,
 `resolved_execution_plan`, `shared_stage_scheduler`, `boundary_plan`,
 `amr_operation_plans` and `state_residency`. They cover complete ARCH state restore,
 invalid-input rejection, shared policy selection, stage/AMR planning and state
 ownership. The source review separately checks the allowed interface changes
 and layout/comment equivalence; the runtime checks exercise the resulting build.
 
-The unified Python run passes all 282 tooling and architecture controls in
-9.140 seconds with zero skips; the standalone architecture audit also passes.
+The unified Python run passes all 289 tooling and architecture controls in
+29.336 seconds with zero skips, including seven configure-helper controls.
 Four fixed provenance protocol inputs have moved to
 [test fixtures](../../../../tests/fixtures/validation_provenance/README.md)
 with their bytes preserved. Their recorded H100 identities serve parser and
@@ -52,47 +61,97 @@ rejection controls, not scientific acceptance of the current implementation.
 ## Current build and runtime checks
 
 The optimized CUDA application and all configured test targets build with the
-representative generated networks and real KLU/cuDSS providers. The layout
-review accounts for 37 test-file moves across 77 adjusted files and checks that
-260 production files remain unchanged apart from the exactly recorded comments.
-The 280 existing normalized
-compiler commands are unchanged; the checkpoint integration test additionally
-links the shared `ChkIO.cpp` implementation. These checks do not equate the
-intentional checkpoint/factory interface changes with comment-only edits.
+representative generated networks and real KLU/cuDSS providers. This cleanup
+changes two production files: the dispatch entry boundary and one axis-label
+literal. Mathematical, physical, AMR, grid and CUDA implementation files remain
+unchanged. All 281 normalized compiler commands retain their previous arguments;
+the configure-helper and test updates do not change optimization flags.
 
-The build reused completed objects while concurrency followed available RAM:
-
-| Phase | Heavy / total jobs | Elapsed | Outcome |
-| --- | --- | --- | --- |
-| Initial build | 2 / 4 | 209.871 s | Guard stopped at the available-memory reserve |
-| Reduced-concurrency continuation | 1 / 2 | 3,033.388 s | Deliberately interrupted after system memory became available |
-| Adaptive continuation | 2 / 4 | 1,852.722 s | All configured targets built successfully |
-
-The successful continuation peaked at 3,756,708 KiB owned RSS, retained at least
-2,652,536 KiB available RAM, and observed 512 KiB of swap growth without a guard
-stop. A final 1.019-second build check reported no work to do. Neither interrupted
-phase was a compiler correctness failure. These are incremental maintenance
-observations, not a replacement for the separate 2,213.445-second
+Configuration completes in 8.041 seconds. The incremental build completes in
+59.005 seconds, with 2,294,800 KiB peak owned RSS, at least 4,867,264 KiB available
+RAM and no swap growth or guard stop. A final 1.013-second build check reports
+no work to do. These are incremental maintenance observations, not a
+replacement for the separate 2,213.445-second
 [cold-core measurement](../cold-core-first-law-20260907/release-909/README.md)
 or a new minimum hardware requirement.
 
-On this build, all 98 Release tests pass without failures or skips and all ten
-development-smoke lanes pass. Smooth and burning restart each complete twelve
-application executions and nine strict comparisons, covering all four backend
-directions with native fields, ENUC, controller and output-phase checks.
-Burning-restart memcheck and racecheck each repeat all twelve executions and
-nine comparisons, including six actual instrumented CUDA processes per tool.
-Every sanitizer report is complete and clean. The original runners and budgets
-are retained; final source and artifact identity checks pass.
+The current runtime campaign passes all 98 Release tests with zero skips and
+all ten development-smoke lanes. Normal smooth restart, normal burning restart,
+burning-restart memcheck and burning-restart racecheck each pass twelve
+application runs and nine strict comparisons. Each instrumented suite includes
+six actual CUDA processes with complete clean reports. All backend directions,
+native fields, ENUC, controller/output phase and source/artifact identities
+retain the original runners and budgets.
 
-The guarded runtime campaign completes in 503.512 seconds, with 574,420 KiB peak
-owned RSS, at least 5,868,904 KiB available RAM and no swap growth or guard stop.
-This instrumented regression time is not a simulation-performance benchmark.
+The guarded runtime recipe completes in 551.022 seconds, with 576,376 KiB peak
+owned RSS and at least 4,849,544 KiB available RAM. Swap grows slightly from
+250,288 to 253,632 KiB; the guard does not stop the run and pressure observations
+are complete. These campaign timings include instrumentation and are not a
+CPU/CUDA speed comparison.
 
 The [execution recipe](run_maintenance_checks.py) reuses the existing CTest,
-smoke, restart and provenance facilities. Its 60 structural positive/negative
-controls pass; these controls test the recipe, not the physical trajectories.
+smoke, restart and provenance facilities. Its structural positive/negative
+controls test the recipe, not the physical trajectories.
 Source-checkout reproduction starts with the [test guide](../../../../tests/README.md).
+
+## Matched local AMR timing
+
+The [timing summary](amr-timing-review.json) and complete
+[small](sedov-timing-small.json) / [medium](sedov-timing-medium.json) reports
+compare the same optimized executable on CPU and CUDA. The host is WSL2 on an
+i7-10700 with 16 GB installed RAM and an RTX 3060 Ti with 8 GB VRAM; the WSL
+guest had about 7.7 GiB RAM assigned. Both backend processes use the same
+eight-thread OpenMP environment. Each scale has one warmup and three measured
+runs per backend, executed serially.
+
+Both sizes use two refinement levels and the same two-dimensional Sedov
+physics, HLLC/PPM/RK3 methods, thresholds and final physical time `0.02`.
+That observation window includes actual runtime refinement and coarsening,
+rather than only the initial mesh setup. Warmups and cost pilots are excluded
+from the following medians.
+
+| Base blocks | Accepted steps | Initial → final leaves | CPU end-to-end | CUDA end-to-end | CUDA / CPU |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 4 × 4 | 354 | 40 → 88 | 12.011 s | 39.670 s | 3.30 |
+| 8 × 8 | 711 | 88 → 208 | 54.186 s | 185.632 s | 3.43 |
+
+CUDA takes 3.30 and 3.43 times the CPU elapsed time on these workloads; neither
+size demonstrates acceleration. CPU/CUDA fields, conservation, accepted steps,
+runtime topology sequences and source/recipe identities pass the existing
+checks. The field budgets remain `rtol=1e-8`, `atol=1e-11`; conservation retains
+`rtol=2e-12`, `atol=2e-10`. The small case has three runtime topology changes
+(two net leaf-count increases and one decrease); the medium case has twelve
+(eight increases and four decreases). These event labels count net changes,
+not individual parent/child operations within a transaction.
+
+End-to-end time runs from ARCH process creation to exit, including setup,
+computation, AMR, endpoint output and shutdown; validation is outside the timer.
+The separately recorded runtime regrid-transaction totals have medians of
+1.404 s CPU / 2.279 s CUDA for the small case and 6.664 s / 10.890 s for the
+medium case. Initialization is separate, and overlapping nested traces are not
+added. There is no separate solver or kernel timer: subtracting regrid from
+end-to-end time does not measure hydrodynamics alone. Both guarded campaigns
+finish without a guard stop or swap growth.
+
+Reproduce with `BUILD_TESTING=ON` and the application and checkpoint comparator
+from the same CUDA-enabled build. Run from the repository root and choose an
+absent or empty output directory:
+
+```bash
+python3 tools/run_memory_guarded.py --min-available-mib 1536 \
+  --max-swap-growth-mib 256 --pressure-guard -- \
+  python3 validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py \
+    --arch build-cuda/bin/ARCH \
+    --checkpoint-validator build-cuda/arch_cuda_single_level_validation \
+    --output-root build/sedov-amr-timing --blocks 4 8 --levels 2 \
+    --time .02 --threads 8 --backend cpu cuda --warmups 1 --repeats 3 \
+    --timeout 1200
+```
+
+The owner accepts integration as a functionally equivalent CPU/CUDA version
+with these performance results disclosed. Runtime performance optimization is
+separate follow-up work; no production implementation or scientific budget was
+changed to obtain these measurements.
 
 ## Evidence continuity
 
@@ -133,8 +192,8 @@ byte-identical Ninja metadata. The [comparison recipe](review_relocation.py)
 contains 19 positive and negative controls and uses the existing identity helpers.
 
 The effective [build record](build-review.json) and
-[runtime record](runtime-review.json) identify the current executions and their
-before/after checks. Referenced source-organization
+[runtime record](runtime-review.json) record the current campaign and its
+before/after identity checks. Referenced source-organization
 measurements keep their recorded identities; they are not the evidence for the
 interface changes described above.
 

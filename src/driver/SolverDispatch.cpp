@@ -130,7 +130,7 @@ const char* axis_label(const SimConfig& config, int axis)
         return cartesian[axis];
     }
     if (axis == 0) return "r";
-    if (config.grid.dim == 2) return "theta";
+    if (config.grid.dim == 2) return "phi";
     if (config.grid.geometry == "cylindrical") {
         static constexpr const char* cylindrical[] = {"r", "z", "phi"};
         return cylindrical[axis];

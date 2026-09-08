@@ -32,7 +32,8 @@ python3 tools/validate_cuda_amr_restart.py --unit-test
 ## 完整程序与结果比较
 
 使用启用测试的构建，并提供同一构建的 ARCH 与 `arch_cuda_single_level_validation`。
-CUDA 测试需要可用显卡；稀疏 CUDA 燃烧还需要 cuDSS 和已注册的生成网络。
+CUDA 测试需要可用显卡；稀疏 CUDA 燃烧还需要 cuDSS，并编入所选网络与 EOS 的
+执行组合。只有使用自定义网络的算例才需要生成网络包，内置网络也可以使用稀疏求解。
 准备方法见[测试指南](../tests/README.zh-CN.md)。
 
 - [smoke_cuda_amr_runtime.py](smoke_cuda_amr_runtime.py)：短时完整程序运行，

@@ -37,17 +37,41 @@ Nuclear statistical equilibrium (NSE) computes an equilibrium composition within
 the isotope set of the selected built-in network.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
+In two dimensions, both cylindrical and spherical grids use the polar
+`(r, phi)` plane; `phi` is the azimuthal angle in radians. Three-dimensional
+spherical grids use `(r, theta, phi)`.
+
 ## GPU-AMR execution model
 
 Implementation entry points are indexed in [CUDA runtime](../src/cuda/runtime/README.md)
 and the [shared AMR module](../src/amr/README.md).
 
 The CPU owns the mesh topology, Morton ordering, and all refinement/coarsening decisions.
+
 - **Topology** describes the connectivity between mesh blocks.
 - **Morton ordering** assigns a spatially contiguous index to those blocks.
 - **Refinement** splits cells into smaller ones for higher resolution, while **coarsening** merges them when configured indicators indicate that high resolution is no longer needed.
 
 Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration operates directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
+
+## Choosing a backend for performance
+
+Shared features and numerical agreement do not guarantee that CUDA will run
+faster. In the local dynamic-AMR Sedov comparison on an i7-10700 and RTX 3060 Ti
+under WSL2, CUDA end-to-end time was 3.30 and 3.43 times the eight-thread CPU
+time at the two measured sizes. Both backends passed the same field,
+conservation and runtime-topology checks. CPU is the faster choice for these
+workloads; compare a representative run when selecting a backend for your own
+model. `auto` selects an available supported backend, not the fastest one by
+benchmarking it.
+
+The [timing record](../validation/backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
+gives the two mesh sizes, one warmup and three measured runs per backend,
+reproduction command and complete reports. End-to-end measurements include
+initialization and output. Runtime regrid transactions are reported separately;
+they are not an additional cost to add to those totals or an isolated solver
+timer. This source release provides CPU/CUDA functional equivalence; execution
+performance remains workload-dependent and is a separate optimization task.
 
 ## Dense and sparse burning
 
@@ -80,10 +104,10 @@ requirements grow with the network and mesh workload.
 
 - Generated weak tables share interpolation, derivatives and energy integration
   across backends. The generator checks the table layout and reports unsupported
-  inputs. The manifest's `generator_version` identifies the package's generator
-  contract, not an ARCH release. Value 3 supports CPU execution; CUDA requires
-  a value of at least 4 and `device_callable_math=true`. Packages without device-callable math
-  execute on CPU only. Independent
+  inputs. CUDA requires a generated package with device-callable math and a
+  supported package interface, checked from its manifest during configuration.
+  CPU-only packages execute on CPU. The exact manifest fields are documented
+  in the [network contract](Reference.md). Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
 - Self-gravity and custom-network NSE are not production capabilities of either
   backend. Built-in NSE is constrained to the selected species set; alpha-chain

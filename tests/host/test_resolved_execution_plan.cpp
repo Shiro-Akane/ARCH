@@ -42,6 +42,20 @@ struct HostHandleProbeEos
     }
 };
 
+// Check the launch signature without instantiating a numerical driver body.
+struct HydroLaunchTypeProbe {};
+
+template <class... Context>
+concept HasHydroLaunchContext = requires(
+    amr::AMRControl& amr, const HostHandleProbeEos& eos,
+    const Physical::Gravity::IGravityPolicy* gravity,
+    const BurnerHandle<HostHandleProbeEos>& burn, const SimConfig& config,
+    const SpeciesManager& species, const RunState& state, Context&&... context) {
+    DispatchImpl::launch_run<HydroLaunchTypeProbe, HydroLaunchTypeProbe>(
+        amr, eos, gravity, burn, config, species, state,
+        std::forward<Context>(context)...);
+};
+
 template <class Config>
 concept HasConfigOnlyBurnHandle = requires(const Config& config) {
     BurnDispatcher::make_handle<HostHandleProbeEos>(config);
@@ -103,6 +117,16 @@ const char* diffusion_route()
 
 void test_plain_cpp_contracts()
 {
+    static_assert(HasHydroLaunchContext<
+        const ResolvedExecutionPlan&, const ExecutionRequirements&,
+        const BackendResolution&, StartupOrder&, const io::CheckpointProvenance&>);
+    static_assert(!HasHydroLaunchContext<>);
+    static_assert(!HasHydroLaunchContext<
+        const ResolvedExecutionPlan&, const ExecutionRequirements&,
+        const BackendResolution&, StartupOrder&>);
+    static_assert(!HasHydroLaunchContext<
+        const ResolvedExecutionPlan*, const ExecutionRequirements*,
+        const BackendResolution*, StartupOrder*, const io::CheckpointProvenance*>);
     static_assert(!HasConfigOnlyBurnHandle<SimConfig>);
     static_assert(!HasConfigOnlyBurnDispatch<SimConfig>);
     static_assert(!HasConfigOnlyDiffusionDispatch<SimConfig>);
@@ -229,13 +253,22 @@ void test_aliases_defaults_and_plan()
                == TimeIntegratorId::Rk2,
            "unknown time integrator defaults RK2");
     SimConfig factory_config{};
+    factory_config.numerics.reconstruction = "pcm";
+    factory_config.numerics.limiter = "minmod";
+    factory_config.numerics.time_integrator = "rk2";
+    const auto no_table = []() -> int {
+        throw std::logic_error("ideal-gas resolution must not inspect a table");
+    };
     factory_config.numerics.solver_name = "Roe";
-    expect(DispatchImpl::parse_flux_selection(factory_config).value == FluxId::Roe,
-           "factory consumes registration alias");
+    const auto factory_alias = resolve_execution_plan(factory_config, no_table);
+    expect(factory_alias.ok && !factory_alias.defaulted
+               && factory_alias.value.flux == FluxId::Roe,
+           "resolved factory plan consumes registration alias");
     factory_config.numerics.solver_name = "unknown";
-    const auto factory_default = DispatchImpl::parse_flux_selection(factory_config);
-    expect(factory_default.defaulted && factory_default.value == FluxId::Hllc,
-           "factory consumes registration default");
+    const auto factory_default = resolve_execution_plan(factory_config, no_table);
+    expect(factory_default.ok && factory_default.defaulted
+               && factory_default.value.flux == FluxId::Hllc,
+           "resolved factory plan consumes registration default");
     expect(parse_registered_policy<EosPolicies>("Ideal").value == EosId::Ideal,
            "Ideal EOS alias");
     expect(parse_registered_policy<EosPolicies>("Helmholtz").value

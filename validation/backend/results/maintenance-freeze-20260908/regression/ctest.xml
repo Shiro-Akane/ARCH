@@ -5,84 +5,84 @@
 	disabled="0"
 	skipped="0"
 	hostname="Shiro-Akane"
-	time="298"
-	timestamp="2026-09-08T12:47:41"
+	time="313"
+	timestamp="2026-09-08T13:33:38"
 	>
-	<testcase name="portable_network_generator" classname="portable_network_generator" time="0.177512" status="run">
+	<testcase name="portable_network_generator" classname="portable_network_generator" time="0.157779" status="run">
 		<properties/>
 		<system-out>.................................
 ----------------------------------------------------------------------
-Ran 33 tests in 0.098s
+Ran 33 tests in 0.093s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="cuda_amr_smoke_runner_contract" classname="cuda_amr_smoke_runner_contract" time="0.12814" status="run">
+	<testcase name="cuda_amr_smoke_runner_contract" classname="cuda_amr_smoke_runner_contract" time="0.10443" status="run">
 		<properties/>
 		<system-out>......failed: unit-only
-Development smoke only: failed; report: /tmp/tmpy3mz4v12/output/smoke-report.json
+Development smoke only: failed; report: /tmp/tmp5enwocht/output/smoke-report.json
 ......
 ----------------------------------------------------------------------
-Ran 12 tests in 0.027s
+Ran 12 tests in 0.023s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="curvilinear_manifest_contract" classname="curvilinear_manifest_contract" time="0.0962781" status="run">
+	<testcase name="curvilinear_manifest_contract" classname="curvilinear_manifest_contract" time="0.0767268" status="run">
 		<properties/>
 		<system-out>........
 ----------------------------------------------------------------------
-Ran 8 tests in 0.023s
+Ran 8 tests in 0.022s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="memory_guard_contract" classname="memory_guard_contract" time="2.15528" status="run">
+	<testcase name="memory_guard_contract" classname="memory_guard_contract" time="2.0536" status="run">
 		<properties/>
 		<system-out>......................
 ----------------------------------------------------------------------
-Ran 22 tests in 2.071s
+Ran 22 tests in 1.979s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="backend_validation_contract" classname="backend_validation_contract" time="0.11191" status="run">
+	<testcase name="backend_validation_contract" classname="backend_validation_contract" time="0.104142" status="run">
 		<properties/>
 		<system-out>.............................
 ----------------------------------------------------------------------
-Ran 29 tests in 0.028s
+Ran 29 tests in 0.026s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="validation_provenance_contract" classname="validation_provenance_contract" time="1.32199" status="run">
+	<testcase name="validation_provenance_contract" classname="validation_provenance_contract" time="1.28258" status="run">
 		<properties/>
 		<system-out>.......................................
 ----------------------------------------------------------------------
-Ran 39 tests in 1.235s
+Ran 39 tests in 1.201s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="runtime_validation_inputs_contract" classname="runtime_validation_inputs_contract" time="0.10922" status="run">
+	<testcase name="runtime_validation_inputs_contract" classname="runtime_validation_inputs_contract" time="0.0980849" status="run">
 		<properties/>
 		<system-out>....................
 ----------------------------------------------------------------------
-Ran 20 tests in 0.027s
+Ran 20 tests in 0.022s
 
 OK
 </system-out>
 	</testcase>
-	<testcase name="physical_constants" classname="physical_constants" time="0.0011348" status="run">
+	<testcase name="physical_constants" classname="physical_constants" time="0.00117502" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="refinement_indicator_math" classname="refinement_indicator_math" time="0.0017608" status="run">
+	<testcase name="refinement_indicator_math" classname="refinement_indicator_math" time="0.00160212" status="run">
 		<properties/>
 		<system-out>REFINEMENT_INDICATOR_MATH_PASS
 </system-out>
 	</testcase>
-	<testcase name="curvilinear_metrics" classname="curvilinear_metrics" time="0.179247" status="run">
+	<testcase name="curvilinear_metrics" classname="curvilinear_metrics" time="0.180198" status="run">
 		<properties/>
 		<system-out>INDEPENDENT_METRIC_MAX_RELATIVE_ERROR=3.03178e-16
 CURVILINEAR_METRICS_PASS
@@ -98,12 +98,12 @@ VISCOUS_...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="compensated_sum" classname="compensated_sum" time="0.0018115" status="run">
+	<testcase name="compensated_sum" classname="compensated_sum" time="0.00166438" status="run">
 		<properties/>
 		<system-out>COMPENSATED_SUM_PASS
 </system-out>
 	</testcase>
-	<testcase name="sparse_ode_continuation" classname="sparse_ode_continuation" time="0.00927111" status="run">
+	<testcase name="sparse_ode_continuation" classname="sparse_ode_continuation" time="0.00937161" status="run">
 		<properties/>
 		<system-out>[ROS4] Fatal Error: Stiff ODE stalled. dt &lt; 1e-22
 [ROS4] Fatal Error: Exceeded max substeps (2)
@@ -115,12 +115,12 @@ VISCOUS_...
 Sparse matrix and all three shared ODE continuation contracts passed
 </system-out>
 	</testcase>
-	<testcase name="checkpoint_conservation_metrics" classname="checkpoint_conservation_metrics" time="0.00616301" status="run">
+	<testcase name="checkpoint_conservation_metrics" classname="checkpoint_conservation_metrics" time="0.00463775" status="run">
 		<properties/>
 		<system-out>checkpoint conservation metrics: shared geometry and legacy/negative controls PASS
 </system-out>
 	</testcase>
-	<testcase name="burn_mainline_reference" classname="burn_mainline_reference" time="105.65" status="run">
+	<testcase name="burn_mainline_reference" classname="burn_mainline_reference" time="107.38" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -135,33 +135,33 @@ BURN_TIME_PASS aprox19.bd species_linf=2.7755575615628914e-17 relative_temperatu
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="mainline_authority" classname="mainline_authority" time="0.0183499" status="run">
+	<testcase name="mainline_authority" classname="mainline_authority" time="0.0164039" status="run">
 		<properties/>
-		<system-out>[Info] Loaded 9 parameters from /tmp/arch-mainline-authority-611517-50889166859950-0/bool.par
-[Info] Loaded 1 parameters from /tmp/arch-mainline-authority-611517-50889179074044-25/fallback.par
+		<system-out>[Info] Loaded 9 parameters from /tmp/arch-mainline-authority-646637-53647763833891-0/bool.par
+[Info] Loaded 1 parameters from /tmp/arch-mainline-authority-646637-53647774412631-25/fallback.par
 [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
-[Info] Loaded 2 parameters from /tmp/arch-mainline-authority-611517-50889179074044-25/override.par
+[Info] Loaded 2 parameters from /tmp/arch-mainline-authority-646637-53647774412631-25/override.par
 [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
-[Info] Loaded 14 parameters from /tmp/arch-mainline-authority-611517-50889181669342-26/lowercase-enums.par
+[Info] Loaded 14 parameters from /tmp/arch-mainline-authority-646637-53647776187421-26/lowercase-enums.par
 [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
-[Info] Loaded 14 parameters from /tmp/arch-mainline-authority-611517-50889181669342-26/mixed-case-enums.par
+[Info] Loaded 14 parameters from /tmp/arch-mainline-authority-646637-53647776187421-26/mixed-case-enums.par
 [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
-[Info] Loaded 6 parameters from /tmp/arch-mainline-authority-611517-50889181669342-26/unknown-enums.par
+[Info] Loaded 6 parameters from /tmp/arch-mainline-authority-646637-53647776187421-26/unknown-enums.par
 [RuntimeParam...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="block_handle" classname="block_handle" time="0.0018208" status="run">
+	<testcase name="block_handle" classname="block_handle" time="0.00171929" status="run">
 		<properties/>
 		<system-out>block handle contract: PASS
 </system-out>
 	</testcase>
-	<testcase name="state_residency" classname="state_residency" time="0.0017141" status="run">
+	<testcase name="state_residency" classname="state_residency" time="0.00180509" status="run">
 		<properties/>
 		<system-out>state residency contract passed
 </system-out>
 	</testcase>
-	<testcase name="shared_stage_scheduler" classname="shared_stage_scheduler" time="0.0034607" status="run">
+	<testcase name="shared_stage_scheduler" classname="shared_stage_scheduler" time="0.00332218" status="run">
 		<properties/>
 		<system-out>LANE_TRACE	physical	euler	stage:1:old=Current:input=Current:output=Next	rotate:Current&lt;-Next:Next&lt;-Current:Scratch&lt;-Scratch	reflux:Current
 LANE_TRACE	bookkeeping	euler	stage:1:output=Next:version=2:token=3:ghost-token=0	reflux:version=3:token=4	Current:interior=3:ghost=Invalid:status=success
@@ -172,32 +172,32 @@ LANE_TRACE	bookkeeping	rk3	stage:1:output=Scratch:version=...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="boundary_plan" classname="boundary_plan" time="0.0259939" status="run">
+	<testcase name="boundary_plan" classname="boundary_plan" time="0.0249938" status="run">
 		<properties/>
 		<system-out>boundary plan contract passed
 </system-out>
 	</testcase>
-	<testcase name="same_level_exchange_plan" classname="same_level_exchange_plan" time="0.0016874" status="run">
+	<testcase name="same_level_exchange_plan" classname="same_level_exchange_plan" time="0.00197359" status="run">
 		<properties/>
 		<system-out>same-level exchange plan contract passed
 </system-out>
 	</testcase>
-	<testcase name="amr_operation_plans" classname="amr_operation_plans" time="0.0020094" status="run">
+	<testcase name="amr_operation_plans" classname="amr_operation_plans" time="0.00222449" status="run">
 		<properties/>
 		<system-out>AMR_PLAN_CONTRACT_PASS ordinary=534e24ea68b3f6bf migration=f6c7dabb6721000d
 </system-out>
 	</testcase>
-	<testcase name="amr_flux_surface_plan" classname="amr_flux_surface_plan" time="0.0036229" status="run">
+	<testcase name="amr_flux_surface_plan" classname="amr_flux_surface_plan" time="0.00373038" status="run">
 		<properties/>
 		<system-out>AMR_FLUX_SURFACE_PLAN_PASS
 </system-out>
 	</testcase>
-	<testcase name="topology_transaction" classname="topology_transaction" time="0.0305916" status="run">
+	<testcase name="topology_transaction" classname="topology_transaction" time="0.0388341" status="run">
 		<properties/>
 		<system-out>TOPOLOGY_TRANSACTION_PASS
 </system-out>
 	</testcase>
-	<testcase name="resolved_execution_plan" classname="resolved_execution_plan" time="0.0020147" status="run">
+	<testcase name="resolved_execution_plan" classname="resolved_execution_plan" time="0.00225909" status="run">
 		<properties/>
 		<system-out>[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
 [Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BE_NR | Linear Solver: DenseLU
@@ -216,37 +216,37 @@ LANE_TRACE	bookkeeping	rk3	stage:1:output=Scratch:version=...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="runtime_probe_and_capabilities" classname="runtime_probe_and_capabilities" time="0.119083" status="run">
+	<testcase name="runtime_probe_and_capabilities" classname="runtime_probe_and_capabilities" time="0.117633" status="run">
 		<properties/>
 		<system-out>native_device=NVIDIA GeForce RTX 3060 Ti cc=8.6 runtime=12030 driver=13030 primary_before=0 primary_after=0
 runtime_probe_and_capabilities: ok
 </system-out>
 	</testcase>
-	<testcase name="reduction_contract" classname="reduction_contract" time="0.0028939" status="run">
+	<testcase name="reduction_contract" classname="reduction_contract" time="0.00248719" status="run">
 		<properties/>
 		<system-out>D2_REDUCTION_CONTRACT_PASS edge_cases=36
 </system-out>
 	</testcase>
-	<testcase name="compute_backend" classname="compute_backend" time="0.0016076" status="run">
+	<testcase name="compute_backend" classname="compute_backend" time="0.00166819" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="device_block_store_lifecycle" classname="device_block_store_lifecycle" time="0.0016977" status="run">
+	<testcase name="device_block_store_lifecycle" classname="device_block_store_lifecycle" time="0.00146569" status="run">
 		<properties/>
 		<system-out>device block store lifecycle contract passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_generated_math_audit31" classname="cuda_generated_math_audit31" time="0.663033" status="run">
+	<testcase name="cuda_generated_math_audit31" classname="cuda_generated_math_audit31" time="0.798604" status="run">
 		<properties/>
 		<system-out>GENERATED_NETWORK_MATH_PASS neq=32 nnz=486 rho=1e+07 temperature=3e+09
 </system-out>
 	</testcase>
-	<testcase name="cuda_generated_math_weak_urca" classname="cuda_generated_math_weak_urca" time="0.562309" status="run">
+	<testcase name="cuda_generated_math_weak_urca" classname="cuda_generated_math_weak_urca" time="0.586703" status="run">
 		<properties/>
 		<system-out>GENERATED_NETWORK_MATH_PASS neq=4 nnz=12 rho=1e+07 temperature=3e+09
 </system-out>
 	</testcase>
-	<testcase name="cuda_regrid_transaction" classname="cuda_regrid_transaction" time="0.696472" status="run">
+	<testcase name="cuda_regrid_transaction" classname="cuda_regrid_transaction" time="0.763926" status="run">
 		<properties/>
 		<system-out>REGRID_STORAGE species=4 refine=1 rollback=1 old_blocks=2 new_blocks=3
 REGRID_STORAGE species=4 refine=1 rollback=0 old_blocks=2 new_blocks=3
@@ -258,12 +258,12 @@ REGRID_STORAGE species=41 refine=0 rollback=0 old_blocks=3 new_blocks=2
 CUDA_REGRID_TRANSACTION_PASS species=41 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
 </system-out>
 	</testcase>
-	<testcase name="cuda_grid_metrics_cache" classname="cuda_grid_metrics_cache" time="0.70132" status="run">
+	<testcase name="cuda_grid_metrics_cache" classname="cuda_grid_metrics_cache" time="0.695603" status="run">
 		<properties/>
 		<system-out>Grid metric cache: 27 shared-math parity layouts and invalid-input guards passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_sparse_burn_factory" classname="cuda_sparse_burn_factory" time="0.762807" status="run">
+	<testcase name="cuda_sparse_burn_factory" classname="cuda_sparse_burn_factory" time="0.86987" status="run">
 		<properties/>
 		<system-out>Production sparse factory iso7.be_nr: species=7, cells=5, capacity=2 passed (active burn, CPU parity, pool reuse, no-commit, Dense rejection)
 Production sparse factory iso7.bd: species=7, cells=5, capacity=2 passed (active burn, CPU parity, pool reuse, no-commit, Dense rejection)
@@ -275,7 +275,7 @@ Production sparse binding custom:weak_urca.be_nr: species=2, capacity=2 passed..
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_sparse_be_nr_batch" classname="cuda_sparse_be_nr_batch" time="6.88611" status="run">
+	<testcase name="cuda_sparse_be_nr_batch" classname="cuda_sparse_be_nr_batch" time="7.57016" status="run">
 		<properties/>
 		<system-out>GPU shared BE_NR + cuDSS: N=32, nnz=124, lanes=2 passed (pool reuse/chunks/DriverBurn/failure no-commit)
 GPU shared BD + cuDSS: N=32, nnz=124, lanes=2 passed (pool reuse/chunks/DriverBurn/failure no-commit)
@@ -290,7 +290,7 @@ GPU shared BE_NR singular-factor/residual retry + cuDSS: N=32, nnz=95, lanes=2 p
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_cudss_sparse_solver" classname="cuda_cudss_sparse_solver" time="0.734818" status="run">
+	<testcase name="cuda_cudss_sparse_solver" classname="cuda_cudss_sparse_solver" time="0.798038" status="run">
 		<properties/>
 		<system-out>CUDSS_MEMORY rows=32 nonzeros=94 factor_and_equilibration_estimated_peak_bytes=351972
 cuDSS N=32: solve/reuse/refactor and negative contracts passed
@@ -305,7 +305,7 @@ cuDSS multiscale N=32 integrated source=0 trace chain=1 ...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_burn_eos_failure" classname="cuda_burn_eos_failure" time="0.953247" status="run">
+	<testcase name="cuda_burn_eos_failure" classname="cuda_burn_eos_failure" time="0.961175" status="run">
 		<properties/>
 		<system-out>Tabular3: dense/sparse EOS failure no-commit and valid reuse passed
 Tabular3: dense/sparse EOS failure no-commit and valid reuse passed
@@ -315,7 +315,7 @@ Tabular4: dense/sparse EOS failure no-commit and valid reuse passed
 Tabular4: dense/sparse EOS failure no-commit and valid reuse passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_regrid_migration" classname="cuda_regrid_migration" time="0.701652" status="run">
+	<testcase name="cuda_regrid_migration" classname="cuda_regrid_migration" time="0.740095" status="run">
 		<properties/>
 		<system-out>CUDA_REGRID_MIGRATION_PASS dim=1 species=4 geometry=cartesian
 CUDA_REGRID_MIGRATION_PASS dim=2 species=4 geometry=cartesian
@@ -331,7 +331,7 @@ CUDA_REGRID_MIGRATION_PASS dim=2 species=21 geometry=cartesian
 CUDA_REGRID_MIGRATION_PASS dim=2 species=41 geometry=cartesian
 </system-out>
 	</testcase>
-	<testcase name="cuda_curvilinear_geometry_smoke" classname="cuda_curvilinear_geometry_smoke" time="1.23489" status="run">
+	<testcase name="cuda_curvilinear_geometry_smoke" classname="cuda_curvilinear_geometry_smoke" time="1.37821" status="run">
 		<properties/>
 		<system-out>INDEPENDENT_METRIC_MAX_RELATIVE_ERROR host=3.03178e-16 device=3.03178e-16
 VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.05 error=0.000625026
@@ -346,32 +346,32 @@ V...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_hydro_eos_failure" classname="cuda_hydro_eos_failure" time="0.601282" status="run">
+	<testcase name="cuda_hydro_eos_failure" classname="cuda_hydro_eos_failure" time="0.591157" status="run">
 		<properties/>
 		<system-out>Hydro checked-EOS ghost/PPM/face/geometry/Tabular sticky failure controls passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_hydro_dispatch" classname="cuda_hydro_dispatch" time="0.001952" status="run">
+	<testcase name="cuda_hydro_dispatch" classname="cuda_hydro_dispatch" time="0.00187498" status="run">
 		<properties/>
 		<system-out>CUDA Hydro registry combinations=60 unknown-ID controls=3 limiter-independent controls=2 passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_refinement_indicators" classname="cuda_refinement_indicators" time="0.634594" status="run">
+	<testcase name="cuda_refinement_indicators" classname="cuda_refinement_indicators" time="0.671359" status="run">
 		<properties/>
 		<system-out>CUDA_REFINEMENT_INDICATORS_PASS
 </system-out>
 	</testcase>
-	<testcase name="cuda_compensated_sum" classname="cuda_compensated_sum" time="0.580183" status="run">
+	<testcase name="cuda_compensated_sum" classname="cuda_compensated_sum" time="0.574505" status="run">
 		<properties/>
 		<system-out>CUDA_COMPENSATED_SUM_PASS cases=11
 </system-out>
 	</testcase>
-	<testcase name="cuda_amr_composition" classname="cuda_amr_composition" time="0.569865" status="run">
+	<testcase name="cuda_amr_composition" classname="cuda_amr_composition" time="0.579684" status="run">
 		<properties/>
 		<system-out>CUDA_AMR_COMPOSITION_PASS valid=12 invalid_no_scatter=24
 </system-out>
 	</testcase>
-	<testcase name="burn_controller_parity" classname="burn_controller_parity" time="2.27094" status="run">
+	<testcase name="burn_controller_parity" classname="burn_controller_parity" time="2.45931" status="run">
 		<properties/>
 		<system-out>[Info] Loaded 68 parameters from /home/shiroakane/ARCH/validation/burn/inputs/bd.par
 [HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
@@ -384,12 +384,12 @@ step,half,lane,burn_dt,T_in,T_out,e_old,e_new,enuc,limiter,host_e_at_output,succ
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_network_derivative" classname="cuda_network_derivative" time="0.543673" status="run">
+	<testcase name="cuda_network_derivative" classname="cuda_network_derivative" time="0.574948" status="run">
 		<properties/>
 		<system-out>NETWORK_DERIVATIVE host=1 cuda=1
 </system-out>
 	</testcase>
-	<testcase name="cuda_burn_thermal_math" classname="cuda_burn_thermal_math" time="1.67491" status="run">
+	<testcase name="cuda_burn_thermal_math" classname="cuda_burn_thermal_math" time="1.8222" status="run">
 		<properties/>
 		<system-out>[ROS4] Fatal Error: Stiff ODE stalled. dt &lt; 1e-22
 [ROS4] Fatal Error: Exceeded max substeps (2)
@@ -404,16 +404,16 @@ BE_SUBSTEPS 0 host_ulps=0 dev...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="checkpoint_temporal_comparison" classname="checkpoint_temporal_comparison" time="0.0126767" status="run">
+	<testcase name="checkpoint_temporal_comparison" classname="checkpoint_temporal_comparison" time="0.00704794" status="run">
 		<properties/>
 		<system-out>checkpoint temporal comparison controls passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_compile_probe" classname="cuda_compile_probe" time="0.0012961" status="run">
+	<testcase name="cuda_compile_probe" classname="cuda_compile_probe" time="0.00120609" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="hydro_leaf_parity" classname="hydro_leaf_parity" time="0.551948" status="run">
+	<testcase name="hydro_leaf_parity" classname="hydro_leaf_parity" time="0.633299" status="run">
 		<properties/>
 		<system-out>Roe identities reflection=2.24367e-16 rotation=0 ideal_sound_speed=1.97531e-16 ideal_pressure_jump=0 stationary_transport=0
 limiter.minmod.negzero 0x0000000000000000
@@ -444,7 +444,7 @@ flux.inf_pressure.rho 0x401800...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="eos_host_device_parity" classname="eos_host_device_parity" time="1.61275" status="run">
+	<testcase name="eos_host_device_parity" classname="eos_host_device_parity" time="1.77177" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -464,20 +464,20 @@ field=Helm...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="tabular_free_energy_owner" classname="tabular_free_energy_owner" time="0.598746" status="run">
+	<testcase name="tabular_free_energy_owner" classname="tabular_free_energy_owner" time="0.625317" status="run">
 		<properties/>
 		<system-out>CUDA tabular free-energy owner passed
 </system-out>
 	</testcase>
-	<testcase name="network_nse_device" classname="network_nse_device" time="1.08819" status="run">
+	<testcase name="network_nse_device" classname="network_nse_device" time="1.0139" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_helpers" classname="burn_policy_parity_helpers" time="0.635563" status="run">
+	<testcase name="burn_policy_parity_helpers" classname="burn_policy_parity_helpers" time="0.671342" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="diffusion_rkl_parity" classname="diffusion_rkl_parity" time="0.707769" status="run">
+	<testcase name="diffusion_rkl_parity" classname="diffusion_rkl_parity" time="0.745518" status="run">
 		<properties/>
 		<system-out>C4_OPERATOR_ENVELOPE field=rho max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
 C4_OPERATOR_ENVELOPE field=mom_u max_abs=0 abs_cell=-1 max_rel=0 rel_cell=-1
@@ -495,12 +495,12 @@ C4_...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="boundary_plan_parity" classname="boundary_plan_parity" time="0.629239" status="run">
+	<testcase name="boundary_plan_parity" classname="boundary_plan_parity" time="0.684429" status="run">
 		<properties/>
 		<system-out>boundary plan CUDA contract passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_policy_resolution" classname="cuda_policy_resolution" time="0.603146" status="run">
+	<testcase name="cuda_policy_resolution" classname="cuda_policy_resolution" time="0.650256" status="run">
 		<properties/>
 		<system-out>ode[25] state=72c77ee5277ebce9 dt=3f4ea573c6d79000 status=2 attempts=150 rejected=4
 ode[26] state=c8a1b60ce78ac30f dt=3feccccccccccccd status=2 attempts=1 rejected=0
@@ -529,12 +529,12 @@ route[17] id=2 value=2.606...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_reduction_contract" classname="cuda_reduction_contract" time="0.602028" status="run">
+	<testcase name="cuda_reduction_contract" classname="cuda_reduction_contract" time="0.59018" status="run">
 		<properties/>
 		<system-out>D2_CUDA_REDUCTION_CONTRACT_PASS edge_cases=36
 </system-out>
 	</testcase>
-	<testcase name="cuda_single_level_smoke" classname="cuda_single_level_smoke" time="0.590865" status="run">
+	<testcase name="cuda_single_level_smoke" classname="cuda_single_level_smoke" time="0.683422" status="run">
 		<properties/>
 		<system-out>CUDA_SIGNED_ENUC_TRANSFER_PASS
 CUDA_HYDRO_BLOCK_PASS dt=0.0422577 rho=1.01562
@@ -544,19 +544,19 @@ CUDA_DIFFUSION_RKL_OBSERVED order=2 hash=0x6285d4893bd5f5f1
 CUDA_DIFFUSION_RKL_PASS order=2 stages=2 dt_fe=0.0156253 hash=0x6285d4893bd5f5f1
 </system-out>
 	</testcase>
-	<testcase name="cuda_multiblock_hydro" classname="cuda_multiblock_hydro" time="0.618271" status="run">
+	<testcase name="cuda_multiblock_hydro" classname="cuda_multiblock_hydro" time="0.655642" status="run">
 		<properties/>
 		<system-out>CUDA_MULTIBLOCK_EXCHANGE_PASS blocks=2 operations=2
 CUDA_MULTIBLOCK_CORNER_PASS blocks=4 operations=8
 </system-out>
 	</testcase>
-	<testcase name="cuda_multiblock_diffusion" classname="cuda_multiblock_diffusion" time="0.584964" status="run">
+	<testcase name="cuda_multiblock_diffusion" classname="cuda_multiblock_diffusion" time="0.610479" status="run">
 		<properties/>
 		<system-out>CUDA_MULTIBLOCK_DIFFUSION_PASS order=1 stages=2 exchanges=2
 CUDA_MULTIBLOCK_DIFFUSION_PASS order=2 stages=3 exchanges=3
 </system-out>
 	</testcase>
-	<testcase name="cuda_multiblock_burn" classname="cuda_multiblock_burn" time="2.74715" status="run">
+	<testcase name="cuda_multiblock_burn" classname="cuda_multiblock_burn" time="2.76099" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -569,12 +569,12 @@ CUDA_MULTIBLOCK_BURN_PASS route=aprox13.bd blocks=2 limiter=0.000257764
 CUDA_MULTIBLOCK_BURN_PASS route=aprox13.ros4 blocks=2 limiter=0.000257764
 </system-out>
 	</testcase>
-	<testcase name="cuda_store_lifecycle" classname="cuda_store_lifecycle" time="0.589952" status="run">
+	<testcase name="cuda_store_lifecycle" classname="cuda_store_lifecycle" time="0.62799" status="run">
 		<properties/>
 		<system-out>CUDA store lifecycle passed
 </system-out>
 	</testcase>
-	<testcase name="cuda_amr_exchange" classname="cuda_amr_exchange" time="114.472" status="run">
+	<testcase name="cuda_amr_exchange" classname="cuda_amr_exchange" time="122.648" status="run">
 		<properties/>
 		<system-out>CUDA_AMR_REJECTION_PASS dimension=1
 CUDA_AMR_EXCHANGE_PASS dimension=1 geometry=cartesian blocks=3 operations=20
@@ -597,7 +597,7 @@ CUDA_AMR_EXCHANGE_PASS dimension=3 geometry=spherical blocks=15 operations...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_hydro_route_matrix" classname="cuda_hydro_route_matrix" time="0.86574" status="run">
+	<testcase name="cuda_hydro_route_matrix" classname="cuda_hydro_route_matrix" time="1.34361" status="run">
 		<properties/>
 		<system-out>CUDA_HYDRO_ROUTE index=0 flux=0 reconstruction=0 limiter=0 hash=0xd5dd7aa0e8ec2619
 CUDA_HYDRO_ROUTE index=1 flux=0 reconstruction=2 limiter=0 hash=0x8c06d7cc7899e5e0
@@ -615,7 +615,7 @@ CUDA_HYDRO_ROUTE index=12 fl...
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="cuda_hydro_integrator_matrix" classname="cuda_hydro_integrator_matrix" time="0.659563" status="run">
+	<testcase name="cuda_hydro_integrator_matrix" classname="cuda_hydro_integrator_matrix" time="0.624214" status="run">
 		<properties/>
 		<system-out>CUDA_HYDRO_INTEGRATOR id=0 hash=0xdaa54056600370c9
 CUDA_HYDRO_INTEGRATOR id=1 hash=0x532550428a6f1a28
@@ -623,7 +623,7 @@ CUDA_HYDRO_INTEGRATOR id=2 hash=0x5594456575782885
 CUDA_HYDRO_INTEGRATOR_MATRIX_PASS routes=3
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_eos_owner_matrix" classname="cuda_backend_eos_owner_matrix" time="1.39189" status="run">
+	<testcase name="cuda_backend_eos_owner_matrix" classname="cuda_backend_eos_owner_matrix" time="1.85349" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -634,19 +634,19 @@ CUDA_EOS_OWNER id=3 dt_bits=0x3e0093ec4c2ca663
 CUDA_EOS_OWNER_MATRIX_PASS routes=4
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_diffusion_rkl1" classname="cuda_backend_diffusion_rkl1" time="0.597265" status="run">
+	<testcase name="cuda_backend_diffusion_rkl1" classname="cuda_backend_diffusion_rkl1" time="0.752782" status="run">
 		<properties/>
 		<system-out>CUDA_DIFFUSION_RKL_OBSERVED order=1 hash=0x8d7b4c3eba3022da
 CUDA_DIFFUSION_RKL_PASS order=1 stages=1 dt_fe=0.0156253 hash=0x8d7b4c3eba3022da
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_diffusion_rkl2" classname="cuda_backend_diffusion_rkl2" time="0.629425" status="run">
+	<testcase name="cuda_backend_diffusion_rkl2" classname="cuda_backend_diffusion_rkl2" time="0.65627" status="run">
 		<properties/>
 		<system-out>CUDA_DIFFUSION_RKL_OBSERVED order=2 hash=0x6285d4893bd5f5f1
 CUDA_DIFFUSION_RKL_PASS order=2 stages=2 dt_fe=0.0156253 hash=0x6285d4893bd5f5f1
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox13_be_nr" classname="cuda_backend_burn_aprox13_be_nr" time="1.25298" status="run">
+	<testcase name="cuda_backend_burn_aprox13_be_nr" classname="cuda_backend_burn_aprox13_be_nr" time="1.5199" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -655,7 +655,7 @@ CUDA_BURN_OBSERVED route=aprox13.be_nr hash=0x71a0677273aaf8ab
 CUDA_BURN_PASS route=aprox13.be_nr limiter=0.00048695 enuc=3.19166e+20 hash=0x71a0677273aaf8ab
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox13_bd" classname="cuda_backend_burn_aprox13_bd" time="1.27139" status="run">
+	<testcase name="cuda_backend_burn_aprox13_bd" classname="cuda_backend_burn_aprox13_bd" time="1.32739" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -664,7 +664,7 @@ CUDA_BURN_OBSERVED route=aprox13.bd hash=0xeca6072983896c29
 CUDA_BURN_PASS route=aprox13.bd limiter=0.00048695 enuc=3.19166e+20 hash=0xeca6072983896c29
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox13_ros4" classname="cuda_backend_burn_aprox13_ros4" time="1.27115" status="run">
+	<testcase name="cuda_backend_burn_aprox13_ros4" classname="cuda_backend_burn_aprox13_ros4" time="1.31469" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -673,7 +673,7 @@ CUDA_BURN_OBSERVED route=aprox13.ros4 hash=0xe5ea0b1955e19a9b
 CUDA_BURN_PASS route=aprox13.ros4 limiter=0.00048695 enuc=3.19166e+20 hash=0xe5ea0b1955e19a9b
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox19_be_nr" classname="cuda_backend_burn_aprox19_be_nr" time="1.3539" status="run">
+	<testcase name="cuda_backend_burn_aprox19_be_nr" classname="cuda_backend_burn_aprox19_be_nr" time="1.75973" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -682,7 +682,7 @@ CUDA_BURN_OBSERVED route=aprox19.be_nr hash=0x319898419c0ea8d3
 CUDA_BURN_PASS route=aprox19.be_nr limiter=4.82673e-11 enuc=3.78197e+27 hash=0x319898419c0ea8d3
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox19_bd" classname="cuda_backend_burn_aprox19_bd" time="1.36084" status="run">
+	<testcase name="cuda_backend_burn_aprox19_bd" classname="cuda_backend_burn_aprox19_bd" time="1.46553" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -691,7 +691,7 @@ CUDA_BURN_OBSERVED route=aprox19.bd hash=0x74cd7777cb578ec8
 CUDA_BURN_PASS route=aprox19.bd limiter=4.82671e-11 enuc=3.78198e+27 hash=0x74cd7777cb578ec8
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox19_ros4" classname="cuda_backend_burn_aprox19_ros4" time="1.3062" status="run">
+	<testcase name="cuda_backend_burn_aprox19_ros4" classname="cuda_backend_burn_aprox19_ros4" time="1.39936" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -700,7 +700,7 @@ CUDA_BURN_OBSERVED route=aprox19.ros4 hash=0xa3d8b6c3db0fe74b
 CUDA_BURN_PASS route=aprox19.ros4 limiter=4.82671e-11 enuc=3.78198e+27 hash=0xa3d8b6c3db0fe74b
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox21_be_nr" classname="cuda_backend_burn_aprox21_be_nr" time="1.36709" status="run">
+	<testcase name="cuda_backend_burn_aprox21_be_nr" classname="cuda_backend_burn_aprox21_be_nr" time="1.51259" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -709,7 +709,7 @@ CUDA_BURN_OBSERVED route=aprox21.be_nr hash=0x89aaeefc482f367d
 CUDA_BURN_PASS route=aprox21.be_nr limiter=8.12159e-12 enuc=2.19791e+28 hash=0x89aaeefc482f367d
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox21_bd" classname="cuda_backend_burn_aprox21_bd" time="1.38359" status="run">
+	<testcase name="cuda_backend_burn_aprox21_bd" classname="cuda_backend_burn_aprox21_bd" time="1.44995" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -718,7 +718,7 @@ CUDA_BURN_OBSERVED route=aprox21.bd hash=0x40ef9aa12a1afe77
 CUDA_BURN_PASS route=aprox21.bd limiter=8.12135e-12 enuc=2.19797e+28 hash=0x40ef9aa12a1afe77
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_aprox21_ros4" classname="cuda_backend_burn_aprox21_ros4" time="1.33181" status="run">
+	<testcase name="cuda_backend_burn_aprox21_ros4" classname="cuda_backend_burn_aprox21_ros4" time="1.34268" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -727,7 +727,7 @@ CUDA_BURN_OBSERVED route=aprox21.ros4 hash=0x9a2e7c93f7cfd38b
 CUDA_BURN_PASS route=aprox21.ros4 limiter=8.12135e-12 enuc=2.19797e+28 hash=0x9a2e7c93f7cfd38b
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_iso7_be_nr" classname="cuda_backend_burn_iso7_be_nr" time="1.25334" status="run">
+	<testcase name="cuda_backend_burn_iso7_be_nr" classname="cuda_backend_burn_iso7_be_nr" time="1.27029" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -736,7 +736,7 @@ CUDA_BURN_OBSERVED route=iso7.be_nr hash=0xb1b7a26a53bbc161
 CUDA_BURN_PASS route=iso7.be_nr limiter=5.27438e-05 enuc=2.99823e+21 hash=0xb1b7a26a53bbc161
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_iso7_bd" classname="cuda_backend_burn_iso7_bd" time="1.2259" status="run">
+	<testcase name="cuda_backend_burn_iso7_bd" classname="cuda_backend_burn_iso7_bd" time="1.31334" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -745,7 +745,7 @@ CUDA_BURN_OBSERVED route=iso7.bd hash=0x2abd51fd62d3f181
 CUDA_BURN_PASS route=iso7.bd limiter=5.27438e-05 enuc=2.99823e+21 hash=0x2abd51fd62d3f181
 </system-out>
 	</testcase>
-	<testcase name="cuda_backend_burn_iso7_ros4" classname="cuda_backend_burn_iso7_ros4" time="1.19867" status="run">
+	<testcase name="cuda_backend_burn_iso7_ros4" classname="cuda_backend_burn_iso7_ros4" time="1.28034" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
@@ -754,103 +754,103 @@ CUDA_BURN_OBSERVED route=iso7.ros4 hash=0xb61f4ed1ef63b0d6
 CUDA_BURN_PASS route=iso7.ros4 limiter=5.27438e-05 enuc=2.99823e+21 hash=0xb61f4ed1ef63b0d6
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_status_be_nr" classname="burn_policy_parity_status_be_nr" time="0.624351" status="run">
+	<testcase name="burn_policy_parity_status_be_nr" classname="burn_policy_parity_status_be_nr" time="0.71562" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_status_bd" classname="burn_policy_parity_status_bd" time="0.560721" status="run">
+	<testcase name="burn_policy_parity_status_bd" classname="burn_policy_parity_status_bd" time="0.66027" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_status_ros4" classname="burn_policy_parity_status_ros4" time="0.594765" status="run">
+	<testcase name="burn_policy_parity_status_ros4" classname="burn_policy_parity_status_ros4" time="0.627431" status="run">
 		<properties/>
 		<system-out></system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox13_be_nr" classname="burn_policy_parity_aprox13_be_nr" time="1.49216" status="run">
+	<testcase name="burn_policy_parity_aprox13_be_nr" classname="burn_policy_parity_aprox13_be_nr" time="1.56513" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox13.be_nr passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox13_bd" classname="burn_policy_parity_aprox13_bd" time="1.4866" status="run">
+	<testcase name="burn_policy_parity_aprox13_bd" classname="burn_policy_parity_aprox13_bd" time="1.55625" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox13.bd passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox13_ros4" classname="burn_policy_parity_aprox13_ros4" time="1.46303" status="run">
+	<testcase name="burn_policy_parity_aprox13_ros4" classname="burn_policy_parity_aprox13_ros4" time="1.54702" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox13.ros4 passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox19_be_nr" classname="burn_policy_parity_aprox19_be_nr" time="1.61882" status="run">
+	<testcase name="burn_policy_parity_aprox19_be_nr" classname="burn_policy_parity_aprox19_be_nr" time="1.71528" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox19.be_nr passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox19_bd" classname="burn_policy_parity_aprox19_bd" time="1.65791" status="run">
+	<testcase name="burn_policy_parity_aprox19_bd" classname="burn_policy_parity_aprox19_bd" time="1.65607" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox19.bd passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox19_ros4" classname="burn_policy_parity_aprox19_ros4" time="1.66581" status="run">
+	<testcase name="burn_policy_parity_aprox19_ros4" classname="burn_policy_parity_aprox19_ros4" time="1.61904" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox19.ros4 passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox21_be_nr" classname="burn_policy_parity_aprox21_be_nr" time="1.70821" status="run">
+	<testcase name="burn_policy_parity_aprox21_be_nr" classname="burn_policy_parity_aprox21_be_nr" time="1.82148" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox21.be_nr passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox21_bd" classname="burn_policy_parity_aprox21_bd" time="1.65066" status="run">
+	<testcase name="burn_policy_parity_aprox21_bd" classname="burn_policy_parity_aprox21_bd" time="1.82794" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox21.bd passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_aprox21_ros4" classname="burn_policy_parity_aprox21_ros4" time="1.64829" status="run">
+	<testcase name="burn_policy_parity_aprox21_ros4" classname="burn_policy_parity_aprox21_ros4" time="1.81952" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 aprox21.ros4 passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_iso7_be_nr" classname="burn_policy_parity_iso7_be_nr" time="1.53853" status="run">
+	<testcase name="burn_policy_parity_iso7_be_nr" classname="burn_policy_parity_iso7_be_nr" time="1.57424" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 iso7.be_nr passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_iso7_bd" classname="burn_policy_parity_iso7_bd" time="1.50932" status="run">
+	<testcase name="burn_policy_parity_iso7_bd" classname="burn_policy_parity_iso7_bd" time="1.53077" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 iso7.bd passed
 </system-out>
 	</testcase>
-	<testcase name="burn_policy_parity_iso7_ros4" classname="burn_policy_parity_iso7_ros4" time="1.45928" status="run">
+	<testcase name="burn_policy_parity_iso7_ros4" classname="burn_policy_parity_iso7_ros4" time="1.53178" status="run">
 		<properties/>
 		<system-out>[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
 [HelmEos] Loaded complete 541x201 electron/positron table.
 iso7.ros4 passed
 </system-out>
 	</testcase>
-	<testcase name="checkpoint_compatibility" classname="checkpoint_compatibility" time="0.0864228" status="run">
+	<testcase name="checkpoint_compatibility" classname="checkpoint_compatibility" time="0.0673851" status="run">
 		<properties/>
 		<system-out>[IO] Saved CHK: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/checkpoint-compatibility-data/checkpoint-native.h5 at step 7 with 1 AMR leaves.
 [IO] Saved CHK: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/checkpoint-compatibility-data/checkpoint-ideal.h5 at step 7 with 1 AMR leaves.
@@ -871,7 +871,7 @@ HDF5-DIAG: Error detected in HDF5 (1.10.10) thread 1:
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="tabular_eos_ideal_gas" classname="tabular_eos_ideal_gas" time="0.0980578" status="run">
+	<testcase name="tabular_eos_ideal_gas" classname="tabular_eos_ideal_gas" time="0.099864" status="run">
 		<properties/>
 		<system-out>[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/tabular-eos-test-data/ideal_gas_3d.h5
 [Tabular3DEOS] Loaded free-energy table with automatic rank validation.
@@ -886,7 +886,7 @@ ideal-gas free-energy table max relative error: 3D=0.000361253, 4D=0.000361253; 
 [This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
 </system-out>
 	</testcase>
-	<testcase name="sparse_klu_161_equations" classname="sparse_klu_161_equations" time="0.0018154" status="run">
+	<testcase name="sparse_klu_161_equations" classname="sparse_klu_161_equations" time="0.00290613" status="run">
 		<properties/>
 		<system-out>KLU 161x161 sparse solve max absolute error: 2.22045e-16, structural nnz=481
 </system-out>

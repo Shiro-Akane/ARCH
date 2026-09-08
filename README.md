@@ -33,6 +33,10 @@ Set `compute_backend = cpu`, `cuda`, or `auto` in your parameter file to choose 
 
 Checkpoints save all the state information—including the mesh and fluid composition—needed to seamlessly resume a simulation. Because the CPU and CUDA backends share the exact same format, you can freely restart a simulation on a different backend. The [Reference Manual](docs/Reference.md) details the saved fields and the physical settings that must remain consistent when resuming.
 
+For smaller AMR workloads, start with CPU and compare a representative run
+before choosing CUDA for speed. The [backend performance guide](docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
+explains the measured CPU/CUDA comparison and how to interpret it.
+
 ## Implemented capabilities
 
 ARCH offers SW and VL flux-vector splitting alongside Roe, HLL, and HLLC Riemann solvers to estimate transport across cell boundaries. For spatial reconstruction at cell faces, it supports PCM, MUSCL/PLM, and PPM. Time integration is handled by Euler, SSPRK2, or SSPRK3 schemes, while diffusion uses RKL1 or RKL2 super-time stepping. All of these numerical choices are completely independent of the selected CPU/CUDA backend.
@@ -42,6 +46,19 @@ Our included teaching cases are pre-configured with appropriate methods, so you 
 ## Build
 
 ARCH must be built in a Linux environment; Windows users should use a WSL2 Linux terminal. Choose either the CPU-only or the combined CPU/CUDA build below. Since the CUDA executable also supports CPU execution, there's no need to build both.
+
+### Get the source
+
+Use `main` for the recommended user checkout:
+
+```bash
+git clone --branch main --single-branch https://github.com/Shiro-Akane/ARCH.git
+cd ARCH
+```
+
+To update an existing `main` checkout, save your local changes first, then run
+`git pull --ff-only` from its repository directory. If Git cannot update it
+directly, it stops without resetting your work.
 
 ### Prepare the tools
 
@@ -61,19 +78,16 @@ CMake downloads HighFive during configuration. KLU, the CPU sparse solver, is
 enabled by default: CMake uses an installed library or downloads pinned
 SuiteSparse v7.13.0. Keep network access available for this step.
 
-All commands below run from the repository root. `cmake -S ... -B ...` checks
-dependencies and prepares the build directory; `cmake --build ...` compiles the
-program. We use Ninja to execute the compile jobs, so no separate `make` command
-is needed. Use a fresh directory if one with the same name was configured with
-a different compiler or build tool.
+All commands below run from the repository root. `cmake --preset ...` checks
+dependencies and prepares the build directory using the project's saved
+settings; `cmake --build ...` compiles the program. The presets use Ninja, so no
+separate `make` command is needed. Use a fresh directory if one with the same
+name was configured with a different compiler or build tool.
 
 ### Option A: CPU
 
 ```bash
-cmake -S . -B build-cpu -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-  -DARCH_ENABLE_CUDA=OFF -DARCH_ENABLE_OPENMP=ON \
-  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cpu/bin"
+cmake --preset cpu-release
 cmake --build build-cpu --target ARCH --parallel 1
 ```
 
@@ -83,14 +97,12 @@ The `--parallel 1` flag restricts compilation to a single job to conserve memory
 
 ### Option B: CPU and CUDA
 
-Run this on the machine whose GPU will execute ARCH; `native` selects that GPU
-as the compilation target.
+Run this on the machine whose GPU will execute ARCH. The preset selects that
+GPU as the compilation target with `CMAKE_CUDA_ARCHITECTURES=native` and limits
+heavy compile jobs to one.
 
 ```bash
-cmake -S . -B build-cuda -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
-  -DARCH_ENABLE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=native \
-  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cuda/bin"
+cmake --preset cuda-release
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
   cmake --build build-cuda --target ARCH --parallel 1
@@ -210,13 +222,13 @@ use_nse = false
 linear_solver = Auto
 ~~~
 
-For CUDA, generate a package whose manifest declares `device_callable_math=true`
-and `generator_version >= 4`. Both backends then use the same generated math
-header and declared Jacobian structure. For recognized embedded weak tables,
-each backend manages its own read-only storage while sharing the interpolation,
-derivatives and signed energy integration. Packages using generator format 3
-or without the device-callable interface are CPU-only. These numbers identify
-generated-package contracts, not ARCH release versions. Generated networks do
+For CUDA, use the supplied generator to create a package with device-callable
+math. Its manifest declares that capability, and CMake checks the required
+package interface before registering a CUDA route. Both backends then use the
+same generated math header and declared Jacobian structure. For recognized
+embedded weak tables, each backend manages its own read-only storage while
+sharing the interpolation, derivatives and signed energy integration.
+CPU-only packages remain available for CPU execution. Generated networks do
 not support the Timmes NSE projection.
 
 Linear-solver names are case-insensitive. `Auto` selects DenseLU for systems of

@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -18,7 +17,6 @@
 #include "../../core/RuntimeParams.h"
 #include "../../data/FluidState.h"
 #include "../../grid/Grid.h"
-#include "../../interface/ProblemGenerator.h"
 
 // Flux and reconstruction policies.
 #include "../../numerics/flux/FluxHLL.h"
@@ -42,12 +40,6 @@
 #include "PolicyDescriptor.h"
 
 namespace DispatchImpl {
-
-inline auto parse_flux_selection(const SimConfig& config) noexcept
-{
-    return arch::dispatch::parse_registered_policy<arch::dispatch::FluxPolicies>(
-        config.numerics.solver_name);
-}
 
 template <class Binding>
 struct CpuLimiterType;
@@ -112,34 +104,31 @@ bool visit_hydro_cpu_route(
     return flux_found && invoked;
 }
 
-// Level 4: Execute the simulation with the fully assembled type
+// Execute a fully assembled route with its required resolved context.
 template <typename TimeIntegrator, typename FluxSchemePolicy, typename EosPolicy>
 void launch_run(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 const Physical::Gravity::IGravityPolicy* gravity,
                 const BurnerHandle<EosPolicy> &burn,
                 const SimConfig &config,
                 const SpeciesManager &specs, const RunState &run_state,
-                const arch::dispatch::ResolvedExecutionPlan* resolved_plan = nullptr,
-                const arch::dispatch::ExecutionRequirements* requirements = nullptr,
-                const arch::dispatch::BackendResolution* backend = nullptr,
-                arch::dispatch::StartupOrder* startup_order = nullptr,
-                const io::CheckpointProvenance* checkpoint_provenance = nullptr)
+                const arch::dispatch::ResolvedExecutionPlan& resolved_plan,
+                const arch::dispatch::ExecutionRequirements& requirements,
+                const arch::dispatch::BackendResolution& backend,
+                arch::dispatch::StartupOrder& startup_order,
+                const io::CheckpointProvenance& checkpoint_provenance)
 {
     // Bind the selected EOS and flux policy behind the hydrodynamics interface.
     Numerics::HydroSolverImpl<EosPolicy, FluxSchemePolicy> hydro_solver(eos);
 
     std::string integrator_name = TimeIntegrator::name() + " + " + FluxSchemePolicy::name();
 
-    // Pass the integrator entry point to the non-templated driver loop.
-    if (checkpoint_provenance == nullptr)
-        throw std::invalid_argument(
-            "checkpoint provenance is required by the Driver");
+    // Pass the integrator entry point and the same context to the shared driver.
     run_simulation<EosPolicy>(amr_ctrl, eos, gravity, burn, &hydro_solver,
                               &TimeIntegrator::template solve<BCHandler>,
                               integrator_name, config, specs, run_state,
-                              *checkpoint_provenance,
-                              resolved_plan, requirements, backend,
-                              startup_order);
+                              checkpoint_provenance,
+                              &resolved_plan, &requirements, &backend,
+                              &startup_order);
 }
 
 template <typename TimeIntegrator, typename EosPolicy>
@@ -159,79 +148,11 @@ void launch_resolved_run(
             (void)sizeof(Reconstruction);
             launch_run<TimeIntegrator, Flux>(
                 amr_ctrl, eos, gravity, burn, config, specs, run_state,
-                &plan, &requirements, &backend, &startup_order,
-                &checkpoint_provenance);
+                plan, requirements, backend, startup_order,
+                checkpoint_provenance);
         });
     if (!launched)
         throw std::logic_error("resolved Hydro route has no CPU binding");
-}
-
-// Level 3: Select Limiter (For MUSCL)
-template <typename TimeIntegrator, class FluxBinding, typename EosPolicy>
-void select_limiter(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
-                    const Physical::Gravity::IGravityPolicy* gravity,
-                    const BurnerHandle<EosPolicy> &burn,
-                    const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
-{
-    using namespace arch::dispatch;
-    const auto selected = parse_registered_policy<LimiterPolicies>(config.numerics.limiter);
-    if (selected.defaulted)
-        std::cerr << "[Warning] Unknown limiter '" << config.numerics.limiter
-                  << "', defaulting to MinMod." << std::endl;
-    visit_policy<LimiterPolicies>(selected.value, [&]<class Registration> {
-        using LimiterBinding = typename PolicyRegistration<Registration>::CpuBinding;
-        using Limiter = typename CpuLimiterType<LimiterBinding>::type;
-        using Reconstruction = MusclReconstruction<Limiter>;
-        using Flux = typename CpuFluxType<FluxBinding, Reconstruction>::type;
-        launch_run<TimeIntegrator, Flux>(amr_ctrl, eos, gravity, burn,
-                                         config, specs, run_state);
-    });
-}
-
-// Level 2: Select Reconstruction Scheme
-template <typename TimeIntegrator, class FluxBinding, typename EosPolicy>
-void select_reconstruction(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
-                           const Physical::Gravity::IGravityPolicy* gravity,
-                           const BurnerHandle<EosPolicy> &burn,
-                           const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
-{
-    using namespace arch::dispatch;
-    const auto selected = parse_registered_policy<ReconstructionPolicies>(
-        config.numerics.reconstruction);
-    if (selected.defaulted)
-        std::cerr << "[Warning] Unknown reconstruction '" << config.numerics.reconstruction
-                  << "', defaulting to PCM." << std::endl;
-    visit_policy<ReconstructionPolicies>(selected.value, [&]<class Registration> {
-        using Binding = typename PolicyRegistration<Registration>::CpuBinding;
-        if constexpr (std::is_same_v<Binding, CpuMusclBinding>) {
-            select_limiter<TimeIntegrator, FluxBinding>(
-                amr_ctrl, eos, gravity, burn, config, specs, run_state);
-        } else {
-            using Reconstruction = typename CpuReconstructionType<Binding>::type;
-            using Flux = typename CpuFluxType<FluxBinding, Reconstruction>::type;
-            launch_run<TimeIntegrator, Flux>(amr_ctrl, eos, gravity, burn,
-                                             config, specs, run_state);
-        }
-    });
-}
-
-// Level 1: Select Flux Scheme
-template <typename TimeIntegrator, typename EosPolicy>
-void select_flux(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
-                 const Physical::Gravity::IGravityPolicy* gravity,
-                 const BurnerHandle<EosPolicy> &burn,
-                 const SimConfig &config, const SpeciesManager &specs, const RunState &run_state)
-{
-    using namespace arch::dispatch;
-    const auto selected = parse_flux_selection(config);
-    if (selected.defaulted)
-        std::cerr << "[Warning] Unknown solver '" << config.numerics.solver_name
-                  << "', defaulting to HLLC." << std::endl;
-    visit_policy<FluxPolicies>(selected.value, [&]<class Registration> {
-        using Binding = typename PolicyRegistration<Registration>::CpuBinding;
-        select_reconstruction<TimeIntegrator, Binding>(
-            amr_ctrl, eos, gravity, burn, config, specs, run_state);
-    });
 }
 
 } // namespace DispatchImpl

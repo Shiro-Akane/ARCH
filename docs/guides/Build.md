@@ -8,20 +8,29 @@ the shell commands from the repository root in a Linux or WSL2 terminal.
 
 ## Configure first, then compile
 
-`cmake -S . -B build-cpu -G Ninja ...` **configures** a build: it locates your compilers and dependencies, saves your options to `build-cpu/CMakeCache.txt`, and generates the Ninja build instructions. Note that this step does not actually compile the ARCH executable yet.
+`cmake --preset cpu-release` **configures** a build: it locates your compilers and dependencies, saves your options to `build-cpu/CMakeCache.txt`, and generates the Ninja build instructions. This step does not compile the ARCH executable yet. The preset supplies the usual options; `cmake -S . -B build-cpu -G Ninja ...` lets you provide them individually.
 
 `cmake --build build-cpu --target ARCH --parallel 1` **compiles and links** the application and its dependencies. CMake will automatically invoke Ninja for you, meaning there is no separate `make` step. After you edit source code, simply repeat this build command; Ninja will smartly recompile only the affected objects and links. If you need to change a build option, repeat the configuration step first. Always use a fresh build directory when switching to a different compiler or generator.
 
-The quick-start commands keep CPU and CUDA output separate:
+The presets in [CMakePresets.json](../../CMakePresets.json) keep output separate:
 
-| Build directory | CUDA option | Executable |
+| Configure command | Build directory | Executable |
 | --- | --- | --- |
-| `build-cpu` | `ARCH_ENABLE_CUDA=OFF` | `build-cpu/bin/ARCH` |
-| `build-cuda` | `ARCH_ENABLE_CUDA=ON` | `build-cuda/bin/ARCH` |
+| `cmake --preset cpu-release` | `build-cpu` | `build-cpu/bin/ARCH` |
+| `cmake --preset cuda-release` | `build-cuda` | `build-cuda/bin/ARCH` |
+| `cmake --preset cuda-debug` | `build-cuda-debug` | `build-cuda-debug/bin/ARCH` |
 
-This separation comes from `ARCH_RUNTIME_OUTPUT_DIRECTORY`, set to the absolute
-`$PWD/build-cpu/bin` or `$PWD/build-cuda/bin` path during configuration. Without
-that option, the project writes executables to `bin/` in the source tree.
+All three use Ninja and OpenMP. The Release presets leave tests out of the
+first-build workflow; `cuda-debug` enables them for development. Both CUDA
+presets target the visible GPU with `CMAKE_CUDA_ARCHITECTURES=native` and set
+`ARCH_CUDA_HEAVY_COMPILE_JOBS=1`. They configure builds only: use the explicit
+build and memory-guard commands below to compile. Run `cmake --list-presets`
+to see the available choices.
+
+Output separation comes from `ARCH_RUNTIME_OUTPUT_DIRECTORY`, set to each
+build directory's absolute `bin/` path. Without that option, the project writes
+executables to `bin/` in the source tree. Append `-DNAME=value` to a configuration
+command to override a preset option, such as a compiler or CUDA architecture.
 
 ## Tools and dependencies
 

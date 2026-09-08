@@ -1,12 +1,12 @@
 ========= COMPUTE-SANITIZER
-========= Process ID:             613566
-========= Created:                2026-Sep-08 12:53:31
+========= Process ID:             650332
+========= Created:                2026-Sep-08 13:39:54
 ========= System OS:              Linux
 ========= OS build:               #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025
 ========= System CPU:             Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz
 ========= CPU architecture:       x86_64
 ========= Computer Name:          Shiro-Akane
-========= Target application:     /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH BurnGradient /home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous.par
+========= Target application:     /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH BurnGradient /home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/restart/burn-memcheck/cuda_continuous/RestartAMR_cuda_continuous.par
 ========= CUDA version:           13.3
 ========= Display Driver version: 610.47
 ========= 

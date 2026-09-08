@@ -1,4 +1,4 @@
 [0/2] Re-checking globbed directories...
 ninja: no work to do.
-MEMORY_GUARD_RESULT min_available_kib=6313652 baseline_swap_kib=187136 peak_swap_kib=187136 guard_stopped=False peak_owned_rss_kib=2688 elapsed_seconds=1.019 stop_reason=none
-SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=2.834 peak_io_full_percent=2.647 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True
+MEMORY_GUARD_RESULT min_available_kib=6994648 baseline_swap_kib=250288 peak_swap_kib=250288 guard_stopped=False peak_owned_rss_kib=5760 elapsed_seconds=1.013 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.022 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=2 complete=True

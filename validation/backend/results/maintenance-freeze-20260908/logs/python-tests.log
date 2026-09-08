@@ -1,9 +1,9 @@
-..................................................................................................................................................................................................failed: unit-only
-Development smoke only: failed; report: /tmp/tmpw06bxaiv/output/smoke-report.json
+.........................................................................................................................................................................................................failed: unit-only
+Development smoke only: failed; report: /tmp/tmpx6f69dj4/output/smoke-report.json
 ........................................................................................
 ----------------------------------------------------------------------
-Ran 282 tests in 9.140s
+Ran 289 tests in 29.336s
 
 OK
-MEMORY_GUARD_RESULT min_available_kib=5453316 baseline_swap_kib=180224 peak_swap_kib=180224 guard_stopped=False peak_owned_rss_kib=75332 elapsed_seconds=10.015 stop_reason=none
-SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.001 peak_io_full_percent=0.243 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=11 complete=True
+MEMORY_GUARD_RESULT min_available_kib=6144172 baseline_swap_kib=250288 peak_swap_kib=250288 guard_stopped=False peak_owned_rss_kib=82892 elapsed_seconds=30.072 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=15.029 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=31 complete=True

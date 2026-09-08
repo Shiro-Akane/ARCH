@@ -30,9 +30,10 @@ ARCH 检查点保存 AMR 叶块拓扑、守恒场、原始质量分数和用于�
 下方结果保留各自受测源码的身份。严格输入验证已通过单独的
 [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)，
 这些控制不替代科学续算测量。本轮[维护复验](../backend/results/maintenance-freeze-20260908/README.zh-CN.md)
-也已在重建的 CUDA 应用上通过光滑／燃烧重启及燃烧重启 memcheck/racecheck。
+已在小范围分发清理后通过光滑／燃烧重启及燃烧重启 memcheck/racecheck。
 四组检查各完成十二次执行和九次严格比较，每种插桩工具覆盖六次实际 CUDA 进程，
-安全报告完整且无报错，最终源码与产物身份一致。
+报告完整且无报错，最终源码与产物身份检查也通过。这些当前源码上的实际运行与
+下方科学续算测量分开记录。
 
 <a id="发布候选版本已完成的检查"></a>
 

@@ -27,13 +27,20 @@ records runtime directory organization, documentation and source equivalence,
 with separate build checks. The scientific results below retain their original
 tested identities.
 
-After the interface and test-layout cleanup, the optimized local CUDA build,
-all 98 configured Release tests, ten development-smoke lanes and both normal
-restart suites pass. Burning-restart memcheck/racecheck and final campaign
-identity checks also pass, completing the local execution scope of the
-[active plan](../docs/development/CudaReleaseStandard.md#active-execution-contract).
+The current dispatch cleanup preserves the numerical implementations and
+registered routes. Its optimized incremental CUDA build and all 289 Python
+controls pass, together with all 98 configured Release tests, ten application
+smoke lanes and all four strict normal/instrumented restart suites. The
+[active plan](../docs/development/CudaReleaseStandard.md#active-execution-contract)
+records the completed technical checks for the owner-authorized integration.
 The [maintenance record](backend/results/maintenance-freeze-20260908/README.md)
 keeps these current checks separate from the scientific measurements below.
+
+The [matched local AMR timing](backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
+passes field, conservation and dynamic-topology checks at both measured Sedov
+sizes. CUDA takes 3.30 and 3.43 times the eight-thread CPU end-to-end time on
+this machine. Functional agreement does not imply a speedup; compare the
+backends on your workload when choosing where to run it.
 
 Timmes author contact and redistribution confirmation remain pending, as recorded
 in the [third-party notices](../THIRD_PARTY_NOTICES.md). This administrative

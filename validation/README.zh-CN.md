@@ -18,12 +18,16 @@ CPU/CUDA 发布范围已通过数值、应用、回归、设备安全、持续�
 记录 runtime 目录组织、文档及源码等价性，并单列构建检查。
 下表中的科学结果保留原有受测身份。
 
-接口和测试目录整理后，优化 CUDA 构建、全部 98 项已配置 Release 测试、十条
-开发短测及两组普通重启检查已通过，燃烧重启 memcheck/racecheck 和最终运行身份
-核对也已通过，[当前计划](../docs/development/CudaReleaseStandard.md#active-execution-contract)
-要求的本机执行已完成。
+当前分发清理保留原有数值实现和注册路由，优化 CUDA 增量构建及全部 289 项 Python
+控制已通过，全部 98 项已配置 Release 测试、十条程序短测及四组普通／插桩严格重启
+复验也均通过。[当前计划](../docs/development/CudaReleaseStandard.md#active-execution-contract)
+记录所有者授权合入所需的已完成技术检查。
 [维护记录](backend/results/maintenance-freeze-20260908/README.zh-CN.md)
 将这些当前检查与下表的科学测量分开记录。
+
+[本机同配置 AMR 计时](backend/results/maintenance-freeze-20260908/README.zh-CN.md#本机同配置-amr-计时)
+在两档 Sedov 上均通过场、守恒及动态拓扑检查；CUDA 端到端耗时分别为本机八线程
+CPU 的 3.30 和 3.43 倍。功能一致不意味着必然加速，选择后端时应对照自己的工作负载。
 
 Timmes 作者联络及重新分发条款确认仍待补充，具体见
 [第三方说明](../THIRD_PARTY_NOTICES.zh-CN.md)。这项发布行政事项与已完成的技术测试分别记录。

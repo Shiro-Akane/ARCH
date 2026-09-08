@@ -18,40 +18,45 @@ shows 41 required passes, zero required failures or pending entries, and only tw
 owner-deferred large-network workloads. The exact source identity for this milestone is
 `73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171`.
 
-The current work completes the local CUDA build and regression after interface
-cleanup and test/tool organization. Keep one implementation per responsibility
-and a clear self-verification path for a source checkout. The existing
+The current work prepares the verified CUDA branch for integration into `main`,
+the recommended checkout for users. Remove unused dispatch entry points, correct
+coordinate labels and capability descriptions, and align build presets and
+linker checks with the supported build workflow. Mathematical and physical
+implementations remain unchanged. Keep one implementation per responsibility
+and a short source-download instruction for new users. The existing
 [maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md)
 and [source-publication record](../../validation/backend/results/source-publication-20260908/README.md)
 are updated in place.
 
-Completed checks:
+Verified on the current integration cleanup:
 
-- The isolated Release build and all six C++ controls:
-  `checkpoint_compatibility`, `resolved_execution_plan`,
-  `shared_stage_scheduler`, `boundary_plan`, `amr_operation_plans` and
-  `state_residency`.
-- The Sod case-registration syntax check.
-- All 282 Python tooling and architecture controls with zero skips, plus the
-  standalone architecture audit and 60 positive/negative recipe controls.
+- All 289 Python tooling and architecture controls with zero skips, including
+  the configure-helper controls; the shared architecture audit also passes.
 - The optimized local CUDA build with cuDSS, KLU and representative generated
-  packages; all 98 configured Release tests and ten development-smoke lanes.
+  packages; all 98 configured Release tests with zero skips and ten
+  development-smoke lanes. The regression inventory includes the shared
+  checkpoint, dispatch, scheduler, boundary, AMR-plan and residency controls.
 - Normal smooth and burning restart: each completes twelve application runs
   and nine strict comparisons across all four backend directions.
 - Burning-restart memcheck and racecheck: each completes the same twelve runs
   and nine comparisons, including six instrumented CUDA processes with complete
   clean reports. Final source, binary and test-artifact identity checks pass.
 
-These checks cover the complete ARCH checkpoint reader, unified policy-ID factories,
-supported setup APIs and test-fixture ownership on the current build. The
-completed runtime campaign records source
-`02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781`.
+The completed runtime campaign records source
+`abd02d1eab0887e366ebf24506882efb1a49166e2607ff47ba1a89937107cedf`.
+It checks the complete ARCH checkpoint reader, unified policy-ID factories,
+required hydro launch context and supported setup APIs on the current build.
+All 281 normalized compiler commands retain their previous arguments; no
+optimization flag or mathematical implementation changes. The 59.005-second
+incremental build is not the separately recorded 2,213.445-second cold build.
 These maintenance checks do not rerun the full
 independent scientific validation profile or change its recorded identity.
 
-The owner has requested the remaining local experiments. Complete these before
-closing the current work:
+Complete these checks on the final changes before integrating `main`:
 
+- [x] Remove unused selection chains and their nullable compatibility defaults;
+  verify required dispatch context and shared coordinate naming. Update presets,
+  final-linker IPO checks and user-facing instructions without changing physics.
 - [x] Configure and build the optimized CUDA application and its configured
   regression targets from the final maintained source. Include cuDSS and the
   representative generated packages in the tested profile; retain actual
@@ -65,15 +70,39 @@ closing the current work:
 - [x] Complete burning-restart memcheck and racecheck with the same strict
   comparisons, then verify the campaign's final source, executable and input
   identities. Preserve incomplete or failed attempts rather than inferring a pass.
-- [x] Update the effective maintenance and affected Validation records in
+- [x] Observe local CPU/CUDA speed with AMR enabled on the same two-dimensional
+  Sedov configuration at two declared problem sizes. Repeat both backend runs,
+  check field consistency and record the mesh sizes and AMR activity alongside
+  end-to-end wall time and the existing runtime AMR regrid-transaction wall
+  measurements. The application has no separate solver timer in this profile;
+  do not report solver/kernel time or label end-to-end minus regrid time as
+  hydrodynamics time. This measures the tested workloads;
+  a speedup is not an acceptance threshold, and physics, tolerances or case
+  selection must not be tuned to guarantee one. It does not replace scientific
+  acceptance. The completed two-scale comparison passes its consistency,
+  conservation, dynamic-topology and identity checks. CUDA takes 3.30 and 3.43
+  times the eight-thread CPU end-to-end time on the measured workloads; the
+  owner accepts functional-parity integration with these results disclosed.
+- Update the effective maintenance and affected Validation records in
   place with the actual new results, then check user commands, local links and
-  source-delivery inventory. Keep any unperformed gate pending.
+  source-delivery inventory. This gate reviews the delivery selection; actual
+  review outcomes are established by the maintenance `freeze-review.json` and
+  source-publication archive manifest. Git integration is established by refs
+  and command receipts, not a document checkbox.
 
 The previous numerical reports retain their actual source and binary identities.
-No large-machine campaign, audit150/audit200 build, third-party contact or
-publication action is authorized in this work. Required independent fixtures
+The owner has authorized the verified commit and main-branch integration. No
+large-machine campaign, audit150/audit200 build or third-party contact is part
+of this work. Required independent fixtures
 stay with their test owners; do not add another report tree or broaden the
 refactor while completing the local checks.
+
+The reviewed technical results are ready for owner-authorized fast-forward
+integration. Complete the final document/inventory checks and verify remote
+ancestry before committing and pushing the selected main/frozen branch updates.
+Runtime performance optimization is a separate follow-up; the measured CUDA
+slowdown does not reopen the passed functional acceptance or authorize kernel
+changes in this integration.
 
 ## Non-negotiable contract
 
@@ -292,9 +321,11 @@ This declared workload evidence is not a maximum supported matrix or mesh size.
 ### 5. Final optimization, documentation and release decision
 
 Status: required numerical, runtime, build and capacity measurements are
-complete for their recorded sources. The current local build, regression,
-restart recheck and refreshed delivery review are tracked above; publication
-and permissions remain owner-controlled.
+complete for their recorded sources. The current local build, regression and
+restart recheck also pass. The additional local AMR performance observation is
+complete with CPU faster at both sizes. The technical selection is ready for
+owner-authorized integration, with final delivery checks tracked above.
+Third-party confirmation remains separate.
 
 Acceptance conditions:
 
@@ -310,10 +341,12 @@ Acceptance conditions:
   input conventions and consequential limitations in natural sentences.
 - [x] Separate user guides, contributor ownership and quantitative Validation.
   Public summaries link the effective results, not a sequence of old attempts.
-- [ ] Refresh the existing maintenance/source-publication inventories and
-  complete final local-link review after the authorized cleanup.
-- [ ] Perform any source selection, commit, push or publication only under
-  explicit owner authorization; technical passes do not perform those actions.
+- Refresh the existing maintenance/source-publication inventories and
+  complete final local-link review after the authorized cleanup; their records
+  establish the actual delivery-check outcomes.
+- Source selection, commit, push and publication require explicit owner
+  authorization. The owner has authorized this main-branch integration;
+  technical passes do not perform Git actions or establish their completion.
 - [ ] Complete the acknowledged Timmes author contact/redistribution review
   under the owner's direction; attribution does not establish permission.
 
@@ -399,12 +432,15 @@ current checkpoint in place rather than appending another execution diary.
 
 Current checkpoint: the optimized local CUDA build, all 98 configured Release
 tests, ten development-smoke lanes, normal smooth/burning restart, burning-restart
-memcheck/racecheck and all 282 Python controls have passed. Final runtime identity
-verification also passes. Effective maintenance records and the source-delivery
-inventory are updated in place, with local links and documented shell commands
-checked against the maintained files.
-The recorded scientific profile stays attached to its measured source.
-Large-system work, author contact and publication remain outside this execution scope.
+memcheck/racecheck and all 289 Python controls have passed on the current source.
+Final runtime identity verification also passes. Both matched AMR timing scales
+pass the original field, conservation, workload and identity checks; CUDA is
+slower on these local workloads. The owner accepts the functionally equivalent
+version for main integration with performance documented. Final document and
+inventory checks guard the reviewed source selection; Git refs and command
+receipts record actual integration. The scientific profile stays attached to
+its measured source. Large-system work and author contact remain outside this
+execution scope.
 
 ## Efficient navigation
 

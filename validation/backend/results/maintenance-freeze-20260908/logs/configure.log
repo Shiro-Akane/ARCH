@@ -5,7 +5,7 @@
 -- [OPT] Found ccache: /usr/bin/ccache
 -- [OPT] Build Type: Release
 -- [OPT] LTO enabled for optimized configurations
--- [OPT] Using mold linker for LTO
+-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed
 -- [NET] Registered custom:audit31
 -- [NET] Registered custom:weak_urca
 -- [CUDA] Compiled code images: 86
@@ -201,8 +201,8 @@
 -- [SUCCESS] Executable : /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH
 -- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
 -- ===================================================================
--- Configuring done (6.9s)
+-- Configuring done (7.3s)
 -- Generating done (0.1s)
 -- Build files have been written to: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core
-MEMORY_GUARD_RESULT min_available_kib=4823364 baseline_swap_kib=186624 peak_swap_kib=186624 guard_stopped=False peak_owned_rss_kib=31284 elapsed_seconds=8.010 stop_reason=none
-SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.330 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True
+MEMORY_GUARD_RESULT min_available_kib=6975844 baseline_swap_kib=250288 peak_swap_kib=250288 guard_stopped=False peak_owned_rss_kib=41032 elapsed_seconds=8.041 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=4.326 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=9 complete=True

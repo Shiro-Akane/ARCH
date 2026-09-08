@@ -66,15 +66,12 @@ if(ipo_supported)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE)
     message(STATUS "[OPT] LTO enabled for optimized configurations")
 
-    # Use lld or mold for memory-efficient linking, critical for LTO memory safety
-    find_program(MOLD_LINKER mold)
-    find_program(LLD_LINKER lld)
-    if(MOLD_LINKER)
-        add_link_options("-fuse-ld=mold")
-        message(STATUS "[OPT] Using mold linker for LTO")
-    elseif(LLD_LINKER)
-        add_link_options("-fuse-ld=lld")
-        message(STATUS "[OPT] Using lld linker for LTO")
+    # A linker being installed does not establish that it accepts this
+    # compiler's LTO objects. Probe the final C/C++ archive-to-executable link.
+    include(cmake/SelectIpoLinker.cmake)
+    arch_select_ipo_linker(arch_ipo_link_option)
+    if(arch_ipo_link_option)
+        add_link_options("${arch_ipo_link_option}")
     endif()
 endif()
 

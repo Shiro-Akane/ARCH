@@ -1,7 +1,8 @@
 {
   "schema": 1,
   "status": "PASS",
-  "scope": "current maintenance reconfigure and incremental full rebuild; not a cold-build benchmark",
+  "recorded_utc": "2026-09-08T05:25:42.008527+00:00",
+  "scope": "Matched local CPU/CUDA dynamic-AMR timing; end-to-end observations, not a new physical validation campaign",
   "source": {
     "commit": "d195706b69bf2dd0373acdf64b4cf363234ec3b8",
     "scope": "code-and-validation-inputs-v1",
@@ -589,167 +590,529 @@
       "checkpoint_validator": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation"
     }
   },
-  "command_receipts": {
-    "current-configure": {
-      "returncode": 0,
-      "command": [
-        "env",
-        "OMP_NUM_THREADS=4",
-        "python3",
-        "-B",
-        "tools/run_memory_guarded.py",
-        "--min-available-mib",
-        "1536",
-        "--max-swap-growth-mib",
-        "256",
-        "--pressure-guard",
-        "--log",
-        "build/maintenance-freeze-20260908/main-integration/configure.log",
-        "--",
-        "cmake",
-        "-S",
-        "/home/shiroakane/ARCH",
-        "-B",
-        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core",
-        "-DARCH_CUDA_HEAVY_COMPILE_JOBS=2"
+  "artifacts": {
+    "arch_sha256": "6016ea9d12c5839d5f54a59aa0989afe837b05bd8229ee68e8046e75586fdd3f",
+    "checkpoint_validator_sha256": "1fe1a701d5a4ea7fe813242ea255b5254addbb3e44a3e5635ca59a2f0548e9b5"
+  },
+  "maintenance_runtime": {
+    "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/runtime/runtime-review.json",
+    "sha256": "c771018b1843b18ee44bf9816efa43d954fc7f119107d9c7ca09fa4d232e96f1",
+    "bytes": 140793
+  },
+  "recipe": {
+    "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py",
+    "sha256": "d365827721ea99e14ac085a285a24c26ec12a8376d19fdb80b59f5af9a616363",
+    "bytes": 19165
+  },
+  "hardware": {
+    "cpu": {
+      "model": "Intel Core i7-10700",
+      "physical_cores": 8,
+      "logical_processors": 16,
+      "source": "lscpu observed on the execution host"
+    },
+    "environment": "WSL2 Linux, Microsoft hypervisor reported by lscpu",
+    "guest_memory_mib": 7892,
+    "guest_memory_source": "free -m observed before calibration",
+    "host_memory_gb": 16,
+    "host_memory_source": "owner-reported installed DRAM, distinct from the measured WSL guest allocation",
+    "gpu": {
+      "model": "NVIDIA GeForce RTX 3060 Ti",
+      "memory_mib": 8192,
+      "driver": "610.47",
+      "source": "nvidia-smi observed before calibration"
+    },
+    "scope": "Local hardware observation, not a portable performance or minimum-memory guarantee"
+  },
+  "execution_receipts": {
+    "schema": 1,
+    "scope": "Observed command outcomes for matched Sedov dynamic-AMR timing; null denotes an unfinished command.",
+    "commands": {
+      "small": {
+        "returncode": 0,
+        "command": [
+          "python3",
+          "-B",
+          "tools/run_memory_guarded.py",
+          "--min-available-mib",
+          "1536",
+          "--max-swap-growth-mib",
+          "256",
+          "--pressure-guard",
+          "--log",
+          "build/maintenance-freeze-20260908/main-integration/sedov-timing-small.log",
+          "--",
+          "python3",
+          "-B",
+          "validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py",
+          "--arch",
+          "build/maintenance-freeze-20260908/core/bin/ARCH",
+          "--checkpoint-validator",
+          "build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--output-root",
+          "build/maintenance-freeze-20260908/main-integration/sedov-timing-small",
+          "--blocks",
+          "4",
+          "--levels",
+          "2",
+          "--time",
+          ".02",
+          "--threads",
+          "8",
+          "--backend",
+          "cpu",
+          "cuda",
+          "--warmups",
+          "1",
+          "--repeats",
+          "3",
+          "--timeout",
+          "1200"
+        ],
+        "log": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-small.log",
+          "sha256": "afd0f9d77aa11c0430c83654e20186f367502168fd8612bdd1c36196b755b82c"
+        }
+      },
+      "medium": {
+        "returncode": 0,
+        "command": [
+          "python3",
+          "-B",
+          "tools/run_memory_guarded.py",
+          "--min-available-mib",
+          "1536",
+          "--max-swap-growth-mib",
+          "256",
+          "--pressure-guard",
+          "--log",
+          "build/maintenance-freeze-20260908/main-integration/sedov-timing-medium.log",
+          "--",
+          "python3",
+          "-B",
+          "validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py",
+          "--arch",
+          "build/maintenance-freeze-20260908/core/bin/ARCH",
+          "--checkpoint-validator",
+          "build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--output-root",
+          "build/maintenance-freeze-20260908/main-integration/sedov-timing-medium",
+          "--blocks",
+          "8",
+          "--levels",
+          "2",
+          "--time",
+          ".02",
+          "--threads",
+          "8",
+          "--backend",
+          "cpu",
+          "cuda",
+          "--warmups",
+          "1",
+          "--repeats",
+          "3",
+          "--timeout",
+          "1200"
+        ],
+        "log": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-medium.log",
+          "sha256": "70f3dcf4b5b287a91744bf89833c72b1b1573f6511eb022cbe676762d2afacb2"
+        }
+      }
+    },
+    "hardware": {
+      "cpu": {
+        "model": "Intel Core i7-10700",
+        "physical_cores": 8,
+        "logical_processors": 16,
+        "source": "lscpu observed on the execution host"
+      },
+      "environment": "WSL2 Linux, Microsoft hypervisor reported by lscpu",
+      "guest_memory_mib": 7892,
+      "guest_memory_source": "free -m observed before calibration",
+      "host_memory_gb": 16,
+      "host_memory_source": "owner-reported installed DRAM, distinct from the measured WSL guest allocation",
+      "gpu": {
+        "model": "NVIDIA GeForce RTX 3060 Ti",
+        "memory_mib": 8192,
+        "driver": "610.47",
+        "source": "nvidia-smi observed before calibration"
+      },
+      "scope": "Local hardware observation, not a portable performance or minimum-memory guarantee"
+    }
+  },
+  "receipt_source": {
+    "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-command-outcomes.json",
+    "sha256": "3b6f329943662f305d4f18ebb22db45098a57ca211ffc77596e6bc0a57317b2c",
+    "bytes": 3564
+  },
+  "resource_observations": {
+    "small": {
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-small.log",
+        "sha256": "afd0f9d77aa11c0430c83654e20186f367502168fd8612bdd1c36196b755b82c",
+        "bytes": 1222
+      },
+      "raw_summary_lines": [
+        "MEMORY_GUARD_RESULT min_available_kib=5278180 baseline_swap_kib=251072 peak_swap_kib=251072 guard_stopped=False peak_owned_rss_kib=358300 elapsed_seconds=215.112 stop_reason=none",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.186 peak_io_full_percent=2.966 peak_swap_in_mib_s=0.004 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=215 complete=True"
       ]
     },
-    "current-build-adaptive": {
-      "returncode": 0,
-      "command": [
-        "env",
-        "OMP_NUM_THREADS=4",
-        "python3",
-        "-B",
-        "tools/run_memory_guarded.py",
-        "--min-available-mib",
-        "1536",
-        "--max-swap-growth-mib",
-        "256",
-        "--pressure-guard",
-        "--log",
-        "build/maintenance-freeze-20260908/main-integration/build.log",
-        "--",
-        "cmake",
-        "--build",
-        "build/maintenance-freeze-20260908/core",
-        "--parallel",
-        "4"
+    "medium": {
+      "log": {
+        "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-medium.log",
+        "sha256": "70f3dcf4b5b287a91744bf89833c72b1b1573f6511eb022cbe676762d2afacb2",
+        "bytes": 1231
+      },
+      "raw_summary_lines": [
+        "MEMORY_GUARD_RESULT min_available_kib=5074252 baseline_swap_kib=251072 peak_swap_kib=251072 guard_stopped=False peak_owned_rss_kib=590500 elapsed_seconds=970.145 stop_reason=none",
+        "SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.048 peak_io_full_percent=2.082 peak_swap_in_mib_s=0.035 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=966 complete=True"
+      ]
+    }
+  },
+  "comparisons": {
+    "small": {
+      "blocks_per_axis": 4,
+      "levels": 2,
+      "max_blocks": 512,
+      "statistics": {
+        "cpu": {
+          "seconds": [
+            12.150276906999352,
+            12.010881882997637,
+            11.957193080001161
+          ],
+          "median": 12.010881882997637,
+          "minimum": 11.957193080001161,
+          "maximum": 12.150276906999352
+        },
+        "cuda": {
+          "seconds": [
+            39.6702538440004,
+            39.35688302399649,
+            39.76712456600217
+          ],
+          "median": 39.6702538440004,
+          "minimum": 39.35688302399649,
+          "maximum": 39.76712456600217
+        }
+      },
+      "cpu_over_cuda_median_ratio": 0.3027679613604016,
+      "comparison_qualified": true,
+      "measured_workloads": {
+        "cpu": [
+          {
+            "repeat": 0,
+            "arch_wall_seconds": 12.150276906999352,
+            "accepted_steps": 354,
+            "initial_leaf_count": 40,
+            "final_leaf_count": 88,
+            "runtime_events": 176,
+            "actual_topology_changes": 3,
+            "net_refining_events": 2,
+            "net_coarsening_events": 1,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 1.453907111,
+            "initial_step_zero_regrid_wall_seconds": 0.02491739,
+            "runtime_leaf_count_min": 40,
+            "runtime_leaf_count_max": 88
+          },
+          {
+            "repeat": 1,
+            "arch_wall_seconds": 12.010881882997637,
+            "accepted_steps": 354,
+            "initial_leaf_count": 40,
+            "final_leaf_count": 88,
+            "runtime_events": 176,
+            "actual_topology_changes": 3,
+            "net_refining_events": 2,
+            "net_coarsening_events": 1,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 1.401161696,
+            "initial_step_zero_regrid_wall_seconds": 0.024913986,
+            "runtime_leaf_count_min": 40,
+            "runtime_leaf_count_max": 88
+          },
+          {
+            "repeat": 2,
+            "arch_wall_seconds": 11.957193080001161,
+            "accepted_steps": 354,
+            "initial_leaf_count": 40,
+            "final_leaf_count": 88,
+            "runtime_events": 176,
+            "actual_topology_changes": 3,
+            "net_refining_events": 2,
+            "net_coarsening_events": 1,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 1.403654934,
+            "initial_step_zero_regrid_wall_seconds": 0.03049959,
+            "runtime_leaf_count_min": 40,
+            "runtime_leaf_count_max": 88
+          }
+        ],
+        "cuda": [
+          {
+            "repeat": 0,
+            "arch_wall_seconds": 39.6702538440004,
+            "accepted_steps": 354,
+            "initial_leaf_count": 40,
+            "final_leaf_count": 88,
+            "runtime_events": 176,
+            "actual_topology_changes": 3,
+            "net_refining_events": 2,
+            "net_coarsening_events": 1,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 2.256793796,
+            "initial_step_zero_regrid_wall_seconds": 0.033712900000000004,
+            "runtime_leaf_count_min": 40,
+            "runtime_leaf_count_max": 88
+          },
+          {
+            "repeat": 1,
+            "arch_wall_seconds": 39.35688302399649,
+            "accepted_steps": 354,
+            "initial_leaf_count": 40,
+            "final_leaf_count": 88,
+            "runtime_events": 176,
+            "actual_topology_changes": 3,
+            "net_refining_events": 2,
+            "net_coarsening_events": 1,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 2.279147956,
+            "initial_step_zero_regrid_wall_seconds": 0.03271019,
+            "runtime_leaf_count_min": 40,
+            "runtime_leaf_count_max": 88
+          },
+          {
+            "repeat": 2,
+            "arch_wall_seconds": 39.76712456600217,
+            "accepted_steps": 354,
+            "initial_leaf_count": 40,
+            "final_leaf_count": 88,
+            "runtime_events": 176,
+            "actual_topology_changes": 3,
+            "net_refining_events": 2,
+            "net_coarsening_events": 1,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 2.280109091,
+            "initial_step_zero_regrid_wall_seconds": 0.033815187,
+            "runtime_leaf_count_min": 40,
+            "runtime_leaf_count_max": 88
+          }
+        ]
+      },
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-small/timing-report.json",
+        "sha256": "1ebddd9d36c0df361bf6ad0e7a6862600c90b59884dac12fd37cf695af9643da",
+        "bytes": 1156570
+      }
+    },
+    "medium": {
+      "blocks_per_axis": 8,
+      "levels": 2,
+      "max_blocks": 2048,
+      "statistics": {
+        "cpu": {
+          "seconds": [
+            56.991028540003754,
+            54.060051247004594,
+            54.186019852000754
+          ],
+          "median": 54.186019852000754,
+          "minimum": 54.060051247004594,
+          "maximum": 56.991028540003754
+        },
+        "cuda": {
+          "seconds": [
+            184.83128981399932,
+            185.87165087799804,
+            185.63213971900404
+          ],
+          "median": 185.63213971900404,
+          "minimum": 184.83128981399932,
+          "maximum": 185.87165087799804
+        }
+      },
+      "cpu_over_cuda_median_ratio": 0.2918999906698456,
+      "comparison_qualified": true,
+      "measured_workloads": {
+        "cpu": [
+          {
+            "repeat": 0,
+            "arch_wall_seconds": 56.991028540003754,
+            "accepted_steps": 711,
+            "initial_leaf_count": 88,
+            "final_leaf_count": 208,
+            "runtime_events": 355,
+            "actual_topology_changes": 12,
+            "net_refining_events": 8,
+            "net_coarsening_events": 4,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 7.000212104,
+            "initial_step_zero_regrid_wall_seconds": 0.041364727000000004,
+            "runtime_leaf_count_min": 88,
+            "runtime_leaf_count_max": 208
+          },
+          {
+            "repeat": 1,
+            "arch_wall_seconds": 54.060051247004594,
+            "accepted_steps": 711,
+            "initial_leaf_count": 88,
+            "final_leaf_count": 208,
+            "runtime_events": 355,
+            "actual_topology_changes": 12,
+            "net_refining_events": 8,
+            "net_coarsening_events": 4,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 6.630212393,
+            "initial_step_zero_regrid_wall_seconds": 0.042136567,
+            "runtime_leaf_count_min": 88,
+            "runtime_leaf_count_max": 208
+          },
+          {
+            "repeat": 2,
+            "arch_wall_seconds": 54.186019852000754,
+            "accepted_steps": 711,
+            "initial_leaf_count": 88,
+            "final_leaf_count": 208,
+            "runtime_events": 355,
+            "actual_topology_changes": 12,
+            "net_refining_events": 8,
+            "net_coarsening_events": 4,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 6.664130937,
+            "initial_step_zero_regrid_wall_seconds": 0.044131672999999996,
+            "runtime_leaf_count_min": 88,
+            "runtime_leaf_count_max": 208
+          }
+        ],
+        "cuda": [
+          {
+            "repeat": 0,
+            "arch_wall_seconds": 184.83128981399932,
+            "accepted_steps": 711,
+            "initial_leaf_count": 88,
+            "final_leaf_count": 208,
+            "runtime_events": 355,
+            "actual_topology_changes": 12,
+            "net_refining_events": 8,
+            "net_coarsening_events": 4,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 10.898289124,
+            "initial_step_zero_regrid_wall_seconds": 0.047958563,
+            "runtime_leaf_count_min": 88,
+            "runtime_leaf_count_max": 208
+          },
+          {
+            "repeat": 1,
+            "arch_wall_seconds": 185.87165087799804,
+            "accepted_steps": 711,
+            "initial_leaf_count": 88,
+            "final_leaf_count": 208,
+            "runtime_events": 355,
+            "actual_topology_changes": 12,
+            "net_refining_events": 8,
+            "net_coarsening_events": 4,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 10.845797276,
+            "initial_step_zero_regrid_wall_seconds": 0.048824196,
+            "runtime_leaf_count_min": 88,
+            "runtime_leaf_count_max": 208
+          },
+          {
+            "repeat": 2,
+            "arch_wall_seconds": 185.63213971900404,
+            "accepted_steps": 711,
+            "initial_leaf_count": 88,
+            "final_leaf_count": 208,
+            "runtime_events": 355,
+            "actual_topology_changes": 12,
+            "net_refining_events": 8,
+            "net_coarsening_events": 4,
+            "changed_equal_leaf_count_events": 0,
+            "runtime_regrid_wall_seconds": 10.890234693,
+            "initial_step_zero_regrid_wall_seconds": 0.051400111,
+            "runtime_leaf_count_min": 88,
+            "runtime_leaf_count_max": 208
+          }
+        ]
+      },
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-medium/timing-report.json",
+        "sha256": "43e72331ff4ad1d881a377b45d42e568be6bb01b0bf7aec9a5199829eabb277a",
+        "bytes": 2217400
+      }
+    }
+  },
+  "timing_boundary": "ARCH process creation through exit includes initialization, solver work, AMR, forced endpoint IO and shutdown; validators are outside the timer.",
+  "interpretation": "A ratio below one means CPU was faster for this measured workload. No speed threshold is an acceptance gate. End-to-end time minus regrid time is not labeled hydro time.",
+  "regrid_counting": "Step-zero observations are separate. Refining/coarsening event labels use net leaf-count increases/decreases; mixed operations within one event cannot be reconstructed from these totals.",
+  "raw_data_policy": "Only the two complete JSON reports and this summary are archived. HDF5, traces and process logs remain in their original ignored build directories.",
+  "cpu_large_pilot_cost": {
+    "report": {
+      "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-calibration-large-t8/timing-report.json",
+      "sha256": "c537f6ef41f8515f0cc2bbba15c1afda47ad410de0cae19874627671b3285823",
+      "bytes": 553186
+    },
+    "settings": {
+      "arch": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
+      "checkpoint_validator": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+      "output_root": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-calibration-large-t8",
+      "blocks": [
+        16
       ],
-      "note": "Incremental integration build; existing objects and dependencies are reused. This is not a cold-build benchmark."
+      "levels": 2,
+      "physical_time": 0.02,
+      "threads": 8,
+      "backend": [
+        "cpu"
+      ],
+      "repeats": 1,
+      "warmups": 0,
+      "timeout": 1200.0,
+      "pilot": true
     },
-    "current-build-confirm": {
-      "returncode": 0,
-      "command": [
-        "env",
-        "OMP_NUM_THREADS=4",
-        "python3",
-        "-B",
-        "tools/run_memory_guarded.py",
-        "--min-available-mib",
-        "1536",
-        "--max-swap-growth-mib",
-        "256",
-        "--pressure-guard",
-        "--log",
-        "build/maintenance-freeze-20260908/main-integration/build-confirm.log",
-        "--",
-        "cmake",
-        "--build",
-        "build/maintenance-freeze-20260908/core",
-        "--parallel",
-        "4"
-      ]
-    }
+    "repeat": 0,
+    "arch_wall_seconds": 327.5246454590015,
+    "accepted_steps": 1408,
+    "initial_leaf_count": 328,
+    "final_leaf_count": 592,
+    "runtime_events": 703,
+    "actual_topology_changes": 34,
+    "net_refining_events": 22,
+    "net_coarsening_events": 12,
+    "changed_equal_leaf_count_events": 0,
+    "runtime_regrid_wall_seconds": 42.86101983,
+    "initial_step_zero_regrid_wall_seconds": 0.187100718,
+    "runtime_leaf_count_min": 328,
+    "runtime_leaf_count_max": 592,
+    "scope": "One CPU-only cost pilot; excluded from the repeated CPU/CUDA speed table. No GPU result or speed ratio was measured for this scale."
   },
-  "measurements": {
-    "current-configure": {
-      "MEMORY_GUARD_RESULT": {
-        "min_available_kib": 6975844,
-        "baseline_swap_kib": 250288,
-        "peak_swap_kib": 250288,
-        "guard_stopped": false,
-        "peak_owned_rss_kib": 41032,
-        "elapsed_seconds": 8.041,
-        "stop_reason": "none"
+  "copies": [
+    {
+      "source": {
+        "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-small/timing-report.json",
+        "sha256": "1ebddd9d36c0df361bf6ad0e7a6862600c90b59884dac12fd37cf695af9643da",
+        "bytes": 1156570
       },
-      "SYSTEM_PRESSURE_OBSERVATION": {
-        "scope": "linux_system",
-        "peak_memory_full_percent": 0.0,
-        "peak_io_full_percent": 4.326,
-        "peak_swap_in_mib_s": 0.0,
-        "peak_swap_out_mib_s": 0.0,
-        "memory_limit_percent": 20.0,
-        "io_limit_percent": 50.0,
-        "sustain_seconds": 10.0,
-        "samples": 9,
-        "complete": true
+      "published": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/sedov-timing-small.json",
+        "sha256": "1ebddd9d36c0df361bf6ad0e7a6862600c90b59884dac12fd37cf695af9643da",
+        "bytes": 1156570
       }
     },
-    "current-build-adaptive": {
-      "MEMORY_GUARD_RESULT": {
-        "min_available_kib": 4867264,
-        "baseline_swap_kib": 250288,
-        "peak_swap_kib": 250288,
-        "guard_stopped": false,
-        "peak_owned_rss_kib": 2294800,
-        "elapsed_seconds": 59.005,
-        "stop_reason": "none"
+    {
+      "source": {
+        "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/main-integration/sedov-timing-medium/timing-report.json",
+        "sha256": "43e72331ff4ad1d881a377b45d42e568be6bb01b0bf7aec9a5199829eabb277a",
+        "bytes": 2217400
       },
-      "SYSTEM_PRESSURE_OBSERVATION": {
-        "scope": "linux_system",
-        "peak_memory_full_percent": 0.0,
-        "peak_io_full_percent": 24.662,
-        "peak_swap_in_mib_s": 0.016,
-        "peak_swap_out_mib_s": 0.0,
-        "memory_limit_percent": 20.0,
-        "io_limit_percent": 50.0,
-        "sustain_seconds": 10.0,
-        "samples": 59,
-        "complete": true
-      }
-    },
-    "current-build-confirm": {
-      "MEMORY_GUARD_RESULT": {
-        "min_available_kib": 6994648,
-        "baseline_swap_kib": 250288,
-        "peak_swap_kib": 250288,
-        "guard_stopped": false,
-        "peak_owned_rss_kib": 5760,
-        "elapsed_seconds": 1.013,
-        "stop_reason": "none"
-      },
-      "SYSTEM_PRESSURE_OBSERVATION": {
-        "scope": "linux_system",
-        "peak_memory_full_percent": 0.0,
-        "peak_io_full_percent": 0.022,
-        "peak_swap_in_mib_s": 0.0,
-        "peak_swap_out_mib_s": 0.0,
-        "memory_limit_percent": 20.0,
-        "io_limit_percent": 50.0,
-        "sustain_seconds": 10.0,
-        "samples": 2,
-        "complete": true
+      "published": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/sedov-timing-medium.json",
+        "sha256": "43e72331ff4ad1d881a377b45d42e568be6bb01b0bf7aec9a5199829eabb277a",
+        "bytes": 2217400
       }
     }
-  },
-  "logs": {
-    "current-configure": {
-      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/logs/configure.log",
-      "sha256": "1e848d8651b1cfce3f6aeb1af33719d31f8f33f531ca6544a124f643c5c421a2"
-    },
-    "current-build-adaptive": {
-      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/logs/build.log",
-      "sha256": "c8281eb97d2c47e6705b345f7111fac107749bf8f69d83e666579abc8a5aa94e"
-    },
-    "current-build-confirm": {
-      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/logs/build-confirm.log",
-      "sha256": "dfb9d788f8f85155ce9af5ffa7a50c43270338e8585264ccc14450b54cbdf356"
-    }
-  },
-  "completed_build": "current-build-adaptive",
-  "final_confirmation": "current-build-confirm",
-  "continuation_policy": "The recorded configure/build commands retain the memory guard and reuse completed objects; only observed completed phases qualify this build.",
-  "cache_policy": "Existing build/dependency/cache state and partial objects were reused across attempts. No cold-cache or universal minimum-memory claim is made.",
-  "argv_policy": "Unavailable configure argv is explicitly null; observed return codes, raw logs and actual CMake options are retained."
+  ]
 }

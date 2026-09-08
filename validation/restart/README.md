@@ -43,10 +43,12 @@ validation passes the separate
 [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review);
 these controls do not replace the scientific continuation measurements. The
 current [maintenance recheck](../backend/results/maintenance-freeze-20260908/README.md)
-also passes smooth/burning restart and burning-restart memcheck/racecheck on the
-rebuilt CUDA-enabled application. Each of the four suites completes twelve
-executions and nine strict comparisons; each sanitizer observes six real CUDA
-processes with complete clean reports. Final source and artifact identities match.
+passes smooth/burning restart and burning-restart memcheck/racecheck after the
+narrow dispatch cleanup. Each of the four suites completes twelve executions
+and nine strict comparisons, including six actual CUDA processes with complete
+clean reports per sanitizer. Final source and artifact identity checks pass.
+These current-source runs are recorded separately from the scientific
+continuation measurements below.
 
 <a id="completed-checks-on-the-release-candidate"></a>
 
