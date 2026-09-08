@@ -20,6 +20,17 @@
 即使已启用测试，`cmake --build <build-dir> --target ARCH` 仍只构建应用及其依赖，
 不会编译独立测试。在 `.par` 中改为 CPU 运行，也不会消除 CUDA 构建的编译成本。
 
+## GitHub 持续集成
+
+[ARCH CI](../.github/workflows/ci.yml) 在 GitHub 提供的 Linux 机器上执行共用实现审查、
+全部 Python 工具测试，以及包含 KLU 和所有已配置 Host 测试的 CPU Release 构建。
+这些任务复用下文的测试入口，不维护另一套 CI 数学实现。CPU 任务会下载所需的
+Helmholtz LFS 表，拒绝缺项或跳过的 CTest 报告；工具任务同样不接受跳过的检查。
+
+`CI required` 汇总这两个任务的结果，不代表实际执行了 CUDA 或重新完成了整套科学
+验证。诊断附件保留 14 天，与维护者审阅过的 Validation 记录分开存放。
+手动运行、资源限制、安全设置及分支规则的接入方法见[工作流指南](../.github/workflows/README.md)。
+
 ## 不需要 GPU 的工具检查
 
 使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。测试使用标准库和受控

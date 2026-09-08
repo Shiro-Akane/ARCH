@@ -35,6 +35,15 @@ python3 tools/validate_cuda_amr_restart.py --unit-test
 These modes check the checking protocol only. They do not produce a CPU/CUDA
 trajectory or replace field comparisons.
 
+## Check CI test reports
+
+[check_ci_results.py](check_ci_results.py) verifies the CPU CI profile's CTest
+inventory and, when provided, its JUnit report. It rejects missing coverage
+anchors, duplicate or omitted results, failures and skips. It reads CTest's
+pass/fail decisions rather than recalculating numerical tolerances. The
+[workflow guide](../.github/workflows/README.md) describes its use; this report
+check does not generate scientific Validation evidence.
+
 ## Run the application and compare results
 
 Use a testing-enabled build containing ARCH and

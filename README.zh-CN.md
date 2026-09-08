@@ -4,6 +4,7 @@
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
+[![CPU CI](https://github.com/Shiro-Akane/ARCH/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Shiro-Akane/ARCH/actions/workflows/ci.yml)
 [![CPU backend](https://img.shields.io/badge/backend-CPU-success.svg)]()
 [![CUDA](https://img.shields.io/badge/CUDA-supported-success.svg)](docs/CudaBackendStatus.zh-CN.md)
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
@@ -17,6 +18,9 @@ ARCH 采用有限体积法：将流体区域划分为网格单元，并追踪它
 ## 项目状态
 
 CPU 与 CUDA 后端均完整支持以下功能。当前的发布版本已顺利通过严格的数值精度、应用运行、设备安全、构建和资源检查。详细的测试配置与最终的交付审阅状态，均记录在 [Validation](validation/README.zh-CN.md) 验证套件中。
+
+[持续集成](tests/README.zh-CN.md#github-持续集成)检查新改动的工具行为、CPU 构建和
+回归结果；GPU 与独立科学验证的结果另见 Validation。
 
 | 功能 | 共用行为与后端选择 |
 | --- | --- |
@@ -264,9 +268,10 @@ ARCH/
 ├── SECURITY.md               # 安全问题报告说明
 ├── SECURITY.zh-CN.md         # 中文安全报告指南
 ├── .gitleaks.toml            # 共用凭据扫描规则
-├── .github/                  # 仓库审阅归属与维护说明
+├── .github/                  # 审阅归属、维护说明与持续集成
 │   ├── CODEOWNERS            # 默认代码审阅负责人
-│   └── README.md             # 维护文件职责
+│   ├── MAINTENANCE.md        # 维护职责与 CI 设置入口
+│   └── workflows/            # CPU／工具工作流及说明
 ├── LICENSE                   # ARCH 自有内容的 MIT 许可证
 ├── THIRD_PARTY_NOTICES.md    # 科学软件来源与第三方条款
 ├── LICENSES/                 # 保留的第三方许可证文本

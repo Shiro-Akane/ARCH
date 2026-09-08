@@ -29,6 +29,13 @@ python3 tools/validate_cuda_amr_restart.py --unit-test
 
 这些模式只检查验证协议，不产生 CPU/CUDA 轨迹，不能替代实际场比较。
 
+## 核对 CI 测试报告
+
+[check_ci_results.py](check_ci_results.py) 核对 CPU CI 配置的 CTest 清单，以及可选的
+JUnit 结果报告，拒绝关键测试缺失、重复或遗漏结果、失败和跳过。它读取 CTest 的
+通过／失败判定，不重新定义数值误差标准。接入方式见[工作流指南](../.github/workflows/README.md)；
+这项报告检查不生成科学 Validation 证据。
+
 ## 完整程序与结果比较
 
 使用启用测试的构建，并提供同一构建的 ARCH 与 `arch_cuda_single_level_validation`。
