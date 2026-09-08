@@ -27,6 +27,21 @@ tests or choose `cuda-release` as needed. With testing enabled,
 dependencies, not standalone tests. Changing a `.par` file to run on CPU does
 not remove the compile cost of a CUDA-enabled build.
 
+## GitHub continuous integration
+
+[ARCH CI](../.github/workflows/ci.yml) runs the shared-authority audit, the full
+Python tooling suite and a CPU Release build with all configured Host tests,
+including KLU, on GitHub-hosted Linux machines. The jobs reuse the commands and
+test owners described here; no separate CI mathematical implementation exists.
+The CPU job fetches the required Helmholtz LFS table and rejects incomplete or
+skipped CTest reports. The tooling job also rejects skipped controls.
+
+The `CI required` result combines those two jobs. It does not represent CUDA
+execution or a rerun of the full scientific Validation campaign. Diagnostic
+artifacts are kept for 14 days, separately from reviewed Validation records.
+See the [workflow guide](../.github/workflows/README.md) for manual runs,
+resource limits, security settings and branch-rule setup.
+
 ## Check tools without a GPU
 
 Use Python 3.10 or newer and Git/CMake from the build setup. These checks use

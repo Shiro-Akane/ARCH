@@ -4,6 +4,7 @@ Chinese translation: [README.zh-CN.md](README.zh-CN.md).
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
+[![CPU CI](https://github.com/Shiro-Akane/ARCH/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Shiro-Akane/ARCH/actions/workflows/ci.yml)
 [![CPU backend](https://img.shields.io/badge/backend-CPU-success.svg)]()
 [![CUDA](https://img.shields.io/badge/CUDA-supported-success.svg)](docs/CudaBackendStatus.md)
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
@@ -17,6 +18,10 @@ To run your first simulation, follow the [Build](#build) and [First run](#first-
 ## Project status
 
 Both CPU and CUDA backends fully support the following features. The release version has successfully passed rigorous numerical, application, device-safety, build, and resource checks. Detailed testing configurations and the final delivery-review status are documented in the [Validation](validation/README.md) suite.
+
+[Continuous integration](tests/README.md#github-continuous-integration) checks
+the tooling and CPU build/regressions on new changes. GPU and independent
+scientific checks are documented separately in Validation.
 
 | Capability | Shared behavior and backend choices |
 | --- | --- |
@@ -304,9 +309,10 @@ ARCH/
 ├── SECURITY.md               # Security reporting instructions
 ├── SECURITY.zh-CN.md         # Chinese security reporting guide
 ├── .gitleaks.toml            # Shared secret-scanning policy
-├── .github/                  # Repository review ownership and maintenance notes
+├── .github/                  # Review ownership, maintenance notes and CI
 │   ├── CODEOWNERS            # Default code-review owner
-│   └── README.md             # Maintenance-file responsibilities
+│   ├── MAINTENANCE.md        # Maintenance responsibilities and CI setup
+│   └── workflows/            # CPU/tooling workflow and its guide
 ├── LICENSE                   # MIT license for ARCH-authored material
 ├── THIRD_PARTY_NOTICES.md    # Scientific-source provenance and terms
 ├── LICENSES/                 # Retained third-party license texts

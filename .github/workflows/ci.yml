@@ -1,0 +1,195 @@
+name: ARCH CI
+
+on:
+  push:
+    branches: [main, CUDA_complete_v1]
+  pull_request:
+    branches: [main, CUDA_complete_v1]
+  workflow_dispatch:
+
+# Public PRs run only on disposable GitHub-hosted machines, without secrets or
+# write permissions. Do not change this to pull_request_target to run PR code.
+permissions:
+  contents: read
+
+concurrency:
+  group: arch-ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tooling:
+    name: Tooling
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out the tested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Prepare host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential cmake ninja-build mold python3 shellcheck
+          mkdir -p build-ci/tooling
+          git rev-parse HEAD > build-ci/tooling/commit.txt
+
+      - name: Validate workflow syntax
+        run: |
+          archive="$RUNNER_TEMP/actionlint.tar.gz"
+          curl --proto '=https' --tlsv1.2 --fail --silent --show-error --location \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$archive"
+          printf '%s  %s\n' \
+            8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8 \
+            "$archive" | sha256sum --check --strict
+          tar -xzf "$archive" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -color \
+            2>&1 | tee build-ci/tooling/workflow.log
+
+      - name: Audit shared implementation and header boundaries
+        run: |
+          python3 tools/audit_architecture.py . \
+            2>&1 | tee build-ci/tooling/architecture.log
+
+      - name: Run the existing Python suite without skips
+        run: |
+          python3 - <<'PY' 2>&1 | tee build-ci/tooling/unittest.log
+          import sys
+          import unittest
+
+          suite = unittest.defaultTestLoader.discover("tests/tooling", pattern="test_*.py")
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          if not result.testsRun or result.skipped:
+              print("CI requires a nonempty tooling suite with no skipped controls.")
+          sys.exit(0 if result.wasSuccessful() and result.testsRun and not result.skipped else 1)
+          PY
+
+      - name: Retain tooling diagnostics
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tooling-${{ github.run_id }}-${{ github.run_attempt }}
+          path: build-ci/tooling/
+          retention-days: 14
+          if-no-files-found: warn
+
+  cpu:
+    name: CPU Release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    env:
+      CC: gcc-12
+      CXX: g++-12
+      OMP_NUM_THREADS: '2'
+      OMP_DYNAMIC: 'FALSE'
+      CCACHE_DIR: ${{ github.workspace }}/build-ci/ccache
+      CCACHE_MAXSIZE: 1G
+      CCACHE_COMPILERCHECK: content
+    steps:
+      - name: Check out source and the required EOS table
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          lfs: true
+
+      - name: Prepare the CPU toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            gcc-12 g++-12 cmake ninja-build ccache mold libhdf5-dev python3
+          mkdir -p build-ci/reports
+          git rev-parse HEAD > build-ci/reports/commit.txt
+          python3 --version
+          cmake --version
+          gcc-12 --version
+          free -h
+
+      - name: Identify native compiler targets for the cache
+        id: compiler
+        run: |
+          # Release uses -march=native. Never share its cached objects across
+          # machines with different resolved target flags or compiler binaries.
+          identity=$(gcc-12 -march=native -Q --help=target | sha256sum | cut -d ' ' -f 1)
+          echo "target=$identity" >> "$GITHUB_OUTPUT"
+
+      - name: Restore compiler cache
+        id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build-ci/ccache
+          key: arch-cpu-ubuntu24-gcc12-${{ steps.compiler.outputs.target }}-${{ hashFiles('CMakeLists.txt', 'cmake/**') }}-${{ github.sha }}
+          restore-keys: |
+            arch-cpu-ubuntu24-gcc12-${{ steps.compiler.outputs.target }}-${{ hashFiles('CMakeLists.txt', 'cmake/**') }}-
+
+      - name: Configure the existing CPU Release preset with tests and KLU
+        run: |
+          cmake --preset cpu-release -B build-ci/cpu \
+            -DBUILD_TESTING=ON -DARCH_ENABLE_KLU=ON -DARCH_FETCH_SUITESPARSE=ON \
+            -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-ci/cpu/bin" \
+            2>&1 | tee build-ci/reports/configure.log
+          ctest --test-dir build-ci/cpu --show-only=json-v1 > build-ci/reports/inventory.json
+          python3 tools/check_ci_results.py --inventory build-ci/reports/inventory.json
+
+      - name: Build the application and all configured CPU tests
+        run: |
+          python3 tools/run_memory_guarded.py \
+            --min-available-mib 1536 --max-swap-growth-mib 512 --pressure-guard \
+            --log build-ci/reports/build.log -- \
+            cmake --build build-ci/cpu --parallel 2
+
+      - name: Run every configured CPU test
+        run: |
+          ctest --test-dir build-ci/cpu --parallel 1 --timeout 600 \
+            --no-tests=error --output-on-failure \
+            --output-junit "$PWD/build-ci/reports/ctest.xml" \
+            2>&1 | tee build-ci/reports/ctest.log
+          python3 tools/check_ci_results.py \
+            --inventory build-ci/reports/inventory.json --junit build-ci/reports/ctest.xml
+
+      - name: Report cache use
+        if: always()
+        run: |
+          if command -v ccache >/dev/null; then ccache --show-stats; fi
+
+      # A PR may restore trusted caches, but cannot publish a new shared cache.
+      - name: Save cache after a successful main or V1 push
+        if: success() && github.event_name == 'push' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build-ci/ccache
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Retain CPU diagnostics, not build products or checkpoints
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: cpu-release-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            build-ci/reports/
+            build-ci/cpu/Testing/Temporary/LastTest.log
+            build-ci/cpu/Testing/Temporary/LastTestsFailed.log
+          retention-days: 14
+          if-no-files-found: warn
+
+  required:
+    name: CI required
+    needs: [tooling, cpu]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    env:
+      TOOLING_RESULT: ${{ needs.tooling.result }}
+      CPU_RESULT: ${{ needs.cpu.result }}
+    steps:
+      - name: Require both jobs to succeed
+        run: |
+          printf 'Tooling: %s\nCPU Release: %s\n' "$TOOLING_RESULT" "$CPU_RESULT"
+          test "$TOOLING_RESULT" = success
+          test "$CPU_RESULT" = success
