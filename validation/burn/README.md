@@ -3,15 +3,22 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+Burning changes isotope abundances and exchanges nuclear binding energy with
+thermal energy. A one-zone calculation isolates this reaction and temperature
+evolution from fluid transport. The checks below compare time integrators,
+composition constraints and energy balance; nuclear statistical equilibrium
+(NSE) checks additionally compare the equilibrium state of the selected built-in
+network with independent references.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
 CPU and CUDA pass the original cross-solver and composition-closure checks.
-The [current-candidate application record](results/application-first-law-20260907/release-878/evidence.json)
+The [application record](results/application-first-law-20260907/release-878/evidence.json)
 contains all six executions and their source/binary identities. The same
-candidate also passes [native burn restart](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json).
+build also passes [native burn restart](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json).
 Whole-project acceptance is tracked in the [validation index](../README.md).
 
 The `BurnOneZone` implementation remains in `simulation/BurnOneZone/`; the
@@ -86,7 +93,7 @@ Network data and implementation tests are described in the
 
 The four built-in networks also have immutable endpoints from independent
 DOP853 time integration, cross-checked by Radau and a refined time-step ceiling.
-The [current-candidate reference review](results/independent-time-final-20260907/release-888/evidence.json) checks all
+The [independent reference review](results/independent-time-final-20260907/release-888/evidence.json) checks all
 four networks and independently evaluates endpoint energy with the existing
 high-precision Helmholtz monomial-fit model. Reaction rates still come from the
 shared ARCH RHS; this is independent **time integration**, not independent
@@ -98,7 +105,7 @@ difference is \(1.666\times10^{-16}\), relative temperature difference
 The [complete Release regression](../backend/results/final-first-law-20260907/release-regression-895/evidence.json)
 includes all twelve Host network/ODE controls, their negative controls and the
 separate CUDA policy checks. [Built-in NSE application results](results/nse-application-native-20260907/release-890/evidence.json)
-cover sixteen cases and thirty-two physical endpoints on the same candidate.
+cover sixteen cases and thirty-two physical endpoints on the same tested build.
 
 Build `arch_burn_mainline_reference` with testing enabled. Its ordinary invocation
 checks all twelve network/ODE routes against these endpoints, with species Linf
@@ -113,9 +120,9 @@ with `--binary <build>/arch_burn_mainline_reference --build-dir <build>` using
 NumPy/SciPy/mpmath. It queries only the shared RHS/EOS, not ARCH's ODE algorithm
 or Jacobian, and never refreshes fixtures. Use the common memory guard for runs.
 
-The old main's method-dependent numerical snapshots remain unchanged as
-historical data with their original checker/negative controls. They are no
-longer treated as exact solutions after independently demonstrated Jacobian and
-time-controller corrections. The short-step CUDA policy tests separately retain
+Method-dependent numerical snapshots are retained as historical records with
+their original checkers and negative controls. Accuracy is assessed with
+independent references rather than treating these approximate endpoints as exact
+solutions. The short-step CUDA policy tests separately retain
 their strict backend-parity budgets, complementing the reference and application
 checks above.

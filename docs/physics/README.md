@@ -17,9 +17,7 @@ numerical changes.
 
 ## Historical numerical investigations
 
-The following notes retain dated diagnostics and intermediate tasks. Read their
-open/pending statements in that historical context; the linked module summaries
-record the later acceptance results.
+The following notes preserve dated diagnostics and intermediate tasks. Please interpret any open or pending statements within their proper historical context; for the final acceptance results, refer to the linked module summaries.
 
 - [Curvilinear metric review](CurvilinearMetricReview.md): derivation and repair
   history for finite-volume measures, geometry sources and diffusion. Later

@@ -3,9 +3,14 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+These tests apply a prescribed gravitational acceleration; they do not solve
+for the gravity produced by the fluid itself. The force should change momentum
+and energy by the expected amounts without changing total mass. Coupled cases
+check that this balance survives mesh refinement and species diffusion.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
 CPU and CUDA use the same external-gravity stage operator. Verification starts
@@ -54,7 +59,7 @@ unchanged by that normalization; the absolute budget applies to the recorded
 sums. Species accuracy and diffusion convergence have separate
 [diffusion records](../diffusion/README.md).
 
-The same candidate also passes the uniform-grid source tests below. Overall
+The same tested build also passes the uniform-grid source tests below. Overall
 acceptance is tracked in the [validation index](../README.md).
 
 ## Reproduce the coupled checks
@@ -85,7 +90,7 @@ report and input identities. Keep the same build and data for both commands.
 
 The `ExternalGravity` problem in `simulation/ExternalGravity/` and the
 immutable parameters in [`inputs/`](inputs/) isolate the gravity source on a
-uniform mesh. The [current-candidate application record](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+uniform mesh. The [application record](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 reproduces the values below and in [metrics.csv](metrics.csv), with both backends
 reaching the prescribed physical endpoint.
 

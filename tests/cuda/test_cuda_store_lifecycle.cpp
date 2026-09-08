@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_store_lifecycle.cpp
+ * @brief Check actual CUDA allocation, transfer and retirement behavior.
+ *
+ * The test selects a device through the backend interface and verifies
+ * complete state upload, storage reuse and resource-lifetime constraints.
+ */
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
 #include "cuda/runtime/CudaBackend.h"

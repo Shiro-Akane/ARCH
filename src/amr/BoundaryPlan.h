@@ -1,3 +1,11 @@
+/**
+ * @file BoundaryPlan.h
+ * @brief Backend-independent logical operations for physical ghost boundaries.
+ *
+ * Plans describe cell references, field classes, transfer weights, and axis
+ * phases without embedding storage pointers. Host construction and validation
+ * establish this contract before an executor binds the operations to memory.
+ */
 #pragma once
 
 #include <array>

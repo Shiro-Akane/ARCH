@@ -1,6 +1,10 @@
 /**
  * @file TopologyIdentityRegistry.h
- * @brief Host-only reconciliation of stable logical blocks to BlockHandle.
+ * @brief Reconcile stable logical block identities with topology handles.
+ *
+ * Host-side transactions assign generations to surviving and replacement
+ * blocks before publication. Tree decisions and conservative field migration
+ * remain with the AMR authorities and their backend consumers.
  */
 
 #pragma once

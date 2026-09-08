@@ -2,10 +2,14 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+流体力学描述流动如何输运质量、动量和能量。光滑波测试衡量一个剖面传播得是否准确，
+Sod 和 Sedov 则检查陡峭的波及激波位置。阅读时先看相对各自参考解的误差，再用
+CPU/CUDA 对照判断后端一致性。
 
-当前候选版本已在 CPU 和 CUDA 上通过光滑波空间与时间精度、Sod、持续周期平流以及平面 Sedov 检验。整体验收状态统一见[验证索引](../README.zh-CN.md)。
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+
+CPU 和 CUDA 已通过光滑波空间与时间精度、Sod、持续周期平流以及平面 Sedov 检验。整体验收状态统一见[验证索引](../README.zh-CN.md)。
 
 ## 光滑波空间精度
 
@@ -13,7 +17,7 @@
 
 ### 复现
 
-[当前候选版本的主程序验证记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)保存了实际受测源码、程序、依赖和构建设置。在相同物理终止时刻，两侧分别与解析解比较，再进行 CPU/CUDA 对照。使用启用了测试目标的 CUDA 构建，从仓库根目录运行：
+[主程序验证记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)保存了实际受测源码、程序、依赖和构建设置。在相同物理终止时刻，两侧分别与解析解比较，再进行 CPU/CUDA 对照。使用启用了测试目标的 CUDA 构建，从仓库根目录运行：
 
 ```bash
 export OMP_NUM_THREADS=4
@@ -39,7 +43,7 @@ PPM 在通过所选 EOS 重构压力并保留光滑极值后超过 2.7 验收阶
 
 ## Sod 激波管
 
-[同一份当前候选版本记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)中，两个后端均在 \(t=0.2\) 通过 Sod 检验。测试采用 64、128 和 256 单元的均匀笛卡尔网格，以及 HLLC、PPM 和 SSPRK3。理想气体的 \(\gamma=1.4\)，初始左右状态分别为 \((\rho,u,p)=(1,0,1)\) 和 \((0.125,0,0.1)\)，间断面位于单位区间的 \(x=0.5\)，两端使用流出边界。
+[同一份主程序记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)中，两个后端均在 \(t=0.2\) 通过 Sod 检验。测试采用 64、128 和 256 单元的均匀笛卡尔网格，以及 HLLC、PPM 和 SSPRK3。理想气体的 \(\gamma=1.4\)，初始左右状态分别为 \((\rho,u,p)=(1,0,1)\) 和 \((0.125,0,0.1)\)，间断面位于单位区间的 \(x=0.5\)，两端使用流出边界。
 
 参考值来自独立的精确 Euler Riemann 解。积分在各个波的边界处分段，计算解析密度、速度、压力和总能量密度的单元平均值。下表中的验收范数针对密度，报告同时保留另外三个物理量的剖面误差。
 
@@ -59,7 +63,7 @@ CPU 与 CUDA 在所示精度内一致。两对相邻分辨率的密度 L1 阶数
 
 [time_reference.py](time_reference.py) 使用 PCM 推进同一周期接触波，将实际 ARCH 输出与半离散迎风算子的精确傅里叶指数解比较。固定网格使时间误差与空间误差分离，参考值不调用生产代码中的时间积分器。
 
-[当前候选版本的 18 次运行记录](results/time-native-20260907/release-879/evidence.json)在 CFL 为 0.4、0.2、0.1 时全部通过，物理终止时刻均为 \(t=0.1\)。CPU 与 CUDA 得到相同的时间误差和收敛阶：
+[18 次时间精度运行记录](results/time-native-20260907/release-879/evidence.json)在 CFL 为 0.4、0.2、0.1 时全部通过，物理终止时刻均为 \(t=0.1\)。CPU 与 CUDA 得到相同的时间误差和收敛阶：
 
 | 积分器 | 观测 L1 阶数 | 最低要求 | 结果 |
 | --- | --- | ---: | --- |
@@ -76,7 +80,7 @@ python3 validation/hydro/time_reference.py --build-dir build-cuda \
 
 ## 平面 Sedov 爆炸波
 
-[当前候选版本的记录](results/sedov-first-law-20260907/release-889/evidence.json)显示，两个后端均通过了同一套独立强激波检验。测试采用 128、256 和 512 单元的一维均匀笛卡尔网格，模拟向两侧传播的爆炸波；数值方法为 HLLC、PPM 和 SSPRK3，状态方程为 \(\gamma=1.4\) 的理想气体。在测试所用单位下，环境密度为 1、环境压力为 \(10^{-5}\)、沉积能量为 1，比较时刻为 0.1。每档分辨率的初始能量都沉积在两个单元内，因此随网格细化逐步趋近点爆炸极限。
+[验收记录](results/sedov-first-law-20260907/release-889/evidence.json)显示，两个后端均通过了同一套独立强激波检验。测试采用 128、256 和 512 单元的一维均匀笛卡尔网格，模拟向两侧传播的爆炸波；数值方法为 HLLC、PPM 和 SSPRK3，状态方程为 \(\gamma=1.4\) 的理想气体。在测试所用单位下，环境密度为 1、环境压力为 \(10^{-5}\)、沉积能量为 1，比较时刻为 0.1。每档分辨率的初始能量都沉积在两个单元内，因此随网格细化逐步趋近点爆炸极限。
 
 [sedov_reference.py](sedov_reference.py) 独立计算 Sedov 自相似解，不调用 ARCH 的流体、EOS 或时间积分实现。参考解本身通过已发表的剖面数值、强激波跃迁条件、扫掠质量以及独立积分得到的能量归一化检验。比较采用守恒量的有限体积单元平均值，再由这些平均值计算速度和压力。检验覆盖密度、速度、压力和总能量密度剖面，同时检查激波位置、镜像对称性、质量与能量守恒，以及初始沉积能量。
 

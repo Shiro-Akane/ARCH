@@ -1,5 +1,8 @@
 # Task guides
 
+[Build.md](Build.md) ([Chinese](Build.zh-CN.md)) explains configuration versus
+compilation, dependencies, CUDA targets, and memory-aware build parallelism.
+
 [SimulationCase.md](SimulationCase.md) ([Chinese](SimulationCase.zh-CN.md)) walks
 through building, running and extending a small Sod problem. Start there for a
 first calculation, then use the [simulation catalogue](../../simulation/README.md)

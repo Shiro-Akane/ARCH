@@ -1,3 +1,11 @@
+/**
+ * @file CudaBackendBurnIdeal.cu
+ * @brief Select the registered compact burn delegate for IdealGas.
+ *
+ * Network selection forwards borrowed launch arguments and the caller's stream.
+ * The per-network binding instantiates the common ODE and burn policies.
+ */
+
 #include "physics/eos/IdealGas.h"
 #include "cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h"
 

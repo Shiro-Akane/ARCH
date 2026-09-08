@@ -1,3 +1,13 @@
+/**
+ * @file RegridMigration.cu
+ * @brief Device execution of conservative parent/child regrid transfers.
+ *
+ * Each thread gathers one geometric family and calls amr::regrid_math from
+ * RegridTransferMath.h. Only staged interiors are written; active source blocks
+ * remain unchanged. The caller owns scratch/status storage and must check a
+ * completion fence and the transaction status before publishing destinations.
+ */
+
 #include "RegridMigration.h"
 
 #include <cmath>

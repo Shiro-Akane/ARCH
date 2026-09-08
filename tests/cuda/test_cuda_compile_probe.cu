@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_compile_probe.cu
+ * @brief Check portable annotations and lightweight CUDA interfaces.
+ *
+ * Compile shared constants and declaration-only backend headers without
+ * completing every EOS type. This is a compile/link probe, not a GPU run.
+ */
 #include "core/ArchPortability.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "cuda/runtime/burn/CudaBackendBurnSparse.h"

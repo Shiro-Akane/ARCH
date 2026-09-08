@@ -1,9 +1,13 @@
 /**
  * @file Species.h
- * @brief Manages the thermodynamic properties of chemical species.
- * Defines a central registry to handle multi-species mixtures.
- * Assumes a "Calorically Perfect Gas" model where properties like Gamma
- * are constant constants for each species.
+ * @brief Ordered species registry and shared composition averages.
+ *
+ * Registration order defines mass-fraction array indices for EOS, networks,
+ * and output. A and Z describe isotope composition; gamma_ref and Cv_ref are
+ * the per-species constant parameters used by the calorically perfect ideal
+ * gas model, not a restriction on the other EOS policies.
+ * For mass fractions X_i, Ye = sum_i X_i*Z_i/A_i,
+ * Abar = 1/sum_i X_i/A_i, and Zbar = Abar*Ye.
  */
 
 #pragma once

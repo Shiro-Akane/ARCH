@@ -1,4 +1,5 @@
 /**
+ * @file CuDssSparseSolver.h
  * @brief Host-invoked CUDA sparse execution policy; no ODE or network physics.
  */
 #pragma once
@@ -29,8 +30,8 @@ struct CuDssResult
  *
  * Calls check both host cuDSS status and stream-completed CUDSS_DATA_INFO. They
  * therefore provide completed responses for a shared ODE continuation, not an
- * optimistic "submitted" success. Future batched scheduling can reduce fences
- * without changing either the ODE or this factor-lifetime contract.
+ * optimistic "submitted" success. Factor reuse is governed by matrix tokens,
+ * independently of the ODE method that requested the linear operation.
  */
 class CuDssSparseSolver
 {

@@ -31,7 +31,7 @@ CheckpointProvenance inspect_checkpoint_provenance(
 /**
  * Validate a saved identity against the running executable/configuration.
  *
- * @return false only for a legacy v1/v2 checkpoint without identity metadata.
+ * @return false only for a v1/v2 checkpoint without identity metadata.
  * @throws std::runtime_error for a present but incompatible identity.
  */
 bool require_checkpoint_provenance_compatible(

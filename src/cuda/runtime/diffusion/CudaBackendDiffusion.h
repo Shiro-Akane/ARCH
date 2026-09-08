@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendDiffusion.h
- * @brief Narrow runtime ABI for CUDA diffusion/RKL instantiations.
+ * @brief Narrow runtime interface to CUDA diffusion and RKL instantiations.
+ *
+ * Launches borrow stage slots, metric views and scratch storage. The shared
+ * scheduler supplies stage descriptors; runtime control orders ghost exchange,
+ * checks completed status and publishes output-slot validity.
  */
 
 #pragma once

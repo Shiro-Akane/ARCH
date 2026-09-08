@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendHydroInstantiation.cuh
- * @brief Shared CUDA Hydro implementation instantiated by one EOS owner TU.
+ * @brief Instantiate common CUDA hydro launch routes for one EOS type.
+ *
+ * Registered reconstruction and flux visitors bind the shared numerical
+ * policies to device kernels. Views, workspaces and stream are borrowed from
+ * the runtime, which checks completion and publishes slot/ghost validity.
  */
 
 #pragma once
@@ -43,8 +47,8 @@ struct HydroStageLaunchVisitor {
     CudaBackendLaunchResult& result;
     Physical::Gravity::ExternalGravityView gravity;
 
-    // Keep this callback named as well: it is instantiated inside the three
-    // registry visitors. There remains just one checked-EOS production route.
+    // Registry visitors instantiate this named callback; every selected
+    // reconstruction/flux combination uses the same checked-EOS route.
     template <class Reconstruction, class Flux>
     void operator()()
     {

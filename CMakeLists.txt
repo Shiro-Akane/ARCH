@@ -279,9 +279,9 @@ foreach(custom_config IN LISTS ARCH_CUSTOM_NETWORK_CONFIGS)
         "M(${custom_token}, ${custom_numeric_id}, \"custom:${ARCH_CUSTOM_NETWORK_ID}\", ${ARCH_CUSTOM_NETWORK_TYPE})")
     string(APPEND ARCH_CUSTOM_ALL " \\")
     string(APPEND ARCH_CUSTOM_ALL "\n    ${custom_entry}")
-    # v4 emits a single host/device mathematical body only for packages whose
-    # immutable tables and Jacobian structure were successfully lowered. Older
-    # adapters and runtime-loaded weak-rate tables retain their CPU-only route.
+    # Device registration requires a generated host/device mathematical body,
+    # immutable device-accessible tables and a lowered Jacobian structure.
+    # Packages without this contract retain a CPU-only execution route.
     string(JSON custom_device_math ERROR_VARIABLE custom_device_error
         GET "${custom_manifest_json}" device_callable_math)
     string(JSON custom_device_type ERROR_VARIABLE custom_device_type_error
@@ -428,51 +428,51 @@ if(BUILD_TESTING)
     find_package(Python3 COMPONENTS Interpreter REQUIRED)
     add_test(NAME portable_network_generator
         COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_portable_network_generator.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_portable_network_generator.py)
     set_tests_properties(portable_network_generator PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME cuda_amr_smoke_runner_contract
         COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_smoke_cuda_amr_runtime.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_smoke_cuda_amr_runtime.py)
     add_test(NAME curvilinear_manifest_contract
         COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_curvilinear_manifest.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_curvilinear_manifest.py)
     if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         add_test(NAME memory_guard_contract
             COMMAND ${Python3_EXECUTABLE} -B
-                ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_run_memory_guarded.py)
+                ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_run_memory_guarded.py)
     endif()
     add_test(NAME backend_validation_contract
         COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validate_backend_results.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_validate_backend_results.py)
     set_tests_properties(backend_validation_contract PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME validation_provenance_contract
         COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_validation_provenance.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_validation_provenance.py)
     set_tests_properties(validation_provenance_contract PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_test(NAME runtime_validation_inputs_contract
         COMMAND ${Python3_EXECUTABLE} -B
-            ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_validation_inputs.py)
+            ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_runtime_validation_inputs.py)
     set_tests_properties(runtime_validation_inputs_contract PROPERTIES
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     foreach(contract IN ITEMS physical_constants refinement_indicator_math curvilinear_metrics)
-        add_executable(arch_${contract} tests/test_${contract}.cpp)
+        add_executable(arch_${contract} tests/host/test_${contract}.cpp)
         target_link_libraries(arch_${contract} PRIVATE arch_build_contract)
         add_test(NAME ${contract} COMMAND arch_${contract})
     endforeach()
-    add_executable(arch_compensated_sum tests/test_compensated_sum.cpp)
+    add_executable(arch_compensated_sum tests/host/test_compensated_sum.cpp)
     target_compile_features(arch_compensated_sum PRIVATE cxx_std_20)
     add_test(NAME compensated_sum COMMAND arch_compensated_sum)
-    add_executable(arch_sparse_ode_continuation tests/test_sparse_ode_continuation.cpp)
+    add_executable(arch_sparse_ode_continuation tests/host/test_sparse_ode_continuation.cpp)
     target_link_libraries(arch_sparse_ode_continuation PRIVATE arch_build_contract)
     add_test(NAME sparse_ode_continuation COMMAND arch_sparse_ode_continuation)
-    add_executable(arch_checkpoint_conservation_metrics tests/test_checkpoint_conservation_metrics.cpp)
+    add_executable(arch_checkpoint_conservation_metrics tests/host/test_checkpoint_conservation_metrics.cpp)
     target_link_libraries(arch_checkpoint_conservation_metrics PRIVATE arch_build_contract)
     add_test(NAME checkpoint_conservation_metrics COMMAND arch_checkpoint_conservation_metrics)
     add_executable(arch_burn_mainline_reference
-        tests/test_burn_mainline_reference.cpp src/core/FileFingerprint.cpp)
+        tests/host/test_burn_mainline_reference.cpp src/core/FileFingerprint.cpp)
     target_compile_features(arch_burn_mainline_reference PRIVATE cxx_std_20)
     target_compile_definitions(arch_burn_mainline_reference PRIVATE
         ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
@@ -486,20 +486,20 @@ if(BUILD_TESTING)
     target_link_libraries(arch_mainline_authority PRIVATE Threads::Threads)
     add_test(NAME mainline_authority COMMAND arch_mainline_authority)
 
-    add_executable(arch_block_handle tests/test_block_handle.cpp)
+    add_executable(arch_block_handle tests/host/test_block_handle.cpp)
     target_compile_features(arch_block_handle PRIVATE cxx_std_20)
     target_include_directories(arch_block_handle PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME block_handle COMMAND arch_block_handle)
 
-    add_executable(arch_state_residency tests/test_state_residency.cpp)
+    add_executable(arch_state_residency tests/host/test_state_residency.cpp)
     target_compile_features(arch_state_residency PRIVATE cxx_std_20)
     target_include_directories(arch_state_residency PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME state_residency COMMAND arch_state_residency)
 
     add_executable(arch_shared_stage_scheduler
-        tests/test_shared_stage_scheduler.cpp)
+        tests/host/test_shared_stage_scheduler.cpp)
     target_compile_features(arch_shared_stage_scheduler PRIVATE cxx_std_20)
     target_include_directories(arch_shared_stage_scheduler PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -507,14 +507,14 @@ if(BUILD_TESTING)
         ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
     add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 
-    add_executable(arch_boundary_plan tests/test_boundary_plan.cpp)
+    add_executable(arch_boundary_plan tests/host/test_boundary_plan.cpp)
     target_compile_features(arch_boundary_plan PRIVATE cxx_std_20)
     target_include_directories(arch_boundary_plan PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME boundary_plan COMMAND arch_boundary_plan)
 
     add_executable(arch_same_level_exchange_plan
-        tests/test_same_level_exchange_plan.cpp)
+        tests/host/test_same_level_exchange_plan.cpp)
     target_compile_features(arch_same_level_exchange_plan PRIVATE cxx_std_20)
     target_include_directories(arch_same_level_exchange_plan PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -522,28 +522,28 @@ if(BUILD_TESTING)
         COMMAND arch_same_level_exchange_plan)
 
     add_executable(arch_amr_operation_plans
-        tests/test_amr_operation_plans.cpp)
+        tests/host/test_amr_operation_plans.cpp)
     target_compile_features(arch_amr_operation_plans PRIVATE cxx_std_20)
     target_include_directories(arch_amr_operation_plans PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME amr_operation_plans COMMAND arch_amr_operation_plans)
 
     add_executable(arch_amr_flux_surface_plan
-        tests/test_amr_flux_surface_plan.cpp)
+        tests/host/test_amr_flux_surface_plan.cpp)
     target_compile_features(arch_amr_flux_surface_plan PRIVATE cxx_std_20)
     target_include_directories(arch_amr_flux_surface_plan PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME amr_flux_surface_plan COMMAND arch_amr_flux_surface_plan)
 
     add_executable(arch_topology_transaction
-        tests/test_topology_transaction.cpp)
+        tests/host/test_topology_transaction.cpp)
     target_compile_features(arch_topology_transaction PRIVATE cxx_std_20)
     target_include_directories(arch_topology_transaction PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME topology_transaction COMMAND arch_topology_transaction)
 
     add_executable(arch_resolved_execution_plan
-        tests/test_resolved_execution_plan.cpp)
+        tests/host/test_resolved_execution_plan.cpp)
     target_compile_features(arch_resolved_execution_plan PRIVATE cxx_std_20)
     target_include_directories(arch_resolved_execution_plan PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -553,7 +553,7 @@ if(BUILD_TESTING)
     add_test(NAME resolved_execution_plan COMMAND arch_resolved_execution_plan)
 
     add_executable(arch_runtime_probe_capabilities
-        tests/test_runtime_probe_and_capabilities.cpp)
+        tests/host/test_runtime_probe_and_capabilities.cpp)
     target_compile_features(arch_runtime_probe_capabilities PRIVATE cxx_std_20)
     target_include_directories(arch_runtime_probe_capabilities PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -567,7 +567,7 @@ if(BUILD_TESTING)
     add_test(NAME runtime_probe_and_capabilities
         COMMAND arch_runtime_probe_capabilities)
 
-    add_executable(arch_reduction_contract tests/test_reduction_contract.cpp)
+    add_executable(arch_reduction_contract tests/host/test_reduction_contract.cpp)
     target_compile_features(arch_reduction_contract PRIVATE cxx_std_20)
     target_include_directories(arch_reduction_contract PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
@@ -576,14 +576,14 @@ if(BUILD_TESTING)
         arch_build_contract)
     add_test(NAME reduction_contract COMMAND arch_reduction_contract)
 
-    add_executable(arch_compute_backend tests/test_compute_backend.cpp)
+    add_executable(arch_compute_backend tests/host/test_compute_backend.cpp)
     target_compile_features(arch_compute_backend PRIVATE cxx_std_20)
     target_include_directories(arch_compute_backend PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
     add_test(NAME compute_backend COMMAND arch_compute_backend)
 
     add_executable(arch_device_block_store_lifecycle
-        tests/test_device_block_store_lifecycle.cpp)
+        tests/host/test_device_block_store_lifecycle.cpp)
     target_compile_features(arch_device_block_store_lifecycle PRIVATE cxx_std_20)
     target_include_directories(arch_device_block_store_lifecycle PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -1655,9 +1655,10 @@ endif()
 include(CTest)
 if(BUILD_TESTING)
     add_executable(arch_checkpoint_compatibility
-        tests/test_checkpoint_compatibility.cpp
+        tests/host/test_checkpoint_compatibility.cpp
         src/core/FileFingerprint.cpp
         src/io/chk/CheckpointCompatibility.cpp
+        src/io/chk/ChkIO.cpp
         src/io/hdf5/HDF5Writer.cpp)
     target_compile_features(arch_checkpoint_compatibility PRIVATE cxx_std_20)
     target_include_directories(arch_checkpoint_compatibility PRIVATE
@@ -1671,7 +1672,7 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_BINARY_DIR}/checkpoint-compatibility-data")
 
     add_executable(tabular_eos_regression
-        tests/TabularEOSRegression.cpp
+        tests/host/TabularEOSRegression.cpp
         src/core/FileFingerprint.cpp
         src/physics/eos/Tabular3DEOS.cpp
         src/physics/eos/Tabular4DEOS.cpp
@@ -1688,7 +1689,7 @@ if(BUILD_TESTING)
                 "${CMAKE_CURRENT_BINARY_DIR}/tabular-eos-test-data")
 
     if(ARCH_KLU_TARGET)
-        add_executable(sparse_klu_regression tests/SparseKLURegression.cpp)
+        add_executable(sparse_klu_regression tests/host/SparseKLURegression.cpp)
         target_compile_features(sparse_klu_regression PRIVATE cxx_std_20)
         target_include_directories(sparse_klu_regression PRIVATE
             "${CMAKE_CURRENT_SOURCE_DIR}/src")

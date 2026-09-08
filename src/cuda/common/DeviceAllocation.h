@@ -1,7 +1,10 @@
-/** Stream-owner-managed CUDA allocation and the backend error boundary.
- * This is the existing runtime allocation owner, shared with typed sparse
+/**
+ * @file DeviceAllocation.h
+ * @brief Stream-owner-managed CUDA allocation and backend error transport.
+ *
+ * The runtime allocation owner is shared with typed sparse
  * pools. It must not import a block store, EOS catalogue or kernel templates.
- * The enclosing owner still establishes the device and completion witness
+ * The enclosing owner establishes the device and completion witness
  * before destruction; this class does not introduce an implicit stream fence.
  */
 #pragma once

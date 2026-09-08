@@ -1,4 +1,12 @@
-/** Host-only lowering of logical all-field migration plans into block groups. */
+/**
+ * @file RegridExecutionPlan.h
+ * @brief Host-only lowering of all-field migration plans into block groups.
+ *
+ * Validate matching dimensions, complete field coverage, and parent/child
+ * relations before grouping transfers. Child slots are ordered by the parity
+ * bits of their logical coordinates. Backends consume these groups to move
+ * complete cell states; they do not independently infer topology or field sets.
+ */
 #pragma once
 
 #include "AmrTransferPlans.h"

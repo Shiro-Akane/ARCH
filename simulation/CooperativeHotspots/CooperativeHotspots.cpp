@@ -1,6 +1,11 @@
 /**
  * @file CooperativeHotspots.cpp
- * @brief Controlled 2D helium-hotspot initiation experiment.
+ * @brief Initialize a controlled two-dimensional isobaric hotspot experiment.
+ *
+ * Setup brackets hotspot density against the ambient pressure using the
+ * selected common EOS and network composition. Init chooses the configured
+ * hotspot footprint and supplies stationary primitive states; the production
+ * driver owns subsequent hydro and burn evolution.
  */
 
 #include <algorithm>

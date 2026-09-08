@@ -1,13 +1,11 @@
 /**
  * @file TimeIntegratorRK2.h
  * @brief 2nd Order Strong Stability Preserving Runge-Kutta (SSPRK2) Time Integrator.
- */
-
-/**
- * Workflow:
- * 1. Evaluate block-local flux divergence and physical source terms.
- * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
- * 3. Leave AMR communication and reflux ownership with the common driver services.
+ *
+ * Host block execution binds the shared driver/StageScheduler.h descriptors
+ * to concrete state slots. The scheduler owns stage order and weights; the
+ * hydro interface performs patch updates, and callbacks synchronize halos,
+ * rotate storage, and apply reflux at the prescribed completion boundary.
  */
 #pragma once
 

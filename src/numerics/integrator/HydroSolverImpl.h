@@ -2,10 +2,9 @@
  * @file HydroSolverImpl.h
  * @brief Bridges concrete EOS/flux templates to the block-level hydro interface.
  *
- * Workflow:
- * 1. Evaluate block-local flux divergence and physical source terms.
- * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
- * 3. Leave AMR communication and reflux ownership with the common driver services.
+ * This Host adapter allocates patch flux buffers and forwards the configured
+ * EOS/flux combination to TimeIntegratorHelper.h. The helper owns divergence
+ * and stage-update mathematics; this binding does not define another scheme.
  */
 
 #pragma once

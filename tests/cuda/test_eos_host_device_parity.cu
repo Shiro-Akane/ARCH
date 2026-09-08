@@ -1,3 +1,10 @@
+/**
+ * @file test_eos_host_device_parity.cu
+ * @brief Check EOS values and device-owner lifetime on both backends.
+ *
+ * Ideal, tabular and Helmholtz cases cover thermodynamics, composition,
+ * upload descriptors, pointer ownership and delayed resource destruction.
+ */
 #include "physics/eos/IdealGas.h"
 
 #include "cuda/microphysics/helm_eos_loader.h"
@@ -1377,9 +1384,9 @@ void test_helm(cudaStream_t stream)
     eos_state_t frozen{};
     frozen.rho = 1.0e6; frozen.T = 1.0e8; frozen.Xi = Xi.data();
     host.evaluate_state(frozen);
-    // Only constant-sensitive snapshots are superseded. The independent
-    // endpoint-fit reference retains the previous nonzero field budgets;
-    // cv/xne use rounding windows where a same-implementation bit oracle stood.
+    // The independent endpoint-fit reference uses per-field accuracy budgets;
+    // cv/xne use explicit rounding windows instead of same-implementation
+    // bit comparisons.
     const double state_values[]{frozen.P, frozen.E, frozen.cv, frozen.sound_speed,
         frozen.dp_drho, frozen.dp_dT, frozen.pele, frozen.xne, frozen.eta};
     const double state_budgets[]{8.0e-14, 1.5e-15,
@@ -1417,8 +1424,8 @@ void test_helm(cudaStream_t stream)
           "helm.independent_isentrope.temperature");
     close(isentrope.pressure, HelmReference::isentrope[2], 8.0e-14,
           "helm.independent_isentrope.pressure");
-    // Exact derivatives now replace the old finite-pressure stencil. Retain
-    // the independent state budget and original Host/Device budgets.
+    // Analytic derivatives determine the isentropic sound speed; apply the
+    // independent state budget alongside the separate Host/Device budgets.
     close(isentrope.sound_speed, HelmReference::isentrope[3], state_budgets[3],
           "helm.independent_isentrope.sound_speed");
     require(Xi == std::vector<double>({0.25, 0.75}),
@@ -1479,8 +1486,8 @@ void test_helm(cudaStream_t stream)
         cuda_check(cudaStreamSynchronize(stream), "Helm grid completion");
         require(std::equal(copy.begin(), copy.end(), cpu_nodes), "Helm grid values changed on upload");
     }
-    // Independent coverage includes strong Coulomb and radiation-dominated
-    // regimes, not merely backend agreement at the original single state.
+    // Independent references cover strong-Coulomb and radiation-dominated
+    // regimes in addition to the single-state backend comparison above.
     for (const auto& point : HelmReference::points) {
         eos_state_t cpu{};
         cpu.rho = point.rho; cpu.T = point.temperature; cpu.Xi = Xi.data();

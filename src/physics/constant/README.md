@@ -5,12 +5,11 @@ and named mathematical constants. It contains scalar compile-time values, not
 backend storage or runtime selection. Formula-local aliases may refer to this
 authority; they must not supply another numerical value.
 
-The 2026-09-06 owner-approved unification replaces the earlier relocation-only
-profiles. There is one current set, not a set per EOS or a historical-version
-maintenance layer. Use SI defining constants and the measured central values
-from [CODATA 2022 / NIST](https://physics.nist.gov/cuu/Constants/Table/allascii.txt),
-the latest published adjustment checked on 2026-09-06. More printed digits in an
-old measurement do not make it more accurate. Pi comes from C++20 `<numbers>`.
+All models use the same definitions, grouped by physical discipline rather than
+by caller. The values come from SI defining constants and the measured central
+values in [CODATA 2022 / NIST](https://physics.nist.gov/cuu/Constants/Table/allascii.txt),
+checked on 2026-09-06. Measured constants retain the precision supported by that
+reference. Pi comes from C++20 `<numbers>`.
 
 | Namespace | Quantities and units |
 |---|---|
@@ -50,24 +49,19 @@ particular, the air-like 718 J/(kg K) fallback is a model default owned by
 geometrized-unit calculations must explicitly convert to G=c=1, not overwrite
 the dimensional constants above.
 
-Deferred by the project owner: `physics/network/**`, generated pynucastro math,
-Timmes reaction constants, nuclear masses and reaction/screening fit data. These
-are data/model contracts, not a second backend implementation. Their constants
-must be changed together with their generated energy metadata and reference
-data, not by search-and-replace. External EOS tables also keep their original
-contents; adopting new analytic constants does not regenerate an electron table.
-No claim is made that external tables or deferred networks were restandardized.
+`physics/network/**`, generated pynucastro math, Timmes reaction constants,
+nuclear masses and reaction/screening fit data retain their model-specific
+definitions. These constitute strict data/model contracts, not secondary backend implementations. Any changes to their constants must be made in tandem with updates to their generated energy metadata and reference data; they must not be updated via simple search-and-replace. Likewise, external EOS tables retain their original contents and conventions. Note that updating the analytic constants here will not regenerate an electron table or alter any pre-existing reaction data.
 
 ## Validation impact
 
-Helm analytic terms, tabular ideal fallbacks, NSE and conductivity now consume
-the shared current values. This is an authorized numerical update, not just a
-prefix change. Old raw-bit snapshots using different values are historical
-evidence, not current acceptance oracles. Requalification must use independently
-derived expectations and unchanged physical acceptance budgets; do not refresh
-snapshots from the implementation merely to obtain a pass.
+Helm analytic terms, tabular ideal fallbacks, NSE and conductivity consume these
+shared values. Archived raw-bit snapshots retain the constants and source
+identities under which they were recorded. Acceptance checks use independently
+derived expectations and the stated physical budgets; changing a constant
+requires a numerical review, not snapshots copied from the changed implementation.
 
-Keep this small: the existing constants test checks definitions/conversions and
+The constants test checks definitions/conversions and
 independent high-precision derived values; the existing CUDA compile probe checks
 device constexpr consumption. Affected EOS/NSE/burn checks and their tested
 source identities are recorded in the shared [Validation](../../../validation/README.md).

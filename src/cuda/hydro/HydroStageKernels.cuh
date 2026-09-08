@@ -1,3 +1,12 @@
+/**
+ * @file HydroStageKernels.cuh
+ * @brief Apply one shared hydro stage update to device interiors.
+ *
+ * The scheduler supplies old/current states and stage weights. The kernel calls
+ * TimeIntegration::update_stage_cell for fluid and species values; it does not
+ * rotate logical slots or publish ghosts. Runtime control owns those transitions.
+ */
+
 #pragma once
 
 #include "HydroFaceKernel.cuh"

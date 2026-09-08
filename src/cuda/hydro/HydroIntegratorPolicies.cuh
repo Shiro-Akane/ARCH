@@ -1,6 +1,10 @@
 /**
  * @file HydroIntegratorPolicies.cuh
- * @brief Bounded CUDA execution of one E1 Hydro stage descriptor.
+ * @brief Registered CUDA execution of a shared hydro stage descriptor.
+ *
+ * Registry visitors select shared reconstruction, limiter and flux policies.
+ * Launches accumulate directional fluxes and sources into borrowed stage
+ * buffers; runtime control owns ghost readiness, completion and slot rotation.
  */
 
 #pragma once

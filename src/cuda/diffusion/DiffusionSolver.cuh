@@ -1,6 +1,9 @@
 /**
  * @file DiffusionSolver.cuh
- * @brief Bounded physical operations for one E1 RKL callback.
+ * @brief Device buffer copies and launch forwarding for RKL callbacks.
+ *
+ * DiffusionKernels applies the shared diffusion/stage mathematics. These helpers
+ * borrow state and the runtime stream; they do not rotate slots or fence work.
  */
 
 #pragma once

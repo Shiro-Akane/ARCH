@@ -1,6 +1,10 @@
 /**
  * @file Sod.cpp
- * @brief Standard one-dimensional Sod shock-tube benchmark.
+ * @brief Initialize the one-dimensional Cartesian Sod shock tube.
+ *
+ * Setup validates left/right primitive states and an interior discontinuity.
+ * Init chooses the state at each cell location; the common problem adapter
+ * performs EOS conversion and the selected hydro driver evolves the Riemann data.
  */
 
 #include <iostream>

@@ -3,9 +3,14 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+Diffusion smooths differences in composition between neighboring cells. Here a
+cosine-shaped concentration profile has a known decay rate, so its amplitude
+tests diffusion accuracy while total species mass tests conservation. Comparing
+resolutions shows how the spatial error decreases.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
 CPU and CUDA pass the same analytic-error, boundedness and conservation checks.
@@ -25,10 +30,10 @@ and RKL2 inputs use 64, 128, and 256 cells and end at \(t=0.1\).
 
 ## Reproduce
 
-The [final-candidate application evidence](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The [application evidence](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 records both backends at the prescribed physical end time. Source, artifact and
 build identities are recorded with the actual inputs. All six diffusion cases
-pass on the current candidate. Curved, dynamically refined diffusion and
+pass on the tested build. Curved, dynamically refined diffusion and
 hydrodynamic coupling are covered separately by the [AMR suite](../amr/README.md).
 
 ```bash
@@ -48,7 +53,7 @@ measured from the final HDF5 cell averages.
 
 The values below represent both backends at the displayed precision;
 [metrics.csv](metrics.csv) retains their separate full-precision observations.
-The final-candidate run reproduces these values. At the physical endpoint,
+The acceptance run reproduces these values. At the physical endpoint,
 the largest CPU/CUDA field difference is \(9.992\times10^{-16}\), within the
 unchanged relative/absolute comparison budget of \(5\times10^{-10}\) and
 \(2\times10^{-12}\).

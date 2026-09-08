@@ -3,13 +3,18 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+Hydrodynamics describes how fluid motion transports mass, momentum and energy.
+The smooth-wave tests measure how accurately a profile travels; Sod and Sedov
+test sharp waves and shock positions. Read the errors against each problem's
+reference solution before using CPU/CUDA agreement to assess backend consistency.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
-The current candidate passes the smooth-wave spatial and temporal accuracy,
-Sod, sustained periodic-advection and planar Sedov checks on CPU and CUDA.
+CPU and CUDA pass the smooth-wave spatial and temporal accuracy,
+Sod, sustained periodic-advection and planar Sedov checks.
 Overall acceptance is tracked in the [validation index](../README.md).
 
 ## Smooth-wave spatial accuracy
@@ -23,7 +28,7 @@ are fixed while PCM, MUSCL-MC, and PPM are run at 64, 128, and 256 cells.
 
 ### Reproduce
 
-The [current-candidate application evidence](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The [application evidence](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 records the tested source, binaries, dependencies and build settings. Its
 fixed-time runs compare both backends with the analytic wave, then with each
 other. Use a testing-enabled CUDA build and run from the repository root:
@@ -61,7 +66,7 @@ fourth-order claim. No positivity or species repair is expected for this state.
 
 ## Sod shock tube
 
-The [same current-candidate record](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The [same application record](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 passes the Sod checks on both backends at \(t=0.2\), using HLLC, PPM and
 SSPRK3 on 64, 128 and 256 uniform Cartesian cells. The ideal gas has
 \(\gamma=1.4\); the initial left/right states are
@@ -107,7 +112,7 @@ PCM and compares actual ARCH output with the exact Fourier exponential of its
 semi-discrete upwind operator. Holding the mesh fixed separates time error from
 spatial error. No production time integrator supplies the expected solution.
 
-The [current-candidate 18-run record](results/time-native-20260907/release-879/evidence.json)
+The [18-run temporal-accuracy record](results/time-native-20260907/release-879/evidence.json)
 passes with CFL values 0.4, 0.2 and 0.1 at the same physical end time,
 \(t=0.1\). CPU and CUDA give the same temporal errors and orders:
 
@@ -129,7 +134,7 @@ python3 validation/hydro/time_reference.py --build-dir build-cuda \
 
 ## Planar Sedov blast
 
-The [current-candidate record](results/sedov-first-law-20260907/release-889/evidence.json)
+The [acceptance record](results/sedov-first-law-20260907/release-889/evidence.json)
 passes the same independent strong-shock checks on both backends. It covers a
 one-dimensional, two-sided blast on uniform Cartesian grids of 128, 256 and
 512 cells, using HLLC, PPM, SSPRK3 and an ideal gas with \(\gamma=1.4\). In the

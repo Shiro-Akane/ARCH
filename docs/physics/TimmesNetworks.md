@@ -3,6 +3,18 @@
 Chinese translation: [TimmesNetworks.zh-CN.md](TimmesNetworks.zh-CN.md).
 The English file is the authoritative source text.
 
+A nuclear reaction network follows the amounts of selected isotopes and the
+energy released or absorbed as reactions occur. The reaction-rate equations
+provide time derivatives, often called the right-hand side (RHS). An ordinary
+differential equation (ODE) solver advances them through time. Nuclear
+statistical equilibrium (NSE) instead finds an equilibrium composition within
+the network's isotope set when that model is selected.
+
+This is the implementation and provenance note for contributors and users
+choosing a burn model. For a first simulation, begin with the
+[case guide](../guides/SimulationCase.md); use the sections below when you need
+species ordering, solver conventions or the reference comparisons.
+
 The four built-in networks share their reaction, ODE and NSE mathematics on
 CPU and CUDA. Current validation includes independent time-integration and
 energy checks, together with coupled NSE application tests. The original
@@ -10,12 +22,7 @@ Fortran comparisons are retained as translation records.
 
 ## 1. Source and implementation boundary
 
-The `iso7`, `aprox13`, `aprox19`, and `aprox21` directories contain C++
-translations of the classic compact Timmes nuclear-network Fortran packages
-provided with the project. Reaction-rate formulas, forward/reverse relations,
-nuclear data, screening corrections, approximate-equilibrium branches, RHS
-assembly, and energy-release conventions follow the corresponding
-`public_*.f90` source.
+The `iso7`, `aprox13`, `aprox19`, and `aprox21` directories contain C++ translations of the classic, compact Timmes nuclear-network Fortran packages bundled with this project. We rigorously follow the corresponding `public_*.f90` source files for all reaction-rate formulas, forward/reverse relations, core nuclear data, screening corrections, approximate-equilibrium branches, RHS assembly, and energy-release conventions.
 
 Provenance is recorded per file rather than inferred from directory placement.
 Translated formulas and generated equations identify their Timmes source;
@@ -340,12 +347,14 @@ before backend construction rather than substituted. The optional cuDSS 0.8
 provider is discovered through CMake/`CUDSS_ROOT` and enabled only when linked
 with the registered network/EOS routes. Missing providers fail closed.
 
-Generator version 4 registers device-callable packages only when their manifest
-declares `device_callable_math=true`. CPU and CUDA then consume the same math
-header, constants, and declared Jacobian structure. Recognized embedded weak
-tables have backend-owned immutable storage and explicit borrowed views;
-version-3 or unlowered packages remain CPU-only and can be regenerated for the
-current contract. CUDA sparse execution reuses
+A generated package registers for device execution when it provides
+device-callable math and passes the
+[package metadata checks](../../src/physics/network/custom/README.md).
+The `generator_version` field is machine-checked package-schema information.
+CPU and CUDA consume the same math header, constants, and declared Jacobian
+structure. Recognized embedded weak tables have backend-owned immutable storage
+and explicit borrowed views. Accepted packages without a device-callable math
+contract execute on CPU only. CUDA sparse execution reuses
 the shared BE_NR/ROS4/BD continuations with a backend-specific CSR/cuDSS
 executor, not a second set of network or ODE physics. Generated packages still
 set `SUPPORTS_NSE=false`. Recognized weak networks integrate their signed energy

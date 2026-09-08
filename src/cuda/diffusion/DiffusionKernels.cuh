@@ -1,3 +1,13 @@
+/**
+ * @file DiffusionKernels.cuh
+ * @brief Device flux, stability and RKL-stage traversal for shared diffusion.
+ *
+ * DiffFlux and DiffusionAMRStages own transport, geometry and stage arithmetic.
+ * Launch results describe queued kernels and their write extent; the runtime
+ * owns the stream, workspaces, EOS status checks and logical-slot publication.
+ * A successful interior update does not make the surrounding ghosts valid.
+ */
+
 #pragma once
 
 #include <cuda_runtime.h>
@@ -633,7 +643,7 @@ inline DiffusionLaunchResult launch_initialize_rkl_stage_buffers(
     return result;
 }
 
-// A successful stage result declares only an interior write. Task E owns the
+// A successful stage result declares only an interior write. Runtime control owns the
 // ensuing ghost invalidation, boundary/exchange completion, and complete
 // logical-slot rotation; these launchers never rotate pointers or publish a
 // readable ghost region.

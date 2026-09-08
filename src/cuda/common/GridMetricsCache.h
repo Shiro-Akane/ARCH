@@ -1,3 +1,11 @@
+/**
+ * @file GridMetricsCache.h
+ * @brief Launch contract for runtime-owned immutable device metric arrays.
+ *
+ * The cache stores values computed by the shared GridMetrics authority.
+ * Array validity and completion requirements are specified at the launch boundary.
+ */
+
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"

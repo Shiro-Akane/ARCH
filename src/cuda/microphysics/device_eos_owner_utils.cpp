@@ -1,3 +1,12 @@
+/**
+ * @file device_eos_owner_utils.cpp
+ * @brief Validate and stage immutable EOS/species arrays for device owners.
+ *
+ * Allocation and asynchronous copy use the caller's stream. The concrete owner
+ * must retain staging and device buffers through completion and release them
+ * through its lifetime boundary; no table interpolation is performed here.
+ */
+
 #include "cuda/microphysics/device_eos_owner_utils.h"
 
 #include <limits>

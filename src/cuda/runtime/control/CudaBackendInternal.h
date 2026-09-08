@@ -1,10 +1,10 @@
 /**
  * @file CudaBackendInternal.h
- * @brief Internal ownership model shared by CUDA host-control units.
+ * @brief Private resource layout shared by CUDA host-control units.
  *
- * Numerical kernels are deliberately absent.  Method bodies live in the
- * functionally owning .cpp unit so including this layout does not recompile
- * the former backend monolith in every control translation unit.
+ * The implementation owns the stream, block stores, immutable EOS/network data
+ * and reusable workspaces. Functional control units define its methods; typed
+ * kernel launch interfaces remain separate from this ownership declaration.
  */
 
 #pragma once

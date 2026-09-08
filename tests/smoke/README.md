@@ -13,11 +13,12 @@ python3 tools/smoke_cuda_amr_runtime.py --arch build-cuda/bin/ARCH \
   --checkpoint-validator build-cuda/arch_cuda_single_level_validation
 ```
 
-This is **not scientific validation or merge qualification**. It does not
-compare errors/conservation with independent references, or certify restart
-field parity. It checks process/step completion, explicit backend selection,
-CUDA hydro/diffusion work and ghost-completion traces, real device topology
-change in the Cartesian case, and a short checkpoint continuation. The existing
+This smoke test checks that a short application completes its requested steps
+on the selected backend. It looks for CUDA hydro/diffusion execution and completed
+ghost-cell exchanges, a real device topology change in the Cartesian case, and
+a short checkpoint continuation. Quantitative errors, conservation and restart
+field agreement are evaluated separately in [Validation](../../validation/README.md);
+this quick development check does not replace those acceptance tests. The existing
 comparator reads each actual HDF5 checkpoint using `--metrics CHECKPOINT
 --parameters ACTUAL_RUN.par`: source/terminal metadata must report the requested
 step, and a restart source must report the source lane's completed step before
@@ -49,6 +50,4 @@ python3 tools/smoke_cuda_amr_runtime.py --arch build-cuda/bin/ARCH \
   --case cartesian_dynamic_sedov --timeout 30
 ```
 
-The curved cases are initial-refined AMR execution/restart checks; their success
-alone does not prove dynamic curved regrid happened after backend creation.
-Full shared migration kernels and staged-store tests cover that separate seam.
+The curved test cases specifically verify execution and restart capabilities on an initially refined mesh. Note that runtime curved refinement and coarsening behaviors are rigorously covered by the [AMR lifecycle records](../../validation/amr/README.md#what-the-tests-cover), alongside the shared migration and intermediate-state tests.

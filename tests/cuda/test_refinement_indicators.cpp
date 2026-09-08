@@ -1,3 +1,10 @@
+/**
+ * @file test_refinement_indicators.cpp
+ * @brief Compare production GPU refinement indicators with shared host math.
+ *
+ * Cases cover different fields and species layouts, including recovered
+ * tabular temperatures and propagation of invalid EOS states.
+ */
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 

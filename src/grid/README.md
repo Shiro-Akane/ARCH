@@ -4,7 +4,4 @@
 authority for physical volumes, areas and lengths; [GridGeometryView.h](GridGeometryView.h)
 provides a lightweight geometry view for numerical consumers.
 
-Hydro, diffusion, CFL, AMR and diagnostics share these conventions. CUDA caches
-the metrics through [cuda/common](../cuda/common/README.md), without defining
-another coordinate system or set of formulas. Geometry checks are indexed in
-[AMR validation](../../validation/amr/README.md).
+These rigorous geometric conventions are shared universally across hydro, diffusion, CFL calculations, AMR, and diagnostics. The CUDA backend caches these exact metrics through [cuda/common](../cuda/common/README.md), and critically does not define any secondary coordinate system or alternate set of formulas. Comprehensive geometry checks are indexed in [AMR validation](../../validation/amr/README.md).

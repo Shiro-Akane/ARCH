@@ -1,6 +1,6 @@
 /**
  * @file CudaLaunchConfig.h
- * @brief Ordinary-C++ lowering of a frozen execution plan for CUDA launches.
+ * @brief Ordinary-C++ lowering of a resolved execution plan for CUDA launches.
  */
 
 #pragma once

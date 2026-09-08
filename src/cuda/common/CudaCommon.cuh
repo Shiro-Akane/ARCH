@@ -1,3 +1,13 @@
+/**
+ * @file CudaCommon.cuh
+ * @brief Non-owning device state, grid and per-lane workspace views.
+ *
+ * These POD records bind runtime-owned allocations to kernels. State accessors
+ * preserve the common field layout; geometry formulas remain in GridMetrics.
+ * Species scratch uses local or caller-owned storage without changing the
+ * numerical policy. Passing a view transfers neither ownership nor completion.
+ */
+
 #pragma once
 
 #include <cuda_runtime.h>

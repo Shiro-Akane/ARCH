@@ -1,13 +1,11 @@
 /**
  * @file MemoryPool.h
- * @brief Memory pool for AMR blocks.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ * @brief Host ownership and free-list allocation of fixed-capacity AMR blocks.
+ *
+ * Allocate storage for all block slots and their three fluid states once, then
+ * recycle slots without resizing the pool. A block ID is a pool index, not a
+ * persistent topology identity: a freed index may later hold another block.
+ * AmrTree owns the hierarchy; this class only owns and recycles its storage.
  */
 
 #pragma once
@@ -73,7 +71,7 @@ public:
      */
     void FreeBlock(int id) noexcept {
         if (id < 0 || id >= max_blocks || !pool[id].active) {
-            return; // Invalid free
+            return; // Invalid or already-free slots do not alter the free list.
         }
         pool[id].active = false;
         free_list.push_back(id);

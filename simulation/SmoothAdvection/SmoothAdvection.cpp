@@ -1,6 +1,10 @@
 /**
  * @file SmoothAdvection.cpp
- * @brief Periodic entropy-wave advection for hydro reconstruction verification.
+ * @brief Initialize a cell-averaged entropy wave for hydro reconstruction checks.
+ *
+ * Setup computes the root-cell averaging factor for the density mode. Init
+ * keeps pressure and velocity uniform; the configured boundary conditions and
+ * common hydro policies determine the subsequent advection.
  */
 
 #include <cmath>

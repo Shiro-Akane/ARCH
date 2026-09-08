@@ -9,6 +9,4 @@ Network selection and optional generated-network preparation follow the
 [Reference](../../docs/Reference.md) and
 [custom-network guide](../../src/physics/network/custom/README.md).
 
-This example defines a research calculation's starting state. Qualified burn
-and hydro comparisons live in [Validation](../../validation/README.md), separate
-from any particular detonation study.
+This example defines the starting state for a focused research calculation. All qualified burn and hydro comparisons are maintained within the [Validation](../../validation/README.md) module, strictly separate from any particular standalone detonation study.

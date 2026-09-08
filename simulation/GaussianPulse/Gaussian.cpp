@@ -4,7 +4,7 @@
  *
  * Workflow:
  * 1. Setup(): Read pulse parameters (amplitude, width, location) from configuration.
- * 2. Setup(): Register dummy species for species-diffusion verification.
+ * 2. Setup(): Use registered network species or add passive gas species.
  * 3. Init(): Evaluate one envelope in Grid's physical Cartesian coordinates.
  * 4. Init(): Apply it to species and optional hydrodynamic perturbations.
  */
@@ -57,7 +57,7 @@ public:
             throw std::invalid_argument(
                 "Gaussian requires positive rho0, p0, width and pressure_amplitude > -1");
         // A passive pulse has no reaction network by default. Explicit nuclear
-        // network selections (e.g. with Helmholtz) still use the common factory.
+        // network selections (e.g. with Helmholtz) use the common factory.
         config.physics.burn.network_name = config.Get<std::string>("network_name", "none");
         ProblemHelper::SetupNetworkAndFractions(config, specs, default_X);
 
@@ -87,7 +87,7 @@ public:
 
         // Pressure amplitude is fractional; velocities use native orthonormal
         // components in the problem's velocity units. Zero amplitudes leave the
-        // original uniform pressure / stationary hydrodynamic state.
+        // uniform pressure and stationary hydrodynamic background.
         out.rho = m_density;
         out.p   = m_pressure * (1.0 + m_pressure_amplitude * pulse);
         out.u   = m_u_amplitude * pulse;

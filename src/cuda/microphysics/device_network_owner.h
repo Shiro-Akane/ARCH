@@ -1,4 +1,7 @@
-/** Backend storage for one immutable generated network; no network catalogue.
+/**
+ * @file device_network_owner.h
+ * @brief Device storage for one immutable generated-network table payload.
+ *
  * Construction completes the upload before returning, so borrowed Host data
  * need only outlive construction. Device views borrow this owner and its stream.
  */

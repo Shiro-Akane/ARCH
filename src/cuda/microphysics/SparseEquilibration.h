@@ -1,4 +1,10 @@
-/** CUDA launch ABI for provider-owned equilibration; no network templates. */
+/**
+ * @file SparseEquilibration.h
+ * @brief CUDA launch interface for provider-owned matrix/vector scaling.
+ *
+ * Buffers and status are borrowed; LinearEquilibration owns the arithmetic.
+ * The caller checks stream completion and the invalid latch before use.
+ */
 #pragma once
 #include <cuda_runtime_api.h>
 

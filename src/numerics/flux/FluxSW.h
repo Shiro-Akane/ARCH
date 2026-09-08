@@ -11,7 +11,9 @@
  * Workflow:
  * 1. Reconstruct left and right face states using the configured limiter policy.
  * 2. Evaluate the named Riemann flux consistently in every active dimension.
- * 3. Register interface fluxes through the shared AMR path when a coarse-fine face is present.
+ * 3. Store fluid and species face fluxes for the caller's divergence update.
+ * Time integration and coarse-fine flux registration belong to the caller,
+ * not to this flux policy; the per-face mathematics is shared by backends.
  */
 
 #pragma once

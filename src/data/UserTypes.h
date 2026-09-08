@@ -16,14 +16,15 @@ struct SpeciesManager;
  * @struct PrimitiveData
  * @brief Represents fluid state in Primitive Variables (Physical Observables).
  * Unlike conserved variables (density, momentum, energy), primitive variables
- * are \f$ W = (\rho, u, v, w, p) \f$. Used for EOS calls, boundary conditions, and IO.
+ * are \f$ W = (\rho, u, v, w, p) \f$. Problem callbacks supply these values
+ * to the common EOS-backed initialization adapter.
  */
 struct PrimitiveData
 {
     double rho = 0.0; ///< Mass density (\f$ \rho \f$).
-    double u = 0.0;   ///< Velocity X-component (\f$ v_x \f$).
-    double v = 0.0;   ///< Velocity Y-component (\f$ v_y \f$).
-    double w = 0.0;   ///< Velocity Z-component (\f$ v_z \f$).
+    double u = 0.0;   ///< First native orthonormal velocity component.
+    double v = 0.0;   ///< Second native orthonormal velocity component.
+    double w = 0.0;   ///< Third native orthonormal velocity component.
     double p = 0.0;   ///< Thermal pressure (\f$ P \f$).
     double temperature = 0.0; ///< Optional EOS temperature used when has_temperature is true.
     bool has_temperature = false; ///< Selects temperature as the EOS initialization input.

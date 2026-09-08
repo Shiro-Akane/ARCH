@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendAmrFlux.h
- * @brief Local CUDA launch ABI for compact AMR flux surfaces.
+ * @brief Runtime launch interface for compact AMR flux surfaces.
+ *
+ * Route views borrow device block records and host-lowered target/term arrays.
+ * Their runtime owner keeps the buffers valid through execution; launch status
+ * is distinct from stream completion and accepted-state publication.
  */
 
 #pragma once

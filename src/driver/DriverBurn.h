@@ -1,12 +1,11 @@
 /**
  * @file DriverBurn.h
- * @brief Operator splitting integration of the nuclear reaction network.
+ * @brief Host traversal for the shared split burn operation.
  *
- * Workflow:
- * 1. Filters cells by a minimum density threshold to skip vacuums.
- * 2. Extracts cell composition and calculates cell temperature.
- * 3. Calls the underlying ODE solver (e.g. BE_NR) to integrate species abundances.
- * 4. Applies a nuclear energy (enuc) limiter to safely restrict the global CFL timestep.
+ * Each active cell uses DriverBurnPolicy preparation, the selected ODE solver,
+ * and the checked thermodynamic handoff before committing its state. Common
+ * reduction semantics combine limiter candidates for later timestep selection;
+ * CUDA kernels consume the same preparation and commit rules.
  */
 
 #pragma once

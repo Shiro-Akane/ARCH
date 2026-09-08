@@ -10,5 +10,4 @@ uses this problem to exercise burn-energy refinement indicators. The
 [restart](../../validation/restart/README.md) summaries describe migration,
 native burn-state restore and sustained continuation checks.
 
-The initializer contains no AMR or ODE implementation; those operations remain
-in the common driver and numerical modules.
+This initializer contains no distinct AMR or ODE implementations. Those specific operations consistently remain securely embedded in the common driver and their respective numerical modules.

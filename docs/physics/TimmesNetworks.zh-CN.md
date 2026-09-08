@@ -2,12 +2,20 @@
 
 英文原文：[TimmesNetworks.md](TimmesNetworks.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
+核反应网络跟踪所选核素的含量，以及反应释放或吸收的能量。反应率方程给出这些量的
+时间导数，常称为方程右端（RHS），常微分方程（ODE）求解器负责随时间推进它们。
+启用核统计平衡（NSE）模型时，则在网络选定的核素集合内求平衡组分。
+
+本文供开发者和需要选择燃烧模型的用户查阅实现与来源。第一次运行请从
+[算例指南](../guides/SimulationCase.zh-CN.md)开始；需要核素顺序、求解器约定或
+参考对照时，再阅读下方各节。
+
 四个内置网络在 CPU 与 CUDA 上共用反应、ODE 和 NSE 数学实现。当前验证包括独立
 时间积分、能量检查和耦合 NSE 主程序测试；原 Fortran 对照作为转写记录保留。
 
 ## 1. 来源与实现边界
 
-本目录中的 `iso7`、`aprox13`、`aprox19` 和 `aprox21` 是根据项目提供的经典 Timmes 小型核反应网络 Fortran 源包逐项转写的 C++ 实现。反应率公式、正反应/逆反应关系、核素数据、筛选修正、近似平衡分支、RHS 和能量释放约定均以对应的 `public_*.f90` 为基准。
+本目录中的 `iso7`、`aprox13`、`aprox19` 和 `aprox21` 是根据项目提供的经典 Timmes 小型核反应网络 Fortran 源包逐项转写而成的 C++ 实现。我们严格以对应的 `public_*.f90` 源文件为基准，原样保留了所有的反应率公式、正/逆反应关系、核心核素数据、筛选修正、近似平衡分支、RHS 装配以及能量释放约定。
 
 来源归属按文件实际内容记录，而不是由目录位置推断。转写公式和生成方程注明 Timmes 上游；`Dual.h`、`RatePair.h`、`TimmesNetworkSupport.h` 等 ARCH 自有适配层则明确标为项目代码。官方[反应网络页面](https://cococubed.com/code_pages/burn.shtml)提出引用要求，但没有列出标准 SPDX 许可证。重新分发范围以及 EOS/NSE 的具体来源见 [`THIRD_PARTY_NOTICES.zh-CN.md`](../../THIRD_PARTY_NOTICES.zh-CN.md)。
 
@@ -221,7 +229,7 @@ eos_table_path = /absolute/path/to/helm_table.dat
 
 pynucastro 生成网络包的工作流见 [custom 网络契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。线性求解器名称不区分大小写。`Auto` 对不超过 31 个 ODE 方程的系统选择 DenseLU，这一计数包含温度和辅助能量变量；更大的系统在 CPU 上使用 SuiteSparse KLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在后端构造前被拒绝。可选 cuDSS 0.8 通过 CMake/`CUDSS_ROOT` 发现，只有求解器与相应网络/EOS 路由实际链接时才开放；缺少依赖会明确报错。
 
-生成器版本 4 为 manifest 声明 `device_callable_math=true` 的网络包注册 CUDA 路由。CPU 与 CUDA 使用同一数学头文件、常数与 Jacobian 结构。已支持的内嵌弱反应率表由各后端持有不可变存储，并通过显式视图传给共同数学库。版本 3 或尚未完成转换的网络包仅支持 CPU，可重新生成以采用当前接口。CUDA 稀疏计算使用共用的 BE_NR/ROS4/BD 状态机，由后端专用 CSR/cuDSS 执行器处理线性求解。
+生成网络包提供可设备调用的数学实现，并通过[包元数据检查](../../src/physics/network/custom/README.md)后，才能注册 CUDA 路由。`generator_version` 字段是供构建系统检查的包结构信息。CPU 与 CUDA 使用同一数学头文件、常数与 Jacobian 结构。已支持的内嵌弱反应率表由各后端持有不可变存储，并通过显式视图传给共同数学库。通过包检查但不具备设备端数学契约的网络包仅在 CPU 上执行。CUDA 稀疏计算使用共用的 BE_NR/ROS4/BD 状态机，由后端专用 CSR/cuDSS 执行器处理线性求解。
 
 生成网络仍设置 `SUPPORTS_NSE=false`。已支持的弱反应网络使用相同 ODE 阶段、误差控制和回滚机制积分带符号的能量源，并将其与核反应能量一起纳入共同的接受步能量核算。[网络验证](../../validation/network/README.zh-CN.md)分别记录生成数学库、求解器兼容、独立物理轨迹和完整程序验证。模型的科学可靠性取决于其核素集合、反应数据和适用范围。
 

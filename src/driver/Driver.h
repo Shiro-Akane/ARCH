@@ -1,15 +1,11 @@
 /**
  * @file Driver.h
- * @brief Main time-integration loop (Driver) for the simulation.
- * Implements the "Method of Lines" approach, decoupling the spatial discretization
- * (SolverPolicy) from the time stepping logic.
- */
-
-/**
- * Workflow:
- * 1. Select the configured policy and determine a stable macro step.
- * 2. Apply hydro, diffusion, gravity, and burn operators in the documented order.
- * 3. Synchronize AMR leaves and emit diagnostics before continuing the evolution.
+ * @brief Shared simulation orchestration for CPU and CUDA execution.
+ *
+ * The driver owns time/output control, state-residency tracking and AMR
+ * transaction coordination. It orders split burn, diffusion and hydro stages
+ * through the selected interfaces; topology decisions and numerical policies
+ * remain shared while backend owners manage execution and data visibility.
  */
 
 #pragma once
@@ -66,10 +62,9 @@
 
 /**
  * @brief Executes the main simulation loop.
- * @tparam SolverPolicy Numerical flux policy, for example HLLC.
  * @tparam EosPolicy The equation of state (e.g., Ideal Gas).
- * @tparam GravityPolicy The gravity policy.
- * @tparam BurnerPolicy The burning policy.
+ * Hydro, gravity and burn operations enter through the supplied interfaces;
+ * resolved execution inputs determine the concrete backend and policy routes.
  */
 template <typename EosPolicy>
 void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
@@ -555,8 +550,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 compute_backend->stage_amr_flux_plan(
                     *payload.store_transaction, staged_flux_plan, staged_reflux_plan);
 
-                // The same logical plans and complete mathematical leaves as
-                // CPU migration now execute against private device storage.
+                // CPU and CUDA migration share logical plans and mathematical
+                // leaves; this route executes against private device storage.
                 compute_backend->migrate_staged_current(*payload.store_transaction,
                     source_accesses, prepared.prolongation_plan(), prepared.restriction_plan());
                 const auto staged_same_level =
@@ -754,7 +749,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
 
     // Whole-operation measurements are separate from per-block backend traces:
     // boundary records nested in regrid must not be counted a second time.
-    // Existing indicator/migration/publication fences complete device work
+    // Indicator/migration/publication fences complete device work
     // before execute_regrid returns; measurement adds no synchronization.
     struct RegridMeasurement {
         int step;

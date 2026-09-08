@@ -7,7 +7,7 @@
 /**
  * Workflow:
  * 1. Read the selected runtime mode and problem parameters.
- * 2. Construct physically consistent cell states and refinement indicators.
+ * 2. Construct stratified pressure, density and a localized velocity perturbation.
  * 3. Hand the initialized problem to the common AMR driver without solver-specific shortcuts.
  */
 
@@ -46,8 +46,8 @@ public:
         g_is_3d = config.grid.dim == 3;
         g_Lz = g_is_3d ? config.grid.x3_max - config.grid.x3_min : 0.0;
 
-        // 2. Sync gravity with the global physics configuration!
-        // This guarantees the Hydrostatic Equilibrium matches the solver's source terms.
+        // 2. Use the same acceleration as the configured gravity source when
+        // constructing the continuous hydrostatic pressure profile.
         g_gy = config.physics.gravity.g_y;
 
         // 3. Read custom RT parameters

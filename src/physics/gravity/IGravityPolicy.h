@@ -1,11 +1,10 @@
 /**
  * @file IGravityPolicy.h
- * @brief Defines the common gravity-policy boundary for CPU and future device paths.
+ * @brief Type-erased Host patch interface for gravity field and source services.
  *
- * Workflow:
- * 1. Construct the selected gravity policy from runtime configuration.
- * 2. Evaluate accelerations or potentials on the current active AMR geometry.
- * 3. Apply gravity only through the common source-term interface used by every integrator.
+ * Host integrators use this interface without including concrete policies.
+ * CUDA execution uses plain views and shared cell mathematics rather than
+ * invoking these virtual methods over Host-owned vectors.
  */
 
 #pragma once
@@ -21,7 +20,7 @@ namespace Gravity {
 /**
  * @brief Pure virtual interface for gravity models.
  * Acts as a compilation firewall (type erasure boundary) between the generic
- * numerical hydrodynamics loops and specific gravity implementations (CPU/CUDA).
+ * Host hydrodynamics loops and specific gravity implementations.
  */
 class IGravityPolicy {
 public:
@@ -29,7 +28,7 @@ public:
 
     /**
      * @brief Computes and stores gravity fields/potentials if necessary.
-     * @param execution_stream Opaque pointer for heterogeneous execution (e.g. cudaStream_t).
+     * @param execution_stream Reserved opaque execution context; current Host policies ignore it.
      */
     virtual void update_field(const FluidState& state, const Grid& grid, void* execution_stream = nullptr) const = 0;
 
@@ -37,7 +36,7 @@ public:
      * @brief Evaluates the gravity source terms on a single patch and adds them to dU.
      * @param dU The flux divergence accumulator array.
      * @param dt The time step size.
-     * @param execution_stream Opaque pointer for heterogeneous execution.
+     * @param execution_stream Reserved opaque execution context; current Host policies ignore it.
      */
     virtual void add_sources_on_patch(std::vector<FluidVector>& dU, const FluidState& state,
                                       const Grid& grid, double dt, void* execution_stream = nullptr) const = 0;

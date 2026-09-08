@@ -1,3 +1,12 @@
+/**
+ * @file GridMetricsCache.cu
+ * @brief Populate device geometry caches from shared physical metric helpers.
+ *
+ * Validate the borrowed output ranges, clear inactive slots and evaluate active
+ * cell volumes and face areas through GridMetrics. Work remains on the supplied
+ * stream; the runtime retains allocation ownership and publication responsibility.
+ */
+
 #include "cuda/common/GridMetricsCache.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 

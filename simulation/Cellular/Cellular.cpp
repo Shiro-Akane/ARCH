@@ -1,6 +1,11 @@
 /**
  * @file Cellular.cpp
- * @brief User-defined Problem: Cellular Detonation with Helmholtz EOS & Pynucastro Networks.
+ * @brief Initialize a cellular-detonation state with an optional transverse perturbation.
+ *
+ * Setup resolves the selected network and uses the common EOS to obtain
+ * ambient and compressed-state pressures. Init selects the shock direction
+ * and perturbs the compressed region; hydro and burn evolution use the common
+ * driver and the configured backend.
  */
 
 #include <cmath>

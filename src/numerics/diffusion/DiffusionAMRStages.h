@@ -30,10 +30,10 @@ namespace Numerics::Diffusion {
 
 namespace detail {
 
-// These expression leaves intentionally remain macro-expanded at legacy CPU
+// These expression leaves intentionally remain macro-expanded at Host
 // call sites. GCC's -ffast-math changes FMA grouping when the recurrences
 // cross a function boundary, even after inlining. Keeping one expansion source
-// lets CPU paths retain their frozen raw bits while the host/device cell
+// preserves the Host expression grouping while the Host/device cell
 // wrappers below consume the identical authority.
 #define ARCH_DIFFUSION_FIRST_RKL_COMPONENT(                                \
     state_n, coefficient, increment)                                       \

@@ -2,10 +2,10 @@
  * @file eosdispatch.h
  * @brief Selects and constructs the requested equation-of-state policy.
  *
- * Workflow:
- * 1. Construct or query the configured thermodynamic closure from canonical state variables.
- * 2. Return pressure, temperature, and transport quantities with validated bounds.
- * 3. Keep host and future device views consistent through one dispatch contract.
+ * Host construction binds species and table ownership before handing a
+ * concrete policy to the caller. Cache identity includes ordered species
+ * values and table file identity; thermodynamic evaluation remains in the
+ * selected EOS implementation rather than being duplicated in the factory.
  */
 
 #pragma once

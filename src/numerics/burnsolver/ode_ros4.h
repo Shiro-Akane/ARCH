@@ -95,8 +95,8 @@ struct Solver_ROS4
         Continuation& c, MatrixType& J_mat, MatrixType& A, double* X_ODE,
         const EOSType& eos, const BurnConfigView& burn_cfg)
     {
-        // These aliases keep the production expressions and operation order
-        // unchanged while making every value surviving a solve explicit.
+        // Aliases refer to continuation-owned values that remain valid across
+        // a suspended linear solve; they do not introduce separate stage state.
         auto& report = c.report;
         auto& dt = c.dt;
         auto& dt_rec = c.dt_recommended;
@@ -187,7 +187,7 @@ struct Solver_ROS4
                     finish_trial(c, X_ODE, eos, burn_cfg);
                     continue;
                 }
-                // Stage RHS expressions are the original matched ROS4 tableau.
+                // Construct the next stage state from the matched ROS4 tableau.
                 if (c.stage == 0) {
 #pragma omp simd
                     for (int i = 0; i < NEQ; ++i) c.X_k[i] = stage_state_sum(c, i, a21).value();
@@ -247,9 +247,9 @@ struct Solver_ROS4
 
 private:
     // One affine stage-state authority. Preserve small thermal/source changes
-    // on a large background using the shared compensated arithmetic; the ROS4
-    // tableau, error weights and physical projection are unchanged. Zero
-    // coefficients must not read stages that have not yet been computed.
+    // on a large background using the shared compensated arithmetic. The
+    // caller supplies weights from the ROS4 tableau. Zero coefficients must
+    // not read stages that have not yet been computed.
     ARCH_HOST_DEVICE static void add_weighted_stages(
         arch::math::CompensatedSum& sum, const Continuation& c, int i,
         double w1, double w2, double w3, double w4)

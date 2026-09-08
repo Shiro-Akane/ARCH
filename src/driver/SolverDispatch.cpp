@@ -1,13 +1,10 @@
 /**
  * @file SolverDispatch.cpp
- * @brief The "Switchboard" for the simulation.
- */
-
-/**
- * Workflow:
- * 1. Select the configured policy and determine a stable macro step.
- * 2. Apply hydro, diffusion, gravity, and burn operators in the documented order.
- * 3. Synchronize AMR leaves and emit diagnostics before continuing the evolution.
+ * @brief Resolve startup policies and launch the selected time-integrator driver.
+ *
+ * Startup validates execution requirements and backend capability before
+ * initialization or strict checkpoint restoration. Narrow integrator entries
+ * select the typed driver; timestep execution remains in the common driver.
  */
 
 #include <cmath>

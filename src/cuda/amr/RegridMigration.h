@@ -1,4 +1,10 @@
-/** CUDA memory executors for the Host-authoritative regrid migration plans. */
+/**
+ * @file RegridMigration.h
+ * @brief Device transfer interface for host-authoritative regrid plans.
+ *
+ * State, geometry and scratch pointers are borrowed from the transaction owner.
+ * RegridTransferMath supplies the common conservative family operations.
+ */
 #pragma once
 
 #include "amr/RegridTransferMath.h"

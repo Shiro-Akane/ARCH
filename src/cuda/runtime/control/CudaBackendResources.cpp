@@ -1,6 +1,11 @@
 /**
  * @file CudaBackendResources.cpp
- * @brief CUDA stream, allocation, block-runtime, and owner lifetime control.
+ * @brief CUDA stream, allocation, block-runtime and owner lifetime control.
+ *
+ * Construction binds device views to owned buffers and uploads immutable plans
+ * on the backend stream. Upload guards and explicit quiescence keep host staging
+ * and device destinations alive through completion, including exception paths.
+ * Numerical values come from the shared geometry, EOS and policy authorities.
  */
 
 #include "cuda/runtime/control/CudaBackendInternal.h"

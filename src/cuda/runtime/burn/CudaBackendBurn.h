@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendBurn.h
- * @brief Narrow runtime ABI between the CUDA backend and burn instantiations.
+ * @brief Narrow runtime interface to typed CUDA burn instantiations.
+ *
+ * Launches borrow state, EOS views, scratch arrays and the runtime stream.
+ * The optional owner slot retains immutable network tables across calls;
+ * successful enqueueing does not make the device summary host-visible.
  */
 
 #pragma once

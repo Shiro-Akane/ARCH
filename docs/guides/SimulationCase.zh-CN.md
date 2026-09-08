@@ -4,33 +4,35 @@
 
 本文提供完成第一个 ARCH 算例的连续学习路径，建议按顺序阅读。完整参数目录和框架扩展接口集中在可搜索的[研究与 API 参考](../Reference.zh-CN.md)中。
 
+你不需要具备 CFD 背景也能快速上手。ARCH 会将流体离散为由网格单元组成的计算域，并在连续的时间步中不断更新它们的平均密度、动量和能量。一个“算例”定义了流体的初始状态、计算域边界以及底层的物理模型，而它配套的参数文件则负责指挥计算的具体执行方式。
+
+我们的第一个示例是激波管：两种不同状态的气体最初在一个清晰的界面相遇，随着它们的相互作用，会逐渐演化出传播的波。运行这个示例可以向你展示整个计算工作流，而且不需要任何核反应网络或外部的 EOS 状态方程表。在随后的章节中，我们会将你的输入选项与底层的物理方程联系起来，并教你如何编写自定义的初始条件。
+
 ## 1. 运行小型激波管
 
-如尚未构建 ARCH，请在仓库根目录执行：
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
-```
-
+首先，请完成 [README 的方案 A：使用 CPU](../../README.zh-CN.md#方案-a使用-cpu)。这一步将为你编译出不含测试套件的 `build-cpu/bin/ARCH` 可执行程序。如果你需要了解依赖项或可选的 CUDA 构建方式，请参阅[构建指南](Build.zh-CN.md)。下方示例都使用这份 CPU 程序，并从仓库根目录执行。
 然后运行小型一维 Sod 输入：
 
 ```bash
 export OMP_NUM_THREADS=4
-./bin/ARCH Sod simulation/Sod/Sod_beginner.par
+./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
 命令行契约始终为：
 
 ```text
-./bin/ARCH <registered-problem-name> <parameter-file>
+./build-cpu/bin/ARCH <registered-problem-name> <parameter-file>
 ```
 
 `Sod.cpp` 中的 `REGISTER_PROBLEM_CLASS` 将运行时名称注册为 `Sod`，目录负责组织源码和输入。成功运行后，日志、plot 文件和 checkpoint 会写入 `output/first_sod/`。
 
-教学输入使用 64 个单元、HLLC 通量、MUSCL-MC 重构、SSPRK2、理想气体，并关闭 AMR、燃烧、重力和扩散。它用于教学和 smoke test。
+这个教学输入使用了 64 个单元、HLLC 通量、MUSCL-MC 重构、SSPRK2 时间积分以及理想气体状态方程。它刻意关闭了 AMR、核燃烧、重力和扩散，因为它的主要目的是教学和基础的冒烟测试 (smoke testing)。
 
 ## 2. 将问题理解为 CFD 计算
+
+程序采用有限体积方法：在每个单元中保存平均状态，根据穿过单元面的输运和局部
+物理源项更新它。下面的符号中，密度表示单位体积的质量，速度描述流动，压力描述
+流体的力学响应，质量分数描述组分。
 
 ARCH 推进守恒状态的单元平均值
 
@@ -190,7 +192,7 @@ void Init(const PointCoords &point, PrimitiveData &out) const;
 
 这两个文件构成完整的算例侧 ARCH 头文件表面。可以按需加入 C++ 标准库头文件，但算例不得直接包含具体 EOS 头文件、`eos_Utils.h` 或 `eosdispatch.h`。`UserInterface.h` 重新导出稳定的注册宏、算例类型和 `ProblemHelper` 操作；第二个显式头文件 `GlobalDefs.h` 提供有类型的运行时配置，同时避免算例依赖具体 EOS 策略。
 
-`Setup` 在网格分配前运行，应在其中读取和验证算例参数并注册核素。`Init` 会在 OpenMP 下仅填充一次已分配的根网格单元；初始及后续细网格 block 均由守恒 AMR transfer 构造，不会再次调用 `Init`。该函数仍必须确定、线程安全，且不能依赖调用顺序产生副作用。
+`Setup` 在网格分配前运行，你应该在其中读取、验证算例参数并注册所需的核素。`Init` 函数会在 OpenMP 并行环境下被调用，用于精确地将初始数据填充到已分配的根网格单元中（且仅调用一次）。初始以及后续生成的任何细网格 block 都是通过守恒的 AMR 传递操作构造的，而不会再次调用 `Init`。正因如此，`Init` 必须是严格确定的、线程安全的，并且没有任何依赖于执行顺序的副作用。
 
 最小完整示例：
 
@@ -241,9 +243,12 @@ REGISTER_PROBLEM_CLASS("GaussianDensity", GaussianDensity);
 新增 `.cpp` 后重新运行 CMake 配置，以刷新源码 glob：
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
-./bin/ARCH GaussianDensity path/to/arch.par
+cmake -S . -B build-cpu -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+  -DARCH_ENABLE_CUDA=OFF -DARCH_ENABLE_OPENMP=ON \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cpu/bin"
+cmake --build build-cpu --target ARCH --parallel 1
+./build-cpu/bin/ARCH GaussianDensity path/to/arch.par
 ```
 
 ## 7. 算例侧类型和辅助函数
@@ -252,7 +257,7 @@ cmake --build build --parallel 4
 
 用 `config.Get<double/int/string>(key, default)` 读取算例自定义参数。数值通过 `std::stod` 解析；`2*pi` 等表达式应写成已求值的十进制数。未知键会作为自定义参数保留，但不会进行拼写验证。
 
-需要核心设置时，应读取对应的强类型成员，例如：
+当你需要访问核心设置时，应该直接读取它们严格按类型定义的成员。例如：
 
 ```cpp
 config.grid.dim

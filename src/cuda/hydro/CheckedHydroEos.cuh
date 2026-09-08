@@ -1,3 +1,11 @@
+/**
+ * @file CheckedHydroEos.cuh
+ * @brief Transport shared EOS failures through a borrowed device status latch.
+ *
+ * Queries delegate to the physical EOS without changing their returned values.
+ * The launch owner keeps status storage alive until all consumers complete.
+ */
+
 #pragma once
 
 #include "data/FluidState.h"

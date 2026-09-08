@@ -1,6 +1,11 @@
 /**
  * @file BlockHandle.h
  * @brief Backend-neutral identities for blocks, topology epochs, and logical cells.
+ *
+ * A handle pairs a persistent block UID with the topology epoch in which it
+ * is valid. Neither value is a memory-pool index or a device address. Logical
+ * keys describe topology/cell locations; backend stores resolve handles to
+ * their own allocation slots and must reject stale epoch bindings.
  */
 
 #pragma once

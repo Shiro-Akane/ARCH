@@ -1,4 +1,11 @@
-// Generated build binding only. Numerical methods live in shared ARCH headers.
+/**
+ * @file CudaBurnSparseOwner.cu.in
+ * @brief Bind one network/EOS pair to the CUDA sparse-burn storage owner.
+ *
+ * CudaBurnSparseRoutes.cmake supplies this specialization's types. The shared
+ * factory constructs workspace and continuation state for the selected route;
+ * numerical formulas remain in the common network, EOS and ODE headers.
+ */
 #include "@ARCH_SPARSE_EOS_HEADER@"
 #include "cuda/runtime/burn/CudaBackendBurnSparseRoutes.h"
 #include "@ARCH_SPARSE_NETWORK_HEADER@"

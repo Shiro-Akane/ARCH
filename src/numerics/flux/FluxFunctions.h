@@ -6,6 +6,7 @@
  * 1. Physical flux F(U) for a conservative state.
  * 2. Steger-Warming flux-vector splitting.
  * 3. Vinokur-Van Leer flux-vector splitting.
+ * 4. Roe-Glaister linearization and HLL signal-speed estimates.
  */
 
 #pragma once
@@ -17,8 +18,9 @@
 
 #include "../../data/FluidState.h"
 
-// Direction map: dir=0, 1, and 2 select x, y, and z. Flux formulas below use
-// local normal and tangential components and map the result back afterward.
+// Direction map: dir=0, 1, and 2 select the stored native momentum axes.
+// Flux formulas use local orthonormal normal/tangential components and map
+// the result back afterward; curved-coordinate metrics belong to GridMetrics.
 
 /// Return the velocity normal to the selected coordinate direction.
 ARCH_INLINE double get_un(const FluidVector &U, int dir)

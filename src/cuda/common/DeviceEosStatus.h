@@ -1,3 +1,11 @@
+/**
+ * @file DeviceEosStatus.h
+ * @brief Bind a shared EOS view to a backend-owned device failure latch.
+ *
+ * The adapter copies the view and attaches status storage when its interface
+ * supports it. It does not change EOS values or own the latch lifetime.
+ */
+
 #pragma once
 
 #include "core/ArchPortability.h"

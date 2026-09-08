@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_policy_resolution.cu
+ * @brief Exercise device-callable bindings from the shared policy lists.
+ *
+ * Instantiate the registered method families and compare numerical results
+ * with host and independent checks, rather than testing names alone.
+ */
 #include "driver/dispatch/PolicyDescriptor.h"
 
 #include "cuda/diffusion/DiffusionKernels.cuh"

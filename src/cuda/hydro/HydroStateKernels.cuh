@@ -1,3 +1,13 @@
+/**
+ * @file HydroStateKernels.cuh
+ * @brief Device CFL reduction, buffer clearing and flux-divergence traversal.
+ *
+ * CFL candidates use DriverUtils and divergence uses TimeIntegratorHelper with
+ * shared metric caches. Reductions retain failure status. Borrowed buffers stay
+ * owned by the runtime, which checks completion before reading results or
+ * publishing the next stage.
+ */
+
 #pragma once
 
 #include <cstddef>

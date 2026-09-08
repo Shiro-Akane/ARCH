@@ -37,10 +37,10 @@ int inspect_eos_table_rank(const std::string& path)
     const bool has_X = file.exist("n_X");
     if (has_A != has_Z || (has_X && has_A)) {
         throw std::runtime_error(
-            "Legacy tabular EOS axes are incomplete or ambiguous");
+            "Tabular EOS without table_rank has incomplete or ambiguous composition axes");
     }
     if (has_A && has_Z) return 4;
     if (has_X) return 3;
     throw std::runtime_error(
-        "Cannot infer tabular EOS rank: provide table_rank or legacy n_X/n_A/n_Z datasets");
+        "Cannot infer tabular EOS rank: provide table_rank or n_X/n_A/n_Z composition-axis datasets");
 }

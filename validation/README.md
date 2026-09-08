@@ -8,16 +8,32 @@ covering hydrodynamics, diffusion, external gravity, burning, AMR, EOS, restart
 and generated networks on CPU and CUDA. Each record identifies its tested
 sources, binaries and data.
 
+Start with the module for the physics you plan to use. Its summary explains the
+test problem, the reference answer and the allowed error before linking the full
+records. A convergence check asks whether error decreases as the mesh or timestep
+is refined; a conservation check accounts for physical sources and boundary
+transport. CPU/CUDA agreement checks backend consistency, while the independent
+references check the numerical answer itself. Neither comparison substitutes
+for the other.
+
 The CPU/CUDA release profile has passed its numerical, application, regression,
 device-safety, sustained-run and resource checks. The results below preserve
 the tested source, binary and scientific-data identities. The
-[candidate delivery review](backend/results/final-acceptance-20260907/release-73a9cf50/)
+[source delivery review](backend/results/final-acceptance-20260907/release-73a9cf50/)
 collects the final evidence inventory and source-asset review.
 
-The subsequent [maintenance freeze review](backend/results/maintenance-freeze-20260908/README.md)
-records the runtime directory reorganization and documentation cleanup. It links
-the source-equivalence review and separate rebuild checks; the scientific results
-below retain their original tested identities.
+The [source organization and build review](backend/results/maintenance-freeze-20260908/README.md)
+records runtime directory organization, documentation and source equivalence,
+with separate build checks. The scientific results below retain their original
+tested identities.
+
+After the interface and test-layout cleanup, the optimized local CUDA build,
+all 98 configured Release tests, ten development-smoke lanes and both normal
+restart suites pass. Burning-restart memcheck/racecheck and final campaign
+identity checks also pass, completing the local execution scope of the
+[active plan](../docs/development/CudaReleaseStandard.md#active-execution-contract).
+The [maintenance record](backend/results/maintenance-freeze-20260908/README.md)
+keeps these current checks separate from the scientific measurements below.
 
 Timmes author contact and redistribution confirmation remain pending, as recorded
 in the [third-party notices](../THIRD_PARTY_NOTICES.md). This administrative
@@ -37,7 +53,9 @@ and are excluded from new Git additions. Keep the JSON/CSV results, parameters,
 logs and artifact hashes in Git; distribute a full binary-data archive separately
 when needed. Existing tracked reference data and EOS inputs are unaffected.
 
-## Completed results on the release candidate
+<a id="completed-results-on-the-release-candidate"></a>
+
+## Accepted CPU/CUDA results
 
 | Area | Passing CPU/CUDA checks | Record |
 | --- | --- | --- |
@@ -78,15 +96,6 @@ observation interval. The shorter instrumentation run does not replace the
 full scientific trajectory. Host/device capacity and optimized core-build
 measurements are linked above.
 
-### Historical evidence
-
-Earlier [uniform application](backend/results/release-uniform-accounted-20260907/backend-validation-evidence.json)
-and [focused sanitizer](backend/results/accounted-sanitizer-20260907/README.md)
-records remain archived with their original identities. The earlier sanitizer
-campaign passed 18 routes under memory and race checks; it does not qualify the
-candidate's current binaries. Other historical records are linked from each
-module summary.
-
 ## Error conventions
 
 Verification compares the implementation with analytic, manufactured, or
@@ -109,6 +118,13 @@ metrics are sufficient to reproduce the decision.
 
 ## Record requirements
 
+Each case has one effective result set. Rerun in a temporary working directory,
+then update the existing result, summary and dependent index together after
+checking their identities. Do not accumulate V1/V2 copies or relabel an earlier
+run as a new execution. Keep required reference data and failure controls under
+their stated test ownership; superseded working outputs do not belong in the
+published validation directory.
+
 Each completed record states:
 
 1. the property and modules tested, equations, dimension, and geometry;
@@ -127,14 +143,17 @@ case source, parameters, reference and metric definitions. Physical acceptance
 compares solutions at the same prescribed time; exact checkpoint restoration
 has its own state and metadata checks.
 
-## Final-candidate verification
+<a id="final-candidate-verification"></a>
+
+## Recheck the acceptance records
 
 The completed campaigns cover the following areas on one frozen source and
 scientific-data set, with identified Debug/Release binaries, dependencies and
 comparators. Their [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50/)
-records the combined evidence and reviewed source assets. Earlier revisions
-retain their separate evidence; source publication and third-party confirmation
-are not inferred from a passing test report.
+records the combined evidence and reviewed source assets. Each retained result
+identifies the source actually tested; the current maintenance checks are
+recorded separately from those scientific runs. A passing test report does not
+itself publish the source or confirm third-party redistribution permission.
 
 | Area | Reference or check | Required measurements |
 | --- | --- | --- |

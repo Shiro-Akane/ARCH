@@ -43,14 +43,15 @@ function(arch_register_cuda_dense_burn_routes)
             arch_configure_cuda_backend_object(${route_target} "${route_source}")
             target_link_libraries(${route_target} PRIVATE arch_build_contract CUDA::cudart)
             target_sources(arch_cuda_backend PRIVATE $<TARGET_OBJECTS:${route_target}>)
-            # Reuse the existing heavy compile pool and Makefile phase order;
-            # this split adds no competing memory/scheduling policy.
+            # Keep each route in the common heavy compile pool. Dependencies
+            # also preserve phase ordering for generators without Ninja pools.
             add_dependencies(${route_target} ${previous_route})
             set(previous_route ${route_target})
             list(APPEND route_targets ${route_target})
         endforeach()
     endforeach()
-    # Thin Ideal -> thin Helm -> these network/EOS objects -> unchanged Tabular.
+    # Compile the thin Ideal/Helm dispatchers before their network/EOS objects,
+    # then allow the Tabular phase to begin.
     add_dependencies(arch_cuda_backend_burn_tabular3d ${previous_route})
     set(ARCH_CUDA_DENSE_BURN_ROUTE_OBJECT_TARGETS "${route_targets}" PARENT_SCOPE)
     set(ARCH_CUDA_DENSE_BURN_LAST_TARGET "${previous_route}" PARENT_SCOPE)

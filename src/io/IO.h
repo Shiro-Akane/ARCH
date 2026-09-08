@@ -1,11 +1,10 @@
 /**
  * @file IO.h
- * @brief Routes plot, checkpoint, and restart I/O through the configured backend.
+ * @brief Common host-facing plot, checkpoint and restart interfaces.
  *
- * Workflow:
- * 1. Collect synchronized leaf metadata and field values from the driver.
- * 2. Serialize them through the selected backend with explicit dimensions and geometry.
- * 3. Write restart- or analysis-ready output without changing simulation state.
+ * Output callers provide synchronized AMR state, independent of its execution
+ * backend. Plot and checkpoint paths share the HDF5 format; restart validates
+ * and restores state before the driver constructs its continuing evolution.
  */
 
 #pragma once

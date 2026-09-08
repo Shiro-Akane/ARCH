@@ -2,8 +2,11 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+扩散使相邻单元的组分差异逐渐平滑。本页使用衰减速率已知的余弦浓度剖面，
+通过振幅检查扩散精度，通过组分总质量检查守恒，再比较不同分辨率下空间误差的变化。
+
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 CPU 与 CUDA 均通过相同的解析误差、有界性和守恒检验。
 
@@ -17,7 +20,7 @@ X(x,t)=0.5+0.25\exp[-D(2\pi)^2t]\cos(2\pi x),\qquad D=0.01.
 
 ## 复现
 
-[最终候选的主程序验证记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)保存了两个后端在指定物理终止时刻的结果，以及实际输入、源码、程序和构建身份。当前候选的六个扩散用例均已通过。曲线坐标、动态加密及流体耦合扩散由 [AMR 验证](../amr/README.zh-CN.md)另行覆盖。
+[主程序验证记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)保存了两个后端在指定物理终止时刻的结果，以及实际输入、源码、程序和构建身份。受测的六个扩散用例均已通过。曲线坐标、动态加密及流体耦合扩散由 [AMR 验证](../amr/README.zh-CN.md)另行覆盖。
 
 ```bash
 export OMP_NUM_THREADS=4
@@ -32,7 +35,7 @@ python3 tools/validate_backend_results.py \
 RKL2 验收要求最后一对分辨率的 tracer L1 阶数至少 1.8，平均 tracer 漂移不超过 \(10^{-12}\)。RKL1 要求分数有限且有界，Linf 误差不超过 \(10^{-5}\)，并满足相同漂移限制。结果由最终 HDF5 单元平均值测量。
 
 下表的显示精度适用于两个后端；[metrics.csv](metrics.csv)分别保留完整精度的观测值。
-最终候选运行复现了这些数值。在指定物理终点，CPU/CUDA 场量的最大绝对差为
+验收运行复现了这些数值。在指定物理终点，CPU/CUDA 场量的最大绝对差为
 \(9.992\times10^{-16}\)，满足原有的相对误差 \(5\times10^{-10}\)
 和绝对误差 \(2\times10^{-12}\) 对照预算。
 

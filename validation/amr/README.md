@@ -3,15 +3,27 @@
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 authoritative.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+Adaptive mesh refinement (AMR) adds cells where more detail is needed and merges
+them where a coarser mesh is sufficient. Changing the mesh must preserve the
+physical quantities carried by those cells. The records therefore check both
+the refine/coarsen sequence and the fields after transfer, using physical cell
+volumes when computing conservation in curved coordinates.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
 ARCH uses the same refinement indicators, conservative transfers, geometric
 measures and flux corrections on CPU and CUDA. The CPU manages topology and
 Morton ordering; the CUDA backend keeps field migration and numerical updates
 on the GPU. Overall acceptance is tracked in the [validation index](../README.md).
+
+AMR restart requires a complete ARCH checkpoint, including `ENUC` and
+native composition. The [restart guide](../restart/README.md) describes that
+contract. The [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+cover this reader contract separately; the scientific results below retain the
+source identities of the runs that produced them.
 
 ## What the tests cover
 
@@ -29,7 +41,9 @@ PPM uses MUSCL-MinMod at coarse/fine faces. Uniform-grid PPM convergence and
 AMR-wide spatial accuracy are therefore measured separately. Spherical 2-D
 uses the project's polar `(r,phi)` convention.
 
-## Completed checks on the release candidate
+<a id="completed-checks-on-the-release-candidate"></a>
+
+## Accepted CPU/CUDA checks
 
 The [Cartesian application record](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
 passes ten cases, 54 CPU/CUDA executions and 27 comparisons. The largest
@@ -50,7 +64,7 @@ three-dimensional application lifecycle check.
 The three-dimensional [memcheck record](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
 and [racecheck record](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
 each pass all seven CUDA executions and seven CPU reference runs on the same
-candidate. Every memcheck report records zero errors and zero leaked bytes or
+tested build. Every memcheck report records zero errors and zero leaked bytes or
 allocations; every racecheck report records zero hazards, errors or warnings.
 Both campaigns retain the complete eight-child refine/coarsen/refine transitions
 and pass the original field and conservation budgets. In the racecheck
@@ -116,11 +130,11 @@ before destination fields are written.
 
 ## Independent geometry and diffusion checks
 
-The [current-candidate geometry record](results/geometry-native-20260907/release-880/evidence.json)
+The [geometry record](results/geometry-native-20260907/release-880/evidence.json)
 passes 12 thin-shell and near-pole references checked with independent 70/90-digit integrals.
 Spatial refinement checks cover thermal/species diffusion and viscous
 momentum/work fluxes in all coordinate systems and dimensions. The CPU and CUDA
-test executables use the same candidate source and are identified in the report.
+test executables use the same tested source and are identified in the report.
 
 Viscous tests use 30 profiles at three spacings per backend, including uniform
 Cartesian velocity, quadratic fields, variable density and radial flow. The
@@ -138,7 +152,7 @@ nonnegative and maximum row sums do not exceed one, within the original
 
 ## Sustained regridding and continuation
 
-The [current-candidate sustained record](results/sustained-first-law-20260907/release-901/evidence.json)
+The [sustained-execution record](results/sustained-first-law-20260907/release-901/evidence.json)
 passes 500 one-dimensional hydro steps and 100 five-stage RKL2 diffusion steps
 on both backends.
 Including initialization, these runs record 501 and 101 regrid checks. Hydro
@@ -236,20 +250,3 @@ Cartesian, curved, uniform-grid and generated-network matrices and both restart
 reports belong to one build and contain every required comparison. Independent
 scientific, memory-safety and capacity checks are combined with these application
 results in the [validation index](../README.md).
-
-## Historical records
-
-Earlier [Cartesian](results/cartesian-native-20260907/release-768/backend-validation-evidence.json)
-and [curvilinear](results/curved-native-20260907/release-764/backend-validation-evidence.json)
-application records retain their original source and binary identities.
-Earlier [smooth](results/restart-smooth-native-20260907/release-758/restart-validation-evidence.json)
-and [burn/ENUC](results/restart-burn-native-20260907/release-757/restart-validation-evidence.json)
-restart records passed all four backend directions at intermediate and terminal
-checkpoints. The [earlier sustained record](results/sustained-first-law-20260907/release-763/evidence.json)
-passed 500 hydro steps and 100 diffusion steps. These results are archived
-separately from the candidate's qualification records.
-
-Earlier CPU conservation measurements, transfer diagnostics, figures and detailed
-audit commands are preserved in the [pre-release notes](results/pre-release-notes-20260907/README.md).
-Earlier GPU results remain in the [device archive](results/h100-sm90-20260903/README.md).
-They retain their original inputs and measurements.

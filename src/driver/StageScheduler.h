@@ -1,6 +1,10 @@
 /**
  * @file StageScheduler.h
- * @brief Backend-neutral Hydro/RKL stage descriptors and coherence ordering.
+ * @brief Backend-neutral hydro/RKL plans and coherence ordering.
+ *
+ * Descriptors name stage inputs, outputs and required ghost validity. Scheduler
+ * transitions coordinate the residency tracker and backend operations; numerical
+ * field storage and its lifetime remain outside the scheduler descriptors.
  */
 
 #pragma once

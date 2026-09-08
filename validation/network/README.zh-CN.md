@@ -2,10 +2,14 @@
 
 英文原文：[README.md](README.md)。英文版为规范文本。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+反应网络给出燃烧使用的核素、反应率及耦合演化方程。这些测试从生成包的注册一直
+检查到实际时间演化，并将弱反应引起的组分和能量变化与独立参考比较。稀疏案例
+还实际检查大方程系统的求解路径，而不只是确认生成包能够编译。
 
-当前候选版本已通过生成网络的完整程序矩阵、真实 31 核素稀疏轨迹矩阵，
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+
+CPU 和 CUDA 已通过生成网络的完整程序矩阵、真实 31 核素稀疏轨迹矩阵，
 以及恒定比热和 Helmholtz EOS 下的独立弱反应轨迹验证。这些记录覆盖
 同一套网络物理和 ODE 求解器在 CPU、CUDA 后端上的执行。
 
@@ -135,7 +139,7 @@ python tools/run_memory_guarded.py --min-available-mib 1536 \
 
 生成器将 [audit31](inputs/audit31.py) 和 [weak_urca](inputs/weak_urca.py) 的网络包
 写入 `src/physics/network/custom/`，两个后端共用同一份注册包。
-已经匹配的包不会改动。如果需要重新生成旧包，在对应生成命令后添加
+已经匹配的包不会改动。修改配方或生成设置后若要替换网络包，在对应生成命令后添加
 `--replace`，生成器会保留备份。生成或替换网络包后需重新运行 CMake。
 
 保持此 Python 环境激活，每次复现均使用新的空结果目录。下方命令采用报告
@@ -172,7 +176,7 @@ Helmholtz 命令中的 `--cv` 用于配套工厂控制，轨迹本身使用 Helm
 弱反应工具保留粗、细两档容差控制，并要求细容差结果通过。稀疏工具要求三种
 ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算完整覆盖。
 
-## 发布后续与历史记录
+## 适用范围与后续工作
 
 完整 Release／Debug 回归、[五阶段核心构建检查](../backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
 及[声明规模的容量检查](../backend/results/device-memory-first-law-20260907/README.zh-CN.md)
@@ -184,15 +188,6 @@ ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算�
 不属于本轮本地发布门槛。超大网络的科学可靠性取决于核素集合、反应数据和模型
 适用范围，求解器及后端的一致性单独记录。当前不支持自定义网络 NSE；
 [NSE 独立参考](nse_reference.py) 覆盖已支持的内置网络。
-
-此前的[恒定比热](results/weak-cv-first-law-20260907/evidence.json)、
-[Helmholtz](results/weak-helm-first-law-20260907/evidence.json)、
-[audit31](results/audit31-first-law-20260907/evidence.json) 和
-[应用](results/runtime-first-law-20260907/backend-validation-evidence.json)
-记录作为历史候选版本证据保留，当前结论使用上方四份最终科学／程序接入记录
-及已完成的设备安全记录。
-[CPU v3 审计](results/cpu-v3-compatibility/README.zh-CN.md) 及其 CSV 保留原始
-验收范围与机型信息。
 
 内部状态见[发布标准](../../docs/development/CudaReleaseStandard.md)，
 用户能力说明见[后端指南](../../docs/CudaBackendStatus.zh-CN.md)。

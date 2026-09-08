@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include <string>
-
 #include "../amr/AMRControl.h"
 #include "../data/GlobalDefs.h"
 #include "../grid/Grid.h"
@@ -57,8 +55,4 @@ public:
                                 const SpeciesManager &specs,
                                 ProblemInitializationContext context) = 0;
 
-    /**
-     * @brief Returns the name of the problem for logging.
-     */
-    virtual std::string GetSolverName() = 0;
 };

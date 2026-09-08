@@ -1,4 +1,7 @@
-/** Non-owning immutable weak-table storage; no interpolation or reaction math.
+/**
+ * @file WeakTableView.h
+ * @brief Non-owning immutable weak-table storage, without interpolation or reaction math.
+ *
  * Host generated data and a CUDA allocation may bind the same views. Owners
  * must outlive every evaluator/continuation using their addresses.
  */

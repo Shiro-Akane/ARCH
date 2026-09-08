@@ -320,9 +320,9 @@ private:
                 bounded = burn_cfg.nuclearTempMin;
             }
             c.X_j[i] = bounded;
-            // Preserve the original stage projection. Only a real clamp resets
+            // Project each midpoint stage into its admissible domain. Only a clamp resets
             // the increment; subtracting the baseline on every stage would
-            // reintroduce the very cancellation this representation avoids.
+            // lose the small changes retained by this increment representation.
             if (bounded != candidate) c.increment[i] = bounded - initial[i];
         }
     }

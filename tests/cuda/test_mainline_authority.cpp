@@ -1,3 +1,10 @@
+/**
+ * @file test_mainline_authority.cpp
+ * @brief Check shared configuration and physical helper contracts.
+ *
+ * Boolean parsing, runtime aliases, case APIs, conduction factors, terminal
+ * time alignment and isentropic helpers retain one maintained implementation.
+ */
 #include <atomic>
 #include <array>
 #include <chrono>

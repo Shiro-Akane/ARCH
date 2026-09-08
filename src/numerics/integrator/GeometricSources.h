@@ -1,6 +1,12 @@
 /**
  * @file GeometricSources.h
  * @brief Common per-cell orthonormal momentum sources for every backend.
+ *
+ * These curvature terms complement the metric-weighted flux divergence; they
+ * do not add mass or total-energy sources. Radial factors use GridMetrics'
+ * cell-volume average of 1/r, not simply the inverse centre radius. Velocity
+ * components follow the native orthonormal axes, including the shared 2D
+ * polar specialization. The caller supplies the explicit stage duration dt.
  */
 #pragma once
 

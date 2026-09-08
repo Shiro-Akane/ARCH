@@ -1,3 +1,10 @@
+/**
+ * @file test_hydro_leaf_parity.cu
+ * @brief Compare shared hydro numerical leaves on CPU and CUDA.
+ *
+ * Exercise reconstructed faces, directional fluxes, divergence and primitive
+ * recovery against host results and independent physical identities.
+ */
 #include <bit>
 #include <cmath>
 #include <cstdint>

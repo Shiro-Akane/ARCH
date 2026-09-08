@@ -1,3 +1,12 @@
+/**
+ * @file CudaBackendExchange.cu
+ * @brief Forward runtime exchange plans to device boundary and ghost kernels.
+ *
+ * Borrowed blocks, operations, scratch and status use the caller's stream.
+ * The runtime retains their lifetime and completion responsibility; logical
+ * plans and transfer mathematics remain shared with host execution.
+ */
+
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 
 #include "cuda/amr/CoarseFineExchangeKernels.cuh"

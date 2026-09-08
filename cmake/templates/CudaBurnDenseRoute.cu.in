@@ -1,4 +1,11 @@
-// Generated network/EOS binding only. Numerical methods are maintained once.
+/**
+ * @file CudaBurnDenseRoute.cu.in
+ * @brief Bind one built-in network and EOS to the compact CUDA burn kernel.
+ *
+ * CudaBurnDenseRoutes.cmake supplies the types and registration names. This
+ * translation unit instantiates the shared burn/ODE implementation; it owns no
+ * reaction formula or solver algorithm. Noncompact systems use a sparse owner.
+ */
 #include "@ARCH_DENSE_EOS_HEADER@"
 #include "cuda/runtime/burn/CudaBackendBurnDenseRoutes.h"
 #include "@ARCH_DENSE_NETWORK_HEADER@"

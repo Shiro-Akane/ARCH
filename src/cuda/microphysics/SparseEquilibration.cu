@@ -1,3 +1,12 @@
+/**
+ * @file SparseEquilibration.cu
+ * @brief Apply shared matrix/vector scaling helpers to device CSR storage.
+ *
+ * Row, column and vector kernels call LinearEquilibration for the arithmetic.
+ * The provider supplies original inputs, private scaled outputs and an invalid
+ * latch, and owns the stream fence before consuming the result.
+ */
+
 #include "SparseEquilibration.h"
 #include "numerics/linalg/LinearEquilibration.h"
 #include <algorithm>

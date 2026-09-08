@@ -1,14 +1,10 @@
 /**
  * @file RuntimeParams.h
- * @brief Global static interface for accessing runtime parameters via type deduction.
- * Wraps the ConfigParser in a Singleton to provide seamless access across the codebase.
- */
-
-/**
- * Workflow:
- * 1. Read or derive the configuration value from its canonical source.
- * 2. Validate it before exposing it to problem setup and solver dispatch.
- * 3. Keep policy decisions out of low-level numerical kernels.
+ * @brief Load a parameter file into the shared simulation configuration.
+ *
+ * The loader converts typed sections, checks control values and preserves
+ * problem-specific parameters. Enum-like tokens are case-normalized here;
+ * policy registration and backend resolution validate their meanings later.
  */
 
 #pragma once
@@ -172,8 +168,8 @@ public:
         cfg.numerics.cfl = parser.GetDouble("cfl", 0.8);
         cfg.numerics.limiter = parser.GetString("limiter", "minmod");
         cfg.numerics.reconstruction = parser.GetString("reconstruct", "pcm");
-        // Prefer the canonical snake_case key while preserving compatibility
-        // with existing parameter files that use the legacy spelling.
+        // The canonical time_integrator key takes precedence over its
+        // accepted timeintegrator alias.
         cfg.numerics.time_integrator = parser.GetString(
             "time_integrator", parser.GetString("timeintegrator", "RK2"));
         if (parser.GetBool("EntropyFix", true))

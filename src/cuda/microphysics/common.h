@@ -20,7 +20,7 @@ template <int N>
 using BurnOdeMatrixWorkspaceFor =
     OdeMatrixWorkspace<DenseMatrixData<N>>;
 
-// Compatibility surface for focused maximum-size policy tests. Production
+// Maximum-size workspace alias for focused policy tests. Production
 // storage is allocated with BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>.
 using BurnOdeMatrixWorkspace =
     BurnOdeMatrixWorkspaceFor<BurnLimits::MAX_ODE_NEQ>;

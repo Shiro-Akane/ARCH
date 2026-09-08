@@ -1,3 +1,12 @@
+/**
+ * @file RuntimeProbe.cpp
+ * @brief Query driver/runtime capability without constructing a CUDA backend.
+ *
+ * Dynamically loaded APIs report the selected device, library versions and
+ * primary-context state. Compiled SASS/PTX metadata is checked here; backend
+ * resolution decides how to use the result, and simulation allocation occurs later.
+ */
+
 #include "RuntimeProbe.h"
 
 #include <charconv>

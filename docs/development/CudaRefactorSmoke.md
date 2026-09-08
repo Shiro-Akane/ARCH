@@ -25,10 +25,7 @@ below describe the September 5 artifacts; they do not qualify the newer sources.
 | Sparse structure | `CsrPattern`, `CsrMatrixView`, declared structural entries and temperature coupling | cuDSS descriptors, analysis, factors, stream ownership |
 | Coordinates | `GridGeometryView`, `GridMetrics`, `GeometricSources`, `DiffFlux` | Device views and launches |
 
-There is no second copy of the reaction, ODE, interpolation, or coordinate
-formulas. Existing CPU conventions and floors are preserved, including its
-dimension-specific cylindrical/spherical specializations. This establishes
-implementation parity, not an independent physical validation of those conventions.
+Crucially, there is no second, duplicate copy of the reaction, ODE, interpolation, or coordinate formulas. We strictly preserve the existing CPU conventions and numeric floors, including its dimension-specific cylindrical and spherical specializations. This design choice establishes *implementation parity* across backends, rather than serving as an independent physical validation of those conventions themselves.
 
 ### Functional compilation boundaries
 
@@ -96,10 +93,10 @@ state remain on the GPU. The provider disables hybrid CPU numerical execution
 and Host factor spill. Only small scheduling/status messages cross the boundary.
 See [NVIDIA's cuDSS API and memory-estimate contract](https://docs.nvidia.com/cuda/cudss/types.html).
 
-Generator v4 emits a single host/device mathematical header for recognized
+The generator emits a single host/device mathematical header for recognized
 immutable-table packages and records `device_callable_math` in the manifest.
-Registered policies select generated network/EOS delegates. Old v3 packages and
-networks requiring runtime-loaded weak-rate tables remain CPU-only; the latter
+Registered policies select generated network/EOS delegates. Packages without a
+device-callable math interface and runtime-loaded weak-rate tables remain CPU-only; the latter
 still need a backend table owner. Generated networks do not gain NSE.
 
 ## Build and smoke protocol
@@ -156,7 +153,7 @@ Completed focused checks at this integration checkpoint:
 - all three ODE continuations against frozen-main CPU references;
 - device sparse linear algebra and ODE tests at 32, 151, and 201 equations;
 - actual generated 31-species RHS/Jacobian/temperature-derivative CPU/GPU parity;
-- old-v3/new-v4 generated CPU outputs: 2,238 values bit-identical;
+- generated CPU output comparison: 2,238 values bit-identical;
 - multidimensional/curvilinear AMR indicator and migration tests, including
   large passive composition and invalid-input cases;
 - curvilinear hydro/diffusion and boundary short tests;

@@ -5,7 +5,7 @@ bin/
 *.o
 *.out
 
-# 模拟数据 (一定要屏蔽，否则传不上去)
+# 本地模拟输出
 output/
 
 # Validation summaries, inputs and logs belong in Git. Generated checkpoints

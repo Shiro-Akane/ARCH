@@ -1,13 +1,10 @@
 /**
  * @file AmrDefines.h
  * @brief Global compile-time constants for the AMR (Adaptive Mesh Refinement) module.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ *
+ * Active block extents, ghost capacity, and the padded innermost stride define
+ * a shared storage contract. Padding is allocation space, not an extra set of
+ * physical cells; numerical loops use the grid's active and ghost extents.
  */
 
 #pragma once

@@ -4,12 +4,22 @@ Start with [implementation ownership](ImplementationOwnership.md) before changin
 shared mathematics, backend storage, or execution paths. The map identifies the
 single maintained implementation and its CPU/CUDA consumers.
 
+The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.
+
+When changing a module, identify its owner and callers, explain the inputs and
+assumptions that must stay valid, then select the relevant tests. Update the
+public description when behavior changes and retain a separate record of the
+verification. The [comment and documentation guide](CommentAndDocumentationStyle.md)
+describes how to explain this flow without turning source comments into a change log.
+
 ## Current maintenance
 
-- [Maintenance freeze and release ledger](CudaReleaseStandard.md): the active
-  post-acceptance organization scope, followed by the completed release plan and
-  its execution history. Preserve the distinction between the accepted source
-  and later maintenance changes.
+- [Current interface review](ImplementationOwnership.md#current-interface-and-compatibility-review): the complete ARCH checkpoint
+  contract, removal of unused solver-selection members, retained API boundaries
+  and the focused verification record.
+- [Release review ledger](CudaReleaseStandard.md): review scope, decisions and
+  the evidence used for acceptance. Individual measurements identify the source
+  and build they tested; retain that association when making changes.
 - [Optimized core-build reference](../../validation/backend/results/cold-core-first-law-20260907/release-909/README.md):
   the measured cold, no-op and incremental builds, with the two-heavy/four-total
   job configuration. This is a measured reference, not a universal optimum.

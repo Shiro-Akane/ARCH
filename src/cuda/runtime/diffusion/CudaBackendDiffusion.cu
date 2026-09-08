@@ -1,3 +1,13 @@
+/**
+ * @file CudaBackendDiffusion.cu
+ * @brief Bind shared RKL descriptors and EOS views to CUDA diffusion launches.
+ *
+ * DiffFunction supplies stage coefficients. The binding selects stage inputs,
+ * launches the shared operator/update adapters and registers AMR surface fluxes.
+ * Runtime control owns slot publication, scratch lifetime and the stream fence;
+ * this file does not introduce a second RKL recurrence.
+ */
+
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 
 #include "cuda/diffusion/DiffusionSolver.cuh"

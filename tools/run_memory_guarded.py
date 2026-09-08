@@ -71,6 +71,9 @@ class SystemPressureObservation:
         delta = [value - previous for value, previous in zip(counters, self.previous)]
         if min(delta) < 0:
             raise RuntimeError('system pressure counters moved backwards')
+        # PSI totals are microseconds: 100 * delta_us / (elapsed_s * 1e6)
+        # gives the percentage of the sampling interval spent fully stalled.
+        # Swap counters are pages and are converted separately to MiB/s.
         rates = [min(100., value / (elapsed * 10000.)) for value in delta[:2]]
         rates.extend(value * self.page_mib / elapsed for value in delta[2:])
         self.peaks = [max(peak, rate) for peak, rate in zip(self.peaks, rates)]
@@ -226,7 +229,7 @@ class OwnedDescendants:
                     # Older kernels can return EINVAL, not ESRCH, when a
                     # process is reaped between PID lookup and the TGID check.
                     # Ignore only a verified stale snapshot; a live identity
-                    # we cannot pin must still fail closed (including EINVAL).
+                    # that cannot be pinned must still fail closed (including EINVAL).
                     verified = process_identity(current.pid)
                     if error.errno == errno.EINVAL and (verified is None
                             or verified.start_time != current.start_time):

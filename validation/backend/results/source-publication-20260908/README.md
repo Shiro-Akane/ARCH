@@ -1,8 +1,8 @@
-# CUDA_complete_v1 source archive
+# Source publication record
 
-This record accompanies the independently frozen source branch requested by the
-project owner. It packages the reviewed worktree; it is not a new simulation,
-another scientific qualification, or a precompiled binary release.
+This existing record identifies the maintained source delivery and its selected
+verification evidence. Update it in place when the delivered files change; it
+does not represent a new simulation or a precompiled binary release.
 
 ## Contents
 
@@ -15,31 +15,44 @@ documentation; their original hashes and published locations are in the manifest
 
 Generated HDF5 checkpoints and plots, executables, object/static/shared libraries,
 dependency installations, profiler databases and large raw traces are not part
-of this source delivery. They remain in the owner's local workspace; no local
-results were deleted. Necessary multi-megabyte JSON evidence summaries are
+of this source delivery. Necessary multi-megabyte JSON evidence summaries are
 retained explicitly, rather than silently dropping them by a blanket size rule.
 The existing Helmholtz table keeps its unchanged Git LFS pointer. Runtime
 `*_log.dat` text logs use ordinary, byte-preserving Git storage instead of LFS.
 
-## Evidence and version identity
+## Evidence and source identity
 
 The [scientific acceptance](../final-acceptance-20260907/release-73a9cf50/README.md)
-retains its original source73 identity. The subsequent
-[maintenance freeze](../maintenance-freeze-20260908/README.md) records the path-only
-source comparison, optimized rebuild, 98 passing Release tests and ten passing
-development-smoke lanes. Neither record is rewritten to name this later commit.
+retains its recorded source identity and 41 required passes. The
+[maintenance review](../maintenance-freeze-20260908/README.md) records the current
+ARCH checkpoint reader, unified factory interfaces, test/tool organization and
+actual local verification. The optimized CUDA build, all 98 configured Release
+tests, ten development-smoke lanes, smooth/burning restart, burning-restart
+memcheck/racecheck and all 282 Python controls pass. The runtime campaign checks
+source, executable and test-artifact identities before and after execution.
+Its source fingerprint is
+`02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781`;
+the independent scientific measurements retain their own source identity.
 
-The source/input fingerprint in those records describes an uncommitted worktree,
-including tracked paths already deleted at that time. Staging the intended
-deletions and creating a commit changes Git/source identity without changing the
-surviving source bytes. The archive manifest therefore checks every surviving
-source input against the maintenance comparison, separately from Git identity.
+The archive manifest observes the current source and selected evidence directly.
+It must include the intentional interface, fixture and documentation changes;
+the earlier path-only surviving-source comparison does not establish equivalence
+for this cleanup. Recorded scientific inputs, budgets and measurements are not
+renamed to match a later Git commit.
 
-Old reports preserve their original absolute paths and hashes. A source checkout
-does not contain the original HDF5 files, locally built programs or all raw traces
-required to replay the complete historical identity audit. Reproduce the tests
-with a fresh build and new result directories; do not treat missing excluded
-artifacts as evidence that the recorded numerical run failed.
+## Updating effective validation records
+
+Use the existing module inputs, runners and declared report locations. After a
+successful rerun, replace that module's effective report and summary together,
+recording the actual source/build identities and measured data. Do not create
+parallel versioned result sets or copy a previous pass into a new identity.
+Independent reference fixtures and required failure/protocol controls retain
+their explicit test ownership; they are not additional current success reports.
+
+A source checkout excludes original HDF5 products, locally built programs and
+large profiler traces. Reproduction therefore requires the documented build and
+dependencies. The selected evidence states the original observations and scope;
+absence of an excluded runtime artifact is not itself a numerical failure.
 
 Third-party provenance remains in [THIRD_PARTY_NOTICES.md](../../../../THIRD_PARTY_NOTICES.md).
 The pending Timmes contact/redistribution confirmation is unchanged by this source

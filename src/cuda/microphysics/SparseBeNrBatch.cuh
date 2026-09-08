@@ -1,4 +1,9 @@
-/** Compatibility aliases; all sparse ODE methods share one backend executor. */
+/**
+ * @file SparseBeNrBatch.cuh
+ * @brief BE-NR aliases of the common sparse ODE backend executor.
+ *
+ * These names bind a method to SparseOdeBatch; they define no second solver.
+ */
 #pragma once
 #include "SparseOdeBatch.cuh"
 

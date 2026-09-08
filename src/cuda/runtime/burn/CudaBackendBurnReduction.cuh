@@ -1,4 +1,11 @@
-/** Shared CUDA burn summary reduction for dense and sparse execution. */
+/**
+ * @file CudaBackendBurnReduction.cuh
+ * @brief Reduce dense and sparse CUDA burn outcomes into one summary.
+ *
+ * The kernel reads borrowed cell candidates and dispositions using the common
+ * ReductionSpec semantics. The runtime owns the summary buffer and must complete
+ * the stream before the host uses its limiter or failure information.
+ */
 #pragma once
 #include "cuda/runtime/CudaBackendTypes.h"
 #include "driver/DriverBurnPolicy.h"

@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_amr_exchange.cpp
+ * @brief Compare CUDA coarse-fine exchange with the CPU transfer path.
+ *
+ * The host test drives production GPU exchange across dimensions and
+ * geometries, then checks the resulting fluid and species fields.
+ */
 #include "amr/AMRControl.h"
 #include "amr/BoundaryPlan.h"
 #include "amr/CoarseFineCellPlan.h"

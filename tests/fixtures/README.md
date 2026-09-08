@@ -4,8 +4,8 @@ Fixtures provide expected values or small controlled systems for the
 [tests](../README.md). Each header records its source or derivation; reference
 data and historical snapshots serve different purposes.
 
-- [BurnMainlineReference.h](BurnMainlineReference.h): preserved endpoints from the
-  frozen CPU implementation, used to explain changes rather than redefine accuracy.
+- [BurnMainlineReference.h](BurnMainlineReference.h): method-specific numerical
+  snapshots, distinct from independent accuracy references.
 - [BurnTimeReference.h](BurnTimeReference.h): independently integrated burn
   endpoints, with the production rate and EOS models held fixed.
 - [HelmReference.h](HelmReference.h), [NseReference.h](NseReference.h) and
@@ -13,7 +13,12 @@ data and historical snapshots serve different purposes.
   and flux reference values; reproduction scripts are identified in the headers.
 - [SparseTransferNetwork.h](SparseTransferNetwork.h): a manufactured conservative
   chain for sparse execution tests, not a nuclear reaction network.
+- [amr_composition_test_cases.h](amr_composition_test_cases.h) and
+  [regrid_migration_fixture.h](regrid_migration_fixture.h): reusable composition
+  and topology-transfer inputs for host/device tests.
+- [checkpoint_conservation_metrics.h](checkpoint_conservation_metrics.h): shared
+  test-side integration and comparison support, not a production checkpoint reader.
+- [validation_provenance/](validation_provenance/README.md): fixed qualifier
+  protocol inputs and artifact-mismatch negative controls, not release evidence.
 
-Reusable numerical test traversals belong to [math/](../math/README.md).
-Keep provenance with changed reference data and preserve the historical evidence
-that motivated a correction.
+All reusable numerical test traversals belong strictly in [math/](../math/README.md). When changing reference data, you must carefully keep the associated provenance and rigorously preserve the historical evidence that originally motivated the correction.

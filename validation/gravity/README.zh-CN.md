@@ -2,8 +2,12 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+这些测试施加预先给定的重力加速度，不求解流体自身产生的重力。外力应按预期
+改变动量与能量，而不改变总质量。耦合案例进一步检查网格细化和组分扩散时
+能否保持这项收支平衡。
+
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 CPU 与 CUDA 共用逐阶段外部重力源项。验证从周期状态开始，其中 \(\rho=1\)、
 \(p=1\)、\(u=0\)，常加速度为 \(g_x=1\)。在 \(t=0.1\) 时，精确解为
@@ -41,7 +45,7 @@ CPU 与 CUDA 共用逐阶段外部重力源项。验证从周期状态开始，�
 根单元宽度即为物理体积积分。该归一化不改变相对漂移，绝对预算作用于报告中记录的和。
 组分精度与扩散收敛另见[扩散记录](../diffusion/README.zh-CN.md)。
 
-同一候选也已通过下文的均匀网格源项测试。整体验收状态统一见[验证索引](../README.zh-CN.md)。
+同一受测构建也已通过下文的均匀网格源项测试。整体验收状态统一见[验证索引](../README.zh-CN.md)。
 
 ## 复现耦合检查
 
@@ -69,7 +73,7 @@ python3 validation/gravity/results/coupled-final-20260907/check_terminal.py \
 
 `simulation/ExternalGravity/` 中的 `ExternalGravity` 算例和 [`inputs/`](inputs/)
 中的不可变参数，在均匀网格上单独验证重力源项。
-[当前候选的应用记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+[应用记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
 复现了下表及 [metrics.csv](metrics.csv) 中的数值，两个后端均到达指定物理终点。
 
 RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预算。

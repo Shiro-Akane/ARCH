@@ -80,7 +80,7 @@ inline void RegisterCoarseFineFluxes(
 }
 
 /**
- * Compatibility entry used by Host hydro/diffusion.  AMRControl owns the
+ * Cached-plan entry used by Host hydro/diffusion. AMRControl owns the
  * epoch cache, so the first call after publication builds O(blocks*surface)
  * plans and every later stage/direction call is an indexed lookup.
  */

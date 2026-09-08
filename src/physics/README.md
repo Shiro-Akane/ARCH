@@ -12,10 +12,7 @@ by the [numerical methods](../numerics/README.md).
 - [Diagnostics](diagnostics/README.md): metric-aware velocity diagnostics.
 - [Constants and units](constant/README.md): project-owned constant definitions.
 
-Each physical model has one mathematical authority used by both backends.
-Host owners and CUDA owners may differ in allocation and table placement;
-borrowed views expose those data to the same formulas. Numerical integration,
-mesh traversal and runtime dispatch belong to their respective modules.
+Each physical model is defined by a single mathematical authority that is shared by both backends. While host owners and CUDA owners may manage memory allocation and table placement differently, they expose their data to these shared formulas using borrowed views. Furthermore, numerical integration, mesh traversal, and runtime dispatch logic are purposefully excluded from these models and belong entirely to their respective modules.
 
 See the [Reference](../../docs/Reference.md),
 [validation overview](../../validation/README.md) and

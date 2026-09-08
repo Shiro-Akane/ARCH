@@ -1,13 +1,12 @@
 /**
  * @file Morton.h
  * @brief 64-bit Morton encoding (Z-curve) for 3D AMR blocks.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ *
+ * Host topology keys use the high four bits for the refinement level and the
+ * low sixty bits for interleaved logical coordinates: x, y, z occupy bit
+ * positions 3n, 3n+1, 3n+2. Coordinates are nonnegative block indices, not
+ * physical distances. Callers must validate the representable domain before
+ * encoding, because the bit operations mask rather than reject overflow.
  */
 
 #pragma once
@@ -21,7 +20,7 @@ inline constexpr int kMaxRefinementLevel = (1 << kMortonLevelBits) - 1;
 inline constexpr uint32_t kMortonCoordinateMask = (1u << 20) - 1u;
 
 /**
- * @brief Interleaves three 20-bit integers into the low 60 bits.
+ * @brief Spreads one 20-bit coordinate into every third bit of a 60-bit word.
  */
 inline uint64_t splitBy3(uint64_t a) {
     a &= kMortonCoordinateMask;

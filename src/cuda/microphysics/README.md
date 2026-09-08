@@ -1,7 +1,8 @@
 # Microphysics storage and sparse execution
 
-This functional index groups the closely related owners without moving their
-established interfaces during the maintenance freeze.
+This directory supplies the device storage and solver-library resources needed
+by EOS and burning calculations. The index separates long-lived uploaded data
+from the work buffers and execution used to solve reaction systems.
 
 | Responsibility | Main entries |
 | --- | --- |
@@ -12,8 +13,4 @@ established interfaces during the maintenance freeze.
 | Sparse provider and scaling | [CuDssSparseSolver.h](CuDssSparseSolver.h), [SparseEquilibration.h](SparseEquilibration.h) and their implementations |
 | Batched burn execution | [SparseOdeBatch.cuh](SparseOdeBatch.cuh), [SparseBurnCells.cuh](SparseBurnCells.cuh); [SparseBeNrBatch.cuh](SparseBeNrBatch.cuh) contains aliases, not another solver |
 
-Storage owners upload existing data and expose borrowed views. EOS, network,
-ODE and equilibration mathematics keep their common authorities in
-[physics](../../physics/README.md) and [numerics](../../numerics/README.md).
-The cuDSS adapter owns provider handles, buffers and error reporting; registration
-and dense/sparse routing live in [runtime/burn](../runtime/burn/README.md).
+Storage owners are responsible for uploading existing host data and subsequently exposing borrowed device views. All underlying EOS, network, ODE, and equilibration mathematics must remain governed by their common authorities in [physics](../../physics/README.md) and [numerics](../../numerics/README.md). The cuDSS adapter handles provider handles, buffers, and error reporting, while the actual registration and dense/sparse routing logic resides in [runtime/burn](../runtime/burn/README.md).

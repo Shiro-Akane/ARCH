@@ -1,5 +1,12 @@
+/**
+ * @file test_cuda_amr_composition.cu
+ * @brief Check composition conservation during CUDA AMR transfers.
+ *
+ * Exercise shared prolongation cases in every dimension, including trace
+ * species, closure roundoff and invalid parent-density controls.
+ */
 #include "cuda/amr/CoarseFineExchangeKernels.cuh"
-#include "../amr_composition_test_cases.h"
+#include "../fixtures/amr_composition_test_cases.h"
 
 #include <algorithm>
 #include <array>

@@ -6,6 +6,11 @@
  * integrators supply the (possibly negative) stage weight at execution time.
  * Keeping that value out of the plan makes one canonical plan reusable by
  * Euler/RK hydro and every RKL diffusion stage.
+ * Registration accumulates the signed fine-minus-coarse flux difference.
+ * Reflux applies U_after = U_before + correction * registered_flux, with
+ * geometry and orientation supplied by the execution plan. Species follow
+ * the same update for rho*X and are divided by the updated density, so the
+ * correction conserves species mass rather than the mass fraction itself.
  */
 
 #pragma once

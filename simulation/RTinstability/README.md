@@ -8,6 +8,4 @@ mixing in two or three dimensions. Species fields identify the two fluids.
 external-gravity and output choices for the intended calculation; parameter
 definitions are in the [Reference](../../docs/Reference.md).
 
-This directory owns the initial condition, not a separate gravity, AMR or flux
-implementation. Scientific acceptance is recorded separately in
-[Validation](../../validation/README.md).
+This directory exclusively owns the initial condition setup; it does not contain separate gravity, AMR, or flux implementations. Scientific acceptance criteria and records are maintained strictly within the [Validation](../../validation/README.md) module.

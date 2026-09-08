@@ -205,18 +205,25 @@ def lane_contract() -> list[tuple[str, str, str | None]]:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--arch", type=Path)
-    parser.add_argument("--checkpoint-validator", type=Path)
-    parser.add_argument("--source-root", type=Path, default=Path.cwd())
-    parser.add_argument("--build-dir", type=Path)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--arch", type=Path, help="ARCH executable from the selected build")
+    parser.add_argument("--checkpoint-validator", type=Path,
+                        help="arch_cuda_single_level_validation from the same build")
+    parser.add_argument("--source-root", type=Path, default=Path.cwd(),
+                        help="repository root used to resolve inputs and capture source identity")
+    parser.add_argument("--build-dir", type=Path,
+                        help="CMake build directory that produced both executables")
     parser.add_argument("--configuration", help="required for multi-config builds")
     parser.add_argument(
         "--input", type=Path,
-        default=Path("validation/amr/inputs/smooth_amr80_l1.par"))
-    parser.add_argument("--problem", default="SmoothAdvection")
-    parser.add_argument("--output-root", type=Path)
-    parser.add_argument("--unit-test", action="store_true")
+        default=Path("validation/amr/inputs/smooth_amr80_l1.par"),
+        help="canonical parameter file, relative to the source root")
+    parser.add_argument("--problem", default="SmoothAdvection",
+                        help="registered ARCH problem corresponding to the input")
+    parser.add_argument("--output-root", type=Path,
+                        help="new or empty directory for restart lanes and the result report")
+    parser.add_argument("--unit-test", action="store_true",
+                        help="check the declared restart routes only; do not execute ARCH")
     validation_sanitizer.add_arguments(parser)
     args = parser.parse_args(argv)
     if args.unit_test:

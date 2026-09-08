@@ -6,6 +6,4 @@ The initializer samples cells at their centres; the
 [hydro validation](../../validation/hydro/README.md) accounts for finite-radius
 and spatial-resolution effects when comparing the blast with its reference.
 
-[Sedov.par](Sedov.par) is the reusable example. The
-[AMR validation](../../validation/amr/README.md) owns the qualified refinement,
-coarsening and conservative-migration cases that reuse this problem.
+You can use [Sedov.par](Sedov.par) as a reusable example. Note that the [AMR validation](../../validation/amr/README.md) module exclusively owns all qualified refinement, coarsening, and conservative-migration test cases that leverage this problem's setup.

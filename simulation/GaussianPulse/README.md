@@ -10,5 +10,4 @@ initial physical pulse consistent across the selected coordinate systems.
 diffusion-coupling and dynamic-mesh cases; it also checks the initial envelope
 against an independent reference.
 
-The problem only initializes fields. Coordinate metrics, diffusion operators and
-CPU/CUDA execution remain in their shared production modules.
+This problem exclusively handles the initialization of fields. All underlying coordinate metrics, diffusion operators, and CPU/CUDA execution logic remain securely within their shared production modules.

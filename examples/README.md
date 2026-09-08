@@ -5,6 +5,4 @@ custom reaction network. Examples illustrate extension interfaces; reusable
 simulation problems and their parameter files live in
 [simulation/](../simulation/README.md).
 
-For build and runtime choices, use the [documentation index](../docs/README.md).
-Measured scientific cases and their acceptance budgets belong to
-[Validation](../validation/README.md).
+For detailed build and runtime choices, always refer to the [documentation index](../docs/README.md). Measured scientific cases and their formal acceptance budgets rigorously belong in the [Validation](../validation/README.md) module.

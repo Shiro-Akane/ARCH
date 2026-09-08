@@ -1,3 +1,10 @@
+/**
+ * @file test_burn_policy_parity.cu
+ * @brief Exercise built-in burn policies on CPU and CUDA.
+ *
+ * Compare selected network/ODE routes and verify controller status, EOS
+ * ownership, workspace layout and the handoff to shared burn mathematics.
+ */
 #include "cuda/microphysics/helm_eos_device_owner.h"
 #include "cuda/microphysics/microphysics_api.h"
 #include "core/FileFingerprint.h"

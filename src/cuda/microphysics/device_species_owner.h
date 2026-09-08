@@ -1,3 +1,12 @@
+/**
+ * @file device_species_owner.h
+ * @brief Own immutable device species arrays and expose borrowed shared views.
+ *
+ * The constructor borrows a stream and retains host staging for uploads.
+ * Consumers must obey the stream/lifetime contract below; view() does not
+ * transfer ownership or introduce a separate mixture model.
+ */
+
 #pragma once
 
 #include "physics/eos/IdealGas.h"

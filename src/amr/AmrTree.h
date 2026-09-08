@@ -1,13 +1,11 @@
 /**
  * @file AmrTree.h
  * @brief Manages the hierarchy and active block list for AMR.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ *
+ * The Host owns Morton lookup, leaf ordering, neighbour relations, and the
+ * balanced refinement decision. Regridding prepares a candidate hierarchy
+ * and logical transfer plans before committing the topology. Executors bind
+ * those plans to storage without maintaining a second hierarchy algorithm.
  */
 
 #pragma once

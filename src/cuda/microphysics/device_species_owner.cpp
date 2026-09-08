@@ -1,3 +1,12 @@
+/**
+ * @file device_species_owner.cpp
+ * @brief Upload species metadata and manage its device-array lifetime.
+ *
+ * Host values are copied into retained staging, then uploaded on the borrowed
+ * stream. Shared SpeciesPODView and IdealGasView use the resulting arrays;
+ * move/release operations preserve the owner boundary.
+ */
+
 #include "cuda/microphysics/device_species_owner.h"
 
 #include "cuda/microphysics/device_eos_owner_utils.h"

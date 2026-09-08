@@ -2,10 +2,10 @@
  * @file GhostExchange.h
  * @brief Synchronizes same-level and coarse-fine AMR ghost cells.
  *
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ * Host plan construction resolves neighbours and logical source/destination
+ * cells. Execution binds those cells to block storage, using direct same-level
+ * copies or the shared coarse-fine prolongation/restriction rules. Ghost
+ * synchronization changes field data, not hierarchy ownership.
  */
 
 #pragma once

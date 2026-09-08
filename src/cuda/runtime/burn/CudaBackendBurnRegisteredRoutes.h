@@ -1,4 +1,10 @@
-/** Lightweight registered network dispatch, with no numerical instantiations. */
+/**
+ * @file CudaBackendBurnRegisteredRoutes.h
+ * @brief Select a registered dense burn route without numerical instantiation.
+ *
+ * Policy visitors map the resolved network binding to a typed launch function.
+ * ODE selection and cell evolution remain in the shared burn implementation.
+ */
 #pragma once
 
 #include "cuda/runtime/burn/CudaBackendBurnDenseRoutes.h"

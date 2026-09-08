@@ -49,9 +49,9 @@ function(arch_register_cuda_sparse_burn_routes)
                 target_link_libraries(${route_target} PRIVATE
                     arch_build_contract arch_cuda_sparse_provider)
                 target_sources(arch_cuda_backend PRIVATE $<TARGET_OBJECTS:${route_target}>)
-                # The shared Ninja pool imposes the hard memory bound. This
-                # dependency also preserves the functional route sequence for
-                # Makefile generators, without adding a new compile policy.
+                # The shared Ninja pool limits concurrent heavy compilations;
+                # actual memory use is observed by the build guard. Dependencies
+                # preserve route ordering for generators without Ninja pools.
                 add_dependencies(${route_target} ${previous_route})
                 set(previous_route ${route_target})
                 list(APPEND route_targets ${route_target})

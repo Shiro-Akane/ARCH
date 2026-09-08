@@ -1,3 +1,13 @@
+/**
+ * @file PolicyDescriptor.h
+ * @brief Common policy registrations, names, requirements and binding visitors.
+ *
+ * The registry connects parsed choices to CPU/CUDA binding tags and exposes
+ * network shape and feature requirements without importing numerical kernels.
+ * Backend factories consume these registrations rather than maintaining separate
+ * lists of physical models.
+ */
+
 #pragma once
 
 #include "ResolvedExecutionPlan.h"

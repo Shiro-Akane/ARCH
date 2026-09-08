@@ -1,3 +1,13 @@
+/**
+ * @file CudaBackendHydroControl.cpp
+ * @brief Coordinate CUDA hydro, boundary exchange, reflux and slot rotation.
+ *
+ * Validate store generations and shared stage/plan descriptors before binding
+ * device views. Runtime-owned scratch and transfer metadata remain alive through
+ * stream completion; ghost and slot visibility follow the common driver contract.
+ * Flux, CFL, interpolation and geometry formulas stay in their shared owners.
+ */
+
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 #include "amr/CoarseFineCellPlan.h"

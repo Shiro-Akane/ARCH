@@ -1,3 +1,13 @@
+/**
+ * @file CudaBackendIndicators.cpp
+ * @brief Gather device refinement summaries for host mesh decisions.
+ *
+ * Reuse backend-owned scratch across stream-ordered blocks, evaluate shared
+ * indicators with the selected EOS and download one scalar per block. Complete
+ * the batch before host consumption or scratch retirement, then reject invalid
+ * summaries before topology work.
+ */
+
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/amr/RefinementIndicators.h"
 #include <cmath>

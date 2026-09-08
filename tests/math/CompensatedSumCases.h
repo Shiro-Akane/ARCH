@@ -1,3 +1,10 @@
+/**
+ * @file CompensatedSumCases.h
+ * @brief Provide exact cancellation cases for host and device reductions.
+ *
+ * Both consumers read the same terms and expected sums or sum-of-products.
+ * Runtime staging prevents constant folding from replacing the tested path.
+ */
 #pragma once
 
 #include "core/CompensatedSum.h"

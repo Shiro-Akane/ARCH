@@ -1,3 +1,12 @@
+/**
+ * @file RefinementIndicatorMath.h
+ * @brief Shared field sampling and dimensionless AMR refinement indicators.
+ *
+ * Host configuration selects the fields. Host and device executors then use
+ * these scalar leaves on the same logical stencils and take the maximum
+ * error over selected fields and active axes. Thresholding returns a refine,
+ * keep, or derefine flag; hierarchy mutation remains a separate Host step.
+ */
 #pragma once
 
 #include "core/ArchPortability.h"
@@ -56,6 +65,13 @@ ARCH_INLINE int refinement_flag(double error, int level, int minimum_level,
         : (error < derefine && level > minimum_level ? -1 : 0);
 }
 
+/**
+ * Three-point curvature indicator for q at offsets -1, 0, +1. The numerator
+ * is max(0, |q+ - 2q0 + q-| - uncertainty); the denominator combines the
+ * two first differences with epsilon*(|q+| + 2|q0| + |q-|). Their common
+ * field units cancel. A positive floor avoids division by zero, and the
+ * result is capped at one. Nonfinite stencil data remain an invalid result.
+ */
 ARCH_INLINE double loehner_error(double qm, double q0, double qp,
                                  double curvature_uncertainty = 0.0)
 {
@@ -159,6 +175,9 @@ struct StateView {
         case Field::VelocityY: return VelocityView{momentum[1], density, density_floor}[cell];
         case Field::VelocityZ: return VelocityView{momentum[2], density, density_floor}[cell];
         case Field::Entropy: {
+            // P/rho^Gamma1 is an entropy proxy for refinement, not the general
+            // EOS thermodynamic entropy. Invalid ghost closure uses the nearest
+            // interior sample; invalid interior closure remains an error.
             const bool interior = i >= is && i < ie && j >= js && j < je
                 && k >= ks && k < ke;
             if (interior && !valid_entropy(cell))

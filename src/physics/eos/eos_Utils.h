@@ -1,5 +1,5 @@
 /**
- * @file EOS_Utils.h
+ * @file eos_Utils.h
  * @brief Common thermodynamic and kinematic utilities for EOS solvers.
  */
 #pragma once

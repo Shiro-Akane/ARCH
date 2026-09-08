@@ -19,7 +19,7 @@
 #include "../../numerics/integrator/TimeIntegratorEuler.h"  // Isolate Euler instantiations in this unit.
 
 // Runtime physics dispatch.
-#include "../../numerics/burnsolver/BurnDispatch.h" // Provides make_handle().
+#include "../../numerics/burnsolver/BurnDispatch.h" // Provides the host burn factory.
 #include "../../numerics/burnsolver/BurnerHandle.h"
 #include "../../io/chk/CheckpointCompatibility.h"
 #include "../../physics/eos/eosdispatch.h"

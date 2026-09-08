@@ -2,7 +2,13 @@
 
 英文规范文本：[TabularEOS.md](TabularEOS.md)。完整运行参数与策略表面由
 [`docs/Reference.zh-CN.md`](../../../docs/Reference.zh-CN.md)统一索引。本文件是供
-制表工具使用、与源码相邻的版本化契约。
+制表工具使用、与源码相邻的文件格式契约。schema 编号标识表格布局，独立于 ARCH
+软件版本。
+
+状态方程（EOS）将材料的密度、温度和组分与压力、内能等量联系起来。表格 EOS
+保存预先采样的数值，不必在每次查询时直接计算所有解析项。HDF5 是文件容器；
+下文的数据集名称、坐标轴和单位规定 ARCH 需要从中读取什么。这里的表维数是
+热力学坐标轴的数量，不是模拟区域的空间维数。
 
 ## 适用范围
 
@@ -20,15 +26,15 @@ SFHo/HS、CompOSE 或 EOSDriver 的变量、单位、能量零点和组分坐标
 质子/电子分数的主表；[CompOSE 软件](https://compose.obspm.fr/software/)读取
 自身的通用 `(T, nB, Yq)` 产品，并可输出自身布局的 HDF5；
 [StellarCollapse/EOSDriver](https://stellarcollapse.org/equationofstate.html)
-也以 EOSDriver schema 发布 Shen、LS、HS 系列 `.h5`。这些是候选来源体系，
-不是当前 loader 可直接打开的文件。格式兼容性只能由下述规范化数据集及保留
+也以 EOSDriver schema 发布 Shen、LS、HS 系列 `.h5`。这些是可供选择的数据来源，
+不是 ARCH 读取器可直接打开的文件。格式兼容性只能由下述规范化数据集及保留
 来源信息的表族专用转换报告确定。
 
 ## 维数自动识别
 
-新文件必须写标量整数 `table_rank`，取 3 或 4。分派器优先读取该元数据，并校验该值与组分轴的一致性。
+制表工具必须写标量整数 `table_rank`，取 3 或 4。分派器优先读取该元数据，并校验该值与组分轴的一致性。
 
-只为兼容旧 ARCH 表，缺少 `table_rank` 时按以下规则推断：
+读取器也接受缺少 `table_rank` 的文件，并按以下规则推断：
 
 - 只有 `n_X` 表示 3D；
 - 同时有 `n_A` 和 `n_Z`、且没有 `n_X`，表示 4D；
@@ -40,9 +46,9 @@ SFHo/HS、CompOSE 或 EOSDriver 的变量、单位、能量零点和组分坐标
 
 | 数据集 | 类型 | 含义 |
 | --- | --- | --- |
-| `arch_eos_version` | integer | 仅旧文件可省略；存在时必须为 1，未知版本会被拒绝 |
-| `table_rank` | integer | 新文件必需，3 或 4 |
-| `thermodynamic_model` | UTF-8 string | `free_energy` 或 `direct`；缺省仅按旧 `direct` 处理 |
+| `arch_eos_version` | integer | 存在时必须为 1；仅在 `table_rank` 与 `thermodynamic_model` 都缺失时可省略；其他版本会被拒绝 |
+| `table_rank` | integer | 制表工具必须写 3 或 4；读取器的推断规则见上文 |
+| `thermodynamic_model` | UTF-8 string | `free_energy` 或 `direct`；缺失时读取器使用 `direct` |
 | `n_rho`、`n_T` | integer | 等间隔热力学节点数 |
 | `log_rho_min`、`log_rho_max` | float64 | 以 g cm^-3 为单位的密度之 log10 边界 |
 | `log_T_min`、`log_T_max` | float64 | 以 K 为单位的温度之 log10 边界 |
@@ -88,15 +94,13 @@ cs^2            = (dP/drho)_e + (dP/de)_rho * P/rho^2
 Gamma1          = rho * cs^2 / P
 ~~~
 
-全部物理量从同一个势导出，以维持所实现的热力学关系。跨越不连续区域或欠分辨
-相边界时的单调性不属于当前插值器的保证范围。若查询得到非正压力、比内能、
-`cv` 或 `cs^2`，或非有限导数，接口会拒绝该状态。schema v1 明确要求记录能量
-零点 shift，并保证所有可达状态的比内能为正，因为流体反解把正 `e` 作为可接受
-状态域。
+全部热力学量必须从同一个势导出，以严格维持所实现的热力学关系。然而，在跨越不连续区域或欠分辨相边界时的单调性，并不属于当前插值器的保证范围。至关重要的是，若任何查询返回非正的压力、比内能、`cv` 或 `cs^2`，或产生任何非有限导数，接口将在查询时直接拒绝该状态。Schema v1 明确要求记录规范的能量零点平移 (shift)，以保证所有可达状态的比内能均为正值，因为流体反解过程依赖正的 `e` 作为其可接受的状态域。
 
-## 旧 direct 模式
+<a id="旧-direct-模式"></a>
 
-设置 `thermodynamic_model = direct`；只有旧文件可省略它。以与上表相同的
+## 直接物理量模式
+
+设置 `thermodynamic_model = direct`；该数据集缺失时，读取器也采用此模式。以与上表相同的
 rank shape 写入 float64 `pressure`、`energy`、`sound_speed` 和 `cv`；
 `dp_drho`、`dp_dT` 可选，其语义分别为 `(dP/drho)_e` 与
 `(dP/dT)_rho`。
@@ -104,7 +108,7 @@ rank shape 写入 float64 `pressure`、`energy`、`sound_speed` 和 `cv`；
 loader 要求所有值有限，压力、能量、声速和 `cv` 为正，并要求固定密度与组分时能量随
 温度严格递增。各物理量仍做顶点三线性/四线性插值；缺失 `dp_drho` 时会扰动
 密度并在固定能量下重新反解温度，而不是错误地保持温度不变。direct 路径用于
-兼容无法由单一 Helmholtz 势表达的上游产品。新的自由能 EOS 表采用上述首选
+读取无法由单一 Helmholtz 势表达的产品。具有自由能势的表采用上述首选
 模式。
 
 查询超出任一密度、温度或组分边界时不会外推表格。schema v1 会切换到已有的
@@ -140,11 +144,11 @@ fallback。
 | 161 | 0.0125 | 0.000361253 | 0.0000942008 |
 
 3D/4D 结果数值相同，因为该解析自由能与组分无关。因此本 sweep 验证自动 rank
-识别、布局、差分/插值收敛和边界行为，但不构成非线性组分插值资格。保留的旧
+识别、布局、差分/插值收敛和边界行为，但不构成非线性组分插值资格。保留的
 3D direct/顶点 smoke 结果为 `3.30779e-3`。上述数值只适用于平滑解析 EOS；
 相变或核物质表没有通用合格间隔，必须保留自己的各轴减半报告。
 
-仓库中的回归命令只检查最细的 161 节点规范化 3D/4D 表和旧 direct smoke。
+仓库中的回归命令只检查最细的 161 节点规范化 3D/4D 表和直接物理量 smoke。
 完整多分辨率 sweep 是一次独立验证审计，其标量证据统一保留在
 `validation/eos`，不另行提交 test target。
 
@@ -154,7 +158,4 @@ cmake --build build --target tabular_eos_regression
 ctest --test-dir build -R tabular_eos_ideal_gas --output-on-failure
 ~~~
 
-外部 EOS 转换器还必须记录来源、原始单位、能量零点、轻子/光子贡献、组分定义、
-有效区/相区 mask、原生字段变换或导数，以及网格减半误差报告。当前 Shen 来源
-表审计记录在 [`validation/eos`](../../../validation/eos/README.zh-CN.md)；两份
-已审计资产都没有被接受为可直接载入的 ARCH 表。
+任何针对外部 EOS 的自定义转换器都必须全面详细地记录其数据来源、原始物理单位、能量零点约定、轻子/光子贡献情况、具体的组分定义、有效区或相区 mask、原生字段的变换或导数计算逻辑，并必须附带严谨的网格减半误差报告。作为参考，当前的 Shen 来源表审计结果严格记录在 [`validation/eos`](../../../validation/eos/README.zh-CN.md) 之中；需要注意的是，这两份经过审计的资产目前均未被接受为可以直接载入运行的 ARCH 表格。

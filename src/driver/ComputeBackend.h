@@ -1,6 +1,10 @@
 /**
  * @file ComputeBackend.h
- * @brief Ordinary-C++ contract between the shared scheduler and compute backends.
+ * @brief Contract between the shared scheduler and compute backends.
+ *
+ * Access tokens identify a block, storage generation and logical state slot.
+ * Concrete backends own execution resources and implement transfer/stage/regrid
+ * operations; this interface keeps those mechanics separate from shared policy.
  */
 
 #pragma once

@@ -104,8 +104,4 @@ of the NVIDIA agreement alone.
 
 ## ARCH support code inside attributed directories
 
-Directory placement alone does not imply third-party authorship. For example,
-`timmes_common/Dual.h`, `RatePair.h`, and `TimmesNetworkSupport.h` are
-ARCH-authored support layers around Timmes-derived equations. Their file
-headers state that boundary explicitly. Other ARCH modules have no external
-provenance claim unless a file header or this notice says otherwise.
+Note that directory placement alone does not inherently imply third-party authorship. For example, `timmes_common/Dual.h`, `RatePair.h`, and `TimmesNetworkSupport.h` are entirely ARCH-authored support layers built around Timmes-derived equations. Their respective file headers state this boundary explicitly. Similarly, all other ARCH modules have no external provenance claims whatsoever unless a specific file header or this notice explicitly says otherwise.

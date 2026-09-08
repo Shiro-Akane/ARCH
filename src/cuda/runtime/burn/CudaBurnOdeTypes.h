@@ -1,4 +1,10 @@
-/** Registered CUDA execution bindings select the shared ODE policy types. */
+/**
+ * @file CudaBurnOdeTypes.h
+ * @brief Bind CUDA ODE registrations to the shared ODE policy templates.
+ *
+ * These aliases select BE-NR, BD or ROS4; their algorithms remain in numerics.
+ * CUDA execution and linear-provider storage are supplied by their consumers.
+ */
 #pragma once
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "numerics/burnsolver/ode_be-nr.h"

@@ -8,5 +8,4 @@ The [gravity inputs](../../validation/gravity/inputs/) select the time integrato
 The [gravity summary](../../validation/gravity/README.md) describes the analytic
 momentum/energy comparison and coupled application results.
 
-This problem exercises the shared external-force update; it does not solve a
-self-gravitating field or implement its own source integrator.
+While this problem exercises the shared external-force update machinery, it does not attempt to solve a self-gravitating field, nor does it implement any custom source integrator.

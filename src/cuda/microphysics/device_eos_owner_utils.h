@@ -1,3 +1,12 @@
+/**
+ * @file device_eos_owner_utils.h
+ * @brief Shared upload validation, staging and release helpers for device EOS owners.
+ *
+ * Concrete owners retain the staging vectors and device arrays. These helpers
+ * check extents and presence, enqueue copies and support stream-ordered cleanup;
+ * thermodynamic evaluation remains in physics/eos.
+ */
+
 #pragma once
 
 #include "physics/species/Species.h"

@@ -1,4 +1,4 @@
-/*
+/**
  * @file DenseWrap.h
  * @brief Fixed-size dense LU solver for compact reaction networks.
  */

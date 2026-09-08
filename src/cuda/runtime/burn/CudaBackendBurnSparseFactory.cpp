@@ -1,4 +1,11 @@
-/** Registered sparse factory routing only; no numerical template bodies. */
+/**
+ * @file CudaBackendBurnSparseFactory.cpp
+ * @brief Resolve registered network/EOS bindings to sparse burn owners.
+ *
+ * This host-only factory checks the selected provider and requested capacity,
+ * then delegates allocation to a typed owner. It does not instantiate ODE kernels
+ * or provide an alternative network or linear-solver algorithm.
+ */
 #include "cuda/runtime/burn/CudaBackendBurnSparseRoutes.h"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"

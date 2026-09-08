@@ -1,7 +1,12 @@
 /**
  * @file ReductionSpec.h
- * @brief Backend-neutral deterministic reduction semantics.
+ * @brief Shared deterministic candidate and reduction semantics.
+ *
+ * CPU traversal and CUDA reductions use the same acceptance, empty-input and
+ * tie rules. Logical keys define the required ordering; callers own candidate
+ * storage and ensure values are visible before consuming the final result.
  */
+
 #pragma once
 
 #include "amr/BlockHandle.h"

@@ -1,13 +1,12 @@
 /**
  * @file GridMetrics.h
  * @brief Shared finite-volume measures for Cartesian and curvilinear grids.
- */
-
-/**
- * Workflow:
- * 1. Derive active logical extents and physical coordinates from RuntimeParams.
- * 2. Expose consistent cell, face, and metric information to numerical operators.
- * 3. Preserve compact 1D/2D storage while retaining the common contiguous pool layout.
+ *
+ * These Host/device leaves are the metric authority for flux divergence,
+ * transfer, sources, and stability estimates. Inactive-coordinate measures
+ * are omitted consistently: spherical 1D uses volume per solid angle, while
+ * both curved 2D geometries describe a polar plane, not an (r,theta) slice.
+ * Face fluxes and vector components use the local orthonormal basis.
  */
 
 #pragma once
@@ -43,6 +42,7 @@ ARCH_HOST_DEVICE inline double radial_shell_volume(double r_left, double r_right
 }
 
 ARCH_HOST_DEVICE inline double cylindrical_annulus_volume(double r_left, double r_right) {
+    // Integral r dr = (r_right^2 - r_left^2)/2, factored for thin annuli.
     return 0.5 * (r_right - r_left) * (r_right + r_left);
 }
 

@@ -1,4 +1,5 @@
 /**
+ * @file SparseOdeBatch.cuh
  * @brief Bounded device-resident sparse ODE execution with a host-API sparse provider.
  *
  * This executor contains only launch/response/linear-provider scheduling. It
@@ -53,7 +54,7 @@ struct SparseOdeBatchView
 };
 
 namespace sparse_burn_detail {
-// One existing request integer also acknowledges a rejected previous response.
+// The request integer also acknowledges a rejected previous response.
 // Reserve -1 for a structural error; -(request + 2) carries rejection even when
 // the continuation has terminated. No extra transfer/fence or numeric download.
 inline constexpr int invalid_structure_request = -1;
@@ -148,10 +149,10 @@ __global__ void advance_ode(
 }
 } // namespace sparse_burn_detail
 
-/** A conservative synchronous host scheduler over device-resident contexts.
- * Only request/response integers cross the PCIe boundary; numerical cell states
- * and matrices never return to the CPU. Parallel cuDSS batches can optimize the
- * scheduling later without changing this public pool or shared ODE contract.
+/** A synchronous host scheduler over device-resident contexts.
+ * Continuation scheduling transfers request/response integers; numerical cell
+ * states and matrix values remain on the device. The provider separately checks
+ * symbolic metadata and owns its linear-solve completion boundaries.
  */
 template <class Network, template <class, class, class> class Solver>
 class SparseOdeBatchExecutor
@@ -277,7 +278,7 @@ private:
     SparseOdeBatchView<Network, Solver> batch_;
     cudaStream_t stream_;
     // One resident numerical factor set bounds fill-in memory independently of
-    // pool capacity; a future budgeted cache can trade memory for fewer factors.
+    // pool capacity; a different lane's token can evict the current factors.
     std::unique_ptr<CuDssSparseSolver> provider_;
     std::vector<int> requests_, responses_;
     std::vector<std::uint64_t> factor_tokens_;

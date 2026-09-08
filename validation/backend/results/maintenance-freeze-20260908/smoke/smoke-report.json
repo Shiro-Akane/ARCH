@@ -4,9 +4,9 @@
   "scientific_validation": false,
   "scope": "process completion, explicit backend, device work/AMR trace, checkpoint restart",
   "arch": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
-  "arch_sha256": "f261bbedb11f5d92d86899bfb7cec607968e3b7489e2ce37e209802e2456c382",
+  "arch_sha256": "d32b7eb0473e5c8ffb2dfb683bd4d644ae7e78d7c5cc93866c9d9d8755201090",
   "checkpoint_validator": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
-  "checkpoint_validator_sha256": "e5cc53d3d19a8ad547f1d990353cc55d55d884ce24dcd2e4f99621dd50825bbc",
+  "checkpoint_validator_sha256": "1fe1a701d5a4ea7fe813242ea255b5254addbb3e44a3e5635ca59a2f0548e9b5",
   "manifest_sha256": "cd96c378f2cbaddd1633b439b7c4b70958b75b1b6b4dc2546572ed9c7f72118b",
   "backends": [
     "cpu",
@@ -26,14 +26,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 3,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/sedov_amr_species.par",
       "restart_from": null,
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Sedov",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source/run.par"
       ],
       "canonical_sha256": "7e146ac5cc90d602785d652b23e4243d648589bdff249a76f65c56da8512679e",
       "effective_parameters": {
@@ -69,7 +69,7 @@
         "tmax": "1e99",
         "max_steps": "3",
         "restart": "false",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source",
         "base_name": "cartesian_dynamic_sedov_cpu_source",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -87,9 +87,9 @@
         "ambient_density": "1.0",
         "ambient_pressure": "1.0e-5",
         "explosion_energy": "1.0",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source"
       },
-      "parameter_sha256": "5f53b52954d15a096aa31000c85f446353e1586df2966026c3855a24cea6fd89",
+      "parameter_sha256": "decc713b8773fd3d8a9fa9d108fc8ca7932d4b725b9c4510dbc73b482c6c6e2e",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -112,7 +112,7 @@
         "linear": "none",
         "diffusion": "none"
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source/cartesian_dynamic_sedov_cpu_source_chk_0001.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source/cartesian_dynamic_sedov_cpu_source_chk_0001.h5",
       "checkpoint_metadata": {
         "step": 3,
         "time": 0.0030261977742828306,
@@ -121,18 +121,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "5f53b52954d15a096aa31000c85f446353e1586df2966026c3855a24cea6fd89",
-        "checkpoint_sha256": "8477189b0059ee4f30d2b59450ddd1a322a156955e5384c00a82829707c6676b",
+        "parameter_sha256": "decc713b8773fd3d8a9fa9d108fc8ca7932d4b725b9c4510dbc73b482c6c6e2e",
+        "checkpoint_sha256": "3d65082324cf75d45b5fc750b2583907676f2b8b93e68eb888c14f3aa6fa9a09",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source/cartesian_dynamic_sedov_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source/cartesian_dynamic_sedov_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cpu_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cpu_source/run.par"
         ]
       },
-      "checkpoint_sha256": "8477189b0059ee4f30d2b59450ddd1a322a156955e5384c00a82829707c6676b",
-      "elapsed_seconds": 0.071082344999013
+      "checkpoint_sha256": "3d65082324cf75d45b5fc750b2583907676f2b8b93e68eb888c14f3aa6fa9a09",
+      "elapsed_seconds": 0.0730360980014666
     },
     {
       "name": "cartesian_dynamic_sedov_cuda_source",
@@ -140,14 +140,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 3,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/sedov_amr_species.par",
       "restart_from": null,
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Sedov",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source/run.par"
       ],
       "canonical_sha256": "7e146ac5cc90d602785d652b23e4243d648589bdff249a76f65c56da8512679e",
       "effective_parameters": {
@@ -183,7 +183,7 @@
         "tmax": "1e99",
         "max_steps": "3",
         "restart": "false",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source",
         "base_name": "cartesian_dynamic_sedov_cuda_source",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -201,9 +201,9 @@
         "ambient_density": "1.0",
         "ambient_pressure": "1.0e-5",
         "explosion_energy": "1.0",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source"
       },
-      "parameter_sha256": "4d9edcdefc8cd852b59aee41b64c9d20ecfc7aca6cdda303270bfbb9fe523de2",
+      "parameter_sha256": "e72b6099e5ee9c84046aba1f0d913285ec816c3e89a2194499d0a6fd096817a7",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -240,7 +240,7 @@
         ],
         "device_topology_changed": true
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source/cartesian_dynamic_sedov_cuda_source_chk_0001.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source/cartesian_dynamic_sedov_cuda_source_chk_0001.h5",
       "checkpoint_metadata": {
         "step": 3,
         "time": 0.0030261977742828306,
@@ -249,18 +249,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cartesian",
-        "parameter_sha256": "4d9edcdefc8cd852b59aee41b64c9d20ecfc7aca6cdda303270bfbb9fe523de2",
-        "checkpoint_sha256": "f511af7eaabd18643aa3bbbba9c0cfc3c1c2f64115f730dbb83150f0f2612683",
+        "parameter_sha256": "e72b6099e5ee9c84046aba1f0d913285ec816c3e89a2194499d0a6fd096817a7",
+        "checkpoint_sha256": "3d65082324cf75d45b5fc750b2583907676f2b8b93e68eb888c14f3aa6fa9a09",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source/cartesian_dynamic_sedov_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source/cartesian_dynamic_sedov_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cartesian_dynamic_sedov_cuda_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cartesian_dynamic_sedov_cuda_source/run.par"
         ]
       },
-      "checkpoint_sha256": "f511af7eaabd18643aa3bbbba9c0cfc3c1c2f64115f730dbb83150f0f2612683",
-      "elapsed_seconds": 0.6224502089971793
+      "checkpoint_sha256": "3d65082324cf75d45b5fc750b2583907676f2b8b93e68eb888c14f3aa6fa9a09",
+      "elapsed_seconds": 0.7252800429996569
     },
     {
       "name": "cylindrical_amr_diffusion_cpu_source",
@@ -268,14 +268,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 2,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
       "restart_from": null,
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "effective_parameters": {
@@ -313,7 +313,7 @@
         "tmax": "1e99",
         "max_steps": "2",
         "restart": "false",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source",
         "base_name": "cylindrical_amr_diffusion_cpu_source",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -339,9 +339,9 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source"
       },
-      "parameter_sha256": "5dd660e31cb7f9a301d933ac93fb4b688cd30478958e1fb0987debf279165f81",
+      "parameter_sha256": "c186a98cfda89e7ad3ce080273aa20d6c0220ab5cb284f76070b08c03c6be5f2",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -364,7 +364,7 @@
         "linear": "none",
         "diffusion": "rkl2"
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
       "checkpoint_metadata": {
         "step": 2,
         "time": 0.0006835937500000001,
@@ -373,18 +373,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cylindrical",
-        "parameter_sha256": "5dd660e31cb7f9a301d933ac93fb4b688cd30478958e1fb0987debf279165f81",
-        "checkpoint_sha256": "bbf41c94fa4572dd08aa23af3fd4e42b7c52f7e513c3d189be300a918863b129",
+        "parameter_sha256": "c186a98cfda89e7ad3ce080273aa20d6c0220ab5cb284f76070b08c03c6be5f2",
+        "checkpoint_sha256": "7d664b6c4b3d27a69881e7580a8388389b28f0b89e40b287a96096ec3c18181d",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/run.par"
         ]
       },
-      "checkpoint_sha256": "bbf41c94fa4572dd08aa23af3fd4e42b7c52f7e513c3d189be300a918863b129",
-      "elapsed_seconds": 0.07090405800408917
+      "checkpoint_sha256": "7d664b6c4b3d27a69881e7580a8388389b28f0b89e40b287a96096ec3c18181d",
+      "elapsed_seconds": 0.07280900399928214
     },
     {
       "name": "cylindrical_amr_diffusion_cpu_resume",
@@ -392,14 +392,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 3,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
-      "restart_from": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume",
+      "restart_from": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "restart_metadata": {
@@ -410,18 +410,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cylindrical",
-        "parameter_sha256": "5dd660e31cb7f9a301d933ac93fb4b688cd30478958e1fb0987debf279165f81",
-        "checkpoint_sha256": "bbf41c94fa4572dd08aa23af3fd4e42b7c52f7e513c3d189be300a918863b129",
+        "parameter_sha256": "c186a98cfda89e7ad3ce080273aa20d6c0220ab5cb284f76070b08c03c6be5f2",
+        "checkpoint_sha256": "7d664b6c4b3d27a69881e7580a8388389b28f0b89e40b287a96096ec3c18181d",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/run.par"
         ]
       },
-      "restart_sha256": "bbf41c94fa4572dd08aa23af3fd4e42b7c52f7e513c3d189be300a918863b129",
-      "restart_parameters": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/run.par",
+      "restart_sha256": "7d664b6c4b3d27a69881e7580a8388389b28f0b89e40b287a96096ec3c18181d",
+      "restart_parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/run.par",
       "effective_parameters": {
         "geometry": "cylindrical",
         "nblockx1": "4",
@@ -457,7 +457,7 @@
         "tmax": "1e99",
         "max_steps": "3",
         "restart": "true",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume",
         "base_name": "cylindrical_amr_diffusion_cpu_resume",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -483,10 +483,10 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume",
-        "restart_file": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume",
+        "restart_file": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_source/cylindrical_amr_diffusion_cpu_source_chk_0001.h5"
       },
-      "parameter_sha256": "392171062c710dd0c9c6b70f78bb7f14dbb851dc6c30d6eee4ab60ccb61a4697",
+      "parameter_sha256": "0687faf1ac0d0c5959b69e18b6a1a8c5c43956701ac5415e97b0975ff46ec031",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -509,7 +509,7 @@
         "linear": "none",
         "diffusion": "rkl2"
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume/cylindrical_amr_diffusion_cpu_resume_chk_0002.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume/cylindrical_amr_diffusion_cpu_resume_chk_0002.h5",
       "checkpoint_metadata": {
         "step": 3,
         "time": 0.001025390625,
@@ -518,18 +518,18 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "cylindrical",
-        "parameter_sha256": "392171062c710dd0c9c6b70f78bb7f14dbb851dc6c30d6eee4ab60ccb61a4697",
-        "checkpoint_sha256": "d5ff8ebb8d852c68ab825400270fca61870b384efa3765d8e18aa859e30a8040",
+        "parameter_sha256": "0687faf1ac0d0c5959b69e18b6a1a8c5c43956701ac5415e97b0975ff46ec031",
+        "checkpoint_sha256": "405ae9cff89e7486d98a21d2cff8df8b27b1c90d438cf835a6401bab1778ed2d",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume/cylindrical_amr_diffusion_cpu_resume_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume/cylindrical_amr_diffusion_cpu_resume_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cpu_resume/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cpu_resume/run.par"
         ]
       },
-      "checkpoint_sha256": "d5ff8ebb8d852c68ab825400270fca61870b384efa3765d8e18aa859e30a8040",
-      "elapsed_seconds": 0.07692745299573289
+      "checkpoint_sha256": "405ae9cff89e7486d98a21d2cff8df8b27b1c90d438cf835a6401bab1778ed2d",
+      "elapsed_seconds": 0.08140760399692226
     },
     {
       "name": "cylindrical_amr_diffusion_cuda_source",
@@ -537,14 +537,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 2,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
       "restart_from": null,
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "effective_parameters": {
@@ -582,7 +582,7 @@
         "tmax": "1e99",
         "max_steps": "2",
         "restart": "false",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source",
         "base_name": "cylindrical_amr_diffusion_cuda_source",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -608,9 +608,9 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source"
       },
-      "parameter_sha256": "6df07d98f490ee96578198beb5e650b9767ea30ca7670f8609a28465b5b63369",
+      "parameter_sha256": "600dc5ea75ead1da47c4c187771e8b61d03ca90abe7de9dcae1890f94d1a61d9",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -645,7 +645,7 @@
         ],
         "device_topology_changed": false
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
       "checkpoint_metadata": {
         "step": 2,
         "time": 0.0006835937500000001,
@@ -654,18 +654,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cylindrical",
-        "parameter_sha256": "6df07d98f490ee96578198beb5e650b9767ea30ca7670f8609a28465b5b63369",
-        "checkpoint_sha256": "ae11278f9168decd120404d66070f543030e3da8c3fa5063e00f954db69ec45c",
+        "parameter_sha256": "600dc5ea75ead1da47c4c187771e8b61d03ca90abe7de9dcae1890f94d1a61d9",
+        "checkpoint_sha256": "0ac583b86dd03e235bd1cd0c2d3ed4f660d994ba17157c5f6bae807aa879b6eb",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/run.par"
         ]
       },
-      "checkpoint_sha256": "ae11278f9168decd120404d66070f543030e3da8c3fa5063e00f954db69ec45c",
-      "elapsed_seconds": 0.5733611019968521
+      "checkpoint_sha256": "0ac583b86dd03e235bd1cd0c2d3ed4f660d994ba17157c5f6bae807aa879b6eb",
+      "elapsed_seconds": 0.7262931360019138
     },
     {
       "name": "cylindrical_amr_diffusion_cuda_resume",
@@ -673,14 +673,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 3,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
-      "restart_from": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume",
+      "restart_from": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "restart_metadata": {
@@ -691,18 +691,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "cylindrical",
-        "parameter_sha256": "6df07d98f490ee96578198beb5e650b9767ea30ca7670f8609a28465b5b63369",
-        "checkpoint_sha256": "ae11278f9168decd120404d66070f543030e3da8c3fa5063e00f954db69ec45c",
+        "parameter_sha256": "600dc5ea75ead1da47c4c187771e8b61d03ca90abe7de9dcae1890f94d1a61d9",
+        "checkpoint_sha256": "0ac583b86dd03e235bd1cd0c2d3ed4f660d994ba17157c5f6bae807aa879b6eb",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/run.par"
         ]
       },
-      "restart_sha256": "ae11278f9168decd120404d66070f543030e3da8c3fa5063e00f954db69ec45c",
-      "restart_parameters": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/run.par",
+      "restart_sha256": "0ac583b86dd03e235bd1cd0c2d3ed4f660d994ba17157c5f6bae807aa879b6eb",
+      "restart_parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/run.par",
       "effective_parameters": {
         "geometry": "cylindrical",
         "nblockx1": "4",
@@ -738,7 +738,7 @@
         "tmax": "1e99",
         "max_steps": "3",
         "restart": "true",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume",
         "base_name": "cylindrical_amr_diffusion_cuda_resume",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -764,10 +764,10 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume",
-        "restart_file": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume",
+        "restart_file": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_source/cylindrical_amr_diffusion_cuda_source_chk_0001.h5"
       },
-      "parameter_sha256": "5e2c833452ba70dcbb71562d72cbba27d7fe89cfa28af816e4ddaf1308e50f7d",
+      "parameter_sha256": "41214f239cf03527c3713bf0e3170844887a4f39e1be0e45069feb6384f4dc6a",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -802,7 +802,7 @@
         ],
         "device_topology_changed": false
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume/cylindrical_amr_diffusion_cuda_resume_chk_0002.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume/cylindrical_amr_diffusion_cuda_resume_chk_0002.h5",
       "checkpoint_metadata": {
         "step": 3,
         "time": 0.001025390625,
@@ -811,18 +811,18 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "cylindrical",
-        "parameter_sha256": "5e2c833452ba70dcbb71562d72cbba27d7fe89cfa28af816e4ddaf1308e50f7d",
-        "checkpoint_sha256": "d3d229765a30280184a6aebfd18c32969301da1ca10d58a286e31039d914427c",
+        "parameter_sha256": "41214f239cf03527c3713bf0e3170844887a4f39e1be0e45069feb6384f4dc6a",
+        "checkpoint_sha256": "e743fc820e00e1b6f8be61809476933ac94375779e78c205ec2ac49ed1665964",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume/cylindrical_amr_diffusion_cuda_resume_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume/cylindrical_amr_diffusion_cuda_resume_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/cylindrical_amr_diffusion_cuda_resume/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/cylindrical_amr_diffusion_cuda_resume/run.par"
         ]
       },
-      "checkpoint_sha256": "d3d229765a30280184a6aebfd18c32969301da1ca10d58a286e31039d914427c",
-      "elapsed_seconds": 0.581608797001536
+      "checkpoint_sha256": "e743fc820e00e1b6f8be61809476933ac94375779e78c205ec2ac49ed1665964",
+      "elapsed_seconds": 0.6819185290005407
     },
     {
       "name": "spherical_amr_diffusion_cpu_source",
@@ -830,14 +830,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 2,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
       "restart_from": null,
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "effective_parameters": {
@@ -875,7 +875,7 @@
         "tmax": "1e99",
         "max_steps": "2",
         "restart": "false",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source",
         "base_name": "spherical_amr_diffusion_cpu_source",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -901,9 +901,9 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source"
       },
-      "parameter_sha256": "acbff4f11ac8796433a9b7de2f928fed937da1b97d06dac5dce8b69379820b17",
+      "parameter_sha256": "5141a54b33d5ad17973a4cf934b713ca8f0b72a8dcf4fe246e2939aba6f6f5a7",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -926,7 +926,7 @@
         "linear": "none",
         "diffusion": "rkl2"
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
       "checkpoint_metadata": {
         "step": 2,
         "time": 0.0006835868502397173,
@@ -935,18 +935,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "spherical",
-        "parameter_sha256": "acbff4f11ac8796433a9b7de2f928fed937da1b97d06dac5dce8b69379820b17",
-        "checkpoint_sha256": "3c7ac43f161ec491ccbb7bd0be607b681db4445114f753fbd056472ce682ae12",
+        "parameter_sha256": "5141a54b33d5ad17973a4cf934b713ca8f0b72a8dcf4fe246e2939aba6f6f5a7",
+        "checkpoint_sha256": "742ce97feee02be55e07fa26193ad72a784775c0edecdbdaa452c5c275c17783",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/run.par"
         ]
       },
-      "checkpoint_sha256": "3c7ac43f161ec491ccbb7bd0be607b681db4445114f753fbd056472ce682ae12",
-      "elapsed_seconds": 0.07082482999976492
+      "checkpoint_sha256": "742ce97feee02be55e07fa26193ad72a784775c0edecdbdaa452c5c275c17783",
+      "elapsed_seconds": 0.07278280299942708
     },
     {
       "name": "spherical_amr_diffusion_cpu_resume",
@@ -954,14 +954,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 3,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
-      "restart_from": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume",
+      "restart_from": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "restart_metadata": {
@@ -972,18 +972,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "spherical",
-        "parameter_sha256": "acbff4f11ac8796433a9b7de2f928fed937da1b97d06dac5dce8b69379820b17",
-        "checkpoint_sha256": "3c7ac43f161ec491ccbb7bd0be607b681db4445114f753fbd056472ce682ae12",
+        "parameter_sha256": "5141a54b33d5ad17973a4cf934b713ca8f0b72a8dcf4fe246e2939aba6f6f5a7",
+        "checkpoint_sha256": "742ce97feee02be55e07fa26193ad72a784775c0edecdbdaa452c5c275c17783",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/run.par"
         ]
       },
-      "restart_sha256": "3c7ac43f161ec491ccbb7bd0be607b681db4445114f753fbd056472ce682ae12",
-      "restart_parameters": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/run.par",
+      "restart_sha256": "742ce97feee02be55e07fa26193ad72a784775c0edecdbdaa452c5c275c17783",
+      "restart_parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/run.par",
       "effective_parameters": {
         "geometry": "spherical",
         "nblockx1": "4",
@@ -1019,7 +1019,7 @@
         "tmax": "1e99",
         "max_steps": "3",
         "restart": "true",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume",
         "base_name": "spherical_amr_diffusion_cpu_resume",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -1045,10 +1045,10 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume",
-        "restart_file": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume",
+        "restart_file": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_source/spherical_amr_diffusion_cpu_source_chk_0001.h5"
       },
-      "parameter_sha256": "24b2754d019d0552ccdd6ac426c056abfb18607b4e33c4bcd528d96c13fc13e2",
+      "parameter_sha256": "e5d7c3d213613bb0eb40ec4b2959f429d273f8706e9f4509e7444ca3320517b6",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -1071,7 +1071,7 @@
         "linear": "none",
         "diffusion": "rkl2"
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume/spherical_amr_diffusion_cpu_resume_chk_0002.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume/spherical_amr_diffusion_cpu_resume_chk_0002.h5",
       "checkpoint_metadata": {
         "step": 3,
         "time": 0.001025380275359576,
@@ -1080,18 +1080,18 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "spherical",
-        "parameter_sha256": "24b2754d019d0552ccdd6ac426c056abfb18607b4e33c4bcd528d96c13fc13e2",
-        "checkpoint_sha256": "a3deabbeb4307120d91fe5283cb760e7917048a124a87fb06e40cf6e5b4df656",
+        "parameter_sha256": "e5d7c3d213613bb0eb40ec4b2959f429d273f8706e9f4509e7444ca3320517b6",
+        "checkpoint_sha256": "e0a2798b88c7de2f46553075764e94b8cc9e7feafa34d75a68bd7fbe6944adc3",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume/spherical_amr_diffusion_cpu_resume_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume/spherical_amr_diffusion_cpu_resume_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cpu_resume/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cpu_resume/run.par"
         ]
       },
-      "checkpoint_sha256": "a3deabbeb4307120d91fe5283cb760e7917048a124a87fb06e40cf6e5b4df656",
-      "elapsed_seconds": 0.07764881099865306
+      "checkpoint_sha256": "e0a2798b88c7de2f46553075764e94b8cc9e7feafa34d75a68bd7fbe6944adc3",
+      "elapsed_seconds": 0.08192750399757642
     },
     {
       "name": "spherical_amr_diffusion_cuda_source",
@@ -1099,14 +1099,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 2,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
       "restart_from": null,
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "effective_parameters": {
@@ -1144,7 +1144,7 @@
         "tmax": "1e99",
         "max_steps": "2",
         "restart": "false",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source",
         "base_name": "spherical_amr_diffusion_cuda_source",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -1170,9 +1170,9 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source"
       },
-      "parameter_sha256": "3c89682644b7aac8f68cadb9afb59c5c6f284d32715f0e75ba1a4f4316ce2ebd",
+      "parameter_sha256": "e6b65e4424cbec510b9dbb78816758a3cdf0fcfb11bc426c9c96656a77c4effe",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -1207,7 +1207,7 @@
         ],
         "device_topology_changed": false
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
       "checkpoint_metadata": {
         "step": 2,
         "time": 0.0006835868502397173,
@@ -1216,18 +1216,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "spherical",
-        "parameter_sha256": "3c89682644b7aac8f68cadb9afb59c5c6f284d32715f0e75ba1a4f4316ce2ebd",
-        "checkpoint_sha256": "25060a1313b21bdd5cf00d8b021e3a52aa6800b2d745ca996ef2bf465614a3a5",
+        "parameter_sha256": "e6b65e4424cbec510b9dbb78816758a3cdf0fcfb11bc426c9c96656a77c4effe",
+        "checkpoint_sha256": "45ff9c9c2f44a4a335dedd2d7f810fca31e8dd53c6dc5a8f3f38a2a5498c936a",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/run.par"
         ]
       },
-      "checkpoint_sha256": "25060a1313b21bdd5cf00d8b021e3a52aa6800b2d745ca996ef2bf465614a3a5",
-      "elapsed_seconds": 0.5727848099995754
+      "checkpoint_sha256": "45ff9c9c2f44a4a335dedd2d7f810fca31e8dd53c6dc5a8f3f38a2a5498c936a",
+      "elapsed_seconds": 0.7250477249981486
     },
     {
       "name": "spherical_amr_diffusion_cuda_resume",
@@ -1235,14 +1235,14 @@
       "status": "passed",
       "returncode": 0,
       "expected_total_steps": 3,
-      "parameter": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume/run.par",
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume/run.par",
       "canonical_input": "/home/shiroakane/ARCH/validation/amr/inputs/gaussian_diffusion_amr.par",
-      "restart_from": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
-      "output_directory": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume",
+      "restart_from": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
+      "output_directory": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume",
       "command": [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
         "Gaussian",
-        "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume/run.par"
+        "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume/run.par"
       ],
       "canonical_sha256": "64f88c16f5be3848508cb22652832b802fe9e7f9e29d75800c802ff09e58543b",
       "restart_metadata": {
@@ -1253,18 +1253,18 @@
         "plt_file_index": 2,
         "measure": "physical_cell_volume",
         "geometry": "spherical",
-        "parameter_sha256": "3c89682644b7aac8f68cadb9afb59c5c6f284d32715f0e75ba1a4f4316ce2ebd",
-        "checkpoint_sha256": "25060a1313b21bdd5cf00d8b021e3a52aa6800b2d745ca996ef2bf465614a3a5",
+        "parameter_sha256": "e6b65e4424cbec510b9dbb78816758a3cdf0fcfb11bc426c9c96656a77c4effe",
+        "checkpoint_sha256": "45ff9c9c2f44a4a335dedd2d7f810fca31e8dd53c6dc5a8f3f38a2a5498c936a",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/run.par"
         ]
       },
-      "restart_sha256": "25060a1313b21bdd5cf00d8b021e3a52aa6800b2d745ca996ef2bf465614a3a5",
-      "restart_parameters": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/run.par",
+      "restart_sha256": "45ff9c9c2f44a4a335dedd2d7f810fca31e8dd53c6dc5a8f3f38a2a5498c936a",
+      "restart_parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/run.par",
       "effective_parameters": {
         "geometry": "spherical",
         "nblockx1": "4",
@@ -1300,7 +1300,7 @@
         "tmax": "1e99",
         "max_steps": "3",
         "restart": "true",
-        "out_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume",
+        "out_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume",
         "base_name": "spherical_amr_diffusion_cuda_resume",
         "plt_dt": "-1",
         "plt_dstep": "-1",
@@ -1326,10 +1326,10 @@
         "amp": "0.5",
         "width": "0.08",
         "xc": "1.5",
-        "log_dir": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume",
-        "restart_file": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5"
+        "log_dir": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume",
+        "restart_file": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_source/spherical_amr_diffusion_cuda_source_chk_0001.h5"
       },
-      "parameter_sha256": "50c84605862cb86a09ea154e663e22dd132435c53c0a38f256c76842dad9f1f0",
+      "parameter_sha256": "fb7e38fb5684f2cbdf716b54ff5fc351adf53eaf80fabf73ba3793ec9ea97c89",
       "OMP_NUM_THREADS": 4,
       "resolved_plan": {
         "schema": "1",
@@ -1364,7 +1364,7 @@
         ],
         "device_topology_changed": false
       },
-      "checkpoint": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume/spherical_amr_diffusion_cuda_resume_chk_0002.h5",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume/spherical_amr_diffusion_cuda_resume_chk_0002.h5",
       "checkpoint_metadata": {
         "step": 3,
         "time": 0.001025380275359576,
@@ -1373,18 +1373,18 @@
         "plt_file_index": 3,
         "measure": "physical_cell_volume",
         "geometry": "spherical",
-        "parameter_sha256": "50c84605862cb86a09ea154e663e22dd132435c53c0a38f256c76842dad9f1f0",
-        "checkpoint_sha256": "45d2036a0b88974ad5583f48071e58d87327951dafaed3fd695d89a9be9e6b93",
+        "parameter_sha256": "fb7e38fb5684f2cbdf716b54ff5fc351adf53eaf80fabf73ba3793ec9ea97c89",
+        "checkpoint_sha256": "5e179b68721b2830fd4f3da3bbaf9fec212a8d5f8b0899aaaa7472f83c814819",
         "command": [
           "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
           "--metrics",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume/spherical_amr_diffusion_cuda_resume_chk_0002.h5",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume/spherical_amr_diffusion_cuda_resume_chk_0002.h5",
           "--parameters",
-          "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/spherical_amr_diffusion_cuda_resume/run.par"
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/spherical_amr_diffusion_cuda_resume/run.par"
         ]
       },
-      "checkpoint_sha256": "45d2036a0b88974ad5583f48071e58d87327951dafaed3fd695d89a9be9e6b93",
-      "elapsed_seconds": 0.579592872003559
+      "checkpoint_sha256": "5e179b68721b2830fd4f3da3bbaf9fec212a8d5f8b0899aaaa7472f83c814819",
+      "elapsed_seconds": 0.6916577209995012
     }
   ],
   "binary_unchanged": true,

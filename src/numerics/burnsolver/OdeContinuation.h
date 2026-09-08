@@ -1,4 +1,5 @@
 /**
+ * @file OdeContinuation.h
  * @brief Linear-algebra suspension points shared by CPU and GPU ODE executors.
  * Continuations own numerical progress, not backend handles. A CPU executor
  * services requests synchronously; a GPU executor may keep contexts on device

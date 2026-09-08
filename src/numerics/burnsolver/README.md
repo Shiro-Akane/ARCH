@@ -14,9 +14,11 @@ without introducing separate CPU and CUDA ODE algorithms.
   temperature-derivative fallback. [BurnDispatch.h](BurnDispatch.h),
   [BurnerHandle.h](BurnerHandle.h) and [Networks.h](Networks.h) bind policies.
 
-CPU execution services continuation requests directly. CUDA keeps continuation
-state on device and services sparse requests through its provider adapter.
-Neither executor owns another reaction formula or acceptance rule.
+Burn dispatch consumes resolved network, ODE and linear-solver IDs. Names,
+aliases and backend support are handled by the
+[shared resolver](../../driver/dispatch/README.md) before factory construction.
+
+During execution, the CPU services ODE continuation requests directly. In contrast, CUDA maintains the continuation state directly on the device and services sparse requests exclusively through its provider adapter. Importantly, neither executor implements an alternative reaction formula or thermodynamic acceptance rule; both defer to the shared numerics.
 
 See the [Reference](../../../docs/Reference.md),
 [burn validation](../../../validation/burn/README.md) and

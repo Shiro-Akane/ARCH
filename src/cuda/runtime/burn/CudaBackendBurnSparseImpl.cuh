@@ -1,4 +1,12 @@
-/** Typed factory implementation; generated per-network/EOS TUs delegate here. */
+/**
+ * @file CudaBackendBurnSparseImpl.cuh
+ * @brief Typed ownership and execution of a bounded sparse burn pool.
+ *
+ * Each network/EOS instantiation owns its device workspaces, weak-table owner
+ * and sparse executor. It borrows the containing runtime's EOS storage and stream;
+ * destruction quiesces work before retiring dependent buffers and factor state.
+ * Cell preparation, ODE continuation and energy handoff use the shared authorities.
+ */
 #pragma once
 
 #include "cuda/runtime/burn/CudaBackendBurnSparse.h"

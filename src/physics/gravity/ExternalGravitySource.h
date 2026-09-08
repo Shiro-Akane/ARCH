@@ -1,3 +1,13 @@
+/**
+ * @file ExternalGravitySource.h
+ * @brief Shared cell-local momentum and energy increments from external gravity.
+ *
+ * For conserved density rho, momentum rho*v, and total energy density E,
+ * add delta(rho*v) = dt*rho*g and delta(E) = dt*rho*(v dot g).
+ * Acceleration uses length/time^2 in the simulation's consistent units and
+ * follows the stored orthonormal axes. These are explicit stage increments;
+ * the time integrator owns their combination and the backend owns traversal.
+ */
 #pragma once
 
 #include "../../data/FluidState.h"

@@ -1,3 +1,11 @@
+/**
+ * @file CudaBackendBurnTabular3D.cu
+ * @brief Select a registered Tabular3D burn network delegate.
+ *
+ * Built-in and generated routes forward the same launch arguments. Numerical
+ * work is instantiated by the selected network/EOS binding, not this switch.
+ */
+
 #include "physics/eos/Tabular3DEOS.h"
 #include "cuda/runtime/burn/CudaBackendBurnNetworkRoutes.h"
 

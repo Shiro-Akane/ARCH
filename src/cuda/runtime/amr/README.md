@@ -8,7 +8,4 @@
 - [CudaBackendAmrFlux.h](CudaBackendAmrFlux.h) and its `.cu` implementation
   bind flux registration and reflux.
 
-The CPU retains topology and Morton ordering in [amr](../../../amr/README.md).
-[CUDA AMR kernels](../../amr/README.md) provide device traversal of the shared
-indicator and transfer mathematics. Keep completion, retained storage and
-rollback rules coordinated with [runtime control](../control/README.md).
+The CPU continues to manage grid topology and Morton ordering within the [amr](../../../amr/README.md) module. The specialized [CUDA AMR kernels](../../amr/README.md) strictly provide the device traversal of the universally shared indicator and transfer mathematics. Ensure that stage completion, retained storage lifecycles, and rollback rules are meticulously coordinated with the [runtime control](../control/README.md) architecture.

@@ -47,4 +47,4 @@ cuDSS 受 [NVIDIA Math Libraries SDK 许可协议](https://docs.nvidia.com/cuda/
 
 ## 归属目录中的 ARCH 支撑代码
 
-文件位于归属目录中并不自动表示第三方作者身份。例如 `timmes_common/Dual.h`、`RatePair.h` 和 `TimmesNetworkSupport.h` 是围绕 Timmes 派生方程编写的 ARCH 自有支撑层，文件头已明确说明边界。除非文件头或本说明指出，其他 ARCH 模块不声明外部来源。
+请注意，文件位于某个归属目录中，并不自动意味着它是第三方作者的身份。例如，`timmes_common/Dual.h`、`RatePair.h` 和 `TimmesNetworkSupport.h` 是完全由 ARCH 自行编写的支撑层，用于包裹 Timmes 派生方程；它们的具体文件头已经非常明确地说明了这一边界。同样地，除非文件头或本声明中有特别指出，否则其他任何 ARCH 模块均不作任何外部来源声明。

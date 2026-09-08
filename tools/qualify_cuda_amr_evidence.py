@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Gate AMR or full runtime-parity matrices against final artifacts.
+"""Check recorded AMR or full runtime-parity coverage against identified artifacts.
 
-Historical schema-1 reports remain readable, but cannot pass this gate without
-the provenance captured by the current runtime validators. This is an evidence
-consistency/coverage check, not a substitute for executing the validation suites.
-Even the full-runtime profile is not a complete scientific/sanitizer/capacity
-release qualification; its output states that boundary explicitly.
+Reports must include the source, build and input identities captured by the
+runtime validators. This command checks those identities and the declared case
+coverage; it does not run the simulations. Scientific accuracy, sanitizer and
+capacity measurements have separate acceptance criteria.
 """
 
 from __future__ import annotations
@@ -340,8 +339,8 @@ def main(argv: list[str] | None = None) -> int:
     matrix_contract = runtime_matrix_contract(args.profile, args.matrix, args.manifest,
                                                args.curved_matrix, args.uniform_matrix,
                                                args.generated_matrix)
-    # Check the legacy top-level binary hash first, so old reports cannot be
-    # accidentally qualified merely because all recorded numerical tests pass.
+    # Validate the final executable inventory before inspecting science reports.
+    # Each report must then match the captured source/build/artifact identity.
     provenance.require_final_artifact_list(args.final_artifacts, args.arch, args.build_dir)
     expected = provenance.capture(
         arch=args.arch, checkpoint_validator=args.checkpoint_validator,

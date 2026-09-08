@@ -1,3 +1,12 @@
+/**
+ * @file CudaBackendMicrophysicsControl.cpp
+ * @brief Bind shared burn and RKL schedules to CUDA runtime execution.
+ *
+ * Resolve the active slots/EOS, validate stage descriptors and dispatch typed
+ * launches on the backend stream. This layer owns completion/status checks and
+ * summary downloads; shared burn/diffusion policies own numerical updates.
+ */
+
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "driver/DriverBurnPolicy.h"

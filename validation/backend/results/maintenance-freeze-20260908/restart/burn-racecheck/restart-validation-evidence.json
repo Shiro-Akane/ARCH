@@ -1,0 +1,2780 @@
+{
+  "schema": 1,
+  "problem": "BurnGradient",
+  "input": "/home/shiroakane/ARCH/validation/amr/inputs/burn_enuc_amr.par",
+  "input_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+  "runtime_inputs": {
+    "schema": 1,
+    "parameter_file": "/home/shiroakane/ARCH/validation/amr/inputs/burn_enuc_amr.par",
+    "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+    "scientific_overrides": {},
+    "eos_type": "helmholtz",
+    "dependencies": [
+      {
+        "parameter": "eos_table_path",
+        "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+        "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+      }
+    ]
+  },
+  "continuous": {
+    "cpu": {
+      "name": "cpu_continuous",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "8fe603d1bf47d6505d4687164d1f97e4497fb967f051da94fc3b959a851832be",
+        "checkpoint_sha256": "2ceeb61c64906b0388cc76568e7251c276e0f3d8bd7edbeca60e23bb368ae903",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_continuous/RestartAMR_cpu_continuous.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_continuous/RestartAMR_cpu_continuous.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+      "checkpoint_sha256": "2ceeb61c64906b0388cc76568e7251c276e0f3d8bd7edbeca60e23bb368ae903",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_continuous/RestartAMR_cpu_continuous_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null
+    },
+    "cuda": {
+      "name": "cuda_continuous",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "f8f0f1b1874e796be8e1b8a4a470ba11d98c514a9bb5ed64c5c839ae2f7c7b35",
+        "checkpoint_sha256": "7b7332300c1372202ec7fbbef341d078535bcbc5f3c356be1df5a8f51e19fde6",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_continuous/RestartAMR_cuda_continuous.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_continuous/RestartAMR_cuda_continuous.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+      "checkpoint_sha256": "7b7332300c1372202ec7fbbef341d078535bcbc5f3c356be1df5a8f51e19fde6",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_continuous/RestartAMR_cuda_continuous_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": {
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_continuous/sanitizer.log",
+          "sha256": "ffb1dbbfe9867d6de8756c01e511b5114d3b2121e0f665092bb590fb96ea51a1"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      }
+    }
+  },
+  "sources": {
+    "cpu": {
+      "name": "cpu_source",
+      "backend": "cpu",
+      "steps": 2,
+      "run_completed_steps": 3,
+      "checkpoint_metadata": {
+        "step": 2,
+        "time": 3e-16,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "af1456b44d4ee6fc4ae4a682cbbba35d4982c9d352cea7b316d11663fb071201",
+        "checkpoint_sha256": "6f61e7db7c8fa467a5ac065bdf43a498396702bb6ea3d554f331922a61ad6a5c",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+      "checkpoint_sha256": "6f61e7db7c8fa467a5ac065bdf43a498396702bb6ea3d554f331922a61ad6a5c",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "terminal_checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+      "terminal_metadata": {
+        "step": 3,
+        "time": 6.999999999999999e-16,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "af1456b44d4ee6fc4ae4a682cbbba35d4982c9d352cea7b316d11663fb071201",
+        "checkpoint_sha256": "76ce43126adf712d2e5954e4608955e11bc196458f30c31361360873d792e997",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      }
+    },
+    "cuda": {
+      "name": "cuda_source",
+      "backend": "cuda",
+      "steps": 2,
+      "run_completed_steps": 3,
+      "checkpoint_metadata": {
+        "step": 2,
+        "time": 3e-16,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c3d9ff53ef706641124d1268042a772fe10f7fa1e60e03aaf28bc3ddf8819f14",
+        "checkpoint_sha256": "a1004151af65e87d040701a92587a693104a9bf6c4f3f6ae7b87b135403f2039",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+      "checkpoint_sha256": "a1004151af65e87d040701a92587a693104a9bf6c4f3f6ae7b87b135403f2039",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": {
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/sanitizer.log",
+          "sha256": "a6d8a5f417e520f85134e887d395f47d918ba96ef127749c825b84d5d8519824"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      "terminal_checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+      "terminal_metadata": {
+        "step": 3,
+        "time": 6.999999999999999e-16,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c3d9ff53ef706641124d1268042a772fe10f7fa1e60e03aaf28bc3ddf8819f14",
+        "checkpoint_sha256": "d943bf5fe10fb3eddb268195868b2b90b2dff08fb8a6fae58933a2836075e70e",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      }
+    }
+  },
+  "resumed": [
+    {
+      "name": "cpu_to_cpu",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "f593d82fb33e360ae1f496ef3af964f9df90cd357eac9204074f8ff1c892f067",
+        "checkpoint_sha256": "4a040d3b260fc4948f9d4cc81492400c46413647d714df388d769219d37e2dd0",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu/RestartAMR_cpu_to_cpu.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu/RestartAMR_cpu_to_cpu.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "4a040d3b260fc4948f9d4cc81492400c46413647d714df388d769219d37e2dd0",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu/RestartAMR_cpu_to_cpu_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par",
+        "step": 2,
+        "time": 3e-16,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "af1456b44d4ee6fc4ae4a682cbbba35d4982c9d352cea7b316d11663fb071201",
+        "checkpoint_sha256": "6f61e7db7c8fa467a5ac065bdf43a498396702bb6ea3d554f331922a61ad6a5c",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cuda",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "bd70781f1bba7f62585d90c48801b39b19281610a0606b827fda49748ae4a839",
+        "checkpoint_sha256": "665725d8af05d03a91643c310717050f75fe3a6df294cfacb7909d8b0a41f8ab",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda/RestartAMR_cuda_to_cuda.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda/RestartAMR_cuda_to_cuda.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "665725d8af05d03a91643c310717050f75fe3a6df294cfacb7909d8b0a41f8ab",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda/RestartAMR_cuda_to_cuda_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": {
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda/sanitizer.log",
+          "sha256": "9a8ac45f0d259362cc3a02838f4a6b4d61f9b499ca4308c81560d58fbec407d2"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par",
+        "step": 2,
+        "time": 3e-16,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c3d9ff53ef706641124d1268042a772fe10f7fa1e60e03aaf28bc3ddf8819f14",
+        "checkpoint_sha256": "a1004151af65e87d040701a92587a693104a9bf6c4f3f6ae7b87b135403f2039",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cpu_to_cuda",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0ce34284e04a0c1a94210573ebc2ecb6769e9f3ec7033fd08fec70cc04bf968e",
+        "checkpoint_sha256": "1efbd9b820e13d4e90de358c4fa43038668ea8b9130fb2384cdc46b2c9e7ce8b",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda/RestartAMR_cpu_to_cuda.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda/RestartAMR_cpu_to_cuda.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "1efbd9b820e13d4e90de358c4fa43038668ea8b9130fb2384cdc46b2c9e7ce8b",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda/RestartAMR_cpu_to_cuda_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": {
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda/sanitizer.log",
+          "sha256": "7ec4dbc38c0479058b763f274da8d49058efde80a2141dc04e2dd578706c268b"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par",
+        "step": 2,
+        "time": 3e-16,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "af1456b44d4ee6fc4ae4a682cbbba35d4982c9d352cea7b316d11663fb071201",
+        "checkpoint_sha256": "6f61e7db7c8fa467a5ac065bdf43a498396702bb6ea3d554f331922a61ad6a5c",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cpu",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "45c06cf4f5689b97a8b51c2abd6bf7a4e4f02e4975c2c65d1672d4ca68f5f02e",
+        "checkpoint_sha256": "53aa51b6ba7b86c85d415d8d3a29a39b1b236ba286d22a5acf339f5b77b73bbe",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu/RestartAMR_cuda_to_cpu.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu/RestartAMR_cuda_to_cpu.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "53aa51b6ba7b86c85d415d8d3a29a39b1b236ba286d22a5acf339f5b77b73bbe",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu/RestartAMR_cuda_to_cpu_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par",
+        "step": 2,
+        "time": 3e-16,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c3d9ff53ef706641124d1268042a772fe10f7fa1e60e03aaf28bc3ddf8819f14",
+        "checkpoint_sha256": "a1004151af65e87d040701a92587a693104a9bf6c4f3f6ae7b87b135403f2039",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cpu_to_cpu_terminal",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "3d2a6b3df7e68d4f4146621d19e1d0f279baf58d1f7c3425124a3d8bb75c1ba0",
+        "checkpoint_sha256": "8e6a802ffc224029157310659ff87e8d0078a8da474efa5aae9e3415157f8577",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
+      "checkpoint_sha256": "8e6a802ffc224029157310659ff87e8d0078a8da474efa5aae9e3415157f8577",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par",
+        "step": 3,
+        "time": 6.999999999999999e-16,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "af1456b44d4ee6fc4ae4a682cbbba35d4982c9d352cea7b316d11663fb071201",
+        "checkpoint_sha256": "76ce43126adf712d2e5954e4608955e11bc196458f30c31361360873d792e997",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cuda_terminal",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "e6f48281cec04a65bd75446e93cb9145d482ce386f76980692f029ac4aa2647c",
+        "checkpoint_sha256": "7c28f20d106788ec825870cc1b76fad8872c3382a801a6e101ce7d488b601c64",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
+      "checkpoint_sha256": "7c28f20d106788ec825870cc1b76fad8872c3382a801a6e101ce7d488b601c64",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": {
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cuda_terminal/sanitizer.log",
+          "sha256": "238265a307c41eec07251cec5c87e68f2aeb795f65608421301d07f2f2480a14"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par",
+        "step": 3,
+        "time": 6.999999999999999e-16,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c3d9ff53ef706641124d1268042a772fe10f7fa1e60e03aaf28bc3ddf8819f14",
+        "checkpoint_sha256": "d943bf5fe10fb3eddb268195868b2b90b2dff08fb8a6fae58933a2836075e70e",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cpu_to_cuda_terminal",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "d0873e54625917333522320e6aeca45dc5ec7fbc3c3b472cf2937725ca49e675",
+        "checkpoint_sha256": "67bc1a19a00fc1b3251ad22f3ce9b5e9871e5e0b7627e7db5497c0c84c7f609f",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
+      "checkpoint_sha256": "67bc1a19a00fc1b3251ad22f3ce9b5e9871e5e0b7627e7db5497c0c84c7f609f",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": {
+        "tool": "racecheck",
+        "executable": {
+          "path": "/usr/local/cuda-12.3/bin/compute-sanitizer",
+          "sha256": "5cba659e1cd603aa2370e103425f184368e6ed405da90ce85743c4399c324dbc"
+        },
+        "report": {
+          "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_to_cuda_terminal/sanitizer.log",
+          "sha256": "17de0bf8966f410f7804a51b140022bdfbe2dbe11b12e3d9c3dbb6604d841df0"
+        },
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par",
+        "step": 3,
+        "time": 6.999999999999999e-16,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "af1456b44d4ee6fc4ae4a682cbbba35d4982c9d352cea7b316d11663fb071201",
+        "checkpoint_sha256": "76ce43126adf712d2e5954e4608955e11bc196458f30c31361360873d792e997",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cpu_terminal",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 1.5e-15,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c9204ddce8947a5bfbc944827c2317a93ba3337da4e8c76d3b47bc7755287069",
+        "checkpoint_sha256": "141fc520130d0c80c6a9248355e02c85a94ae686fc77c489c75d57a0ca6b39a5",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par",
+      "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
+      "checkpoint_sha256": "141fc520130d0c80c6a9248355e02c85a94ae686fc77c489c75d57a0ca6b39a5",
+      "plan": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+        "parameters": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par",
+        "step": 3,
+        "time": 6.999999999999999e-16,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c3d9ff53ef706641124d1268042a772fe10f7fa1e60e03aaf28bc3ddf8819f14",
+        "checkpoint_sha256": "d943bf5fe10fb3eddb268195868b2b90b2dff08fb8a6fae58933a2836075e70e",
+        "command": [
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-racecheck/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    }
+  ],
+  "comparisons": [
+    {
+      "route": "cpu_vs_cuda_continuous",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064017152e+24,
+      "candidate_dt_burn": 9.999509064013169e+24,
+      "dt_burn_relative": 3.98377774502427e-13,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 16173236224,
+      "max_rel": 5.894529916654079e-09,
+      "max_field_normalized": 6.523175578247191e-13,
+      "max_enuc_normalized": 3.9850215662349e-13,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cpu",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064017152e+24,
+      "candidate_dt_burn": 9.999509064017152e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cuda",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064013169e+24,
+      "candidate_dt_burn": 9.999509064013169e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cuda",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064013169e+24,
+      "candidate_dt_burn": 9.999509064013169e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 7.62939453125e-06,
+      "max_rel": 1.0904671116595024e-11,
+      "max_field_normalized": 3.5070836442189204e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cpu",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064017152e+24,
+      "candidate_dt_burn": 9.999509064017152e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 7.62939453125e-06,
+      "max_rel": 1.0904671116357203e-11,
+      "max_field_normalized": 3.5070836442189204e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cpu_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064017152e+24,
+      "candidate_dt_burn": 9.999509064017152e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cuda_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064013169e+24,
+      "candidate_dt_burn": 9.999509064013169e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cuda_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064013169e+24,
+      "candidate_dt_burn": 9.999509064013169e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0.003612518310546875,
+      "max_rel": 1.9648434442419385e-09,
+      "max_field_normalized": 1.6606041055376588e-13,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cpu_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "candidate_step": 4,
+      "candidate_time": 1.5e-15,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "candidate_dt_old": 8e-16,
+      "dt_burn": 9.999509064017152e+24,
+      "candidate_dt_burn": 9.999509064017152e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0.003612518310546875,
+      "max_rel": 1.9648434519631575e-09,
+      "max_field_normalized": 1.6606041055376588e-13,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "schema": 1,
+    "source": {
+      "commit": "1829d27e28f237f08b0a42bd0a7cac7bdf71c309",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "02f52db849e5212642576e5b945d594bf96b6b692292e5c21c2a7b407979b781",
+      "dirty": true,
+      "modified_files": [
+        "CMakeLists.txt",
+        "cmake/CudaBurnDenseRoutes.cmake",
+        "cmake/CudaBurnSparseRoutes.cmake",
+        "cmake/CudaCustomDenseRoute.cu.in",
+        "cmake/templates/CudaBurnDenseRoute.cu.in",
+        "cmake/templates/CudaBurnSparseOwner.cu.in",
+        "simulation/BurnGradient/BurnGradient.cpp",
+        "simulation/BurnOneZone/BurnOneZone.cpp",
+        "simulation/Cellular/Cellular.cpp",
+        "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+        "simulation/DiffusionMode/DiffusionMode.cpp",
+        "simulation/ExternalGravity/ExternalGravity.cpp",
+        "simulation/GaussianPulse/Gaussian.cpp",
+        "simulation/RTinstability/RT_instab.cpp",
+        "simulation/Sedov/Sedov.cpp",
+        "simulation/SmoothAdvection/SmoothAdvection.cpp",
+        "simulation/Sod/Sod.cpp",
+        "src/amr/AMRControl.h",
+        "src/amr/AMRFluxRegistering.h",
+        "src/amr/AmrDefines.h",
+        "src/amr/AmrFluxMath.h",
+        "src/amr/AmrTree.h",
+        "src/amr/Block.h",
+        "src/amr/BlockHandle.h",
+        "src/amr/BoundaryPlan.h",
+        "src/amr/ConservativeRestriction.h",
+        "src/amr/FluxRegister.h",
+        "src/amr/GhostExchange.h",
+        "src/amr/LimitedLinearProlongation.h",
+        "src/amr/MemoryPool.h",
+        "src/amr/Morton.h",
+        "src/amr/RefinementIndicatorMath.h",
+        "src/amr/RegridExecutionPlan.h",
+        "src/amr/RegridTransferMath.h",
+        "src/amr/TopologyTransaction.h",
+        "src/core/ProblemHelper.cpp",
+        "src/core/RuntimeParams.h",
+        "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+        "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+        "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+        "src/cuda/amr/RefinementIndicators.cu",
+        "src/cuda/amr/RefinementIndicators.h",
+        "src/cuda/amr/RegridMigration.cu",
+        "src/cuda/amr/RegridMigration.h",
+        "src/cuda/common/CudaCommon.cuh",
+        "src/cuda/common/CudaLaunchConfig.h",
+        "src/cuda/common/DeviceAllocation.h",
+        "src/cuda/common/DeviceEosStatus.h",
+        "src/cuda/common/GridMetricsCache.cu",
+        "src/cuda/common/GridMetricsCache.h",
+        "src/cuda/diffusion/DiffusionKernels.cuh",
+        "src/cuda/diffusion/DiffusionSolver.cuh",
+        "src/cuda/hydro/Boundary.cuh",
+        "src/cuda/hydro/BoundaryPlan.h",
+        "src/cuda/hydro/CheckedHydroEos.cuh",
+        "src/cuda/hydro/ExchangeKernels.cuh",
+        "src/cuda/hydro/GridGeometryAdapter.cuh",
+        "src/cuda/hydro/HydroFaceKernel.cuh",
+        "src/cuda/hydro/HydroFluxPolicies.cuh",
+        "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+        "src/cuda/hydro/HydroReconstructionPolicies.cuh",
+        "src/cuda/hydro/HydroSourceKernels.cuh",
+        "src/cuda/hydro/HydroStageKernels.cuh",
+        "src/cuda/hydro/HydroStateKernels.cuh",
+        "src/cuda/microphysics/CuDssSparseSolver.cpp",
+        "src/cuda/microphysics/CuDssSparseSolver.h",
+        "src/cuda/microphysics/SparseBeNrBatch.cuh",
+        "src/cuda/microphysics/SparseBurnCells.cuh",
+        "src/cuda/microphysics/SparseEquilibration.cu",
+        "src/cuda/microphysics/SparseEquilibration.h",
+        "src/cuda/microphysics/SparseOdeBatch.cuh",
+        "src/cuda/microphysics/common.h",
+        "src/cuda/microphysics/device_eos_owner_utils.cpp",
+        "src/cuda/microphysics/device_eos_owner_utils.h",
+        "src/cuda/microphysics/device_network_owner.h",
+        "src/cuda/microphysics/device_species_owner.cpp",
+        "src/cuda/microphysics/device_species_owner.h",
+        "src/cuda/microphysics/helm_eos_device_owner.cpp",
+        "src/cuda/microphysics/helm_eos_device_owner.h",
+        "src/cuda/microphysics/helm_eos_loader.h",
+        "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+        "src/cuda/microphysics/tabular3_eos_device_owner.h",
+        "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+        "src/cuda/microphysics/tabular4_eos_device_owner.h",
+        "src/cuda/runtime/CudaBackend.h",
+        "src/cuda/runtime/CudaBackendFactory.cpp",
+        "src/cuda/runtime/DeviceBlockStore.h",
+        "src/cuda/runtime/amr/CudaBackendAmrFlux.cu",
+        "src/cuda/runtime/amr/CudaBackendAmrFlux.h",
+        "src/cuda/runtime/amr/CudaBackendExchange.cu",
+        "src/cuda/runtime/amr/CudaBackendExchange.h",
+        "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+        "src/cuda/runtime/amr/CudaBackendMigration.cpp",
+        "src/cuda/runtime/burn/CudaBackendBurn.h",
+        "src/cuda/runtime/burn/CudaBackendBurnDenseRoutes.h",
+        "src/cuda/runtime/burn/CudaBackendBurnImpl.cuh",
+        "src/cuda/runtime/burn/CudaBackendBurnReduction.cuh",
+        "src/cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h",
+        "src/cuda/runtime/burn/CudaBackendBurnSparse.h",
+        "src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp",
+        "src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh",
+        "src/cuda/runtime/burn/CudaBackendBurnSparseRoutes.h",
+        "src/cuda/runtime/burn/CudaBurnOdeTypes.h",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu",
+        "src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu",
+        "src/cuda/runtime/control/CudaBackendCore.cpp",
+        "src/cuda/runtime/control/CudaBackendInternal.h",
+        "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
+        "src/cuda/runtime/control/CudaBackendResources.cpp",
+        "src/cuda/runtime/control/CudaBackendStore.cpp",
+        "src/cuda/runtime/diffusion/CudaBackendDiffusion.cu",
+        "src/cuda/runtime/diffusion/CudaBackendDiffusion.h",
+        "src/cuda/runtime/hydro/CudaBackendHydro.h",
+        "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+        "src/cuda/runtime/hydro/CudaBackendHydroHelm.cu",
+        "src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu",
+        "src/cuda/runtime/hydro/CudaBackendHydroInstantiation.cuh",
+        "src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu",
+        "src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu",
+        "src/data/FluidState.h",
+        "src/data/GlobalDefs.h",
+        "src/data/UserTypes.h",
+        "src/driver/ComputeBackend.h",
+        "src/driver/Driver.h",
+        "src/driver/DriverBurn.h",
+        "src/driver/DriverBurnPolicy.h",
+        "src/driver/DriverControl.h",
+        "src/driver/DriverUtils.h",
+        "src/driver/ReductionSpec.h",
+        "src/driver/SolverDispatch.cpp",
+        "src/driver/SolverDispatch.h",
+        "src/driver/StageScheduler.h",
+        "src/driver/StateResidency.h",
+        "src/driver/TopologyIdentityRegistry.h",
+        "src/driver/dispatch/BackendCapabilities.h",
+        "src/driver/dispatch/DispatchImpl.h",
+        "src/driver/dispatch/Dispatch_Euler.cpp",
+        "src/driver/dispatch/Dispatch_RK2.cpp",
+        "src/driver/dispatch/Dispatch_RK3.cpp",
+        "src/driver/dispatch/PolicyDescriptor.h",
+        "src/driver/dispatch/ResolvedExecutionPlan.h",
+        "src/driver/dispatch/RuntimeProbe.cpp",
+        "src/driver/dispatch/RuntimeProbe.h",
+        "src/grid/Grid.h",
+        "src/grid/GridMetrics.h",
+        "src/interface/GenericProblem.h",
+        "src/interface/ProblemGenerator.h",
+        "src/io/IO.h",
+        "src/io/chk/CheckpointCompatibility.h",
+        "src/io/chk/ChkIO.cpp",
+        "src/io/hdf5/HDF5Writer.cpp",
+        "src/io/hdf5/HDF5Writer.h",
+        "src/io/plot/PlotIO.cpp",
+        "src/numerics/burnsolver/BurnDispatch.h",
+        "src/numerics/burnsolver/BurnThermodynamics.h",
+        "src/numerics/burnsolver/BurnerHandle.h",
+        "src/numerics/burnsolver/NetworkDerivative.h",
+        "src/numerics/burnsolver/OdeContinuation.h",
+        "src/numerics/burnsolver/odeFunction.h",
+        "src/numerics/burnsolver/ode_bd.h",
+        "src/numerics/burnsolver/ode_ros4.h",
+        "src/numerics/diffusion/DiffDispatch.h",
+        "src/numerics/diffusion/DiffusionAMRStages.h",
+        "src/numerics/diffusion/DiffusionTypes.h",
+        "src/numerics/flux/FluxFunctions.h",
+        "src/numerics/flux/FluxHLL.h",
+        "src/numerics/flux/FluxHLLC.h",
+        "src/numerics/flux/FluxRoe.h",
+        "src/numerics/flux/FluxSW.h",
+        "src/numerics/flux/FluxVL.h",
+        "src/numerics/integrator/GeometricSources.h",
+        "src/numerics/integrator/HydroSolverImpl.h",
+        "src/numerics/integrator/IHydroSolver.h",
+        "src/numerics/integrator/TimeIntegratorEuler.h",
+        "src/numerics/integrator/TimeIntegratorHelper.h",
+        "src/numerics/integrator/TimeIntegratorRK2.h",
+        "src/numerics/integrator/TimeIntegratorRK3.h",
+        "src/numerics/linalg/CsrMatrixView.h",
+        "src/numerics/linalg/DenseWrap.h",
+        "src/numerics/linalg/LinearEquilibration.h",
+        "src/numerics/linalg/SparseWrap.h",
+        "src/numerics/reconstruction/Limiters.h",
+        "src/numerics/reconstruction/Reconstruction.h",
+        "src/physics/eos/IdealGas.h",
+        "src/physics/eos/Tabular4DEOS.h",
+        "src/physics/eos/TabularFreeEnergy.h",
+        "src/physics/eos/eos.h",
+        "src/physics/eos/eos_Utils.h",
+        "src/physics/eos/eos_state.h",
+        "src/physics/eos/eosdispatch.cpp",
+        "src/physics/eos/eosdispatch.h",
+        "src/physics/gravity/ExternalGravity.h",
+        "src/physics/gravity/ExternalGravitySource.h",
+        "src/physics/gravity/GravityDispatch.h",
+        "src/physics/gravity/GravityNone.h",
+        "src/physics/gravity/IGravityPolicy.h",
+        "src/physics/network/WeakTableView.h",
+        "src/physics/species/Species.h",
+        "tests/SparseKLURegression.cpp",
+        "tests/TabularEOSRegression.cpp",
+        "tests/amr_composition_test_cases.h",
+        "tests/checkpoint_conservation_metrics.h",
+        "tests/cuda/test_boundary_plan_parity.cu",
+        "tests/cuda/test_burn_policy_parity.cu",
+        "tests/cuda/test_burn_thermal_math.cu",
+        "tests/cuda/test_compensated_sum.cu",
+        "tests/cuda/test_cuda_amr_composition.cu",
+        "tests/cuda/test_cuda_amr_exchange.cpp",
+        "tests/cuda/test_cuda_compile_probe.cu",
+        "tests/cuda/test_cuda_hydro_block.cu",
+        "tests/cuda/test_cuda_multiblock_burn.cu",
+        "tests/cuda/test_cuda_multiblock_diffusion.cu",
+        "tests/cuda/test_cuda_multiblock_hydro.cu",
+        "tests/cuda/test_cuda_policy_resolution.cu",
+        "tests/cuda/test_cuda_reduction_contract.cu",
+        "tests/cuda/test_cuda_regrid_migration.cu",
+        "tests/cuda/test_cuda_regrid_transaction.cpp",
+        "tests/cuda/test_cuda_single_level_validation.cpp",
+        "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+        "tests/cuda/test_cuda_store_lifecycle.cpp",
+        "tests/cuda/test_curvilinear_geometry_smoke.cu",
+        "tests/cuda/test_diffusion_rkl_parity.cu",
+        "tests/cuda/test_eos_host_device_parity.cu",
+        "tests/cuda/test_grid_metrics_cache.cu",
+        "tests/cuda/test_hydro_leaf_parity.cu",
+        "tests/cuda/test_mainline_authority.cpp",
+        "tests/cuda/test_network_derivative.cu",
+        "tests/cuda/test_network_nse_device.cu",
+        "tests/cuda/test_refinement_indicators.cpp",
+        "tests/cuda/test_tabular_free_energy_owner.cu",
+        "tests/fixtures/BurnTimeReference.h",
+        "tests/fixtures/NseReference.h",
+        "tests/fixtures/SparseTransferNetwork.h",
+        "tests/math/CompensatedSumCases.h",
+        "tests/math/DenseLuCases.h",
+        "tests/math/NetworkDerivativeCases.h",
+        "tests/regrid_migration_fixture.h",
+        "tests/test_amr_flux_surface_plan.cpp",
+        "tests/test_amr_operation_plans.cpp",
+        "tests/test_block_handle.cpp",
+        "tests/test_boundary_plan.cpp",
+        "tests/test_burn_mainline_reference.cpp",
+        "tests/test_checkpoint_compatibility.cpp",
+        "tests/test_checkpoint_conservation_metrics.cpp",
+        "tests/test_compensated_sum.cpp",
+        "tests/test_compute_backend.cpp",
+        "tests/test_curvilinear_manifest.py",
+        "tests/test_curvilinear_metrics.cpp",
+        "tests/test_device_block_store_lifecycle.cpp",
+        "tests/test_generated_network_reference.cpp",
+        "tests/test_physical_constants.cpp",
+        "tests/test_portable_network_generator.py",
+        "tests/test_reduction_contract.cpp",
+        "tests/test_refinement_indicator_math.cpp",
+        "tests/test_resolved_execution_plan.cpp",
+        "tests/test_run_memory_guarded.py",
+        "tests/test_runtime_probe_and_capabilities.cpp",
+        "tests/test_runtime_validation_inputs.py",
+        "tests/test_same_level_exchange_plan.cpp",
+        "tests/test_shared_stage_scheduler.cpp",
+        "tests/test_smoke_cuda_amr_runtime.py",
+        "tests/test_sparse_ode_continuation.cpp",
+        "tests/test_state_residency.cpp",
+        "tests/test_topology_transaction.cpp",
+        "tests/test_validate_backend_results.py",
+        "tests/test_validation_device_memory.py",
+        "tests/test_validation_provenance.py",
+        "tests/test_validation_subprocess_logs.py",
+        "tests/tooling/test_audit_combination_v2.py",
+        "tools/audit_combination_v2.py",
+        "tools/network/GenerateNetwork.py",
+        "tools/qualify_cuda_amr_evidence.py",
+        "tools/run_memory_guarded.py",
+        "tools/smoke_cuda_amr_runtime.py",
+        "tools/summarize_cuda_compile_memory.py",
+        "tools/validate_backend_results.py",
+        "tools/validate_cuda_amr_restart.py"
+      ],
+      "untracked_source_files": [
+        "tests/fixtures/amr_composition_test_cases.h",
+        "tests/fixtures/checkpoint_conservation_metrics.h",
+        "tests/fixtures/regrid_migration_fixture.h",
+        "tests/fixtures/validation_provenance/backend-validation-evidence.json",
+        "tests/fixtures/validation_provenance/restart-enuc-evidence.json",
+        "tests/fixtures/validation_provenance/restart-smooth-evidence.json",
+        "tests/host/SparseKLURegression.cpp",
+        "tests/host/TabularEOSRegression.cpp",
+        "tests/host/test_amr_flux_surface_plan.cpp",
+        "tests/host/test_amr_operation_plans.cpp",
+        "tests/host/test_block_handle.cpp",
+        "tests/host/test_boundary_plan.cpp",
+        "tests/host/test_burn_mainline_reference.cpp",
+        "tests/host/test_checkpoint_compatibility.cpp",
+        "tests/host/test_checkpoint_conservation_metrics.cpp",
+        "tests/host/test_compensated_sum.cpp",
+        "tests/host/test_compute_backend.cpp",
+        "tests/host/test_curvilinear_metrics.cpp",
+        "tests/host/test_device_block_store_lifecycle.cpp",
+        "tests/host/test_generated_network_reference.cpp",
+        "tests/host/test_physical_constants.cpp",
+        "tests/host/test_reduction_contract.cpp",
+        "tests/host/test_refinement_indicator_math.cpp",
+        "tests/host/test_resolved_execution_plan.cpp",
+        "tests/host/test_runtime_probe_and_capabilities.cpp",
+        "tests/host/test_same_level_exchange_plan.cpp",
+        "tests/host/test_shared_stage_scheduler.cpp",
+        "tests/host/test_sparse_ode_continuation.cpp",
+        "tests/host/test_state_residency.cpp",
+        "tests/host/test_topology_transaction.cpp",
+        "tests/tooling/test_audit_architecture.py",
+        "tests/tooling/test_curvilinear_manifest.py",
+        "tests/tooling/test_portable_network_generator.py",
+        "tests/tooling/test_run_memory_guarded.py",
+        "tests/tooling/test_runtime_validation_inputs.py",
+        "tests/tooling/test_smoke_cuda_amr_runtime.py",
+        "tests/tooling/test_validate_backend_results.py",
+        "tests/tooling/test_validation_device_memory.py",
+        "tests/tooling/test_validation_provenance.py",
+        "tests/tooling/test_validation_subprocess_logs.py",
+        "tools/audit_architecture.py"
+      ]
+    },
+    "build": {
+      "source_directory": "/home/shiroakane/ARCH",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "22b1047478c644bc625840938539f535caff3518b0e8c48bad7bd3da3231a411",
+      "compile_commands_sha256": "dde1b4ed11fec77592e0611fd82db3830a4fd288379c3df65523a4aba59de1aa",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "2",
+        "ARCH_CUDSS_IR_STEPS": "2",
+        "ARCH_CUSTOM_NETWORKS": "audit31;weak_urca",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/tmp/arch-release-inline-networks.zr6m6q",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "ON",
+        "ARCH_ENABLE_KLU": "ON",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "ON",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin",
+        "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_BINDIR": "bin",
+        "CMAKE_INSTALL_DATADIR": "",
+        "CMAKE_INSTALL_DATAROOTDIR": "share",
+        "CMAKE_INSTALL_DOCDIR": "",
+        "CMAKE_INSTALL_INCLUDEDIR": "include",
+        "CMAKE_INSTALL_INFODIR": "",
+        "CMAKE_INSTALL_LIBDIR": "lib",
+        "CMAKE_INSTALL_LIBEXECDIR": "libexec",
+        "CMAKE_INSTALL_LOCALEDIR": "",
+        "CMAKE_INSTALL_LOCALSTATEDIR": "var",
+        "CMAKE_INSTALL_MANDIR": "",
+        "CMAKE_INSTALL_OLDINCLUDEDIR": "/usr/include",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_INSTALL_RUNSTATEDIR": "",
+        "CMAKE_INSTALL_SBINDIR": "sbin",
+        "CMAKE_INSTALL_SHAREDSTATEDIR": "com",
+        "CMAKE_INSTALL_SYSCONFDIR": "etc",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_VERSION": "7.13.0",
+        "CMAKE_PROJECT_VERSION_MAJOR": "7",
+        "CMAKE_PROJECT_VERSION_MINOR": "13",
+        "CMAKE_PROJECT_VERSION_PATCH": "0",
+        "CMAKE_PROJECT_VERSION_TWEAK": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CuDSS_INCLUDE_DIR": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include",
+        "CuDSS_LIBRARY": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+        "KLU_BINARY_DIR": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/_deps/suitesparse-build/KLU",
+        "KLU_DIR": "KLU_DIR-NOTFOUND",
+        "KLU_IS_TOP_LEVEL": "OFF",
+        "KLU_SOURCE_DIR": "/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU",
+        "KLU_USE_CHOLMOD": "OFF",
+        "KLU_VERSION_MAJOR": "2",
+        "KLU_VERSION_MINOR": "3",
+        "KLU_VERSION_SUB": "6",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [
+        {
+          "package": "audit31",
+          "root": "/tmp/arch-release-inline-networks.zr6m6q/audit31",
+          "manifest": {
+            "auxiliary_equations": 0,
+            "class_name": "NetCustom_audit31",
+            "device_callable_math": true,
+            "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+            "explicit_weak_storage": false,
+            "generator_sha256": "1e1c32172e9321fda5874ebd7b326f434e716028ce08ca3811660e53917e3a08",
+            "generator_version": 4,
+            "header": "NetCustom_audit31.h",
+            "literal_zero_jacobian_entries_pruned": 538,
+            "network_id": "audit31",
+            "pynucastro_version": "2.12.0",
+            "rate_count": 229,
+            "recipe": "/home/shiroakane/ARCH/validation/network/inputs/audit31.py",
+            "recipe_sha256": "c5c8aba5b49ee7a85b8723b56119ea6ad1e819d9f61235f9e3d8df23dd4be449",
+            "runtime_name": "custom:audit31",
+            "schema_version": 1,
+            "source": "NetCustom_audit31.cpp",
+            "species": [
+              "n",
+              "h1",
+              "he4",
+              "c12",
+              "c13",
+              "n13",
+              "n14",
+              "n15",
+              "o14",
+              "o15",
+              "o16",
+              "o17",
+              "o18",
+              "f17",
+              "f18",
+              "f19",
+              "ne18",
+              "ne19",
+              "ne20",
+              "ne21",
+              "ne22",
+              "na21",
+              "na22",
+              "na23",
+              "mg22",
+              "mg23",
+              "mg24",
+              "mg25",
+              "mg26",
+              "al25",
+              "si28"
+            ],
+            "species_count": 31,
+            "supports_nse": false,
+            "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+            "weak_composition_jacobian": false,
+            "weak_table_coordinate_derivatives": false
+          },
+          "files": [
+            {
+              "name": "NetCustom_audit31.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.cpp",
+              "sha256": "630e1ed3b491d7fbb686b7ac710fead1df484bb4b4ad0ab375869cf702c22ab3"
+            },
+            {
+              "name": "NetCustom_audit31.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.h",
+              "sha256": "4674a590f32c5a79eacda0e0ee8b0a81b3e502916961a487b3b3ee9d0a5223a9"
+            },
+            {
+              "name": "NetCustom_audit31.math.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/NetCustom_audit31.math.h",
+              "sha256": "7ecaa2c22d90f57f8678a3f2b3088aa13696ae884b72c33cf1a117fcaf0372c0"
+            },
+            {
+              "name": "generated/GNUmakefile",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            {
+              "name": "generated/actual_network.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_network.H",
+              "sha256": "3a648c8e9d446ad08597c9db2140896c539b2d057786a0effc149b5c627987b5"
+            },
+            {
+              "name": "generated/actual_rhs.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/actual_rhs.H",
+              "sha256": "c14e623823cae57d1ab8608e36028ee3ef32b654b57bc0c92d217b4f61f28de1"
+            },
+            {
+              "name": "generated/amrex_bridge.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/amrex_bridge.H",
+              "sha256": "7ed4f4aed5952bb0f508098283a5f45bea48d107e2d4b1faa4d4dc538f3c7b36"
+            },
+            {
+              "name": "generated/approximate_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/approximate_rates.H",
+              "sha256": "03c4262b056a6c4b8bf0b01af96c631947d31bc52dd13181e2dd59b2f7034d5b"
+            },
+            {
+              "name": "generated/burn_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/burn_type.H",
+              "sha256": "927124ac16e4eedc267383d5b9c17b41c3a0a6bfedd2d6572f1fcde4abd04039"
+            },
+            {
+              "name": "generated/derived_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/derived_rates.H",
+              "sha256": "16e45c3cc2276b0023b7717a95a7f22c16e5ba143c3af4f201906538f4e41378"
+            },
+            {
+              "name": "generated/fundamental_constants.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/fundamental_constants.H",
+              "sha256": "2325004fd9e19aca28945f2e1e0e86607cfcd818945f5745fe0a44d7c0f84fc2"
+            },
+            {
+              "name": "generated/interp_tools.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/interp_tools.H",
+              "sha256": "0d48a1f9c4fdbc83e22a30265743436b8a4766b20eb94ba73ce078e3f0e58f60"
+            },
+            {
+              "name": "generated/main.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            {
+              "name": "generated/modified_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/modified_rates.H",
+              "sha256": "d97990ca895534876a0937675308a2a0731c6e421d8ccd0f51dbac3d1268a248"
+            },
+            {
+              "name": "generated/network_properties.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/network_properties.H",
+              "sha256": "4342d16a3eab36ab950655ae170fef028a3d8e848b4698a5e065a7c7c3019cc2"
+            },
+            {
+              "name": "generated/partition_functions.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/partition_functions.H",
+              "sha256": "6f44a72f9792ac2ff74fd6b93794bb89fe81f02bd7f6a2bdfc84f1209b6f7a81"
+            },
+            {
+              "name": "generated/pynucastro-info.txt",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            {
+              "name": "generated/rate_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/rate_type.H",
+              "sha256": "f37c743e7396db447165b7c4cf1b749d77131b1b44f50c20c49a3922f0ffaf5b"
+            },
+            {
+              "name": "generated/reaclib_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/reaclib_rates.H",
+              "sha256": "4ce29b40ad9b96a7e738ee4da6795fb1acc1b6da76ed630dad344c1dc0c43e0e"
+            },
+            {
+              "name": "generated/screen.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen.H",
+              "sha256": "262a5783855191aecca88871ec13c923b21f7795a72192812d1430470e89f250"
+            },
+            {
+              "name": "generated/screen_data.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/screen_data.H",
+              "sha256": "6d76387291465678f089e85cf48577c46e54b84364b1b8b782f728408328a599"
+            },
+            {
+              "name": "generated/table_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/table_rates.H",
+              "sha256": "993682e72f4644238bb369d02cab4a4cf42b3198520ccef7b1591bf0328f4823"
+            },
+            {
+              "name": "generated/tfactors.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/generated/tfactors.H",
+              "sha256": "b59ebe7f9331ee9eb7288c43f7803962ce466099cfd6c597e701f2f78408dac3"
+            },
+            {
+              "name": "manifest.json",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/manifest.json",
+              "sha256": "b2d968411f50ff5b7bb01bcc1a5b902060f7c035244648853041c0bd5ad964f7"
+            },
+            {
+              "name": "network.cmake",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/audit31/network.cmake",
+              "sha256": "3fab99c93f9b3d8ef6efb629716eb3f48956ae5368f23f5adbdbc43d41eab4d4"
+            }
+          ]
+        },
+        {
+          "package": "weak_urca",
+          "root": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca",
+          "manifest": {
+            "auxiliary_equations": 1,
+            "class_name": "NetCustom_weak_urca",
+            "device_callable_math": true,
+            "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+            "explicit_weak_storage": true,
+            "generator_sha256": "1e1c32172e9321fda5874ebd7b326f434e716028ce08ca3811660e53917e3a08",
+            "generator_version": 4,
+            "header": "NetCustom_weak_urca.h",
+            "literal_zero_jacobian_entries_pruned": 0,
+            "network_id": "weak_urca",
+            "pynucastro_version": "2.12.0",
+            "rate_count": 2,
+            "recipe": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+            "recipe_sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2",
+            "runtime_name": "custom:weak_urca",
+            "schema_version": 1,
+            "source": "NetCustom_weak_urca.cpp",
+            "species": [
+              "ne23",
+              "na23"
+            ],
+            "species_count": 2,
+            "supports_nse": false,
+            "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+            "weak_composition_jacobian": true,
+            "weak_table_coordinate_derivatives": true
+          },
+          "files": [
+            {
+              "name": "NetCustom_weak_urca.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.cpp",
+              "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+            },
+            {
+              "name": "NetCustom_weak_urca.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.h",
+              "sha256": "88eccb366a37f2323ab7a5d8090fecfd56acfdc70c7e9e003fb0b29856dcf32a"
+            },
+            {
+              "name": "NetCustom_weak_urca.math.h",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/NetCustom_weak_urca.math.h",
+              "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+            },
+            {
+              "name": "generated/GNUmakefile",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            {
+              "name": "generated/actual_network.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_network.H",
+              "sha256": "810500edb06b1de5eb5aa5c1dd26e6d07d79cf7871a92d31af2b89f7841ac98f"
+            },
+            {
+              "name": "generated/actual_rhs.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/actual_rhs.H",
+              "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+            },
+            {
+              "name": "generated/amrex_bridge.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/amrex_bridge.H",
+              "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+            },
+            {
+              "name": "generated/approximate_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/approximate_rates.H",
+              "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+            },
+            {
+              "name": "generated/burn_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/burn_type.H",
+              "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+            },
+            {
+              "name": "generated/derived_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/derived_rates.H",
+              "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+            },
+            {
+              "name": "generated/fundamental_constants.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/fundamental_constants.H",
+              "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+            },
+            {
+              "name": "generated/interp_tools.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/interp_tools.H",
+              "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+            },
+            {
+              "name": "generated/main.cpp",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            {
+              "name": "generated/modified_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/modified_rates.H",
+              "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+            },
+            {
+              "name": "generated/network_properties.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/network_properties.H",
+              "sha256": "380d685b449b008894ea7cdfacdba17064e6eeb76f9f467ec78a714402b35be0"
+            },
+            {
+              "name": "generated/partition_functions.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/partition_functions.H",
+              "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+            },
+            {
+              "name": "generated/pynucastro-info.txt",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            {
+              "name": "generated/rate_type.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/rate_type.H",
+              "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+            },
+            {
+              "name": "generated/reaclib_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/reaclib_rates.H",
+              "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+            },
+            {
+              "name": "generated/screen.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen.H",
+              "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+            },
+            {
+              "name": "generated/screen_data.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/screen_data.H",
+              "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+            },
+            {
+              "name": "generated/table_rates.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/table_rates.H",
+              "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+            },
+            {
+              "name": "generated/tfactors.H",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/generated/tfactors.H",
+              "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+            },
+            {
+              "name": "manifest.json",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/manifest.json",
+              "sha256": "8000e826bd6f8acac41e5e18c06c52d47f70b6f02268924ca9c3ec4c47036fb4"
+            },
+            {
+              "name": "network.cmake",
+              "path": "/tmp/arch-release-inline-networks.zr6m6q/weak_urca/network.cmake",
+              "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+            }
+          ]
+        }
+      ],
+      "sparse_link": {
+        "required_providers": [
+          "cudss",
+          "klu"
+        ],
+        "link_command_sha256": "5dc687734e57735f95f917a13de4ada46931c078d943bca858f8c0411970ad51",
+        "libraries": [
+          {
+            "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+            "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/_deps/suitesparse-build/AMD/libamd.a",
+            "sha256": "8b79de67f1ac801be56c9d52a9d67ffe40fcfb292dea6866c0d0dc402d846948"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/_deps/suitesparse-build/BTF/libbtf.a",
+            "sha256": "46f73eefc45b4916651ba84e690680c7afc1ab62dc8ae9f86827a79a1b8fcaa2"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/_deps/suitesparse-build/COLAMD/libcolamd.a",
+            "sha256": "ac5c469a436b8bc1a268a50e6f3743ebda60f6ea8b2d9772c4015aa4556a8bf1"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/_deps/suitesparse-build/KLU/libklu.a",
+            "sha256": "64da50c9487ee38b0d5bcbf8126f780e1fd66921b49c9917d720e2ad3806623a"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+            "sha256": "22e573552279f92dd804fd8da0409223fa5f343beabf54fb41d92767036be297"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublas.so.12.3.4.1",
+            "sha256": "8bdbda040980c430fc07dd853fdebc578e51951015284e4f109de5ee345a22e6"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublasLt.so.12.3.4.1",
+            "sha256": "4776affac4b3d78f1e5076d39bd046637672f54682bd2b3f40824f9dfac37708"
+          }
+        ]
+      },
+      "configured_sparse_libraries": {
+        "CuDSS_LIBRARY": {
+          "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+          "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+        }
+      },
+      "artifact_paths": {
+        "arch": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH",
+        "checkpoint_validator": "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": "4",
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_PROC_BIND": null,
+      "OMP_PLACES": null,
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "d32b7eb0473e5c8ffb2dfb683bd4d644ae7e78d7c5cc93866c9d9d8755201090",
+      "checkpoint_validator_sha256": "1fe1a701d5a4ea7fe813242ea255b5254addbb3e44a3e5635ca59a2f0548e9b5"
+    },
+    "artifact_observation": {
+      "arch": [
+        2096,
+        683574,
+        306379832,
+        1788838416109908712,
+        1788838416129908782
+      ],
+      "checkpoint_validator": [
+        2096,
+        683647,
+        347768,
+        1788838999597932033,
+        1788838999597932033
+      ]
+    }
+  },
+  "binary_sha256": "d32b7eb0473e5c8ffb2dfb683bd4d644ae7e78d7c5cc93866c9d9d8755201090",
+  "identity_verified_after_run": true
+}

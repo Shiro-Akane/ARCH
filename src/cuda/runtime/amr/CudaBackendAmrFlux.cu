@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendAmrFlux.cu
- * @brief Launch control for compact AMR flux surfaces.
+ * @brief Validate and enqueue compact AMR surface operations.
+ *
+ * These launch wrappers select clear, capture, registration or reflux kernels
+ * over runtime-owned buffers. Shared AMR plans and AmrFluxMath define the
+ * operation; the caller orders launches and checks asynchronous completion.
  */
 
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"

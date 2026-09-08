@@ -1,3 +1,10 @@
+/**
+ * @file test_tabular_free_energy_owner.cu
+ * @brief Check thermodynamics through tabular free-energy device owners.
+ *
+ * Manufactured 3D/4D fields exercise values, derivatives and failure behavior
+ * through the same EOS views used by the production kernels.
+ */
 #include "cuda/microphysics/helm_eos_loader.h"
 
 #include <cuda_runtime.h>

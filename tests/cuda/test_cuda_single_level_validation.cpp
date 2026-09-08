@@ -1,7 +1,14 @@
+/**
+ * @file test_cuda_single_level_validation.cpp
+ * @brief Inspect and compare real ARCH checkpoint and trace artifacts.
+ *
+ * This host-side executable supplies field comparisons, conserved totals and
+ * analytic qualification metrics to the external validation runners.
+ */
 #include "cuda/runtime/CudaBackend.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "core/RuntimeParams.h"
-#include "../checkpoint_conservation_metrics.h"
+#include "../fixtures/checkpoint_conservation_metrics.h"
 
 #include <algorithm>
 #include <array>
@@ -612,8 +619,8 @@ void compare_real_checkpoints(const std::filesystem::path& reference_path,
     double global_max_field_normalized = 0.0;
     double max_enuc_normalized = 0.0;
     for (const auto& field : fields) {
-        // Older checkpoints contain only species densities. When both files
-        // preserve the native state, apply the same field policy to it too.
+        // Checkpoints without native composition provide species densities.
+        // When both files preserve native X, apply the same field policy to it.
         if (std::string_view(field.name) == "X" && !native_composition_compared)
             continue;
         require(field.reference->size() == field.candidate->size(),

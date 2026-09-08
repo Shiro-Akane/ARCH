@@ -52,7 +52,6 @@ struct GridConfig
 struct NumericsConfig
 {
     std::string solver_name;    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
-    std::string riemann_solver; ///< Reserved compatibility field; dispatch uses solver_name.
 
     // Runtime dispatch maps these names to compile-time reconstruction policies.
     std::string reconstruction = "pcm";  ///< "pcm" (1st), "plm" (2nd), "ppm" (3rd)
@@ -82,7 +81,7 @@ struct ExecutionConfig
 struct OdeConfig
 {
     std::string ode_solver = "BE_NR";      ///< Default ODE solver: Backward Euler with Newton-Raphson
-    std::string linear_solver = "Auto";    ///< <=30 DenseLU; larger CPU/CUDA candidates use KLU/cuDSS
+    std::string linear_solver = "Auto";    ///< DenseLU through 31 total ODE equations; larger CPU/CUDA systems use KLU/cuDSS.
 
     double rtol = 1e-4; ///< Relative tolerance for ODE integration
     double atol = 1e-8; ///< Absolute tolerance for ODE integration
@@ -359,9 +358,9 @@ struct RunState
     int chk_idx = 0;   ///< Current checkpoint file index
     double dt_old = 0.0; ///< Unsynchronized macro-step proposal used by the growth limiter
     double dt_burn = 0.0; ///< Burn-reported limit carried into the next macro step
-    bool has_timestep_state = false; ///< True for checkpoint formats that persist both limits
+    bool has_timestep_state = false; ///< Restored controller limits are available; false for a fresh simulation.
     bool resume_after_regrid = false; ///< The saved loop checkpoint already completed regrid/I/O
-    bool checkpoint_provenance_verified = false; ///< True after strict v3 scientific-identity validation
+    bool checkpoint_provenance_verified = false; ///< True after validating the restored scientific identity.
     std::string verified_eos_table_sha256; ///< Saved table identity rechecked after the EOS owner loads
 };
 

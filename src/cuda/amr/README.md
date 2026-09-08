@@ -9,7 +9,4 @@
 - [AmrFluxSurfaceKernels.cuh](AmrFluxSurfaceKernels.cuh) and
   [AmrFluxSurfaceTypes.cuh](AmrFluxSurfaceTypes.cuh) implement device surface traversal.
 
-Topology and formulas remain in the common [AMR module](../../amr/README.md).
-Plan binding, migration transactions and completion live in
-[runtime/amr](../runtime/amr/README.md). Keep kernel traversal separate from
-mesh-tree decisions and test both through [AMR validation](../../../validation/amr/README.md).
+Topology definitions and mathematical formulas remain securely within the common [AMR module](../../amr/README.md). Meanwhile, plan binding, migration transactions, and completion logic are maintained in [runtime/amr](../runtime/amr/README.md). You must always keep device kernel traversal completely separate from host mesh-tree decisions, and comprehensively test both using the [AMR validation](../../../validation/amr/README.md) framework.

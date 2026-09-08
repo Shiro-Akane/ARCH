@@ -1,11 +1,10 @@
 /**
  * @file HDF5Writer.cpp
- * @brief Implements low-level HDF5 dataset and attribute emission.
+ * @brief Read and write the common HDF5 datasets and attributes.
  *
- * Workflow:
- * 1. Collect synchronized leaf metadata and field values from the driver.
- * 2. Serialize them through the selected backend with explicit dimensions and geometry.
- * 3. Write restart- or analysis-ready output without changing simulation state.
+ * Checkpoint serialization checks payload lengths, native composition and
+ * restart metadata using the declared format. Higher-level IO code gathers or
+ * restores AMR state; this layer consumes and returns host-side payloads.
  */
 
 #include <iostream>
@@ -262,19 +261,17 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         CheckpointData checkpoint;
         int version = 0;
         file.getAttribute("checkpoint_version").read(version);
-        if (version < 1 || version > checkpoint_format_version)
+        if (version != checkpoint_format_version)
             throw std::runtime_error("Unsupported checkpoint format version.");
         file.getAttribute("time").read(checkpoint.time);
-        if (version >= 2) {
-            int resume_after_regrid = 0;
-            file.getAttribute("dt_old").read(checkpoint.dt_old);
-            file.getAttribute("dt_burn").read(checkpoint.dt_burn);
-            file.getAttribute("resume_after_regrid").read(resume_after_regrid);
-            checkpoint.has_timestep_state = true;
-            checkpoint.resume_after_regrid = resume_after_regrid != 0;
-            if (!has_valid_timestep_state(checkpoint)) {
-                throw std::runtime_error("Checkpoint timestep-controller state is invalid.");
-            }
+        int resume_after_regrid = 0;
+        file.getAttribute("dt_old").read(checkpoint.dt_old);
+        file.getAttribute("dt_burn").read(checkpoint.dt_burn);
+        file.getAttribute("resume_after_regrid").read(resume_after_regrid);
+        checkpoint.has_timestep_state = true;
+        checkpoint.resume_after_regrid = resume_after_regrid != 0;
+        if (!has_valid_timestep_state(checkpoint)) {
+            throw std::runtime_error("Checkpoint timestep-controller state is invalid.");
         }
         file.getAttribute("step").read(checkpoint.step_count);
         file.getAttribute("chk_index").read(checkpoint.chk_file_index);
@@ -283,29 +280,27 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         file.getAttribute("geometry").read(checkpoint.geometry);
         file.getAttribute("num_species").read(checkpoint.num_species);
         file.getAttribute("cells_per_block").read(checkpoint.cells_per_block);
-        if (version >= 3) {
-            int burn_enabled = 0;
-            int nse_enabled = 0;
-            checkpoint.provenance.available = true;
-            file.getAttribute("eos_type").read(checkpoint.provenance.eos_type);
-            file.getAttribute("ideal_gamma").read(
-                checkpoint.provenance.ideal_gamma);
-            file.getAttribute("burn_enabled").read(burn_enabled);
-            file.getAttribute("active_network").read(
-                checkpoint.provenance.active_network);
-            file.getAttribute("nse_enabled").read(nse_enabled);
-            if ((burn_enabled != 0 && burn_enabled != 1)
-                || (nse_enabled != 0 && nse_enabled != 1)) {
-                throw std::runtime_error(
-                    "Checkpoint burn/NSE provenance flags are not Boolean.");
-            }
-            checkpoint.provenance.burn_enabled = burn_enabled != 0;
-            checkpoint.provenance.nse_enabled = nse_enabled != 0;
-            file.getAttribute("eos_table_path").read(
-                checkpoint.provenance.eos_table_path);
-            file.getAttribute("eos_table_sha256").read(
-                checkpoint.provenance.eos_table_sha256);
+        int burn_enabled = 0;
+        int nse_enabled = 0;
+        checkpoint.provenance.available = true;
+        file.getAttribute("eos_type").read(checkpoint.provenance.eos_type);
+        file.getAttribute("ideal_gamma").read(
+            checkpoint.provenance.ideal_gamma);
+        file.getAttribute("burn_enabled").read(burn_enabled);
+        file.getAttribute("active_network").read(
+            checkpoint.provenance.active_network);
+        file.getAttribute("nse_enabled").read(nse_enabled);
+        if ((burn_enabled != 0 && burn_enabled != 1)
+            || (nse_enabled != 0 && nse_enabled != 1)) {
+            throw std::runtime_error(
+                "Checkpoint burn/NSE provenance flags are not Boolean.");
         }
+        checkpoint.provenance.burn_enabled = burn_enabled != 0;
+        checkpoint.provenance.nse_enabled = nse_enabled != 0;
+        file.getAttribute("eos_table_path").read(
+            checkpoint.provenance.eos_table_path);
+        file.getAttribute("eos_table_sha256").read(
+            checkpoint.provenance.eos_table_sha256);
 
         Group blocks_group = file.getGroup("Blocks");
         blocks_group.getDataSet("level").read(checkpoint.levels);
@@ -339,29 +334,23 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
         read_field("mom_v", field_dims, checkpoint.mom_v);
         read_field("mom_w", field_dims, checkpoint.mom_w);
         read_field("eng", field_dims, checkpoint.eng);
-        if (version >= 3) {
-            read_field("enuc_rate", field_dims, checkpoint.enuc_rate);
-            checkpoint.has_enuc_rate = true;
-        }
-        checkpoint.has_mass_fractions = version >= 4;
+        read_field("enuc_rate", field_dims, checkpoint.enuc_rate);
+        checkpoint.has_enuc_rate = true;
+        checkpoint.has_mass_fractions = true;
         if (checkpoint.num_species > 0) {
             read_field("rhoX", {static_cast<size_t>(checkpoint.num_species),
                                 blocks, checkpoint.cells_per_block}, checkpoint.rhoX);
-            if (checkpoint.has_mass_fractions) {
-                read_field("X", {static_cast<size_t>(checkpoint.num_species),
-                                 blocks, checkpoint.cells_per_block}, checkpoint.mass_fractions);
-            }
-            if (version >= 3) {
-                Group species = file.getGroup("Species");
-                species.getDataSet("name").read(
-                    checkpoint.provenance.species_names);
-                species.getDataSet("A").read(checkpoint.provenance.species_A);
-                species.getDataSet("Z").read(checkpoint.provenance.species_Z);
-                species.getDataSet("gamma").read(
-                    checkpoint.provenance.species_gamma);
-                species.getDataSet("Cv").read(
-                    checkpoint.provenance.species_Cv);
-            }
+            read_field("X", {static_cast<size_t>(checkpoint.num_species),
+                             blocks, checkpoint.cells_per_block}, checkpoint.mass_fractions);
+            Group species = file.getGroup("Species");
+            species.getDataSet("name").read(
+                checkpoint.provenance.species_names);
+            species.getDataSet("A").read(checkpoint.provenance.species_A);
+            species.getDataSet("Z").read(checkpoint.provenance.species_Z);
+            species.getDataSet("gamma").read(
+                checkpoint.provenance.species_gamma);
+            species.getDataSet("Cv").read(
+                checkpoint.provenance.species_Cv);
         }
 
         if (!has_consistent_checkpoint_payload(checkpoint)) {
@@ -371,7 +360,7 @@ CheckpointData read_hdf5_chk_impl(const std::string& filepath)
             throw std::runtime_error(
                 "Checkpoint native mass fractions are inconsistent with rhoX.");
         }
-        if (version >= 3 && !has_consistent_checkpoint_provenance(checkpoint)) {
+        if (!has_consistent_checkpoint_provenance(checkpoint)) {
             throw std::runtime_error(
                 "Checkpoint scientific provenance is inconsistent.");
         }

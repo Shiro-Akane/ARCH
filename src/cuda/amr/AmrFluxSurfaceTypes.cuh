@@ -1,6 +1,10 @@
 /**
  * @file AmrFluxSurfaceTypes.cuh
- * @brief Compact CUDA storage views for AMR flux registration and reflux.
+ * @brief Borrowed CUDA views of compact AMR flux surfaces.
+ *
+ * Views address conserved and species flux arrays owned by the runtime's
+ * block/flux resources. They carry layout information but allocate no storage;
+ * the owning store and topology generation must outlive every queued use.
  */
 
 #pragma once

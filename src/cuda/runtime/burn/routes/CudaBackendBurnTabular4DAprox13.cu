@@ -1,3 +1,11 @@
+/**
+ * @file CudaBackendBurnTabular4DAprox13.cu
+ * @brief Instantiate the aprox13/Tabular4D common burn route.
+ *
+ * The binding helper supplies ODE dispatch and shared numerical calls; this
+ * translation unit selects types only and owns no runtime storage.
+ */
+
 #include "physics/eos/Tabular4DEOS.h"
 #include "physics/network/aprox13/NetAprox13.h"
 #include "cuda/runtime/burn/CudaBackendBurnNetworkRouteImpl.cuh"

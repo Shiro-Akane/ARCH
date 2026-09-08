@@ -6,10 +6,7 @@ contains rate evaluations; [TimmesRhs.inc](TimmesRhs.inc) contains the reaction
 RHS expressions. [TimmesJacobian.inc](TimmesJacobian.inc) supplies the network's composition-Jacobian expressions.
 [NetAprox13.cpp](NetAprox13.cpp) supplies the ordinary compilation witness.
 
-These files are the network's single mathematical authority for CPU and CUDA.
-Common adapters live in [timmes_common](../timmes_common/README.md);
-[burnsolver](../../../numerics/burnsolver/README.md) owns ODE integration,
-and backends own execution and storage.
+These files constitute the network's single, unified mathematical authority for both CPU and CUDA targets. All common adapters are maintained in [timmes_common](../timmes_common/README.md); meanwhile, [burnsolver](../../../numerics/burnsolver/README.md) exclusively owns the ODE integration, and the respective backends handle execution and storage.
 
 This network adapts Frank Timmes's `public_aprox13.f90`. Preserve source
 attributions and the [third-party notices](../../../../THIRD_PARTY_NOTICES.md);

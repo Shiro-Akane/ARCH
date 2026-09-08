@@ -1,6 +1,12 @@
 /**
  * @file TopologyTransaction.h
  * @brief Move-only transaction guard for staged AMR topology publication.
+ *
+ * A transaction progresses Prepared -> Migrating -> ReadyToCommit -> Committed.
+ * Commit performs fallible preparation and physical finalization before a
+ * noexcept publication callback. A failed commit is not retried; explicit
+ * abort supplies noexcept cleanup for uncommitted state. The guard enforces
+ * ordering and scope while the caller owns data movement and cleanup.
  */
 
 #pragma once

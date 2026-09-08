@@ -1,3 +1,7 @@
+/**
+ * @file BurnerHandle.h
+ * @brief Host burner binding that isolates ODE policy templates from hydro dispatch.
+ */
 #pragma once
 
 #include <type_traits>

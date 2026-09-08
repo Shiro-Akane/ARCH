@@ -1,4 +1,11 @@
-// Host/device witnesses for the shared compact linear provider.
+/**
+ * @file DenseLuCases.h
+ * @brief Shared CPU/CUDA regression cases for compact linear-system solves.
+ *
+ * Check componentwise accuracy under row rescaling, factor reuse and signed
+ * right-hand sides. Separate controls require singular and nonfinite matrices
+ * to be rejected. The analytic reference is test data, not a second solver.
+ */
 #pragma once
 #include "numerics/linalg/DenseWrap.h"
 #include <cmath>
@@ -11,7 +18,9 @@ ARCH_INLINE bool mixed_units()
     // Two-variable principal subsystem captured from the actual aprox13/Helm
     // BD first-divergence matrix (2026-09-06, macro 6, first burn half).
     // The independent oracle is the analytic 2x2 determinant formula evaluated
-    // with 80 decimal digits on the exact binary64 inputs, then rounded once.
+    // with 80 decimal digits on the exact binary64 inputs, then rounded once:
+    // det(A) = a*d - b*c, x = (d*r_0 - b*r_1)/det(A),
+    // y = (a*r_1 - c*r_0)/det(A), for A = [[a,b],[c,d]].
     constexpr double original[2][2]{
         {1.000000000244876, -6.401316084438572e-20},
         {-1.4914256518698759, 0.9999999996227632}};

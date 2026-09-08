@@ -1,3 +1,12 @@
+/**
+ * @file ResolvedExecutionPlan.h
+ * @brief Backend-neutral identifiers and resolved execution requirements.
+ *
+ * Parsed requests preserve automatic linear-solver selection until a concrete
+ * backend candidate is chosen. These value types describe the selected policies
+ * and state layout; they neither allocate backend resources nor probe a device.
+ */
+
 #pragma once
 
 #include <cstddef>

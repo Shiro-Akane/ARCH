@@ -1,6 +1,10 @@
 /**
  * @file StateResidency.h
- * @brief Backend-neutral logical state residency and coherence tracking.
+ * @brief Track logical state versions and host/device visibility.
+ *
+ * Interior and ghost regions are tracked independently for each block and
+ * slot. Transfer completion and stage writes update this metadata explicitly;
+ * the tracker performs neither data copies nor numerical evolution.
  */
 
 #pragma once

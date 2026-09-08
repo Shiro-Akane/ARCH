@@ -3,7 +3,15 @@
 Chinese translation: [TabularEOS.zh-CN.md](TabularEOS.zh-CN.md). The exact
 runtime parameter and policy surface is indexed from
 [`docs/Reference.md`](../../../docs/Reference.md). This file is the local,
-versioned contract for table producers.
+file-format contract for table producers. Schema numbers identify the table
+layout, independently of the ARCH software release.
+
+An equation of state (EOS) relates a material's density, temperature and
+composition to quantities such as pressure and internal energy. A tabular EOS
+stores sampled values instead of evaluating every term from an analytic model.
+HDF5 is the file container; the dataset names, axes and units below define what
+ARCH expects inside it. Table rank counts thermodynamic axes, not the number
+of spatial dimensions in the simulation.
 
 ## Scope
 
@@ -26,16 +34,16 @@ tables over density, temperature, and proton/electron fraction. The
 purpose `(T, nB, Yq)` products and can export its own HDF5 layout.
 [StellarCollapse/EOSDriver](https://stellarcollapse.org/equationofstate.html)
 likewise distributes Shen, LS, and HS-family `.h5` files in the EOSDriver
-schema. These are candidate source families, not files that the current loader
+schema. These are possible data sources, not files that the ARCH loader
 can open directly. Format compatibility is determined only by the normalized
 datasets below and a provenance-preserving, family-specific conversion report.
 
 ## Rank detection
 
-A new file must contain scalar integer `table_rank` equal to 3 or 4. Dispatch
+A table producer must write scalar integer `table_rank` equal to 3 or 4. Dispatch
 uses this metadata first and verifies that it agrees with the composition axes.
 
-For legacy ARCH files only, absent `table_rank` is inferred as follows:
+The reader also accepts files without `table_rank`, inferring the rank as follows:
 
 - `n_X` and no `n_A`/`n_Z` means rank 3;
 - both `n_A` and `n_Z` and no `n_X` means rank 4;
@@ -47,9 +55,9 @@ Rank detection uses schema content rather than filenames or a table-name list.
 
 | Dataset | Type | Meaning |
 | --- | --- | --- |
-| `arch_eos_version` | integer | optional only for legacy files; when present it must equal 1, and unknown versions are rejected |
-| `table_rank` | integer | required for new files: 3 or 4 |
-| `thermodynamic_model` | UTF-8 string | `free_energy` or `direct`; absent means legacy `direct` |
+| `arch_eos_version` | integer | must equal 1 when present; may be omitted only when both `table_rank` and `thermodynamic_model` are absent; other versions are rejected |
+| `table_rank` | integer | table producers must write 3 or 4; reader inference is described above |
+| `thermodynamic_model` | UTF-8 string | `free_energy` or `direct`; the reader uses `direct` when absent |
 | `n_rho`, `n_T` | integer | number of uniformly spaced thermodynamic nodes |
 | `log_rho_min`, `log_rho_max` | float64 | base-10 density bounds, rho in g cm^-3 |
 | `log_T_min`, `log_T_max` | float64 | base-10 temperature bounds, T in K |
@@ -98,19 +106,12 @@ cs^2            = (dP/drho)_e + (dP/de)_rho * P/rho^2
 Gamma1          = rho * cs^2 / P
 ~~~
 
-Deriving all fields from one potential maintains the implemented thermodynamic
-relations. Monotonicity across discontinuities and poorly resolved phase
-boundaries remains outside the current interpolant's guarantees. A table is
-rejected at query time if it produces non-positive pressure, specific internal
-energy, `cv`, or `cs^2`, or non-finite derivatives. Schema v1 deliberately
-requires a documented energy-zero shift that keeps every reachable specific
-internal energy positive because the hydro inversion uses positive `e` as its
-admissible state domain.
+Deriving all thermodynamic fields from a single potential strictly maintains the implemented thermodynamic relations. However, ensuring monotonicity across discontinuities and poorly resolved phase boundaries remains outside the current interpolant's guarantees. Crucially, a table will be rejected at query time if it produces non-positive pressure, specific internal energy, `cv`, or `cs^2`, or any non-finite derivatives. Schema v1 deliberately requires a well-documented energy-zero shift to guarantee that every reachable specific internal energy remains positive. This requirement is strictly enforced because the hydro inversion process uses positive `e` as its admissible state domain.
 
-## Legacy direct model
+## Direct-field model
 
-Set `thermodynamic_model = direct`, or omit it only for an existing legacy
-file. Store float64 `pressure`, `energy`, `sound_speed`, and `cv` with the exact
+Set `thermodynamic_model = direct`; this is also the reader's default when the
+dataset is absent. Store float64 `pressure`, `energy`, `sound_speed`, and `cv` with the exact
 rank-dependent shape above. Optional `dp_drho` and `dp_dT` use the same shape.
 Their meanings are `(dP/drho)_e` and `(dP/dT)_rho`, respectively.
 
@@ -119,8 +120,8 @@ energy strictly increasing with temperature at fixed density and composition. Va
 are vertex-interpolated (trilinear or quadrilinear). A missing `dp_drho` is
 estimated by perturbing density and reinverting temperature at fixed energy;
 it is not a constant-temperature derivative. The direct path is the
-compatibility contract for upstream products without a single
-Helmholtz-potential representation. New free-energy EOS tables use the
+input representation for products without a single
+Helmholtz-potential representation. Tables with a free-energy potential use the
 preferred model above.
 
 Queries outside any declared density, temperature, or composition bound do not
@@ -166,12 +167,12 @@ Rank-3 and rank-4 results are numerically identical because this analytic free
 energy is composition independent. The sweep therefore verifies automatic rank
 detection, layout, finite-difference/interpolation convergence, and boundary
 behavior; it does not qualify nonlinear composition interpolation. The retained
-legacy 3D direct/vertex smoke result is `3.30779e-3`. These values apply only to
+3D direct/vertex smoke result is `3.30779e-3`. These values apply only to
 the smooth analytic EOS. A phase-transition or nuclear-matter table has no
 universal accepted spacing and must retain its own axis-halving report.
 
 The repository regression command below checks the finest 161-node normalized
-rank-3/rank-4 case and the legacy direct smoke. The complete multi-resolution
+rank-3/rank-4 case and the direct-field smoke. The complete multi-resolution
 sweep was an isolated validation audit; its scalar evidence is retained under
 `validation/eos` rather than as another test target.
 
@@ -181,9 +182,4 @@ cmake --build build --target tabular_eos_regression
 ctest --test-dir build -R tabular_eos_ideal_gas --output-on-failure
 ~~~
 
-A converter for an external EOS must also document provenance, original units,
-energy zero convention, lepton/photon contributions, composition definition,
-valid/phase masks, native field transforms or derivatives, and its
-refinement/error report. The current Shen source-table assessment is recorded
-under [`validation/eos`](../../../validation/eos/README.md); neither assessed
-asset is accepted as a directly loadable ARCH table.
+Any custom converter for an external EOS must comprehensively document its data provenance, original physical units, energy-zero convention, specific lepton/photon contributions, composition definitions, valid phase masks, native field transforms (or derivatives), and a rigorous refinement/error report. For example, the current Shen source-table assessment is recorded strictly under [`validation/eos`](../../../validation/eos/README.md); note that neither of those assessed assets is currently accepted as a directly loadable ARCH table.

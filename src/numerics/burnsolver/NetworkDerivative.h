@@ -1,7 +1,14 @@
-/** Temperature differences of a complete network RHS, including screening and
+/**
+ * @file NetworkDerivative.h
+ * @brief Temperature differences of the complete network right-hand side.
+ *
+ * The differentiated evaluation includes screening and
  * nonconservative energy terms. One policy is compiled by Host and CUDA.
  * This is a numerical fallback for generated networks, not a replacement for
  * the built-in networks' analytic/AD temperature derivatives.
+ * Temperature is the last packed state coordinate, in kelvin. Central
+ * differences use Richardson extrapolation (4*D_h - D_2h)/3; near the lower
+ * temperature boundary, a fourth-order forward stencil stays in the domain.
  */
 #pragma once
 #include "core/ArchPortability.h"

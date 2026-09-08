@@ -1,3 +1,10 @@
+/**
+ * @file test_burn_thermal_math.cu
+ * @brief Run analytic thermal-burn checks on an actual CUDA device.
+ *
+ * The same fixtures also run on the host and cover Jacobians, first-law
+ * balance, accepted composition/energy updates and temporal convergence.
+ */
 #include "../math/BurnThermalCases.h"
 #include <cuda_runtime.h>
 #include <iomanip>

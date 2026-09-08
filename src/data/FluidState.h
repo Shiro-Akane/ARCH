@@ -1,14 +1,10 @@
 /**
  * @file FluidState.h
- * @brief Definitions for local fluid state vectors and global data containers.
- * Refactored for Block-Structured AMR (Static Memory Layout).
- */
-
-/**
- * Workflow:
- * 1. Allocate or address state through the active-dimension layout contract.
- * 2. Read and write conservative variables and species with one shared indexing rule.
- * 3. Expose the result to numerical operators without hidden storage conversions.
+ * @brief Shared cell values and host-owned block state arrays.
+ *
+ * FluidVector supplies the small conserved value type used by numerical leaves.
+ * FluidState owns dynamic structure-of-arrays storage sized for a block's active
+ * dimensions; CUDA owners expose separate borrowed views of device storage.
  */
 
 #pragma once
@@ -62,11 +58,11 @@ ARCH_INLINE FluidVector operator*(double s, const FluidVector &v)
 /**
  * @struct FluidState
  * @brief Local block container for fluid variables using Structure-of-Arrays (SoA) layout.
- * Fixed static size for GPU Memory Pool compatibility.
+ * Each vector owns host storage for the same block-local cell extent.
  */
 struct FluidState
 {
-    // Dynamically allocated for dimensional degradation
+    // Host arrays use the active-dimension block extent.
     std::vector<double> rho;
     std::vector<double> mom_u;
     std::vector<double> mom_v;
@@ -85,7 +81,7 @@ struct FluidState
 
     FluidState() = default;
 
-    // Preallocate all vectors to dynamic degraded size
+    // Allocate all fields for the requested block-local cell count.
     void Preallocate(int size)
     {
         block_total_size_ = size;

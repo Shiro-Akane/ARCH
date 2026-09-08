@@ -2,8 +2,12 @@
 
 英文权威文本见 [README.md](README.md)。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+重启验证回答两个不同的问题：读取后是否恢复了保存时的状态，以及从该状态续算
+能否得到预期的演化。严格恢复检查直接核对文件中的场与控制状态；续算检查则使用
+文中规定的数值容差，将后续物理状态与不间断运行比较。
+
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 CPU 与 CUDA 共用一种检查点格式和读取器。只要目标构建支持相应物理模块和数据，
 就可以从检查点切换后端继续运行。验证将续算与不间断运行进行比较，包含动态加密和
@@ -11,7 +15,7 @@ CPU 与 CUDA 共用一种检查点格式和读取器。只要目标构建支持�
 
 ## 检查点保存什么
 
-v4 保存 AMR 叶块拓扑、守恒场、原始质量分数和用于加密判据的 `ENUC`，同时保存时间步
+ARCH 检查点保存 AMR 叶块拓扑、守恒场、原始质量分数和用于加密判据的 `ENUC`，同时保存时间步
 控制状态、输出编号和循环阶段，避免续算时重复执行已经完成的重网格或输出操作。
 质量分数与组分密度同时保存，恢复时不再经过先乘密度再除密度的有损舍入过程。
 
@@ -19,16 +23,24 @@ v4 保存 AMR 叶块拓扑、守恒场、原始质量分数和用于加密判据
 读取器先检查这些物理配置是否一致，再恢复状态。CUDA 随后通过常规后端接口上传
 恢复的场，不采用另一套 IO 格式。
 
-v1/v2 文件仍可读取，但不含 ENUC 和 v3 的物理配置身份记录，v1 还缺少部分控制器
-状态。缺失的 ENUC 从零开始，因此无法还原文件中没有保存的 ENUC 加密历史。
-v3 保留这些状态和物理配置身份，但质量分数需要从组分密度重建。
-请使用 v4 检查点，以同时保留实际演化的原始组分。
+读取器和写入器共同遵循 ARCH 检查点契约。物理配置身份、`ENUC`、控制器元数据及活动核素的
+原始质量分数都是必需内容，缺失时会拒绝文件，不重建缺失状态。完整的字段、形状
+与身份检查见[格式契约](../../docs/Reference.zh-CN.md#arch-检查点)。
 
-## 发布候选版本已完成的检查
+下方结果保留各自受测源码的身份。严格输入验证已通过单独的
+[定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)，
+这些控制不替代科学续算测量。本轮[维护复验](../backend/results/maintenance-freeze-20260908/README.zh-CN.md)
+也已在重建的 CUDA 应用上通过光滑／燃烧重启及燃烧重启 memcheck/racecheck。
+四组检查各完成十二次执行和九次严格比较，每种插桩工具覆盖六次实际 CUDA 进程，
+安全报告完整且无报错，最终源码与产物身份一致。
+
+<a id="发布候选版本已完成的检查"></a>
+
+## CPU/CUDA 已通过的检查
 
 [光滑平流记录](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
 和[燃烧／ENUC 记录](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
-使用同一份候选源码、程序和比较工具，各通过十二次执行和九次比较。每组包括两次
+使用同一份受测源码、程序和比较工具，各通过十二次执行和九次比较。每组包括两次
 不间断运行、两次检查点来源运行和八次续算。续算覆盖 CPU 到 CPU、CPU 到 CUDA、
 CUDA 到 CPU、CUDA 到 CUDA 四种方向，分别从第 2 步重网格后的检查点和第 3 步
 终态检查点启动。全部续算推进至第 4 步，保留 0–1 混合 AMR 层级；平流有七个
@@ -50,7 +62,7 @@ DenseLU 求解。
 
 燃烧／AMR 的 [memcheck 检查](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
 和 [racecheck 检查](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
-也在同一候选版本上各自完成全部十二次执行和九次严格比较。每组对六次实际 CUDA
+也在同一受测构建上各自完成全部十二次执行和九次严格比较。每组对六次实际 CUDA
 执行插桩：不间断运行、检查点来源运行，以及四次以 CUDA 为目标的恢复。
 六份 memcheck 报告均为零错误、零泄漏字节和零泄漏分配；六份 racecheck 报告
 均为零隐患、零错误和零警告，CPU 路径保留普通参考运行。原生组分、控制器状态、
@@ -69,7 +81,7 @@ DenseLU 求解。
 
 ## 持续原生状态恢复
 
-[当前候选版本的持续记录](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
+[持续运行记录](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
 通过 CPU、CUDA 和交替后端三条燃烧链各十二个恢复循环。36 份来源状态在继续演化前，
 分别经过共同的 Host 读取器和 CUDA 上传／下载路径恢复。全部 72 次原生状态比较中，
 场、原始组分、时间、控制器及输出元数据均精确保持，场差为零。
@@ -106,14 +118,3 @@ python3 tools/validate_cuda_amr_restart.py \
 同一工具保留四个后端方向、两种来源阶段和全部原有数值预算。
 
 上述续算测试不包含在外部库调用中途强制中断。
-
-## 历史记录
-
-早期[平流](../amr/results/restart-smooth-native-20260907/release-758/restart-validation-evidence.json)
-和[燃烧／ENUC](../amr/results/restart-burn-native-20260907/release-757/restart-validation-evidence.json)
-报告保留原有源码与程序身份。[早期持续记录](../amr/results/sustained-first-law-20260907/release-763/evidence.json)
-中的恢复与固定时刻测量保留原样，与上方候选版本记录分别归档。
-
-[metrics.csv](metrics.csv) 保留早期 CPU 均匀网格及格式兼容审计，不代表当前候选
-的跨后端测量。[审计说明](results/pre-release-notes-20260907/README.zh-CN.md)保留了
-原始输入、兼容细节与复现命令；当前应用指标见上方两份候选报告。

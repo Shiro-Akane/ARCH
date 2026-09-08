@@ -1,13 +1,11 @@
 /**
  * @file FluxRegister.h
  * @brief Flux register for coarse-fine boundary refluxing.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ *
+ * A contiguous Host arena accumulates stage-weighted fine-minus-coarse fluxes
+ * on coarse-fine faces. Reflux converts those interface integrals into cell
+ * corrections using GridMetrics and AmrFluxMath. Fluid and species share face
+ * indexing, with species transported and corrected as conserved rho*X.
  */
 
 #pragma once

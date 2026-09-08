@@ -164,7 +164,8 @@ ARCH_HOST_DEVICE inline double reconstruct(
     const double sz = geometry.dimension == 3
         ? minmod(center - source.conserved_sample(field, geometry.neighbours[4]),
                  source.conserved_sample(field, geometry.neighbours[5]) - center) : 0.0;
-    // Keep the frozen CPU expression/accumulation order, including inactive axes.
+    // Accumulate limited slopes in x, y, z order on both backends. Inactive
+    // axes contribute zero; each child lies at +/-1/4 of the parent width.
     return center + ((child & 1) ? 0.25 : -0.25) * sx
         + ((child & 2) ? 0.25 : -0.25) * sy
         + ((child & 4) ? 0.25 : -0.25) * sz;

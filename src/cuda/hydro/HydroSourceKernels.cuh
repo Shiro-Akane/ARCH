@@ -1,3 +1,12 @@
+/**
+ * @file HydroSourceKernels.cuh
+ * @brief Accumulate shared geometric and external-gravity sources on device.
+ *
+ * Read the stage state and add source increments to its borrowed delta buffer.
+ * GeometricSources and ExternalGravitySource remain the mathematical owners;
+ * the runtime supplies the stream, scratch lifetime and completion boundary.
+ */
+
 #pragma once
 
 #include "GridGeometryAdapter.cuh"

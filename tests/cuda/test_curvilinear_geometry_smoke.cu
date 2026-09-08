@@ -130,8 +130,8 @@ void analytic_geometry_examples()
     // r=2, theta=pi/4, dt=.1, nu=.03. Native velocity components are
     // constant in neighbouring cells. Viscous source is mu*sum C_d(C_d(v));
     // spherical 2D is polar, spherical 3D includes radial/theta cot coupling.
-    // Spherical 1D/3D sources now use <1/r> = 6/13 on the shell [1,3],
-    // rather than 1/r_mid = 1/2; the analytic source changes by 12/13.
+    // Spherical 1D/3D sources use <1/r> = 6/13 on the shell [1,3].
+    // The volume-weighted source is 12/13 of its midpoint value (1/r_mid = 1/2).
     struct Example {
         GridMetrics::Geometry geometry;
         int dimension;

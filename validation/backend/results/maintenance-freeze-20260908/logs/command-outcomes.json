@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "commands": {
+    "current-configure": {
+      "returncode": 0,
+      "command": null,
+      "note": "Observed successful tool exit; original full configure argv was not retained. The actual configure log and final CMake cache are retained separately."
+    },
+    "current-configure-reduced": {
+      "returncode": 0,
+      "command": null,
+      "note": "Observed successful tool exit after changing ARCH_CUDA_HEAVY_COMPILE_JOBS to 1; original full configure argv was not retained. The actual configure log and final CMake cache are retained separately."
+    },
+    "current-build": {
+      "returncode": 125,
+      "command": ["env", "OMP_NUM_THREADS=4", "/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/maintenance-freeze-20260908/current-build.log", "--", "/usr/bin/cmake", "--build", "build/maintenance-freeze-20260908/core", "--parallel", "4"],
+      "note": "The guard stopped its owned build processes at the available-memory reserve; this was not a compiler correctness error."
+    },
+    "current-build-reduced": {
+      "returncode": 143,
+      "command": ["env", "OMP_NUM_THREADS=4", "/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/maintenance-freeze-20260908/current-build-reduced.log", "--", "/usr/bin/cmake", "--build", "build/maintenance-freeze-20260908/core", "--parallel", "2"],
+      "note": "Deliberately interrupted via the verified guard's PID file descriptor after unrelated system memory use fell. Owned descendants were cleaned by the existing guard. Completed objects are reused by the next build; this partial phase is not a complete-build pass."
+    },
+    "current-configure-adaptive": {
+      "returncode": 0,
+      "command": ["env", "OMP_NUM_THREADS=4", "/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/maintenance-freeze-20260908/current-configure-adaptive.log", "--", "/usr/bin/cmake", "-S", "/home/shiroakane/ARCH", "-B", "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core", "-DARCH_CUDA_HEAVY_COMPILE_JOBS=2"]
+    },
+    "current-build-adaptive": {
+      "returncode": 0,
+      "command": ["env", "OMP_NUM_THREADS=4", "/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/maintenance-freeze-20260908/current-build-adaptive.log", "--", "/usr/bin/cmake", "--build", "build/maintenance-freeze-20260908/core", "--parallel", "4"],
+      "note": "Completed all configured targets, reusing completed objects with two heavy and four total jobs after unrelated system memory use fell. This is an incremental continuation, not a cold-build benchmark."
+    },
+    "current-build-confirm": {
+      "returncode": 0,
+      "command": ["env", "OMP_NUM_THREADS=4", "/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/maintenance-freeze-20260908/current-build-confirm.log", "--", "/usr/bin/cmake", "--build", "build/maintenance-freeze-20260908/core", "--parallel", "4"]
+    },
+    "current-runtime": {
+      "returncode": 0,
+      "command": ["env", "OMP_NUM_THREADS=4", "/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/maintenance-freeze-20260908/current-runtime.log", "--", "/usr/bin/python3", "-B", "validation/backend/results/maintenance-freeze-20260908/run_maintenance_checks.py", "--build-dir", "build/maintenance-freeze-20260908/core", "--output-root", "build/maintenance-freeze-20260908/runtime-current", "--reference-inventory", "build/compatibility-cleanup-20260908/record-baseline/ctest-inventory.json", "--threads", "4", "--timeout", "3600", "--cuda-sanitizer", "/usr/local/cuda/bin/compute-sanitizer"]
+    },
+    "current-python": {
+      "returncode": 0,
+      "command": ["/usr/bin/python3", "-B", "tools/run_memory_guarded.py", "--min-available-mib", "1536", "--max-swap-growth-mib", "256", "--pressure-guard", "--log", "build/compatibility-cleanup-20260908/current-python.log", "--", "/usr/bin/python3", "-B", "-m", "unittest", "discover", "-s", "tests/tooling", "-p", "test_*.py"]
+    }
+  }
+}

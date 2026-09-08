@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_reduction_contract.cu
+ * @brief Check reduction contracts on an actual CUDA device.
+ *
+ * Edge cases test candidate ordering and invalid states; production hydro
+ * and diffusion owners verify that runtime reductions use those contracts.
+ */
 #include <cuda_runtime.h>
 
 #include "cuda/diffusion/DiffusionKernels.cuh"

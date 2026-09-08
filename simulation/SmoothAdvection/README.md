@@ -9,5 +9,4 @@ and [AMR inputs](../../validation/amr/inputs/). They exercise reconstruction
 accuracy, transport across refinement boundaries and restart continuity using
 the same initializer.
 
-Reference methods and results are in [hydro](../../validation/hydro/README.md)
-and [AMR](../../validation/amr/README.md); no duplicate input set is maintained here.
+All reference methods and their associated results are rigorously maintained within the [hydro](../../validation/hydro/README.md) and [AMR](../../validation/amr/README.md) validation modules; no duplicate input sets are maintained in this directory.

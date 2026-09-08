@@ -10,6 +10,4 @@ tested Python/pynucastro environment using the
 [network setup](../../validation/network/README.md#reproduce-the-records), then
 run the [generator](../../tools/network/GenerateNetwork.py).
 
-This is an editable starting recipe, not a generated package or a claim that a
-particular network has been scientifically qualified. Preserve the recipe used
-for a calculation alongside its package manifest.
+Please note that this is strictly an editable starting recipe; it is absolutely not a generated package, nor does it imply that any particular network has been scientifically qualified. You must rigorously preserve the specific recipe used for a calculation alongside its corresponding package manifest.

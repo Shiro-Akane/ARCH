@@ -1,11 +1,11 @@
 /**
  * @file ChkIO.cpp
- * @brief Serializes and restores checkpoint metadata and AMR block state.
+ * @brief Pack and restore checkpoint metadata, controller state and AMR leaves.
  *
- * Workflow:
- * 1. Collect synchronized leaf metadata and field values from the driver.
- * 2. Serialize them through the selected backend with explicit dimensions and geometry.
- * 3. Write restart- or analysis-ready output without changing simulation state.
+ * Writing gathers synchronized host interiors, native composition and identity
+ * metadata into the shared HDF5 payload. Reading checks compatibility and layout
+ * before restoring the leaf grid, fields and timestep/output controller state;
+ * backend transfers and evolution are outside this serialization layer.
  */
 
 #include <filesystem>
@@ -138,16 +138,10 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
         checkpoint.num_species != expected_species || checkpoint.cells_per_block != cells_per_block) {
         throw std::runtime_error("Checkpoint is incompatible with the configured dimension, geometry, or species network.");
     }
-    const bool verified_identity = checkpoint.provenance.available
-        ? io::require_checkpoint_provenance_compatible(
-              checkpoint.provenance, expected_provenance)
-        : false;
+    const bool verified_identity = io::require_checkpoint_provenance_compatible(
+        checkpoint.provenance, expected_provenance);
     if (!verified_identity) {
-        std::cout << "[IO] Legacy checkpoint has no EOS/network/table or "
-                     "ordered-species identity; only its historical shape "
-                     "checks can be applied. Rewrite a checkpoint before "
-                     "claiming verified restart compatibility."
-                  << std::endl;
+        throw std::runtime_error("Checkpoint scientific identity is required before restoring AMR state.");
     }
 
     amr_ctrl.tree->LoadLeafGrid(config, expected_species, checkpoint.levels,
@@ -170,15 +164,10 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
                     block.fluid_state.mom_v[cell] = checkpoint.mom_v[offset];
                     block.fluid_state.mom_w[cell] = checkpoint.mom_w[offset];
                     block.fluid_state.eng[cell] = checkpoint.eng[offset];
-                    block.fluid_state.enuc_rate[cell] =
-                        checkpoint.has_enuc_rate
-                            ? checkpoint.enuc_rate[offset] : 0.0;
+                    block.fluid_state.enuc_rate[cell] = checkpoint.enuc_rate[offset];
                     for (int species = 0; species < expected_species; ++species) {
-                        const double rho = checkpoint.rho[offset];
-                        const double rhoX = checkpoint.rhoX[static_cast<size_t>(species) * field_size + offset];
-                        block.fluid_state.X(species, cell) = checkpoint.has_mass_fractions
-                            ? checkpoint.mass_fractions[static_cast<size_t>(species) * field_size + offset]
-                            : (rho > 0.0 ? rhoX / rho : 0.0);
+                        block.fluid_state.X(species, cell) =
+                            checkpoint.mass_fractions[static_cast<size_t>(species) * field_size + offset];
                     }
                 }
             }
@@ -193,25 +182,7 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     run_state.has_timestep_state = checkpoint.has_timestep_state;
     run_state.resume_after_regrid = checkpoint.resume_after_regrid;
     run_state.checkpoint_provenance_verified = verified_identity;
-    run_state.verified_eos_table_sha256 = verified_identity
-        ? checkpoint.provenance.eos_table_sha256 : std::string{};
-    if (!run_state.has_timestep_state) {
-        std::cout << "[IO] Legacy checkpoint has no timestep-controller state; "
-                     "hydro recomputes its CFL limit and burn resumes conservatively from dt_init."
-                  << std::endl;
-    }
-    if (!checkpoint.has_enuc_rate) {
-        std::cout << "[IO] Legacy checkpoint has no ENUC restart field; "
-                     "the diagnostic is initialized to zero. ENUC-based "
-                     "dynamic-AMR split-run parity is not verifiable until "
-                     "a current-format checkpoint is written."
-                  << std::endl;
-    }
-    if (expected_species > 0 && !checkpoint.has_mass_fractions) {
-        std::cout << "[IO] Checkpoint composition is reconstructed from rhoX. "
-                     "New checkpoints also preserve the original mass fractions."
-                  << std::endl;
-    }
+    run_state.verified_eos_table_sha256 = checkpoint.provenance.eos_table_sha256;
     std::cout << "[IO] Restored CHK: " << filepath << " at step " << run_state.step
               << " with " << active_blocks.size() << " AMR leaves." << std::endl;
 }

@@ -9,5 +9,4 @@ constant-coefficient cases and resolutions. The
 [diffusion summary](../../validation/diffusion/README.md) owns RKL configuration,
 reference methods and accuracy budgets; inputs are not duplicated here.
 
-Time stepping and diffusion fluxes are supplied by the production driver, not
-by this initializer.
+Note that all time stepping and diffusion fluxes are inherently supplied by the production driver; this initializer problem does not implement those behaviors.

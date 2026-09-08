@@ -101,6 +101,7 @@ struct CsrMatrixView
     /** Componentwise backward-error check over the ORIGINAL matrix and RHS.
      * A provider can report successful factorization after perturbing a tiny
      * pivot; this common numerical gate prevents accepting an inaccurate solve.
+     * Each row must satisfy |(A*x-b)_i| <= allowance*(|b_i| + sum_j |A_ij*x_j|).
      * The O(N*epsilon) allowance covers sparse dot-product roundoff, not the
      * physical ODE tolerance. No matrix or state must return to the CPU for it.
      */

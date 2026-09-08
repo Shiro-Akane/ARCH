@@ -6,6 +6,11 @@ package. Start with the [recipe example](../../examples/network/README.md), then
 follow the [custom-network contract](../../src/physics/network/custom/README.md)
 and tested [environment setup](../../validation/network/README.md#reproduce-the-records).
 
+Choose the network in your recipe; the generator writes package metadata for
+CMake to check automatically. Package contract identifiers are not ARCH release
+numbers and do not need to be set by the user. CUDA registration checks the
+generated device-math contract and its declared capabilities.
+
 The supporting modules have separate responsibilities:
 
 - [PortableCxx.py](PortableCxx.py): generated-header annotations, bounded storage
@@ -17,6 +22,8 @@ The supporting modules have separate responsibilities:
 - [WeakStorage.py](WeakStorage.py): expose read-only weak data through explicit
   storage views for backend-owned memory.
 
-Generated packages are output, not hand-maintained generator modules. Keep
-recipes and generation metadata reproducible, preserve upstream notices, and
-exercise generator changes with [test_portable_network_generator.py](../../tests/test_portable_network_generator.py).
+Generated network packages are build outputs, not files to maintain by hand.
+Keep the recipe and generation metadata so others can reproduce a package, and
+retain the upstream notices. When changing the generator, run
+[test_portable_network_generator.py](../../tests/tooling/test_portable_network_generator.py)
+to check its output contract.

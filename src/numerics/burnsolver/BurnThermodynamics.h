@@ -1,6 +1,14 @@
-/** Shared fixed-density thermodynamic closure for temperature-based burning.
+/**
+ * @file BurnThermodynamics.h
+ * @brief Shared fixed-density thermodynamic derivatives for temperature-based burning.
+ *
  * EOS policies own energy/cv and optional analytic derivatives. This adapter
  * contracts them with reaction rates; CPU and CUDA call the same mathematics.
+ * Packed states contain species mass fractions followed by temperature.
+ * At fixed rho, de/dt = cv*dT/dt + sum_i[(de/dX_i)*dX_i/dt]; odeFunction.h
+ * uses this chain rule to convert the network energy rate into a temperature
+ * rate. Specific energy and cv use the selected EOS's consistent units.
+ * Composition derivatives use independent X_i, without renormalizing them.
  */
 #pragma once
 

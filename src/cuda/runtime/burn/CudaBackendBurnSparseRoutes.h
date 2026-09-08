@@ -1,4 +1,10 @@
-/** Internal link seam: one sparse owner instantiation per network/EOS TU. */
+/**
+ * @file CudaBackendBurnSparseRoutes.h
+ * @brief Link declarations for per-network/EOS sparse owner instantiations.
+ *
+ * The host factory selects these specializations through the policy registry.
+ * Generated CUDA translation units instantiate the common sparse owner body.
+ */
 #pragma once
 
 #include "cuda/runtime/burn/CudaBackendBurnSparse.h"

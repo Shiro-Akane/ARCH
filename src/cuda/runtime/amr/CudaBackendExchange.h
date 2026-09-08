@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendExchange.h
- * @brief Narrow runtime ABI for CUDA same-level and coarse/fine exchange.
+ * @brief Runtime launch interface for CUDA ghost exchange.
+ *
+ * POD records lower shared same-level, coarse/fine and physical-boundary plans
+ * to device addresses. Launches borrow plans, scratch, status and stream; the
+ * runtime retains them and publishes valid ghosts only after completion.
  */
 
 #pragma once

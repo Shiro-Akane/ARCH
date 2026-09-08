@@ -1,14 +1,13 @@
 /**
  * @file TimeIntegratorHelper.h
  * @brief Common helper functions for dimensional sweeping and state updates.
- * Centralizes the core loops for all explicit time integrators.
- */
-
-/**
- * Workflow:
- * 1. Evaluate block-local flux divergence and physical source terms.
- * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
- * 3. Leave AMR communication and reflux ownership with the common driver services.
+ *
+ * Shared cell leaves compute delta U = dt*(A_left*F_left - A_right*F_right)/V
+ * and combine stages as U_new = w_n*U_old + w_flux*(U_current + delta U).
+ * A and V are physical face/cell measures from GridMetrics. Species increments
+ * carry rho*X, then recover mass fractions after the density update and state
+ * admissibility repairs. Host traversal calls these leaves and registers
+ * coarse-fine fluxes; the integrator supplies weights and the driver schedules exchange.
  */
 
 #pragma once

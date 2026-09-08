@@ -1,3 +1,10 @@
+/**
+ * @file test_grid_metrics_cache.cu
+ * @brief Compare cached device geometry with the shared grid measures.
+ *
+ * Verify metric parity and rejection of invalid geometry before kernels
+ * consume the cache.
+ */
 #include "cuda/common/GridMetricsCache.h"
 #include "grid/GridMetrics.h"
 

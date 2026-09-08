@@ -1,3 +1,11 @@
+/**
+ * @file CudaBackendBurnHelm.cu
+ * @brief Select the registered compact burn delegate for Helmholtz.
+ *
+ * Network selection forwards borrowed launch arguments and the caller's stream.
+ * The per-network binding instantiates the common ODE and burn policies.
+ */
+
 #include "physics/eos/HelmEos.h"
 #include "cuda/runtime/burn/CudaBackendBurnRegisteredRoutes.h"
 

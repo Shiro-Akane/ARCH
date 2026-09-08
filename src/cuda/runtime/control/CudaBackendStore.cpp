@@ -1,3 +1,13 @@
+/**
+ * @file CudaBackendStore.cpp
+ * @brief Stage, publish and retire CUDA block-storage transactions.
+ *
+ * Candidate resources remain private while interiors, ghosts and flux plans
+ * are prepared. Publication follows a completion witness and atomically changes
+ * the store namespace; abandoned candidates synchronize before releasing memory.
+ * The shared DeviceBlockStoreLifecycle owns identity rules, not transfer physics.
+ */
+
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 #include <algorithm>

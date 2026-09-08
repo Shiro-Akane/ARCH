@@ -2,12 +2,21 @@
 
 英文原文：[README.md](README.md)。英文版是规范文本。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+自适应网格细化（AMR）在需要更多细节的位置增加单元，在较粗网格足够的位置合并
+单元。改变网格时必须保留单元承载的物理量，因此记录既检查细化／粗化过程，也检查
+迁移后的场数据；曲线坐标下的守恒计算使用单元的实际物理体积。
+
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 ARCH 的 CPU 与 CUDA 后端共用细化指标、守恒迁移、几何测度和通量修正。
 CPU 管理拓扑与 Morton 排序，CUDA 将场数据迁移和数值更新保留在 GPU 上。
 整体发布验收状态统一见[验证索引](../README.zh-CN.md)。
+
+AMR 重启要求完整的 ARCH 检查点，包括 `ENUC` 和原始组分，具体见
+[重启指南](../restart/README.zh-CN.md)。单独的
+[定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+覆盖这一读取规则；下方科学结果仍对应实际产生这些数据的受测源码。
 
 ## 测试覆盖
 
@@ -24,7 +33,9 @@ CPU 管理拓扑与 Morton 排序，CUDA 将场数据迁移和数值更新保留
 PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性与 AMR 整体空间
 精度分开测量。二维球坐标沿用项目的极坐标 `(r,phi)` 约定。
 
-## 发布候选版本已完成的检查
+<a id="发布候选版本已完成的检查"></a>
+
+## CPU/CUDA 已通过的检查
 
 [笛卡尔应用记录](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
 通过十个案例、54 次 CPU/CUDA 执行和 27 次比较。最大绝对场差为 `1.332e-15`，
@@ -40,7 +51,7 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 
 三维的 [memcheck 记录](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
 与 [racecheck 记录](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
-各自在同一候选版本上通过全部七次 CUDA 执行和七次 CPU 参考运行。每份 memcheck
+各自在同一受测构建上通过全部七次 CUDA 执行和七次 CPU 参考运行。每份 memcheck
 报告均为零错误、零泄漏字节及零泄漏分配；每份 racecheck 报告均为零隐患、零错误
 和零警告。两组均保留完整八子块的细化／粗化／再次细化转换，并通过原有场与守恒
 预算。racecheck 快照中，同样的六个父块在第 40 至 41 步间完成粗化，到第 80 步
@@ -80,7 +91,7 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 超过 `256` 倍机器精度的活动判据。这项检查确认热输运确实改变解，收敛性另行验证。
 
 这些报告使用同一源码、程序、比较工具和依赖库，并核对它们在运行期间保持不变。
-下文的独立几何记录另外检查同一份候选源码。重启验收见[重启指南](../restart/README.zh-CN.md)，
+下文的独立几何记录另外检查同一份受测源码。重启验收见[重启指南](../restart/README.zh-CN.md)，
 持续 AMR 检查汇总在下方。
 
 网格交换测试覆盖笛卡尔、圆柱、球坐标各自的一至三维，
@@ -89,10 +100,10 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 
 ## 独立几何与扩散检查
 
-[当前候选版本的几何记录](results/geometry-native-20260907/release-880/evidence.json)
+[几何记录](results/geometry-native-20260907/release-880/evidence.json)
 通过 12 组薄壳与极点附近单元的参考检查，参考值由独立的 70/90 位精度积分核验。
 空间收敛测试覆盖全部坐标与维度的热／组分扩散，以及黏性动量通量和功通量。
-CPU 和 CUDA 测试程序使用同一份候选源码，各自的程序身份保存在报告中。
+CPU 和 CUDA 测试程序使用同一份受测源码，各自的程序身份保存在报告中。
 
 每个后端的黏性测试包含 30 组场、三档网格间距，覆盖均匀笛卡尔速度、二次函数、
 变密度及径向流。最细网格的最大归一化误差为 `7.26751e-5`，满足 `1e-4` 门槛。
@@ -106,7 +117,7 @@ Euler 更新矩阵的元素非负，最大行和不超过 1，满足原定 `2e-1
 
 ## 持续重网格与续算
 
-[当前候选版本的持续记录](results/sustained-first-law-20260907/release-901/evidence.json)
+[持续运行记录](results/sustained-first-law-20260907/release-901/evidence.json)
 通过两个后端的 500 步一维流体与 100 步五阶段 RKL2 扩散运行。包含初始化在内，
 分别记录了 501 和 101 次重网格检查。流体发生 490 次拓扑变化，明确覆盖细化和
 粗化转换；扩散在各采样检查点保持六个混合层级叶块。两组矩阵共包含 22 次执行
@@ -162,19 +173,3 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 曲线坐标、均匀网格、生成网络四组矩阵及两份重启报告是否来自同一构建，并包含
 全部必要比较。[验证索引](../README.zh-CN.md)将这些应用结果与独立科学参考、
 内存安全和容量检查统一汇总。
-
-## 历史记录
-
-早期[笛卡尔](results/cartesian-native-20260907/release-768/backend-validation-evidence.json)
-和[曲线坐标](results/curved-native-20260907/release-764/backend-validation-evidence.json)
-应用记录保留原有的源码与程序身份。
-早期[平流](results/restart-smooth-native-20260907/release-758/restart-validation-evidence.json)
-和[燃烧／ENUC](results/restart-burn-native-20260907/release-757/restart-validation-evidence.json)
-重启记录通过了中间及终点检查点的四种后端方向；
-[早期持续运行记录](results/sustained-first-law-20260907/release-763/evidence.json)通过
-500 步流体与 100 步扩散。这些结果与当前候选版本的验收记录分别归档。
-
-早期 CPU 守恒数据、迁移诊断、图像和详细审计命令保留在
-[发布前记录](results/pre-release-notes-20260907/README.zh-CN.md)中；
-早期 GPU 结果保留在[设备档案](results/h100-sm90-20260903/README.md)中。
-原始输入与测量值均未删除。

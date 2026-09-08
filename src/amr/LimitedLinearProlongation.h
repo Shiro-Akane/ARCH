@@ -43,7 +43,7 @@ ARCH_HOST_DEVICE inline double minmod(double left, double right)
  * Reconstruct one fine-cell value at offsets +/-1/4 of a coarse cell.
  * One common multidimensional limiter keeps all 2^dim children inside the
  * coarse stencil bounds.  Because the limited slopes and limiter are shared
- * by the symmetric children, their arithmetic mean is exactly the parent.
+ * by the symmetric children, their arithmetic mean is the parent in exact arithmetic.
  */
 ARCH_HOST_DEVICE inline double limited_linear_value(
     double center, const double lower[3], const double upper[3],

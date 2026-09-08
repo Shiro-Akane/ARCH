@@ -1,6 +1,11 @@
 /**
  * @file DiffusionMode.cpp
- * @brief Periodic cosine mode for constant-coefficient RKL2 species diffusion.
+ * @brief Initialize a cell-averaged cosine mode for species diffusion.
+ *
+ * Setup computes the root-cell averaging factor and registers two species
+ * with identical thermodynamic properties. Init supplies complementary mass
+ * fractions at uniform density and pressure; the configured diffusion policy
+ * and boundary conditions determine their subsequent evolution.
  */
 
 #include <cmath>

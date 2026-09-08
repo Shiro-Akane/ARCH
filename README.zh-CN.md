@@ -1,6 +1,6 @@
 # ARCH：自适应反应流 CUDA 流体力学框架
 
-英文原文：[README.md](README.md)。英文版是唯一规范文本；行为或接口发生变化时应先更新英文版。若中英文内容不一致，以英文版为准。
+英文原文：[README.md](README.md)。
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -8,127 +8,153 @@
 [![CUDA](https://img.shields.io/badge/CUDA-supported-success.svg)](docs/CudaBackendStatus.zh-CN.md)
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
 
-ARCH 是一个面向可压缩反应流体力学的块自适应有限体积框架。CPU 与 CUDA 共用同一套数学和物理实现。构建时启用 `ARCH_ENABLE_CUDA=ON`，即可在算例配置中选择 CUDA 后端。
+ARCH 是一个用于模拟可压缩流体运动、传热与反应的计算框架。它既适合初学者学习计算流体力学（CFD），也方便研究人员直接在源码中扩展底层的物理方程和数值方法。
 
-项目主要面向两类使用者：
+ARCH 采用有限体积法：将流体区域划分为网格单元，并追踪它们之间质量、动量和能量的交换。为了高效捕捉细节，自适应网格细化（AMR）技术只在需要的地方动态插入更小的单元，从而避免了全局使用极细网格带来的高昂计算成本。CPU 与 CUDA 执行共用同一套数学与物理核心，各自的后端仅负责调度计算任务和管理数据存储。
 
-- 学习如何配置、初始化、推进和检查 CFD 算例的学生；
-- 直接在源码树中扩展 Riemann 求解器、状态方程、核反应网络、扩散、重力、AMR 或诊断功能的科研人员。
+想要运行你的第一个模拟，请遵循下方的[构建](#构建)与[首次运行](#首次运行)说明。之后，[模拟算例指南](docs/guides/SimulationCase.zh-CN.md)将带你了解如何读取输出结果、修改参数以及创建自己的仿真场景。请放心，初学者示例既不需要 GPU，也不需要配置任何核反应网络。
 
 ## 项目状态
 
-CPU 与 CUDA 均支持下表功能。本次发布验证范围已通过数值、应用运行、设备安全、
-构建与资源检查。受测配置和最终交付审阅状态统一见 [Validation](validation/README.zh-CN.md)。
+CPU 与 CUDA 后端均完整支持以下功能。当前的发布版本已顺利通过严格的数值精度、应用运行、设备安全、构建和资源检查。详细的测试配置与最终的交付审阅状态，均记录在 [Validation](validation/README.zh-CN.md) 验证套件中。
 
 | 功能 | 共用行为与后端选择 |
 | --- | --- |
 | 流体力学 | 一维、二维和三维的笛卡尔、柱坐标及球坐标网格 |
 | 动态块 AMR | 守恒细化与粗化、边界数据交换及通量修正。使用 CUDA 时，GPU 计算细化指标并迁移网格数据，CPU 管理网格树。 |
-| 状态方程 | 理想气体、Helmholtz 及三维／四维表格 EOS |
+| 状态方程（EOS） | 描述密度、温度、压力与能量之间的关系，支持理想气体、Helmholtz 及三维／四维表格 |
 | 扩散 | 热扩散、黏性扩散和组分扩散，支持 RKL1/RKL2 时间推进 |
 | 重力 | 给定的外部重力场 |
-| 核燃烧 | 四个内置网络及 pynucastro 生成网络；内置网络支持 NSE 投影。CUDA 使用具备设备数学接口的版本 4 生成网络。 |
+| 核燃烧 | 四个内置网络及 pynucastro 生成网络；内置网络还支持核统计平衡（NSE），可根据平衡条件确定组分。 |
 | 线性求解 | 小系统使用 DenseLU；稀疏系统在 CPU 上使用 KLU，在 CUDA 上使用 cuDSS。 |
 | 输出与重启 | 两侧使用相同的 HDF5 可视化数据和检查点格式，保存 AMR 层级、燃烧能量及时间步控制器状态。 |
 
-版本 1/2 checkpoint 仍可读取；它们缺少有序物理配置身份和 `ENUC`，版本 1 还缺少时间步控制器状态。版本 3 记录实际启用的燃烧、网络与 NSE 身份，以及 EOS 实际加载的表摘要。版本 4 另外保存原始质量分数，避免从组分密度重建时损失精度。CPU 与 CUDA 使用同一格式，后端选择不作为 restart 兼容字段。
+你可以在参数文件中设置 `compute_backend = cpu`、`cuda` 或 `auto` 来选择模拟运行的硬件。如果明确请求 `cuda` 但构建或硬件不支持，程序将报错。若设为 `auto`，当 CUDA 不可用且 CPU 支持所需功能时，ARCH 会在启动时平滑回退到 CPU。一旦模拟开始，后端将保持固定。[CUDA 指南](docs/CudaBackendStatus.zh-CN.md)详细说明了这些选项以及 CPU 和 GPU 在 AMR 过程中的协作方式。
 
-`compute_backend = cpu`、`cuda` 或 `auto` 会在初始化时确定执行后端。
-显式选择 CUDA 时，不满足运行条件会直接报错。选择 `auto` 时，如果没有可用
-GPU，或当前 CUDA 构建不支持所需功能，而 CPU 支持同一组物理配置，程序会在
-初始化前选择 CPU 并报告结果；运行过程中不会自动更换后端。
-
-CPU 与 CUDA 共用策略注册、AMR 指标与迁移公式、几何、EOS、反应网络、
-数值求解算法、推进调度和 HDF5 格式。Morton 编码与网格拓扑决策由 CPU 负责，
-GPU 调用共用公式完成单元计算和守恒迁移。各后端分别管理内存、计算内核、
-数据传输和执行同步，并适配各自的稀疏求解库。
+检查点（Checkpoint）保存了无缝恢复模拟所需的所有状态信息（包括网格和流体组分）。由于 CPU 和 CUDA 后端使用完全相同的文件格式，你可以自由地在不同的后端之间进行重启。[参考手册](docs/Reference.zh-CN.md)详细列出了保存的字段，以及恢复模拟时必须保持一致的物理设置。
 
 ## 已实现功能
 
-- 带 ghost exchange、prolongation/restriction、flux register 和 reflux 的守恒块 AMR；
-- Cartesian、cylindrical 和 spherical 网格上的维度感知 1D、2D 和 3D 存储；
-- SW、VL、Roe、HLL 和 HLLC 通量策略；
-- PCM、MUSCL/PLM 和 PPM 重构，以及 Euler、SSPRK2 或 SSPRK3 时间推进；
-- 理想气体、自动识别维数的 3D/4D 表格（包括规范化自由能表）和 Timmes Helmholtz 状态方程；
-- 共享外部重力、内置或 pynucastro 生成的核燃烧、DenseLU/可选 CPU KLU 或 CUDA cuDSS 线性求解、NSE 投影和 RKL1/RKL2 超时间步扩散；
-- HDF5 plot/checkpoint 文件，包括 AMR 叶节点层次的重启。
+ARCH 提供 SW 和 VL 通量矢量分裂，以及 Roe、HLL 和 HLLC 黎曼求解器，用于估计跨越单元边界的输运。在单元面的空间重构方面，支持 PCM、MUSCL/PLM 和 PPM。时间积分由 Euler、SSPRK2 或 SSPRK3 方案处理，而扩散过程则采用 RKL1 或 RKL2 超时间步方法。所有这些数值方法的选择都完全独立于 CPU/CUDA 后端。
+
+内置的教学算例已经预先配置了合适的方法，你可以放心从这些设置开始。[算例指南](docs/guides/SimulationCase.zh-CN.md)会在深入各个参数前，先解释每种方法的作用。如需查看所有允许的方法组合，请参阅[参考手册](docs/Reference.zh-CN.md)。
 
 ## 构建
 
-ARCH 面向 Linux/WSL 风格的 C++ 环境。所需工具和库包括：
+ARCH 必须在 Linux 环境中编译；Windows 用户请使用 WSL2 Linux 终端。你可以在下方选择构建纯 CPU 版本或 CPU/CUDA 双支持版本。由于 CUDA 可执行程序同时也支持在 CPU 上运行，因此不需要将两者都编译一遍。
 
-- C++20 编译器；
-- CPU 构建使用 CMake 3.22 或更高版本，CUDA 的要求见下文；
-- Python 3.10 或更高版本，用于默认测试配置及验证工具；
-- OpenMP，除非配置时关闭；
-- HDF5 C++ 和 HL 库；
-- Git，以及配置阶段的网络访问，因为 CMake 会获取 HighFive，并在找不到已安装 KLU 库时获取固定版本的 SuiteSparse；
-- Git LFS，用于克隆由 LFS 管理的 EOS `.dat` 或 `.h5` 资源。
+### 准备工具
 
-在仓库根目录配置和构建：
+先在 Linux 环境中安装以下工具及开发库：
+
+- 支持 C++20 的编译器、CMake 3.22 或更高版本、Ninja 和 Git。
+- HDF5 的 C++ 与高层接口库，以及用于 CPU 并行计算的 OpenMP。
+- 使用 CUDA 时，还需要 CMake 3.25.2 或更高版本、CUDA Toolkit 12.0 或更高版本、
+  该工具链支持的宿主编译器及可用的 NVIDIA 驱动。下方带内存监控的编译命令还
+  需要 Python 3.10 或更高版本。
+
+使用 WSL2 时，NVIDIA 驱动安装在 **Windows**，CUDA Toolkit 安装在 WSL 内；
+不要在 WSL 内安装 Linux 显示驱动。安装步骤见
+[NVIDIA 的 WSL 指南](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)。
+
+CMake 会在配置时下载 HighFive。CPU 稀疏求解器 KLU 默认启用：程序优先使用
+已安装的库，否则下载固定版本的 SuiteSparse v7.13.0。因此，配置阶段需要联网。
+
+下方命令都在仓库根目录执行。`cmake -S ... -B ...` 检查依赖并准备构建目录，
+`cmake --build ...` 才开始编译。这里使用 Ninja 执行编译任务，不需要再运行
+`make`。如果同名构建目录已配置过其他编译器或构建工具，请换一个空目录。
+
+### 方案 A：使用 CPU
 
 ```bash
-git lfs pull
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 1
+cmake -S . -B build-cpu -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+  -DARCH_ENABLE_CUDA=OFF -DARCH_ENABLE_OPENMP=ON \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cpu/bin"
+cmake --build build-cpu --target ARCH --parallel 1
 ```
 
-CUDA 后端需要 CMake 3.25.2 或更高版本、NVCC 12.0 或更高版本，以及相应
-CUDA 工具链支持的宿主编译器。这些版本提供所需的
-[CUDA C++20 语言支持](https://cmake.org/cmake/help/latest/release/3.25.html)；
-本次参考构建使用 CMake 3.28 和 CUDA 12.3。通过 `CMAKE_CUDA_ARCHITECTURES`
-指定目标 GPU：本机编译可使用 `native`，面向多代设备可指定 `80;86;90`
-这样的列表。程序会在选择后端前检查编译产物和驱动是否匹配。
-下面的示例使用 Ninja，才能分别限制重型编译任务与总并发数。请先安装 Ninja；
-若要更换现有构建的生成器，请使用新的构建目录。
+这会将可执行程序生成在 **`build-cpu/bin/ARCH`**。现在你可以跳至[首次运行](#首次运行)部分。
+请注意，`BUILD_TESTING=OFF` 只是跳过编译测试套件——它绝不会关闭任何模拟功能。
+`--parallel 1` 标志将编译任务限制为单线程，以节省内存。
+
+### 方案 B：同时支持 CPU 与 CUDA
+
+请在将要运行 ARCH 的 GPU 所在机器上执行；`native` 表示为本机 GPU 编译。
 
 ```bash
-cmake -S . -B build-cuda -G Ninja -DARCH_ENABLE_CUDA=ON \
-  -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=native \
-  -DARCH_CUDA_HEAVY_COMPILE_JOBS=2 \
-  -DARCH_ENABLE_CUDSS=ON -DCUDSS_ROOT=/path/to/cudss \
+cmake -S . -B build-cuda -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+  -DARCH_ENABLE_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=native \
   -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cuda/bin"
 python3 tools/run_memory_guarded.py --min-available-mib 1536 \
   --max-swap-growth-mib 256 --pressure-guard -- \
-  cmake --build build-cuda --target ARCH --parallel 4
+  cmake --build build-cuda --target ARCH --parallel 1
 ```
 
-示例保留默认的 CPU KLU，并启用 CUDA cuDSS，同一构建可以在两个后端运行稀疏燃烧。
-上述命令构建可执行文件，不会构建完整验证套件；ARCH 程序本身不需要运行时
-Python 环境。cuDSS 是可选依赖：若已能自动发现，可省略 `CUDSS_ROOT`；
-不需要 CUDA 稀疏燃烧时可设置 `-DARCH_ENABLE_CUDSS=OFF`，也可以使用安装在
-用户目录中的 cuDSS。当前适配层要求 cuDSS 0.8 API，并检查运行库版本。
-只有求解库与所选网络／EOS 的执行代码实际链接时，程序才接受该配置；缺少依赖
-会明确报错。KLU 用于 CPU，cuDSS 用于 CUDA。
+编译完成后，程序位于 **`build-cuda/bin/ARCH`**。外层 Python 工具负责监测内存
+和磁盘压力，实际编译仍由 CMake 启动。按这里的设置，工具会在可用内存低于
+1.5 GiB、swap 新增超过 256 MiB，或者内存与 I/O 中任一等待指标持续超限时停止编译。
+它不改变编译出的数值算法。
 
-示例中的编译保护工具会保留 1.5 GiB 可用内存，并允许最多新增 256 MiB swap。
-启用 `--pressure-guard` 后，还会监测 Linux 内存和 I/O 等待情况，持续高压力时停止本次编译。
-该选项需要 Linux 内存和 I/O 的 PSI full 计数器。保护工具还需要可用的 pidfd、
-子进程托管支持及可读的 `/proc`，会在启动编译前检查这些能力；当前 WSL2 已提供支持。
-需要手动停止时，使用 `Ctrl+C` 或 `SIGTERM`，工具会一并清理本次启动的编译器进程。
+如果需要在 CUDA 上进行**稀疏核燃烧求解**，请在配置前另行安装 cuDSS 0.8。
+CMake 会自动查找它；如果安装在自定义目录，可在配置命令中追加
+`-DCUDSS_ROOT=/your/installed/cudss`，并将路径替换为实际安装位置。
+未安装 cuDSS 时，程序可以使用其他 CUDA 功能及稠密燃烧求解，但会拒绝 CUDA
+稀疏燃烧请求。KLU 负责 CPU 稀疏求解，不能在 CUDA 上代替 cuDSS。
 
-手动选择 GCC 时，`CMAKE_C_COMPILER`、`CMAKE_CXX_COMPILER` 和
-`CMAKE_CUDA_HOST_COMPILER` 应使用配套版本。Release 构建保留 LTO，本地编译的依赖库也需要使用兼容的编译器版本。
+### 加快编译与获取可选数据
 
-默认可执行文件写入 `bin/ARCH`；上述隔离 CUDA 示例写入 `build-cuda/bin/ARCH`，避免跨构建覆盖。KLU 默认启用；CMake 会使用已安装的库，或获取固定版本的 SuiteSparse v7.13.0。
+上述命令从单任务编译开始。希望加快编译时，可按[构建指南](docs/guides/Build.zh-CN.md)
+调整并行数并监测内存。指南中的中等配置实测参考为 WSL2、i7-10700、16 GB
+系统内存和 RTX 3060 Ti 8 GB 显卡，采用两个重型编译任务、四个总任务。
+指南也说明了如何选择编译器、为其他 GPU 构建，以及运行测试套件。
+这些设置保留 Release 优化。
 
-使用 Ninja 时，`ARCH_CUDA_HEAVY_COMPILE_JOBS` 控制重型编译任务的并发数（默认 `1`），
-`--parallel` 控制所有任务的总并发数。对于下述中等配置参考，推荐使用
-`ARCH_CUDA_HEAVY_COMPILE_JOBS=2`、`--parallel 4`；这套配置已完成
-[核心构建测量](validation/backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)。
-它是实测参考配置，不是最低硬件要求或通用最优值。可用内存较少时降低并发数，
-大内存机器可以结合保护工具的测量结果提高两个上限；数值方法和 Release 优化保持不变。
-供贡献者使用的测量与重构过程记录见[开发文档](docs/development/README.md)。
+首次运行的 Sod 算例不需要 EOS 表。使用 Helmholtz 或其他由 LFS 管理的表数据时，
+安装 Git LFS，并在仓库根目录执行 `git lfs pull` 即可。ARCH 运行模拟本身不需要 Python。
 
-本地编译测量以 WSL2、i7-10700 级别 CPU、16 GB 系统内存及 RTX 3060 Ti
-级别的 8 GB 显卡作为中等配置参考。模拟所需内存取决于网格、细化层级、核素
-数量和稀疏求解器的工作空间。使用 WSL 时，还需检查实际分配给 Linux 的内存，
-并为 Windows 留出余量。不同机器使用相同的数值方法和精度设置。
+拉取源码后，可按[测试指南](tests/README.zh-CN.md)先运行无需 GPU 的工具检查，再编译
+CPU 或 CUDA 测试，并执行对应配置的完整程序与重启检查。测试源码和小型参考数据
+均随仓库提供，测试程序在本机编译。
 
-Release 构建会针对本机 CPU 优化，迁移到不同 CPU 架构时请重新构建。
-通过 `CMAKE_CUDA_ARCHITECTURES` 指定运行程序的目标 GPU，并选择支持这些目标的 CUDA 工具链。
+## 首次运行
+
+Sod 激波管在初始时刻包含两侧密度和压力不同的气体。撤去两者之间的假想隔板
+后，会出现激波、接触面和膨胀波。这个小型一维算例适合用来确认程序能够运行，
+并熟悉如何查看输出。
+
+完成方案 A 的编译后，在仓库根目录执行：
+
+```bash
+export OMP_NUM_THREADS=4
+./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
+```
+
+其中，`Sod` 选择算例定义，`.par` 文件提供参数，`OMP_NUM_THREADS` 控制 CPU
+工作线程数，不影响数值精度设置。如果使用方案 B，可执行文件
+路径应换成 `./build-cuda/bin/ARCH`。需要 GPU 执行时，先复制示例参数文件，
+在副本中加入 `compute_backend = cuda`，再运行该副本。
+
+成功运行后，程序会打印所选方法和时间步表，并在 `output/first_sod/` 下写入：
+
+```text
+SodBeginner_log.dat
+SodBeginner_HLLC_plt_0000.h5
+SodBeginner_chk_0000.h5
+...
+```
+
+日志是可以直接阅读的文本；名称包含 `_plt_` 的文件保存供查看的流体场，
+`_chk_` 文件则是用于重启的检查点。HDF5 是这些二进制数据文件采用的格式。
+[算例指南](docs/guides/SimulationCase.zh-CN.md)会介绍如何读取场数据并比较结果。
+这个示例使用 64 个单元；`simulation/Sod/Sod.par` 提供 128 单元的标准激波管，
+`simulation/Sedov/` 则提供爆炸波示例。
 
 ## Tabular EOS 与自定义网络
+
+当理想气体或内置反应网络不足以描述目标问题时，可以使用这些扩展。首次运行
+不需要配置它们。
 
 Tabular EOS 参数提供 HDF5 路径，表内元数据负责维数选择：
 
@@ -166,54 +192,36 @@ use_nse = false
 linear_solver = Auto
 ~~~
 
-生成器版本 4 仅为清单中声明 `device_callable_math=true` 的网络包启用 CUDA。
+使用 CUDA 时，生成网络包的清单需声明 `device_callable_math=true` 和 `generator_version >= 4`。
 两个后端使用同一个生成数学头文件及清单声明的 Jacobian 结构。对于已识别的
 内嵌弱反应率表，各后端分别管理只读数据，共用插值、导数和有符号能量积分。
-版本 3 或尚未转换为设备端实现的网络包仍只能在 CPU 上运行。生成网络不支持
-Timmes NSE 投影。
+采用生成格式 3 或不具备设备数学接口的网络包仅支持 CPU。这些编号表示生成包的
+接口格式，不是 ARCH 的发布版本。生成网络不支持 Timmes NSE 投影。
 
 线性求解器名称不区分大小写。`Auto` 在 ODE 方程总数不超过 31 时选择 DenseLU，
 计数包含核素、温度和可选辅助状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA
 上使用 cuDSS，前提是相应求解库与网络／EOS 执行代码已构建。显式 SparseKLU
 仅适用于 CPU，显式 cuDSS 仅适用于 CUDA；不兼容的组合会在后端构造前报错，
 不会静默替换求解器。cuDSS 是可选依赖，但 CUDA 稀疏燃烧必须链接该库。
-独立弱反应轨迹、真实生成网络的应用运行及多规模兼容记录统一见
+独立弱反应轨迹、真实生成网络的应用运行及不同网络规模的检查记录统一见
 [网络验证](validation/network/README.zh-CN.md)。完整契约和生成器要求见
 [研究与 API 参考](docs/Reference.zh-CN.md)。
-
-## 首次运行
-
-运行小型一维 Sod 教学算例：
-
-```bash
-export OMP_NUM_THREADS=4
-./bin/ARCH Sod simulation/Sod/Sod_beginner.par
-```
-
-成功运行后会打印选定的 EOS、求解器、重构、时间积分器、AMR 分辨率和时间步表，并在 `output/first_sod/` 下写入：
-
-```text
-SodBeginner_log.dat
-SodBeginner_HLLC_plt_0000.h5
-SodBeginner_chk_0000.h5
-...
-```
-
-`Sod_beginner.par` 使用 64 个网格单元；`Sod.par` 提供 128 单元的标准激波管。爆炸波基准位于 `simulation/Sedov/`。
 
 ## 文档路径
 
 [模拟算例指南](docs/guides/SimulationCase.zh-CN.md)提供从首次运行、核心 CFD 参数到新建 `Setup`/`Init` 算例的连续学生学习路径。
 
-参数名、可接受取值、API 签名、输出格式、扩展契约和已知工程妥协统一收录在可搜索的[研究与 API 参考](docs/Reference.zh-CN.md)中。
+参数名、可接受取值、API 签名、输出格式和扩展要求统一收录在可搜索的
+[研究与 API 参考](docs/Reference.zh-CN.md)中。
 
 [文档索引](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与法律文件入口。
 
 [CUDA 与 GPU-AMR 指南](docs/CudaBackendStatus.zh-CN.md)介绍支持的功能、后端职责与求解器选择。
 
-[验证索引](validation/README.zh-CN.md)汇总数值结果与发布验收状态。
-[AMR 验证页](validation/amr/README.zh-CN.md)介绍网格自适应、守恒、几何与重启检查，
-并提供相应的可复现记录。
+[验证索引](validation/README.zh-CN.md)解释测试了什么，以及如何理解结果。
+各模块页面先介绍科学检查，再链接详细报告、日志和实测硬件配置。这些记录供
+复现与审阅使用，不是首次运行前必须完成的额外配置步骤。修改源码的开发者还应
+阅读[贡献者指南](docs/development/README.md)。
 
 ## 仓库结构
 
@@ -252,14 +260,37 @@ ARCH/
 
 ## 当前数值边界
 
-- 燃烧、扩散和流体使用对称组合 `B(dt/2)-D(dt/2)-H(dt)-D(dt/2)-B(dt/2)`；因此即使流体子步选择 SSPRK3，耦合方法最高也只有二阶；
-- 粗细 AMR 界面以 MUSCL-MinMod 代替 PPM 的宽模板；
-- 在无效或近真空状态下，密度、速度、内能和组分保护可能修改守恒更新；
-- 共用构建契约在支持的 GNU/Clang/NVIDIA 工具链上关闭 fast-math 与浮点收缩。Release 仍使用 `-march=native`；不保证跨机器逐位一致；
-- ARCH 当前提供源码级扩展接口，而不是已安装的公共库 ABI。
+选择更高阶的流体积分器，并不能自动提升所有耦合物理过程的精度。燃烧、扩散和流体运动采用对称的算子分裂顺序进行积分：`B(dt/2)-D(dt/2)-H(dt)-D(dt/2)-B(dt/2)`，其中每个字母代表将该过程推进指定的时间跨度。由于这种耦合机制，组合方法的最高精度被限制为二阶，即使流体子步本身使用的是 SSPRK3。请注意，这一限制并不适用于纯流体计算。此外，在 AMR 粗细网格的交界处，程序会安全地回退使用 MUSCL-MinMod 重构，而不是需要更宽模板的 PPM。
 
-收敛和生产研究应遵循 Reference。正式验证结论必须包含可复现输入、参考解、范数和容差。
+进行收敛研究时，还应检查密度、速度、内能或组分保护是否被触发，因为这些
+保护可能改变无效或近真空状态下的更新。[参考手册](docs/Reference.zh-CN.md)
+解释这些数值选择，验证页面则展示误差与守恒量的测量方法。
+
+Release 构建保留 CPU 优化和 LTO。为维持所需的数值行为，共用构建设置会在
+支持的 GNU、Clang 和 NVIDIA 工具链上关闭 fast-math 与浮点收缩；不过这不意味着
+不同机器会产生逐位相同的结果。目前扩展功能使用源码接口，而非已安装的
+二进制库接口。
 
 ## 许可证
 
-ARCH 自有内容采用 [MIT License](LICENSE)。第三方派生科学代码和数据保留其上游来源与条款，详见[第三方来源与说明](THIRD_PARTY_NOTICES.zh-CN.md)。MIT 许可证尤其不会重新许可 Timmes 派生的反应网络、NSE 实现、Helmholtz EOS 或表数据。 可选 KLU 后端的 SuiteSparse LGPL/BSD 条款保留在 [LICENSES](LICENSES/) 与[第三方说明](THIRD_PARTY_NOTICES.zh-CN.md)中。
+ARCH 自有内容采用 [MIT License](LICENSE)。第三方衍生科学代码和数据保留其上游来源与条款，详见[第三方来源与说明](THIRD_PARTY_NOTICES.zh-CN.md)。MIT 许可证尤其不会重新许可 Timmes 衍生的反应网络、NSE 实现、Helmholtz EOS 或表数据。 可选 KLU 后端的 SuiteSparse LGPL/BSD 条款保留在 [LICENSES](LICENSES/) 与[第三方说明](THIRD_PARTY_NOTICES.zh-CN.md)中。
+
+## 后续开发方向
+
+下面两条路线展示已有功能之外的开发方向。每条路线的首项是当前推进重点；
+带 `?` 的项目是后续候选方向，具体范围与设计仍可调整。箭头表示计划顺序，
+不表示软件或物理上的依赖关系。
+
+```text
+物理：自引力 → MHD? → { BSSN? | Z4c? }
+软件：MPI    → GNN? → { FP32/FP64 切换? | RT Core 加速? }
+```
+
+自引力将计算模拟物质自身产生的引力场，磁流体力学（MHD）则把磁场加入流体
+模型。BSSN 和 Z4c 是未来可能考虑的广义相对论时空演化形式，目前作为候选
+方案列出，并非已经实现的模块。
+
+MPI 的方向是把模拟分配到多个进程和多台机器。后续还会探索图神经网络（GNN）、
+32 位与 64 位浮点精度的选择，以及在适合的算法中利用 GPU 光线追踪核心
+（RT Core）。这些计划与当前支持的功能分开列示。性能、内存使用、编译效率、
+文档和验证也会持续优化，同时保持 CPU 与 GPU 共用一套数学和物理实现。

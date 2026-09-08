@@ -1,3 +1,13 @@
+/**
+ * @file CuDssSparseSolver.cpp
+ * @brief Own cuDSS descriptors, factors and private equilibration buffers.
+ *
+ * The provider borrows the caller's device CSR data and stream. It validates
+ * symbolic metadata, scales through shared LinearEquilibration helpers and
+ * checks completed library/device status before returning a linear response.
+ * It never advances an ODE or downloads numerical cell states for a CPU solve.
+ */
+
 #include "CuDssSparseSolver.h"
 #include "SparseEquilibration.h"
 #include "cuda/common/DeviceAllocation.h"
@@ -231,7 +241,7 @@ CuDssSparseSolver::CuDssSparseSolver(
     // the library's global-pivot factorization. Nested-dissection/local-block
     // factors can lose componentwise trace accuracy despite successful status
     // and refinement. Matching is NOT supported with BTF; leave it disabled.
-    // Every solve still faces ARCH's unchanged original-matrix residual gate.
+    // Every solve must satisfy ARCH's original-matrix residual gate.
     const cudssReorderingAlg_t ordering = CUDSS_REORDERING_ALG_BTF_COLAMD;
     checked(cudssConfigSet(p.config, CUDSS_CONFIG_REORDERING_ALG,
                            &ordering, sizeof(ordering)), "select nonsymmetric sparse ordering");
@@ -243,7 +253,7 @@ CuDssSparseSolver::CuDssSparseSolver(
     // Direct LU can return success yet miss componentwise accuracy on mixed
     // abundance/temperature scales (even the CPU dense oracle can do so).
     // Refine the equilibrated device equations before handing the solution
-    // to ARCH's unchanged ORIGINAL-matrix residual gate. Zero IR_TOL avoids
+    // to ARCH's original-matrix residual gate. Zero IR_TOL avoids
     // replacing that gate by cuDSS's different global two-norm criterion.
     const int refinement_steps = ARCH_CUDSS_IR_STEPS;
     const double no_library_tolerance = 0.0;

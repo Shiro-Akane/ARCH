@@ -7,6 +7,8 @@ from fractions import Fraction
 from pathlib import Path
 from PortableAdapter import adapt as make_portable_adapter
 
+# Package contract identifier used for reuse and CMake registration.
+# This is generated metadata, not an ARCH release number or a user setting.
 GENERATOR_VERSION = 4
 ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,47}$")
 RESERVED = {"custom", "none", "null", "ideal", "helmholtz", "tabular"}
@@ -357,9 +359,11 @@ void eval_temperature_derivative(const double* state, double rho,
 
 def main():
     parser=argparse.ArgumentParser(description="Generate an isolated ARCH custom network.")
-    parser.add_argument("recipe", type=Path)
-    parser.add_argument("--replace", action="store_true")
-    parser.add_argument("--check", action="store_true")
+    parser.add_argument("recipe", type=Path, help="Python recipe defining the network")
+    parser.add_argument("--replace", action="store_true",
+                        help="replace an existing generated package with the same network ID")
+    parser.add_argument("--check", action="store_true",
+                        help="validate the recipe and network without writing a package")
     parser.add_argument("--custom-root", type=Path, default=None, help=argparse.SUPPRESS)
     args=parser.parse_args()
     recipe_path=args.recipe.resolve()
@@ -372,7 +376,9 @@ def main():
     target=custom_root/network_id
     if target.parent.resolve()!=custom_root.resolve(): fail("target escaped custom root")
     try: import pynucastro as pyna
-    except ImportError: fail("run with: conda run -n p311 python tools/network/GenerateNetwork.py ...")
+    except ImportError:
+        fail("pynucastro is required in the active Python environment; "
+             "see tools/network/README.md for setup and generation instructions")
     recipe_hash=hashlib.sha256(recipe_path.read_bytes()).hexdigest()
     generator_hash = hashlib.sha256(b"".join(
         (Path(__file__).parent / name).read_bytes()
@@ -419,7 +425,7 @@ def main():
             connect_weak_derivatives(stage, network_id, network)
             from WeakStorage import promote_weak_storage
             promote_weak_storage(stage, network_id)
-            # The same view is now bound by CPU entry points and CUDA dense /
+            # The same view is bound by CPU entry points and CUDA dense /
             # sparse owners. Promotion validates the complete table layout;
             # failure aborts staged publication instead of advertising a route.
             device_callable = True

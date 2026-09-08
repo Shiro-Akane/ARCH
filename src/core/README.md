@@ -7,7 +7,5 @@
 - [CompensatedSum.h](CompensatedSum.h) owns compensated scalar accumulation.
 - [FileFingerprint.h](FileFingerprint.h) fingerprints scientific input files.
 
-Keep these services independent of a particular reaction network or CUDA
-runtime owner. Inline annotations are part of the reviewed compile contract;
-changing a heavy device call boundary requires build and runtime measurements.
-See the [source guide](../README.md) and [parameter reference](../../docs/Reference.md).
+These core services must remain independent of any specific reaction network or CUDA runtime management code. It is important to treat inline annotations as a critical part of the reviewed compilation contract; altering any heavy device-call boundary requires careful build and runtime performance measurements.
+For further details, refer to the [source guide](../README.md) and the comprehensive [parameter reference](../../docs/Reference.md).

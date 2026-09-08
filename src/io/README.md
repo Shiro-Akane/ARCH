@@ -7,6 +7,4 @@ diagnostics and [IO.h](IO.h) declares plot/checkpoint operations.
 - [chk](chk/README.md) owns checkpoint/restart routing and compatibility.
 - [plot](plot/README.md) owns analysis-output routing.
 
-CPU and CUDA use the same schemas and writers. The driver materializes required
-device fields at IO boundaries. Keep numerical updates out of serialization and
-coordinate format changes with [restart validation](../../validation/restart/README.md).
+CPU and CUDA environments utilize the exact same schemas and writers. At IO boundaries, the driver explicitly materializes any required device fields. It is strictly required to keep all numerical state updates completely separated from the serialization logic, and you must coordinate any format changes with [restart validation](../../validation/restart/README.md).

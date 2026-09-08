@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_hydro_block.cu
+ * @brief Exercise the production CUDA backend through focused run modes.
+ *
+ * Hydro, EOS, diffusion and burn modes test ownership and numerical routes;
+ * the command-line mode selects the bounded operation under examination.
+ */
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
 #include "cuda/hydro/BoundaryPlan.h"

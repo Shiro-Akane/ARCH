@@ -122,7 +122,7 @@ def parse_samples(path: Path, input_format: str = "auto") -> list[dict[str, obje
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("samples", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--format", choices=("auto", "commands", "ps"), default="auto")

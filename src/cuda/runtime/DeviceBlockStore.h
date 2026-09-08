@@ -1,6 +1,10 @@
 /**
  * @file DeviceBlockStore.h
- * @brief Ordinary-C++ identity and lifecycle contract for device block storage.
+ * @brief Identity and lifecycle bookkeeping for device block storage.
+ *
+ * The index validates block/storage generations and the transaction records
+ * candidate publication and retirement. These host-side records do not own
+ * numerical field buffers or perform AMR transfer mathematics.
  */
 
 #pragma once

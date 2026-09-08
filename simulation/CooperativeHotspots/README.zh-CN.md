@@ -64,4 +64,4 @@ R           = 6 cm
 4. 对唯一最强候选做 `dx/2` 和 `aprox19` 复核；
 5. 若 `D` 仍不超过 `E`，立即停止该 topic，把计算资源转到 stage-resolved cellular propagation/composition closure。
 
-默认参数文件恢复为 4.0 GK 单热点的快速运行；修改 `hotspot_mode`、`hotspot_separation`、`hotspot_temperature`、`tmax` 和 `base_name` 可复现上述各层。
+默认的参数文件已恢复为 4.0 GK 单热点的快速运行模式。若需复现上述各个测试层，请直接修改 `hotspot_mode`、`hotspot_separation`、`hotspot_temperature`、`tmax` 以及 `base_name` 等参数即可。

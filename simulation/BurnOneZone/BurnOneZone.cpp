@@ -1,6 +1,10 @@
 /**
  * @file BurnOneZone.cpp
- * @brief Uniform one-zone network integration through the production burn driver.
+ * @brief Initialize a uniform one-zone state for the production burn driver.
+ *
+ * Setup resolves network composition and pressure through the common EOS.
+ * Init supplies constant density, temperature and composition; ODE integration
+ * and thermodynamic energy handoff remain in the shared burn implementation.
  */
 
 #include <iostream>

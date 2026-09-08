@@ -1,5 +1,5 @@
 /**
- * @file EOS.h
+ * @file eos.h
  * @brief Unified concept/interface for Equation of State.
  * EOS implementations use a compile-time policy interface so tight CFD loops
  * can inline thermodynamic calls. Each policy provides the signatures below.

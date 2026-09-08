@@ -1,0 +1,14 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             613718
+========= Created:                2026-Sep-08 12:53:46
+========= System OS:              Linux
+========= OS build:               #1 SMP PREEMPT_DYNAMIC Thu Jun  5 18:30:46 UTC 2025
+========= System CPU:             Intel(R) Core(TM) i7-10700 CPU @ 2.90GHz
+========= CPU architecture:       x86_64
+========= Computer Name:          Shiro-Akane
+========= Target application:     /home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/bin/ARCH BurnGradient /home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/restart/burn-memcheck/cuda_source/RestartAMR_cuda_source.par
+========= CUDA version:           13.3
+========= Display Driver version: 610.47
+========= 
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

@@ -8,6 +8,18 @@ This searchable reference follows the declarations and dispatch paths in the
 current source tree. The student workflow is in
 [`docs/guides/SimulationCase.md`](guides/SimulationCase.md).
 
+Think of this document as a lookup guide for use after your first successful run. In ARCH terminology, a *case* defines the initial fluid state, a *policy* represents a swappable numerical method or physical model, and a *backend* dictates whether execution happens on the CPU or GPU. Additionally, an API defines the exact functions and data types available to you, and its corresponding *contract* spells out the inputs, outputs, and assumptions you can safely rely on.
+
+Our primary numerical terminology mirrors the physical flow of the calculation:
+- A **mesh** divides the continuous space into discrete cells.
+- **Reconstruction** estimates values exactly at cell faces.
+- A **flux** quantifies the physical transport across each of those faces.
+- A **time integrator** then steps the overall cell state forward in time.
+- The **equation of state (EOS)** closes the system by relating thermodynamic quantities like pressure, density, and internal energy.
+- **Adaptive mesh refinement (AMR)** dynamically allocates smaller cells only where greater spatial resolution is necessary.
+- **Nuclear burning** evolves the fluid's composition and temperature by solving coupled ordinary differential equations (ODEs).
+- **Nuclear statistical equilibrium (NSE)** provides an instantaneous equilibrium composition for the active reaction network.
+
 ## Contents
 
 1. [Authority and stability](#authority-and-stability)
@@ -34,15 +46,15 @@ ARCH exposes two interface levels:
   functions. A case includes exactly those two ARCH headers; concrete EOS,
   dispatch, AMR, and driver headers are not part of this surface.
 - **Source-extension API**: template or virtual contracts used to add numerical
-  and physical policies inside this repository. They follow in-tree source
-  compatibility.
+  and physical policies inside this repository. Extensions compile against the
+  owning headers and are tested together with their callers.
 
 Stability labels in this document mean:
 
 | Label | Meaning |
 | --- | --- |
-| Stable | Maintained for case authors; incompatible changes require migration notes. |
-| Source extension | In-tree source compatibility. |
+| Stable | The supported interface for writing simulation cases. |
+| Source extension | An extension interface compiled and tested with the repository. |
 | Internal | Driver/AMR implementation detail outside the case surface. |
 | Experimental | Implemented, but validation or interface stabilization is incomplete. |
 | Reserved | Parsed or named for future work. |
@@ -75,18 +87,19 @@ CUDA implements Cartesian/cylindrical/spherical 1D/2D/3D hydro, the registered
 flux/reconstruction/time-integrator matrix, Ideal/Helmholtz/Tabular3D/Tabular4D
 EOS, and RKL1/RKL2 diffusion through the common geometry definitions. Two-dimensional
 spherical grids use ARCH's polar `(r,phi)` convention. Runtime
-species scratch removes the 30-species storage ceiling for passive transport
-and AMR; DenseLU independently remains limited to 31 total ODE equations. Dynamic
+species scratch is sized to the configured composition for passive transport
+and AMR; DenseLU has a separate limit of 31 total ODE equations. Dynamic
 AMR uses Host topology plans and device numerical indicators/migration, staged
 device-store transactions, multiblock exchange, and compact Hydro/RKL reflux.
 Restart uses the shared Host checkpoint schema, and output uses the shared
-host writer after explicit materialization.
+host writer after the required fields have been copied to host memory.
 
 The four built-in burn networks support DenseLU and optional cuDSS solving and
-retain NSE. Version-4 generated packages declaring `device_callable_math=true`
-use the same math on CPU and CUDA. Recognized embedded weak tables have separate
-read-only storage on each backend. Version-3 packages and packages not converted
-for device execution remain CPU-only. cuDSS requires its optional library to be
+support NSE. Generated packages use the same math on CPU and CUDA when CMake
+accepts their [device-math package contract](../src/physics/network/custom/README.md)
+and the manifest declares `device_callable_math=true`. Recognized embedded weak
+tables have separate read-only storage on each backend. Accepted host-only
+packages execute on CPU. cuDSS requires its optional library to be
 linked; KLU is CPU-only, and incompatible explicit backend/solver choices are
 rejected. External gravity uses
 one per-stage source operator on both backends. The
@@ -203,11 +216,7 @@ pressure, bounds species to `[0,1]`, and renormalizes interface compositions.
 Release compilation uses optimization and `-march=native`, but the shared
 build contract explicitly disables fast-math and contraction for supported
 GNU/Clang host compilers (`-fno-fast-math -ffp-contract=off`) and NVIDIA CUDA
-(`--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`). Host link options
-also prevent fast-math startup state. This preserves the intended compensated
-sums and frozen arithmetic policy, not cross-machine bitwise reproducibility.
-Validation records include compiler, flags, OpenMP thread count, hardware, and
-numerical tolerances.
+(`--fmad=false --ftz=false --prec-div=true --prec-sqrt=true`). Host link options are also carefully configured to prevent `fast-math` from leaking into the startup state. These choices intentionally preserve exact compensated sums and strict floating-point evaluation order. However, they do not guarantee cross-machine bitwise reproducibility. For this reason, our [Validation](../validation/README.md) records meticulously document the compiler versions, flags, OpenMP thread counts, hardware, and accepted numerical tolerances used for each verified run.
 
 The CPU dispatch translation units use `-O1` and
 `-fno-inline-functions-called-once` to limit compiler memory for the
@@ -233,10 +242,10 @@ COLAMD, and SuiteSparse_config. EOS `.dat`/`.h5` assets may require Git LFS.
 
 CUDA sparse burning additionally uses optional cuDSS discovery with
 `ARCH_ENABLE_CUDSS=ON` (default) and `CUDSS_ROOT` for an installed prefix; a
-user-local installation is supported. The provider requires the reviewed 0.8
-API and a matching runtime version. It is advertised only after its registered
-network/EOS routes and library are linked. Missing cuDSS does not prevent a
-dense-only CUDA build, but sparse requests are rejected. See the
+user-local installation is supported. The ARCH adapter requires the reviewed 0.8
+API and a matching runtime version. A network/EOS combination becomes available
+after its registered execution code and library are linked. Missing cuDSS does
+not prevent a dense-only CUDA build, but sparse requests are rejected. See the
 [README build example](../README.md#build) for isolated executable output and
 `tools/run_memory_guarded.py`. Start with `--parallel 1` when available memory
 is uncertain, then choose the heavy-pool and total-job limits from measurements.
@@ -245,13 +254,14 @@ Simulation capacity is measured separately for the selected workload.
 
 `ARCH_CUDSS_IR_STEPS` is a nonnegative integer CMake setting (default `2`)
 for cuDSS's device-side iterative-refinement passes. `0` disables them for
-diagnostics. It changes only the linear provider, not the ODE tolerances or
+diagnostics. It changes only the linear-solver adapter, not the ODE tolerances or
 the Auto cutoff: at most 31 total equations use DenseLU. Thirty isotopes plus
 temperature and a weak-energy integral already form a 32-equation system.
-The provider keeps cuDSS `IR_TOL=0` and applies ARCH's unchanged original-matrix
-componentwise residual gate after the solve; a successful library status alone
-does not prove an accurate correction. This setting is private to the Host
-provider compilation and does not reinstantiate CUDA network/EOS kernels.
+The adapter keeps cuDSS `IR_TOL=0` and checks the residual of the original matrix
+component by component after the solve. ARCH accepts a correction only when this
+accuracy check passes, not simply when the library reports success.
+This setting affects only compilation of the host-side adapter and does not
+reinstantiate CUDA network/EOS kernels.
 See the [cuDSS refinement contract](https://docs.nvidia.com/cuda/cudss/types.html#cudssconfigparam-t).
 
 Relevant cache controls are `ARCH_ENABLE_KLU` (default `ON`),
@@ -278,7 +288,7 @@ REGISTER_PROBLEM_CLASS("RuntimeName", CaseClass);
 
 It registers a factory during static initialization. Duplicate names overwrite
 the existing entry. The case class must be default
-constructible. A free-function compatibility macro also exists:
+constructible. To register a pair of free functions, use:
 
 ```cpp
 REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
@@ -317,7 +327,7 @@ Important behavior:
 - quotes are stripped from `eos_table_path` by EOS dispatch, but general strings
   retain parser text.
 
-Fallback policy is inconsistent by design today:
+Invalid selections are handled as follows:
 
 | Invalid choice | Current behavior |
 | --- | --- |
@@ -325,9 +335,9 @@ Fallback policy is inconsistent by design today:
 | reconstruction | warning, PCM |
 | MUSCL limiter | warning, MinMod |
 | hydro integrator | warning, SSPRK2 |
-| gravity | exception during resolved-requirement construction |
+| gravity | exception during configuration resolution |
 | EOS, network, ODE, linear solver | exception |
-| diffusion integrator | fatal/exception depending path |
+| diffusion integrator | exception during configuration resolution |
 
 Always inspect the startup “Strategy” line and treat fallback warnings as a
 failed configuration in research workflows.
@@ -378,7 +388,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `reconstruct` | string | `pcm` | `pcm`, `donor_cell`, `muscl`, `plm`, `ppm` |
 | `limiter` | string | `minmod` | MUSCL only: `minmod`, `superbee`, `vanleer`, `mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
-| `timeintegrator` | string | — | legacy fallback key when canonical key is absent |
+| `timeintegrator` | string | — | alias used only when `time_integrator` is absent |
 | `cfl` | double | `0.8` | explicit hydro CFL; range unchecked at load time |
 | `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
 | `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
@@ -413,20 +423,20 @@ and any other spelling are rejected with the parameter name in the error.
 | `gravity_G` | expression | `6.6743e-8` | parsed only for unsupported self gravity |
 
 For `eos_type = tabular`, the HDF5 file declares `table_rank = 3` or `4` and
-dispatch selects the matching policy automatically. New tables should store
+dispatch selects the matching policy automatically. Tables should preferably store
 specific Helmholtz free energy; the normalized datasets, derivative identities,
-legacy direct-table path, and measured guard-node/endpoint spacing rules are specified
+direct-field model, and guard-node/endpoint spacing rules are specified
 in the local [Tabular EOS HDF5 interface](../src/physics/eos/TabularEOS.md).
 Shen/LS/HS/CompOSE/EOSDriver files require a family-specific converter; none is
 currently bundled. Binary compatibility is defined by the normalized schema,
-not by an upstream filename or HDF5 container. The acquired Shen EOS4 and
-EOSDriver HShen assets are assessed, but not accepted as directly loadable, in
-the [EOS validation record](../validation/eos/README.md).
+not by an upstream filename or HDF5 container. The
+[EOS validation record](../validation/eos/README.md) describes source-table
+assessments, including Shen EOS4 and EOSDriver HShen.
 
 The maintained Helmholtz validation asset is the `helm_table.dat` member of the
 `helmholtz.tar.xz` archive downloaded from the
-[Timmes EOS page](https://cococubed.com/code_pages/eos.shtml). It is materialized
-at `EOS_toolkit/tables/helmholtz/helm_table.dat` through Git LFS and has
+[Timmes EOS page](https://cococubed.com/code_pages/eos.shtml). It is downloaded
+to `EOS_toolkit/tables/helmholtz/helm_table.dat` through Git LFS and has
 size 60,242,514 bytes and
 SHA-256
 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`.
@@ -451,7 +461,7 @@ also requires the exact checksum above.
 | `enforce_mass_conservation` | bool | `true` | parsed and stored; no active burn path currently consumes this switch |
 | `burn_verbose_level` | int | `0` | parsed and stored; no active burn path currently consumes this level |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
-| `linear_solver` | string | `Auto` | Case-insensitive `Auto`, `DenseLU`, `SparseKLU`, or `cuDSS` (`dense_lu`, `sparse_klu`, `cu_dss` aliases accepted); see backend-dependent materialization below |
+| `linear_solver` | string | `Auto` | Case-insensitive `Auto`, `DenseLU`, `SparseKLU`, or `cuDSS` (`dense_lu`, `sparse_klu`, `cu_dss` aliases accepted); see backend-dependent selection below |
 | `ode_rtol` | double | `1e-4` | relative ODE tolerance |
 | `ode_atol` | double | `1e-8` | absolute ODE tolerance |
 | `ode_max_newton_iter` | int | `50` | Newton limit where used |
@@ -795,8 +805,8 @@ CODATA 2022, not a different constant profile per EOS. Pi delegates to C++20
 fundamentals. See the [constants and data boundaries](../src/physics/constant/README.md)
 before adding values: external tables and deferred reaction-network data are
 not regenerated by changing this header. Arbitrary code units are not
-automatically converted. Historical raw-bit results using other constants
-require independent requalification for the current release.
+automatically converted. Numerical comparisons must identify their constants;
+raw-bit snapshots using different values are not reference results for this set.
 
 EOS dispatch uses static duck typing. `src/physics/eos/eos.h` lists the expected
 surface. Methods exercised across hydro, initialization, burn, diffusion, and
@@ -825,7 +835,7 @@ valid `(rho,T,X)` input it must fill finite `P`, `E`, `cv`, `sound_speed`,
 `dp_drho`, and `dp_dT`; pressure, specific internal energy, `cv`, and sound
 speed must be positive. `dp_drho` means `(dP/drho)_e`, while `dp_dT` means
 `(dP/dT)_rho`. Free-energy tabular policies derive these quantities from one
-interpolated Helmholtz potential. The legacy direct policy uses supplied
+interpolated Helmholtz potential. The direct-field policy uses supplied
 derivative datasets or table-bounded local differences rather than returning
 zero. See the
 [normalized HDF5 contract](../src/physics/eos/TabularEOS.md).
@@ -861,7 +871,9 @@ virtual void add_sources_on_patch(
     void *execution_stream = nullptr) const = 0;
 ```
 
-Register construction in `make_gravity`. External gravity is a constant logical
+Register construction in `make_gravity(config, GravityId)`, using the gravity ID
+from the resolved execution plan. Parameter names and aliases are resolved before
+factory construction, not reparsed inside the factory. External gravity is a constant logical
 vector evaluated inside every hydro RK stage. Self gravity requires a separate
 field solver.
 
@@ -894,6 +906,12 @@ with `aprox` or `iso` are reserved. Existing-ID replacement requires
 discovers any number of coexisting packages through its generated registry.
 A run selects exactly one with `network_name = custom:<id>`.
 
+Burn factories consume the network, ODE and linear-solver IDs from the shared
+`ResolvedExecutionPlan`. Extend policy registration and capability resolution
+when adding a method; do not add a second factory that interprets the same
+configuration strings. The concrete network and ODE mathematical bodies remain
+independent of that selection step.
+
 The documented generator and validation recipes use pynucastro 2.12.0. See
 the [network setup](../validation/network/README.md#reproduce-the-records) for
 the matching Python environment and build commands.
@@ -904,11 +922,15 @@ generated SimpleCxx headers. Recognized weak tables include the rho*Ye
 composition chain rule and signed energy-source gradient. Custom networks set
 `SUPPORTS_NSE=false`; the complete-RHS temperature Jacobian uses the shared
 fourth-order difference policy with a precision-derived step and boundary stencil.
-Generator version 3 removes only compile-time literal-zero Jacobian calls;
+The generator removes only compile-time literal-zero Jacobian calls;
 runtime numerical zeros remain structural entries for safe KLU refactorization.
 The default `NUCLEI` path retains disconnected requested nuclei as inert
-species and rejects duplicates. CMake validates each manifest and rejects
-packages that predate these version-3 safeguards. Networks that integrate signed
+species and rejects duplicates. CMake validates the automatically generated
+contract metadata, including `generator_version`, and checks the declared
+sparsity and nucleus ordering against the
+[package contract](../src/physics/network/custom/README.md). These fields are
+written by the generator, not runtime settings to select by hand.
+Networks that integrate signed
 weak losses add a source-integral state using the same BE_NR/BD/ROS4 stages, error control and
 rollback; accepted energy includes both nuclear energy and that integral.
 Controlled Urca trajectories pass independent reference checks with both
@@ -917,8 +939,8 @@ applications also pass on both backends; their workload scope, original error
 budgets and reproduction commands are in [network validation](../validation/network/README.md).
 AMR and restart have their own [application acceptance records](../validation/amr/README.md).
 
-Generator version 4 adds one portable math header used by both the
-ordinary C++ adapter and CUDA instantiations. It preserves the original
+Device-capable packages use one portable math header shared by the
+ordinary C++ adapter and CUDA instantiations. It preserves the generated
 reaction expressions and their nuclear-data convention. Energy weights derive
 from the emitted masses/conversion, with a conserved-baryon mass offset to
 condition their dot product. Recognized small immutable metadata is
@@ -929,9 +951,9 @@ reaction/ODE math are maintained once.
 Per-package include guards and scoped screening macros allow packages to
 coexist. The symbolic Jacobian structure comes from declared writes (after
 literal-zero pruning), not from sampling numerical nonzeros; unrecognized
-write indices are rejected. CMake enables CUDA execution only for manifests
-with generator version at least 4 and `device_callable_math=true`. Version-3
-packages and layouts not converted for device execution stay CPU-only;
+write indices are rejected. CMake enables CUDA execution only when the package
+passes the device-math contract checks and its manifest declares
+`device_callable_math=true`. Accepted packages without that contract are CPU-only;
 unrecognized weak layouts are rejected before writing the final package.
 Portable generation does not remove the
 scientific qualification or custom NSE limitations above,
@@ -958,7 +980,7 @@ shared BE_NR/ROS4/BD ODE continuations; only memory, batched execution, and
 library-specific sparse operations are backend-specific. The CUDA route uses a
 declared CSR pattern, bounded per-lane workspace and memory-budgeted factor
 storage. It does not use a dense `N*N` entry-to-slot table. CPU `SparseWrap`
-continues to store CSC values and its existing `N*N` integer lookup. Memory
+stores CSC values and an `N*N` integer lookup. Memory
 requirements depend on sparse fill-in and the active workload. For very large
 networks, model reliability depends on the isotope set, reaction data and their
 range of applicability; current coverage is recorded in
@@ -968,11 +990,15 @@ After generating or replacing a package, rerun CMake. Use `--check` before
 writing, and use `-DARCH_CUSTOM_NETWORKS="id1;id2"` to restrict expensive builds.
 The generic source scan excludes the custom subtree, so only selected adapter
 sources are compiled. The generator itself needs pynucastro only at generation
-time; ARCH has no runtime Python dependency. Multi-size generated-network
-compatibility evidence is centralized in
+time; ARCH has no runtime Python dependency. Generated-network checks across
+network sizes are centralized in
 [validation/network](../validation/network/README.md).
 
 ### Diffusion — Source extension/Experimental
+
+`dispatch_diffusion(config, DiffusionIntegratorId, next_step)` consumes the
+integrator ID resolved by the shared policy-selection path. It constructs the
+selected integration policy without parsing the parameter string again.
 
 Single-block integrators provide:
 
@@ -1023,12 +1049,17 @@ Grid/morton                  Morton code per block
 Data/<requested field>       [block, z?, y?, x] interior-cell arrays
 ```
 
-Registered species use their registered names. The historical visual renderer
-searches for `X_` prefixes, creating a composition auto-selection mismatch.
+Species datasets use their registered names. When selecting a composition field
+in a plotting tool, use that name rather than assuming an `X_` prefix.
 
 `HDF5Writer` logs PLT write failures and continues the simulation.
 
-### Checkpoint file version 4
+### ARCH checkpoint
+
+An ARCH checkpoint contains the complete state needed to resume a simulation.
+Both backends use the same reader and writer. The reader checks the file's
+internal schema identifier and the required fields below; incomplete or
+unsupported input is rejected before restoring the simulation.
 
 Attributes include `checkpoint_version`, `time`, `step`, `chk_index`,
 `plt_index`, `dim`, `geometry`, `num_species`, `cells_per_block`, `dt_old`,
@@ -1058,31 +1089,35 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 
 `Data/X` preserves the native mass fractions used by both backends. The reader
 checks that they reproduce the stored `rhoX`; restoring them directly avoids
-roundoff from multiplying and then dividing by density. Version-3 files remain
-readable with their scientific identity and ENUC state, but reconstruct mass
-fractions from `rhoX`. New files preserve both representations.
+roundoff from multiplying and then dividing by density. The writer saves both
+representations.
 
 Restart compatibility checks dimension, geometry, cells per block, EOS policy,
 ideal-gas gamma where applicable, reaction-network identity, EOS-table content,
 burn and NSE enablement, and every ordered species name and thermodynamic
 property. `ENUC` is persisted
 because it is restart-relevant when it drives dynamic refinement. Structural
-or present-provenance mismatches throw before hierarchy publication. Version-1
-and version-2 files remain readable, but are reported as legacy/unverified
-because they have no ordered scientific identity or `ENUC`; version 1 also has
-no controller state, so hydro recomputes its CFL step and burning starts
-conservatively from `dt_init`. Step-zero and already-final restarts do not
+or scientific-identity mismatches throw before hierarchy publication.
+Step-zero and already-final restarts do not
 duplicate initial/final files. CPU/CUDA both read and write this same Host
 schema; the backend name is intentionally not part of compatibility.
+
+Scientific identity, `Data/enuc_rate`, timestep-controller metadata and native
+`Data/X` for active species are required. Missing fields, invalid shapes or
+values, and disagreement between `Data/X` and `Data/rhoX` are errors; the reader
+does not synthesize an unverified identity, zero-fill missing burn energy or
+reconstruct missing mass fractions. A fresh simulation initializes its own
+`RunState` and does not use these restart rules.
 
 ## Known limitations
 
 - Verification results apply to the tested workloads and configurations
   described in the [validation index](../validation/README.md), which also
   records combined acceptance status.
-- Generated CUDA networks require a device-callable version-4 package.
-  Regenerate older CPU-only packages; unlowered layouts are not supported on
-  CUDA. Neither backend implements self-gravity, the Jeans indicator or
+- Generated CUDA networks must satisfy the
+  [device-math package contract](../src/physics/network/custom/README.md), including
+  the `device_callable_math=true` declaration. Accepted host-only packages support
+  CPU execution only. Neither backend implements self-gravity, the Jeans indicator or
   custom-network NSE.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
@@ -1090,13 +1125,11 @@ schema; the backend name is intentionally not part of compatibility.
   conservation or hide malformed numerical selections; production runs must
   inspect their resolved configuration and diagnostics.
 - Unit metadata and complete build/run provenance (parameter file, compiler,
-  solver settings, boundaries, and commit) remain external to HDF5. Version 3
-  embeds the restart-critical EOS/table/network/species identity, but release
+  solver settings, boundaries, and commit) remain external to HDF5. Checkpoints
+  embed the restart-critical EOS/table/network/species identity, but Release
   flags still prevent a cross-machine bitwise-reproducibility guarantee.
 - Case builds assume the `simulation/<Case>/` layout, and plot-write failures are
   reported without aborting the simulation.
-- The historical AMR visual archive is qualitative and retains an input/renderer
-  species-name mismatch pending archive regeneration.
 - Sedov deposits a normalized continuous finite-radius profile at cell centres,
   so its discrete injected energy remains resolution dependent.
 

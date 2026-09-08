@@ -1,15 +1,14 @@
 /**
  * @file Grid.h
- * @brief Defines the 1D spatial grid topology and geometry.
- * Manages mesh parameters (size, spacing, boundaries) and provides utilities
- * to map between array indices and physical coordinates.
- */
-
-/**
- * Workflow:
- * 1. Derive active logical extents and physical coordinates from RuntimeParams.
- * 2. Expose consistent cell, face, and metric information to numerical operators.
- * 3. Preserve compact 1D/2D storage while retaining the common contiguous pool layout.
+ * @brief Block-local grid extents, native coordinates, and padded array indexing.
+ *
+ * Three-dimensional native axes are Cartesian (x,y,z), cylindrical (R,z,phi),
+ * or spherical (r,theta,phi). Both curved two-dimensional grids use the polar
+ * plane (r,phi); angular coordinates are in radians. GridMetrics owns physical
+ * volumes, face areas, and orthonormal spacing derived from this geometry.
+ *
+ * Array offsets are i + j*stride_y + k*stride_z. Axis indices include ghosts;
+ * inactive dimensions retain one storage cell rather than ghost planes.
  */
 
 #pragma once
@@ -23,7 +22,7 @@
 #include "../amr/AmrDefines.h"
 #include "../data/GlobalDefs.h"
 
-// -- Global Coord. Sturcture
+// One physical point expressed in each supported coordinate system.
 struct PointCoords
 {
     double x, y, z;            // Cartesian
@@ -65,9 +64,7 @@ struct Grid
     double x2_max; ///< Coordinate of the right physical boundary (x2)
     double x3_max; ///< Coordinate of the right physical boundary (x3)
 
-    /**
-     * @brief Constructor initializes grid parameters and computes cell width (dx1).
-     */
+    // Native coordinate system used by coordinate conversion and metric views.
     std::string geometry = "cartesian"; ///< "cartesian", "cylindrical", "spherical"
 
     Grid() : dim(3), nblockx1(1), nblockx2(1), nblockx3(1), ng(0), x1_min(0), x2_min(0), x3_min(0), x1_max(0), x2_max(0), x3_max(0), geometry("cartesian") {}
@@ -138,7 +135,7 @@ private:
             if (x1_min < 0.0)
                 throw std::invalid_argument("Domain Error: R_min cannot be negative.");
 
-            // In 2D spherical coordinates, x2 represents phi and may span 2pi.
+            // In 2D cylindrical coordinates, x2 represents phi and may span 2pi.
             if (dim == 2)
             {
                 if ((x2_max - x2_min) > 2.0 * arch::constants::math::pi + eps)
@@ -322,7 +319,7 @@ public:
 
     /**
      * @brief Computes the physical coordinate (center) of a cell given its global index.
-     * @param i The global index in the data array (0 to TotalSize-1).
+     * @param i Block-local x1 index, including ghost cells (not a flat offset).
      * @return The physical x-coordinate.
      */
     double GetCellCenterX(int i) const

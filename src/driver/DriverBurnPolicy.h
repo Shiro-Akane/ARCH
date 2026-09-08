@@ -1,6 +1,10 @@
-/** Shared single-cell burn preparation, energy handoff and limiter semantics.
+/**
+ * @file DriverBurnPolicy.h
+ * @brief Shared single-cell burn preparation, energy handoff and limiter semantics.
+ *
  * CPU iteration and CUDA launch/storage are consumers, not alternative physics.
- * This header deliberately does not import runtime parsing or a host Grid.
+ * Preparation and checked commit surround the selected ODE integration; this
+ * header deliberately imports neither runtime parsing nor a host Grid.
  */
 #pragma once
 

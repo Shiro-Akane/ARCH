@@ -341,7 +341,7 @@ def read_conservation_metrics(
         result["parameter_sha256"] = parameter_sha256
     else:
         if result.get("measure", "legacy_level_normalized") != "legacy_level_normalized":
-            raise RuntimeError("legacy conservation metric measure changed")
+            raise RuntimeError("level-normalized conservation metric measure changed")
         result["measure"] = "legacy_level_normalized"
     return result
 
@@ -386,7 +386,8 @@ def validate_conservation(
         if _sha256(parameter_file) != parameter_sha256:
             raise RuntimeError("conservation parameters differ from actual run")
     else:
-        # Keep historical Cartesian totals AND absolute-budget units unchanged.
+        # Level-normalized Cartesian totals and their absolute budgets use
+        # the same measure; physical-volume parameters do not apply here.
         parameter_file = None
     before = read_conservation_metrics(checkpoint_validator, initial, parameter_file)
     after = read_conservation_metrics(checkpoint_validator, final, parameter_file)
@@ -1084,16 +1085,23 @@ def run_case(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--manifest", type=Path, required=True)
-    parser.add_argument("--case", action="append", default=[])
-    parser.add_argument("--arch", type=Path)
-    parser.add_argument("--checkpoint-validator", type=Path)
-    parser.add_argument("--source-root", type=Path, default=Path.cwd())
-    parser.add_argument("--build-dir", type=Path)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--manifest", type=Path, required=True,
+                        help="canonical case manifest with inputs and acceptance budgets")
+    parser.add_argument("--case", action="append", default=[],
+                        help="run only this case ID; repeat to select several cases")
+    parser.add_argument("--arch", type=Path, help="ARCH executable from the selected build")
+    parser.add_argument("--checkpoint-validator", type=Path,
+                        help="arch_cuda_single_level_validation from the same build")
+    parser.add_argument("--source-root", type=Path, default=Path.cwd(),
+                        help="repository root used to resolve inputs and capture source identity")
+    parser.add_argument("--build-dir", type=Path,
+                        help="CMake build directory that produced both executables")
     parser.add_argument("--configuration", help="required for multi-config builds")
-    parser.add_argument("--output-root", type=Path)
-    parser.add_argument("--unit-test", action="store_true")
+    parser.add_argument("--output-root", type=Path,
+                        help="new or empty directory for logs, checkpoints and the result report")
+    parser.add_argument("--unit-test", action="store_true",
+                        help="check manifest structure only; do not execute ARCH")
     validation_sanitizer.add_arguments(parser)
     args = parser.parse_args(argv)
     manifest = load_manifest(args.manifest)

@@ -1,4 +1,5 @@
 /**
+ * @file SparseBurnCells.cuh
  * @brief Device packing and commit around the shared sparse ODE executor.
  * DriverBurn remains the sole source of activation/composition/energy physics.
  */

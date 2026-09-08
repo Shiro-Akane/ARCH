@@ -1,6 +1,10 @@
 /**
  * @file ExchangeKernels.cuh
- * @brief Bounded CUDA lowering for a compiled same-level exchange plan.
+ * @brief Execute a compiled same-level exchange phase on CUDA.
+ *
+ * Gather snapshots source values into borrowed scratch before same-stream
+ * scatter writes any destination. The host plan defines phase ordering and
+ * the runtime owns buffers, completion and publication of ghost validity.
  */
 
 #pragma once

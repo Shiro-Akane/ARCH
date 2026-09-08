@@ -1,16 +1,10 @@
 /**
  * @file DriverUtils.h
- * @brief Utility functions for boundary enforcement and time-step control.
- * Provides essential support for the main driver loop, specifically:
- * 1. Populating ghost cells to enforce boundary conditions (e.g., Outflow).
- * 2. Computing the adaptive time step (dt) based on the CFL stability criterion.
- */
-
-/**
- * Workflow:
- * 1. Select the configured policy and determine a stable macro step.
- * 2. Apply hydro, diffusion, gravity, and burn operators in the documented order.
- * 3. Synchronize AMR leaves and emit diagnostics before continuing the evolution.
+ * @brief Common boundary mapping, CFL candidates and reduction helpers.
+ *
+ * Host traversal and CUDA kernels consume the same logical boundary rules and
+ * cell-level stability expressions. These helpers form candidates and enforce
+ * boundary values; the driver owns operator ordering and macro-step selection.
  */
 
 #pragma once

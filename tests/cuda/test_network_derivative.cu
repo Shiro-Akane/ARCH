@@ -1,3 +1,10 @@
+/**
+ * @file test_network_derivative.cu
+ * @brief Evaluate analytic network-derivative fixtures on CUDA.
+ *
+ * Reuse the host test cases to check the complete temperature derivative,
+ * including its energy component and invalid-input behavior.
+ */
 #include "../math/NetworkDerivativeCases.h"
 #include <cuda_runtime.h>
 #include <iostream>

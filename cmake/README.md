@@ -21,7 +21,4 @@ registration, compiled device images and optional dependency discovery.
 - [FindCuDSS.cmake](FindCuDSS.cmake): locate headers and libraries and define the
   imported target. Discovery alone does not enable a production route.
 
-Generated translation units belong to the build directory. Reuse the existing
-compile job pools and optimization controls when adding a route. Configuration
-instructions are in the [Reference](../docs/Reference.md); measured build behavior
-is recorded in the [core-build reference](../validation/backend/results/cold-core-first-law-20260907/release-909/README.md).
+Note that all generated translation units inherently belong to the build directory. When adding a new route, always reuse the existing compile job pools and overarching optimization controls. Configuration instructions are provided in the [Reference](../docs/Reference.md); furthermore, measured build behavior is carefully recorded within the [core-build reference](../validation/backend/results/cold-core-first-law-20260907/release-909/README.md).

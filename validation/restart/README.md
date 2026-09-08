@@ -2,9 +2,15 @@
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is authoritative.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+Restart verification asks two separate questions: does loading recover the
+state that was saved, and does continuing from that state reproduce the expected
+evolution? Strict restoration checks inspect the stored fields and controller
+state directly. Continuation checks compare later physical states with an
+uninterrupted run, using the stated numerical tolerances.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
 CPU and CUDA use one checkpoint format and reader. A checkpoint can continue
@@ -14,7 +20,7 @@ refinement and burning. Overall acceptance is tracked in the [validation index](
 
 ## What a checkpoint preserves
 
-Format v4 stores AMR leaf topology, conserved fields, native mass fractions and the
+An ARCH checkpoint stores AMR leaf topology, conserved fields, native mass fractions and the
 `ENUC` refinement field. It also stores timestep-controller values, output
 indices and the loop phase so that a resumed run does not repeat regridding or
 output work already completed at that checkpoint. Native fractions are saved
@@ -26,18 +32,29 @@ network and NSE selection, and the ordered species. The reader checks this
 scientific identity before restoring the state. CUDA uploads the restored
 fields through its normal backend boundary; it does not use another IO format.
 
-Earlier v1/v2 files remain readable. They do not contain ENUC or the v3
-scientific identity, and v1 also lacks some controller state. Missing ENUC
-starts at zero, so these files cannot reproduce an ENUC-based refinement history
-that was never stored. Version-3 files retain that state and scientific identity,
-but reconstruct mass fractions from species densities. Use v4 checkpoints to
-preserve the original evolved composition as well.
+The reader and writer enforce the ARCH checkpoint contract. Scientific identity,
+`ENUC`, controller metadata and native mass fractions for active species are
+required; missing state is rejected rather than reconstructed. The full
+[format contract](../../docs/Reference.md#arch-checkpoint) also defines
+the retained field, shape and identity checks.
 
-## Completed checks on the release candidate
+The recorded results below keep their tested-source identities. Strict input
+validation passes the separate
+[focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review);
+these controls do not replace the scientific continuation measurements. The
+current [maintenance recheck](../backend/results/maintenance-freeze-20260908/README.md)
+also passes smooth/burning restart and burning-restart memcheck/racecheck on the
+rebuilt CUDA-enabled application. Each of the four suites completes twelve
+executions and nine strict comparisons; each sanitizer observes six real CUDA
+processes with complete clean reports. Final source and artifact identities match.
+
+<a id="completed-checks-on-the-release-candidate"></a>
+
+## Accepted CPU/CUDA checks
 
 The [smooth-advection record](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
 and [burn/ENUC record](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
-each pass twelve executions and nine comparisons on the same candidate source,
+each pass twelve executions and nine comparisons on the same tested source,
 executable and comparator. Each has two uninterrupted runs, two source runs
 and eight resumed runs: CPU-to-CPU, CPU-to-CUDA, CUDA-to-CPU and CUDA-to-CUDA,
 from both a step-2 post-regrid checkpoint and a step-3 terminal checkpoint.
@@ -64,7 +81,7 @@ source's output history.
 The burn/AMR [memcheck campaign](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
 and [racecheck campaign](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
 each repeat the full twelve executions and nine strict comparisons on the same
-candidate. Each instruments six actual CUDA executions: the uninterrupted run,
+tested build. Each instruments six actual CUDA executions: the uninterrupted run,
 the source run and four CUDA-destination restores. All six memcheck reports
 contain zero errors and zero leaked bytes or allocations; all six racecheck
 reports contain zero hazards, errors or warnings. The CPU lanes remain ordinary
@@ -88,7 +105,7 @@ container allocation and metadata layout are not numerical state.
 
 ## Sustained native restoration
 
-The [current-candidate sustained record](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
+The [sustained-execution record](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
 passes twelve restore cycles in each of three burn chains: CPU, CUDA and
 alternating backends. Each of the 36 source states is restored through both the
 shared Host reader and the CUDA upload/download path before further evolution.
@@ -136,18 +153,3 @@ phases and the original numerical budgets.
 
 Interruption inside an external library call is not covered by these completed
 continuation tests.
-
-## Historical records
-
-Earlier [smooth](../amr/results/restart-smooth-native-20260907/release-758/restart-validation-evidence.json)
-and [burn/ENUC](../amr/results/restart-burn-native-20260907/release-757/restart-validation-evidence.json)
-reports retain their original source and binary identities. The
-[earlier sustained record](../amr/results/sustained-first-law-20260907/release-763/evidence.json)
-retains its original restoration and fixed-time measurements separately from
-the candidate record above.
-
-[metrics.csv](metrics.csv) preserves the earlier CPU uniform-grid and format-
-compatibility audit, not the candidate's cross-backend measurements. Its
-[audit notes](results/pre-release-notes-20260907/README.md) contain the original
-inputs, compatibility details and reproduction commands; current application
-metrics are in the two candidate reports above.

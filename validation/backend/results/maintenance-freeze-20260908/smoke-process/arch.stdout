@@ -8,4 +8,4 @@ passed: spherical_amr_diffusion_cpu_source
 passed: spherical_amr_diffusion_cpu_resume
 passed: spherical_amr_diffusion_cuda_source
 passed: spherical_amr_diffusion_cuda_resume
-Development smoke only: passed; report: /home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/smoke/smoke-report.json
+Development smoke only: passed; report: /home/shiroakane/ARCH/build/maintenance-freeze-20260908/runtime-current/smoke/smoke-report.json

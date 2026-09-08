@@ -57,8 +57,8 @@ template<class T> struct Buffer {
 };
 
 // An epsilon-scaled contract for this short, smooth fixture, not a tolerance
-// inferred from observed GPU results. This does not replace or loosen the
-// existing dense policy parity or independent frozen-main regression gates.
+// inferred from observed GPU results. Dense policy parity and independent
+// burn-accuracy checks retain their separate scientific budgets.
 double roundoff_budget(double expected)
 {
     return 128.0 * std::numeric_limits<double>::epsilon()
@@ -90,7 +90,7 @@ BurnConfig make_config()
 }
 
 // Failure-only isolation, never a substitute for the production factory result.
-// All ODE/network/EOS work still comes from the shared CPU continuation; only
+// All ODE/network/EOS work comes from the shared continuation on the CPU; only
 // this diagnostic transports its matrix/RHS to the actual cuDSS provider.
 template<class Network>
 void diagnose_bd_linear_path(const std::vector<double>& initial, int cell,

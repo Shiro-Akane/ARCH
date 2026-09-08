@@ -1,3 +1,13 @@
+/**
+ * @file helm_eos_device_owner.h
+ * @brief Own immutable Helmholtz device tables and expose the shared EOS view.
+ *
+ * The owner retains staging, species metadata and device arrays while borrowing
+ * the constructor stream. Queries on that stream observe the preceding uploads;
+ * cross-stream use needs explicit ordering. Returned views borrow this owner,
+ * and the EOS formulas remain in physics/eos.
+ */
+
 #pragma once
 
 #include "cuda/microphysics/device_species_owner.h"

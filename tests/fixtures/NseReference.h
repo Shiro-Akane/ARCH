@@ -8,8 +8,9 @@
 // Independent Saha-root DATA, not output sampled from NSESolver.
 // Reproduce: validation/network/nse_reference.py (mpmath 70 and 90 digits).
 // Nuclear arrays: the declared built-in data; SI/CODATA 2022 constants.
-// rho=1e7, T=5e9; old X_i=(i+1)/(N*(N+1)/2), Ye summed in binary64.
-// Boundary energy uses old X_0=-1e-12. Network energy conversion is deferred.
+// rho=1e7, T=5e9; initial X_i=(i+1)/(N*(N+1)/2), Ye summed in binary64.
+// The boundary-energy case starts with X_0=-1e-12. Energy conversion uses the
+// built-in network's declared convention, independently of equilibrium constants.
 namespace NseReference {
 
 struct Reference {
@@ -73,4 +74,3 @@ inline const Reference& find(std::string_view name)
 }
 
 } // namespace NseReference
-

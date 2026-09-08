@@ -1,11 +1,10 @@
 /**
  * @file HDF5Writer.h
- * @brief Declares the HDF5 writing interface shared by plot and checkpoint paths.
+ * @brief Shared HDF5 payloads and interfaces for plots and checkpoints.
  *
- * Workflow:
- * 1. Collect synchronized leaf metadata and field values from the driver.
- * 2. Serialize them through the selected backend with explicit dimensions and geometry.
- * 3. Write restart- or analysis-ready output without changing simulation state.
+ * Callers supply host-side fields and metadata. Checkpoint payloads include
+ * native composition, controller state and scientific identity so the reader
+ * can validate their layout; this interface owns no CPU or CUDA solver state.
  */
 
 #pragma once
@@ -16,6 +15,7 @@
 
 namespace io {
 
+// On-disk layout discriminator, independent of the ARCH software release.
 inline constexpr int checkpoint_format_version = 4;
 
 /** Scientific/state-layout identity required for a verified restart. */

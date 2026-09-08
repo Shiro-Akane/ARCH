@@ -1,12 +1,10 @@
 /**
  * @file DispatchImpl.h
- * @brief Template matrix factory for dispatching physical and numerical solver policies.
+ * @brief Bind registered numerical policies to a typed simulation driver.
  *
- * Workflow:
- * 1. Instantiates the physics models (EOS, Gravity, Reaction Networks).
- * 2. Instantiates the hydrodynamics components (Flux solvers, Limiters).
- * 3. Binds them into a concrete template sequence to call run_simulation().
- * 4. Used heavily to avoid bloated compilation objects by keeping template instantiations segregated.
+ * Each integrator translation unit supplies its selected time integrator.
+ * Registry visitors bind reconstruction and flux types to that driver while
+ * erased EOS, gravity and burn interfaces retain their own shared authorities.
  */
 
 #pragma once

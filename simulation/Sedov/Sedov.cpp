@@ -4,8 +4,8 @@
  *
  * A finite-radius pressure deposit initializes the blast. The requested energy
  * is normalized by the continuous 1D/2D/3D injection measure;
- * cell-centre sampling introduces a resolution-dependent deposition error for
- * the planned validation analysis.
+ * cell-centre sampling introduces a resolution-dependent deposition error
+ * that must be accounted for when comparing blast profiles.
  */
 
 #include <cmath>

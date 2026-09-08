@@ -1,4 +1,11 @@
-// Generated dispatch-only delegate. Mathematical definitions remain shared.
+/**
+ * @file CudaCustomDenseRoute.cu.in
+ * @brief Register a generated network with one compact CUDA burn EOS route.
+ *
+ * Configuration supplies the generated network type and its public binding
+ * name. The delegate uses the shared burn kernel and ODE policies; larger
+ * equation systems are handled by the separately registered sparse owner.
+ */
 #include "@custom_eos_header@"
 #include "cuda/runtime/burn/CudaBackendBurnNetworkRoutes.h"
 #include "cuda/runtime/burn/CudaBackendBurnImpl.cuh"

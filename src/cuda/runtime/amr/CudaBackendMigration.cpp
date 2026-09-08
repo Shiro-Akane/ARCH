@@ -1,4 +1,12 @@
-/** Transactional device regrid: shared numerical leaves, private staged storage. */
+/**
+ * @file CudaBackendMigration.cpp
+ * @brief Transactional device regrid using shared transfer mathematics.
+ *
+ * The active store remains the migration source while the private candidate
+ * receives survivor copies and parent/child transfers. Completion and EOS status
+ * are checked before candidate ghosts are completed and the runtime may publish
+ * the new topology; these methods do not retire the old store.
+ */
 #include "cuda/runtime/control/CudaBackendInternal.h"
 #include "cuda/amr/RegridMigration.h"
 #include "amr/RegridExecutionPlan.h"

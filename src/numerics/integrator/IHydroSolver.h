@@ -2,10 +2,10 @@
  * @file IHydroSolver.h
  * @brief Defines the type-erased block-level hydrodynamics solver contract.
  *
- * Workflow:
- * 1. Evaluate block-local flux divergence and physical source terms.
- * 2. Combine stages with the documented Euler, RK2, or RK3 coefficients.
- * 3. Leave AMR communication and reflux ownership with the common driver services.
+ * Host time integrators request patch divergence/source evaluation and stage
+ * combination through this interface. Concrete flux and reconstruction
+ * templates remain behind the binding, while the driver controls AMR
+ * synchronization and the integrator supplies stage weights.
  */
 
 #pragma once
@@ -35,9 +35,9 @@ public:
      * @param grid The grid topology.
      * @param dt The time step size.
      * @param dU The accumulator for conservative variable changes.
-     * @param d_spec The accumulator for species fraction changes.
+     * @param d_spec The accumulator for conserved species-density changes (rho*X).
      * @param gravity The gravity policy interface.
-     * @param execution_stream Opaque pointer for heterogeneous execution (e.g. cudaStream_t).
+     * @param execution_stream Reserved opaque execution context; the Host binding ignores it.
      */
     virtual void evaluate_patch(amr::AMRControl* amr_ctrl, int block_id,
                                 const FluidState& state, const Grid& grid, double dt,
@@ -56,7 +56,7 @@ public:
      * @param grid The grid topology.
      * @param w_old Weight for the old state.
      * @param w_flux Weight for the flux contribution.
-     * @param execution_stream Opaque pointer for heterogeneous execution.
+     * @param execution_stream Reserved opaque execution context; the Host binding ignores it.
      */
     virtual void update_patch(const FluidState& state_old, const FluidState& state_curr, FluidState& state_new,
                               const std::vector<FluidVector>& dU, const std::vector<double>& d_spec,

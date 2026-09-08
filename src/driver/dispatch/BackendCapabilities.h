@@ -1,3 +1,12 @@
+/**
+ * @file BackendCapabilities.h
+ * @brief Resolve backend availability against registered execution requirements.
+ *
+ * Build features, policy bindings and the runtime probe determine whether a
+ * CPU or CUDA candidate can be constructed. Explicit incompatible selections
+ * fail here; automatic selection is resolved before backend allocation.
+ */
+
 #pragma once
 
 #include "PolicyDescriptor.h"

@@ -5,15 +5,15 @@
 #include <iostream>
 
 // Immutable endpoints from independent DOP853 time integration, corroborated
-// by Radau. Reaction rates and the Helm EOS are still the production models:
+// by Radau. Reaction rates and the Helm EOS use the production models:
 // this is NOT an independent nuclear-data reference. Reproduce/read-only check:
 // validation/burn/time_reference.py --binary <arch_burn_mainline_reference>.
-// The old main's method-dependent snapshots remain intact in the adjacent file;
-// corrected time-error control/Jacobians must not reproduce an inaccurate step.
+// Method-dependent historical snapshots are preserved in BurnMainlineReference.h;
+// they describe implementation history rather than the converged time solution.
 // Fixed-density first-law endpoints independently derived in run-656: DOP853
 // and Radau at two resolutions, with a passive energy-rate quadrature and a
 // separate 60/80-digit Helm energy balance. This includes the EOS composition
-// energy term; the old q/cv trajectory is not a physical compatibility target.
+// energy term; a q/cv-only trajectory omits that first-law contribution.
 namespace BurnTimeReference {
 
 using BurnMainlineReference::kDt;
@@ -108,8 +108,8 @@ Errors validate(const Reference& reference, const double* state,
     if (!std::isfinite(expected_energy) || !(expected_energy > old_energy))
         throw std::runtime_error(label + " lost the reference heating signal");
     errors.relative_energy = std::abs(new_energy / expected_energy - 1.0);
-    // Existing burn Validation's 1e-8 species / total-energy and 1e-12 closure
-    // gates, now applied to an independent TIME integrator instead of BE_NR.
+    // Burn validation uses 1e-8 species/total-energy and 1e-12 closure gates
+    // against the independent time-integration reference.
     // Temperature has the same dimensionless target. Also resolve the heating
     // signal to 1% when total-energy scaling would otherwise accept a no-op.
     if (errors.species_linf > 1.0e-8 || errors.relative_energy > 1.0e-8

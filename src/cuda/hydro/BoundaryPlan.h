@@ -1,3 +1,12 @@
+/**
+ * @file BoundaryPlan.h
+ * @brief Flatten shared logical boundary operations for a device layout.
+ *
+ * Host compilation checks grid bounds and preserves the shared plan's phases,
+ * ordinals and component signs. The resulting host vector is upload data, not
+ * device allocation; runtime resources own its device copy.
+ */
+
 #pragma once
 
 #include "../common/CudaCommon.cuh"

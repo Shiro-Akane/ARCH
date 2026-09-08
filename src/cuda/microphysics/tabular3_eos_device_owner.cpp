@@ -1,3 +1,13 @@
+/**
+ * @file tabular3_eos_device_owner.cpp
+ * @brief Stage and upload Tabular3D tables without changing EOS mathematics.
+ *
+ * Validate the host table layout, retain copy sources, bind device pointers into
+ * the shared view and synchronize before releasing storage. Construction queues
+ * uploads on the borrowed stream; runtime control establishes their completion
+ * before publishing the owner to numerical consumers.
+ */
+
 #include "cuda/microphysics/tabular3_eos_device_owner.h"
 
 #include "cuda/microphysics/device_eos_owner_utils.h"

@@ -16,8 +16,8 @@
 /**
  * @struct NoLimiter
  * @brief Suppress the reconstructed gradient and recover first-order PCM.
- * Despite the historical type name, phi(r)=0 is a first-order policy rather
- * than an unlimited second-order reconstruction.
+ * Here "None" disables reconstruction: phi(r)=0 selects a first-order policy,
+ * not an unlimited second-order slope.
  */
 struct NoLimiter
 {

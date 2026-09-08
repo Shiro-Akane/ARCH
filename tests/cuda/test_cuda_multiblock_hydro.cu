@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_multiblock_hydro.cu
+ * @brief Check multiblock hydro exchange in the production CUDA backend.
+ *
+ * The cases include neighboring blocks and two-dimensional corners, where
+ * ghost exchange ordering must agree with the host calculation.
+ */
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
 #include "amr/ExchangePlan.h"

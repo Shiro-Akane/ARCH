@@ -7,37 +7,40 @@ This guide is the continuous learning path for a first ARCH case. Complete it in
 order; the exact parameter catalogue and framework extension interfaces are kept
 in the searchable [Research and API Reference](../Reference.md).
 
+You don't need a CFD background to get started. ARCH represents the fluid as a mesh of discrete cells, updating their average density, momentum, and energy over successive time steps. A 'case' defines the initial fluid state, the domain boundaries, and the underlying physical models, while its accompanying parameter file dictates exactly how the calculation is executed.
+
+Our first example is a shock tube: two different gas states initially meet at a sharp interface, and waves develop as they interact. Running this example demonstrates the complete workflow without requiring a nuclear reaction network or an external EOS table. Later sections will connect your input choices to the underlying equations and show you how to write your own custom initializer.
+
 ## 1. Run a small shock tube
 
-Build ARCH from the repository root if needed:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
-```
-
+First, complete [Option A: CPU in the README](../../README.md#option-a-cpu). This will compile the `build-cpu/bin/ARCH` executable without the test suite. If you need more details on dependencies or optional CUDA builds, consult the [Build Guide](Build.md).
+The examples below use that CPU executable and run from the repository root.
 Then run the small one-dimensional Sod input:
 
 ```bash
 export OMP_NUM_THREADS=4
-./bin/ARCH Sod simulation/Sod/Sod_beginner.par
+./build-cpu/bin/ARCH Sod simulation/Sod/Sod_beginner.par
 ```
 
 The command-line contract is always:
 
 ```text
-./bin/ARCH <registered-problem-name> <parameter-file>
+./build-cpu/bin/ARCH <registered-problem-name> <parameter-file>
 ```
 
 `REGISTER_PROBLEM_CLASS` in `Sod.cpp` registers the runtime name `Sod`. The
 directory organizes its source and inputs. A successful run writes its log,
 plot files, and checkpoints to `output/first_sod/`.
 
-The teaching input uses 64 cells, HLLC fluxes, MUSCL-MC reconstruction, SSPRK2,
-an ideal gas, and no AMR, burning, gravity, or diffusion. Its scope is teaching
-and smoke testing.
+This teaching input uses 64 cells, HLLC fluxes, MUSCL-MC reconstruction, SSPRK2 time integration, and an ideal gas equation of state. It intentionally disables AMR, nuclear burning, gravity, and diffusion, as its primary purpose is teaching and basic smoke testing.
 
 ## 2. Read the problem as a CFD calculation
+
+The program uses a finite-volume method: it stores an average state in each
+cell and changes that state according to transport across the cell faces and
+local physical sources. In the notation below, density is mass per volume,
+velocity describes the flow, pressure describes its mechanical response, and
+the mass fractions describe its composition.
 
 ARCH evolves cell averages of the conservative state
 
@@ -228,11 +231,7 @@ stable registration, case types, and `ProblemHelper` operations; keeping
 `GlobalDefs.h` as the second explicit include exposes the typed runtime
 configuration without coupling a case to an EOS policy.
 
-`Setup` runs before grid allocation. Read case parameters, validate them, and
-register species there. `Init` is called under OpenMP to populate the allocated
-root-grid cells once. Initial and later fine blocks are constructed by
-conservative AMR transfer instead of calling `Init` again. `Init` must still be
-deterministic, thread-safe, and free of order-dependent side effects.
+`Setup` runs before grid allocation. Read case parameters, validate them, and register species there. The `Init` function is called under OpenMP to populate the allocated root-grid cells exactly once. Both the initial and any subsequent fine AMR blocks are constructed via conservative transfers rather than by calling `Init` again. Because of this, `Init` must be strictly deterministic, thread-safe, and free of any order-dependent side effects.
 
 Minimal complete example:
 
@@ -283,9 +282,12 @@ REGISTER_PROBLEM_CLASS("GaussianDensity", GaussianDensity);
 After adding a new `.cpp`, rerun CMake configuration to refresh the source glob:
 
 ```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DARCH_ENABLE_OPENMP=ON
-cmake --build build --parallel 4
-./bin/ARCH GaussianDensity path/to/arch.par
+cmake -S . -B build-cpu -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+  -DARCH_ENABLE_CUDA=OFF -DARCH_ENABLE_OPENMP=ON \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-cpu/bin"
+cmake --build build-cpu --target ARCH --parallel 1
+./build-cpu/bin/ARCH GaussianDensity path/to/arch.par
 ```
 
 ## 7. Case-facing types and helpers
@@ -297,7 +299,7 @@ Numeric values use `std::stod`; write evaluated decimal values for expressions
 such as `2*pi`. Unknown keys are retained as custom parameters without spelling
 validation.
 
-Core settings should be read from their typed members when needed, for example:
+When you need access to core settings, you should read them directly from their strictly-typed members. For example:
 
 ```cpp
 config.grid.dim

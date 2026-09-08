@@ -2,9 +2,9 @@
  * @file SolverDispatch.h
  * @brief Lightweight runtime solver-dispatch interface.
  *
- * Heavy solver, EOS, burner, reconstruction, and integrator templates are
- * intentionally kept in SolverDispatch.cpp so including this header does not
- * instantiate the complete runtime-selectable strategy matrix.
+ * Startup orchestration lives in SolverDispatch.cpp. Integrator-specific
+ * Dispatch translation units instantiate the shared typed dispatch body, so
+ * callers of this declaration do not instantiate the full strategy matrix.
  */
 
 #pragma once

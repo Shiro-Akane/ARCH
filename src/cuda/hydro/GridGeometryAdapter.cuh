@@ -1,3 +1,11 @@
+/**
+ * @file GridGeometryAdapter.cuh
+ * @brief Adapt device layout metadata to the common geometry view.
+ *
+ * This value-only adapter owns no arrays and defines no metric formulas.
+ * GridMetrics and its shared numerical consumers perform the physical arithmetic.
+ */
+
 #pragma once
 
 #include "cuda/common/CudaCommon.cuh"

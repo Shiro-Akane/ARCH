@@ -21,7 +21,7 @@ import tarfile
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 sys.path.insert(0, str(ROOT / "tools"))
-import audit_combination_v2 as audit
+import audit_architecture as audit
 import validation_provenance as provenance
 
 
@@ -405,7 +405,7 @@ def review(args):
     if provenance.file_identity(baseline_path) != baseline_identity or provenance.file_identity(map_path) != map_identity:
         problems.append("baseline or path map changed during review")
     helpers = [provenance.file_identity(ROOT / "tools" / name)
-               for name in ("validation_provenance.py", "audit_combination_v2.py")]
+               for name in ("validation_provenance.py", "audit_architecture.py")]
     return {"schema": 1, "scope": "maintenance relocation source/configured-build equivalence",
             "started_utc": started, "completed_utc": datetime.now(timezone.utc).isoformat(),
             "status": "PASS" if not problems else "FAIL", "problems": problems,

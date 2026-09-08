@@ -9,6 +9,4 @@ The existing [Chinese research notes](README.zh-CN.md) retain the study's
 exploratory observations and proposed follow-up calculations. They describe
 that research trajectory, not the project's combined release acceptance.
 
-The initial states use the selected production EOS and network. Common burn,
-hydro and AMR behavior is documented and qualified through
-[Validation](../../validation/README.md); no hotspot-specific solver is maintained here.
+The generated initial states utilize the selected production EOS and network configuration. Common burn, hydro, and AMR behaviors are strictly documented and qualified via the [Validation](../../validation/README.md) module; you must not maintain any hotspot-specific solver logic here.

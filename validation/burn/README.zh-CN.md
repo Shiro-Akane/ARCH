@@ -2,12 +2,16 @@
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+燃烧改变核素丰度，并在核结合能与热能之间传递能量。单区计算将反应和温度演化
+与流体输运分开，便于比较时间积分器、组分约束和能量收支。核统计平衡（NSE）
+检查还将所选内置网络的平衡态与独立参考进行比较。
+
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 CPU 与 CUDA 均通过原定的跨求解器误差和组分闭合检查。
-[当前候选的应用记录](results/application-first-law-20260907/release-878/evidence.json)
-包含全部六次执行及对应源码、程序身份。同一候选还通过了
+[应用记录](results/application-first-law-20260907/release-878/evidence.json)
+包含全部六次执行及对应源码、程序身份。同一受测构建还通过了
 [原生燃烧恢复验证](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)。
 整个项目的验收状态统一见[验证索引](../README.zh-CN.md)。
 
@@ -55,7 +59,7 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 ## 内置网络的时间积分精度检查
 
 四个内置网络另有独立 DOP853 时间积分得到的不可变端点，并通过 Radau 和
-更严格的最大时间步复核。[当前候选的参考复核记录](results/independent-time-final-20260907/release-888/evidence.json)
+更严格的最大时间步复核。[独立参考复核记录](results/independent-time-final-20260907/release-888/evidence.json)
 覆盖四个网络，端点能量还使用已有高精度 Helmholtz 单项式拟合模型独立检查。
 反应率仍来自 ARCH 共用 RHS；这里独立的是**时间积分**，不是核反应数据。
 十六条复核轨迹覆盖每个网络的两种独立积分器和两档最大时间步。核素 Linf
@@ -64,7 +68,7 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 \(2.221\times10^{-16}\)，所有第一定律检查均满足原定预算。
 [完整 Release 回归](../backend/results/final-first-law-20260907/release-regression-895/evidence.json)
 包含十二种 Host 网络/ODE 检查、相应反例和独立的 CUDA 策略检查。
-同一候选的[内置 NSE 应用验证](results/nse-application-native-20260907/release-890/evidence.json)
+同一受测构建的[内置 NSE 应用验证](results/nse-application-native-20260907/release-890/evidence.json)
 另覆盖十六个用例、三十二个物理终点。
 
 启用 testing 后构建 `arch_burn_mainline_reference`。普通执行检查十二种网络/ODE
@@ -78,6 +82,6 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 它只查询共用 RHS/EOS，不调用 ARCH 的 ODE 算法或 Jacobian，也不会刷新 fixture。
 运行时仍使用共用内存守护。
 
-旧 main 中依赖具体方法的数值快照及原检查器/反例保持不变，作为历史数据保留。
-在已独立证实的 Jacobian 和时间误差控制修正后，不再把这些近似端点当作精确解。
+依赖具体方法的数值快照及原检查器/反例作为历史数值记录保留。
+精度验收使用独立参考，不把这些近似端点当作精确解。
 CUDA 短步策略检查仍保留原严格后端一致性阈值，与上文的参考复核和应用检查互为补充。

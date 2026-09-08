@@ -1,3 +1,12 @@
+/**
+ * @file NetworkDerivativeCases.h
+ * @brief Check temperature derivatives against analytic test functions.
+ *
+ * The fixtures use x = T / scale, so d/dT = (1/scale) d/dx. Polynomial and
+ * trigonometric RHS terms check both abundance and independently defined energy
+ * derivatives, while step refinement checks the expected fourth-order error.
+ * CPU and CUDA tests consume these same cases.
+ */
 #pragma once
 #include "numerics/burnsolver/NetworkDerivative.h"
 

@@ -1,6 +1,10 @@
 /**
  * @file ExternalGravity.cpp
- * @brief Uniform periodic state under constant external acceleration.
+ * @brief Initialize a uniform state for constant external acceleration.
+ *
+ * Setup requires the one-dimensional Cartesian external-gravity case. Init
+ * supplies density, pressure and initial velocity; the common gravity source
+ * supplies the momentum and energy updates during production evolution.
  */
 
 #include <iostream>

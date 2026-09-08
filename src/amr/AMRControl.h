@@ -1,13 +1,10 @@
 /**
  * @file AMRControl.h
- * @brief Bundles all AMR-related managers and data structures.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ * @brief Binds Host AMR storage, hierarchy, exchange, and reflux services.
+ *
+ * Active block handles connect the logical hierarchy to execution storage.
+ * This controller publishes those bindings and caches the corresponding flux
+ * plans; scalar transfer and reflux mathematics live in the shared AMR leaves.
  */
 
 #pragma once

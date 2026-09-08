@@ -1,4 +1,12 @@
-/** Manufactured conservative chain for sparse execution tests, not nuclear data. */
+/**
+ * @file SparseTransferNetwork.h
+ * @brief Manufactured reaction chains for sparse ODE execution tests.
+ *
+ * For the transfer chain, dX_i/dt = k X_(i-1) - k X_i, with k = 0.02 per unit
+ * of test time. The first incoming and last outgoing terms are zero, so
+ * sum_i dX_i/dt = 0. No heat is released. These analytic fixtures test storage,
+ * continuation and retry behavior; they do not represent nuclear reaction data.
+ */
 #pragma once
 #include "core/ArchPortability.h"
 

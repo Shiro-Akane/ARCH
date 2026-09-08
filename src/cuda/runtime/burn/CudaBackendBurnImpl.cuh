@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendBurnImpl.cuh
- * @brief Burn kernels and ODE routing shared by narrowly instantiated TUs.
+ * @brief Dense burn kernels and shared ODE routing for typed CUDA instantiations.
+ *
+ * Cell preparation and thermodynamic commit use DriverBurnPolicy around the
+ * selected shared ODE policy. The runtime supplies persistent workspaces and
+ * owns stream completion; a common reduction reports cell failures and limits.
  */
 
 #pragma once
@@ -50,7 +54,7 @@ __global__ void burn_cells_kernel(
     // The shared table EOS latches at its original failure boundary. A later
     // finite temperature/floor must not turn that failed query into a commit.
     // This address is global, not a thread-local atomic destination; each cell
-    // owns it until we replace the latch with the final disposition below.
+    // owns it until the final disposition replaces the latch below.
     statuses[linear] = 0;
     const auto checked_eos = bind_device_eos_status(eos, statuses + linear);
     execute_burn_policy_cell<Network, Ode::template solver>(

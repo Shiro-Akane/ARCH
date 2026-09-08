@@ -1,13 +1,11 @@
 /**
  * @file Block.h
- * @brief Definition of a single AMR Block.
- */
-
-/**
- * Workflow:
- * 1. Build or query topology using the single hierarchy and memory-pool ownership model.
- * 2. Synchronize state or face data with the documented 2:1 AMR index convention.
- * 3. Return conservative leaf data to the driver for refluxing, regridding, or timestep work.
+ * @brief Host block record combining logical identity, geometry, and fluid storage.
+ *
+ * Pool indices locate storage, while level and logical coordinates identify
+ * the block in the hierarchy. Transfer helpers use the shared prolongation
+ * and conservative restriction mathematics rather than defining another
+ * interpolation policy inside the storage record.
  */
 
 #pragma once
@@ -33,7 +31,7 @@ namespace amr {
  * @brief Represents a single AMR block with its local fluid state.
  */
 struct Block {
-    int id;                 ///< Unique ID of this block (its index in the memory pool)
+    int id;                 ///< Reusable storage index in the memory pool
     uint64_t morton_code;   ///< 64-bit Morton code
     int level;              ///< Refinement level (0 is root)
     int active_index = -1;  ///< Index in AmrTree active_blocks array
@@ -154,7 +152,7 @@ struct Block {
 
 
 
-// Keep the original helper names available, with one Host/device definition.
+// Expose the shared regrid mathematics without duplicating its scalar leaves.
 using regrid_math::minmod;
 using regrid_math::is_admissible_conserved_state;
 using regrid_math::composition_simplex_tolerance;

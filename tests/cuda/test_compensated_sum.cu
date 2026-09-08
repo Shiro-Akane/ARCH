@@ -1,3 +1,10 @@
+/**
+ * @file test_compensated_sum.cu
+ * @brief Run compensated-sum reference cases through device memory.
+ *
+ * Upload shared fixtures, evaluate the production accumulator in a kernel
+ * and compare downloaded results with independently specified exact values.
+ */
 #include "../math/CompensatedSumCases.h"
 
 #include <cuda_runtime.h>

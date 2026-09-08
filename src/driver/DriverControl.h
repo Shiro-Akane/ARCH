@@ -6,7 +6,7 @@
  * 1. Initializes timing and index tracking based on whether it is a restart.
  * 2. Checks conditions for writing plot/checkpoint files (I/O).
  * 3. Restricts dt growth based on user-defined limits and burn safety factors.
- * 4. Ensures the final timestep perfectly aligns with the targeted maximum simulation time.
+ * 4. Aligns steps with output/final times using explicit floating-point tolerance.
  */
 
 #pragma once

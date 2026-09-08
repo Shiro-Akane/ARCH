@@ -1,11 +1,10 @@
 /**
  * @file ProblemHelper.cpp
- * @brief Builds problem-dependent configuration and initial-condition helpers.
+ * @brief Shared problem setup, EOS queries and host-state initialization.
  *
- * Workflow:
- * 1. Read or derive the configuration value from its canonical source.
- * 2. Validate it before exposing it to problem setup and solver dispatch.
- * 3. Keep policy decisions out of low-level numerical kernels.
+ * Registered network metadata supplies species and initial fractions. Problem
+ * callbacks provide primitive values; PopulateState traverses host AMR blocks
+ * and uses the selected common EOS to construct their conservative state.
  */
 
 #include <algorithm>

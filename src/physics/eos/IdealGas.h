@@ -1,13 +1,11 @@
 /**
  * @file IdealGas.h
- * @brief Equation of State (EOS) solver for an Ideal Gas.
- */
-
-/**
- * Workflow:
- * 1. Construct or query the configured thermodynamic closure from canonical state variables.
- * 2. Return pressure, temperature, and transport quantities with validated bounds.
- * 3. Keep host and future device views consistent through one dispatch contract.
+ * @brief Calorically perfect ideal-gas mixture closure and its Host owner.
+ *
+ * IdealGasView contains the shared thermodynamic leaves and non-owning species
+ * data. The Host policy binds species ownership to that view. Per-species heat
+ * capacities and gamma values determine the mixture; an empty species view
+ * uses the configured global gamma and the documented fallback heat capacity.
  */
 
 #pragma once

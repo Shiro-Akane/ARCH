@@ -1,6 +1,13 @@
 /**
  * @file SparseWrap.h
  * @brief Sparse CSC matrix and SuiteSparse KLU linear-solver policy.
+ *
+ * The Host matrix accepts the network's one-based assembly interface and
+ * lowers stored entries to zero-based compressed columns for KLU. Structural
+ * changes invalidate symbolic and numeric factors; value-only updates retain
+ * the pattern for refactorization. This object owns its KLU resources and
+ * cannot be copied. CSR device storage is a separate backend binding, not a
+ * second definition of the ODE equations.
  */
 #pragma once
 

@@ -20,12 +20,7 @@ Physical CFL/gradient spacings share `GridMetrics::PhysicalSpacing`: Cartesian
 (dr,r*dtheta,r*sin(theta)*dphi); both 2D curved specializations use (dr,r*dphi).
 No arbitrary angular length floor is substituted for an active cell center.
 
-The geometric source uses the volume average of 1/r: I1/I2 in spherical 1D/3D,
-and dr/I1 in cylindrical/polar cells. The volume-weighted angular cotangent is
-cot(theta_center) on this uniform angular grid. This also corrects the former
-spherical constant-pressure rest imbalance, not only angular dimensions. The
-independent source fixture on r=[1,3] changes from 1/2 to 6/13; its expected
-values are analytically derived, not regenerated from solver output.
+The geometric source explicitly uses the mathematically exact volume average of `1/r`: `I1/I2` in spherical 1D/3D, and `dr/I1` in cylindrical/polar cells. Furthermore, the volume-weighted angular cotangent simplifies cleanly to `cot(theta_center)` on this uniform angular grid. This change not only fixes the angular dimensions but crucially corrects the former spherical constant-pressure rest imbalance. As a result, the independent source fixture on the interval `r=[1,3]` is updated from `1/2` to `6/13`. These expected values are derived completely analytically, rather than being regenerated from solver output.
 
 These measures follow direct integration of the orthogonal metric factors;
 the [Athena++ spherical-coordinate implementation](https://github.com/PrincetonUniversity/athena/blob/main/src/coordinates/spherical_polar.cpp)

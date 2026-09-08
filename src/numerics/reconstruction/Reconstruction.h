@@ -123,7 +123,7 @@ struct PCMReconstruction
  * @tparam Limiter The limiter policy (e.g., MinMod, VanLeer).
  * @param state Global fluid state.
  * @param i Index of the cell to the left of the interface.
- * @return std::pair<FluidVector3, FluidVector3> {U_L, U_R}
+ * @return std::pair<FluidVector, FluidVector> {U_L, U_R}
  */
 
 template <typename Limiter>

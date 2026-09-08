@@ -1,6 +1,10 @@
 /**
  * @file AmrFluxSurfaceKernels.cuh
- * @brief CUDA leaves for compact AMR flux registration and reflux.
+ * @brief CUDA memory execution of shared AMR registration and reflux rules.
+ *
+ * Compiled host plans supply target cells and geometric weights. Kernels use
+ * AmrFluxMath to update borrowed compact surfaces and conservative cell values;
+ * the runtime serializes contributors and owns stream completion.
  */
 
 #pragma once

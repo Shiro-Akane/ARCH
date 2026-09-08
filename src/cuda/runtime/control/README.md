@@ -9,6 +9,4 @@
 - [CudaBackendMicrophysicsControl.cpp](CudaBackendMicrophysicsControl.cpp)
   coordinates both burn and diffusion; its name does not imply burn-only ownership.
 
-Keep synchronization and atomic publication explicit. This layout is not a
-general-purpose include for device numerical templates. Launch declarations
-live in the sibling functional groups; see the [runtime map](../README.md).
+You must keep all synchronization primitives and atomic publication explicitly defined. This structural layout does not serve as a general-purpose include directory for device numerical templates. Instead, all launch declarations correctly belong in their respective sibling functional groups; please refer to the comprehensive [runtime map](../README.md) for clarification.

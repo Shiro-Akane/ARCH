@@ -13,9 +13,7 @@
 
 ## 本轮修复与验收边界
 
-下文 H100 数据属于历史结果，不是当前工作树的最终验收。三份 AMR/restart JSON
-记录的二进制为 `d42711fa…`，而历史最终重链接产物为 `e903232e…`。
-原始数据保持不变，不得改写为新代码已通过的结果。
+请注意，下文展示的 H100 数据纯属历史结果，并不代表当前工作树的最终验收。具体来说，三份生产级 AMR 与 restart 的 JSON 报告所指向的二进制文件为 `d42711fa…`，而历史最终重链接的产物则为 `e903232e…`。这些原始数据保持原样，仅仅作为历史证据存档，绝对不得被篡改或误导为新代码已通过的运行结果。
 
 - `arch_build_contract` 统一管理 C++ 和 CUDA Host/Device 的严格浮点编译与链接语义，
   禁止重结合、隐式 FMA 收缩和 flush-to-zero 破坏补偿求和。Debug/Release
@@ -46,8 +44,9 @@ parity 预算。Release 聚焦 CPU/GPU 检查通过 5/5；两个 GPU 数学测�
 - 首次完整 65 项 CUDA CTest 在外部 GPU 争用下通过 52 项；显存隔离后的首轮重跑通过 10/13，并暴露出三个确定性的 burn CPU/CUDA 精度问题。统一补偿 `double` 求和、按实测误差校准单一路由预算后，Burn policy 16/16、原 13 项 13/13、完整 CTest 65/65 均已通过；工具测试 72/72 通过。
 - 当前 NVIDIA vGPU 禁用了 GPU debugging，`compute-sanitizer` memcheck/racecheck 无法插桩。尝试日志已经保存，本状态不宣称 sanitizer 通过。
 
-机器可读证据、精确构建记录和测试日志位于
-[`validation/amr/results/h100-sm90-20260903/`](../../validation/amr/results/h100-sm90-20260903/)。
+来源检查使用的固定矩阵／重启记录现归入[协议 fixture](../../tests/fixtures/validation_provenance/README.md)，
+保留实际记录的身份，用于解析与产物身份不匹配的拒绝控制，不认证当前源码的 H100
+科学计算。有效验收数据见 [Validation](../../validation/README.zh-CN.md)。
 
 ## 已完成实现
 
@@ -76,7 +75,7 @@ parity 预算。Release 聚焦 CPU/GPU 检查通过 5/5；两个 GPU 数学测�
 - 3D/4D 表格 EOS 温度迭代现以当前温度尺度判断 Newton 增量；Direct 和 free-energy EOS 使用有限的 CPU/CUDA 容差，没有复制 device 数学。
 - 内置 burn/network 使用统一注册表；不可用或不具 device 能力的 route fail-closed。外部 KLU 仍为 CPU-only。
 - Ye、Timmes RHS/Jacobian/温度能量、ODE 能量闭合及 NSE 守恒量统一使用固定顺序的补偿 `double` 求和，消除了 Host `long double` 与 CUDA `double` 的隐式分歧。短步 policy 测试保留既有的逐路由/逐字段预算（包括 aprox19、aprox21）；历史 H100 收尾中曾将 aprox19 ROS4 校准为实测最大误差加 25% 余量。这些预算与新增冻结 main 基线独立固定的 ODE 误差/舍入准则分开，本轮不放宽既有 CPU/CUDA parity 预算。
-- checkpoint schema v3 为 CPU/GPU 共用，保存 ENUC、EOS/table SHA-256、burn/network/NSE 状态和 species metadata；CUDA 先 materialize `Current`，再调用 Host writer。
+- CPU/GPU 共用 ARCH 检查点，保存原始组分、ENUC、控制器状态、EOS/表 SHA-256、燃烧/网络/NSE 状态和组分信息；CUDA 先将 `Current` 同步到主机，再调用共用写入器。
 
 ## 历史已验证环境与构建边界
 

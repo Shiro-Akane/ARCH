@@ -1,11 +1,10 @@
 /**
  * @file PlotIO.cpp
- * @brief Exports leaf-block fields and metadata for post-processing plots.
+ * @brief Export synchronized leaf fields and derived plot diagnostics.
  *
- * Workflow:
- * 1. Collect synchronized leaf metadata and field values from the driver.
- * 2. Serialize them through the selected backend with explicit dimensions and geometry.
- * 3. Write restart- or analysis-ready output without changing simulation state.
+ * The writer gathers host block interiors and geometry, obtains thermodynamic
+ * fields through the supplied EOS callbacks, and uses the shared velocity
+ * diagnostics before HDF5 emission. Device visibility is the caller's responsibility.
  */
 
 #include <algorithm>

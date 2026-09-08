@@ -1,3 +1,13 @@
+/**
+ * @file CudaBackendFactory.cpp
+ * @brief Construct the CUDA backend and bind a selected shared EOS view.
+ *
+ * Validate typed EOS identity against the resolved plan, create runtime storage
+ * and immutable owners, then finish uploads before returning the backend.
+ * CudaBackend::Impl owns the stream and resources; the physical EOS still lives
+ * in its shared policy, independent of host/device table placement.
+ */
+
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 namespace arch::cuda {

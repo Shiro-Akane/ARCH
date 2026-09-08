@@ -1,3 +1,10 @@
+/**
+ * @file test_diffusion_rkl_parity.cu
+ * @brief Compare CPU/CUDA diffusion operators and RKL stage updates.
+ *
+ * Check directional timestep limits, EOS failures, state-buffer preparation
+ * and every stage against the shared host calculation and reference cases.
+ */
 #include <cuda_runtime.h>
 
 #include <array>
@@ -290,7 +297,7 @@ using RklBudgets = std::array<NumericBudget, 8>;
 
 // Frozen values characterize the CPU formula, while CUDA instruction
 // selection differs slightly across GPU ISAs.  Eight e-16 relative (and
-// eight e-15 absolute near zero) is still a tight, O(ULP) parity gate.
+// eight e-15 absolute near zero) defines this O(ULP) parity gate.
 constexpr NumericBudget kRklPortableBudget{8.0e-15, 8.0e-16, false};
 constexpr NumericBudget kRklExactBudget{0.0, 0.0, true};
 constexpr RklBudgets kFirstRklBudgets = {
@@ -485,8 +492,8 @@ void verify_frozen_host_authority()
         const Grid grid = make_grid(dimension);
         const FluidState state = make_state(grid, 2);
         const double spacing[]{grid.dx1, grid.dx2, grid.dx3};
-        // Original numbers describe uniform capacities; preserve that exact
-        // mathematical control, not the former varying-capacity dt mistake.
+        // The bitwise control describes uniform capacities. The separate
+        // face-capacity reference checks the varying-capacity stability step.
         expect_bits("uniform_cartesian.raw_fe", DiffFlux::raw_forward_euler_candidate(.37, spacing, dimension),
                     dt_bits[dimension-1]);
         expect_close("cartesian.face_capacity_dt",

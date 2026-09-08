@@ -872,7 +872,7 @@
       {
         "command" : 0,
         "file" : 0,
-        "line" : 1669,
+        "line" : 1670,
         "parent" : 190
       },
       {
@@ -881,7 +881,7 @@
       {
         "command" : 0,
         "file" : 0,
-        "line" : 1686,
+        "line" : 1687,
         "parent" : 192
       },
       {
@@ -890,7 +890,7 @@
       {
         "command" : 0,
         "file" : 0,
-        "line" : 1696,
+        "line" : 1697,
         "parent" : 194
       }
     ]
@@ -904,8 +904,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_portable_network_generator.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_portable_network_generator.py"
       ],
+      "config" : "Release",
       "name" : "portable_network_generator",
       "properties" : 
       [
@@ -921,8 +922,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_smoke_cuda_amr_runtime.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_smoke_cuda_amr_runtime.py"
       ],
+      "config" : "Release",
       "name" : "cuda_amr_smoke_runner_contract",
       "properties" : 
       [
@@ -938,8 +940,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_curvilinear_manifest.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_curvilinear_manifest.py"
       ],
+      "config" : "Release",
       "name" : "curvilinear_manifest_contract",
       "properties" : 
       [
@@ -955,8 +958,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_run_memory_guarded.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_run_memory_guarded.py"
       ],
+      "config" : "Release",
       "name" : "memory_guard_contract",
       "properties" : 
       [
@@ -972,8 +976,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_validate_backend_results.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_validate_backend_results.py"
       ],
+      "config" : "Release",
       "name" : "backend_validation_contract",
       "properties" : 
       [
@@ -989,8 +994,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_validation_provenance.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_validation_provenance.py"
       ],
+      "config" : "Release",
       "name" : "validation_provenance_contract",
       "properties" : 
       [
@@ -1006,8 +1012,9 @@
       [
         "/usr/bin/python3",
         "-B",
-        "/home/shiroakane/ARCH/tests/test_runtime_validation_inputs.py"
+        "/home/shiroakane/ARCH/tests/tooling/test_runtime_validation_inputs.py"
       ],
+      "config" : "Release",
       "name" : "runtime_validation_inputs_contract",
       "properties" : 
       [
@@ -1023,6 +1030,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_physical_constants"
       ],
+      "config" : "Release",
       "name" : "physical_constants",
       "properties" : 
       [
@@ -1038,6 +1046,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_refinement_indicator_math"
       ],
+      "config" : "Release",
       "name" : "refinement_indicator_math",
       "properties" : 
       [
@@ -1053,6 +1062,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_curvilinear_metrics"
       ],
+      "config" : "Release",
       "name" : "curvilinear_metrics",
       "properties" : 
       [
@@ -1068,6 +1078,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_compensated_sum"
       ],
+      "config" : "Release",
       "name" : "compensated_sum",
       "properties" : 
       [
@@ -1083,6 +1094,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_sparse_ode_continuation"
       ],
+      "config" : "Release",
       "name" : "sparse_ode_continuation",
       "properties" : 
       [
@@ -1098,6 +1110,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_checkpoint_conservation_metrics"
       ],
+      "config" : "Release",
       "name" : "checkpoint_conservation_metrics",
       "properties" : 
       [
@@ -1113,6 +1126,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_burn_mainline_reference"
       ],
+      "config" : "Release",
       "name" : "burn_mainline_reference",
       "properties" : 
       [
@@ -1128,6 +1142,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_mainline_authority"
       ],
+      "config" : "Release",
       "name" : "mainline_authority",
       "properties" : 
       [
@@ -1143,6 +1158,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_block_handle"
       ],
+      "config" : "Release",
       "name" : "block_handle",
       "properties" : 
       [
@@ -1158,6 +1174,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_state_residency"
       ],
+      "config" : "Release",
       "name" : "state_residency",
       "properties" : 
       [
@@ -1173,6 +1190,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_shared_stage_scheduler"
       ],
+      "config" : "Release",
       "name" : "shared_stage_scheduler",
       "properties" : 
       [
@@ -1188,6 +1206,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_boundary_plan"
       ],
+      "config" : "Release",
       "name" : "boundary_plan",
       "properties" : 
       [
@@ -1203,6 +1222,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_same_level_exchange_plan"
       ],
+      "config" : "Release",
       "name" : "same_level_exchange_plan",
       "properties" : 
       [
@@ -1218,6 +1238,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_amr_operation_plans"
       ],
+      "config" : "Release",
       "name" : "amr_operation_plans",
       "properties" : 
       [
@@ -1233,6 +1254,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_amr_flux_surface_plan"
       ],
+      "config" : "Release",
       "name" : "amr_flux_surface_plan",
       "properties" : 
       [
@@ -1248,6 +1270,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_topology_transaction"
       ],
+      "config" : "Release",
       "name" : "topology_transaction",
       "properties" : 
       [
@@ -1263,6 +1286,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_resolved_execution_plan"
       ],
+      "config" : "Release",
       "name" : "resolved_execution_plan",
       "properties" : 
       [
@@ -1278,6 +1302,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_runtime_probe_capabilities"
       ],
+      "config" : "Release",
       "name" : "runtime_probe_and_capabilities",
       "properties" : 
       [
@@ -1293,6 +1318,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_reduction_contract"
       ],
+      "config" : "Release",
       "name" : "reduction_contract",
       "properties" : 
       [
@@ -1308,6 +1334,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_compute_backend"
       ],
+      "config" : "Release",
       "name" : "compute_backend",
       "properties" : 
       [
@@ -1323,6 +1350,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_device_block_store_lifecycle"
       ],
+      "config" : "Release",
       "name" : "device_block_store_lifecycle",
       "properties" : 
       [
@@ -1338,6 +1366,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_generated_math_audit31"
       ],
+      "config" : "Release",
       "name" : "cuda_generated_math_audit31",
       "properties" : 
       [
@@ -1357,6 +1386,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_generated_math_weak_urca"
       ],
+      "config" : "Release",
       "name" : "cuda_generated_math_weak_urca",
       "properties" : 
       [
@@ -1376,6 +1406,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_regrid_transaction"
       ],
+      "config" : "Release",
       "name" : "cuda_regrid_transaction",
       "properties" : 
       [
@@ -1395,6 +1426,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_grid_metrics_cache"
       ],
+      "config" : "Release",
       "name" : "cuda_grid_metrics_cache",
       "properties" : 
       [
@@ -1414,6 +1446,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_sparse_burn_factory"
       ],
+      "config" : "Release",
       "name" : "cuda_sparse_burn_factory",
       "properties" : 
       [
@@ -1433,6 +1466,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_sparse_be_nr_batch"
       ],
+      "config" : "Release",
       "name" : "cuda_sparse_be_nr_batch",
       "properties" : 
       [
@@ -1452,6 +1486,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_cudss_sparse_solver"
       ],
+      "config" : "Release",
       "name" : "cuda_cudss_sparse_solver",
       "properties" : 
       [
@@ -1471,6 +1506,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_eos_failure"
       ],
+      "config" : "Release",
       "name" : "cuda_burn_eos_failure",
       "properties" : 
       [
@@ -1490,6 +1526,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_regrid_migration"
       ],
+      "config" : "Release",
       "name" : "cuda_regrid_migration",
       "properties" : 
       [
@@ -1509,6 +1546,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_curvilinear_geometry_smoke"
       ],
+      "config" : "Release",
       "name" : "cuda_curvilinear_geometry_smoke",
       "properties" : 
       [
@@ -1528,6 +1566,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_eos_failure"
       ],
+      "config" : "Release",
       "name" : "cuda_hydro_eos_failure",
       "properties" : 
       [
@@ -1547,6 +1586,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_dispatch"
       ],
+      "config" : "Release",
       "name" : "cuda_hydro_dispatch",
       "properties" : 
       [
@@ -1562,6 +1602,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_refinement_indicators"
       ],
+      "config" : "Release",
       "name" : "cuda_refinement_indicators",
       "properties" : 
       [
@@ -1581,6 +1622,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_compensated_sum"
       ],
+      "config" : "Release",
       "name" : "cuda_compensated_sum",
       "properties" : 
       [
@@ -1600,6 +1642,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_amr_composition"
       ],
+      "config" : "Release",
       "name" : "cuda_amr_composition",
       "properties" : 
       [
@@ -1619,6 +1662,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_controller_parity"
       ],
+      "config" : "Release",
       "name" : "burn_controller_parity",
       "properties" : 
       [
@@ -1638,6 +1682,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_network_derivative"
       ],
+      "config" : "Release",
       "name" : "cuda_network_derivative",
       "properties" : 
       [
@@ -1657,6 +1702,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_thermal_math"
       ],
+      "config" : "Release",
       "name" : "cuda_burn_thermal_math",
       "properties" : 
       [
@@ -1677,6 +1723,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_single_level_validation",
         "--test-time-comparison"
       ],
+      "config" : "Release",
       "name" : "checkpoint_temporal_comparison",
       "properties" : 
       [
@@ -1692,6 +1739,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_compile_probe"
       ],
+      "config" : "Release",
       "name" : "cuda_compile_probe",
       "properties" : 
       [
@@ -1707,6 +1755,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_leaf_parity"
       ],
+      "config" : "Release",
       "name" : "hydro_leaf_parity",
       "properties" : 
       [
@@ -1722,6 +1771,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_eos_host_device_parity"
       ],
+      "config" : "Release",
       "name" : "eos_host_device_parity",
       "properties" : 
       [
@@ -1737,6 +1787,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_tabular_free_energy_owner"
       ],
+      "config" : "Release",
       "name" : "tabular_free_energy_owner",
       "properties" : 
       [
@@ -1756,6 +1807,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_network_nse_device"
       ],
+      "config" : "Release",
       "name" : "network_nse_device",
       "properties" : 
       [
@@ -1772,6 +1824,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "helpers"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_helpers",
       "properties" : 
       [
@@ -1787,6 +1840,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_diffusion_rkl_parity"
       ],
+      "config" : "Release",
       "name" : "diffusion_rkl_parity",
       "properties" : 
       [
@@ -1802,6 +1856,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_boundary_plan_parity"
       ],
+      "config" : "Release",
       "name" : "boundary_plan_parity",
       "properties" : 
       [
@@ -1817,6 +1872,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_policy_resolution"
       ],
+      "config" : "Release",
       "name" : "cuda_policy_resolution",
       "properties" : 
       [
@@ -1832,6 +1888,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_reduction_contract"
       ],
+      "config" : "Release",
       "name" : "cuda_reduction_contract",
       "properties" : 
       [
@@ -1847,6 +1904,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block"
       ],
+      "config" : "Release",
       "name" : "cuda_single_level_smoke",
       "properties" : 
       [
@@ -1862,6 +1920,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_multiblock_hydro"
       ],
+      "config" : "Release",
       "name" : "cuda_multiblock_hydro",
       "properties" : 
       [
@@ -1877,6 +1936,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_multiblock_diffusion"
       ],
+      "config" : "Release",
       "name" : "cuda_multiblock_diffusion",
       "properties" : 
       [
@@ -1892,6 +1952,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_multiblock_burn"
       ],
+      "config" : "Release",
       "name" : "cuda_multiblock_burn",
       "properties" : 
       [
@@ -1907,6 +1968,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_store_lifecycle"
       ],
+      "config" : "Release",
       "name" : "cuda_store_lifecycle",
       "properties" : 
       [
@@ -1926,6 +1988,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_amr_exchange"
       ],
+      "config" : "Release",
       "name" : "cuda_amr_exchange",
       "properties" : 
       [
@@ -1946,6 +2009,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "hydro-matrix"
       ],
+      "config" : "Release",
       "name" : "cuda_hydro_route_matrix",
       "properties" : 
       [
@@ -1962,6 +2026,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "hydro-integrators"
       ],
+      "config" : "Release",
       "name" : "cuda_hydro_integrator_matrix",
       "properties" : 
       [
@@ -1978,6 +2043,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "eos-matrix"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_eos_owner_matrix",
       "properties" : 
       [
@@ -1994,6 +2060,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "rkl1"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_diffusion_rkl1",
       "properties" : 
       [
@@ -2010,6 +2077,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "rkl2"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_diffusion_rkl2",
       "properties" : 
       [
@@ -2026,6 +2094,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox13.be_nr"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox13_be_nr",
       "properties" : 
       [
@@ -2042,6 +2111,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox13.bd"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox13_bd",
       "properties" : 
       [
@@ -2058,6 +2128,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox13.ros4"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox13_ros4",
       "properties" : 
       [
@@ -2074,6 +2145,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox19.be_nr"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox19_be_nr",
       "properties" : 
       [
@@ -2090,6 +2162,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox19.bd"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox19_bd",
       "properties" : 
       [
@@ -2106,6 +2179,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox19.ros4"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox19_ros4",
       "properties" : 
       [
@@ -2122,6 +2196,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox21.be_nr"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox21_be_nr",
       "properties" : 
       [
@@ -2138,6 +2213,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox21.bd"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox21_bd",
       "properties" : 
       [
@@ -2154,6 +2230,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "aprox21.ros4"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_aprox21_ros4",
       "properties" : 
       [
@@ -2170,6 +2247,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "iso7.be_nr"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_iso7_be_nr",
       "properties" : 
       [
@@ -2186,6 +2264,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "iso7.bd"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_iso7_bd",
       "properties" : 
       [
@@ -2202,6 +2281,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_hydro_block",
         "iso7.ros4"
       ],
+      "config" : "Release",
       "name" : "cuda_backend_burn_iso7_ros4",
       "properties" : 
       [
@@ -2218,6 +2298,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "status.be_nr"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_status_be_nr",
       "properties" : 
       [
@@ -2234,6 +2315,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "status.bd"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_status_bd",
       "properties" : 
       [
@@ -2250,6 +2332,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "status.ros4"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_status_ros4",
       "properties" : 
       [
@@ -2266,6 +2349,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox13.be_nr"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox13_be_nr",
       "properties" : 
       [
@@ -2289,6 +2373,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox13.bd"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox13_bd",
       "properties" : 
       [
@@ -2312,6 +2397,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox13.ros4"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox13_ros4",
       "properties" : 
       [
@@ -2335,6 +2421,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox19.be_nr"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox19_be_nr",
       "properties" : 
       [
@@ -2358,6 +2445,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox19.bd"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox19_bd",
       "properties" : 
       [
@@ -2381,6 +2469,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox19.ros4"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox19_ros4",
       "properties" : 
       [
@@ -2404,6 +2493,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox21.be_nr"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox21_be_nr",
       "properties" : 
       [
@@ -2427,6 +2517,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox21.bd"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox21_bd",
       "properties" : 
       [
@@ -2450,6 +2541,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "aprox21.ros4"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_aprox21_ros4",
       "properties" : 
       [
@@ -2473,6 +2565,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "iso7.be_nr"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_iso7_be_nr",
       "properties" : 
       [
@@ -2496,6 +2589,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "iso7.bd"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_iso7_bd",
       "properties" : 
       [
@@ -2519,6 +2613,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_cuda_burn_policy_parity",
         "iso7.ros4"
       ],
+      "config" : "Release",
       "name" : "burn_policy_parity_iso7_ros4",
       "properties" : 
       [
@@ -2542,6 +2637,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/arch_checkpoint_compatibility",
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/checkpoint-compatibility-data"
       ],
+      "config" : "Release",
       "name" : "checkpoint_compatibility",
       "properties" : 
       [
@@ -2558,6 +2654,7 @@
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/tabular_eos_regression",
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/tabular-eos-test-data"
       ],
+      "config" : "Release",
       "name" : "tabular_eos_ideal_gas",
       "properties" : 
       [
@@ -2573,6 +2670,7 @@
       [
         "/home/shiroakane/ARCH/build/maintenance-freeze-20260908/core/sparse_klu_regression"
       ],
+      "config" : "Release",
       "name" : "sparse_klu_161_equations",
       "properties" : 
       [

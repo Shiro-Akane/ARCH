@@ -10,5 +10,4 @@ Canonical [burn inputs](../../validation/burn/inputs/) and the
 thermal reference checks. Generated-network trajectories are documented in
 [network validation](../../validation/network/README.md).
 
-The problem supplies initial conditions only; reaction rates, EOS closure and
-CPU/CUDA ODE algorithms are shared with other simulations.
+This problem exclusively supplies the initial conditions. Essential components such as reaction rates, EOS closure logic, and the CPU/CUDA ODE algorithms remain strictly shared with other simulations.

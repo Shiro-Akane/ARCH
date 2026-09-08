@@ -2,9 +2,14 @@
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). English is authoritative.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+An equation of state (EOS) relates density, temperature and composition to
+pressure, energy and their derivatives. The tests check both these local
+thermodynamic relations and their use in evolving fluid and burning problems.
+Each reference covers its stated thermodynamic range and table representation.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
 EOS verification combines independent thermodynamic references with actual
@@ -61,10 +66,6 @@ execution and capacity evidence.
   original table data and documented constants, without calling production
   EOS code. Sound speed and pressure derivatives follow independent
   thermodynamic identities.
-
-[Earlier focused records](results/current-constants-20260906/README.md) retain
-their original test artifacts and reference criteria. They are separate from
-the application records above.
 
 ## Reproduce
 

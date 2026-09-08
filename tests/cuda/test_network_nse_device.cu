@@ -1,3 +1,10 @@
+/**
+ * @file test_network_nse_device.cu
+ * @brief Compare built-in network, NSE and dense-solver device behavior.
+ *
+ * Exercise registered network data and numerical leaves with host reference
+ * checks before comparing their CUDA execution.
+ */
 #include "numerics/linalg/DenseWrap.h"
 #include "physics/network/aprox13/NetAprox13.h"
 #include "physics/network/aprox19/NetAprox19.h"

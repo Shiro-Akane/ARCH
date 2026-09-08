@@ -10,6 +10,4 @@ and EOS error transport have dedicated adapters, rather than copied formulas.
 [ExchangeKernels.cuh](ExchangeKernels.cuh) handle device boundary work.
 [GridGeometryAdapter.cuh](GridGeometryAdapter.cuh) binds the common geometry view.
 
-Host control and typed EOS instantiation are in
-[runtime/hydro](../runtime/hydro/README.md). Mathematical changes belong in
-[numerics](../../numerics/README.md) or [physics](../../physics/README.md).
+All host-side control logic and typed EOS instantiation mechanics reside in [runtime/hydro](../runtime/hydro/README.md). Any mathematical changes must be directed to either [numerics](../../numerics/README.md) or [physics](../../physics/README.md).

@@ -1,4 +1,7 @@
-/** Equation/unknown unit normalization, independent of linear provider.
+/**
+ * @file LinearEquilibration.h
+ * @brief Equation/unknown unit normalization, independent of linear provider.
+ *
  * D A C y = D b, x = C y is equivalent to A x = b. Retain original buffers for
  * backward-error acceptance; normalization is not regularization or clipping.
  */

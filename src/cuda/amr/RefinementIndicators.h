@@ -1,3 +1,12 @@
+/**
+ * @file RefinementIndicators.h
+ * @brief Borrowed device workspace and typed launches for shared AMR indicators.
+ *
+ * The runtime supplies state, selected fields, scratch arrays and a stream.
+ * The launch produces one block error; its owner fences the stream and checks
+ * EOS status before using that scalar to make host-side topology decisions.
+ */
+
 #pragma once
 
 #include "amr/RefinementIndicatorMath.h"

@@ -4,7 +4,4 @@
 and checkpoint serialization for both backends, including mesh metadata and
 restart-critical scientific identity.
 
-The caller supplies synchronized state. Do not add CUDA kernels, a second
-checkpoint schema or numerical state repair here. Coordinate changes with
-[checkpoint compatibility](../chk/README.md) and the
-[format reference](../../../docs/Reference.md).
+The caller is entirely responsible for supplying a fully synchronized state. Absolutely do not introduce CUDA kernels, secondary checkpoint schemas, or any form of numerical state repair within this module. Any changes here must be carefully coordinated with [checkpoint compatibility](../chk/README.md) and the formal [format reference](../../../docs/Reference.md).

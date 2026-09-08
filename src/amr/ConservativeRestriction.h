@@ -5,6 +5,10 @@
  * Topology and Morton lowering remain Host-only.  These scalar leaves merely
  * express that species are conserved as rho*X and that physical-volume
  * integrals are converted back to cell averages after restriction.
+ * For child volumes V_c, U_parent = sum(V_c U_c) / sum(V_c), whereas
+ * X_parent = sum(V_c rho_c X_c) / sum(V_c rho_c). Thus composition is
+ * mass-weighted, not volume-weighted. The executor supplies valid positive
+ * volume and density integrals before calling the division leaves.
  */
 
 #pragma once

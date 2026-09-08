@@ -5,7 +5,4 @@
 Cross-module stage control stays in
 [CudaBackendMicrophysicsControl.cpp](../control/CudaBackendMicrophysicsControl.cpp).
 
-Use [CUDA diffusion kernels](../../diffusion/README.md) to traverse device state
-and the common [diffusion operators](../../../numerics/diffusion/README.md) for
-mathematics. RKL scheduling, stability rules and coefficients must not gain a
-second backend-specific definition.
+You should rely on [CUDA diffusion kernels](../../diffusion/README.md) to handle device-state traversal, but strictly utilize the common [diffusion operators](../../../numerics/diffusion/README.md) for the actual mathematics. It is imperative that RKL scheduling logic, stability rules, and numerical coefficients never acquire a secondary backend-specific definition.

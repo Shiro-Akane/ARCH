@@ -13,11 +13,7 @@ stable; implementation files are grouped by responsibility:
 | [amr](amr/README.md) | Indicator, migration, ghost exchange and flux-correction orchestration |
 | [diffusion](diffusion/README.md) | Diffusion launch interface and device execution |
 
-These are functional boundaries, not separate implementations of physical
-models. Numerical leaves remain shared with the CPU. Keep heavy EOS/network
-bodies out of declaration-only launch headers; complete owners may include the
-types they actually construct. Cross-group includes use the `cuda/runtime/...`
-path from the existing `src` include root, without extra global search paths.
+These directories represent functional boundaries, not isolated implementations of physical models; all numerical leaves remain strictly shared with the CPU. You must keep heavy EOS and network bodies out of declaration-only launch headers, though complete owners are permitted to include the specific types they construct. For cross-group includes, always use the explicit `cuda/runtime/...` path starting from the existing `src` root, completely avoiding any extra global search paths.
 
 CMake continues to name each translation unit explicitly. Generated policy
 bindings belong in the build directory and are produced by

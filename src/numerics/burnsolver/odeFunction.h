@@ -320,16 +320,16 @@ namespace OdeMath
         result.cv = burn_cv_floor(eos.get_cv(rho, state[temperature], state));
         burn_energy_composition_gradient<Network::NUM_SPECIES + 1>(
             state, rho, eos, result.energy_composition_gradient);
-        // At fixed rho: de/dt = cv*T' + sum_i e_Xi*X_i'. Nuclear/source
-        // energy is unchanged; the changing mixture also changes EOS energy.
+        // At fixed rho: de/dt = cv*T' + sum_i e_Xi*X_i'. The network supplies
+        // de/dt; subtract the EOS composition term before recovering T'.
         rhs[temperature] = (result.energy - composition_energy_rate<Network::NUM_SPECIES>(
             result.energy_composition_gradient, rhs)) / result.cv;
         return result;
     }
 
     // Differentiate the complete first-law thermal RHS, including its EOS
-    // composition Hessian contraction and cv denominator. Species/network
-    // derivatives stay owned by the network and sparse pattern is unchanged.
+    // composition Hessian contraction and cv denominator. The network owns
+    // species derivatives; the shared structural builder owns sparse entries.
     template <class Network, class Matrix, class EOS>
     ARCH_HEAVY_INLINE void assemble_burn_jacobian(
         const double* state, double rho, const EOS& eos, Matrix& matrix, double* rhs,

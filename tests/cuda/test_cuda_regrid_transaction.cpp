@@ -1,9 +1,16 @@
+/**
+ * @file test_cuda_regrid_transaction.cpp
+ * @brief Exercise transactional regridding through the CUDA backend.
+ *
+ * Check topology changes and field restoration for both compact and larger
+ * species storage, using the shared transaction and transfer machinery.
+ */
 #include "amr/AMRControl.h"
 #include "amr/RegridExecutionPlan.h"
 #include "cuda/runtime/CudaBackend.h"
 #include "driver/DriverUtils.h"
 #include "physics/eos/IdealGas.h"
-#include "../regrid_migration_fixture.h"
+#include "../fixtures/regrid_migration_fixture.h"
 
 #include <cuda_runtime_api.h>
 #include <bit>

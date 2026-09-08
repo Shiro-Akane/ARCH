@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_multiblock_diffusion.cu
+ * @brief Compare multiblock RKL diffusion on CPU and CUDA.
+ *
+ * Both RKL1 and RKL2 use the production backend so stage storage and block
+ * exchange are tested together with the shared diffusion operator.
+ */
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
 #include "amr/ExchangePlan.h"

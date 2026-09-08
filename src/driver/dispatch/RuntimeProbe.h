@@ -1,3 +1,12 @@
+/**
+ * @file RuntimeProbe.h
+ * @brief Ordinary-C++ interface for querying CUDA runtime availability.
+ *
+ * An injectable loader reports device and compiled-image compatibility before
+ * backend construction. The probe does not choose a physics policy or own the
+ * simulation's CUDA stream and device allocations.
+ */
+
 #pragma once
 
 #include "ResolvedExecutionPlan.h"

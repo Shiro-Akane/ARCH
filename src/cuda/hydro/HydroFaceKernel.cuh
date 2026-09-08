@@ -1,3 +1,13 @@
+/**
+ * @file HydroFaceKernel.cuh
+ * @brief Reconstruct device face states and evaluate shared flux policies.
+ *
+ * The shared AMR stencil predicate chooses the admissible reconstruction near
+ * coarse/fine interfaces. Each face writes hydro and species fluxes to borrowed
+ * buffers; per-lane composition scratch belongs to the launch owner. Launch
+ * success means work was queued, not that the output is host-visible.
+ */
+
 #pragma once
 
 #include "HydroFluxPolicies.cuh"

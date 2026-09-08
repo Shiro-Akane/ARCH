@@ -1,3 +1,13 @@
+/**
+ * @file RefinementIndicators.cu
+ * @brief Device traversal and block reduction for AMR refinement indicators.
+ *
+ * Optional thermodynamic fields are evaluated through shared EOS views, then
+ * amr::indicator::cell_error evaluates the selected stencils. A final device
+ * reduction preserves nonfinite/EOS failures. Launches enqueue work only;
+ * runtime control owns buffers, synchronization and refine/derefine decisions.
+ */
+
 #include "RefinementIndicators.h"
 #include "cuda/common/DeviceEosStatus.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"

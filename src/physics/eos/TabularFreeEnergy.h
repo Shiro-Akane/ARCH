@@ -1,6 +1,11 @@
 /**
  * @file TabularFreeEnergy.h
  * @brief Thermodynamically consistent interpolation of specific Helmholtz free energy.
+ *
+ * The interpolated potential a is specific free energy. Its derivative axes
+ * are x=ln(rho) and y=ln(T), even when table coordinates are stored as log10.
+ * A biquintic Hermite patch supplies a and its derivatives from one surface;
+ * the EOS view owns composition interpolation and table-domain handling.
  */
 #pragma once
 
@@ -205,6 +210,14 @@ ARCH_INLINE FreeEnergyState blend(const FreeEnergyState& lower,
     return out;
 }
 
+/**
+ * Recover thermodynamics at fixed composition from the same potential:
+ * P=rho*a_x, e=a-a_y, cv=(a_y-a_yy)/T. With P_e=(dP/de)_rho and
+ * P_rho=(dP/drho)_e, c_s^2=P_rho+P_e*P/rho^2 and Gamma1=rho*c_s^2/P.
+ * Pressure, internal energy, cv, and c_s^2 must be finite and positive, and
+ * pressure derivatives must remain finite. Invalid states carry explicit
+ * failure status rather than constructing an independent fallback.
+ */
 ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
     const FreeEnergyState& f, double rho, double temperature)
 {

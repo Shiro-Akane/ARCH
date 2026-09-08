@@ -1,4 +1,11 @@
-/** Host-only ABI for a typed, backend-owned sparse burn pool. */
+/**
+ * @file CudaBackendBurnSparse.h
+ * @brief Host interface to a backend-owned sparse burn workspace.
+ *
+ * Concrete owners retain bounded device pools and sparse provider state while
+ * borrowing the supplied EOS views and stream. The containing runtime must keep
+ * those dependencies alive and establish completion before consuming summaries.
+ */
 #pragma once
 
 #include "cuda/runtime/CudaBackendTypes.h"

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Small real-ARCH integration smoke; deliberately NOT release/scientific evidence.
+"""Run short CPU/CUDA applications to check execution, AMR and checkpoint restart.
 
-Uses the ordinary problem registry, parameter parser, and checkpoint restart.
-No fields, checkpoints, or physical source implementation are modified.
+Cases use the ordinary problem registry and parameter parser. The report records
+process completion and expected runtime work; quantitative physical accuracy is
+checked by the separate scientific validation campaigns.
 """
 from __future__ import annotations
 

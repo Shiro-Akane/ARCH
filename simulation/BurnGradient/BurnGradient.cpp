@@ -1,6 +1,11 @@
 /**
  * @file BurnGradient.cpp
- * @brief Spatial burn pulse used to validate ENUC-driven AMR and restart.
+ * @brief Initialize a spatial burn pulse for ENUC-driven AMR and restart checks.
+ *
+ * Setup validates the one-dimensional burn case and resolves composition
+ * through the common network registry. Init supplies a Gaussian temperature
+ * profile at uniform density; the common EOS adapter constructs energy and the
+ * production driver performs burn evolution, refinement and checkpointing.
  */
 
 #include <cmath>

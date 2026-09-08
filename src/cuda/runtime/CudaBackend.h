@@ -1,6 +1,10 @@
 /**
  * @file CudaBackend.h
- * @brief Ordinary-C++ declaration of the uniform multi-block CUDA backend.
+ * @brief Ordinary-C++ interface to active and staged CUDA block storage.
+ *
+ * The private implementation owns device resources and the execution stream.
+ * Driver access tokens name logical slots and topology generations; regrid
+ * transactions prepare a candidate store before publishing it as active.
  */
 
 #pragma once

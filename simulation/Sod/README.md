@@ -10,5 +10,4 @@ contacts and rarefactions through the common hydro driver.
 - [Hydro validation](../../validation/hydro/README.md): reference solution,
   convergence inputs and measured results.
 
-Parameter files select reconstruction, flux and time integration; the problem
-does not contain a separate numerical solver.
+Note that the parameter files are solely responsible for selecting the reconstruction method, flux calculation, and time-integration scheme; this problem definition itself does not contain any separate numerical solver logic.

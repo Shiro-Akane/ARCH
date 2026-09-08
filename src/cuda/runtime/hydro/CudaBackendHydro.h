@@ -1,6 +1,10 @@
 /**
  * @file CudaBackendHydro.h
- * @brief Narrow runtime ABI for CUDA Hydro kernel instantiations.
+ * @brief Narrow runtime interface to typed CUDA hydro kernels.
+ *
+ * Launches consume resolved policy and stage descriptors with borrowed state,
+ * EOS, geometry and workspace views. Launch results describe enqueueing; the
+ * runtime owns completion checks, reflux ordering and state visibility.
  */
 
 #pragma once

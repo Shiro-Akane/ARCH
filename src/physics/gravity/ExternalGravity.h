@@ -1,17 +1,9 @@
 /**
  * @file ExternalGravity.h
- * @brief Evaluates configured external gravity fields and their source coupling.
+ * @brief Host patch traversal for a spatially constant external acceleration.
  *
- * Workflow:
- * 1. Construct the selected gravity policy from runtime configuration.
- * 2. Evaluate accelerations or potentials on the current active AMR geometry.
- * 3. Apply gravity only through the common source-term interface used by every integrator.
- */
-
-/**
- * ExternalGravity.h
- * @brief Implements an external gravity model for the simulation.
- * This model applies a constant gravitational field throughout the domain.
+ * No field solve is needed. Interior cells call the common source leaf in
+ * ExternalGravitySource.h, which also defines the device-side mathematics.
  */
 
 #pragma once

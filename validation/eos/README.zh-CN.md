@@ -2,8 +2,12 @@
 
 英文原文：[README.md](README.md)。英文版为规范文本。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收版本；后续目录维护
-及新构建检查单列于[维护记录](../backend/results/maintenance-freeze-20260908/)。
+状态方程（EOS）把密度、温度和组分与压力、能量及其导数联系起来。测试既检查
+这些局部热力学关系，也检查它们在流体和燃烧演化中的使用。各项参考对应文中
+明确给出的热力学范围和表格表示方式。
+
+本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
+构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、Helmholtz 和
 规范化 Tabular3D/Tabular4D 在 CPU 与 CUDA 上共用数学实现；后端负责表格
@@ -48,9 +52,6 @@ CPU/CUDA 场通过 `rtol=2e-8`、`atol=1e-12` 的对比；燃烧质量分数满�
 - [helm_reference.py](helm_reference.py) 根据独立端点约束，以两档高精度重建
   表格插值；它使用原始表数据和注明的常数，不调用生产 EOS 代码。
   声速与压力导数通过独立热力学关系核对。
-
-[早期定向记录](results/current-constants-20260906/README.md)保留原有测试程序
-与参考判据，与上面的应用记录分开归档。
 
 ## 复现
 

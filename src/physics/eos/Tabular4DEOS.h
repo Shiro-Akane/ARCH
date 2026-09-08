@@ -29,7 +29,7 @@
 // Keep the two large interpolation routines as explicit device call
 // boundaries.  Force-inlining them into every reconstruction/flux query makes
 // NVCC materialize the same 4-D/free-energy expression graph many times in a
-// single Hydro kernel and can exceed a 16 GiB Debug-build worker.  The formula
+// single hydro kernel, increasing compiler memory use. The formula
 // remains shared by Host and CUDA; only the CUDA compilation boundary differs.
 // ARCH_HEAVY_INLINE is owned by core/ArchPortability.h, shared with other EOS.
 

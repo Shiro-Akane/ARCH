@@ -1,4 +1,12 @@
-/** Shared diffusion argument/result records; no grid traversal or flux bodies. */
+/**
+ * @file DiffusionTypes.h
+ * @brief Plain Host/device diffusion arguments and validity-bearing results.
+ *
+ * These records carry configuration, coefficients, and reduction candidates
+ * without owning memory or grid traversal. DiffFlux.h owns the flux and
+ * stability mathematics; executors preserve the validity flags when reducing
+ * face or timestep results.
+ */
 #pragma once
 
 #include "../../data/GlobalDefs.h"

@@ -16,10 +16,8 @@ older capability boundaries below, but do not inherit the earlier test results.
 
 ## Current review fixes and acceptance boundary
 
-The historical H100 results below are not final acceptance of this worktree.
-The three production AMR/restart JSON reports identify executable `d42711fa…`,
-whereas the historical final relink identifies `e903232e…`. They remain intact
-as historical evidence and must not be relabeled as results of the new code.
+Please note that the historical H100 results presented below do not represent the final acceptance of this current worktree.
+Specifically, the three production AMR and restart JSON reports identify their executable as `d42711fa…`, whereas the historical final relink identifies as `e903232e…`. These records remain intact purely as historical evidence and must absolutely not be relabeled or misconstrued as results originating from the new code.
 
 - `arch_build_contract` now owns strict floating-point compile **and link**
   semantics for ordinary C++ and CUDA host/device compilation. Reassociation,
@@ -72,8 +70,11 @@ long-running capacity qualification.
   the driver reports that GPU debugging features are disabled. The attempted
   logs are retained and sanitizer cleanliness is not claimed.
 
-Machine-readable evidence and the exact build/test records are in
-[`validation/amr/results/h100-sm90-20260903/`](../../validation/amr/results/h100-sm90-20260903/).
+The fixed matrix/restart records used by the provenance tests now belong to
+[the protocol fixtures](../../tests/fixtures/validation_provenance/README.md).
+They retain their recorded identities for parsing and artifact-mismatch rejection;
+they do not certify current-source H100 science. Effective acceptance data are in
+[Validation](../../validation/README.md).
 
 ## Completed implementation
 
@@ -127,8 +128,8 @@ Machine-readable evidence and the exact build/test records are in
   maxima. Those budgets are separate from the new frozen-main reference's
   independently fixed ODE-error and roundoff criteria. This review does not
   widen the existing CPU/CUDA parity budgets.
-- Checkpoint schema v3 is shared by both backends and records ENUC, EOS/table
-  SHA-256, burn/network/NSE state, and species metadata. CUDA materializes
+- ARCH checkpoints are shared by both backends and record native composition,
+  ENUC, controller state, EOS/table SHA-256, burn/network/NSE state, and species metadata. CUDA materializes
   `Current` before invoking the Host writer.
 
 ## Historical verified environment and build envelope

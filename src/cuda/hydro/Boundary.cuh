@@ -1,3 +1,13 @@
+/**
+ * @file Boundary.cuh
+ * @brief Execute a compiled physical-boundary plan on device fields.
+ *
+ * Transfers and component signs come from the shared logical boundary plan.
+ * Phases are enqueued in order on the supplied stream so later phases can use
+ * completed earlier-phase values. The runtime owns transfer/state storage and
+ * fences completion before declaring the ghost region readable.
+ */
+
 #pragma once
 
 #include "BoundaryPlan.h"

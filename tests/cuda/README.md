@@ -1,8 +1,9 @@
 # CUDA execution and parity tests
 
 These tests exercise production CUDA launchers and compare shared operations
-with host execution or independent references. The filenames stay grouped here
-so CMake targets and archived reproduction paths remain stable.
+with host execution or independent references. Use the responsibility index
+below to find a focused check; CMake defines target names and optional
+dependencies centrally.
 
 | Responsibility | Useful entry points |
 |---|---|
@@ -22,6 +23,4 @@ dependencies. [Network validation](../../validation/network/README.md) supplies
 the generated-package setup. The shared [math witnesses](../math/README.md) and
 [fixtures](../fixtures/README.md) own reusable test data.
 
-Passing an individual test establishes its stated contract. Application coverage,
-sanitizer runs and combined acceptance are recorded in
-[Validation](../../validation/README.md).
+Passing an individual test successfully establishes its specific stated contract. However, full application coverage, sanitizer runs, and combined acceptance criteria are rigorously recorded and maintained exclusively within the [Validation](../../validation/README.md) module.

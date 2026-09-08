@@ -1,3 +1,10 @@
+/**
+ * @file test_cuda_multiblock_burn.cu
+ * @brief Check multiblock CUDA burning for each supported ODE method.
+ *
+ * Run aprox13 with BE-NR, BD and ROS4 through the production backend and
+ * compare the block results with the corresponding CPU calculation.
+ */
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
 #include "amr/ExchangePlan.h"

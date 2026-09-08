@@ -1,5 +1,12 @@
+/**
+ * @file test_cuda_regrid_migration.cu
+ * @brief Compare production GPU regrid transfers with CPU results.
+ *
+ * Refinement and coarsening cases cover all supported coordinate systems,
+ * dimensions and several species-storage sizes.
+ */
 #include "cuda/amr/RegridMigration.h"
-#include "../regrid_migration_fixture.h"
+#include "../fixtures/regrid_migration_fixture.h"
 
 #include <algorithm>
 #include <array>

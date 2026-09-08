@@ -1,3 +1,12 @@
+/**
+ * @file CudaBackendCore.cpp
+ * @brief Implement the public CUDA backend's state-transfer and control surface.
+ *
+ * Access is checked against the active store before enqueueing host/device
+ * copies. The implementation owns resources and records work; callers use the
+ * explicit quiesce boundary before consuming host-visible transfer results.
+ */
+
 #include "cuda/runtime/control/CudaBackendInternal.h"
 
 namespace arch::cuda {

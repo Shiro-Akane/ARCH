@@ -1,3 +1,12 @@
+/**
+ * @file HydroReconstructionPolicies.cuh
+ * @brief Gather device stencils for shared PCM, MUSCL and PPM reconstruction.
+ *
+ * Adapters load state and species samples, then call the common reconstruction
+ * and limiter helpers. The caller supplies face outputs and scratch storage;
+ * this layer neither advances state nor owns device allocations.
+ */
+
 #pragma once
 
 #include "../common/CudaCommon.cuh"

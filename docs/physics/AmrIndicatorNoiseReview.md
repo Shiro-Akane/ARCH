@@ -16,14 +16,7 @@ the absolute second difference, bounded below by zero; keep the original
 denominator and refine/derefine thresholds. Every selected species is treated
 equally; no stored field is clamped. Other scalar indicators retain their formula.
 
-This is a documented local arithmetic-resolution model, not a rigorous bound on
-an entire hydrodynamic trajectory. Gradients substantially above that scale remain
-detectable; signals below closure resolution are intentionally not promised as
-reliably distinguishable from roundoff. Density-unit rescaling leaves decisions
-unchanged. `test_refinement_indicator_math.cpp` covers signed closure noise,
-1/7/19/31/200 species, density scales 1e-20 to 1e20, resolvable trace fractions
-and every species index. Both CPU and CUDA receive runtime N in the shared view.
-This changes historical CPU AMR policy and therefore reopens final evidence.
+This model establishes a documented, localized arithmetic-resolution limit; it is not meant to serve as a rigorous mathematical bound across an entire hydrodynamic trajectory. Gradients that are substantially above this scale remain fully detectable, whereas signals below the closure resolution are intentionally not promised to be reliably distinguishable from basic numeric roundoff. Importantly, density-unit rescaling leaves these mesh decisions unchanged. The `test_refinement_indicator_math.cpp` test suite thoroughly covers signed closure noise, 1/7/19/31/200 species configurations, density scales ranging from 1e-20 to 1e20, resolvable trace fractions, and every possible species index. Both the CPU and CUDA paths receive the runtime value of N through the shared view. Because this adjustment meaningfully changes the historical CPU AMR policy, it necessitates reopening the final evidence gates for re-validation.
 
 ## Evidence
 

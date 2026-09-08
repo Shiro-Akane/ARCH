@@ -1,3 +1,12 @@
+/**
+ * @file HydroFluxPolicies.cuh
+ * @brief Bind device face traversal to the common Riemann-flux policies.
+ *
+ * Inputs are already reconstructed face states. The PCM template argument only
+ * binds the shared flux class; it does not replace the chosen reconstruction.
+ * No flux formula or device storage is defined by these aliases.
+ */
+
 #pragma once
 
 #include "../../numerics/flux/FluxHLL.h"

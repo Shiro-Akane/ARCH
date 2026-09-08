@@ -19,7 +19,7 @@
 #include "../../numerics/integrator/TimeIntegratorRK3.h"   // Isolate RK3 instantiations in this unit.
 
 // Runtime physics dispatch.
-#include "../../numerics/burnsolver/BurnDispatch.h" // Provides make_handle().
+#include "../../numerics/burnsolver/BurnDispatch.h" // Provides the host burn factory.
 #include "../../numerics/burnsolver/BurnerHandle.h"
 #include "../../io/chk/CheckpointCompatibility.h"
 #include "../../physics/eos/eosdispatch.h"

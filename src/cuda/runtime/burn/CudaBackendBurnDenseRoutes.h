@@ -1,6 +1,10 @@
-/** Internal link seam for one compact network x Ideal/Helm EOS burn owner.
- * Uses the common Host-only launch request. These declarations let
- * network selection compile without instantiating any network or ODE kernels.
+/**
+ * @file CudaBackendBurnDenseRoutes.h
+ * @brief Link declarations for compact-network CUDA burn instantiations.
+ *
+ * Network selection uses the common host launch request and these declarations
+ * without importing numerical template bodies. The selected network/EOS route
+ * instantiates the shared burn implementation in its own CUDA translation unit.
  */
 #pragma once
 

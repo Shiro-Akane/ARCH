@@ -1,3 +1,10 @@
+/**
+ * @file test_boundary_plan_parity.cu
+ * @brief Compare CUDA boundary execution with shared boundary plans.
+ *
+ * Lower the same logical operations to device storage and check raw field
+ * values, component handling and rejection of invalid input layouts.
+ */
 #include "amr/BoundaryPlan.h"
 #include "cuda/hydro/Boundary.cuh"
 #include "driver/DriverUtils.h"

@@ -2,15 +2,8 @@
  * @file GravityNone.h
  * @brief Provides the no-gravity policy with a source-free contract.
  *
- * Workflow:
- * 1. Construct the selected gravity policy from runtime configuration.
- * 2. Evaluate accelerations or potentials on the current active AMR geometry.
- * 3. Apply gravity only through the common source-term interface used by every integrator.
- */
-
-/**
- * GravityNone.h
- * @brief Implements a "no gravity" model for the simulation.
+ * Both field preparation and source accumulation are no-ops, allowing the
+ * integrator to retain the same policy interface when gravity is disabled.
  */
 
 #pragma once

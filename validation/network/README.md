@@ -2,19 +2,25 @@
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). English is authoritative.
 
-The results on this page refer to the scientific acceptance version identified
-in the [central Validation index](../README.md); subsequent directory maintenance
-and new-build checks are recorded separately in the
+A reaction network defines the isotopes, reaction rates and coupled evolution
+equations used by burning. These tests follow generated networks from package
+registration to actual time evolution, and compare weak-reaction composition and
+energy changes with independent references. The sparse cases also check the
+large-system solver path, not just whether a package compiles.
+
+The results on this page belong to the scientific acceptance snapshot identified
+in the [central Validation index](../README.md). Source organization and build
+verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
-The current candidate passes the generated-network application matrix, the real
+CPU and CUDA pass the generated-network application matrix, the real
 31-isotope sparse trajectory matrix, and independent weak-reaction trajectories
 with constant heat capacity and the Helmholtz EOS. These records exercise shared
 network physics and ODE solvers through their CPU and CUDA backends.
 
 ## Current evidence
 
-The four records below share the frozen candidate source. Each records the
+The four records below share the same scientific acceptance source. Each records the
 actual build, generated packages, provider libraries and execution controls.
 Scientific accuracy and application integration have distinct acceptance criteria;
 the table gives rounded maxima with the unchanged budgets.
@@ -159,8 +165,8 @@ repository's `bin/`, not the build directory's `bin/`.
 
 The generator writes [audit31](inputs/audit31.py) and [weak_urca](inputs/weak_urca.py)
 under `src/physics/network/custom/`; both backends use those same registered
-packages. Matching packages are left unchanged. If an older package needs
-regeneration, add `--replace` to its generation command; the generator keeps a
+packages. Matching packages are left unchanged. To replace a package after
+changing its recipe or generation settings, add `--replace`; the generator keeps a
 backup. Rerun CMake after generating or replacing a package.
 
 Keep this environment active and use new, empty result directories for each
@@ -200,7 +206,7 @@ and tight controls and requires the tight result to pass. The sparse runner
 requires all three ODEs and both storage sizes; a selected-method diagnostic or
 a skipped GPU run does not count as complete coverage.
 
-## Release follow-up and historical records
+## Scope and follow-up
 
 Complete Release/Debug regressions and the
 [five-phase core-build check](../backend/results/cold-core-first-law-20260907/release-909/README.md)
@@ -216,15 +222,6 @@ large networks, scientific reliability depends on the isotope set, reaction data
 and model's range of applicability; solver/provider validation is recorded
 separately. Custom-network NSE is not currently supported; the
 [NSE reference](nse_reference.py) covers the supported built-in networks.
-
-Earlier [constant-cv](results/weak-cv-first-law-20260907/evidence.json),
-[Helmholtz](results/weak-helm-first-law-20260907/evidence.json),
-[audit31](results/audit31-first-law-20260907/evidence.json) and
-[application](results/runtime-first-law-20260907/backend-validation-evidence.json)
-records are retained as historical candidate evidence. Current conclusions
-above use the four final scientific/application records and the completed safety
-records. The [CPU v3 audit](results/cpu-v3-compatibility/README.md)
-and its CSV retain their original scope and hardware details.
 
 See the internal [release standard](../../docs/development/CudaReleaseStandard.md)
 and the user-facing [backend guide](../../docs/CudaBackendStatus.md).

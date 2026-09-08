@@ -3,6 +3,8 @@
 Chinese translation: [CudaBackendStatus.zh-CN.md](CudaBackendStatus.zh-CN.md).
 The English file is authoritative.
 
+A *backend* refers to the specific execution engine in ARCH responsible for performing calculations on your chosen hardware. CUDA serves as our GPU backend. Selecting it alters how execution and memory management are handled under the hood, but it strictly retains the exact same physical models and logic as the CPU backend. *Adaptive mesh refinement (AMR)* dynamically adjusts cell sizes during a simulation, ensuring that complex regions receive higher spatial resolution. This guide details the division of labor between processors and helps you select a compatible configuration.
+
 The CUDA backend executes hydrodynamics and adaptive-mesh numerical work on the
 GPU. CPU and CUDA share the same mathematical and physical implementations;
 device memory, kernels, streams and linear-solver libraries are backend-specific.
@@ -25,9 +27,14 @@ technical results and combined acceptance status.
 | Generated burning | Registered networks with device-callable math, including recognized embedded weak tables stored read-only on each backend; dense or sparse solving as described below |
 | Output and restart | Shared HDF5/checkpoint facilities, with state transfers at IO boundaries and CPU/CUDA restart routes |
 
-Policy names, aliases and capability resolution share one registration system.
-EOS/network mathematics use static duck-typed interfaces. Backend adapters
-connect storage or solver libraries without introducing another physical model.
+Policy names, aliases and supported combinations share one registration system.
+The equation of state (EOS) relates pressure, density, energy and composition;
+a reaction network describes how the composition changes. Their implementations
+use static duck-typed interfaces: a model supplies the required operations, and
+the compiler connects them to the caller. Backend adapters connect storage or
+solver libraries without introducing another physical model.
+Nuclear statistical equilibrium (NSE) computes an equilibrium composition within
+the isotope set of the selected built-in network.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
 ## GPU-AMR execution model
@@ -35,16 +42,17 @@ See [the API and parameter reference](Reference.md) for precise configuration.
 Implementation entry points are indexed in [CUDA runtime](../src/cuda/runtime/README.md)
 and the [shared AMR module](../src/amr/README.md).
 
-The CPU owns the topology, Morton ordering and refinement/coarsening decisions.
-The GPU computes cell indicators and transfers one summary value per block for
-those decisions. Conservative field migration runs on device buffers using the
-same transfer mathematics as the CPU. Mesh decisions therefore use CPU control,
-while bulk field work stays on the GPU. At checkpoint and plot output, the
-required fields are copied to the shared host writer.
+The CPU owns the mesh topology, Morton ordering, and all refinement/coarsening decisions.
+- **Topology** describes the connectivity between mesh blocks.
+- **Morton ordering** assigns a spatially contiguous index to those blocks.
+- **Refinement** splits cells into smaller ones for higher resolution, while **coarsening** merges them when configured indicators indicate that high resolution is no longer needed.
+
+Conversely, the GPU computes the actual cell indicators and transfers just one summary value per block back to the host to inform those decisions. Conservative field migration operates directly on device buffers, utilizing the exact same transfer mathematics as the CPU path. This design ensures that high-level mesh decisions remain under CPU control, while the heavy bulk field computations stay on the GPU. During checkpoints and plot outputs, only the required fields are explicitly copied back to the shared host writer.
 
 ## Dense and sparse burning
 
-An ODE system contains one equation per isotope plus temperature. Networks that
+Burning is advanced as a system of ordinary differential equations (ODEs).
+Each ODE system contains one equation per isotope plus temperature. Networks that
 integrate signed weak losses also include one energy-source state. With `linear_solver = Auto`,
 up to 31 total equations use the shared DenseLU (30 isotopes without that source,
 29 with it).
@@ -54,6 +62,8 @@ is rejected. Explicit CUDA selection does not silently execute CPU physics.
 `compute_backend = auto` may select an available supported backend at startup
 and reports that choice; selection is closed once construction begins.
 
+Dense solving stores the complete small matrix. Sparse solving stores its
+nonzero entries; CSR (compressed sparse row) organizes those entries by row.
 The CUDA sparse executor keeps numerical states and CSR matrices on the GPU.
 Host control invokes the cuDSS API and exchanges execution requests/responses.
 Factor storage is bounded; memory requirements depend on matrix fill-in and
@@ -70,10 +80,10 @@ requirements grow with the network and mesh workload.
 
 - Generated weak tables share interpolation, derivatives and energy integration
   across backends. The generator checks the table layout and reports unsupported
-  inputs. Version-3 packages and packages not converted for device execution
-  remain CPU-only; CUDA requires a version-4 package declaring
-  `device_callable_math=true`. Regenerate older packages with the current generator
-  to use its supported CUDA interfaces. Independent
+  inputs. The manifest's `generator_version` identifies the package's generator
+  contract, not an ARCH release. Value 3 supports CPU execution; CUDA requires
+  a value of at least 4 and `device_callable_math=true`. Packages without device-callable math
+  execute on CPU only. Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
 - Self-gravity and custom-network NSE are not production capabilities of either
   backend. Built-in NSE is constrained to the selected species set; alpha-chain

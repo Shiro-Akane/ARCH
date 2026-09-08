@@ -1,6 +1,11 @@
 /**
  * @file CoarseFineExchangeKernels.cuh
- * @brief CUDA memory execution for Host-lowered coarse/fine ghost cells.
+ * @brief Execute host-planned coarse/fine ghost transfers on CUDA.
+ *
+ * Gather evaluates the common conservative restriction or limited-linear
+ * prolongation rules into borrowed scratch. A same-stream scatter writes
+ * destinations only after a successful gather; runtime control checks the
+ * completed status before publishing ghost validity.
  */
 
 #pragma once
