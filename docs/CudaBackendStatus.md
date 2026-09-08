@@ -34,7 +34,8 @@ use static duck-typed interfaces: a model supplies the required operations, and
 the compiler connects them to the caller. Backend adapters connect storage or
 solver libraries without introducing another physical model.
 Nuclear statistical equilibrium (NSE) computes an equilibrium composition within
-the isotope set of the selected built-in network.
+the isotope set of the selected supported network: a built-in network or an
+explicitly certified generated model.
 See [the API and parameter reference](Reference.md) for precise configuration.
 
 In two dimensions, both cylindrical and spherical grids use the polar
@@ -109,12 +110,21 @@ requirements grow with the network and mesh workload.
   CPU-only packages execute on CPU. The exact manifest fields are documented
   in the [network contract](Reference.md). Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
-- Self-gravity and custom-network NSE are not production capabilities of either
-  backend. Built-in NSE is constrained to the selected species set; alpha-chain
-  networks are not a substitute for a general NSE network.
+- Self-gravity is not a production capability of either backend. Generated
+  networks that pass the nuclear-data and equilibrium-model checks can use
+  shared NSE math, covered by focused CPU/CUDA tests rather than a new full
+  application qualification.
+  See the [model limits](../src/physics/nse/README.md). Both built-in and generated
+  NSE are constrained to the selected species set; alpha-chain networks are not
+  a substitute for a general NSE network.
 - Normalized ARCH EOS tables are not interchangeable with arbitrary native
   nuclear-matter tables. Units, thermodynamic components and energy zero must
   satisfy the documented [tabular data contract](../src/physics/eos/TabularEOS.md).
+  Native EOSDriver and the supported baryon ASCII source format reuse the
+  existing table owners. Component completion happens on the host; strict
+  interpolation, derivatives and all-root temperature inversion share one
+  CPU/CUDA implementation. Their focused extension checks are separate from
+  the full historical CUDA release profile.
 - The local release profile uses representative generated and weak networks.
   Larger-model trajectories and resource measurements run on machines sized for
   those workloads. ARCH currently runs on one CPU node or one CUDA GPU.

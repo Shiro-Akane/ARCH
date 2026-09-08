@@ -98,9 +98,72 @@ ctest --test-dir build -R '^tabular_eos_ideal_gas$' --output-on-failure
 
 ## Table formats and follow-up work
 
-Production tabular EOS inputs follow the normalized 3D/4D HDF5
-[data contract](../../src/physics/eos/TabularEOS.md). Converting native Shen
-EOS4/EOSDriver data is a separate future extension that must document units,
-energy zero, thermodynamic components and valid domains. The
+The current reader accepts normalized 3D/4D HDF5 and native EOSDriver total-EOS
+HDF5 under the [data contract](../../src/physics/eos/TabularEOS.md). The latter
+preserves native axes and log-field encodings, adopts the source's fixed energy
+shift and rejects invalid cells or ambiguous temperature inverses. It is a
+new interface, not part of the frozen application results above. Its focused
+regression target is `arch_native_tabular`; an optional second argument after
+the output directory loads an actual EOSDriver file. The current source also
+reads the shared finite-temperature baryon ASCII format used by EOS2/EOS4,
+and completes explicitly missing electron/positron or photon terms for both
+normalized free-energy ranks. Generic CompOSE remains unsupported. The
 [historical source-table assessment](results/tabular-assessment-archive.md)
 retains the original spacing study and source-data analysis.
+
+### Native targeted check
+
+The local working tree based on `e799640b` plus uncommitted changes was checked
+against the original EOSDriver `HShenEOS.h5` with
+[NativeTabularRegression.cpp](../../tests/host/NativeTabularRegression.cpp).
+Of 400 deterministic interior samples, 395 had unique usable inverses:
+391 were thermally resolved at the fixed `2e-8` relative-temperature budget,
+and 4 were separately classified as source-precision-limited. Four samples
+touched invalid cells and one had multiple valid thermal roots; those states
+were rejected rather than assigned an arbitrary inverse.
+
+The largest resolved temperature error was `2.1496398940564856e-9`; the largest
+error including the under-resolved group was `5.5932036852564723e-7`. The
+largest energy back-substitution residual was `1.6412292014574082e-14`, below
+the unchanged `2e-12` budget. Under-resolved classification uses source log-energy
+ULPs and `e/(T*cv)` before testing the inverse; it does not certify those cold
+states at the `2e-8` temperature budget. The
+[retained diagnostic log](results/tabular-extension-20260908/native-real-final.log)
+records this earlier-source observation. This targeted
+interface/conditioning check is not a complete physical qualification of Shen
+matter and does not modify the frozen application records above.
+
+### Component and raw-baryon extension checks
+
+The [extension record](results/tabular-extension-20260908/README.md) keeps source,
+asset and build identities, regression reports, actual CUDA owner execution and
+bounded application checks separate from the historical release above.
+Manufactured 3D/4D tables check every supported missing-component subset,
+already-total inputs, an independent non-default baryon-mass convention,
+source/dependency fingerprints and startup rejection. Independent component
+controls check Timmes electron/positron and analytic photon formulas. Exact
+potentials check strict inverses, same-cell multiple roots, invalid intervals
+and derivative seeds.
+
+Each unmodified EOS2/EOS4 source has 650650 nodes. Source coordinate checks
+mark 6382 and 6369 nodes respectively; another 29211 source-valid nodes per
+table lie outside the electron provider. Propagating all derivative dependencies
+excludes 75126 and 74918 nodal stencils. These are not valid-volume fractions;
+queries require the full participating patch to be valid.
+
+Each real-table owner sample fixes 200 source nodes and 50 interior points.
+Both tables accept 174 nodes and 46 interiors; 7 nodes exceed component support,
+19 nodes and 4 interiors touch excluded derivative stencils. No accepted sample
+is relabeled from a failed, nonphysical or ambiguous inverse. Maximum nodal
+pressure/energy error relative to independently assembled source F/P/S and
+component terms is `2.427e-14` (fixed budget `2e-8`). Maximum resolved inverse
+temperature error is `2.902e-14`; all 46 accepted interiors per table meet the
+fixed `2e-8` budget. Energy back-substitution meets `2e-12`.
+
+These node identities and interior self-consistency do not measure interpolation
+accuracy against an independent continuous nuclear-matter model. The source's
+printed F/E/S retain small discrepancies; roughly 1% of source-valid nodes
+exceed a strict half-last-digit rounding budget. ARCH preserves F/P/S constraints
+and does not fit reference constants or overwrite source files to remove this
+disagreement. Full-domain and nonuniform nuclear-EOS applications remain
+separate qualification tasks.

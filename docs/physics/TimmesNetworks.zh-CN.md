@@ -148,7 +148,14 @@ sum_i (Z_i/A_i) X_i = Ye
 - `aprox19`/`aprox21` 同时含有物理量子态相同的 `h1` 和 `prot` 记账条目。NSE 统计和中排除重复的 `h1`，平衡自由质子写入 `prot`，避免重复计算质子简并度。
 
 求解结果是当前网络核素集合上的“网络受限 NSE”。`iso7`/`aprox13` 缺少自由核子和中子丰核素，只支持 `Ye=0.5` 的受限解，在高温低密度下可能偏离完整 NSE。完整物理 NSE 需要覆盖充分的独立核素集合及守恒映射。
-CPU 与 CUDA 对四个内置网络使用同一求解器；生成网络包不支持在线 NSE。
+CPU 与 CUDA 对四个内置网络及合格生成网络共用求解器。生成数据保留 pynucastro 的
+质量与详细平衡约定，不借用 Timmes 常数；[网络包契约](../../src/physics/network/custom/README.md)
+规定资格条件和当前无屏蔽、无弱反应、基态平衡的模型边界。
+
+`use_nse=auto` 在启动时判定网络能力。true 与 auto 均使用
+`T > nseTempThreshold` 和 `rho > nseDensThreshold`，默认仍为 `4.5e9 K` 与
+`1e6 g/cm^3`，不增加另一套动态激活条件。两者都要满足核数据/EOS 适用域和能量闭合；
+守恒解若低于阈值，不会被强行夹回阈值。
 
 NSE 投影联立求解：
 
@@ -229,9 +236,12 @@ eos_table_path = /absolute/path/to/helm_table.dat
 
 pynucastro 生成网络包的工作流见 [custom 网络契约](../../src/physics/network/custom/README.md)和 [Reference](../Reference.zh-CN.md)。线性求解器名称不区分大小写。`Auto` 对不超过 31 个 ODE 方程的系统选择 DenseLU，这一计数包含温度和辅助能量变量；更大的系统在 CPU 上使用 SuiteSparse KLU，在 CUDA 上使用 cuDSS。SparseKLU 仅适用于 CPU，cuDSS 仅适用于 CUDA，不兼容的显式组合会在后端构造前被拒绝。可选 cuDSS 0.8 通过 CMake/`CUDSS_ROOT` 发现，只有求解器与相应网络/EOS 路由实际链接时才开放；缺少依赖会明确报错。
 
-生成网络包提供可设备调用的数学实现，并通过[包元数据检查](../../src/physics/network/custom/README.md)后，才能注册 CUDA 路由。`generator_version` 字段是供构建系统检查的包结构信息。CPU 与 CUDA 使用同一数学头文件、常数与 Jacobian 结构。已支持的内嵌弱反应率表由各后端持有不可变存储，并通过显式视图传给共同数学库。通过包检查但不具备设备端数学契约的网络包仅在 CPU 上执行。CUDA 稀疏计算使用共用的 BE_NR/ROS4/BD 状态机，由后端专用 CSR/cuDSS 执行器处理线性求解。
+生成网络包提供可设备调用的数学实现，并通过[包元数据检查](../../src/physics/network/custom/README.md)后，才能注册 CUDA 路由。CPU 与 CUDA 使用同一数学头文件、常数与 Jacobian 结构。已支持的内嵌弱反应率表由各后端持有不可变存储，并通过显式视图传给共同数学库。通过包检查但不具备设备端数学契约的网络包仅在 CPU 上执行。CUDA 稀疏计算使用共用的 BE_NR/ROS4/BD 状态机，由后端专用 CSR/cuDSS 执行器处理线性求解。
 
-生成网络仍设置 `SUPPORTS_NSE=false`。已支持的弱反应网络使用相同 ODE 阶段、误差控制和回滚机制积分带符号的能量源，并将其与核反应能量一起纳入共同的接受步能量核算。[网络验证](../../validation/network/README.zh-CN.md)分别记录生成数学库、求解器兼容、独立物理轨迹和完整程序验证。模型的科学可靠性取决于其核素集合、反应数据和适用范围。
+生成网络仅在数据与平衡模型检查通过后声明 NSE 能力。弱反应网络仍使用普通 ODE，
+通过相同阶段、误差控制和回滚机制积分带符号能量源，并与核反应能量一起纳入接受步核算。
+[网络验证](../../validation/network/README.zh-CN.md)分别记录生成数学库、求解器兼容、
+独立物理轨迹和完整程序验证。模型的科学可靠性取决于核素集合、反应数据和适用范围。
 
 OpenMP 默认开启，可通过 `-DARCH_ENABLE_OPENMP=OFF` 关闭。使用 OpenMP 编译时，可用环境变量控制运行线程数，例如：
 

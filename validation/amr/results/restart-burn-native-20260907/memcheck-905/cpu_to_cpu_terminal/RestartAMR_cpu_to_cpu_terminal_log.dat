@@ -1,0 +1,33 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/restart-burn-native-20260907/memcheck-905/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/restart-burn-native-20260907/memcheck-905/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par
+[Main] Problem created: BurnGradient
+[Problem] Burn gradient: rho=1e+07, T_bg=5e+07, T_peak=3e+09, network=aprox13
+[Main] Configuration:
+       Grid: 80 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Restarting from checkpoint: /home/shiroakane/ARCH/validation/amr/results/restart-burn-native-20260907/memcheck-905/cpu_source/RestartAMR_cpu_source_chk_0002.h5
+[IO] Restored CHK: /home/shiroakane/ARCH/validation/amr/results/restart-burn-native-20260907/memcheck-905/cpu_source/RestartAMR_cpu_source_chk_0002.h5 at step 3 with 8 AMR leaves.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0125
+    Level 1   | dx1(x): 0.00625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+4       1.50000e-15    8.00000e-16    3.68178e-12    4.00000e-16    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/restart-burn-native-20260907/memcheck-905/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_HLLC_plt_0002.h5 at t=1.50000e-15
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/restart-burn-native-20260907/memcheck-905/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5 at step 4 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 4 | Final Time: 1.50000e-15

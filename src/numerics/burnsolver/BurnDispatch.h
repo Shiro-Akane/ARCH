@@ -195,7 +195,7 @@ private:
                 + std::string(
                     arch::dispatch::PolicyRegistration<Registration>::names[0]));
         } else {
-            std::cout << "[Burn Dispatch] Online Timmes NSE solver enabled above T="
+            std::cout << "[Burn Dispatch] Online network-consistent NSE solver enabled above T="
                       << config.physics.burn.nseTempThreshold << " K and rho="
                       << config.physics.burn.nseDensThreshold
                       << " g/cm^3." << std::endl;

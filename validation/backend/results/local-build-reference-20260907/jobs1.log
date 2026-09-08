@@ -1,0 +1,823 @@
+COMPILE_INPUT {"source": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu", "argv": ["/usr/local/cuda/bin/nvcc", "-forward-unknown-to-host-compiler", "-ccbin=/usr/bin/g++-12", "-DARCH_CUDA_BUILD_ENABLED=1", "-DARCH_HAS_CUDSS_PROVIDER=1", "-DARCH_HAS_KLU=1", "-I/home/shiroakane/ARCH/src", "-I/home/shiroakane/ARCH/cases", "-I/home/shiroakane/ARCH/build/release-core-throughput-cmake/generated", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU/Include", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/AMD/Include", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/SuiteSparse_config", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/COLAMD/Include", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/BTF/Include", "-O3", "-DNDEBUG", "-std=c++20", "--generate-code=arch=compute_86,code=[compute_86,sm_86]", "--expt-relaxed-constexpr", "-Xcompiler=-march=native", "--fmad=false", "--ftz=false", "--prec-div=true", "--prec-sqrt=true", "-Xcompiler=-fno-fast-math,-ffp-contract=off", "-x", "cu", "-c", "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu", "-o", "/tmp/arch-heavy-compile-10e_hkhp/route-0.o"]}
+/home/shiroakane/ARCH/src/physics/network/aprox21/../timmes_common/Dual.h(25): warning #20012-D: __host__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+      __attribute__((host)) __attribute__((device)) Dual() = default;
+                     ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/../timmes_common/Dual.h(25): warning #20012-D: __device__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+      __attribute__((host)) __attribute__((device)) Dual() = default;
+                                           ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/../timmes_common/Dual.h(25): warning #20012-D: __host__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+      __attribute__((host)) __attribute__((device)) Dual() = default;
+                     ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/../timmes_common/Dual.h(25): warning #20012-D: __device__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+      __attribute__((host)) __attribute__((device)) Dual() = default;
+                                           ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(72): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(72): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(352): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(352): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(385): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(385): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(413): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(413): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(441): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(441): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(469): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(469): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(497): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(497): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(525): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(525): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(546): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(546): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(574): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(574): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(602): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(602): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(630): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(630): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(658): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(658): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(686): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(686): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(714): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(714): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(742): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(742): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(770): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(770): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(798): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(798): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(826): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(826): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(854): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(854): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(882): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(882): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(910): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(910): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(938): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(938): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(966): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(966): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(992): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(992): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1013): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1013): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1036): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1036): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1055): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1055): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1078): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1078): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1107): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1107): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1137): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1137): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1167): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1167): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1234): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1234): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1264): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1264): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1296): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1296): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1316): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1316): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1339): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1339): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1367): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1367): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1393): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1419): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1419): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1445): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1445): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+CONTROLLED_COMPILE elapsed_seconds=146.94 peak_rss_kib=1927800 exit_code=0
+COMPILE_FINISHED {"source": "/home/shiroakane/ARCH/src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu", "elapsed_seconds": 143.8578740410012, "exit_code": 0}
+COMPILE_INPUT {"source": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/generated/cuda_sparse_burn/aprox21_tabular4deosview.cu", "argv": ["/usr/local/cuda/bin/nvcc", "-forward-unknown-to-host-compiler", "-ccbin=/usr/bin/g++-12", "-DARCH_CUDA_BUILD_ENABLED=1", "-DARCH_HAS_CUDSS_PROVIDER=1", "-DARCH_HAS_KLU=1", "-I/home/shiroakane/ARCH/src", "-I/home/shiroakane/ARCH/cases", "-I/home/shiroakane/ARCH/build/release-core-throughput-cmake/generated", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU/Include", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/AMD/Include", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/SuiteSparse_config", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/COLAMD/Include", "-I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/BTF/Include", "-isystem", "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include", "-isystem", "/usr/local/cuda/targets/x86_64-linux/include", "-O3", "-DNDEBUG", "-std=c++20", "--generate-code=arch=compute_86,code=[compute_86,sm_86]", "--expt-relaxed-constexpr", "-Xcompiler=-march=native", "--fmad=false", "--ftz=false", "--prec-div=true", "--prec-sqrt=true", "-Xcompiler=-fno-fast-math,-ffp-contract=off", "-x", "cu", "-c", "/home/shiroakane/ARCH/build/release-core-throughput-cmake/generated/cuda_sparse_burn/aprox21_tabular4deosview.cu", "-o", "/tmp/arch-heavy-compile-10e_hkhp/route-1.o"]}
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(72): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(72): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(352): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(352): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(385): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(385): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(413): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(413): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(441): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(441): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(469): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(469): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(497): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(497): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(525): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(525): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(546): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(546): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(574): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(574): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(602): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(602): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(630): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(630): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(658): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(658): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(686): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(686): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(714): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(714): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(742): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(742): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(770): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(770): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(798): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(798): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(826): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(826): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(854): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(854): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(882): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(882): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(910): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(910): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(938): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(938): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(966): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(966): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(992): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(992): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1013): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1013): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1036): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1036): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1055): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1055): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1078): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1078): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1107): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1107): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1137): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1137): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1167): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1167): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1234): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1234): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1264): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1264): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1296): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1296): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1316): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1316): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1339): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1339): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1367): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1367): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1393): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1419): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1419): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1445): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/physics/network/aprox21/TimmesRateLibrary.h(1445): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+CONTROLLED_COMPILE elapsed_seconds=147.58 peak_rss_kib=1932504 exit_code=0
+COMPILE_FINISHED {"source": "/home/shiroakane/ARCH/build/release-core-throughput-cmake/generated/cuda_sparse_burn/aprox21_tabular4deosview.cu", "elapsed_seconds": 143.56001787599234, "exit_code": 0}
+CONTROLLED_GROUP {"jobs": 1, "sources": ["CudaBackendBurnTabular4DAprox21.cu", "aprox21_tabular4deosview.cu"], "elapsed_seconds": 287.4197159840114, "exit_codes": [0, 0]}
+MEMORY_GUARD_RESULT min_available_kib=4659456 baseline_swap_kib=57880 peak_swap_kib=57880 guard_stopped=False peak_owned_rss_kib=1951348 elapsed_seconds=287.928 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.009 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=288 complete=True

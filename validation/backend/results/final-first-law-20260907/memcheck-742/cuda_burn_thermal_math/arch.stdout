@@ -1,0 +1,56 @@
+ROS_FAILURE 0 host_status=4 gpu_status=4 host_attempts=4 gpu_attempts=4 host_rejected=4 gpu_rejected=4 host_pass=1 gpu_pass=1 host_nonfinite=0 gpu_nonfinite=0 gpu_dt=9.9999999999999995e-21
+ROS_FAILURE 1 host_status=3 gpu_status=3 host_attempts=3 gpu_attempts=3 host_rejected=2 gpu_rejected=2 host_pass=1 gpu_pass=1 host_nonfinite=0 gpu_nonfinite=0 gpu_dt=9.9999999999999995e-21
+ROS_FAILURE 2 host_status=4 gpu_status=4 host_attempts=4 gpu_attempts=4 host_rejected=4 gpu_rejected=4 host_pass=1 gpu_pass=1 host_nonfinite=0 gpu_nonfinite=0 gpu_dt=9.9999999999999995e-21
+ROS_FAILURE 3 host_status=4 gpu_status=4 host_attempts=4 gpu_attempts=4 host_rejected=4 gpu_rejected=4 host_pass=1 gpu_pass=1 host_nonfinite=1 gpu_nonfinite=1 gpu_dt=9.9999999999999995e-21
+BE_TRANSLATION 0 host_ulps=0 device_ulps=0
+BE_SUBSTEPS 0 host_ulps=0 device_ulps=0
+BD_TRANSLATION 0 host_ulps=0 device_ulps=0
+ROS_TRANSLATION 0 host_ulps=0 device_ulps=0
+BD_SUBSTEPS 0 host_ulps=0 device_ulps=0
+ROS_SUBSTEPS 0 host_ulps=0 device_ulps=0
+BE_TRANSLATION 1 host_ulps=0 device_ulps=0
+BE_SUBSTEPS 1 host_ulps=0 device_ulps=0
+BD_TRANSLATION 1 host_ulps=0 device_ulps=0
+ROS_TRANSLATION 1 host_ulps=0 device_ulps=0
+BD_SUBSTEPS 1 host_ulps=0 device_ulps=0
+ROS_SUBSTEPS 1 host_ulps=0 device_ulps=0
+BE_TRANSLATION 2 host_ulps=0 device_ulps=0
+BE_SUBSTEPS 2 host_ulps=0 device_ulps=0
+BD_TRANSLATION 2 host_ulps=1 device_ulps=1
+ROS_TRANSLATION 2 host_ulps=1 device_ulps=1
+BD_SUBSTEPS 2 host_ulps=1 device_ulps=1
+ROS_SUBSTEPS 2 host_ulps=1 device_ulps=1
+BE_TRANSLATION 3 host_ulps=0 device_ulps=0
+BE_SUBSTEPS 3 host_ulps=0 device_ulps=0
+BD_TRANSLATION 3 host_ulps=0 device_ulps=0
+ROS_TRANSLATION 3 host_ulps=0 device_ulps=0
+BD_SUBSTEPS 3 host_ulps=0 device_ulps=0
+ROS_SUBSTEPS 3 host_ulps=0 device_ulps=0
+EXTERNAL_ENERGY BE_NR reacting=0 steps=8 host_t_error=0.032436876763387329 device_t_error=0.032436876763387329 host_integral_error=0.032436876763387135 device_integral_error=0.032436876763387135
+EXTERNAL_ENERGY BE_NR reacting=0 steps=16 host_t_error=0.016565369764400761 device_t_error=0.016565369764400761 host_integral_error=0.016565369764400817 device_integral_error=0.016565369764400817
+EXTERNAL_ENERGY BE_NR reacting=0 steps=32 host_t_error=0.0083704056387191583 device_t_error=0.0083704056387191583 host_integral_error=0.0083704056387189363 device_integral_error=0.0083704056387189363
+EXTERNAL_ENERGY BE_NR reacting=1 steps=8 host_t_error=0.033758373614122761 device_t_error=0.033758373614122761 host_integral_error=0.036491486358810721 device_integral_error=0.036491486358810721
+EXTERNAL_ENERGY BE_NR reacting=1 steps=16 host_t_error=0.017235304641639151 device_t_error=0.017235304641639151 host_integral_error=0.018636040984950752 device_integral_error=0.018636040984950752
+EXTERNAL_ENERGY BE_NR reacting=1 steps=32 host_t_error=0.0087074038037315282 device_t_error=0.0087074038037315282 host_integral_error=0.009416706343559067 device_integral_error=0.009416706343559067
+EXTERNAL_ENERGY BD reacting=0 steps=8 host_t_error=2.5987684046158144e-05 device_t_error=2.5987684046158144e-05 host_integral_error=2.5987684046269166e-05 device_integral_error=2.5987684046269166e-05
+EXTERNAL_ENERGY BD reacting=0 steps=16 host_t_error=3.4442778913401639e-06 device_t_error=3.4442778913401639e-06 host_integral_error=3.4442778911181193e-06 device_integral_error=3.4442778911181193e-06
+EXTERNAL_ENERGY BD reacting=0 steps=32 host_t_error=4.4418036096449676e-07 device_t_error=4.4418036096449676e-07 host_integral_error=4.4418036071469658e-07 device_integral_error=4.4418036071469658e-07
+EXTERNAL_ENERGY BD reacting=1 steps=8 host_t_error=2.865098345358752e-05 device_t_error=2.865098345358752e-05 host_integral_error=2.9236144552302612e-05 device_integral_error=2.9236144552302612e-05
+EXTERNAL_ENERGY BD reacting=1 steps=16 host_t_error=3.7993496031230034e-06 device_t_error=3.7993496031230034e-06 host_integral_error=3.8748126276466621e-06 device_integral_error=3.8748126276466621e-06
+EXTERNAL_ENERGY BD reacting=1 steps=32 host_t_error=4.9011673713961201e-07 device_t_error=4.9011673713961201e-07 host_integral_error=4.9970290616485613e-07 device_integral_error=4.9970290616485613e-07
+EXTERNAL_ENERGY ROS4 reacting=0 steps=8 host_t_error=2.0249926768661775e-05 device_t_error=2.0249926768661775e-05 host_integral_error=2.0249926768634019e-05 device_integral_error=2.0249926768634019e-05
+EXTERNAL_ENERGY ROS4 reacting=0 steps=16 host_t_error=1.4972438940608068e-06 device_t_error=1.4972438940608068e-06 host_integral_error=1.4972438940885624e-06 device_integral_error=1.4972438940885624e-06
+EXTERNAL_ENERGY ROS4 reacting=0 steps=32 host_t_error=1.024114885395111e-07 device_t_error=1.024114885395111e-07 host_integral_error=1.0241148851175552e-07 device_integral_error=1.0241148851175552e-07
+EXTERNAL_ENERGY ROS4 reacting=1 steps=8 host_t_error=2.2526796231797652e-05 device_t_error=2.2526796231797652e-05 host_integral_error=2.2781167615004705e-05 device_integral_error=2.2781167615004705e-05
+EXTERNAL_ENERGY ROS4 reacting=1 steps=16 host_t_error=1.6670004220897816e-06 device_t_error=1.6670004220897816e-06 host_integral_error=1.6843993807524882e-06 device_integral_error=1.6843993807524882e-06
+EXTERNAL_ENERGY ROS4 reacting=1 steps=32 host_t_error=1.1407341539426685e-07 device_t_error=1.1407341539426685e-07 host_integral_error=1.152129246451139e-07 device_integral_error=1.152129246451139e-07
+BE_CONTROL 0 host_error=0.0090847625545679156 device_error=0.0090847625545679156 host_attempts=12 device_attempts=12
+BE_CONTROL 1 host_error=0.0010661647485946946 device_error=0.0010661647485947223 host_attempts=90 device_attempts=90
+composition_cv,steps,cpu_x_error,gpu_x_error,cpu_t_error,gpu_t_error
+0,16,6.9595835261448968e-08,6.9595835261448968e-08,8.4393632970858334e-08,8.4393632970858334e-08
+0,32,4.5580368368547397e-09,4.5580368368547397e-09,5.5139575128038132e-09,5.5139575128038132e-09
+0,64,2.9174562765632572e-10,2.9174562765632572e-10,3.5227265549053755e-10,3.5227265549053755e-10
+1,16,6.9595835261448968e-08,6.9595835261448968e-08,3.1294813851445724e-08,3.1294813851445724e-08
+1,32,4.5580368368547397e-09,4.5580368368547397e-09,2.0308514869782357e-09,2.0308514869782357e-09
+1,64,2.9174562765632572e-10,2.9174562765632572e-10,1.2929723958166051e-10,1.2929723958166051e-10
+CONTRACTS jacobian=1 first_law=1 accepted_state=1 ros_failure=1 be_control=1 bound_network=1 external_jacobian=1 external_0=1,1,1 external_1=1,1,1 external_2=1,1,1

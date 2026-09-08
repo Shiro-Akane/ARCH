@@ -1,0 +1,4 @@
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Tabular3DEOS] Warning: thermodynamic spacing exceeds 0.02 dex; refine and run the error analyzer before production use.
+[Fatal Error] This tabular EOS does not supply the electron diagnostics required by automatic stellar conductivity. Declare a positive alpha_therm for a constant-diffusivity model or disable thermal diffusion.

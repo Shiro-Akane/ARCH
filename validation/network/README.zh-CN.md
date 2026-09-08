@@ -6,8 +6,9 @@
 检查到实际时间演化，并将弱反应引起的组分和能量变化与独立参考比较。稀疏案例
 还实际检查大方程系统的求解路径，而不只是确认生成包能够编译。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+本页历史验证结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；
+下方生成网络 NSE 扩展属于后续有界开发检查，不替代这些冻结验证。
+源码组织与构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
 
 CPU 和 CUDA 已通过生成网络的完整程序矩阵、真实 31 核素稀疏轨迹矩阵，
 以及恒定比热和 Helmholtz EOS 下的独立弱反应轨迹验证。这些记录覆盖
@@ -176,6 +177,38 @@ Helmholtz 命令中的 `--cv` 用于配套工厂控制，轨迹本身使用 Helm
 弱反应工具保留粗、细两档容差控制，并要求细容差结果通过。稀疏工具要求三种
 ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算完整覆盖。
 
+## 生成网络 NSE 扩展（2026-09-08）
+
+生成器会检查网络是否适用[生成网络契约](../../src/physics/network/custom/README.md#generated-network-nse-eligibility)
+限定的基态 NSE 模型。资格要求完整质量／自旋数据、无屏蔽的强反应 ReacLib
+正向率与受识别的 `DerivedRate(use_pf=False)` 逆向率配对、无弱源项，且反应计量
+不变量只有独立的重子数与电荷约束；不是按网络名称或核素数量设置白名单。
+温度相关配分函数、带屏蔽或弱反应的平衡不在该模型认证范围；缺少资格元数据的
+已有生成包继续使用原有普通 ODE 路径。
+
+真实生成包 [nse_light](inputs/nse_light.py) 与 [nse_alpha](inputs/nse_alpha.py)
+已通过定向 CPU [平衡与燃烧交接检查](../../tests/host/test_generated_nse_network.cpp)。
+每个包检查九个状态：`T={4.5,5,7}e9 K` 与 `rho={1e6,1e7,1e9} g/cm³`。
+测试调用包内真实反应率与 RHS 代码，逐对隔离正／逆单向流并独立要求流量相抵，
+同时以全部单向流绝对值之和归一化，检查真实完整 RHS。
+
+| 生成包 | 核素数／反应对数／约束秩 | 最大反应对或 RHS 相对残差 | 最大耦合能量残差 |
+| --- | --- | --- | --- |
+| `nse_light` | 7 / 10 / 2 | `2.576e-12` | `3.966e-14` |
+| `nse_alpha` | 2 / 1 / 1 | `5.804e-13` | `2.180e-15` |
+
+详细平衡／RHS 预算为 `1e-10`。每个包还通过 BE_NR、BD、ROS4 三种方法，
+使用相同 NSE 温密度阈值检查保守投影、阈值以下负控，以及降温投影失败后继续
+真实普通 ODE 演化。投影第一定律残差以 `cv*T` 归一化，上限为 `1e-12`；
+电荷守恒保留 `1e-12`。这些是紧凑网络恒定比热交接检查，不等于独立的长时间
+天体物理轨迹或大型网络性能验收。
+
+在 `ARCH_CUSTOM_NETWORKS` 选择这两个维护配方后，CTest 注册
+`generated_nse_nse_light` 与 `generated_nse_nse_alpha`。默认的 `generated_nse`
+和 CUDA `generated_nse_device` 共用独立解析秩一／秩二参考、能量零点与拒绝负控，
+两端均通过；CUDA 检查不是上表真实生成包的轨迹矩阵。内建 NSE 参考覆盖单独保留且
+未改动。这些新增检查不追溯修改此前弱反应、稀疏、完整程序或插桩验收记录。
+
 ## 适用范围与后续工作
 
 完整 Release／Debug 回归、[五阶段核心构建检查](../backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
@@ -186,8 +219,8 @@ ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算�
 
 150/200 核素的完整轨迹和规模测试仍按已批准的安排，放到更大验证系统上继续，
 不属于本轮本地发布门槛。超大网络的科学可靠性取决于核素集合、反应数据和模型
-适用范围，求解器及后端的一致性单独记录。当前不支持自定义网络 NSE；
-[NSE 独立参考](nse_reference.py) 覆盖已支持的内置网络。
+适用范围，求解器及后端的一致性单独记录。生成网络 NSE 的支持受上方契约与定向
+覆盖范围限制；[NSE 独立参考](nse_reference.py) 继续覆盖已支持的内置网络。
 
 内部状态见[发布标准](../../docs/development/CudaReleaseStandard.md)，
 用户能力说明见[后端指南](../../docs/CudaBackendStatus.zh-CN.md)。

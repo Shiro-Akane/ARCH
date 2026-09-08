@@ -64,6 +64,42 @@ target_compile_features(arch_burn_mainline_reference PRIVATE cxx_std_20)
 target_compile_definitions(arch_burn_mainline_reference PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME burn_mainline_reference COMMAND arch_burn_mainline_reference)
+add_executable(arch_generated_nse tests/host/test_generated_nse.cpp)
+arch_configure_host_test(arch_generated_nse)
+target_link_libraries(arch_generated_nse PRIVATE arch_build_contract)
+add_test(NAME generated_nse COMMAND arch_generated_nse)
+add_executable(arch_tabular_strict tests/math/test_tabular_strict.cpp)
+arch_configure_host_test(arch_tabular_strict)
+target_link_libraries(arch_tabular_strict PRIVATE arch_build_contract)
+add_test(NAME tabular_strict_math COMMAND arch_tabular_strict)
+add_executable(arch_baryon_source tests/host/BaryonSourceRegression.cpp
+    src/physics/eos/TabularBaryonSource.cpp)
+arch_configure_host_test(arch_baryon_source)
+target_link_libraries(arch_baryon_source PRIVATE arch_build_contract)
+add_test(NAME baryon_source_format COMMAND arch_baryon_source
+    "${CMAKE_CURRENT_BINARY_DIR}/baryon-source-test-data")
+add_executable(arch_helm_components tests/host/HelmComponentsRegression.cpp)
+arch_configure_host_test(arch_helm_components "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_helm_components PRIVATE arch_build_contract)
+add_test(NAME helm_components COMMAND arch_helm_components
+    "${CMAKE_CURRENT_SOURCE_DIR}/EOS_toolkit/tables/helmholtz/helm_table.dat")
+# These maintained recipes define the physical inputs of the detailed-balance
+# and cooling-handoff witnesses. Do not impose their trajectories on arbitrary
+# user networks or require pynucastro during an ordinary CPU CI run.
+foreach(reference_id IN ITEMS nse_light nse_alpha)
+    if(reference_id IN_LIST ARCH_CUSTOM_CUDA_IDS)
+        set(reference_target arch_generated_nse_${reference_id})
+        add_executable(${reference_target} tests/host/test_generated_nse_network.cpp)
+        arch_configure_host_test(${reference_target}
+            "${ARCH_CUSTOM_NETWORK_ROOT}/${reference_id}")
+        target_compile_definitions(${reference_target} PRIVATE
+            ARCH_TEST_NETWORK_HEADER="${ARCH_CUSTOM_HEADER_${reference_id}}"
+            ARCH_TEST_NETWORK_TYPE=${ARCH_CUSTOM_TYPE_${reference_id}}
+            ARCH_TEST_GENERATED_NAMESPACE=arch_pynucastro_${reference_id})
+        target_link_libraries(${reference_target} PRIVATE arch_build_contract)
+        add_test(NAME generated_nse_${reference_id} COMMAND ${reference_target})
+    endif()
+endforeach()
 add_executable(arch_mainline_authority tests/cuda/test_mainline_authority.cpp)
 arch_configure_host_test(arch_mainline_authority)
 target_compile_definitions(arch_mainline_authority PRIVATE
@@ -136,6 +172,8 @@ function(arch_register_io_regression_tests)
     add_executable(arch_checkpoint_compatibility
         tests/host/test_checkpoint_compatibility.cpp
         src/core/FileFingerprint.cpp
+        src/physics/eos/eosdispatch.cpp
+        src/physics/eos/TabularBaryonSource.cpp
         src/io/chk/CheckpointCompatibility.cpp
         src/io/chk/ChkIO.cpp
         src/io/hdf5/HDF5Writer.cpp)
@@ -153,7 +191,9 @@ function(arch_register_io_regression_tests)
         src/core/FileFingerprint.cpp
         src/physics/eos/Tabular3DEOS.cpp
         src/physics/eos/Tabular4DEOS.cpp
-        src/physics/eos/eosdispatch.cpp)
+        src/physics/eos/eosdispatch.cpp
+        src/physics/eos/TabularBaryonSource.cpp
+        src/physics/eos/TabularCompletion.cpp)
     arch_configure_host_test(tabular_eos_regression
         "${highfive_SOURCE_DIR}/include"
         ${HDF5_INCLUDE_DIRS})
@@ -162,6 +202,48 @@ function(arch_register_io_regression_tests)
     add_test(NAME tabular_eos_ideal_gas
         COMMAND tabular_eos_regression
                 "${CMAKE_CURRENT_BINARY_DIR}/tabular-eos-test-data")
+
+    add_executable(arch_native_tabular
+        tests/host/NativeTabularRegression.cpp
+        src/core/FileFingerprint.cpp
+        src/physics/eos/Tabular3DEOS.cpp
+        src/physics/eos/eosdispatch.cpp
+        src/physics/eos/TabularBaryonSource.cpp
+        src/physics/eos/TabularCompletion.cpp)
+    arch_configure_host_test(arch_native_tabular
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_native_tabular PRIVATE
+        arch_build_contract ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    add_test(NAME native_tabular_eos COMMAND arch_native_tabular
+        "${CMAKE_CURRENT_BINARY_DIR}/native-tabular-test-data")
+
+    add_executable(arch_tabular_completion tests/host/TabularCompletionRegression.cpp
+        src/core/FileFingerprint.cpp
+        src/physics/eos/eosdispatch.cpp
+        src/physics/eos/Tabular3DEOS.cpp src/physics/eos/Tabular4DEOS.cpp
+        src/physics/eos/TabularBaryonSource.cpp src/physics/eos/TabularCompletion.cpp)
+    arch_configure_host_test(arch_tabular_completion
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_tabular_completion PRIVATE arch_build_contract
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    add_test(NAME tabular_component_completion COMMAND arch_tabular_completion
+        "${CMAKE_CURRENT_BINARY_DIR}/component-completion-test-data"
+        "${CMAKE_CURRENT_SOURCE_DIR}/EOS_toolkit/tables/helmholtz/helm_table.dat")
+    set_tests_properties(tabular_component_completion PROPERTIES
+        FIXTURES_SETUP tabular_completion_tables)
+
+    # Real author tables are an explicit scientific sample, not an optional
+    # skipped test in the default regression inventory.
+    add_executable(arch_baryon_eos tests/host/BaryonEosRegression.cpp
+        src/core/FileFingerprint.cpp src/physics/eos/eosdispatch.cpp
+        src/physics/eos/Tabular3DEOS.cpp src/physics/eos/Tabular4DEOS.cpp
+        src/physics/eos/TabularBaryonSource.cpp src/physics/eos/TabularCompletion.cpp)
+    arch_configure_host_test(arch_baryon_eos "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_baryon_eos PRIVATE arch_build_contract
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
 
     if(ARCH_KLU_TARGET)
         add_executable(sparse_klu_regression tests/host/SparseKLURegression.cpp)

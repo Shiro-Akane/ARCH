@@ -417,21 +417,64 @@ and any other spelling are rejected with the parameter name in the error.
 | --- | --- | --- | --- |
 | `eos_type` | string | `ideal` | `ideal`, `tabular`, `helmholtz` |
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
+| `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
 | `gamma` | double | `1.4` | ideal-gas fallback/reference gamma |
 | `gravity_type` | string | `none` | `none`, `external`; `self` is rejected by the capability gate before construction |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | parsed only for unsupported self gravity |
 
-For `eos_type = tabular`, the HDF5 file declares `table_rank = 3` or `4` and
-dispatch selects the matching policy automatically. Tables should preferably store
-specific Helmholtz free energy; the normalized datasets, derivative identities,
-direct-field model, and guard-node/endpoint spacing rules are specified
-in the local [Tabular EOS HDF5 interface](../src/physics/eos/TabularEOS.md).
-Shen/LS/HS/CompOSE/EOSDriver files require a family-specific converter; none is
-currently bundled. Binary compatibility is defined by the normalized schema,
-not by an upstream filename or HDF5 container. The
-[EOS validation record](../validation/eos/README.md) describes source-table
-assessments, including Shen EOS4 and EOSDriver HShen.
+For `eos_type=tabular`, EOSDispatcher recognizes normalized HDF5 with rank 3 or
+4, EOSDriver total-EOS HDF5, and the original positive-temperature 16-column
+baryon ASCII main tables used by Shen EOS2/EOS4. Selection uses file content,
+not an EOS-name list. The [source and HDF5 contract](../src/physics/eos/TabularEOS.md)
+defines the layouts, units, derivative constraints and supported domains;
+arbitrary CompOSE or unrelated ASCII layouts remain unsupported.
+
+Normalized `eos_components` declares `baryons`, `baryons,electrons_positrons`,
+`baryons,photons`, or `baryons,electrons_positrons,photons` (`total` is an alias
+for the last). The host loader adds only missing electron/positron or photon
+terms to a `free_energy` potential; it does not modify source files, duplicate
+ions/Coulomb terms, or add separate pressure/energy fields. Absent declarations
+preserve the legacy complete-table interpretation. Complete tables and
+photon-only completion do not load the auxiliary electron table. If electrons
+are missing, an empty `eos_helm_table_path` resolves to
+`EOS_toolkit/tables/helmholtz/helm_table.dat`.
+
+Optional positive finite `baryon_mass_g` specifies the fixed `rho=m_B*n_B`
+convention; electron density and specific-energy units are converted together,
+without changing physical pressure. Rank 3 requires a physical `Ye` coordinate
+for electron completion; rank 4 uses `Zbar/Abar`. Optional
+`free_energy_dlnrho`/`free_energy_dlnT` supply source potential constraints
+`P/rho` and `-T*S`. The original baryon reader uses source F/P/S, its fixed mass
+and documented constant E/F reference difference; it does not fit energy zeros.
+Printed source E remains an independent consistency diagnostic, and the source
+F/E/S residuals are not universally within half a printed unit.
+
+Declared-component or nuclear-equilibrium free-energy tables use the same
+strict masked-domain and temperature-inversion policy whether supplied total
+or completed automatically. One load-time constant energy reference may be
+needed; there are no per-state shifts. Invalid source/component derivative
+stencils, out-of-domain queries and absent or multiple valid thermal roots are
+rejected. The source/interpretation fingerprint includes any electron supplement
+actually used. EOSDriver total tables retain their native axes and encoded
+pressure/energy interpolants, with their own strict validity and inverse checks.
+
+Native nuclear-equilibrium tables, or normalized integer
+`nuclear_equilibrium=1`, require `use_burn=false` to avoid double-counting nuclear
+binding. Declared/strict tables also reject Steger-Warming flux splitting and
+automatic stellar conductivity; use a general-EOS flux and explicit constant
+thermal diffusivity, or disable it. An allowed kinetic energy source does not
+establish compatibility with every weak network: tabular views do not provide
+a physical electron `eta`, needed by the `aprox19`/`aprox21` electron-capture
+terms. Their existing Helmholtz routes are unchanged. No generic weak-process
+compatibility is implied by the component-completion interface.
+
+The original `EOS_toolkit/tables/baryon/eos2.tab` and `eos4.tab` assets are
+unmodified, LFS-managed author data under the identified CC BY 4.0 deposit.
+Processed HShen HDF5 is investigated for compatibility but not bundled.
+Format compatibility and sampled tests do not qualify an arbitrary table or
+its full domain; see the [EOS validation record](../validation/eos/README.md)
+and [table provenance](../THIRD_PARTY_NOTICES.md#external-shen-eos-tables-and-eosdriver-compatible-formats).
 
 The maintained Helmholtz validation asset is the `helm_table.dat` member of the
 `helmholtz.tar.xz` archive downloaded from the
@@ -449,15 +492,15 @@ also requires the exact checksum above.
 | Key | Type | Load default | Contract |
 | --- | --- | --- | --- |
 | `use_burn` | bool | `false` | enables the burn module |
-| `network_name` | string | `aprox19` | built-ins above or any compiled `custom:<id>`; generated networks require `use_nse = false` |
+| `network_name` | string | `aprox19` | built-ins above or any compiled `custom:<id>`; NSE availability follows package metadata |
 | `nuclearTempMin` | double | `1e9` | K; burn activation threshold |
 | `nuclearDensMin` | double | `1e-10` | g/cm3; burn activation threshold |
 | `smallt` | double | `1e5` | K; burn state floor |
 | `smallx` | double | `1e-20` | composition floor |
 | `enucDtFactor` | double | `1e30` | energy-release time-step limiter; huge default is effectively off |
-| `use_nse` | bool | `true` | enables thresholded NSE projection for the four built-in networks only |
-| `nseTempThreshold` | double | `4.5e9` | K |
-| `nseDensThreshold` | double | `1e6` | g/cm3 |
+| `use_nse` | bool or `auto` | `true` | `true` requires NSE support; `false` disables it; `auto` enables it only for a capable network |
+| `nseTempThreshold` | double | `4.5e9` | finite positive K; the same strict `T > threshold` for true and auto |
+| `nseDensThreshold` | double | `1e6` | finite nonnegative g/cm3; the same strict `rho > threshold` for true and auto |
 | `enforce_mass_conservation` | bool | `true` | parsed and stored; no active burn path currently consumes this switch |
 | `burn_verbose_level` | int | `0` | parsed and stored; no active burn path currently consumes this level |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
@@ -919,8 +962,14 @@ the matching Python environment and build commands.
 The adapter converts pynucastro molar RHS/Jacobian entries to ARCH mass-fraction
 form, carries nuclear/weak-neutrino energy into the ODE RHS, and namespaces the
 generated SimpleCxx headers. Recognized weak tables include the rho*Ye
-composition chain rule and signed energy-source gradient. Custom networks set
-`SUPPORTS_NSE=false`; the complete-RHS temperature Jacobian uses the shared
+composition chain rule and signed energy-source gradient. Generated NSE
+eligibility is checked from nuclear data, detailed-balance pairs and the rank
+of the strong-reaction conservation constraints. The initial supported model
+is unscreened, weak-free, ground-state equilibrium; temperature-dependent
+partition functions require an excitation-energy closure not supplied here.
+Missing or incompatible metadata leaves ordinary ODE burning available with
+`use_nse=auto` or `false`. See the [package contract](../src/physics/network/custom/README.md).
+The complete-RHS temperature Jacobian uses the shared
 fourth-order difference policy with a precision-derived step and boundary stencil.
 The generator removes only compile-time literal-zero Jacobian calls;
 runtime numerical zeros remain structural entries for safe KLU refactorization.
@@ -1072,8 +1121,10 @@ part of restart identity rather than the raw `tabular` configuration spelling.
 the burn limit carried into the next macro step, and loop phase without
 repeating a completed regrid or step-based output event. The table path is
 audit metadata; compatibility uses the SHA-256 content identity, so an
-unchanged table may move between installations. The table loader fingerprints
-the file before and after loading, binds cached owners to that digest, and the
+unchanged table may move between installations. For a component-completed EOS,
+this identity includes the source interpretation and any electron supplement
+actually used, not only the main table's file hash. The table loader fingerprints
+the effective source identity before and after loading, binds cached owners to that digest, and the
 immutable identity passed to every checkpoint therefore describes the bytes
 actually resident in the EOS owner rather than a later path lookup.
 
@@ -1117,8 +1168,9 @@ reconstruct missing mass fractions. A fresh simulation initializes its own
 - Generated CUDA networks must satisfy the
   [device-math package contract](../src/physics/network/custom/README.md), including
   the `device_callable_math=true` declaration. Accepted host-only packages support
-  CPU execution only. Neither backend implements self-gravity, the Jeans indicator or
-  custom-network NSE.
+  CPU execution only. Neither backend implements self-gravity or the Jeans indicator.
+  Generated NSE requires the documented equilibrium-model eligibility; it is not
+  a promise that every correct kinetic network admits an NSE bypass.
 - Runtime selection is string based, and several policy surfaces are compile-time
   or duck-typed contracts rather than a stable public ABI.
 - State repair, interface clamping, and fallback defaults can alter strict

@@ -1,0 +1,133 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/matrices/hydro_amr_regrid_cycle_1d/step-100/cpu/hydro_amr_regrid_cycle_1d_cpu_s100_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/matrices/hydro_amr_regrid_cycle_1d/step-100/cpu/hydro_amr_regrid_cycle_1d_cpu_s100.par
+[Main] Problem created: SmoothAdvection
+[Problem] Smooth entropy wave: rho=1+0.2 sin(2*pi*1*x/L), u=1, p=1
+[Main] Configuration:
+       Grid: 80 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0125
+    Level 1   | dx1(x): 0.00625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+           -> Refining initial condition (Pass 1)...
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/matrices/hydro_amr_regrid_cycle_1d/step-100/cpu/hydro_amr_regrid_cycle_1d_cpu_s100_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/matrices/hydro_amr_regrid_cycle_1d/step-100/cpu/hydro_amr_regrid_cycle_1d_cpu_s100_chk_0000.h5 at step 0 with 6 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       8.07248e-04    8.07248e-04    8.07248e-04    
+2       1.61450e-03    8.07248e-04    8.07248e-04    
+3       2.42174e-03    8.07248e-04    8.07248e-04    
+4       3.22899e-03    8.07248e-04    8.07248e-04    
+5       4.03624e-03    8.07248e-04    8.07248e-04    
+6       4.84349e-03    8.07248e-04    8.07248e-04    
+7       5.65074e-03    8.07248e-04    8.07248e-04    
+8       6.45799e-03    8.07248e-04    8.07248e-04    
+9       7.26523e-03    8.07248e-04    8.07248e-04    
+10      8.07248e-03    8.07248e-04    8.07248e-04    
+11      8.87973e-03    8.07248e-04    8.07248e-04    
+12      9.68916e-03    8.09425e-04    8.09425e-04    
+13      1.04964e-02    8.07248e-04    8.07248e-04    
+14      1.13037e-02    8.07248e-04    8.07248e-04    
+15      1.21128e-02    8.09189e-04    8.09189e-04    
+16      1.29201e-02    8.07264e-04    8.07264e-04    
+17      1.37274e-02    8.07264e-04    8.07264e-04    
+18      1.45363e-02    8.08965e-04    8.08965e-04    
+19      1.53436e-02    8.07287e-04    8.07287e-04    
+20      1.61524e-02    8.08798e-04    8.08798e-04    
+21      1.69597e-02    8.07287e-04    8.07287e-04    
+22      1.77670e-02    8.07287e-04    8.07287e-04    
+23      1.85743e-02    8.07287e-04    8.07287e-04    
+24      1.93816e-02    8.07287e-04    8.07287e-04    
+25      2.01901e-02    8.08489e-04    8.08489e-04    
+26      2.09973e-02    8.07288e-04    8.07288e-04    
+27      2.18046e-02    8.07288e-04    8.07288e-04    
+28      2.26129e-02    8.08278e-04    8.08278e-04    
+29      2.34202e-02    8.07293e-04    8.07293e-04    
+30      2.42275e-02    8.07293e-04    8.07293e-04    
+31      2.50356e-02    8.08139e-04    8.08139e-04    
+32      2.58429e-02    8.07303e-04    8.07303e-04    
+33      2.66502e-02    8.07303e-04    8.07303e-04    
+34      2.74575e-02    8.07303e-04    8.07303e-04    
+35      2.82956e-02    8.38070e-04    8.38070e-04    
+36      2.91029e-02    8.07324e-04    8.07324e-04    
+37      2.99103e-02    8.07324e-04    8.07324e-04    
+38      3.07491e-02    8.38827e-04    8.38827e-04    
+39      3.15564e-02    8.07324e-04    8.07324e-04    
+40      3.23637e-02    8.07324e-04    8.07324e-04    
+41      3.31714e-02    8.07699e-04    8.07699e-04    
+42      3.39788e-02    8.07326e-04    8.07326e-04    
+43      3.47861e-02    8.07326e-04    8.07326e-04    
+44      3.55934e-02    8.07326e-04    8.07326e-04    
+45      3.64007e-02    8.07326e-04    8.07326e-04    
+46      3.72083e-02    8.07576e-04    8.07576e-04    
+47      3.80156e-02    8.07334e-04    8.07334e-04    
+48      3.88230e-02    8.07334e-04    8.07334e-04    
+49      3.96305e-02    8.07494e-04    8.07494e-04    
+50      4.04378e-02    8.07346e-04    8.07346e-04    
+51      4.12452e-02    8.07346e-04    8.07346e-04    
+52      4.20872e-02    8.42007e-04    8.42007e-04    
+53      4.28945e-02    8.07357e-04    8.07357e-04    
+54      4.37019e-02    8.07357e-04    8.07357e-04    
+55      4.45093e-02    8.07431e-04    8.07431e-04    
+56      4.53167e-02    8.07357e-04    8.07357e-04    
+57      4.61240e-02    8.07357e-04    8.07357e-04    
+58      4.69675e-02    8.43448e-04    8.43448e-04    
+59      4.77748e-02    8.07359e-04    8.07359e-04    
+60      4.85822e-02    8.07359e-04    8.07359e-04    
+61      4.93896e-02    8.07359e-04    8.07359e-04    
+62      5.01969e-02    8.07359e-04    8.07359e-04    
+63      5.10043e-02    8.07383e-04    8.07383e-04    
+64      5.18117e-02    8.07368e-04    8.07368e-04    
+65      5.26190e-02    8.07368e-04    8.07368e-04    
+66      5.34264e-02    8.07368e-04    8.07368e-04    
+67      5.42338e-02    8.07368e-04    8.07368e-04    
+68      5.50412e-02    8.07381e-04    8.07381e-04    
+69      5.58485e-02    8.07381e-04    8.07381e-04    
+70      5.66559e-02    8.07381e-04    8.07381e-04    
+71      5.74990e-02    8.43079e-04    8.43079e-04    
+72      5.83064e-02    8.07382e-04    8.07382e-04    
+73      5.91138e-02    8.07382e-04    8.07382e-04    
+74      5.99211e-02    8.07382e-04    8.07382e-04    
+75      6.07285e-02    8.07382e-04    8.07382e-04    
+76      6.15359e-02    8.07382e-04    8.07382e-04    
+77      6.23433e-02    8.07383e-04    8.07383e-04    
+78      6.31847e-02    8.41423e-04    8.41423e-04    
+79      6.39921e-02    8.07398e-04    8.07398e-04    
+80      6.47995e-02    8.07398e-04    8.07398e-04    
+81      6.56069e-02    8.07398e-04    8.07398e-04    
+82      6.64143e-02    8.07398e-04    8.07398e-04    
+83      6.72217e-02    8.07398e-04    8.07398e-04    
+84      6.80291e-02    8.07400e-04    8.07400e-04    
+85      6.88367e-02    8.07644e-04    8.07644e-04    
+86      6.96442e-02    8.07405e-04    8.07405e-04    
+87      7.04835e-02    8.39310e-04    8.39310e-04    
+88      7.12909e-02    8.07406e-04    8.07406e-04    
+89      7.20983e-02    8.07406e-04    8.07406e-04    
+90      7.29057e-02    8.07406e-04    8.07406e-04    
+91      7.37136e-02    8.07875e-04    8.07875e-04    
+92      7.45210e-02    8.07411e-04    8.07411e-04    
+93      7.53284e-02    8.07411e-04    8.07411e-04    
+94      7.61364e-02    8.08031e-04    8.08031e-04    
+95      7.69438e-02    8.07418e-04    8.07418e-04    
+96      7.77512e-02    8.07418e-04    8.07418e-04    
+97      7.85587e-02    8.07418e-04    8.07418e-04    
+98      7.93661e-02    8.07418e-04    8.07418e-04    
+99      8.01744e-02    8.08271e-04    8.08271e-04    
+100     8.09818e-02    8.07429e-04    8.07429e-04    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/matrices/hydro_amr_regrid_cycle_1d/step-100/cpu/hydro_amr_regrid_cycle_1d_cpu_s100_HLLC_plt_0001.h5 at t=8.09818e-02
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/matrices/hydro_amr_regrid_cycle_1d/step-100/cpu/hydro_amr_regrid_cycle_1d_cpu_s100_chk_0001.h5 at step 100 with 10 AMR leaves.
+>>> Simulation Done. Total Steps: 100 | Final Time: 8.09818e-02

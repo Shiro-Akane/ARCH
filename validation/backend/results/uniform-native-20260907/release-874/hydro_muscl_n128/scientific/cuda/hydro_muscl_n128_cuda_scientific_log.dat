@@ -1,0 +1,128 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/hydro_muscl_n128/scientific/cuda/hydro_muscl_n128_cuda_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/hydro_muscl_n128/scientific/cuda/hydro_muscl_n128_cuda_scientific.par
+[Main] Problem created: SmoothAdvection
+[Problem] Smooth entropy wave: rho=1+0.2 sin(2*pi*1*x/L), u=1, p=1
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 16 | Finest Level: 0
+    Level 0   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/hydro_muscl_n128/scientific/cuda/hydro_muscl_n128_cuda_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/hydro_muscl_n128/scientific/cuda/hydro_muscl_n128_cuda_scientific_chk_0000.h5 at step 0 with 8 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       1.00902e-03    1.00902e-03    1.00902e-03    
+2       2.01803e-03    1.00902e-03    1.00902e-03    
+3       3.02705e-03    1.00902e-03    1.00902e-03    
+4       4.03606e-03    1.00902e-03    1.00902e-03    
+5       5.04508e-03    1.00902e-03    1.00902e-03    
+6       6.05409e-03    1.00902e-03    1.00902e-03    
+7       7.06311e-03    1.00902e-03    1.00902e-03    
+8       8.07212e-03    1.00902e-03    1.00902e-03    
+9       9.08114e-03    1.00902e-03    1.00902e-03    
+10      1.00902e-02    1.00902e-03    1.00902e-03    
+11      1.10992e-02    1.00903e-03    1.00903e-03    
+12      1.21082e-02    1.00903e-03    1.00903e-03    
+13      1.31173e-02    1.00903e-03    1.00903e-03    
+14      1.41263e-02    1.00903e-03    1.00903e-03    
+15      1.51353e-02    1.00903e-03    1.00903e-03    
+16      1.61444e-02    1.00903e-03    1.00903e-03    
+17      1.71534e-02    1.00903e-03    1.00903e-03    
+18      1.81624e-02    1.00903e-03    1.00903e-03    
+19      1.91715e-02    1.00904e-03    1.00904e-03    
+20      2.01805e-02    1.00904e-03    1.00904e-03    
+21      2.11895e-02    1.00904e-03    1.00904e-03    
+22      2.21986e-02    1.00904e-03    1.00904e-03    
+23      2.32076e-02    1.00904e-03    1.00904e-03    
+24      2.42167e-02    1.00904e-03    1.00904e-03    
+25      2.52257e-02    1.00904e-03    1.00904e-03    
+26      2.62348e-02    1.00904e-03    1.00904e-03    
+27      2.72438e-02    1.00905e-03    1.00905e-03    
+28      2.82529e-02    1.00905e-03    1.00905e-03    
+29      2.92619e-02    1.00905e-03    1.00905e-03    
+30      3.02710e-02    1.00905e-03    1.00905e-03    
+31      3.12800e-02    1.00905e-03    1.00905e-03    
+32      3.22891e-02    1.00905e-03    1.00905e-03    
+33      3.32981e-02    1.00905e-03    1.00905e-03    
+34      3.43072e-02    1.00905e-03    1.00905e-03    
+35      3.53162e-02    1.00905e-03    1.00905e-03    
+36      3.63253e-02    1.00906e-03    1.00906e-03    
+37      3.73344e-02    1.00906e-03    1.00906e-03    
+38      3.83434e-02    1.00906e-03    1.00906e-03    
+39      3.93525e-02    1.00906e-03    1.00906e-03    
+40      4.03615e-02    1.00906e-03    1.00906e-03    
+41      4.13706e-02    1.00906e-03    1.00906e-03    
+42      4.23797e-02    1.00906e-03    1.00906e-03    
+43      4.33887e-02    1.00906e-03    1.00906e-03    
+44      4.43978e-02    1.00907e-03    1.00907e-03    
+45      4.54069e-02    1.00907e-03    1.00907e-03    
+46      4.64159e-02    1.00907e-03    1.00907e-03    
+47      4.74250e-02    1.00907e-03    1.00907e-03    
+48      4.84341e-02    1.00907e-03    1.00907e-03    
+49      4.94431e-02    1.00907e-03    1.00907e-03    
+50      5.04522e-02    1.00907e-03    1.00907e-03    
+51      5.14613e-02    1.00907e-03    1.00907e-03    
+52      5.24703e-02    1.00907e-03    1.00907e-03    
+53      5.34794e-02    1.00907e-03    1.00907e-03    
+54      5.44885e-02    1.00907e-03    1.00907e-03    
+55      5.54976e-02    1.00907e-03    1.00907e-03    
+56      5.65066e-02    1.00907e-03    1.00907e-03    
+57      5.75157e-02    1.00907e-03    1.00907e-03    
+58      5.85248e-02    1.00907e-03    1.00907e-03    
+59      5.95339e-02    1.00907e-03    1.00907e-03    
+60      6.05429e-02    1.00908e-03    1.00908e-03    
+61      6.15520e-02    1.00908e-03    1.00908e-03    
+62      6.25611e-02    1.00908e-03    1.00908e-03    
+63      6.35702e-02    1.00908e-03    1.00908e-03    
+64      6.45793e-02    1.00908e-03    1.00908e-03    
+65      6.55883e-02    1.00908e-03    1.00908e-03    
+66      6.65974e-02    1.00908e-03    1.00908e-03    
+67      6.76065e-02    1.00908e-03    1.00908e-03    
+68      6.86156e-02    1.00908e-03    1.00908e-03    
+69      6.96247e-02    1.00909e-03    1.00909e-03    
+70      7.06338e-02    1.00909e-03    1.00909e-03    
+71      7.16428e-02    1.00909e-03    1.00909e-03    
+72      7.26519e-02    1.00909e-03    1.00909e-03    
+73      7.36610e-02    1.00909e-03    1.00909e-03    
+74      7.46701e-02    1.00909e-03    1.00909e-03    
+75      7.56792e-02    1.00909e-03    1.00909e-03    
+76      7.66883e-02    1.00909e-03    1.00909e-03    
+77      7.76974e-02    1.00909e-03    1.00909e-03    
+78      7.87065e-02    1.00909e-03    1.00909e-03    
+79      7.97156e-02    1.00909e-03    1.00909e-03    
+80      8.07246e-02    1.00909e-03    1.00909e-03    
+81      8.17337e-02    1.00909e-03    1.00909e-03    
+82      8.27428e-02    1.00909e-03    1.00909e-03    
+83      8.37519e-02    1.00909e-03    1.00909e-03    
+84      8.47610e-02    1.00909e-03    1.00909e-03    
+85      8.57701e-02    1.00910e-03    1.00910e-03    
+86      8.67792e-02    1.00910e-03    1.00910e-03    
+87      8.77883e-02    1.00910e-03    1.00910e-03    
+88      8.87974e-02    1.00910e-03    1.00910e-03    
+89      8.98065e-02    1.00910e-03    1.00910e-03    
+90      9.08156e-02    1.00910e-03    1.00910e-03    
+91      9.18247e-02    1.00910e-03    1.00910e-03    
+92      9.28338e-02    1.00910e-03    1.00910e-03    
+93      9.38429e-02    1.00910e-03    1.00910e-03    
+94      9.48520e-02    1.00910e-03    1.00910e-03    
+95      9.58611e-02    1.00910e-03    1.00910e-03    
+96      9.68702e-02    1.00910e-03    1.00910e-03    
+97      9.78793e-02    1.00910e-03    1.00910e-03    
+98      9.88884e-02    1.00910e-03    1.00910e-03    
+99      9.98975e-02    1.00910e-03    1.00910e-03    
+100     1.00000e-01    1.02499e-04    1.00910e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/hydro_muscl_n128/scientific/cuda/hydro_muscl_n128_cuda_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/hydro_muscl_n128/scientific/cuda/hydro_muscl_n128_cuda_scientific_chk_0001.h5 at step 100 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 100 | Final Time: 1.00000e-01

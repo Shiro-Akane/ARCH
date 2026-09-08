@@ -1,0 +1,710 @@
+[
+  {
+    "origin": "cpu",
+    "destination": "cpu",
+    "lane": {
+      "name": "cpu_to_cpu",
+      "backend": "cpu",
+      "steps": 26,
+      "run_completed_steps": 26,
+      "checkpoint_metadata": {
+        "step": 26,
+        "time": 4.260541905120779e-11,
+        "resume_after_regrid": false,
+        "chk_file_index": 13,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "6883bd55980785e6906ad99c54f048723abd8523ed680ed2796b4c3d09cf0479",
+        "checkpoint_sha256": "faa06e1474b85ba2f3d99c827d9044f09f2e0bb7e6e161785de9bc1ec0946bd8",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0013.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cpu/RestartAMR_cpu_to_cpu.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cpu/RestartAMR_cpu_to_cpu.par",
+      "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0013.h5",
+      "checkpoint_sha256": "faa06e1474b85ba2f3d99c827d9044f09f2e0bb7e6e161785de9bc1ec0946bd8",
+      "plan": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cpu/RestartAMR_cpu_to_cpu_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous_chk_0012.h5",
+        "parameters": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous.par",
+        "step": 24,
+        "time": 3.5524452977539e-11,
+        "resume_after_regrid": true,
+        "chk_file_index": 12,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "59330cc47537167c4105bfff36658341f21f649f5397c3afacc1ed2561b30ebb",
+        "checkpoint_sha256": "e841888db9bdc7cd647ca2d3db81f7ad5acdb060da437cd6c0ff65e6e0670a8d",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous_chk_0012.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    "strict_comparison": {
+      "status": "pass",
+      "step": 26,
+      "time": 4.260541905120779e-11,
+      "candidate_step": 26,
+      "candidate_time": 4.260541905120779e-11,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 3.5327048425316056e-12,
+      "candidate_dt_old": 3.5327048425316056e-12,
+      "dt_burn": 1.3010586826910287e+25,
+      "candidate_dt_burn": 1.3010586826910287e+25,
+      "dt_burn_relative": 0,
+      "chk_file_index": 13,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 13,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  },
+  {
+    "origin": "cpu",
+    "destination": "cuda",
+    "lane": {
+      "name": "cpu_to_cuda",
+      "backend": "cuda",
+      "steps": 26,
+      "run_completed_steps": 26,
+      "checkpoint_metadata": {
+        "step": 26,
+        "time": 4.260541905120779e-11,
+        "resume_after_regrid": false,
+        "chk_file_index": 13,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "398bbdbb38278c69f98c54bc84e8d97406aeb44d3c5ba3db968b4aad7affced3",
+        "checkpoint_sha256": "7a2ac126fa825a1ef14adda3afe7fc95b021cf794941037b924869de033d0227",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0013.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cuda/RestartAMR_cpu_to_cuda.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cuda/RestartAMR_cpu_to_cuda.par",
+      "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0013.h5",
+      "checkpoint_sha256": "7a2ac126fa825a1ef14adda3afe7fc95b021cf794941037b924869de033d0227",
+      "plan": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cpu_to_cuda/RestartAMR_cpu_to_cuda_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous_chk_0012.h5",
+        "parameters": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous.par",
+        "step": 24,
+        "time": 3.5524452977539e-11,
+        "resume_after_regrid": true,
+        "chk_file_index": 12,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "59330cc47537167c4105bfff36658341f21f649f5397c3afacc1ed2561b30ebb",
+        "checkpoint_sha256": "e841888db9bdc7cd647ca2d3db81f7ad5acdb060da437cd6c0ff65e6e0670a8d",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous_chk_0012.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cpu/continuous/RestartAMR_continuous.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    "strict_comparison": {
+      "status": "pass",
+      "step": 26,
+      "time": 4.260541905120779e-11,
+      "candidate_step": 26,
+      "candidate_time": 4.260541905120779e-11,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 3.5327048425316056e-12,
+      "candidate_dt_old": 3.5327048425316056e-12,
+      "dt_burn": 1.3010586826910287e+25,
+      "candidate_dt_burn": 1.3010586765394336e+25,
+      "dt_burn_relative": 4.728145775674168e-09,
+      "chk_file_index": 13,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 13,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 217397160050688,
+      "max_rel": 1,
+      "max_field_normalized": 7.493339620633511e-09,
+      "max_enuc_normalized": 7.493339620633511e-09,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  },
+  {
+    "origin": "cuda",
+    "destination": "cpu",
+    "lane": {
+      "name": "cuda_to_cpu",
+      "backend": "cpu",
+      "steps": 26,
+      "run_completed_steps": 26,
+      "checkpoint_metadata": {
+        "step": 26,
+        "time": 4.2605419051455016e-11,
+        "resume_after_regrid": false,
+        "chk_file_index": 13,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "b38ccb39b31c97deb5d3fe1412664cf16339dfccc68941bc5f0321d357c9905c",
+        "checkpoint_sha256": "e39b96be875e4037981e239ec7e4721f4ae256e4a2fbb2ec5ad0a466db650403",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0013.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cpu/RestartAMR_cuda_to_cpu.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cpu/RestartAMR_cuda_to_cpu.par",
+      "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0013.h5",
+      "checkpoint_sha256": "e39b96be875e4037981e239ec7e4721f4ae256e4a2fbb2ec5ad0a466db650403",
+      "plan": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cpu/RestartAMR_cuda_to_cpu_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous_chk_0012.h5",
+        "parameters": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous.par",
+        "step": 24,
+        "time": 3.5524452977730833e-11,
+        "resume_after_regrid": true,
+        "chk_file_index": 12,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "19f675a23fc051bb141dcbab67723027555cfb7d708890dfe10a1e7c7f24ad55",
+        "checkpoint_sha256": "ef6c420674af00b7ebc19c3b4c7eea744f9e202f4e22d2ce2bc4508871cc5241",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous_chk_0012.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    "strict_comparison": {
+      "status": "pass",
+      "step": 26,
+      "time": 4.2605419051455016e-11,
+      "candidate_step": 26,
+      "candidate_time": 4.2605419051455016e-11,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 3.5327048425424313e-12,
+      "candidate_dt_old": 3.5327048425424313e-12,
+      "dt_burn": 1.3010586780861682e+25,
+      "candidate_dt_burn": 1.3010586780861682e+25,
+      "dt_burn_relative": 0,
+      "chk_file_index": 13,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 13,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 181164300042240,
+      "max_rel": 1,
+      "max_field_normalized": 6.2444496604845024e-09,
+      "max_enuc_normalized": 6.2444496604845024e-09,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  },
+  {
+    "origin": "cuda",
+    "destination": "cuda",
+    "lane": {
+      "name": "cuda_to_cuda",
+      "backend": "cuda",
+      "steps": 26,
+      "run_completed_steps": 26,
+      "checkpoint_metadata": {
+        "step": 26,
+        "time": 4.2605419051455016e-11,
+        "resume_after_regrid": false,
+        "chk_file_index": 13,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "1ecfa44a1d9ea5edb7986a91e5a0d7aeb941a0d6e57f082455b9feda9b88a0a2",
+        "checkpoint_sha256": "0f19a0be7123fca8a97f505184cd630b800c523bae780ae32fed7b792cc66970",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0013.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cuda/RestartAMR_cuda_to_cuda.par"
+        ]
+      },
+      "parameter": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cuda/RestartAMR_cuda_to_cuda.par",
+      "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0013.h5",
+      "checkpoint_sha256": "0f19a0be7123fca8a97f505184cd630b800c523bae780ae32fed7b792cc66970",
+      "plan": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-748/cuda_to_cuda/RestartAMR_cuda_to_cuda_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA GeForce RTX 3060 Ti",
+        "compute_capability": "8.6",
+        "runtime_version": "12030",
+        "driver_version": "13030",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "helmholtz",
+        "network": "aprox13",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous_chk_0012.h5",
+        "parameters": "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous.par",
+        "step": 24,
+        "time": 3.5524452977730833e-11,
+        "resume_after_regrid": true,
+        "chk_file_index": 12,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "19f675a23fc051bb141dcbab67723027555cfb7d708890dfe10a1e7c7f24ad55",
+        "checkpoint_sha256": "ef6c420674af00b7ebc19c3b4c7eea744f9e202f4e22d2ce2bc4508871cc5241",
+        "command": [
+          "/home/shiroakane/ARCH/build/release-core-throughput-cmake/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous_chk_0012.h5",
+          "--parameters",
+          "/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/diagnosis-746/cuda/continuous/RestartAMR_continuous.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    "strict_comparison": {
+      "status": "pass",
+      "step": 26,
+      "time": 4.2605419051455016e-11,
+      "candidate_step": 26,
+      "candidate_time": 4.2605419051455016e-11,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 3.5327048425424313e-12,
+      "candidate_dt_old": 3.5327048425424313e-12,
+      "dt_burn": 1.3010586780861682e+25,
+      "candidate_dt_burn": 1.3010586780861682e+25,
+      "dt_burn_relative": 0,
+      "chk_file_index": 13,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 13,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  }
+]

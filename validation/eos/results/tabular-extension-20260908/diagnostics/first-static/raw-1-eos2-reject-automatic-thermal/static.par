@@ -1,0 +1,134 @@
+# ==============================================================================
+# ARCH Simulation Configuration File
+# Case: Pure Carbon Detonation (1D ZND)
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# [Grid Configuration]
+# ------------------------------------------------------------------------------
+geometry = cartesian
+
+nblockx1 = 1
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 4
+
+x1_min = 0
+x1_max = 1e8
+x2_min = 0
+x2_max = 1
+x3_min = 0
+x3_max = 1
+
+# A reflecting left face can act as a rigid wall for ignition; the present
+# file leaves x1l unspecified and therefore uses the parser's default.
+x1r_boundary_type = periodic
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+# ------------------------------------------------------------------------------
+# [Numerics]
+# ------------------------------------------------------------------------------
+solver = HLLC
+reconstruct = muscl
+time_integrator = RK2
+limiter = mc
+cfl = .25
+
+EntropyFix = true
+EntropyFixCoefficient = 0.1
+
+sml_rho = 1e-12
+max_eint = 1e25
+
+# ------------------------------------------------------------------------------
+# [AMR]
+# Use density only for the stiff detonation front; avoid over-refining smooth ash.
+# ------------------------------------------------------------------------------
+lrefinemin = 0
+lrefinemax = 0
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.80
+derefine_threshold = 0.20
+
+# ------------------------------------------------------------------------------
+# [Time & IO]
+# ------------------------------------------------------------------------------
+tmax = 1e99
+max_steps = 3
+restart = false
+
+out_dir = /home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-automatic-thermal
+base_name = Static
+
+plt_dstep = 1
+plt_dt = -1
+plt_variables = DENS,TEMP,PRES,VELX,VELY,VELZ,ENER,SPECIES
+chk_dstep = -1
+chk_dt = -1
+
+# ------------------------------------------------------------------------------
+# [Physics Core]
+# ------------------------------------------------------------------------------
+eos_type = tabular
+eos_table_path = /home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab
+
+gravity_type = none
+
+# ------------------------------------------------------------------------------
+# [Nuclear Burn & ODE]
+# ------------------------------------------------------------------------------
+use_burn = false
+# Runtime-selectable built-in networks: aprox13, aprox19, aprox21, and iso7.
+network_name = aprox19
+# burn_verbose_level: 0 = fatal errors only, 1 = initialization summary,
+# 2 = detailed stiff-integrator diagnostics.
+burn_verbose_level = 2
+
+nuclearTempMin   = 1e9       # Minimum burn temperature (K); typical range 5e8-1e9.
+nuclearDensMin   = 1e-10     # Minimum burn density (g/cm^3).
+
+dt_init          = 1e-16     # Initial step for ignition transients; typical range 1e-16-1e-12 s.
+dt_min           = 1e-20     # Smallest ODE substep; typical range 1e-22-1e-20 s.
+tstep_change_factor = 1.2    # Maximum macro-step growth; 1.1-1.2 limits post-ignition jumps.
+enucDtFactor     = 0.05      # Maximum fractional nuclear-energy change; 1e30 effectively disables it.
+
+ode_solver = ROS4
+linear_solver = DenseLU
+
+# ------------------------------------------------------------------------------
+# [User Custom Parameters: CellularDet]
+# ------------------------------------------------------------------------------
+shock_dir = 0
+radiusPerturb = 5e7
+
+# Ambient unburned state ahead of the shock.
+rhoAmbient = 1e10
+tempAmbient = 1e10
+
+# Frozen von Neumann spike immediately behind the shock and before substantial burning.
+rhoPerturb = 1e10
+tempPerturb = 1e10
+velxPerturb = 0
+
+# Transverse cellular perturbation for breaking symmetry in 2D/3D.
+noiseAmplitude = 0
+
+# Initial composition in the default pynucastro aprox19 ordering:
+# N, H1, He3, He4, C12, N14, O16, Ne20, Mg24, Si28, S32, Ar36, Ca40, Ti44, Cr48, Fe52, Fe54, Ni56
+xhe4 = 0
+xc12 = 0
+xo16 = 0
+compute_backend = cpu
+x1l_boundary_type = periodic
+min_eint = 1e-10
+use_diffusion = true
+use_thermal_diff = true
+alpha_therm = 0
+use_nse = false
+xneut = .7
+xprot = .3
+eos_helm_table_path = /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat

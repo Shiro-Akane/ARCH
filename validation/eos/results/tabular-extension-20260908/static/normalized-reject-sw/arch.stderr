@@ -1,0 +1,4 @@
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Tabular3DEOS] Warning: thermodynamic spacing exceeds 0.02 dex; refine and run the error analyzer before production use.
+[Fatal Error] Steger-Warming requires a composition-only gamma and is not compatible with this declared tabular EOS; select a general-EOS flux.

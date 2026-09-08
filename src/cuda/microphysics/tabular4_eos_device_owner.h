@@ -47,6 +47,8 @@ private:
     std::array<std::vector<double>, 6> staging_{};
     std::array<std::vector<double>, tabular_eos::FieldCount>
         staging_free_energy_{};
+    double* device_valid_ = nullptr;
+    std::vector<double> staging_valid_;
 };
 
 } // namespace arch::cuda

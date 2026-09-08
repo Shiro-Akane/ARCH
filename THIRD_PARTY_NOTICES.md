@@ -27,13 +27,56 @@ therefore does not assert that the Timmes-derived material is relicensed under
 ARCH's MIT license. Maintainers should preserve source attribution and confirm
 applicable redistribution terms before a public release.
 
-The project uses Timmes's scientific work and has not yet contacted the author.
-The maintainer plans to supplement the contact and redistribution confirmation
-record. This administrative release item remains pending and is separate from
-technical validation; neither attribution nor successful tests imply permission.
+The maintainer is handling the request to clarify redistribution of the Timmes
+material and will retain the correspondence and applicable terms. Source
+attribution and upstream notices remain in place while this request is handled.
+This administrative release item is separate from technical validation; an
+in-progress request, attribution or successful tests does not establish written
+redistribution permission.
 
 Implementation and validation details are in
 [`docs/physics/TimmesNetworks.md`](docs/physics/TimmesNetworks.md).
+
+## External Shen EOS tables and EOSdriver-compatible formats
+
+ARCH's native nuclear-table reader is an ARCH-authored implementation of data
+formats. It does not copy or adapt EOSmaker/EOSdriver routines. Reader code and
+table data have separate provenance: support for a table format does not
+transfer ownership or licensing of the table data to ARCH.
+
+The authors' [Shen EOS archive on Zenodo, record 3612487](https://zenodo.org/records/3612487)
+declares `cc-by-4.0` in its [record metadata](https://zenodo.org/api/records/3612487).
+That deposit contains six ZIP archives for the EOS2 and EOS4 `.tab`, `.t00`
+and `.yp0` tables. Those specifically archived files may be redistributed and
+adapted under [Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/),
+including for commercial purposes. Preserve the supplied creator attribution,
+source/DOI, copyright, license and disclaimer notices; provide the license link
+and identify modifications, including prior modification notices. Do not imply
+author endorsement or impose restrictions that contradict the license. The
+table data retain their own license when packaged alongside ARCH's MIT code.
+
+ARCH includes the unmodified `eos2.tab` and `eos4.tab` main-table members from
+that deposit at `EOS_toolkit/tables/baryon/`, stored through Git LFS. Attribution:
+H. Shen, F. Ji, J. N. Hu and K. Sumiyoshi, *Equation of state for simulations of
+core-collapse supernovae and neutron-star mergers* (2020),
+[DOI: 10.5281/zenodo.3612487](https://doi.org/10.5281/zenodo.3612487).
+Only extraction and LFS packaging were performed; the data bytes were not
+modified. Exact sizes and SHA-256 checksums are recorded in the
+[runtime-table guide](EOS_toolkit/README.md#original-shen-data).
+ARCH's in-memory component completion and fixed energy reference do not alter
+these distributed source files. The zero-temperature `.t00` and zero-charge
+`.yp0` auxiliary products are not bundled.
+
+This recorded license applies to the identified deposit, not automatically to
+every Shen release or a third party's processed table. The
+[StellarCollapse EOS page](https://stellarcollapse.org/equationofstate.html)
+states attribution, noncommercial and share-alike conditions for its code and
+tables. Redistributing an EOSdriver-compatible HShen HDF5 table therefore
+requires checking the terms and notices for that particular processed file and
+version, including contributions added during its preparation. The original
+Zenodo archive's CC BY 4.0 license does not automatically replace those separate
+terms. Processed HShen HDF5 tables have been investigated for format
+compatibility only and are not bundled with ARCH.
 
 ## AMReX-Astro Microphysics
 

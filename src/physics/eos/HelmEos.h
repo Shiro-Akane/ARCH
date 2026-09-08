@@ -61,6 +61,31 @@ struct BasicHelmEosView {
         bool charge_active = true;
     };
 
+    // One additive component in cgs units. Energy/free energy are specific
+    // (erg/g); density and temperature derivatives hold Ye fixed. These
+    // queries contain neither ideal ions nor ion-background Coulomb terms.
+    struct ComponentThermodynamics {
+        double pressure = 0.0, energy = 0.0, free_energy = 0.0, cv = 0.0;
+        double pressure_density = 0.0, pressure_temperature = 0.0;
+        double energy_density = 0.0, cv_temperature = 0.0;
+        double entropy = 0.0; // Specific entropy, erg/(g K), from the potential derivative.
+    };
+
+    ARCH_INLINE static bool reject_component(ComponentThermodynamics& out) {
+        const double invalid = std::numeric_limits<double>::quiet_NaN();
+        out = {invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid, invalid};
+        return false;
+    }
+
+    ARCH_INLINE static bool finite_component(const ComponentThermodynamics& value) {
+        return std::isfinite(value.pressure) && std::isfinite(value.energy)
+            && std::isfinite(value.free_energy) && std::isfinite(value.cv)
+            && std::isfinite(value.pressure_density)
+            && std::isfinite(value.pressure_temperature)
+            && std::isfinite(value.energy_density) && std::isfinite(value.cv_temperature)
+            && std::isfinite(value.entropy);
+    }
+
     struct AxisCell { int index; double spacing, coordinate; };
 
     ARCH_INLINE AxisCell locate_axis(double value, const double* nodes,
@@ -136,10 +161,69 @@ struct BasicHelmEosView {
     static constexpr double avo = arch::constants::statistical::avogadro;
     static constexpr double asol = arch::constants::radiation::cgs::energy_density;
 
+    // The radiation contribution has one authority shared by the complete
+    // Helmholtz EOS and selective tabular completion. Preserve the original
+    // expressions and their evaluation order in the complete EOS.
+    ARCH_INLINE static ComponentThermodynamics radiation_thermodynamics(double rho, double T) {
+        ComponentThermodynamics result;
+        result.pressure = asol / 3.0 * T * T * T * T;
+        result.energy = 3.0 * result.pressure / rho;
+        result.free_energy = -result.pressure / rho;
+        result.cv = 4.0 * asol * T * T * T / rho;
+        result.pressure_temperature = 4.0 * result.pressure / T;
+        result.energy_density = -result.energy / rho;
+        result.cv_temperature = 12.0 * asol * T * T / rho;
+        result.entropy = result.cv / 3.0;
+        return result;
+    }
+
+    // Unlike the complete EOS's historical extrapolation/clamping policy,
+    // completion may use only actual electron-table support. A missing table,
+    // zero net charge, unsupported rho*Ye/T or nonfinite result fails without
+    // substituting another component. The caller owns the error context.
+    ARCH_HEAVY_INLINE bool electron_positron_component(
+        double rho, double T, double ye, ComponentThermodynamics& out) const {
+        if (!std::isfinite(rho) || !std::isfinite(T) || !std::isfinite(ye)
+            || !(rho > 0.0) || !(T > 0.0) || !(ye > 0.0) || ye > 1.0
+            || !density_nodes || !temperature_nodes)
+            return reject_component(out);
+        const double electron_density = rho * ye;
+        if (!std::isfinite(electron_density)
+            || electron_density < density_nodes[0]
+            || electron_density > density_nodes[imax - 1]
+            || T < temperature_nodes[0] || T > temperature_nodes[jmax - 1])
+            return reject_component(out);
+        for (const double* field : f) if (!field) return reject_component(out);
+        ComponentThermodynamics result;
+        ThermodynamicDerivatives derivatives;
+        interpolate_ele_pos(rho, T, ye, result.pressure, result.energy,
+                            &result.cv, &derivatives, &result.free_energy, &result.entropy);
+        result.pressure_density = derivatives.pressure_density;
+        result.pressure_temperature = derivatives.pressure_temperature;
+        result.energy_density = (result.pressure - T * result.pressure_temperature) / (rho * rho);
+        result.cv_temperature = derivatives.cv_temperature;
+        if (!finite_component(result)) return reject_component(out);
+        out = result;
+        return true;
+    }
+
+    // Photons require no electron table or composition metadata.
+    ARCH_INLINE static bool photon_component(
+        double rho, double T, ComponentThermodynamics& out) {
+        if (!std::isfinite(rho) || !std::isfinite(T) || !(rho > 0.0) || !(T > 0.0))
+            return reject_component(out);
+        const auto result = radiation_thermodynamics(rho, T);
+        if (!finite_component(result)) return reject_component(out);
+        out = result;
+        return true;
+    }
+
     ARCH_HEAVY_INLINE void interpolate_ele_pos(double rho, double T, double ye,
                              double& P_ele, double& E_ele,
                              double* cv_ele = nullptr,
-                             ThermodynamicDerivatives* derivatives = nullptr) const {
+                             ThermodynamicDerivatives* derivatives = nullptr,
+                             double* specific_free_energy = nullptr,
+                             double* specific_entropy = nullptr) const {
         double din = rho * ye;
         const auto density = locate_axis(din, density_nodes, imax, dlo, dstpi);
         const auto temperature = locate_axis(T, temperature_nodes, jmax, tlo, tstpi);
@@ -207,6 +291,8 @@ struct BasicHelmEosView {
         P_ele = din * din * df_d;
         double sele = -df_t * ye;
         E_ele = ye * free_energy + T * sele;
+        if (specific_free_energy != nullptr) *specific_free_energy = ye * free_energy;
+        if (specific_entropy != nullptr) *specific_entropy = sele;
 
         if (cv_ele != nullptr) {
             *cv_ele = -ye * T * hermite_row(row_tt, wd, true);
@@ -259,8 +345,9 @@ struct BasicHelmEosView {
         double E_ion = 1.5 * P_ion / rho; // Specific internal energy
 
         // 3. Radiation
-        double P_rad = asol / 3.0 * T * T * T * T;
-        double E_rad = 3.0 * P_rad / rho;
+        const auto radiation = radiation_thermodynamics(rho, T);
+        const double P_rad = radiation.pressure;
+        const double E_rad = radiation.energy;
 
         // 4. Timmes uniform-background Coulomb correction (Yakovlev &
         // Shalybkov 1989).  This is part of the original Helmholtz support
@@ -335,7 +422,7 @@ struct BasicHelmEosView {
 
         if (cv != nullptr) {
             *cv = cv_ele + 1.5 * avo * kerg * ytot
-                + 4.0 * asol * T * T * T / rho + dE_coul_dT;
+                + radiation.cv + dE_coul_dT;
         }
         if (derivatives != nullptr) {
             auto& d = *derivatives;
@@ -343,7 +430,7 @@ struct BasicHelmEosView {
             const double first_energy = coefficient * T * ytot * coupling_f_first;
             const double second_energy = coefficient * T * ytot * coupling_squared_f_second;
             d.pressure_density += P_ion / rho + E_coul / 3.0 + first_energy / 9.0;
-            d.pressure_temperature += P_ion / T + 4.0 * P_rad / T + rho * dE_coul_dT / 3.0;
+            d.pressure_temperature += P_ion / T + radiation.pressure_temperature + rho * dE_coul_dT / 3.0;
             // Gamma is proportional to z^2 y^(-5/3) / T at fixed rho.
             d.energy_y = 1.5 * coefficient * T + (E_coul - (5.0 / 3.0) * first_energy) / ytot;
             d.energy_z += 2.0 * first_energy / ye;
@@ -352,7 +439,7 @@ struct BasicHelmEosView {
             d.energy_zz += (2.0 * first_energy + 4.0 * second_energy) / (ye * ye);
             d.cv_y = 1.5 * coefficient + (E_coul - first_energy + (5.0 / 3.0) * second_energy) / (T * ytot);
             d.cv_z -= 2.0 * second_energy / (T * ye);
-            d.cv_temperature += 12.0 * asol * T * T / rho + second_energy / (T * T);
+            d.cv_temperature += radiation.cv_temperature + second_energy / (T * T);
             d.charge_active = charge_active;
         }
     }

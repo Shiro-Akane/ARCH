@@ -310,12 +310,48 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | --- | --- | --- | --- |
 | `eos_type` | string | `ideal` | `ideal`、`tabular`、`helmholtz` |
 | `eos_table_path` | string | 空 | tabular/Helmholtz 必需 |
+| `eos_helm_table_path` | string | 空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
 | `gamma` | double | `1.4` | 理想气体 fallback/参考 gamma |
 | `gravity_type` | string | `none` | `none`、`external`；`self` 会在构造前由 capability gate 拒绝 |
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | 仅为尚不支持的自重力解析 |
 
-对 `eos_type = tabular`，HDF5 文件声明 `table_rank = 3` 或 `4`，dispatch 自动选择相应策略。表格宜优先保存比 Helmholtz 自由能；规范化数据集、导数关系、直接热力学字段模型以及 guard-node/端点间隔规则见源码旁的 [Tabular EOS HDF5 接口](../src/physics/eos/TabularEOS.zh-CN.md)。Shen/LS/HS/CompOSE/EOSDriver 文件需要表族专用转换器，目前仓库不附带这类工具；二进制兼容性由规范化 schema 而不是上游文件名或 HDF5 容器定义。[EOS 验证记录](../validation/eos/README.zh-CN.md)汇总了包括 Shen EOS4 与 EOSDriver HShen 在内的来源表评估。
+对 `eos_type=tabular`，EOSDispatcher 可识别 3D/4D 规范化 HDF5、EOSDriver 总
+EOS HDF5，以及原始 Shen EOS2/EOS4 使用的正温度 16 列重子 ASCII 主表。
+识别依据是文件内容，不是 EOS 名称列表。[来源与 HDF5 契约](../src/physics/eos/TabularEOS.zh-CN.md)
+规定布局、单位、导数约束与支持域；任意 CompOSE 或无关 ASCII 布局仍不受支持。
+
+规范化 `eos_components` 可声明 `baryons`、`baryons,electrons_positrons`、
+`baryons,photons` 或 `baryons,electrons_positrons,photons`，最后一项也可写为
+`total`。主机加载器只往 `free_energy` 势补入缺少的电子／正电子或光子，不改
+来源文件、不重复加入离子／库仑项，也不分别拼装压力／能量字段。没有声明时保留
+旧的总表解释。总表与仅缺光子的表不读取辅助电子表；缺电子时，空的
+`eos_helm_table_path` 解析为 `EOS_toolkit/tables/helmholtz/helm_table.dat`。
+
+可选且必须正、有限的 `baryon_mass_g` 声明固定的 `rho=m_B*n_B` 约定；电子密度
+与比能量单位一并换算，物理压力不额外缩放。3D 补电子需要物理 `Ye` 坐标，4D
+使用 `Zbar/Abar`。可选的 `free_energy_dlnrho`／`free_energy_dlnT` 提供来源势
+的 `P/rho` 与 `-T*S` 约束。原始重子读取器使用来源 F/P/S、固定质量及文档规定的
+E/F 常数基准差，不拟合零点。打印的来源 E 保留为独立一致性诊断；来源 F/E/S
+残差并非逐点都在半个打印末位单位以内。
+
+有成分声明或标为核平衡的自由能表，无论预先提供总表还是自动补齐，都使用相同
+的严格屏蔽域与温度反解。必要时加载阶段选取一个固定能量基准，没有逐状态平移。
+无效来源／组件导数模板、越界查询，以及无有效根或多个有效温度根均被拒绝。
+来源／解释指纹同时绑定实际使用的电子补充表。EOSDriver 总表则保留原生轴与
+压力／能量编码插值，并使用其对应的严格有效性和反解检查。
+
+原生核平衡表，或规范化整数 `nuclear_equilibrium=1`，要求 `use_burn=false`，
+以免重复计入核结合能。有声明／使用严格域的表还会拒绝 Steger-Warming 通量
+分裂和自动恒星热传导；可使用一般 EOS 通量及显式常热扩散率，或关闭热扩散。
+允许动力学核能源项并不代表适配了每种弱网络：tabular view 尚不提供真实电子
+`eta`，而 `aprox19`／`aprox21` 的电子俘获项需要它。其已有 Helmholtz 路径
+保持不变，组件补齐接口不意味着通用弱过程物理兼容。
+
+`EOS_toolkit/tables/baryon/eos2.tab` 与 `eos4.tab` 是未修改、通过 LFS 管理的
+原作者数据，采用已识别归档的 CC BY 4.0 许可。加工 HShen HDF5 仅进行兼容性
+调查，不随附。格式兼容和抽样测试不代表任意表或其全域已合格；详见
+[EOS 验证记录](../validation/eos/README.zh-CN.md)和[表来源](../THIRD_PARTY_NOTICES.zh-CN.md)。
 
 维护中的 Helmholtz 验证资源是从 [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)下载的 `helmholtz.tar.xz` 中的 `helm_table.dat`。它通过 Git LFS 实体化在 `EOS_toolkit/tables/helmholtz/helm_table.dat`，大小为 60,242,514 bytes，SHA-256 为 `c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1`。原始表成员是验证权威。loader 使用固定 541×201 Timmes 布局并要求全部四个数据块；燃烧基线还要求上述精确 checksum。
 
@@ -324,15 +360,15 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | 键 | 类型 | 加载默认值 | 契约 |
 | --- | --- | --- | --- |
 | `use_burn` | bool | `false` | 启用燃烧模块 |
-| `network_name` | string | `aprox19` | 上述内置网络或任意已编译的 `custom:<id>`；生成网络要求 `use_nse = false` |
+| `network_name` | string | `aprox19` | 上述内置网络或任意已编译的 `custom:<id>`；NSE 能力由生成包元数据确定 |
 | `nuclearTempMin` | double | `1e9` | K；燃烧激活阈值 |
 | `nuclearDensMin` | double | `1e-10` | g/cm3；燃烧激活阈值 |
 | `smallt` | double | `1e5` | K；燃烧状态 floor |
 | `smallx` | double | `1e-20` | 组分 floor |
 | `enucDtFactor` | double | `1e30` | 能量释放时间步 limiter；巨大默认值实际关闭限制 |
-| `use_nse` | bool | `true` | 仅为四个内置网络启用带阈值 NSE 投影 |
-| `nseTempThreshold` | double | `4.5e9` | K |
-| `nseDensThreshold` | double | `1e6` | g/cm3 |
+| `use_nse` | bool 或 `auto` | `true` | `true` 要求网络支持 NSE；`false` 禁用；`auto` 按网络能力决定是否启用 |
+| `nseTempThreshold` | double | `4.5e9` | 有限正数，K；true 与 auto 均用严格的 `T > threshold` |
+| `nseDensThreshold` | double | `1e6` | 有限非负数，g/cm3；true 与 auto 均用严格的 `rho > threshold` |
 | `enforce_mass_conservation` | bool | `true` | 已解析并保存；当前 burn 路径尚未消费该开关 |
 | `burn_verbose_level` | int | `0` | 已解析并保存；当前 burn 路径尚未消费该级别 |
 | `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
@@ -697,8 +733,11 @@ CMake 通过生成注册表发现多个共存网络包，一次运行用 `networ
 
 适配层将 pynucastro 的摩尔丰度 RHS/Jacobian 转为 ARCH 质量分数形式，把核能与
 弱中微子能量写入 ODE RHS，并隔离 SimpleCxx 头文件的命名空间。已识别的弱表
-包含 rho*Ye 的组分链式导数及有符号能量源梯度。自定义网络设置
-`SUPPORTS_NSE=false`；完整 RHS 的温度 Jacobian 列使用共用四阶差分策略、
+包含 rho*Ye 的组分链式导数及有符号能量源梯度。生成器依据核数据、详细平衡反应对和
+强反应守恒约束的秩判定 NSE 资格。首轮支持无屏蔽、无弱反应的基态平衡模型；
+温度相关配分函数还需要本轮未提供的激发能闭合。缺少或不满足元数据条件时，
+`use_nse=auto` 或 `false` 保留普通 ODE 燃烧，具体见[网络包契约](../src/physics/network/custom/README.md)。
+完整 RHS 的温度 Jacobian 列使用共用四阶差分策略、
 精度导出的步长及边界模板。生成器只删除编译期字面零 Jacobian 调用；
 运行值为零的结构项仍保留，以保证 KLU 安全地复用结构并重新分解。
 默认 `NUCLEI` 路径会把没有连通反应的指定核素保留为不参与反应的组分，并拒绝
@@ -809,6 +848,9 @@ ARCH 检查点保存继续模拟所需的完整状态，两个后端共用读取
 
 属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn`、`resume_after_regrid`、`eos_type`、`ideal_gamma`、`burn_enabled`、`active_network`、`nse_enabled`、`eos_table_path` 和 `eos_table_sha256`。checkpoint 中的 `eos_type` 记录已解析的规范策略（`ideal`、`helmholtz`、`tabular3d` 或 `tabular4d`），因此自动识别出的表 rank 属于 restart 身份，而不是沿用配置中的原始 `tabular` 拼写。燃烧关闭时 `active_network` 必须为 `none`。时间步字段分别恢复增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。表路径仅用于审计；兼容性按 SHA-256 内容身份判断，因此同一份表可以在不同安装位置之间移动。表加载器会在加载前后计算摘要，并将缓存 owner 绑定到该摘要；传给每次 checkpoint 的不可变身份描述的是 EOS owner 实际驻留的字节，而不是稍后重新读取路径的结果。
 
+对补齐组件后的 EOS，该身份还包含来源解释与实际使用的电子补充表，不只是主表
+文件的散列值。加载前后核对的是整个有效来源身份；更换辅助表也会使身份改变。
+
 数据集：
 
 ```text
@@ -831,7 +873,7 @@ Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ## 已知限制
 
 - 验证结果对应[验证索引](../validation/README.zh-CN.md)注明的受测工作负载与配置；整体验收状态也由该索引统一记录。
-- CUDA 生成网络必须满足[设备数学包契约](../src/physics/network/custom/README.md)，包括声明 `device_callable_math=true`；通过检查的仅主机网络包在 CPU 上执行。两后端均未实现自重力、Jeans 指标或自定义网络 NSE。
+- CUDA 生成网络必须满足[设备数学包契约](../src/physics/network/custom/README.md)，包括声明 `device_callable_math=true`；通过检查的仅主机网络包在 CPU 上执行。两后端均未实现自重力或 Jeans 指标。生成网络 NSE 受平衡模型资格限制；正确的动力学网络不一定适合 NSE 旁路。
 - 运行时选择基于字符串，多个策略表面是编译期或 duck-typed 契约，而不是稳定公共 ABI。
 - 状态修复、界面 clamp 和 fallback 默认值可能破坏严格守恒或隐藏错误的数值选择；生产运行必须检查解析后的配置与诊断。
 - 单位元数据以及完整的构建/运行来源（参数文件、编译器、求解器设置、边界与 commit）位于 HDF5 外部。检查点内嵌重启关键的 EOS/表/网络/核素身份，但 Release flags 无法保证跨机器逐位复现。

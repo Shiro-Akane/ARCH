@@ -6,6 +6,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 namespace arch::core {
 
@@ -15,5 +16,8 @@ namespace arch::core {
  * behind unchanged path, size, or modification-time metadata.
  */
 std::string file_sha256(const std::string& path);
+
+/** Hash a canonical interpretation record with the same SHA-256 authority. */
+std::string string_sha256(std::string_view bytes);
 
 } // namespace arch::core

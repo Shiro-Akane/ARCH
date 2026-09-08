@@ -1,0 +1,107 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/diffusion_rkl2_n256/scientific/cpu/diffusion_rkl2_n256_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/diffusion_rkl2_n256/scientific/cpu/diffusion_rkl2_n256_cpu_scientific.par
+[Main] Problem created: DiffusionMode
+[Problem] Diffusion cosine mode: X=0.5+0.25 cos(2*pi*1*x/L)
+[Main] Configuration:
+       Grid: 256 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 2
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 24 | Finest Level: 0
+    Level 0   | dx1(x): 0.00390625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+           -> Diffusion Solver Initialized: RKL2 (CFL_diff = 0.8)
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/diffusion_rkl2_n256/scientific/cpu/diffusion_rkl2_n256_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/diffusion_rkl2_n256/scientific/cpu/diffusion_rkl2_n256_cpu_scientific_chk_0000.h5 at step 0 with 16 AMR leaves.
+Step    Time           dt             dt_hydro       dt_diff        
+--------------------------------------------------------------------
+[Diffusion] multi-block AMR uses composite RKL2 STS with stage ghost synchronization and reflux.
+1       1.32055e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+2       2.64111e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+3       3.96166e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+4       5.28221e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+5       6.60277e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+6       7.92332e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+7       9.24387e-03    1.32055e-03    1.32055e-03    7.62939e-04    
+8       1.05644e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+9       1.18850e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+10      1.32055e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+11      1.45261e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+12      1.58466e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+13      1.71672e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+14      1.84877e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+15      1.98083e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+16      2.11289e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+17      2.24494e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+18      2.37700e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+19      2.50905e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+20      2.64111e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+21      2.77316e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+22      2.90522e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+23      3.03727e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+24      3.16933e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+25      3.30138e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+26      3.43344e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+27      3.56549e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+28      3.69755e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+29      3.82961e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+30      3.96166e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+31      4.09372e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+32      4.22577e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+33      4.35783e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+34      4.48988e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+35      4.62194e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+36      4.75399e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+37      4.88605e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+38      5.01810e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+39      5.15016e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+40      5.28221e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+41      5.41427e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+42      5.54632e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+43      5.67838e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+44      5.81044e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+45      5.94249e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+46      6.07455e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+47      6.20660e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+48      6.33866e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+49      6.47071e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+50      6.60277e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+51      6.73482e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+52      6.86688e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+53      6.99893e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+54      7.13099e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+55      7.26304e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+56      7.39510e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+57      7.52716e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+58      7.65921e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+59      7.79127e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+60      7.92332e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+61      8.05538e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+62      8.18743e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+63      8.31949e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+64      8.45154e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+65      8.58360e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+66      8.71565e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+67      8.84771e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+68      8.97976e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+69      9.11182e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+70      9.24387e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+71      9.37593e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+72      9.50799e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+73      9.64004e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+74      9.77210e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+75      9.90415e-02    1.32055e-03    1.32055e-03    7.62939e-04    
+76      1.00000e-01    9.58486e-04    1.32055e-03    7.62939e-04    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/diffusion_rkl2_n256/scientific/cpu/diffusion_rkl2_n256_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-874/diffusion_rkl2_n256/scientific/cpu/diffusion_rkl2_n256_cpu_scientific_chk_0001.h5 at step 76 with 16 AMR leaves.
+>>> Simulation Done. Total Steps: 76 | Final Time: 1.00000e-01

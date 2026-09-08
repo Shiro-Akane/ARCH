@@ -51,7 +51,7 @@ Tooling and CPU jobs have 20- and 180-minute limits; each CTest execution has a
 600-second limit. Timeouts and guard stops fail the job. The compiler cache is
 limited to 1 GiB and separated by native compiler target flags and build
 configuration. PR jobs may restore existing caches; only successful pushes to
-main or V1 save caches. Build directories and dependency source trees are not
+`main` or `CUDA_complete_v1` save caches. Build directories and dependency source trees are not
 restored as cached test results: configuration, compilation checks and tests
 run each time.
 

@@ -9,6 +9,7 @@
 #include "../../data/GlobalDefs.h"
 #include "../../driver/dispatch/PolicyDescriptor.h"
 #include "../../physics/species/Species.h"
+#include "../../physics/eos/TabularSource.h"
 
 #include <algorithm>
 #include <cctype>
@@ -151,8 +152,11 @@ CheckpointProvenance inspect_checkpoint_provenance(
     if (eos_type != "ideal" && path.empty())
         throw std::runtime_error(
             "Checkpoint provenance requires an EOS table path");
-    const std::string digest = eos_type == "ideal"
-        ? std::string{} : arch::core::file_sha256(path);
+    const bool tabular = resolved_eos == arch::dispatch::EosId::Tabular3D
+        || resolved_eos == arch::dispatch::EosId::Tabular4D;
+    const std::string digest = eos_type == "ideal" ? std::string{}
+        : tabular ? tabular_source_fingerprint(path,unquote(config.physics.eos_helm_table_path))
+                  : arch::core::file_sha256(path);
     return make_checkpoint_provenance(
         config, species, resolved_eos, burn_enabled, active_network,
         nse_enabled, digest);

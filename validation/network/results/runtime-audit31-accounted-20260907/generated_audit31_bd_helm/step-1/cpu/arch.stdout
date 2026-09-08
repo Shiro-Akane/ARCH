@@ -1,0 +1,35 @@
+[Info] Loaded 68 parameters from /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1.par
+[Main] Problem created: BurnOneZone
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Problem] Burn one-zone state: rho=1e+07, T=3e+09, p=1.86976e+24, network=custom:audit31
+[Main] Configuration:
+       Grid: 32 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 31
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 8 | Finest Level: 0
+    Level 0   | dx1(x): 3.125e+06
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Resolving Network: custom:audit31 | ODE Solver: BD | Linear Solver: Auto
+[Burn Dispatch] Matrix backend: SparseKLU (N=32)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1_chk_0000.h5 at step 0 with 2 AMR leaves.
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+1       1.00000e-16    1.00000e-16    2.44659e-03    5.00000e-17    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1_HLLC_plt_0001.h5 at t=1.00000e-16
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/network/results/runtime-audit31-accounted-20260907/generated_audit31_bd_helm/step-1/cpu/generated_audit31_bd_helm_cpu_s1_chk_0001.h5 at step 1 with 2 AMR leaves.
+>>> Simulation Done. Total Steps: 1 | Final Time: 1.00000e-16

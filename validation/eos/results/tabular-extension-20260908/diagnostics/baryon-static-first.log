@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "validation/eos/results/tabular-extension-20260908/replay_static.py", line 21, in <module>
+    import validate_backend_results as runtime
+  File "/home/shiroakane/ARCH/tools/validate_backend_results.py", line 20, in <module>
+    import validation_sanitizer
+  File "/home/shiroakane/ARCH/tools/validation_sanitizer.py", line 13, in <module>
+    def check_report(text: str, tool: str) -> list[str]:
+TypeError: 'type' object is not subscriptable

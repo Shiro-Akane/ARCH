@@ -1,0 +1,35 @@
+[Info] Loaded 58 parameters from /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4.par
+[Main] Problem created: Sedov
+[Problem] Sedov regularized blast: dim=1, radius=0.0078125, deposited pressure=25.6
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 1
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 16 | Finest Level: 0
+    Level 0   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4_chk_0000.h5 at step 0 with 8 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       5.21995e-04    5.21995e-04    5.21995e-04    
+2       1.00989e-03    4.87898e-04    4.87898e-04    
+3       1.49057e-03    4.80682e-04    4.80682e-04    
+4       1.97098e-03    4.80402e-04    4.80402e-04    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4_HLLC_plt_0001.h5 at t=1.97098e-03
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/hydro/results/sedov-first-law-20260907/symmetry-840/runs/muscl_rk3/step-4/cpu/muscl_rk3_cpu_s4_chk_0001.h5 at step 4 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 4 | Final Time: 1.97098e-03

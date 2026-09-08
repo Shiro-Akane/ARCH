@@ -1,0 +1,36 @@
+[Info] Loaded 72 parameters from /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_control_2/RestartAMR_alternating_control_2.par
+[RuntimeParams] Restart Enabled. Target file: '/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_segment_1/RestartAMR_alternating_segment_1_chk_0002.h5'
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_control_2/RestartAMR_alternating_control_2_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_control_2/RestartAMR_alternating_control_2.par
+[Main] Problem created: BurnGradient
+[Problem] Burn gradient: rho=1e+07, T_bg=5e+07, T_peak=3e+09, network=aprox13
+[Main] Configuration:
+       Grid: 80 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Restarting from checkpoint: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_segment_1/RestartAMR_alternating_segment_1_chk_0002.h5
+[IO] Restored CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_segment_1/RestartAMR_alternating_segment_1_chk_0002.h5 at step 4 with 8 AMR leaves.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0125
+    Level 1   | dx1(x): 0.00625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+5       3.10000e-15    1.60000e-15    3.68178e-12    8.00000e-16    
+6       6.30000e-15    3.20000e-15    3.68177e-12    1.60000e-15    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_control_2/RestartAMR_alternating_control_2_chk_0003.h5 at step 6 with 8 AMR leaves.
+7       1.27000e-14    6.40000e-15    3.68177e-12    3.20000e-15    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_control_2/RestartAMR_alternating_control_2_HLLC_plt_0001.h5 at t=1.27000e-14
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/alternating_control_2/RestartAMR_alternating_control_2_chk_0004.h5 at step 7 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 7 | Final Time: 1.27000e-14

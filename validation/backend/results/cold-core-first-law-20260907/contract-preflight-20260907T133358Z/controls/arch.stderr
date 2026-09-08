@@ -1,0 +1,14 @@
+test_both_trees_changing_identically_still_invalidates_measurement (__main__.ColdContractTests.test_both_trees_changing_identically_still_invalidates_measurement) ... ok
+test_command_order_is_preserved (__main__.ColdContractTests.test_command_order_is_preserved) ... ok
+test_compile_flags_cannot_be_normalized_away (__main__.ColdContractTests.test_compile_flags_cannot_be_normalized_away) ... ok
+test_equivalent_own_roots_and_zero_objects (__main__.ColdContractTests.test_equivalent_own_roots_and_zero_objects) ... ok
+test_existing_object_is_rejected (__main__.ColdContractTests.test_existing_object_is_rejected) ... ok
+test_external_roots_are_not_normalized (__main__.ColdContractTests.test_external_roots_are_not_normalized) ... ok
+test_heavy_assignment_mismatch_is_rejected (__main__.ColdContractTests.test_heavy_assignment_mismatch_is_rejected) ... ok
+test_heavy_depth_mismatch_is_rejected (__main__.ColdContractTests.test_heavy_depth_mismatch_is_rejected) ... ok
+test_link_flags_cannot_be_normalized_away (__main__.ColdContractTests.test_link_flags_cannot_be_normalized_away) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.088s
+
+OK

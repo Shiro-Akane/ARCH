@@ -19,6 +19,7 @@
 #include "../../core/ArchPortability.h"
 #include "../../core/CompensatedSum.h"
 #include "../constant/PhysicalConstants.h"
+#include "../network/NuclearEnergy.h"
 
 namespace arch::nse_detail {
 
@@ -59,6 +60,11 @@ ARCH_HOST_DEVICE inline double clamp_by_value(double value, double lower,
  * normal reaction-network energy convention is based on nuclear rest masses
  * rather than binding energies.
  *
+ * Generated packages advertise NSE_DATA_VERSION and supply their original
+ * pynucastro mass-number and constant conventions for the Saha prefactor.
+ * Their energy uses the same mass contraction as the kinetic network. The
+ * built-in data path keeps its original prefactor and binding-energy closure.
+ *
  * The public interface uses mass fractions X despite the historical Y names.
  * Internally the Saha equation and energy closure use molar abundance X/A.
  */
@@ -67,6 +73,19 @@ struct NSESolver
 {
     static constexpr int NUM_SPEC = NetType::NUM_SPECIES;
     static_assert(NUM_SPEC > 0, "NSE requires at least one network species");
+    static constexpr bool generated_data = requires { NetType::NSE_DATA_VERSION; };
+
+    ARCH_HOST_DEVICE static constexpr double minimum_temperature()
+    {
+        if constexpr (generated_data) return NetType::NSE_T_MIN;
+        else return 0.0;
+    }
+
+    ARCH_HOST_DEVICE static constexpr double maximum_temperature()
+    {
+        if constexpr (generated_data) return NetType::NSE_T_MAX;
+        else return std::numeric_limits<double>::infinity();
+    }
 
     /**
      * @brief Solve the network-constrained NSE state at fixed T, rho and Ye.
@@ -75,7 +94,7 @@ struct NSESolver
      * @param Ye      electron fraction, sum_i (Z_i/A_i) X_i
      * @param X_old   input mass fractions (kept unchanged)
      * @param X_out   output NSE mass fractions
-     * @param enuc    binding-energy change from X_old to X_out [erg g^-1]
+     * @param enuc    nuclear-energy change from X_old to X_out [erg g^-1]
      * @return true only after Newton convergence and an independent
      *         mass/charge-conservation check
      */
@@ -88,6 +107,11 @@ struct NSESolver
             || !std::isfinite(rho) || !std::isfinite(Ye)
             || T <= 0.0 || rho <= 0.0 || Ye < 0.0 || Ye > 1.0) {
             return false;
+        }
+        if constexpr (generated_data) {
+            static_assert(NetType::NSE_DATA_VERSION == 1,
+                          "Unsupported generated NSE nuclear-data contract");
+            if (T < minimum_temperature() || T > maximum_temperature()) return false;
         }
 
         std::array<double, NUM_SPEC> log_base{};
@@ -120,15 +144,30 @@ struct NSESolver
                 continue;
             }
 
-            // Hartmann et al. (1985), ApJ 297, 837, Eq. 2, in the same
-            // convention as public_nse.f90.  BINDING_E is the total binding
-            // energy of one nucleus, not binding energy per nucleon.
-            const double nuclear_mass = A * atomic_mass_unit;
-            const double log_prefactor =
-                std::log(A * weight / (avogadro * rho))
-                + 1.5 * std::log(two_pi * nuclear_mass * kT
-                                 / (planck * planck));
-            log_base[i] = log_prefactor + binding / kT_mev;
+            if constexpr (generated_data) {
+                // pynucastro's detailed-balance convention uses A_nuc rather
+                // than integer A in the translational mass factor. Preserve
+                // that package's constants and normalized partition function.
+                const double mass = NetType::nse_mass_number(i)
+                                  * NetType::NSE_ATOMIC_MASS_UNIT;
+                const double partition = NetType::nse_log_partition(i, T);
+                if (!std::isfinite(mass) || mass <= 0.0
+                    || !std::isfinite(partition)) return false;
+                log_base[i] = 2.5 * std::log(mass) + std::log(weight) - std::log(rho)
+                    + 1.5 * std::log(NetType::NSE_K_BOLTZMANN * T
+                        / (two_pi * NetType::NSE_HBAR * NetType::NSE_HBAR))
+                    + binding / (NetType::NSE_K_BOLTZMANN_MEV * T) + partition;
+            } else {
+                // Hartmann et al. (1985), ApJ 297, 837, Eq. 2, in the same
+                // convention as public_nse.f90. BINDING_E is total MeV per
+                // nucleus, not binding energy per nucleon.
+                const double nuclear_mass = A * atomic_mass_unit;
+                const double log_prefactor =
+                    std::log(A * weight / (avogadro * rho))
+                    + 1.5 * std::log(two_pi * nuclear_mass * kT
+                                     / (planck * planck));
+                log_base[i] = log_prefactor + binding / kT_mev;
+            }
             if (!std::isfinite(log_base[i])) return false;
 
             const double q = Z / A;
@@ -153,8 +192,14 @@ struct NSESolver
         // every Saha relation and the original conservation tolerances. This
         // is a residual test, not a small-energy or small-delta-X cutoff.
         for (int i = 0; i < NUM_SPEC; ++i) solution[i] = X_old[i];
-        if (check_conservation(solution, Ye)
-            && input_is_equilibrium(log_base, solution, q_span)) {
+        const bool input_conserved = check_conservation(solution, Ye);
+        if constexpr (generated_data) {
+            // A mass-based source is gauge-independent only for a conserved
+            // increment. Never silently normalize an invalid input or change
+            // its charge while interpreting the change as nuclear burning.
+            if (!input_conserved) return false;
+        }
+        if (input_conserved && input_is_equilibrium(log_base, solution, q_span)) {
             for (int i = 0; i < NUM_SPEC; ++i) X_out[i] = solution[i];
             return true; // enuc was initialized to exactly zero.
         }
@@ -173,15 +218,20 @@ struct NSESolver
 
         if (!converged || !check_conservation(solution, Ye)) return false;
 
-        arch::math::CompensatedSum delta_binding;
-        for (int i = 0; i < NUM_SPEC; ++i) {
-            delta_binding.add(
-                (solution[i] - X_old[i])
-                * (NetType::binding_energy(i) / NetType::aion(i)));
-        }
+        double energy;
+        if constexpr (generated_data) {
+            energy = arch::network_energy::integrated_composition_energy<NetType>(
+                solution.data(), X_old);
+        } else {
+            arch::math::CompensatedSum delta_binding;
+            for (int i = 0; i < NUM_SPEC; ++i) {
+                delta_binding.add(
+                    (solution[i] - X_old[i])
+                    * (NetType::binding_energy(i) / NetType::aion(i)));
+            }
 
-        const double energy = binding_energy_conversion()
-                            * delta_binding.value();
+            energy = binding_energy_conversion() * delta_binding.value();
+        }
         if (!std::isfinite(energy)) return false;
 
 #pragma omp simd

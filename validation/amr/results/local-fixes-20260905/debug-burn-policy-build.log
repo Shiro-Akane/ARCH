@@ -1,0 +1,1092 @@
+[0/2] Re-checking globbed directories...
+[1/5] Building CXX object CMakeFiles/arch_cuda_backend_eos_helm.dir/src/cuda/microphysics/helm_eos_device_owner.cpp.o
+[2/5] Building CXX object CMakeFiles/arch_cuda_backend_eos_species.dir/src/cuda/microphysics/device_species_owner.cpp.o
+[3/5] Building CUDA object CMakeFiles/arch_cuda_burn_policy_parity.dir/tests/cuda/test_burn_policy_parity.cu.o
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(72): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(72): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(352): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(352): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(385): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(385): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(413): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(413): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(441): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(441): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(469): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(469): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(497): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(497): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(525): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(525): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(546): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(546): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(574): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(574): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(602): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(602): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(630): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(630): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(658): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(658): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(686): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(686): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(714): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(714): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(742): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(742): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(770): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(770): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(798): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(798): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(826): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(826): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(854): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(854): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(882): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(882): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(910): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(910): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(938): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox13/TimmesRateLibrary.h(938): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(72): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(72): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(352): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(352): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(385): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(385): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(413): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(413): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(441): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(441): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(469): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(469): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(497): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(497): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(525): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(525): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(546): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(546): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(574): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(574): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(602): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(602): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(630): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(630): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(658): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(658): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(686): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(686): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(714): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(714): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(742): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(742): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(770): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(770): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(798): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(798): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(826): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(826): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(854): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(854): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(882): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(882): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(910): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(910): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(938): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(938): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(966): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(966): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(992): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(992): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1013): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1013): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1036): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1036): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1055): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1055): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1078): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1078): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1107): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1107): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1137): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1137): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1167): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1167): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1234): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1234): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1264): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1264): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1296): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1296): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1316): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1316): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1339): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox19/TimmesRateLibrary.h(1339): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(72): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(72): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(352): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(352): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(385): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(385): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(413): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(413): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(441): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(441): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(469): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(469): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(497): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(497): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(525): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(525): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(546): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(546): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(574): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(574): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(602): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(602): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(630): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(630): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(658): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(658): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(686): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(686): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(714): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(714): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(742): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(742): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(770): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(770): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(798): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(798): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(826): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(826): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(854): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(854): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(882): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(882): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(910): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(910): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(938): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(938): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(966): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(966): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(992): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(992): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1013): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1013): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1036): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1036): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1055): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1055): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1078): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1078): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1107): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1107): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1137): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1137): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1167): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1167): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1234): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1234): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1264): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1264): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1296): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1296): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1316): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1316): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1339): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1339): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1367): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1367): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1393): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1419): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1419): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1445): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/aprox21/TimmesRateLibrary.h(1445): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(18): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(18): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(62): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(62): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(116): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(116): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(142): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(142): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(182): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(182): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(199): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(199): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(229): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(229): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(273): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(273): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(309): warning #550-D: variable "dfrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                          ^
+
+/home/shiroakane/ARCH/src/driver/../numerics/burnsolver/../../physics/network/iso7/TimmesRateLibrary.h(309): warning #550-D: variable "drrdd" was set but never used
+      double dfrdt = 0.0, dfrdd = 0.0, drrdt = 0.0, drrdd = 0.0;
+                                                    ^
+
+[4/5] Building CXX object CMakeFiles/arch_cuda_burn_policy_parity.dir/src/core/FileFingerprint.cpp.o
+[5/5] Linking CXX executable arch_cuda_burn_policy_parity

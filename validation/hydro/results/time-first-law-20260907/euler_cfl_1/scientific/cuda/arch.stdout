@@ -1,0 +1,104 @@
+[Info] Loaded 51 parameters from /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific.par
+[Main] Problem created: SmoothAdvection
+[Problem] Smooth entropy wave: rho=1+0.2 sin(2*pi*1*x/L), u=1, p=1
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.2
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 1 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 12 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Dispatch] Strategy: Euler/RK1 + HLLC + pcm (mc)
+>>> Simulation Started | Solver: Euler (1st Order) + HLLC + PCM (1st Order) | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       1.34547e-03    1.34547e-03    1.34547e-03    
+2       2.69094e-03    1.34547e-03    1.34547e-03    
+3       4.03641e-03    1.34548e-03    1.34548e-03    
+4       5.38190e-03    1.34549e-03    1.34549e-03    
+5       6.72741e-03    1.34551e-03    1.34551e-03    
+6       8.07295e-03    1.34554e-03    1.34554e-03    
+7       9.41852e-03    1.34557e-03    1.34557e-03    
+8       1.07641e-02    1.34561e-03    1.34561e-03    
+9       1.21098e-02    1.34566e-03    1.34566e-03    
+10      1.34555e-02    1.34571e-03    1.34571e-03    
+11      1.48013e-02    1.34578e-03    1.34578e-03    
+12      1.61471e-02    1.34584e-03    1.34584e-03    
+13      1.74930e-02    1.34589e-03    1.34589e-03    
+14      1.88389e-02    1.34589e-03    1.34589e-03    
+15      2.01848e-02    1.34590e-03    1.34590e-03    
+16      2.15307e-02    1.34592e-03    1.34592e-03    
+17      2.28767e-02    1.34594e-03    1.34594e-03    
+18      2.42226e-02    1.34597e-03    1.34597e-03    
+19      2.55686e-02    1.34601e-03    1.34601e-03    
+20      2.69147e-02    1.34605e-03    1.34605e-03    
+21      2.82608e-02    1.34610e-03    1.34610e-03    
+22      2.96069e-02    1.34616e-03    1.34616e-03    
+23      3.09532e-02    1.34622e-03    1.34622e-03    
+24      3.22994e-02    1.34629e-03    1.34629e-03    
+25      3.36457e-02    1.34631e-03    1.34631e-03    
+26      3.49921e-02    1.34631e-03    1.34631e-03    
+27      3.63384e-02    1.34632e-03    1.34632e-03    
+28      3.76847e-02    1.34634e-03    1.34634e-03    
+29      3.90311e-02    1.34637e-03    1.34637e-03    
+30      4.03775e-02    1.34640e-03    1.34640e-03    
+31      4.17239e-02    1.34644e-03    1.34644e-03    
+32      4.30704e-02    1.34648e-03    1.34648e-03    
+33      4.44169e-02    1.34654e-03    1.34654e-03    
+34      4.57635e-02    1.34659e-03    1.34659e-03    
+35      4.71102e-02    1.34666e-03    1.34666e-03    
+36      4.84569e-02    1.34672e-03    1.34672e-03    
+37      4.98036e-02    1.34672e-03    1.34672e-03    
+38      5.11504e-02    1.34673e-03    1.34673e-03    
+39      5.24971e-02    1.34675e-03    1.34675e-03    
+40      5.38439e-02    1.34677e-03    1.34677e-03    
+41      5.51907e-02    1.34679e-03    1.34679e-03    
+42      5.65375e-02    1.34683e-03    1.34683e-03    
+43      5.78844e-02    1.34687e-03    1.34687e-03    
+44      5.92313e-02    1.34692e-03    1.34692e-03    
+45      6.05783e-02    1.34697e-03    1.34697e-03    
+46      6.19253e-02    1.34703e-03    1.34703e-03    
+47      6.32724e-02    1.34710e-03    1.34710e-03    
+48      6.46195e-02    1.34714e-03    1.34714e-03    
+49      6.59667e-02    1.34714e-03    1.34714e-03    
+50      6.73138e-02    1.34715e-03    1.34715e-03    
+51      6.86610e-02    1.34717e-03    1.34717e-03    
+52      7.00082e-02    1.34719e-03    1.34719e-03    
+53      7.13554e-02    1.34722e-03    1.34722e-03    
+54      7.27027e-02    1.34726e-03    1.34726e-03    
+55      7.40500e-02    1.34730e-03    1.34730e-03    
+56      7.53973e-02    1.34735e-03    1.34735e-03    
+57      7.67447e-02    1.34741e-03    1.34741e-03    
+58      7.80922e-02    1.34747e-03    1.34747e-03    
+59      7.94397e-02    1.34754e-03    1.34754e-03    
+60      8.07873e-02    1.34755e-03    1.34755e-03    
+61      8.21348e-02    1.34755e-03    1.34755e-03    
+62      8.34824e-02    1.34757e-03    1.34757e-03    
+63      8.48300e-02    1.34758e-03    1.34758e-03    
+64      8.61776e-02    1.34761e-03    1.34761e-03    
+65      8.75252e-02    1.34764e-03    1.34764e-03    
+66      8.88729e-02    1.34768e-03    1.34768e-03    
+67      9.02206e-02    1.34773e-03    1.34773e-03    
+68      9.15684e-02    1.34778e-03    1.34778e-03    
+69      9.29163e-02    1.34784e-03    1.34784e-03    
+70      9.42642e-02    1.34791e-03    1.34791e-03    
+71      9.56121e-02    1.34796e-03    1.34796e-03    
+72      9.69601e-02    1.34796e-03    1.34796e-03    
+73      9.83080e-02    1.34797e-03    1.34797e-03    
+74      9.96560e-02    1.34798e-03    1.34798e-03    
+75      1.00000e-01    3.43976e-04    1.34800e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/hydro/results/time-first-law-20260907/euler_cfl_1/scientific/cuda/euler_cfl_1_cuda_scientific_chk_0001.h5 at step 75 with 4 AMR leaves.
+>>> Simulation Done. Total Steps: 75 | Final Time: 1.00000e-01

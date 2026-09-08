@@ -198,6 +198,47 @@ target_link_libraries(arch_cuda_tabular_free_energy_owner PRIVATE
 add_executable(arch_cuda_network_nse_device
     tests/cuda/test_network_nse_device.cu)
 arch_configure_cuda_math_test(arch_cuda_network_nse_device)
+add_executable(arch_cuda_generated_nse tests/cuda/test_generated_nse_device.cu)
+arch_configure_cuda_math_test(arch_cuda_generated_nse)
+target_link_libraries(arch_cuda_generated_nse PRIVATE arch_build_contract CUDA::cudart)
+add_test(NAME generated_nse_device COMMAND arch_cuda_generated_nse)
+add_executable(arch_cuda_native_tabular
+    tests/cuda/test_native_tabular_owner.cu
+    src/core/FileFingerprint.cpp
+    src/physics/eos/Tabular3DEOS.cpp
+    src/physics/eos/eosdispatch.cpp
+    src/physics/eos/TabularBaryonSource.cpp
+    src/physics/eos/TabularCompletion.cpp
+    src/cuda/microphysics/tabular3_eos_device_owner.cpp
+    src/cuda/microphysics/device_eos_owner_utils.cpp
+    src/cuda/microphysics/device_species_owner.cpp)
+arch_configure_cuda_math_test(arch_cuda_native_tabular)
+target_include_directories(arch_cuda_native_tabular PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_cuda_native_tabular PRIVATE
+    arch_build_contract CUDA::cudart)
+# HDF5/HighFive are attached by Dependencies.cmake after provider discovery.
+add_test(NAME native_tabular_device COMMAND arch_cuda_native_tabular
+    "${CMAKE_CURRENT_BINARY_DIR}/native-tabular-device-data")
+add_executable(arch_cuda_tabular_completion
+    tests/cuda/test_tabular_completion_device.cu
+    src/core/FileFingerprint.cpp src/physics/eos/eosdispatch.cpp
+    src/physics/eos/Tabular3DEOS.cpp src/physics/eos/Tabular4DEOS.cpp
+    src/physics/eos/TabularBaryonSource.cpp src/physics/eos/TabularCompletion.cpp
+    src/cuda/microphysics/tabular3_eos_device_owner.cpp
+    src/cuda/microphysics/tabular4_eos_device_owner.cpp
+    src/cuda/microphysics/device_eos_owner_utils.cpp
+    src/cuda/microphysics/device_species_owner.cpp)
+arch_configure_cuda_math_test(arch_cuda_tabular_completion)
+target_include_directories(arch_cuda_tabular_completion PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests")
+target_link_libraries(arch_cuda_tabular_completion PRIVATE arch_build_contract CUDA::cudart)
+add_test(NAME tabular_completion_device COMMAND arch_cuda_tabular_completion
+    "${CMAKE_CURRENT_SOURCE_DIR}/EOS_toolkit/tables/helmholtz/helm_table.dat"
+    "${CMAKE_CURRENT_BINARY_DIR}/component-completion-test-data/partial-3d-00.h5"
+    "${CMAKE_CURRENT_BINARY_DIR}/component-completion-test-data/partial-4d-00.h5")
+set_tests_properties(tabular_completion_device PROPERTIES
+    FIXTURES_REQUIRED tabular_completion_tables)
 add_executable(arch_cuda_hydro_leaf_parity
     tests/cuda/test_hydro_leaf_parity.cu)
 arch_configure_cuda_math_test(arch_cuda_hydro_leaf_parity)
@@ -342,6 +383,9 @@ if(ARCH_CUDA_HEAVY_JOB_POOL)
             arch_cuda_eos_host_device_parity
             arch_cuda_tabular_free_energy_owner
             arch_cuda_network_nse_device
+            arch_cuda_generated_nse
+            arch_cuda_native_tabular
+            arch_cuda_tabular_completion
             arch_cuda_hydro_leaf_parity
             arch_cuda_reduction_contract
             arch_cuda_burn_policy_parity

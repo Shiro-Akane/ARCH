@@ -1,0 +1,850 @@
+{
+  "base_scientific_control": {
+    "local_rtol": 1e-07,
+    "log": {
+      "path": "/home/shiroakane/ARCH/validation/network/results/weak-urca-inline-control-20260906/base/arch.stdout",
+      "sha256": "dc265856d7450b2c0bcf9da31926f4e2d0f7c3f75115a643cb080c5ab20802ee"
+    },
+    "normalization": [
+      1.0,
+      1.0,
+      500000000.0,
+      5e+16
+    ],
+    "normalized_budget": 1e-07,
+    "pass": false,
+    "rows": [
+      {
+        "attempts": 1290,
+        "backend": 0,
+        "method": 0,
+        "normalized_error": 3.355585769176483e-06,
+        "pass": false,
+        "rejections": 33
+      },
+      {
+        "attempts": 1290,
+        "backend": 1,
+        "method": 0,
+        "normalized_error": 3.355585769176483e-06,
+        "pass": false,
+        "rejections": 33
+      },
+      {
+        "attempts": 107,
+        "backend": 0,
+        "method": 1,
+        "normalized_error": 3.5762786865234375e-16,
+        "pass": true,
+        "rejections": 8
+      },
+      {
+        "attempts": 107,
+        "backend": 1,
+        "method": 1,
+        "normalized_error": 1.1920928955078126e-16,
+        "pass": true,
+        "rejections": 8
+      },
+      {
+        "attempts": 8,
+        "backend": 0,
+        "method": 2,
+        "normalized_error": 4.523158073425293e-12,
+        "pass": true,
+        "rejections": 0
+      },
+      {
+        "attempts": 8,
+        "backend": 1,
+        "method": 2,
+        "normalized_error": 4.523158073425293e-12,
+        "pass": true,
+        "rejections": 0
+      }
+    ]
+  },
+  "be_nr_error_improvement": 100.03501255728669,
+  "commands": [
+    [
+      "/home/shiroakane/ARCH/build/release-weak-factory-cmake/arch_cuda_generated_weak_factory_weak_urca",
+      "4000000000.0",
+      "500000000.0",
+      "10.0",
+      "100000000.0"
+    ],
+    [
+      "/home/shiroakane/ARCH/build/release-weak-factory-cmake/arch_cuda_generated_weak_trajectory_weak_urca",
+      "4000000000.0",
+      "500000000.0",
+      "10.0",
+      "100000000.0",
+      "1e-7"
+    ],
+    [
+      "/home/shiroakane/ARCH/build/release-weak-factory-cmake/arch_cuda_generated_weak_trajectory_weak_urca",
+      "4000000000.0",
+      "500000000.0",
+      "10.0",
+      "100000000.0",
+      "1e-11"
+    ]
+  ],
+  "factory_log": {
+    "path": "/home/shiroakane/ARCH/validation/network/results/weak-urca-inline-control-20260906/factory/arch.stdout",
+    "sha256": "2b6a0bad72ecb9fa58aa7f6aa59218acaded929b084f4f4aad0d4ed0d28de6c1"
+  },
+  "finished_utc": "2026-09-06T14:28:15.808403+00:00",
+  "focused_gate_pass": true,
+  "identity": {
+    "artifact_observation": {
+      "factory": [
+        2096,
+        409383,
+        4049960,
+        1788704323087676677,
+        1788704323091604995
+      ],
+      "trajectory": [
+        2096,
+        409316,
+        1639264,
+        1788704329464680103,
+        1788704329464680103
+      ]
+    },
+    "artifacts": {
+      "factory": {
+        "path": "/home/shiroakane/ARCH/build/release-weak-factory-cmake/arch_cuda_generated_weak_factory_weak_urca",
+        "sha256": "85e22c83a0cf3e229c9f70ce43edf0f470e5154779b8d0023748d5b5e34b7095"
+      },
+      "trajectory": {
+        "path": "/home/shiroakane/ARCH/build/release-weak-factory-cmake/arch_cuda_generated_weak_trajectory_weak_urca",
+        "sha256": "2e0c4b54dc60a3078a54517ec2099682d14facdd87ed73ea13d7cff6a1c15bc7"
+      }
+    },
+    "build": {
+      "cmake_cache_sha256": "1a2f14a6f217049235d855514e1639b49a5950bbfe216b36d89d5c6fb6d6bc63",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build/release-weak-factory-cmake",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_CUDSS_IR_STEPS": "2",
+        "ARCH_CUSTOM_NETWORKS": "weak_urca",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/tmp/arch-weak-factory-package.a19OQ2",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "ON",
+        "ARCH_ENABLE_KLU": "OFF",
+        "ARCH_ENABLE_OPENMP": "OFF",
+        "ARCH_FETCH_SUITESPARSE": "ON",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build/release-weak-factory-cmake/bin",
+        "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CUDA_ARCHITECTURES": "86",
+        "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/cc",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-13",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-13",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build/release-weak-factory-cmake/CMakeFiles/pkgRedirects",
+        "CMAKE_GENERATOR": "Ninja",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12",
+        "CuDSS_INCLUDE_DIR": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/include",
+        "CuDSS_LIBRARY": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0"
+      },
+      "compile_commands_sha256": "e764e518fd80e1e98ca229311482a56d530f23aa6c7c7d3af51fa54475c99546",
+      "configuration": "Debug",
+      "configured_sparse_libraries": {
+        "CuDSS_LIBRARY": {
+          "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+          "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+        }
+      },
+      "multi_config": false,
+      "registered_networks": [
+        {
+          "files": [
+            {
+              "name": "NetCustom_weak_urca.cpp",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/NetCustom_weak_urca.cpp",
+              "sha256": "f9efd94ad08ff963ea6797a5df3263a6e4531511d3393c4708a90ef1ea7e46f5"
+            },
+            {
+              "name": "NetCustom_weak_urca.h",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/NetCustom_weak_urca.h",
+              "sha256": "35c36e96d5773eea357f1fe714717aabeada9f22902e8e268e65377416015832"
+            },
+            {
+              "name": "NetCustom_weak_urca.math.h",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/NetCustom_weak_urca.math.h",
+              "sha256": "b58ed4638ecd82339d3ce9f8d9f860839a80e420b6aa6469be25b58ba4425417"
+            },
+            {
+              "name": "generated/GNUmakefile",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/GNUmakefile",
+              "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+            },
+            {
+              "name": "generated/actual_network.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/actual_network.H",
+              "sha256": "f2a3c5efe771e8449226a7cad2334573984c4af0b01e67419d3af300b6275778"
+            },
+            {
+              "name": "generated/actual_rhs.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/actual_rhs.H",
+              "sha256": "3d313905b8f6b9d748088b9b68c685f146c2bc5438baa32d98655b12e5863b69"
+            },
+            {
+              "name": "generated/amrex_bridge.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/amrex_bridge.H",
+              "sha256": "779fa47c70fddf3afa3c91b4ce13db6aa752c5f0fbbeb2bd7982bc3629862326"
+            },
+            {
+              "name": "generated/approximate_rates.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/approximate_rates.H",
+              "sha256": "37778f59f8ed8962270951d1850b36b5121847a8a8eeef21b0965de2a661d51c"
+            },
+            {
+              "name": "generated/burn_type.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/burn_type.H",
+              "sha256": "1137e9a14321da935004fdbd69fec33260ddabec268f5825e904533bea7dcfb9"
+            },
+            {
+              "name": "generated/derived_rates.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/derived_rates.H",
+              "sha256": "ce700b1bdc24f96cac054564340d30086934ab0c8ecdeafd76e034167c8516d2"
+            },
+            {
+              "name": "generated/fundamental_constants.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/fundamental_constants.H",
+              "sha256": "ca9d060e21c33bfd3b7b9352fe3d2bcefa243cf8ffd65a70a3d84a82cc3ba708"
+            },
+            {
+              "name": "generated/interp_tools.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/interp_tools.H",
+              "sha256": "211bbd6ae849e5385296fa96177fbe1c4195ca89499a17bfed78e301b157308f"
+            },
+            {
+              "name": "generated/main.cpp",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/main.cpp",
+              "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+            },
+            {
+              "name": "generated/modified_rates.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/modified_rates.H",
+              "sha256": "d0f6df4981a6fef262f65b987c356d3fd85f18a9e89cf75ca4014ade55c47880"
+            },
+            {
+              "name": "generated/network_properties.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/network_properties.H",
+              "sha256": "8ccd1429067d9cf8487c597071eee37c8785b51120eeef788809ab26f4529a83"
+            },
+            {
+              "name": "generated/partition_functions.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/partition_functions.H",
+              "sha256": "d1d2b618fd87c76e79630169a9f48340692b3c29f2c7cd2ea715fd520fa28ad2"
+            },
+            {
+              "name": "generated/pynucastro-info.txt",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/pynucastro-info.txt",
+              "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+            },
+            {
+              "name": "generated/rate_type.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/rate_type.H",
+              "sha256": "d7269a7265764cfe774838d3dfd8afbcb9595a5294a578251bb39f69c6297d0a"
+            },
+            {
+              "name": "generated/reaclib_rates.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/reaclib_rates.H",
+              "sha256": "5996ce889fa18af7409399ccc5f0e104f825fb9091eee40b1b3e4f41f85c5e74"
+            },
+            {
+              "name": "generated/screen.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/screen.H",
+              "sha256": "3b3bba0a119c50a4e4dbd216081b8c98fc42780d578669492ade80078fe4329d"
+            },
+            {
+              "name": "generated/screen_data.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/screen_data.H",
+              "sha256": "ffd07435aee7a69494700a6bf5e5ba7a92a786342bea9cfec9609f7302b07cc3"
+            },
+            {
+              "name": "generated/table_rates.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/table_rates.H",
+              "sha256": "9936bbf8d89ecc63edf414b8fc8f3f36430ecf763b063d67546b2fb10de654b3"
+            },
+            {
+              "name": "generated/tfactors.H",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/generated/tfactors.H",
+              "sha256": "887ebcfe2b34c065d387acc34a59494cb3e84a7605bc9135248cc01347d20f2a"
+            },
+            {
+              "name": "manifest.json",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/manifest.json",
+              "sha256": "39b2b4578117ecc70e61e881c813bc23a8f12621e1ecda47d5a6580d2542499d"
+            },
+            {
+              "name": "network.cmake",
+              "path": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca/network.cmake",
+              "sha256": "6d2ad288c1e0811722fe70c7de936bfb26c90523e7b24b94d2dd170997a0c11e"
+            }
+          ],
+          "manifest": {
+            "auxiliary_equations": 1,
+            "class_name": "NetCustom_weak_urca",
+            "device_callable_math": true,
+            "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+            "explicit_weak_storage": true,
+            "generator_sha256": "b04e6fb59c9d04754fcc184b28ddb3507894e0626d245597928bf2732ae3a3c4",
+            "generator_version": 4,
+            "header": "NetCustom_weak_urca.h",
+            "literal_zero_jacobian_entries_pruned": 0,
+            "network_id": "weak_urca",
+            "pynucastro_version": "2.12.0",
+            "rate_count": 2,
+            "recipe": "/home/shiroakane/ARCH/validation/network/inputs/weak_urca.py",
+            "recipe_sha256": "78783ad98340019bf063ae81986ac0002aebd1a4a5ccf7cb6d65bc70e4621de2",
+            "runtime_name": "custom:weak_urca",
+            "schema_version": 1,
+            "source": "NetCustom_weak_urca.cpp",
+            "species": [
+              "ne23",
+              "na23"
+            ],
+            "species_count": 2,
+            "supports_nse": false,
+            "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+            "weak_composition_jacobian": true,
+            "weak_table_coordinate_derivatives": true
+          },
+          "package": "weak_urca",
+          "root": "/tmp/arch-weak-factory-package.a19OQ2/weak_urca"
+        }
+      ],
+      "source_directory": "/home/shiroakane/ARCH",
+      "sparse_link": {
+        "libraries": [
+          {
+            "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+            "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublas.so.12.3.4.1",
+            "sha256": "8bdbda040980c430fc07dd853fdebc578e51951015284e4f109de5ee345a22e6"
+          },
+          {
+            "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublasLt.so.12.3.4.1",
+            "sha256": "4776affac4b3d78f1e5076d39bd046637672f54682bd2b3f40824f9dfac37708"
+          }
+        ],
+        "link_command_sha256": "2297e1b5cd97977e95deac081baa1a40e01a9fa446069758d9e50e582f8ea41d",
+        "required_providers": [
+          "cudss"
+        ]
+      }
+    },
+    "execution_environment": {
+      "CUDA_MODULE_LOADING": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "OMP_DYNAMIC": null,
+      "OMP_NUM_THREADS": null,
+      "OMP_PLACES": null,
+      "OMP_PROC_BIND": null,
+      "OMP_SCHEDULE": null
+    },
+    "schema": 1,
+    "source": {
+      "commit": "2226456c1f87415a317dd6a2a96053a7e154b949",
+      "dirty": true,
+      "modified_files": [
+        "CMakeLists.txt",
+        "simulation/Cellular/Cellular.cpp",
+        "simulation/DiffusionMode/DiffusionMode.cpp",
+        "simulation/RTinstability/RT_instab.cpp",
+        "simulation/Sedov/Sedov.cpp",
+        "simulation/SmoothAdvection/SmoothAdvection.cpp",
+        "src/amr/AmrTree.h",
+        "src/amr/Block.h",
+        "src/amr/GhostExchange.h",
+        "src/amr/LimitedLinearProlongation.h",
+        "src/core/ArchPortability.h",
+        "src/core/CompensatedSum.h",
+        "src/core/RuntimeParams.h",
+        "src/cuda/amr/AmrFluxSurfaceKernels.cuh",
+        "src/cuda/amr/AmrFluxSurfaceTypes.cuh",
+        "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+        "src/cuda/common/CudaCommon.cuh",
+        "src/cuda/common/CudaLaunchConfig.h",
+        "src/cuda/common/DiffusionConfigViewAdapter.h",
+        "src/cuda/diffusion/DiffusionKernels.cuh",
+        "src/cuda/hydro/HydroFaceKernel.cuh",
+        "src/cuda/hydro/HydroIntegratorPolicies.cuh",
+        "src/cuda/hydro/HydroStateKernels.cuh",
+        "src/cuda/microphysics/common.h",
+        "src/cuda/microphysics/microphysics_api.h",
+        "src/cuda/runtime/CudaBackend.h",
+        "src/cuda/runtime/CudaBackendAmrFlux.h",
+        "src/cuda/runtime/CudaBackendBurn.h",
+        "src/cuda/runtime/CudaBackendBurnAllNetworksImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnHelm.cu",
+        "src/cuda/runtime/CudaBackendBurnIdeal.cu",
+        "src/cuda/runtime/CudaBackendBurnImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnNetworkRouteImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnNetworkRoutes.h",
+        "src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DAprox13.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DAprox19.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DAprox21.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular3DIso7.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DAprox13.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DAprox19.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DAprox21.cu",
+        "src/cuda/runtime/CudaBackendBurnTabular4DIso7.cu",
+        "src/cuda/runtime/CudaBackendDiffusion.cu",
+        "src/cuda/runtime/CudaBackendDiffusion.h",
+        "src/cuda/runtime/CudaBackendExchange.cu",
+        "src/cuda/runtime/CudaBackendExchange.h",
+        "src/cuda/runtime/CudaBackendFactory.cpp",
+        "src/cuda/runtime/CudaBackendHydro.h",
+        "src/cuda/runtime/CudaBackendHydroControl.cpp",
+        "src/cuda/runtime/CudaBackendHydroHelm.cu",
+        "src/cuda/runtime/CudaBackendHydroIdeal.cu",
+        "src/cuda/runtime/CudaBackendHydroInstantiation.cuh",
+        "src/cuda/runtime/CudaBackendHydroTabular3.cu",
+        "src/cuda/runtime/CudaBackendHydroTabular4.cu",
+        "src/cuda/runtime/CudaBackendInternal.h",
+        "src/cuda/runtime/CudaBackendMicrophysicsControl.cpp",
+        "src/cuda/runtime/CudaBackendResources.cpp",
+        "src/cuda/runtime/CudaBackendStore.cpp",
+        "src/cuda/runtime/CudaBurnNetworkTypes.h",
+        "src/data/GlobalDefs.h",
+        "src/driver/ComputeBackend.h",
+        "src/driver/Driver.h",
+        "src/driver/DriverBurn.h",
+        "src/driver/DriverUtils.h",
+        "src/driver/StateResidency.h",
+        "src/driver/dispatch/BackendCapabilities.h",
+        "src/driver/dispatch/PolicyDescriptor.h",
+        "src/grid/Grid.h",
+        "src/grid/GridMetrics.h",
+        "src/numerics/burnsolver/BurnDispatch.h",
+        "src/numerics/burnsolver/BurnerHandle.h",
+        "src/numerics/burnsolver/odeFunction.h",
+        "src/numerics/burnsolver/ode_bd.h",
+        "src/numerics/burnsolver/ode_be-nr.h",
+        "src/numerics/burnsolver/ode_ros4.h",
+        "src/numerics/diffusion/DiffFlux.h",
+        "src/numerics/integrator/TimeIntegratorHelper.h",
+        "src/numerics/linalg/DenseWrap.h",
+        "src/physics/diagnostics/VelocityDiagnostics.h",
+        "src/physics/diffusionCoe/diffusion_math.hpp",
+        "src/physics/eos/HelmEos.h",
+        "src/physics/eos/IdealGas.h",
+        "src/physics/eos/Tabular3DEOS.h",
+        "src/physics/eos/Tabular4DEOS.h",
+        "src/physics/eos/TabularFreeEnergy.h",
+        "src/physics/eos/eos.h",
+        "src/physics/gravity/ExternalGravity.h",
+        "src/physics/network/timmes_common/TimmesNetworkSupport.h",
+        "src/physics/nse/nse_solver.h",
+        "tests/cuda/test_boundary_plan_parity.cu",
+        "tests/cuda/test_burn_policy_parity.cu",
+        "tests/cuda/test_cuda_amr_exchange.cpp",
+        "tests/cuda/test_cuda_compile_probe.cu",
+        "tests/cuda/test_cuda_policy_resolution.cu",
+        "tests/cuda/test_cuda_single_level_validation.cpp",
+        "tests/cuda/test_diffusion_rkl_parity.cu",
+        "tests/cuda/test_eos_host_device_parity.cu",
+        "tests/cuda/test_hydro_leaf_parity.cu",
+        "tests/cuda/test_network_nse_device.cu",
+        "tests/test_amr_operation_plans.cpp",
+        "tests/test_reduction_contract.cpp",
+        "tests/test_resolved_execution_plan.cpp",
+        "tests/test_runtime_probe_and_capabilities.cpp",
+        "tests/test_state_residency.cpp",
+        "tests/test_topology_transaction.cpp",
+        "tests/test_validate_backend_results.py",
+        "tests/tooling/test_audit_combination_v2.py",
+        "tools/audit_combination_v2.py",
+        "tools/network/GenerateNetwork.py",
+        "tools/validate_backend_results.py",
+        "tools/validate_cuda_amr_restart.py"
+      ],
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true,
+        "nested_cmakelists": true,
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ]
+      },
+      "untracked_source_files": [
+        "cmake/CudaBurnDenseRoutes.cmake",
+        "cmake/CudaBurnNetworks.cmake",
+        "cmake/CudaBurnSparseRoutes.cmake",
+        "cmake/CudaCustomDenseRoute.cu.in",
+        "cmake/FindCuDSS.cmake",
+        "cmake/templates/CudaBurnDenseRoute.cu.in",
+        "cmake/templates/CudaBurnSparseOwner.cu.in",
+        "simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+        "simulation/CooperativeHotspots/CooperativeHotspots.par",
+        "src/amr/RefinementIndicatorMath.h",
+        "src/amr/RegridExecutionPlan.h",
+        "src/amr/RegridTransferMath.h",
+        "src/cuda/amr/RefinementIndicators.cu",
+        "src/cuda/amr/RefinementIndicators.h",
+        "src/cuda/amr/RegridMigration.cu",
+        "src/cuda/amr/RegridMigration.h",
+        "src/cuda/common/DeviceAllocation.h",
+        "src/cuda/common/DeviceEosStatus.h",
+        "src/cuda/common/GridMetricsCache.cu",
+        "src/cuda/common/GridMetricsCache.h",
+        "src/cuda/hydro/CheckedHydroEos.cuh",
+        "src/cuda/hydro/GridGeometryAdapter.cuh",
+        "src/cuda/hydro/HydroSourceKernels.cuh",
+        "src/cuda/microphysics/CuDssSparseSolver.cpp",
+        "src/cuda/microphysics/CuDssSparseSolver.h",
+        "src/cuda/microphysics/SparseBeNrBatch.cuh",
+        "src/cuda/microphysics/SparseBurnCells.cuh",
+        "src/cuda/microphysics/SparseEquilibration.cu",
+        "src/cuda/microphysics/SparseEquilibration.h",
+        "src/cuda/microphysics/SparseOdeBatch.cuh",
+        "src/cuda/microphysics/device_network_owner.h",
+        "src/cuda/runtime/CudaBackendBurnDenseRoutes.h",
+        "src/cuda/runtime/CudaBackendBurnReduction.cuh",
+        "src/cuda/runtime/CudaBackendBurnRegisteredRoutes.h",
+        "src/cuda/runtime/CudaBackendBurnSparse.h",
+        "src/cuda/runtime/CudaBackendBurnSparseFactory.cpp",
+        "src/cuda/runtime/CudaBackendBurnSparseImpl.cuh",
+        "src/cuda/runtime/CudaBackendBurnSparseRoutes.h",
+        "src/cuda/runtime/CudaBackendIndicators.cpp",
+        "src/cuda/runtime/CudaBackendMigration.cpp",
+        "src/cuda/runtime/CudaBurnOdeTypes.h",
+        "src/driver/DriverBurnPolicy.h",
+        "src/grid/GridGeometryView.h",
+        "src/numerics/burnsolver/NetworkDerivative.h",
+        "src/numerics/burnsolver/OdeContinuation.h",
+        "src/numerics/diffusion/DiffusionTypes.h",
+        "src/numerics/integrator/GeometricSources.h",
+        "src/numerics/linalg/CsrMatrixView.h",
+        "src/numerics/linalg/CsrPattern.h",
+        "src/numerics/linalg/LinearEquilibration.h",
+        "src/physics/constant/PhysicalConstants.h",
+        "src/physics/gravity/ExternalGravitySource.h",
+        "src/physics/network/WeakTableView.h",
+        "tests/amr_composition_test_cases.h",
+        "tests/checkpoint_conservation_metrics.h",
+        "tests/cuda/GeneratedSparseBurnFactory.h",
+        "tests/cuda/test_burn_controller_parity.cu",
+        "tests/cuda/test_burn_eos_failure.cu",
+        "tests/cuda/test_burn_thermal_math.cu",
+        "tests/cuda/test_compensated_sum.cu",
+        "tests/cuda/test_cuda_amr_composition.cu",
+        "tests/cuda/test_cuda_regrid_migration.cu",
+        "tests/cuda/test_cuda_regrid_transaction.cpp",
+        "tests/cuda/test_cuda_sparse_burn_factory.cpp",
+        "tests/cuda/test_cudss_sparse_solver.cpp",
+        "tests/cuda/test_curvilinear_geometry_smoke.cu",
+        "tests/cuda/test_generated_network_math.cu",
+        "tests/cuda/test_generated_sparse_burn.cpp",
+        "tests/cuda/test_generated_sparse_burn_factory.cu",
+        "tests/cuda/test_generated_weak_factory.cu",
+        "tests/cuda/test_generated_weak_trajectory.cu",
+        "tests/cuda/test_grid_metrics_cache.cu",
+        "tests/cuda/test_hydro_dispatch.cu",
+        "tests/cuda/test_hydro_eos_failure.cu",
+        "tests/cuda/test_network_derivative.cu",
+        "tests/cuda/test_refinement_indicators.cpp",
+        "tests/cuda/test_sparse_be_nr_batch.cu",
+        "tests/fixtures/BurnMainlineReference.h",
+        "tests/fixtures/BurnTimeReference.h",
+        "tests/fixtures/HelmReference.h",
+        "tests/fixtures/NseReference.h",
+        "tests/fixtures/SparseTransferNetwork.h",
+        "tests/math/BurnThermalCases.h",
+        "tests/math/CompensatedSumCases.h",
+        "tests/math/CurvilinearMetricCases.h",
+        "tests/math/DenseLuCases.h",
+        "tests/math/NetworkDerivativeCases.h",
+        "tests/regrid_migration_fixture.h",
+        "tests/smoke/cuda_amr_cases.json",
+        "tests/test_burn_mainline_reference.cpp",
+        "tests/test_checkpoint_conservation_metrics.cpp",
+        "tests/test_compensated_sum.cpp",
+        "tests/test_curvilinear_manifest.py",
+        "tests/test_curvilinear_metrics.cpp",
+        "tests/test_generated_network_reference.cpp",
+        "tests/test_physical_constants.cpp",
+        "tests/test_portable_network_generator.py",
+        "tests/test_refinement_indicator_math.cpp",
+        "tests/test_run_memory_guarded.py",
+        "tests/test_runtime_validation_inputs.py",
+        "tests/test_smoke_cuda_amr_runtime.py",
+        "tests/test_sparse_ode_continuation.cpp",
+        "tests/test_validation_provenance.py",
+        "tests/test_validation_subprocess_logs.py",
+        "tools/network/PortableAdapter.py",
+        "tools/network/PortableCxx.py",
+        "tools/network/WeakStorage.py",
+        "tools/network/WeakTables.py",
+        "tools/qualify_cuda_amr_evidence.py",
+        "tools/run_memory_guarded.py",
+        "tools/smoke_cuda_amr_runtime.py",
+        "tools/validation_provenance.py",
+        "validation/amr/geometry_reference.py",
+        "validation/amr/gpu_curvilinear_cases.json",
+        "validation/burn/time_reference.py",
+        "validation/eos/helm_reference.py",
+        "validation/network/inputs/weak_urca.py",
+        "validation/network/nse_reference.py",
+        "validation/network/run_sparse_validation.py",
+        "validation/network/run_weak_validation.py",
+        "validation/network/test_sparse_validation.py",
+        "validation/network/test_weak_reference.py",
+        "validation/network/weak_reference.py"
+      ],
+      "worktree_sha256": "e3ae292b0b1bbb032ccbd99cec66221b422cd85a2df971fb521853c9e9d3bd7d"
+    }
+  },
+  "identity_verified_after_run": true,
+  "independent": {
+    "controls": {
+      "cv": 100000000.0,
+      "interval": 10.0,
+      "rho": 4000000000.0,
+      "temperature": 500000000.0
+    },
+    "inputs": {
+      "avogadro": 6.02214129e+23,
+      "energy_per_ne23_fraction": -1.8356560485217034e+17,
+      "light_speed_cm_s": 29979245800.0,
+      "masses_g": [
+        3.818321060312286e-23,
+        3.817541002484691e-23
+      ],
+      "nuclear_conversion": {
+        "path": "/home/shiroakane/miniconda3/envs/p311/lib/python3.11/site-packages/pynucastro/templates/simple-cxx-network/fundamental_constants.H.template",
+        "sha256": "2283df0250daf7d23736d5357e94cc661cba78b242f2cb838ed23f90f72c3458"
+      },
+      "pynucastro_version": "2.12.0",
+      "tables": [
+        {
+          "path": "/home/shiroakane/miniconda3/envs/p311/lib/python3.11/site-packages/pynucastro/library/tabular/suzuki/suzuki-23ne-23na_betadecay.dat",
+          "sha256": "58771ed1f03c49ccdc83e5e7fe8e37c557445f005d65ca3a94288408257d9a4a"
+        },
+        {
+          "path": "/home/shiroakane/miniconda3/envs/p311/lib/python3.11/site-packages/pynucastro/library/tabular/suzuki/suzuki-23na-23ne_electroncapture.dat",
+          "sha256": "b9cdc476d3d8767254ac16410a65ae71afc00b08e69fca4852714bc5313b0e1f"
+        }
+      ]
+    },
+    "normalized_integrator_agreement": 3.3306690738754696e-16,
+    "oracle": "original Suzuki data; SciPy grid interpolation; constrained Urca balance",
+    "release_qualified": false,
+    "trajectories": [
+      {
+        "energy_identity_error": 4.575e-16,
+        "method": "DOP853",
+        "normalized_state": [
+          0.5227736293904056,
+          0.8986453495461842,
+          -0.017745549379235902
+        ],
+        "rhs_calls": 1550,
+        "state": [
+          0.5227736293904056,
+          0.4772263706095944,
+          449322674.77309215,
+          -887277468961795.1
+        ]
+      },
+      {
+        "energy_identity_error": 2.275e-16,
+        "method": "Radau",
+        "normalized_state": [
+          0.5227736293904056,
+          0.8986453495461846,
+          -0.01774554937923579
+        ],
+        "rhs_calls": 919,
+        "state": [
+          0.5227736293904056,
+          0.4772263706095944,
+          449322674.77309227,
+          -887277468961789.6
+        ]
+      }
+    ]
+  },
+  "qualification_note": "Constant-cv two-isotope scientific control and typed owner/cell paths; not full EOS, whole-application/AMR, large-network or final-release qualification.",
+  "release_qualified": false,
+  "schema": 1,
+  "scope": "controlled-Urca-weak-factory-and-trajectories",
+  "started_utc": "2026-09-06T14:26:47.356464+00:00",
+  "tight_scientific_control": {
+    "local_rtol": 1e-11,
+    "log": {
+      "path": "/home/shiroakane/ARCH/validation/network/results/weak-urca-inline-control-20260906/tight/arch.stdout",
+      "sha256": "0604573e1ff9d981bc286c5a7a48c4fe3f787e8762d6345f561caf522e361d60"
+    },
+    "normalization": [
+      1.0,
+      1.0,
+      500000000.0,
+      5e+16
+    ],
+    "normalized_budget": 1e-07,
+    "pass": true,
+    "rows": [
+      {
+        "attempts": 124516,
+        "backend": 0,
+        "method": 0,
+        "normalized_error": 3.35441130399704e-08,
+        "pass": true,
+        "rejections": 63
+      },
+      {
+        "attempts": 124516,
+        "backend": 1,
+        "method": 0,
+        "normalized_error": 3.3544112920761105e-08,
+        "pass": true,
+        "rejections": 63
+      },
+      {
+        "attempts": 34,
+        "backend": 0,
+        "method": 1,
+        "normalized_error": 1.1920928955078126e-16,
+        "pass": true,
+        "rejections": 8
+      },
+      {
+        "attempts": 34,
+        "backend": 1,
+        "method": 1,
+        "normalized_error": 1.0728836059570312e-15,
+        "pass": true,
+        "rejections": 8
+      },
+      {
+        "attempts": 48,
+        "backend": 0,
+        "method": 2,
+        "normalized_error": 1.6570091247558592e-14,
+        "pass": true,
+        "rejections": 9
+      },
+      {
+        "attempts": 48,
+        "backend": 1,
+        "method": 2,
+        "normalized_error": 1.6808509826660157e-14,
+        "pass": true,
+        "rejections": 9
+      }
+    ]
+  }
+}

@@ -205,6 +205,7 @@ public:
         // Equation-of-state and physical-module configuration.
         cfg.physics.eos_type = parser.GetString("eos_type", "ideal");
         cfg.physics.eos_table_path = parser.GetString("eos_table_path", "");
+        cfg.physics.eos_helm_table_path = parser.GetString("eos_helm_table_path", "");
         cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
 
         // Nuclear reaction and NSE configuration.
@@ -216,9 +217,21 @@ public:
         cfg.physics.burn.smallx = parser.GetDouble("smallx", 1e-20);
 
         cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", 1e30);
-        cfg.physics.burn.use_nse = parser.GetBool("use_nse", true);
+        const std::string nse_request = CanonicalizeEnumToken(
+            parser.GetString("use_nse", "true"));
+        cfg.physics.burn.nse_auto = nse_request == "auto";
+        cfg.physics.burn.use_nse = cfg.physics.burn.nse_auto
+            || parser.GetBool("use_nse", true);
         cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", 4.5e9);
         cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", 1.0e6);
+        if (!std::isfinite(cfg.physics.burn.nseTempThreshold)
+            || !(cfg.physics.burn.nseTempThreshold > 0.0)
+            || !std::isfinite(cfg.physics.burn.nseDensThreshold)
+            || cfg.physics.burn.nseDensThreshold < 0.0) {
+            throw std::invalid_argument(
+                "NSE requires finite nseTempThreshold > 0 K and "
+                "nseDensThreshold >= 0 g/cm^3, for both true and auto.");
+        }
 
         cfg.physics.burn.enforce_mass_conservation = parser.GetBool("enforce_mass_conservation", true);
         cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", 0);

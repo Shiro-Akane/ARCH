@@ -1,0 +1,4 @@
+macro_step	physical_time	backend	old_blocks	new_blocks	topology_changed	wall_seconds	bytes_h2d	bytes_d2h	kernel_count	stream_sync_count
+0	0	cuda	4	4	0	0.0030863890000000001	1512	32	14	6
+2	0.010564428184106458	cuda	4	4	0	0.00040551299999999998	1512	32	14	6
+4	0.021128856368212916	cuda	4	4	0	0.00038947100000000001	1512	32	14	6

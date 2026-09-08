@@ -1,0 +1,5 @@
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+CUDA_BURN_SUMMARY route=aprox19.be_nr status=0 failed_cells=0 limiter=4.82673e-11
+CUDA_BURN_OBSERVED route=aprox19.be_nr hash=0x101588c7a8060721
+CUDA_BURN_PASS route=aprox19.be_nr limiter=4.82673e-11 enuc=3.78196e+27 hash=0x101588c7a8060721

@@ -6,10 +6,11 @@ from datetime import datetime, timezone
 from fractions import Fraction
 from pathlib import Path
 from PortableAdapter import adapt as make_portable_adapter
+from NseMetadata import inspect_network as inspect_nse, cpp_interface as nse_cpp_interface
 
 # Package contract identifier used for reuse and CMake registration.
 # This is generated metadata, not an ARCH release number or a user setting.
-GENERATOR_VERSION = 4
+GENERATOR_VERSION = 5
 ID_RE = re.compile(r"^[a-z][a-z0-9_]{0,47}$")
 RESERVED = {"custom", "none", "null", "ideal", "helmholtz", "tabular"}
 
@@ -197,11 +198,13 @@ def install_conserved_energy_gauge(generated_dir, network, nuclei):
     return weights, conversion
 
 
-def write_adapter(stage, network_id, network):
+def write_adapter(stage, network_id, network, *, nse_metadata=None):
     cls = f"NetCustom_{network_id}"
     detail = f"arch_custom_{network_id}_detail"
     generated = f"arch_pynucastro_{network_id}"
     nuclei = validated_nuclei(network)
+    if nse_metadata is None:
+        nse_metadata = inspect_nse(network, nuclei)
     names = [n.short_spec_name.lower() for n in nuclei]
     aion, zion = [n.A for n in nuclei], [n.Z for n in nuclei]
     masses, conversion = install_conserved_energy_gauge(stage / 'generated', network, nuclei)
@@ -212,9 +215,11 @@ def write_adapter(stage, network_id, network):
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include "core/ArchPortability.h"
 #include "data/GlobalDefs.h"
 #include "physics/species/Species.h"
 #include "numerics/burnsolver/NetworkDerivative.h"
@@ -229,13 +234,14 @@ void eval_temperature_derivative(const double*, double, double*, double&);
 struct {cls} {{
     static constexpr int NUM_SPECIES = {len(nuclei)};
     static constexpr int ODE_NEQ = NUM_SPECIES + 1;
-    static constexpr bool SUPPORTS_NSE = false;
+    static constexpr bool SUPPORTS_NSE = {str(nse_metadata['eligible']).lower()};
     static constexpr const char* NETWORK_NAME = "custom:{network_id}";
     inline static constexpr std::array<const char*, NUM_SPECIES> SPECIES_NAMES{{{quoted_array(names)}}};
     inline static constexpr std::array<double, NUM_SPECIES> AION{{{cpp_array(aion)}}};
     inline static constexpr std::array<double, NUM_SPECIES> ZION{{{cpp_array(zion)}}};
     inline static constexpr std::array<double, NUM_SPECIES> ENERGY_WEIGHTS{{{cpp_array(masses)}}};
     static constexpr double ENERGY_CONVERSION = {conversion:.17g};
+{nse_cpp_interface(nse_metadata)}
 
     static double aion(int index) {{ return AION[index]; }}
     static double energy_weight(int index) {{ return ENERGY_WEIGHTS[index]; }}
@@ -382,7 +388,7 @@ def main():
     recipe_hash=hashlib.sha256(recipe_path.read_bytes()).hexdigest()
     generator_hash = hashlib.sha256(b"".join(
         (Path(__file__).parent / name).read_bytes()
-        for name in ("GenerateNetwork.py", "PortableCxx.py", "PortableAdapter.py", "WeakTables.py", "WeakStorage.py"))).hexdigest()
+        for name in ("GenerateNetwork.py", "PortableCxx.py", "PortableAdapter.py", "WeakTables.py", "WeakStorage.py", "NseMetadata.py"))).hexdigest()
     if target.exists() and not args.replace and not args.check:
         manifest_path=target/"manifest.json"
         if manifest_path.is_file():
@@ -396,10 +402,16 @@ def main():
              else default_network(recipe, pyna))
     if not isinstance(network, pyna.SimpleCxxNetwork):
         fail("build_network() must return pynucastro.SimpleCxxNetwork")
-    validated_nuclei(network)
+    nuclei = validated_nuclei(network)
+    from pynucastro.constants import constants as nuclear_constants
+    from pynucastro.rates import ReacLibRate
+    nse_metadata = inspect_nse(network, nuclei, constants=nuclear_constants,
+                               derived_rate_type=pyna.DerivedRate,
+                               forward_rate_type=ReacLibRate)
     if args.check:
         print(f"validated custom:{network_id}: {len(network.unique_nuclei)} nuclei, "
-              f"{len(network.rates)} rates, pynucastro {pyna.__version__}"); return
+              f"{len(network.rates)} rates, pynucastro {pyna.__version__}; "
+              f"NSE: {nse_metadata['reason']}"); return
     custom_root.mkdir(parents=True, exist_ok=True)
     stage=Path(tempfile.mkdtemp(prefix=f".{network_id}.", dir=custom_root))
     backup = None
@@ -416,7 +428,7 @@ def main():
                 "expected to be sparse",
                 file=sys.stderr,
             )
-        cls, header, source=write_adapter(stage, network_id, network)
+        cls, header, source=write_adapter(stage, network_id, network, nse_metadata=nse_metadata)
         from WeakTables import enable_coordinate_derivatives, connect_weak_derivatives
         weak_coordinate_derivatives = enable_coordinate_derivatives(stage, header)
         device_callable = make_portable_adapter(stage, network_id, cls, header, source,
@@ -436,7 +448,8 @@ def main():
             "pynucastro_version":pyna.__version__, "recipe":str(recipe_path),
             "recipe_sha256":recipe_hash, "species_count":len(network.unique_nuclei),
             "species":[n.short_spec_name.lower() for n in network.unique_nuclei],
-            "rate_count":len(network.rates), "supports_nse":False,
+            "rate_count":len(network.rates), "supports_nse":nse_metadata['eligible'],
+            "nse":nse_metadata,
             "device_callable_math": device_callable,
             "weak_table_coordinate_derivatives": weak_coordinate_derivatives,
             "weak_composition_jacobian": weak_coordinate_derivatives,

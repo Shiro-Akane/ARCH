@@ -8,8 +8,10 @@ registration to actual time evolution, and compare weak-reaction composition and
 energy changes with independent references. The sparse cases also check the
 large-system solver path, not just whether a package compiles.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
+The historical campaign results on this page belong to the scientific acceptance
+snapshot identified in the [central Validation index](../README.md). The generated
+NSE extension below is a subsequent, bounded development check, not a replacement
+for those frozen campaigns. Source organization and build
 verification have a separate
 [maintenance record](../backend/results/maintenance-freeze-20260908/).
 
@@ -206,6 +208,46 @@ and tight controls and requires the tight result to pass. The sparse runner
 requires all three ODEs and both storage sizes; a selected-method diagnostic or
 a skipped GPU run does not count as complete coverage.
 
+## Generated NSE extension (2026-09-08)
+
+The generator checks eligibility for the bounded ground-state NSE model described
+in the [generated-network contract](../../src/physics/network/custom/README.md#generated-network-nse-eligibility).
+The certificate requires complete mass/spin data, unscreened strong ReacLib
+rates paired with recognized `DerivedRate(use_pf=False)` inverses, no weak
+sources, and no stoichiometric invariants beyond independent baryon number and
+charge. It is not a network-name or isotope-count whitelist. Temperature-dependent
+partition functions and screened/weak equilibrium are not certified by this model;
+existing packages without the eligibility metadata retain their ordinary ODE routes.
+
+The real generated [nse_light](inputs/nse_light.py) and
+[nse_alpha](inputs/nse_alpha.py) packages passed the focused CPU
+[equilibrium and burn-handoff test](../../tests/host/test_generated_nse_network.cpp).
+Each uses nine states: `T={4.5,5,7}e9 K` and `rho={1e6,1e7,1e9} g/cm³`.
+The test isolates each forward/reverse pair through the package's actual rate
+and RHS code, independently requires equal opposing flows, and also checks the
+full generated RHS against the sum of absolute one-way flows.
+
+| Package | Species / reaction pairs / constraint rank | Largest relative pair or RHS residual | Largest coupled energy residual |
+| --- | --- | --- | --- |
+| `nse_light` | 7 / 10 / 2 | `2.576e-12` | `3.966e-14` |
+| `nse_alpha` | 2 / 1 / 1 | `5.804e-13` | `2.180e-15` |
+
+The detailed-balance/RHS budget is `1e-10`. Each package also passes BE_NR, BD
+and ROS4 with the same NSE temperature/density thresholds: conservative
+projection, below-threshold controls and a cooling projection that fails and
+continues with real ordinary ODE evolution. The projection's first-law residual
+is normalized by `cv*T` and limited to `1e-12`; charge conservation retains
+`1e-12`. These are compact constant-cv handoff checks, not independent long
+astrophysical trajectories or large-network performance qualification.
+
+Selecting these maintained packages in `ARCH_CUSTOM_NETWORKS` registers CTest
+entries `generated_nse_nse_light` and `generated_nse_nse_alpha`. The unconditional
+`generated_nse` test and CUDA `generated_nse_device` share independent analytic
+rank-one/rank-two fixtures, energy-gauge and rejection witnesses; both passed.
+The CUDA witness is not the real-package trajectory matrix above. Built-in NSE
+reference coverage remains separate and unchanged. These new checks do not
+retroactively change the earlier weak/sparse/application or sanitizer records.
+
 ## Scope and follow-up
 
 Complete Release/Debug regressions and the
@@ -220,8 +262,9 @@ Complete 150/200-isotope trajectories and scaling remain the approved follow-up
 work for a larger validation system, outside this local release gate. For very
 large networks, scientific reliability depends on the isotope set, reaction data
 and model's range of applicability; solver/provider validation is recorded
-separately. Custom-network NSE is not currently supported; the
-[NSE reference](nse_reference.py) covers the supported built-in networks.
+separately. Generated-network NSE support has the bounded contract and focused
+coverage above; the [NSE reference](nse_reference.py) continues to cover the
+supported built-in networks.
 
 See the internal [release standard](../../docs/development/CudaReleaseStandard.md)
 and the user-facing [backend guide](../../docs/CudaBackendStatus.md).

@@ -1,0 +1,14 @@
+[OUTPUT] 
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/review-cuda-debug
+
+[HANDLER_OUTPUT] 
+Test project /home/shiroakane/ARCH/build/review-cuda-debug
+
+    Start 19: cuda_compensated_sum
+1/2 Test #19: cuda_compensated_sum .............   Passed    0.29 sec
+    Start 20: cuda_amr_composition
+2/2 Test #20: cuda_amr_composition .............   Passed    0.42 sec
+
+100% tests passed, 0 tests failed out of 2
+
+Total Test time (real) =   0.72 sec

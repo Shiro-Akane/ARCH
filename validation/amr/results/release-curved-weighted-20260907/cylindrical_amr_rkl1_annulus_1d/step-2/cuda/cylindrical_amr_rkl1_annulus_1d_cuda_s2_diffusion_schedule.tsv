@@ -1,0 +1,5 @@
+macro_step	cache_generation	order	stages	negative_gamma_stages	captures_initial_operator	diffusion_dt	dt_forward_euler
+0	1	1	4	0	0	0.0003662109375	6.103515625e-05
+0	2	1	4	0	0	0.0003662109375	6.103515625e-05
+1	3	1	4	0	0	0.0003662109375	6.103515625e-05
+1	4	1	4	0	0	0.0003662109375	6.103515625e-05

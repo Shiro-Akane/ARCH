@@ -1,0 +1,35 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/runs/burn_4_direct_default/step-2/cpu/burn_4_direct_default_cpu_s2_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/runs/burn_4_direct_default/step-2/cpu/burn_4_direct_default_cpu_s2.par
+[Main] Problem created: BurnOneZone
+[EOS Dispatch] Resolving EOS Policy: tabular
+[Tabular4DEOS] Loading validated 4D HDF5 table: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/tables/burn-4-direct.h5
+[Tabular4DEOS] Loaded direct table with automatic rank validation.
+[Problem] Burn one-zone state: rho=1e+07, T=3e+09, p=3.00048e+24, network=aprox13
+[Main] Configuration:
+       Grid: 16 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 8 | Finest Level: 0
+    Level 0   | dx1(x): 6.25e+06
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BD | Linear Solver: DenseLU
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/runs/burn_4_direct_default/step-2/cpu/burn_4_direct_default_cpu_s2_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/runs/burn_4_direct_default/step-2/cpu/burn_4_direct_default_cpu_s2_chk_0000.h5 at step 0 with 1 AMR leaves.
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+1       1.00000e-16    1.00000e-16    3.53539e-03    5.00000e-17    
+2       3.00000e-16    2.00000e-16    3.53539e-03    1.00000e-16    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/runs/burn_4_direct_default/step-2/cpu/burn_4_direct_default_cpu_s2_HLLC_plt_0001.h5 at t=3.00000e-16
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-795/runs/burn_4_direct_default/step-2/cpu/burn_4_direct_default_cpu_s2_chk_0001.h5 at step 2 with 1 AMR leaves.
+>>> Simulation Done. Total Steps: 2 | Final Time: 3.00000e-16

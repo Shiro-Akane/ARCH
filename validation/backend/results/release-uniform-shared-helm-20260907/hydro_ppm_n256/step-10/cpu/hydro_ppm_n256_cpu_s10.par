@@ -1,0 +1,58 @@
+# Smooth periodic entropy-wave advection: PPM, 256 cells.
+# VALIDATION INPUT: owned by validation/hydro/README.md; keep synchronized with metrics.csv.
+geometry = cartesian
+nblockx1 = 16
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 24
+x1_min = 0.0
+x1_max = 1.0
+x2_min = 0.0
+x2_max = 1.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = periodic
+x1r_boundary_type = periodic
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = ppm
+limiter = mc
+time_integrator = RK3
+cfl = 0.3
+sml_rho = 1e-12
+max_eint = 1e6
+compute_backend = cpu
+
+lrefinemin = 0
+lrefinemax = 0
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.8
+derefine_threshold = 0.2
+
+tmax = 1e99
+max_steps = 10
+restart = false
+out_dir = /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/hydro_ppm_n256/step-10/cpu
+base_name = hydro_ppm_n256_cpu_s10
+plt_dt = -1
+plt_dstep = -1
+chk_dt = -1
+chk_dstep = 10
+plt_variables = DENS, PRES, VELX, ENER
+
+eos_type = ideal
+gamma = 1.4
+gravity_type = none
+use_burn = false
+use_diffusion = false
+
+rho_mean = 1.0
+rho_amplitude = 0.2
+pressure0 = 1.0
+velocity0 = 1.0
+mode = 1

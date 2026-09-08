@@ -1,0 +1,5 @@
+========= COMPUTE-SANITIZER
+[Tabular3DEOS] Loaded EOSDriver total equilibrium EOS, native axes/fields; 10501 invalid nodes excluded from the query domain. Conserved energy includes the source reference shift 2.49119e+18 erg/g.
+native EOSDriver CUDA parity, host-release/move lifetime and failure latch PASS
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

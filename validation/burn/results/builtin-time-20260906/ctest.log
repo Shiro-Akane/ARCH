@@ -1,0 +1,43 @@
+Start testing: Sep 06 22:44 JST
+----------------------------------------------------------
+14/96 Testing: burn_mainline_reference
+14/96 Test: burn_mainline_reference
+Command: "/home/shiroakane/ARCH/build/release-bounded-network-cmake/arch_burn_mainline_reference"
+Directory: /home/shiroakane/ARCH/build/release-bounded-network-cmake
+"burn_mainline_reference" start time: Sep 06 22:44 JST
+Output:
+----------------------------------------------------------
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+BURN_TIME_PASS aprox13.be_nr species_linf=2.7755575615628914e-17 relative_temperature=2.2204460492503131e-16 relative_energy=6.6613381477509392e-15 mass_closure=0
+BURN_TIME_PASS aprox13.bd species_linf=2.7755575615628914e-17 relative_temperature=2.2204460492503131e-16 relative_energy=6.6613381477509392e-15 mass_closure=0
+BURN_TIME_PASS aprox13.ros4 species_linf=2.7755575615628914e-17 relative_temperature=2.2204460492503131e-16 relative_energy=6.6613381477509392e-15 mass_closure=0
+aprox13: independent time reference and historical checker controls passed
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+BURN_TIME_PASS aprox19.be_nr species_linf=1.6864115659487311e-09 relative_temperature=1.1390872689531761e-09 relative_energy=2.6178283984990003e-09 mass_closure=0
+BURN_TIME_PASS aprox19.bd species_linf=2.7755575615628914e-17 relative_temperature=1.3322676295501878e-15 relative_energy=1.2212453270876722e-14 mass_closure=0
+BURN_TIME_PASS aprox19.ros4 species_linf=2.1510571102112408e-16 relative_temperature=8.8817841970012523e-16 relative_energy=5.1070259132757201e-15 mass_closure=0
+aprox19: independent time reference and historical checker controls passed
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+BURN_TIME_PASS aprox21.be_nr species_linf=7.7605667586633231e-09 relative_temperature=3.6232464806218445e-09 relative_energy=8.6570700608135098e-09 mass_closure=1.1102230246251565e-16
+BURN_TIME_PASS aprox21.bd species_linf=8.3266726846886741e-17 relative_temperature=2.0872192862952943e-14 relative_energy=5.0182080713057076e-14 mass_closure=0
+BURN_TIME_PASS aprox21.ros4 species_linf=9.4368957093138306e-16 relative_temperature=2.1538326677728037e-14 relative_energy=4.8183679268731794e-14 mass_closure=0
+aprox21: independent time reference and historical checker controls passed
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+BURN_TIME_PASS iso7.be_nr species_linf=1.1102230246251565e-16 relative_temperature=1.1102230246251565e-16 relative_energy=7.6605388699135801e-15 mass_closure=0
+BURN_TIME_PASS iso7.bd species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+BURN_TIME_PASS iso7.ros4 species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+iso7: independent time reference and historical checker controls passed
+12 burn routes passed independent time-integration references; historical data from main 8c76be85e2abc8b4a58049767e9ef32b34d6754b preserved
+<end of output>
+Test time = 1087.33 sec
+----------------------------------------------------------
+Test Passed.
+"burn_mainline_reference" end time: Sep 06 23:03 JST
+"burn_mainline_reference" time elapsed: 00:18:07
+----------------------------------------------------------
+
+End testing: Sep 06 23:03 JST

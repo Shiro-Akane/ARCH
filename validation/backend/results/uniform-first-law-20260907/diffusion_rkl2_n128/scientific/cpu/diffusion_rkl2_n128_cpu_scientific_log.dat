@@ -1,0 +1,69 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/diffusion_rkl2_n128/scientific/cpu/diffusion_rkl2_n128_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/diffusion_rkl2_n128/scientific/cpu/diffusion_rkl2_n128_cpu_scientific.par
+[Main] Problem created: DiffusionMode
+[Problem] Diffusion cosine mode: X=0.5+0.25 cos(2*pi*1*x/L)
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 2
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 16 | Finest Level: 0
+    Level 0   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+           -> Diffusion Solver Initialized: RKL2 (CFL_diff = 0.8)
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/diffusion_rkl2_n128/scientific/cpu/diffusion_rkl2_n128_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/diffusion_rkl2_n128/scientific/cpu/diffusion_rkl2_n128_cpu_scientific_chk_0000.h5 at step 0 with 8 AMR leaves.
+Step    Time           dt             dt_hydro       dt_diff        
+--------------------------------------------------------------------
+[Diffusion] multi-block AMR uses composite RKL2 STS with stage ghost synchronization and reflux.
+1       2.64111e-03    2.64111e-03    2.64111e-03    3.05176e-03    
+2       5.28221e-03    2.64111e-03    2.64111e-03    3.05176e-03    
+3       7.92332e-03    2.64111e-03    2.64111e-03    3.05176e-03    
+4       1.05644e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+5       1.32055e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+6       1.58466e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+7       1.84877e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+8       2.11289e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+9       2.37700e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+10      2.64111e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+11      2.90522e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+12      3.16933e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+13      3.43344e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+14      3.69755e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+15      3.96166e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+16      4.22577e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+17      4.48988e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+18      4.75399e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+19      5.01810e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+20      5.28221e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+21      5.54632e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+22      5.81044e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+23      6.07455e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+24      6.33866e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+25      6.60277e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+26      6.86688e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+27      7.13099e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+28      7.39510e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+29      7.65921e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+30      7.92332e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+31      8.18743e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+32      8.45154e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+33      8.71565e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+34      8.97976e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+35      9.24387e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+36      9.50799e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+37      9.77210e-02    2.64111e-03    2.64111e-03    3.05176e-03    
+38      1.00000e-01    2.27904e-03    2.64111e-03    3.05176e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/diffusion_rkl2_n128/scientific/cpu/diffusion_rkl2_n128_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/diffusion_rkl2_n128/scientific/cpu/diffusion_rkl2_n128_cpu_scientific_chk_0001.h5 at step 38 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 38 | Final Time: 1.00000e-01

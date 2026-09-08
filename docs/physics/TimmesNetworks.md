@@ -205,8 +205,17 @@ The result is network-constrained NSE over the selected species set. `iso7` and
 `aprox13` omit free nucleons and neutron-rich nuclei and support only the
 `Ye=0.5` constrained solution. Full physical NSE requires an independent,
 sufficiently broad species set and conservation mapping.
-CPU and CUDA use the same solver for the four built-in networks. Generated
-network packages do not support online NSE.
+CPU and CUDA use the same solver for the four built-in networks and eligible
+generated packages. Generated data preserve pynucastro's mass and
+detailed-balance convention instead of borrowing Timmes's constants. The
+[package contract](../../src/physics/network/custom/README.md) defines eligibility
+and the current unscreened, weak-free, ground-state model boundary.
+
+`use_nse=auto` resolves network capability at startup. True and auto share
+`T > nseTempThreshold` and `rho > nseDensThreshold`, with unchanged defaults
+`4.5e9 K` and `1e6 g/cm^3`. No additional dynamic activation criterion is
+introduced. Both modes still require valid nuclear/EOS data and a conserving
+thermal solution; a solution below the threshold is not forced back onto it.
 
 NSE projection solves:
 
@@ -350,14 +359,14 @@ with the registered network/EOS routes. Missing providers fail closed.
 A generated package registers for device execution when it provides
 device-callable math and passes the
 [package metadata checks](../../src/physics/network/custom/README.md).
-The `generator_version` field is machine-checked package-schema information.
 CPU and CUDA consume the same math header, constants, and declared Jacobian
 structure. Recognized embedded weak tables have backend-owned immutable storage
 and explicit borrowed views. Accepted packages without a device-callable math
 contract execute on CPU only. CUDA sparse execution reuses
 the shared BE_NR/ROS4/BD continuations with a backend-specific CSR/cuDSS
-executor, not a second set of network or ODE physics. Generated packages still
-set `SUPPORTS_NSE=false`. Recognized weak networks integrate their signed energy
+executor, not a second set of network or ODE physics. Generated packages
+advertise NSE only after the documented data and equilibrium-model checks.
+Recognized weak networks remain ordinary-ODE cases and integrate their signed energy
 source with the same ODE stages, error control and rollback as composition and
 temperature. Nuclear energy and that source integral enter the common
 accepted-energy accounting.

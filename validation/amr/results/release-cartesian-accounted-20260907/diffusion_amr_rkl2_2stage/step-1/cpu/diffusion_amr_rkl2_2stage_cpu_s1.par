@@ -1,0 +1,68 @@
+# Localized Cartesian species pulse for real GPU-AMR diffusion validation.
+geometry = cartesian
+nblockx1 = 4
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 64
+x1_min = 0.0
+x1_max = 1.0
+x2_min = 0.0
+x2_max = 1.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = outflow
+x1r_boundary_type = outflow
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = muscl
+limiter = mc
+time_integrator = RK2
+cfl = 0.4
+sml_rho = 1e-12
+max_eint = 1e6
+compute_backend = cpu
+
+lrefinemin = 0
+lrefinemax = 1
+regrid_interval = 1
+refine_var = SPECIES
+refine_threshold = 0.7
+derefine_threshold = 0.15
+
+tmax = 1e99
+max_steps = 1
+restart = false
+out_dir = /home/shiroakane/ARCH/validation/amr/results/release-cartesian-accounted-20260907/diffusion_amr_rkl2_2stage/step-1/cpu
+base_name = diffusion_amr_rkl2_2stage_cpu_s1
+plt_dt = -1
+plt_dstep = -1
+chk_dt = -1
+chk_dstep = 1
+plt_variables = DENS, PRES, SPECIES
+
+eos_type = ideal
+gamma = 1.4
+# Ordinary passive gases with positive heat capacity; no nuclear network.
+network_name = none
+gas_cv = 717.5
+gravity_type = none
+use_burn = false
+
+use_diffusion = true
+diff_integrator = RKL2
+diff_cfl = 0.8
+diff_max_stages = 2
+use_thermal_diff = false
+use_viscous_diff = false
+use_species_diff = true
+D_spec = 0.5
+
+rho0 = 1.0
+p0 = 1.0
+amp = 0.5
+width = 0.08
+xc = 0.5

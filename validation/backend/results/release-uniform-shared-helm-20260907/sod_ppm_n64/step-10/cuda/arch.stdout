@@ -1,0 +1,40 @@
+[Info] Loaded 53 parameters from /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10.par
+[Main] Problem created: Sod
+[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 1
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 3 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 12 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Dispatch] Strategy: SSPRK3 + HLLC + ppm (mc)
+>>> Simulation Started | Solver: SSPRK3 + HLLC + PPM (3rd Order) | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       5.28221e-03    5.28221e-03    5.28221e-03    
+2       8.70367e-03    3.42146e-03    3.42146e-03    
+3       1.18493e-02    3.14562e-03    3.14562e-03    
+4       1.48646e-02    3.01532e-03    3.01532e-03    
+5       1.78334e-02    2.96876e-03    2.96876e-03    
+6       2.08129e-02    2.97957e-03    2.97957e-03    
+7       2.38364e-02    3.02348e-03    3.02348e-03    
+8       2.68812e-02    3.04479e-03    3.04479e-03    
+9       2.98554e-02    2.97414e-03    2.97414e-03    
+10      3.27319e-02    2.87653e-03    2.87653e-03    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10_HLLC_plt_0001.h5 at t=3.27319e-02
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/sod_ppm_n64/step-10/cuda/sod_ppm_n64_cuda_s10_chk_0001.h5 at step 10 with 4 AMR leaves.
+>>> Simulation Done. Total Steps: 10 | Final Time: 3.27319e-02

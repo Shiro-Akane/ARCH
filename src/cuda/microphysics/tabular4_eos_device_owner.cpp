@@ -53,6 +53,12 @@ SpeciesHostView validate_tabular4_upload(const Tabular4DEOSHostView &host)
                 host.free_energy_extents[field],
                 "Tabular4 free-energy derivative field");
     }
+    if (host.strict_domain)
+        owner_detail::validate_required_upload(host.table_valid,host.valid_extent,
+            expected,"Tabular4 derivative valid-node mask");
+    else
+        owner_detail::validate_absent_upload(host.table_valid,host.valid_extent,
+            "Tabular4 derivative valid-node mask");
     owner_detail::validate_species_upload(host.specs);
     return host.specs;
 }
@@ -82,6 +88,8 @@ Tabular4DEOSDeviceOwner::Tabular4DEOSDeviceOwner(
     device_view_.Z_max = host.Z_max;
     device_view_.dZ = host.dZ;
     device_view_.uses_free_energy = host.uses_free_energy;
+    device_view_.strict_domain = host.strict_domain;
+    device_view_.energy_reference_shift = host.energy_reference_shift;
     const double *source[6]{
         host.table_P, host.table_E, host.table_cs, host.table_cv,
         host.table_dP_drho, host.table_dP_dT};
@@ -116,6 +124,13 @@ Tabular4DEOSDeviceOwner::Tabular4DEOSDeviceOwner(
             device_view_.table_dP_drho = device_[4];
             device_view_.table_dP_dT = device_[5];
         }
+        if (host.strict_domain) {
+            owner_detail::stage_required(staging_valid_,host.table_valid,extent,
+                "Tabular4 derivative valid-node mask");
+            owner_detail::allocate_and_copy(device_valid_,staging_valid_,stream_,
+                "upload Tabular4 derivative validity");
+            device_view_.table_valid=device_valid_;
+        }
         device_view_.specs = species_.view();
     } catch (...) {
         release_after_sync();
@@ -134,7 +149,9 @@ Tabular4DEOSDeviceOwner::Tabular4DEOSDeviceOwner(
       species_(std::move(other.species_)), device_view_(other.device_view_),
       device_(other.device_), device_free_energy_(other.device_free_energy_),
       staging_(std::move(other.staging_)),
-      staging_free_energy_(std::move(other.staging_free_energy_))
+      staging_free_energy_(std::move(other.staging_free_energy_)),
+      device_valid_(std::exchange(other.device_valid_,nullptr)),
+      staging_valid_(std::move(other.staging_valid_))
 {
     other.device_view_ = {};
     other.device_.fill(nullptr);
@@ -156,17 +173,21 @@ Tabular4DEOSDeviceOwner &Tabular4DEOSDeviceOwner::operator=(
     other.device_free_energy_.fill(nullptr);
     staging_ = std::move(other.staging_);
     staging_free_energy_ = std::move(other.staging_free_energy_);
+    device_valid_=std::exchange(other.device_valid_,nullptr);
+    staging_valid_=std::move(other.staging_valid_);
     return *this;
 }
 
 void Tabular4DEOSDeviceOwner::release_after_sync() noexcept
 {
-    bool has_storage = false;
+    bool has_storage = device_valid_!=nullptr;
     for (double *pointer : device_)
         has_storage = has_storage || pointer != nullptr;
     for (double *pointer : device_free_energy_)
         has_storage = has_storage || pointer != nullptr;
     if (has_storage) cudaStreamSynchronize(stream_);
+    if (device_valid_) cudaFree(device_valid_);
+    device_valid_=nullptr;
     for (double *&pointer : device_) {
         if (pointer != nullptr) cudaFree(pointer);
         pointer = nullptr;
@@ -189,7 +210,7 @@ bool Tabular4DEOSDeviceOwner::empty() const noexcept
                        [](const double *pointer) {
                            return pointer == nullptr;
                        })
-        && species_.empty();
+        && device_valid_==nullptr && species_.empty();
 }
 
 } // namespace arch::cuda

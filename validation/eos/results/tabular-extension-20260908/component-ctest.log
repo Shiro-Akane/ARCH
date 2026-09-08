@@ -1,0 +1,80 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build-ci/cpu
+Test project /home/shiroakane/ARCH/build-ci/cpu
+      Start  1: portable_network_generator
+ 1/37 Test  #1: portable_network_generator ...........   Passed    0.72 sec
+      Start  2: cuda_amr_smoke_runner_contract
+ 2/37 Test  #2: cuda_amr_smoke_runner_contract .......   Passed    0.14 sec
+      Start  3: curvilinear_manifest_contract
+ 3/37 Test  #3: curvilinear_manifest_contract ........   Passed    0.11 sec
+      Start  4: memory_guard_contract
+ 4/37 Test  #4: memory_guard_contract ................   Passed    2.35 sec
+      Start  5: backend_validation_contract
+ 5/37 Test  #5: backend_validation_contract ..........   Passed    0.16 sec
+      Start  6: validation_provenance_contract
+ 6/37 Test  #6: validation_provenance_contract .......   Passed    1.74 sec
+      Start  7: runtime_validation_inputs_contract
+ 7/37 Test  #7: runtime_validation_inputs_contract ...   Passed    0.21 sec
+      Start  8: physical_constants
+ 8/37 Test  #8: physical_constants ...................   Passed    0.00 sec
+      Start  9: refinement_indicator_math
+ 9/37 Test  #9: refinement_indicator_math ............   Passed    0.00 sec
+      Start 10: curvilinear_metrics
+10/37 Test #10: curvilinear_metrics ..................   Passed    0.31 sec
+      Start 11: compensated_sum
+11/37 Test #11: compensated_sum ......................   Passed    0.00 sec
+      Start 12: sparse_ode_continuation
+12/37 Test #12: sparse_ode_continuation ..............   Passed    0.01 sec
+      Start 13: checkpoint_conservation_metrics
+13/37 Test #13: checkpoint_conservation_metrics ......   Passed    0.00 sec
+      Start 14: burn_mainline_reference
+14/37 Test #14: burn_mainline_reference ..............   Passed  113.52 sec
+      Start 15: generated_nse
+15/37 Test #15: generated_nse ........................   Passed    0.00 sec
+      Start 16: tabular_strict_math
+16/37 Test #16: tabular_strict_math ..................   Passed    0.01 sec
+      Start 17: baryon_source_format
+17/37 Test #17: baryon_source_format .................   Passed    0.01 sec
+      Start 18: helm_components
+18/37 Test #18: helm_components ......................   Passed    0.63 sec
+      Start 19: mainline_authority
+19/37 Test #19: mainline_authority ...................   Passed    0.01 sec
+      Start 20: block_handle
+20/37 Test #20: block_handle .........................   Passed    0.00 sec
+      Start 21: state_residency
+21/37 Test #21: state_residency ......................   Passed    0.00 sec
+      Start 22: shared_stage_scheduler
+22/37 Test #22: shared_stage_scheduler ...............   Passed    0.00 sec
+      Start 23: boundary_plan
+23/37 Test #23: boundary_plan ........................   Passed    0.03 sec
+      Start 24: same_level_exchange_plan
+24/37 Test #24: same_level_exchange_plan .............   Passed    0.00 sec
+      Start 25: amr_operation_plans
+25/37 Test #25: amr_operation_plans ..................   Passed    0.00 sec
+      Start 26: amr_flux_surface_plan
+26/37 Test #26: amr_flux_surface_plan ................   Passed    0.00 sec
+      Start 27: topology_transaction
+27/37 Test #27: topology_transaction .................   Passed    0.03 sec
+      Start 28: resolved_execution_plan
+28/37 Test #28: resolved_execution_plan ..............   Passed    0.00 sec
+      Start 29: runtime_probe_and_capabilities
+29/37 Test #29: runtime_probe_and_capabilities .......   Passed    0.00 sec
+      Start 30: reduction_contract
+30/37 Test #30: reduction_contract ...................   Passed    0.01 sec
+      Start 31: compute_backend
+31/37 Test #31: compute_backend ......................   Passed    0.00 sec
+      Start 32: device_block_store_lifecycle
+32/37 Test #32: device_block_store_lifecycle .........   Passed    0.00 sec
+      Start 33: checkpoint_compatibility
+33/37 Test #33: checkpoint_compatibility .............   Passed    0.04 sec
+      Start 34: tabular_eos_ideal_gas
+34/37 Test #34: tabular_eos_ideal_gas ................   Passed    0.10 sec
+      Start 35: native_tabular_eos
+35/37 Test #35: native_tabular_eos ...................   Passed    0.01 sec
+      Start 36: tabular_component_completion
+36/37 Test #36: tabular_component_completion .........   Passed    7.16 sec
+      Start 37: sparse_klu_161_equations
+37/37 Test #37: sparse_klu_161_equations .............   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 37
+
+Total Test time (real) = 127.40 sec

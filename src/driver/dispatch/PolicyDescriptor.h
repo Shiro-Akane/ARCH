@@ -138,17 +138,20 @@ template <class PolicyTag>
 struct NetworkPolicyMetadata
 {
     static constexpr bool supports_nse = false;
+    static constexpr std::string_view nse_reason = "missing_nse_metadata";
 };
 
 template <>
 struct NetworkPolicyMetadata<NoNetworkPolicy>
 {
     static constexpr bool supports_nse = false;
+    static constexpr std::string_view nse_reason = "burn_disabled";
 };
 
 #define ARCH_DECLARE_NSE_NETWORK_METADATA(TAG) \
     template <> struct NetworkPolicyMetadata<TAG> { \
         static constexpr bool supports_nse = true; \
+        static constexpr std::string_view nse_reason = "builtin_timmes"; \
     }
 ARCH_DECLARE_NSE_NETWORK_METADATA(Aprox13Policy);
 ARCH_DECLARE_NSE_NETWORK_METADATA(Aprox19Policy);
@@ -156,12 +159,15 @@ ARCH_DECLARE_NSE_NETWORK_METADATA(Aprox21Policy);
 ARCH_DECLARE_NSE_NETWORK_METADATA(Iso7Policy);
 #undef ARCH_DECLARE_NSE_NETWORK_METADATA
 
-#define ARCH_DECLARE_CUSTOM_NETWORK_METADATA(TAG, VALUE, NAME, TYPE) \
+#ifdef ARCH_FOR_EACH_CUSTOM_NETWORK_NSE
+#define ARCH_DECLARE_CUSTOM_NETWORK_METADATA(TAG, SUPPORTED, REASON) \
     template <> struct NetworkPolicyMetadata<TAG##Policy> { \
-        static constexpr bool supports_nse = false; \
+        static constexpr bool supports_nse = SUPPORTED; \
+        static constexpr std::string_view nse_reason = REASON; \
     };
-ARCH_FOR_EACH_CUSTOM_NETWORK(ARCH_DECLARE_CUSTOM_NETWORK_METADATA)
+ARCH_FOR_EACH_CUSTOM_NETWORK_NSE(ARCH_DECLARE_CUSTOM_NETWORK_METADATA)
 #undef ARCH_DECLARE_CUSTOM_NETWORK_METADATA
+#endif
 
 // Plain generated metadata only: dispatch must not include reaction bodies.
 template <class PolicyTag>
@@ -551,6 +557,24 @@ constexpr bool network_supports_nse(NetworkId id) noexcept
     for (const auto& descriptor : descriptors)
         if (descriptor.id == id) return descriptor.supports_nse;
     return false;
+}
+
+inline std::string_view network_nse_reason(NetworkId id) noexcept
+{
+    std::string_view result = "unknown_network";
+    visit_policy<NetworkPolicies>(id, [&]<class Registration> {
+        result = NetworkPolicyMetadata<Registration>::nse_reason;
+    });
+    return result;
+}
+
+// Auto is capability selection, not a second physical activation criterion.
+// Resolve the host request once; the unchanged device view receives only the
+// effective boolean and the user's common temperature/density thresholds.
+inline void resolve_nse_request(BurnConfig& config, NetworkId network) noexcept
+{
+    if (config.nse_auto)
+        config.use_nse = config.use_burn && network_supports_nse(network);
 }
 
 constexpr std::size_t network_ode_equations(NetworkId id, std::size_t species) noexcept

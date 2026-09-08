@@ -85,6 +85,41 @@ void test_sha256_padding_boundaries(const std::filesystem::path& directory)
         expect(arch::core::file_sha256(path.string()) == vector.digest,
                "SHA-256 padding boundary failed at "
                    + std::to_string(vector.size) + " bytes");
+        expect(arch::core::string_sha256(std::string(vector.size, 'a')) == vector.digest,
+               "in-memory fingerprint does not use the file SHA-256 contract");
+    }
+}
+
+void test_nse_parameter_contract(const std::filesystem::path& directory)
+{
+    const auto path = directory / "nse-controls.par";
+    for (const std::string request : {"true", "false", "auto", "AuTo", "TRUE"}) {
+        write_bytes(path, "use_nse = " + request
+            + "\nnseTempThreshold = 5.25e9\nnseDensThreshold = 2.75e6\n");
+        const auto config = RuntimeParams::Load(path.string());
+        const auto& burn = config.physics.burn;
+        expect(burn.nse_auto == (request == "auto" || request == "AuTo"),
+               "NSE auto parsing must be case-insensitive");
+        expect(burn.use_nse == (request != "false"),
+               "NSE explicit boolean compatibility changed");
+        expect(burn.nseTempThreshold == 5.25e9 && burn.nseDensThreshold == 2.75e6,
+               "NSE mode must not alter activation thresholds");
+    }
+    write_bytes(path, "");
+    const auto defaults = RuntimeParams::Load(path.string());
+    expect(defaults.physics.burn.use_nse && !defaults.physics.burn.nse_auto
+               && defaults.physics.burn.nseTempThreshold == 4.5e9
+               && defaults.physics.burn.nseDensThreshold == 1.0e6,
+           "existing NSE defaults changed");
+    for (const std::string contents : {
+            "use_nse = sometimes\n", "use_nse = 1\n",
+            "use_nse = auto\nnseTempThreshold = nan\n",
+            "use_nse = true\nnseTempThreshold = 0\n",
+            "use_nse = auto\nnseDensThreshold = -1\n",
+            "use_nse = true\nnseDensThreshold = inf\n"}) {
+        write_bytes(path, contents);
+        expect_rejected([&] { (void)RuntimeParams::Load(path.string()); },
+                        "invalid NSE controls were accepted");
     }
 }
 
@@ -597,6 +632,7 @@ int main(int argc, char** argv)
         const std::filesystem::path directory = argv[1];
         std::filesystem::create_directories(directory);
         test_sha256_padding_boundaries(directory);
+        test_nse_parameter_contract(directory);
         test_identity_and_digest(directory);
         test_hdf5_round_trip(directory);
         test_native_composition(directory);

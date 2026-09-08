@@ -1,0 +1,39 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/curved-first-law-20260907/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/curved-first-law-20260907/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5.par
+[Main] Problem created: Gaussian
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 2
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 2 | Geometry: spherical
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(r): 0.015625, dx2(theta): 0.015625
+    Level 1   | dx1(r): 0.0078125, dx2(theta): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+           -> Diffusion Solver Initialized: RKL2 (CFL_diff = 0.8)
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+           -> Refining initial condition (Pass 1)...
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/curved-first-law-20260907/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/curved-first-law-20260907/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5 at step 0 with 40 AMR leaves.
+Step    Time           dt             dt_hydro       dt_diff        
+--------------------------------------------------------------------
+[Diffusion] multi-block AMR uses composite RKL2 STS with stage ghost synchronization and reflux.
+1       1.71364e-04    1.71364e-04    1.32313e-03    3.06007e-05    
+2       3.42728e-04    1.71364e-04    1.32313e-03    3.06007e-05    
+3       5.14092e-04    1.71364e-04    1.32313e-03    3.06007e-05    
+4       6.85457e-04    1.71364e-04    1.32313e-03    3.06007e-05    
+5       8.56821e-04    1.71364e-04    1.32313e-03    3.06007e-05    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/curved-first-law-20260907/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5 at t=8.56821e-04
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/curved-first-law-20260907/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5 at step 5 with 40 AMR leaves.
+>>> Simulation Done. Total Steps: 5 | Final Time: 8.56821e-04

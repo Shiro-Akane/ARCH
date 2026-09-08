@@ -11,6 +11,10 @@ data and historical snapshots serve different purposes.
 - [HelmReference.h](HelmReference.h), [NseReference.h](NseReference.h) and
   [RoeFluxReference.h](RoeFluxReference.h): independently derived EOS, equilibrium
   and flux reference values; reproduction scripts are identified in the headers.
+- [GeneratedNseReference.h](GeneratedNseReference.h): high-precision analytic
+  rank-one/rank-two equilibrium values with their defining equations.
+- [NativeTabularFixture.h](NativeTabularFixture.h): an analytic gas encoded in
+  the native EOSDriver schema, including source-axis and failure controls.
 - [SparseTransferNetwork.h](SparseTransferNetwork.h): a manufactured conservative
   chain for sparse execution tests, not a nuclear reaction network.
 - [amr_composition_test_cases.h](amr_composition_test_cases.h) and

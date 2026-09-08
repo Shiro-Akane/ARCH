@@ -25,6 +25,7 @@
 #include "IdealGas.h"
 #include "Tabular3DEOS.h"
 #include "Tabular4DEOS.h"
+#include "TabularSource.h"
 #include "eos.h"
 
 #include "../../core/FileFingerprint.h"
@@ -127,6 +128,19 @@ struct EOSDispatcher
         return path;
     }
 
+    static std::string component_table_path(const SimConfig& config)
+    {
+        std::string path=config.physics.eos_helm_table_path;
+        path.erase(std::remove(path.begin(),path.end(),'\"'),path.end());
+        path.erase(std::remove(path.begin(),path.end(),'\''),path.end());
+        return path.empty() ? default_tabular_helm_path : path;
+    }
+
+    // Source declarations constrain coupling before either backend is built.
+    // Existing undeclared normalized-table behavior remains unchanged.
+    static void validate_coupling(const SimConfig& config,
+        const TabularSourceInfo& source, bool requires_composition_gamma);
+
     /**
      * @brief Visit the already-resolved EOS without parsing configuration.
      * A callback may accept a second `std::string_view`; it is the digest
@@ -177,15 +191,16 @@ struct EOSDispatcher
         }
         case EosId::Tabular3D: {
             const std::string path = table_path(config, "Tabular");
-            const std::string before = arch::core::file_sha256(path);
+            const std::string helm_path = component_table_path(config);
+            const std::string before = tabular_source_fingerprint(path,helm_path);
             const auto species_before = species_identity(specs);
             if (table_dimension != 3 || !cached_3d
                 || cached_table_path != path
                 || cached_table_sha256 != before
                 || !same_species_identity(cached_species, species_before)) {
                 auto replacement =
-                    std::make_unique<Tabular3DEOS>(path, &specs);
-                const std::string after = arch::core::file_sha256(path);
+                    std::make_unique<Tabular3DEOS>(path, &specs,helm_path);
+                const std::string after = tabular_source_fingerprint(path,helm_path);
                 const auto species_after = species_identity(specs);
                 if (before != after) {
                     throw std::runtime_error(
@@ -206,15 +221,16 @@ struct EOSDispatcher
         }
         case EosId::Tabular4D: {
             const std::string path = table_path(config, "Tabular");
-            const std::string before = arch::core::file_sha256(path);
+            const std::string helm_path = component_table_path(config);
+            const std::string before = tabular_source_fingerprint(path,helm_path);
             const auto species_before = species_identity(specs);
             if (table_dimension != 4 || !cached_4d
                 || cached_table_path != path
                 || cached_table_sha256 != before
                 || !same_species_identity(cached_species, species_before)) {
                 auto replacement =
-                    std::make_unique<Tabular4DEOS>(path, &specs);
-                const std::string after = arch::core::file_sha256(path);
+                    std::make_unique<Tabular4DEOS>(path, &specs,helm_path);
+                const std::string after = tabular_source_fingerprint(path,helm_path);
                 const auto species_after = species_identity(specs);
                 if (before != after) {
                     throw std::runtime_error(

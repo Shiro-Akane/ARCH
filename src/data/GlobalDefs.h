@@ -198,7 +198,8 @@ struct BurnConfig
     double smallx = 1e-20;  ///< Minimum mass fraction for species (to avoid negative or zero)
 
     double enucDtFactor = 1e30; ///< Maximum fractional change in internal energy per burn step (1e30 = practically off)
-    bool use_nse = true; ///< Use the online Timmes Saha NSE solver at high T/rho
+    bool use_nse = true; ///< Effective NSE switch; explicit true requires a capable network.
+    bool nse_auto = false; ///< Host-only request: resolve capability before constructing either backend.
     double nseTempThreshold = 4.5e9; ///< Temperature threshold for NSE projection
     double nseDensThreshold = 1.0e6; ///< Density threshold for NSE projection
 
@@ -275,7 +276,8 @@ struct DiffusionConfig
 struct PhysicsConfig
 {
     std::string eos_type = "ideal";  ///< Equation of state: ideal, tabular, or helmholtz.
-    std::string eos_table_path = ""; ///< For tabular EOS, the path to the HDF5 file
+    std::string eos_table_path = ""; ///< Selected EOS source table.
+    std::string eos_helm_table_path = ""; ///< Optional electron-completion dependency; empty selects bundled data.
     double gamma = 1.4;              ///< Default adiabatic index
 
     GravityConfig gravity;

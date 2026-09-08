@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="Linux-g++-12"
+	tests="3"
+	failures="0"
+	disabled="0"
+	skipped="0"
+	hostname="Shiro-Akane"
+	time="0"
+	timestamp="2026-09-08T22:59:26"
+	>
+	<testcase name="generated_nse_nse_light" classname="generated_nse_nse_light" time="0.0047297" status="run">
+		<properties/>
+		<system-out>custom:nse_light
+BALANCE T=4500000000 rho=1000000 pairs=10 pair_residual=2.2610965715840144e-12 rhs_residual=2.2610680842513078e-12
+BALANCE T=4500000000 rho=10000000 pairs=10 pair_residual=2.269341818978367e-12 rhs_residual=2.2693190133565174e-12
+BALANCE T=4500000000 rho=1000000000 pairs=10 pair_residual=2.5757827497948093e-12 rhs_residual=2.5757310314037202e-12
+BALANCE T=5000000000 rho=1000000 pairs=10 pair_residual=2.0133260818262248e-12 rhs_residual=2.0132970236314695e-12
+BALANCE T=5000000000 rho=10000000 pairs=10 pair_residual=2.003248789129041e-12 rhs_residual=2.0032229367546203e-12
+BALANCE T=5000000000 rho=1000000000 pairs=10 pair_residual=2.0221650258751959e-12 rhs_residual=2.0221927480322737e-12
+BALANCE T=7000000000 rho=1000000 pairs=10 pair_residual=1.4422664187940773e-12 rhs_residual=1.4422664187940771e-12
+BALANCE T=7000000000 rho=10000000 pairs=10 pair_residual=1.4434616658817183e-12 rhs_residual=1.4434616658817181e-12
+BALANCE T=7000000000 rho=1000000000 pairs=10 pair_residual=1.5015100838718826e-1...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="generated_nse_nse_alpha" classname="generated_nse_nse_alpha" time="0.00262463" status="run">
+		<properties/>
+		<system-out>custom:nse_alpha
+BALANCE T=4500000000 rho=1000000 pairs=1 pair_residual=5.8037621452896977e-13 rhs_residual=5.8034632903903523e-13
+BALANCE T=4500000000 rho=10000000 pairs=1 pair_residual=9.1563972028904174e-14 rhs_residual=9.1502602074461212e-14
+BALANCE T=4500000000 rho=1000000000 pairs=1 pair_residual=8.6050462349193207e-14 rhs_residual=8.6050462349193207e-14
+BALANCE T=5000000000 rho=1000000 pairs=1 pair_residual=9.1307653057267809e-14 rhs_residual=9.1307653057267809e-14
+BALANCE T=5000000000 rho=10000000 pairs=1 pair_residual=8.7967795061380802e-14 rhs_residual=8.7991699353517049e-14
+BALANCE T=5000000000 rho=1000000000 pairs=1 pair_residual=1.7591350829857994e-13 rhs_residual=1.7591350829857994e-13
+BALANCE T=7000000000 rho=1000000 pairs=1 pair_residual=5.8970569246198129e-14 rhs_residual=5.8970569246198129e-14
+BALANCE T=7000000000 rho=10000000 pairs=1 pair_residual=7.0332940703809118e-14 rhs_residual=7.0432001183673636e-14
+BALANCE T=7000000000 rho=1000000000 pairs=1 pair_residual=8.1798253802198935e-14 rhs_r...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+	<testcase name="resolved_execution_plan" classname="resolved_execution_plan" time="0.0021652" status="run">
+		<properties/>
+		<system-out>[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BD | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: ROS4 | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Burn Dispatch] Resolving Network: aprox19 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Online network-consistent NSE solver enabled above T=4.5e+09 K and rho=1e+06 g/cm^3.
+[Burn Dispatch] Matrix backend: DenseLU (N=20)
+[Burn Dispatch] Resolving Ne...
+[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]
+</system-out>
+	</testcase>
+</testsuite>

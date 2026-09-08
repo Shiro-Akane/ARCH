@@ -1,0 +1,65 @@
+[Info] Loaded 52 parameters from /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific.par
+[Main] Problem created: SmoothAdvection
+[Problem] Smooth entropy wave: rho=10+2 sin(2*pi*1*x/L), u=1e+07, p=1e+16
+[Main] Configuration:
+       Grid: 80 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: tabular
+[Tabular3DEOS] Loading validated 3D HDF5 table: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/tables/hydro-3-direct.h5
+[Tabular3DEOS] Loaded direct table with automatic rank validation.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0125
+    Level 1   | dx1(x): 0.00625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+           -> Refining initial condition (Pass 1)...
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific_chk_0000.h5 at step 0 with 6 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       3.37023e-11    3.37023e-11    3.37023e-11    
+2       6.74045e-11    3.37023e-11    3.37023e-11    
+3       1.01107e-10    3.37023e-11    3.37023e-11    
+4       1.34809e-10    3.37023e-11    3.37023e-11    
+5       1.68511e-10    3.37023e-11    3.37023e-11    
+6       2.02214e-10    3.37023e-11    3.37023e-11    
+7       2.35916e-10    3.37023e-11    3.37023e-11    
+8       2.69618e-10    3.37023e-11    3.37023e-11    
+9       3.03320e-10    3.37023e-11    3.37023e-11    
+10      3.37023e-10    3.37023e-11    3.37023e-11    
+11      3.70725e-10    3.37023e-11    3.37023e-11    
+12      4.04427e-10    3.37023e-11    3.37023e-11    
+13      4.38130e-10    3.37023e-11    3.37023e-11    
+14      4.71832e-10    3.37023e-11    3.37023e-11    
+15      5.05534e-10    3.37023e-11    3.37023e-11    
+16      5.39236e-10    3.37023e-11    3.37023e-11    
+17      5.72939e-10    3.37023e-11    3.37023e-11    
+18      6.06641e-10    3.37023e-11    3.37023e-11    
+19      6.40343e-10    3.37023e-11    3.37023e-11    
+20      6.74045e-10    3.37023e-11    3.37023e-11    
+21      7.07748e-10    3.37022e-11    3.37022e-11    
+22      7.41450e-10    3.37022e-11    3.37022e-11    
+23      7.75152e-10    3.37022e-11    3.37022e-11    
+24      8.08854e-10    3.37022e-11    3.37022e-11    
+25      8.42556e-10    3.37022e-11    3.37022e-11    
+26      8.76259e-10    3.37022e-11    3.37022e-11    
+27      9.09961e-10    3.37022e-11    3.37022e-11    
+28      9.43663e-10    3.37022e-11    3.37022e-11    
+29      9.77365e-10    3.37022e-11    3.37022e-11    
+30      1.00000e-09    2.26347e-11    3.37022e-11    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-09
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-891/runs/hydro_3_direct_default/scientific/cpu/hydro_3_direct_default_cpu_scientific_chk_0001.h5 at step 30 with 10 AMR leaves.
+>>> Simulation Done. Total Steps: 30 | Final Time: 1.00000e-09

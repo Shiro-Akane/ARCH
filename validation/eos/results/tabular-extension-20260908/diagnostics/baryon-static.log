@@ -1,0 +1,19 @@
+PASS raw-1-eos2-static
+PASS raw-1-eos2-reject-burn
+PASS raw-1-eos2-reject-sw
+PASS raw-1-eos2-reject-automatic-thermal
+PASS raw-2-eos4-static
+PASS raw-2-eos4-reject-burn
+PASS raw-2-eos4-reject-sw
+PASS raw-2-eos4-reject-automatic-thermal
+Traceback (most recent call last):
+  File "/home/shiroakane/ARCH/validation/eos/results/tabular-extension-20260908/replay_static.py", line 206, in <module>
+    main()
+  File "/home/shiroakane/ARCH/validation/eos/results/tabular-extension-20260908/replay_static.py", line 190, in main
+    evidence["cases"].append(run_case(arch, output, normalized, helm, "normalized-reject-" + guard, guard))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shiroakane/ARCH/validation/eos/results/tabular-extension-20260908/replay_static.py", line 143, in run_case
+    require(completed.returncode != 0 and message in transcript, f"{name}: expected startup rejection absent")
+  File "/home/shiroakane/ARCH/validation/eos/results/tabular-extension-20260908/replay_static.py", line 55, in require
+    raise RuntimeError(message)
+RuntimeError: normalized-reject-sw: expected startup rejection absent

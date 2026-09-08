@@ -1,0 +1,58 @@
+# Smooth periodic entropy-wave advection: PCM, 64 cells.
+# VALIDATION INPUT: owned by validation/hydro/README.md; keep synchronized with metrics.csv.
+geometry = cartesian
+nblockx1 = 4
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 12
+x1_min = 0.0
+x1_max = 1.0
+x2_min = 0.0
+x2_max = 1.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = periodic
+x1r_boundary_type = periodic
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = pcm
+limiter = mc
+time_integrator = RK3
+cfl = 0.3
+sml_rho = 1e-12
+max_eint = 1e6
+compute_backend = cuda
+
+lrefinemin = 0
+lrefinemax = 0
+regrid_interval = 2
+refine_var = DENS
+refine_threshold = 0.8
+derefine_threshold = 0.2
+
+tmax = 0.1
+max_steps = -1
+restart = false
+out_dir = /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_pcm_n64/scientific/cuda
+base_name = hydro_pcm_n64_cuda_scientific
+plt_dt = -1
+plt_dstep = -1
+chk_dt = 0.1
+chk_dstep = -1
+plt_variables = DENS, PRES, VELX, ENER
+
+eos_type = ideal
+gamma = 1.4
+gravity_type = none
+use_burn = false
+use_diffusion = false
+
+rho_mean = 1.0
+rho_amplitude = 0.2
+pressure0 = 1.0
+velocity0 = 1.0
+mode = 1

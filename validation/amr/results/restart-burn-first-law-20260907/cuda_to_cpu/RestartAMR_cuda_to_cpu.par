@@ -1,0 +1,79 @@
+# Compact production-burn pulse for ENUC-driven AMR restart validation.
+geometry = cartesian
+nblockx1 = 5
+nblockx2 = 0
+nblockx3 = 0
+max_blocks = 128
+x1_min = 0.0
+x1_max = 1.0
+x2_min = 0.0
+x2_max = 1.0
+x3_min = 0.0
+x3_max = 1.0
+x1l_boundary_type = periodic
+x1r_boundary_type = periodic
+x2l_boundary_type = outflow
+x2r_boundary_type = outflow
+x3l_boundary_type = outflow
+x3r_boundary_type = outflow
+
+solver = HLLC
+reconstruct = muscl
+limiter = mc
+time_integrator = RK2
+cfl = 0.3
+sml_rho = 1e-12
+max_eint = 1e22
+compute_backend = cpu
+
+lrefinemin = 0
+lrefinemax = 1
+regrid_interval = 1
+refine_var = ENUC
+refine_threshold = 0.2
+derefine_threshold = 0.05
+
+tmax = 1e99
+max_steps = 4
+restart = true
+out_dir = /home/shiroakane/ARCH/validation/amr/results/restart-burn-first-law-20260907/cuda_to_cpu
+base_name = RestartAMR_cuda_to_cpu
+plt_dt = -1
+plt_dstep = -1
+chk_dt = -1
+chk_dstep = 2
+plt_variables = DENS, TEMP, PRES, ENER, ENUC, SPECIES
+
+eos_type = helmholtz
+eos_table_path = EOS_toolkit/tables/helmholtz/helm_table.dat
+gravity_type = none
+use_diffusion = false
+
+use_burn = true
+network_name = aprox13
+burn_verbose_level = 0
+nuclearTempMin = 1e8
+nuclearDensMin = 1e-10
+smallt = 1e5
+smallx = 1e-20
+use_nse = false
+dt_init = 1e-16
+dt_min = 1e-24
+tstep_change_factor = 2.0
+enucDtFactor = 1e30
+ode_solver = BE_NR
+linear_solver = DenseLU
+ode_rtol = 1e-10
+ode_atol = 1e-14
+ode_max_substeps = 100000
+ode_initial_dt_frac = 1e-3
+
+rho0 = 1e7
+background_temperature = 5e7
+peak_temperature = 3e9
+center_x = 0.5
+width = 0.08
+xhe4 = 0.0
+xc12 = 0.5
+xo16 = 0.5
+restart_file = /home/shiroakane/ARCH/validation/amr/results/restart-burn-first-law-20260907/cuda_source/RestartAMR_cuda_source_chk_0001.h5

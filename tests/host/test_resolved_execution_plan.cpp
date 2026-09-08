@@ -195,8 +195,11 @@ void test_plain_cpp_contracts()
             || descriptor.id == NetworkId::Aprox19
             || descriptor.id == NetworkId::Aprox21
             || descriptor.id == NetworkId::Iso7;
-        expect(descriptor.supports_nse == built_in_nse_network,
-               "only built-in Timmes networks advertise NSE support");
+        if (built_in_nse_network)
+            expect(descriptor.supports_nse,
+                   "all built-in Timmes networks retain NSE support");
+        if (descriptor.id == NetworkId::None)
+            expect(!descriptor.supports_nse, "disabled burn has no NSE solver");
         expect(network_supports_nse(descriptor.id)
                    == descriptor.supports_nse,
                "NSE capability lookup must derive from network metadata");
@@ -862,11 +865,47 @@ void test_backend_aware_host_burn_handle()
     expect(threw, "disabled burn rejects an active resolved plan");
 }
 
+void test_nse_auto_resolution()
+{
+    constexpr auto networks = make_policy_descriptors<NetworkPolicies>();
+    for (const auto& network : networks) {
+        BurnConfig automatic;
+        automatic.use_burn = true;
+        automatic.nse_auto = true;
+        automatic.nseTempThreshold = 5.25e9;
+        automatic.nseDensThreshold = 2.75e6;
+        resolve_nse_request(automatic, network.id);
+        expect(automatic.use_nse == network.supports_nse,
+               "auto must follow the registered NSE capability");
+        const auto view = make_burn_config_view(automatic);
+        expect(view.use_nse == network.supports_nse
+                   && view.nseTempThreshold == 5.25e9
+                   && view.nseDensThreshold == 2.75e6,
+               "auto must preserve the same activation thresholds in device views");
+        BurnConfig explicit_request = automatic;
+        explicit_request.nse_auto = false;
+        for (bool enabled : {false, true}) {
+            explicit_request.use_nse = enabled;
+            resolve_nse_request(explicit_request, network.id);
+            expect(explicit_request.use_nse == enabled,
+                   "explicit NSE choice must not silently change");
+            const auto explicit_view = make_burn_config_view(explicit_request);
+            expect(explicit_view.nseTempThreshold == view.nseTempThreshold
+                       && explicit_view.nseDensThreshold == view.nseDensThreshold,
+                   "explicit and auto must pass identical physical thresholds");
+        }
+        automatic.use_burn = false;
+        resolve_nse_request(automatic, network.id);
+        expect(!automatic.use_nse, "disabled burn cannot activate auto NSE");
+    }
+}
+
 } // namespace
 
 int main()
 {
     test_plain_cpp_contracts();
+    test_nse_auto_resolution();
     test_aliases_defaults_and_plan();
     test_requirements();
     test_factory_routes_preserved();

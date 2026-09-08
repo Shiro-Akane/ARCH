@@ -1,0 +1,52 @@
+[OUTPUT] 
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/review-cpu-debug
+
+[HANDLER_OUTPUT] 
+Test project /home/shiroakane/ARCH/build/review-cpu-debug
+
+      Start  1: backend_validation_contract
+ 1/21 Test  #1: backend_validation_contract ..........   Passed    0.21 sec
+      Start  2: validation_provenance_contract
+ 2/21 Test  #2: validation_provenance_contract .......   Passed    0.86 sec
+      Start  3: runtime_validation_inputs_contract
+ 3/21 Test  #3: runtime_validation_inputs_contract ...   Passed    0.10 sec
+      Start  4: compensated_sum
+ 4/21 Test  #4: compensated_sum ......................   Passed    0.00 sec
+      Start  5: burn_mainline_reference
+ 5/21 Test  #5: burn_mainline_reference ..............   Passed    8.19 sec
+      Start  6: mainline_authority
+ 6/21 Test  #6: mainline_authority ...................   Passed    0.01 sec
+      Start  7: block_handle
+ 7/21 Test  #7: block_handle .........................   Passed    0.00 sec
+      Start  8: state_residency
+ 8/21 Test  #8: state_residency ......................   Passed    0.00 sec
+      Start  9: shared_stage_scheduler
+ 9/21 Test  #9: shared_stage_scheduler ...............   Passed    0.02 sec
+      Start 10: boundary_plan
+10/21 Test #10: boundary_plan ........................   Passed    0.15 sec
+      Start 11: same_level_exchange_plan
+11/21 Test #11: same_level_exchange_plan .............   Passed    0.00 sec
+      Start 12: amr_operation_plans
+12/21 Test #12: amr_operation_plans ..................   Passed    0.00 sec
+      Start 13: amr_flux_surface_plan
+13/21 Test #13: amr_flux_surface_plan ................   Passed    0.01 sec
+      Start 14: topology_transaction
+14/21 Test #14: topology_transaction .................   Passed    0.09 sec
+      Start 15: resolved_execution_plan
+15/21 Test #15: resolved_execution_plan ..............   Passed    0.00 sec
+      Start 16: runtime_probe_and_capabilities
+16/21 Test #16: runtime_probe_and_capabilities .......   Passed    0.00 sec
+      Start 17: reduction_contract
+17/21 Test #17: reduction_contract ...................   Passed    0.03 sec
+      Start 18: compute_backend
+18/21 Test #18: compute_backend ......................   Passed    0.00 sec
+      Start 19: device_block_store_lifecycle
+19/21 Test #19: device_block_store_lifecycle .........   Passed    0.00 sec
+      Start 20: checkpoint_compatibility
+20/21 Test #20: checkpoint_compatibility .............   Passed    0.02 sec
+      Start 21: tabular_eos_ideal_gas
+21/21 Test #21: tabular_eos_ideal_gas ................   Passed    2.85 sec
+
+100% tests passed, 0 tests failed out of 21
+
+Total Test time (real) =  12.56 sec

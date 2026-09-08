@@ -1,0 +1,186 @@
+INDEPENDENT_METRIC_MAX_RELATIVE_ERROR host=3.03178e-16 device=3.03178e-16
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.05 error=0.000625026
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.025 error=0.000156252
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0 h=0.0125 error=3.90626e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0.1 h=0.05 error=0.000672081
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0.1 h=0.025 error=0.000168013
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=1 uniform=0 density_slope=0.1 h=0.0125 error=4.20028e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=0 density_slope=0 h=0.05 error=0.000129938
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=0 density_slope=0 h=0.025 error=3.24844e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=0 density_slope=0 h=0.0125 error=8.1211e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=1 density_slope=0 h=0.05 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=1 density_slope=0 h=0.025 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=1 density_slope=0 h=0.0125 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=0 density_slope=0.1 h=0.05 error=0.00014553
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=0 density_slope=0.1 h=0.025 error=3.63825e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=0 density_slope=0.1 h=0.0125 error=9.09563e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=1 density_slope=0.1 h=0.05 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=1 density_slope=0.1 h=0.025 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=2 uniform=1 density_slope=0.1 h=0.0125 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=0 density_slope=0 h=0.05 error=0.000141509
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=0 density_slope=0 h=0.025 error=3.53774e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=0 density_slope=0 h=0.0125 error=8.84434e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=1 density_slope=0 h=0.05 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=1 density_slope=0 h=0.025 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=1 density_slope=0 h=0.0125 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=0 density_slope=0.1 h=0.05 error=0.000152161
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=0 density_slope=0.1 h=0.025 error=3.80402e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=0 density_slope=0.1 h=0.0125 error=9.51004e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=1 density_slope=0.1 h=0.05 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=1 density_slope=0.1 h=0.025 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cartesian dim=3 uniform=1 density_slope=0.1 h=0.0125 error=0
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=1 uniform=0 density_slope=0 h=0.05 error=0.000868142
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=1 uniform=0 density_slope=0 h=0.025 error=0.000217019
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=1 uniform=0 density_slope=0 h=0.0125 error=5.42538e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=1 uniform=0 density_slope=0.1 h=0.05 error=0.000922124
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=1 uniform=0 density_slope=0.1 h=0.025 error=0.000230511
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=1 uniform=0 density_slope=0.1 h=0.0125 error=5.76264e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=0 density_slope=0 h=0.05 error=0.000225
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=0 density_slope=0 h=0.025 error=5.625e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=0 density_slope=0 h=0.0125 error=1.40625e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=1 density_slope=0 h=0.05 error=3.67133e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=1 density_slope=0 h=0.025 error=9.17929e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=1 density_slope=0 h=0.0125 error=2.29488e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=0 density_slope=0.1 h=0.05 error=0.000257494
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=0 density_slope=0.1 h=0.025 error=6.43732e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=0 density_slope=0.1 h=0.0125 error=1.60933e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=1 density_slope=0.1 h=0.05 error=4.27971e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=1 density_slope=0.1 h=0.025 error=1.07008e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=2 uniform=1 density_slope=0.1 h=0.0125 error=2.67528e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=0 density_slope=0 h=0.05 error=0.0002079
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=0 density_slope=0 h=0.025 error=5.19751e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=0 density_slope=0 h=0.0125 error=1.29938e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=1 density_slope=0 h=0.05 error=3.5847e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=1 density_slope=0 h=0.025 error=8.96268e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=1 density_slope=0 h=0.0125 error=2.24073e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=0 density_slope=0.1 h=0.05 error=0.000226719
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=0 density_slope=0.1 h=0.025 error=5.66794e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=0 density_slope=0.1 h=0.0125 error=1.41698e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=1 density_slope=0.1 h=0.05 error=4.00334e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=1 density_slope=0.1 h=0.025 error=1.00095e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=cylindrical dim=3 uniform=1 density_slope=0.1 h=0.0125 error=2.50243e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=1 uniform=0 density_slope=0 h=0.05 error=0.00110133
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=1 uniform=0 density_slope=0 h=0.025 error=0.000275307
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=1 uniform=0 density_slope=0 h=0.0125 error=6.8825e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=1 uniform=0 density_slope=0.1 h=0.05 error=0.00116296
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=1 uniform=0 density_slope=0.1 h=0.025 error=0.000290709
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=1 uniform=0 density_slope=0.1 h=0.0125 error=7.26751e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=0 density_slope=0 h=0.05 error=0.000225
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=0 density_slope=0 h=0.025 error=5.625e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=0 density_slope=0 h=0.0125 error=1.40625e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=1 density_slope=0 h=0.05 error=3.67133e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=1 density_slope=0 h=0.025 error=9.17929e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=1 density_slope=0 h=0.0125 error=2.29488e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=0 density_slope=0.1 h=0.05 error=0.000257494
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=0 density_slope=0.1 h=0.025 error=6.43732e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=0 density_slope=0.1 h=0.0125 error=1.60933e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=1 density_slope=0.1 h=0.05 error=4.27971e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=1 density_slope=0.1 h=0.025 error=1.07008e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=2 uniform=1 density_slope=0.1 h=0.0125 error=2.67528e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=0 density_slope=0 h=0.05 error=0.000354158
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=0 density_slope=0 h=0.025 error=8.85411e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=0 density_slope=0 h=0.0125 error=2.21354e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=1 density_slope=0 h=0.05 error=6.79457e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=1 density_slope=0 h=0.025 error=1.69887e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=1 density_slope=0 h=0.0125 error=4.24731e-07
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=0 density_slope=0.1 h=0.05 error=0.00038166
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=0 density_slope=0.1 h=0.025 error=9.54162e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=0 density_slope=0.1 h=0.0125 error=2.38541e-05
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=1 density_slope=0.1 h=0.05 error=7.40847e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=1 density_slope=0.1 h=0.025 error=1.85235e-06
+VISCOUS_SPATIAL_CONVERGENCE backend=cuda geometry=spherical dim=3 uniform=1 density_slope=0.1 h=0.0125 error=4.63104e-07
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=1 h=0.025 error=8.88178e-16
+VISCOUS_RADIAL_STABILITY backend=cuda geometry=cylindrical h=0.025 minimum_entry=0 maximum_row_sum=0.999207
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=1 h=0.0125 error=1.77636e-15
+VISCOUS_RADIAL_STABILITY backend=cuda geometry=cylindrical h=0.0125 minimum_entry=0 maximum_row_sum=0.999207
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=1 h=0.00625 error=3.55271e-15
+VISCOUS_RADIAL_STABILITY backend=cuda geometry=cylindrical h=0.00625 minimum_entry=0 maximum_row_sum=0.999207
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=2 h=0.025 error=8.88178e-16
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=2 h=0.0125 error=1.77636e-15
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=2 h=0.00625 error=3.55271e-15
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=3 h=0.025 error=8.88178e-16
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=3 h=0.0125 error=1.77636e-15
+VISCOUS_ORIGIN backend=cuda geometry=cylindrical dim=3 h=0.00625 error=3.55271e-15
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=1 h=0.025 error=8.88178e-16
+VISCOUS_RADIAL_STABILITY backend=cuda geometry=spherical h=0.025 minimum_entry=0 maximum_row_sum=0.998943
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=1 h=0.0125 error=1.77636e-15
+VISCOUS_RADIAL_STABILITY backend=cuda geometry=spherical h=0.0125 minimum_entry=0 maximum_row_sum=0.998943
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=1 h=0.00625 error=3.55271e-15
+VISCOUS_RADIAL_STABILITY backend=cuda geometry=spherical h=0.00625 minimum_entry=0 maximum_row_sum=0.998943
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=2 h=0.025 error=8.88178e-16
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=2 h=0.0125 error=1.77636e-15
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=2 h=0.00625 error=3.55271e-15
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=3 h=0.025 error=7.32747e-15
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=3 h=0.0125 error=1.46549e-14
+VISCOUS_ORIGIN backend=cuda geometry=spherical dim=3 h=0.00625 error=2.93099e-14
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=cartesian contrast=1 minimum_entry=0 maximum_row_sum=1
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=cartesian contrast=10 minimum_entry=0 maximum_row_sum=1
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=cartesian contrast=100 minimum_entry=0 maximum_row_sum=1
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=cylindrical contrast=1 minimum_entry=0 maximum_row_sum=0.999207
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=cylindrical contrast=10 minimum_entry=0 maximum_row_sum=0.999683
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=cylindrical contrast=100 minimum_entry=0 maximum_row_sum=0.999955
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=spherical contrast=1 minimum_entry=0 maximum_row_sum=0.998943
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=spherical contrast=10 minimum_entry=0 maximum_row_sum=0.999577
+VISCOUS_DENSITY_STABILITY backend=cuda geometry=spherical contrast=100 minimum_entry=0 maximum_row_sum=0.99994
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cylindrical dim=1 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cylindrical dim=2 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cylindrical dim=3 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=1 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=2 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=3 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cartesian dim=2 species=41
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=3 species=41
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.05 host_error=1e-07 device_error=1e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.025 host_error=2.5e-08 device_error=2.5e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.0125 host_error=6.25e-09 device_error=6.25e-09
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.05 host_error=3e-07 device_error=3e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.025 host_error=7.5e-08 device_error=7.5e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.0125 host_error=1.87499e-08 device_error=1.87499e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.05 host_error=1.22511e-07 device_error=1.22511e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.025 host_error=3.0628e-08 device_error=3.0628e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.0125 host_error=7.65703e-09 device_error=7.65703e-09
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.05 host_error=3.67532e-07 device_error=3.67532e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.025 host_error=9.18841e-08 device_error=9.18841e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.0125 host_error=2.29711e-08 device_error=2.29711e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.05 host_error=1.86242e-07 device_error=1.86242e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.025 host_error=4.65619e-08 device_error=4.65619e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.0125 host_error=1.16405e-08 device_error=1.16405e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.05 host_error=5.58727e-07 device_error=5.58727e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.025 host_error=1.39686e-07 device_error=1.39686e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.0125 host_error=3.49218e-08 device_error=3.49218e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.05 host_error=3e-07 device_error=3e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.025 host_error=7.5e-08 device_error=7.5e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.0125 host_error=1.875e-08 device_error=1.875e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.05 host_error=9e-07 device_error=9e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.025 host_error=2.25e-07 device_error=2.25e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.0125 host_error=5.62499e-08 device_error=5.62499e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.05 host_error=3.05628e-07 device_error=3.05628e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.025 host_error=7.6407e-08 device_error=7.6407e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.0125 host_error=1.91018e-08 device_error=1.91018e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.05 host_error=9.16883e-07 device_error=9.16883e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.025 host_error=2.29221e-07 device_error=2.29221e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.0125 host_error=5.73053e-08 device_error=5.73053e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.05 host_error=3.38444e-07 device_error=3.38444e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.025 host_error=8.46115e-08 device_error=8.46115e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.0125 host_error=2.11529e-08 device_error=2.11529e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.05 host_error=1.01533e-06 device_error=1.01533e-06
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.025 host_error=2.53835e-07 device_error=2.53835e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.0125 host_error=6.34588e-08 device_error=6.34588e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.05 host_error=5.66653e-07 device_error=5.66653e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.025 host_error=1.41666e-07 device_error=1.41666e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.0125 host_error=3.54166e-08 device_error=3.54166e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.05 host_error=1.69996e-06 device_error=1.69996e-06
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.025 host_error=4.24997e-07 device_error=4.24997e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.0125 host_error=1.0625e-07 device_error=1.0625e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.05 host_error=3.05628e-07 device_error=3.05628e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.025 host_error=7.6407e-08 device_error=7.6407e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.0125 host_error=1.91018e-08 device_error=1.91018e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.05 host_error=9.16883e-07 device_error=9.16883e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.025 host_error=2.29221e-07 device_error=2.29221e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.0125 host_error=5.73053e-08 device_error=5.73053e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.05 host_error=6.08852e-07 device_error=6.08852e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.025 host_error=1.52217e-07 device_error=1.52217e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.0125 host_error=3.80544e-08 device_error=3.80544e-08
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.05 host_error=1.82656e-06 device_error=1.82656e-06
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.025 host_error=4.5665e-07 device_error=4.5665e-07
+THERMAL_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.0125 host_error=1.14163e-07 device_error=1.14163e-07
