@@ -1079,5 +1079,1971 @@
     "path": "/home/shiroakane/ARCH/build/cmake-maintenance-20260908/archive_cmake_review.py",
     "sha256": "b3a95667354d1ba9bc54289099ec2f1548e19fb670a436a93e117c9c38a43495",
     "bytes": 16071
+  },
+  "configure_output_review": {
+    "schema": 1,
+    "status": "PASS",
+    "recorded_utc": "2026-09-08T07:06:54.377850+00:00",
+    "scope": "Configuration status output and guarded reproduction arguments only. No numerical changes, full NVCC build, full CTest rerun or scientific rerun.",
+    "current_source": {
+      "commit": "fd81ec457e00b996255fd323749cd0163fb69639",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "73b6551547278551255a4278385ab6b6a6db27438a1f3cc2c1374b63d12151e0",
+      "dirty": true,
+      "modified_files": [
+        "cmake/BuildOptions.cmake",
+        "cmake/Dependencies.cmake"
+      ],
+      "untracked_source_files": []
+    },
+    "base_commit": "fd81ec457e00b996255fd323749cd0163fb69639",
+    "source_review": {
+      "unchanged_non_markdown_files": 391,
+      "scope": [
+        "src",
+        "simulation",
+        "tests",
+        "tools"
+      ],
+      "file_inventory_sha256": "e57630c69c99c9c822e1554c12de5471c5b57a162619d435b8946e28ffecaadc",
+      "build_changes": [
+        {
+          "path": "/home/shiroakane/ARCH/cmake/BuildOptions.cmake",
+          "sha256": "2e1be0be502920e06c0d95683e1ed6bc001acf6eb576f2a14b9230f47b367bc6"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+          "sha256": "d3209d23f55bbd806469135b7b98eb234aef1e627415b264d5ffa3dca968ae35"
+        }
+      ]
+    },
+    "configuration_runs": {
+      "before": {
+        "receipt": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/before-outcomes.json",
+          "sha256": "cbc660028b024fca8751cfc4039dcc40e131173e94a5159926b4aff388527e2a"
+        },
+        "runs": [
+          {
+            "backend": "cpu",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-before.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=OFF",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu/bin",
+              "-DARCH_ENABLE_CUDA=OFF"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5678788 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=26240 elapsed_seconds=7.013 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.037 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=8 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-before.log",
+              "sha256": "e9bb20c143e35b788c65c87cafccb0ecf09a507f218b3a1149404b3ccf3dd58b"
+            }
+          },
+          {
+            "backend": "cuda",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-before.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=OFF",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda/bin",
+              "-DARCH_ENABLE_CUDA=ON",
+              "-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc",
+              "-DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-12",
+              "-DCMAKE_CUDA_ARCHITECTURES=86",
+              "-DCUDSS_ROOT=/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5657764 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=55644 elapsed_seconds=14.022 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=4.840 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=15 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-before.log",
+              "sha256": "6e094e1d09529e1df17d69e4bb179a0afbfedac76b250253ff42ee9fbcf9e1c6"
+            }
+          }
+        ]
+      },
+      "after": {
+        "receipt": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/after-outcomes.json",
+          "sha256": "acea7f39ccb20927146b76f448daa858052b4c14da965c091c081cb83794b690"
+        },
+        "runs": [
+          {
+            "backend": "cpu",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-after.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=OFF",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu/bin",
+              "-DARCH_ENABLE_CUDA=OFF"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5659012 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=22740 elapsed_seconds=4.007 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.030 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=5 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-after.log",
+              "sha256": "478e868d613c77ee1749b87bfc53b0e2886fbc04dcb4ec7bdbf0d45000803749"
+            }
+          },
+          {
+            "backend": "cuda",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-after.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=OFF",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda/bin",
+              "-DARCH_ENABLE_CUDA=ON",
+              "-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc",
+              "-DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-12",
+              "-DCMAKE_CUDA_ARCHITECTURES=86",
+              "-DCUDSS_ROOT=/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5501988 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=43064 elapsed_seconds=6.010 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.090 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-after.log",
+              "sha256": "43347d53efdf45e2510daed73d72b68a16c9cd2efe38d796f209eb71132437d1"
+            }
+          }
+        ]
+      },
+      "verbose": {
+        "receipt": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/verbose-outcomes.json",
+          "sha256": "44e6e78633609f70ea769c2637ec938ed6faccfa0edbf481c9346ec3559e586e"
+        },
+        "runs": [
+          {
+            "backend": "cpu",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-verbose.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=ON",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu/bin",
+              "-DARCH_ENABLE_CUDA=OFF"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5708652 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=24628 elapsed_seconds=4.008 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.012 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=5 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-verbose.log",
+              "sha256": "4dd55aa095ccc88f341e9ac8a673a71861af5c38298019a598957c88218ce8c4"
+            }
+          },
+          {
+            "backend": "cuda",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-verbose.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=ON",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda/bin",
+              "-DARCH_ENABLE_CUDA=ON",
+              "-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc",
+              "-DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-12",
+              "-DCMAKE_CUDA_ARCHITECTURES=86",
+              "-DCUDSS_ROOT=/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5709500 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=26036 elapsed_seconds=6.009 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.009 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-verbose.log",
+              "sha256": "f6796f80fba7e6245ceba7e5337c7705930ab4d1918b12b7b352fb9a9d533e09"
+            }
+          }
+        ]
+      },
+      "quiet": {
+        "receipt": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/quiet-outcomes.json",
+          "sha256": "7a9c933757e54454af86207954d9af32e055bbe65ed08a0dcea685fe6bc24f05"
+        },
+        "runs": [
+          {
+            "backend": "cpu",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-quiet.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=OFF",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu/bin",
+              "-DARCH_ENABLE_CUDA=OFF"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5705288 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=21884 elapsed_seconds=3.007 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.000 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=4 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-quiet.log",
+              "sha256": "fe6013e63ae1d3280c1958c1ca63a5ab3e1a8314eb13979053865341d03f10d7"
+            }
+          },
+          {
+            "backend": "cuda",
+            "command": [
+              "/usr/bin/python3",
+              "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+              "--min-available-mib",
+              "1536",
+              "--max-swap-growth-mib",
+              "256",
+              "--pressure-guard",
+              "--log",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-quiet.log",
+              "--",
+              "cmake",
+              "-S",
+              "/home/shiroakane/ARCH",
+              "-B",
+              "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda",
+              "-G",
+              "Ninja",
+              "-DCMAKE_BUILD_TYPE=Release",
+              "-DCMAKE_C_COMPILER=/usr/bin/gcc-12",
+              "-DCMAKE_CXX_COMPILER=/usr/bin/g++-12",
+              "-DBUILD_TESTING=ON",
+              "-DCMAKE_DISABLE_FIND_PACKAGE_KLU=ON",
+              "-DARCH_VERBOSE_BUILD=OFF",
+              "-DFETCHCONTENT_UPDATES_DISCONNECTED=ON",
+              "-DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/shiroakane/ARCH/build/_deps/highfive-src",
+              "-DFETCHCONTENT_SOURCE_DIR_SUITESPARSE=/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src",
+              "-DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda/bin",
+              "-DARCH_ENABLE_CUDA=ON",
+              "-DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc",
+              "-DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-12",
+              "-DCMAKE_CUDA_ARCHITECTURES=86",
+              "-DCUDSS_ROOT=/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12"
+            ],
+            "returncode": 0,
+            "guard_output": "MEMORY_GUARD_RESULT min_available_kib=5671576 baseline_swap_kib=2328 peak_swap_kib=2328 guard_stopped=False peak_owned_rss_kib=30964 elapsed_seconds=6.009 stop_reason=none\nSYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.051 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True\n",
+            "guard_stderr": "",
+            "log": {
+              "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-quiet.log",
+              "sha256": "2c219c68466b19c6baa0a8a145b6a2df69d6168e604b2e297e3997a926b92b4e"
+            }
+          }
+        ]
+      }
+    },
+    "original_source_comparison": {
+      "cpu": {
+        "before": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-before-snapshot/snapshot.json",
+          "sha256": "3b4bb8692854ffda8d62083f48266ad01f173f7339452b1077ade9e79fd529a2"
+        },
+        "after": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-after-snapshot/snapshot.json",
+          "sha256": "8f06e1f65f0b96d6de8e67a25bbb3a7300d898ef61e5e93961be84829eb64cb0"
+        },
+        "counts": {
+          "compile_commands": 160,
+          "ctest_tests": 31,
+          "effective_commands": 337,
+          "generated_files": 4,
+          "ninja_edges": 397
+        },
+        "sections": {
+          "compile_commands": {
+            "equal": true,
+            "before_sha256": "7cccc33c70c316e70e6c58b22725fbaebe2f09b114698b54a8ad5b3e182234b8",
+            "after_sha256": "7cccc33c70c316e70e6c58b22725fbaebe2f09b114698b54a8ad5b3e182234b8"
+          },
+          "ctest_tests": {
+            "equal": true,
+            "before_sha256": "369371b193d1c5238dd4450b8288d44d70bfb90a048542963ef352d72fba1435",
+            "after_sha256": "369371b193d1c5238dd4450b8288d44d70bfb90a048542963ef352d72fba1435"
+          },
+          "generated_hashes": {
+            "equal": true,
+            "before_sha256": "0c440bbc886ba4b58133abd15b52e90aabb32ffb17cc77a8b83aa8a94640f3a6",
+            "after_sha256": "0c440bbc886ba4b58133abd15b52e90aabb32ffb17cc77a8b83aa8a94640f3a6"
+          },
+          "ninja_edges": {
+            "equal": false,
+            "before_sha256": "d9dd575de34d18d7fa8f332a9ee0224004230a4f7578a9bebc39d8029b372bf9",
+            "after_sha256": "425bbb9354de85a0bfdc3cebc4273ed5fde58c910a091d62a66623ccc8fe4048"
+          },
+          "ninja_effective_commands": {
+            "equal": true,
+            "before_sha256": "c9becd00c64e5237672c9789bc4eda86854ca4fbb2809c6d2f67833f35e90c68",
+            "after_sha256": "c9becd00c64e5237672c9789bc4eda86854ca4fbb2809c6d2f67833f35e90c68"
+          },
+          "ninja_global_statements": {
+            "equal": true,
+            "before_sha256": "f5389e5e8e6729e0a50eae975923ea6e469632dc35f6483791faf006684b51e3",
+            "after_sha256": "f5389e5e8e6729e0a50eae975923ea6e469632dc35f6483791faf006684b51e3"
+          },
+          "ninja_rules_and_pools": {
+            "equal": true,
+            "before_sha256": "c6e730e6d3d4ac3149e4827a0d725c5efb81dc32c600e611aa47ef28b9500fad",
+            "after_sha256": "c6e730e6d3d4ac3149e4827a0d725c5efb81dc32c600e611aa47ef28b9500fad"
+          }
+        },
+        "full_graph_equal": false,
+        "first_configuration_metadata": {
+          "changed_binding_counts": {
+            "TARGET_COMPILE_PDB": 192,
+            "TARGET_PDB": 192,
+            "COMMAND": 1
+          },
+          "interpretation": "Fresh versus warm configuration adds unused Linux PDB metadata and two generated files to the SuiteSparse purge target. All effective compiler/linker commands, rules, tests and generated source remain identical. The raw comparison is DIFFERENT, not relabeled PASS."
+        }
+      },
+      "cuda": {
+        "before": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-before-snapshot/snapshot.json",
+          "sha256": "a55b61f930ec830eabd0b2dbe7d8e0a97f8b1f50b9631b6aacec213acffdffff"
+        },
+        "after": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-after-snapshot/snapshot.json",
+          "sha256": "7549a67ec34bde4cf2516c47ea72ae762aad7fe28c2da40cc411872f524edc49"
+        },
+        "counts": {
+          "compile_commands": 257,
+          "ctest_tests": 96,
+          "effective_commands": 632,
+          "generated_files": 28,
+          "ninja_edges": 692
+        },
+        "sections": {
+          "compile_commands": {
+            "equal": true,
+            "before_sha256": "ed61dd0b748b0b1e84a48df2b2711e35b79ff00206acae8581300e49ebd53889",
+            "after_sha256": "ed61dd0b748b0b1e84a48df2b2711e35b79ff00206acae8581300e49ebd53889"
+          },
+          "ctest_tests": {
+            "equal": true,
+            "before_sha256": "c9f37527b9d02adc1c9270419aaecfeab20d1601b52ecb8624dd6704c0e0979b",
+            "after_sha256": "c9f37527b9d02adc1c9270419aaecfeab20d1601b52ecb8624dd6704c0e0979b"
+          },
+          "generated_hashes": {
+            "equal": true,
+            "before_sha256": "20e417f19c289eba6d660e3c1152782fad3615beaa1020e62f742644040b8021",
+            "after_sha256": "20e417f19c289eba6d660e3c1152782fad3615beaa1020e62f742644040b8021"
+          },
+          "ninja_edges": {
+            "equal": false,
+            "before_sha256": "655305b6996114ce3851971ba550134f92828d87d175e71cd33057785b853a50",
+            "after_sha256": "2732d0ce50d13db2c9f946aea72c24e4c2e15852ec8bf180ffc814d792d86493"
+          },
+          "ninja_effective_commands": {
+            "equal": true,
+            "before_sha256": "4a3195a83092ae564f1ee6da6b9c90bcbcde20a3db7754c5c3353a98f8c78b4c",
+            "after_sha256": "4a3195a83092ae564f1ee6da6b9c90bcbcde20a3db7754c5c3353a98f8c78b4c"
+          },
+          "ninja_global_statements": {
+            "equal": true,
+            "before_sha256": "3f9d4cab54e4858f68426bf7b0d8ef0e6026bb582ca7e3bca6b4227fa8cc2dcd",
+            "after_sha256": "3f9d4cab54e4858f68426bf7b0d8ef0e6026bb582ca7e3bca6b4227fa8cc2dcd"
+          },
+          "ninja_rules_and_pools": {
+            "equal": true,
+            "before_sha256": "db317bd09a3bf952995008d769a605acc4306b61ace443afa3815a5a3efd5139",
+            "after_sha256": "db317bd09a3bf952995008d769a605acc4306b61ace443afa3815a5a3efd5139"
+          }
+        },
+        "full_graph_equal": false,
+        "first_configuration_metadata": {
+          "changed_binding_counts": {
+            "TARGET_COMPILE_PDB": 324,
+            "TARGET_PDB": 324,
+            "COMMAND": 1
+          },
+          "interpretation": "Fresh versus warm configuration adds unused Linux PDB metadata and two generated files to the SuiteSparse purge target. All effective compiler/linker commands, rules, tests and generated source remain identical. The raw comparison is DIFFERENT, not relabeled PASS."
+        }
+      }
+    },
+    "settled_verbose_quiet_comparison": {
+      "cpu": {
+        "before": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-verbose-snapshot/snapshot.json",
+          "sha256": "e355c40ed6f93989ca45ea0054d6ab2dea085e4502deca3cbcf958f93a6b9e89"
+        },
+        "after": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-quiet-snapshot/snapshot.json",
+          "sha256": "6ea03e66dbc286ddfbcab15090e03dde5adb28deec6bb03c9bc0ed3c10b42942"
+        },
+        "counts": {
+          "compile_commands": 160,
+          "ctest_tests": 31,
+          "effective_commands": 337,
+          "generated_files": 4,
+          "ninja_edges": 397
+        },
+        "sections": {
+          "compile_commands": {
+            "equal": true,
+            "before_sha256": "7cccc33c70c316e70e6c58b22725fbaebe2f09b114698b54a8ad5b3e182234b8",
+            "after_sha256": "7cccc33c70c316e70e6c58b22725fbaebe2f09b114698b54a8ad5b3e182234b8"
+          },
+          "ctest_tests": {
+            "equal": true,
+            "before_sha256": "369371b193d1c5238dd4450b8288d44d70bfb90a048542963ef352d72fba1435",
+            "after_sha256": "369371b193d1c5238dd4450b8288d44d70bfb90a048542963ef352d72fba1435"
+          },
+          "generated_hashes": {
+            "equal": true,
+            "before_sha256": "0c440bbc886ba4b58133abd15b52e90aabb32ffb17cc77a8b83aa8a94640f3a6",
+            "after_sha256": "0c440bbc886ba4b58133abd15b52e90aabb32ffb17cc77a8b83aa8a94640f3a6"
+          },
+          "ninja_edges": {
+            "equal": true,
+            "before_sha256": "425bbb9354de85a0bfdc3cebc4273ed5fde58c910a091d62a66623ccc8fe4048",
+            "after_sha256": "425bbb9354de85a0bfdc3cebc4273ed5fde58c910a091d62a66623ccc8fe4048"
+          },
+          "ninja_effective_commands": {
+            "equal": true,
+            "before_sha256": "c9becd00c64e5237672c9789bc4eda86854ca4fbb2809c6d2f67833f35e90c68",
+            "after_sha256": "c9becd00c64e5237672c9789bc4eda86854ca4fbb2809c6d2f67833f35e90c68"
+          },
+          "ninja_global_statements": {
+            "equal": true,
+            "before_sha256": "f5389e5e8e6729e0a50eae975923ea6e469632dc35f6483791faf006684b51e3",
+            "after_sha256": "f5389e5e8e6729e0a50eae975923ea6e469632dc35f6483791faf006684b51e3"
+          },
+          "ninja_rules_and_pools": {
+            "equal": true,
+            "before_sha256": "c6e730e6d3d4ac3149e4827a0d725c5efb81dc32c600e611aa47ef28b9500fad",
+            "after_sha256": "c6e730e6d3d4ac3149e4827a0d725c5efb81dc32c600e611aa47ef28b9500fad"
+          }
+        },
+        "full_graph_equal": true,
+        "first_configuration_metadata": null
+      },
+      "cuda": {
+        "before": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-verbose-snapshot/snapshot.json",
+          "sha256": "153ee1a53e319ccff8307c4f384eaead19f4e9cdb0250b4f70879880ab7a3719"
+        },
+        "after": {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cuda-quiet-snapshot/snapshot.json",
+          "sha256": "5c50b498dc726f6fcc8e4378852a138420457c0f4f930b249079a937f69b9bf8"
+        },
+        "counts": {
+          "compile_commands": 257,
+          "ctest_tests": 96,
+          "effective_commands": 632,
+          "generated_files": 28,
+          "ninja_edges": 692
+        },
+        "sections": {
+          "compile_commands": {
+            "equal": true,
+            "before_sha256": "ed61dd0b748b0b1e84a48df2b2711e35b79ff00206acae8581300e49ebd53889",
+            "after_sha256": "ed61dd0b748b0b1e84a48df2b2711e35b79ff00206acae8581300e49ebd53889"
+          },
+          "ctest_tests": {
+            "equal": true,
+            "before_sha256": "c9f37527b9d02adc1c9270419aaecfeab20d1601b52ecb8624dd6704c0e0979b",
+            "after_sha256": "c9f37527b9d02adc1c9270419aaecfeab20d1601b52ecb8624dd6704c0e0979b"
+          },
+          "generated_hashes": {
+            "equal": true,
+            "before_sha256": "20e417f19c289eba6d660e3c1152782fad3615beaa1020e62f742644040b8021",
+            "after_sha256": "20e417f19c289eba6d660e3c1152782fad3615beaa1020e62f742644040b8021"
+          },
+          "ninja_edges": {
+            "equal": true,
+            "before_sha256": "2732d0ce50d13db2c9f946aea72c24e4c2e15852ec8bf180ffc814d792d86493",
+            "after_sha256": "2732d0ce50d13db2c9f946aea72c24e4c2e15852ec8bf180ffc814d792d86493"
+          },
+          "ninja_effective_commands": {
+            "equal": true,
+            "before_sha256": "4a3195a83092ae564f1ee6da6b9c90bcbcde20a3db7754c5c3353a98f8c78b4c",
+            "after_sha256": "4a3195a83092ae564f1ee6da6b9c90bcbcde20a3db7754c5c3353a98f8c78b4c"
+          },
+          "ninja_global_statements": {
+            "equal": true,
+            "before_sha256": "3f9d4cab54e4858f68426bf7b0d8ef0e6026bb582ca7e3bca6b4227fa8cc2dcd",
+            "after_sha256": "3f9d4cab54e4858f68426bf7b0d8ef0e6026bb582ca7e3bca6b4227fa8cc2dcd"
+          },
+          "ninja_rules_and_pools": {
+            "equal": true,
+            "before_sha256": "db317bd09a3bf952995008d769a605acc4306b61ace443afa3815a5a3efd5139",
+            "after_sha256": "db317bd09a3bf952995008d769a605acc4306b61ace443afa3815a5a3efd5139"
+          }
+        },
+        "full_graph_equal": true,
+        "first_configuration_metadata": null
+      }
+    },
+    "diagnostic_policy": {
+      "report": {
+        "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/summary.json",
+        "sha256": "b03ce1212bce017f1c8f22367c2eabc528ee1f82800bdf4b1cda378969b0f6d1"
+      },
+      "cases": [
+        {
+          "name": "default-release",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/default-release",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_BUILD_TYPE=Release"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19327588599981027,
+          "expected": {
+            "name": "default-release",
+            "args": [
+              "-DCMAKE_BUILD_TYPE=Release"
+            ],
+            "status": false,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/default-release/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "FALSE",
+            "initial_level": "",
+            "initial_cache_defined": "0",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/default-release.log",
+          "log_sha256": "cf21d2a80523c030e8b8af9ccafbce11a71befcbd23fc2ec8ab09d9be8bc646a",
+          "status": "PASS"
+        },
+        {
+          "name": "default-debug",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/default-debug",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_BUILD_TYPE=Debug"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19318659700002172,
+          "expected": {
+            "name": "default-debug",
+            "args": [
+              "-DCMAKE_BUILD_TYPE=Debug"
+            ],
+            "status": false,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/default-debug/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "FALSE",
+            "initial_level": "",
+            "initial_cache_defined": "0",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/default-debug.log",
+          "log_sha256": "435f9ba6be96b85e2bdfb28ae3fa61678b89700cf5673fb370bc3101d90640d2",
+          "status": "PASS"
+        },
+        {
+          "name": "arch-verbose",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/arch-verbose",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DARCH_VERBOSE_BUILD=ON"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19108335100008844,
+          "expected": {
+            "name": "arch-verbose",
+            "args": [
+              "-DARCH_VERBOSE_BUILD=ON"
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/arch-verbose/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "FALSE",
+            "initial_level": "",
+            "initial_cache_defined": "0",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/arch-verbose.log",
+          "log_sha256": "0866df8195d8c95bbd588b316ca3a3451b79d73045d5f1fd7ce8a74095c27269",
+          "status": "PASS"
+        },
+        {
+          "name": "cache-status",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-status",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=STATUS"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19098864300030982,
+          "expected": {
+            "name": "cache-status",
+            "args": [
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=STATUS"
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-status/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "STATUS",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "STATUS"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cache-status.log",
+          "log_sha256": "25c5b6bca24fba83331dc1a89c980b5e0f90db2691d2779f920cda2447a36d26",
+          "status": "PASS"
+        },
+        {
+          "name": "cache-verbose",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-verbose",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=VERBOSE"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.20861054300030446,
+          "expected": {
+            "name": "cache-verbose",
+            "args": [
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=VERBOSE"
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": true,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-verbose/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "VERBOSE",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "VERBOSE"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cache-verbose.log",
+          "log_sha256": "5dc351070438cc2108bd5e2e24fabc8270309b31e5fa15918c6c110072037288",
+          "status": "PASS"
+        },
+        {
+          "name": "normal-status",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/normal-status",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DFIXTURE_NORMAL_LOG_LEVEL=STATUS"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.20873776300004465,
+          "expected": {
+            "name": "normal-status",
+            "args": [
+              "-DFIXTURE_NORMAL_LOG_LEVEL=STATUS"
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/normal-status/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "STATUS",
+            "initial_cache_defined": "0",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/normal-status.log",
+          "log_sha256": "f59596d00c5b7c8c95916618f78cf84725a06a3318a08faf357d13b8a045cacf",
+          "status": "PASS"
+        },
+        {
+          "name": "cache-warning",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-warning",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=WARNING"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.1984674600003018,
+          "expected": {
+            "name": "cache-warning",
+            "args": [
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=WARNING"
+            ],
+            "status": false,
+            "notice": false,
+            "warning": true,
+            "verbose": false,
+            "parent_status": false,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-warning/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "WARNING",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "WARNING"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cache-warning.log",
+          "log_sha256": "7771e357e0fa9215458858d0847a04abdb5f21904b02e238010a2701f91f844d",
+          "status": "PASS"
+        },
+        {
+          "name": "cache-error",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-error",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=ERROR"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.1934087500003443,
+          "expected": {
+            "name": "cache-error",
+            "args": [
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=ERROR"
+            ],
+            "status": false,
+            "notice": false,
+            "warning": false,
+            "verbose": false,
+            "parent_status": false,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cache-error/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "ERROR",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "ERROR"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cache-error.log",
+          "log_sha256": "41a595ed75fcefe5efa0c00bb29211b1b02a0829b617fd5af50e5c75a064e8dc",
+          "status": "PASS"
+        },
+        {
+          "name": "normal-warning-shadows-cache-status",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/normal-warning-shadows-cache-status",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=STATUS",
+            "-DFIXTURE_NORMAL_LOG_LEVEL=WARNING"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.2051758110001174,
+          "expected": {
+            "name": "normal-warning-shadows-cache-status",
+            "args": [
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=STATUS",
+              "-DFIXTURE_NORMAL_LOG_LEVEL=WARNING"
+            ],
+            "status": false,
+            "notice": false,
+            "warning": true,
+            "verbose": false,
+            "parent_status": false,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/normal-warning-shadows-cache-status/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "WARNING",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "STATUS"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/normal-warning-shadows-cache-status.log",
+          "log_sha256": "6bba29cfc9440d92a938b15f440e091ce7b86deb04e7e9bc3ceb473565345087",
+          "status": "PASS"
+        },
+        {
+          "name": "cli-verbose",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cli-verbose",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "--log-level=VERBOSE"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19619564300001002,
+          "expected": {
+            "name": "cli-verbose",
+            "args": [
+              "--log-level=VERBOSE"
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": true,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cli-verbose/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "FALSE",
+            "initial_level": "",
+            "initial_cache_defined": "0",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cli-verbose.log",
+          "log_sha256": "39335158cd54d6fafdef5eef7c9d9d5c50a50d0ffc9f2f64a7d609c9b454a9d6",
+          "status": "PASS"
+        },
+        {
+          "name": "cli-status-over-cache-warning",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cli-status-over-cache-warning",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "--log-level=STATUS",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=WARNING"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.1953594130000056,
+          "expected": {
+            "name": "cli-status-over-cache-warning",
+            "args": [
+              "--log-level=STATUS",
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=WARNING"
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cli-status-over-cache-warning/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "WARNING",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "WARNING"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cli-status-over-cache-warning.log",
+          "log_sha256": "05a0bfcfc59741bbe7e7df172a5f7f1a2f7b84f4717f3001dd5f1269066b7f64",
+          "status": "PASS"
+        },
+        {
+          "name": "cli-warning-over-cache-status",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cli-warning-over-cache-status",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "--log-level=WARNING",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=STATUS"
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19703438900023684,
+          "expected": {
+            "name": "cli-warning-over-cache-status",
+            "args": [
+              "--log-level=WARNING",
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=STATUS"
+            ],
+            "status": false,
+            "notice": false,
+            "warning": true,
+            "verbose": false,
+            "parent_status": false,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/cli-warning-over-cache-status/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "STATUS",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "STATUS"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/cli-warning-over-cache-status.log",
+          "log_sha256": "6ec1a065d80619226d97e35c37f2ece490e7a53ff5ed5d54b449a44022f36c09",
+          "status": "PASS"
+        },
+        {
+          "name": "explicit-empty-cache",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/explicit-empty-cache",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING="
+          ],
+          "actual_exit_code": 0,
+          "elapsed_seconds": 0.19736965599986434,
+          "expected": {
+            "name": "explicit-empty-cache",
+            "args": [
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING="
+            ],
+            "status": true,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": null
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/explicit-empty-cache/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "",
+            "initial_cache_defined": "1",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/explicit-empty-cache.log",
+          "log_sha256": "dedb7f9f1a15237dc8b38d5ec5664ff65eecfec1ddaec4e5131f536ebb6662a1",
+          "status": "PASS"
+        },
+        {
+          "name": "send-error",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/send-error",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DFIXTURE_ERROR=SEND_ERROR"
+          ],
+          "actual_exit_code": 1,
+          "elapsed_seconds": 0.18867921299988666,
+          "expected": {
+            "name": "send-error",
+            "args": [
+              "-DFIXTURE_ERROR=SEND_ERROR"
+            ],
+            "status": false,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": true,
+            "error": "SEND_ERROR"
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "error_message_visible": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/send-error/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "FALSE",
+            "initial_level": "",
+            "initial_cache_defined": "0",
+            "initial_cache_value": ""
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/send-error.log",
+          "log_sha256": "0f412c87a8c9475dca49f2b1ed31265ed10ab938e0fdcd45c14c79cdc4f2da49",
+          "status": "PASS"
+        },
+        {
+          "name": "fatal-error",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/fatal-error",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DFIXTURE_ERROR=FATAL_ERROR"
+          ],
+          "actual_exit_code": 1,
+          "elapsed_seconds": 0.20722404299976915,
+          "expected": {
+            "name": "fatal-error",
+            "args": [
+              "-DFIXTURE_ERROR=FATAL_ERROR"
+            ],
+            "status": false,
+            "notice": true,
+            "warning": true,
+            "verbose": false,
+            "parent_status": false,
+            "error": "FATAL_ERROR"
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "error_message_visible": true
+          },
+          "observations": {},
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/fatal-error.log",
+          "log_sha256": "1d3440ac87b67876cddc6c479b1ca67c44c5c5dccceac85537eef159845b5f67",
+          "status": "PASS"
+        },
+        {
+          "name": "send-error-at-error-level",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/send-error-at-error-level",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DFIXTURE_ERROR=SEND_ERROR",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=ERROR"
+          ],
+          "actual_exit_code": 1,
+          "elapsed_seconds": 0.19283247300018047,
+          "expected": {
+            "name": "send-error-at-error-level",
+            "args": [
+              "-DFIXTURE_ERROR=SEND_ERROR",
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=ERROR"
+            ],
+            "status": false,
+            "notice": false,
+            "warning": false,
+            "verbose": false,
+            "parent_status": false,
+            "error": "SEND_ERROR"
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "error_message_visible": true,
+            "observations_written": true,
+            "policy_state_restored": true,
+            "directory_links_restored": true,
+            "child_links_empty": true,
+            "child_parent_scope_visible": true,
+            "dependency_target_visible": true,
+            "dependency_target_property_preserved": true,
+            "populated_visible": true,
+            "source_dir_visible": true,
+            "binary_dir_visible": true
+          },
+          "observations": {
+            "policy_state_restored": "TRUE",
+            "directory_links_restored": "TRUE",
+            "child_links_empty": "TRUE",
+            "child_parent_scope_visible": "TRUE",
+            "dependency_target_visible": "TRUE",
+            "dependency_target_property_preserved": "TRUE",
+            "source_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/dependency",
+            "binary_dir": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/send-error-at-error-level/_deps/suitesparse-build",
+            "populated": "True",
+            "initial_level_defined": "TRUE",
+            "initial_level": "ERROR",
+            "initial_cache_defined": "1",
+            "initial_cache_value": "ERROR"
+          },
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/send-error-at-error-level.log",
+          "log_sha256": "83a825d753ca74e395ecff00e199d6b2b5926259d567e756080beddc1d387a65",
+          "status": "PASS"
+        },
+        {
+          "name": "fatal-error-at-error-level",
+          "argv": [
+            "/usr/bin/cmake",
+            "-S",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test",
+            "-B",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/log-policy-test/results/fatal-error-at-error-level",
+            "-G",
+            "Ninja",
+            "-DARCH_DEPENDENCIES=/home/shiroakane/ARCH/cmake/Dependencies.cmake",
+            "-DFIXTURE_ERROR=FATAL_ERROR",
+            "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=ERROR"
+          ],
+          "actual_exit_code": 1,
+          "elapsed_seconds": 0.19440268400012428,
+          "expected": {
+            "name": "fatal-error-at-error-level",
+            "args": [
+              "-DFIXTURE_ERROR=FATAL_ERROR",
+              "-DCMAKE_MESSAGE_LOG_LEVEL:STRING=ERROR"
+            ],
+            "status": false,
+            "notice": false,
+            "warning": false,
+            "verbose": false,
+            "parent_status": false,
+            "error": "FATAL_ERROR"
+          },
+          "checks": {
+            "expected_exit_status": true,
+            "child_status_visibility": true,
+            "child_notice_visibility": true,
+            "child_warning_visibility": true,
+            "child_verbose_visibility": true,
+            "parent_status_visibility": true,
+            "error_message_visible": true
+          },
+          "observations": {},
+          "log": "build/cmake-output-review-20260908/log-policy-test/results/fatal-error-at-error-level.log",
+          "log_sha256": "2358fefbeae63c4171907b3cbe2c409cc01e0d6567b0687e675f21b3dd64875d",
+          "status": "PASS"
+        }
+      ],
+      "harness_files": {
+        "build/cmake-output-review-20260908/log-policy-test/run_tests.py": "94c4dbe1a657537eceaa2c311e75e9b5f7c8b95aa94feed24822a537084cf7f2",
+        "build/cmake-output-review-20260908/log-policy-test/CMakeLists.txt": "f51d111ee73562b6dbf342eebbb8aec6477eb9e52bd73c0031f6d5bba24de190",
+        "build/cmake-output-review-20260908/log-policy-test/dependency/CMakeLists.txt": "110b012d9d5c3ecc5245e7be9954f642887ef3568c1d3c68b6dee96b10943f60"
+      },
+      "case_count": 17,
+      "check_count": 256,
+      "all_passed": true
+    },
+    "host_checks": {
+      "receipt": {
+        "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/short-check-outcomes.json",
+        "sha256": "04522b3b38622a48e35b7a8ceb9e0147e64a1a22d792232402caf57e9330f1fa"
+      },
+      "logs": [
+        {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-build-execution.log",
+          "sha256": "ec2b7b1786aa9cb09a2d7cd5573b9f196bc4e6eb214883ed377841ed31835b7f"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-short-build.log",
+          "sha256": "656630dc266fd50605c2075cab06256c3945d7fd62f9b37466f4c15cd3a66124"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-build-execution-2.log",
+          "sha256": "daf9b5e371ef7096f38f46426cb65a72e13d260afe6381588180cbbe2a23abf3"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-short-build-2.log",
+          "sha256": "23472d68d6608948a007cfab21a942872aabfd9b91a6dc3afe6ad239d0d34d71"
+        },
+        {
+          "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-ctest-execution-2.log",
+          "sha256": "84ea7bca0e8c95b6f48eafe63ef95f9d81270c48320f3855c8727b6daba767a4"
+        }
+      ],
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "cpu-build",
+          "argv": [
+            "/usr/bin/python3",
+            "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+            "--min-available-mib",
+            "1536",
+            "--max-swap-growth-mib",
+            "256",
+            "--pressure-guard",
+            "--log",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-short-build-2.log",
+            "--",
+            "cmake",
+            "--build",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+            "--target",
+            "arch_boundary_plan",
+            "arch_physical_constants",
+            "arch_compensated_sum",
+            "--parallel",
+            "2"
+          ],
+          "returncode": 0,
+          "log": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-build-execution-2.log",
+          "environment_overrides": {
+            "CCACHE_DIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache",
+            "CCACHE_TEMPDIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache/tmp"
+          }
+        },
+        {
+          "name": "cpu-ctest",
+          "argv": [
+            "ctest",
+            "--test-dir",
+            "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+            "-R",
+            "^(boundary_plan|physical_constants|compensated_sum)$",
+            "--output-on-failure"
+          ],
+          "returncode": 0,
+          "log": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-ctest-execution-2.log",
+          "environment_overrides": {
+            "CCACHE_DIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache",
+            "CCACHE_TEMPDIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache/tmp"
+          },
+          "passed_percent": 100,
+          "failed_tests": 0,
+          "total_tests": 3
+        }
+      ],
+      "attempts": [
+        {
+          "status": "INCOMPLETE",
+          "checks": [
+            {
+              "name": "cpu-build",
+              "argv": [
+                "/usr/bin/python3",
+                "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+                "--min-available-mib",
+                "1536",
+                "--max-swap-growth-mib",
+                "256",
+                "--pressure-guard",
+                "--log",
+                "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-short-build.log",
+                "--",
+                "cmake",
+                "--build",
+                "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+                "--target",
+                "arch_boundary_plan",
+                "arch_physical_constants",
+                "arch_compensated_sum",
+                "--parallel",
+                "2"
+              ],
+              "returncode": 1,
+              "log": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-build-execution.log"
+            }
+          ]
+        },
+        {
+          "status": "PASS",
+          "checks": [
+            {
+              "name": "cpu-build",
+              "argv": [
+                "/usr/bin/python3",
+                "/home/shiroakane/ARCH/tools/run_memory_guarded.py",
+                "--min-available-mib",
+                "1536",
+                "--max-swap-growth-mib",
+                "256",
+                "--pressure-guard",
+                "--log",
+                "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-short-build-2.log",
+                "--",
+                "cmake",
+                "--build",
+                "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+                "--target",
+                "arch_boundary_plan",
+                "arch_physical_constants",
+                "arch_compensated_sum",
+                "--parallel",
+                "2"
+              ],
+              "returncode": 0,
+              "log": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-build-execution-2.log",
+              "environment_overrides": {
+                "CCACHE_DIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache",
+                "CCACHE_TEMPDIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache/tmp"
+              }
+            },
+            {
+              "name": "cpu-ctest",
+              "argv": [
+                "ctest",
+                "--test-dir",
+                "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu",
+                "-R",
+                "^(boundary_plan|physical_constants|compensated_sum)$",
+                "--output-on-failure"
+              ],
+              "returncode": 0,
+              "log": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/cpu-ctest-execution-2.log",
+              "environment_overrides": {
+                "CCACHE_DIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache",
+                "CCACHE_TEMPDIR": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/compiler-cache/tmp"
+              },
+              "passed_percent": 100,
+              "failed_tests": 0,
+              "total_tests": 3
+            }
+          ]
+        }
+      ],
+      "note": "The first attempt could not write the default ccache directory in the sandbox. Subsequent attempts use a local writable cache; compiler and linker flags are unchanged."
+    },
+    "reproduction_recipe_controls": {
+      "receipt": {
+        "path": "/home/shiroakane/ARCH/build/cmake-output-review-20260908/replay-output-review.json",
+        "sha256": "c706ffdbc397612fa51eb5b921758a5a08ac6c6a20a81939d73d9b2aded086c5"
+      },
+      "schema": 1,
+      "status": "PASS",
+      "recorded_utc": "2026-09-08T07:05:22.573990+00:00",
+      "script": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/local-build-reference-20260907/replay.py",
+        "bytes": 4294,
+        "sha256": "74f229376c4c0510f3db618e749a861c722a6d2cdf0c7bf3533c60d61de5bc4f"
+      },
+      "positive_controls": 2,
+      "negative_controls": 19,
+      "current_compile_database_routes_checked": 2,
+      "compiler_and_optimization_arguments_unchanged": true,
+      "nvcc_executed": false,
+      "scope": "AST-loaded pure argument redirection only; no compiler or subprocess invocation, no scratch files created."
+    },
+    "historical_evidence": {
+      "scientific_index": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/final-acceptance-20260907/release-73a9cf50/index-final-930/index.json",
+        "sha256": "2af13844b90959a57e4479fc269641cd87ce1b8c6ef2404f62f59c5f8f690b85"
+      },
+      "runtime_record": {
+        "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/runtime-review.json",
+        "sha256": "917930fe8db4862046bd407581b44d4b77477d6346ddc1b11b06f59f0ae3b388"
+      }
+    },
+    "historical_identity_policy": "The existing CMake-split, runtime and scientific records retain their original executed source identities. This field supplies the later display-only qualification, not replacement simulation measurements."
   }
 }

@@ -106,7 +106,21 @@ if(ARCH_ENABLE_KLU)
         # arch_build_contract -> KLU -> arch_build_contract and breaks exports.
         get_property(arch_saved_directory_links DIRECTORY PROPERTY LINK_LIBRARIES)
         set_property(DIRECTORY PROPERTY LINK_LIBRARIES "")
+
+        # Each SuiteSparse component prints the same configuration report.
+        # Limit only the default dependency chatter; retain notices, warnings
+        # and errors, and respect explicit user log levels or verbose builds.
+        # Keep FetchContent in this scope so its output variables remain visible.
+        set(arch_restore_dependency_log_level FALSE)
+        if(NOT ARCH_VERBOSE_BUILD AND NOT DEFINED CMAKE_MESSAGE_LOG_LEVEL)
+            set(CMAKE_MESSAGE_LOG_LEVEL NOTICE)
+            set(arch_restore_dependency_log_level TRUE)
+        endif()
         FetchContent_MakeAvailable(suitesparse)
+        if(arch_restore_dependency_log_level)
+            unset(CMAKE_MESSAGE_LOG_LEVEL)
+        endif()
+        unset(arch_restore_dependency_log_level)
         set_property(DIRECTORY PROPERTY LINK_LIBRARIES "${arch_saved_directory_links}")
         set(ARCH_KLU_TARGET SuiteSparse::KLU)
     endif()

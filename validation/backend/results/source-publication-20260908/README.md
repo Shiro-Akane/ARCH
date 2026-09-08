@@ -47,10 +47,23 @@ builds and checks pass. This is not another full NVCC build or runtime campaign.
 The source inventory records the new build-module identity while retaining the
 executed identities of the scientific, runtime and timing records.
 
+The configuration-output review in that same CMake record covers the quieter
+default dependency messages and the explicit verbose option. It separates
+first-configuration metadata differences from the settled CPU/CUDA build-graph
+comparison, and records the actual diagnostics controls and short host checks.
+This display-layer change does not alter compiler options or qualify a new
+scientific run. Repository delivery also includes the security policy,
+code-owner declaration and secret-scanner configuration; local scan payloads
+and private audit logs remain outside the source archive.
+
 Source delivery includes the capacity reviewer's allocation-lifetime and
 process-identity self-test scripts beside its recipe. These two small inputs
 are required by the acceptance index's `--self-test`; their inclusion does not
 add the surrounding raw diagnostics, profiler outputs or HDF5 data.
+The earlier local compile-concurrency reference also includes the small
+`replay.py` named in its reproduction command. Its output arguments are checked
+before redirecting compiler products into a temporary directory; no new heavy
+compile measurement is claimed by including the recipe.
 
 The archive manifest observes the current source and selected evidence directly.
 It must include the intentional interface, fixture and documentation changes;

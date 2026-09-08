@@ -86,6 +86,10 @@ CMake 会在配置时下载 HighFive。CPU 稀疏求解器 KLU 默认启用：�
 并准备构建目录，`cmake --build ...` 才开始编译。预设使用 Ninja 执行编译任务，
 不需要再运行 `make`。如果同名构建目录已配置过其他编译器或构建工具，请换一个空目录。
 
+配置时会保留 ARCH 的依赖摘要，并收起随源码构建的依赖库反复打印的参数。
+Debug 和 Release 都会保留警告与错误；需要完整配置或编译命令时，参见
+[构建输出](docs/guides/Build.zh-CN.md#构建输出)。
+
 ### 方案 A：使用 CPU
 
 ```bash
@@ -244,6 +248,9 @@ linear_solver = Auto
 复现与审阅使用，不是首次运行前必须完成的额外配置步骤。修改源码的开发者还应
 阅读[贡献者指南](docs/development/README.md)。
 
+发现疑似安全漏洞时，请先按[安全报告指南](SECURITY.zh-CN.md)联系维护者，不要直接公开
+漏洞细节。普通构建问题和数值差异可以提交到 [GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues)。
+
 ## 仓库结构
 
 [源码导览](src/README.md)按功能连接各实现模块。各模块 README 介绍职责与主要入口，
@@ -254,6 +261,12 @@ linear_solver = Auto
 ARCH/
 ├── README.md                 # 英文入口与首次运行，规范文本
 ├── README.zh-CN.md           # 中文辅助入口
+├── SECURITY.md               # 安全问题报告说明
+├── SECURITY.zh-CN.md         # 中文安全报告指南
+├── .gitleaks.toml            # 共用凭据扫描规则
+├── .github/                  # 仓库审阅归属与维护说明
+│   ├── CODEOWNERS            # 默认代码审阅负责人
+│   └── README.md             # 维护文件职责
 ├── LICENSE                   # ARCH 自有内容的 MIT 许可证
 ├── THIRD_PARTY_NOTICES.md    # 科学软件来源与第三方条款
 ├── LICENSES/                 # 保留的第三方许可证文本

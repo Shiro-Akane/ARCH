@@ -1,14 +1,14 @@
 {
   "schema": 1,
-  "scope": "Current compact source-delivery inventory; no new scientific qualification or publication action",
-  "recorded_utc": "2026-09-08T06:03:38.120604+00:00",
+  "scope": "Current source delivery with repository policy, configuration-output qualification and its required reproduction recipe; scientific observations retain their original identities.",
+  "recorded_utc": "2026-09-08T07:08:38.770009+00:00",
   "candidate_branch": "main",
-  "base_commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
+  "base_commit": "fd81ec457e00b996255fd323749cd0163fb69639",
   "previous_frozen_branch": "CUDA_complete_v1",
   "remote": "git@github.com:Shiro-Akane/ARCH.git",
   "publication_action": "none",
   "current_source": {
-    "commit": "b4b991ad44babb0c6d4742ea7e135f6200b41e94",
+    "commit": "fd81ec457e00b996255fd323749cd0163fb69639",
     "scope": "code-and-validation-inputs-v1",
     "scope_policy": {
       "directories": [
@@ -55,20 +55,13 @@
       ],
       "include_untracked_and_gitignored_source": true
     },
-    "worktree_sha256": "3bc8f1ce79ef787f398128962a4b72dcec2339a3a2fc397816576e999cfb228e",
+    "worktree_sha256": "73b6551547278551255a4278385ab6b6a6db27438a1f3cc2c1374b63d12151e0",
     "dirty": true,
     "modified_files": [
-      "CMakeLists.txt"
-    ],
-    "untracked_source_files": [
-      "cmake/Application.cmake",
       "cmake/BuildOptions.cmake",
-      "cmake/CudaBackend.cmake",
-      "cmake/CustomNetworks.cmake",
-      "cmake/Dependencies.cmake",
-      "cmake/tests/CudaTests.cmake",
-      "cmake/tests/HostTests.cmake"
-    ]
+      "cmake/Dependencies.cmake"
+    ],
+    "untracked_source_files": []
   },
   "current_evidence_roots": [
     {
@@ -85,14 +78,14 @@
     },
     {
       "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
-      "sha256": "837d636d5315b04c57d51e28772c52bad0d6c181c34709c8bc1041a98c1c8247"
+      "sha256": "ecb7f3296cdbd9bc4a6252dcd9013aafc3a0ff77da29555f922c11bb80417597"
     }
   ],
   "evidence_selection": {
     "method": "Retain current compact scientific selection; add visible maintained source/docs and verified current maintenance artifacts.",
     "raw_data": "HDF5, compiled binaries, build caches, profiler databases and unreviewed large files are excluded.",
     "result_retention_record": "validation/backend/results/maintenance-freeze-20260908/freeze-review.json",
-    "selected_files": 4172,
+    "selected_files": 4178,
     "current_maintenance_patterns": [
       "*.json",
       "*.md",
@@ -120,15 +113,30 @@
     ],
     "maintenance_replacement_receipt": null,
     "explicit_large_files": [],
-    "previous_manifest_sha256": "7a2833e42cbe86a5fbb0971d0b6cf626ff8404568089efbe4f61d4094b05ee5c",
+    "previous_manifest_sha256": "6af46b5362de6260bfa17cc41cec7f3edc6d6bc31d710e5544136adb1022545b",
     "reviewer_self_test_inputs": [
       "validation/backend/results/device-memory-first-law-20260907/test_allocation_lifetimes.py",
       "validation/backend/results/device-memory-first-law-20260907/test_process_identity.py"
     ],
     "cmake_only_review": {
       "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
-      "sha256": "837d636d5315b04c57d51e28772c52bad0d6c181c34709c8bc1041a98c1c8247"
-    }
+      "sha256": "ecb7f3296cdbd9bc4a6252dcd9013aafc3a0ff77da29555f922c11bb80417597"
+    },
+    "configuration_output_review": {
+      "path": "/home/shiroakane/ARCH/validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
+      "sha256": "ecb7f3296cdbd9bc4a6252dcd9013aafc3a0ff77da29555f922c11bb80417597",
+      "field": "configure_output_review"
+    },
+    "explicit_repository_policy_files": [
+      ".github/CODEOWNERS",
+      ".github/README.md",
+      ".gitleaks.toml",
+      "SECURITY.md",
+      "SECURITY.zh-CN.md"
+    ],
+    "required_reproduction_recipes": [
+      "validation/backend/results/local-build-reference-20260907/replay.py"
+    ]
   },
   "archive_copies": [
     {
@@ -156,9 +164,24 @@
       "sha256": "7b46223a760ac33946b5a4ded9935e1bb2b4f5f8d3fe4bb47e840257ef79382a"
     },
     {
+      "path": ".github/CODEOWNERS",
+      "bytes": 83,
+      "sha256": "12868aa40f68be4968a1f7b5be6eea4c1ea369305c3ce04823452c7261a4c685"
+    },
+    {
+      "path": ".github/README.md",
+      "bytes": 847,
+      "sha256": "ae88f76a49f2276cbfdd1b8094e7cbd5cd5749469f021c279466abeb931b7194"
+    },
+    {
       "path": ".gitignore",
-      "bytes": 403,
-      "sha256": "9009188cab8a0bbc047bd8cbff4c2ac0825ea56345c62328106507d6411d7b01"
+      "bytes": 787,
+      "sha256": "0b0fc96589a511e9f2cb785f9c1678bfe3af59d0c284ccd812a0291c2d93a424"
+    },
+    {
+      "path": ".gitleaks.toml",
+      "bytes": 200,
+      "sha256": "cd485b21604877f842f7a3f7da8b37f5b2b766b895dc84ace04497cc09484738"
     },
     {
       "path": "CMakeLists.txt",
@@ -222,13 +245,23 @@
     },
     {
       "path": "README.md",
-      "bytes": 22913,
-      "sha256": "224dc4ad1c2f767448090123e33174f0cf4a48e10be1d882edd372ec72e58dcf"
+      "bytes": 23865,
+      "sha256": "553ab05079d205f2f7b10b8f6ebfdfaa953b7d6d35a8c7dad790b714b25b5ced"
     },
     {
       "path": "README.zh-CN.md",
-      "bytes": 21303,
-      "sha256": "01ae94b5ca3bfcfc6c0369ada2860b68db3100dc5207a5a43c368a2af4cadbcf"
+      "bytes": 22191,
+      "sha256": "3722b437682fbc9e8e4cd548ee0121b8a6cf9ffd5b75e6fae1ec50a09d1290ed"
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 1016,
+      "sha256": "1c83c26c7ee84faf3b4cef9f35cdbf9b7f51079ff60d49e7cc6a93448f10eb10"
+    },
+    {
+      "path": "SECURITY.zh-CN.md",
+      "bytes": 929,
+      "sha256": "7d4862a142ae8efe65239d74efd13d7749725d1456ec24fa3a17e33255ea82dd"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -247,8 +280,8 @@
     },
     {
       "path": "cmake/BuildOptions.cmake",
-      "bytes": 4990,
-      "sha256": "fd9d5f1ac92d1ef77f4ddd1d55eed5e99ca57bf514ae8ff96c4026b11d09be2b"
+      "bytes": 5010,
+      "sha256": "2e1be0be502920e06c0d95683e1ed6bc001acf6eb576f2a14b9230f47b367bc6"
     },
     {
       "path": "cmake/CudaBackend.cmake",
@@ -287,8 +320,8 @@
     },
     {
       "path": "cmake/Dependencies.cmake",
-      "bytes": 5687,
-      "sha256": "eca2b4c5dc0cc005101d6166094774462167cd9cab54827abb350fbb1911fd2e"
+      "bytes": 6403,
+      "sha256": "d3209d23f55bbd806469135b7b98eb234aef1e627415b264d5ffa3dca968ae35"
     },
     {
       "path": "cmake/FindCuDSS.cmake",
@@ -297,8 +330,8 @@
     },
     {
       "path": "cmake/README.md",
-      "bytes": 3478,
-      "sha256": "e5053e3bedf0a52ab45067f81131757e984c952eb966e32f7e5ee5300cd65e4a"
+      "bytes": 3905,
+      "sha256": "73221832e54f9bee772698575fac91273824b9f670f5f192a73866d9d53a2ead"
     },
     {
       "path": "cmake/SelectIpoLinker.cmake",
@@ -397,18 +430,18 @@
     },
     {
       "path": "docs/development/README.md",
-      "bytes": 3576,
-      "sha256": "2fa9c23daa50140b79df0d0e317bb2cdfdc4b59994abd87e904179a6222f0734"
+      "bytes": 5465,
+      "sha256": "befe1f448a71de55f7c82c88057e69be991f51e4dc0ab8bb417cb4321f988512"
     },
     {
       "path": "docs/guides/Build.md",
-      "bytes": 11641,
-      "sha256": "3b31c21e77d5881fdd21bfa160cdb51b8ca78a76d9f8996d5ebd01c632256064"
+      "bytes": 12611,
+      "sha256": "9c83391f8509fed1ef7ac101228be323885249fdb07fc16db46c28b5a83d1ac5"
     },
     {
       "path": "docs/guides/Build.zh-CN.md",
-      "bytes": 11249,
-      "sha256": "3ef068eca735427f1c8f739d851964316faf2d3184773cc3ca8535fd4228211d"
+      "bytes": 12146,
+      "sha256": "b3f3e3059fe5d12bc92cd6b6aaaf2f1b644ef8003ca8ec15a3b9e97bbb7c2259"
     },
     {
       "path": "docs/guides/README.md",
@@ -12377,8 +12410,13 @@
     },
     {
       "path": "validation/backend/results/local-build-reference-20260907/README.md",
-      "bytes": 3267,
-      "sha256": "74729b9233393c416d2874ee5af8c9ec96b03b4bdf6ec08fdce1d8eeb323e425"
+      "bytes": 3481,
+      "sha256": "527f184e03b8a06f32512d2cc6b143896ea9c5d31d5a7af08405507da558a80a"
+    },
+    {
+      "path": "validation/backend/results/local-build-reference-20260907/replay.py",
+      "bytes": 4294,
+      "sha256": "74f229376c4c0510f3db618e749a861c722a6d2cdf0c7bf3533c60d61de5bc4f"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/README.md",
@@ -12407,8 +12445,8 @@
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/cmake-review.json",
-      "bytes": 54024,
-      "sha256": "837d636d5315b04c57d51e28772c52bad0d6c181c34709c8bc1041a98c1c8247"
+      "bytes": 141203,
+      "sha256": "ecb7f3296cdbd9bc4a6252dcd9013aafc3a0ff77da29555f922c11bb80417597"
     },
     {
       "path": "validation/backend/results/maintenance-freeze-20260908/document-baseline.json",
@@ -12737,8 +12775,8 @@
     },
     {
       "path": "validation/backend/results/source-publication-20260908/README.md",
-      "bytes": 4889,
-      "sha256": "e1d84eb0ec6b1e6f2f8fe85f331986e4c432acbf51ce0104716cbc0089768036"
+      "bytes": 5766,
+      "sha256": "1ea904bc4520e31777614dbcf33e4d3e75c7e964ecb9cea1aa4e2923e81cdb4a"
     },
     {
       "path": "validation/backend/results/source-publication-20260908/archives/baseline-reviewed-documents.tar.gz",

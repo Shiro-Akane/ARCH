@@ -22,6 +22,13 @@ dependency module then attaches the required libraries, and the top-level file
 calls `arch_register_io_regression_tests()` once HDF5 and KLU are known. Keeping
 this order also keeps production-only builds free of test targets.
 
+The dependency module temporarily reduces SuiteSparse's repeated status output
+only when no explicit log level or verbose build was requested. It restores
+the log level before ARCH's own summary, leaves notices and diagnostics visible,
+and keeps FetchContent in the caller's scope. The
+[build-output guide](../docs/guides/Build.md#build-output) describes how to request
+full logs without changing compiler or linker settings.
+
 ## CUDA helpers
 
 - [CudaBurnNetworks.cmake](CudaBurnNetworks.cmake): one compilation inventory

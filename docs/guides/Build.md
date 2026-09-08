@@ -46,6 +46,23 @@ build directory's absolute `bin/` path. Without that option, the project writes
 executables to `bin/` in the source tree. Append `-DNAME=value` to a configuration
 command to override a preset option, such as a compiler or CUDA architecture.
 
+## Build output
+
+Configuration normally shows ARCH's selected backend, optimization settings
+and dependency results. When KLU is built from SuiteSparse sources, repeated
+per-library status reports are hidden by default. Notices, warnings and errors
+remain visible, and the log level is restored before ARCH reports the KLU
+result. Installed-library discovery is unchanged.
+
+Debug controls how the program is compiled, not how much configuration text is
+printed. To inspect the complete dependency configuration, append
+`--log-level=VERBOSE` to the configuration command. An explicit
+`CMAKE_MESSAGE_LOG_LEVEL` is also respected. `ARCH_VERBOSE_BUILD=ON` restores
+the default dependency reports and enables full commands for Makefile builds.
+With any generator, use `cmake --build <build-directory> --verbose` when you
+need the actual compiler and linker commands. These output choices do not
+change optimization, floating-point settings, linked libraries or parallelism.
+
 ## Tools and dependencies
 
 Install Ninja for the commands in this guide. CPU builds need a C++20 compiler,

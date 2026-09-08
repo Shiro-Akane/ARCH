@@ -92,6 +92,11 @@ settings; `cmake --build ...` compiles the program. The presets use Ninja, so no
 separate `make` command is needed. Use a fresh directory if one with the same
 name was configured with a different compiler or build tool.
 
+Configuration keeps ARCH's dependency summary while reducing repeated reports
+from bundled libraries. Warnings and errors remain visible in both Debug and
+Release builds. See [build output](docs/guides/Build.md#build-output) when you
+need the full configuration or compiler commands.
+
 ### Option A: CPU
 
 ```bash
@@ -280,6 +285,10 @@ records are intended for reproduction and review; they are not extra setup
 steps for a first simulation. Developers changing the code should also read
 the [contributor guide](docs/development/README.md).
 
+For suspected security vulnerabilities, follow the [security reporting guide](SECURITY.md)
+before sharing details publicly. Ordinary build and numerical issues can use
+[GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues).
+
 ## Repository map
 
 The [source guide](src/README.md) links each implementation module. Local README
@@ -292,6 +301,12 @@ application, optional backend and test groups.
 ARCH/
 ├── README.md                 # Entry point and first run
 ├── README.zh-CN.md           # Chinese guide
+├── SECURITY.md               # Security reporting instructions
+├── SECURITY.zh-CN.md         # Chinese security reporting guide
+├── .gitleaks.toml            # Shared secret-scanning policy
+├── .github/                  # Repository review ownership and maintenance notes
+│   ├── CODEOWNERS            # Default code-review owner
+│   └── README.md             # Maintenance-file responsibilities
 ├── LICENSE                   # MIT license for ARCH-authored material
 ├── THIRD_PARTY_NOTICES.md    # Scientific-source provenance and terms
 ├── LICENSES/                 # Retained third-party license texts

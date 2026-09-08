@@ -65,7 +65,7 @@ if(ipo_supported)
 endif()
 
 option(ARCH_ENABLE_OPENMP "Enable OpenMP parallelization" ON)
-option(ARCH_VERBOSE_BUILD "Print every compiler and linker command" OFF)
+option(ARCH_VERBOSE_BUILD "Show dependency configuration and verbose Makefile commands" OFF)
 option(ARCH_ENABLE_KLU "Enable SuiteSparse KLU for large reaction networks" ON)
 option(ARCH_FETCH_SUITESPARSE "Fetch pinned SuiteSparse when KLU is not installed" ON)
 set(ARCH_CUSTOM_NETWORKS "" CACHE STRING "Semicolon-separated custom network IDs to compile; empty selects all")

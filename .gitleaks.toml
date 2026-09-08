@@ -1,0 +1,6 @@
+# Use the scanner's standard secret-detection rules without project-wide
+# exclusions or a baseline that silently hides historical findings.
+title = "ARCH secret scanning"
+
+[extend]
+useDefault = true
