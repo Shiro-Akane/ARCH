@@ -1,0 +1,2 @@
+translation_unit,peak_rss_kib,peak_rss_mib,measurement,elapsed_seconds,exit_code,session_id,process_group
+/home/shiroakane/ARCH/tests/cuda/test_cuda_single_level_validation.cpp,304644,297.504,gnu_time_command_maxrss,2.42,0,,

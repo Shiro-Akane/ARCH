@@ -1,0 +1,21 @@
+NSE application PASS: aprox13_be_nr_nse_False
+NSE application PASS: aprox13_be_nr_nse_True
+NSE application PASS: aprox13_bd_nse_True
+NSE application PASS: aprox13_ros4_nse_True
+NSE application PASS: aprox19_be_nr_nse_False
+NSE application PASS: aprox19_be_nr_nse_True
+NSE application PASS: aprox19_bd_nse_True
+NSE application PASS: aprox19_ros4_nse_True
+NSE application PASS: aprox21_be_nr_nse_False
+Traceback (most recent call last):
+  File "/home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/replay.py", line 114, in <module>
+    main()
+  File "/home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/replay.py", line 68, in main
+    record = runtime.run_case(arch, validator, ROOT, case, output / 'runs')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/shiroakane/ARCH/tools/validate_backend_results.py", line 1052, in run_case
+    raise RuntimeError(
+RuntimeError: aprox21_be_nr_nse_True scientific first mismatch: {'field': 'checkpoint', 'reason': 'checkpoint validation failed: checkpoint first mismatch field=enuc_rate index=0 reference=-9.09323e+20 candidate=-8.03235e+20 abs=1.06088e+20 rel=0.116667 normalized_to_field_peak=0.116667'}
+MEMORY_GUARD_RESULT min_available_kib=6365192 baseline_swap_kib=149380 peak_swap_kib=149380 guard_stopped=False peak_owned_rss_kib=383720 elapsed_seconds=40.352 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0 total_mib=8192 baseline_used_mib=2594 peak_used_mib=5705 min_free_mib=2320 samples=40 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.059 peak_swap_in_mib_s=0.007 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=39 complete=True

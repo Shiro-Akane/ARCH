@@ -1,11 +1,16 @@
-"""Fast storage-adapter regressions; no pynucastro, CUDA, or compiler needed.
+"""Fast storage-adapter regressions without pynucastro or CUDA.
 
 Fixtures model the recognized SimpleCxx header contract. These check conversion
 and metadata identity, not scientific accuracy of a generated reaction network.
+The registry consistency witness additionally uses CMake and a C++ compiler.
 """
 
 from pathlib import Path
+import copy
+import json
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 from fractions import Fraction
@@ -20,6 +25,243 @@ import PortableAdapter
 import PortableCxx
 import WeakTables
 import WeakStorage
+import NseMetadata
+
+
+class GeneratedNseContract(unittest.TestCase):
+    """Independent algebraic witnesses for the generation eligibility gate."""
+
+    @staticmethod
+    def nucleus(name, a, z):
+        return SimpleNamespace(short_spec_name=name, A=a, Z=z, mass=a * 930.0,
+                               A_nuc=a * 0.999, nucbind=7.0, spin_states=1,
+                               spin_reliable=True, partition_function=None)
+
+    class Rate:
+        def __init__(self, reactants, products):
+            self.reactants, self.products = reactants, products
+            self.weak = False
+            self.stoichiometry = None
+            self.fname = '_'.join(n.short_spec_name for n in reactants + products)
+            self.expression = 'sample_forward_rate'
+
+        def function_string_cxx(self):
+            return self.expression
+
+    class Derived(Rate):
+        def __init__(self, source):
+            super().__init__(source.products, source.reactants)
+            self.source_rate = source
+            self.underlying_rate = source
+            self.use_pf = False
+
+    @staticmethod
+    def constants():
+        return SimpleNamespace(N_A=6.02214076e23, k=1.380649e-16,
+                               k_MeV=8.61733326214518e-11, h=6.62607015e-27,
+                               hbar=1.0545718176461565e-27,
+                               m_u_C18=1.6605390666e-24, MeV2erg=1.602176634e-6)
+
+    def alpha_network(self):
+        he = self.nucleus('he4', 4, 2)
+        carbon = self.nucleus('c12', 12, 6)
+        oxygen = self.nucleus('o16', 16, 8)
+        forward = [self.Rate([he, he, he], [carbon]), self.Rate([he, carbon], [oxygen])]
+        return SimpleNamespace(unique_nuclei=[he, carbon, oxygen], do_screening=False,
+                               rates=forward + [self.Derived(rate) for rate in forward])
+
+    def inspect(self, network):
+        return NseMetadata.inspect_network(network, network.unique_nuclei,
+                                           constants=self.constants(), derived_rate_type=self.Derived,
+                                           forward_rate_type=self.Rate)
+
+    def test_alpha_constraint_rank_is_one_not_two(self):
+        metadata = self.inspect(self.alpha_network())
+        self.assertTrue(metadata['eligible'], metadata['reasons'])
+        self.assertEqual(metadata['constraint_rank'], 1)
+        self.assertEqual(metadata['strong_stoichiometric_rank'], 2)
+
+    def test_full_charge_and_baryon_rank(self):
+        neutron, proton, deuteron = [self.nucleus(*args) for args in
+                                     [('n', 1, 0), ('p', 1, 1), ('d', 2, 1)]]
+        rate = self.Rate([neutron, proton], [deuteron])
+        network = SimpleNamespace(unique_nuclei=[neutron, proton, deuteron],
+                                  do_screening=False, rates=[rate, self.Derived(rate)])
+        metadata = self.inspect(network)
+        self.assertTrue(metadata['eligible'], metadata['reasons'])
+        self.assertEqual((metadata['constraint_rank'], metadata['strong_stoichiometric_rank']), (2, 1))
+
+    def test_extra_invariant_rejected_even_with_paired_rates(self):
+        network = self.alpha_network()
+        network.unique_nuclei.append(self.nucleus('ne20', 20, 10))
+        self.assertIn('extra_conserved_quantities', self.inspect(network)['reasons'])
+
+    def test_connected_reaction_graph_can_still_have_an_extra_invariant(self):
+        network = self.alpha_network()
+        # He4 + C12 <-> O16 touches every species but leaves two conserved
+        # quantities, while their A/Z span contains only one constraint.
+        network.rates = [network.rates[1], network.rates[3]]
+        metadata = self.inspect(network)
+        self.assertEqual(metadata['strong_stoichiometric_rank'], 1)
+        self.assertIn('extra_conserved_quantities', metadata['reasons'])
+
+    def test_each_unsupported_physical_contract_has_a_reason(self):
+        changes = [
+            ('screening_model_not_supported', lambda n: setattr(n, 'do_screening', True)),
+            ('weak_rates_present', lambda n: setattr(n.rates[0], 'weak', True)),
+            ('partition_excitation_eos_not_supported', lambda n: setattr(n.rates[2], 'use_pf', True)),
+            ('missing_nuclear_data', lambda n: setattr(n.unique_nuclei[0], 'spin_states', None)),
+            ('unreliable_spin_data', lambda n: setattr(n.unique_nuclei[0], 'spin_reliable', False)),
+            ('modified_stoichiometry_not_supported', lambda n: setattr(n.rates[0], 'stoichiometry', {})),
+            ('rates_not_certified_detailed_balance', lambda n: n.rates.pop()),
+        ]
+        for reason, change in changes:
+            with self.subTest(reason=reason):
+                network = self.alpha_network()
+                change(network)
+                metadata = self.inspect(network)
+                self.assertFalse(metadata['eligible'])
+                self.assertIn(reason, metadata['reasons'])
+
+    def test_rate_subclasses_cannot_claim_the_upstream_detailed_balance_contract(self):
+        class ChangedInverse(self.Derived):
+            def function_string_cxx(self):
+                return 'independent_inverse_mathematics'
+
+        network = self.alpha_network()
+        network.rates[2] = ChangedInverse(network.rates[0])
+        self.assertIn('unrecognized_detailed_balance_rate_type', self.inspect(network)['reasons'])
+
+        class ChangedForward(self.Rate):
+            pass
+
+        network = self.alpha_network()
+        source = ChangedForward(network.rates[0].reactants, network.rates[0].products)
+        network.rates[0], network.rates[2] = source, self.Derived(source)
+        self.assertIn('unrecognized_forward_rate_type', self.inspect(network)['reasons'])
+
+    def test_upstream_copied_rates_match_by_expression_not_only_name(self):
+        network = self.alpha_network()
+        network.rates[0] = copy.deepcopy(network.rates[0])
+        self.assertTrue(self.inspect(network)['eligible'])
+        network.rates[0].expression = 'different_physics_with_the_same_name'
+        self.assertIn('detailed_balance_source_missing', self.inspect(network)['reasons'])
+
+    def test_partition_provenance_is_retained_without_enabling_excitation(self):
+        network = self.alpha_network()
+        network.unique_nuclei[1].partition_function = SimpleNamespace(
+            T9_points=[1.0, 2.0], log_pf_data=[0.0, 0.25])
+        metadata = self.inspect(network)
+        self.assertTrue(metadata['eligible'])  # Explicit use_pf=False rate policy.
+        self.assertEqual(metadata['species'][1]['partition_data']['log_partition'], [0.0, 0.25])
+        header = NseMetadata.cpp_interface(metadata)
+        self.assertIn('nse_log_partition(int, double) { return 0.0; }', header)
+        self.assertIn('NSE_K_BOLTZMANN_MEV', header)
+        self.assertNotIn('ENERGY_WEIGHTS', header)
+
+    def test_exact_rank_does_not_confuse_near_dependence_with_a_new_invariant(self):
+        large = 10**18
+        self.assertEqual(NseMetadata.exact_rank([[large, large + 1], [large - 1, large]]), 2)
+        self.assertEqual(NseMetadata.exact_rank([[4, 12, 16], [2, 6, 8]]), 1)
+
+    @unittest.skipUnless(shutil.which('cmake') and shutil.which('c++'),
+                         'CMake and a C++ compiler are needed for registry-contract controls')
+    def test_registry_preserves_old_packages_and_checks_new_nse_data(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            project = Path(temporary)
+            package = project / 'packages' / 'sample'
+            package.mkdir(parents=True)
+            class_header = ('#pragma once\nstruct NetSample {\n'
+                            'static constexpr int NUM_SPECIES=3, ODE_NEQ=4;\n'
+                            'static constexpr int NSE_DATA_VERSION=1, NSE_CONSTRAINT_RANK=1;\n'
+                            'static constexpr bool SUPPORTS_NSE=true;\n};\n')
+            (package / 'Net.h').write_text(class_header)
+            (package / 'Net.cpp').write_text('#include "Net.h"\n')
+            (package / 'network.cmake').write_text(
+                'set(ARCH_CUSTOM_NETWORK_ID sample)\nset(ARCH_CUSTOM_NETWORK_TYPE NetSample)\n'
+                'set(ARCH_CUSTOM_NETWORK_HEADER "${CMAKE_CURRENT_LIST_DIR}/Net.h")\n'
+                'set(ARCH_CUSTOM_NETWORK_SOURCE "${CMAKE_CURRENT_LIST_DIR}/Net.cpp")\n')
+            (project / 'CMakeLists.txt').write_text(
+                'cmake_minimum_required(VERSION 3.20)\nproject(NseRegistry NONE)\n'
+                'set(ARCH_CUSTOM_NETWORK_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/packages")\n'
+                f'include("{ROOT / "cmake/CustomNetworks.cmake"}")\n')
+            metadata = self.inspect(self.alpha_network())
+            manifest = {'schema_version': 1, 'generator_version': 5, 'network_id': 'sample',
+                        'species_count': 3, 'species': ['he4', 'c12', 'o16'],
+                        'auxiliary_equations': 0, 'device_callable_math': True,
+                        'supports_nse': True, 'nse': metadata}
+
+            def configure():
+                (package / 'manifest.json').write_text(json.dumps(manifest))
+                return subprocess.run(['cmake', '-S', str(project), '-B', str(project / 'build')],
+                                      capture_output=True, text=True, check=False)
+
+            result = configure()
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            registry = (project / 'build/generated/CustomNetworkRegistry.generated.h').read_text()
+            self.assertIn('M(Custom_sample, true, "eligible_ground_state_detailed_balance")', registry)
+            types = (project / 'build/generated/CustomNetworks.generated.h').read_text()
+            self.assertLess(types.index('#include "' + str(package)), types.index('::NSE_DATA_VERSION'))
+            command = ['c++', '-std=c++20', '-x', 'c++', '-fsyntax-only',
+                       str(project / 'build/generated/CustomNetworks.generated.h')]
+            self.assertEqual(subprocess.run(command, capture_output=True).returncode, 0)
+            (package / 'Net.h').write_text(class_header.replace('SUPPORTS_NSE=true', 'SUPPORTS_NSE=false'))
+            mismatch = subprocess.run(command, capture_output=True, text=True)
+            self.assertNotEqual(mismatch.returncode, 0)
+            self.assertIn('Network NSE eligibility mismatch', mismatch.stderr)
+            (package / 'Net.h').write_text(class_header)
+            baseline = copy.deepcopy(manifest)
+            for path, value in [
+                (('supports_nse',), False),
+                (('supports_nse',), 'true'),
+                (('nse', 'schema_version'), 2),
+                (('nse', 'schema_version'), '1'),
+                (('nse', 'eligible'), 'true'),
+                (('nse', 'reason'), 'unsafe"reason'),
+                (('nse', 'constraint_rank'), 2),
+                (('nse', 'strong_stoichiometric_rank'), 1),
+                (('nse', 'species_count'), 4),
+                (('nse', 'reasons'), ['missing_nuclear_data']),
+                (('nse', 'missing_species'), ['he4']),
+                (('nse', 'partition_policy'), 'temperature_dependent'),
+                (('nse', 'screening_policy'), 'screened'),
+                (('nse', 'weak_policy'), 'weak'),
+                (('nse', 'mass_convention'), 'another_mass_convention'),
+                (('nse', 'energy_reference'), 'another_energy_reference'),
+                (('nse', 'constants', 'NSE_ATOMIC_MASS_UNIT'), 0),
+                (('nse', 'constants', 'NSE_HBAR'), None),
+                (('nse', 'species', 0, 'name'), 'c12'),
+                (('nse', 'species', 0, 'spin_weight'), 0),
+                (('nse', 'species', 0, 'spin_reliable'), False),
+                (('nse', 'species', 0, 'spin_reliable'), 'true'),
+                (('nse', 'species', 0, 'mass_amu'), -1),
+                (('nse', 'species', 0, 'binding_mev'), None),
+                (('nse', 'species', 0, 'A'), 4.5),
+                (('nse', 'species', 0, 'Z'), -1),
+                (('nse', 'species', 0, 'Z'), 5),
+            ]:
+                with self.subTest(path=path):
+                    manifest = copy.deepcopy(baseline)
+                    target = manifest
+                    for member in path[:-1]:
+                        target = target[member]
+                    target[path[-1]] = value
+                    self.assertNotEqual(configure().returncode, 0)
+            manifest = copy.deepcopy(baseline)
+            del manifest['nse']['mass_convention']
+            self.assertNotEqual(configure().returncode, 0)
+            manifest = copy.deepcopy(baseline)
+            manifest['supports_nse'] = False
+            manifest['nse']['eligible'] = False
+            manifest['nse']['reason'] = 'weak_rates_present'
+            self.assertEqual(configure().returncode, 0)
+            for version in (3, 4):
+                manifest['generator_version'] = version
+                manifest.pop('nse', None)
+                result = configure()
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                registry = (project / 'build/generated/CustomNetworkRegistry.generated.h').read_text()
+                self.assertIn('M(Custom_sample, false, "missing_nse_metadata")', registry)
 
 
 class WeakStorageContract(unittest.TestCase):

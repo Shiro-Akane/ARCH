@@ -1,0 +1,46 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Found ccache: /usr/bin/ccache
+-- [OPT] Build Type: Release
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using mold linker; combined C/C++ optimized LTO link passed
+-- [DEP] OpenMP enabled for target ARCH
+-- [DEP] HDF5 C++ libraries linked successfully
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU enabled for sparse reaction networks
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/shiroakane/ARCH/build-ci/cpu/bin/ARCH
+-- [SUCCESS] Data Output: /home/shiroakane/ARCH/output/
+-- ===================================================================
+-- Configuring done (3.8s)
+-- Generating done (0.1s)
+-- Build files have been written to: /home/shiroakane/ARCH/build-ci/cpu
+[0/2] Re-checking globbed directories...
+[1/21] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o
+[2/21] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o
+[3/21] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o
+[4/21] Building CXX object CMakeFiles/ARCH.dir/src/core/ProblemHelper.cpp.o
+[5/21] Building CXX object CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o
+[6/21] Building CXX object CMakeFiles/arch_checkpoint_compatibility.dir/src/physics/eos/eosdispatch.cpp.o
+[7/21] Linking CXX executable arch_checkpoint_compatibility
+[8/21] Building CXX object CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o
+[9/21] Linking CXX static library libarch_solver_dispatch.a
+[10/21] Building CXX object CMakeFiles/tabular_eos_regression.dir/tests/host/TabularEOSRegression.cpp.o
+[11/21] Linking CXX executable arch_runtime_probe_capabilities
+[12/21] Building CXX object CMakeFiles/tabular_eos_regression.dir/src/physics/eos/eosdispatch.cpp.o
+[13/21] Linking CXX executable tabular_eos_regression
+[14/21] Building CXX object CMakeFiles/arch_native_tabular.dir/src/physics/eos/eosdispatch.cpp.o
+[15/21] Linking CXX executable bin/ARCH
+[16/21] Linking CXX executable arch_native_tabular
+[17/21] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/eosdispatch.cpp.o
+[18/21] Building CXX object CMakeFiles/arch_baryon_eos.dir/src/physics/eos/eosdispatch.cpp.o
+[19/21] Linking CXX executable arch_baryon_eos
+[20/21] Building CXX object CMakeFiles/arch_tabular_completion.dir/tests/host/TabularCompletionRegression.cpp.o
+[21/21] Linking CXX executable arch_tabular_completion
+MEMORY_GUARD_RESULT min_available_kib=3231700 baseline_swap_kib=1548 peak_swap_kib=1548 guard_stopped=False peak_owned_rss_kib=1547244 elapsed_seconds=47.349 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.508 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=48 complete=True

@@ -180,9 +180,12 @@ void print_amr_resolution_summary(const SimConfig& config)
 
 void DispatchSolver(const std::string &solver_name,
                     ProblemGenerator &problem,
-                    const SimConfig &config,
+                    const SimConfig &requested_config,
                     const SpeciesManager &specs)
 {
+    // Own the effective configuration for the complete driver lifetime. Auto
+    // selection must reach CPU and device views, initialisation and restart IO.
+    SimConfig config = requested_config;
     std::cout << "[Dispatch] Initializing System..." << std::endl;
 
     using namespace arch::dispatch;
@@ -199,6 +202,29 @@ void DispatchSolver(const std::string &solver_name,
         }, specs.count());
     if (!parsed_plan.ok)
         throw std::runtime_error(std::string(parsed_plan.error));
+    if (parsed_plan.value.eos == EosId::Tabular3D
+        || parsed_plan.value.eos == EosId::Tabular4D) {
+        const auto source = inspect_tabular_source(
+            EOSDispatcher::table_path(config, "Tabular"));
+        EOSDispatcher::validate_coupling(
+            config, source, parsed_plan.value.flux == FluxId::Sw);
+    }
+    resolve_nse_request(config.physics.burn, parsed_plan.value.network);
+    if (config.physics.burn.nse_auto && config.physics.burn.use_burn) {
+        std::cout << "[Dispatch] use_nse=auto resolved to "
+                  << (config.physics.burn.use_nse ? "enabled" : "disabled")
+                  << " (" << network_nse_reason(parsed_plan.value.network) << ")"
+                  << "; thresholds T>" << config.physics.burn.nseTempThreshold
+                  << " K, rho>" << config.physics.burn.nseDensThreshold
+                  << " g/cm^3." << std::endl;
+    }
+    if (config.physics.burn.use_burn && config.physics.burn.use_nse
+        && !network_supports_nse(parsed_plan.value.network)) {
+        throw std::invalid_argument(
+            "use_nse=true requires an NSE-capable network: "
+            + std::string(network_nse_reason(parsed_plan.value.network))
+            + ". Select use_nse=auto or false to retain ordinary ODE burning.");
+    }
     const auto cpu_candidate = materialize_execution_plan(
         parsed_plan.value, ComputeBackend::Cpu, specs.count());
     const auto cuda_candidate = materialize_execution_plan(

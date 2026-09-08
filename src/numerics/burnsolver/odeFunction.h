@@ -11,6 +11,7 @@
 #include "../../core/ArchPortability.h"
 #include "../../core/CompensatedSum.h"
 #include "../../data/GlobalDefs.h"
+#include "../../physics/network/NuclearEnergy.h"
 #include "../../physics/nse/nse_solver.h"
 #include "OdeContinuation.h"
 #include "BurnThermodynamics.h"
@@ -90,32 +91,10 @@ namespace OdeMath
         }
     }
 
-    // Composition-derived nuclear energy only. Nonconservative sources such
-    // as escaping-neutrino losses require their own time-integrated term;
-    // they cannot be inferred from a change of isotope masses.
-    template <class Network, class Increment>
-    ARCH_INLINE double composition_increment_energy(const Increment& increment)
-    {
-        arch::math::CompensatedSum nuclear_mass_delta;
-        for (int i = 0; i < Network::NUM_SPECIES; ++i) {
-            const double molar_delta = increment[i] / Network::aion(i);
-            nuclear_mass_delta.add_product(molar_delta, Network::energy_weight(i));
-        }
-        return Network::ENERGY_CONVERSION * nuclear_mass_delta.value();
-    }
-
-    struct StateDifference
-    {
-        const double* after;
-        const double* before;
-        ARCH_INLINE double operator[](int i) const { return after[i] - before[i]; }
-    };
-
-    template <class Network>
-    ARCH_INLINE double integrated_composition_energy(const double* after, const double* before)
-    {
-        return composition_increment_energy<Network>(StateDifference{after, before});
-    }
+    // ODE increments and generated-network NSE use the same mass authority.
+    using arch::network_energy::composition_increment_energy;
+    using arch::network_energy::StateDifference;
+    using arch::network_energy::integrated_composition_energy;
 
     template <class Network, class Increment>
     ARCH_INLINE double integrated_burn_increment_energy(const Increment& increment)
@@ -383,6 +362,7 @@ namespace OdeMath
                              const BurnConfigView& burn_cfg,
                              double& dt_rec, double* accepted_energy = nullptr)
     {
+        check_burn_state_layout<NetType>();
         // Network dimensions are compile-time properties of NetType.
         constexpr int NEQ = NetType::ODE_NEQ;
         constexpr int NUM_SPEC = NetType::NUM_SPECIES;
@@ -403,7 +383,7 @@ namespace OdeMath
             ye_sum.add(state[i] * (NetType::zion(i) / NetType::aion(i)));
         }
         const double ye = ye_sum.value();
-        const double old_temperature = state[NEQ - 1];
+        const double old_temperature = state[NUM_SPEC];
         const double old_eint = eos.get_eint_from_T(rho, old_temperature, old_x);
         if (!std::isfinite(ye) || !std::isfinite(old_eint)) return false;
 
@@ -430,15 +410,22 @@ namespace OdeMath
         auto accept = [&](const Candidate& candidate) {
 #pragma omp simd
             for (int i = 0; i < NUM_SPEC; ++i) state[i] = candidate.x[i];
-            state[NEQ - 1] = candidate.temperature;
+            state[NUM_SPEC] = candidate.temperature;
             dt_rec = dt_target;
             if (accepted_energy) *accepted_energy = candidate.enuc;
             return true;
         };
 
-        const double minimum_temperature = std::max(burn_cfg.nseTempThreshold, burn_cfg.smallt);
+        double minimum_temperature = std::max(burn_cfg.nseTempThreshold, burn_cfg.smallt);
         // Timmes burn/NSE states above 1e11 K are outside the maintained range.
-        constexpr double maximum_temperature = 1.0e11;
+        double maximum_temperature = 1.0e11;
+        if constexpr (NSESolver<NetType>::generated_data) {
+            minimum_temperature = std::max(minimum_temperature,
+                NSESolver<NetType>::minimum_temperature());
+            maximum_temperature = std::min(maximum_temperature,
+                NSESolver<NetType>::maximum_temperature());
+        }
+        if (minimum_temperature > maximum_temperature) return false;
         if (old_temperature < minimum_temperature || old_temperature > maximum_temperature) {
             return false;
         }

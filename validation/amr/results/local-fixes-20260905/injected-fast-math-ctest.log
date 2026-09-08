@@ -1,0 +1,12 @@
+[OUTPUT] 
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/review-fp-injected
+
+[HANDLER_OUTPUT] 
+Test project /home/shiroakane/ARCH/build/review-fp-injected
+
+    Start 4: compensated_sum
+1/1 Test #4: compensated_sum ..................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.00 sec

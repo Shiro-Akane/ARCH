@@ -20,7 +20,8 @@ def adapt(stage, network_id, cls, header_name, source_name, *, host_weak_math=Fa
     source_path = stage / source_name
     header = header_path.read_text(encoding='utf-8')
     source = source_path.read_text(encoding='utf-8')
-    header = header.replace('#include <algorithm>', '#include "core/ArchPortability.h"\n#include <algorithm>', 1)
+    if '#include "core/ArchPortability.h"' not in header:
+        header = header.replace('#include <algorithm>', '#include "core/ArchPortability.h"\n#include <algorithm>', 1)
     declarations = f'''namespace {detail} {{
 {heavy} void eval_rhs(const double*, double, double*, double&);
 template<class Matrix>

@@ -12,13 +12,131 @@ explicit authorization for those actions.
 
 ## Active execution contract
 
+The owner-authorized extension is developed on `CUDA_complete_v1`, with the
+hosted CPU/tooling CI carried forward. After its verified push, the owner has
+authorized immediate same-tree integration into `main` and an attempted
+`V1.0.0` release. Authorization is distinct from completed Git/publication
+actions, whose receipts must be recorded separately. The active
+scope includes native EOSDriver total tables, finite-temperature EOS2/EOS4
+baryon ASCII tables, declared missing-component completion for the existing
+Tabular3D/Tabular4D free-energy representation, and generated-data NSE within
+the explicitly certified ground-state model. These are source-format and
+component contracts, not a promise to recognize every astrophysical table.
+CompOSE, zero-temperature/zero-proton companion tables and nuclear
+excitation/weak/screened NSE coupling remain outside this extension.
+
+Keep all aprox/iso paths, the existing EOS dispatch and CUDA ownership system,
+and identical NSE temperature/density controls for true and auto. Source
+inspection determines rank, components and nuclear-equilibrium meaning before
+construction. Do not add a runtime EOS variant, per-model physics adapter or
+backend macro. An equilibrium nuclear table cannot also supply an independent
+kinetic burn/NSE energy source.
+
+`EOSDispatcher::validate_coupling` owns this startup contract; `SolverDispatch`
+passes source metadata and the resolved flux requirement. Nuclear-equilibrium
+binding alone controls the kinetic-burn prohibition. Declared or equilibrium
+tables also reject composition-only-gamma fluxes and automatic conductivity
+without electron diagnostics; a positive explicit thermal diffusivity remains
+available. Keep these distinct conditions in that one maintained validator.
+
+### Component and thermodynamic contract
+
+Host import adds only explicitly missing electron/positron and photon terms.
+The baryon reader preserves native coordinates and source F/P/S samples; their
+aligned free energy, `F_ln(rho)=P/rho` and `F_ln(T)=-T*S` constrain the existing
+shared Hermite potential. Retain source E as an independent finite-precision
+diagnostic, not a second runtime energy interpolation. Source F/E/S need not
+agree beyond the precision of their published values and reference convention;
+report observed disagreement rather than fitting a new reference constant.
+EOSDriver total tables retain their native P/E interpolation and its derivative
+closure; that separate representation is not a single-Maxwell-potential claim.
+
+Use the source family's fixed baryon mass and documented energy/free-energy
+references from one lightweight format contract. Electron number density must
+respect that fixed mass when mapping to the Timmes component convention;
+photons use the original mass density. Never infer a different baryon mass
+from each rounded density/number-density pair. A table-wide constant energy
+reference may enforce the positive-energy contract without changing pressure,
+entropy or heat capacity; no query-, density- or composition-dependent gauge
+is allowed.
+
+Source-coordinate inconsistencies and missing-component domain limits remain
+explicit holes on the original grid. The shared five-point derivative stencil
+must also determine the full validity dependency closure. Strict 3D/4D queries
+reject invalid cells, nonphysical thermodynamics and out-of-domain inputs;
+temperature inversion isolates all roots of the same interpolating potential
+and rejects nonunique roots without bridging holes, extrapolating or applying
+an ideal-gas fallback. Single-potential closure and backend agreement do not
+establish source fidelity or full-domain physical accuracy.
+
+### Required checks for the final extension source
+
+- Build the complete CPU Release application and configured CTest inventory
+  with KLU; run that complete inventory, the full no-skip Python tooling suite
+  and the architecture audit after the final shared-header changes.
+- Run independent format/unit/reference controls, missing-component versus
+  already-total controls, exact-potential/derivative tests, strict-domain and
+  same-cell multiple-root negative controls, and existing generated-NSE checks.
+  Raw-source observations must separately report source/component/stencil
+  exclusions, physical failures and unresolved or ambiguous inversions.
+- Run focused CUDA shared-math and strict Tabular3D/Tabular4D owner tests,
+  including uploaded-field/mask lifetime and host-release/move behavior, plus
+  the affected native-EOS and generated-NSE device controls. Use the existing
+  owner/error transport and relevant device instrumentation. A full CUDA
+  backend rebuild is not required for this bounded extension gate.
+- Review the existing dispatch/checkpoint component and auxiliary-data
+  identities, English/Chinese user instructions, local links and source/
+  validation delivery inventory. Keep one effective record per responsibility.
+
+These gates do not rerun or requalify the complete CUDA application, restart,
+sanitizer or physics profile below. The earlier 33 CPU / 307 Python / three
+focused CUDA results belong to the preceding native-total/generated-NSE source;
+they do not close the component/raw-source gates. The final extension results
+are recorded in the [current checkpoint](#progressevidence-rules) and the
+[EOS/NSE extension record](../../validation/eos/results/tabular-extension-20260908/README.md).
+Historical results retain their original identities and failed attempts.
+
+The main-integration decision uses the completed affected CPU, shared-math,
+device-owner and coupled static-application checks. This extension does not add
+independent scheduling, geometry or kernel mathematics. That bounded review
+does not claim a rerun of the historical full CUDA physics or restart campaign;
+future changes to those responsibilities must reopen their affected gates.
+
+### Authorized delivery and branch boundaries
+
+The owner has authorized committing and pushing the completed project changes
+and previously unarchived, in-scope validation evidence to `CUDA_complete_v1`
+after the required checks. Inventory the actual worktree, including maintained
+untracked inputs and evidence; do not silently omit scientific fixtures or
+claim ignored local logs are already published. Preserve third-party license
+and unrelated-private-data boundaries when selecting delivery files.
+
+After verifying the `CUDA_complete_v1` push, immediately integrate it into
+`main` and verify that the resulting main tree is identical to the tested and
+delivered V1 tree. At the authorization review, `origin/main` names CI merge
+commit `1b07cfe6`, whose tree equals the extension's starting commit `e799640b`;
+no source conflict is expected. Recheck remote ancestry before acting rather
+than assuming that observation is still current. The owner also authorizes the
+`V1.0.0` tag and release attempt on the integrated tree. Do not describe the
+tag, remote pushes or hosted release as complete until their actual outcomes
+are verified.
+
+The local CI working branch has been removed after carrying its changes
+forward. Delete the remote `codex/ci-workflow` only after verifying the
+successful `CUDA_complete_v1` push and the carried-forward CI changes.
+Ref/remote observations establish delivery, merge and deletion, not this
+authorization text. External author contact and third-party redistribution
+permission remain separate from the authorized Git/release actions.
+
+### Previously verified integration profile
+
 The required scientific release profile is completely verified on its recorded source.
 Specifically, the [acceptance index](../../validation/backend/results/final-acceptance-20260907/release-73a9cf50/index-final-930/README.md)
 shows 41 required passes, zero required failures or pending entries, and only two
 owner-deferred large-network workloads. The exact source identity for this milestone is
 `73a9cf50bbd4405972160ecb1742da33f52666466b33d1fa8d5d1949cffed171`.
 
-The current work prepares the verified CUDA branch for integration into `main`,
+The recorded maintenance work prepared the verified CUDA branch for integration into `main`,
 the recommended checkout for users. Remove unused dispatch entry points, correct
 coordinate labels and capability descriptions, and align build presets and
 linker checks with the supported build workflow. Mathematical and physical
@@ -28,7 +146,8 @@ and a short source-download instruction for new users. The existing
 and [source-publication record](../../validation/backend/results/source-publication-20260908/README.md)
 are updated in place.
 
-Verified on the current integration cleanup:
+Verified on the previously recorded integration cleanup (not requalified by the
+native-EOS/generated-NSE extension):
 
 - All 289 Python tooling and architecture controls with zero skips, including
   the configure-helper controls; the shared architecture audit also passes.
@@ -52,7 +171,7 @@ incremental build is not the separately recorded 2,213.445-second cold build.
 These maintenance checks do not rerun the full
 independent scientific validation profile or change its recorded identity.
 
-Complete these checks on the final changes before integrating `main`:
+The previously recorded main-integration review required these checks:
 
 - [x] Remove unused selection chains and their nullable compatibility defaults;
   verify required dispatch context and shared coordinate naming. Update presets,
@@ -91,15 +210,16 @@ Complete these checks on the final changes before integrating `main`:
   and command receipts, not a document checkbox.
 
 The previous numerical reports retain their actual source and binary identities.
-The owner has authorized the verified commit and main-branch integration. No
+That review carried authorization for its verified main-branch integration;
+the active extension's branch restrictions above supersede it. No
 large-machine campaign, audit150/audit200 build or third-party contact is part
 of this work. Required independent fixtures
 stay with their test owners; do not add another report tree or broaden the
 refactor while completing the local checks.
 
-The reviewed technical results are ready for owner-authorized fast-forward
-integration. Complete the final document/inventory checks and verify remote
-ancestry before committing and pushing the selected main/frozen branch updates.
+Those reviewed technical results established readiness for the then-authorized
+fast-forward integration, subject to document/inventory and remote-ancestry
+checks. They do not authorize main/frozen-branch updates for the current source.
 Runtime performance optimization is a separate follow-up; the measured CUDA
 slowdown does not reopen the passed functional acceptance or authorize kernel
 changes in this integration.
@@ -345,8 +465,8 @@ Acceptance conditions:
   complete final local-link review after the authorized cleanup; their records
   establish the actual delivery-check outcomes.
 - Source selection, commit, push and publication require explicit owner
-  authorization. The owner has authorized this main-branch integration;
-  technical passes do not perform Git actions or establish their completion.
+  authorization. The active branch/delivery contract above governs this
+  extension; technical passes do not perform Git actions or establish completion.
 - [ ] Complete the acknowledged Timmes author contact/redistribution review
   under the owner's direction; attribution does not establish permission.
 
@@ -392,8 +512,10 @@ and verified in the local profile.
 Other follow-up work is bounded by [implementation ownership](ImplementationOwnership.md):
 small AMR scalar-helper consolidation needs exceptional-value review; unused
 Timmes hand-Jacobian fragments must not become a separate backend derivative.
-Custom-network NSE, native nuclear-table conversion and new physics/distributed
-execution are separate proposals rather than unfinished release-profile gates.
+The bounded custom-network NSE, native-table readers and declared component
+completion described in the active contract are extension work, not unfinished
+gates of that recorded release profile. Other table families, new physics and
+distributed execution remain separate work.
 
 The [third-party notices](../../THIRD_PARTY_NOTICES.md) explicitly attribute
 Timmes-derived code and data. The author has not yet been contacted, and the
@@ -430,17 +552,55 @@ ownership rows at least every 20 minutes of active work, after resumption, at
 phase changes and before final qualification or a completion claim. Update the
 current checkpoint in place rather than appending another execution diary.
 
-Current checkpoint: the optimized local CUDA build, all 98 configured Release
-tests, ten development-smoke lanes, normal smooth/burning restart, burning-restart
-memcheck/racecheck and all 289 Python controls have passed on the current source.
-Final runtime identity verification also passes. Both matched AMR timing scales
-pass the original field, conservation, workload and identity checks; CUDA is
-slower on these local workloads. The owner accepts the functionally equivalent
-version for main integration with performance documented. Final document and
-inventory checks guard the reviewed source selection; Git refs and command
-receipts record actual integration. The scientific profile stays attached to
-its measured source. Large-system work and author contact remain outside this
-execution scope.
+Current checkpoint: the component/raw-source extension passes its required
+bounded checks on the uncommitted `CUDA_complete_v1` worktree based on
+`e799640b`. The [extension record](../../validation/eos/results/tabular-extension-20260908/README.md)
+and [identity inventory](../../validation/eos/results/tabular-extension-20260908/identity.json)
+retain the actual source/build/artifact observations and detailed results:
+
+- The complete CPU Release application/test build and 37/37 configured CTests
+  pass with zero skips. All 307 Python tooling controls pass with zero skips,
+  and the architecture audit passes.
+- The separate generated-network CPU build passes all three focused checks,
+  including two actual generated packages and their registry resolution.
+- Four focused CUDA execution checks plus their host completion fixture pass
+  5/5. Strict Tabular3D/Tabular4D owner coverage includes six states and 23
+  fields per rank. Strict-owner and real-HShen owner memcheck report zero
+  errors and zero leaks.
+- Each original EOS2/EOS4 table is sampled at 250 prescribed states: 220 are
+  accepted and 30 are explicitly rejected. The record classifies source,
+  component-domain and derivative-stencil exclusions; these are not 250
+  physically accepted states or a full-table accuracy qualification.
+- Two 16-cell, three-step static application runs preserve their fields
+  bitwise, and all eight startup rejection controls pass. These coupled
+  witnesses do not replace nonuniform-flow or restart-continuation campaigns.
+
+The owner now authorizes verified V1 delivery, immediate same-tree main
+integration and the `V1.0.0` release attempt under the branch contract above.
+Push, merge, tag and hosted-release outcomes remain pending their actual
+receipts; none is established by the test counts or this checkpoint.
+
+The preceding native-total/generated-NSE checkpoint, also based on `e799640b`
+with a different uncommitted source snapshot, passed the full CPU
+Release application/test build, all 33 configured CPU CTests with zero skips,
+all 307 Python controls and the architecture audit. Both maintained
+generated-network detailed-balance/ODE witnesses and their registry resolution
+passed in the separate CPU custom-package build. The three focused CUDA tests
+(`generated_nse_device`, `network_nse_device`, `native_tabular_device`) passed;
+the native owner also passed real-HShen memcheck with zero errors/leaks after
+host release and owner move. A 16-cell, three-step native-HShen uniform CPU
+application preserved every field exactly and rejected the three unsupported
+burn/SW/automatic-conductivity configurations at startup. These are bounded
+integration/ownership witnesses, not nonuniform-flow or full restart tests.
+The 400-point real-HShen sample reported 391 thermally resolved points, four
+under-resolved points, four invalid cells and one nonunique inverse; see the
+[EOS module summary](../../validation/eos/README.md). Reading a table is not a
+full-domain physical-accuracy qualification. Local logs and JUnit reports are
+under ignored `build-ci/reports/`; they are not a published acceptance bundle.
+The prior 98-test CUDA release, restart/sanitizer and timing results remain
+attached to their recorded source above; they are not evidence for this new
+extension. Current delivery/main integration is authorized only as stated in
+the active branch contract; external author contact is not authorized.
 
 ## Efficient navigation
 

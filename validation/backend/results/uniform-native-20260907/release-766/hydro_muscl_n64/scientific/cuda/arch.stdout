@@ -1,0 +1,79 @@
+[Info] Loaded 51 parameters from /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific.par
+[Main] Problem created: SmoothAdvection
+[Problem] Smooth entropy wave: rho=1+0.2 sin(2*pi*1*x/L), u=1, p=1
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 12 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       2.01820e-03    2.01820e-03    2.01820e-03    
+2       4.03641e-03    2.01820e-03    2.01820e-03    
+3       6.05461e-03    2.01820e-03    2.01820e-03    
+4       8.07281e-03    2.01820e-03    2.01820e-03    
+5       1.00910e-02    2.01820e-03    2.01820e-03    
+6       1.21092e-02    2.01820e-03    2.01820e-03    
+7       1.41274e-02    2.01820e-03    2.01820e-03    
+8       1.61456e-02    2.01820e-03    2.01820e-03    
+9       1.81639e-02    2.01822e-03    2.01822e-03    
+10      2.01821e-02    2.01826e-03    2.01826e-03    
+11      2.22004e-02    2.01832e-03    2.01832e-03    
+12      2.42188e-02    2.01834e-03    2.01834e-03    
+13      2.62371e-02    2.01834e-03    2.01834e-03    
+14      2.82555e-02    2.01834e-03    2.01834e-03    
+15      3.02738e-02    2.01834e-03    2.01834e-03    
+16      3.22921e-02    2.01834e-03    2.01834e-03    
+17      3.43105e-02    2.01834e-03    2.01834e-03    
+18      3.63288e-02    2.01835e-03    2.01835e-03    
+19      3.83472e-02    2.01839e-03    2.01839e-03    
+20      4.03657e-02    2.01843e-03    2.01843e-03    
+21      4.23841e-02    2.01843e-03    2.01843e-03    
+22      4.44025e-02    2.01843e-03    2.01843e-03    
+23      4.64210e-02    2.01843e-03    2.01843e-03    
+24      4.84394e-02    2.01843e-03    2.01843e-03    
+25      5.04578e-02    2.01843e-03    2.01843e-03    
+26      5.24763e-02    2.01843e-03    2.01843e-03    
+27      5.44947e-02    2.01846e-03    2.01846e-03    
+28      5.65132e-02    2.01850e-03    2.01850e-03    
+29      5.85317e-02    2.01851e-03    2.01851e-03    
+30      6.05502e-02    2.01851e-03    2.01851e-03    
+31      6.25687e-02    2.01851e-03    2.01851e-03    
+32      6.45872e-02    2.01851e-03    2.01851e-03    
+33      6.66058e-02    2.01851e-03    2.01851e-03    
+34      6.86243e-02    2.01851e-03    2.01851e-03    
+35      7.06428e-02    2.01852e-03    2.01852e-03    
+36      7.26613e-02    2.01856e-03    2.01856e-03    
+37      7.46799e-02    2.01857e-03    2.01857e-03    
+38      7.66985e-02    2.01857e-03    2.01857e-03    
+39      7.87171e-02    2.01857e-03    2.01857e-03    
+40      8.07356e-02    2.01857e-03    2.01857e-03    
+41      8.27542e-02    2.01857e-03    2.01857e-03    
+42      8.47728e-02    2.01857e-03    2.01857e-03    
+43      8.67914e-02    2.01858e-03    2.01858e-03    
+44      8.88100e-02    2.01861e-03    2.01861e-03    
+45      9.08286e-02    2.01863e-03    2.01863e-03    
+46      9.28472e-02    2.01863e-03    2.01863e-03    
+47      9.48659e-02    2.01863e-03    2.01863e-03    
+48      9.68845e-02    2.01863e-03    2.01863e-03    
+49      9.89031e-02    2.01863e-03    2.01863e-03    
+50      1.00000e-01    1.09688e-03    2.01863e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/hydro_muscl_n64/scientific/cuda/hydro_muscl_n64_cuda_scientific_chk_0001.h5 at step 50 with 4 AMR leaves.
+>>> Simulation Done. Total Steps: 50 | Final Time: 1.00000e-01

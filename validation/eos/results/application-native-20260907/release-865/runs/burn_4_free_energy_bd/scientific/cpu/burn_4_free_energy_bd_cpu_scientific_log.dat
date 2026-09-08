@@ -1,0 +1,52 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/runs/burn_4_free_energy_bd/scientific/cpu/burn_4_free_energy_bd_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/runs/burn_4_free_energy_bd/scientific/cpu/burn_4_free_energy_bd_cpu_scientific.par
+[Main] Problem created: BurnOneZone
+[EOS Dispatch] Resolving EOS Policy: tabular
+[Tabular4DEOS] Loading validated 4D HDF5 table: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/tables/burn-4-free_energy.h5
+[Tabular4DEOS] Loaded free-energy table with automatic rank validation.
+[Problem] Burn one-zone state: rho=1e+07, T=3e+09, p=3e+24, network=aprox13
+[Main] Configuration:
+       Grid: 16 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 8 | Finest Level: 0
+    Level 0   | dx1(x): 6.25e+06
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: bd | Linear Solver: DenseLU
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/runs/burn_4_free_energy_bd/scientific/cpu/burn_4_free_energy_bd_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/runs/burn_4_free_energy_bd/scientific/cpu/burn_4_free_energy_bd_cpu_scientific_chk_0000.h5 at step 0 with 1 AMR leaves.
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+1       1.00000e-16    1.00000e-16    3.53551e-03    5.00000e-17    
+2       3.00000e-16    2.00000e-16    3.53551e-03    1.00000e-16    
+3       7.00000e-16    4.00000e-16    3.53551e-03    2.00000e-16    
+4       1.50000e-15    8.00000e-16    3.53551e-03    4.00000e-16    
+5       3.10000e-15    1.60000e-15    3.53551e-03    8.00000e-16    
+6       6.30000e-15    3.20000e-15    3.53551e-03    1.60000e-15    
+7       1.27000e-14    6.40000e-15    3.53551e-03    3.20000e-15    
+8       2.55000e-14    1.28000e-14    3.53551e-03    6.40000e-15    
+9       5.11000e-14    2.56000e-14    3.53551e-03    1.28000e-14    
+10      1.02300e-13    5.12000e-14    3.53551e-03    2.56000e-14    
+11      2.04700e-13    1.02400e-13    3.53551e-03    5.12000e-14    
+12      4.09500e-13    2.04800e-13    3.53551e-03    1.02400e-13    
+13      8.19100e-13    4.09600e-13    3.53551e-03    2.04800e-13    
+14      1.63830e-12    8.19200e-13    3.53551e-03    4.09600e-13    
+15      3.27670e-12    1.63840e-12    3.53551e-03    8.19200e-13    
+16      6.55350e-12    3.27680e-12    3.53551e-03    1.63840e-12    
+17      1.31071e-11    6.55360e-12    3.53551e-03    3.27680e-12    
+18      2.62143e-11    1.31072e-11    3.53551e-03    6.55360e-12    
+19      5.24287e-11    2.62144e-11    3.53551e-03    1.31072e-11    
+20      1.00000e-10    4.75713e-11    3.53550e-03    2.37857e-11    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/runs/burn_4_free_energy_bd/scientific/cpu/burn_4_free_energy_bd_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-10
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/eos/results/application-native-20260907/release-865/runs/burn_4_free_energy_bd/scientific/cpu/burn_4_free_energy_bd_cpu_scientific_chk_0001.h5 at step 20 with 1 AMR leaves.
+>>> Simulation Done. Total Steps: 20 | Final Time: 1.00000e-10

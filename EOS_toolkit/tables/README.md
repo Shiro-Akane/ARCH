@@ -1,7 +1,10 @@
 # Runtime table datasets
 
 [helmholtz/](helmholtz/README.md) contains the maintained Helmholtz runtime table.
-Additional production datasets belong in their own model or dataset directory.
+[baryon/](baryon/README.md) contains the unmodified EOS2/EOS4 finite-temperature
+author tables, with their separate CC BY 4.0 license and explicit supported
+subdomain. All three runtime tables use Git LFS. Additional datasets belong
+with their own source/license record, not a new EOS-specific runtime policy.
 
 The [EOS table guide](../README.md) owns layout, parameter-path and new-dataset
 requirements. [Third-party notices](../../THIRD_PARTY_NOTICES.md) retain table

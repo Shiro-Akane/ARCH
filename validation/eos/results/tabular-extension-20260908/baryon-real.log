@@ -1,0 +1,21 @@
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Tabular EOS] Completing missing components: electrons/positrons=1, photons=1; 29211 source nodes outside component support. Affected derivative stencils are excluded, never extrapolated.
+[Tabular3DEOS] Loaded baryon source and completed a single free-energy potential; 75126 source/component derivative stencils excluded. Constant energy reference=4.7494e+18 erg/g.
+baryon EOS source=EOS_toolkit/tables/baryon/eos2.tab sha256=d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58 nodes=650650 energy_shift=4.7494005102109082e+18 electron_mass_scale=0.99999943823927562
+node samples accepted=174 source_hole=0 component_hole=7 derivative_stencil_hole=19 nonpositive_pressure_energy=0 nonpositive_cv=0 nonpositive_sound_speed=0 ambiguous_inverse=0 resolved=0 underresolved=0
+interior samples accepted=46 source_hole=0 component_hole=0 derivative_stencil_hole=4 nonpositive_pressure_energy=0 nonpositive_cv=0 nonpositive_sound_speed=0 ambiguous_inverse=0 resolved=46 underresolved=0
+max_node_P_relative=2.406654078156788e-14 max_node_E_relative=2.4269054543939931e-14 node_budget=2e-08 max_source_printed_E_scaled_difference=2.8033745032907979e-06 max_inverse_T_relative=2.9013438498391497e-14 max_resolved_inverse_T_relative=2.9013438498391497e-14 max_inverse_E_relative=0 max_condition_E_over_Tcv=275.75368234397848 elapsed_seconds=6.9338019659999999
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Tabular EOS] Completing missing components: electrons/positrons=1, photons=1; 29211 source nodes outside component support. Affected derivative stencils are excluded, never extrapolated.
+[Tabular3DEOS] Loaded baryon source and completed a single free-energy potential; 74918 source/component derivative stencils excluded. Constant energy reference=4.714261162422571e+18 erg/g.
+baryon EOS source=EOS_toolkit/tables/baryon/eos4.tab sha256=5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34 nodes=650650 energy_shift=4.714261162422571e+18 electron_mass_scale=0.99999943823927562
+node samples accepted=174 source_hole=0 component_hole=7 derivative_stencil_hole=19 nonpositive_pressure_energy=0 nonpositive_cv=0 nonpositive_sound_speed=0 ambiguous_inverse=0 resolved=0 underresolved=0
+interior samples accepted=46 source_hole=0 component_hole=0 derivative_stencil_hole=4 nonpositive_pressure_energy=0 nonpositive_cv=0 nonpositive_sound_speed=0 ambiguous_inverse=0 resolved=46 underresolved=0
+max_node_P_relative=2.406654078156788e-14 max_node_E_relative=2.4269054544473927e-14 node_budget=2e-08 max_source_printed_E_scaled_difference=2.2211967934571942e-06 max_inverse_T_relative=2.3067820284382978e-14 max_resolved_inverse_T_relative=2.3067820284382978e-14 max_inverse_E_relative=0 max_condition_E_over_Tcv=241.55272067561077 elapsed_seconds=6.5859330800000002
+explicit real baryon EOS owner acceptance PASS

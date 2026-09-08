@@ -71,6 +71,14 @@ if(TARGET arch_cuda_single_level_validation)
     target_link_libraries(arch_cuda_single_level_validation PRIVATE
         ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
 endif()
+foreach(target arch_cuda_native_tabular arch_cuda_tabular_completion)
+    if(TARGET ${target})
+        target_include_directories(${target} PRIVATE
+            "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+        target_link_libraries(${target} PRIVATE
+            ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    endif()
+endforeach()
 message(STATUS "[DEP] HighFive headers configured via FetchContent")
 
 # 4. SuiteSparse KLU

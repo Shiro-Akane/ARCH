@@ -1,0 +1,26 @@
+[0/2] Re-checking globbed directories...
+[1/33] Building CXX object CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o
+[2/33] Linking CXX static library libarch_diffusion_math.a
+[3/33] Building CXX object CMakeFiles/arch_cuda_backend_eos_utils.dir/src/cuda/microphysics/device_eos_owner_utils.cpp.o
+[4/33] Building CUDA object CMakeFiles/arch_cuda_backend_burn_ideal.dir/src/cuda/runtime/CudaBackendBurnIdeal.cu.o
+/home/shiroakane/ARCH/src/physics/network/timmes_common/Dual.h(25): warning #20012-D: __host__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/timmes_common/Dual.h(25): warning #20012-D: __device__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+/home/shiroakane/ARCH/src/physics/network/timmes_common/Dual.h(25): warning #20012-D: __host__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/shiroakane/ARCH/src/physics/network/timmes_common/Dual.h(25): warning #20012-D: __device__ annotation is ignored on a function("Dual") that is explicitly defaulted on its first declaration
+     __attribute__((host)) __attribute__((device)) 
+                                          ^
+
+ninja: build stopped: interrupted by user.

@@ -1,0 +1,25 @@
+{
+  "pass": 22,
+  "pending": 15,
+  "failed": 0,
+  "deferred": 2,
+  "open_required_gates": [
+    "regression.debug",
+    "science.weak_cv",
+    "science.weak_helm",
+    "science.sparse",
+    "reliability.sustained",
+    "sanitizer.focused_memcheck",
+    "sanitizer.focused_racecheck",
+    "sanitizer.curved_memcheck",
+    "sanitizer.curved_racecheck",
+    "sanitizer.restart_memcheck",
+    "sanitizer.restart_racecheck",
+    "resources.capacity",
+    "resources.compilation",
+    "manual.documentation",
+    "manual.delivery_assets"
+  ]
+}
+MEMORY_GUARD_RESULT min_available_kib=4493632 baseline_swap_kib=129872 peak_swap_kib=140112 guard_stopped=False peak_owned_rss_kib=42248 elapsed_seconds=54.071 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.753 peak_io_full_percent=6.879 peak_swap_in_mib_s=4.374 peak_swap_out_mib_s=3.614 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=55 complete=True

@@ -1,0 +1,34 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-739/matrices/diffusion_amr_rkl2_5stage/step-2/cuda/diffusion_amr_rkl2_5stage_cuda_s2_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-739/matrices/diffusion_amr_rkl2_5stage/step-2/cuda/diffusion_amr_rkl2_5stage_cuda_s2.par
+[Main] Problem created: Gaussian
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 2
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 64 | Finest Level: 1
+    Level 0   | dx1(x): 0.015625
+    Level 1   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+           -> Diffusion Solver Initialized: RKL2 (CFL_diff = 0.8)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+           -> Refining initial condition (Pass 1)...
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-739/matrices/diffusion_amr_rkl2_5stage/step-2/cuda/diffusion_amr_rkl2_5stage_cuda_s2_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-739/matrices/diffusion_amr_rkl2_5stage/step-2/cuda/diffusion_amr_rkl2_5stage_cuda_s2_chk_0000.h5 at step 0 with 6 AMR leaves.
+Step    Time           dt             dt_hydro       dt_diff        
+--------------------------------------------------------------------
+1       3.41797e-04    3.41797e-04    2.64111e-03    6.10352e-05    
+2       6.83594e-04    3.41797e-04    2.64111e-03    6.10352e-05    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-739/matrices/diffusion_amr_rkl2_5stage/step-2/cuda/diffusion_amr_rkl2_5stage_cuda_s2_HLLC_plt_0001.h5 at t=6.83594e-04
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-739/matrices/diffusion_amr_rkl2_5stage/step-2/cuda/diffusion_amr_rkl2_5stage_cuda_s2_chk_0001.h5 at step 2 with 6 AMR leaves.
+>>> Simulation Done. Total Steps: 2 | Final Time: 6.83594e-04

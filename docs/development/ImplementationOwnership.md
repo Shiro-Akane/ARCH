@@ -33,6 +33,9 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 | External gravity | `src/physics/gravity/ExternalGravitySource.h` | CPU `ExternalGravity.h`, CUDA source kernel; same per-stage update |
 | ODE algorithms and continuations | `src/numerics/burnsolver/ode_be-nr.h`, `ode_bd.h`, `ode_ros4.h`, `OdeContinuation.h` | CPU executor and CUDA `SparseOdeBatch.cuh` invoke the same begin/advance/linear-response continuations. `SparseBeNrBatch.cuh` retains aliases only, not another ODE implementation. |
 | NSE fixed-point certification | `src/physics/nse/nse_solver.h::{input_is_equilibrium,log_mass_fraction}` | The existing solver reconstructs chemical potentials from populated species and checks every Saha log residual plus mass/charge at the unchanged tolerances. A certified input is preserved exactly; perturbed inputs use the existing safeguarded solver. No energy cutoff or backend branch. |
+| Generated NSE data and eligibility | `tools/network/NseMetadata.py`, emitted package metadata, `cmake/CustomNetworks.cmake` | Nuclear masses/spins/binding and constant conventions come from the generating pynucastro installation. Exact stoichiometric rank and recognized detailed-balance pairs certify the supported ground-state, unscreened, weak-free model. The shared NSE solver consumes those data; no per-network solver or backend macro family. |
+| NSE Auto request | `PolicyDescriptor.h::resolve_nse_request`, existing `RuntimeParams.h` parser | Resolve the host capability request before construction and pass the effective boolean through the unchanged `BurnConfigView`. True and auto share the same configured temperature/density gates and failure-to-ODE path. |
+| Composition-derived nuclear energy | `src/physics/network/NuclearEnergy.h` | The existing compensated mass contraction moved intact from `odeFunction.h`, whose `OdeMath` names remain aliases. Generated NSE and accepted ODE increments use that one authority; Timmes NSE retains its original binding-data convention. |
 | ROS4 rejected-trial handling | `ode_ros4.h::finish_trial` | Factor and stage-solve failures share quarter-step retry, NSE reset, stall termination and no-commit behavior. Host/CUDA controls in `tests/math/BurnThermalCases.h` cover finite provider rejection, actual nonfinite DenseLU rejection and max-substep ordering. |
 | Accepted-substep compensated state | `odeFunction.h::OdeMath::AcceptedState`, consuming `core/CompensatedSum.h` | BE_NR/BD/ROS4 share initialization, trial copies and projection-aware commit; rejected trials do not mutate accepted sums. O(NEQ) payload is included in typed workspace sizing |
 | Self-heating Jacobian assembly | `src/numerics/burnsolver/odeFunction.h::assemble_burn_jacobian` | BE_NR/BD/ROS4; EOS cv gradient uses the view's analytic provider or samples that same view, including the denominator chain rule |
@@ -54,9 +57,16 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 | Dense/sparse factorization | `src/numerics/linalg/`, `cuda/microphysics/CuDssSparseSolver.cpp` | KLU CPU / cuDSS CUDA are intentionally separate; native nonsymmetric BTF/COLAMD, original-matrix residual rejection invalidates native analysis through the existing request message; opaque native errors fail closed |
 | Sparse structure and value indexing | `src/numerics/linalg/CsrPattern.h`, `CsrMatrixView.h` | Host-only symbolic pattern construction and a backend-neutral duck-typed value view; generated structural writes and the shared burn Jacobian supply entries. The CUDA provider owns its numerical buffers and factorization handles. |
 | Sparse equation/unknown equilibration | `src/numerics/linalg/LinearEquilibration.h` | One contiguous/permuted scale/division authority; `cuda/microphysics/SparseEquilibration.cu` only lowers traversal/launch, `CuDssSparseSolver.cpp` owns device workspaces and immutable column-slot metadata. Original CSR/RHS residual acceptance unchanged |
-| EOS free-energy math | `src/physics/eos/TabularFreeEnergy.h`, EOS views | One cached Horner-basis tensor and constant-background-subtracted compensated contraction serve Host/CUDA. Tabular temperature inversion reuses a single energy/cv query per iteration. Host table owners and CUDA owners/error latch supply data/lifetime only; independent full-degree polynomial/constant-background controls do not call production bases for expected values. |
-| Tabular thermal composition derivatives | `Tabular3DEOS.h`, `Tabular4DEOS.h` differentiate their existing interpolation patches; `eos_Utils.h::composition_derivative_query` | One species chain rule in linear composition coordinates, including the Hessian action. 4D maps Abar/Zbar analytically to sum(X/A), Ye; 3D supports selected Xi and Ye. Host/device share formulas and declared table-domain fallback. Independent manufactured controls live in the existing EOS test. |
+| EOS free-energy math | `src/physics/eos/TabularFreeEnergy.h`, EOS views | One cached Horner-basis tensor and constant-background-subtracted compensated contraction serve Host/CUDA. Optional native F/P/S derivative constraints enter the existing field builder; higher derivatives and validity dependencies use the same five-point stencil contract. Host table owners and CUDA owners/error latch supply data/lifetime only; independent polynomial/constant-background controls do not call production bases for expected values. |
+| Tabular source metadata and dispatch | `TabularSource.h`, `eosdispatch.cpp` | The lightweight source/component contract supports content-based normalized, EOSDriver-total and baryon-ASCII inspection before rank dispatch. Existing Tabular3D/Tabular4D owners consume it; no new runtime EOS variant or backend macro. Source, interpretation and required auxiliary-table identities enter the existing checkpoint fingerprint. Equilibrium nuclear binding cannot be combined with independent kinetic burn/NSE. |
+| Declared tabular coupling eligibility | `EOSDispatcher::validate_coupling`, implemented in `eosdispatch.cpp` | `SolverDispatch` supplies the resolved flux requirement and source metadata before backend construction. Equilibrium sources reject kinetic burn/NSE; declared or equilibrium sources reject composition-only-gamma fluxes and automatic conductivity without electron diagnostics. Positive constant thermal diffusivity remains allowed, and undeclared ordinary tables retain their established behavior. |
+| Baryon source-format decoding | `TabularBaryonSource.{h,cpp}` | One finite-temperature 16-column family reader serves EOS2/EOS4 header aliases, preserves native axes/raw samples and converts units/reference conventions. `source::baryon_ascii16` owns fixed mass/reference constants and interpretation metadata for reader and fingerprint consumers. Rounded coordinate mismatches produce source-mask holes, not moved nodes or locally fitted masses. No component physics, interpolation or device ownership belongs here. |
+| Missing tabular component assembly | `TabularCompletion.{h,cpp}` | Host import adds only declared missing electron/positron and photon F/derivative terms through the existing Helm component API. Fixed source-to-provider mass conversion, derivative-mask closure and one table-wide energy reference serve existing 3D/4D owners. The original baryon ASCII reader feeds the 3D owner. No EOS-name tuning, duplicate component formula or runtime completion kernel. |
+| Strict free-energy temperature inversion | `TabularInversion.h`, consuming the thermal polynomial from `TabularFreeEnergy.h` | Both strict 3D/4D views use one derivative-hierarchy root isolator on the original Hermite potential. Domain, invalid-mask gaps, nonphysical roots, nonunique branches and nonfinite arithmetic fail closed; no sampled surrogate, extrapolation or ideal-gas fallback. Existing CUDA error transport only carries that shared failure. |
+| Tabular coordinates and encoded fields | `TabularInterpolation.h`, consuming `Tabular3DEOS.h` | Native EOSDriver P/E interpolation supplies its analytic derivatives and Newtonian acoustic closure; inversion searches the same function and rejects ambiguous branches. This representation is distinct from single-potential completion. Existing CUDA owners upload axes, fields and validity data. Normalized tables without explicit component declarations retain their existing interpretation. |
+| Tabular thermal composition derivatives | `Tabular3DEOS.h`, `Tabular4DEOS.h` differentiate their existing interpolation patches; `eos_Utils.h::composition_derivative_query` | One species chain rule in linear composition coordinates, including the Hessian action. 4D maps Abar/Zbar analytically to sum(X/A), Ye; 3D supports selected Xi and Ye. Host/device share formulas; strict/native queries reject unsupported domains rather than taking the ordinary table fallback. Independent manufactured controls remain under the EOS tests. |
 | Helm table coordinates and conditioned Hermite contraction | `HelmEos` materializes the documented grid once; `BasicHelmEosView::{locate_axis,hermite_row,interpolate_ele_pos}` | Host/CUDA share identical grid values and the same constant-background-subtracted tensor polynomial. Existing Helm device owner only uploads/owns the two axes. `CompensatedSum` remains the sole accumulator. Independent monomial and actual-table tests remain separate mathematical oracles. |
+| Electron/positron and photon thermodynamics | `BasicHelmEosView::{electron_positron_component,photon_component}` | Component queries reuse the maintained electron free-energy interpolation and photon formula, with explicit domains and no ion/Coulomb double count. The host tabular assembler maps a declared fixed baryon mass to the electron provider's number-density convention; photons use the original density. CUDA views expose the same mathematical API, not a second completion implementation. |
 | Network reaction math | built-in network headers or device-callable generated `.math.h` | CPU adapter + CUDA instantiation; no second generated math body |
 | Generated package assembly and route binding | `tools/network/GenerateNetwork.py`, `PortableAdapter.py`, `PortableCxx.py` | The adapter moves numerical definitions into one `.math.h`; the emitted `.cpp` includes it. CMake network discovery and dense/sparse route templates bind registered types, not copied reaction or ODE formulas. Weak data/view specialization uses the separate owners below. |
 | Generated complete-RHS temperature difference | `src/numerics/burnsolver/NetworkDerivative.h` | One generated `CompleteRhs` functor for Host/CUDA; built-in AD derivatives unchanged |
@@ -101,6 +111,15 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 5. Record moved symbols, remaining aliases, retired implementations and tests
    below. A generated TU must only bind types and call shared bodies.
 
+The tabular split follows these rules: `TabularSource.h` is a lightweight
+inspection/interface boundary; `TabularBaryonSource` decodes a source family;
+`TabularCompletion` assembles missing components on the host; and
+`TabularInversion` is common host/device mathematics. Small file size alone is
+not a reason to merge these responsibilities or pull EOS mathematics into a
+declaration header. The existing `eosdispatch` remains the selection authority.
+Source constants/interpretation and the five-point stencil are shared contracts,
+not independently maintained copies in these files.
+
 ## Current interface and compatibility review
 
 Updated 2026-09-08. These decisions define the maintained interfaces. Verification
@@ -139,6 +158,18 @@ The full contracts are in the [Reference](../Reference.md),
 [generated-network guide](../../src/physics/network/custom/README.md).
 
 ### Verification scope
+
+The active component/raw-source extension on `CUDA_complete_v1` requires its
+own final-source complete CPU Release inventory, full Python/tooling controls
+and focused CUDA strict-3D/4D mathematics and owner/lifetime checks. A full CUDA
+backend rebuild is not part of that bounded gate. The preceding extension's
+33 CPU, 307 Python and three focused CUDA passes are not final results for
+this later source. Current measurements belong to the existing module summaries
+and the [release checkpoint](CudaReleaseStandard.md#progressevidence-rules),
+not to a new evidence hierarchy. Passing format or owner tests does not certify
+the complete raw-table domain, nonuniform flow or restart continuation.
+
+The following recorded verification describes earlier identified sources:
 
 The [scientific acceptance index](../../validation/backend/results/final-acceptance-20260907/release-73a9cf50/index-final-930/README.md)
 records 41 required passes and two owner-deferred large-network workloads for
@@ -247,6 +278,43 @@ the declared recipe explicitly and bind its identity to subsequent measurements.
 Do not add a second Jacobian, energy conversion or lookup table to shorten a
 backend build.
 
+### Native tables and component completion
+
+Content-based family recognition and explicit component declarations feed the
+existing rank/owner dispatch. A total table never receives another electron or
+photon contribution. An undeclared normalized table retains its established
+meaning; arbitrary field names or an EOS model name are not enough to infer
+missing physics. Finite-temperature EOS2/EOS4 share one baryon reader, while
+EOSDriver total tables retain their native P/E representation. CompOSE and
+zero-temperature/zero-proton companion formats require separate supported
+format contracts before they can be advertised.
+
+For baryon ASCII, align source F to the documented E reference, seed
+`F_ln(rho)=P/rho` and `F_ln(T)=-T*S`, and add missing components to those same
+quantities before building the existing Hermite fields. Entropy preserves
+small thermal information that subtracting independently rounded F/E can lose.
+The resulting runtime E, derivatives and acoustic state come from that one
+potential. Published E remains an independent source-fidelity diagnostic;
+finite source F/E/S disagreement is not corrected by fitting a model-specific
+constant or weakening a physical acceptance budget.
+
+The fixed source baryon mass gives `rho_helm=rho/(m_b*N_A)` for the electron
+provider. Convert its specific free energy and entropy by the same constant
+ratio `rho_helm/rho`; pressure is unchanged. Photon queries use the original
+rho. Do not use the rounded nodewise nB/rho ratio to define a density-dependent
+mass convention. One immutable table-wide energy reference remains outside
+the derivative fields, preserving pressure, entropy and heat capacity.
+
+Source-coordinate inconsistencies and component support limits remain holes
+on the native axes. The same five-point stencil used for derivative fields
+defines their full validity dependencies. Strict queries reject affected cells
+and nonphysical states; shared all-root inversion never bridges invalid cells
+or chooses an arbitrary valid branch. CPU and CUDA consume the same potential,
+axes, mask and energy reference. Host ingestion and device storage are distinct
+owners, not distinct thermodynamic models. Independent source fidelity, exact
+manufactured closure, backend parity and application behavior must be reported
+as separate checks.
+
 ### Sparse execution, headers and measurements
 
 DenseLU uses shared row-scaled pivot selection. CPU KLU and CUDA cuDSS own their
@@ -282,8 +350,11 @@ checker.
   a replacement independently. They must not become a CUDA-only derivative path.
 - Complete audit150/audit200 trajectories and scaling remain the owner-approved
   larger-system follow-up in the [release standard](CudaReleaseStandard.md).
-  Their absence is not an unclosed local required gate. Custom-network NSE and
-  native nuclear-table converters are separate capability extensions.
+  Their absence is not an unclosed local required gate. Native EOSDriver,
+  baryon-source/component completion and qualified generated-NSE extensions
+  have their own focused controls; those do not inherit historical release
+  qualification. Other native-table families and excitation/weak/screened NSE
+  remain separate extensions.
 
 ## Constants boundaries
 
@@ -296,7 +367,11 @@ an IdealGas model parameter, not a universal physical constant.
 
 Generated network data, reaction fits and Timmes data constants retain their
 declared conventions. They are not duplicated backend definitions and must not
-be silently rescaled. No automatic conversion between arbitrary ideal-gas code
+be silently rescaled. The EOS2/EOS4 source contract deliberately retains its
+fixed rounded baryon mass and printed reference conventions in
+`TabularBaryonSource.h::source::baryon_ascii16`; these are not replacements for
+the central fundamental constants. Reader and scientific fingerprint consumers
+use that one declaration. No automatic conversion between arbitrary ideal-gas code
 units and cgs is implied. See the
 [constant boundaries](../../src/physics/constant/README.md) and independent
 [EOS](../../validation/eos/README.md) / [NSE](../../validation/network/README.md)

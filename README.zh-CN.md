@@ -185,18 +185,24 @@ SodBeginner_chk_0000.h5
 当理想气体或内置反应网络不足以描述目标问题时，可以使用这些扩展。首次运行
 不需要配置它们。
 
-Tabular EOS 参数提供 HDF5 路径，表内元数据负责维数选择：
+Tabular EOS 参数提供来源路径，文件内容负责格式与维数选择：
 
 ~~~text
 eos_type = tabular
 eos_table_path = /path/to/model.h5
 ~~~
 
-文件内部的 `table_rank` 自动选择 3D 或 4D 策略。新 EOS 表应保存比 Helmholtz
-自由能并遵循[本地 HDF5 契约](src/physics/eos/TabularEOS.zh-CN.md)；上游
-Shen/LS/HS 或 CompOSE 文件必须使用表族专用转换器转换成该契约。仓库目前不
-附带外部 EOS 转换器；真实 Shen 来源表评估见
-[validation/eos](validation/eos/README.zh-CN.md)。
+支持的来源包括规范化 3D/4D HDF5、EOSDriver 总 EOS HDF5，以及原始 Shen
+EOS2/EOS4 主表使用的正温度重子 ASCII 格式。自由能表可声明已包含的物理分量，
+ARCH 在加载时只补齐缺失的电子／正电子和光子，之后两个后端查询同一个总自由能势。
+这不会重复叠加离子模型，也不会改写来源文件。`eos_helm_table_path` 可选指定电子表，
+默认使用已有的 Timmes `helm_table.dat`，仅在需要补电子时读取。
+
+核平衡表要求 `use_burn = false`，避免重复计入核结合能。未识别的格式，包括任意
+CompOSE 布局，仍需要有明确契约的适配器；可以读入不代表整个表域都有效。
+[表格契约](src/physics/eos/TabularEOS.zh-CN.md)说明成分声明、固定质量／能量基准与
+严格有效域；科学边界见 [EOS 验证](validation/eos/README.zh-CN.md)，原始 Shen
+数据的来源与许可见[第三方声明](THIRD_PARTY_NOTICES.zh-CN.md)。加工后的 HShen 表不随附。
 
 本文的网络生成流程使用 pynucastro 2.12.0，Python 环境与完整构建步骤见
 [网络验证指南](validation/network/README.zh-CN.md#复现这些记录)。复制并编辑示例生成脚本，
@@ -225,7 +231,10 @@ linear_solver = Auto
 这项能力，CMake 在注册 CUDA 执行组合前检查所需的包接口。两个后端使用同一个
 生成数学头文件及清单声明的 Jacobian 结构。对于已识别的内嵌弱反应率表，各后端
 分别管理只读数据，共用插值、导数和有符号能量积分。仅提供 CPU 接口的网络包
-仍可在 CPU 上运行。生成网络不支持 Timmes NSE 投影。
+仍可在 CPU 上运行。生成器还会检查网络包是否支持与其反应数据一致的基态 NSE 模型。
+`use_nse = auto` 仅对已认证的包启用，否则保持动力学积分；显式 `true` 则要求
+该能力。两种模式使用相同的温度／密度阈值，不会把任意网络投影到内置 Timmes
+核素集合。详见 [NSE 模型边界](src/physics/nse/README.md)。
 
 线性求解器名称不区分大小写。`Auto` 在 ODE 方程总数不超过 31 时选择 DenseLU，
 计数包含核素、温度和可选辅助状态。更大系统在 CPU 上使用 SparseKLU，在 CUDA

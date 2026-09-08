@@ -1,0 +1,1294 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test",
+      "include",
+      "arch_register_io_regression_tests"
+    ],
+    "files" : 
+    [
+      "/home/shiroakane/ARCH/cmake/tests/HostTests.cmake",
+      "/home/shiroakane/ARCH/CMakeLists.txt"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 0
+      },
+      {
+        "file" : 0,
+        "parent" : 1
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 14,
+        "parent" : 2
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 4
+      },
+      {
+        "file" : 0,
+        "parent" : 5
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 19,
+        "parent" : 6
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 8
+      },
+      {
+        "file" : 0,
+        "parent" : 9
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 22,
+        "parent" : 10
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 12
+      },
+      {
+        "file" : 0,
+        "parent" : 13
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 26,
+        "parent" : 14
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 16
+      },
+      {
+        "file" : 0,
+        "parent" : 17
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 30,
+        "parent" : 18
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 20
+      },
+      {
+        "file" : 0,
+        "parent" : 21
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 35,
+        "parent" : 22
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 24
+      },
+      {
+        "file" : 0,
+        "parent" : 25
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 40,
+        "parent" : 26
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 28
+      },
+      {
+        "file" : 0,
+        "parent" : 29
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 50,
+        "parent" : 30
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 32
+      },
+      {
+        "file" : 0,
+        "parent" : 33
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 50,
+        "parent" : 34
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 36
+      },
+      {
+        "file" : 0,
+        "parent" : 37
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 50,
+        "parent" : 38
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 40
+      },
+      {
+        "file" : 0,
+        "parent" : 41
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 54,
+        "parent" : 42
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 44
+      },
+      {
+        "file" : 0,
+        "parent" : 45
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 57,
+        "parent" : 46
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 48
+      },
+      {
+        "file" : 0,
+        "parent" : 49
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 60,
+        "parent" : 50
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 52
+      },
+      {
+        "file" : 0,
+        "parent" : 53
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 66,
+        "parent" : 54
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 56
+      },
+      {
+        "file" : 0,
+        "parent" : 57
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 70,
+        "parent" : 58
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 60
+      },
+      {
+        "file" : 0,
+        "parent" : 61
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 74,
+        "parent" : 62
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 64
+      },
+      {
+        "file" : 0,
+        "parent" : 65
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 79,
+        "parent" : 66
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 68
+      },
+      {
+        "file" : 0,
+        "parent" : 69
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 84,
+        "parent" : 70
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 72
+      },
+      {
+        "file" : 0,
+        "parent" : 73
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 108,
+        "parent" : 74
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 76
+      },
+      {
+        "file" : 0,
+        "parent" : 77
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 114,
+        "parent" : 78
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 80
+      },
+      {
+        "file" : 0,
+        "parent" : 81
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 114,
+        "parent" : 82
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 84
+      },
+      {
+        "file" : 0,
+        "parent" : 85
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 122,
+        "parent" : 86
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 88
+      },
+      {
+        "file" : 0,
+        "parent" : 89
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 128,
+        "parent" : 90
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 92
+      },
+      {
+        "file" : 0,
+        "parent" : 93
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 128,
+        "parent" : 94
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 96
+      },
+      {
+        "file" : 0,
+        "parent" : 97
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 128,
+        "parent" : 98
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 100
+      },
+      {
+        "file" : 0,
+        "parent" : 101
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 128,
+        "parent" : 102
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 104
+      },
+      {
+        "file" : 0,
+        "parent" : 105
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 128,
+        "parent" : 106
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 108
+      },
+      {
+        "file" : 0,
+        "parent" : 109
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 137,
+        "parent" : 110
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 112
+      },
+      {
+        "file" : 0,
+        "parent" : 113
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 149,
+        "parent" : 114
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 116
+      },
+      {
+        "file" : 0,
+        "parent" : 117
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 156,
+        "parent" : 118
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 120
+      },
+      {
+        "file" : 0,
+        "parent" : 121
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 160,
+        "parent" : 122
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 124
+      },
+      {
+        "file" : 0,
+        "parent" : 125
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 167,
+        "parent" : 126
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 2,
+        "file" : 1,
+        "line" : 29,
+        "parent" : 128
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 185,
+        "parent" : 129
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 2,
+        "file" : 1,
+        "line" : 29,
+        "parent" : 131
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 202,
+        "parent" : 132
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 2,
+        "file" : 1,
+        "line" : 29,
+        "parent" : 134
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 218,
+        "parent" : 135
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 2,
+        "file" : 1,
+        "line" : 29,
+        "parent" : 137
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 231,
+        "parent" : 138
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 2,
+        "file" : 1,
+        "line" : 29,
+        "parent" : 140
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 252,
+        "parent" : 141
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_portable_network_generator.py"
+      ],
+      "name" : "portable_network_generator",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace" : 7,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_smoke_cuda_amr_runtime.py"
+      ],
+      "name" : "cuda_amr_smoke_runner_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_curvilinear_manifest.py"
+      ],
+      "name" : "curvilinear_manifest_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 15,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_run_memory_guarded.py"
+      ],
+      "name" : "memory_guard_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 19,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_validate_backend_results.py"
+      ],
+      "name" : "backend_validation_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace" : 23,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_validation_provenance.py"
+      ],
+      "name" : "validation_provenance_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace" : 27,
+      "command" : 
+      [
+        "/usr/bin/python3",
+        "-B",
+        "/home/shiroakane/ARCH/tests/tooling/test_runtime_validation_inputs.py"
+      ],
+      "name" : "runtime_validation_inputs_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH"
+        }
+      ]
+    },
+    {
+      "backtrace" : 31,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_physical_constants"
+      ],
+      "name" : "physical_constants",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 35,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_refinement_indicator_math"
+      ],
+      "name" : "refinement_indicator_math",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 39,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_curvilinear_metrics"
+      ],
+      "name" : "curvilinear_metrics",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 43,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_compensated_sum"
+      ],
+      "name" : "compensated_sum",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 47,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_sparse_ode_continuation"
+      ],
+      "name" : "sparse_ode_continuation",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 51,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_checkpoint_conservation_metrics"
+      ],
+      "name" : "checkpoint_conservation_metrics",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 55,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_burn_mainline_reference"
+      ],
+      "name" : "burn_mainline_reference",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 59,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_generated_nse"
+      ],
+      "name" : "generated_nse",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 63,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_tabular_strict"
+      ],
+      "name" : "tabular_strict_math",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 67,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_baryon_source",
+        "/home/shiroakane/ARCH/build-ci/cpu/baryon-source-test-data"
+      ],
+      "name" : "baryon_source_format",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 71,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_helm_components",
+        "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat"
+      ],
+      "name" : "helm_components",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 75,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_mainline_authority"
+      ],
+      "name" : "mainline_authority",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 79,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_block_handle"
+      ],
+      "name" : "block_handle",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 83,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_state_residency"
+      ],
+      "name" : "state_residency",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 87,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_shared_stage_scheduler"
+      ],
+      "name" : "shared_stage_scheduler",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 91,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_boundary_plan"
+      ],
+      "name" : "boundary_plan",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 95,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_same_level_exchange_plan"
+      ],
+      "name" : "same_level_exchange_plan",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 99,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_amr_operation_plans"
+      ],
+      "name" : "amr_operation_plans",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 103,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_amr_flux_surface_plan"
+      ],
+      "name" : "amr_flux_surface_plan",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 107,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_topology_transaction"
+      ],
+      "name" : "topology_transaction",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 111,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_resolved_execution_plan"
+      ],
+      "name" : "resolved_execution_plan",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 115,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_runtime_probe_capabilities"
+      ],
+      "name" : "runtime_probe_and_capabilities",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 119,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_reduction_contract"
+      ],
+      "name" : "reduction_contract",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 123,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_compute_backend"
+      ],
+      "name" : "compute_backend",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 127,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_device_block_store_lifecycle"
+      ],
+      "name" : "device_block_store_lifecycle",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 130,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_checkpoint_compatibility",
+        "/home/shiroakane/ARCH/build-ci/cpu/checkpoint-compatibility-data"
+      ],
+      "name" : "checkpoint_compatibility",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 133,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/tabular_eos_regression",
+        "/home/shiroakane/ARCH/build-ci/cpu/tabular-eos-test-data"
+      ],
+      "name" : "tabular_eos_ideal_gas",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 136,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_native_tabular",
+        "/home/shiroakane/ARCH/build-ci/cpu/native-tabular-test-data"
+      ],
+      "name" : "native_tabular_eos",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 139,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/arch_tabular_completion",
+        "/home/shiroakane/ARCH/build-ci/cpu/component-completion-test-data",
+        "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat"
+      ],
+      "name" : "tabular_component_completion",
+      "properties" : 
+      [
+        {
+          "name" : "FIXTURES_SETUP",
+          "value" : 
+          [
+            "tabular_completion_tables"
+          ]
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    },
+    {
+      "backtrace" : 142,
+      "command" : 
+      [
+        "/home/shiroakane/ARCH/build-ci/cpu/sparse_klu_regression"
+      ],
+      "name" : "sparse_klu_161_equations",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/shiroakane/ARCH/build-ci/cpu"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

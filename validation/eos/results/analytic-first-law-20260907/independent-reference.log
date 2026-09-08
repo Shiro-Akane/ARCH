@@ -1,0 +1,174 @@
+{
+  "binary64_grid_derivatives": {
+    "cv_temperature": "0x1.0663b45860b72p-3",
+    "cv_y": "0x1.cb9e0216a02e8p+26",
+    "cv_z": "0x1.23e68b82755dep+24",
+    "energy_y": "0x1.8e5eb3283f5fep+53",
+    "energy_yy": "-0x1.aa1f06fe40193p+52",
+    "energy_yz": "0x1.65f11a5ab0b90p+52",
+    "energy_z": "0x1.15bd4ad5415f6p+57",
+    "energy_zz": "0x1.f77e441709256p+56",
+    "pressure_density": "0x1.b448c35df18afp+55",
+    "pressure_temperature": "0x1.479b66b8a1053p+45"
+  },
+  "derivatives": {
+    "cv_temperature": "0x1.0663b45861553p-3",
+    "cv_y": "0x1.cb9e0216a02e8p+26",
+    "cv_z": "0x1.23e68b82755dep+24",
+    "energy_y": "0x1.8e5eb3283f5fep+53",
+    "energy_yy": "-0x1.aa1f06fe40193p+52",
+    "energy_yz": "0x1.65f11a5ab0b90p+52",
+    "energy_z": "0x1.15bd4ad5415f5p+57",
+    "energy_zz": "0x1.f77e441709355p+56",
+    "pressure_density": "0x1.b448c35df197ap+55",
+    "pressure_temperature": "0x1.479b66b8a1053p+45"
+  },
+  "isentrope": {
+    "pressure": "0x1.16a27c29d839fp+75",
+    "rho": "0x1.e897ef7879665p+19",
+    "sound_speed": "0x1.e37509236a39bp+27",
+    "temperature": "0x1.7d9f696be747fp+26"
+  },
+  "lower_bound_P": "0x1.265fc90c16d69p-3",
+  "oracle": "monomial endpoint fit; mpmath 60/80 digits",
+  "probe": [
+    "0x1.6666666666666p+0",
+    "0x1.11dd49d27b7b9p+26",
+    "0x1.165b39cd39317p+75",
+    "0x1.de090cf0d3a24p+55",
+    "0x1.7d78400000000p+26",
+    "0x1.165b39cd39317p+75",
+    "0x1.e35fdb06be6ccp+27",
+    "0x1.114a967071b91p+55",
+    "0x1.323ca8d59ba93p+19",
+    "0x1.c7e3d99b5b946p+75",
+    "0x1.165b39cd39317p+75",
+    "0x1.de090cf0d3a24p+55",
+    "0x1.11dd49d27b7b9p+26",
+    "0x1.e35fdb06be6ccp+27",
+    "0x1.b448c35df197ap+55",
+    "0x1.479b66b8a1053p+45",
+    "0x1.fdc71382b3e0bp+74",
+    "0x1.300a5854b919fp+98",
+    "0x1.2f0e543b5127ap+4"
+  ],
+  "state": {
+    "E": "0x1.de090cf0d3a24p+55",
+    "P": "0x1.165b39cd39317p+75",
+    "cv": "0x1.11dd49d27b7b9p+26",
+    "dp_dT": "0x1.479b66b8a1053p+45",
+    "dp_drho": "0x1.b448c35df197ap+55",
+    "eta": "0x1.2f0e543b5127ap+4",
+    "pele": "0x1.fdc71382b3e0bp+74",
+    "sound_speed": "0x1.e35fdb06be6ccp+27",
+    "xne": "0x1.300a5854b919fp+98"
+  },
+  "table_sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+  "upper_bound_P": "0x1.a4f566773ceb4p+125",
+  "witnesses": [
+    {
+      "E": "0x1.798aae83b1da9p+60",
+      "P": "0x1.0dbe9ee0ea344p+89",
+      "T": "0x1.e848000000000p+19",
+      "binary64_grid_derivatives": {
+        "cv_temperature": "-0x1.c0300f837c1dcp+4",
+        "cv_y": "0x1.9698a44da62c4p+27",
+        "cv_z": "0x1.561cd876add0dp+26",
+        "energy_y": "0x1.fa082ffe64abfp+53",
+        "energy_yy": "-0x1.dc2a3bf080341p+55",
+        "energy_yz": "0x1.8ffa8444e6922p+55",
+        "energy_z": "0x1.a07e1b9794348p+61",
+        "energy_zz": "0x1.e72924b4cdad4p+60",
+        "pressure_density": "0x1.84996d3c6d6a1p+59",
+        "pressure_temperature": "0x1.ccc4533597f0fp+55"
+      },
+      "cv": "0x1.0afc804b0ff72p+27",
+      "derivatives": {
+        "cv_temperature": "-0x1.c0300f837c1e6p+4",
+        "cv_y": "0x1.9698a44da62c4p+27",
+        "cv_z": "0x1.561cd876add0dp+26",
+        "energy_y": "0x1.fa082ffe64abfp+53",
+        "energy_yy": "-0x1.dc2a3bf080341p+55",
+        "energy_yz": "0x1.8ffa8444e6922p+55",
+        "energy_z": "0x1.a07e1b9794348p+61",
+        "energy_zz": "0x1.e72924b4cdb04p+60",
+        "pressure_density": "0x1.84996d3c6d6c7p+59",
+        "pressure_temperature": "0x1.ccc4533597f0fp+55"
+      },
+      "eta": "0x1.63f1d29066a4fp+15",
+      "pele": "0x1.0f4cb6de06f98p+89",
+      "rho": "0x1.dcd6500000000p+29",
+      "xne": "0x1.28ea1a42bcc35p+108"
+    },
+    {
+      "E": "0x1.7b3b182f36353p+60",
+      "P": "0x1.0f89c477d6b1ep+89",
+      "T": "0x1.7d78400000000p+26",
+      "binary64_grid_derivatives": {
+        "cv_temperature": "-0x1.fc3c9fe08a4fbp-5",
+        "cv_y": "0x1.dd2aed73b795ep+26",
+        "cv_z": "0x1.708b4f3d0d7a4p+24",
+        "energy_y": "0x1.bb274c72cf8a5p+54",
+        "energy_yy": "-0x1.f983822ed9ae2p+55",
+        "energy_yz": "0x1.a8a1aacb31bb4p+55",
+        "energy_z": "0x1.a0dc8f11b740dp+61",
+        "energy_zz": "0x1.e6bd5494cbd27p+60",
+        "pressure_density": "0x1.8692aaf086d8bp+59",
+        "pressure_temperature": "0x1.21bf085513b52p+55"
+      },
+      "cv": "0x1.02795a5a8d4a6p+26",
+      "derivatives": {
+        "cv_temperature": "-0x1.fc3c9fe08a260p-5",
+        "cv_y": "0x1.dd2aed73b795ep+26",
+        "cv_z": "0x1.708b4f3d0d7a4p+24",
+        "energy_y": "0x1.bb274c72cf8a5p+54",
+        "energy_yy": "-0x1.f983822ed9ae2p+55",
+        "energy_yz": "0x1.a8a1aacb31bb4p+55",
+        "energy_z": "0x1.a0dc8f11b740dp+61",
+        "energy_zz": "0x1.e6bd5494cbd58p+60",
+        "pressure_density": "0x1.8692aaf086db0p+59",
+        "pressure_temperature": "0x1.21bf085513b52p+55"
+      },
+      "eta": "0x1.c79a494e23ed0p+8",
+      "pele": "0x1.0f4e84e1dc666p+89",
+      "rho": "0x1.dcd6500000000p+29",
+      "xne": "0x1.28ea1a42bcc35p+108"
+    },
+    {
+      "E": "0x1.c2cefe7c1ecf2p+92",
+      "P": "0x1.21b001d82de89p+71",
+      "T": "0x1.dcd6500000000p+29",
+      "binary64_grid_derivatives": {
+        "cv_temperature": "0x1.154c99771f14fp+37",
+        "cv_y": "0x1.dbc1e2ba9ce14p+26",
+        "cv_z": "-0x1.1b89ae501ce38p+42",
+        "energy_y": "0x1.bb156569577fap+56",
+        "energy_yy": "-0x1.e604c21d3b302p+31",
+        "energy_yz": "0x1.98416fdb1d3cep+31",
+        "energy_z": "0x1.9585503ad30c9p+84",
+        "energy_zz": "-0x1.868671f045ab8p+91",
+        "pressure_density": "-0x1.c48a935380e57p+72",
+        "pressure_temperature": "0x1.4afcdb7c0f018p+43"
+      },
+      "cv": "0x1.11b149c92a6ffp+65",
+      "derivatives": {
+        "cv_temperature": "0x1.154c99771f05ep+37",
+        "cv_y": "0x1.dbc1e2ba9ce14p+26",
+        "cv_z": "-0x1.1b89ae52bf2b0p+42",
+        "energy_y": "0x1.bb156569577fap+56",
+        "energy_yy": "-0x1.e604c21d3b302p+31",
+        "energy_yz": "0x1.98416fdb1d3cep+31",
+        "energy_z": "0x1.9585503ad3043p+84",
+        "energy_zz": "-0x1.868671f0459f5p+91",
+        "pressure_density": "-0x1.c48a93598a9fep+72",
+        "pressure_temperature": "0x1.4afcdb7c0f018p+43"
+      },
+      "eta": "-0x1.7b834f0c26005p+2",
+      "pele": "0x1.042e9d6acda1ap+67",
+      "rho": "0x1.0c6f7a0b5ed8dp-20",
+      "xne": "0x1.4e4bc4754ccdcp+58"
+    }
+  ]
+}
+MEMORY_GUARD_RESULT min_available_kib=4683244 baseline_swap_kib=85320 peak_swap_kib=85320 guard_stopped=False peak_owned_rss_kib=100100 elapsed_seconds=5.031 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=7.595 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=6 complete=True

@@ -1,0 +1,16 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build-ci/cuda-focused
+Test project /home/shiroakane/ARCH/build-ci/cuda-focused
+    Start  42: generated_nse_device
+1/5 Test  #42: generated_nse_device .............   Passed    0.73 sec
+    Start  43: native_tabular_device
+2/5 Test  #43: native_tabular_device ............   Passed    0.62 sec
+    Start 100: tabular_component_completion
+3/5 Test #100: tabular_component_completion .....   Passed    8.03 sec
+    Start  44: tabular_completion_device
+4/5 Test  #44: tabular_completion_device ........   Passed    3.02 sec
+    Start  53: network_nse_device
+5/5 Test  #53: network_nse_device ...............   Passed    0.94 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Total Test time (real) =  13.35 sec

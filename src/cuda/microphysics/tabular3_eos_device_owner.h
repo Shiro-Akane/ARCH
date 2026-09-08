@@ -44,7 +44,10 @@ private:
     Tabular3DEOSView device_view_{};
     std::array<double *, 6> device_{};
     std::array<double *, tabular_eos::FieldCount> device_free_energy_{};
+    // Native axes, source pressure-energy derivative and valid-node mask.
+    std::array<double *, 5> device_native_{};
     std::array<std::vector<double>, 6> staging_{};
+    std::array<std::vector<double>, 5> staging_native_{};
     std::array<std::vector<double>, tabular_eos::FieldCount>
         staging_free_energy_{};
 };

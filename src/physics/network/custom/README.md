@@ -115,8 +115,8 @@ signed energy-source gradient. The generator removes only literal
 in the structural pattern so KLU refactorization is safe. It derives the
 declared symbolic Jacobian structure from those writes, not by sampling
 numerical nonzeros, and rejects unrecognized write indices instead of silently
-omitting structure. Generated packages
-set `SUPPORTS_NSE=false` for the Timmes NSE projection. Production
+omitting structure. Generated packages declare NSE eligibility from their
+nuclear data and reaction invariants as described below. Production
 qualification for each generated network covers its RHS/Jacobian, tolerances,
 conservation, energy, and trajectory behavior. Pynucastro is a generation-time
 dependency only. Focused device math/solver smoke checks do not qualify a full
@@ -130,3 +130,54 @@ CPU functions borrow host data; CUDA storage managers upload read-only tables
 once and retain them across grid-storage changes. No second interpolator or ODE is maintained.
 Independent scientific weak trajectories and final application qualification
 remain required; focused math/factory controls do not close those gates.
+
+## Generated-network NSE eligibility
+
+The generator reports an NSE eligibility reason during `--check` and writes
+the same decision to the package manifest. A network is eligible when all
+nuclear masses, binding energies and experimentally reliable ground-state spin
+weights are available; every strong ReacLib rate has a matching
+`pynucastro.DerivedRate` reverse of the recognized upstream type; screening and
+weak reactions are absent; and the exact stoichiometric conservation space
+contains only independent baryon-number and charge constraints. Alpha-only
+sets have one independent constraint, while general isotope sets have two.
+Disconnected or incompletely linked isotope sets can conserve additional
+quantities and are not automatically suitable for NSE.
+Rate subclasses that can replace emitted mathematical expressions remain
+eligible for ordinary supported burning but do not inherit this NSE certificate.
+
+The supported thermal model uses `DerivedRate(forward, use_pf=False)` and
+`SimpleCxxNetwork(..., do_screening=False)`. This is an explicit ground-state
+approximation chosen in the recipe. ARCH does not change existing rates,
+screening or partition functions when detecting eligibility. The ordinary
+`WITH_REVERSE=True` ReacLib selection includes library inverse rates but does
+not certify thermodynamic detailed balance. See the small
+[ground-state example](../../../../validation/network/inputs/nse_light.py)
+for a recipe with paired forward and derived reverse rates.
+
+Nuclear data and the NSE prefactor constants come from the same installed
+pynucastro package that produces the rates. The manifest retains available
+partition-function nodes and their interpolation convention as provenance.
+Temperature-dependent nuclear partition functions, screened equilibrium and
+weak evolution require additional thermodynamic closures; such networks
+retain their ordinary burning route and report an explicit NSE rejection
+reason. Missing partition data are never replaced by a claimed physical
+partition model. The supported ground-state recipe intentionally does not
+consume thermal partition functions.
+
+Generated packages carrying the NSE metadata contract are checked by CMake
+against the declared species order, constraint rank, physical assumptions and
+class eligibility. Existing packages without this metadata remain usable for
+their ordinary CPU/device routes. Regenerate them explicitly to evaluate NSE
+eligibility; regeneration does not change or automatically qualify their physics.
+An eligibility pass establishes an interface and algebraic contract. It does
+not independently qualify equilibrium abundances, full trajectories or
+large-network performance for an astrophysical problem.
+
+Choose `use_nse=auto` to use NSE when the selected network is eligible and
+ordinary ODE burning when it is not. Explicit `use_nse=true` requires eligibility
+and rejects an incompatible network during startup; `false` disables NSE.
+Both `auto` and `true` use the same `nseTempThreshold` and `nseDensThreshold`
+to activate projection in a cell. Nuclear-data or model-domain checks are
+validity conditions, not another adjustable activation threshold. A generation
+certificate does not expand a model's physical temperature or density range.

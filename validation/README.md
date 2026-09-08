@@ -127,7 +127,7 @@ metrics are sufficient to reproduce the decision.
 
 Each case has one effective result set. Rerun in a temporary working directory,
 then update the existing result, summary and dependent index together after
-checking their identities. Do not accumulate V1/V2 copies or relabel an earlier
+checking their identities. Do not accumulate numbered copies or relabel an earlier
 run as a new execution. Keep required reference data and failure controls under
 their stated test ownership; superseded working outputs do not belong in the
 published validation directory.
@@ -178,11 +178,14 @@ itself publish the source or confirm third-party redistribution permission.
 
 ## Follow-up workloads and table formats
 
-ARCH's tabular EOS supports the normalized 3D/4D HDF5 layouts in the
-[tabular data contract](../src/physics/eos/TabularEOS.md). Converting native
-nuclear-matter tables, such as Shen, is a separate future extension: each table
-family needs documented units, energy zero, component scope and valid domains.
-The historical source-table assessment is linked from [EOS validation](eos/README.md).
+ARCH's [tabular data contract](../src/physics/eos/TabularEOS.md) includes
+normalized 3D/4D HDF5, native EOSDriver total tables and the shared
+finite-temperature baryon ASCII format used by EOS2/EOS4. Declared missing
+electron/positron and photon components are assembled during loading. These
+extensions have their own [bounded EOS checks](eos/README.md), not the source
+identity or full coupled-application qualification of the frozen results above.
+Other source families still need explicit units, energy references, component
+scope and valid domains; there is no safe universal numerical-data inference.
 
 Complete large-network trajectories and scaling measurements are scheduled for
 machines sized for those workloads. They remain separate from the release

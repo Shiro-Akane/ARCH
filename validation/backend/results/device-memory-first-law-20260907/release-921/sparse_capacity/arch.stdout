@@ -1,0 +1,116 @@
+CUDSS_MEMORY rows=16384 nonzeros=49150 factor_and_equilibration_estimated_peak_bytes=181270500
+cuDSS N=16384: solve/reuse/refactor and negative contracts passed
+Generating '/tmp/nsys-report-7efa.qdstrm'
+
+[1/2] [0%                          ] sparse_capacity.nsys-rep
+[1/2] [0%                          ] sparse_capacity.nsys-rep
+[1/2] [6%                          ] sparse_capacity.nsys-rep
+[1/2] [=====================87%    ] sparse_capacity.nsys-rep
+[1/2] [========================100%] sparse_capacity.nsys-rep
+[1/2] [========================100%] sparse_capacity.nsys-rep
+
+[2/2] [0%                          ] sparse_capacity.sqlite
+[2/2] [1%                          ] sparse_capacity.sqlite
+[2/2] [2%                          ] sparse_capacity.sqlite
+[2/2] [3%                          ] sparse_capacity.sqlite
+[2/2] [4%                          ] sparse_capacity.sqlite
+[2/2] [5%                          ] sparse_capacity.sqlite
+[2/2] [6%                          ] sparse_capacity.sqlite
+[2/2] [7%                          ] sparse_capacity.sqlite
+[2/2] [8%                          ] sparse_capacity.sqlite
+[2/2] [9%                          ] sparse_capacity.sqlite
+[2/2] [10%                         ] sparse_capacity.sqlite
+[2/2] [11%                         ] sparse_capacity.sqlite
+[2/2] [12%                         ] sparse_capacity.sqlite
+[2/2] [13%                         ] sparse_capacity.sqlite
+[2/2] [14%                         ] sparse_capacity.sqlite
+[2/2] [=15%                        ] sparse_capacity.sqlite
+[2/2] [=16%                        ] sparse_capacity.sqlite
+[2/2] [=17%                        ] sparse_capacity.sqlite
+[2/2] [==18%                       ] sparse_capacity.sqlite
+[2/2] [==19%                       ] sparse_capacity.sqlite
+[2/2] [==20%                       ] sparse_capacity.sqlite
+[2/2] [==21%                       ] sparse_capacity.sqlite
+[2/2] [===22%                      ] sparse_capacity.sqlite
+[2/2] [===23%                      ] sparse_capacity.sqlite
+[2/2] [===24%                      ] sparse_capacity.sqlite
+[2/2] [====25%                     ] sparse_capacity.sqlite
+[2/2] [====26%                     ] sparse_capacity.sqlite
+[2/2] [====27%                     ] sparse_capacity.sqlite
+[2/2] [====28%                     ] sparse_capacity.sqlite
+[2/2] [=====29%                    ] sparse_capacity.sqlite
+[2/2] [=====30%                    ] sparse_capacity.sqlite
+[2/2] [=====31%                    ] sparse_capacity.sqlite
+[2/2] [=====32%                    ] sparse_capacity.sqlite
+[2/2] [======33%                   ] sparse_capacity.sqlite
+[2/2] [======34%                   ] sparse_capacity.sqlite
+[2/2] [======35%                   ] sparse_capacity.sqlite
+[2/2] [=======36%                  ] sparse_capacity.sqlite
+[2/2] [=======37%                  ] sparse_capacity.sqlite
+[2/2] [=======38%                  ] sparse_capacity.sqlite
+[2/2] [=======39%                  ] sparse_capacity.sqlite
+[2/2] [========40%                 ] sparse_capacity.sqlite
+[2/2] [========41%                 ] sparse_capacity.sqlite
+[2/2] [========42%                 ] sparse_capacity.sqlite
+[2/2] [=========43%                ] sparse_capacity.sqlite
+[2/2] [=========44%                ] sparse_capacity.sqlite
+[2/2] [=========45%                ] sparse_capacity.sqlite
+[2/2] [=========46%                ] sparse_capacity.sqlite
+[2/2] [==========47%               ] sparse_capacity.sqlite
+[2/2] [==========48%               ] sparse_capacity.sqlite
+[2/2] [==========49%               ] sparse_capacity.sqlite
+[2/2] [===========50%              ] sparse_capacity.sqlite
+[2/2] [===========51%              ] sparse_capacity.sqlite
+[2/2] [===========52%              ] sparse_capacity.sqlite
+[2/2] [===========53%              ] sparse_capacity.sqlite
+[2/2] [============54%             ] sparse_capacity.sqlite
+[2/2] [============55%             ] sparse_capacity.sqlite
+[2/2] [============56%             ] sparse_capacity.sqlite
+[2/2] [============57%             ] sparse_capacity.sqlite
+[2/2] [=============58%            ] sparse_capacity.sqlite
+[2/2] [=============59%            ] sparse_capacity.sqlite
+[2/2] [=============60%            ] sparse_capacity.sqlite
+[2/2] [==============61%           ] sparse_capacity.sqlite
+[2/2] [==============62%           ] sparse_capacity.sqlite
+[2/2] [==============63%           ] sparse_capacity.sqlite
+[2/2] [==============64%           ] sparse_capacity.sqlite
+[2/2] [===============65%          ] sparse_capacity.sqlite
+[2/2] [===============66%          ] sparse_capacity.sqlite
+[2/2] [===============67%          ] sparse_capacity.sqlite
+[2/2] [================68%         ] sparse_capacity.sqlite
+[2/2] [================69%         ] sparse_capacity.sqlite
+[2/2] [================70%         ] sparse_capacity.sqlite
+[2/2] [================71%         ] sparse_capacity.sqlite
+[2/2] [=================72%        ] sparse_capacity.sqlite
+[2/2] [=================73%        ] sparse_capacity.sqlite
+[2/2] [=================74%        ] sparse_capacity.sqlite
+[2/2] [==================75%       ] sparse_capacity.sqlite
+[2/2] [==================76%       ] sparse_capacity.sqlite
+[2/2] [==================77%       ] sparse_capacity.sqlite
+[2/2] [==================78%       ] sparse_capacity.sqlite
+[2/2] [===================79%      ] sparse_capacity.sqlite
+[2/2] [===================80%      ] sparse_capacity.sqlite
+[2/2] [===================81%      ] sparse_capacity.sqlite
+[2/2] [===================82%      ] sparse_capacity.sqlite
+[2/2] [====================83%     ] sparse_capacity.sqlite
+[2/2] [====================84%     ] sparse_capacity.sqlite
+[2/2] [====================85%     ] sparse_capacity.sqlite
+[2/2] [=====================86%    ] sparse_capacity.sqlite
+[2/2] [=====================87%    ] sparse_capacity.sqlite
+[2/2] [=====================88%    ] sparse_capacity.sqlite
+[2/2] [=====================89%    ] sparse_capacity.sqlite
+[2/2] [======================90%   ] sparse_capacity.sqlite
+[2/2] [======================91%   ] sparse_capacity.sqlite
+[2/2] [======================92%   ] sparse_capacity.sqlite
+[2/2] [=======================93%  ] sparse_capacity.sqlite
+[2/2] [=======================94%  ] sparse_capacity.sqlite
+[2/2] [=======================95%  ] sparse_capacity.sqlite
+[2/2] [=======================96%  ] sparse_capacity.sqlite
+[2/2] [========================97% ] sparse_capacity.sqlite
+[2/2] [========================98% ] sparse_capacity.sqlite
+[2/2] [========================99% ] sparse_capacity.sqlite
+[2/2] [========================100%] sparse_capacity.sqlite
+[2/2] [========================100%] sparse_capacity.sqlite
+Generated:
+    /home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-j266po2q/sparse_capacity.nsys-rep
+    /home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-j266po2q/sparse_capacity.sqlite

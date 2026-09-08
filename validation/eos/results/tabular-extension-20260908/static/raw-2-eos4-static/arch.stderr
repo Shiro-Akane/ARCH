@@ -1,0 +1,2 @@
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions

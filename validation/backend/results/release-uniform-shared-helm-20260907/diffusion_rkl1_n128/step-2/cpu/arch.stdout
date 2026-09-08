@@ -1,0 +1,35 @@
+[Info] Loaded 58 parameters from /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2.par
+[Main] Problem created: DiffusionMode
+[Problem] Diffusion cosine mode: X=0.5+0.25 cos(2*pi*1*x/L)
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 2
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 16 | Finest Level: 0
+    Level 0   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+           -> Diffusion Solver Initialized: RKL1 (CFL_diff = 0.8)
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2_chk_0000.h5 at step 0 with 8 AMR leaves.
+Step    Time           dt             dt_hydro       dt_diff        
+--------------------------------------------------------------------
+[Diffusion] multi-block AMR uses composite RKL1 STS with stage ghost synchronization and reflux.
+1       2.64111e-03    2.64111e-03    2.64111e-03    3.05176e-03    
+2       5.28221e-03    2.64111e-03    2.64111e-03    3.05176e-03    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2_HLLC_plt_0001.h5 at t=5.28221e-03
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/release-uniform-shared-helm-20260907/diffusion_rkl1_n128/step-2/cpu/diffusion_rkl1_n128_cpu_s2_chk_0001.h5 at step 2 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 2 | Final Time: 5.28221e-03

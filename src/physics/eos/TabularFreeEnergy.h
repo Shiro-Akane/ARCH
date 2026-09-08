@@ -55,7 +55,11 @@ enum class FreeEnergyStatus : int {
     invalid_pressure_or_energy,
     invalid_heat_capacity,
     invalid_derivatives,
-    invalid_sound_speed
+    invalid_sound_speed,
+    invalid_native_domain,
+    invalid_native_cell,
+    invalid_temperature_inversion,
+    ambiguous_temperature_inversion
 };
 
 struct FreeEnergyResult {
@@ -210,6 +214,54 @@ ARCH_INLINE FreeEnergyState blend(const FreeEnergyState& lower,
     return out;
 }
 
+// Coefficients in normalized log-temperature for the very same Hermite
+// surface. Root isolation uses these, never a fitted temperature sample grid.
+using ThermalPolynomial = std::array<double, 6>;
+
+ARCH_INLINE ThermalPolynomial thermal_polynomial(
+    const std::array<const double*, FieldCount>& fields,
+    const std::array<std::size_t, 4>& corners,
+    double tx, double hx, double hy, int density_derivative = 0)
+{
+    ThermalPolynomial coefficients{};
+    const double background = fields[F][corners[0]];
+    for (int degree = 0; degree <= 5; ++degree) {
+        arch::math::CompensatedSum value;
+        if (degree == 0 && density_derivative == 0) value.add(background);
+        for (int ex = 0; ex < 2; ++ex) {
+            for (int ey = 0; ey < 2; ++ey) {
+                for (int dx = 0; dx <= 2; ++dx) {
+                    const double bx = scaled_basis(ex, dx, density_derivative, tx, hx);
+                    double scale = 1.0;
+                    for (int dy = 0; dy <= 2; ++dy) {
+                        const double datum = fields[field_for_orders(dx, dy)][corners[2 * ex + ey]]
+                            - ((dx == 0 && dy == 0) ? background : 0.0);
+                        value.add_product(bx * scale * quintic_coefficient(ey, dy, degree), datum);
+                        scale *= hy;
+                    }
+                }
+            }
+        }
+        coefficients[degree] = value.value();
+    }
+    return coefficients;
+}
+
+ARCH_INLINE ThermalPolynomial blend(const ThermalPolynomial& lower,
+                                    const ThermalPolynomial& upper, double fraction)
+{
+    ThermalPolynomial out{};
+    for (int k = 0; k < 6; ++k) out[k] = lower[k] + fraction * (upper[k] - lower[k]);
+    return out;
+}
+
+ARCH_INLINE double specific_energy(const FreeEnergyState& f, double energy_shift = 0.0)
+{
+    double energy = f.a - f.ay;
+    if (energy_shift != 0.0) energy += energy_shift;
+    return energy;
+}
+
 /**
  * Recover thermodynamics at fixed composition from the same potential:
  * P=rho*a_x, e=a-a_y, cv=(a_y-a_yy)/T. With P_e=(dP/de)_rho and
@@ -219,12 +271,13 @@ ARCH_INLINE FreeEnergyState blend(const FreeEnergyState& lower,
  * failure status rather than constructing an independent fallback.
  */
 ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
-    const FreeEnergyState& f, double rho, double temperature)
+    const FreeEnergyState& f, double rho, double temperature,
+    double energy_shift = 0.0)
 {
     FreeEnergyResult result{};
     ThermodynamicState& state = result.state;
     state.pressure = rho * f.ax;
-    state.energy = f.a - f.ay;
+    state.energy = specific_energy(f, energy_shift);
     if (!(state.pressure > 0.0) || !std::isfinite(state.pressure) ||
         !(state.energy > 0.0) || !std::isfinite(state.energy)) {
         return free_energy_failure(
@@ -276,6 +329,14 @@ inline ThermodynamicState require_thermodynamics(const FreeEnergyResult& result)
     case FreeEnergyStatus::invalid_sound_speed:
         throw std::runtime_error(
             "Tabular EOS free energy produced non-positive sound speed squared");
+    case FreeEnergyStatus::invalid_native_domain:
+        throw std::runtime_error("Native tabular EOS query is outside its finite declared domain");
+    case FreeEnergyStatus::invalid_native_cell:
+        throw std::runtime_error("Native tabular EOS query touches an invalid thermodynamic cell");
+    case FreeEnergyStatus::invalid_temperature_inversion:
+        throw std::runtime_error("Native tabular EOS has no valid temperature inverse");
+    case FreeEnergyStatus::ambiguous_temperature_inversion:
+        throw std::runtime_error("Native tabular EOS has multiple valid temperature roots");
     }
     throw std::runtime_error("Tabular EOS free energy produced an unknown error");
 }
@@ -306,17 +367,24 @@ inline ThermodynamicState to_thermodynamics(const FreeEnergyState& f,
     return require_thermodynamics(evaluate_thermodynamics(f, rho, temperature));
 }
 
+// Shared support for the five-point derivative and its validity propagation.
+inline int derivative_stencil_begin(int index, int count)
+{
+    return index < 2 ? 0 : (index > count - 3 ? count - 5 : index - 2);
+}
+
 inline double derivative_sample(const std::vector<double>& input,
                                 std::size_t base, std::size_t stride,
                                 int index, int count, double spacing)
 {
-    auto at = [&](int i) -> double {
-        return input[base + static_cast<std::size_t>(i) * stride];
-    };
     if (count < 5) {
         throw std::runtime_error(
             "Free-energy tables require at least five rho and temperature points");
     }
+    const int first = derivative_stencil_begin(index, count);
+    auto at = [&](int i) -> double {
+        return input[base + static_cast<std::size_t>(first + i) * stride];
+    };
     if (index == 0) {
         return (-25.0 * at(0) + 48.0 * at(1) - 36.0 * at(2) +
                 16.0 * at(3) - 3.0 * at(4)) / (12.0 * spacing);
@@ -326,17 +394,17 @@ inline double derivative_sample(const std::vector<double>& input,
                 6.0 * at(3) + at(4)) / (12.0 * spacing);
     }
     if (index == count - 2) {
-        return (3.0 * at(count - 1) + 10.0 * at(count - 2) -
-                18.0 * at(count - 3) + 6.0 * at(count - 4) -
-                at(count - 5)) / (12.0 * spacing);
+        return (3.0 * at(4) + 10.0 * at(3) -
+                18.0 * at(2) + 6.0 * at(1) -
+                at(0)) / (12.0 * spacing);
     }
     if (index == count - 1) {
-        return (25.0 * at(count - 1) - 48.0 * at(count - 2) +
-                36.0 * at(count - 3) - 16.0 * at(count - 4) +
-                3.0 * at(count - 5)) / (12.0 * spacing);
+        return (25.0 * at(4) - 48.0 * at(3) +
+                36.0 * at(2) - 16.0 * at(1) +
+                3.0 * at(0)) / (12.0 * spacing);
     }
-    return (-at(index + 2) + 8.0 * at(index + 1) -
-            8.0 * at(index - 1) + at(index - 2)) /
+    return (-at(4) + 8.0 * at(3) -
+            8.0 * at(1) + at(0)) /
            (12.0 * spacing);
 }
 
@@ -379,14 +447,19 @@ inline std::vector<double> differentiate(
 inline std::array<std::vector<double>, FieldCount>
 build_derivative_fields(const std::vector<double>& free_energy,
                         int n_rho, int n_temperature, int n_composition,
-                        double d_ln_rho, double d_ln_temperature)
+                        double d_ln_rho, double d_ln_temperature,
+                        const std::vector<double>* density_derivative = nullptr,
+                        const std::vector<double>* temperature_derivative = nullptr)
 {
+    if ((density_derivative && density_derivative->size() != free_energy.size()) ||
+        (temperature_derivative && temperature_derivative->size() != free_energy.size()))
+        throw std::runtime_error("Free-energy derivative seed extent does not match the potential");
     std::array<std::vector<double>, FieldCount> fields;
     fields[F] = free_energy;
-    fields[Fx] = differentiate(fields[F], n_rho, n_temperature,
-                               n_composition, true, d_ln_rho);
-    fields[Fy] = differentiate(fields[F], n_rho, n_temperature,
-                               n_composition, false, d_ln_temperature);
+    fields[Fx] = density_derivative ? *density_derivative :
+        differentiate(fields[F], n_rho, n_temperature, n_composition, true, d_ln_rho);
+    fields[Fy] = temperature_derivative ? *temperature_derivative :
+        differentiate(fields[F], n_rho, n_temperature, n_composition, false, d_ln_temperature);
     fields[Fxx] = differentiate(fields[Fx], n_rho, n_temperature,
                                 n_composition, true, d_ln_rho);
     fields[Fxy] = differentiate(fields[Fx], n_rho, n_temperature,

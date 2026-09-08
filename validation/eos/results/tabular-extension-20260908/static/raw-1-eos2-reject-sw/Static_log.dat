@@ -1,0 +1,18 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/build-ci/reports/baryon-static-final/raw-1-eos2-reject-sw/Static_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/build-ci/reports/baryon-static-final/raw-1-eos2-reject-sw/static.par
+[Main] Problem created: CellularDet
+[EOS Dispatch] Resolving EOS Policy: tabular
+[HelmEos] Loading 2D Helmholtz table from /home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Tabular EOS] Completing missing components: electrons/positrons=1, photons=1; 29211 source nodes outside component support. Affected derivative stencils are excluded, never extrapolated.
+[Tabular3DEOS] Loaded baryon source and completed a single free-energy potential; 75126 source/component derivative stencils excluded. Constant energy reference=4.7494e+18 erg/g.
+[Problem] Cellular Detonation Setup Complete.
+          Shock Dir  : 0 (0=X, 1=Y, 2=Z)
+          Spike Dist : 5e+07
+          Amb Press  : 7.39508e+27 erg/cm^3
+          VN Press   : 7.39508e+27 erg/cm^3
+[Main] Configuration:
+       Grid: 16 cells, CFL: 0.25
+       Solver: SW
+       Species Count: 19
+[Dispatch] Initializing System...

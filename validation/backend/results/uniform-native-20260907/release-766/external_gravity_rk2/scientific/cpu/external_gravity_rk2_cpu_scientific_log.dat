@@ -1,0 +1,49 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/external_gravity_rk2/scientific/cpu/external_gravity_rk2_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/external_gravity_rk2/scientific/cpu/external_gravity_rk2_cpu_scientific.par
+[Main] Problem created: ExternalGravity
+[Problem] Uniform external-gravity state: rho=1, p=1, u0=0, gx=1
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 16 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: external | g = (1, 0, 0)
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/external_gravity_rk2/scientific/cpu/external_gravity_rk2_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/external_gravity_rk2/scientific/cpu/external_gravity_rk2_cpu_scientific_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       5.28221e-03    5.28221e-03    5.28221e-03    
+2       1.05410e-02    5.25874e-03    5.25874e-03    
+3       1.57765e-02    5.23557e-03    5.23557e-03    
+4       2.09892e-02    5.21271e-03    5.21271e-03    
+5       2.61794e-02    5.19015e-03    5.19015e-03    
+6       3.13473e-02    5.16787e-03    5.16787e-03    
+7       3.64931e-02    5.14588e-03    5.14588e-03    
+8       4.16173e-02    5.12417e-03    5.12417e-03    
+9       4.67200e-02    5.10274e-03    5.10274e-03    
+10      5.18016e-02    5.08157e-03    5.08157e-03    
+11      5.68623e-02    5.06066e-03    5.06066e-03    
+12      6.19023e-02    5.04000e-03    5.04000e-03    
+13      6.69219e-02    5.01960e-03    5.01960e-03    
+14      7.19213e-02    4.99945e-03    4.99945e-03    
+15      7.69009e-02    4.97953e-03    4.97953e-03    
+16      8.18607e-02    4.95986e-03    4.95986e-03    
+17      8.68011e-02    4.94041e-03    4.94041e-03    
+18      9.17223e-02    4.92119e-03    4.92119e-03    
+19      9.66245e-02    4.90220e-03    4.90220e-03    
+20      1.00000e-01    3.37548e-03    4.88342e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/external_gravity_rk2/scientific/cpu/external_gravity_rk2_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-native-20260907/release-766/external_gravity_rk2/scientific/cpu/external_gravity_rk2_cpu_scientific_chk_0001.h5 at step 20 with 4 AMR leaves.
+>>> Simulation Done. Total Steps: 20 | Final Time: 1.00000e-01

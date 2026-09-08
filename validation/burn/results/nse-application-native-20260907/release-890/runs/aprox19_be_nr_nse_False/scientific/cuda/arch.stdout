@@ -1,0 +1,32 @@
+[Info] Loaded 70 parameters from /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific.par
+[Main] Problem created: BurnOneZone
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Problem] Burn one-zone state: rho=1e+07, T=1e+10, p=6.71557e+25, network=aprox19
+[Main] Configuration:
+       Grid: 16 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 19
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 8 | Finest Level: 0
+    Level 0   | dx1(x): 6.25e+06
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific_chk_0000.h5 at step 0 with 1 AMR leaves.
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+1       1.00000e-16    1.00000e-16    8.32860e-04    5.00000e-17    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific_HLLC_plt_0001.h5 at t=1.00000e-16
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/burn/results/nse-application-native-20260907/release-890/runs/aprox19_be_nr_nse_False/scientific/cuda/aprox19_be_nr_nse_False_cuda_scientific_chk_0001.h5 at step 1 with 1 AMR leaves.
+>>> Simulation Done. Total Steps: 1 | Final Time: 1.00000e-16

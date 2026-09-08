@@ -1,0 +1,3 @@
+[RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+[Fatal Error] This EOS source already includes nuclear-equilibrium binding energy. Independent kinetic burning/NSE would double-count nuclear energy; use_burn must be false until a consistent coupled model is supplied.

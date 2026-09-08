@@ -205,19 +205,29 @@ example.
 These extensions are useful when an ideal gas or a built-in reaction network
 does not describe the intended problem. They are not needed for the first run.
 
-Tabular EOS configuration supplies the HDF5 path; rank selection is file-driven:
+Tabular EOS configuration supplies the source path; format and rank selection are file-driven:
 
 ~~~text
 eos_type = tabular
 eos_table_path = /path/to/model.h5
 ~~~
 
-`table_rank` inside the file selects the 3D or 4D policy. New EOS tables should
-store specific Helmholtz free energy and follow the
-[local HDF5 contract](src/physics/eos/TabularEOS.md); upstream Shen/LS/HS or
-CompOSE files require a family-specific converter to that contract. No external
-EOS converter is currently bundled; the real Shen source-table assessment is
-recorded in [validation/eos](validation/eos/README.md).
+Supported sources include normalized 3D/4D HDF5, EOSDriver total-EOS HDF5, and
+the positive-temperature baryon ASCII format used by the original Shen EOS2/EOS4
+main tables. A free-energy table can declare its included physical components.
+At loading, ARCH adds only missing electrons/positrons and photons, then both
+backends query the same completed potential. It does not add a second ion model
+or rewrite the source file. `eos_helm_table_path` optionally selects the electron
+table; its default is the existing Timmes `helm_table.dat`, read only when needed.
+
+Nuclear-equilibrium tables require `use_burn = false` to avoid counting nuclear
+binding energy twice. Unrecognized formats, including arbitrary CompOSE layouts,
+still need a documented adapter; readable data do not imply validity everywhere.
+The [table contract](src/physics/eos/TabularEOS.md) defines component declarations,
+fixed mass/energy references and strict valid domains. See
+[EOS validation](validation/eos/README.md) for the scientific limits and
+[table provenance](THIRD_PARTY_NOTICES.md#external-shen-eos-tables-and-eosdriver-compatible-formats)
+for original Shen data; processed HShen tables are not bundled.
 
 Use pynucastro 2.12.0 for the documented network-generation workflow. The
 [network validation guide](validation/network/README.md#reproduce-the-records)
@@ -251,8 +261,13 @@ package interface before registering a CUDA route. Both backends then use the
 same generated math header and declared Jacobian structure. For recognized
 embedded weak tables, each backend manages its own read-only storage while
 sharing the interpolation, derivatives and signed energy integration.
-CPU-only packages remain available for CPU execution. Generated networks do
-not support the Timmes NSE projection.
+CPU-only packages remain available for CPU execution. The generator also checks
+whether a package supports a network-consistent ground-state NSE model. With
+`use_nse = auto`, ARCH enables it only for a certified package; otherwise it
+retains kinetic integration. Explicit `true` requires that capability. Both
+modes use the same temperature/density thresholds. This does not project an
+arbitrary network onto a built-in Timmes species set; see the
+[NSE model limits](src/physics/nse/README.md).
 
 Linear-solver names are case-insensitive. `Auto` selects DenseLU for systems of
 up to 31 total ODE equations, counting species, temperature and any auxiliary

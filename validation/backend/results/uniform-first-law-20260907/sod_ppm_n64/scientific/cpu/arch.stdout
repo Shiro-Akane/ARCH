@@ -1,0 +1,99 @@
+[Info] Loaded 53 parameters from /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific.par
+[Main] Problem created: Sod
+[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 1
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 3 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 12 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK3 + HLLC + ppm (mc)
+>>> Simulation Started | Solver: SSPRK3 + HLLC + PPM (3rd Order) | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       5.28221e-03    5.28221e-03    5.28221e-03    
+2       8.70367e-03    3.42146e-03    3.42146e-03    
+3       1.18493e-02    3.14562e-03    3.14562e-03    
+4       1.48646e-02    3.01532e-03    3.01532e-03    
+5       1.78334e-02    2.96876e-03    2.96876e-03    
+6       2.08129e-02    2.97957e-03    2.97957e-03    
+7       2.38364e-02    3.02348e-03    3.02348e-03    
+8       2.68812e-02    3.04479e-03    3.04479e-03    
+9       2.98554e-02    2.97414e-03    2.97414e-03    
+10      3.27319e-02    2.87653e-03    2.87653e-03    
+11      3.55973e-02    2.86538e-03    2.86538e-03    
+12      3.84921e-02    2.89487e-03    2.89487e-03    
+13      4.13819e-02    2.88971e-03    2.88971e-03    
+14      4.42496e-02    2.86771e-03    2.86771e-03    
+15      4.71385e-02    2.88889e-03    2.88889e-03    
+16      5.00056e-02    2.86712e-03    2.86712e-03    
+17      5.28381e-02    2.83249e-03    2.83249e-03    
+18      5.56800e-02    2.84192e-03    2.84192e-03    
+19      5.85470e-02    2.86704e-03    2.86704e-03    
+20      6.13727e-02    2.82568e-03    2.82568e-03    
+21      6.42006e-02    2.82790e-03    2.82790e-03    
+22      6.70479e-02    2.84734e-03    2.84734e-03    
+23      6.98747e-02    2.82677e-03    2.82677e-03    
+24      7.26937e-02    2.81900e-03    2.81900e-03    
+25      7.55260e-02    2.83231e-03    2.83231e-03    
+26      7.83608e-02    2.83482e-03    2.83482e-03    
+27      8.11791e-02    2.81824e-03    2.81824e-03    
+28      8.40041e-02    2.82500e-03    2.82500e-03    
+29      8.68415e-02    2.83748e-03    2.83748e-03    
+30      8.96624e-02    2.82087e-03    2.82087e-03    
+31      9.24841e-02    2.82173e-03    2.82173e-03    
+32      9.53159e-02    2.83178e-03    2.83178e-03    
+33      9.81417e-02    2.82582e-03    2.82582e-03    
+34      1.00963e-01    2.82121e-03    2.82121e-03    
+35      1.03792e-01    2.82862e-03    2.82862e-03    
+36      1.06623e-01    2.83159e-03    2.83159e-03    
+37      1.09446e-01    2.82268e-03    2.82268e-03    
+38      1.12275e-01    2.82882e-03    2.82882e-03    
+39      1.15111e-01    2.83624e-03    2.83624e-03    
+40      1.17936e-01    2.82506e-03    2.82506e-03    
+41      1.20766e-01    2.82954e-03    2.82954e-03    
+42      1.23602e-01    2.83676e-03    2.83676e-03    
+43      1.26430e-01    2.82800e-03    2.82800e-03    
+44      1.29261e-01    2.83079e-03    2.83079e-03    
+45      1.32099e-01    2.83819e-03    2.83819e-03    
+46      1.34930e-01    2.83057e-03    2.83057e-03    
+47      1.37762e-01    2.83170e-03    2.83170e-03    
+48      1.40601e-01    2.83974e-03    2.83974e-03    
+49      1.43435e-01    2.83360e-03    2.83360e-03    
+50      1.46268e-01    2.83274e-03    2.83274e-03    
+51      1.49108e-01    2.84021e-03    2.84021e-03    
+52      1.51943e-01    2.83565e-03    2.83565e-03    
+53      1.54776e-01    2.83274e-03    2.83274e-03    
+54      1.57615e-01    2.83929e-03    2.83929e-03    
+55      1.60453e-01    2.83781e-03    2.83781e-03    
+56      1.63286e-01    2.83246e-03    2.83246e-03    
+57      1.66125e-01    2.83958e-03    2.83958e-03    
+58      1.68964e-01    2.83914e-03    2.83914e-03    
+59      1.71796e-01    2.83202e-03    2.83202e-03    
+60      1.74636e-01    2.83912e-03    2.83912e-03    
+61      1.77475e-01    2.83950e-03    2.83950e-03    
+62      1.80306e-01    2.83117e-03    2.83117e-03    
+63      1.83144e-01    2.83804e-03    2.83804e-03    
+64      1.85983e-01    2.83875e-03    2.83875e-03    
+65      1.88813e-01    2.83038e-03    2.83038e-03    
+66      1.91649e-01    2.83584e-03    2.83584e-03    
+67      1.94488e-01    2.83887e-03    2.83887e-03    
+68      1.97317e-01    2.82932e-03    2.82932e-03    
+69      2.00000e-01    2.68251e-03    2.83292e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific_HLLC_plt_0001.h5 at t=2.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/backend/results/uniform-first-law-20260907/sod_ppm_n64/scientific/cpu/sod_ppm_n64_cpu_scientific_chk_0001.h5 at step 69 with 4 AMR leaves.
+>>> Simulation Done. Total Steps: 69 | Final Time: 2.00000e-01

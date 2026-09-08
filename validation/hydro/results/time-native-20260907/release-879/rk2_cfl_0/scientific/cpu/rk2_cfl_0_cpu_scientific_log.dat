@@ -1,0 +1,67 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/hydro/results/time-native-20260907/release-879/rk2_cfl_0/scientific/cpu/rk2_cfl_0_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/hydro/results/time-native-20260907/release-879/rk2_cfl_0/scientific/cpu/rk2_cfl_0_cpu_scientific.par
+[Main] Problem created: SmoothAdvection
+[Problem] Smooth entropy wave: rho=1+0.2 sin(2*pi*1*x/L), u=1, p=1
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 1 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 12 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + pcm (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + PCM (1st Order) | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/hydro/results/time-native-20260907/release-879/rk2_cfl_0/scientific/cpu/rk2_cfl_0_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/hydro/results/time-native-20260907/release-879/rk2_cfl_0/scientific/cpu/rk2_cfl_0_cpu_scientific_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       2.69094e-03    2.69094e-03    2.69094e-03    
+2       5.38190e-03    2.69097e-03    2.69097e-03    
+3       8.07295e-03    2.69105e-03    2.69105e-03    
+4       1.07641e-02    2.69118e-03    2.69118e-03    
+5       1.34555e-02    2.69137e-03    2.69137e-03    
+6       1.61471e-02    2.69162e-03    2.69162e-03    
+7       1.88390e-02    2.69186e-03    2.69186e-03    
+8       2.15309e-02    2.69190e-03    2.69190e-03    
+9       2.42229e-02    2.69199e-03    2.69199e-03    
+10      2.69150e-02    2.69213e-03    2.69213e-03    
+11      2.96073e-02    2.69233e-03    2.69233e-03    
+12      3.22999e-02    2.69258e-03    2.69258e-03    
+13      3.49927e-02    2.69277e-03    2.69277e-03    
+14      3.76855e-02    2.69282e-03    2.69282e-03    
+15      4.03784e-02    2.69292e-03    2.69292e-03    
+16      4.30715e-02    2.69308e-03    2.69308e-03    
+17      4.57648e-02    2.69329e-03    2.69329e-03    
+18      4.84583e-02    2.69355e-03    2.69355e-03    
+19      5.11520e-02    2.69369e-03    2.69369e-03    
+20      5.38458e-02    2.69375e-03    2.69375e-03    
+21      5.65396e-02    2.69386e-03    2.69386e-03    
+22      5.92337e-02    2.69402e-03    2.69402e-03    
+23      6.19279e-02    2.69424e-03    2.69424e-03    
+24      6.46224e-02    2.69451e-03    2.69451e-03    
+25      6.73170e-02    2.69460e-03    2.69460e-03    
+26      7.00117e-02    2.69466e-03    2.69466e-03    
+27      7.27064e-02    2.69478e-03    2.69478e-03    
+28      7.54014e-02    2.69496e-03    2.69496e-03    
+29      7.80966e-02    2.69518e-03    2.69518e-03    
+30      8.07921e-02    2.69546e-03    2.69546e-03    
+31      8.34876e-02    2.69550e-03    2.69550e-03    
+32      8.61831e-02    2.69558e-03    2.69558e-03    
+33      8.88788e-02    2.69571e-03    2.69571e-03    
+34      9.15747e-02    2.69589e-03    2.69589e-03    
+35      9.42709e-02    2.69613e-03    2.69613e-03    
+36      9.69672e-02    2.69637e-03    2.69637e-03    
+37      9.96636e-02    2.69641e-03    2.69641e-03    
+38      1.00000e-01    3.36352e-04    2.69649e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/hydro/results/time-native-20260907/release-879/rk2_cfl_0/scientific/cpu/rk2_cfl_0_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/hydro/results/time-native-20260907/release-879/rk2_cfl_0/scientific/cpu/rk2_cfl_0_cpu_scientific_chk_0001.h5 at step 38 with 4 AMR leaves.
+>>> Simulation Done. Total Steps: 38 | Final Time: 1.00000e-01

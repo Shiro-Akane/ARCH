@@ -1,0 +1,17 @@
+The CPU-only independent burn review and its memory guard returned exit code 0.
+The initial inline archive wrapper then raised:
+
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Cause: it attempted JSONDecoder.raw_decode on the guard's captured stdout.
+run_memory_guarded.py writes child stdout/stderr into its --log file and emits
+only resource summaries to its own stdout. The complete scientific JSON is
+retained unchanged at the start of resource.log (copied from
+build/burn-independent-final-870.log). arch.stdout contains the successful guard
+and pressure summaries; arch.stderr is empty.
+
+Recovery extracts that existing JSON using JSONDecoder.raw_decode(resource.log),
+checks the complete four-network/two-method/two-refinement inventory and source,
+artifact and table identities, then writes review.json and evidence.json.
+No scientific calculation is repeated, no raw log is overwritten, and no
+reference, numerical tolerance, production source or fixture is changed.

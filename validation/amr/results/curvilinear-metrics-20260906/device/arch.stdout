@@ -1,0 +1,36 @@
+INDEPENDENT_METRIC_MAX_RELATIVE_ERROR host=3.03178e-16 device=3.03178e-16
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cylindrical dim=1 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cylindrical dim=2 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cylindrical dim=3 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=1 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=2 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=3 species=2
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=cartesian dim=2 species=41
+CURVILINEAR_GEOMETRY_SMOKE_PASS geometry=spherical dim=3 species=41
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.05 host_error=1e-07 device_error=1e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.025 host_error=2.5e-08 device_error=2.5e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=1 h=0.0125 host_error=6.25e-09 device_error=6.25e-09
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.05 host_error=1.22511e-07 device_error=1.22511e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.025 host_error=3.0628e-08 device_error=3.0628e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=2 h=0.0125 host_error=7.65703e-09 device_error=7.65703e-09
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.05 host_error=1.86242e-07 device_error=1.86242e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.025 host_error=4.65619e-08 device_error=4.65619e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cartesian dim=3 h=0.0125 host_error=1.16405e-08 device_error=1.16405e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.05 host_error=3e-07 device_error=3e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.025 host_error=7.5e-08 device_error=7.5e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=1 h=0.0125 host_error=1.875e-08 device_error=1.875e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.05 host_error=3.05628e-07 device_error=3.05628e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.025 host_error=7.6407e-08 device_error=7.6407e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=2 h=0.0125 host_error=1.91018e-08 device_error=1.91018e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.05 host_error=3.38444e-07 device_error=3.38444e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.025 host_error=8.46115e-08 device_error=8.46115e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=cylindrical dim=3 h=0.0125 host_error=2.11529e-08 device_error=2.11529e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.05 host_error=5.66653e-07 device_error=5.66653e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.025 host_error=1.41666e-07 device_error=1.41666e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=1 h=0.0125 host_error=3.54166e-08 device_error=3.54166e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.05 host_error=3.05628e-07 device_error=3.05628e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.025 host_error=7.6407e-08 device_error=7.6407e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=2 h=0.0125 host_error=1.91018e-08 device_error=1.91018e-08
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.05 host_error=6.08852e-07 device_error=6.08852e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.025 host_error=1.52217e-07 device_error=1.52217e-07
+DIFFUSION_SPATIAL_CONVERGENCE geometry=spherical dim=3 h=0.0125 host_error=3.80544e-08 device_error=3.80544e-08

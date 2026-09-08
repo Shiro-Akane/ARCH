@@ -5,17 +5,19 @@
 
 #include "Tabular4DEOS.h"
 #include "TabularLoaderUtils.h"
+#include "TabularCompletion.h"
 
 #include <algorithm>
 #include <cmath>
 
 Tabular4DEOS::Tabular4DEOS(const std::string& h5_filename,
-                           const SpeciesManager* specs_ptr)
+                           const SpeciesManager* specs_ptr,const std::string& helm_path)
     : table_path(h5_filename)
 {
     std::cout << "[Tabular4DEOS] Loading validated 4D HDF5 table: "
               << h5_filename << std::endl;
     HighFive::File file(h5_filename, HighFive::File::ReadOnly);
+    const auto source=inspect_tabular_source(h5_filename);
     tabular_eos::loader::validate_schema_version(file);
 
     if (file.exist("table_rank")) {
@@ -78,10 +80,39 @@ Tabular4DEOS::Tabular4DEOS(const std::string& h5_filename,
         }
         std::vector<double> free_energy =
             tabular_eos::loader::read_table_field(file, "free_energy", shape);
+        std::vector<double> seed_rho,seed_temperature;
+        if (file.exist("free_energy_dlnrho")) seed_rho=
+            tabular_eos::loader::read_table_field(file,"free_energy_dlnrho",shape);
+        if (file.exist("free_energy_dlnT")) seed_temperature=
+            tabular_eos::loader::read_table_field(file,"free_energy_dlnT",shape);
+        if (source.components.needs_completion()) {
+            if (!specs_ptr || specs_ptr->count()==0)
+                throw std::runtime_error("Component-completed EOS requires species metadata");
+            const auto a=tabular_eos::uniform_axis(view.n_A,view.A_min,view.A_max);
+            const auto z=tabular_eos::uniform_axis(view.n_Z,view.Z_min,view.Z_max);
+            std::vector<double> ye(composition_count);
+            for (int ia=0;ia<view.n_A;++ia) for (int iz=0;iz<view.n_Z;++iz)
+                ye[ia*view.n_Z+iz]=z[iz]/a[ia];
+            tabular_eos::complete_free_energy(free_energy,h_table_valid,
+                tabular_eos::uniform_axis(view.n_rho,view.log_rho_min,view.log_rho_max),
+                tabular_eos::uniform_axis(view.n_T,view.log_T_min,view.log_T_max),
+                ye,source.components,helm_path,source.baryon_mass_g,
+                seed_rho.empty()?nullptr:&seed_rho,seed_temperature.empty()?nullptr:&seed_temperature);
+        }
         h_free_energy_fields = tabular_eos::build_derivative_fields(
             free_energy, view.n_rho, view.n_T, composition_count,
             std::log(10.0) * view.dlog_rho,
-            std::log(10.0) * view.dlog_T);
+            std::log(10.0) * view.dlog_T,seed_rho.empty()?nullptr:&seed_rho,
+            seed_temperature.empty()?nullptr:&seed_temperature);
+        if (source.components.declared || source.nuclear_equilibrium) {
+            if (h_table_valid.empty()) h_table_valid.assign(free_energy.size(),1.0);
+            h_table_valid=tabular_eos::free_energy_derivative_validity(
+                h_table_valid,view.n_rho,view.n_T,composition_count);
+            view.energy_reference_shift=tabular_eos::positive_energy_reference(
+                h_free_energy_fields,h_table_valid);
+            view.strict_domain=true;
+            view.table_valid=h_table_valid.data();
+        }
         for (int field = 0; field < tabular_eos::FieldCount; ++field) {
             view.free_energy_fields[field] =
                 h_free_energy_fields[field].data();

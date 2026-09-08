@@ -1,0 +1,11 @@
+PASS raw-1-eos2-static
+PASS raw-1-eos2-reject-burn
+PASS raw-1-eos2-reject-sw
+PASS raw-1-eos2-reject-automatic-thermal
+PASS raw-2-eos4-static
+PASS raw-2-eos4-reject-burn
+PASS raw-2-eos4-reject-sw
+PASS raw-2-eos4-reject-automatic-thermal
+PASS normalized-reject-sw
+PASS normalized-reject-automatic-thermal
+bounded static EOS replay PASS: /home/shiroakane/ARCH/build-ci/reports/baryon-static-final/evidence.json

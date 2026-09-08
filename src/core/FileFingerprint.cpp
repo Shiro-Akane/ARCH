@@ -149,6 +149,13 @@ private:
 
 } // namespace
 
+std::string string_sha256(std::string_view bytes)
+{
+    Sha256 hash;
+    hash.update(reinterpret_cast<const std::uint8_t*>(bytes.data()), bytes.size());
+    return hash.finish();
+}
+
 std::string file_sha256(const std::string& path)
 {
     std::ifstream input(path, std::ios::binary);

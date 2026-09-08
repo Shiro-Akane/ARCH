@@ -1,0 +1,6 @@
+[0/2] Re-checking globbed directories...
+[1/3] Building CXX object CMakeFiles/arch_tabular_completion.dir/src/physics/eos/eosdispatch.cpp.o
+[2/3] Building CXX object CMakeFiles/arch_tabular_completion.dir/tests/host/TabularCompletionRegression.cpp.o
+[3/3] Linking CXX executable arch_tabular_completion
+MEMORY_GUARD_RESULT min_available_kib=3999044 baseline_swap_kib=1548 peak_swap_kib=1548 guard_stopped=False peak_owned_rss_kib=340780 elapsed_seconds=6.020 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.566 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=7 complete=True

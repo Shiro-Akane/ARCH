@@ -1,0 +1,38 @@
+[Info] Loaded 72 parameters from /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_8/RestartAMR_cpu_segment_8.par
+[RuntimeParams] Restart Enabled. Target file: '/home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_7/RestartAMR_cpu_segment_7_chk_0008.h5'
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_8/RestartAMR_cpu_segment_8_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_8/RestartAMR_cpu_segment_8.par
+[Main] Problem created: BurnGradient
+[Problem] Burn gradient: rho=1e+07, T_bg=5e+07, T_peak=3e+09, network=aprox13
+[Main] Configuration:
+       Grid: 80 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Restarting from checkpoint: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_7/RestartAMR_cpu_segment_7_chk_0008.h5
+[IO] Restored CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_7/RestartAMR_cpu_segment_7_chk_0008.h5 at step 16 with 8 AMR leaves.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0125
+    Level 1   | dx1(x): 0.00625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+17      1.02199e-11    3.66636e-12    3.66636e-12    1.83318e-12    
+18      1.38752e-11    3.65535e-12    3.65535e-12    1.82768e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_8/RestartAMR_cpu_segment_8_chk_0009.h5 at step 18 with 8 AMR leaves.
+19      1.75186e-11    3.64337e-12    3.64337e-12    1.82168e-12    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_8/RestartAMR_cpu_segment_8_HLLC_plt_0001.h5 at t=1.75186e-11
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-753/burn/cpu_segment_8/RestartAMR_cpu_segment_8_chk_0010.h5 at step 19 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 19 | Final Time: 1.75186e-11

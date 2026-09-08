@@ -1,0 +1,121 @@
+REGRID_STORAGE species=4 refine=1 rollback=1 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=4 refine=1 rollback=0 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=4 refine=0 rollback=0 old_blocks=3 new_blocks=2
+CUDA_REGRID_TRANSACTION_PASS species=4 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
+REGRID_STORAGE species=41 refine=1 rollback=1 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=41 refine=1 rollback=0 old_blocks=2 new_blocks=3
+REGRID_STORAGE species=41 refine=0 rollback=0 old_blocks=3 new_blocks=2
+CUDA_REGRID_TRANSACTION_PASS species=41 survivor=1 refine=1 restrict=1 rollback=1 stale_host=1
+Generating '/tmp/nsys-report-cb47.qdstrm'
+
+[1/2] [0%                          ] regrid_transaction.nsys-rep
+[1/2] [0%                          ] regrid_transaction.nsys-rep
+[1/2] [==================75%       ] regrid_transaction.nsys-rep
+[1/2] [========================100%] regrid_transaction.nsys-rep
+[1/2] [========================100%] regrid_transaction.nsys-rep
+
+[2/2] [0%                          ] regrid_transaction.sqlite
+[2/2] [1%                          ] regrid_transaction.sqlite
+[2/2] [2%                          ] regrid_transaction.sqlite
+[2/2] [3%                          ] regrid_transaction.sqlite
+[2/2] [4%                          ] regrid_transaction.sqlite
+[2/2] [5%                          ] regrid_transaction.sqlite
+[2/2] [6%                          ] regrid_transaction.sqlite
+[2/2] [7%                          ] regrid_transaction.sqlite
+[2/2] [8%                          ] regrid_transaction.sqlite
+[2/2] [9%                          ] regrid_transaction.sqlite
+[2/2] [10%                         ] regrid_transaction.sqlite
+[2/2] [11%                         ] regrid_transaction.sqlite
+[2/2] [12%                         ] regrid_transaction.sqlite
+[2/2] [13%                         ] regrid_transaction.sqlite
+[2/2] [14%                         ] regrid_transaction.sqlite
+[2/2] [=15%                        ] regrid_transaction.sqlite
+[2/2] [=16%                        ] regrid_transaction.sqlite
+[2/2] [=17%                        ] regrid_transaction.sqlite
+[2/2] [==18%                       ] regrid_transaction.sqlite
+[2/2] [==19%                       ] regrid_transaction.sqlite
+[2/2] [==20%                       ] regrid_transaction.sqlite
+[2/2] [==21%                       ] regrid_transaction.sqlite
+[2/2] [===22%                      ] regrid_transaction.sqlite
+[2/2] [===23%                      ] regrid_transaction.sqlite
+[2/2] [===24%                      ] regrid_transaction.sqlite
+[2/2] [====25%                     ] regrid_transaction.sqlite
+[2/2] [====26%                     ] regrid_transaction.sqlite
+[2/2] [====27%                     ] regrid_transaction.sqlite
+[2/2] [====28%                     ] regrid_transaction.sqlite
+[2/2] [=====29%                    ] regrid_transaction.sqlite
+[2/2] [=====30%                    ] regrid_transaction.sqlite
+[2/2] [=====31%                    ] regrid_transaction.sqlite
+[2/2] [=====32%                    ] regrid_transaction.sqlite
+[2/2] [======33%                   ] regrid_transaction.sqlite
+[2/2] [======34%                   ] regrid_transaction.sqlite
+[2/2] [======35%                   ] regrid_transaction.sqlite
+[2/2] [=======36%                  ] regrid_transaction.sqlite
+[2/2] [=======37%                  ] regrid_transaction.sqlite
+[2/2] [=======38%                  ] regrid_transaction.sqlite
+[2/2] [=======39%                  ] regrid_transaction.sqlite
+[2/2] [========40%                 ] regrid_transaction.sqlite
+[2/2] [========41%                 ] regrid_transaction.sqlite
+[2/2] [========42%                 ] regrid_transaction.sqlite
+[2/2] [=========43%                ] regrid_transaction.sqlite
+[2/2] [=========44%                ] regrid_transaction.sqlite
+[2/2] [=========45%                ] regrid_transaction.sqlite
+[2/2] [=========46%                ] regrid_transaction.sqlite
+[2/2] [==========47%               ] regrid_transaction.sqlite
+[2/2] [==========48%               ] regrid_transaction.sqlite
+[2/2] [==========49%               ] regrid_transaction.sqlite
+[2/2] [===========50%              ] regrid_transaction.sqlite
+[2/2] [===========51%              ] regrid_transaction.sqlite
+[2/2] [===========52%              ] regrid_transaction.sqlite
+[2/2] [===========53%              ] regrid_transaction.sqlite
+[2/2] [============54%             ] regrid_transaction.sqlite
+[2/2] [============55%             ] regrid_transaction.sqlite
+[2/2] [============56%             ] regrid_transaction.sqlite
+[2/2] [============57%             ] regrid_transaction.sqlite
+[2/2] [=============58%            ] regrid_transaction.sqlite
+[2/2] [=============59%            ] regrid_transaction.sqlite
+[2/2] [=============60%            ] regrid_transaction.sqlite
+[2/2] [==============61%           ] regrid_transaction.sqlite
+[2/2] [==============62%           ] regrid_transaction.sqlite
+[2/2] [==============63%           ] regrid_transaction.sqlite
+[2/2] [==============64%           ] regrid_transaction.sqlite
+[2/2] [===============65%          ] regrid_transaction.sqlite
+[2/2] [===============66%          ] regrid_transaction.sqlite
+[2/2] [===============67%          ] regrid_transaction.sqlite
+[2/2] [================68%         ] regrid_transaction.sqlite
+[2/2] [================69%         ] regrid_transaction.sqlite
+[2/2] [================70%         ] regrid_transaction.sqlite
+[2/2] [================71%         ] regrid_transaction.sqlite
+[2/2] [=================72%        ] regrid_transaction.sqlite
+[2/2] [=================73%        ] regrid_transaction.sqlite
+[2/2] [=================74%        ] regrid_transaction.sqlite
+[2/2] [==================75%       ] regrid_transaction.sqlite
+[2/2] [==================76%       ] regrid_transaction.sqlite
+[2/2] [==================77%       ] regrid_transaction.sqlite
+[2/2] [==================78%       ] regrid_transaction.sqlite
+[2/2] [===================79%      ] regrid_transaction.sqlite
+[2/2] [===================80%      ] regrid_transaction.sqlite
+[2/2] [===================81%      ] regrid_transaction.sqlite
+[2/2] [===================82%      ] regrid_transaction.sqlite
+[2/2] [====================83%     ] regrid_transaction.sqlite
+[2/2] [====================84%     ] regrid_transaction.sqlite
+[2/2] [====================85%     ] regrid_transaction.sqlite
+[2/2] [=====================86%    ] regrid_transaction.sqlite
+[2/2] [=====================87%    ] regrid_transaction.sqlite
+[2/2] [=====================88%    ] regrid_transaction.sqlite
+[2/2] [=====================89%    ] regrid_transaction.sqlite
+[2/2] [======================90%   ] regrid_transaction.sqlite
+[2/2] [======================91%   ] regrid_transaction.sqlite
+[2/2] [======================92%   ] regrid_transaction.sqlite
+[2/2] [=======================93%  ] regrid_transaction.sqlite
+[2/2] [=======================94%  ] regrid_transaction.sqlite
+[2/2] [=======================95%  ] regrid_transaction.sqlite
+[2/2] [=======================96%  ] regrid_transaction.sqlite
+[2/2] [========================97% ] regrid_transaction.sqlite
+[2/2] [========================98% ] regrid_transaction.sqlite
+[2/2] [========================99% ] regrid_transaction.sqlite
+[2/2] [========================100%] regrid_transaction.sqlite
+[2/2] [========================100%] regrid_transaction.sqlite
+Generated:
+    /home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-j266po2q/regrid_transaction.nsys-rep
+    /home/shiroakane/ARCH/build/release-core-throughput-cmake/device-memory-j266po2q/regrid_transaction.sqlite

@@ -1,0 +1,71 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/runtime-867/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/runtime-867/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific.par
+[Main] Problem created: Gaussian
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.4
+       Solver: HLLC
+       Species Count: 2
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 64 | Finest Level: 1
+    Level 0   | dx1(x): 0.015625
+    Level 1   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: external | g = (1, 0, 0)
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK3 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+           -> Refining initial condition (Pass 1)...
+>>> Simulation Started | Solver: SSPRK3 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/runtime-867/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/runtime-867/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0000.h5 at step 0 with 6 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       2.64111e-03    2.64111e-03    2.64111e-03    
+2       5.27633e-03    2.63522e-03    2.63522e-03    
+3       7.90571e-03    2.62938e-03    2.62938e-03    
+4       1.05293e-02    2.62358e-03    2.62358e-03    
+5       1.31471e-02    2.61781e-03    2.61781e-03    
+6       1.57592e-02    2.61208e-03    2.61208e-03    
+7       1.83656e-02    2.60639e-03    2.60639e-03    
+8       2.09663e-02    2.60074e-03    2.60074e-03    
+9       2.35614e-02    2.59512e-03    2.59512e-03    
+10      2.61510e-02    2.58954e-03    2.58954e-03    
+11      2.87350e-02    2.58400e-03    2.58400e-03    
+12      3.13135e-02    2.57849e-03    2.57849e-03    
+13      3.38865e-02    2.57301e-03    2.57301e-03    
+14      3.64541e-02    2.56757e-03    2.56757e-03    
+15      3.90162e-02    2.56217e-03    2.56217e-03    
+16      4.15730e-02    2.55680e-03    2.55680e-03    
+17      4.41245e-02    2.55146e-03    2.55146e-03    
+18      4.66706e-02    2.54616e-03    2.54616e-03    
+19      4.92115e-02    2.54088e-03    2.54088e-03    
+20      5.17472e-02    2.53565e-03    2.53565e-03    
+21      5.42776e-02    2.53044e-03    2.53044e-03    
+22      5.68029e-02    2.52527e-03    2.52527e-03    
+23      5.93230e-02    2.52012e-03    2.52012e-03    
+24      6.18380e-02    2.51501e-03    2.51501e-03    
+25      6.43479e-02    2.50993e-03    2.50993e-03    
+26      6.68528e-02    2.50488e-03    2.50488e-03    
+27      6.93527e-02    2.49986e-03    2.49986e-03    
+28      7.18476e-02    2.49487e-03    2.49487e-03    
+29      7.43375e-02    2.48991e-03    2.48991e-03    
+30      7.68225e-02    2.48498e-03    2.48498e-03    
+31      7.93025e-02    2.48008e-03    2.48008e-03    
+32      8.17777e-02    2.47521e-03    2.47521e-03    
+33      8.42481e-02    2.47037e-03    2.47037e-03    
+34      8.67137e-02    2.46555e-03    2.46555e-03    
+35      8.91744e-02    2.46077e-03    2.46077e-03    
+36      9.16304e-02    2.45601e-03    2.45601e-03    
+37      9.40817e-02    2.45128e-03    2.45128e-03    
+38      9.65283e-02    2.44657e-03    2.44657e-03    
+39      9.89702e-02    2.44189e-03    2.44189e-03    
+40      1.00000e-01    1.02982e-03    2.43724e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/runtime-867/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/coupled-final-20260907/runtime-867/gravity_amr_rk3/scientific/cpu/gravity_amr_rk3_cpu_scientific_chk_0001.h5 at step 40 with 7 AMR leaves.
+>>> Simulation Done. Total Steps: 40 | Final Time: 1.00000e-01

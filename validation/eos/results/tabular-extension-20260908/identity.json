@@ -1,0 +1,1622 @@
+{
+  "schema": 1,
+  "scope": "bounded EOS/NSE extension; not full CUDA application qualification",
+  "identity_observation": "post-execution source, configured build and artifact identity",
+  "profiles": {
+    "cpu": {
+      "schema": 1,
+      "source": {
+        "commit": "e799640be7f6cbad678ec0e36a09b96b48c7c572",
+        "scope": "code-and-validation-inputs-v1",
+        "scope_policy": {
+          "directories": [
+            "cmake",
+            "simulation",
+            "src",
+            "tests",
+            "tools",
+            "validation"
+          ],
+          "suffixes": [
+            ".c",
+            ".cc",
+            ".cmake",
+            ".cpp",
+            ".cu",
+            ".cuh",
+            ".cxx",
+            ".def",
+            ".h",
+            ".hh",
+            ".hpp",
+            ".hxx",
+            ".in",
+            ".inc",
+            ".ipp",
+            ".json",
+            ".par",
+            ".py",
+            ".sh",
+            ".tpp",
+            ".yaml",
+            ".yml"
+          ],
+          "root_configuration": [
+            "CMakeLists.txt",
+            "CMakePresets.json",
+            "CMakeUserPresets.json"
+          ],
+          "nested_cmakelists": true,
+          "excluded": [
+            "validation/**/results/**",
+            "**/__pycache__/**"
+          ],
+          "include_untracked_and_gitignored_source": true
+        },
+        "worktree_sha256": "5fc6ae75af92af155113c4b552ebf9953afe01e20d524a9422a63bdd2a3dde8c",
+        "dirty": true,
+        "modified_files": [
+          "cmake/CustomNetworks.cmake",
+          "cmake/Dependencies.cmake",
+          "cmake/tests/CudaTests.cmake",
+          "cmake/tests/HostTests.cmake",
+          "src/core/FileFingerprint.cpp",
+          "src/core/FileFingerprint.h",
+          "src/core/RuntimeParams.h",
+          "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+          "src/cuda/microphysics/tabular3_eos_device_owner.h",
+          "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+          "src/cuda/microphysics/tabular4_eos_device_owner.h",
+          "src/data/GlobalDefs.h",
+          "src/driver/SolverDispatch.cpp",
+          "src/driver/dispatch/PolicyDescriptor.h",
+          "src/io/chk/CheckpointCompatibility.cpp",
+          "src/numerics/burnsolver/BurnDispatch.h",
+          "src/numerics/burnsolver/odeFunction.h",
+          "src/physics/eos/HelmEos.h",
+          "src/physics/eos/Tabular3DEOS.cpp",
+          "src/physics/eos/Tabular3DEOS.h",
+          "src/physics/eos/Tabular4DEOS.cpp",
+          "src/physics/eos/Tabular4DEOS.h",
+          "src/physics/eos/TabularFreeEnergy.h",
+          "src/physics/eos/eosdispatch.cpp",
+          "src/physics/eos/eosdispatch.h",
+          "src/physics/nse/nse_solver.h",
+          "tests/host/test_checkpoint_compatibility.cpp",
+          "tests/host/test_resolved_execution_plan.cpp",
+          "tests/tooling/test_portable_network_generator.py",
+          "tools/network/GenerateNetwork.py",
+          "tools/network/PortableAdapter.py"
+        ],
+        "untracked_source_files": [
+          "src/physics/eos/TabularBaryonSource.cpp",
+          "src/physics/eos/TabularBaryonSource.h",
+          "src/physics/eos/TabularCompletion.cpp",
+          "src/physics/eos/TabularCompletion.h",
+          "src/physics/eos/TabularInterpolation.h",
+          "src/physics/eos/TabularInversion.h",
+          "src/physics/eos/TabularSource.h",
+          "src/physics/network/NuclearEnergy.h",
+          "tests/cuda/test_generated_nse_device.cu",
+          "tests/cuda/test_native_tabular_owner.cu",
+          "tests/cuda/test_tabular_completion_device.cu",
+          "tests/fixtures/GeneratedNseReference.h",
+          "tests/fixtures/NativeTabularFixture.h",
+          "tests/host/BaryonEosRegression.cpp",
+          "tests/host/BaryonSourceRegression.cpp",
+          "tests/host/HelmComponentsRegression.cpp",
+          "tests/host/NativeTabularRegression.cpp",
+          "tests/host/TabularCompletionRegression.cpp",
+          "tests/host/test_generated_nse.cpp",
+          "tests/host/test_generated_nse_network.cpp",
+          "tests/math/GeneratedNseCases.h",
+          "tests/math/test_tabular_strict.cpp",
+          "tools/network/NseMetadata.py",
+          "validation/network/inputs/nse_alpha.py",
+          "validation/network/inputs/nse_light.py"
+        ]
+      },
+      "build": {
+        "source_directory": "/home/shiroakane/ARCH",
+        "configuration": "Release",
+        "multi_config": false,
+        "cmake_cache_sha256": "3eb7ef5fc666d05361dac38a2912931e3cd5799c16d34b093a1ab0726f1b2fda",
+        "compile_commands_sha256": "c6a9410d680ef4ac6c960615460f377a333036d0acb99e46c597d6773958c8d9",
+        "cmake_options": {
+          "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build-ci/cpu",
+          "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+          "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+          "ARCH_CUSTOM_NETWORKS": "",
+          "ARCH_CUSTOM_NETWORK_ROOT": "/home/shiroakane/ARCH/src/physics/network/custom",
+          "ARCH_ENABLE_CUDA": "OFF",
+          "ARCH_ENABLE_CUDSS": "ON",
+          "ARCH_ENABLE_KLU": "ON",
+          "ARCH_ENABLE_OPENMP": "ON",
+          "ARCH_FETCH_SUITESPARSE": "ON",
+          "ARCH_IS_TOP_LEVEL": "ON",
+          "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build-ci/cpu/bin",
+          "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+          "ARCH_VERBOSE_BUILD": "OFF",
+          "BUILD_TESTING": "ON",
+          "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+          "CMAKE_AR": "/usr/bin/ar",
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+          "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+          "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+          "CMAKE_CXX_FLAGS": "",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+          "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-12",
+          "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+          "CMAKE_C_FLAGS": "",
+          "CMAKE_C_FLAGS_DEBUG": "-g",
+          "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+          "CMAKE_EXE_LINKER_FLAGS": "",
+          "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+          "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build-ci/cpu/CMakeFiles/pkgRedirects",
+          "CMAKE_INSTALL_BINDIR": "bin",
+          "CMAKE_INSTALL_DATADIR": "",
+          "CMAKE_INSTALL_DATAROOTDIR": "share",
+          "CMAKE_INSTALL_DOCDIR": "",
+          "CMAKE_INSTALL_INCLUDEDIR": "include",
+          "CMAKE_INSTALL_INFODIR": "",
+          "CMAKE_INSTALL_LIBDIR": "lib",
+          "CMAKE_INSTALL_LIBEXECDIR": "libexec",
+          "CMAKE_INSTALL_LOCALEDIR": "",
+          "CMAKE_INSTALL_LOCALSTATEDIR": "var",
+          "CMAKE_INSTALL_MANDIR": "",
+          "CMAKE_INSTALL_OLDINCLUDEDIR": "/usr/include",
+          "CMAKE_INSTALL_PREFIX": "/usr/local",
+          "CMAKE_INSTALL_RUNSTATEDIR": "",
+          "CMAKE_INSTALL_SBINDIR": "sbin",
+          "CMAKE_INSTALL_SHAREDSTATEDIR": "com",
+          "CMAKE_INSTALL_SYSCONFDIR": "etc",
+          "CMAKE_LINKER": "/usr/bin/ld",
+          "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+          "CMAKE_MODULE_LINKER_FLAGS": "",
+          "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_NM": "/usr/bin/nm",
+          "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+          "CMAKE_OBJDUMP": "/usr/bin/objdump",
+          "CMAKE_PROJECT_DESCRIPTION": "",
+          "CMAKE_PROJECT_HOMEPAGE_URL": "",
+          "CMAKE_PROJECT_NAME": "ARCH",
+          "CMAKE_PROJECT_VERSION": "7.13.0",
+          "CMAKE_PROJECT_VERSION_MAJOR": "7",
+          "CMAKE_PROJECT_VERSION_MINOR": "13",
+          "CMAKE_PROJECT_VERSION_PATCH": "0",
+          "CMAKE_PROJECT_VERSION_TWEAK": "",
+          "CMAKE_RANLIB": "/usr/bin/ranlib",
+          "CMAKE_READELF": "/usr/bin/readelf",
+          "CMAKE_SHARED_LINKER_FLAGS": "",
+          "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_SKIP_INSTALL_RPATH": "NO",
+          "CMAKE_SKIP_RPATH": "NO",
+          "CMAKE_STATIC_LINKER_FLAGS": "",
+          "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_STRIP": "/usr/bin/strip",
+          "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+          "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+          "CUDSS_ROOT": "",
+          "KLU_BINARY_DIR": "/home/shiroakane/ARCH/build-ci/cpu/_deps/suitesparse-build/KLU",
+          "KLU_DIR": "KLU_DIR-NOTFOUND",
+          "KLU_IS_TOP_LEVEL": "OFF",
+          "KLU_SOURCE_DIR": "/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU",
+          "KLU_USE_CHOLMOD": "OFF",
+          "KLU_VERSION_MAJOR": "2",
+          "KLU_VERSION_MINOR": "3",
+          "KLU_VERSION_SUB": "6",
+          "CMAKE_GENERATOR": "Ninja"
+        },
+        "registered_networks": [],
+        "sparse_link": {
+          "required_providers": [
+            "klu"
+          ],
+          "link_command_sha256": "4c2d6c9970cb262cfefe5fd4120c1711d5a927762f73da3eda3820c5ae16b544",
+          "libraries": [
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu/_deps/suitesparse-build/AMD/libamd.a",
+              "sha256": "b1c1115a0556b6fba48a91e55a535bc9f2ee4eb3117747ea7490490771713d09"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu/_deps/suitesparse-build/BTF/libbtf.a",
+              "sha256": "359580fb4eaf5e1ffdca78f9482073d1e1cf11aa88628249169e53e80be8a67e"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu/_deps/suitesparse-build/COLAMD/libcolamd.a",
+              "sha256": "7f0f420909980fe62ace03717d1be39dd016e4a3dc66c95952cc1c7d34c1595f"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu/_deps/suitesparse-build/KLU/libklu.a",
+              "sha256": "6ddf3df30ef65c328a68fa3932e3e2d134b366d41907eef7ede0af06ae36b3c1"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+              "sha256": "1a89d49a3e57838a7465b581be2afdec400c09959cd16303bd5f03a52ff938ef"
+            }
+          ]
+        },
+        "configured_sparse_libraries": {}
+      },
+      "execution_environment": {
+        "OMP_NUM_THREADS": null,
+        "OMP_DYNAMIC": null,
+        "OMP_PROC_BIND": null,
+        "OMP_PLACES": null,
+        "OMP_SCHEDULE": null,
+        "CUDA_VISIBLE_DEVICES": null,
+        "CUDA_MODULE_LOADING": null
+      },
+      "artifacts": {
+        "ARCH": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/bin/ARCH",
+          "sha256": "d81dd59d7c3f58db0dae0d965cd2d599bf185a01dc40dfa78688ace4ec0ae3ac"
+        },
+        "arch_baryon_eos": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/arch_baryon_eos",
+          "sha256": "aea9f3acb24977d786f89a1e553c808ee77c88893358044906584b38cbc114fc"
+        },
+        "arch_tabular_completion": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/arch_tabular_completion",
+          "sha256": "e1184ac984182528ed0b49e3557169008716bbe136194ee4b49dc4ddc14bc09f"
+        },
+        "arch_native_tabular": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/arch_native_tabular",
+          "sha256": "bb91f1d1793ccf6c748f6b68d00a69d77b71e3623a561639a5764b481dc26e16"
+        },
+        "arch_helm_components": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/arch_helm_components",
+          "sha256": "378efc5baff1d3535a899db29c50a26f3381904ccad8d1ac0f96bb8275396413"
+        },
+        "arch_baryon_source": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/arch_baryon_source",
+          "sha256": "97bad504c9f6d212a4edc48da16b8cf772b17728e8d3010ce72301c81585bcb7"
+        },
+        "arch_tabular_strict": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu/arch_tabular_strict",
+          "sha256": "e182618676cedf733915b34c6f8e483e323a925480268533e9a30aae31fd21ec"
+        }
+      },
+      "artifact_observation": {
+        "ARCH": [
+          2096,
+          60608,
+          5942208,
+          1788875829551744552,
+          1788875829555669969
+        ],
+        "arch_baryon_eos": [
+          2096,
+          59878,
+          322248,
+          1788875831483137972,
+          1788875831483137972
+        ],
+        "arch_tabular_completion": [
+          2096,
+          56722,
+          471784,
+          1788875834042727747,
+          1788875834042727747
+        ],
+        "arch_native_tabular": [
+          2096,
+          59240,
+          369968,
+          1788875829830449112,
+          1788875829830449112
+        ],
+        "arch_helm_components": [
+          2096,
+          532926,
+          67440,
+          1788874510462897632,
+          1788874510462897632
+        ],
+        "arch_baryon_source": [
+          2096,
+          533333,
+          83368,
+          1788875253636229019,
+          1788875253640149856
+        ],
+        "arch_tabular_strict": [
+          2096,
+          533289,
+          121024,
+          1788875251342539841,
+          1788875251342539841
+        ]
+      }
+    },
+    "cuda_focused": {
+      "schema": 1,
+      "source": {
+        "commit": "e799640be7f6cbad678ec0e36a09b96b48c7c572",
+        "scope": "code-and-validation-inputs-v1",
+        "scope_policy": {
+          "directories": [
+            "cmake",
+            "simulation",
+            "src",
+            "tests",
+            "tools",
+            "validation"
+          ],
+          "suffixes": [
+            ".c",
+            ".cc",
+            ".cmake",
+            ".cpp",
+            ".cu",
+            ".cuh",
+            ".cxx",
+            ".def",
+            ".h",
+            ".hh",
+            ".hpp",
+            ".hxx",
+            ".in",
+            ".inc",
+            ".ipp",
+            ".json",
+            ".par",
+            ".py",
+            ".sh",
+            ".tpp",
+            ".yaml",
+            ".yml"
+          ],
+          "root_configuration": [
+            "CMakeLists.txt",
+            "CMakePresets.json",
+            "CMakeUserPresets.json"
+          ],
+          "nested_cmakelists": true,
+          "excluded": [
+            "validation/**/results/**",
+            "**/__pycache__/**"
+          ],
+          "include_untracked_and_gitignored_source": true
+        },
+        "worktree_sha256": "5fc6ae75af92af155113c4b552ebf9953afe01e20d524a9422a63bdd2a3dde8c",
+        "dirty": true,
+        "modified_files": [
+          "cmake/CustomNetworks.cmake",
+          "cmake/Dependencies.cmake",
+          "cmake/tests/CudaTests.cmake",
+          "cmake/tests/HostTests.cmake",
+          "src/core/FileFingerprint.cpp",
+          "src/core/FileFingerprint.h",
+          "src/core/RuntimeParams.h",
+          "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+          "src/cuda/microphysics/tabular3_eos_device_owner.h",
+          "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+          "src/cuda/microphysics/tabular4_eos_device_owner.h",
+          "src/data/GlobalDefs.h",
+          "src/driver/SolverDispatch.cpp",
+          "src/driver/dispatch/PolicyDescriptor.h",
+          "src/io/chk/CheckpointCompatibility.cpp",
+          "src/numerics/burnsolver/BurnDispatch.h",
+          "src/numerics/burnsolver/odeFunction.h",
+          "src/physics/eos/HelmEos.h",
+          "src/physics/eos/Tabular3DEOS.cpp",
+          "src/physics/eos/Tabular3DEOS.h",
+          "src/physics/eos/Tabular4DEOS.cpp",
+          "src/physics/eos/Tabular4DEOS.h",
+          "src/physics/eos/TabularFreeEnergy.h",
+          "src/physics/eos/eosdispatch.cpp",
+          "src/physics/eos/eosdispatch.h",
+          "src/physics/nse/nse_solver.h",
+          "tests/host/test_checkpoint_compatibility.cpp",
+          "tests/host/test_resolved_execution_plan.cpp",
+          "tests/tooling/test_portable_network_generator.py",
+          "tools/network/GenerateNetwork.py",
+          "tools/network/PortableAdapter.py"
+        ],
+        "untracked_source_files": [
+          "src/physics/eos/TabularBaryonSource.cpp",
+          "src/physics/eos/TabularBaryonSource.h",
+          "src/physics/eos/TabularCompletion.cpp",
+          "src/physics/eos/TabularCompletion.h",
+          "src/physics/eos/TabularInterpolation.h",
+          "src/physics/eos/TabularInversion.h",
+          "src/physics/eos/TabularSource.h",
+          "src/physics/network/NuclearEnergy.h",
+          "tests/cuda/test_generated_nse_device.cu",
+          "tests/cuda/test_native_tabular_owner.cu",
+          "tests/cuda/test_tabular_completion_device.cu",
+          "tests/fixtures/GeneratedNseReference.h",
+          "tests/fixtures/NativeTabularFixture.h",
+          "tests/host/BaryonEosRegression.cpp",
+          "tests/host/BaryonSourceRegression.cpp",
+          "tests/host/HelmComponentsRegression.cpp",
+          "tests/host/NativeTabularRegression.cpp",
+          "tests/host/TabularCompletionRegression.cpp",
+          "tests/host/test_generated_nse.cpp",
+          "tests/host/test_generated_nse_network.cpp",
+          "tests/math/GeneratedNseCases.h",
+          "tests/math/test_tabular_strict.cpp",
+          "tools/network/NseMetadata.py",
+          "validation/network/inputs/nse_alpha.py",
+          "validation/network/inputs/nse_light.py"
+        ]
+      },
+      "build": {
+        "source_directory": "/home/shiroakane/ARCH",
+        "configuration": "Release",
+        "multi_config": false,
+        "cmake_cache_sha256": "f0a25a63a3708ad8655c07cc34e8aafc38f04f880aec9c2c032dd670502a670b",
+        "compile_commands_sha256": "643cb581c08f8b775a3926b624de1198151a26784729b4f5e3ff3f68e8fc79b4",
+        "cmake_options": {
+          "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build-ci/cuda-focused",
+          "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+          "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+          "ARCH_CUSTOM_NETWORKS": "",
+          "ARCH_CUSTOM_NETWORK_ROOT": "/home/shiroakane/ARCH/src/physics/network/custom",
+          "ARCH_ENABLE_CUDA": "ON",
+          "ARCH_ENABLE_CUDSS": "OFF",
+          "ARCH_ENABLE_KLU": "ON",
+          "ARCH_ENABLE_OPENMP": "ON",
+          "ARCH_FETCH_SUITESPARSE": "ON",
+          "ARCH_IS_TOP_LEVEL": "ON",
+          "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build-ci/cuda-focused/bin",
+          "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+          "ARCH_VERBOSE_BUILD": "OFF",
+          "BUILD_TESTING": "ON",
+          "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+          "CMAKE_AR": "/usr/bin/ar",
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CUDA_ARCHITECTURES": "86",
+          "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+          "CMAKE_CUDA_FLAGS": "",
+          "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+          "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+          "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+          "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+          "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+          "CMAKE_CXX_FLAGS": "",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+          "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-12",
+          "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+          "CMAKE_C_FLAGS": "",
+          "CMAKE_C_FLAGS_DEBUG": "-g",
+          "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+          "CMAKE_EXE_LINKER_FLAGS": "",
+          "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+          "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build-ci/cuda-focused/CMakeFiles/pkgRedirects",
+          "CMAKE_INSTALL_BINDIR": "bin",
+          "CMAKE_INSTALL_DATADIR": "",
+          "CMAKE_INSTALL_DATAROOTDIR": "share",
+          "CMAKE_INSTALL_DOCDIR": "",
+          "CMAKE_INSTALL_INCLUDEDIR": "include",
+          "CMAKE_INSTALL_INFODIR": "",
+          "CMAKE_INSTALL_LIBDIR": "lib",
+          "CMAKE_INSTALL_LIBEXECDIR": "libexec",
+          "CMAKE_INSTALL_LOCALEDIR": "",
+          "CMAKE_INSTALL_LOCALSTATEDIR": "var",
+          "CMAKE_INSTALL_MANDIR": "",
+          "CMAKE_INSTALL_OLDINCLUDEDIR": "/usr/include",
+          "CMAKE_INSTALL_PREFIX": "/usr/local",
+          "CMAKE_INSTALL_RUNSTATEDIR": "",
+          "CMAKE_INSTALL_SBINDIR": "sbin",
+          "CMAKE_INSTALL_SHAREDSTATEDIR": "com",
+          "CMAKE_INSTALL_SYSCONFDIR": "etc",
+          "CMAKE_LINKER": "/usr/bin/ld",
+          "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+          "CMAKE_MODULE_LINKER_FLAGS": "",
+          "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_NM": "/usr/bin/nm",
+          "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+          "CMAKE_OBJDUMP": "/usr/bin/objdump",
+          "CMAKE_PROJECT_DESCRIPTION": "",
+          "CMAKE_PROJECT_HOMEPAGE_URL": "",
+          "CMAKE_PROJECT_NAME": "ARCH",
+          "CMAKE_PROJECT_VERSION": "7.13.0",
+          "CMAKE_PROJECT_VERSION_MAJOR": "7",
+          "CMAKE_PROJECT_VERSION_MINOR": "13",
+          "CMAKE_PROJECT_VERSION_PATCH": "0",
+          "CMAKE_PROJECT_VERSION_TWEAK": "",
+          "CMAKE_RANLIB": "/usr/bin/ranlib",
+          "CMAKE_READELF": "/usr/bin/readelf",
+          "CMAKE_SHARED_LINKER_FLAGS": "",
+          "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_SKIP_INSTALL_RPATH": "NO",
+          "CMAKE_SKIP_RPATH": "NO",
+          "CMAKE_STATIC_LINKER_FLAGS": "",
+          "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_STRIP": "/usr/bin/strip",
+          "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+          "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+          "CUDSS_ROOT": "",
+          "KLU_BINARY_DIR": "/home/shiroakane/ARCH/build-ci/cuda-focused/_deps/suitesparse-build/KLU",
+          "KLU_DIR": "KLU_DIR-NOTFOUND",
+          "KLU_IS_TOP_LEVEL": "OFF",
+          "KLU_SOURCE_DIR": "/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU",
+          "KLU_USE_CHOLMOD": "OFF",
+          "KLU_VERSION_MAJOR": "2",
+          "KLU_VERSION_MINOR": "3",
+          "KLU_VERSION_SUB": "6",
+          "CMAKE_GENERATOR": "Ninja"
+        },
+        "registered_networks": [],
+        "sparse_link": {
+          "required_providers": [
+            "klu"
+          ],
+          "link_command_sha256": "18a6b4188b11275d57da983953ef53c2eda36b86a1f41dc39b38c34fb20dd41c",
+          "libraries": [
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/_deps/suitesparse-build/AMD/libamd.a",
+              "sha256": "c0780de6b0a83c6c1770b4296b8b03f8a1b051bc978ec05119095d043d702aa1"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/_deps/suitesparse-build/BTF/libbtf.a",
+              "sha256": "d0b1eda656bdd515fba38e2aeb7ab7eee44c6fcd4ee8177e76eeb5b7b5b2e507"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/_deps/suitesparse-build/COLAMD/libcolamd.a",
+              "sha256": "bb65abc28e1ff13b86682a636e49c6447565697e9728e24004a326887f6669ca"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/_deps/suitesparse-build/KLU/libklu.a",
+              "sha256": "72439aa40464191204dd84d2a2766bf9d03b2acef8c228908b5e5ce4ee5da1c6"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+              "sha256": "911de41fc45b066b4cec6c6576db3df2a8204633f39a90c64341c4a65d48032d"
+            }
+          ]
+        },
+        "configured_sparse_libraries": {}
+      },
+      "execution_environment": {
+        "OMP_NUM_THREADS": null,
+        "OMP_DYNAMIC": null,
+        "OMP_PROC_BIND": null,
+        "OMP_PLACES": null,
+        "OMP_SCHEDULE": null,
+        "CUDA_VISIBLE_DEVICES": null,
+        "CUDA_MODULE_LOADING": null
+      },
+      "artifacts": {
+        "arch_cuda_tabular_completion": {
+          "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/arch_cuda_tabular_completion",
+          "sha256": "eaf59019c8a6058aa7e487cdb86e6db0df3ff6267f15cdfe5167436b3f3aeb29"
+        },
+        "arch_cuda_native_tabular": {
+          "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/arch_cuda_native_tabular",
+          "sha256": "31c3213831c4e459712a51a09919c8e727ffbc23232a196f819cc93e48ce1ac5"
+        },
+        "arch_cuda_generated_nse": {
+          "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/arch_cuda_generated_nse",
+          "sha256": "362f929e81d6b328374f8e997f2242687551630a08c426f7c5925973a7cc831c"
+        },
+        "arch_cuda_network_nse_device": {
+          "path": "/home/shiroakane/ARCH/build-ci/cuda-focused/arch_cuda_network_nse_device",
+          "sha256": "1501659e8cbe28c76dc59aefebf3f01e22fdaaed031d54c07c8753f82c021a78"
+        }
+      },
+      "artifact_observation": {
+        "arch_cuda_tabular_completion": [
+          2096,
+          535304,
+          4256904,
+          1788875711736062903,
+          1788875711736062903
+        ],
+        "arch_cuda_native_tabular": [
+          2096,
+          532848,
+          1087592,
+          1788875708949013659,
+          1788875708952939081
+        ],
+        "arch_cuda_generated_nse": [
+          2096,
+          532251,
+          375984,
+          1788875691195877790,
+          1788875691199803347
+        ],
+        "arch_cuda_network_nse_device": [
+          2096,
+          532250,
+          13407960,
+          1788875691085962184,
+          1788875691085962184
+        ]
+      }
+    },
+    "generated_cpu": {
+      "schema": 1,
+      "source": {
+        "commit": "e799640be7f6cbad678ec0e36a09b96b48c7c572",
+        "scope": "code-and-validation-inputs-v1",
+        "scope_policy": {
+          "directories": [
+            "cmake",
+            "simulation",
+            "src",
+            "tests",
+            "tools",
+            "validation"
+          ],
+          "suffixes": [
+            ".c",
+            ".cc",
+            ".cmake",
+            ".cpp",
+            ".cu",
+            ".cuh",
+            ".cxx",
+            ".def",
+            ".h",
+            ".hh",
+            ".hpp",
+            ".hxx",
+            ".in",
+            ".inc",
+            ".ipp",
+            ".json",
+            ".par",
+            ".py",
+            ".sh",
+            ".tpp",
+            ".yaml",
+            ".yml"
+          ],
+          "root_configuration": [
+            "CMakeLists.txt",
+            "CMakePresets.json",
+            "CMakeUserPresets.json"
+          ],
+          "nested_cmakelists": true,
+          "excluded": [
+            "validation/**/results/**",
+            "**/__pycache__/**"
+          ],
+          "include_untracked_and_gitignored_source": true
+        },
+        "worktree_sha256": "5fc6ae75af92af155113c4b552ebf9953afe01e20d524a9422a63bdd2a3dde8c",
+        "dirty": true,
+        "modified_files": [
+          "cmake/CustomNetworks.cmake",
+          "cmake/Dependencies.cmake",
+          "cmake/tests/CudaTests.cmake",
+          "cmake/tests/HostTests.cmake",
+          "src/core/FileFingerprint.cpp",
+          "src/core/FileFingerprint.h",
+          "src/core/RuntimeParams.h",
+          "src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+          "src/cuda/microphysics/tabular3_eos_device_owner.h",
+          "src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+          "src/cuda/microphysics/tabular4_eos_device_owner.h",
+          "src/data/GlobalDefs.h",
+          "src/driver/SolverDispatch.cpp",
+          "src/driver/dispatch/PolicyDescriptor.h",
+          "src/io/chk/CheckpointCompatibility.cpp",
+          "src/numerics/burnsolver/BurnDispatch.h",
+          "src/numerics/burnsolver/odeFunction.h",
+          "src/physics/eos/HelmEos.h",
+          "src/physics/eos/Tabular3DEOS.cpp",
+          "src/physics/eos/Tabular3DEOS.h",
+          "src/physics/eos/Tabular4DEOS.cpp",
+          "src/physics/eos/Tabular4DEOS.h",
+          "src/physics/eos/TabularFreeEnergy.h",
+          "src/physics/eos/eosdispatch.cpp",
+          "src/physics/eos/eosdispatch.h",
+          "src/physics/nse/nse_solver.h",
+          "tests/host/test_checkpoint_compatibility.cpp",
+          "tests/host/test_resolved_execution_plan.cpp",
+          "tests/tooling/test_portable_network_generator.py",
+          "tools/network/GenerateNetwork.py",
+          "tools/network/PortableAdapter.py"
+        ],
+        "untracked_source_files": [
+          "src/physics/eos/TabularBaryonSource.cpp",
+          "src/physics/eos/TabularBaryonSource.h",
+          "src/physics/eos/TabularCompletion.cpp",
+          "src/physics/eos/TabularCompletion.h",
+          "src/physics/eos/TabularInterpolation.h",
+          "src/physics/eos/TabularInversion.h",
+          "src/physics/eos/TabularSource.h",
+          "src/physics/network/NuclearEnergy.h",
+          "tests/cuda/test_generated_nse_device.cu",
+          "tests/cuda/test_native_tabular_owner.cu",
+          "tests/cuda/test_tabular_completion_device.cu",
+          "tests/fixtures/GeneratedNseReference.h",
+          "tests/fixtures/NativeTabularFixture.h",
+          "tests/host/BaryonEosRegression.cpp",
+          "tests/host/BaryonSourceRegression.cpp",
+          "tests/host/HelmComponentsRegression.cpp",
+          "tests/host/NativeTabularRegression.cpp",
+          "tests/host/TabularCompletionRegression.cpp",
+          "tests/host/test_generated_nse.cpp",
+          "tests/host/test_generated_nse_network.cpp",
+          "tests/math/GeneratedNseCases.h",
+          "tests/math/test_tabular_strict.cpp",
+          "tools/network/NseMetadata.py",
+          "validation/network/inputs/nse_alpha.py",
+          "validation/network/inputs/nse_light.py"
+        ]
+      },
+      "build": {
+        "source_directory": "/home/shiroakane/ARCH",
+        "configuration": "Release",
+        "multi_config": false,
+        "cmake_cache_sha256": "e083866b626c2326a60912ada8cc1de2c804b67f1733a631d9e91ec13e5de46a",
+        "compile_commands_sha256": "8f9cdf13cfab58ee528bd90d294dd120cb0bcfb8470a2f95e590b2c501467d05",
+        "cmake_options": {
+          "ARCH_BINARY_DIR": "/home/shiroakane/ARCH/build-ci/cpu-nse",
+          "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+          "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+          "ARCH_CUSTOM_NETWORKS": "nse_light;nse_alpha",
+          "ARCH_CUSTOM_NETWORK_ROOT": "/tmp/arch-nse-packages.hwOoH4",
+          "ARCH_ENABLE_CUDA": "OFF",
+          "ARCH_ENABLE_CUDSS": "ON",
+          "ARCH_ENABLE_KLU": "ON",
+          "ARCH_ENABLE_OPENMP": "ON",
+          "ARCH_FETCH_SUITESPARSE": "ON",
+          "ARCH_IS_TOP_LEVEL": "ON",
+          "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/shiroakane/ARCH/build-ci/cpu-nse/bin",
+          "ARCH_SOURCE_DIR": "/home/shiroakane/ARCH",
+          "ARCH_VERBOSE_BUILD": "OFF",
+          "BUILD_TESTING": "ON",
+          "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+          "CMAKE_AR": "/usr/bin/ar",
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+          "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-12",
+          "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+          "CMAKE_CXX_FLAGS": "",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_C_COMPILER": "/usr/bin/gcc-12",
+          "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-12",
+          "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-12",
+          "CMAKE_C_FLAGS": "",
+          "CMAKE_C_FLAGS_DEBUG": "-g",
+          "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+          "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+          "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+          "CMAKE_EXE_LINKER_FLAGS": "",
+          "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+          "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/shiroakane/ARCH/build-ci/cpu-nse/CMakeFiles/pkgRedirects",
+          "CMAKE_INSTALL_BINDIR": "bin",
+          "CMAKE_INSTALL_DATADIR": "",
+          "CMAKE_INSTALL_DATAROOTDIR": "share",
+          "CMAKE_INSTALL_DOCDIR": "",
+          "CMAKE_INSTALL_INCLUDEDIR": "include",
+          "CMAKE_INSTALL_INFODIR": "",
+          "CMAKE_INSTALL_LIBDIR": "lib",
+          "CMAKE_INSTALL_LIBEXECDIR": "libexec",
+          "CMAKE_INSTALL_LOCALEDIR": "",
+          "CMAKE_INSTALL_LOCALSTATEDIR": "var",
+          "CMAKE_INSTALL_MANDIR": "",
+          "CMAKE_INSTALL_OLDINCLUDEDIR": "/usr/include",
+          "CMAKE_INSTALL_PREFIX": "/usr/local",
+          "CMAKE_INSTALL_RUNSTATEDIR": "",
+          "CMAKE_INSTALL_SBINDIR": "sbin",
+          "CMAKE_INSTALL_SHAREDSTATEDIR": "com",
+          "CMAKE_INSTALL_SYSCONFDIR": "etc",
+          "CMAKE_LINKER": "/usr/bin/ld",
+          "CMAKE_MAKE_PROGRAM": "/usr/bin/ninja",
+          "CMAKE_MODULE_LINKER_FLAGS": "",
+          "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_NM": "/usr/bin/nm",
+          "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+          "CMAKE_OBJDUMP": "/usr/bin/objdump",
+          "CMAKE_PROJECT_DESCRIPTION": "",
+          "CMAKE_PROJECT_HOMEPAGE_URL": "",
+          "CMAKE_PROJECT_NAME": "ARCH",
+          "CMAKE_PROJECT_VERSION": "7.13.0",
+          "CMAKE_PROJECT_VERSION_MAJOR": "7",
+          "CMAKE_PROJECT_VERSION_MINOR": "13",
+          "CMAKE_PROJECT_VERSION_PATCH": "0",
+          "CMAKE_PROJECT_VERSION_TWEAK": "",
+          "CMAKE_RANLIB": "/usr/bin/ranlib",
+          "CMAKE_READELF": "/usr/bin/readelf",
+          "CMAKE_SHARED_LINKER_FLAGS": "",
+          "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_SKIP_INSTALL_RPATH": "NO",
+          "CMAKE_SKIP_RPATH": "NO",
+          "CMAKE_STATIC_LINKER_FLAGS": "",
+          "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+          "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+          "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+          "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+          "CMAKE_STRIP": "/usr/bin/strip",
+          "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+          "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+          "CUDSS_ROOT": "",
+          "KLU_BINARY_DIR": "/home/shiroakane/ARCH/build-ci/cpu-nse/_deps/suitesparse-build/KLU",
+          "KLU_DIR": "KLU_DIR-NOTFOUND",
+          "KLU_IS_TOP_LEVEL": "OFF",
+          "KLU_SOURCE_DIR": "/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU",
+          "KLU_USE_CHOLMOD": "OFF",
+          "KLU_VERSION_MAJOR": "2",
+          "KLU_VERSION_MINOR": "3",
+          "KLU_VERSION_SUB": "6",
+          "CMAKE_GENERATOR": "Ninja"
+        },
+        "registered_networks": [
+          {
+            "package": "nse_alpha",
+            "root": "/tmp/arch-nse-packages.hwOoH4/nse_alpha",
+            "manifest": {
+              "auxiliary_equations": 0,
+              "class_name": "NetCustom_nse_alpha",
+              "device_callable_math": true,
+              "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+              "explicit_weak_storage": false,
+              "generator_sha256": "b29e41046ec13347e414f95810106c5d0aa00e4e159ed85f2e112dcfb47a9b75",
+              "generator_version": 5,
+              "header": "NetCustom_nse_alpha.h",
+              "literal_zero_jacobian_entries_pruned": 0,
+              "network_id": "nse_alpha",
+              "nse": {
+                "constants": {
+                  "NSE_ATOMIC_MASS_UNIT": 1.6605390666e-24,
+                  "NSE_AVOGADRO": 6.02214076e+23,
+                  "NSE_HBAR": 1.0545718176461565e-27,
+                  "NSE_K_BOLTZMANN": 1.3806490000000002e-16,
+                  "NSE_K_BOLTZMANN_MEV": 8.61733326214518e-11,
+                  "NSE_MEV_TO_ERG": 1.6021766339999998e-06,
+                  "NSE_PLANCK": 6.62607015e-27
+                },
+                "constraint_rank": 1,
+                "eligible": true,
+                "energy_reference": "generated_mion_conserved_baryon_gauge",
+                "mass_convention": "pynucastro_Nucleus_A_nuc_and_nucbind_same_package",
+                "missing_species": [],
+                "partition_policy": "ground_state_only",
+                "reason": "eligible_ground_state_detailed_balance",
+                "reasons": [],
+                "schema_version": 1,
+                "screening_policy": "none",
+                "species": [
+                  {
+                    "A": 4,
+                    "Z": 2,
+                    "binding_mev": 28.295662457999697,
+                    "mass_amu": 4.002603254130864,
+                    "mass_mev": 3728.40132555,
+                    "name": "he4",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 1
+                  },
+                  {
+                    "A": 12,
+                    "Z": 6,
+                    "binding_mev": 92.16173498399803,
+                    "mass_amu": 12.0,
+                    "mass_mev": 11177.92922904,
+                    "name": "c12",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 1
+                  }
+                ],
+                "species_count": 2,
+                "strong_stoichiometric_rank": 1,
+                "temperature_max": null,
+                "temperature_min": 0.0,
+                "weak_policy": "none"
+              },
+              "pynucastro_version": "2.12.0",
+              "rate_count": 2,
+              "recipe": "/home/shiroakane/ARCH/validation/network/inputs/nse_alpha.py",
+              "recipe_sha256": "595f29429bd1ebfa3cc9106fd636cb645e2e13d84b35bd7eeeb41862359dbcd3",
+              "runtime_name": "custom:nse_alpha",
+              "schema_version": 1,
+              "source": "NetCustom_nse_alpha.cpp",
+              "species": [
+                "he4",
+                "c12"
+              ],
+              "species_count": 2,
+              "supports_nse": true,
+              "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+              "weak_composition_jacobian": false,
+              "weak_table_coordinate_derivatives": false
+            },
+            "files": [
+              {
+                "name": "NetCustom_nse_alpha.cpp",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/NetCustom_nse_alpha.cpp",
+                "sha256": "12e27c7e960e11f2ab489158768d2f82011260e2cfa021cc5d0bd16dfe33ad5f"
+              },
+              {
+                "name": "NetCustom_nse_alpha.h",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/NetCustom_nse_alpha.h",
+                "sha256": "1e8e1f5aa27782457b81e6af417330f8736bd2405f0da5cdf4d8135e2d9013a3"
+              },
+              {
+                "name": "NetCustom_nse_alpha.math.h",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/NetCustom_nse_alpha.math.h",
+                "sha256": "da90f7dd29d3f89e3e231808140ce2f255e3329d9ee1c9aec03b32ebd24bdb1c"
+              },
+              {
+                "name": "generated/GNUmakefile",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/GNUmakefile",
+                "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+              },
+              {
+                "name": "generated/actual_network.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/actual_network.H",
+                "sha256": "23c946b27688046d0fe43c3a32e0a7331d40a70da038837fc23707f31f28cc90"
+              },
+              {
+                "name": "generated/actual_rhs.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/actual_rhs.H",
+                "sha256": "7c45bd1538849b111e62a4d67d90cbf73ea4d2d270825ad5d22c1026dfca1830"
+              },
+              {
+                "name": "generated/amrex_bridge.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/amrex_bridge.H",
+                "sha256": "119bb6bf1af44c50cf860acfa8aef0816ea0e3f22f61f3ad80c353d9b4383796"
+              },
+              {
+                "name": "generated/approximate_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/approximate_rates.H",
+                "sha256": "e6a544ed8c9a3e1cef3336fa7fe3a4351ad005bdd3e9fb3146922193eccfa2b2"
+              },
+              {
+                "name": "generated/burn_type.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/burn_type.H",
+                "sha256": "ae5ef60ebac1803f52d1d0744c56579fa609037691de66cce0569e428ff23dfb"
+              },
+              {
+                "name": "generated/derived_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/derived_rates.H",
+                "sha256": "144c4ac229a9c66a9d329c0297f4517fdfa0a6dcd7f8d7343efd7dbf0e6f580f"
+              },
+              {
+                "name": "generated/fundamental_constants.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/fundamental_constants.H",
+                "sha256": "b70969bfd25e4142ed04790ad02a2c460a0e649dc231d1347fb5d0387e30a98e"
+              },
+              {
+                "name": "generated/interp_tools.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/interp_tools.H",
+                "sha256": "54caec4d7070310889cb1636c2166aa1c1101b078b37f82a0fbe8979cc134dd6"
+              },
+              {
+                "name": "generated/main.cpp",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/main.cpp",
+                "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+              },
+              {
+                "name": "generated/modified_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/modified_rates.H",
+                "sha256": "b1bc9afbae59d09dc2a6ff37b7ab4388ad28defc6981c0d3d6d82117033b5b33"
+              },
+              {
+                "name": "generated/network_properties.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/network_properties.H",
+                "sha256": "dd8b4d023ac496fb48f84addbe317a053bce3244dd387671b16a15f32317fa48"
+              },
+              {
+                "name": "generated/partition_functions.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/partition_functions.H",
+                "sha256": "76de03e2662a5ba4c903ef31d7124e0063e05e260a44a3efd1fc021248cee3ab"
+              },
+              {
+                "name": "generated/pynucastro-info.txt",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/pynucastro-info.txt",
+                "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+              },
+              {
+                "name": "generated/rate_type.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/rate_type.H",
+                "sha256": "d9386471494170a0797ffc8f1507dc071a58d61308b4220860f364b93e6672b3"
+              },
+              {
+                "name": "generated/reaclib_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/reaclib_rates.H",
+                "sha256": "8865c694c5490c50a467af41499d374745c8464b19ecc7ea2738df6c545a8a55"
+              },
+              {
+                "name": "generated/screen.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/screen.H",
+                "sha256": "0e7161a3afe43890d10c711de94fc5393dbb1695abe5581e17a10a64377fb434"
+              },
+              {
+                "name": "generated/screen_data.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/screen_data.H",
+                "sha256": "cd7b978f1a43bb6de68799477f7502b8173c5c2a1caec899fbcc61ab4eb76df7"
+              },
+              {
+                "name": "generated/table_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/table_rates.H",
+                "sha256": "8715a604fde032578a12b58c54e1b79c09dc5cebe27bc3f1c01ace27ef5e10d5"
+              },
+              {
+                "name": "generated/tfactors.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/generated/tfactors.H",
+                "sha256": "b7e61d6c348005fa5cdfe02aadb67b1e0befa22deab5ebadfd3e9d91e3be2009"
+              },
+              {
+                "name": "manifest.json",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/manifest.json",
+                "sha256": "92f5c7219d5c903a004ecf8d33ac90237d6cf0f5e6dead3c41d3c03747872bf2"
+              },
+              {
+                "name": "network.cmake",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_alpha/network.cmake",
+                "sha256": "a86eba4db6e01999a6d804e4a955ad628ff9bae6c71a9841b43c8ef56de9d6aa"
+              }
+            ]
+          },
+          {
+            "package": "nse_light",
+            "root": "/tmp/arch-nse-packages.hwOoH4/nse_light",
+            "manifest": {
+              "auxiliary_equations": 0,
+              "class_name": "NetCustom_nse_light",
+              "device_callable_math": true,
+              "energy_authority": "generated mion and C::enuc_conv2; conserved-baryon mass offset, shared energy_mion accessor",
+              "explicit_weak_storage": false,
+              "generator_sha256": "b29e41046ec13347e414f95810106c5d0aa00e4e159ed85f2e112dcfb47a9b75",
+              "generator_version": 5,
+              "header": "NetCustom_nse_light.h",
+              "literal_zero_jacobian_entries_pruned": 16,
+              "network_id": "nse_light",
+              "nse": {
+                "constants": {
+                  "NSE_ATOMIC_MASS_UNIT": 1.6605390666e-24,
+                  "NSE_AVOGADRO": 6.02214076e+23,
+                  "NSE_HBAR": 1.0545718176461565e-27,
+                  "NSE_K_BOLTZMANN": 1.3806490000000002e-16,
+                  "NSE_K_BOLTZMANN_MEV": 8.61733326214518e-11,
+                  "NSE_MEV_TO_ERG": 1.6021766339999998e-06,
+                  "NSE_PLANCK": 6.62607015e-27
+                },
+                "constraint_rank": 2,
+                "eligible": true,
+                "energy_reference": "generated_mion_conserved_baryon_gauge",
+                "mass_convention": "pynucastro_Nucleus_A_nuc_and_nucbind_same_package",
+                "missing_species": [],
+                "partition_policy": "ground_state_only",
+                "reason": "eligible_ground_state_detailed_balance",
+                "reasons": [],
+                "schema_version": 1,
+                "screening_policy": "none",
+                "species": [
+                  {
+                    "A": 1,
+                    "Z": 0,
+                    "binding_mev": 0.0,
+                    "mass_amu": 1.0086649159442136,
+                    "mass_mev": 939.56542052,
+                    "name": "n",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 2
+                  },
+                  {
+                    "A": 1,
+                    "Z": 1,
+                    "binding_mev": 0.0,
+                    "mass_amu": 1.0078250318977473,
+                    "mass_mev": 938.7830734839999,
+                    "name": "h1",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 2
+                  },
+                  {
+                    "A": 2,
+                    "Z": 1,
+                    "binding_mev": 2.2245662689997516,
+                    "mass_amu": 2.014101777843653,
+                    "mass_mev": 1876.123927735,
+                    "name": "h2",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 3
+                  },
+                  {
+                    "A": 3,
+                    "Z": 2,
+                    "binding_mev": 7.718041347999588,
+                    "mass_amu": 3.0160293219690915,
+                    "mass_mev": 2809.41352614,
+                    "name": "he3",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 2
+                  },
+                  {
+                    "A": 4,
+                    "Z": 2,
+                    "binding_mev": 28.295662457999697,
+                    "mass_amu": 4.002603254130864,
+                    "mass_mev": 3728.40132555,
+                    "name": "he4",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 1
+                  },
+                  {
+                    "A": 12,
+                    "Z": 6,
+                    "binding_mev": 92.16173498399803,
+                    "mass_amu": 12.0,
+                    "mass_mev": 11177.92922904,
+                    "name": "c12",
+                    "partition_data": null,
+                    "spin_reliable": true,
+                    "spin_weight": 1
+                  },
+                  {
+                    "A": 16,
+                    "Z": 8,
+                    "binding_mev": 127.6193154119992,
+                    "mass_amu": 15.994914619332862,
+                    "mass_mev": 14899.16863662,
+                    "name": "o16",
+                    "partition_data": {
+                      "interpolation": "linear_log_partition_in_temperature_gk",
+                      "log_partition": [
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.0,
+                        0.02955880224154443,
+                        0.08617769624105241,
+                        0.16551443847757333,
+                        0.27763173659827955,
+                        0.4252677354043441,
+                        0.6043159668533296,
+                        0.7975071958841882,
+                        1.007957920399979,
+                        1.2296405510745139,
+                        1.4609379041156563,
+                        2.0681277817795625,
+                        2.70805020110221,
+                        3.3775875160230218,
+                        4.062165663857866,
+                        4.7535901911063645,
+                        5.4510384535657,
+                        6.142037405587356,
+                        6.828712071641684,
+                        7.512071245835466,
+                        8.185907481482324,
+                        8.85366542803745,
+                        9.517825071724143,
+                        10.177324218165856,
+                        10.831706855275558,
+                        11.48246625748552,
+                        12.128111104060462,
+                        12.774223335915433,
+                        13.41652441595382,
+                        14.054527458434775,
+                        14.690979295318174,
+                        15.324022551808413,
+                        15.956752500549557,
+                        16.588099280204055,
+                        17.216707939626428,
+                        17.842646370492925,
+                        18.469470908121796,
+                        19.09362521719479,
+                        19.715407911546766,
+                        20.337603356134426,
+                        20.954377557909798,
+                        22.19802884605391,
+                        23.43796058076729,
+                        24.670655986211848,
+                        25.905049387238495,
+                        27.136724794113768,
+                        28.368185181905268,
+                        29.602320498988682,
+                        32.68726692127686
+                      ],
+                      "temperature_gk": [
+                        0.01,
+                        0.15,
+                        0.2,
+                        0.3,
+                        0.4,
+                        0.5,
+                        0.6,
+                        0.7,
+                        0.8,
+                        0.9,
+                        1.0,
+                        1.5,
+                        2.0,
+                        2.5,
+                        3.0,
+                        3.5,
+                        4.0,
+                        4.5,
+                        5.0,
+                        6.0,
+                        7.0,
+                        8.0,
+                        9.0,
+                        10.0,
+                        12.0,
+                        14.0,
+                        16.0,
+                        18.0,
+                        20.0,
+                        22.0,
+                        24.0,
+                        26.0,
+                        28.0,
+                        30.0,
+                        35.0,
+                        40.0,
+                        45.0,
+                        50.0,
+                        55.0,
+                        60.0,
+                        65.0,
+                        70.0,
+                        75.0,
+                        80.0,
+                        85.0,
+                        90.0,
+                        95.0,
+                        100.0,
+                        105.0,
+                        110.0,
+                        115.0,
+                        120.0,
+                        125.0,
+                        130.0,
+                        135.0,
+                        140.0,
+                        145.0,
+                        150.0,
+                        155.0,
+                        160.0,
+                        165.0,
+                        170.0,
+                        175.0,
+                        180.0,
+                        190.0,
+                        200.0,
+                        210.0,
+                        220.0,
+                        230.0,
+                        240.0,
+                        250.0,
+                        275.0
+                      ]
+                    },
+                    "spin_reliable": true,
+                    "spin_weight": 1
+                  }
+                ],
+                "species_count": 7,
+                "strong_stoichiometric_rank": 5,
+                "temperature_max": null,
+                "temperature_min": 0.0,
+                "weak_policy": "none"
+              },
+              "pynucastro_version": "2.12.0",
+              "rate_count": 20,
+              "recipe": "/home/shiroakane/ARCH/validation/network/inputs/nse_light.py",
+              "recipe_sha256": "9f9f8ec07a866aa49593a95d3d7cba4d0bcb6e941be54aaa268dc1daa5a659f3",
+              "runtime_name": "custom:nse_light",
+              "schema_version": 1,
+              "source": "NetCustom_nse_light.cpp",
+              "species": [
+                "n",
+                "h1",
+                "h2",
+                "he3",
+                "he4",
+                "c12",
+                "o16"
+              ],
+              "species_count": 7,
+              "supports_nse": true,
+              "temperature_jacobian": "shared fourth-order complete-RHS difference; relative epsilon^(1/5) step; forward boundary stencil",
+              "weak_composition_jacobian": false,
+              "weak_table_coordinate_derivatives": false
+            },
+            "files": [
+              {
+                "name": "NetCustom_nse_light.cpp",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/NetCustom_nse_light.cpp",
+                "sha256": "74f24cd77006dddec7bc3e6c7a320c68d9d2f2bf82e8bca8dbd7986444246b17"
+              },
+              {
+                "name": "NetCustom_nse_light.h",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/NetCustom_nse_light.h",
+                "sha256": "2a57796f750f037539b5e7cc4797f031c9884b87950c65e5fc48822e3e135b8e"
+              },
+              {
+                "name": "NetCustom_nse_light.math.h",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/NetCustom_nse_light.math.h",
+                "sha256": "a427624a6fda359ca362a575b17a114104017743fdbb47c4a20020b6035483c5"
+              },
+              {
+                "name": "generated/GNUmakefile",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/GNUmakefile",
+                "sha256": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d"
+              },
+              {
+                "name": "generated/actual_network.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/actual_network.H",
+                "sha256": "37719cec9deefe637ae6a71d3f286330ca577a73464dfeca762c1bb6431143af"
+              },
+              {
+                "name": "generated/actual_rhs.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/actual_rhs.H",
+                "sha256": "c9faa7b15b7186460d8df9022032b69415e455054fe644b1bad59332677aea11"
+              },
+              {
+                "name": "generated/amrex_bridge.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/amrex_bridge.H",
+                "sha256": "e71865eb7d0f95704a2ec9e1e5930434e4bbd733ca3c200d5595cef190523433"
+              },
+              {
+                "name": "generated/approximate_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/approximate_rates.H",
+                "sha256": "bb0f212cba412c8e557629f2b7dd6de1e86d75cb346251f3eef594182c7cf245"
+              },
+              {
+                "name": "generated/burn_type.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/burn_type.H",
+                "sha256": "500c6af01da2d74702a467201d64d7b70044e1b9526becbe8af287e40b4b6a60"
+              },
+              {
+                "name": "generated/derived_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/derived_rates.H",
+                "sha256": "f9e9af48a031eb7d632748eb9d91e91caf5a974096ac4d391d84a37870d9d22d"
+              },
+              {
+                "name": "generated/fundamental_constants.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/fundamental_constants.H",
+                "sha256": "220a9e2c9727ed744da725621fefdd3567d0ff5a53171087d96d6db4d9725488"
+              },
+              {
+                "name": "generated/interp_tools.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/interp_tools.H",
+                "sha256": "6a62d135991460b1c31386b588fee7d5af3123193b7041159633314a8d443a39"
+              },
+              {
+                "name": "generated/main.cpp",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/main.cpp",
+                "sha256": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0"
+              },
+              {
+                "name": "generated/modified_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/modified_rates.H",
+                "sha256": "4ead1e6a8ba32e75f49260e80e04b8993d5ce1fdbf7af268a4dc71ee6645e612"
+              },
+              {
+                "name": "generated/network_properties.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/network_properties.H",
+                "sha256": "aa0b57f862031c6e9d2399f610cf7f8f587e8bcf9626de8cd64085889400cdc6"
+              },
+              {
+                "name": "generated/partition_functions.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/partition_functions.H",
+                "sha256": "0000c71b18a5d8c7d37273e213ced70c89f9092ed63327651986b9a836974ad9"
+              },
+              {
+                "name": "generated/pynucastro-info.txt",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/pynucastro-info.txt",
+                "sha256": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da"
+              },
+              {
+                "name": "generated/rate_type.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/rate_type.H",
+                "sha256": "0721f2d4975b58fa208b39cca902c59aec78c4f9f47e7525b1c83246d5fb6b62"
+              },
+              {
+                "name": "generated/reaclib_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/reaclib_rates.H",
+                "sha256": "9ef44b979653e1aacac2e2c4cb11a78b286da78a2602b7944fbe8c44f0dc8c1a"
+              },
+              {
+                "name": "generated/screen.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/screen.H",
+                "sha256": "091c4600b0d2972e124265b630b654bd67b5d9a7760e4503b8cf64132b187702"
+              },
+              {
+                "name": "generated/screen_data.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/screen_data.H",
+                "sha256": "c384cfd19dc934d9e1a42c9e30ad6eb7acbbb951aede8f612854eeae61a0d4fb"
+              },
+              {
+                "name": "generated/table_rates.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/table_rates.H",
+                "sha256": "10ac1c1737dbcfd80ede9721c0b364a4d11d24c5cd08793cf421c6b53b592385"
+              },
+              {
+                "name": "generated/tfactors.H",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/generated/tfactors.H",
+                "sha256": "10e144ae10b74abfbc3ab33e4d2e34373ace731fd11b73d1c90ac9c905dcc7d1"
+              },
+              {
+                "name": "manifest.json",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/manifest.json",
+                "sha256": "d4e9ce9812185b6e97a910d078552305851498fee05575f9c7c8aefe9c6e6541"
+              },
+              {
+                "name": "network.cmake",
+                "path": "/tmp/arch-nse-packages.hwOoH4/nse_light/network.cmake",
+                "sha256": "534a480b849975fdfd6c76a73501b2ef3ae79d9bf36c05c510203ca87daeea41"
+              }
+            ]
+          }
+        ],
+        "sparse_link": {
+          "required_providers": [
+            "klu"
+          ],
+          "link_command_sha256": "33973b0bd24f7747cd40f98afd69766364b05d81865e0090caabeede20e5e45e",
+          "libraries": [
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/_deps/suitesparse-build/AMD/libamd.a",
+              "sha256": "568c022d8da6037838d2f413565c91aaaabc525d9c58b64dfdddec602813a323"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/_deps/suitesparse-build/BTF/libbtf.a",
+              "sha256": "4d768c87fbb5982acc5e2b024b2a55b0cda6b30fc86dec02d5118879afddb0a4"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/_deps/suitesparse-build/COLAMD/libcolamd.a",
+              "sha256": "2abd6e596e3b10e9fedc8bbe132dbc2c0af09d08457ab36c0cada254af1034f0"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/_deps/suitesparse-build/KLU/libklu.a",
+              "sha256": "e529b7f34172a19f52601844c02e0b2a573404343c5e40ac044195c93d0a7c4c"
+            },
+            {
+              "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+              "sha256": "1f463d549ca39ccb9edc2cbc558a054e8dc93618f3088e5bf8892de2db3e38ca"
+            }
+          ]
+        },
+        "configured_sparse_libraries": {}
+      },
+      "execution_environment": {
+        "OMP_NUM_THREADS": null,
+        "OMP_DYNAMIC": null,
+        "OMP_PROC_BIND": null,
+        "OMP_PLACES": null,
+        "OMP_SCHEDULE": null,
+        "CUDA_VISIBLE_DEVICES": null,
+        "CUDA_MODULE_LOADING": null
+      },
+      "artifacts": {
+        "arch_generated_nse_nse_light": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/arch_generated_nse_nse_light",
+          "sha256": "84c1cc2d85aa60cf60a079aa105339afe8098120be82fd6294f7f68a8ae0a3f7"
+        },
+        "arch_generated_nse_nse_alpha": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/arch_generated_nse_nse_alpha",
+          "sha256": "23ab78ef6181a4bca1d658e7f84dc5152d6c48e56bc2f8fd20c359be8eee88c4"
+        },
+        "arch_resolved_execution_plan": {
+          "path": "/home/shiroakane/ARCH/build-ci/cpu-nse/arch_resolved_execution_plan",
+          "sha256": "4253c26b21e66ef06c805942c6ba575459c2d86ca70a38a432fcd4e121820422"
+        }
+      },
+      "artifact_observation": {
+        "arch_generated_nse_nse_light": [
+          2096,
+          532953,
+          158584,
+          1788875916868601427,
+          1788875916868601427
+        ],
+        "arch_generated_nse_nse_alpha": [
+          2096,
+          532954,
+          109128,
+          1788875916021057054,
+          1788875916021057054
+        ],
+        "arch_resolved_execution_plan": [
+          2096,
+          532955,
+          844288,
+          1788875931961077338,
+          1788875931961077338
+        ]
+      }
+    }
+  },
+  "eos_inputs": [
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab",
+      "sha256": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos4.tab",
+      "sha256": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34"
+    }
+  ]
+}

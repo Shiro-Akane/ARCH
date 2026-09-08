@@ -1,0 +1,59 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu.par
+[Main] Problem created: BurnGradient
+[Problem] Burn gradient: rho=1e+07, T_bg=5e+07, T_peak=3e+09, network=aprox13
+[Main] Configuration:
+       Grid: 80 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Restarting from checkpoint: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_segment_11/RestartAMR_cpu_segment_11_chk_0012.h5
+[IO] Restored CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_segment_11/RestartAMR_cpu_segment_11_chk_0012.h5 at step 24 with 8 AMR leaves.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0125
+    Level 1   | dx1(x): 0.00625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: BE_NR | Linear Solver: DenseLU
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=4)
+Step    Time           dt             dt_hydro       dt_burn        
+--------------------------------------------------------------------
+25      3.90727e-11    3.54826e-12    3.54826e-12    1.77413e-12    
+26      4.26054e-11    3.53270e-12    3.53270e-12    1.76635e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0013.h5 at step 26 with 8 AMR leaves.
+27      4.61242e-11    3.51880e-12    3.51880e-12    1.75940e-12    
+28      4.96308e-11    3.50654e-12    3.50654e-12    1.75327e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0014.h5 at step 28 with 8 AMR leaves.
+29      5.31267e-11    3.49589e-12    3.49589e-12    1.74795e-12    
+30      5.66116e-11    3.48492e-12    3.48492e-12    1.74246e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0015.h5 at step 30 with 8 AMR leaves.
+31      6.00844e-11    3.47285e-12    3.47285e-12    1.73643e-12    
+32      6.35470e-11    3.46253e-12    3.46253e-12    1.73126e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0016.h5 at step 32 with 8 AMR leaves.
+33      6.70008e-11    3.45385e-12    3.45385e-12    1.72693e-12    
+34      7.04476e-11    3.44673e-12    3.44673e-12    1.72337e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0017.h5 at step 34 with 8 AMR leaves.
+35      7.38854e-11    3.43788e-12    3.43788e-12    1.71894e-12    
+36      7.73153e-11    3.42990e-12    3.42990e-12    1.71495e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0018.h5 at step 36 with 8 AMR leaves.
+37      8.07389e-11    3.42352e-12    3.42352e-12    1.71176e-12    
+38      8.41575e-11    3.41863e-12    3.41863e-12    1.70931e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0019.h5 at step 38 with 8 AMR leaves.
+39      8.75726e-11    3.41514e-12    3.41514e-12    1.70757e-12    
+40      9.09856e-11    3.41297e-12    3.41297e-12    1.70648e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0020.h5 at step 40 with 8 AMR leaves.
+41      9.43963e-11    3.41072e-12    3.41072e-12    1.70536e-12    
+42      9.78040e-11    3.40772e-12    3.40772e-12    1.70386e-12    
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0021.h5 at step 42 with 8 AMR leaves.
+43      1.00000e-10    2.19598e-12    3.40611e-12    1.09799e-12    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_HLLC_plt_0001.h5 at t=1.00000e-10
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/amr/results/sustained-first-law-20260907/release-901/burn/cpu_fixed_cpu/RestartAMR_cpu_fixed_cpu_chk_0022.h5 at step 43 with 8 AMR leaves.
+>>> Simulation Done. Total Steps: 43 | Final Time: 1.00000e-10

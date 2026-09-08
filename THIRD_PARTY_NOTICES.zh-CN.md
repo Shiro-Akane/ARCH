@@ -17,9 +17,19 @@ ARCH 包含 Frank Timmes 所发布软件的 C++ 适配：
 
 Timmes 下载页面请求在使用这些代码、代码片段或修改版本时引用相关文献；反应网络页面也欢迎就集成到其他软件的工作联系作者。这些页面没有声明标准 SPDX 软件许可证。因此本项目不主张将 Timmes 派生内容重新许可为 ARCH 的 MIT 许可证。维护者应保留来源归属，并在公开发布前确认适用的重新分发条款。
 
-本项目使用了 Timmes 的科学成果，目前尚未联系作者。维护者计划补充联系及重新分发条款的确认记录。这项发布行政事项仍待完成，与技术验证分别记录；来源标注或测试通过均不代表已获得授权。
+维护者正在处理 Timmes 相关内容重新分发条款的确认请求，并将保留往来记录及适用条款。请求处理期间继续保留来源归属与上游说明。这项发布行政事项与技术验证分别记录；请求正在办理、来源标注或测试通过均不代表已有书面重新分发许可。
 
 实现和验证细节见 [`docs/physics/TimmesNetworks.zh-CN.md`](docs/physics/TimmesNetworks.zh-CN.md)。
+
+## 外部 Shen EOS 表与 EOSdriver 兼容格式
+
+ARCH 的原生核物质表读取器由 ARCH 自行实现数据格式读取，没有复制或改写 EOSmaker/EOSdriver 例程。读取器代码与表数据分别记录来源；支持某种表格式不会将表数据的所有权或许可转移给 ARCH。
+
+作者的 [Shen EOS Zenodo 归档，记录 3612487](https://zenodo.org/records/3612487)，在其[记录元数据](https://zenodo.org/api/records/3612487)中声明 `cc-by-4.0`。该归档包含 EOS2 和 EOS4 的 `.tab`、`.t00`、`.yp0` 表，共六个 ZIP 压缩包。这些特定归档文件可按 [Creative Commons 署名 4.0 国际许可协议](https://creativecommons.org/licenses/by/4.0/)重新分发和改编，包括商业用途。须保留已提供的作者署名、来源/DOI、版权、许可和免责声明，提供许可链接，并标明修改及保留既有修改标记；不得暗示作者背书，也不得施加与许可相冲突的额外限制。与 ARCH 的 MIT 代码一同打包时，表数据仍保留其自身许可。
+
+ARCH 在 `EOS_toolkit/tables/baryon/` 通过 Git LFS 随附该归档中未修改的 `eos2.tab` 和 `eos4.tab` 主表成员。署名为 H. Shen、F. Ji、J. N. Hu、K. Sumiyoshi，*Equation of state for simulations of core-collapse supernovae and neutron-star mergers*（2020），[DOI: 10.5281/zenodo.3612487](https://doi.org/10.5281/zenodo.3612487)。只执行了解压和 LFS 打包，没有修改数据字节；精确大小与 SHA-256 校验值见[运行时表指南](EOS_toolkit/README.zh-CN.md#原始-shen-数据)。ARCH 在内存中完成的组件补齐与固定能量基准处理不改变这些分发的来源文件。零温 `.t00`、零电荷 `.yp0` 辅助产品不随附。
+
+上述许可适用于已识别的归档，不会自动覆盖所有 Shen 版本或第三方加工后的表。[StellarCollapse EOS 页面](https://stellarcollapse.org/equationofstate.html)对其代码和表声明了署名、非商业性使用和相同方式共享条件。因此，重新分发 EOSdriver 兼容的 HShen HDF5 表时，须针对具体加工文件及版本核对适用条款与说明，包括制作过程中加入的其他贡献。原始 Zenodo 归档的 CC BY 4.0 不会自动替代这些独立条款。加工后的 HShen HDF5 表仅进行格式兼容性调查，不随 ARCH 分发。
 
 ## AMReX-Astro Microphysics
 

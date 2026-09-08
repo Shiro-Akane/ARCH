@@ -1,0 +1,338 @@
+{
+  "schema": 1,
+  "scope": "bounded uniform CPU EOS integration/startup guards; not nonuniform physical accuracy",
+  "passed": false,
+  "release_qualified": false,
+  "dependencies": [
+    {
+      "path": "/home/shiroakane/ARCH/build-ci/cpu/bin/ARCH",
+      "sha256": "d81dd59d7c3f58db0dae0d965cd2d599bf185a01dc40dfa78688ace4ec0ae3ac"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/simulation/Cellular/Cellular.par",
+      "sha256": "a50af34a33e25d785c56aff1070c5187a5148c65cf4a68ee3703e2817dfc4122"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/validation/eos/results/tabular-extension-20260908/replay_static.py",
+      "sha256": "c4cd2429b15f5e9bf283e9ae87212bf5b9ffbbe202f07336f6641ae16fb2a069"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab",
+      "sha256": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos4.tab",
+      "sha256": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build-ci/cpu/component-completion-test-data/partial-3d-00.h5",
+      "sha256": "8537330c82a067d15ae5985f471323e4d4224c168391682de3800ad3a230b51c"
+    }
+  ],
+  "binary_before": {
+    "path": "/home/shiroakane/ARCH/build-ci/cpu/bin/ARCH",
+    "sha256": "d81dd59d7c3f58db0dae0d965cd2d599bf185a01dc40dfa78688ace4ec0ae3ac"
+  },
+  "helm_table_before": {
+    "path": "/home/shiroakane/ARCH/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "environment": {
+    "OMP_NUM_THREADS": "2",
+    "OMP_DYNAMIC": "FALSE",
+    "OMP_PROC_BIND": null,
+    "OMP_PLACES": null,
+    "OMP_SCHEDULE": null,
+    "CUDA_VISIBLE_DEVICES": null,
+    "CUDA_MODULE_LOADING": null
+  },
+  "started_utc": "2026-09-08T14:01:38.238018+00:00",
+  "budgets": {
+    "temperature_relative": 2e-08,
+    "closure_relative": 2e-12,
+    "composition_absolute": 1e-12,
+    "state_change": "exact zero"
+  },
+  "cases": [
+    {
+      "id": "raw-1-eos2-static",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/static.par",
+        "sha256": "035685e9570765521896fba070a55a2889885f3b94213551e96a99a17f856222"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab",
+      "returncode": 0,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/arch.stdout",
+        "sha256": "69e741dbd582b7a6642289ba897e1ec454218a1e036752c1686fabd88a61e1fb"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/arch.stderr",
+        "sha256": "6f3896bd7e554e11d867d6941a1a7f711ab3f0dfc44a11f0aaa64a58ad97ccf2"
+      },
+      "plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "tabular3d",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "static_checks": {
+        "steps": 3,
+        "cells": 16,
+        "native_fields": 8,
+        "plot_fields": 24,
+        "exact_spatial_uniformity": true,
+        "exact_initial_final_state": true,
+        "final_time": 0.004723193510278592,
+        "temperature_relative_error": 1.887379141862766e-15,
+        "energy_closure_relative": 0.0,
+        "rhoX_closure_relative": 0.0,
+        "species_sum_error": 0.0,
+        "Ye_absolute_error": 0.0,
+        "pressure": 7.395077014401132e+27,
+        "energy_density": 6.262559427302609e+28,
+        "artifacts": [
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/Static_HLLC_plt_0000.h5",
+            "sha256": "c9fc521821972076f401d81ebf25a287385a2a51f29504bb82e1d4f5b2f5344a"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/Static_HLLC_plt_0001.h5",
+            "sha256": "684ef4b064a8c4a9c1d03b6701a4a900f8ade4c623181d6c19e790fac8c1d69f"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/Static_HLLC_plt_0002.h5",
+            "sha256": "fb8e50eb1c250a1b1dbf45fc83bc3f142d519f27f05ac38c4fcb1e77cfdadda0"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/Static_HLLC_plt_0003.h5",
+            "sha256": "55a7696be988b406da222b821c2880a1af5e1d4d3d32e8720aafded897b9e970"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/Static_chk_0000.h5",
+            "sha256": "b23882b3a1c9aa322422ee51c61fdeade9f2d1d0c40bd16192f62dddbfa1a566"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-static/Static_chk_0001.h5",
+            "sha256": "ef49106bbc2e379c3dac0ae52c9aadeddaaa61bcbf53f7324c5d957855a4ebbb"
+          }
+        ]
+      }
+    },
+    {
+      "id": "raw-1-eos2-reject-burn",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-burn/static.par",
+        "sha256": "09d585d791eb33d485a6c6273f4fed5f3e36c96d7d1a5c8115f319515a2d8551"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab",
+      "returncode": 1,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-burn/arch.stdout",
+        "sha256": "bb98f8ebd8a8ad49ebc9bac39cc5b245ad69ee6eeed650763126d3e4034f5b22"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-burn/arch.stderr",
+        "sha256": "0dae73dc6e4a767fa3b7c61c3748f1ab96851193648e89f21dcde6a95b026c87"
+      },
+      "startup_rejection": "burn",
+      "expected_message": "Independent kinetic burning/NSE would double-count nuclear energy"
+    },
+    {
+      "id": "raw-1-eos2-reject-sw",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-sw/static.par",
+        "sha256": "e332d4d79562650b972e8ab17151dba2bea90d5fcc27f98378746893bd5fd559"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab",
+      "returncode": 1,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-sw/arch.stdout",
+        "sha256": "753388ef4886c91f0bab91ad4964b6d5bdd4d6c6ee2aab17f4f6e83d9943cd68"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-sw/arch.stderr",
+        "sha256": "609dc7065a62bfe6f42f9c2588fb68bfa594ce55ff72f804a3c7c3cd6846762e"
+      },
+      "startup_rejection": "sw",
+      "expected_message": "Steger-Warming requires a composition-only gamma"
+    },
+    {
+      "id": "raw-1-eos2-reject-automatic-thermal",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-automatic-thermal/static.par",
+        "sha256": "79a732acf1d2963c841f7bafc0796147536116218ce4fd4c7425f2987996ce8d"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos2.tab",
+      "returncode": 1,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-automatic-thermal/arch.stdout",
+        "sha256": "69cba0fcb7952b6c69ac23a7d759fc2c23a4dbee039c35d49159e3677e274174"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-1-eos2-reject-automatic-thermal/arch.stderr",
+        "sha256": "669e2042fc7953ca6ed1e1e420c960033d959427e2ae373a6b3936b7b176da92"
+      },
+      "startup_rejection": "automatic-thermal",
+      "expected_message": "does not supply the electron diagnostics required by automatic stellar conductivity"
+    },
+    {
+      "id": "raw-2-eos4-static",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/static.par",
+        "sha256": "5f5ab3f7fd83bea71d2f99138a13544ae3070b1cb4f4db375d4eb56f57f267c9"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos4.tab",
+      "returncode": 0,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/arch.stdout",
+        "sha256": "89ff600617e15bae8cf883945fc0a42362fd3d41f2e137cb2a666b0ede713e82"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/arch.stderr",
+        "sha256": "6f3896bd7e554e11d867d6941a1a7f711ab3f0dfc44a11f0aaa64a58ad97ccf2"
+      },
+      "plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk2",
+        "eos": "tabular3d",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "static_checks": {
+        "steps": 3,
+        "cells": 16,
+        "native_fields": 8,
+        "plot_fields": 24,
+        "exact_spatial_uniformity": true,
+        "exact_initial_final_state": true,
+        "final_time": 0.004664981133943825,
+        "temperature_relative_error": 1.887379141862766e-15,
+        "energy_closure_relative": 0.0,
+        "rhoX_closure_relative": 0.0,
+        "species_sum_error": 0.0,
+        "Ye_absolute_error": 0.0,
+        "pressure": 7.575541065268866e+27,
+        "energy_density": 6.431312797554618e+28,
+        "artifacts": [
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/Static_HLLC_plt_0000.h5",
+            "sha256": "450081e1fbf7dfa2d70cd2ea1a19d2eea478964600bbd737f3349f3af577eadc"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/Static_HLLC_plt_0001.h5",
+            "sha256": "bfb691494b441e7322731f2bfd79cc87b723663831bdbabacdb1e1ab9bcc8300"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/Static_HLLC_plt_0002.h5",
+            "sha256": "8dd135ef33dc7f7326bb1771e4c27aa9da1af2da0bf79e16991e907be5035d10"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/Static_HLLC_plt_0003.h5",
+            "sha256": "c054de3b48e0305d60624f7658702f0245a975e2223207cb38993f15b4d4e872"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/Static_chk_0000.h5",
+            "sha256": "8dcae7960c36033783f9cb227d79f10d9489532a12009d14e2c5f3aef5fe5450"
+          },
+          {
+            "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-static/Static_chk_0001.h5",
+            "sha256": "4305ece83849c6d7e8e599f45b5099480276b99d4b00ffa02d255888e79e16f7"
+          }
+        ]
+      }
+    },
+    {
+      "id": "raw-2-eos4-reject-burn",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-burn/static.par",
+        "sha256": "ef786b4f2861d97cdcff8f25711afe7d2d9dbdacbc100f4de11974abcc2c8f2f"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos4.tab",
+      "returncode": 1,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-burn/arch.stdout",
+        "sha256": "d11f96d7ded5863b785fb6af8a4d2c40bf3a74aca9063604021c698487165c76"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-burn/arch.stderr",
+        "sha256": "0dae73dc6e4a767fa3b7c61c3748f1ab96851193648e89f21dcde6a95b026c87"
+      },
+      "startup_rejection": "burn",
+      "expected_message": "Independent kinetic burning/NSE would double-count nuclear energy"
+    },
+    {
+      "id": "raw-2-eos4-reject-sw",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-sw/static.par",
+        "sha256": "44d306d9b0f95693320f8fc931b7b367f96203c985ccde624a482d3032f677db"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos4.tab",
+      "returncode": 1,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-sw/arch.stdout",
+        "sha256": "df362e661d7ef5e69afddbbe92dcc9f3fe15c1e63839290f5636f783915cf9a0"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-sw/arch.stderr",
+        "sha256": "609dc7065a62bfe6f42f9c2588fb68bfa594ce55ff72f804a3c7c3cd6846762e"
+      },
+      "startup_rejection": "sw",
+      "expected_message": "Steger-Warming requires a composition-only gamma"
+    },
+    {
+      "id": "raw-2-eos4-reject-automatic-thermal",
+      "parameter": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-automatic-thermal/static.par",
+        "sha256": "ca62a22e3766a70987fe3db0f4e8c9c2cc9b2964cb1622effda89daf4fc0159d"
+      },
+      "table": "/home/shiroakane/ARCH/EOS_toolkit/tables/baryon/eos4.tab",
+      "returncode": 1,
+      "stdout": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-automatic-thermal/arch.stdout",
+        "sha256": "06b053f91e447671187214a86f734ba1e8fdfc14ff059e0ef25c097a181ce982"
+      },
+      "stderr": {
+        "path": "/home/shiroakane/ARCH/build-ci/reports/baryon-static/raw-2-eos4-reject-automatic-thermal/arch.stderr",
+        "sha256": "669e2042fc7953ca6ed1e1e420c960033d959427e2ae373a6b3936b7b176da92"
+      },
+      "startup_rejection": "automatic-thermal",
+      "expected_message": "does not supply the electron diagnostics required by automatic stellar conductivity"
+    }
+  ],
+  "failure": "normalized-reject-sw: expected startup rejection absent",
+  "finished_utc": "2026-09-08T14:02:26.548118+00:00"
+}

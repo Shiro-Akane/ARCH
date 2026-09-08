@@ -1,0 +1,3 @@
+MEMORY_GUARD_RESULT min_available_kib=6526048 baseline_swap_kib=174212 peak_swap_kib=174212 guard_stopped=False peak_owned_rss_kib=330324 elapsed_seconds=27.229 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-c41606cd-88f2-ac99-0afd-5edd7d8867c0 total_mib=8192 baseline_used_mib=1926 peak_used_mib=2116 min_free_mib=5909 samples=28 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.078 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=27 complete=True
