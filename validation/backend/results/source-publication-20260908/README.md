@@ -91,5 +91,5 @@ dependencies. The selected evidence states the original observations and scope;
 absence of an excluded runtime artifact is not itself a numerical failure.
 
 Third-party provenance remains in [THIRD_PARTY_NOTICES.md](../../../../THIRD_PARTY_NOTICES.md).
-The pending Timmes contact/redistribution confirmation is unchanged by this source
+The authorized Timmes free-use status is unchanged by this source
 archive. Optional CUDA/provider binaries are not bundled.

@@ -10,7 +10,7 @@ large-network qualification workloads, not local passes.
 
 This conclusion applies to the reviewed working tree. It is ready for source
 release preparation; no staging, commit, push or release tag was performed.
-Timmes author contact and redistribution confirmation remain the separately
+Timmes free use and redistribution authorization remain the separately
 recorded administrative item in the [third-party notices](../../../../../THIRD_PARTY_NOTICES.md).
 Attribution and successful testing do not supply that confirmation.
 
@@ -87,7 +87,7 @@ Its retained local log is `build/index-final-930.log`, SHA-256
   Large HDF5 outputs and local build artifacts are not automatically part of Git;
   this recorded identity audit requires those original artifacts, while a new
   machine reproduces the campaigns into new result directories.
-- Complete the recorded Timmes contact/redistribution confirmation before treating
+- Complete the recorded Timmes contact/redistribution confirmation (Now resolved and authorized) before treating
   that administrative release item as closed. Further metadata caching and the
   approved large-network measurements remain follow-up work, without changing
   the completed profile's numerical acceptance.
