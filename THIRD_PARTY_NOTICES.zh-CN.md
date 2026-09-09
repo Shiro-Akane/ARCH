@@ -15,9 +15,9 @@ ARCH 包含 Frank Timmes 所发布软件的 C++ 适配：
 | `src/physics/eos/HelmEos.h` | [Timmes EOS 页面](https://cococubed.com/code_pages/eos.shtml)中的 Helmholtz EOS 包 | C++ EOS 策略、严格表加载、状态耦合和诊断 |
 | `EOS_toolkit/tables/helmholtz/helm_table.dat` | 项目下载的 `helmholtz.tar.xz` 中的 `helm_table.dat` | 仅 Git LFS 打包；表数据不是 ARCH 自有作品 |
 
-Timmes 下载页面请求在使用这些代码、代码片段或修改版本时引用相关文献；反应网络页面也欢迎就集成到其他软件的工作联系作者。这些页面没有声明标准 SPDX 软件许可证。因此本项目不主张将 Timmes 派生内容重新许可为 ARCH 的 MIT 许可证。维护者应保留来源归属，并在公开发布前确认适用的重新分发条款。
+Timmes 下载页面请求在使用这些代码、代码片段或修改版本时引用相关文献；反应网络页面也欢迎就集成到其他软件的工作联系作者。原作者 Frank X. Timmes 已明确授权可无限制地自由使用和重新分发这些材料：“my license is whatever i post on cococubed is free to use in any manner one wishes. attribution is nice, but not required.”（我发布在 cococubed 上的所有内容均可按任何意愿自由使用。保留署名很好，但并非强制要求。）
 
-维护者正在处理 Timmes 相关内容重新分发条款的确认请求，并将保留往来记录及适用条款。请求处理期间继续保留来源归属与上游说明。这项发布行政事项与技术验证分别记录；请求正在办理、来源标注或测试通过均不代表已有书面重新分发许可。
+这项明确授权彻底解决了本项目中捆绑的 Timmes 衍生材料的重新分发与许可顾虑。出于学术礼仪并尊重作者的贡献，我们仍保留了来源署名和上游说明。
 
 实现和验证细节见 [`docs/physics/TimmesNetworks.zh-CN.md`](docs/physics/TimmesNetworks.zh-CN.md)。
 

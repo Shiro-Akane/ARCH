@@ -9,11 +9,11 @@ Chinese translation: [README.zh-CN.md](README.zh-CN.md).
 [![CUDA](https://img.shields.io/badge/CUDA-supported-success.svg)](docs/CudaBackendStatus.md)
 [![ARCH code: MIT](https://img.shields.io/badge/ARCH_code-MIT-yellow.svg)](LICENSE)
 
-ARCH is a framework for simulating the motion, heat transfer, and reactions of compressible fluids. It is built both for newcomers learning computational fluid dynamics (CFD) and for researchers looking to extend the underlying physical equations and numerical methods directly in the source code.
+ARCH is a computational framework for simulating the motion, heat transfer, and reactions of compressible fluids. Whether you are a newcomer eager to learn computational fluid dynamics (CFD) or a researcher looking to extend the underlying physical equations and numerical methods directly in the source code, ARCH provides a solid and welcoming foundation.
 
-ARCH uses the finite-volume method: it divides the fluid domain into cells and tracks the exchange of mass, momentum, and energy between them. To capture fine details efficiently, adaptive mesh refinement (AMR) dynamically inserts smaller cells only where needed, avoiding the cost of a uniformly fine mesh. Both CPU and CUDA execution share the same mathematical and physical core; their respective backends simply handle how calculations are scheduled and where data is stored.
+Under the hood, ARCH uses the finite-volume method: it divides the fluid domain into distinct cells and accurately tracks the exchange of mass, momentum, and energy between them. To capture fine details efficiently, adaptive mesh refinement (AMR) dynamically inserts smaller cells only where they are truly needed, cleverly avoiding the massive computational cost of a uniformly fine mesh. Furthermore, both CPU and CUDA execution share the exact same mathematical and physical core; their respective backends simply handle how calculations are scheduled and where data is stored, ensuring robust consistency and ease of maintenance.
 
-To run your first simulation, follow the [Build](#build) and [First run](#first-run) sections below. Afterward, the [Simulation Case Guide](docs/guides/SimulationCase.md) will walk you through reading the output, modifying parameters, and creating your own scenarios. Note that the beginner example doesn't require a GPU or any nuclear reaction networks.
+To run your very first simulation, follow the [Build](#build) and [First run](#first-run) sections below. Once you have it running, the [Simulation Case Guide](docs/guides/SimulationCase.md) will step-by-step walk you through reading the output, tweaking parameters, and creating your own unique scenarios. Rest assured, the beginner example is designed to be highly accessible—it doesn't require a GPU or any complex nuclear reaction networks to get started.
 
 ## Project status
 

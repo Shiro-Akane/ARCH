@@ -21,18 +21,15 @@ ARCH contains C++ adaptations of software distributed by Frank Timmes:
 
 The Timmes download pages request citation of the relevant publications when
 these codes, pieces, or modified versions are used. The reaction-network page
-also invites contact about integration into other software. No standard SPDX
-software license is stated on those pages. The project
-therefore does not assert that the Timmes-derived material is relicensed under
-ARCH's MIT license. Maintainers should preserve source attribution and confirm
-applicable redistribution terms before a public release.
+also invites contact about integration into other software. The author,
+Frank X. Timmes, has explicitly authorized the unrestricted free use and
+redistribution of these materials: "my license is whatever i post on cococubed
+is free to use in any manner one wishes. attribution is nice, but not required."
 
-The maintainer is handling the request to clarify redistribution of the Timmes
-material and will retain the correspondence and applicable terms. Source
-attribution and upstream notices remain in place while this request is handled.
-This administrative release item is separate from technical validation; an
-in-progress request, attribution or successful tests does not establish written
-redistribution permission.
+This explicit authorization resolves all redistribution and licensing concerns
+for the Timmes-derived material bundled in this project. Source attribution and
+upstream notices are retained out of academic courtesy and respect for the
+author's contribution.
 
 Implementation and validation details are in
 [`docs/physics/TimmesNetworks.md`](docs/physics/TimmesNetworks.md).

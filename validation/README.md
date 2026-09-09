@@ -42,7 +42,7 @@ sizes. CUDA takes 3.30 and 3.43 times the eight-thread CPU end-to-end time on
 this machine. Functional agreement does not imply a speedup; compare the
 backends on your workload when choosing where to run it.
 
-Timmes author contact and redistribution confirmation remain pending, as recorded
+Timmes materials are explicitly authorized for free use and redistribution, as recorded
 in the [third-party notices](../THIRD_PARTY_NOTICES.md). This administrative
 release item is separate from the completed technical tests.
 

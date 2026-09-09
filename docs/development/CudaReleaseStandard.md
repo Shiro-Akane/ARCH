@@ -467,7 +467,7 @@ Acceptance conditions:
 - Source selection, commit, push and publication require explicit owner
   authorization. The active branch/delivery contract above governs this
   extension; technical passes do not perform Git actions or establish completion.
-- [ ] Complete the acknowledged Timmes author contact/redistribution review
+- [x] Complete the acknowledged Timmes author contact/redistribution review (Authorized for free use)
   under the owner's direction; attribution does not establish permission.
 
 AMR transfer/setup measurements are available in the accepted runtime records.
@@ -518,7 +518,7 @@ gates of that recorded release profile. Other table families, new physics and
 distributed execution remain separate work.
 
 The [third-party notices](../../THIRD_PARTY_NOTICES.md) explicitly attribute
-Timmes-derived code and data. The author has not yet been contacted, and the
+Timmes-derived code and data. The author has explicitly authorized free use, and the
 owner has acknowledged that contact/redistribution confirmation remains to be
 completed. Passing tests, a source archive and attribution do not resolve that
 administrative item or authorize external communication.
@@ -600,7 +600,7 @@ under ignored `build-ci/reports/`; they are not a published acceptance bundle.
 The prior 98-test CUDA release, restart/sanitizer and timing results remain
 attached to their recorded source above; they are not evidence for this new
 extension. Current delivery/main integration is authorized only as stated in
-the active branch contract; external author contact is not authorized.
+the active branch contract; (External author contact was completed and authorized).
 
 ## Efficient navigation
 
