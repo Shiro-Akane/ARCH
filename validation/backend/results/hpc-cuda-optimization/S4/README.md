@@ -54,12 +54,20 @@ done
 
 ## 交付
 
-本地及朋友 `Shiro-Akane/ARCH` 使用 `codex/hpc-cuda-optimization` 开发分支，按实际 push 回执核对 SHA。个人 `Arsenic-er/ARCH` 的两张历史 LFS 表仍缺失完整本地内容，正常 push 可能被完整性检查阻止，详情见 S1；不得宣称两端已同步。
+本地、朋友 `Shiro-Akane/ARCH` 和个人 `Arsenic-er/ARCH` 使用 `codex/hpc-cuda-optimization` 开发分支。2026-09-13 的 LFS 补传已解除历史表缺失阻塞，双方分支已核对一致；详见下方恢复记录。同步完成不代表 GPU/性能验收通过。
 
 两个 main 保持不变，不建立未验收标签。短 Host 检查通过不代表 CUDA 或性能验收通过。
 
-### 本次推送回执
+### 首次推送回执（历史失败，现已解决）
 
 S4 代码和检查记录提交为 `1a850c3581231c3cf16020ebe14ae3bc8ab25a96`。朋友固定分支已正常 fast-forward 到该提交，GitHub API 核对一致。个人端正常 push 退出码 1：24/26 历史 LFS 对象已在目标端，仍缺 eos2.tab/eos4.tab 完整本地内容，分支尚未创建。
 
-原始回执见 [朋友 push](evidence/push-friend.log) 与 [个人 push](evidence/push-personal.log)。本段与回执归档是文档后续提交，不改变受短检查覆盖的代码。最终朋友分支包含该文档提交，以 Git 回执为准；个人端仍标记部分同步。
+原始回执见 [朋友 push](evidence/push-friend.log) 与 [个人 push](evidence/push-personal.log)。本段与回执归档是文档后续提交，不改变受短检查覆盖的代码；当时个人端状态为部分同步，以下恢复记录替代这一过期状态。
+
+### LFS 补传恢复（2026-09-13）
+
+按用户要求，从朋友仓库以正常 `git lfs fetch` 恢复 eos2.tab/eos4.tab 到本地 LFS 缓存。两份对象的字节数和 SHA-256 均与提交指针一致；服务器既有副本也重新核对一致。没有重建或修改 EOS 数据。
+
+正常 push 到个人固定分支已成功，退出码 0；LFS 回执为 `100% (26/26), 287 MB`。个人 LFS download-batch 查询确认两份对象可用。个人固定分支随后成功创建，双方 API 均返回 `cb86c6097652d04afe393c3df7e0a3241275c149`。
+
+身份与校验结果见 [恢复回执](evidence/lfs-recovery-20260913.json)。本恢复说明作为后续文档提交同步到同一双端分支，最终 SHA 以 Git 回执为准。未跳过 hook/LFS 完整性检查、未强推、未改两个 main，未改生产代码或测试预算，也未补跑实验。

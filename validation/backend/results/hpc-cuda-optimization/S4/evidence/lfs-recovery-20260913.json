@@ -1,0 +1,35 @@
+{
+  "date": "2026-09-13",
+  "branch": "codex/hpc-cuda-optimization",
+  "verified_commit_before_receipt": "cb86c6097652d04afe393c3df7e0a3241275c149",
+  "fetch_source": "friend HEAD",
+  "fetch_exit_code": 0,
+  "objects": [
+    {
+      "path": "EOS_toolkit/tables/baryon/eos2.tab",
+      "bytes": 143166842,
+      "sha256": "d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+      "local_hash_matches_pointer": true,
+      "server_hash_matches_pointer": true,
+      "personal_lfs_download_available": true
+    },
+    {
+      "path": "EOS_toolkit/tables/baryon/eos4.tab",
+      "bytes": 143167115,
+      "sha256": "5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+      "local_hash_matches_pointer": true,
+      "server_hash_matches_pointer": true,
+      "personal_lfs_download_available": true
+    }
+  ],
+  "personal_push_exit_code": 0,
+  "personal_push_result": "new branch",
+  "lfs_upload_result": "100% (26/26), 287 MB",
+  "friend_ref_verified": "cb86c6097652d04afe393c3df7e0a3241275c149",
+  "personal_ref_verified": "cb86c6097652d04afe393c3df7e0a3241275c149",
+  "friend_main_unchanged": "7d4448a9b4a07dd86aa8cfc83fe9d85c7d63a866",
+  "personal_main_unchanged": "e12b96c15e022691d788f4b67faba4dc06da342e",
+  "integrity_checks_bypassed": false,
+  "production_code_changed": false,
+  "experiments_run": false
+}
