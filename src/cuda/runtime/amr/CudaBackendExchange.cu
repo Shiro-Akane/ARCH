@@ -21,6 +21,7 @@ __global__ void boundary_batch_phase_kernel(const DeviceBoundaryBatchBlock* bloc
 {
     const auto& b = blocks[blockIdx.y];
     const auto p = b.phases[phase];
+    if (p.count == 0) return; // No pointer arithmetic on a block with no transfers.
     detail::boundary_phase_kernel_work(b.state, b.transfers + p.first, static_cast<int>(p.count));
 }
 }
@@ -32,7 +33,7 @@ cudaError_t launch_cuda_backend_boundary_batch(
     kernels = 0;
     if (block_count < 0 || (block_count > 0 && !blocks)) return cudaErrorInvalidValue;
     for (const int count : phase_counts) if (count < 0) return cudaErrorInvalidValue;
-    for (int first = 0; first < block_count; first += 1024) {
+    for (int first = 0; first < block_count;) {
         const int count = std::min(1024, block_count - first);
         for (int phase = 0; phase < 3; ++phase) {
             if (phase_counts[phase] == 0) continue;
@@ -42,6 +43,7 @@ cudaError_t launch_cuda_backend_boundary_batch(
             if (status != cudaSuccess) return status;
             ++kernels;
         }
+        first += count;
     }
     return cudaSuccess;
 }
