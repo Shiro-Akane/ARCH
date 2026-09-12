@@ -1,0 +1,17 @@
+适用于 .NET Framework MSBuild 版本 17.14.40+3e7442088
+
+  Checking File Globs
+  1>Checking Build System
+  Building Custom Rule C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/CMakeLists.txt
+  test_compute_backend.cpp
+  Building Custom Rule C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/CMakeLists.txt
+  Building Custom Rule C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/CMakeLists.txt
+  test_shared_stage_scheduler.cpp
+  test_device_block_store_lifecycle.cpp
+  shared_stage_scheduler.vcxproj -> C:\tmp\ARCH-perf-20260909\build\hpc-s1-local-20260912\host-build\Debug\shared_stage_scheduler.exe
+  device_block_store_lifecycle.vcxproj -> C:\tmp\ARCH-perf-20260909\build\hpc-s1-local-20260912\host-build\Debug\device_block_store_lifecycle.exe
+  Building Custom Rule C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/CMakeLists.txt
+  test_state_residency.cpp
+  compute_backend.vcxproj -> C:\tmp\ARCH-perf-20260909\build\hpc-s1-local-20260912\host-build\Debug\compute_backend.exe
+  state_residency.vcxproj -> C:\tmp\ARCH-perf-20260909\build\hpc-s1-local-20260912\host-build\Debug\state_residency.exe
+  Building Custom Rule C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/CMakeLists.txt

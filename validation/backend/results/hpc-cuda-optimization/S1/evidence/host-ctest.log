@@ -1,0 +1,14 @@
+Internal ctest changing into directory: C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/host-build
+Test project C:/tmp/ARCH-perf-20260909/build/hpc-s1-local-20260912/host-build
+    Start 1: compute_backend
+1/4 Test #1: compute_backend ..................   Passed    0.12 sec
+    Start 2: shared_stage_scheduler
+2/4 Test #2: shared_stage_scheduler ...........   Passed    0.12 sec
+    Start 3: state_residency
+3/4 Test #3: state_residency ..................   Passed    0.08 sec
+    Start 4: device_block_store_lifecycle
+4/4 Test #4: device_block_store_lifecycle .....   Passed    0.08 sec
+
+100% tests passed, 0 tests failed out of 4
+
+Total Test time (real) =   0.43 sec

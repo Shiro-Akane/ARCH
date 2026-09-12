@@ -1,0 +1,2 @@
+# Preserve the actual local compiler/test transcripts.
+evidence/** -text
