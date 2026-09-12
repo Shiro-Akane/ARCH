@@ -933,12 +933,18 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
         hydro_dt_candidates.reserve(active_blocks.size());
         if (compute_backend) {
+            std::vector<arch::backend::BackendStateAccess> currents;
+            currents.reserve(active_blocks.size());
+            for (std::size_t index = 0; index < active_blocks.size(); ++index)
+                currents.push_back(backend_access(index, StateSlot::Current));
+            const auto block_dt = compute_backend->compute_hydro_dt_batch(currents, cfl);
+            if (block_dt.size() != currents.size())
+                throw std::logic_error("Hydro batch lost a required block result");
             for (std::size_t index = 0; index < active_blocks.size(); ++index) {
                 const amr::Block& b = amr_ctrl.pool->GetBlock(
                     active_blocks[index]);
                 hydro_dt_candidates.push_back({
-                    compute_backend->compute_hydro_dt(
-                        backend_access(index, StateSlot::Current), cfl),
+                    block_dt[index],
                     DriverReduction::make_block_reduction_key(
                         b.level, b.morton_code, b.logical_x1, b.logical_x2,
                         b.logical_x3,
@@ -1237,19 +1243,18 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         // C3. Hydrodynamics Step (dt)
         if (compute_backend) {
             complete_device_boundary(StateSlot::Current);
+            std::vector<arch::backend::BackendStateAccess> currents;
+            currents.reserve(stage_handles.size());
+            for (std::size_t index = 0; index < stage_handles.size(); ++index)
+                currents.push_back(backend_access(index, StateSlot::Current));
             const auto before = compute_backend->counters();
             const auto executor = [&] (
                 const arch::scheduler::StageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 if (descriptor.stage == 1)
                     (void)compute_backend->clear_amr_flux_register(token);
-                for (std::size_t index = 0;
-                     index < stage_handles.size(); ++index) {
-                    (void)compute_backend->execute_hydro_stage(
-                        backend_access(index, StateSlot::Current),
-                        descriptor, dt, token);
-                }
-                return token;
+                return compute_backend->execute_hydro_stage_batch(
+                    currents, descriptor, dt, token);
             };
             const auto boundary = [&] (
                 StateSlot slot, arch::state::StateVersion version,

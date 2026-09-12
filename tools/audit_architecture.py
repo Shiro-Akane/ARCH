@@ -142,6 +142,8 @@ _CUDA_FORMULA_FILENAME_EXCEPTIONS = frozenset({
 })
 
 _CUDA_RUNTIME_FUNCTION_OWNERS = {
+    "compute_hydro_dt_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
+    "execute_hydro_stage_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "compute_hydro_dt": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "execute_hydro_stage": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "execute_physical_boundary":
@@ -155,6 +157,8 @@ _CUDA_RUNTIME_FUNCTION_OWNERS = {
 }
 
 _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
+    "compute_hydro_dt_batch",
+    "execute_hydro_stage_batch",
     "compute_hydro_dt",
     "execute_hydro_stage",
     "compute_diffusion_dt",
@@ -163,12 +167,22 @@ _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
 })
 
 _CUDA_COMPLETION_LAUNCHES = {
+    "compute_hydro_dt_batch": r"\blaunch_cuda_backend_hydro_dt\s*\(",
+    "execute_hydro_stage_batch": r"\blaunch_cuda_backend_hydro_stage\s*\(",
     "compute_hydro_dt": r"\blaunch_cuda_backend_hydro_dt\s*\(",
     "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage\s*\(",
     "compute_diffusion_dt": r"\blaunch_cuda_backend_diffusion_dt\s*\(",
     "execute_diffusion_stage":
         r"\blaunch_cuda_backend_diffusion_stage\s*\(",
     "execute_burn": r"\blaunch_cuda_burn_route\s*\(",
+}
+
+# Only these exact single-request delegates may omit their own fence. The
+# batch bodies remain subject to the launch/quiescence/counter contract.
+_CUDA_SCALAR_BATCH_DELEGATES = {
+    "compute_hydro_dt": "return compute_hydro_dt_batch({&current, 1}, cfl).front();",
+    "execute_hydro_stage":
+        "return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected);",
 }
 
 
@@ -700,7 +714,16 @@ def audit_tree(root: pathlib.Path):
                     f"CUDA runtime function has the wrong functional owner: "
                     f"{function_name} in {relative}")
                 continue
+            delegate = _CUDA_SCALAR_BATCH_DELEGATES.get(function_name)
+            is_batch_delegate = delegate is not None and (
+                re.sub(r"\s+", "", _without_cpp_comments(body))
+                == re.sub(r"\s+", "", delegate))
+            if is_batch_delegate and _function_body(
+                    content, f"CudaBackend::{function_name}_batch") is None:
+                violations.append(
+                    f"CUDA scalar delegate requires its batch owner: {function_name}")
             if (function_name in _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS
+                    and not is_batch_delegate
                     and not _launch_quiesces_before_kernel_count(
                         body, _CUDA_COMPLETION_LAUNCHES[function_name])):
                 violations.append(

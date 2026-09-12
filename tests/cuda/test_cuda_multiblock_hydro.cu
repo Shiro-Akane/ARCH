@@ -13,12 +13,16 @@
 #include "physics/eos/IdealGas.h"
 #include "physics/species/Species.h"
 
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <iostream>
+#include <limits>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -132,7 +136,8 @@ arch::backend::HostStateTransferView transfer_view(FluidState& state)
         nullptr, state.rho.size(), 0, 0};
 }
 
-arch::cuda::CudaLaunchConfig make_launch_config()
+arch::cuda::CudaLaunchConfig make_launch_config(
+    arch::dispatch::TimeIntegratorId method = arch::dispatch::TimeIntegratorId::Euler)
 {
     SimConfig config{};
     config.physics.burn.use_burn = false;
@@ -141,7 +146,7 @@ arch::cuda::CudaLaunchConfig make_launch_config()
         arch::dispatch::FluxId::Hllc,
         arch::dispatch::ReconstructionId::Ppm,
         arch::dispatch::LimiterId::MinMod,
-        arch::dispatch::TimeIntegratorId::Euler,
+        method,
         arch::dispatch::EosId::Ideal,
         arch::dispatch::NetworkId::None,
         arch::dispatch::OdeSolverId::None,
@@ -392,6 +397,159 @@ void run_2d_corner_exchange()
               << plan.operations.size() << '\n';
 }
 
+void run_hydro_batch_contract()
+{
+    using namespace arch;
+    using state::StateSlot;
+    const std::array methods{
+        std::pair{scheduler::HydroMethod::Euler, dispatch::TimeIntegratorId::Euler},
+        std::pair{scheduler::HydroMethod::RK2, dispatch::TimeIntegratorId::Rk2},
+        std::pair{scheduler::HydroMethod::RK3, dispatch::TimeIntegratorId::Rk3}};
+    for (const auto [method, route] : methods) {
+        std::array<amr::Block, 2> blocks{make_block(0), make_block(1)};
+        for (auto& block : blocks) {
+            for (int i = 0; i < block.grid.GetTotalX(); ++i) {
+                const double rho = 1.0 + 0.1 * block.id + 0.001 * i;
+                block.fluid_state.set(block.grid.GetIndex(i),
+                    {rho, 0.1 * rho, 0.0, 0.0, 3.0 + 0.005 * rho});
+            }
+        }
+        const auto boundary = make_boundary_plan();
+        const std::array<backend::BackendStateAccess, 2> accesses{{
+            {{{701}, {19}}, {801}, StateSlot::Current},
+            {{{702}, {19}}, {802}, StateSlot::Current}}};
+        std::array<cuda::CudaBlockBinding, 2> bindings;
+        for (std::size_t i = 0; i < blocks.size(); ++i)
+            bindings[i] = {&blocks[i], accesses[i].block, accesses[i].storage, &boundary};
+        SpeciesManager species;
+        IdealGas eos(1.4, species);
+        auto scalar = cuda::make_cuda_backend(bindings, 0, make_launch_config(route), species, eos);
+        auto batch = cuda::make_cuda_backend(bindings, 0, make_launch_config(route), species, eos);
+        const auto upload = [&](cuda::CudaBackend& target) {
+            for (std::size_t i = 0; i < blocks.size(); ++i)
+                for (const auto region : {state::StateRegion::Interior, state::StateRegion::Ghost})
+                    target.enqueue_upload_slot(accesses[i], region, transfer_view(blocks[i].fluid_state));
+            target.quiesce();
+        };
+        upload(*scalar);
+        upload(*batch);
+        const std::array<double, 2> reference_dt{
+            scalar->compute_hydro_dt(accesses[0], 0.8),
+            scalar->compute_hydro_dt(accesses[1], 0.8)};
+        // Grow 1 -> 2, reorder, shrink 2 -> 1 and repeat, without stale tails.
+        require(batch->compute_hydro_dt(accesses[0], 0.8) == reference_dt[0], "single CFL changed");
+        const std::array reversed{accesses[1], accesses[0]};
+        const auto before = batch->counters();
+        const auto values = batch->compute_hydro_dt_batch(reversed, 0.8);
+        const auto after = batch->counters();
+        require(values == std::vector<double>({reference_dt[1], reference_dt[0]}),
+                "CFL batch result order/value drifted");
+        require(after.stream_sync_count - before.stream_sync_count == 1
+            && after.kernel_count - before.kernel_count == 4
+            && after.bytes_d2h - before.bytes_d2h == 2 * (sizeof(double) + sizeof(int)),
+            "CFL batch did not use one completion boundary");
+        require(batch->compute_hydro_dt(accesses[1], 0.8) == reference_dt[1], "CFL capacity reuse drifted");
+        const auto plan = scheduler::make_hydro_plan(method);
+        const state::CompletionToken token{99, state::CompletionState::Complete};
+        const auto empty_before = batch->counters();
+        require(batch->compute_hydro_dt_batch({}, 0.8).empty()
+            && batch->execute_hydro_stage_batch({}, plan.stages.front(), 0.01, token) == token,
+            "empty local Hydro batch is not a no-op");
+        const auto empty_after = batch->counters();
+        require(empty_before.kernel_count == empty_after.kernel_count
+            && empty_before.bytes_d2h == empty_after.bytes_d2h
+            && empty_before.stream_sync_count == empty_after.stream_sync_count,
+            "empty batch submitted CUDA work");
+        for (int fault = 0; fault < 3; ++fault) {
+            auto invalid = accesses;
+            if (fault == 0) invalid[1] = invalid[0];
+            if (fault == 1) invalid[1].storage.value += 100;
+            if (fault == 2) invalid[1].slot = StateSlot::Scratch;
+            bool dt_rejected = false, stage_rejected = false;
+            try { (void)batch->compute_hydro_dt_batch(invalid, 0.8); }
+            catch (const std::invalid_argument&) { dt_rejected = true; }
+            try { (void)batch->execute_hydro_stage_batch(invalid, plan.stages.front(), 0.01, token); }
+            catch (const std::invalid_argument&) { stage_rejected = true; }
+            const auto rejected = batch->counters();
+            require(dt_rejected && stage_rejected
+                && rejected.kernel_count == empty_after.kernel_count
+                && rejected.stream_sync_count == empty_after.stream_sync_count,
+                "invalid later Hydro access submitted work before rejection");
+        }
+        const double dt = 0.1 * std::min(reference_dt[0], reference_dt[1]);
+        for (const auto& descriptor : plan.stages) {
+            for (const auto access : accesses)
+                (void)scalar->execute_hydro_stage(access, descriptor, dt, token);
+            const auto start = batch->counters();
+            require(batch->execute_hydro_stage_batch(accesses, descriptor, dt, token) == token,
+                    "Hydro batch completion token drifted");
+            const auto done = batch->counters();
+            require(done.stream_sync_count - start.stream_sync_count == 1
+                && done.bytes_d2h - start.bytes_d2h == 2 * sizeof(int),
+                "Hydro stage synchronized per block");
+            if (descriptor.refresh_ghost_after) {
+                for (auto access : accesses) {
+                    access.slot = descriptor.output_slot;
+                    (void)scalar->execute_physical_boundary(access, {1}, token);
+                    (void)batch->execute_physical_boundary(access, {1}, token);
+                }
+            }
+        }
+        for (const auto access : accesses) {
+            scalar->rotate_slots(access, plan.final_rotation);
+            batch->rotate_slots(access, plan.final_rotation);
+        }
+        for (std::size_t i = 0; i < blocks.size(); ++i) {
+            FluidState a, b;
+            a.Preallocate(blocks[i].grid.GetTotalSize()); a.InitSpecies(0);
+            b.Preallocate(blocks[i].grid.GetTotalSize()); b.InitSpecies(0);
+            scalar->enqueue_materialize_host_current(accesses[i], state::StateRegion::Interior, transfer_view(a));
+            batch->enqueue_materialize_host_current(accesses[i], state::StateRegion::Interior, transfer_view(b));
+            scalar->quiesce(); batch->quiesce();
+            for (int x = blocks[i].grid.Is(); x < blocks[i].grid.Ie(); ++x) {
+                const int cell = blocks[i].grid.GetIndex(x);
+                for (const auto field : {std::pair{&a.rho, &b.rho}, {&a.mom_u, &b.mom_u},
+                         {&a.mom_v, &b.mom_v}, {&a.mom_w, &b.mom_w}, {&a.eng, &b.eng},
+                         {&a.enuc_rate, &b.enuc_rate}})
+                    require(std::bit_cast<std::uint64_t>((*field.first)[cell])
+                        == std::bit_cast<std::uint64_t>((*field.second)[cell]),
+                        "Hydro scalar/batch interior bits differ");
+            }
+        }
+        // Exercise first AND last block failures, then prove a valid reuse can
+        // clear the old latch. A ghost-only fault isolates the stage EOS path.
+        for (std::size_t bad = 0; bad < blocks.size(); ++bad) {
+            for (const bool ghost_only : {false, true}) {
+                const int x = blocks[bad].grid.Is() - (ghost_only ? 1 : 0);
+                const int cell = blocks[bad].grid.GetIndex(x);
+                auto& energy = blocks[bad].fluid_state.eng[cell];
+                const double saved = energy;
+                energy = std::numeric_limits<double>::quiet_NaN();
+                upload(*batch);
+                bool rejected = false;
+                try {
+                    if (ghost_only)
+                        (void)batch->execute_hydro_stage_batch(accesses, plan.stages.front(), dt, token);
+                    else
+                        (void)batch->compute_hydro_dt_batch(accesses, 0.8);
+                } catch (const std::runtime_error& error) {
+                    rejected = std::string(error.what()).find("block="
+                        + std::to_string(accesses[bad].block.uid.value)) != std::string::npos;
+                }
+                require(rejected, "Hydro batch hid the failing block EOS status");
+                energy = saved;
+                upload(*batch);
+                require(batch->compute_hydro_dt_batch(accesses, 0.8)
+                        == std::vector<double>({reference_dt[0], reference_dt[1]}),
+                        "CFL batch reused a stale failure latch");
+                require(batch->execute_hydro_stage_batch(accesses, plan.stages.front(), dt, token) == token,
+                        "Hydro batch reused a stale EOS failure latch");
+            }
+        }
+    }
+    std::cout << "CUDA_HYDRO_BATCH_CONTRACT_PASS methods=3 blocks=2\n";
+}
+
 } // namespace
 
 int main()
@@ -399,6 +557,7 @@ int main()
     try {
         run_multiblock_exchange();
         run_2d_corner_exchange();
+        run_hydro_batch_contract();
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

@@ -15,6 +15,7 @@
 #include "driver/StageScheduler.h"
 
 #include <cstddef>
+#include <algorithm>
 #include <cstdint>
 #include <array>
 #include <limits>
@@ -22,6 +23,7 @@
 #include <span>
 #include <stdexcept>
 #include <type_traits>
+#include <vector>
 
 namespace amr { struct AmrFluxTopologyPlan; struct Block; }
 namespace arch::boundary { class BoundaryPlan; }
@@ -254,6 +256,34 @@ public:
         BackendStateAccess current,
         const scheduler::StageDescriptor& descriptor,
         double dt, state::CompletionToken expected) = 0;
+    // Results retain request order. Logical keys and the final reduction stay
+    // with the Host caller; a local empty batch contributes no candidates.
+    virtual std::vector<double> compute_hydro_dt_batch(
+        std::span<const BackendStateAccess> currents, double cfl)
+    {
+        validate_hydro_batch_accesses(currents);
+        std::vector<double> result;
+        result.reserve(currents.size());
+        for (const auto current : currents)
+            result.push_back(compute_hydro_dt(current, cfl));
+        return result;
+    }
+    // A successful return is a completion witness for ALL requests, not an
+    // enqueue acknowledgement. No scheduler publication may precede it.
+    virtual state::CompletionToken execute_hydro_stage_batch(
+        std::span<const BackendStateAccess> currents,
+        const scheduler::StageDescriptor& descriptor,
+        double dt, state::CompletionToken expected)
+    {
+        validate_hydro_batch_accesses(currents);
+        if (!state::is_complete(expected))
+            throw std::invalid_argument("Hydro batch requires a completion token");
+        for (const auto current : currents) {
+            if (execute_hydro_stage(current, descriptor, dt, expected) != expected)
+                throw std::logic_error("Hydro batch returned incomplete work");
+        }
+        return expected;
+    }
     virtual state::CompletionToken execute_physical_boundary(
         BackendStateAccess access, state::StateVersion version,
         state::CompletionToken expected) = 0;
@@ -363,6 +393,25 @@ public:
     virtual BackendCounters counters() const noexcept = 0;
     virtual void append_trace(BackendTraceRecord record) = 0;
     virtual std::span<const BackendTraceRecord> trace_snapshot() const noexcept = 0;
+
+protected:
+    // Validate the whole batch before the first write, including a stale or
+    // duplicate later entry. Subsets are legal; Driver owns required coverage.
+    void validate_hydro_batch_accesses(
+        std::span<const BackendStateAccess> currents) const
+    {
+        std::vector<amr::BlockHandle> handles;
+        handles.reserve(currents.size());
+        for (const auto current : currents) {
+            if (!amr::is_valid(current.block) || !is_valid(current.storage)
+                || current.slot != state::StateSlot::Current || !contains(current))
+                throw std::invalid_argument("Invalid Hydro batch Current access");
+            handles.push_back(current.block);
+        }
+        std::sort(handles.begin(), handles.end());
+        if (std::adjacent_find(handles.begin(), handles.end()) != handles.end())
+            throw std::invalid_argument("Duplicate Hydro batch block");
+    }
 };
 
 inline state::CompletionToken transfer_state_regions(

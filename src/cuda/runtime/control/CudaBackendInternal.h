@@ -152,7 +152,7 @@ struct CudaBlockRuntime {
     std::array<DeviceAmrFluxSurfaceStorage, 6> amr_flux_register;
     std::array<DeviceAmrFluxSurfaceStorage, 6> amr_initial_flux;
     DeviceAllocation<double> cfl_candidates;
-    DeviceAllocation<double> cfl_result;
+    // Refinement indicators still own a separate per-block EOS latch.
     DeviceAllocation<int> cfl_status;
     DeviceAllocation<double> diffusion_dt_candidates;
     DeviceAllocation<double> diffusion_dt_result;
@@ -245,6 +245,25 @@ struct CudaBackend::Impl {
     // bounded scratch allocation is therefore shared across every block/stage.
     DeviceAllocation<double> species_workspace_storage;
     SpeciesWorkspaceView species_workspace{};
+    // Compact per-block results, reused only after the previous batch drained.
+    // Capacity follows the largest requested batch (no field-sized staging).
+    struct HydroBatchScratch {
+        std::unique_ptr<DeviceAllocation<double>> dt;
+        std::unique_ptr<DeviceAllocation<int>> status;
+        std::vector<int> host_status;
+
+        void ensure_capacity(std::size_t count)
+        {
+            host_status.resize(count);
+            if (count == 0 || (dt && dt->size() >= count)) return;
+            auto next_dt = std::make_unique<DeviceAllocation<double>>();
+            auto next_status = std::make_unique<DeviceAllocation<int>>();
+            next_dt->allocate(count);
+            next_status->allocate(count);
+            dt.swap(next_dt);
+            status.swap(next_status);
+        }
+    } hydro_batch;
     // Indicators retain capacity across regrids, not field values. The ordered
     // evaluator completes before any buffer is grown or reused.
     struct RefinementScratch {

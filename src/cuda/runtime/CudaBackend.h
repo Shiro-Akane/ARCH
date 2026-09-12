@@ -95,6 +95,12 @@ public:
     bool contains(backend::BackendStateAccess access) const noexcept override;
     double compute_hydro_dt(backend::BackendStateAccess current,
                             double cfl) override;
+    std::vector<double> compute_hydro_dt_batch(
+        std::span<const backend::BackendStateAccess> currents, double cfl) override;
+    state::CompletionToken execute_hydro_stage_batch(
+        std::span<const backend::BackendStateAccess> currents,
+        const scheduler::StageDescriptor& descriptor,
+        double dt, state::CompletionToken expected) override;
     state::CompletionToken execute_hydro_stage(
         backend::BackendStateAccess current,
         const scheduler::StageDescriptor& descriptor,

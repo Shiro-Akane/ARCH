@@ -377,7 +377,6 @@ CudaBlockRuntime::CudaBlockRuntime(
         if (active <= 0)
             throw std::invalid_argument("CUDA block has no active cells");
         cfl_candidates.allocate(active);
-        cfl_result.allocate(1);
         cfl_status.allocate(1);
         diffusion_dt_candidates.allocate(active);
         diffusion_dt_result.allocate(1);

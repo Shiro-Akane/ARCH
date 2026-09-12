@@ -15,6 +15,7 @@
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 
 #include <cmath>
+#include <string>
 
 namespace arch::cuda {
 namespace {
@@ -51,39 +52,62 @@ scheduler::HydroMethod hydro_method(
 double CudaBackend::compute_hydro_dt(
     backend::BackendStateAccess current, double cfl)
 {
-    auto& block = impl_->require_block(current);
-    const DeviceStateView state = block.require_access(current);
-    if (current.slot != state::StateSlot::Current)
-        throw std::invalid_argument("Hydro dt requires Current");
-    const CudaHydroWorkspaceView workspace{
-        block.face_flux.view(), block.hydro_delta.view(),
-        block.cfl_candidates.get(), block.cfl_result.get(),
-        block.cfl_status.get(), impl_->species_workspace};
-    double result = 0.0;
-    int status = static_cast<int>(reduction::ReductionStatus::Empty);
-    // Use the shared runtime lifetime guard after the asynchronous-copy
-    // destinations, so a failed enqueue cannot outlive their stack storage.
+    return compute_hydro_dt_batch({&current, 1}, cfl).front();
+}
+
+std::vector<double> CudaBackend::compute_hydro_dt_batch(
+    std::span<const backend::BackendStateAccess> currents, double cfl)
+{
+    validate_hydro_batch_accesses(currents);
+    std::vector<double> result(currents.size());
+    if (currents.empty()) return result;
+    std::vector<CudaBlockRuntime*> blocks;
+    blocks.reserve(currents.size());
+    for (const auto current : currents) {
+        auto& block = impl_->require_block(current);
+        static_cast<void>(block.require_access(current));
+        blocks.push_back(&block);
+    }
+    impl_->select_device();
+    auto& scratch = impl_->hydro_batch;
+    scratch.ensure_capacity(currents.size());
+    // Result and owner staging outlive the guard, including a failed second
+    // download. No Host pointer escapes this synchronous batch operation.
     CudaQuiescenceGuard work_guard{*impl_};
-    cudaError_t launch_error = cudaSuccess;
-    visit_eos(impl_->eos, [&](const auto& eos) {
-        launch_error = launch_cuda_backend_hydro_dt(
-            state, block.grid, eos, cfl, workspace, impl_->stream.get());
-    });
-    check_cuda(launch_error, "launch Hydro dt");
-    check_cuda(cudaMemcpyAsync(
-                   &result, block.cfl_result.get(), sizeof(double),
-                   cudaMemcpyDeviceToHost, impl_->stream.get()),
-               "download Hydro dt");
-    check_cuda(cudaMemcpyAsync(
-                   &status, block.cfl_status.get(), sizeof(int),
-                   cudaMemcpyDeviceToHost, impl_->stream.get()),
-               "download Hydro CFL reduction status");
+    for (std::size_t index = 0; index < blocks.size(); ++index) {
+        auto& block = *blocks[index];
+        const CudaHydroWorkspaceView workspace{
+            block.face_flux.view(), block.hydro_delta.view(),
+            block.cfl_candidates.get(), scratch.dt->get() + index,
+            scratch.status->get() + index, impl_->species_workspace};
+        cudaError_t launch_error = cudaSuccess;
+        visit_eos(impl_->eos, [&](const auto& eos) {
+            launch_error = launch_cuda_backend_hydro_dt(
+                block.require_access(currents[index]), block.grid, eos,
+                cfl, workspace, impl_->stream.get());
+        });
+        check_cuda(launch_error, "launch Hydro dt batch");
+    }
+    // Pageable staging is sufficient: transfers occur AFTER every launch,
+    // and this API intentionally returns synchronously. Two bulk D2H calls,
+    // not two tiny transfers per block; no pinned buffers/events are needed.
+    check_cuda(cudaMemcpyAsync(result.data(), scratch.dt->get(),
+                   result.size() * sizeof(double), cudaMemcpyDeviceToHost,
+                   impl_->stream.get()), "download Hydro dt batch");
+    check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
+                   currents.size() * sizeof(int), cudaMemcpyDeviceToHost,
+                   impl_->stream.get()), "download Hydro CFL batch status");
     quiesce();
     work_guard.completed = true;
-    impl_->runtime_counters.kernel_count += 2;
-    impl_->runtime_counters.bytes_d2h += sizeof(double) + sizeof(int);
-    if (status != static_cast<int>(reduction::ReductionStatus::Ok))
-        throw std::runtime_error("Invalid CUDA hydro EOS query or CFL reduction");
+    impl_->runtime_counters.kernel_count += 2 * currents.size();
+    impl_->runtime_counters.bytes_d2h += currents.size() * (sizeof(double) + sizeof(int));
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        if (scratch.host_status[index] != static_cast<int>(reduction::ReductionStatus::Ok))
+            throw std::runtime_error("Invalid CUDA hydro EOS query or CFL reduction: block="
+                + std::to_string(currents[index].block.uid.value) + " epoch="
+                + std::to_string(currents[index].block.epoch.value) + " status="
+                + std::to_string(scratch.host_status[index]));
+    }
     return result;
 }
 
@@ -92,51 +116,78 @@ state::CompletionToken CudaBackend::execute_hydro_stage(
     const scheduler::StageDescriptor& descriptor,
     double dt, state::CompletionToken expected)
 {
-    auto& block = impl_->require_block(current);
-    static_cast<void>(block.require_access(current));
-    const scheduler::HydroPlan plan = scheduler::make_hydro_plan(
+    return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected);
+}
+
+state::CompletionToken CudaBackend::execute_hydro_stage_batch(
+    std::span<const backend::BackendStateAccess> currents,
+    const scheduler::StageDescriptor& descriptor,
+    double dt, state::CompletionToken expected)
+{
+    validate_hydro_batch_accesses(currents);
+    const auto plan = scheduler::make_hydro_plan(
         hydro_method(impl_->launch.plan.time_integrator));
-    if (current.slot != state::StateSlot::Current || !complete_token(expected)
-        || descriptor.stage <= 0
+    if (!complete_token(expected) || descriptor.stage <= 0
         || descriptor.stage > static_cast<int>(plan.stages.size())
-        || !same_hydro_descriptor(
-            descriptor, plan.stages[descriptor.stage - 1]))
+        || !same_hydro_descriptor(descriptor, plan.stages[descriptor.stage - 1]))
         throw std::invalid_argument("invalid Hydro stage contract");
-    const DeviceStateView old_state = block.slots[slot_index(descriptor.old_slot)];
-    const DeviceStateView input = block.slots[slot_index(descriptor.input_slot)];
-    const DeviceStateView output = block.slots[slot_index(descriptor.output_slot)];
-    const auto amr_routes = make_cuda_amr_route_views(
-        impl_->active_amr_flux.get(), current.block);
-    CudaBackendLaunchResult launch{};
-    int eos_status = 0;
+    if (currents.empty()) return expected;
+    struct PreparedBlock {
+        CudaBlockRuntime* block;
+        DeviceStateView old_state, input, output;
+        std::array<CudaAmrFluxDirectionRouteView, 3> routes;
+    };
+    std::vector<PreparedBlock> blocks;
+    blocks.reserve(currents.size());
+    for (const auto current : currents) {
+        auto& block = impl_->require_block(current);
+        static_cast<void>(block.require_access(current));
+        blocks.push_back({&block, block.slots[slot_index(descriptor.old_slot)],
+            block.slots[slot_index(descriptor.input_slot)],
+            block.slots[slot_index(descriptor.output_slot)],
+            make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block)});
+    }
+    impl_->select_device();
+    auto& scratch = impl_->hydro_batch;
+    scratch.ensure_capacity(currents.size());
+    std::uint64_t kernels = 0;
     CudaQuiescenceGuard work_guard{*impl_};
-    visit_eos(impl_->eos, [&](const auto& eos) {
-        launch = launch_cuda_backend_hydro_stage(
-            impl_->launch.plan, old_state, input, output,
-            block.hydro_delta.view(), block.face_flux.view(), block.grid, eos,
-            impl_->launch.entropy_fix_coefficient,
-            impl_->launch.density_floor,
-            impl_->launch.minimum_internal_energy,
-            impl_->launch.maximum_internal_energy,
-            amr_routes.data(), descriptor, dt, block.cfl_status.get(),
-            impl_->stream.get(), impl_->species_workspace, impl_->launch.gravity);
-    });
-    if (!launch.route_found)
-        throw std::logic_error("CUDA Hydro route is unavailable");
-    check_cuda(launch.error, "launch Hydro stage");
-    // CFL and Hydro stages execute serially on the backend stream, so the
-    // existing per-block CFL status allocation is also the stage EOS latch.
-    check_cuda(cudaMemcpyAsync(
-                   &eos_status, block.cfl_status.get(), sizeof(int),
-                   cudaMemcpyDeviceToHost, impl_->stream.get()),
-               "download Hydro stage EOS status");
+    for (std::size_t index = 0; index < blocks.size(); ++index) {
+        const auto& prepared = blocks[index];
+        auto& block = *prepared.block;
+        CudaBackendLaunchResult launch{};
+        visit_eos(impl_->eos, [&](const auto& eos) {
+            launch = launch_cuda_backend_hydro_stage(
+                impl_->launch.plan, prepared.old_state, prepared.input, prepared.output,
+                block.hydro_delta.view(), block.face_flux.view(), block.grid, eos,
+                impl_->launch.entropy_fix_coefficient, impl_->launch.density_floor,
+                impl_->launch.minimum_internal_energy,
+                impl_->launch.maximum_internal_energy,
+                prepared.routes.data(), descriptor, dt, scratch.status->get() + index,
+                impl_->stream.get(), impl_->species_workspace, impl_->launch.gravity);
+        });
+        if (!launch.route_found) throw std::logic_error("CUDA Hydro route is unavailable");
+        check_cuda(launch.error, "launch Hydro stage batch");
+        kernels += static_cast<std::uint64_t>(launch.kernels_launched);
+    }
+    // Distinct latches prevent a valid later block from clearing earlier EOS
+    // failures. The ordered stream still protects shared species scratch and
+    // registers face flux before its block scratch is overwritten.
+    check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
+                   currents.size() * sizeof(int), cudaMemcpyDeviceToHost,
+                   impl_->stream.get()), "download Hydro stage batch EOS status");
     quiesce();
     work_guard.completed = true;
-    impl_->runtime_counters.kernel_count +=
-        static_cast<std::uint64_t>(launch.kernels_launched);
-    impl_->runtime_counters.bytes_d2h += sizeof(int);
-    if (eos_status != 0)
-        throw std::runtime_error("Invalid CUDA hydro stage EOS query");
+    impl_->runtime_counters.kernel_count += kernels;
+    impl_->runtime_counters.bytes_d2h += currents.size() * sizeof(int);
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        if (scratch.host_status[index] != 0)
+            throw std::runtime_error("Invalid CUDA hydro stage EOS query: stage="
+                + std::to_string(descriptor.stage) + " block="
+                + std::to_string(currents[index].block.uid.value) + " epoch="
+                + std::to_string(currents[index].block.epoch.value) + " status="
+                + std::to_string(scratch.host_status[index]));
+    }
     return expected;
 }
 

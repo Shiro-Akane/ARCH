@@ -225,14 +225,24 @@ public:
             || (access.block == second_block
                 && access.storage == second_storage);
     }
-    double compute_hydro_dt(arch::backend::BackendStateAccess, double) override
+    double compute_hydro_dt(arch::backend::BackendStateAccess access, double) override
     {
-        return 1.0;
+        ++hydro_dt_calls;
+        return access.block == block ? 1.0 : 2.0;
     }
     arch::state::CompletionToken execute_hydro_stage(
         arch::backend::BackendStateAccess,
         const arch::scheduler::StageDescriptor&, double,
-        arch::state::CompletionToken token) override { return token; }
+        arch::state::CompletionToken token) override
+    {
+        ++hydro_stage_calls;
+        if (hydro_stage_calls == fail_hydro_stage)
+            throw std::runtime_error("injected Hydro EOS failure");
+        if (incomplete_hydro_stage)
+            return {token.value, arch::state::CompletionState::Pending};
+        if (wrong_hydro_token) ++token.value;
+        return token;
+    }
     arch::state::CompletionToken execute_physical_boundary(
         arch::backend::BackendStateAccess, arch::state::StateVersion,
         arch::state::CompletionToken token) override { return token; }
@@ -327,6 +337,11 @@ public:
     arch::backend::StorageGeneration second_storage{10};
     std::vector<int> calls;
     int enqueue_count = 0;
+    int hydro_dt_calls = 0;
+    int hydro_stage_calls = 0;
+    int fail_hydro_stage = 0;
+    bool incomplete_hydro_stage = false;
+    bool wrong_hydro_token = false;
     int fail_enqueue = 0;
     bool fail_quiesce = false;
     bool fail_trace = false;
@@ -334,6 +349,69 @@ public:
     arch::backend::BackendCounters counters_value{};
     std::vector<arch::backend::BackendTraceRecord> trace;
 };
+
+void test_hydro_batch_contract()
+{
+    using namespace arch::state;
+    using arch::backend::BackendStateAccess;
+    FakeBackend backend;
+    const std::array<BackendStateAccess, 2> accesses{{
+        {backend.second_block, backend.second_storage, StateSlot::Current},
+        {backend.block, backend.storage, StateSlot::Current}}};
+    const auto descriptor = arch::scheduler::make_hydro_plan(
+        arch::scheduler::HydroMethod::Euler).stages.front();
+    const CompletionToken token{91, CompletionState::Complete};
+    require(backend.compute_hydro_dt_batch({}, 0.8).empty(),
+            "empty local CFL batch must contribute no candidates");
+    require(backend.execute_hydro_stage_batch({}, descriptor, 0.1, token) == token
+                && backend.hydro_stage_calls == 0 && backend.hydro_dt_calls == 0,
+            "empty Hydro batch launched work");
+    require(backend.compute_hydro_dt_batch(accesses, 0.8) == std::vector<double>({2.0, 1.0}),
+            "Hydro batch changed request ordering");
+    require(backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token) == token
+                && backend.hydro_stage_calls == 2,
+            "Hydro batch did not complete all blocks");
+    const std::array<BackendStateAccess, 1> single{{accesses[1]}};
+    require(backend.compute_hydro_dt_batch(single, 0.8) == std::vector<double>({1.0}),
+            "single-block batch changed result extent");
+
+    for (int fault = 0; fault < 4; ++fault) {
+        auto invalid = accesses;
+        if (fault == 0) invalid[1].storage.value += 100;
+        if (fault == 1) invalid[1].slot = StateSlot::Next;
+        if (fault == 2) invalid[1] = invalid[0];
+        if (fault == 3) invalid[1].block.epoch.value += 1;
+        const int dt_calls = backend.hydro_dt_calls;
+        const int stage_calls = backend.hydro_stage_calls;
+        require_failure([&] { (void)backend.compute_hydro_dt_batch(invalid, 0.8); },
+                        "invalid later access accepted by CFL batch");
+        require_failure([&] {
+            (void)backend.execute_hydro_stage_batch(invalid, descriptor, 0.1, token);
+        }, "invalid later access accepted by Hydro batch");
+        require(backend.hydro_dt_calls == dt_calls && backend.hydro_stage_calls == stage_calls,
+                "batch validation submitted earlier work before rejecting later access");
+    }
+    const int before = backend.hydro_stage_calls;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1,
+            {token.value, CompletionState::Pending});
+    }, "Hydro batch accepted pending expected token");
+    require(backend.hydro_stage_calls == before, "pending batch launched work");
+    backend.incomplete_hydro_stage = true;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
+    }, "Hydro batch manufactured completion from pending work");
+    backend.incomplete_hydro_stage = false;
+    backend.wrong_hydro_token = true;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
+    }, "Hydro batch accepted a different completion token");
+    backend.wrong_hydro_token = false;
+    backend.fail_hydro_stage = backend.hydro_stage_calls + 2;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
+    }, "failure in the second block returned batch success");
+}
 
 void test_transfer_transaction()
 {
@@ -625,6 +703,7 @@ int main()
     test_device_block_store_identity();
     test_host_transfer_view();
     test_cuda_launch_config();
+    test_hydro_batch_contract();
     test_transfer_transaction();
     test_multiblock_exchange_contract();
     test_dynamic_topology_store_is_fail_closed_by_default();

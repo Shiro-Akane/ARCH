@@ -882,6 +882,12 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
 
     def test_rejects_split_runtime_completion_before_quiescence(self):
         cases = {
+            "compute_hydro_dt_batch": (
+                "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+                "launch_cuda_backend_hydro_dt();"),
+            "execute_hydro_stage_batch": (
+                "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+                "launch_cuda_backend_hydro_stage();"),
             "compute_hydro_dt": (
                 "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
                 "launch_cuda_backend_hydro_dt();"),
@@ -912,6 +918,36 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                         "}\n"
                 }, f"CUDA bounded work must quiesce before completion: "
                    f"{function_name}")
+
+    def test_accepts_exact_scalar_batch_delegates(self):
+        self.assert_accepted({
+            "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp":
+                "double CudaBackend::compute_hydro_dt() {\n"
+                "return compute_hydro_dt_batch({&current, 1}, cfl).front(); }\n"
+                "auto CudaBackend::compute_hydro_dt_batch() {\n"
+                "launch_cuda_backend_hydro_dt(); quiesce();\n"
+                "impl_->runtime_counters.kernel_count += 2; }\n"
+                "auto CudaBackend::execute_hydro_stage() {\n"
+                "return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected); }\n"
+                "auto CudaBackend::execute_hydro_stage_batch() {\n"
+                "launch_cuda_backend_hydro_stage(); quiesce();\n"
+                "impl_->runtime_counters.kernel_count += 1; }\n",
+        })
+
+    def test_rejects_scalar_delegate_without_batch_owner(self):
+        self.assert_rejected_with({
+            "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp":
+                "double CudaBackend::compute_hydro_dt() {\n"
+                "return compute_hydro_dt_batch({&current, 1}, cfl).front(); }\n",
+        }, "CUDA scalar delegate requires its batch owner")
+
+    def test_rejects_enqueue_hidden_before_scalar_delegate(self):
+        self.assert_rejected_with({
+            "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp":
+                "double CudaBackend::compute_hydro_dt() {\n"
+                "launch_cuda_backend_hydro_dt();\n"
+                "return compute_hydro_dt_batch({&current, 1}, cfl).front(); }\n",
+        }, "CUDA bounded work must quiesce before completion")
 
     def test_rejects_boundary_quiescence_from_another_function(self):
         self.assert_rejected_with({
