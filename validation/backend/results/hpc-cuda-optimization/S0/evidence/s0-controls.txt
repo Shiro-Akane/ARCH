@@ -1,0 +1,15 @@
+test_build_inspection_is_not_science (test_hpc_s0_recipe.S0RecipeContract.test_build_inspection_is_not_science) ... ok
+test_configuration_or_binary_change_is_rejected (test_hpc_s0_recipe.S0RecipeContract.test_configuration_or_binary_change_is_rejected) ... ok
+test_existing_output_is_never_overwritten_even_if_empty (test_hpc_s0_recipe.S0RecipeContract.test_existing_output_is_never_overwritten_even_if_empty) ... ok
+test_inspection_does_not_depend_on_old_summary_marker (test_hpc_s0_recipe.S0RecipeContract.test_inspection_does_not_depend_on_old_summary_marker) ... ok
+test_missing_or_damaged_artifact_never_executes (test_hpc_s0_recipe.S0RecipeContract.test_missing_or_damaged_artifact_never_executes) ... ok
+test_nonzero_command_stops_and_records_failure (test_hpc_s0_recipe.S0RecipeContract.test_nonzero_command_stops_and_records_failure) ... ok
+test_pending_build_graph_does_not_claim_artifact_ready (test_hpc_s0_recipe.S0RecipeContract.test_pending_build_graph_does_not_claim_artifact_ready) ... ok
+test_repeated_completion_is_not_reused (test_hpc_s0_recipe.S0RecipeContract.test_repeated_completion_is_not_reused) ... ok
+test_source_change_is_rejected (test_hpc_s0_recipe.S0RecipeContract.test_source_change_is_rejected) ... ok
+test_timeout_and_interrupt_are_not_left_running (test_hpc_s0_recipe.S0RecipeContract.test_timeout_and_interrupt_are_not_left_running) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.241s
+
+OK

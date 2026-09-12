@@ -1,0 +1,2326 @@
+{
+  "status": "passed",
+  "baseline": {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/baseline/timing-report.json",
+    "sha256": "2356a9c4d58fe8e4c46574e6024159a8ffd357a9baa95447362f8d67e5c5f386"
+  },
+  "observer": {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/cuda_api_profile_detailed.so",
+    "sha256": "29ea62fa6ed670ce5b932f56b040ed3c1fd36a6e8a56294e4387ce46066e1cf0"
+  },
+  "lanes": [
+    {
+      "blocks_per_axis": 4,
+      "command": [
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin/ARCH",
+        "Sedov",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/api-profile-detailed/blocks-4/run.par"
+      ],
+      "seconds": 18.482424516929314,
+      "returncode": 0,
+      "directory": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/api-profile-detailed/blocks-4",
+      "api": {
+        "scope": "host CUDA API inclusive latency; no injected synchronization",
+        "process_seconds": 18.299395971,
+        "apis": [
+          {
+            "name": "cudaLaunchKernel",
+            "calls": 599832,
+            "seconds": 1.835563722,
+            "max_seconds": 0.003515166,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemcpyAsync",
+            "calls": 168360,
+            "seconds": 6.746450156,
+            "max_seconds": 0.001529207,
+            "bytes": 877485368,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemcpy",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemsetAsync",
+            "calls": 523350,
+            "seconds": 1.489088609,
+            "max_seconds": 5.8107e-05,
+            "bytes": 2643128440,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemset",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMalloc",
+            "calls": 39504,
+            "seconds": 0.239587757,
+            "max_seconds": 0.001185716,
+            "bytes": 2062554744,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaFree",
+            "calls": 39504,
+            "seconds": 0.225007409,
+            "max_seconds": 0.000659132,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaStreamSynchronize",
+            "calls": 162209,
+            "seconds": 1.462313719,
+            "max_seconds": 0.000448882,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaDeviceSynchronize",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaHostAlloc",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaFreeHost",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaEventSynchronize",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          }
+        ],
+        "async_copy_categories": [
+          {
+            "name": "host_to_host_le16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "host_to_host_gt16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "host_to_device_le16",
+            "calls": 181,
+            "seconds": 0.000645637,
+            "max_seconds": 7.793e-06,
+            "bytes": 2864,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "host_to_device_gt16",
+            "calls": 29068,
+            "seconds": 0.166638775,
+            "max_seconds": 0.000105283,
+            "bytes": 868217744,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_host_le16",
+            "calls": 103486,
+            "seconds": 6.051878565,
+            "max_seconds": 0.001260839,
+            "bytes": 495736,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_host_gt16",
+            "calls": 34673,
+            "seconds": 0.523570653,
+            "max_seconds": 0.001529207,
+            "bytes": 2919936,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_device_le16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_device_gt16",
+            "calls": 952,
+            "seconds": 0.003716526,
+            "max_seconds": 1.8582e-05,
+            "bytes": 5849088,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "default_le16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "default_gt16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          }
+        ]
+      },
+      "comparison": {
+        "status": "pass",
+        "step": 354,
+        "time": 0.02,
+        "candidate_step": 354,
+        "candidate_time": 0.02,
+        "comparison_mode": "physical-time",
+        "target_time": 0.02,
+        "time_roundoff_matches": true,
+        "controller_matches": true,
+        "output_indices_match": true,
+        "native_composition_compared": true,
+        "dimension": 2,
+        "blocks": 88,
+        "min_level": 0,
+        "max_level": 2,
+        "dt_old": 7.204589942596442e-05,
+        "candidate_dt_old": 7.204589942596442e-05,
+        "dt_burn": 1e+99,
+        "candidate_dt_burn": 1e+99,
+        "dt_burn_relative": 0,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "candidate_chk_file_index": 1,
+        "candidate_plt_file_index": 2,
+        "output_index_offsets": {
+          "checkpoint": 0,
+          "plot": 0
+        },
+        "resume_after_regrid": false,
+        "topology": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            3,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            3,
+            3,
+            0
+          ],
+          [
+            1,
+            2,
+            0,
+            0
+          ],
+          [
+            1,
+            3,
+            0,
+            0
+          ],
+          [
+            1,
+            2,
+            1,
+            0
+          ],
+          [
+            1,
+            3,
+            1,
+            0
+          ],
+          [
+            1,
+            0,
+            2,
+            0
+          ],
+          [
+            1,
+            1,
+            2,
+            0
+          ],
+          [
+            1,
+            0,
+            3,
+            0
+          ],
+          [
+            1,
+            1,
+            3,
+            0
+          ],
+          [
+            1,
+            2,
+            2,
+            0
+          ],
+          [
+            1,
+            4,
+            0,
+            0
+          ],
+          [
+            1,
+            5,
+            0,
+            0
+          ],
+          [
+            1,
+            4,
+            1,
+            0
+          ],
+          [
+            1,
+            5,
+            1,
+            0
+          ],
+          [
+            1,
+            5,
+            2,
+            0
+          ],
+          [
+            1,
+            6,
+            2,
+            0
+          ],
+          [
+            1,
+            7,
+            2,
+            0
+          ],
+          [
+            1,
+            6,
+            3,
+            0
+          ],
+          [
+            1,
+            7,
+            3,
+            0
+          ],
+          [
+            1,
+            0,
+            4,
+            0
+          ],
+          [
+            1,
+            1,
+            4,
+            0
+          ],
+          [
+            1,
+            0,
+            5,
+            0
+          ],
+          [
+            1,
+            1,
+            5,
+            0
+          ],
+          [
+            1,
+            2,
+            5,
+            0
+          ],
+          [
+            1,
+            2,
+            6,
+            0
+          ],
+          [
+            1,
+            3,
+            6,
+            0
+          ],
+          [
+            1,
+            2,
+            7,
+            0
+          ],
+          [
+            1,
+            3,
+            7,
+            0
+          ],
+          [
+            1,
+            5,
+            5,
+            0
+          ],
+          [
+            1,
+            6,
+            4,
+            0
+          ],
+          [
+            1,
+            7,
+            4,
+            0
+          ],
+          [
+            1,
+            6,
+            5,
+            0
+          ],
+          [
+            1,
+            7,
+            5,
+            0
+          ],
+          [
+            1,
+            4,
+            6,
+            0
+          ],
+          [
+            1,
+            5,
+            6,
+            0
+          ],
+          [
+            1,
+            4,
+            7,
+            0
+          ],
+          [
+            1,
+            5,
+            7,
+            0
+          ],
+          [
+            2,
+            6,
+            4,
+            0
+          ],
+          [
+            2,
+            7,
+            4,
+            0
+          ],
+          [
+            2,
+            6,
+            5,
+            0
+          ],
+          [
+            2,
+            7,
+            5,
+            0
+          ],
+          [
+            2,
+            4,
+            6,
+            0
+          ],
+          [
+            2,
+            5,
+            6,
+            0
+          ],
+          [
+            2,
+            4,
+            7,
+            0
+          ],
+          [
+            2,
+            5,
+            7,
+            0
+          ],
+          [
+            2,
+            6,
+            6,
+            0
+          ],
+          [
+            2,
+            7,
+            6,
+            0
+          ],
+          [
+            2,
+            6,
+            7,
+            0
+          ],
+          [
+            2,
+            7,
+            7,
+            0
+          ],
+          [
+            2,
+            8,
+            4,
+            0
+          ],
+          [
+            2,
+            9,
+            4,
+            0
+          ],
+          [
+            2,
+            8,
+            5,
+            0
+          ],
+          [
+            2,
+            9,
+            5,
+            0
+          ],
+          [
+            2,
+            8,
+            6,
+            0
+          ],
+          [
+            2,
+            9,
+            6,
+            0
+          ],
+          [
+            2,
+            8,
+            7,
+            0
+          ],
+          [
+            2,
+            9,
+            7,
+            0
+          ],
+          [
+            2,
+            10,
+            6,
+            0
+          ],
+          [
+            2,
+            11,
+            6,
+            0
+          ],
+          [
+            2,
+            10,
+            7,
+            0
+          ],
+          [
+            2,
+            11,
+            7,
+            0
+          ],
+          [
+            2,
+            4,
+            8,
+            0
+          ],
+          [
+            2,
+            5,
+            8,
+            0
+          ],
+          [
+            2,
+            4,
+            9,
+            0
+          ],
+          [
+            2,
+            5,
+            9,
+            0
+          ],
+          [
+            2,
+            6,
+            8,
+            0
+          ],
+          [
+            2,
+            7,
+            8,
+            0
+          ],
+          [
+            2,
+            6,
+            9,
+            0
+          ],
+          [
+            2,
+            7,
+            9,
+            0
+          ],
+          [
+            2,
+            6,
+            10,
+            0
+          ],
+          [
+            2,
+            7,
+            10,
+            0
+          ],
+          [
+            2,
+            6,
+            11,
+            0
+          ],
+          [
+            2,
+            7,
+            11,
+            0
+          ],
+          [
+            2,
+            8,
+            8,
+            0
+          ],
+          [
+            2,
+            9,
+            8,
+            0
+          ],
+          [
+            2,
+            8,
+            9,
+            0
+          ],
+          [
+            2,
+            9,
+            9,
+            0
+          ],
+          [
+            2,
+            10,
+            8,
+            0
+          ],
+          [
+            2,
+            11,
+            8,
+            0
+          ],
+          [
+            2,
+            10,
+            9,
+            0
+          ],
+          [
+            2,
+            11,
+            9,
+            0
+          ],
+          [
+            2,
+            8,
+            10,
+            0
+          ],
+          [
+            2,
+            9,
+            10,
+            0
+          ],
+          [
+            2,
+            8,
+            11,
+            0
+          ],
+          [
+            2,
+            9,
+            11,
+            0
+          ]
+        ],
+        "max_abs": 0,
+        "max_rel": 0,
+        "max_field_normalized": 0,
+        "max_enuc_normalized": 0,
+        "passed": true,
+        "tolerance": {
+          "rtol": 1e-08,
+          "atol": 1e-11,
+          "fields": [
+            "rho",
+            "mom_u",
+            "mom_v",
+            "mom_w",
+            "eng",
+            "rhoX"
+          ]
+        }
+      }
+    },
+    {
+      "blocks_per_axis": 8,
+      "command": [
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin/ARCH",
+        "Sedov",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/api-profile-detailed/blocks-8/run.par"
+      ],
+      "seconds": 88.13453962607309,
+      "returncode": 0,
+      "directory": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/api-profile-detailed/blocks-8",
+      "api": {
+        "scope": "host CUDA API inclusive latency; no injected synchronization",
+        "process_seconds": 87.9132489,
+        "apis": [
+          {
+            "name": "cudaLaunchKernel",
+            "calls": 2903079,
+            "seconds": 8.645482385,
+            "max_seconds": 0.001988431,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemcpyAsync",
+            "calls": 682938,
+            "seconds": 33.007179978,
+            "max_seconds": 0.003686173,
+            "bytes": 3128741672,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemcpy",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemsetAsync",
+            "calls": 2655170,
+            "seconds": 7.282193885,
+            "max_seconds": 8.7299e-05,
+            "bytes": 13426054040,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMemset",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaMalloc",
+            "calls": 176226,
+            "seconds": 0.461110233,
+            "max_seconds": 0.000185317,
+            "bytes": 9624731640,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaFree",
+            "calls": 176226,
+            "seconds": 0.479717451,
+            "max_seconds": 0.000669718,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaStreamSynchronize",
+            "calls": 799439,
+            "seconds": 7.570427146,
+            "max_seconds": 0.00046635,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaDeviceSynchronize",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaHostAlloc",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaFreeHost",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "cudaEventSynchronize",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          }
+        ],
+        "async_copy_categories": [
+          {
+            "name": "host_to_host_le16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "host_to_host_gt16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "host_to_device_le16",
+            "calls": 360,
+            "seconds": 0.00133706,
+            "max_seconds": 1.6338e-05,
+            "bytes": 5728,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "host_to_device_gt16",
+            "calls": 67196,
+            "seconds": 0.40231292,
+            "max_seconds": 0.000133923,
+            "bytes": 3049949472,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_host_le16",
+            "calls": 522234,
+            "seconds": 30.808220095,
+            "max_seconds": 0.001281079,
+            "bytes": 2504712,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_host_gt16",
+            "calls": 81892,
+            "seconds": 1.750141956,
+            "max_seconds": 0.003686173,
+            "bytes": 7124896,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_device_le16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "device_to_device_gt16",
+            "calls": 11256,
+            "seconds": 0.045167947,
+            "max_seconds": 4.0435e-05,
+            "bytes": 69156864,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "default_le16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          },
+          {
+            "name": "default_gt16",
+            "calls": 0,
+            "seconds": 0.0,
+            "max_seconds": 0.0,
+            "bytes": 0,
+            "errors": 0,
+            "nested_calls": 0
+          }
+        ]
+      },
+      "comparison": {
+        "status": "pass",
+        "step": 711,
+        "time": 0.02,
+        "candidate_step": 711,
+        "candidate_time": 0.02,
+        "comparison_mode": "physical-time",
+        "target_time": 0.02,
+        "time_roundoff_matches": true,
+        "controller_matches": true,
+        "output_indices_match": true,
+        "native_composition_compared": true,
+        "dimension": 2,
+        "blocks": 208,
+        "min_level": 0,
+        "max_level": 2,
+        "dt_old": 3.515679549859478e-05,
+        "candidate_dt_old": 3.515679549859478e-05,
+        "dt_burn": 1e+99,
+        "candidate_dt_burn": 1e+99,
+        "dt_burn_relative": 0,
+        "chk_file_index": 1,
+        "plt_file_index": 2,
+        "candidate_chk_file_index": 1,
+        "candidate_plt_file_index": 2,
+        "output_index_offsets": {
+          "checkpoint": 0,
+          "plot": 0
+        },
+        "resume_after_regrid": false,
+        "topology": [
+          [
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            3,
+            0,
+            0
+          ],
+          [
+            0,
+            2,
+            1,
+            0
+          ],
+          [
+            0,
+            3,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            2,
+            0
+          ],
+          [
+            0,
+            1,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            1,
+            3,
+            0
+          ],
+          [
+            0,
+            4,
+            0,
+            0
+          ],
+          [
+            0,
+            5,
+            0,
+            0
+          ],
+          [
+            0,
+            4,
+            1,
+            0
+          ],
+          [
+            0,
+            5,
+            1,
+            0
+          ],
+          [
+            0,
+            6,
+            0,
+            0
+          ],
+          [
+            0,
+            7,
+            0,
+            0
+          ],
+          [
+            0,
+            6,
+            1,
+            0
+          ],
+          [
+            0,
+            7,
+            1,
+            0
+          ],
+          [
+            0,
+            6,
+            2,
+            0
+          ],
+          [
+            0,
+            7,
+            2,
+            0
+          ],
+          [
+            0,
+            6,
+            3,
+            0
+          ],
+          [
+            0,
+            7,
+            3,
+            0
+          ],
+          [
+            0,
+            0,
+            4,
+            0
+          ],
+          [
+            0,
+            1,
+            4,
+            0
+          ],
+          [
+            0,
+            0,
+            5,
+            0
+          ],
+          [
+            0,
+            1,
+            5,
+            0
+          ],
+          [
+            0,
+            0,
+            6,
+            0
+          ],
+          [
+            0,
+            1,
+            6,
+            0
+          ],
+          [
+            0,
+            0,
+            7,
+            0
+          ],
+          [
+            0,
+            1,
+            7,
+            0
+          ],
+          [
+            0,
+            2,
+            6,
+            0
+          ],
+          [
+            0,
+            3,
+            6,
+            0
+          ],
+          [
+            0,
+            2,
+            7,
+            0
+          ],
+          [
+            0,
+            3,
+            7,
+            0
+          ],
+          [
+            0,
+            6,
+            4,
+            0
+          ],
+          [
+            0,
+            7,
+            4,
+            0
+          ],
+          [
+            0,
+            6,
+            5,
+            0
+          ],
+          [
+            0,
+            7,
+            5,
+            0
+          ],
+          [
+            0,
+            4,
+            6,
+            0
+          ],
+          [
+            0,
+            5,
+            6,
+            0
+          ],
+          [
+            0,
+            4,
+            7,
+            0
+          ],
+          [
+            0,
+            5,
+            7,
+            0
+          ],
+          [
+            0,
+            6,
+            6,
+            0
+          ],
+          [
+            0,
+            7,
+            6,
+            0
+          ],
+          [
+            0,
+            6,
+            7,
+            0
+          ],
+          [
+            0,
+            7,
+            7,
+            0
+          ],
+          [
+            1,
+            4,
+            4,
+            0
+          ],
+          [
+            1,
+            5,
+            4,
+            0
+          ],
+          [
+            1,
+            4,
+            5,
+            0
+          ],
+          [
+            1,
+            5,
+            5,
+            0
+          ],
+          [
+            1,
+            6,
+            4,
+            0
+          ],
+          [
+            1,
+            7,
+            4,
+            0
+          ],
+          [
+            1,
+            4,
+            6,
+            0
+          ],
+          [
+            1,
+            4,
+            7,
+            0
+          ],
+          [
+            1,
+            8,
+            4,
+            0
+          ],
+          [
+            1,
+            9,
+            4,
+            0
+          ],
+          [
+            1,
+            10,
+            4,
+            0
+          ],
+          [
+            1,
+            11,
+            4,
+            0
+          ],
+          [
+            1,
+            10,
+            5,
+            0
+          ],
+          [
+            1,
+            11,
+            5,
+            0
+          ],
+          [
+            1,
+            11,
+            6,
+            0
+          ],
+          [
+            1,
+            11,
+            7,
+            0
+          ],
+          [
+            1,
+            4,
+            8,
+            0
+          ],
+          [
+            1,
+            4,
+            9,
+            0
+          ],
+          [
+            1,
+            4,
+            10,
+            0
+          ],
+          [
+            1,
+            5,
+            10,
+            0
+          ],
+          [
+            1,
+            4,
+            11,
+            0
+          ],
+          [
+            1,
+            5,
+            11,
+            0
+          ],
+          [
+            1,
+            6,
+            11,
+            0
+          ],
+          [
+            1,
+            7,
+            11,
+            0
+          ],
+          [
+            1,
+            11,
+            8,
+            0
+          ],
+          [
+            1,
+            11,
+            9,
+            0
+          ],
+          [
+            1,
+            8,
+            11,
+            0
+          ],
+          [
+            1,
+            9,
+            11,
+            0
+          ],
+          [
+            1,
+            10,
+            10,
+            0
+          ],
+          [
+            1,
+            11,
+            10,
+            0
+          ],
+          [
+            1,
+            10,
+            11,
+            0
+          ],
+          [
+            1,
+            11,
+            11,
+            0
+          ],
+          [
+            2,
+            12,
+            10,
+            0
+          ],
+          [
+            2,
+            13,
+            10,
+            0
+          ],
+          [
+            2,
+            12,
+            11,
+            0
+          ],
+          [
+            2,
+            13,
+            11,
+            0
+          ],
+          [
+            2,
+            14,
+            10,
+            0
+          ],
+          [
+            2,
+            15,
+            10,
+            0
+          ],
+          [
+            2,
+            14,
+            11,
+            0
+          ],
+          [
+            2,
+            15,
+            11,
+            0
+          ],
+          [
+            2,
+            10,
+            12,
+            0
+          ],
+          [
+            2,
+            11,
+            12,
+            0
+          ],
+          [
+            2,
+            10,
+            13,
+            0
+          ],
+          [
+            2,
+            11,
+            13,
+            0
+          ],
+          [
+            2,
+            10,
+            14,
+            0
+          ],
+          [
+            2,
+            11,
+            14,
+            0
+          ],
+          [
+            2,
+            10,
+            15,
+            0
+          ],
+          [
+            2,
+            11,
+            15,
+            0
+          ],
+          [
+            2,
+            12,
+            12,
+            0
+          ],
+          [
+            2,
+            13,
+            12,
+            0
+          ],
+          [
+            2,
+            12,
+            13,
+            0
+          ],
+          [
+            2,
+            13,
+            13,
+            0
+          ],
+          [
+            2,
+            14,
+            12,
+            0
+          ],
+          [
+            2,
+            15,
+            12,
+            0
+          ],
+          [
+            2,
+            14,
+            13,
+            0
+          ],
+          [
+            2,
+            15,
+            13,
+            0
+          ],
+          [
+            2,
+            12,
+            14,
+            0
+          ],
+          [
+            2,
+            13,
+            14,
+            0
+          ],
+          [
+            2,
+            12,
+            15,
+            0
+          ],
+          [
+            2,
+            13,
+            15,
+            0
+          ],
+          [
+            2,
+            14,
+            14,
+            0
+          ],
+          [
+            2,
+            15,
+            14,
+            0
+          ],
+          [
+            2,
+            14,
+            15,
+            0
+          ],
+          [
+            2,
+            15,
+            15,
+            0
+          ],
+          [
+            2,
+            16,
+            10,
+            0
+          ],
+          [
+            2,
+            17,
+            10,
+            0
+          ],
+          [
+            2,
+            16,
+            11,
+            0
+          ],
+          [
+            2,
+            17,
+            11,
+            0
+          ],
+          [
+            2,
+            18,
+            10,
+            0
+          ],
+          [
+            2,
+            19,
+            10,
+            0
+          ],
+          [
+            2,
+            18,
+            11,
+            0
+          ],
+          [
+            2,
+            19,
+            11,
+            0
+          ],
+          [
+            2,
+            16,
+            12,
+            0
+          ],
+          [
+            2,
+            17,
+            12,
+            0
+          ],
+          [
+            2,
+            16,
+            13,
+            0
+          ],
+          [
+            2,
+            17,
+            13,
+            0
+          ],
+          [
+            2,
+            18,
+            12,
+            0
+          ],
+          [
+            2,
+            19,
+            12,
+            0
+          ],
+          [
+            2,
+            18,
+            13,
+            0
+          ],
+          [
+            2,
+            19,
+            13,
+            0
+          ],
+          [
+            2,
+            16,
+            14,
+            0
+          ],
+          [
+            2,
+            17,
+            14,
+            0
+          ],
+          [
+            2,
+            16,
+            15,
+            0
+          ],
+          [
+            2,
+            17,
+            15,
+            0
+          ],
+          [
+            2,
+            18,
+            14,
+            0
+          ],
+          [
+            2,
+            19,
+            14,
+            0
+          ],
+          [
+            2,
+            18,
+            15,
+            0
+          ],
+          [
+            2,
+            19,
+            15,
+            0
+          ],
+          [
+            2,
+            20,
+            12,
+            0
+          ],
+          [
+            2,
+            21,
+            12,
+            0
+          ],
+          [
+            2,
+            20,
+            13,
+            0
+          ],
+          [
+            2,
+            21,
+            13,
+            0
+          ],
+          [
+            2,
+            20,
+            14,
+            0
+          ],
+          [
+            2,
+            21,
+            14,
+            0
+          ],
+          [
+            2,
+            20,
+            15,
+            0
+          ],
+          [
+            2,
+            21,
+            15,
+            0
+          ],
+          [
+            2,
+            10,
+            16,
+            0
+          ],
+          [
+            2,
+            11,
+            16,
+            0
+          ],
+          [
+            2,
+            10,
+            17,
+            0
+          ],
+          [
+            2,
+            11,
+            17,
+            0
+          ],
+          [
+            2,
+            10,
+            18,
+            0
+          ],
+          [
+            2,
+            11,
+            18,
+            0
+          ],
+          [
+            2,
+            10,
+            19,
+            0
+          ],
+          [
+            2,
+            11,
+            19,
+            0
+          ],
+          [
+            2,
+            12,
+            16,
+            0
+          ],
+          [
+            2,
+            13,
+            16,
+            0
+          ],
+          [
+            2,
+            12,
+            17,
+            0
+          ],
+          [
+            2,
+            13,
+            17,
+            0
+          ],
+          [
+            2,
+            14,
+            16,
+            0
+          ],
+          [
+            2,
+            15,
+            16,
+            0
+          ],
+          [
+            2,
+            14,
+            17,
+            0
+          ],
+          [
+            2,
+            15,
+            17,
+            0
+          ],
+          [
+            2,
+            12,
+            18,
+            0
+          ],
+          [
+            2,
+            13,
+            18,
+            0
+          ],
+          [
+            2,
+            12,
+            19,
+            0
+          ],
+          [
+            2,
+            13,
+            19,
+            0
+          ],
+          [
+            2,
+            14,
+            18,
+            0
+          ],
+          [
+            2,
+            15,
+            18,
+            0
+          ],
+          [
+            2,
+            14,
+            19,
+            0
+          ],
+          [
+            2,
+            15,
+            19,
+            0
+          ],
+          [
+            2,
+            12,
+            20,
+            0
+          ],
+          [
+            2,
+            13,
+            20,
+            0
+          ],
+          [
+            2,
+            12,
+            21,
+            0
+          ],
+          [
+            2,
+            13,
+            21,
+            0
+          ],
+          [
+            2,
+            14,
+            20,
+            0
+          ],
+          [
+            2,
+            15,
+            20,
+            0
+          ],
+          [
+            2,
+            14,
+            21,
+            0
+          ],
+          [
+            2,
+            15,
+            21,
+            0
+          ],
+          [
+            2,
+            16,
+            16,
+            0
+          ],
+          [
+            2,
+            17,
+            16,
+            0
+          ],
+          [
+            2,
+            16,
+            17,
+            0
+          ],
+          [
+            2,
+            17,
+            17,
+            0
+          ],
+          [
+            2,
+            18,
+            16,
+            0
+          ],
+          [
+            2,
+            19,
+            16,
+            0
+          ],
+          [
+            2,
+            18,
+            17,
+            0
+          ],
+          [
+            2,
+            19,
+            17,
+            0
+          ],
+          [
+            2,
+            16,
+            18,
+            0
+          ],
+          [
+            2,
+            17,
+            18,
+            0
+          ],
+          [
+            2,
+            16,
+            19,
+            0
+          ],
+          [
+            2,
+            17,
+            19,
+            0
+          ],
+          [
+            2,
+            18,
+            18,
+            0
+          ],
+          [
+            2,
+            19,
+            18,
+            0
+          ],
+          [
+            2,
+            18,
+            19,
+            0
+          ],
+          [
+            2,
+            19,
+            19,
+            0
+          ],
+          [
+            2,
+            20,
+            16,
+            0
+          ],
+          [
+            2,
+            21,
+            16,
+            0
+          ],
+          [
+            2,
+            20,
+            17,
+            0
+          ],
+          [
+            2,
+            21,
+            17,
+            0
+          ],
+          [
+            2,
+            20,
+            18,
+            0
+          ],
+          [
+            2,
+            21,
+            18,
+            0
+          ],
+          [
+            2,
+            20,
+            19,
+            0
+          ],
+          [
+            2,
+            21,
+            19,
+            0
+          ],
+          [
+            2,
+            16,
+            20,
+            0
+          ],
+          [
+            2,
+            17,
+            20,
+            0
+          ],
+          [
+            2,
+            16,
+            21,
+            0
+          ],
+          [
+            2,
+            17,
+            21,
+            0
+          ],
+          [
+            2,
+            18,
+            20,
+            0
+          ],
+          [
+            2,
+            19,
+            20,
+            0
+          ],
+          [
+            2,
+            18,
+            21,
+            0
+          ],
+          [
+            2,
+            19,
+            21,
+            0
+          ]
+        ],
+        "max_abs": 0,
+        "max_rel": 0,
+        "max_field_normalized": 0,
+        "max_enuc_normalized": 0,
+        "passed": true,
+        "tolerance": {
+          "rtol": 1e-08,
+          "atol": 1e-11,
+          "fields": [
+            "rho",
+            "mom_u",
+            "mom_v",
+            "mom_w",
+            "eng",
+            "rhoX"
+          ]
+        }
+      }
+    }
+  ]
+}
+MEMORY_GUARD_RESULT min_available_kib=115434812 baseline_swap_kib=5640 peak_swap_kib=5640 guard_stopped=False peak_owned_rss_kib=479176 elapsed_seconds=107.920 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=587 min_free_mib=19177 samples=104 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.396 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=103 complete=True

@@ -1,0 +1,117 @@
+"""Bounded S0 recipe: reuse ARCH provenance and runners, never qualify a release.
+
+Run from an unchanged source checkout. Each invocation needs a NEW output root.
+This result-local recipe does not change sources, rebuild targets or parse science.
+"""
+import argparse
+from datetime import datetime, timezone
+import json
+import os
+from pathlib import Path
+import sys
+
+ROOT = next(p for p in Path(__file__).resolve().parents if (p / 'CMakeLists.txt').is_file())
+sys.path.insert(0, str(ROOT / 'tools'))
+import validation_provenance as provenance
+import validate_backend_results as validation
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--source-root', type=Path, required=True)
+    parser.add_argument('--output-root', type=Path, required=True)
+    parser.add_argument('--action', choices=('baseline', 'tooling', 'inspect-build'), required=True)
+    parser.add_argument('--build-dir', type=Path)
+    parser.add_argument('--historical-report', type=Path)
+    parser.add_argument('--target', action='append', default=[])
+    parser.add_argument('--artifact', action='append', default=[], help='NAME=build-relative-path')
+    args = parser.parse_args()
+    source, output = args.source_root.resolve(), args.output_root.resolve()
+    if not output.is_relative_to(source / 'build') or output == source / 'build':
+        raise ValueError('output must be a new directory beneath source/build')
+    if output.exists():
+        raise FileExistsError('S0 recipe never overwrites or appends an earlier output')
+    output.mkdir(parents=True)
+    report = dict(action=args.action, commands=[], status='running', release_qualified=False,
+                  started_utc=datetime.now(timezone.utc).isoformat(),
+                  recipe=provenance.file_identity(Path(__file__)),
+                  source_before=provenance.source_identity(source))
+
+    def save():
+        (output / 'status.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+
+    def execute(name, command, timeout=2400):
+        lane = output / name
+        lane.mkdir()
+        record = dict(name=name, command=[str(v) for v in command], status='running')
+        report['commands'].append(record)
+        save()
+        result = validation.run_arch_with_logs(record['command'], source_root=source,
+                                              lane_root=lane, timeout=timeout)
+        record.update(returncode=result.returncode,
+                      status='passed' if result.returncode == 0 else 'failed')
+        save()
+        if result.returncode:
+            raise RuntimeError(f'{name} returned {result.returncode}; original logs retained')
+        return lane
+
+    save()
+    try:
+        if args.action == 'baseline':
+            build = args.build_dir.resolve()
+            old = json.loads(args.historical_report.read_text())
+            identity_args = dict(arch=build / 'bin/ARCH', checkpoint_validator=build / 'arch_cuda_single_level_validation',
+                                 source_root=source, build_dir=build)
+            before = provenance.capture(**identity_args)
+            # Old runs retain their real SHA; verify reusable sources/configuration/binaries.
+            for section in ('source', 'build', 'artifacts'):
+                if before[section] != old['identity_after'][section]:
+                    raise RuntimeError(f'historical baseline {section} differs; do not relabel or silently reuse')
+            report['baseline_identity_before'] = before
+            execute('matched-timing', [sys.executable,
+                source / 'validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py',
+                '--arch', identity_args['arch'], '--checkpoint-validator', identity_args['checkpoint_validator'],
+                '--output-root', output / 'baseline', '--blocks', '4', '8', '--time', '0.02',
+                '--threads', '8', '--warmups', '1', '--repeats', '3'])
+            report['baseline_identity_after'] = provenance.capture(**identity_args)
+            provenance.require_unchanged(before, report['baseline_identity_after'])
+            result = json.loads((output / 'baseline/timing-report.json').read_text())
+            if result.get('status') != 'passed' or not result.get('identity_verified_after_run'):
+                raise RuntimeError('maintained timing recipe did not qualify its comparison')
+            report['statistics'] = result['statistics']
+        elif args.action == 'tooling':
+            execute('architecture', [sys.executable, '-B', source / 'tools/audit_architecture.py', source])
+            execute('tooling', [sys.executable, '-B', '-m', 'unittest', 'discover', '-s', 'tests/tooling', '-p', 'test_*.py'])
+            execute('sparse-parser', [sys.executable, '-B', source / 'validation/network/test_sparse_validation.py'])
+        else:
+            build = args.build_dir.resolve()
+            artifacts = {}
+            for entry in args.artifact:
+                name, relative = entry.split('=', 1)
+                if name in artifacts:
+                    raise ValueError('duplicate artifact')
+                artifacts[name] = build / relative
+            before = provenance.capture_focused(artifacts=artifacts, source_root=source, build_dir=build)
+            report['build_identity_before'] = before
+            # Dry-run only: never launch a surprise multi-hour compile.
+            lane = execute('build-dry-run', ['cmake', '--build', build, '--target', *args.target, '--', '-n'])
+            transcript = (lane / 'arch.stdout').read_text()
+            report['build_graph_up_to_date'] = 'ninja: no work to do.' in transcript
+            report['build_identity_after'] = provenance.capture_focused(artifacts=artifacts, source_root=source, build_dir=build)
+            provenance.require_unchanged(before, report['build_identity_after'])
+            report['scope'] = 'current artifact/configuration identity and build-graph observation; NOT retrospective science or build provenance proof'
+        report['source_after'] = provenance.source_identity(source)
+        if report['source_before'] != report['source_after']:
+            raise RuntimeError('source changed during S0 check')
+        report['status'] = 'passed'
+    except BaseException as error:
+        report.update(status='failed', error=f'{type(error).__name__}: {error}')
+        raise
+    finally:
+        report['finished_utc'] = datetime.now(timezone.utc).isoformat()
+        save()
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

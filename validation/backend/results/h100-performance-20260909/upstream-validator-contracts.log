@@ -1,0 +1,6 @@
+.........................................................................
+----------------------------------------------------------------------
+Ran 73 tests in 2.295s
+
+OK
+MEMORY_GUARD_RESULT min_available_kib=111395332 baseline_swap_kib=5640 peak_swap_kib=5640 guard_stopped=False peak_owned_rss_kib=30920 elapsed_seconds=3.166 stop_reason=none

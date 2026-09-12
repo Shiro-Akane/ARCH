@@ -1,0 +1,7 @@
+Test project /home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release
+    Start 39: cuda_cudss_sparse_solver
+1/1 Test #39: cuda_cudss_sparse_solver .........   Passed    1.37 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   1.38 sec

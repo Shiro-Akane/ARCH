@@ -1,0 +1,49 @@
+{
+  "status": "failed",
+  "started_utc": "2026-09-08T18:20:06.025214+00:00",
+  "source_commit": "0266d96f20b184d4b17ebc6a066ac3b9021f1642",
+  "commands": [],
+  "focused": {
+    "audit150": {
+      "passed": false,
+      "evidence": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/results/audit150-fourstep/evidence.json"
+    },
+    "audit200": {
+      "passed": false,
+      "evidence": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/results/audit200-fourstep/evidence.json"
+    }
+  },
+  "safety_gate": "blocked: vGPU debugging features disabled",
+  "release_qualified": false,
+  "build_processes": {
+    "focused": [
+      2521302,
+      "126428666"
+    ],
+    "integration": [
+      2525010,
+      "126638557"
+    ]
+  },
+  "test_patch": {
+    "cmake/tests/HostTests.cmake": {
+      "before": "a5b1cdc1f5b5dfda5bea2fb5d867910480cadb96ca08f55d10a442b984e9aaf7",
+      "staged": "1822484b0b9e5553d96ab80e67b3b5aba3e4462aac5b0d8098c98bf22c55d777"
+    },
+    "tests/cuda/test_generated_sparse_burn.cpp": {
+      "before": "71b7da2d622d3a01ec1c872099eeb118e4a76777e4fc39983726bc76554f7e25",
+      "staged": "e3c9b1293d64360f505c0f72594ee4b13c80de1bebc8bac12e9006124044c21b"
+    },
+    "validation/network/run_sparse_validation.py": {
+      "before": "1df210c56ee7253fbe4040689c03f8781b4d6895012119dcbc3c06b6eca727a6",
+      "staged": "0a3c58e080134cae566dbb39767bf4e6df1122c031d9954a99a84c4dfa349ab1"
+    },
+    "validation/network/test_sparse_validation.py": {
+      "before": "f298f89608213fe3a8b82e140df41e7caccca117b6a08bd253ab6af80a56bd91",
+      "staged": "122d1f638e343a646e596da57d7f36a792a787623f706de77403081b2640f2c4"
+    }
+  },
+  "updated_utc": "2026-09-08T22:49:16.979425+00:00",
+  "error": "complete pristine ARCH build did not finish successfully; inspect full build log",
+  "finished_utc": "2026-09-08T22:49:16.979385+00:00"
+}

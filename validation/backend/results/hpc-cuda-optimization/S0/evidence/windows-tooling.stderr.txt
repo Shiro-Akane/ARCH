@@ -1,0 +1,160 @@
+...............................................................................................s.sssss........ssss................................s......................................sssssssssssssEE.EE.....E...........................................................E........E...........................E..........E
+======================================================================
+ERROR: test_brief_stall_resets_when_system_recovers (test_run_memory_guarded.SystemPressureTests.test_brief_stall_resets_when_system_recovers)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 44, in test_brief_stall_resets_when_system_recovers
+    observer = self.observer()
+               ^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 29, in observer
+    patch.object(guard.os, 'sysconf', return_value=4096):
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1467, in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1437, in get_original
+    raise AttributeError(
+AttributeError: <module 'os' (frozen)> does not have the attribute 'sysconf'
+
+======================================================================
+ERROR: test_missing_or_reset_counters_fail_closed (test_run_memory_guarded.SystemPressureTests.test_missing_or_reset_counters_fail_closed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 56, in test_missing_or_reset_counters_fail_closed
+    observer = self.observer()
+               ^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 29, in observer
+    patch.object(guard.os, 'sysconf', return_value=4096):
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1467, in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1437, in get_original
+    raise AttributeError(
+AttributeError: <module 'os' (frozen)> does not have the attribute 'sysconf'
+
+======================================================================
+ERROR: test_productive_swap_is_recorded_without_stopping (test_run_memory_guarded.SystemPressureTests.test_productive_swap_is_recorded_without_stopping)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 38, in test_productive_swap_is_recorded_without_stopping
+    observer = self.observer()
+               ^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 29, in observer
+    patch.object(guard.os, 'sysconf', return_value=4096):
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1467, in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1437, in get_original
+    raise AttributeError(
+AttributeError: <module 'os' (frozen)> does not have the attribute 'sysconf'
+
+======================================================================
+ERROR: test_sustained_memory_or_io_stall_stops_without_waiting_for_full_swap (test_run_memory_guarded.SystemPressureTests.test_sustained_memory_or_io_stall_stops_without_waiting_for_full_swap)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 53, in test_sustained_memory_or_io_stall_stops_without_waiting_for_full_swap
+    self.assertEqual(self.sample(self.observer(), 10., counters), reason)
+                                 ^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_run_memory_guarded.py", line 29, in observer
+    patch.object(guard.os, 'sysconf', return_value=4096):
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1467, in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\unittest\mock.py", line 1437, in get_original
+    raise AttributeError(
+AttributeError: <module 'os' (frozen)> does not have the attribute 'sysconf'
+
+======================================================================
+ERROR: test_symlinked_executable_cannot_escape_build_tree (test_runtime_validation_inputs.ArtifactBindingTests.test_symlinked_executable_cannot_escape_build_tree)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_runtime_validation_inputs.py", line 201, in test_symlinked_executable_cannot_escape_build_tree
+    (self.output / "ARCH").symlink_to(outside)
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py", line 1386, in symlink_to
+    os.symlink(target, self, target_is_directory)
+OSError: [WinError 1314] 客\u6237端没有所需的特\u6743。: 'C:\\Users\\jiang\\AppData\\Local\\Temp\\tmp1tzs84hk\\other-ARCH' -> 'C:\\Users\\jiang\\AppData\\Local\\Temp\\tmp1tzs84hk\\build\\bin\\ARCH'
+
+======================================================================
+ERROR: test_sqlite_enums_and_selected_process_identity (test_validation_device_memory.DeviceMemoryTest.test_sqlite_enums_and_selected_process_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 633, in _rmtree_unsafe
+    os.unlink(fullname)
+PermissionError: [WinError 32] \u53e6一个程序正在使用此文件，\u8fdb程无法\u8bbf\u95ee。: 'C:\\Users\\jiang\\AppData\\Local\\Temp\\tmpirnru6gc\\profile.sqlite'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_validation_device_memory.py", line 20, in test_sqlite_enums_and_selected_process_identity
+    with tempfile.TemporaryDirectory() as directory:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 950, in __exit__
+    self.cleanup()
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 954, in cleanup
+    self._rmtree(self.name, ignore_errors=self._ignore_cleanup_errors)
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 934, in _rmtree
+    _shutil.rmtree(name, onexc=onexc)
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 781, in rmtree
+    return _rmtree_unsafe(path, onexc)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\shutil.py", line 635, in _rmtree_unsafe
+    onexc(os.unlink, fullname, err)
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\tempfile.py", line 909, in onexc
+    _os.unlink(path)
+PermissionError: [WinError 32] \u53e6一个程序正在使用此文件，\u8fdb程无法\u8bbf\u95ee。: 'C:\\Users\\jiang\\AppData\\Local\\Temp\\tmpirnru6gc\\profile.sqlite'
+
+======================================================================
+ERROR: test_execution_controls_are_observed_without_dumping_environment (test_validation_provenance.ProvenanceTests.test_execution_controls_are_observed_without_dumping_environment)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_validation_provenance.py", line 55, in test_execution_controls_are_observed_without_dumping_environment
+    before = provenance.capture(arch=self.arch, checkpoint_validator=self.validator,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tools\validation_provenance.py", line 406, in capture
+    "source": source_identity(source_root),
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tools\validation_provenance.py", line 146, in source_identity
+    if Path(_git(root, "rev-parse", "--show-toplevel").decode().strip()).resolve() != root:
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\tmp\ARCH-perf-20260909\tools\validation_provenance.py", line 123, in _git
+    result = subprocess.run(
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\subprocess.py", line 548, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\subprocess.py", line 1538, in _execute_child
+    hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [WinError 2] 系\u7edf找不到指定的文件。
+
+======================================================================
+ERROR: test_restart_requires_all_routes_and_both_continuous_lanes (test_validation_provenance.QualificationTests.test_restart_requires_all_routes_and_both_continuous_lanes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_validation_provenance.py", line 596, in test_restart_requires_all_routes_and_both_continuous_lanes
+    qualification.check_restart(original, problem="SmoothAdvection", input_path=input_path, source_root=ROOT)
+  File "C:\tmp\ARCH-perf-20260909\tools\qualify_cuda_amr_evidence.py", line 223, in check_restart
+    raise RuntimeError("restart problem/canonical input mismatch")
+RuntimeError: restart problem/canonical input mismatch
+
+======================================================================
+ERROR: test_timeout_preserves_partial_byte_text_and_empty_streams (test_validation_subprocess_logs.ValidationSubprocessLogsTests.test_timeout_preserves_partial_byte_text_and_empty_streams) (index=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_validation_subprocess_logs.py", line 59, in test_timeout_preserves_partial_byte_text_and_empty_streams
+    self.assertEqual((lane / "arch.stderr").read_text(), expected_err)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\jiang\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\Lib\pathlib.py", line 1028, in read_text
+    return f.read()
+           ^^^^^^^^
+UnicodeDecodeError: 'cp932' codec can't decode byte 0xef in position 15: illegal multibyte sequence
+
+----------------------------------------------------------------------
+Ran 317 tests in 36.978s
+
+FAILED (errors=9, skipped=24)

@@ -1,0 +1,577 @@
+{
+  "action": "baseline",
+  "commands": [
+    {
+      "name": "matched-timing",
+      "command": [
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/bin/python",
+        "/home/ubuntu/projects/ARCH-perf-20260909/validation/backend/results/maintenance-freeze-20260908/run_sedov_amr_timing.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/arch_cuda_single_level_validation",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/hpc-s0-baseline-20260912/baseline",
+        "--blocks",
+        "4",
+        "8",
+        "--time",
+        "0.02",
+        "--threads",
+        "8",
+        "--warmups",
+        "1",
+        "--repeats",
+        "3"
+      ],
+      "status": "passed",
+      "returncode": 0
+    }
+  ],
+  "status": "passed",
+  "release_qualified": false,
+  "started_utc": "2026-09-12T14:50:42.763285+00:00",
+  "recipe": {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/run_s0_checks.py",
+    "sha256": "5bf0219c2aaca0c61892149a60354dadc0f79cc0cfa00d451399ca087dc4e78c"
+  },
+  "source_before": {
+    "commit": "0266d96f20b184d4b17ebc6a066ac3b9021f1642",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "56880fa7e4f11f5676b06449133358fa923bd3dd8cab83a998cd57dc901a55f0",
+    "dirty": false,
+    "modified_files": [],
+    "untracked_source_files": []
+  },
+  "baseline_identity_before": {
+    "schema": 1,
+    "source": {
+      "commit": "0266d96f20b184d4b17ebc6a066ac3b9021f1642",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "56880fa7e4f11f5676b06449133358fa923bd3dd8cab83a998cd57dc901a55f0",
+      "dirty": false,
+      "modified_files": [],
+      "untracked_source_files": []
+    },
+    "build": {
+      "source_directory": "/home/ubuntu/projects/ARCH-perf-20260909",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "44e044aa0dc5a149737803f6a3d34cde3f6d5be7fac42e1fe431d1e1863812f5",
+      "compile_commands_sha256": "10be7e8dcc885ebb22fd474f8ee36d39288f3ede0b3a98f706eb4bfe26fb00bb",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "3",
+        "ARCH_CUSTOM_NETWORKS": "",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/home/ubuntu/projects/ARCH-perf-20260909/src/physics/network/custom",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "OFF",
+        "ARCH_ENABLE_KLU": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "OFF",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin",
+        "ARCH_SOURCE_DIR": "/home/ubuntu/projects/ARCH-perf-20260909",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-11",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_BUILD_DATABASE": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/home/ubuntu/projects/.envs/arch/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PREFIX_PATH": "/home/ubuntu/projects/.envs/arch",
+        "CMAKE_PROJECT_COMPAT_VERSION": "",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_SPDX_LICENSE": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [],
+      "sparse_link": {
+        "required_providers": [],
+        "libraries": []
+      },
+      "configured_sparse_libraries": {},
+      "artifact_paths": {
+        "arch": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin/ARCH",
+        "checkpoint_validator": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": null,
+      "OMP_DYNAMIC": null,
+      "OMP_PROC_BIND": null,
+      "OMP_PLACES": null,
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "c6ee086f3aafddd54909f79066005002ade490f32c91297281d3bd2f73dc3f69",
+      "checkpoint_validator_sha256": "d3044c4dfe931cd53f76ff87aae365b24b06f2bbec3891c9b91a98d1d26ae2f2"
+    },
+    "artifact_observation": {
+      "arch": [
+        64768,
+        597224985,
+        151010552,
+        1788887699280073927,
+        1788887699280073927
+      ],
+      "checkpoint_validator": [
+        64768,
+        286274207,
+        333352,
+        1788887661783895423,
+        1788887661783895423
+      ]
+    }
+  },
+  "baseline_identity_after": {
+    "schema": 1,
+    "source": {
+      "commit": "0266d96f20b184d4b17ebc6a066ac3b9021f1642",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "56880fa7e4f11f5676b06449133358fa923bd3dd8cab83a998cd57dc901a55f0",
+      "dirty": false,
+      "modified_files": [],
+      "untracked_source_files": []
+    },
+    "build": {
+      "source_directory": "/home/ubuntu/projects/ARCH-perf-20260909",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "44e044aa0dc5a149737803f6a3d34cde3f6d5be7fac42e1fe431d1e1863812f5",
+      "compile_commands_sha256": "10be7e8dcc885ebb22fd474f8ee36d39288f3ede0b3a98f706eb4bfe26fb00bb",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "3",
+        "ARCH_CUSTOM_NETWORKS": "",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/home/ubuntu/projects/ARCH-perf-20260909/src/physics/network/custom",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "OFF",
+        "ARCH_ENABLE_KLU": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "OFF",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin",
+        "ARCH_SOURCE_DIR": "/home/ubuntu/projects/ARCH-perf-20260909",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-11",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_BUILD_DATABASE": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/home/ubuntu/projects/.envs/arch/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PREFIX_PATH": "/home/ubuntu/projects/.envs/arch",
+        "CMAKE_PROJECT_COMPAT_VERSION": "",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_SPDX_LICENSE": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [],
+      "sparse_link": {
+        "required_providers": [],
+        "libraries": []
+      },
+      "configured_sparse_libraries": {},
+      "artifact_paths": {
+        "arch": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin/ARCH",
+        "checkpoint_validator": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": null,
+      "OMP_DYNAMIC": null,
+      "OMP_PROC_BIND": null,
+      "OMP_PLACES": null,
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "c6ee086f3aafddd54909f79066005002ade490f32c91297281d3bd2f73dc3f69",
+      "checkpoint_validator_sha256": "d3044c4dfe931cd53f76ff87aae365b24b06f2bbec3891c9b91a98d1d26ae2f2"
+    },
+    "artifact_observation": {
+      "arch": [
+        64768,
+        597224985,
+        151010552,
+        1788887699280073927,
+        1788887699280073927
+      ],
+      "checkpoint_validator": [
+        64768,
+        286274207,
+        333352,
+        1788887661783895423,
+        1788887661783895423
+      ]
+    }
+  },
+  "statistics": {
+    "4": {
+      "cpu": {
+        "seconds": [
+          13.2888241938781,
+          13.256869518896565,
+          13.274007421918213
+        ],
+        "median": 13.274007421918213,
+        "minimum": 13.256869518896565,
+        "maximum": 13.2888241938781
+      },
+      "cuda": {
+        "seconds": [
+          17.69220707495697,
+          17.73658220213838,
+          17.61128358892165
+        ],
+        "median": 17.69220707495697,
+        "minimum": 17.61128358892165,
+        "maximum": 17.73658220213838
+      },
+      "cpu_over_cuda_median_ratio": 0.7502742515775409,
+      "speedup_qualified": true
+    },
+    "8": {
+      "cpu": {
+        "seconds": [
+          68.34270277991891,
+          72.85111481905915,
+          70.61004220508039
+        ],
+        "median": 70.61004220508039,
+        "minimum": 68.34270277991891,
+        "maximum": 72.85111481905915
+      },
+      "cuda": {
+        "seconds": [
+          85.08120376593433,
+          88.22802869114093,
+          88.13344711600803
+        ],
+        "median": 88.13344711600803,
+        "minimum": 85.08120376593433,
+        "maximum": 88.22802869114093
+      },
+      "cpu_over_cuda_median_ratio": 0.8011719105022411,
+      "speedup_qualified": true
+    }
+  },
+  "source_after": {
+    "commit": "0266d96f20b184d4b17ebc6a066ac3b9021f1642",
+    "scope": "code-and-validation-inputs-v1",
+    "scope_policy": {
+      "directories": [
+        "cmake",
+        "simulation",
+        "src",
+        "tests",
+        "tools",
+        "validation"
+      ],
+      "suffixes": [
+        ".c",
+        ".cc",
+        ".cmake",
+        ".cpp",
+        ".cu",
+        ".cuh",
+        ".cxx",
+        ".def",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".in",
+        ".inc",
+        ".ipp",
+        ".json",
+        ".par",
+        ".py",
+        ".sh",
+        ".tpp",
+        ".yaml",
+        ".yml"
+      ],
+      "root_configuration": [
+        "CMakeLists.txt",
+        "CMakePresets.json",
+        "CMakeUserPresets.json"
+      ],
+      "nested_cmakelists": true,
+      "excluded": [
+        "validation/**/results/**",
+        "**/__pycache__/**"
+      ],
+      "include_untracked_and_gitignored_source": true
+    },
+    "worktree_sha256": "56880fa7e4f11f5676b06449133358fa923bd3dd8cab83a998cd57dc901a55f0",
+    "dirty": false,
+    "modified_files": [],
+    "untracked_source_files": []
+  },
+  "finished_utc": "2026-09-12T15:03:37.642694+00:00"
+}

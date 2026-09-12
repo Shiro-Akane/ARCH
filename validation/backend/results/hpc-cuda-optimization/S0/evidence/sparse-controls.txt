@@ -1,0 +1,14 @@
+test_budgets_noop_totals_and_capacity_are_not_waived (__main__.SparseTranscriptContract.test_budgets_noop_totals_and_capacity_are_not_waived) ... ok
+test_capacity_matrix_and_controls (__main__.SparseTranscriptContract.test_capacity_matrix_and_controls) ... ok
+test_complete_matrix (__main__.SparseTranscriptContract.test_complete_matrix) ... ok
+test_final_state_extent_nonfinite_and_closure (__main__.SparseTranscriptContract.test_final_state_extent_nonfinite_and_closure) ... ok
+test_identity_and_step_coverage (__main__.SparseTranscriptContract.test_identity_and_step_coverage) ... ok
+test_invalid_storage_extents (__main__.SparseTranscriptContract.test_invalid_storage_extents) ... ok
+test_missing_changed_or_exceeded_capacity (__main__.SparseTranscriptContract.test_missing_changed_or_exceeded_capacity) ... ok
+test_original_archived_audit31_transcript_is_compatible (__main__.SparseTranscriptContract.test_original_archived_audit31_transcript_is_compatible) ... ok
+test_partial_duplicate_selected_or_failed_matrix (__main__.SparseTranscriptContract.test_partial_duplicate_selected_or_failed_matrix) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.008s
+
+OK

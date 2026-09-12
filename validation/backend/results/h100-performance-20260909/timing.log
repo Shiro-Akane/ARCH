@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "report": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/baseline/timing-report.json",
+  "statistics": {
+    "4": {
+      "cpu": {
+        "seconds": [
+          13.95669623510912,
+          13.89803795516491,
+          13.953197078080848
+        ],
+        "median": 13.953197078080848,
+        "minimum": 13.89803795516491,
+        "maximum": 13.95669623510912
+      },
+      "cuda": {
+        "seconds": [
+          17.82223439309746,
+          18.010874203871936,
+          17.89043104997836
+        ],
+        "median": 17.89043104997836,
+        "minimum": 17.82223439309746,
+        "maximum": 18.010874203871936
+      },
+      "cpu_over_cuda_median_ratio": 0.7799251476446525,
+      "speedup_qualified": true
+    },
+    "8": {
+      "cpu": {
+        "seconds": [
+          70.67244729585946,
+          70.62180164200254,
+          69.38779742806219
+        ],
+        "median": 70.62180164200254,
+        "minimum": 69.38779742806219,
+        "maximum": 70.67244729585946
+      },
+      "cuda": {
+        "seconds": [
+          87.27736388891935,
+          88.33157376619056,
+          87.76499656587839
+        ],
+        "median": 87.76499656587839,
+        "minimum": 87.27736388891935,
+        "maximum": 88.33157376619056
+      },
+      "cpu_over_cuda_median_ratio": 0.8046693374959825,
+      "speedup_qualified": true
+    }
+  }
+}
+MEMORY_GUARD_RESULT min_available_kib=115325696 baseline_swap_kib=5640 peak_swap_kib=5640 guard_stopped=False peak_owned_rss_kib=494412 elapsed_seconds=778.079 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.580 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=758 complete=True
