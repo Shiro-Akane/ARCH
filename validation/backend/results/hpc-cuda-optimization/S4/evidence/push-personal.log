@@ -1,0 +1,7 @@
+Git LFS upload failed:
+  (missing) EOS_toolkit/tables/baryon/eos4.tab (5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34)
+Uploading LFS objects:  92% (24/26), 513 KB | 0 B/s, done.
+  (missing) EOS_toolkit/tables/baryon/eos2.tab (d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58)
+hint: Your push was rejected due to missing or corrupt local objects.
+hint: You can disable this check with: `git config lfs.allowincompletepush true`
+error: failed to push some refs to 'https://github.com/Arsenic-er/ARCH.git'

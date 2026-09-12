@@ -57,3 +57,9 @@ done
 本地及朋友 `Shiro-Akane/ARCH` 使用 `codex/hpc-cuda-optimization` 开发分支，按实际 push 回执核对 SHA。个人 `Arsenic-er/ARCH` 的两张历史 LFS 表仍缺失完整本地内容，正常 push 可能被完整性检查阻止，详情见 S1；不得宣称两端已同步。
 
 两个 main 保持不变，不建立未验收标签。短 Host 检查通过不代表 CUDA 或性能验收通过。
+
+### 本次推送回执
+
+S4 代码和检查记录提交为 `1a850c3581231c3cf16020ebe14ae3bc8ab25a96`。朋友固定分支已正常 fast-forward 到该提交，GitHub API 核对一致。个人端正常 push 退出码 1：24/26 历史 LFS 对象已在目标端，仍缺 eos2.tab/eos4.tab 完整本地内容，分支尚未创建。
+
+原始回执见 [朋友 push](evidence/push-friend.log) 与 [个人 push](evidence/push-personal.log)。本段与回执归档是文档后续提交，不改变受短检查覆盖的代码。最终朋友分支包含该文档提交，以 Git 回执为准；个人端仍标记部分同步。
