@@ -87,6 +87,17 @@ GPU 数值矩阵、AMR/restart 集成、性能采样、sanitizer 仍全部待做
 
 ## 同步边界
 
-发布前核对朋友 main 仍为 `7d4448a9`、用户 main 仍为 `e12b96c1`，朋友固定分支为本阶段起点；用户固定分支仍未创建。用户仓库上次 push 被共享历史中 26 个缺失的 LFS 对象阻止，此问题独立于 S1 源码。不禁用 LFS 完整性检查、不删历史资产。最终推送状态与交付 SHA 以实际 Git 回执为准；不将部分同步写成双端完成。
+发布前核对朋友 main 仍为 `7d4448a9`、用户 main 仍为 `e12b96c1`。S1 代码／记录快照 `1e1d7bcf08a48c3c02093e161a8d677c4d3a8d85` 已推送朋友固定分支，且经 GitHub API 核对。用户仓库此次 push 成功上传 24 个历史 LFS 小对象，但分支发布仍被两张缺失的 EOS 表阻止；固定分支未创建。此问题独立于 S1 源码，不禁用 LFS 完整性检查、不删历史资产。
+
+两张表在服务器既有 `/home/ubuntu/projects/ARCH-large-integration-20260909/EOS_toolkit/tables/baryon/` 中存在完整副本，已只读核对大小和 SHA-256：
+
+| 对象 | 字节 | SHA-256 / LFS OID |
+|---|---:|---|
+| `eos2.tab` | 143166842 | `d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58` |
+| `eos4.tab` | 143167115 | `5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34` |
+
+经 Tailscale 下载到本地的 SFTP/SCP 尝试均未得到完整文件：第一次两分钟仍为零字节，兼容 SCP 重试出现 banner exchange timeout，第二个文件也停在零字节；只停止了本任务的传输进程。部分文件保留在本地 `build/hpc-s1-lfs-recovery*-20260913/`，不能导入 LFS 或作为可用表。后续恢复须先下载并再次校验 OID，再用正常 LFS 流程导入／推送。原 push 日志见 [朋友](evidence/push-friend.log)／[用户](evidence/push-personal.log)。
+
+本次同步说明提交只增加恢复记录，不改变 `c847a40e` 的代码。最终交付 SHA 以实际 Git 回执为准；当前是部分同步，不是双端完成。
 
 新代码没有上传服务器。此前代码传输权限限制未绕过；当前开发快照可先供合作者审阅，不声称服务器已经运行本版本。
