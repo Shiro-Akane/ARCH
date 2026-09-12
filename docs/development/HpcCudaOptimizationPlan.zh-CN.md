@@ -223,4 +223,15 @@ CUDA 分支是该工作线的交付入口，主线是审查后的集成入口。
 
 S1 代码已实现：Driver 改用批量 CFL 和 Hydro stage 接口；CUDA 集中回传每块结果／错误，在原消费边界等待；标量入口委托同一路径。Host 薄合同 4/4、架构工具 98/98 通过。CUDA 编译、设备运行、集成、安全与性能仍待验证，不发验收标签。详细范围、限制、源码提交及原始日志见 [S1 开发记录](../../validation/backend/results/hpc-cuda-optimization/S1/README.md)。
 
-S2 及其后阶段尚未实施；先保留这个可单独回退的 S1 交付点，再进入 kernel 合批。两个 main、物理公式、依赖库、浮点预算和 restart schema 不变。
+用户随后要求先推进到 S4。本轮已完成 S2、S3a、S3b 和 S4 的下列实现；尚未补跑 GPU/性能验收，不把开发快照标成已验收。
+
+| 阶段 | 代码实施 | 仍待执行 |
+|---|---|---|
+| S2 | Hydro 清零/面通量/散度/更新及物理边界跨块合批；共享数学、AMR registration 顺序不变 | NVCC、尾批/多维 AMR、GPU 数值与 launch/计时实测 |
+| S3a | CPU/CUDA 共用单条逻辑计划缓存，精确失效键；重新绑定 slot/storage | 连续 regrid/restart 的 GPU 生命周期检查 |
+| S3b | backend-owned metadata/ghost scratch 容量复用，同层多 phase 最终统一等待 | 实测高水位、失败注入、sanitizer |
+| S4 | Host 编译计划与 scratch、Driver 调度数组复用；公平线程扫描流程准备 | 1/2/4/8/16 线程与亲和性实验、同轮新 CPU/GPU 加速比 |
+
+详细记录：[S2](../../validation/backend/results/hpc-cuda-optimization/S2/README.md)、[S3](../../validation/backend/results/hpc-cuda-optimization/S3/README.md)、[S4](../../validation/backend/results/hpc-cuda-optimization/S4/README.md)。S4 的短 Host 合同 6/6、架构工具 98/98 通过，不能替代 CUDA 构建和 GPU 验收。
+
+保持 `codex/hpc-cuda-optimization` 固定开发分支和独立阶段提交。朋友端按回执推送；个人端仍受两张历史 LFS 表缺失阻塞，状态是部分同步。两个 main、物理公式、依赖库、浮点预算和 restart schema 不变。按用户本次范围停在 S4，不启动 S5。

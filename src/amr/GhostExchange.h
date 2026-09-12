@@ -53,7 +53,8 @@ public:
         const auto& active = tree->GetActiveBlocks();
         if (active.empty() || handles.size() != active.size())
             throw std::invalid_argument("exchange cache requires committed handles");
-        std::vector<std::uint64_t> key;
+        auto& key = cache_probe_;
+        key.clear();
         key.reserve(2 + active.size() * 44);
         key.push_back(static_cast<std::uint64_t>(dim));
         key.push_back(active.size());
@@ -97,12 +98,14 @@ public:
         }
         cached_key_.swap(key);
         cached_plans_.swap(candidate);
+        host_compiled_.clear();
         ++cache_builds_;
         return *cached_plans_;
     }
 
     std::size_t PlanCacheBuilds() const noexcept { return cache_builds_; }
     std::size_t PlanCacheHits() const noexcept { return cache_hits_; }
+    std::size_t HostPlanCacheBuilds() const noexcept { return host_cache_builds_; }
 
     SameLevelExchangePlan BuildSameLevelPlan(
         const std::shared_ptr<MemoryPool>& pool,
@@ -576,15 +579,34 @@ public:
             views.push_back(view);
         }
         const auto& plans = GetPlans(pool, tree, dim, handles);
+        host_compiled_.resize(plans.same_level.size());
+        std::vector<HostExchangeBlockView> level_views;
         for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
             const auto& plan = plans.same_level[group];
-            std::vector<HostExchangeBlockView> level_views;
+            level_views.clear();
             level_views.reserve(plan.blocks.size());
             for (const auto index : plans.level_indices[group])
                 level_views.push_back(views[index]);
-            const auto compiled = compile_host_exchange_plan(
-                plan, level_views);
-            execute_host_exchange_plan(compiled, level_views);
+            auto& compiled = host_compiled_[group];
+            bool reusable = compiled.has_value()
+                && compiled->blocks.size() == level_views.size()
+                && compiled->species_count == n_species;
+            for (std::size_t i = 0; i < level_views.size(); ++i) {
+                const auto& view = level_views[i];
+                // Pointers/stride and live storage remain validated on hits.
+                exchange_detail::validate_host_view(plan, view);
+                if (reusable && (compiled->layouts[i] != view.layout
+                    || compiled->blocks[i].logical != view.logical
+                    || compiled->blocks[i].handle != view.handle))
+                    reusable = false;
+            }
+            if (!reusable) {
+                auto candidate = compile_host_exchange_plan(plan, level_views);
+                compiled = std::move(candidate);
+                ++host_cache_builds_;
+            }
+            // Keep the executor's complete fail-before-scatter validation.
+            execute_host_exchange_plan(*compiled, level_views, host_workspace_);
         }
         ExecuteCoarseFinePlan(
             plans.coarse_fine, pool, tree, dim, state_ptr, handles);
@@ -592,8 +614,12 @@ public:
 
 private:
     mutable std::vector<std::uint64_t> cached_key_;
+    mutable std::vector<std::uint64_t> cache_probe_;
     mutable std::unique_ptr<CachedPlans> cached_plans_;
     mutable std::size_t cache_builds_ = 0, cache_hits_ = 0;
+    mutable std::vector<std::optional<HostCompiledSameLevelExchangePlan>> host_compiled_;
+    std::size_t host_cache_builds_ = 0;
+    HostExchangeWorkspace host_workspace_;
 
     static LogicalBlockKey logical_key(const Block& block, int dim)
     {

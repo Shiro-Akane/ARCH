@@ -550,9 +550,15 @@ inline HostCompiledSameLevelExchangePlan compile_host_exchange_plan(
     return compiled;
 }
 
+struct HostExchangeWorkspace {
+    std::vector<std::uint64_t> operation_offsets;
+    std::vector<double> values;
+};
+
 inline void execute_host_exchange_plan(
     const HostCompiledSameLevelExchangePlan& compiled,
-    std::span<const HostExchangeBlockView> views)
+    std::span<const HostExchangeBlockView> views,
+    HostExchangeWorkspace& workspace)
 {
     if (compiled.logical_fingerprint == 0
         || views.size() != compiled.blocks.size()
@@ -624,7 +630,8 @@ inline void execute_host_exchange_plan(
             throw std::invalid_argument("invalid Host exchange phase metadata");
         expected_first += phase.count;
 
-        std::vector<std::uint64_t> operation_offsets(phase.count + 1, 0);
+        auto& operation_offsets = workspace.operation_offsets;
+        operation_offsets.assign(phase.count + 1, 0);
         for (std::size_t offset = 0; offset < phase.count; ++offset) {
             const auto& operation = compiled.operations[phase.first + offset];
             if (operation.ordinal != phase.first + offset
@@ -647,8 +654,8 @@ inline void execute_host_exchange_plan(
         if (fields != 0
             && cells > std::numeric_limits<std::size_t>::max() / fields)
             throw std::overflow_error("Host exchange scratch size overflow");
-        std::vector<double> scratch(
-            static_cast<std::size_t>(cells * fields));
+        auto& scratch = workspace.values;
+        scratch.resize(static_cast<std::size_t>(cells * fields));
 
         for (std::size_t offset = 0; offset < phase.count; ++offset) {
             const auto& operation = compiled.operations[phase.first + offset];
@@ -691,6 +698,14 @@ inline void execute_host_exchange_plan(
     }
     if (expected_first != compiled.operations.size())
         throw std::invalid_argument("Host exchange phases omit operations");
+}
+
+inline void execute_host_exchange_plan(
+    const HostCompiledSameLevelExchangePlan& compiled,
+    std::span<const HostExchangeBlockView> views)
+{
+    HostExchangeWorkspace workspace;
+    execute_host_exchange_plan(compiled, views, workspace);
 }
 
 } // namespace amr

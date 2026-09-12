@@ -580,6 +580,65 @@ void test_curvilinear_host_restriction()
            "curvilinear test did not distinguish volume weighting");
 }
 
+void test_host_exchange_cache_rebinding()
+{
+    SimConfig config{};
+    config.grid.dim = 1;
+    config.grid.nblockx1 = 2;
+    config.grid.nblockx2 = config.grid.nblockx3 = 0;
+    config.grid.amr_max_blocks = 8;
+    config.amr.lrefinemin = config.amr.lrefinemax = 0;
+    amr::AMRControl control(8, 1);
+    auto pool = control.pool;
+    auto tree = control.tree;
+    tree->LoadLeafGrid(config, 2, {0, 0}, {0, 1}, {0, 0}, {0, 0});
+    const auto& active = tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles{{{41}, {9}}, {{42}, {9}}};
+    for (const auto id : active) fill_block(pool->GetBlock(id));
+    auto& exchange = control.ghost_exchange;
+    auto& left = pool->GetBlock(active[0]);
+    auto& right = pool->GetBlock(active[1]);
+    const int destination = left.grid.GetIndex(left.grid.Ie()); // exclusive active end
+    const int source = right.grid.GetIndex(right.grid.Is());
+    for (const auto slot : {&amr::Block::fluid_state, &amr::Block::state_next,
+                            &amr::Block::state_scratch}) {
+        const auto expected = (right.*slot).rho[source];
+        exchange.ExecuteExchange(pool, tree, 1, slot, handles);
+        expect((left.*slot).rho[destination] == expected,
+            "cached Host plan used a previous slot view");
+    }
+    expect(exchange.PlanCacheBuilds() == 1 && exchange.HostPlanCacheBuilds() == 1,
+        "slot changes recompiled pointer-free Host plans");
+    FluidState replacement = right.state_next;
+    replacement.rho[source] = 7654321.0;
+    right.state_next = std::move(replacement);
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(left.state_next.rho[destination] == 7654321.0
+        && exchange.HostPlanCacheBuilds() == 1,
+        "storage replacement used a dangling Host pointer");
+    const auto stride = left.grid.stride_y;
+    left.grid.stride_y = 0;
+    expect_rejected([&] { exchange.ExecuteExchange(
+        pool, tree, 1, &amr::Block::state_next, handles); },
+        "cache hit bypassed current layout validation");
+    left.grid.stride_y = stride;
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(exchange.HostPlanCacheBuilds() == 1, "invalid layout replaced Host cache");
+    for (const auto id : active) {
+        auto& block = pool->GetBlock(id);
+        block.fluid_state.InitSpecies(1);
+        block.state_next.InitSpecies(1);
+        block.state_scratch.InitSpecies(1);
+    }
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(exchange.PlanCacheBuilds() == 2 && exchange.HostPlanCacheBuilds() == 2,
+        "species change reused old Host lowering");
+    for (auto& handle : handles) ++handle.epoch.value;
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(exchange.PlanCacheBuilds() == 3 && exchange.HostPlanCacheBuilds() == 3,
+        "topology epoch change reused old Host lowering");
+}
+
 void test_mixed_level_and_coarse_fine_execution()
 {
     SimConfig config{};
@@ -1047,6 +1106,7 @@ int main()
         test_amr_interface_stencil_predicate();
         test_multidimensional_cell_lowering();
         test_curvilinear_host_restriction();
+        test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
         const auto ordinary = ordinary_plan();
         const auto migration = migration_plan();

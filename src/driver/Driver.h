@@ -253,10 +253,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     ? after.stream_sync_count - before.stream_sync_count : 0});
         }
     };
+    // Invocation-local scheduler storage retains capacity, never old bindings.
+    std::vector<arch::backend::BackendStateAccess> boundary_accesses;
+    std::vector<arch::backend::BackendStateAccess> boundary_level_accesses;
     const auto execute_device_boundary = [&] (
         StateSlot requested, arch::state::StateVersion version,
         arch::state::CompletionToken token) {
-        std::vector<arch::backend::BackendStateAccess> accesses;
+        auto& accesses = boundary_accesses;
+        accesses.clear();
         accesses.reserve(stage_handles.size());
         for (std::size_t index = 0; index < stage_handles.size(); ++index) {
             const auto access = backend_access(index, requested);
@@ -267,7 +271,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
         for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
             const auto& plan = plans.same_level[group];
-            std::vector<arch::backend::BackendStateAccess> level_accesses;
+            auto& level_accesses = boundary_level_accesses;
+            level_accesses.clear();
             level_accesses.reserve(plan.blocks.size());
             for (const auto index : plans.level_indices[group])
                 level_accesses.push_back(accesses[index]);
@@ -890,6 +895,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // Main Time Loop (Method of Lines)
     bool skip_regrid_once = start_state.resume_after_regrid;
     bool advanced_any_step = false;
+    std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
+    std::vector<arch::reduction::ReductionCandidate> diffusion_dt_candidates;
+    std::vector<arch::backend::BackendStateAccess> hydro_currents;
     while (!ctrl.is_finished())
     {
         // Step A: IO Routine & AMR Regrid
@@ -917,10 +925,11 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         if (stage_handles.size() != active_blocks.size())
             throw std::logic_error(
                 "active topology and scheduler handles disagree");
-        std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
+        hydro_dt_candidates.clear();
         hydro_dt_candidates.reserve(active_blocks.size());
         if (compute_backend) {
-            std::vector<arch::backend::BackendStateAccess> currents;
+            auto& currents = hydro_currents;
+            currents.clear();
             currents.reserve(active_blocks.size());
             for (std::size_t index = 0; index < active_blocks.size(); ++index)
                 currents.push_back(backend_access(index, StateSlot::Current));
@@ -964,8 +973,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             // Reuse backend-local exchange; CUDA does not materialize Host fields.
             if (compute_backend) complete_device_boundary(StateSlot::Current);
             else synchronize_fluid_ghosts();
-            std::vector<arch::reduction::ReductionCandidate>
-                diffusion_dt_candidates;
+            diffusion_dt_candidates.clear();
             diffusion_dt_candidates.reserve(active_blocks.size());
             for (std::size_t index = 0; index < active_blocks.size(); ++index) {
                 const int block_id = active_blocks[index];
@@ -1230,7 +1238,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         // C3. Hydrodynamics Step (dt)
         if (compute_backend) {
             complete_device_boundary(StateSlot::Current);
-            std::vector<arch::backend::BackendStateAccess> currents;
+            auto& currents = hydro_currents;
+            currents.clear();
             currents.reserve(stage_handles.size());
             for (std::size_t index = 0; index < stage_handles.size(); ++index)
                 currents.push_back(backend_access(index, StateSlot::Current));
