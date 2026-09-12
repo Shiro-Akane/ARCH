@@ -108,6 +108,9 @@ public:
     state::CompletionToken execute_physical_boundary(
         backend::BackendStateAccess access, state::StateVersion version,
         state::CompletionToken expected) override;
+    state::CompletionToken execute_physical_boundary_batch(
+        std::span<const backend::BackendStateAccess> accesses,
+        state::StateVersion version, state::CompletionToken expected) override;
     state::CompletionToken execute_same_level_exchange(
         std::span<const backend::BackendStateAccess> accesses,
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,

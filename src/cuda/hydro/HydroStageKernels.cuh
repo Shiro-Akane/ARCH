@@ -16,7 +16,7 @@ namespace arch::cuda
 {
 namespace detail
 {
-static __global__ void hydro_single_stage_update_kernel(
+static __device__ inline void hydro_single_stage_update_kernel_work(
     DeviceStateView old_state, DeviceStateView current_state,
     DeviceStateView destination, DeviceStateView delta, DeviceGridView grid,
     double old_weight, double flux_weight, double density_floor,
@@ -38,6 +38,16 @@ static __global__ void hydro_single_stage_update_kernel(
         updated,
         destination.n_species > 0 ? destination.mass_fractions + cell : nullptr);
     destination.store(cell, updated);
+}
+
+
+static __global__ void hydro_single_stage_update_kernel(
+    DeviceStateView old_state, DeviceStateView current_state,
+    DeviceStateView destination, DeviceStateView delta, DeviceGridView grid,
+    double old_weight, double flux_weight, double density_floor,
+    double minimum_internal_energy, double maximum_internal_energy)
+{
+    hydro_single_stage_update_kernel_work(old_state, current_state, destination, delta, grid, old_weight, flux_weight, density_floor, minimum_internal_energy, maximum_internal_energy);
 }
 } // namespace detail
 

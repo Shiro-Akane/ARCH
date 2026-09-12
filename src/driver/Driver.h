@@ -261,13 +261,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         std::map<amr::BlockHandle, std::size_t> access_indices;
         for (std::size_t index = 0; index < stage_handles.size(); ++index) {
             const auto access = backend_access(index, requested);
-            (void)compute_backend->execute_physical_boundary(
-                access, version, token);
             accesses.push_back(access);
             if (!access_indices.emplace(access.block, index).second)
                 throw std::logic_error(
                     "device boundary has duplicate active handle");
         }
+        (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
         const auto same_level = amr_ctrl.ghost_exchange.BuildSameLevelPlans(
             amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
         for (const auto& plan : same_level) {

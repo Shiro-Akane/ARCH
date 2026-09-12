@@ -17,7 +17,7 @@ namespace arch::cuda {
 namespace detail {
 
 template <typename EosView>
-__global__ void hydro_source_kernel(
+__device__ inline void hydro_source_kernel_work(
     DeviceStateView state, DeviceStateView delta, DeviceGridView grid,
     EosView eos, double dt, SpeciesWorkspaceView workspace,
     Physical::Gravity::ExternalGravityView gravity)
@@ -41,6 +41,15 @@ __global__ void hydro_source_kernel(
         Physical::Gravity::add_external_gravity_source_cell(state.load(cell), gravity, dt, value);
         delta.store(cell, value);
     }
+}
+
+template <typename EosView>
+__global__ void hydro_source_kernel(
+    DeviceStateView state, DeviceStateView delta, DeviceGridView grid,
+    EosView eos, double dt, SpeciesWorkspaceView workspace,
+    Physical::Gravity::ExternalGravityView gravity)
+{
+    hydro_source_kernel_work(state, delta, grid, eos, dt, workspace, gravity);
 }
 
 } // namespace detail

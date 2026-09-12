@@ -142,6 +142,7 @@ _CUDA_FORMULA_FILENAME_EXCEPTIONS = frozenset({
 })
 
 _CUDA_RUNTIME_FUNCTION_OWNERS = {
+    "execute_physical_boundary_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "compute_hydro_dt_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "execute_hydro_stage_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "compute_hydro_dt": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
@@ -157,6 +158,7 @@ _CUDA_RUNTIME_FUNCTION_OWNERS = {
 }
 
 _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
+    "execute_physical_boundary_batch",
     "compute_hydro_dt_batch",
     "execute_hydro_stage_batch",
     "compute_hydro_dt",
@@ -167,8 +169,9 @@ _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
 })
 
 _CUDA_COMPLETION_LAUNCHES = {
+    "execute_physical_boundary_batch": r"\blaunch_cuda_backend_boundary_batch\s*\(",
     "compute_hydro_dt_batch": r"\blaunch_cuda_backend_hydro_dt\s*\(",
-    "execute_hydro_stage_batch": r"\blaunch_cuda_backend_hydro_stage\s*\(",
+    "execute_hydro_stage_batch": r"\blaunch_cuda_backend_hydro_stage_batch\s*\(",
     "compute_hydro_dt": r"\blaunch_cuda_backend_hydro_dt\s*\(",
     "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage\s*\(",
     "compute_diffusion_dt": r"\blaunch_cuda_backend_diffusion_dt\s*\(",

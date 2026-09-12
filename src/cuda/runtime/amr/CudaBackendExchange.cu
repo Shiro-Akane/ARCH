@@ -12,8 +12,39 @@
 #include "cuda/amr/CoarseFineExchangeKernels.cuh"
 #include "cuda/hydro/Boundary.cuh"
 #include "cuda/hydro/ExchangeKernels.cuh"
+#include <algorithm>
 
 namespace arch::cuda {
+
+namespace {
+__global__ void boundary_batch_phase_kernel(const DeviceBoundaryBatchBlock* blocks, int phase)
+{
+    const auto& b = blocks[blockIdx.y];
+    const auto p = b.phases[phase];
+    detail::boundary_phase_kernel_work(b.state, b.transfers + p.first, static_cast<int>(p.count));
+}
+}
+
+cudaError_t launch_cuda_backend_boundary_batch(
+    const DeviceBoundaryBatchBlock* blocks, int block_count,
+    const std::array<int, 3>& phase_counts, cudaStream_t stream, int& kernels)
+{
+    kernels = 0;
+    if (block_count < 0 || (block_count > 0 && !blocks)) return cudaErrorInvalidValue;
+    for (const int count : phase_counts) if (count < 0) return cudaErrorInvalidValue;
+    for (int first = 0; first < block_count; first += 1024) {
+        const int count = std::min(1024, block_count - first);
+        for (int phase = 0; phase < 3; ++phase) {
+            if (phase_counts[phase] == 0) continue;
+            const dim3 grid(detail::hydro_launch_blocks(phase_counts[phase], 256), count);
+            boundary_batch_phase_kernel<<<grid, 256, 0, stream>>>(blocks + first, phase);
+            const auto status = cudaGetLastError();
+            if (status != cudaSuccess) return status;
+            ++kernels;
+        }
+    }
+    return cudaSuccess;
+}
 
 cudaError_t launch_cuda_backend_exchange_phase(
     const DeviceExchangeBlock* blocks,

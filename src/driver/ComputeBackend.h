@@ -287,6 +287,19 @@ public:
     virtual state::CompletionToken execute_physical_boundary(
         BackendStateAccess access, state::StateVersion version,
         state::CompletionToken expected) = 0;
+    virtual state::CompletionToken execute_physical_boundary_batch(
+        std::span<const BackendStateAccess> accesses, state::StateVersion version,
+        state::CompletionToken expected)
+    {
+        validate_hydro_batch_accesses(accesses, accesses.empty()
+            ? state::StateSlot::Current : accesses.front().slot);
+        if (!state::is_valid(version) || !state::is_complete(expected))
+            throw std::invalid_argument("Invalid boundary batch completion");
+        for (const auto access : accesses)
+            if (execute_physical_boundary(access, version, expected) != expected)
+                throw std::logic_error("Boundary batch returned incomplete work");
+        return expected;
+    }
     virtual state::CompletionToken execute_same_level_exchange(
         std::span<const BackendStateAccess> accesses,
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
@@ -398,14 +411,18 @@ protected:
     // Validate the whole batch before the first write, including a stale or
     // duplicate later entry. Subsets are legal; Driver owns required coverage.
     void validate_hydro_batch_accesses(
-        std::span<const BackendStateAccess> currents) const
+        std::span<const BackendStateAccess> currents,
+        state::StateSlot slot = state::StateSlot::Current) const
     {
+        if (slot != state::StateSlot::Current && slot != state::StateSlot::Next
+            && slot != state::StateSlot::Scratch)
+            throw std::invalid_argument("Invalid backend batch slot");
         std::vector<amr::BlockHandle> handles;
         handles.reserve(currents.size());
         for (const auto current : currents) {
             if (!amr::is_valid(current.block) || !is_valid(current.storage)
-                || current.slot != state::StateSlot::Current || !contains(current))
-                throw std::invalid_argument("Invalid Hydro batch Current access");
+                || current.slot != slot || !contains(current))
+                throw std::invalid_argument("Invalid backend batch access");
             handles.push_back(current.block);
         }
         std::sort(handles.begin(), handles.end());

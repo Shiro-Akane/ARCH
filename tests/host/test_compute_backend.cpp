@@ -411,6 +411,20 @@ void test_hydro_batch_contract()
     require_failure([&] {
         (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
     }, "failure in the second block returned batch success");
+
+    for (const auto slot : {StateSlot::Current, StateSlot::Next, StateSlot::Scratch}) {
+        auto selected = accesses;
+        for (auto& access : selected) access.slot = slot;
+        require(backend.execute_physical_boundary_batch(selected, {1}, token) == token,
+                "boundary batch must accept each logical slot");
+        selected[1].storage.value += 100;
+        require_failure([&] {
+            (void)backend.execute_physical_boundary_batch(selected, {1}, token);
+        }, "boundary batch accepted a stale later access");
+    }
+    require_failure([&] {
+        (void)backend.execute_physical_boundary_batch(accesses, {}, token);
+    }, "boundary batch accepted an invalid state version");
 }
 
 void test_transfer_transaction()

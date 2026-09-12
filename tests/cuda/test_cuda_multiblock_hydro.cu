@@ -427,8 +427,12 @@ void run_hydro_batch_contract()
         auto batch = cuda::make_cuda_backend(bindings, 0, make_launch_config(route), species, eos);
         const auto upload = [&](cuda::CudaBackend& target) {
             for (std::size_t i = 0; i < blocks.size(); ++i)
-                for (const auto region : {state::StateRegion::Interior, state::StateRegion::Ghost})
-                    target.enqueue_upload_slot(accesses[i], region, transfer_view(blocks[i].fluid_state));
+                for (const auto slot : {StateSlot::Current, StateSlot::Next, StateSlot::Scratch})
+                    for (const auto region : {state::StateRegion::Interior, state::StateRegion::Ghost}) {
+                        auto access = accesses[i];
+                        access.slot = slot;
+                        target.enqueue_upload_slot(access, region, transfer_view(blocks[i].fluid_state));
+                    }
             target.quiesce();
         };
         upload(*scalar);
@@ -477,6 +481,20 @@ void run_hydro_batch_contract()
                 "invalid later Hydro access submitted work before rejection");
         }
         const double dt = 0.1 * std::min(reference_dt[0], reference_dt[1]);
+        for (const auto slot : {StateSlot::Current, StateSlot::Next, StateSlot::Scratch}) {
+            auto selected = accesses;
+            for (auto& access : selected) {
+                access.slot = slot;
+                (void)scalar->execute_physical_boundary(access, {1}, token);
+            }
+            const auto start = batch->counters();
+            require(batch->execute_physical_boundary_batch(selected, {1}, token) == token,
+                    "boundary batch token drifted");
+            const auto done = batch->counters();
+            require(done.kernel_count - start.kernel_count == 1
+                && done.stream_sync_count - start.stream_sync_count == 1,
+                "1D physical boundary was not batched across blocks");
+        }
         for (const auto& descriptor : plan.stages) {
             for (const auto access : accesses)
                 (void)scalar->execute_hydro_stage(access, descriptor, dt, token);
@@ -485,7 +503,8 @@ void run_hydro_batch_contract()
                     "Hydro batch completion token drifted");
             const auto done = batch->counters();
             require(done.stream_sync_count - start.stream_sync_count == 1
-                && done.bytes_d2h - start.bytes_d2h == 2 * sizeof(int),
+                && done.bytes_d2h - start.bytes_d2h == 2 * sizeof(int)
+                && done.kernel_count - start.kernel_count == 4,
                 "Hydro stage synchronized per block");
             if (descriptor.refresh_ghost_after) {
                 for (auto access : accesses) {

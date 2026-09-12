@@ -83,7 +83,7 @@ static __global__ void hydro_cfl_reduce_kernel(
         : std::numeric_limits<double>::quiet_NaN();
 }
 
-static __global__ void hydro_divergence_kernel(
+static __device__ inline void hydro_divergence_kernel_work(
     DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
     double dt, int direction)
 {
@@ -103,6 +103,14 @@ static __global__ void hydro_divergence_kernel(
         cell_delta,
         delta.n_species > 0 ? delta.mass_fractions + cell : nullptr);
     delta.store(cell, cell_delta);
+}
+
+
+static __global__ void hydro_divergence_kernel(
+    DeviceStateView flux, DeviceStateView delta, DeviceGridView grid,
+    double dt, int direction)
+{
+    hydro_divergence_kernel_work(flux, delta, grid, dt, direction);
 }
 } // namespace detail
 

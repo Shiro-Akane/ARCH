@@ -21,7 +21,7 @@ namespace arch::cuda
 {
 namespace detail
 {
-__global__ void boundary_phase_kernel(
+__device__ inline void boundary_phase_kernel_work(
     DeviceStateView state, const DeviceBoundaryTransfer* transfers,
     int count)
 {
@@ -50,49 +50,22 @@ __global__ void boundary_phase_kernel(
                 state.species(species, source), transfer.species_sign));
     }
 }
+
+
+__global__ void boundary_phase_kernel(
+    DeviceStateView state, const DeviceBoundaryTransfer* transfers,
+    int count)
+{
+    boundary_phase_kernel_work(state, transfers, count);
+}
 } // namespace detail
 
 inline cudaError_t launch_boundary_plan(
     DeviceStateView state, const DeviceBoundaryTransfer* device_transfers,
     const DeviceCompiledBoundaryPlan& compiled, cudaStream_t stream)
 {
-    if (!valid_hydro_view(state)
-        || state.total_size != compiled.total_size
-        || compiled.transfers.empty()
-        || device_transfers == nullptr
-        || compiled.transfers.size()
-            > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-        return cudaErrorInvalidValue;
-
-    std::size_t expected_first = 0;
-    for (std::size_t phase_index = 0;
-         phase_index < compiled.phases.size(); ++phase_index) {
-        const auto& phase = compiled.phases[phase_index];
-        if (phase.id != static_cast<boundary::BoundaryPhaseId>(phase_index)
-            || phase.first != expected_first
-            || phase.first > compiled.transfers.size()
-            || phase.count > compiled.transfers.size() - phase.first)
-            return cudaErrorInvalidValue;
-        expected_first += phase.count;
-    }
-    if (expected_first != compiled.transfers.size())
-        return cudaErrorInvalidValue;
-    for (std::size_t index = 0; index < compiled.transfers.size(); ++index) {
-        const auto& transfer = compiled.transfers[index];
-        const auto valid_sign = [](std::int8_t sign) {
-            return sign == -1 || sign == 1;
-        };
-        bool signs_valid = valid_sign(transfer.species_sign);
-        for (const auto sign : transfer.conserved_signs)
-            signs_valid = signs_valid && valid_sign(sign);
-        if (transfer.logical_ordinal != index
-            || transfer.source_index < 0
-            || transfer.source_index >= compiled.total_size
-            || transfer.destination_index < 0
-            || transfer.destination_index >= compiled.total_size
-            || !signs_valid)
-            return cudaErrorInvalidValue;
-    }
+    const auto validation = validate_boundary_launch(state, device_transfers, compiled);
+    if (validation != cudaSuccess) return validation;
 
     constexpr int threads = 256;
     for (const auto& phase : compiled.phases) {

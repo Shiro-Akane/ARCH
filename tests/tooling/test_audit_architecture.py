@@ -887,7 +887,10 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "launch_cuda_backend_hydro_dt();"),
             "execute_hydro_stage_batch": (
                 "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
-                "launch_cuda_backend_hydro_stage();"),
+                "launch_cuda_backend_hydro_stage_batch();"),
+            "execute_physical_boundary_batch": (
+                "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+                "launch_cuda_backend_boundary_batch();"),
             "compute_hydro_dt": (
                 "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
                 "launch_cuda_backend_hydro_dt();"),
@@ -930,7 +933,7 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "auto CudaBackend::execute_hydro_stage() {\n"
                 "return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected); }\n"
                 "auto CudaBackend::execute_hydro_stage_batch() {\n"
-                "launch_cuda_backend_hydro_stage(); quiesce();\n"
+                "launch_cuda_backend_hydro_stage_batch(); quiesce();\n"
                 "impl_->runtime_counters.kernel_count += 1; }\n",
         })
 
