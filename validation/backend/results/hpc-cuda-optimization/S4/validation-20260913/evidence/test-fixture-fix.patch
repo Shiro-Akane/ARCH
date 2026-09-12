@@ -1,0 +1,48 @@
+diff --git a/tests/cuda/test_cuda_multiblock_hydro.cu b/tests/cuda/test_cuda_multiblock_hydro.cu
+index a23492f..1e10180 100644
+--- a/tests/cuda/test_cuda_multiblock_hydro.cu
++++ b/tests/cuda/test_cuda_multiblock_hydro.cu
+@@ -16,6 +16,7 @@
+ #include <algorithm>
+ #include <array>
+ #include <bit>
++#include <cmath>
+ #include <iostream>
+ #include <limits>
+ #include <optional>
+@@ -543,19 +544,33 @@ void run_hydro_batch_contract()
+                 const int cell = blocks[bad].grid.GetIndex(x);
+                 auto& energy = blocks[bad].fluid_state.eng[cell];
+                 const double saved = energy;
+-                energy = std::numeric_limits<double>::quiet_NaN();
++                // IdealGas's existing max(0, pressure) maps NaN energy to a
++                // finite pressure, so NaN does not establish an EOS failure.
++                // Positive infinity survives that floor. Check the shared
++                // leaf first so the error-transport witness cannot go vacuous.
++                energy = std::numeric_limits<double>::infinity();
++                require(!std::isfinite(eos.get_view().get_pressure(
++                            blocks[bad].fluid_state.get(cell), nullptr)),
++                        "Hydro EOS fault fixture produced a finite pressure");
+                 upload(*batch);
+                 bool rejected = false;
++                std::string failure_detail = "no exception";
+                 try {
+                     if (ghost_only)
+                         (void)batch->execute_hydro_stage_batch(accesses, plan.stages.front(), dt, token);
+                     else
+                         (void)batch->compute_hydro_dt_batch(accesses, 0.8);
+                 } catch (const std::runtime_error& error) {
++                    failure_detail = error.what();
+                     rejected = std::string(error.what()).find("block="
+                         + std::to_string(accesses[bad].block.uid.value)) != std::string::npos;
+                 }
+-                require(rejected, "Hydro batch hid the failing block EOS status");
++                if (!rejected)
++                    throw std::runtime_error("Hydro batch EOS failure witness: method="
++                        + std::to_string(static_cast<int>(method)) + " block="
++                        + std::to_string(accesses[bad].block.uid.value) + " path="
++                        + (ghost_only ? "stage-ghost" : "CFL-interior") + " observed="
++                        + failure_detail);
+                 energy = saved;
+                 upload(*batch);
+                 require(batch->compute_hydro_dt_batch(accesses, 0.8)

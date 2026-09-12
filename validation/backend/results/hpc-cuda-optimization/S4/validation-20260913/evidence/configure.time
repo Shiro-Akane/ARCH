@@ -1,0 +1,23 @@
+	Command being timed: "cmake -S /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913 -B /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DARCH_ENABLE_CUDA=ON -DARCH_ENABLE_CUDSS=OFF -DARCH_ENABLE_KLU=OFF -DARCH_FETCH_SUITESPARSE=OFF -DARCH_ENABLE_OPENMP=ON -DARCH_CUDA_HEAVY_COMPILE_JOBS=1 -DCMAKE_C_COMPILER=/usr/bin/gcc-11 -DCMAKE_CXX_COMPILER=/usr/bin/g++-11 -DCMAKE_CUDA_COMPILER=/home/ubuntu/projects/.envs/arch/bin/nvcc -DCMAKE_CUDA_HOST_COMPILER=/usr/bin/g++-11 -DCMAKE_CUDA_ARCHITECTURES=90 -DCMAKE_PREFIX_PATH=/home/ubuntu/projects/.envs/arch -DHDF5_DIR=/home/ubuntu/projects/.envs/arch/cmake -DFETCHCONTENT_SOURCE_DIR_HIGHFIVE=/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src -DARCH_RUNTIME_OUTPUT_DIRECTORY=/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/bin -DCCACHE_PROGRAM=CCACHE_PROGRAM-NOTFOUND -DCMAKE_CXX_COMPILER_LAUNCHER=/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C -DCMAKE_CUDA_COMPILER_LAUNCHER=/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C"
+	User time (seconds): 4.76
+	System time (seconds): 1.65
+	Percent of CPU this job got: 101%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:06.32
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 189132
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 399739
+	Voluntary context switches: 1251
+	Involuntary context switches: 198
+	Swaps: 0
+	File system inputs: 2088
+	File system outputs: 36776
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

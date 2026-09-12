@@ -1,0 +1,870 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test",
+      "include"
+    ],
+    "files" : 
+    [
+      "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/cmake/tests/HostTests.cmake",
+      "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/CMakeLists.txt",
+      "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/cmake/tests/CudaTests.cmake"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 0
+      },
+      {
+        "file" : 0,
+        "parent" : 1
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 117,
+        "parent" : 2
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 4
+      },
+      {
+        "file" : 0,
+        "parent" : 5
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 125,
+        "parent" : 6
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 8
+      },
+      {
+        "file" : 0,
+        "parent" : 9
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 131,
+        "parent" : 10
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 12
+      },
+      {
+        "file" : 0,
+        "parent" : 13
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 131,
+        "parent" : 14
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 16
+      },
+      {
+        "file" : 0,
+        "parent" : 17
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 163,
+        "parent" : 18
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 20
+      },
+      {
+        "file" : 0,
+        "parent" : 21
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 170,
+        "parent" : 22
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 24
+      },
+      {
+        "file" : 2,
+        "parent" : 25
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 87,
+        "parent" : 26
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 28
+      },
+      {
+        "file" : 2,
+        "parent" : 29
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 133,
+        "parent" : 30
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 32
+      },
+      {
+        "file" : 2,
+        "parent" : 33
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 148,
+        "parent" : 34
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 36
+      },
+      {
+        "file" : 2,
+        "parent" : 37
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 159,
+        "parent" : 38
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 40
+      },
+      {
+        "file" : 2,
+        "parent" : 41
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 356,
+        "parent" : 42
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 44
+      },
+      {
+        "file" : 2,
+        "parent" : 45
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 417,
+        "parent" : 46
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 48
+      },
+      {
+        "file" : 2,
+        "parent" : 49
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 428,
+        "parent" : 50
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 52
+      },
+      {
+        "file" : 2,
+        "parent" : 53
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 438,
+        "parent" : 54
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 56
+      },
+      {
+        "file" : 2,
+        "parent" : 57
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 439,
+        "parent" : 58
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 60
+      },
+      {
+        "file" : 2,
+        "parent" : 61
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 441,
+        "parent" : 62
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 64
+      },
+      {
+        "file" : 2,
+        "parent" : 65
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 443,
+        "parent" : 66
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 68
+      },
+      {
+        "file" : 2,
+        "parent" : 69
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 445,
+        "parent" : 70
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 72
+      },
+      {
+        "file" : 2,
+        "parent" : 73
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 449,
+        "parent" : 74
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 76
+      },
+      {
+        "file" : 2,
+        "parent" : 77
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 452,
+        "parent" : 78
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 80
+      },
+      {
+        "file" : 2,
+        "parent" : 81
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 454,
+        "parent" : 82
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 84
+      },
+      {
+        "file" : 2,
+        "parent" : 85
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 456,
+        "parent" : 86
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 88
+      },
+      {
+        "file" : 2,
+        "parent" : 89
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 458,
+        "parent" : 90
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 92
+      },
+      {
+        "file" : 2,
+        "parent" : 93
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 460,
+        "parent" : 94
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_state_residency"
+      ],
+      "name" : "state_residency",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 7,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_shared_stage_scheduler"
+      ],
+      "name" : "shared_stage_scheduler",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_same_level_exchange_plan"
+      ],
+      "name" : "same_level_exchange_plan",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 15,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_amr_operation_plans"
+      ],
+      "name" : "amr_operation_plans",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 19,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_compute_backend"
+      ],
+      "name" : "compute_backend",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 23,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_device_block_store_lifecycle"
+      ],
+      "name" : "device_block_store_lifecycle",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 27,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_regrid_transaction"
+      ],
+      "name" : "cuda_regrid_transaction",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 31,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_regrid_migration"
+      ],
+      "name" : "cuda_regrid_migration",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 35,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_eos_failure"
+      ],
+      "name" : "cuda_hydro_eos_failure",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 39,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_dispatch"
+      ],
+      "name" : "cuda_hydro_dispatch",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 43,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+        "--test-time-comparison"
+      ],
+      "name" : "checkpoint_temporal_comparison",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 47,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_leaf_parity"
+      ],
+      "name" : "hydro_leaf_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 51,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_boundary_plan_parity"
+      ],
+      "name" : "boundary_plan_parity",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 55,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block"
+      ],
+      "name" : "cuda_single_level_smoke",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 59,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_hydro"
+      ],
+      "name" : "cuda_multiblock_hydro",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 63,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_diffusion"
+      ],
+      "name" : "cuda_multiblock_diffusion",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 67,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_burn"
+      ],
+      "name" : "cuda_multiblock_burn",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 71,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_store_lifecycle"
+      ],
+      "name" : "cuda_store_lifecycle",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 75,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_amr_exchange"
+      ],
+      "name" : "cuda_amr_exchange",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 79,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block",
+        "hydro-matrix"
+      ],
+      "name" : "cuda_hydro_route_matrix",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 83,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block",
+        "hydro-integrators"
+      ],
+      "name" : "cuda_hydro_integrator_matrix",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 87,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block",
+        "eos-matrix"
+      ],
+      "name" : "cuda_backend_eos_owner_matrix",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 91,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block",
+        "rkl1"
+      ],
+      "name" : "cuda_backend_diffusion_rkl1",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 95,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block",
+        "rkl2"
+      ],
+      "name" : "cuda_backend_diffusion_rkl2",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

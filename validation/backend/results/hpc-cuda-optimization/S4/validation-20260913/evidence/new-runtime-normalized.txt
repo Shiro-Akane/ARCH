@@ -1,0 +1,25 @@
+	linux-vdso.so.1
+	libgomp.so.1 => /home/ubuntu/projects/.envs/arch/lib/libgomp.so.1
+	libhdf5.so.320 => /home/ubuntu/projects/.envs/arch/lib/libhdf5.so.320
+	libcudart.so.12 => /home/ubuntu/projects/.envs/arch/lib/libcudart.so.12
+	libstdc++.so.6 => /home/ubuntu/projects/.envs/arch/lib/libstdc++.so.6
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6
+	libgcc_s.so.1 => /home/ubuntu/projects/.envs/arch/lib/libgcc_s.so.1
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0
+	libaws-c-s3.so.0unstable => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-s3.so.0unstable
+	libz.so.1 => /home/ubuntu/projects/.envs/arch/lib/./libz.so.1
+	libsz.so.2 => /home/ubuntu/projects/.envs/arch/lib/./libsz.so.2
+	libaws-c-auth.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-auth.so.1.0.0
+	libaws-c-sdkutils.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-sdkutils.so.1.0.0
+	libaws-c-http.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-http.so.1.0.0
+	libaws-c-io.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-io.so.1.0.0
+	libaws-c-common.so.1 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-common.so.1
+	librt.so.1 => /lib/x86_64-linux-gnu/librt.so.1
+	/lib64/ld-linux-x86-64.so.2
+	libaws-checksums.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-checksums.so.1.0.0
+	libaws-c-cal.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-cal.so.1.0.0
+	libaws-c-compression.so.1.0.0 => /home/ubuntu/projects/.envs/arch/lib/./libaws-c-compression.so.1.0.0
+	libs2n.so.1 => /home/ubuntu/projects/.envs/arch/lib/./libs2n.so.1
+	libcrypto.so.3 => /home/ubuntu/projects/.envs/arch/lib/././libcrypto.so.3

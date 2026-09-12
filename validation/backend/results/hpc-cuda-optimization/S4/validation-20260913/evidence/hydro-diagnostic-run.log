@@ -1,0 +1,3 @@
+CUDA_MULTIBLOCK_EXCHANGE_PASS blocks=2 operations=2
+CUDA_MULTIBLOCK_CORNER_PASS blocks=4 operations=8
+Hydro batch EOS failure witness: method=0 block=701 path=CFL-interior observed=no exception

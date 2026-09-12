@@ -1,0 +1,16 @@
+========= COMPUTE-SANITIZER
+========= Process ID:             2824652
+========= Created:                2026-Sep-13 05:35:45
+========= System OS:              Linux
+========= OS build:               #102-Ubuntu SMP Wed Jan 10 09:33:48 UTC 2024
+========= System CPU:             Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+========= CPU architecture:       x86_64
+========= Computer Name:          gpu-273312
+========= Target application:     /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_hydro
+========= CUDA version:           12.8
+========= Display Driver version: 570.133.20
+========= 
+========= Error: GPU debugging features are disabled. Please consult the list of supported CUDA devices for more details.
+========= 
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 1 error

@@ -1,0 +1,23 @@
+	Command being timed: "python3 -B tools/run_memory_guarded.py --min-available-mib 16384 --max-swap-growth-mib 256 --pressure-guard --log build/s4-validation-20260913/evidence/application-build.log -- cmake --build build/s4-validation-20260913/release --target ARCH arch_cuda_single_level_validation arch_cuda_multiblock_hydro arch_cuda_multiblock_diffusion arch_cuda_multiblock_burn arch_cuda_hydro_block arch_cuda_amr_exchange arch_cuda_regrid_transaction arch_cuda_regrid_migration arch_cuda_store_lifecycle arch_cuda_hydro_leaf_parity arch_cuda_boundary_plan_parity arch_cuda_hydro_eos_failure arch_cuda_hydro_dispatch arch_same_level_exchange_plan arch_compute_backend arch_shared_stage_scheduler arch_state_residency arch_device_block_store_lifecycle arch_amr_operation_plans --parallel 1 --verbose"
+	User time (seconds): 339.48
+	System time (seconds): 25.39
+	Percent of CPU this job got: 153%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 3:57.92
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 826892
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 1
+	Minor (reclaiming a frame) page faults: 8217546
+	Voluntary context switches: 4487
+	Involuntary context switches: 5910
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 4072160
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

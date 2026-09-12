@@ -235,3 +235,7 @@ S1 代码已实现：Driver 改用批量 CFL 和 Hydro stage 接口；CUDA 集�
 详细记录：[S2](../../validation/backend/results/hpc-cuda-optimization/S2/README.md)、[S3](../../validation/backend/results/hpc-cuda-optimization/S3/README.md)、[S4](../../validation/backend/results/hpc-cuda-optimization/S4/README.md)。S4 的短 Host 合同 6/6、架构工具 98/98 通过，不能替代 CUDA 构建和 GPU 验收。
 
 保持 `codex/hpc-cuda-optimization` 固定开发分支和独立阶段提交。2026-09-13 已按用户要求恢复并校验两张历史 LFS 表，正常补传个人仓库成功；双方固定分支均核对为 `cb86c609`，该恢复说明再以文档提交同步。此前的个人端 LFS 阻塞已解除，详见 S4 恢复回执。两个 main、物理公式、依赖库、浮点预算和 restart schema 不变。按用户本次范围停在 S4，不启动 S5；双端同步不代表 GPU/性能验收通过。
+
+### 2026-09-13：恢复 S1–S4 验证
+
+用户授权把 `c44a183c` 放到 GPU-273312 独立目录验证；历史“暂不验证”描述已由本轮状态替代。完整 CUDA archive/ARCH 成功，最终合同与设备测试 24/24、工具测试 319 通过/1 可选项跳过；121 组 checkpoint 对比通过，覆盖尾波、Cartesian/曲线 AMR、连续 regrid 和 CPU↔GPU restart。仅修正一个 EOS 负例输入，不改生产实现。vGPU 明确禁止 GPU debugging，memcheck/racecheck 安全尚未验收。用户随后要求先完成数值验证、计时稍后再做，因此公平 CPU/GPU 对照和线程扫描仍待空闲窗口，S4 不能标成性能验收完成。完整命令、内存及原始证据见 [S4 服务器验证记录](../../validation/backend/results/hpc-cuda-optimization/S4/validation-20260913/README.md)。仍不启动 S5、不修改双方 main，不调整数学、库、容差或 restart schema，不创建验收标签。

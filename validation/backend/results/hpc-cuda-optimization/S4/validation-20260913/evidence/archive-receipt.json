@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "date": "2026-09-13",
+  "scope": "Complete S4 validation build tree, binaries, parameters, checkpoints, runtime outputs and logs",
+  "source": {
+    "base_commit": "c44a183c03a1692388ec56e3fdfec1ab3e412221",
+    "final_code_and_validation_worktree_sha256": "2780e5603e933718bc96ee8e6fd9acc31d565d06c39fb9ed4df5de8caef81f53",
+    "modified_files": ["tests/cuda/test_cuda_multiblock_hydro.cu"],
+    "test_patch_sha256": "2246a7044f5c490a992e8b52b68ee460701aa922752ed170f0d7f8489d53505b",
+    "production_code_changed": false
+  },
+  "canonical_archive": {
+    "format": "tar.zst",
+    "bytes": 1236911980,
+    "sha256": "ffa2287b0e61c5b9f7090138add48e52b41bc454ba07db872103d1b421b0a493",
+    "server": "ubuntu@100.97.101.5",
+    "server_path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst",
+    "local_path": "C:/tmp/ARCH-perf-20260909/build/s4-validation-20260913-evidence.tar.zst",
+    "compression": "Existing Zstandard 1.5.7, --long=27 -T2 -10; lossless",
+    "server_integrity_test_passed": true,
+    "transfer_parts": 10,
+    "transfer_parallelism": 4,
+    "part_manifest": "archive-parts.sha256",
+    "all_part_sha256_verified_locally": true,
+    "complete_archive_sha256_verified_locally": true
+  },
+  "uncompressed_tar": {
+    "bytes": 8018995200,
+    "sha256": "4a96dd7befd9917e8f8ec56fc1664edcefdb772ac6c9e56ee3bd94e3c2a15cad",
+    "gzip_and_zstd_decoded_bytes_identical": true
+  },
+  "alternate_server_gzip": {
+    "bytes": 2968560281,
+    "sha256": "7000634ad10a1b1e57df4b6c99271a092ca4ba2e11026ed93360ed29463ba29f",
+    "server_path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.gz",
+    "integrity_test_passed": true,
+    "local_status": "Old slow download intentionally stopped; .tar.gz.partial retained and is not a complete backup"
+  },
+  "publication": {
+    "readable_reports_inputs_logs_and_recipe": "Tracked beside this receipt",
+    "large_binary_archives": "Retained on server and local ignored build directories; not ordinary Git blobs",
+    "fixed_branch": "codex/hpc-cuda-optimization",
+    "main_modified": false,
+    "release_qualified": false,
+    "performance": "Deferred by user; no pilot, timing scan or API profiling executed",
+    "sanitizer": "blocked_environment: vGPU debugging features disabled"
+  }
+}

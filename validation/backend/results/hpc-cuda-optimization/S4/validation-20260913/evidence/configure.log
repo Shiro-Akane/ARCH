@@ -1,0 +1,160 @@
+-- The C compiler identification is GNU 11.4.0
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/gcc-11 - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/g++-11 - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Build Type: Release
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using default linker; combined C/C++ optimized LTO link passed
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found Python3: /home/ubuntu/.local/bin/python3.11 (found version "3.11.15") found components: Interpreter
+-- The CUDA compiler identification is NVIDIA 12.8.93 with host compiler GNU 11.4.0
+-- Detecting CUDA compiler ABI info
+-- Detecting CUDA compiler ABI info - done
+-- Check for working CUDA compiler: /home/ubuntu/projects/.envs/arch/bin/nvcc - skipped
+-- Detecting CUDA compile features
+-- Detecting CUDA compile features - done
+-- Found CUDAToolkit: /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include (found version "12.8.93")
+-- [CUDA] Compiled code images: 90
+-- Found OpenMP_CXX: -fopenmp (found version "4.5")
+-- Found OpenMP: TRUE (found version "4.5") found components: CXX
+-- [DEP] OpenMP enabled for target ARCH
+-- Found HDF5: hdf5_cpp-shared (found version "2.1.0") found components: CXX HL
+-- [DEP] HDF5 C++ libraries linked successfully
+CMake Warning (author) at /home/ubuntu/projects/.envs/arch/share/cmake-4.4/Modules/FetchContent.cmake:1968 (message):
+  Calling FetchContent_Populate(highfive) is deprecated, call
+  FetchContent_MakeAvailable(highfive) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(highfive) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/Dependencies.cmake:58 (FetchContent_Populate)
+  CMakeLists.txt:27 (include)
+This warning is for project developers.  Use -Wno-author to suppress it.
+
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/bin/ARCH
+-- [SUCCESS] Data Output: /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/output/
+-- ===================================================================
+-- Configuring done (6.2s)
+CMake Warning at cmake/Application.cmake:104 (add_executable):
+  Cannot generate a safe runtime search path for target ARCH because files in
+  some directories may conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:13 (include)
+
+
+CMake Warning at cmake/tests/HostTests.cmake:142 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_runtime_probe_capabilities because files in some directories may
+  conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:17 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:288 (add_executable):
+  Cannot generate a safe runtime search path for target arch_cuda_hydro_block
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:303 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_multiblock_hydro because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:314 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_multiblock_diffusion because files in some directories may
+  conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:323 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_multiblock_burn because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:334 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_store_lifecycle because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:341 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_amr_exchange because files in some directories may conflict with
+  libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+-- Generating done (0.1s)
+-- Build files have been written to: /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release

@@ -1,0 +1,53 @@
+Test project /home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release
+      Start 22: state_residency
+ 1/24 Test #22: state_residency ..................   Passed    0.00 sec
+      Start 23: shared_stage_scheduler
+ 2/24 Test #23: shared_stage_scheduler ...........   Passed    0.01 sec
+      Start 25: same_level_exchange_plan
+ 3/24 Test #25: same_level_exchange_plan .........   Passed    0.00 sec
+      Start 26: amr_operation_plans
+ 4/24 Test #26: amr_operation_plans ..............   Passed    0.00 sec
+      Start 32: compute_backend
+ 5/24 Test #32: compute_backend ..................   Passed    0.00 sec
+      Start 33: device_block_store_lifecycle
+ 6/24 Test #33: device_block_store_lifecycle .....   Passed    0.00 sec
+      Start 34: cuda_regrid_transaction
+ 7/24 Test #34: cuda_regrid_transaction ..........   Passed    0.51 sec
+      Start 36: cuda_regrid_migration
+ 8/24 Test #36: cuda_regrid_migration ............   Passed    0.53 sec
+      Start 38: cuda_hydro_eos_failure
+ 9/24 Test #38: cuda_hydro_eos_failure ...........   Passed    0.37 sec
+      Start 39: cuda_hydro_dispatch
+10/24 Test #39: cuda_hydro_dispatch ..............   Passed    0.00 sec
+      Start 49: checkpoint_temporal_comparison
+11/24 Test #49: checkpoint_temporal_comparison ...   Passed    0.01 sec
+      Start 51: hydro_leaf_parity
+12/24 Test #51: hydro_leaf_parity ................   Passed    0.36 sec
+      Start 57: boundary_plan_parity
+13/24 Test #57: boundary_plan_parity .............   Passed    0.42 sec
+      Start 60: cuda_single_level_smoke
+14/24 Test #60: cuda_single_level_smoke ..........   Passed    0.38 sec
+      Start 61: cuda_multiblock_hydro
+15/24 Test #61: cuda_multiblock_hydro ............   Passed    0.45 sec
+      Start 62: cuda_multiblock_diffusion
+16/24 Test #62: cuda_multiblock_diffusion ........   Passed    0.40 sec
+      Start 63: cuda_multiblock_burn
+17/24 Test #63: cuda_multiblock_burn .............   Passed    2.77 sec
+      Start 64: cuda_store_lifecycle
+18/24 Test #64: cuda_store_lifecycle .............   Passed    0.33 sec
+      Start 65: cuda_amr_exchange
+19/24 Test #65: cuda_amr_exchange ................   Passed   27.29 sec
+      Start 66: cuda_hydro_route_matrix
+20/24 Test #66: cuda_hydro_route_matrix ..........   Passed    0.45 sec
+      Start 67: cuda_hydro_integrator_matrix
+21/24 Test #67: cuda_hydro_integrator_matrix .....   Passed    0.39 sec
+      Start 68: cuda_backend_eos_owner_matrix
+22/24 Test #68: cuda_backend_eos_owner_matrix ....   Passed    1.44 sec
+      Start 69: cuda_backend_diffusion_rkl1
+23/24 Test #69: cuda_backend_diffusion_rkl1 ......   Passed    0.34 sec
+      Start 70: cuda_backend_diffusion_rkl2
+24/24 Test #70: cuda_backend_diffusion_rkl2 ......   Passed    0.34 sec
+
+100% tests passed out of 24
+
+Total Test time (real) =  36.84 sec

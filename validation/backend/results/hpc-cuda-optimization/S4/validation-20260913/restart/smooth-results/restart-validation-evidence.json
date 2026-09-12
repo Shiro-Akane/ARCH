@@ -1,0 +1,1898 @@
+{
+  "schema": 1,
+  "problem": "SmoothAdvection",
+  "input": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/validation/amr/inputs/smooth_amr80_l1.par",
+  "input_sha256": "8862589ee39cebc912c3add4a1b88bf6adc7d924c9bf77d210e16a384cba54fe",
+  "runtime_inputs": {
+    "schema": 1,
+    "parameter_file": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/validation/amr/inputs/smooth_amr80_l1.par",
+    "parameter_sha256": "8862589ee39cebc912c3add4a1b88bf6adc7d924c9bf77d210e16a384cba54fe",
+    "scientific_overrides": {},
+    "eos_type": "ideal",
+    "dependencies": []
+  },
+  "continuous": {
+    "cpu": {
+      "name": "cpu_continuous",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "c401163aa0aadfa2c029c765c0a7d933ce2fe1a3d45792e50c833470e2668567",
+        "checkpoint_sha256": "f92ca89497205b2661698d16b411f0a6bb2058e2a384620f0c0c3cc1d2f4bfcd",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_continuous/RestartAMR_cpu_continuous.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_continuous/RestartAMR_cpu_continuous.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+      "checkpoint_sha256": "f92ca89497205b2661698d16b411f0a6bb2058e2a384620f0c0c3cc1d2f4bfcd",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_continuous/RestartAMR_cpu_continuous_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null
+    },
+    "cuda": {
+      "name": "cuda_continuous",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "5801f3b95fc63079d193bf60c34f4398fbf9a81ce33a52a29221d7e2a86fca88",
+        "checkpoint_sha256": "4ff99c773dabd7e5012ff45a322ea689a18d85e7029a95e186878cd072e13725",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_continuous/RestartAMR_cuda_continuous.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_continuous/RestartAMR_cuda_continuous.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+      "checkpoint_sha256": "4ff99c773dabd7e5012ff45a322ea689a18d85e7029a95e186878cd072e13725",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_continuous/RestartAMR_cuda_continuous_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA H100-20C",
+        "compute_capability": "9.0",
+        "runtime_version": "12080",
+        "driver_version": "12080",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null
+    }
+  },
+  "sources": {
+    "cpu": {
+      "name": "cpu_source",
+      "backend": "cpu",
+      "steps": 2,
+      "run_completed_steps": 3,
+      "checkpoint_metadata": {
+        "step": 2,
+        "time": 0.0016144963779701038,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "9ef7ff0598c13fd6ed566ec57ce3c8ddcce6abaab12d97d7695bb69509788166",
+        "checkpoint_sha256": "9203f4e489aedad6bae227b6a966c7ae218365ba36809e79bebf4f66a8470eb1",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+      "checkpoint_sha256": "9203f4e489aedad6bae227b6a966c7ae218365ba36809e79bebf4f66a8470eb1",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "terminal_checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+      "terminal_metadata": {
+        "step": 3,
+        "time": 0.0024217445669551555,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "9ef7ff0598c13fd6ed566ec57ce3c8ddcce6abaab12d97d7695bb69509788166",
+        "checkpoint_sha256": "72aa83cc89c70e3972c1cd7e3ba787b59d34379abdb8130d2e3e4908cbc14229",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      }
+    },
+    "cuda": {
+      "name": "cuda_source",
+      "backend": "cuda",
+      "steps": 2,
+      "run_completed_steps": 3,
+      "checkpoint_metadata": {
+        "step": 2,
+        "time": 0.0016144963779701038,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0b9955f7e6f57d35fea73cacb70728f861ef2134de03f5e57ca410e60687c473",
+        "checkpoint_sha256": "415c7ce705be83fcdb062b97cf51edc1b1a5a6408bbfeb4200828a5aa92441c2",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+      "checkpoint_sha256": "415c7ce705be83fcdb062b97cf51edc1b1a5a6408bbfeb4200828a5aa92441c2",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA H100-20C",
+        "compute_capability": "9.0",
+        "runtime_version": "12080",
+        "driver_version": "12080",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "terminal_checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+      "terminal_metadata": {
+        "step": 3,
+        "time": 0.0024217445669551555,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0b9955f7e6f57d35fea73cacb70728f861ef2134de03f5e57ca410e60687c473",
+        "checkpoint_sha256": "8d59415a2d9b0e4be296481de50058e3597e4f9953534808d85328ed473a5c57",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      }
+    }
+  },
+  "resumed": [
+    {
+      "name": "cpu_to_cpu",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "db0e85f18f2f064e20cc5d2a98b58f24b62e9cc3c18c201ab3fe5b9538bd9ae3",
+        "checkpoint_sha256": "a9ca11076b37616de482ce1c6be973f872ee614498777f06a44585bf733256ea",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu/RestartAMR_cpu_to_cpu.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu/RestartAMR_cpu_to_cpu.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "a9ca11076b37616de482ce1c6be973f872ee614498777f06a44585bf733256ea",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu/RestartAMR_cpu_to_cpu_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par",
+        "step": 2,
+        "time": 0.0016144963779701038,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "9ef7ff0598c13fd6ed566ec57ce3c8ddcce6abaab12d97d7695bb69509788166",
+        "checkpoint_sha256": "9203f4e489aedad6bae227b6a966c7ae218365ba36809e79bebf4f66a8470eb1",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cuda",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "199e3715e2e00424ce29692c6b6e4f5b7cb3241156a4279f3a0593b57a64e1e5",
+        "checkpoint_sha256": "ae457698add965b640f7e49be012672d4387d6d2a760901613c25af37fa98f96",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda/RestartAMR_cuda_to_cuda.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda/RestartAMR_cuda_to_cuda.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "ae457698add965b640f7e49be012672d4387d6d2a760901613c25af37fa98f96",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda/RestartAMR_cuda_to_cuda_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA H100-20C",
+        "compute_capability": "9.0",
+        "runtime_version": "12080",
+        "driver_version": "12080",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par",
+        "step": 2,
+        "time": 0.0016144963779701038,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0b9955f7e6f57d35fea73cacb70728f861ef2134de03f5e57ca410e60687c473",
+        "checkpoint_sha256": "415c7ce705be83fcdb062b97cf51edc1b1a5a6408bbfeb4200828a5aa92441c2",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cpu_to_cuda",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "fdffa47133638b066833f2e4e83ade0df6b78f5cbb1526c3cb23290fd349d728",
+        "checkpoint_sha256": "46463bd783b5a4c3c74f6091696b1ddefba86f74cd23902730913d8bf44673d2",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda/RestartAMR_cpu_to_cuda.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda/RestartAMR_cpu_to_cuda.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "46463bd783b5a4c3c74f6091696b1ddefba86f74cd23902730913d8bf44673d2",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda/RestartAMR_cpu_to_cuda_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA H100-20C",
+        "compute_capability": "9.0",
+        "runtime_version": "12080",
+        "driver_version": "12080",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par",
+        "step": 2,
+        "time": 0.0016144963779701038,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "9ef7ff0598c13fd6ed566ec57ce3c8ddcce6abaab12d97d7695bb69509788166",
+        "checkpoint_sha256": "9203f4e489aedad6bae227b6a966c7ae218365ba36809e79bebf4f66a8470eb1",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cpu",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "4f12820f70c57b18cc7e762013aeb9bfefb0772ef2791e113b37982ce0b7403f",
+        "checkpoint_sha256": "aab9c98d27ce95fe1be177ada4660b0059fddea27b651cc30e1375c8428378da",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu/RestartAMR_cuda_to_cpu.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu/RestartAMR_cuda_to_cpu.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "aab9c98d27ce95fe1be177ada4660b0059fddea27b651cc30e1375c8428378da",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu/RestartAMR_cuda_to_cpu_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par",
+        "step": 2,
+        "time": 0.0016144963779701038,
+        "resume_after_regrid": true,
+        "chk_file_index": 1,
+        "plt_file_index": 1,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0b9955f7e6f57d35fea73cacb70728f861ef2134de03f5e57ca410e60687c473",
+        "checkpoint_sha256": "415c7ce705be83fcdb062b97cf51edc1b1a5a6408bbfeb4200828a5aa92441c2",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cpu_to_cpu_terminal",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "f125e5f96776ccbbc39b5457f424216a61f5553ab56a008619d602defd936338",
+        "checkpoint_sha256": "131107b4f9e43a2882bb07a6bd89d6d3c5e4feb723f2d1506d03657e29ee4ab3",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_chk_0003.h5",
+      "checkpoint_sha256": "131107b4f9e43a2882bb07a6bd89d6d3c5e4feb723f2d1506d03657e29ee4ab3",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cpu_terminal/RestartAMR_cpu_to_cpu_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par",
+        "step": 3,
+        "time": 0.0024217445669551555,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "9ef7ff0598c13fd6ed566ec57ce3c8ddcce6abaab12d97d7695bb69509788166",
+        "checkpoint_sha256": "72aa83cc89c70e3972c1cd7e3ba787b59d34379abdb8130d2e3e4908cbc14229",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cuda_terminal",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "a80a89e4401d8d912975c00a2b88d1729e15915f6f8e56a7bfa18785baab2c19",
+        "checkpoint_sha256": "88cb6cd2b5eb44a30c70a3edec73f0da52c2bfbccf632c9c692c2899e00db17f",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_chk_0003.h5",
+      "checkpoint_sha256": "88cb6cd2b5eb44a30c70a3edec73f0da52c2bfbccf632c9c692c2899e00db17f",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cuda_terminal/RestartAMR_cuda_to_cuda_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA H100-20C",
+        "compute_capability": "9.0",
+        "runtime_version": "12080",
+        "driver_version": "12080",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par",
+        "step": 3,
+        "time": 0.0024217445669551555,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0b9955f7e6f57d35fea73cacb70728f861ef2134de03f5e57ca410e60687c473",
+        "checkpoint_sha256": "8d59415a2d9b0e4be296481de50058e3597e4f9953534808d85328ed473a5c57",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cpu_to_cuda_terminal",
+      "backend": "cuda",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "4cc04f21af4eca613f41e21e28de8e84797f90864938644543a368b94233f71e",
+        "checkpoint_sha256": "ac11ce38ebf835a06e1a4b4497d3ce9717f615595a8c17beb1de16aa09eee558",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_chk_0003.h5",
+      "checkpoint_sha256": "ac11ce38ebf835a06e1a4b4497d3ce9717f615595a8c17beb1de16aa09eee558",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_to_cuda_terminal/RestartAMR_cpu_to_cuda_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cuda",
+        "resolved": "cuda",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "NVIDIA H100-20C",
+        "compute_capability": "9.0",
+        "runtime_version": "12080",
+        "driver_version": "12080",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par",
+        "step": 3,
+        "time": 0.0024217445669551555,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "9ef7ff0598c13fd6ed566ec57ce3c8ddcce6abaab12d97d7695bb69509788166",
+        "checkpoint_sha256": "72aa83cc89c70e3972c1cd7e3ba787b59d34379abdb8130d2e3e4908cbc14229",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cpu_source/RestartAMR_cpu_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    },
+    {
+      "name": "cuda_to_cpu_terminal",
+      "backend": "cpu",
+      "steps": 4,
+      "run_completed_steps": 4,
+      "checkpoint_metadata": {
+        "step": 4,
+        "time": 0.0032289927559402075,
+        "resume_after_regrid": false,
+        "chk_file_index": 3,
+        "plt_file_index": 3,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "2f58cc44aee4cba100c1346b0b6d90041a74a4f349706efdc33c940d2b310078",
+        "checkpoint_sha256": "ef66960c6336981579ca3d08111472cd18676767abfaa0f594bafdee25a328f8",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par"
+        ]
+      },
+      "parameter": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal.par",
+      "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_chk_0003.h5",
+      "checkpoint_sha256": "ef66960c6336981579ca3d08111472cd18676767abfaa0f594bafdee25a328f8",
+      "plan": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_to_cpu_terminal/RestartAMR_cuda_to_cpu_terminal_backend_plan.txt",
+      "resolved_plan": {
+        "schema": "1",
+        "requested": "cpu",
+        "resolved": "cpu",
+        "capability_code": "0",
+        "fallback_reason": "",
+        "device_ordinal": "0",
+        "device_name": "",
+        "compute_capability": "0.0",
+        "runtime_version": "0",
+        "driver_version": "0",
+        "flux": "hllc",
+        "reconstruction": "plm",
+        "limiter": "mc",
+        "time": "rk3",
+        "eos": "ideal",
+        "network": "none",
+        "ode": "none",
+        "linear": "none",
+        "diffusion": "none"
+      },
+      "sanitizer": null,
+      "restored_from": {
+        "checkpoint": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+        "parameters": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par",
+        "step": 3,
+        "time": 0.0024217445669551555,
+        "resume_after_regrid": false,
+        "chk_file_index": 2,
+        "plt_file_index": 2,
+        "measure": "physical_cell_volume",
+        "geometry": "cartesian",
+        "parameter_sha256": "0b9955f7e6f57d35fea73cacb70728f861ef2134de03f5e57ca410e60687c473",
+        "checkpoint_sha256": "8d59415a2d9b0e4be296481de50058e3597e4f9953534808d85328ed473a5c57",
+        "command": [
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation",
+          "--metrics",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source_chk_0002.h5",
+          "--parameters",
+          "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/restart/smooth-results/cuda_source/RestartAMR_cuda_source.par"
+        ]
+      },
+      "restore_confirmed": true
+    }
+  ],
+  "comparisons": [
+    {
+      "route": "cpu_vs_cuda_continuous",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 8.881784197001252e-16,
+      "max_rel": 5.025302705704168e-16,
+      "max_field_normalized": 3.7013774408619097e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cpu",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cuda",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cuda",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 8.881784197001252e-16,
+      "max_rel": 5.025302705704168e-16,
+      "max_field_normalized": 3.7013774408619097e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cpu",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 2,
+      "candidate_plt_file_index": 2,
+      "output_index_offsets": {
+        "checkpoint": 0,
+        "plot": 0
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 8.881784197001252e-16,
+      "max_rel": 5.025302705704168e-16,
+      "max_field_normalized": 3.7013774408619097e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cpu_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cuda_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 0,
+      "max_rel": 0,
+      "max_field_normalized": 0,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cuda_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 8.881784197001252e-16,
+      "max_rel": 5.025302705704168e-16,
+      "max_field_normalized": 3.7013774408619097e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cpu_terminal",
+      "status": "pass",
+      "step": 4,
+      "time": 0.0032289927559402075,
+      "candidate_step": 4,
+      "candidate_time": 0.0032289927559402075,
+      "comparison_mode": "reproducibility",
+      "target_time": 0,
+      "time_roundoff_matches": true,
+      "controller_matches": true,
+      "output_indices_match": true,
+      "native_composition_compared": true,
+      "dimension": 1,
+      "blocks": 7,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 0.0008072481889850519,
+      "candidate_dt_old": 0.0008072481889850519,
+      "dt_burn": 1e+99,
+      "candidate_dt_burn": 1e+99,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "candidate_chk_file_index": 3,
+      "candidate_plt_file_index": 3,
+      "output_index_offsets": {
+        "checkpoint": 1,
+        "plot": 1
+      },
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 8.881784197001252e-16,
+      "max_rel": 5.025302705704168e-16,
+      "max_field_normalized": 3.7013774408619097e-16,
+      "max_enuc_normalized": 0,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  ],
+  "provenance": {
+    "schema": 1,
+    "source": {
+      "commit": "c44a183c03a1692388ec56e3fdfec1ab3e412221",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "2780e5603e933718bc96ee8e6fd9acc31d565d06c39fb9ed4df5de8caef81f53",
+      "dirty": true,
+      "modified_files": [
+        "tests/cuda/test_cuda_multiblock_hydro.cu"
+      ],
+      "untracked_source_files": []
+    },
+    "build": {
+      "source_directory": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "8b0316e74365ba3b4d07c3e58a33e163a8560da90a402684515c858dc1f225c7",
+      "compile_commands_sha256": "8d7d7b2799e84fe2c7dcf4789c5d5b8b3d030c6356ce4b1dff9bddaa53c18aaa",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "1",
+        "ARCH_CUSTOM_NETWORKS": "",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/src/physics/network/custom",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "OFF",
+        "ARCH_ENABLE_KLU": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "OFF",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/bin",
+        "ARCH_SOURCE_DIR": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CUDA_COMPILER_LAUNCHER": "/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-11",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_BUILD_DATABASE": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/home/ubuntu/projects/.envs/arch/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PREFIX_PATH": "/home/ubuntu/projects/.envs/arch",
+        "CMAKE_PROJECT_COMPAT_VERSION": "",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_SPDX_LICENSE": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [],
+      "sparse_link": {
+        "required_providers": [],
+        "libraries": []
+      },
+      "configured_sparse_libraries": {},
+      "artifact_paths": {
+        "arch": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/bin/ARCH",
+        "checkpoint_validator": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": "8",
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_PROC_BIND": "close",
+      "OMP_PLACES": "cores",
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "a7b085c7c29f5b942b3b2d1110982a8df18d88c49de19100f39fde5794cfcd96",
+      "checkpoint_validator_sha256": "2a3492b170f00fbd196659e1f83c8e84e5c45a483790831fcbee0a48b5913f85"
+    },
+    "artifact_observation": {
+      "arch": [
+        64768,
+        583404000,
+        171792328,
+        1789243542103679026,
+        1789243542103679026
+      ],
+      "checkpoint_validator": [
+        64768,
+        308064997,
+        333352,
+        1789243557531760837,
+        1789243557531760837
+      ]
+    }
+  },
+  "binary_sha256": "a7b085c7c29f5b942b3b2d1110982a8df18d88c49de19100f39fde5794cfcd96",
+  "identity_verified_after_run": true
+}

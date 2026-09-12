@@ -1,0 +1,4 @@
+translation_unit,peak_rss_kib,peak_rss_mib,measurement,elapsed_seconds,exit_code,session_id,process_group
+/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu,793872,775.266,gnu_time_command_maxrss,62.03,0,,
+/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp,382368,373.406,gnu_time_command_maxrss,4.1,0,,
+/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/src/cuda/runtime/amr/CudaBackendExchange.cu,319848,312.352,gnu_time_command_maxrss,3.97,0,,

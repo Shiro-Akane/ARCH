@@ -1,0 +1,2 @@
+a7b085c7c29f5b942b3b2d1110982a8df18d88c49de19100f39fde5794cfcd96  build/s4-validation-20260913/release/bin/ARCH
+2a3492b170f00fbd196659e1f83c8e84e5c45a483790831fcbee0a48b5913f85  build/s4-validation-20260913/release/arch_cuda_single_level_validation
