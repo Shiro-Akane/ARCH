@@ -32,6 +32,9 @@ add_test(NAME backend_validation_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_validate_backend_results.py)
 set_tests_properties(backend_validation_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME sparse_validation_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/validation/network/test_sparse_validation.py)
 add_test(NAME validation_provenance_contract
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_validation_provenance.py)

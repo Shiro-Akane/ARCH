@@ -24,3 +24,9 @@ the generated-package setup. The shared [math witnesses](../math/README.md) and
 [fixtures](../fixtures/README.md) own reusable test data.
 
 Passing an individual test successfully establishes its specific stated contract. However, full application coverage, sanitizer runs, and combined acceptance criteria are rigorously recorded and maintained exclusively within the [Validation](../../validation/README.md) module.
+
+The generated sparse trajectory harness accepts optional `--storage-cells FIRST SECOND`
+and `--pool-cells COUNT`; defaults remain 2/3 cells and a requested pool of 2.
+Non-default transcripts identify those controls and retain the same three ODE
+methods and numerical budgets. This capacity extension is pending real-device
+validation; see the [S0 tooling review](../../validation/backend/results/hpc-cuda-optimization/S0/ToolingReview.zh-CN.md).

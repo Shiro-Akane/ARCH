@@ -250,6 +250,14 @@ retroactively change the earlier weak/sparse/application or sanitizer records.
 
 ## Scope and follow-up
 
+The optional sparse runner controls `--storage-cells FIRST SECOND` and
+`--pool-cells COUNT` extend the existing capacity matrix without changing its
+default 2/3 cells, three ODE methods or numerical budgets. The parser checks
+requested controls against the transcript and records requested versus actual
+pool capacity. This development extension is not a completed large-network
+qualification; its [tooling review](../backend/results/hpc-cuda-optimization/S0/ToolingReview.zh-CN.md)
+lists the pending runtime and protocol review.
+
 Complete Release/Debug regressions and the
 [five-phase core-build check](../backend/results/cold-core-first-law-20260907/release-909/README.md)
 and the [bounded capacity campaign](../backend/results/device-memory-first-law-20260907/README.md)
