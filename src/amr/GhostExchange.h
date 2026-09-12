@@ -33,6 +33,77 @@ class GhostExchange {
 public:
     GhostExchange() = default;
 
+    struct CachedPlans {
+        std::vector<SameLevelExchangePlan> same_level;
+        CoarseFineTransferPlan coarse_fine;
+        std::vector<std::vector<std::size_t>> level_indices;
+    };
+
+    // One entry per exchange owner, not one entry per historical topology.
+    // Logical plans contain no storage/view pointers. Slots, generations,
+    // layouts and physical measures are deliberately rebound by each executor.
+    // The returned reference is valid until the next cache miss on this owner.
+    const CachedPlans& GetPlans(
+        const std::shared_ptr<MemoryPool>& pool,
+        const std::shared_ptr<AmrTree>& tree, int dim,
+        std::span<const BlockHandle> handles) const
+    {
+        if (!pool || !tree || dim < 1 || dim > 3)
+            throw std::invalid_argument("invalid exchange plan cache context");
+        const auto& active = tree->GetActiveBlocks();
+        if (active.empty() || handles.size() != active.size())
+            throw std::invalid_argument("exchange cache requires committed handles");
+        std::vector<std::uint64_t> key;
+        key.reserve(2 + active.size() * 44);
+        key.push_back(static_cast<std::uint64_t>(dim));
+        key.push_back(active.size());
+        for (std::size_t i = 0; i < active.size(); ++i) {
+            if (!is_valid(handles[i]))
+                throw std::invalid_argument("exchange cache has invalid handle");
+            const auto& block = pool->GetBlock(active[i]);
+            key.insert(key.end(), {
+                static_cast<std::uint64_t>(active[i]),
+                handles[i].uid.value, handles[i].epoch.value,
+                static_cast<std::uint64_t>(block.level),
+                block.logical_x1, block.logical_x2, block.logical_x3,
+                static_cast<std::uint64_t>(block.fluid_state.GetNumSpecies())});
+            for (int face = 0; face < 2 * dim; ++face) {
+                const auto& neighbor = block.face_neighbors[face];
+                if (neighbor.count < 0 || neighbor.count > 4)
+                    throw std::invalid_argument("exchange cache has invalid neighbor count");
+                key.push_back(static_cast<std::uint64_t>(neighbor.count));
+                key.push_back(static_cast<std::uint64_t>(neighbor.level_diff));
+                for (const auto id : neighbor.ids)
+                    key.push_back(static_cast<std::uint64_t>(id));
+            }
+        }
+        // Exact equality avoids a fingerprint collision becoming a cache hit.
+        if (cached_plans_ && key == cached_key_) {
+            ++cache_hits_;
+            return *cached_plans_;
+        }
+        auto candidate = std::make_unique<CachedPlans>();
+        candidate->same_level = BuildSameLevelPlans(pool, tree, dim, handles);
+        candidate->coarse_fine = BuildCoarseFinePlan(pool, tree, dim, handles);
+        std::map<BlockHandle, std::size_t> indices;
+        for (std::size_t i = 0; i < handles.size(); ++i)
+            if (!indices.emplace(handles[i], i).second)
+                throw std::invalid_argument("exchange cache has duplicate handles");
+        for (const auto& plan : candidate->same_level) {
+            auto& level = candidate->level_indices.emplace_back();
+            level.reserve(plan.blocks.size());
+            for (const auto& endpoint : plan.blocks)
+                level.push_back(indices.at(endpoint.handle));
+        }
+        cached_key_.swap(key);
+        cached_plans_.swap(candidate);
+        ++cache_builds_;
+        return *cached_plans_;
+    }
+
+    std::size_t PlanCacheBuilds() const noexcept { return cache_builds_; }
+    std::size_t PlanCacheHits() const noexcept { return cache_hits_; }
+
     SameLevelExchangePlan BuildSameLevelPlan(
         const std::shared_ptr<MemoryPool>& pool,
         const std::shared_ptr<AmrTree>& tree, int dim,
@@ -504,34 +575,26 @@ public:
             view.species_stride = block.grid.GetTotalSize();
             views.push_back(view);
         }
-        const auto plans = BuildSameLevelPlans(pool, tree, dim, handles);
-        std::map<LogicalBlockKey, std::size_t> view_by_logical;
-        for (std::size_t index = 0; index < views.size(); ++index) {
-            if (!view_by_logical.emplace(views[index].logical, index).second)
-                throw std::invalid_argument(
-                    "same-level Host views contain duplicate logical blocks");
-        }
-        for (const SameLevelExchangePlan& plan : plans) {
+        const auto& plans = GetPlans(pool, tree, dim, handles);
+        for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
+            const auto& plan = plans.same_level[group];
             std::vector<HostExchangeBlockView> level_views;
             level_views.reserve(plan.blocks.size());
-            for (const ExchangeEndpoint& endpoint : plan.blocks) {
-                const auto found = view_by_logical.find(endpoint.logical);
-                if (found == view_by_logical.end())
-                    throw std::invalid_argument(
-                        "same-level plan endpoint has no Host view");
-                level_views.push_back(views[found->second]);
-            }
+            for (const auto index : plans.level_indices[group])
+                level_views.push_back(views[index]);
             const auto compiled = compile_host_exchange_plan(
                 plan, level_views);
             execute_host_exchange_plan(compiled, level_views);
         }
-        const auto coarse_fine = BuildCoarseFinePlan(
-            pool, tree, dim, handles);
         ExecuteCoarseFinePlan(
-            coarse_fine, pool, tree, dim, state_ptr, handles);
+            plans.coarse_fine, pool, tree, dim, state_ptr, handles);
     }
 
 private:
+    mutable std::vector<std::uint64_t> cached_key_;
+    mutable std::unique_ptr<CachedPlans> cached_plans_;
+    mutable std::size_t cache_builds_ = 0, cache_hits_ = 0;
+
     static LogicalBlockKey logical_key(const Block& block, int dim)
     {
         return {dim, block.level, block.logical_x1,

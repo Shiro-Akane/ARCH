@@ -612,6 +612,46 @@ void test_mixed_level_and_coarse_fine_execution()
     control.flux_register.EnsureSpecies(2);
 
     amr::GhostExchange& exchange = control.ghost_exchange;
+    const auto& cached = exchange.GetPlans(pool, tree, 1, handles);
+    expect(cached.same_level.size() == 2
+        && cached.coarse_fine.fingerprint
+            == exchange.BuildCoarseFinePlan(pool, tree, 1, handles).fingerprint,
+        "cached plans differ from fresh mixed-level plans");
+    const auto fresh = exchange.BuildSameLevelPlans(pool, tree, 1, handles);
+    for (std::size_t group = 0; group < fresh.size(); ++group) {
+        expect(cached.same_level[group].fingerprint == fresh[group].fingerprint,
+            "cached same-level fingerprint differs");
+        for (std::size_t local = 0; local < fresh[group].blocks.size(); ++local)
+            expect(handles[cached.level_indices[group][local]]
+                    == fresh[group].blocks[local].handle,
+                "cached endpoint index is stale");
+    }
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    expect(exchange.PlanCacheBuilds() == 1 && exchange.PlanCacheHits() == 1,
+        "unchanged topology rebuilt exchange plans");
+    // Field and slot contents are not part of a logical plan cache.
+    pool->GetBlock(active.front()).state_next = pool->GetBlock(active.front()).fluid_state;
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    expect(exchange.PlanCacheBuilds() == 1, "field binding invalidated logical cache");
+    auto next_handles = handles;
+    for (auto& handle : next_handles) ++handle.epoch.value;
+    (void)exchange.GetPlans(pool, tree, 1, next_handles);
+    expect(exchange.PlanCacheBuilds() == 2, "epoch change did not invalidate cache");
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    const auto before_failure = exchange.PlanCacheBuilds();
+    auto& neighbor = pool->GetBlock(active.front()).face_neighbors[0];
+    const auto saved_neighbor = neighbor;
+    neighbor.count = 5;
+    expect_rejected([&] { (void)exchange.GetPlans(pool, tree, 1, handles); },
+        "cached plan hid an invalid new topology");
+    neighbor = saved_neighbor;
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    expect(exchange.PlanCacheBuilds() == before_failure,
+        "failed candidate destroyed the previous cache entry");
+    auto invalid_cached_handles = handles;
+    invalid_cached_handles.back() = invalid_cached_handles.front();
+    expect_rejected([&] { (void)exchange.GetPlans(pool, tree, 1, invalid_cached_handles); },
+        "cached plan accepted duplicate handles");
     const double fail_closed_witness =
         pool->GetBlock(active.front()).fluid_state.rho.front();
     expect_rejected(

@@ -258,36 +258,24 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         arch::state::CompletionToken token) {
         std::vector<arch::backend::BackendStateAccess> accesses;
         accesses.reserve(stage_handles.size());
-        std::map<amr::BlockHandle, std::size_t> access_indices;
         for (std::size_t index = 0; index < stage_handles.size(); ++index) {
             const auto access = backend_access(index, requested);
             accesses.push_back(access);
-            if (!access_indices.emplace(access.block, index).second)
-                throw std::logic_error(
-                    "device boundary has duplicate active handle");
         }
-        (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
-        const auto same_level = amr_ctrl.ghost_exchange.BuildSameLevelPlans(
+        const auto& plans = amr_ctrl.ghost_exchange.GetPlans(
             amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
-        for (const auto& plan : same_level) {
+        (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
+        for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
+            const auto& plan = plans.same_level[group];
             std::vector<arch::backend::BackendStateAccess> level_accesses;
             level_accesses.reserve(plan.blocks.size());
-            for (const auto& endpoint : plan.blocks) {
-                const auto found = access_indices.find(endpoint.handle);
-                if (found == access_indices.end())
-                    throw std::logic_error(
-                        "same-level plan references a stale device handle");
-                level_accesses.push_back(accesses[found->second]);
-            }
+            for (const auto index : plans.level_indices[group])
+                level_accesses.push_back(accesses[index]);
             (void)compute_backend->execute_same_level_exchange(
                 level_accesses, plan, requested, version, token);
         }
-        const auto coarse_fine =
-            amr_ctrl.ghost_exchange.BuildCoarseFinePlan(
-                amr_ctrl.pool, amr_ctrl.tree, config.grid.dim,
-                stage_handles);
         return compute_backend->execute_coarse_fine_exchange(
-            accesses, coarse_fine, requested, version, token);
+            accesses, plans.coarse_fine, requested, version, token);
     };
     const auto complete_device_boundary = [&](StateSlot slot) {
         if (stage_handles.empty())
