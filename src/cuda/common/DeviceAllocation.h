@@ -12,6 +12,7 @@
 #include <cuda_runtime.h>
 #include <cstddef>
 #include <limits>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -77,6 +78,24 @@ private:
 
     T* pointer_ = nullptr;
     std::size_t count_ = 0;
+};
+
+// Capacity-only storage. The enclosing stream owner must drain consumers before
+// reserve/reuse/destruction; no view, topology or generation is cached here.
+template <class T>
+class ReusableDeviceAllocation {
+public:
+    void reserve(std::size_t count)
+    {
+        if (count <= size()) return;
+        auto replacement = std::make_unique<DeviceAllocation<T>>();
+        replacement->allocate(count);
+        allocation_.swap(replacement); // Allocation failure preserves old capacity.
+    }
+    T* get() const noexcept { return allocation_ ? allocation_->get() : nullptr; }
+    std::size_t size() const noexcept { return allocation_ ? allocation_->size() : 0; }
+private:
+    std::unique_ptr<DeviceAllocation<T>> allocation_;
 };
 
 } // namespace arch::cuda

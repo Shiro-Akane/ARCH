@@ -11,6 +11,7 @@
 
 #include "cuda/runtime/CudaBackend.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
+#include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "amr/AmrFluxExecutionPlan.h"
@@ -264,6 +265,19 @@ struct CudaBackend::Impl {
             status.swap(next_status);
         }
     } hydro_batch;
+    ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
+    ReusableDeviceAllocation<DeviceBoundaryBatchBlock> boundary_bindings;
+    struct ExchangeScratch {
+        ReusableDeviceAllocation<DeviceExchangeBlock> blocks;
+        struct Phase {
+            ReusableDeviceAllocation<DeviceExchangeOperation> operations;
+            ReusableDeviceAllocation<double> values;
+        };
+        std::array<Phase, 3> phases;
+        ReusableDeviceAllocation<DeviceCoarseFineTransfer> transfers;
+        ReusableDeviceAllocation<double> coarse_values;
+        ReusableDeviceAllocation<int> status;
+    } exchange_scratch;
     // Indicators retain capacity across regrids, not field values. The ordered
     // evaluator completes before any buffer is grown or reused.
     struct RefinementScratch {

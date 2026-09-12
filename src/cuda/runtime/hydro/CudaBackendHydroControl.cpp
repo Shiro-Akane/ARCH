@@ -148,8 +148,8 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
             scratch.status->get() + index,
             make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block)});
     }
-    DeviceAllocation<DeviceHydroBatchBlock> device_blocks;
-    device_blocks.allocate(blocks.size());
+    auto& device_blocks = impl_->hydro_bindings;
+    device_blocks.reserve(blocks.size());
     CudaBackendLaunchResult launch{};
     CudaQuiescenceGuard work_guard{*impl_};
     enqueue_cuda_metadata_upload(device_blocks.get(), blocks.data(),
@@ -309,8 +309,8 @@ state::CompletionToken CudaBackend::execute_physical_boundary_batch(
                 static_cast<int>(block.boundary.phases[phase].count));
     }
     impl_->select_device();
-    DeviceAllocation<DeviceBoundaryBatchBlock> device_blocks;
-    device_blocks.allocate(blocks.size());
+    auto& device_blocks = impl_->boundary_bindings;
+    device_blocks.reserve(blocks.size());
     int kernels = 0;
     CudaQuiescenceGuard work_guard{*impl_};
     enqueue_cuda_metadata_upload(device_blocks.get(), blocks.data(),
@@ -378,8 +378,6 @@ void CudaBackend::Impl::execute_same_level_exchange(
     struct PreparedExchangePhase {
         std::vector<DeviceExchangeOperation> operations;
         std::uint64_t cells = 0;
-        DeviceAllocation<DeviceExchangeOperation> device_operations;
-        DeviceAllocation<double> scratch;
     };
     std::array<PreparedExchangePhase, 3> prepared_phases{};
     const std::uint64_t field_count =
@@ -459,21 +457,24 @@ void CudaBackend::Impl::execute_same_level_exchange(
         throw std::invalid_argument("CUDA exchange phases do not cover plan");
     if (plan.operations.empty()) return;
 
-    DeviceAllocation<DeviceExchangeBlock> device_blocks;
-    device_blocks.allocate(host_blocks.size());
+    select_device();
+    auto& device_blocks = exchange_scratch.blocks;
+    device_blocks.reserve(host_blocks.size());
     CudaQuiescenceGuard work_guard{*this};
     enqueue_cuda_metadata_upload(
                    device_blocks.get(), host_blocks.data(),
                    host_blocks.size() * sizeof(DeviceExchangeBlock),
                    stream.get(), runtime_counters,
                "upload CUDA exchange blocks");
-    for (auto& prepared : prepared_phases) {
+    for (std::size_t phase = 0; phase < prepared_phases.size(); ++phase) {
+        auto& prepared = prepared_phases[phase];
+        auto& buffers = exchange_scratch.phases[phase];
         if (prepared.operations.empty()) continue;
-        prepared.device_operations.allocate(prepared.operations.size());
-        prepared.scratch.allocate(static_cast<std::size_t>(
+        buffers.operations.reserve(prepared.operations.size());
+        buffers.values.reserve(static_cast<std::size_t>(
             prepared.cells * field_count));
         enqueue_cuda_metadata_upload(
-                       prepared.device_operations.get(),
+                       buffers.operations.get(),
                        prepared.operations.data(),
                        prepared.operations.size()
                            * sizeof(DeviceExchangeOperation),
@@ -481,17 +482,22 @@ void CudaBackend::Impl::execute_same_level_exchange(
                    "upload CUDA exchange operations");
     }
 
-    for (auto& prepared : prepared_phases) {
+    std::uint64_t kernels = 0;
+    for (std::size_t phase = 0; phase < prepared_phases.size(); ++phase) {
+        const auto& prepared = prepared_phases[phase];
+        auto& buffers = exchange_scratch.phases[phase];
         if (prepared.operations.empty()) continue;
         check_cuda(launch_cuda_backend_exchange_phase(
-                       device_blocks.get(), prepared.device_operations.get(),
+                       device_blocks.get(), buffers.operations.get(),
                        static_cast<int>(prepared.operations.size()),
                        static_cast<int>(field_count), prepared.cells,
-                       prepared.scratch.get(), stream.get()),
+                       buffers.values.get(), stream.get()),
                    "launch CUDA same-level exchange phase");
-        checked_quiesce("synchronize CUDA same_level exchange");
-        runtime_counters.kernel_count += 2;
+        kernels += 2;
     }
+    // Gather/scatter and subsequent phases are ordered on the same stream.
+    checked_quiesce("synchronize CUDA same_level exchange");
+    runtime_counters.kernel_count += kernels;
     work_guard.completed = true;
     return;
 }
@@ -637,18 +643,19 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
     }
     if (host_transfers.empty()) return;
 
-    DeviceAllocation<DeviceExchangeBlock> device_blocks;
-    DeviceAllocation<DeviceCoarseFineTransfer> device_transfers;
-    DeviceAllocation<double> scratch;
-    DeviceAllocation<int> exchange_status;
-    device_blocks.allocate(host_blocks.size());
-    device_transfers.allocate(host_transfers.size());
-    exchange_status.allocate(1);
+    select_device();
+    auto& device_blocks = exchange_scratch.blocks;
+    auto& device_transfers = exchange_scratch.transfers;
+    auto& scratch = exchange_scratch.coarse_values;
+    auto& exchange_status = exchange_scratch.status;
+    device_blocks.reserve(host_blocks.size());
+    device_transfers.reserve(host_transfers.size());
+    exchange_status.reserve(1);
     if (host_transfers.size()
         > std::numeric_limits<std::size_t>::max() / field_count)
         throw std::overflow_error(
             "CUDA coarse-fine scratch size overflow");
-    scratch.allocate(static_cast<std::size_t>(
+    scratch.reserve(static_cast<std::size_t>(
         host_transfers.size() * field_count));
     int status = 0;
     CudaQuiescenceGuard work_guard{*this};
