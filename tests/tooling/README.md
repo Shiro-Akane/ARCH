@@ -18,3 +18,11 @@ python3 -m unittest discover -s tests/tooling -p 'test_*.py'
   actual nuclear trajectories belong to network Validation.
 
 The core implementation logic resides in [tools/](../../tools/README.md). Fixed protocol inputs are securely maintained in [fixtures/validation_provenance/](../fixtures/validation_provenance/README.md), not within any runtime results directory. It is crucial to remember that these tooling tests do not generate any form of scientific evidence.
+
+## S0 result-recipe controls
+
+`test_hpc_s0_recipe.py` checks the bounded CUDA optimization S0 orchestration
+against controlled fixtures: command failure, interruption, unchanged identities,
+new-output-only handling and separate build/science states. It does not run CUDA
+or supply scientific reference data. Execution and provenance remain owned by
+the existing shared validation helpers.
