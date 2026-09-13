@@ -38,3 +38,11 @@ test('invalid input cannot overwrite saved snapshot and Revert recovers it',()=>
  const invalid=s;s=studioReducer(s,{type:'config/save'});assert.equal(s,invalid);
  s=studioReducer(s,{type:'config/revert'});assert.equal(s.working.hotspot_radius,'0.12');assert.equal(s.config,'saved');
 });
+
+test('continuous edits retain previous data without scheduling generation',()=>{
+ let s=initialState(); const old={density:{values:new Float32Array([1])}} as unknown as NonNullable<typeof s.data>;s={...s,data:old,preview:'current'};
+ for(let i=0;i<100;i++) s=studioReducer(s,{type:'edit',key:'hotspot_x',value:String(i/100)});
+ assert.equal(s.data,old); assert.equal(s.preview,'stale'); assert.equal(s.request,null);
+ const started=studioReducer(s,{type:'preview/start',revision:s.revision});
+ assert.equal(started.preview,'generating'); assert.equal(studioReducer(started,{type:'preview/start',revision:s.revision}),started);
+});

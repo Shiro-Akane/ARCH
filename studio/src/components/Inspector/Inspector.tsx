@@ -12,8 +12,7 @@ export function Inspector({ state }: { state: StudioState }) {
       <p className="inspector-description">Click the current preview to inspect the containing cell center.</p>
       <div className="section-label">COORDINATES</div><Readout name="x" value={point?.x} /><Readout name="y" value={point?.y} />
       <div className="section-label readout-heading">FIELD VALUES</div><Readout name="Density" symbol="ρ" value={point?.density} /><Readout name="Temperature" symbol="T" value={point?.temperature} /><Readout name="Pressure" symbol="P" value={point?.pressure} />
-      <div className="section-label readout-heading">CONTEXT</div><Readout name="Composition" symbol="Xᵢ" /><Readout name="AMR level" />
-      <p className="section-note">Dimensionless Mock values only. Composition and AMR are not modeled.</p>
+      <p className="section-note" title="Composition and AMR are not modeled.">Dimensionless Mock values.</p>
     </div>
     <div className="inspector-bottom"><Icon name="crosshair" size={24} /><span>Select a point.<br />Understand the field.</span></div>
   </aside>;

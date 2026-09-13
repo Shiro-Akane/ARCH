@@ -27,6 +27,7 @@ export function validate(p: Parameters): Partial<Record<ParameterKey, string>> {
   for (const key of ['hotspot_radius', 'hotspot_temperature', 'tmax'] as const) {
     if (!(Number(p[key]) > 0)) errors[key] = 'Must be greater than zero.';
   }
+  for (const key of ['hotspot_x','hotspot_y'] as const) { if(Number(p[key])<0 || Number(p[key])>1) errors[key]='Mock hotspot position must be in [0,1].'; }
   if (p.eos_type !== 'ideal') errors.eos_type = 'Demo supports ideal only.';
   if (!['CPU', 'CUDA'].includes(p.backend)) errors.backend = 'Choose CPU or CUDA (demo only).';
   return errors;
@@ -40,6 +41,7 @@ export function initialState(): StudioState {
 }
 export type Action =
   | { type: 'config/external-edit' }
+  | { type: 'history/restore'; working:Parameters }
   | { type: 'config/save' }
   | { type: 'config/revert' }
   | { type: 'point/select'; x: number; y: number }
@@ -49,6 +51,7 @@ export type Action =
   | { type: 'preview/success'; revision: number; data?: PreviewFields }
   | { type: 'preview/failure'; revision: number; message: string };
 export function studioReducer(state: StudioState, action: Action): StudioState {
+  if(action.type==='history/restore') { const working=action.working;if(working===state.working)return state;return {...state,working,config:Object.keys(validate(working)).length ? 'invalid' : JSON.stringify(working)===JSON.stringify(state.saved) ? 'saved' : 'dirty',preview:'stale',request:null,selected:null,revision:state.revision+1}; }
   if (action.type === 'config/external-edit') return { ...state, preview: 'stale', selected: null, request: null, revision: state.revision + 1 };
   if (action.type === 'config/save') {
     if (state.config === 'invalid') return state;

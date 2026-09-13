@@ -998,3 +998,33 @@ a {
 
 .config-file button { color: #dce6ef; background: #243340; border: 1px solid #526575; border-radius: 4px; padding: 7px 12px; cursor: pointer; }
 .config-file button:hover { background: #314553; }
+
+.mode-description { margin: 0; padding: 6px 20px; font-size: 12px; color: #bdcbd5; background: #151e27; }
+.empty-preview { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+.empty-preview button, .preview-heading button { color: #e9eff4; background: #344b5b; border: 1px solid #678194; border-radius: 4px; padding: 7px 12px; }
+
+.sample-page select { color: #dce6ef; background: #17232d; border: 1px solid #4c606f; border-radius: 4px; padding: 7px 10px; font: inherit; }
+
+/* H5Web theme variables, verified against installed library styles. Data/colormap unchanged. */
+.heatmap-renderer, .line-renderer { background: #14212b; color: #d4e0e8; --h5w-canvas--bgColor: transparent; --h5w-axisLabels--color: #d4e0e8; --h5w-tickLabels--color: #c8d5de; --h5w-grid--color: #738998; --h5w-grid--opacity: 0.3; --h5w-colorBar-tickLabels--color: #d4e0e8; --h5w-colorBar-bounds--color: #d4e0e8; --h5w-line--color: #edba79; --h5w-axisLabels--fontSize: 13px; --h5w-tickLabels--fontSize: 12px; }
+.parameter-field > span, .parameter-field input, .parameter-field select { font-size: 13px; }
+.panel-heading h2, .parameter-group h3, .plotfile-inspector h2 { font-size: 14px; }
+.inspector-content, .inspector-description, .readout strong, .plotfile-inspector { font-size: 13px; }
+.section-note, .preview-footer, .section-label, .block-navigator span { font-size: 12px; }
+.inspector-content dd { margin: 4px 0 16px; overflow-wrap: anywhere; }
+.inspector-content dt { color: #a8bac8; font-size: 12px; }
+
+input[data-numeric=true] { cursor: ew-resize; touch-action: none; }
+input[data-numeric=true]:focus { outline-offset: 2px; }
+
+.block-navigator.compact { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 2px; }
+.block-navigator.compact button { padding: 8px 2px; justify-content: center; font-size: 12px; }
+.block-navigator.compact span { display: none; }
+.brand { cursor: default; }
+
+/* Keep mode guidance within the existing header height. */
+.studio-shell { position: relative; }
+.mode-description { position: absolute; top: 44px; left: 260px; padding: 0; background: transparent; max-width: calc(100% - 280px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2; }
+.parameter-scroll { overflow-anchor: none; }
+.config-context { align-items: flex-start; }
+.plotfile-inspector input { background: #17232d; color: #dce6ef; border: 1px solid #4c606f; border-radius: 4px; padding: 5px; font-size: 13px; }

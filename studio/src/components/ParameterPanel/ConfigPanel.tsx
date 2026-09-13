@@ -1,3 +1,5 @@
+import { EditHistory, historyShortcut } from '../../state/editHistory';
+import type { ParameterDetails } from '../Inspector/ParameterInspector';
 import { useEffect, useRef, useState } from 'react';
 import { createLatestRequest, selectedFile } from '../../data/latestRequest';
 import { enumControls } from './controlContract';
@@ -10,7 +12,9 @@ import { parSchema } from '../../data/parSchema';
 import { effectiveEntries } from '../../data/ParDocument';
 import { loadPar, editPar, parStatus, parErrors, revertPar, exportPar } from '../../state/parState';
 import type { ParState } from '../../state/parState';
-export function ConfigPanel({ onEdit }: { onEdit: () => void }) {
+export function ConfigPanel({ onEdit, onInspect, active }: { active:boolean; onEdit: () => void; onInspect:(p:ParameterDetails|null)=>void }) {
+  const history=useRef(new EditHistory<ParState>());
+  const [selectedKey,setSelectedKey]=useState<string|null>(null);
   const [state,setState] = useState<ParState|null>(null);
   const [message,setMessage] = useState('');
   const [query,setQuery]=useState('');
@@ -22,16 +26,22 @@ export function ConfigPanel({ onEdit }: { onEdit: () => void }) {
   const errors=state ? parErrors(state) : {};
   const values=state ? Object.fromEntries(effectiveEntries(state.document).map(e=>[e.key,state.changes[e.key] ?? e.value])) : {};
   const dimension=observedDimension(values);
+  useEffect(()=>{if(!active)return;const handler=(e:KeyboardEvent)=>{if(e.defaultPrevented||!state)return;const action=historyShortcut(e.key,e.ctrlKey,e.metaKey,e.shiftKey);if(action){e.preventDefault();setState(history.current[action](state));onEdit();}};window.addEventListener('keydown',handler);return()=>window.removeEventListener('keydown',handler);},[active,state,onEdit]);
+  useEffect(()=>{
+    const entry=state && effectiveEntries(state.document).find(e=>e.key===selectedKey);
+    const meta=entry ? parSchema[entry.key] : undefined;
+    onInspect(entry && state ? {key:entry.key,label:friendlyLabels[entry.key] ?? entry.key,value:state.changes[entry.key] ?? entry.value,raw:entry.value,line:entry.line,type:meta?.type ?? 'untyped text',options:enumControls[entry.key] ?? meta?.options,range:meta?.range,error:parErrors(state)[entry.key],evidence:enumControls[entry.key] ? 'src/driver/dispatch/PolicyDescriptor.h' : meta?.evidence} : null);
+  },[state,selectedKey,onInspect]);
   function renderEntry(entry: ReturnType<typeof effectiveEntries>[number]) {
     if (!state) return null;
-    return <label className="parameter-field" key={entry.key}><span title={`Raw key: ${entry.key}; Source line: ${entry.line}; Type: ${parSchema[entry.key]?.type ?? 'untyped text'}; Contract: ${enumControls[entry.key] ? 'src/driver/dispatch/PolicyDescriptor.h; Allowed values: '+enumControls[entry.key].join(', ') : parSchema[entry.key]?.evidence ?? 'No metadata'}${parSchema[entry.key]?.options ? '; Allowed values: '+parSchema[entry.key].options?.join(', ') : ''}${parSchema[entry.key]?.range ? '; Range: '+parSchema[entry.key].range?.join(' to ') : ''}${state.document.entries.filter(e=>e.key===entry.key).length>1 ? '; last occurrence is effective' : ''}`}>{friendlyLabels[entry.key] ?? (entry.key || '(empty key)')}</span><ConfigControl name={entry.key || 'Empty key'} value={state.changes[entry.key] ?? entry.value} meta={parSchema[entry.key]} error={errors[entry.key]} onChange={value => {setState(editPar(state,entry.key,value));onEdit();}} />{errors[entry.key] && <small className="validation-error">{errors[entry.key]}</small>}</label>;
+    return <label className="parameter-field" key={entry.key} onFocus={()=>setSelectedKey(entry.key)} onClick={()=>setSelectedKey(entry.key)}><span title={`Raw key: ${entry.key}; Source line: ${entry.line}; Type: ${parSchema[entry.key]?.type ?? 'untyped text'}; Contract: ${enumControls[entry.key] ? 'src/driver/dispatch/PolicyDescriptor.h; Allowed values: '+enumControls[entry.key].join(', ') : parSchema[entry.key]?.evidence ?? 'No metadata'}${parSchema[entry.key]?.options ? '; Allowed values: '+parSchema[entry.key].options?.join(', ') : ''}${parSchema[entry.key]?.range ? '; Range: '+parSchema[entry.key].range?.join(' to ') : ''}${state.document.entries.filter(e=>e.key===entry.key).length>1 ? '; last occurrence is effective' : ''}`}>{friendlyLabels[entry.key] ?? (entry.key || '(empty key)')}</span><ConfigControl name={entry.key || 'Empty key'} value={state.changes[entry.key] ?? entry.value} meta={parSchema[entry.key]} error={errors[entry.key]} onChange={value => {const next=editPar(state,entry.key,value);history.current.record(state,next);setState(next);onEdit();}} />{errors[entry.key] && <small className="validation-error">{errors[entry.key]}</small>}</label>;
   }
-  return <aside className="parameter-panel panel" aria-label="Real configuration">
+  return <aside className="parameter-panel panel" aria-label="Real configuration" onKeyDown={e=>{const action=historyShortcut(e.key,e.ctrlKey,e.metaKey,e.shiftKey);if(action&&state){e.preventDefault();e.stopPropagation();setState(history.current[action](state));onEdit();}}} onPointerDownCapture={e=>{if(state&&e.target instanceof HTMLInputElement&&(e.target.type==='range'||e.target.dataset.numeric==='true'))history.current.begin(state);}} onPointerUp={()=>{if(state)history.current.end();}} onPointerCancel={()=>{if(state)history.current.end();}}>
     <div className="panel-heading"><h2>Parameters</h2><span title="Local working copy. Browser mode exports a new file; original is not overwritten.">REAL CONFIG</span></div>
     <div className="parameter-scroll">
       <section className="config-file"><h3>Config file</h3><p className="config-filename" title={state?.filename}>{state?.filename ?? 'No configuration loaded'}</p><button type="button" onClick={()=>fileInput.current?.click()}>Open Config…</button><input ref={fileInput} hidden type="file" accept=".par" aria-label="Config file picker" onChange={async e => {
         const file=selectedFile(e.target.files); e.target.value=''; if(!file)return;
-        setState(null);setMessage('Opening…');
+        history.current.reset();setSelectedKey(null);setState(null);setMessage('Opening…');
         await latest.current(async () => {
           if(file.size>1024*1024)throw new Error('Config size limit: 1 MiB.');
           const raw=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer());
@@ -47,7 +57,7 @@ export function ConfigPanel({ onEdit }: { onEdit: () => void }) {
       </div></section>)}
       <section className="custom-search"><h3>Custom Parameters</h3><input className="parameter-search" aria-label="Search custom parameters" placeholder="Search custom parameters…" value={customQuery} onChange={e=>setCustomQuery(e.target.value)} />
       <details className="parameter-group custom-group" open={!!customQuery.trim()}><summary>All Custom Parameters ({effectiveEntries(state.document).filter(entry=>!parSchema[entry.key] && matchesParameter(entry.key,values[entry.key],customQuery)).length})</summary><div className="group-content">{effectiveEntries(state.document).filter(entry=>!parSchema[entry.key] && matchesParameter(entry.key,values[entry.key],customQuery)).map(renderEntry)}</div></details></section>
-      <div className="config-actions"><button disabled={parStatus(state)==='saved'} onClick={()=>{setState(revertPar(state));setMessage('Config reverted');onEdit();}}>Revert</button>
+      <div className="config-actions"><button disabled={parStatus(state)==='saved'} onClick={()=>{history.current.reset();setState(revertPar(state));setMessage('Config reverted');onEdit();}}>Revert</button>
       <button disabled={parStatus(state)==='invalid'} onClick={()=>{
         const result=exportPar(state); const url=URL.createObjectURL(new Blob([result.text],{type:'text/plain;charset=utf-8'}));
         const link=document.createElement('a');link.href=url;link.download=result.filename;link.click();

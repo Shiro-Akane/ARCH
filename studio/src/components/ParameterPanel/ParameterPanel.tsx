@@ -1,3 +1,4 @@
+import { NumericInput } from './NumericInput';
 import { useState } from 'react';
 import { matchesParameter } from './panelPresentation';
 import { BlockNavigator } from './BlockNavigator';
@@ -18,9 +19,11 @@ function Group({ title, badge, children, open = false, custom = false, active = 
 function Field({ label, parameters, onEdit }: { label: ParameterKey; parameters: Parameters; onEdit: (key: ParameterKey, value: string) => void }) {
   const error = validate(parameters)[label];
   const options = label === 'backend' ? ['CPU', 'CUDA'] : label === 'eos_type' ? ['ideal'] : null;
-  return <label className="parameter-field"><span>{label}</span>
+  return <label className="parameter-field"><span title={`Raw key: ${label}${label==='hotspot_temperature' ? '; Mock-only illustrative amplitude' : ''}`}>{label==='hotspot_temperature' ? 'Hotspot intensity' : label==='hotspot_x' ? 'Hotspot X' : label==='hotspot_y' ? 'Hotspot Y' : label}</span>
+    {(label==='hotspot_x' || label==='hotspot_y') && <input type="range" aria-label={`${label} slider`} min="0" max="1" step="0.001" value={Number(parameters[label]) || 0} onChange={e=>onEdit(label,e.target.value)} />}
     {options ? <select aria-label={label} value={parameters[label]} onChange={e => onEdit(label, e.target.value)}>{options.map(option => <option key={option}>{option}</option>)}</select>
-      : <input aria-label={label} aria-invalid={!!error} aria-describedby={error ? `${label}-error` : undefined} inputMode="decimal" value={parameters[label]} onChange={e => onEdit(label, e.target.value)} />}
+      : <NumericInput name={label} value={parameters[label]} error={error} integer={label==='resolution_x'||label==='resolution_y'} range={label==='hotspot_x'||label==='hotspot_y' ? [0,1] : undefined} onChange={value=>onEdit(label,value)} />}
+
     {error && <small className="validation-error" id={`${label}-error`}>{error}</small>}
   </label>;
 }

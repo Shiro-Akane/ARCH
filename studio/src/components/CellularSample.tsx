@@ -5,7 +5,7 @@ export function CellularSample() {
   const [index, setIndex] = useState(1);
   const frame = sample.frames[index];
   return <main className="sample-page">
-    <header><span className="demo-badge">REAL ARCH OUTPUT · READ ONLY</span><h1>CellularDet · 1D result</h1><p>CPU · Helmholtz EOS · aprox19 · {sample.cells} AMR cells / {sample.blocks} leaf blocks</p></header>
+    <header><span className="demo-badge">REAL ARCH OUTPUT · READ ONLY</span><h1>CellularDet · 1D Profile</h1><p>Values sampled along the X axis.</p><p>CPU · Helmholtz EOS · aprox19 · {sample.cells} AMR cells / {sample.blocks} leaf blocks</p></header>
     <label className="snapshot-select">Snapshot <select value={index} onChange={e=>setIndex(Number(e.target.value))}>{sample.frames.map((f,i)=><option key={f.source} value={i}>{f.label} · t = {f.time.toExponential(6)} s</option>)}</select></label>
     <p className="sample-warning">Stopped at the 200-step limit. Final time {sample.frames[1].time.toExponential(6)} s; requested tmax = 5e-8 s was not reached. This is a 1D run with zero transverse perturbation, not a 2D cellular pattern.</p>
     <div className="sample-charts">{(Object.keys(fields) as (keyof typeof fields)[]).map(key=>{
@@ -17,7 +17,7 @@ export function CellularSample() {
         <polyline points={points} fill="none" stroke="#ecb376" strokeWidth="1.5" vectorEffect="non-scaling-stroke"/><text x="460" y="230" textAnchor="middle">x (cm)</text>
       </svg></section>;
     })}</div>
-    <p>Native nonuniform cell-center samples, sorted by x; lines connect samples without resampling. No smoothing or physical-model reconstruction.</p>
-    <details><summary>Source and provenance</summary><p>{frame.source}</p><p>SHA-256: {frame.sha256}</p><p>Fields: Data/DENS, Data/TEMP, Data/PRES; coordinates: Grid/x. Original HDF5 files retained unchanged. Static sample imported offline.</p></details>
+
+    <details><summary>Source and provenance</summary><p>Native nonuniform cell-center samples, sorted by x; lines connect samples without resampling. No smoothing or physical-model reconstruction.</p><p>{frame.source}</p><p>SHA-256: {frame.sha256}</p><p>Fields: Data/DENS, Data/TEMP, Data/PRES; coordinates: Grid/x. Original HDF5 files retained unchanged. Static sample imported offline.</p></details>
   </main>;
 }

@@ -346,3 +346,47 @@ User requested running Cellular with the existing executable, then importing tho
 - Target scope reviewed; PHASE1C1_CONTROL_POLISH_REPORT.md includes A-D before/after, evidence, fallback rationale and limitations.
 - Commit: refactor(studio): polish config controls and parameter feedback.
 - Tag: studio-phase1c1-v0.4.1 (resolve for hash). Local only; no push or next stage.
+
+## UATF-M0 complete
+- Clean baseline studio-phase1c1-v0.4.1 = 5dd195138afca5372d79ab9c9aab7689854d6b8a; branch studio/phase1c2-uat-fixes. Target fully read; UAT-01 through UAT-20 inventory in UAT_FIX_TARGET.md. Prior independent clean-install gates passed 38/38.
+- Root cause identified: RenderBoundary key includes edit revision and preview state, remounting renderer during edits. Undo/scrub absent. No ARCH baseline rerun. Final human UAT/Windows download proof required before checkpoint.
+
+## UATF-M1 complete
+- Four concise mode/input descriptions; centered empty Preview with Generate action. Presentation test/typecheck pass. Target scope reviewed.
+
+## UATF-M2 complete
+- Plotfile custom picker and dark select use existing UI styles; metadata/field reader unchanged. Request/cancel tests and typecheck pass; scope reviewed.
+
+## UATF-M3 complete
+- Real Config focus/click selects current parameter details with verified metadata; Mock removes Composition/AMR placeholders. Existing Plotfile Inspector remains actual-data based. Selection tests/typecheck pass; scope reviewed.
+
+## UATF-M4 complete
+- Verified H5Web theme CSS variables set dark canvas/readable axes without data/colormap changes. Minimum typography raised locally, no global scaling. Typecheck passes; visual QA scheduled M11. Paper theme deferred as optional. Scope reviewed.
+
+## UATF-M5 complete
+- Mock Temperature uniform ambient + radial hotspot; pressure step explicitly labelled; intensity friendly label keeps raw key. Mock X/Y explicit [0,1] slider + exact text entry, invalid values not clamped. Mock tests 4/4 and typecheck pass; Real schema unchanged. Scope reviewed.
+
+## UATF-M6 complete
+- Removed edit/state-derived renderer remount key. Stale retains prior data; explicit Generate/Update/Retry only, duplicate generation guarded. Real Config no longer presents a Mock point viewport. State tests 7/7 and typecheck pass. Crossfade optional deferred. Scope reviewed.
+
+## UATF-M7 complete
+- Separate Mock/Real edit histories; Ctrl+Z, Ctrl+Y, Ctrl+Shift+Z; native range gesture transaction merges edits. Revert resets history to loaded/saved snapshot. History/state tests 9/9 and typecheck pass. Scope reviewed.
+
+## UATF-M8 complete
+- Shared numeric input supports click/type, 4px horizontal drag, magnitude-relative sensitivity, Shift fine, pointer capture, Esc restore. Known integer/range honored, unknown text unchanged. Gesture history tracks latest value independently of render timing. Scrub/history tests and typecheck pass; scope reviewed.
+
+## UATF-M9 complete
+- Core navigation becomes compact four-column sticky row after scrolling. Logo is non-clickable brand. Browser context menu untouched. History/scrub tests and typecheck pass; scope reviewed.
+
+## UATF-M10 implementation
+- Real Plotfile/Cellular explain 1D Profile in one sentence. Cellular processing details moved into existing collapsed provenance. Warnings about incomplete archived run retained. Config shortcuts cover Inspector focus. Scope reviewed.
+
+## UATF-M10 complete
+- Provenance/1D presentation checks included in final regression; no source data changes. Scope reviewed.
+
+## UATF-M11 in progress: human acceptance required
+- Final automated gates: 47/47 tests, lint, typecheck and build pass. Existing HDF5 negative-test diagnostic and Vite size warning unchanged.
+- Browser QA: real numeric scrub 4 -> 8 -> one Undo -> 4; Mock numeric Undo/Redo, explicit Update action and stale prior image, parameter Inspector, source-backed enum fallback, real PRES LineVis and metadata verified.
+- Dark H5Web uses outer background and transparent overlay to preserve visible data. 1280x720 and 1920x1080 screenshots inspected; 2560x1440 layout no overflow. New mode guidance occupies existing header height.
+- Frozen production candidate copied to /home/arch/uat-phase1c2-candidate/dist; source/dist SHA-256 manifest beside it. No final commit/tag before human UAT and Windows Save As confirmation.
+- UATF-M12 pending; do not claim full acceptance or automatically enter next phase.

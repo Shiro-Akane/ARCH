@@ -17,7 +17,7 @@ export function buildMockPreview(parameters: Parameters): PreviewFields {
       const distance = Math.hypot((x - n.hotspot_x) / n.hotspot_radius, (y - n.hotspot_y) / n.hotspot_radius);
       const spot = Math.exp(-0.5 * distance * distance);
       const index = row * width + col;
-      const samples = { density: 1 + n.hotspot_temperature * spot, temperature: 0.2 + (col + 0.5) / width * 0.6 + n.hotspot_temperature * spot, pressure: x < n.hotspot_x ? 1.0 : 0.2 };
+      const samples = { density: 1 + n.hotspot_temperature * spot, temperature: 0.2 + 0.8 * n.hotspot_temperature * spot, pressure: x < n.hotspot_x ? 1.0 : 0.2 };
       for (const key of ['density', 'temperature', 'pressure'] as const) {
         const value = Math.fround(samples[key]);
         if (!Number.isFinite(value)) throw new Error('Parameters exceed the finite Float32 demo range.');

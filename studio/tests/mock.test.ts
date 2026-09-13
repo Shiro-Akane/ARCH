@@ -29,3 +29,8 @@ test('invalid or overflowing parameters fail safely and asynchronous generation 
  const c=new AbortController(); const pending=generateMockPreview(defaults,c.signal); c.abort(); await assert.rejects(pending,/cancelled/);
  const result=await generateMockPreview({...defaults,resolution_x:'4',resolution_y:'4'},new AbortController().signal); assert.equal(result.density.values.length,16);
 });
+
+test('Mock temperature is radially symmetric with no directional gradient',()=>{
+ const field=buildMockPreview({...defaults,resolution_x:'32',resolution_y:'32'}).temperature;
+ for(let y=0;y<32;y++) for(let x=0;x<32;x++) assert.equal(field.values[y*32+x],field.values[y*32+31-x]);
+});

@@ -14,6 +14,7 @@ export function PlotfileWorkspace() {
   const [field, setField] = useState('');
   const [line, setLine] = useState<LinePreviewData | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  const picker=useRef<HTMLInputElement>(null);
   const latest = useRef(createLatestRequest());
   async function selectField(next: string) {
     if (!file) return;
@@ -24,18 +25,18 @@ export function PlotfileWorkspace() {
   }
   return <main className="sample-page plotfile-page" id="plotfile-workspace">
     <h1>Real Plotfile</h1>
-    <label className="open-plotfile">Open Plotfile…<input aria-label="Open Plotfile" type="file" accept=".h5,.hdf5" onChange={async e => {
+    <div className="config-file"><p>{file?.name ?? 'No plotfile loaded'}</p><button onClick={()=>picker.current?.click()}>Open Plotfile…</button><input hidden ref={picker} aria-label="Plotfile picker" type="file" accept=".h5,.hdf5" onChange={async e => {
       const chosen = selectedFile(e.target.files); e.target.value = ''; if (!chosen) return;
         setFile(null); setInfo(null); setLine(null); setSelected(null); setField(''); setMessage('Opening…');
       await latest.current(() => inspectPlotfile(chosen), metadata => {
         setFile(chosen); setInfo(metadata); setMessage('Select a field.');
       }, error => setMessage(error instanceof Error ? error.message : 'Could not read file.'));
-    }} /></label>
+    }} /></div>
     <p role="status">{message}</p>
     {info && <><p>{info.file} · time {info.time} · {info.dimension}D · {info.geometry}</p>
       <label>Field <select aria-label="Plotfile field" value={field} onChange={e => void selectField(e.target.value)}><option value="" disabled>Select field</option>{info.fields.map(name => <option key={name} value={name}>{name}</option>)}</select></label>
     </>}
-    <div className="plotfile-content">{line && <section aria-label="Real 1D preview"><LineRenderer data={line} selected={selected} onPoint={x => setSelected(nearestSample(line, x))} /><p>{line.values.length} samples · x coordinate and field units as stored by ARCH</p></section>}
+    <div className="plotfile-content">{line && <section aria-label="Real 1D preview"><h2>1D Profile</h2><p>Values sampled along the X axis.</p><LineRenderer data={line} selected={selected} onPoint={x => setSelected(nearestSample(line, x))} /><p>{line.values.length} samples · x coordinate and field units as stored by ARCH</p></section>}
       {info && <PlotfileInspector info={info} line={line} selected={selected} onSelect={setSelected} />}</div>
     <nav aria-label="Unavailable execution actions"><button disabled>Build</button><button disabled>Start</button><button disabled>Monitor</button></nav>
   </main>;
