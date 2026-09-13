@@ -21,7 +21,7 @@ def main():
     p.add_argument('--build-dir',type=Path,required=True)
     p.add_argument('--output-dir',type=Path,required=True)
     p.add_argument('--phase',required=True,choices=('canonical','first-law','nse','independent',
-        'coupled','contracts','amr','curved','lifecycle','restart','tails'))
+        'coupled','coupled-restart','contracts','amr','curved','lifecycle','restart','tails'))
     a=p.parse_args()
     build,out=a.build_dir.resolve(),a.output_dir.resolve()
     if not out.is_relative_to(ROOT/'build') or out == ROOT/'build':
@@ -52,9 +52,10 @@ def main():
     elif a.phase=='independent':
         command=[sys.executable,str(ROOT/'validation/burn/time_reference.py'),
             '--binary',str(build/'arch_burn_mainline_reference'),'--build-dir',str(build)]
-    elif a.phase=='coupled':
+    elif a.phase in ('coupled','coupled-restart'):
         command=[sys.executable,str(ROOT/'validation/backend/verify_microphysics_coupling.py'),
             '--build-dir',str(build),'--output-dir',str(out/'results')]
+        if a.phase=='coupled-restart': command+=['--restart']
     else:
         command=[sys.executable,str(ROOT/'validation/backend/results/hpc-cuda-optimization/S4/validation-20260913/verify_s4.py'),
             '--source-root',str(ROOT),'--build-dir',str(build),'--output-root',str(out/'results'),'--phase',a.phase]

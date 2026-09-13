@@ -41,6 +41,15 @@ def make_cases(modules, blocks):
     cases = []
     for module, count in itertools.product(modules, blocks):
         require(count > 0, 'block count must be positive')
+        if module.startswith('coupled_'):
+            import verify_microphysics_coupling as coupled
+            selected=[c for c in coupled.cases(module.endswith('_all_transport')) if c['id']==module]
+            require(len(selected)==1,'unknown coupled method')
+            case=selected[0]
+            case['id']=f'{module}_b{count}'
+            case['overrides'].update(nblockx1=str(count),max_blocks=str(max(128,8*count)))
+            cases.append(case)
+            continue
         if module.startswith('burn_'):
             method = module.removeprefix('burn_')
             require(method in ('be_nr', 'bd', 'ros4'), 'unknown burn method')
@@ -131,10 +140,11 @@ def run_lane(args, case, version, backend, threads, phase, repeat, record, save)
         output_dir=directory,base_name='MicrophysicsTiming',terminal_time=case['scientific_time'],
         scientific_overrides=case['overrides'])
     env = dict(os.environ,OMP_NUM_THREADS=str(threads),OMP_DYNAMIC='FALSE',OMP_PLACES='cores',OMP_PROC_BIND='close')
+    if args.preload and backend == 'cuda': env['LD_PRELOAD']=str(args.preload)
     record.update(case=case['id'],version=version,backend=backend,threads=threads,phase=phase,repeat=repeat,
         directory=str(directory),parameter=provenance.file_identity(par),status='running',
         effective_parameters=validation.read_parameter_map(par),
-        environment={k:env[k] for k in ('OMP_NUM_THREADS','OMP_DYNAMIC','OMP_PLACES','OMP_PROC_BIND')},
+        environment={k:env.get(k) for k in ('OMP_NUM_THREADS','OMP_DYNAMIC','OMP_PLACES','OMP_PROC_BIND','LD_PRELOAD')},
         command=[str(build/'bin/ARCH'),case['problem'],str(par)])
     save()
     record.update(timed_process(record['command'],source,env,directory,args.timeout))
@@ -157,6 +167,17 @@ def run_lane(args, case, version, backend, threads, phase, repeat, record, save)
         record['trace'] = validation.validate_cuda_trace(directory/'MicrophysicsTiming_backend_trace.tsv',meta['step'])
     if case['problem'] == 'BurnOneZone':
         record['source_balance'] = burn_balance(initial,final)
+    elif case['problem'] == 'BurnGradient':
+        import verify_microphysics_coupling as coupled
+        record['pointwise_quality']=coupled.checkpoint_quality(final)
+        record['source_balance']=coupled.balance(validator,initial,final,par)
+        changes=[v for v in record['regrid']['records'] if v['macro_step']>0 and v['topology_changed']]
+        require(bool(changes),'coupled timing did not exercise runtime regrid')
+        if backend=='cuda':
+            order=1 if case['overrides']['diff_integrator']=='RKL1' else 2
+            record['diffusion_schedule']=validation.validate_cuda_diffusion_schedule(
+                directory/'MicrophysicsTiming_diffusion_schedule.tsv',meta['step'],
+                dict(order=order,lanes_per_step=2,allowed_stages=[1,2,3,4,5] if order==1 else [2,3,5]))
     record['status'] = 'passed'
     save()
 
@@ -191,7 +212,11 @@ def main():
     p.add_argument('--repeats',type=int,default=5)
     p.add_argument('--timeout',type=float,default=1200)
     p.add_argument('--pilot',action='store_true')
+    p.add_argument('--preload',type=Path,help='test-only CUDA API observer; requires --pilot')
     args = p.parse_args()
+    require(not os.environ.get('LD_PRELOAD'), 'inherited LD_PRELOAD is not a controlled timing environment')
+    require(not args.preload or args.pilot, 'instrumented runs cannot be formal speedup samples')
+    if args.preload: args.preload=args.preload.resolve(strict=True)
     require(min(args.threads) > 0 and args.repeats >= 5 and args.warmups >= 1 and math.isfinite(args.timeout) and args.timeout > 0,
             'formal protocol requires positive threads/timeout, >=1 warmup and >=5 repeats')
     require(all(len(v)==len(set(v)) for v in (args.threads,args.blocks,args.modules)), 'duplicate selection')
@@ -208,6 +233,7 @@ def main():
         cases=cases,identities_before={v:provenance.capture(**kw) for v,kw in identities.items()},
         inputs={v:validation.runtime_case_inputs(cases,s) for v,(s,b) in args.versions.items()},
         recipe=provenance.file_identity(Path(__file__)),lanes=[],comparisons=[],statistics=[])
+    if args.preload: report['observer']=provenance.file_identity(args.preload)
     def save():
         (args.output_root/'evidence.json').write_text(json.dumps(report,indent=2,default=str)+'\n')
     save()
@@ -255,6 +281,8 @@ def main():
             for v in identities:
                 provenance.require_unchanged(report['identities_before'][v],report['identities_after'][v])
             require(report['recipe'] == provenance.file_identity(Path(__file__)), 'recipe changed')
+            if args.preload:
+                require(report['observer']==provenance.file_identity(args.preload),'observer changed')
             require(report['inputs'] == {v:validation.runtime_case_inputs(cases,s) for v,(s,b) in args.versions.items()},'input dependencies changed')
         except BaseException as error:
             report.update(status='failed',identity_error=repr(error))

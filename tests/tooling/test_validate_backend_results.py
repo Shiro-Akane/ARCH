@@ -510,6 +510,17 @@ class BackendValidationTests(unittest.TestCase):
             policy = {"order": 2, "allowed_stages": [2,3,5], "lanes_per_step": 2}
             result = module.validate_cuda_diffusion_schedule(schedule,1,policy)
             self.assertEqual(result['stage_counts'],[2,3])
+            resumed=text.replace('0\t1\t2\t2','7\t1\t2\t2').replace('0\t2\t2\t3','7\t2\t2\t3')
+            schedule.write_text(resumed)
+            resumed_policy={**policy,'first_macro_step':7}
+            self.assertEqual(module.validate_cuda_diffusion_schedule(schedule,1,resumed_policy)['macro_steps'],[7,7])
+            for offset in (0,6,-1,1.5,True):
+                with self.assertRaises(RuntimeError):
+                    module.validate_cuda_diffusion_schedule(schedule,1,{**policy,'first_macro_step':offset})
+            schedule.write_text(resumed.replace('7\t2','7\t1'))
+            with self.assertRaisesRegex(RuntimeError,'generation'):
+                module.validate_cuda_diffusion_schedule(schedule,1,resumed_policy)
+            schedule.write_text(text)
             for fixed in (2,3):
                 with self.assertRaises(RuntimeError):
                     module.validate_cuda_diffusion_schedule(schedule,1,{"order":2,"stages":fixed})

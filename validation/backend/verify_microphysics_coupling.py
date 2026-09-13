@@ -9,6 +9,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 from pathlib import Path
+import subprocess
 import sys
 
 import numpy as np
@@ -21,11 +22,11 @@ import validate_cuda_amr_restart as restart
 import validation_provenance as provenance
 
 
-def cases():
-    return [dict(id=f'coupled_{method}_{order.lower()}',problem='BurnGradient',
+def cases(all_transport=False):
+    return [dict(id=f'coupled_{method}_{order.lower()}'+('_all_transport' if all_transport else ''),problem='BurnGradient',
         input='validation/amr/inputs/burn_enuc_amr.par',accepted_steps=[],scientific_time=1e-10,
         timeout_seconds=1800,overrides=dict(ode_solver=method,use_diffusion='true',
-            use_species_diff='true',use_thermal_diff='false',use_viscous_diff='false',
+            use_species_diff='true',use_thermal_diff=str(all_transport).lower(),use_viscous_diff=str(all_transport).lower(),
             diff_integrator=order,diff_max_stages='5',diff_cfl='0.8',
             lrefinemin='0',lrefinemax='1'),
         plan_policy=dict(network='aprox13',eos='helmholtz',ode=method,linear='denselu',diffusion=order.lower()),
@@ -82,21 +83,60 @@ def main():
     parser.add_argument('--build-dir',type=Path,required=True)
     parser.add_argument('--output-dir',type=Path,required=True)
     parser.add_argument('--case',action='append',default=[])
+    parser.add_argument('--restart',action='store_true',help='replay original cross-backend split-run protocol on all coupled inputs')
+    parser.add_argument('--all-transport',action='store_true',help='also enable physical Helm thermal/viscous transport, without constant coefficients')
     args=parser.parse_args()
     build,out=args.build_dir.resolve(),args.output_dir.resolve()
     out.mkdir(parents=True,exist_ok=False)
-    selected=runtime.select_cases(dict(cases=cases()),args.case)
+    selected=runtime.select_cases(dict(cases=cases(args.all_transport)),args.case)
     arch,validator=build/'bin/ARCH',build/'arch_cuda_single_level_validation'
     identity_args=dict(arch=arch,checkpoint_validator=validator,source_root=ROOT,build_dir=build)
     before=provenance.capture(**identity_args)
     report=dict(status='running',release_qualified=False,started_utc=datetime.now(timezone.utc).isoformat(),
-        recipe=provenance.file_identity(Path(__file__)),cases=[],derived_cases=selected,
+        recipe=provenance.file_identity(Path(__file__)),cases=[],derived_cases=selected,restart=args.restart,
         runtime_inputs=runtime.runtime_case_inputs(selected,ROOT))
     def save():
         (out/'evidence.json').write_text(json.dumps(report,indent=2,default=str)+'\n')
     save()
     try:
         for case in selected:
+            if args.restart:
+                directory=out/case['id']
+                directory.mkdir()
+                parameter=directory/'coupled.par'
+                runtime.render_parameter_file(ROOT/case['input'],parameter,backend='cpu',
+                    output_dir=directory/'unused',base_name='CoupledRestart',accepted_steps=4,
+                    scientific_overrides=case['overrides'])
+                command=[sys.executable,str(ROOT/'tools/validate_cuda_amr_restart.py'),
+                    '--arch',str(arch),'--checkpoint-validator',str(validator),
+                    '--source-root',str(ROOT),'--build-dir',str(build),'--problem',case['problem'],
+                    '--input',str(parameter),'--output-root',str(directory/'runs')]
+                row=dict(id=case['id'],command=command,parameter=provenance.file_identity(parameter),status='running')
+                report['cases'].append(row)
+                save()
+                with (directory/'stdout.log').open('w') as stdout,(directory/'stderr.log').open('w') as stderr:
+                    rc=subprocess.run(command,cwd=ROOT,stdout=stdout,stderr=stderr,timeout=1800).returncode
+                row.update(returncode=rc,status='passed' if rc==0 else 'failed')
+                if rc: raise RuntimeError('coupled restart failed; complete logs retained')
+                evidence=json.loads((directory/'runs/restart-validation-evidence.json').read_text())
+                row['schedules']=[]
+                for lane in [*evidence['continuous'].values(),*evidence['sources'].values(),*evidence['resumed']]:
+                    runtime.validate_resolved_plan(Path(lane['plan']),lane['backend'],case['plan_policy'])
+                    checkpoint_quality(Path(lane['checkpoint']))
+                    if lane['backend']!='cuda': continue
+                    start=lane.get('restored_from',{}).get('step',0)
+                    order=1 if case['overrides']['diff_integrator']=='RKL1' else 2
+                    par=Path(lane['parameter'])
+                    summary=runtime.validate_cuda_diffusion_schedule(
+                        par.parent/(par.stem+'_diffusion_schedule.tsv'),lane['run_completed_steps']-start,
+                        dict(order=order,lanes_per_step=2,first_macro_step=start,
+                            allowed_stages=[1,2,3,4,5] if order==1 else [2,3,5]))
+                    row['schedules'].append(dict(lane=lane['name'],summary=summary))
+                if row['parameter']!=provenance.file_identity(parameter):
+                    raise RuntimeError('coupled restart input changed')
+                save()
+                print('COUPLED_RESTART_PASS '+case['id'],flush=True)
+                continue
             record=runtime.run_case(arch,validator,ROOT,case,out/'runs')
             report['cases'].append(record)
             for backend in ('cpu','cuda'):

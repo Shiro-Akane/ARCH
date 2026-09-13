@@ -31,6 +31,15 @@ class CoupledMicrophysicsTests(unittest.TestCase):
     def snapshots(self):
         return [dict(mass=1.,energy=10.,rhoX=[0.5,0.5]),dict(mass=1.,energy=10.4,rhoX=[0.4,0.6])]
 
+    def test_all_physical_transport_is_a_separate_input_matrix(self):
+        for original,full in zip(module.cases(),module.cases(True)):
+            self.assertEqual(full['id'],original['id']+'_all_transport')
+            self.assertEqual(full['reduction_policy'],original['reduction_policy'])
+            for key in ('use_species_diff','use_thermal_diff','use_viscous_diff'):
+                self.assertEqual(full['overrides'][key],'true')
+            for key in ('D_spec','alpha_therm','nu_visc','ode_rtol','ode_atol'):
+                self.assertNotIn(key,full['overrides'])
+
     def test_amr_pointwise_quality_preserves_original_gates(self):
         arrays=dict(rho=np.ones((3,16)),eng=np.ones((3,16)),
                     rhoX=np.full((2,3,16),0.5))

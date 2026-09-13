@@ -9,12 +9,28 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0,str(ROOT/'validation/backend'))
 spec = importlib.util.spec_from_file_location('microphysics_timing',ROOT/'validation/backend/run_microphysics_timing.py')
 timing = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(timing)
 
 
 class MicrophysicsTimingTests(unittest.TestCase):
+    def test_observer_cannot_enter_formal_timing(self):
+        args=['timing','--candidate-source','unused','--candidate-build','unused',
+              '--baseline-source','unused','--baseline-build','unused','--output-root','unused',
+              '--preload','unused-observer.so']
+        with patch.object(sys,'argv',args),patch.dict(os.environ,{},clear=True):
+            with self.assertRaisesRegex(RuntimeError,'instrumented runs cannot'):
+                timing.main()
+
+    def test_uncontrolled_preload_is_rejected_before_execution(self):
+        args=['timing','--candidate-source','unused','--candidate-build','unused',
+              '--baseline-source','unused','--baseline-build','unused','--output-root','unused']
+        with patch.object(sys,'argv',args),patch.dict(os.environ,{'LD_PRELOAD':'unknown.so'}):
+            with self.assertRaisesRegex(RuntimeError,'inherited LD_PRELOAD'):
+                timing.main()
+
     def test_table_content_must_match_even_when_parameters_match(self):
         left={'case':dict(parameter_file='/base/run.par',parameter_sha256='par',
             scientific_overrides={},eos_type='helmholtz',dependencies=[dict(
@@ -44,6 +60,15 @@ class MicrophysicsTimingTests(unittest.TestCase):
             self.assertEqual(case['reduction_policy'],dict(rtol=2e-8,atol=1e-12))
             self.assertEqual(case['scientific_time'],1e-10)
             self.assertEqual(case['plan_policy']['ode'],case['overrides']['ode_solver'])
+
+    def test_coupled_timing_keeps_physical_transport_and_runtime_amr(self):
+        cases=timing.make_cases(['coupled_bd_rkl1','coupled_ros4_rkl2'],[8])
+        for case in cases:
+            self.assertEqual(case['overrides']['lrefinemax'],'1')
+            self.assertEqual(case['overrides']['use_species_diff'],'true')
+            self.assertNotIn('D_spec',case['overrides'])
+            self.assertNotIn('ode_rtol',case['overrides'])
+            self.assertEqual(case['input'],'validation/amr/inputs/burn_enuc_amr.par')
 
     def test_unknown_or_invalid_workload_rejected(self):
         for module,count in [('diffusion_magic',8),('burn_unknown',8),('burn_bd',0)]:
