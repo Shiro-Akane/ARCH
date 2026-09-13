@@ -11,7 +11,7 @@ Phase 0 的 M0–M6 已完成。已验证 Mock 工作副本 → Dirty/Stale → 
 ## 启动与复现
 
 Linux 工作树：`/home/arch/projects/ARCH-linux`；分支 `studio/phase0-demo`。
-HEAD：`7d4448a9b4a07dd86aa8cfc83fe9d85c7d63a866`。Studio 文件尚未提交，未推送远端。
+Baseline：`7d4448a9b4a07dd86aa8cfc83fe9d85c7d63a866`。Phase 0 checkpoint `57836fc75d7582c74b160a2f423bac133fea4068` 已提交并推送。正式 release commit 通过 tag `studio-phase0-v0.1.0` 定位；本次发布提交与 tag 的远端推送不包含在本地打包任务内。
 
 ```bash
 cd /home/arch/projects/ARCH-linux/studio

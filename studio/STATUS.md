@@ -140,3 +140,13 @@ User requested running Cellular with the existing executable, then importing tho
 - Commit includes studio source, tests, configuration, lockfile, fixture and documentation. Ignored node_modules, dist, caches and local Python environment are excluded.
 - Pre-commit tracked diff and staged path audit must contain no ARCH Core files. Historical uncommitted references above describe earlier milestone snapshots.
 - Stop after committing; no Phase 1, real HDF5/.par or ARCH interface work.
+
+## Release checkpoint — studio-phase0-v0.1.0
+- Phase 0 formally accepted by the user. Release checkpoint only; Phase 1 remains out of scope.
+- Repository-local Git author: _Ding <d979212462@gmail.com>; global Git configuration unchanged.
+- Existing Phase 0 checkpoint: 57836fc75d7582c74b160a2f423bac133fea4068.
+- Release commit message: feat(studio): complete Phase 0 frontend prototype.
+- Tag: studio-phase0-v0.1.0. Resolve this tag for the release commit hash.
+- Release gate: npm test, npm run lint, npm run typecheck, npm run build.
+- Production dist and release documentation are packaged separately; ignored node_modules, .local, caches and dist are not committed.
+- No feature or directory refactor, no ARCH Core changes, no further HDF5/.par/Build/Run integration.
