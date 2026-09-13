@@ -390,3 +390,9 @@ User requested running Cellular with the existing executable, then importing tho
 - Dark H5Web uses outer background and transparent overlay to preserve visible data. 1280x720 and 1920x1080 screenshots inspected; 2560x1440 layout no overflow. New mode guidance occupies existing header height.
 - Frozen production candidate copied to /home/arch/uat-phase1c2-candidate/dist; source/dist SHA-256 manifest beside it. No final commit/tag before human UAT and Windows Save As confirmation.
 - UATF-M12 pending; do not claim full acceptance or automatically enter next phase.
+
+## Targeted fix regression complete (v2 target)
+- The active v2 targeted-fix scope supersedes the previous open-ended UAT continuation for this round only. Existing broad UAT work is preserved in ee63416e; original dirty workspace remains untouched.
+- Retained Mock preview across config/source changes, canvas-relative status centering, and nearby Hotspot Update Preview implemented.
+- Production browser reproduction and existing Sod Config/Plotfile regression passed; final 49/49 tests, lint, typecheck, build and diff checks passed. See TARGETED_FIX_REGRESSION_REPORT.md for evidence and limitations.
+- Focused commit only; no release tag/push or Phase 2. Historical human UAT / Windows Save As acceptance is not claimed.

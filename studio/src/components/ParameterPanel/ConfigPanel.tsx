@@ -41,7 +41,7 @@ export function ConfigPanel({ onEdit, onInspect, active }: { active:boolean; onE
     <div className="parameter-scroll">
       <section className="config-file"><h3>Config file</h3><p className="config-filename" title={state?.filename}>{state?.filename ?? 'No configuration loaded'}</p><button type="button" onClick={()=>fileInput.current?.click()}>Open Config…</button><input ref={fileInput} hidden type="file" accept=".par" aria-label="Config file picker" onChange={async e => {
         const file=selectedFile(e.target.files); e.target.value=''; if(!file)return;
-        history.current.reset();setSelectedKey(null);setState(null);setMessage('Opening…');
+        history.current.reset();setSelectedKey(null);setState(null);setMessage('Opening…');onEdit();
         await latest.current(async () => {
           if(file.size>1024*1024)throw new Error('Config size limit: 1 MiB.');
           const raw=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer());

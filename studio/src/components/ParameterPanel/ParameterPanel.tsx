@@ -27,7 +27,7 @@ function Field({ label, parameters, onEdit }: { label: ParameterKey; parameters:
     {error && <small className="validation-error" id={`${label}-error`}>{error}</small>}
   </label>;
 }
-export function ParameterPanel({ parameters, onEdit }: { parameters: Parameters; onEdit: (key: ParameterKey, value: string) => void }) {
+export function ParameterPanel({ parameters, onEdit, preview, invalid, onPreview }: { preview:string;invalid:boolean;onPreview:()=>void; parameters: Parameters; onEdit: (key: ParameterKey, value: string) => void }) {
   const [customQuery,setCustomQuery]=useState('');
   const [block,setBlock]=useState<CoreGroup>('Grid');
   return <aside className="parameter-panel panel" aria-labelledby="parameters-heading">
@@ -48,6 +48,7 @@ export function ParameterPanel({ parameters, onEdit }: { parameters: Parameters;
         {(['hotspot_x','hotspot_y','hotspot_radius','hotspot_temperature'] as const).filter(key=>matchesParameter(key,parameters[key],customQuery)).map(key=><Field key={key} label={key} parameters={parameters} onEdit={onEdit} />)}
         <p className="section-note">Illustrative settings only. No physical units or solver connection.</p>
       </Group>
+      <div className="nearby-preview-action"><span role="status">Preview: {preview}</span><button disabled={invalid||preview==='generating'} onClick={onPreview} title="Update the preview from the entire Mock configuration.">{preview==='generating' ? 'Generating…' : 'Update Preview'}</button></div>
     </div>
     <div className="panel-note"><span className="small-dot" />Demo configuration · no real file writes.</div>
   </aside>;
