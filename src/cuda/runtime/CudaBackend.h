@@ -135,6 +135,17 @@ public:
     backend::BurnExecutionResult execute_burn(
         backend::BackendStateAccess current, double dt,
         state::CompletionToken expected) override;
+    std::vector<double> compute_diffusion_dt_batch(
+        std::span<const backend::BackendStateAccess> currents) override;
+    void copy_state_slot_batch(std::span<const backend::BackendStateAccess> sources,
+                               state::StateSlot destination) override;
+    state::CompletionToken execute_diffusion_stage_batch(
+        std::span<const backend::BackendStateAccess> currents, const scheduler::RklPlan& plan,
+        const scheduler::RklStageDescriptor& descriptor, double dt, double dt_fe,
+        state::CompletionToken expected) override;
+    std::vector<backend::BurnExecutionResult> execute_burn_batch(
+        std::span<const backend::BackendStateAccess> currents, double dt,
+        state::CompletionToken expected) override;
     void enqueue_materialize_host_current(
         backend::BackendStateAccess current, state::StateRegion region,
         backend::HostStateTransferView host) override;

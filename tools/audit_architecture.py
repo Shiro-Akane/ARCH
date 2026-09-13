@@ -155,6 +155,9 @@ _CUDA_RUNTIME_FUNCTION_OWNERS = {
         "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
     "execute_burn":
         "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
+    "compute_diffusion_dt_batch": "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
+    "execute_diffusion_stage_batch": "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
+    "execute_burn_batch": "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
 }
 
 _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
@@ -166,6 +169,7 @@ _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
     "compute_diffusion_dt",
     "execute_diffusion_stage",
     "execute_burn",
+    "compute_diffusion_dt_batch", "execute_diffusion_stage_batch", "execute_burn_batch",
 })
 
 _CUDA_COMPLETION_LAUNCHES = {
@@ -178,6 +182,9 @@ _CUDA_COMPLETION_LAUNCHES = {
     "execute_diffusion_stage":
         r"\blaunch_cuda_backend_diffusion_stage\s*\(",
     "execute_burn": r"\blaunch_cuda_burn_route\s*\(",
+    "compute_diffusion_dt_batch": r"\blaunch_cuda_backend_diffusion_dt\s*\(",
+    "execute_diffusion_stage_batch": r"\blaunch_cuda_backend_diffusion_stage\s*\(",
+    "execute_burn_batch": r"\blaunch_cuda_burn_route\s*\(",
 }
 
 # Only these exact single-request delegates may omit their own fence. The
@@ -186,6 +193,10 @@ _CUDA_SCALAR_BATCH_DELEGATES = {
     "compute_hydro_dt": "return compute_hydro_dt_batch({&current, 1}, cfl).front();",
     "execute_hydro_stage":
         "return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected);",
+    "compute_diffusion_dt": "return compute_diffusion_dt_batch({&current, 1}).front();",
+    "execute_diffusion_stage":
+        "return execute_diffusion_stage_batch({&current, 1}, plan, descriptor, dt, dt_fe, expected);",
+    "execute_burn": "return execute_burn_batch({&current, 1}, dt, expected).front();",
 }
 
 
@@ -741,12 +752,12 @@ def audit_tree(root: pathlib.Path):
                         r"block\.boundary\.phases\s*\)")):
                 violations.append(
                     "CUDA boundary completion must follow stream quiescence")
-            if (function_name == "execute_burn"
+            if (function_name in {"execute_burn", "execute_burn_batch"} and not is_batch_delegate
                     and not re.search(
                         r"\bblock\.burn_workspace_storage\.get\(\)\s*,\s*"
                         r"block\.burn_candidates\.get\(\)\s*,\s*"
                         r"block\.burn_statuses\.get\(\)\s*,\s*"
-                        r"block\.burn_summary\.get\(\)",
+                        r"(?:block\.burn_summary\.get\(\)|scratch\.get\(\)\s*\+\s*index)",
                         body, flags=re.DOTALL)):
                 violations.append(
                     "CUDA burn routes must consume the caller workspace")

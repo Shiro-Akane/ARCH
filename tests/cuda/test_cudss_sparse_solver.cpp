@@ -330,6 +330,65 @@ void run_multiscale_system(MultiscaleCase model)
               << " disconnected/rescaled=" << rescaled
               << ": analytic solution, componentwise residual, factor reuse and perturbation rejection passed\n";
 }
+void bounded_lane_cache_contract()
+{
+    constexpr int n = 32;
+    Stream stream;
+    std::vector<int> rows(n+1), columns(n);
+    for (int i=0;i<=n;++i) rows[i]=i;
+    for (int i=0;i<n;++i) columns[i]=i;
+    Buffer<int> drows(rows.size()), dcols(columns.size());
+    check(cudaMemcpy(drows.value,rows.data(),rows.size()*sizeof(int),cudaMemcpyHostToDevice));
+    check(cudaMemcpy(dcols.value,columns.data(),columns.size()*sizeof(int),cudaMemcpyHostToDevice));
+    std::vector<std::unique_ptr<Buffer<double>>> matrices;
+    Buffer<double> rhs(n), solution(n);
+    for (int i=0;i<34;++i) {
+        matrices.push_back(std::make_unique<Buffer<double>>(n));
+        std::vector<double> values(n,2.0+i);
+        check(cudaMemcpy(matrices.back()->value,values.data(),n*sizeof(double),cudaMemcpyHostToDevice));
+    }
+    arch::cuda::CuDssSparseSolver provider(n,n,drows.value,dcols.value,matrices[0]->value,
+                                         rhs.value,solution.value,stream.value);
+    auto solve_lane = [&](int lane,std::uint64_t token,bool cached,double diagonal) {
+        std::vector<double> forcing(n,diagonal*1.25), actual(n);
+        check(cudaMemcpyAsync(rhs.value,forcing.data(),n*sizeof(double),cudaMemcpyHostToDevice,stream.value));
+        const auto kernels=provider.kernel_count();
+        const auto sync=provider.synchronization_count();
+        require_result(provider.factorize(matrices[lane]->value,token));
+        require_result(provider.solve(rhs.value,solution.value,token));
+        if (cached) require(provider.kernel_count()-kernels == 3
+            && provider.synchronization_count()-sync == 1,
+            "Returning to a live lane repeated numerical factorization or returned incomplete work");
+        check(cudaMemcpy(actual.data(),solution.value,n*sizeof(double),cudaMemcpyDeviceToHost));
+        for (double x:actual) require(std::abs(x-1.25)<1e-13,"Lane cache reused a different matrix generation");
+    };
+    for (int i=0;i<4;++i) solve_lane(i,i+1,false,2.0+i);
+    const auto analyses=provider.analysis_count();
+    for (int i=0;i<4;++i) solve_lane(i,i+1,true,2.0+i);
+    require(provider.analysis_count()==analyses,"Live lane restore repeated symbolic analysis");
+    // Same address, new token and different coefficients MUST refactorize.
+    std::vector<double> changed(n,17.0);
+    check(cudaMemcpy(matrices[2]->value,changed.data(),n*sizeof(double),cudaMemcpyHostToDevice));
+    solve_lane(2,100,false,17.0);
+    bool rejected=false;
+    try { provider.solve(rhs.value,solution.value,3); }
+    catch (const std::logic_error&) { rejected=true; }
+    require(rejected,"Selected lane accepted a stale factor token");
+    // Fill beyond the 32-owner count limit; eviction counters must not decrease.
+    auto previous=provider.analysis_count();
+    for (int i=4;i<34;++i) {
+        solve_lane(i,i+1,false,2.0+i);
+        require(provider.analysis_count()>=previous,"Retirement lost historical provider counters");
+        previous=provider.analysis_count();
+    }
+    solve_lane(1,2,false,3.0);
+    provider.invalidate();
+    const auto before=provider.analysis_count();
+    solve_lane(1,2,false,3.0);
+    require(provider.analysis_count()==before+1,"External rejection failed to invalidate cached native analysis");
+    std::cout << "CUDSS_LANE_CACHE_PASS analyses=" << provider.analysis_count()
+              << " estimated_peak_bytes=" << provider.peak_device_bytes() << '\n';
+}
 } // namespace
 
 int main(int argc, char** argv)
@@ -373,6 +432,7 @@ int main(int argc, char** argv)
         run_multiscale_system(MultiscaleCase::IntegratedSource);
         run_multiscale_system(MultiscaleCase::TraceChain);
         run_multiscale_system(MultiscaleCase::DisconnectedUnits);
+        bounded_lane_cache_contract();
         std::cout << "cuDSS compiled API version " << arch::cuda::CuDssSparseSolver::compiled_version() << '\n';
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

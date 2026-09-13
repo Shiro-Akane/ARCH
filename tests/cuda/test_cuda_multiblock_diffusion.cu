@@ -143,7 +143,7 @@ amr::SameLevelExchangePlan make_exchange_plan(
         handles[0].epoch);
 }
 
-void run_route(DiffFunction::RKLOrder order)
+std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
 {
     std::array<amr::Block, 2> blocks{make_block(0), make_block(1)};
     const std::array<amr::BlockHandle, 2> handles{
@@ -179,9 +179,12 @@ void run_route(DiffFunction::RKLOrder order)
         arch::state::ExecutionSide::Device, ledger, clock};
     const auto exchange_plan = make_exchange_plan(handles);
 
-    const double dt_fe = std::min(
-        backend->compute_diffusion_dt(current[0]),
-        backend->compute_diffusion_dt(current[1]));
+    const auto before_dt = backend->counters();
+    const auto dts = batched ? backend->compute_diffusion_dt_batch(current)
+        : std::vector<double>{backend->compute_diffusion_dt(current[0]), backend->compute_diffusion_dt(current[1])};
+    require(backend->counters().stream_sync_count - before_dt.stream_sync_count == (batched ? 1 : 2),
+        "Diffusion dt completion was not batched");
+    const double dt_fe = std::min(dts[0], dts[1]);
     require(std::isfinite(dt_fe) && dt_fe > 0.0,
             "multi-block diffusion dt is invalid");
     const double dt = 2.0 * dt_fe;
@@ -191,11 +194,16 @@ void run_route(DiffFunction::RKLOrder order)
     const auto copy = [&](StateSlot destination) {
         (void)arch::scheduler::copy_slot(
             context, handles, StateSlot::Current, destination, [&] {
+                const auto before = backend->counters();
+                if (batched) backend->copy_state_slot_batch(current, destination);
+                else
                 for (std::size_t index = 0; index < current.size(); ++index) {
                     auto target = current[index];
                     target.slot = destination;
                     backend->copy_state_slot(current[index], target);
                 }
+                require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
+                    "Diffusion slot copy completion was not batched");
             });
     };
     copy(StateSlot::Scratch);
@@ -206,9 +214,14 @@ void run_route(DiffFunction::RKLOrder order)
         const arch::scheduler::RklPlan& plan,
         const arch::scheduler::RklStageDescriptor& descriptor,
         arch::state::CompletionToken token) {
+        const auto before = backend->counters();
+        if (batched) (void)backend->execute_diffusion_stage_batch(current, plan, descriptor, dt, dt_fe, token);
+        else
         for (const auto& access : current)
             (void)backend->execute_diffusion_stage(
                 access, plan, descriptor, dt, dt_fe, token);
+        require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
+            "Diffusion stage completion was not batched");
         return token;
     };
     const auto boundary = [&] (
@@ -271,6 +284,7 @@ void run_route(DiffFunction::RKLOrder order)
     std::cout << "CUDA_MULTIBLOCK_DIFFUSION_PASS order="
               << (order == DiffFunction::RKLOrder::First ? 1 : 2)
               << " stages=" << stages << " exchanges=" << exchange_count << '\n';
+    return downloaded;
 }
 
 } // namespace
@@ -278,8 +292,20 @@ void run_route(DiffFunction::RKLOrder order)
 int main()
 {
     try {
-        run_route(DiffFunction::RKLOrder::First);
-        run_route(DiffFunction::RKLOrder::Second);
+        for (const auto order : {DiffFunction::RKLOrder::First, DiffFunction::RKLOrder::Second}) {
+            const auto sequential = run_route(order, false);
+            const auto batched = run_route(order, true);
+            for (std::size_t i = 0; i < sequential.size(); ++i)
+                for (const auto member : {&FluidState::rho, &FluidState::mom_u, &FluidState::mom_v,
+                     &FluidState::mom_w, &FluidState::eng, &FluidState::enuc_rate, &FluidState::mass_fractions}) {
+                    const auto& a = sequential[i].*member;
+                    const auto& b = batched[i].*member;
+                    require(a.size() == b.size(), "Batch changed storage size");
+                    for (std::size_t j = 0; j < a.size(); ++j)
+                        require(std::bit_cast<std::uint64_t>(a[j]) == std::bit_cast<std::uint64_t>(b[j]),
+                            "Diffusion batch changed field bits");
+                }
+        }
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

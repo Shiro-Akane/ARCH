@@ -23,6 +23,8 @@ def main():
     parser.add_argument('--build-dir', type=Path, required=True)
     parser.add_argument('--overlay', type=Path, required=True)
     parser.add_argument('--output-dir', type=Path, required=True)
+    parser.add_argument('--contracts-only', action='store_true',
+                        help='build/relink all targets and run contracts; large-network numerical gates remain pending')
     args = parser.parse_args()
     root, build, overlay, out = (getattr(args, k).resolve()
         for k in ('source_root', 'build_dir', 'overlay', 'output_dir'))
@@ -123,7 +125,7 @@ def main():
         spec = importlib.util.spec_from_file_location('native_sparse_validation', root / 'validation/network/run_sparse_validation.py')
         original = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(original)
-        for network in ('audit150', 'audit200'):
+        for network in (() if args.contracts_only else ('audit150', 'audit200')):
             command = [str(out / f'arch_cuda_generated_sparse_burn_{network}'), '1e7', '3e9',
                        '1e-10', '1e8', '1e-7', '4', 'c12=0.5', 'o16=0.5']
             rc = run(network, command, 1200)
@@ -140,6 +142,7 @@ def main():
         provenance.require_unchanged(before,
             provenance.capture_focused(source_root=root, build_dir=build, artifacts=artifacts))
         record['baseline_identity_verified_after_run'] = True
+        record['large_network_numerical_gates_run'] = not args.contracts_only
         record['status'] = 'focused-passed' if all(t.get('focused_gate_pass', t.get('passed', False))
                            for t in record['tests'].values()) else 'focused-failed'
         save()

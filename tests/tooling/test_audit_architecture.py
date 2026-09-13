@@ -882,6 +882,16 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
 
     def test_rejects_split_runtime_completion_before_quiescence(self):
         cases = {
+            "compute_diffusion_dt_batch": (
+                "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
+                "launch_cuda_backend_diffusion_dt();"),
+            "execute_diffusion_stage_batch": (
+                "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
+                "launch_cuda_backend_diffusion_stage();"),
+            "execute_burn_batch": (
+                "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
+                "launch_cuda_burn_route(block.burn_workspace_storage.get(), "
+                "block.burn_candidates.get(), block.burn_statuses.get(), scratch.get() + index);"),
             "compute_hydro_dt_batch": (
                 "src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
                 "launch_cuda_backend_hydro_dt();"),
@@ -936,6 +946,39 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "launch_cuda_backend_hydro_stage_batch(); quiesce();\n"
                 "impl_->runtime_counters.kernel_count += 1; }\n",
         })
+
+    def test_accepts_exact_microphysics_batch_delegates(self):
+        self.assert_accepted({
+            "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp":
+                "double CudaBackend::compute_diffusion_dt() {"
+                "return compute_diffusion_dt_batch({&current, 1}).front(); }\n"
+                "double CudaBackend::compute_diffusion_dt_batch() {"
+                "launch_cuda_backend_diffusion_dt(); quiesce();"
+                "impl_->runtime_counters.kernel_count += 2; }\n"
+                "void CudaBackend::execute_diffusion_stage() {"
+                "return execute_diffusion_stage_batch({&current, 1}, plan, descriptor, dt, dt_fe, expected); }\n"
+                "void CudaBackend::execute_diffusion_stage_batch() {"
+                "launch_cuda_backend_diffusion_stage(); quiesce();"
+                "impl_->runtime_counters.kernel_count += 2; }\n"
+                "void CudaBackend::execute_burn() {"
+                "return execute_burn_batch({&current, 1}, dt, expected).front(); }\n"
+                "void CudaBackend::execute_burn_batch() {"
+                "launch_cuda_burn_route(block.burn_workspace_storage.get(), block.burn_candidates.get(), "
+                "block.burn_statuses.get(), scratch.get() + index); quiesce();"
+                "impl_->runtime_counters.kernel_count += 2; }\n",
+        })
+
+    def test_rejects_unowned_microphysics_delegates(self):
+        for name, body in {
+            "compute_diffusion_dt": "return compute_diffusion_dt_batch({&current, 1}).front();",
+            "execute_diffusion_stage": "return execute_diffusion_stage_batch({&current, 1}, plan, descriptor, dt, dt_fe, expected);",
+            "execute_burn": "return execute_burn_batch({&current, 1}, dt, expected).front();",
+        }.items():
+            with self.subTest(name=name):
+                self.assert_rejected_with({
+                    "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp":
+                        f"void CudaBackend::{name}() {{ {body} }}\n",
+                }, "CUDA scalar delegate requires its batch owner")
 
     def test_rejects_scalar_delegate_without_batch_owner(self):
         self.assert_rejected_with({

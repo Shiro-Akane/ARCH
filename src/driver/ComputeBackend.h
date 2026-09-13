@@ -325,6 +325,57 @@ public:
     virtual BurnExecutionResult execute_burn(
         BackendStateAccess current, double dt,
         state::CompletionToken expected) = 0;
+    // Like Hydro batches, these calls return only after every requested block
+    // completed. The Host retains reduction keys and stage publication order.
+    virtual std::vector<double> compute_diffusion_dt_batch(
+        std::span<const BackendStateAccess> currents)
+    {
+        validate_hydro_batch_accesses(currents);
+        std::vector<double> result;
+        result.reserve(currents.size());
+        for (const auto current : currents) result.push_back(compute_diffusion_dt(current));
+        return result;
+    }
+    virtual void copy_state_slot_batch(std::span<const BackendStateAccess> sources,
+                                      state::StateSlot destination)
+    {
+        validate_hydro_batch_accesses(sources);
+        if (destination != state::StateSlot::Next && destination != state::StateSlot::Scratch)
+            throw std::invalid_argument("Batch Current copy needs a distinct destination");
+        for (const auto source : sources)
+            if (!contains({source.block, source.storage, destination}))
+                throw std::invalid_argument("Batch state copy has a stale destination");
+        for (const auto source : sources)
+            copy_state_slot(source, {source.block, source.storage, destination});
+    }
+    virtual state::CompletionToken execute_diffusion_stage_batch(
+        std::span<const BackendStateAccess> currents, const scheduler::RklPlan& plan,
+        const scheduler::RklStageDescriptor& descriptor, double dt, double dt_fe,
+        state::CompletionToken expected)
+    {
+        validate_hydro_batch_accesses(currents);
+        if (!state::is_complete(expected))
+            throw std::invalid_argument("Diffusion batch requires a completion token");
+        for (const auto current : currents)
+            if (execute_diffusion_stage(current, plan, descriptor, dt, dt_fe, expected) != expected)
+                throw std::logic_error("Diffusion batch returned incomplete work");
+        return expected;
+    }
+    virtual std::vector<BurnExecutionResult> execute_burn_batch(
+        std::span<const BackendStateAccess> currents, double dt, state::CompletionToken expected)
+    {
+        validate_hydro_batch_accesses(currents);
+        if (!state::is_complete(expected))
+            throw std::invalid_argument("Burn batch requires a completion token");
+        std::vector<BurnExecutionResult> result;
+        result.reserve(currents.size());
+        for (const auto current : currents) {
+            result.push_back(execute_burn(current, dt, expected));
+            if (result.back().completion != expected)
+                throw std::logic_error("Burn batch returned incomplete work");
+        }
+        return result;
+    }
     virtual void enqueue_materialize_host_current(
         BackendStateAccess current, state::StateRegion region,
         HostStateTransferView host) = 0;

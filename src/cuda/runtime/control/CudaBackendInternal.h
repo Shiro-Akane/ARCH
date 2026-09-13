@@ -265,6 +265,8 @@ struct CudaBackend::Impl {
             status.swap(next_status);
         }
     } hydro_batch;
+    HydroBatchScratch diffusion_batch;
+    ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
     ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
     ReusableDeviceAllocation<DeviceBoundaryBatchBlock> boundary_bindings;
     struct ExchangeScratch {

@@ -155,7 +155,7 @@ amr::SameLevelExchangePlan make_exchange_plan(
         handles[0].epoch);
 }
 
-void run_route(arch::dispatch::OdeSolverId ode, const char* name)
+std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char* name, bool batched)
 {
     SpeciesManager species;
     NetAprox13::RegisterSpecies(species);
@@ -197,13 +197,17 @@ void run_route(arch::dispatch::OdeSolverId ode, const char* name)
     std::array<arch::backend::BurnExecutionResult, 2> results{};
     (void)arch::scheduler::execute_burn_first_lane(
         context, handles, [&](arch::state::CompletionToken token) {
+            const auto before = backend->counters();
+            const auto batch = batched ? backend->execute_burn_batch(current, burn_dt, token)
+                : std::vector<arch::backend::BurnExecutionResult>{};
             for (std::size_t index = 0; index < current.size(); ++index) {
-                results[index] = backend->execute_burn(
-                    current[index], burn_dt, token);
+                results[index] = batched ? batch[index] : backend->execute_burn(current[index], burn_dt, token);
                 require(results[index].completion.value == token.value
                             && arch::state::is_complete(results[index].completion),
                         "multi-block burn completion token drifted");
             }
+            require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
+                "Dense burn summary completion was not batched");
             return token;
         });
 
@@ -269,6 +273,7 @@ void run_route(arch::dispatch::OdeSolverId ode, const char* name)
     }
     std::cout << "CUDA_MULTIBLOCK_BURN_PASS route=" << name
               << " blocks=2 limiter=" << global << '\n';
+    return downloaded;
 }
 
 } // namespace
@@ -276,9 +281,21 @@ void run_route(arch::dispatch::OdeSolverId ode, const char* name)
 int main()
 {
     try {
-        run_route(arch::dispatch::OdeSolverId::BeNr, "aprox13.be_nr");
-        run_route(arch::dispatch::OdeSolverId::Bd, "aprox13.bd");
-        run_route(arch::dispatch::OdeSolverId::Ros4, "aprox13.ros4");
+        for (const auto ode : {arch::dispatch::OdeSolverId::BeNr, arch::dispatch::OdeSolverId::Bd,
+                              arch::dispatch::OdeSolverId::Ros4}) {
+            const auto sequential = run_route(ode, "sequential", false);
+            const auto batched = run_route(ode, "batched", true);
+            for (std::size_t i = 0; i < sequential.size(); ++i)
+                for (const auto member : {&FluidState::rho, &FluidState::mom_u, &FluidState::mom_v,
+                     &FluidState::mom_w, &FluidState::eng, &FluidState::enuc_rate, &FluidState::mass_fractions}) {
+                    const auto& a = sequential[i].*member;
+                    const auto& b = batched[i].*member;
+                    require(a.size() == b.size(), "Batch changed storage size");
+                    for (std::size_t j = 0; j < a.size(); ++j)
+                        require(std::bit_cast<std::uint64_t>(a[j]) == std::bit_cast<std::uint64_t>(b[j]),
+                            "Burn batch changed field bits");
+                }
+        }
         return 0;
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

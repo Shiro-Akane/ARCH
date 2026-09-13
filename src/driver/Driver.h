@@ -898,6 +898,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
     std::vector<arch::reduction::ReductionCandidate> diffusion_dt_candidates;
     std::vector<arch::backend::BackendStateAccess> hydro_currents;
+    std::vector<arch::backend::BackendStateAccess> microphysics_currents;
+    const auto current_microphysics_accesses = [&]() {
+        microphysics_currents.clear();
+        microphysics_currents.reserve(stage_handles.size());
+        for (std::size_t index = 0; index < stage_handles.size(); ++index)
+            microphysics_currents.push_back(backend_access(index, StateSlot::Current));
+        return std::span<const arch::backend::BackendStateAccess>(microphysics_currents);
+    };
     while (!ctrl.is_finished())
     {
         // Step A: IO Routine & AMR Regrid
@@ -975,12 +983,16 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             else synchronize_fluid_ghosts();
             diffusion_dt_candidates.clear();
             diffusion_dt_candidates.reserve(active_blocks.size());
+            const auto device_diffusion_dt = compute_backend
+                ? compute_backend->compute_diffusion_dt_batch(current_microphysics_accesses())
+                : std::vector<double>{};
+            if (compute_backend && device_diffusion_dt.size() != active_blocks.size())
+                throw std::logic_error("Diffusion batch lost a required block result");
             for (std::size_t index = 0; index < active_blocks.size(); ++index) {
                 const int block_id = active_blocks[index];
                 const amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
                 const double block_dt = compute_backend
-                    ? compute_backend->compute_diffusion_dt(
-                        backend_access(index, StateSlot::Current))
+                    ? device_diffusion_dt[index]
                     : DiffFlux::adaptive_dt_diff(
                         block.fluid_state, eos, block.grid, config, 1.0);
                 diffusion_dt_candidates.push_back({
@@ -1030,12 +1042,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     (void)arch::scheduler::copy_slot(
                         stage_context, stage_handles, StateSlot::Current,
                         destination, [&] {
-                            for (std::size_t index = 0;
-                                 index < stage_handles.size(); ++index) {
-                                compute_backend->copy_state_slot(
-                                    backend_access(index, StateSlot::Current),
-                                    backend_access(index, destination));
-                            }
+                            compute_backend->copy_state_slot_batch(
+                                current_microphysics_accesses(), destination);
                         });
                     trace_backend_operation(
                         arch::backend::BackendOperation::DiffusionCopy,
@@ -1079,13 +1087,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const arch::scheduler::RklStageDescriptor& descriptor,
                     arch::state::CompletionToken token) {
                     (void)compute_backend->clear_amr_flux_register(token);
-                    for (std::size_t index = 0;
-                         index < stage_handles.size(); ++index) {
-                        (void)compute_backend->execute_diffusion_stage(
-                            backend_access(index, StateSlot::Current), plan,
-                            descriptor, diffusion_dt, dt_diff_fe, token);
-                    }
-                    return token;
+                    return compute_backend->execute_diffusion_stage_batch(
+                        current_microphysics_accesses(), plan,
+                        descriptor, diffusion_dt, dt_diff_fe, token);
                 };
                 const auto reflux = [&] (
                     const arch::scheduler::RklPlan&,
@@ -1171,11 +1175,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     DriverReduction::make_accumulator_reduction_key(
                         DriverReduction::BlockReductionComponent::BurnFirstHalf),
                     true});
+                const auto burn_results = compute_backend->execute_burn_batch(
+                    current_microphysics_accesses(), 0.5 * dt, token);
+                if (burn_results.size() != stage_handles.size())
+                    throw std::logic_error("Burn batch lost a required block result");
                 for (std::size_t index = 0;
                      index < stage_handles.size(); ++index) {
-                    const auto result = compute_backend->execute_burn(
-                        backend_access(index, StateSlot::Current),
-                        0.5 * dt, token);
+                    const auto& result = burn_results[index];
                     if (!arch::state::is_complete(result.completion)
                         || result.completion.value != token.value
                         || result.status != 0 || result.failed_cells != 0) {
@@ -1317,11 +1323,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     DriverReduction::make_accumulator_reduction_key(
                         DriverReduction::BlockReductionComponent::BurnSecondHalf),
                     true});
+                const auto burn_results = compute_backend->execute_burn_batch(
+                    current_microphysics_accesses(), 0.5 * dt, token);
+                if (burn_results.size() != stage_handles.size())
+                    throw std::logic_error("Burn batch lost a required block result");
                 for (std::size_t index = 0;
                      index < stage_handles.size(); ++index) {
-                    const auto result = compute_backend->execute_burn(
-                        backend_access(index, StateSlot::Current),
-                        0.5 * dt, token);
+                    const auto& result = burn_results[index];
                     if (!arch::state::is_complete(result.completion)
                         || result.completion.value != token.value
                         || result.status != 0 || result.failed_cells != 0) {
