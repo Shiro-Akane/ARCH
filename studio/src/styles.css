@@ -982,3 +982,19 @@ a {
 .raw-source pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:11px; padding:8px; background:#101820; }
 .raw-source p { font-size:11px; color:#9cacb8; }
 .parameter-field > span[title] { cursor:help; }
+
+/* Parameter controls: desktop-first, no native numeric steppers. */
+.parameter-panel input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+.parameter-panel input[type=number]::-webkit-inner-spin-button,
+.parameter-panel input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.config-file { padding: 10px 0; }
+.config-filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.config-state { text-transform: capitalize; font-size: 12px; }
+.config-state.dirty { color: #eac274; }
+.config-state.invalid { color: #ff9292; }
+.config-notification { font-size: 12px; color: #b6c9db; }
+.config-notification:empty { display: none; }
+.parameter-field [aria-invalid=true] { border-color: #ff9292; }
+
+.config-file button { color: #dce6ef; background: #243340; border: 1px solid #526575; border-radius: 4px; padding: 7px 12px; cursor: pointer; }
+.config-file button:hover { background: #314553; }

@@ -311,3 +311,38 @@ User requested running Cellular with the existing executable, then importing tho
 - Tag: studio-phase1c-v0.4.0 (resolve tag for commit hash).
 - Local checkpoint only; excluded node_modules/.local/dist. Imported target whitespace retained verbatim.
 - Stop at Phase 1C; no automatic push or next stage. Browser download-to-disk confirmation remains outstanding.
+
+## P1C1-M0 complete
+- Clean baseline d621ad9ae7c69e2dc565b1c84e712bbf0cbdf319; branch studio/phase1c1-control-polish created from studio-phase1c-v0.4.0. Target fully read. Prior gates retained; download handoff limitation retained.
+- Audited ConfigPanel, ConfigControl, RuntimeParams, ConfigParser and PolicyDescriptor. UI metadata will not change parser/schema validation. Scope reviewed.
+
+## P1C1-M1 complete
+- Custom English Open Config button invokes hidden native picker; filename/no-file state visible. Typecheck passes; target scope reviewed.
+
+## P1C1-M2 complete
+- Compact filename/state, transient operation feedback, two actions; preserved lines moved to Raw, implementation footer removed. Typecheck passes; target scope reviewed.
+
+## P1C1-M3 complete
+- Native numeric spinners hidden in Parameter Panel. Real numeric arrows disabled absent explicit UI stepping contract; direct typing retained. Typecheck passes; scope reviewed.
+
+## P1C1-M4 complete
+- PolicyDescriptor-backed dropdowns include aliases and raw fallback. EOS input tabular distinguished from internal identifiers; network registry remains text. Dedicated raw-preservation test and typecheck pass. No schema/validation edits; scope reviewed.
+
+## P1C1-M5 complete
+- Existing verified bool checkboxes retained with contract tooltip and invalid accessibility state. Non-bool tokens retain raw editor; use_nse remains tri-state. par-validation/par-state tests and typecheck pass. Scope reviewed.
+
+## P1C1-M6 complete
+- Explicit refine_threshold slider plus exact numeric preserved; coarse-step explanation moved to tooltip. Numeric inputs retain scientific notation and negative sentinels, no guessed min/max/step. Custom/expression remain text. Range/export tests and typecheck pass; scope reviewed.
+
+## P1C1-M7 complete
+- Source/type/allowed values/range contract info retained in tooltips; invalid controls show borders and short errors, full issue list collapsed. Typecheck passes. Scope reviewed.
+
+## P1C1-M8 complete with recorded browser limitation
+- Target reviewed. Final 38/38 tests, lint, typecheck and build pass. Existing Phase 0/1A/1B/1C regressions retained.
+- Desktop screenshots inspected at 1280x720 / 1920x1080; Preview 788x656 / 1384x1016 unchanged. 2560 and 900 px checks no horizontal overflow.
+- Browser confirms custom picker, loaded enum spelling, precise scientific notation with no arrow stepping, Invalid gating and Revert. Save As request feedback works; actual disk delivery remains unconfirmed as at Phase 1C.
+
+## P1C1-M9 checkpoint
+- Target scope reviewed; PHASE1C1_CONTROL_POLISH_REPORT.md includes A-D before/after, evidence, fallback rationale and limitations.
+- Commit: refactor(studio): polish config controls and parameter feedback.
+- Tag: studio-phase1c1-v0.4.1 (resolve for hash). Local only; no push or next stage.
