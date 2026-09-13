@@ -4,6 +4,7 @@ import { validate } from '../../state/studioState';
 import { Icon } from '../Icon';
 
 function Group({ title, badge, children, open = false, custom = false }: { title: string; badge?: string; children: ReactNode; open?: boolean; custom?: boolean }) {
+  if (!custom) return <section className="parameter-group core-group"><h3>{title}{badge && <span className="group-badge">{badge}</span>}</h3><div className="group-content">{children}</div></section>;
   return <details className={custom ? 'parameter-group custom-group' : 'parameter-group'} open={open}>
     <summary><Icon name="chevron" size={12} /><span>{title}</span>{badge && <span className="group-badge">{badge}</span>}</summary>
     <div className="group-content">{children}</div>

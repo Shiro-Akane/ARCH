@@ -39,6 +39,7 @@ export function initialState(): StudioState {
   return { previewParameters: null, selected: null, field: 'density', data: null, working: { ...defaults }, saved: { ...defaults }, config: 'saved', preview: 'stale', run: 'idle', revision: 0, request: null, error: null };
 }
 export type Action =
+  | { type: 'config/external-edit' }
   | { type: 'config/save' }
   | { type: 'config/revert' }
   | { type: 'point/select'; x: number; y: number }
@@ -48,6 +49,7 @@ export type Action =
   | { type: 'preview/success'; revision: number; data?: PreviewFields }
   | { type: 'preview/failure'; revision: number; message: string };
 export function studioReducer(state: StudioState, action: Action): StudioState {
+  if (action.type === 'config/external-edit') return { ...state, preview: 'stale', selected: null, request: null, revision: state.revision + 1 };
   if (action.type === 'config/save') {
     if (state.config === 'invalid') return state;
     return { ...state, saved: { ...state.working }, config: 'saved' };

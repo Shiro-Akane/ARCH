@@ -60,3 +60,9 @@ studio/.local/import-venv/bin/python studio/scripts/import_cellular.py
 ```
 
 Offline import dependencies: h5py 3.16.0 (BSD-3-Clause), NumPy 2.5.3 (BSD-3-Clause; bundled third-party notices in its distribution). They live only under ignored studio/.local; no Python server is used.
+
+## Phase 1B real config working copy
+
+Select **Real Config → Open Config** and choose a local UTF-8 `.par` (up to 1 MiB). Core sections remain open and scroll inside the parameter panel. Custom keys remain text unless explicit metadata is available. `refine_threshold` has a source-backed [0,1] slider plus precise numeric input. Edit in memory, Revert to the loaded snapshot, or Save As a new `_modified.par` download. The source file is never overwritten; downloaded exports do not claim in-place saves. Mock preview remains illustrative and disconnected from ARCH initialization.
+
+Desktop/workstation is the target platform, particularly 1280×720 and 1920×1080. Narrow windows receive basic overflow/accessibility checks only. See PHASE1B_COMPLETION_REPORT.md for the checkpoint and validation boundaries.

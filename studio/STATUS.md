@@ -212,3 +212,58 @@ User requested running Cellular with the existing executable, then importing tho
 - No automatic push or Phase 1B. Stop after local commit/tag verification.
 
 - Staged whitespace audit: original target/license whitespace preserved as documented exceptions; remaining staged paths pass. Fixture uses repository Git LFS rules.
+
+## P1B-M0 complete
+- Clean baseline studio-phase1a-v0.2.0 resolves to 3692d5b64ec75733846e705990f6707d5444ebb7; created studio/phase1b-config.
+- Phase 0 Mock and Phase 1A Plotfile browser regression passed immediately before branch creation; no baseline rerun.
+- Observed .par grammar: ConfigParser.h strips text after first #, splits at first =, trims ASCII spaces/tabs/CR/LF. No INI sections, quoting or escape processing. Lines without = are ignored by ARCH but retained as raw by Studio.
+- Known value forms: GetBool accepts case-insensitive true/false only; GetInt/GetDouble use stoi/stod (prefix acceptance possible); GetString returns trimmed literal. RuntimeParams supports scientific notation and limited pi expressions for coordinate/gravity fields. Studio will preserve unfamiliar literals and reject ambiguous edited numeric tokens rather than emulate unsafe prefix conversion.
+- Duplicate-key behavior: exact case-sensitive key, last occurrence wins (map assignment). UI edits only last effective occurrence and identifies its line.
+- Unknown-key behavior: all keys retained in parser map and copied to custom numeric/string maps by RuntimeParams. No inferred units/ranges.
+- Representative fixtures: simulation/Sod/Sod_beginner.par, simulation/Cellular/Cellular.par, simulation/GaussianPulse/Gaussian.par (2*pi expression).
+- Range evidence: RuntimeParams.h validates refine_threshold in [0,1], derefine_threshold >=0 and < refine_threshold. Configuration editing only, no AMR implementation. cfl and custom values get no guessed slider.
+- Scope checked against PHASE1B_TARGET.md. No Core/Setup/Init/Build/Run changes.
+
+## P1B-M1 complete
+- ParDocument preserves original text and value offsets; effective entries use confirmed last-wins semantics.
+- Real Sod/Cellular/Gaussian no-edit round trips pass; single edit changes only selected value, comments/raw lines/CRLF/BOM preserved. Unsafe value injection rejected.
+- 3 parser tests and typecheck pass. Scope reviewed: no runtime/solver invocation.
+
+## P1B-M2 complete
+- Browser loads sod.par read-only, filename and Config saved visible; all effective keys rendered.
+- Working copy state tests verify saved/dirty/invalid/revert, original-text preservation and Mock stale invalidation. Latest request gate reused.
+- Typecheck passes; scope reviewed, no initializer or file mutation.
+
+## P1B-M3 complete
+- Core Grid/EOS/Network/Runtime now persistent sections in real and Mock panels. Custom remains collapsible. Existing fixed-width panel and parameter-scroll retained.
+- Browser confirms real Sod Core contents present without disclosure clicks; typecheck passes. Scope reviewed: no layout/theme/renderer redesign.
+
+## P1B-M4 complete
+- refine_threshold uses explicit RuntimeParams [0,1] evidence; no slider guessed for cfl/tmax/custom keys.
+- Browser verified exact value 0.7654321, keyboard slider update to 0.766, and invalid 1.2 retained without clamp.
+- Slider coarse step 0.001 is UI-only; precise input has no quantization. Range tests/typecheck pass. Scope reviewed.
+
+## P1B-M5 complete
+- Custom fields retain raw names/text with no inferred unit/range; known bool/use_nse enum/numeric controls follow verified accessors.
+- Validation covers finite numeric tokens, 32-bit integers, bool/enum, explicit ranges, threshold ordering and required restart_file. Duplicate editor identifies last effective occurrence.
+- 9 config tests and typecheck pass. Raw ignored lines retained; syntax not recognized by schema is preserved, not guessed. Scope reviewed.
+
+## P1B-M6 complete
+- Revert restores loaded text/state; Save As exports a new _modified.par and does not claim in-place access or completed disk Save.
+- Browser downloaded sod_modified.par; Windows readback exactly equals original with only tmax 0.15 -> 0.25. Revert restored 0.15.
+- Export/round-trip tests and typecheck pass. Config remains mounted across view switches. Scope reviewed; original files unchanged.
+
+## P1B-M7 complete
+- Final 34/34 tests, lint, typecheck and build pass; Phase 0/1A tests retained. No dependency or lockfile change.
+- Browser: real config load/second file, saved/dirty/invalid, Revert, actual Save As download, Custom text controls, slider keyboard/numeric sync, Mock current generation, Plotfile metadata/fields/LineVis/Inspector and error recovery verified.
+- Desktop-first QA per latest user instruction: 1280x720 and 1920x1080 screenshots inspected; no horizontal overflow, Core sections persistent, controls reachable through panel scrolling. 1440x900 panel has overflow:auto (732px viewport / 3280px content).
+- Narrow-window smoke check only: no horizontal overflow or inaccessible controls. Mobile is not a target; no dedicated mobile UX/features added.
+- Parser handles exact ASCII trim and preserves BOM as part of the key, matching ConfigParser (no silent key normalization). Prototype-like keys use plain dictionaries. Finite restricted pi expressions validated.
+- Real fixture copies byte-identical to repository sources. Scope reviewed: no ARCH Core/rebuild/Setup/Init/Build/Run/SSH/AMR work.
+
+## P1B-M8 checkpoint
+- Completion report: PHASE1B_COMPLETION_REPORT.md, including limitations and acceptance evidence.
+- Commit: feat(studio): integrate real ARCH parameter working copy.
+- Tag: studio-phase1b-v0.3.0 (resolve tag for commit hash).
+- Only studio/ code, tests and documentation; no node_modules/.local/dist. Original imported target/fixture whitespace retained as documented exceptions.
+- Stop after local commit/tag verification; no automatic push or next stage.

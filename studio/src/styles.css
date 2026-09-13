@@ -955,3 +955,7 @@ a {
 .plotfile-inspector dd { margin: 0; overflow-wrap: anywhere; }
 .plotfile-page nav { display: flex; gap: 10px; margin-top: 20px; }
 @media (max-width: 900px) { .plotfile-content { grid-template-columns: 1fr; } }
+
+.core-group h3 { margin: 0; padding: 12px 14px 6px; font-size: 12px; text-transform: uppercase; display: flex; justify-content: space-between; }
+
+.config-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px 0; }
