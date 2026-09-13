@@ -942,3 +942,16 @@ a {
 .field-placeholder select { background:#1a232d; color:#d9e4ed; border:1px solid #526170; border-radius:4px; padding:5px; }
 
 .selected-point { display:block; width:13px; height:13px; border:2px solid white; border-radius:50%; box-shadow:0 0 0 1px #17222c; pointer-events:none; }
+
+.open-plotfile { display:flex; gap:12px; align-items:center; padding:12px 0; flex-wrap:wrap; }
+
+.line-renderer { position: relative; height: 420px; min-height: 300px; background: #fff; color: #18212b; }
+.line-renderer > div { position: absolute; inset: 0; }
+.plotfile-page { overflow: auto; }
+
+.plotfile-content { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 24px; margin-top: 20px; }
+.plotfile-inspector { min-width: 0; }
+.plotfile-inspector dl { display: grid; grid-template-columns: 80px minmax(0, 1fr); gap: 10px; }
+.plotfile-inspector dd { margin: 0; overflow-wrap: anywhere; }
+.plotfile-page nav { display: flex; gap: 10px; margin-top: 20px; }
+@media (max-width: 900px) { .plotfile-content { grid-template-columns: 1fr; } }

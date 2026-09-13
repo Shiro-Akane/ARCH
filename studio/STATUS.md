@@ -150,3 +150,65 @@ User requested running Cellular with the existing executable, then importing tho
 - Release gate: npm test, npm run lint, npm run typecheck, npm run build.
 - Production dist and release documentation are packaged separately; ignored node_modules, .local, caches and dist are not committed.
 - No feature or directory refactor, no ARCH Core changes, no further HDF5/.par/Build/Run integration.
+
+## Phase 1A / P1A-M0 complete
+- Started clean from tag studio-phase0-v0.1.0 at 286b476c3c7ca97fa102a865c18e0af3acd5cc7a on studio/phase1a-plotfile.
+- User scope: stop after P1A-M5 and produce an interim report; no M6/M7 checkpoint yet.
+- Scope reviewed against PHASE1A_TARGET.md; only studio changes allowed, no ARCH rerun/rebuild or AMR reconstruction.
+
+## P1A-M1 complete
+- Browser opened existing SodBeginner_HLLC_plt_0003.h5 read-only through h5wasm 0.10.3.
+- File handles and virtual files are released after reading; 16 MiB local-file limit.
+- Scope reviewed: no disk scanning, backend, ARCH run or rebuild.
+
+## P1A-M2 complete
+- Browser confirms Sod metadata time=0.15, dim=1, geometry=cartesian and actual Data fields DENS, ENER, PRES, VELX.
+- Metadata/discovery isolated in PlotfilePreviewProvider; typecheck passes.
+- Scope reviewed: no guessed fields, no hierarchy parsing.
+
+## P1A-M3 complete
+- Sod DENS browser adaptation: 64 samples, min=0.125, max=1.
+- Dedicated LinePreviewData leaves Phase 0 heatmap contract unchanged. Coordinate/value sorting preserves pairing; unique uniform coordinates required.
+- Adapter tests pass for unknown names, range, nearest sample and invalid arrays.
+- Scope reviewed: only Grid/x; no level/morton, ghosts or AMR reconstruction.
+
+## P1A-M4 complete
+- H5Web LineVis renders real Sod DENS curve in browser; screenshot inspected.
+- Renderer consumes only LinePreviewData; existing Heatmap Renderer unchanged.
+- Field selector uses discovered raw names. Typecheck passes.
+- Scope reviewed: 1D only, no source-specific renderer branch.
+
+## P1A-M5 complete — stop at user boundary
+- Real Inspector displays file, time, dimension, geometry, selected raw field, min/max and selected x/value.
+- Click selection verified on Sod PRES: sample 33, x=0.5078125, value=0.3054751636143017; independently matches h5py read of existing file.
+- Browser verified Mock switch and 512x512 generation, non-HDF5 error with cleared old data, reopening valid data and sample-number selection.
+- Final gate: 14/14 tests (12 original unchanged + 2 adapter tests), lint, typecheck, build and git diff --check pass.
+- Build warning: main bundle 6.12 MB / gzip 1.39 MB, includes HDF5 WASM. No performance optimization scope added.
+- Scope review: M0-M5 delivered; M6 complete error matrix and M7 checkpoint are not claimed. No ARCH rebuild/run/baseline retest. All changes remain in studio/; no new commit/tag.
+- Interim report: PHASE1A_M5_REPORT.md. Stop here as requested.
+
+## M6 follow-up work — final browser gate pending
+- Added reproducible unchanged real Sod fixture and h5wasm integration tests for metadata, actual fields, unknown name, min/max and exact sample value.
+- Added invalid HDF5/non-ARCH/missing Data/missing attributes/unsupported type/empty/NaN/Inf/read-failure coverage.
+- Extracted the existing latest-request guard for direct regression testing; old success/failure cannot replace a newer result, current errors recover, empty chooser selection is a no-op.
+- 22/22 tests, lint, typecheck, build and diff whitespace checks pass on the current source. Phase 0 tests retained.
+- Refreshed dependency license inventory (294 records); full h5wasm license retained.
+- Final browser verification was rejected twice by automatic approval review, which treats the earlier M5 stop as still binding and does not accept the goal-continuation message as new authorization.
+- M6/M7 completion is not claimed. Await explicit user confirmation to continue browser verification and checkpoint submission. No commit/tag was created.
+
+## P1A-M6 complete
+- User explicitly confirmed continuation after the earlier M5 stop; prior pending-approval entries are historical.
+- Final browser regression: unknown custom_species field enumerates, renders and reports x=0.0078125/value=1; Mock switching generates a current 512x512 preview with MOCK / DEMO label.
+- Cancelled selection is covered at the application's empty-selection boundary by unit test; native dialog cancellation is not automated by the browser tool.
+- All nine error categories in the target have application-level test coverage; actual invalid-file/recovery UI verified during M5. Request success/failure race protection is directly tested.
+- Final source checks remain 22/22 tests, lint, typecheck, build, diff check passing. No source changes since those successful checks.
+- Scope reviewed: no ARCH Core, baseline, AMR or later-phase expansion.
+
+## P1A-M7 release checkpoint
+- Completion evidence and limitations: PHASE1A_COMPLETION_REPORT.md.
+- Dependency inventory refreshed; h5wasm license copied verbatim. Only studio/ source, tests, small real fixture and documentation belong in the checkpoint.
+- Commit message: feat(studio): integrate real 1D ARCH plotfiles.
+- Tag: studio-phase1a-v0.2.0; resolve the tag for the final commit hash.
+- No automatic push or Phase 1B. Stop after local commit/tag verification.
+
+- Staged whitespace audit: original target/license whitespace preserved as documented exceptions; remaining staged paths pass. Fixture uses repository Git LFS rules.

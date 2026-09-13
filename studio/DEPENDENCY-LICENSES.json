@@ -15,11 +15,6 @@
     "license": "MIT"
   },
   {
-    "package": "semver",
-    "version": "6.3.1",
-    "license": "ISC"
-  },
-  {
     "package": "@babel/generator",
     "version": "7.29.8",
     "license": "MIT"
@@ -28,11 +23,6 @@
     "package": "@babel/helper-compilation-targets",
     "version": "7.29.7",
     "license": "MIT"
-  },
-  {
-    "package": "semver",
-    "version": "6.3.1",
-    "license": "ISC"
   },
   {
     "package": "@babel/helper-globals",
@@ -110,11 +100,6 @@
     "license": "MIT"
   },
   {
-    "package": "eslint-visitor-keys",
-    "version": "3.4.3",
-    "license": "Apache-2.0"
-  },
-  {
     "package": "@eslint-community/regexpp",
     "version": "4.12.2",
     "license": "MIT"
@@ -177,16 +162,6 @@
   {
     "package": "@h5web/lib",
     "version": "17.0.0",
-    "license": "MIT"
-  },
-  {
-    "package": "@types/ndarray",
-    "version": "1.0.14",
-    "license": "MIT"
-  },
-  {
-    "package": "ndarray",
-    "version": "1.0.19",
     "license": "MIT"
   },
   {
@@ -265,62 +240,52 @@
     "license": "MIT"
   },
   {
-    "package": "scheduler",
-    "version": "0.21.0",
-    "license": "MIT"
-  },
-  {
-    "package": "zustand",
-    "version": "3.7.2",
-    "license": "MIT"
-  },
-  {
-    "package": "node_modules/@rolldown/binding-android-arm-eabi",
+    "package": "@rolldown/binding-android-arm-eabi",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-android-arm64",
+    "package": "@rolldown/binding-android-arm64",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-darwin-arm64",
+    "package": "@rolldown/binding-darwin-arm64",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-darwin-x64",
+    "package": "@rolldown/binding-darwin-x64",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-freebsd-x64",
+    "package": "@rolldown/binding-freebsd-x64",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-linux-arm-gnueabihf",
+    "package": "@rolldown/binding-linux-arm-gnueabihf",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-linux-arm64-gnu",
+    "package": "@rolldown/binding-linux-arm64-gnu",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-linux-arm64-musl",
+    "package": "@rolldown/binding-linux-arm64-musl",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-linux-ppc64-gnu",
+    "package": "@rolldown/binding-linux-ppc64-gnu",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-linux-s390x-gnu",
+    "package": "@rolldown/binding-linux-s390x-gnu",
     "version": "1.2.8",
     "license": "MIT"
   },
@@ -330,22 +295,22 @@
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-linux-x64-musl",
+    "package": "@rolldown/binding-linux-x64-musl",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-openharmony-arm64",
+    "package": "@rolldown/binding-openharmony-arm64",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-win32-arm64-msvc",
+    "package": "@rolldown/binding-win32-arm64-msvc",
     "version": "1.2.8",
     "license": "MIT"
   },
   {
-    "package": "node_modules/@rolldown/binding-win32-x64-msvc",
+    "package": "@rolldown/binding-win32-x64-msvc",
     "version": "1.2.8",
     "license": "MIT"
   },
@@ -356,7 +321,17 @@
   },
   {
     "package": "@types/d3-array",
+    "version": "3.0.3",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/d3-array",
     "version": "3.2.2",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/d3-color",
+    "version": "3.1.0",
     "license": "MIT"
   },
   {
@@ -371,6 +346,11 @@
   },
   {
     "package": "@types/d3-format",
+    "version": "3.0.1",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/d3-format",
     "version": "3.0.4",
     "license": "MIT"
   },
@@ -381,12 +361,22 @@
   },
   {
     "package": "@types/d3-interpolate",
+    "version": "3.0.1",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/d3-interpolate",
     "version": "3.0.4",
     "license": "MIT"
   },
   {
     "package": "@types/d3-path",
     "version": "1.0.11",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/d3-scale",
+    "version": "4.0.2",
     "license": "MIT"
   },
   {
@@ -402,6 +392,11 @@
   {
     "package": "@types/d3-shape",
     "version": "1.3.12",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/d3-time",
+    "version": "3.0.0",
     "license": "MIT"
   },
   {
@@ -441,6 +436,11 @@
   },
   {
     "package": "@types/ndarray",
+    "version": "1.0.14",
+    "license": "MIT"
+  },
+  {
+    "package": "@types/ndarray",
     "version": "1.1.0",
     "license": "MIT"
   },
@@ -475,6 +475,11 @@
     "license": "MIT"
   },
   {
+    "package": "@types/react-reconciler",
+    "version": "0.28.9",
+    "license": "MIT"
+  },
+  {
     "package": "@types/react-slider",
     "version": "1.3.6",
     "license": "MIT"
@@ -487,11 +492,6 @@
   {
     "package": "@typescript-eslint/eslint-plugin",
     "version": "8.70.0",
-    "license": "MIT"
-  },
-  {
-    "package": "ignore",
-    "version": "7.0.9",
     "license": "MIT"
   },
   {
@@ -610,46 +610,6 @@
     "license": "MIT and ISC"
   },
   {
-    "package": "@types/d3-array",
-    "version": "3.0.3",
-    "license": "MIT"
-  },
-  {
-    "package": "@types/d3-color",
-    "version": "3.1.0",
-    "license": "MIT"
-  },
-  {
-    "package": "@types/d3-format",
-    "version": "3.0.1",
-    "license": "MIT"
-  },
-  {
-    "package": "@types/d3-interpolate",
-    "version": "3.0.1",
-    "license": "MIT"
-  },
-  {
-    "package": "@types/d3-scale",
-    "version": "4.0.2",
-    "license": "MIT"
-  },
-  {
-    "package": "@types/d3-time",
-    "version": "3.0.0",
-    "license": "MIT"
-  },
-  {
-    "package": "d3-array",
-    "version": "3.2.1",
-    "license": "ISC"
-  },
-  {
-    "package": "d3-format",
-    "version": "3.1.0",
-    "license": "ISC"
-  },
-  {
     "package": "@vitejs/plugin-react",
     "version": "6.1.1",
     "license": "MIT"
@@ -667,6 +627,16 @@
   {
     "package": "ajv",
     "version": "6.15.0",
+    "license": "MIT"
+  },
+  {
+    "package": "balanced-match",
+    "version": "0.4.2",
+    "license": "MIT"
+  },
+  {
+    "package": "balanced-match",
+    "version": "1.0.2",
     "license": "MIT"
   },
   {
@@ -736,6 +706,11 @@
   },
   {
     "package": "d3-array",
+    "version": "3.2.1",
+    "license": "ISC"
+  },
+  {
+    "package": "d3-array",
     "version": "3.2.4",
     "license": "ISC"
   },
@@ -747,6 +722,11 @@
   {
     "package": "d3-delaunay",
     "version": "6.0.2",
+    "license": "ISC"
+  },
+  {
+    "package": "d3-format",
+    "version": "3.1.0",
     "license": "ISC"
   },
   {
@@ -851,6 +831,11 @@
   },
   {
     "package": "eslint-visitor-keys",
+    "version": "3.4.3",
+    "license": "Apache-2.0"
+  },
+  {
+    "package": "eslint-visitor-keys",
     "version": "5.0.1",
     "license": "Apache-2.0"
   },
@@ -920,7 +905,7 @@
     "license": "ISC"
   },
   {
-    "package": "node_modules/fsevents",
+    "package": "fsevents",
     "version": "2.3.3",
     "license": "MIT"
   },
@@ -945,6 +930,11 @@
     "license": "MIT"
   },
   {
+    "package": "h5wasm",
+    "version": "0.10.3",
+    "license": "NIST notice and bundled HDF5 license; see licenses/h5wasm-LICENSE.txt"
+  },
+  {
     "package": "hashery",
     "version": "1.5.1",
     "license": "MIT"
@@ -965,6 +955,11 @@
     "license": "MIT"
   },
   {
+    "package": "hookified",
+    "version": "2.2.0",
+    "license": "MIT"
+  },
+  {
     "package": "ieee754",
     "version": "1.2.1",
     "license": "BSD-3-Clause"
@@ -972,6 +967,11 @@
   {
     "package": "ignore",
     "version": "5.3.2",
+    "license": "MIT"
+  },
+  {
+    "package": "ignore",
+    "version": "7.0.9",
     "license": "MIT"
   },
   {
@@ -1015,11 +1015,6 @@
     "license": "MIT"
   },
   {
-    "package": "@types/react-reconciler",
-    "version": "0.28.9",
-    "license": "MIT"
-  },
-  {
     "package": "js-tokens",
     "version": "4.0.0",
     "license": "MIT"
@@ -1060,37 +1055,37 @@
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-android-arm64",
+    "package": "lightningcss-android-arm64",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-darwin-arm64",
+    "package": "lightningcss-darwin-arm64",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-darwin-x64",
+    "package": "lightningcss-darwin-x64",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-freebsd-x64",
+    "package": "lightningcss-freebsd-x64",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-linux-arm-gnueabihf",
+    "package": "lightningcss-linux-arm-gnueabihf",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-linux-arm64-gnu",
+    "package": "lightningcss-linux-arm64-gnu",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-linux-arm64-musl",
+    "package": "lightningcss-linux-arm64-musl",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
@@ -1100,17 +1095,17 @@
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-linux-x64-musl",
+    "package": "lightningcss-linux-x64-musl",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-win32-arm64-msvc",
+    "package": "lightningcss-win32-arm64-msvc",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
   {
-    "package": "node_modules/lightningcss-win32-x64-msvc",
+    "package": "lightningcss-win32-x64-msvc",
     "version": "1.33.0",
     "license": "MPL-2.0"
   },
@@ -1157,6 +1152,11 @@
   {
     "package": "natural-compare",
     "version": "1.4.0",
+    "license": "MIT"
+  },
+  {
+    "package": "ndarray",
+    "version": "1.0.19",
     "license": "MIT"
   },
   {
@@ -1230,11 +1230,6 @@
     "license": "MIT"
   },
   {
-    "package": "react-is",
-    "version": "16.13.1",
-    "license": "MIT"
-  },
-  {
     "package": "punycode",
     "version": "2.3.1",
     "license": "MIT"
@@ -1242,11 +1237,6 @@
   {
     "package": "qified",
     "version": "0.10.1",
-    "license": "MIT"
-  },
-  {
-    "package": "hookified",
-    "version": "2.2.0",
     "license": "MIT"
   },
   {
@@ -1262,6 +1252,11 @@
   {
     "package": "react-icons",
     "version": "5.4.0",
+    "license": "MIT"
+  },
+  {
+    "package": "react-is",
+    "version": "16.13.1",
     "license": "MIT"
   },
   {
@@ -1285,11 +1280,6 @@
     "license": "MIT"
   },
   {
-    "package": "scheduler",
-    "version": "0.21.0",
-    "license": "MIT"
-  },
-  {
     "package": "react-slider",
     "version": "2.0.6",
     "license": "MIT"
@@ -1310,18 +1300,8 @@
     "license": "MIT"
   },
   {
-    "package": "balanced-match",
-    "version": "0.4.2",
-    "license": "MIT"
-  },
-  {
     "package": "reduce-function-call",
     "version": "1.0.3",
-    "license": "MIT"
-  },
-  {
-    "package": "balanced-match",
-    "version": "1.0.2",
     "license": "MIT"
   },
   {
@@ -1341,8 +1321,28 @@
   },
   {
     "package": "scheduler",
+    "version": "0.21.0",
+    "license": "MIT"
+  },
+  {
+    "package": "scheduler",
+    "version": "0.21.0",
+    "license": "MIT"
+  },
+  {
+    "package": "scheduler",
     "version": "0.23.2",
     "license": "MIT"
+  },
+  {
+    "package": "semver",
+    "version": "6.3.1",
+    "license": "ISC"
+  },
+  {
+    "package": "semver",
+    "version": "6.3.1",
+    "license": "ISC"
   },
   {
     "package": "semver",
@@ -1457,6 +1457,11 @@
   {
     "package": "zod-validation-error",
     "version": "4.0.2",
+    "license": "MIT"
+  },
+  {
+    "package": "zustand",
+    "version": "3.7.2",
     "license": "MIT"
   },
   {

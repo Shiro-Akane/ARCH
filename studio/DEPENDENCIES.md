@@ -20,4 +20,9 @@
 | typescript-eslint | 8.70.0 | MIT | devDependencies |
 | vite | 8.3.0 | MIT | devDependencies |
 
-H5Web is used only through its public visualization API. Its peer/transitive WebGL dependencies are locked in package-lock.json. No @h5web/app, h5wasm or HDF5 reader is installed. Node.js 24.21.0 is isolated in the WSL user directory.
+H5Web is used only through its public visualization API. Its peer/transitive WebGL dependencies are locked in package-lock.json. At the frozen Phase 0 checkpoint, no @h5web/app, h5wasm or HDF5 reader was installed; Phase 1A adds h5wasm as recorded below. Node.js 24.21.0 is isolated in the WSL user directory.
+
+## Phase 1A addition (recorded before installation)
+- h5wasm 0.10.3: browser-local read-only HDF5 decoding using the public NIST API; no server and no @h5web/app dependency.
+- License: NIST notice plus bundled HDF5 license (package LICENSE.txt; not MIT). Preserve the complete notice. Official source: https://github.com/usnistgov/h5wasm .
+- Needed to decode the bytes of files explicitly selected by the user; renderer remains independent.
