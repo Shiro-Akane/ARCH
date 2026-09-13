@@ -267,3 +267,47 @@ User requested running Cellular with the existing executable, then importing tho
 - Tag: studio-phase1b-v0.3.0 (resolve tag for commit hash).
 - Only studio/ code, tests and documentation; no node_modules/.local/dist. Original imported target/fixture whitespace retained as documented exceptions.
 - Stop after local commit/tag verification; no automatic push or next stage.
+
+## P1C-M0 complete
+- Clean baseline studio-phase1b-v0.3.0 = 9609c9d4e5f8ea289b19119a503c223f7d88d8a9; created studio/phase1c-parameter-ui.
+- Existing Phase 0/1A/1B gates and browser flows verified in preceding checkpoint; source unchanged at branch start.
+- Before screenshots inspected at 1280x720 and 1920x1080 using sod.par. Before panel scrollHeight=3280; preview region 788x656 and 1384x1016 respectively. Left panel width at 1280 is 268px.
+- Full PHASE1C_TARGET.md read. Only presentation changes; parser/serialization/parameter schema semantics frozen. No extra references or dependencies needed.
+
+## P1C-M1 complete
+- Four persistent Core Block buttons with selected state and actual-value summaries; browser confirms Grid cartesian/1D/4 blocks X, EOS ideal, Network disabled, Runtime tmax 0.15. Typecheck passes. Scope reviewed.
+
+## P1C-M2 complete
+- Only selected Core block renders details, in both Real Config and Mock panels. Browser Runtime selection hides geometry, shows tmax, and leaves Config saved. Typecheck passes. Scope reviewed.
+
+## P1C-M3 complete
+- Explicit nblockx2/nblockx3 topology drives 1D/2D/3D presentation; absent/invalid topology conservatively shows all axes. Inactive fields remain in Advanced.
+- Dimension and summary tests/typecheck pass, no document mutation or schema change. Scope reviewed.
+
+## P1C-M4 complete
+- Known domain min/max, boundary left/right, refinement levels and internal-energy bounds render in pairs. Missing keys display Not specified without insertion. Browser confirms X domain pair and inactive X2 hidden. Typecheck passes. Scope reviewed.
+
+## P1C-M5 complete
+- Default source line text removed; tooltip retains raw key, source line, type and duplicate semantics. Explicit limited labels used, unknown names unchanged. Browser confirms Geometry info and Left/Right boundary. Typecheck passes. Scope reviewed.
+
+## P1C-M6 complete
+- Current-block search includes Advanced keys; Custom search matches raw key/known label/value and opens filtered All Custom Parameters without scientific grouping.
+- Browser finds inactive x2_min and rho_right while Config remains saved. Presentation tests/typecheck pass. Scope reviewed.
+
+## P1C-M7 complete
+- Dependency-free read-only loaded Raw source with line numbers; browser confirms exact original comment/key lines. No alternate editable form or serializer changes.
+- Core navigation sticky within single scroll region; Mock Custom also searchable/collapsed. Typecheck passes. Scope reviewed.
+
+## P1C-M8 validation record
+- Target rechecked. Final test 37/37, lint, typecheck and build pass; no application edits after these gates.
+- Before/after screenshots inspected at 1280x720 and 1920x1080. Default Sod scroll content 3280 -> 1063 px, sidebar 268 px unchanged; Preview 788x656 / 1384x1016 unchanged. 2560x1440 and 900px window no horizontal overflow.
+- Browser: Mock Preview/Inspector; real Plotfile PRES/LineVis/Inspector; Real Config block/search/source, dimension visibility, numeric/slider, Invalid/Revert verified.
+- Save As export tests and unchanged handler pass, but this session's in-app browser download did not yield a confirmed file. Disk delivery remains an explicit validation limitation, not a claimed pass. Historical Phase 1B download evidence retained without rerun claims.
+- Core, parser/serialization/schema/state, ConfigControl, Plotfile and dependencies unchanged. No baseline rerun.
+
+## P1C-M9 checkpoint
+- Target rechecked; PHASE1C_UI_COMPLETION_REPORT.md records changes, measurements and validation limits.
+- Commit: refactor(studio): simplify parameter panel information architecture.
+- Tag: studio-phase1c-v0.4.0 (resolve tag for commit hash).
+- Local checkpoint only; excluded node_modules/.local/dist. Imported target whitespace retained verbatim.
+- Stop at Phase 1C; no automatic push or next stage. Browser download-to-disk confirmation remains outstanding.
