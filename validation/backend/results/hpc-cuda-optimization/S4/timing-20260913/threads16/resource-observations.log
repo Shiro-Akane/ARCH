@@ -1,0 +1,2294 @@
+2026-09-13T05:57:09+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+3754921       1 1505989  0.2 76016 tailscaled
+   1102       1 1654425  0.1 31128 containerd
+      1       0 1654469  0.0 13640 systemd
+      2       0 1654469  0.0     0 kthreadd
+      3       2 1654469  0.0     0 rcu_gp
+      4       2 1654469  0.0     0 rcu_par_gp
+      5       2 1654469  0.0     0 slub_flushwq
+      6       2 1654469  0.0     0 netns
+      8       2 1654469  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654469  0.0     0 mm_percpu_wq
+     11       2 1654469  0.0     0 rcu_tasks_rude_
+     12       2 1654469  0.0     0 rcu_tasks_trace
+     13       2 1654469  0.0     0 ksoftirqd/0
+     14       2 1654469  0.0     0 rcu_sched
+     15       2 1654469  0.0     0 migration/0
+     16       2 1654469  0.0     0 idle_inject/0
+     18       2 1654469  0.0     0 cpuhp/0
+     19       2 1654469  0.0     0 cpuhp/1
+     20       2 1654469  0.0     0 idle_inject/1
+     21       2 1654469  0.0     0 migration/1
+     22       2 1654469  0.0     0 ksoftirqd/1
+     24       2 1654469  0.0     0 kworker/1:0H-events_highpri
+     25       2 1654469  0.0     0 cpuhp/2
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3539088   8756 113200232    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3526772   8756 113200256    0    0     0    16 1364  840  3  1 96  0  0
+2026-09-13T05:57:19+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868827 2868800       9 1204 94612 ARCH
+2868800 2868768       9  6.2 24272 python3
+2868768 2868720      10  5.6 22520 python3
+3754921       1 1505999  0.2 76016 tailscaled
+   1102       1 1654435  0.1 31128 containerd
+      1       0 1654479  0.0 13640 systemd
+      2       0 1654479  0.0     0 kthreadd
+      3       2 1654479  0.0     0 rcu_gp
+      4       2 1654479  0.0     0 rcu_par_gp
+      5       2 1654479  0.0     0 slub_flushwq
+      6       2 1654479  0.0     0 netns
+      8       2 1654479  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654479  0.0     0 mm_percpu_wq
+     11       2 1654479  0.0     0 rcu_tasks_rude_
+     12       2 1654479  0.0     0 rcu_tasks_trace
+     13       2 1654479  0.0     0 ksoftirqd/0
+     14       2 1654479  0.0     0 rcu_sched
+     15       2 1654479  0.0     0 migration/0
+     16       2 1654479  0.0     0 idle_inject/0
+     18       2 1654479  0.0     0 cpuhp/0
+     19       2 1654479  0.0     0 cpuhp/1
+     20       2 1654479  0.0     0 idle_inject/1
+     21       2 1654479  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3461296   8756 113201664    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3461260   8756 113201664    0    0     0     0 4925 5561 31  0 69  0  0
+2026-09-13T05:57:29+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868860 2868800       6  112 228100 ARCH
+2868800 2868768      19  3.1 24476 python3
+2868768 2868720      20  2.8 22520 python3
+3754921       1 1506009  0.2 76016 tailscaled
+   1102       1 1654445  0.1 31128 containerd
+      1       0 1654489  0.0 13640 systemd
+      2       0 1654489  0.0     0 kthreadd
+      3       2 1654489  0.0     0 rcu_gp
+      4       2 1654489  0.0     0 rcu_par_gp
+      5       2 1654489  0.0     0 slub_flushwq
+      6       2 1654489  0.0     0 netns
+      8       2 1654489  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654489  0.0     0 mm_percpu_wq
+     11       2 1654489  0.0     0 rcu_tasks_rude_
+     12       2 1654489  0.0     0 rcu_tasks_trace
+     13       2 1654489  0.0     0 ksoftirqd/0
+     14       2 1654489  0.0     0 rcu_sched
+     15       2 1654489  0.0     0 migration/0
+     16       2 1654489  0.0     0 idle_inject/0
+     18       2 1654489  0.0     0 cpuhp/0
+     19       2 1654489  0.0     0 cpuhp/1
+     20       2 1654489  0.0     0 idle_inject/1
+     21       2 1654489  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+26 %, 531 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3336388   8756 113214240    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3336604   8756 113214256    0    0     0     0  461  237  3  0 97  0  0
+2026-09-13T05:57:39+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868800 2868768      29  5.5 75400 python3
+2868768 2868720      30  1.9 22520 python3
+3754921       1 1506019  0.2 76016 tailscaled
+   1102       1 1654455  0.1 31128 containerd
+      1       0 1654499  0.0 13640 systemd
+      2       0 1654499  0.0     0 kthreadd
+      3       2 1654499  0.0     0 rcu_gp
+      4       2 1654499  0.0     0 rcu_par_gp
+      5       2 1654499  0.0     0 slub_flushwq
+      6       2 1654499  0.0     0 netns
+      8       2 1654499  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654499  0.0     0 mm_percpu_wq
+     11       2 1654499  0.0     0 rcu_tasks_rude_
+     12       2 1654499  0.0     0 rcu_tasks_trace
+     13       2 1654499  0.0     0 ksoftirqd/0
+     14       2 1654499  0.0     0 rcu_sched
+     15       2 1654499  0.0     0 migration/0
+     16       2 1654499  0.0     0 idle_inject/0
+     18       2 1654499  0.0     0 cpuhp/0
+     19       2 1654499  0.0     0 cpuhp/1
+     20       2 1654499  0.0     0 idle_inject/1
+     21       2 1654499  0.0     0 migration/1
+     22       2 1654499  0.0     0 ksoftirqd/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3485148   8756 113218992    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3424092   8756 113220440    0    0     0  1456 7999 4395 41  1 58  0  0
+2026-09-13T05:57:49+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868930 2868800      10 1185 90856 ARCH
+2868800 2868768      39  4.3 55288 python3
+2868768 2868720      40  1.4 22520 python3
+3754921       1 1506029  0.2 76016 tailscaled
+   1102       1 1654465  0.1 31128 containerd
+      1       0 1654509  0.0 13640 systemd
+      2       0 1654509  0.0     0 kthreadd
+      3       2 1654509  0.0     0 rcu_gp
+      4       2 1654509  0.0     0 rcu_par_gp
+      5       2 1654509  0.0     0 slub_flushwq
+      6       2 1654509  0.0     0 netns
+      8       2 1654509  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654509  0.0     0 mm_percpu_wq
+     11       2 1654509  0.0     0 rcu_tasks_rude_
+     12       2 1654509  0.0     0 rcu_tasks_trace
+     13       2 1654509  0.0     0 ksoftirqd/0
+     14       2 1654509  0.0     0 rcu_sched
+     15       2 1654509  0.0     0 migration/0
+     16       2 1654509  0.0     0 idle_inject/0
+     18       2 1654509  0.0     0 cpuhp/0
+     19       2 1654509  0.0     0 cpuhp/1
+     20       2 1654509  0.0     0 idle_inject/1
+     21       2 1654509  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3416284   8756 113220472    0    0     1     9    0    1  4  0 96  0  0
+12  0   5640 3415996   8756 113220472    0    0     0     0 5244 4969 28  0 72  0  0
+2026-09-13T05:57:59+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868965 2868800       7 1376 93648 ARCH
+2868800 2868768      49  3.6 55288 python3
+2868768 2868720      50  1.1 22520 python3
+3754921       1 1506039  0.2 76016 tailscaled
+   1102       1 1654475  0.1 31128 containerd
+      1       0 1654519  0.0 13640 systemd
+      2       0 1654519  0.0     0 kthreadd
+      3       2 1654519  0.0     0 rcu_gp
+      4       2 1654519  0.0     0 rcu_par_gp
+      5       2 1654519  0.0     0 slub_flushwq
+      6       2 1654519  0.0     0 netns
+      8       2 1654519  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654519  0.0     0 mm_percpu_wq
+     11       2 1654519  0.0     0 rcu_tasks_rude_
+     12       2 1654519  0.0     0 rcu_tasks_trace
+     13       2 1654519  0.0     0 ksoftirqd/0
+     14       2 1654519  0.0     0 rcu_sched
+     15       2 1654519  0.0     0 migration/0
+     16       2 1654519  0.0     0 idle_inject/0
+     18       2 1654519  0.0     0 cpuhp/0
+     19       2 1654519  0.0     0 cpuhp/1
+     20       2 1654519  0.0     0 idle_inject/1
+     21       2 1654519  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3414604   8756 113224840    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3414316   8756 113224848    0    0     0     0 5968 10104 30  0 70  0  0
+2026-09-13T05:58:09+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869001 2868800       5  118 226388 ARCH
+2868800 2868768      59  3.2 55288 python3
+2868768 2868720      60  1.0 22520 python3
+3754921       1 1506049  0.2 76016 tailscaled
+   1102       1 1654485  0.1 31128 containerd
+      1       0 1654529  0.0 13640 systemd
+      2       0 1654529  0.0     0 kthreadd
+      3       2 1654529  0.0     0 rcu_gp
+      4       2 1654529  0.0     0 rcu_par_gp
+      5       2 1654529  0.0     0 slub_flushwq
+      6       2 1654529  0.0     0 netns
+      8       2 1654529  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654529  0.0     0 mm_percpu_wq
+     11       2 1654529  0.0     0 rcu_tasks_rude_
+     12       2 1654529  0.0     0 rcu_tasks_trace
+     13       2 1654529  0.0     0 ksoftirqd/0
+     14       2 1654529  0.0     0 rcu_sched
+     15       2 1654529  0.0     0 migration/0
+     16       2 1654529  0.0     0 idle_inject/0
+     18       2 1654529  0.0     0 cpuhp/0
+     19       2 1654529  0.0     0 cpuhp/1
+     20       2 1654529  0.0     0 idle_inject/1
+     21       2 1654529  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+26 %, 531 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3293740   8756 113237464    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3293452   8756 113237464    0    0     0     0  435  256  3  0 97  0  0
+2026-09-13T05:58:19+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869036 2868800       7  108 228980 ARCH
+2868800 2868768      69  3.6 58080 python3
+2868768 2868720      70  0.8 22520 python3
+3754921       1 1506059  0.2 76016 tailscaled
+   1102       1 1654495  0.1 31128 containerd
+      1       0 1654539  0.0 13640 systemd
+      2       0 1654539  0.0     0 kthreadd
+      3       2 1654539  0.0     0 rcu_gp
+      4       2 1654539  0.0     0 rcu_par_gp
+      5       2 1654539  0.0     0 slub_flushwq
+      6       2 1654539  0.0     0 netns
+      8       2 1654539  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654539  0.0     0 mm_percpu_wq
+     11       2 1654539  0.0     0 rcu_tasks_rude_
+     12       2 1654539  0.0     0 rcu_tasks_trace
+     13       2 1654539  0.0     0 ksoftirqd/0
+     14       2 1654539  0.0     0 rcu_sched
+     15       2 1654539  0.0     0 migration/0
+     16       2 1654539  0.0     0 idle_inject/0
+     18       2 1654539  0.0     0 cpuhp/0
+     19       2 1654539  0.0     0 cpuhp/1
+     20       2 1654539  0.0     0 idle_inject/1
+     21       2 1654539  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+26 %, 531 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3276808   8756 113244704    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3461652   8756 113242192    0    0     0  2268 1288  626  2  1 97  0  0
+2026-09-13T05:58:29+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869072 2868800       9 1201 94220 ARCH
+2868800 2868768      80  3.9 58404 python3
+2868768 2868720      81  0.7 22520 python3
+3754921       1 1506070  0.2 76016 tailscaled
+   1102       1 1654506  0.1 31128 containerd
+      1       0 1654550  0.0 13640 systemd
+      2       0 1654550  0.0     0 kthreadd
+      3       2 1654550  0.0     0 rcu_gp
+      4       2 1654550  0.0     0 rcu_par_gp
+      5       2 1654550  0.0     0 slub_flushwq
+      6       2 1654550  0.0     0 netns
+      8       2 1654550  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654550  0.0     0 mm_percpu_wq
+     11       2 1654550  0.0     0 rcu_tasks_rude_
+     12       2 1654550  0.0     0 rcu_tasks_trace
+     13       2 1654550  0.0     0 ksoftirqd/0
+     14       2 1654550  0.0     0 rcu_sched
+     15       2 1654550  0.0     0 migration/0
+     16       2 1654550  0.0     0 idle_inject/0
+     18       2 1654550  0.0     0 cpuhp/0
+     19       2 1654550  0.0     0 cpuhp/1
+     20       2 1654550  0.0     0 idle_inject/1
+     21       2 1654550  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3389084   8756 113243696    0    0     1     9    0    1  4  0 96  0  0
+ 2  0   5640 3387340   8756 113243696    0    0     0     0 5889 6081 31  0 69  0  0
+2026-09-13T05:58:39+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869171 2868800       7 1209 91856 ARCH
+2868800 2868768      90  3.7 58404 python3
+2868768 2868720      91  0.6 22520 python3
+3754921       1 1506080  0.2 76016 tailscaled
+   1102       1 1654516  0.1 31128 containerd
+      1       0 1654560  0.0 13640 systemd
+      2       0 1654560  0.0     0 kthreadd
+      3       2 1654560  0.0     0 rcu_gp
+      4       2 1654560  0.0     0 rcu_par_gp
+      5       2 1654560  0.0     0 slub_flushwq
+      6       2 1654560  0.0     0 netns
+      8       2 1654560  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654560  0.0     0 mm_percpu_wq
+     11       2 1654560  0.0     0 rcu_tasks_rude_
+     12       2 1654560  0.0     0 rcu_tasks_trace
+     13       2 1654560  0.0     0 ksoftirqd/0
+     14       2 1654560  0.0     0 rcu_sched
+     15       2 1654560  0.0     0 migration/0
+     16       2 1654560  0.0     0 idle_inject/0
+     18       2 1654560  0.0     0 cpuhp/0
+     19       2 1654560  0.0     0 cpuhp/1
+     20       2 1654560  0.0     0 idle_inject/1
+     21       2 1654560  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3390648   8756 113248072    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3389820   8756 113248072    0    0     0   219 6754 13192 31  0 69  0  0
+2026-09-13T05:58:49+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869207 2868800       5 92.4 224764 ARCH
+2868800 2868768     100  3.5 58404 python3
+2869228    1115       1  1.0  8716 sshd
+2869229 2869228       1  1.0  5644 sshd
+2868768 2868720     101  0.6 22520 python3
+3754921       1 1506090  0.2 76016 tailscaled
+   1102       1 1654526  0.1 31128 containerd
+      1       0 1654570  0.0 13640 systemd
+      2       0 1654570  0.0     0 kthreadd
+      3       2 1654570  0.0     0 rcu_gp
+      4       2 1654570  0.0     0 rcu_par_gp
+      5       2 1654570  0.0     0 slub_flushwq
+      6       2 1654570  0.0     0 netns
+      8       2 1654570  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654570  0.0     0 mm_percpu_wq
+     11       2 1654570  0.0     0 rcu_tasks_rude_
+     12       2 1654570  0.0     0 rcu_tasks_trace
+     13       2 1654570  0.0     0 ksoftirqd/0
+     14       2 1654570  0.0     0 rcu_sched
+     15       2 1654570  0.0     0 migration/0
+     16       2 1654570  0.0     0 idle_inject/0
+     18       2 1654570  0.0     0 cpuhp/0
+     19       2 1654570  0.0     0 cpuhp/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+27 %, 531 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3263472   8756 113260688    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3254376   8756 113260688    0    0     0  4260 2182 1567  3  0 96  0  0
+2026-09-13T05:58:59+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869299 2868800       6  103 227524 ARCH
+2868800 2868768     110  3.9 60224 python3
+2868768 2868720     111  0.5 22520 python3
+3754921       1 1506100  0.2 76016 tailscaled
+   1102       1 1654536  0.1 31128 containerd
+      1       0 1654580  0.0 13640 systemd
+      2       0 1654580  0.0     0 kthreadd
+      3       2 1654580  0.0     0 rcu_gp
+      4       2 1654580  0.0     0 rcu_par_gp
+      5       2 1654580  0.0     0 slub_flushwq
+      6       2 1654580  0.0     0 netns
+      8       2 1654580  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654580  0.0     0 mm_percpu_wq
+     11       2 1654580  0.0     0 rcu_tasks_rude_
+     12       2 1654580  0.0     0 rcu_tasks_trace
+     13       2 1654580  0.0     0 ksoftirqd/0
+     14       2 1654580  0.0     0 rcu_sched
+     15       2 1654580  0.0     0 migration/0
+     16       2 1654580  0.0     0 idle_inject/0
+     18       2 1654580  0.0     0 cpuhp/0
+     19       2 1654580  0.0     0 cpuhp/1
+     20       2 1654580  0.0     0 idle_inject/1
+     21       2 1654580  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+26 %, 531 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3243516   8756 113267912    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3243480   8756 113267912    0    0     0     0  480  287  3  0 97  0  0
+2026-09-13T05:59:10+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869333 2868800       7 1339 92536 ARCH
+2868800 2868768     120  4.2 61496 python3
+2868768 2868720     121  0.5 22520 python3
+3754921       1 1506110  0.2 76016 tailscaled
+   1102       1 1654546  0.1 31128 containerd
+      1       0 1654590  0.0 13640 systemd
+      2       0 1654590  0.0     0 kthreadd
+      3       2 1654590  0.0     0 rcu_gp
+      4       2 1654590  0.0     0 rcu_par_gp
+      5       2 1654590  0.0     0 slub_flushwq
+      6       2 1654590  0.0     0 netns
+      8       2 1654590  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654590  0.0     0 mm_percpu_wq
+     11       2 1654590  0.0     0 rcu_tasks_rude_
+     12       2 1654590  0.0     0 rcu_tasks_trace
+     13       2 1654590  0.0     0 ksoftirqd/0
+     14       2 1654590  0.0     0 rcu_sched
+     15       2 1654590  0.0     0 migration/0
+     16       2 1654590  0.0     0 idle_inject/0
+     18       2 1654590  0.0     0 cpuhp/0
+     19       2 1654590  0.0     0 cpuhp/1
+     20       2 1654590  0.0     0 idle_inject/1
+     21       2 1654590  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+13  0   5640 3355080   8756 113266928    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3355296   8756 113266928    0    0     0   309 5048 4968 31  0 69  0  0
+2026-09-13T05:59:20+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869370 2868800       5 1130 257844 ARCH
+2868800 2868768     130  4.0 61496 python3
+2868768 2868720     131  0.5 22520 python3
+3754921       1 1506120  0.2 76016 tailscaled
+   1102       1 1654556  0.1 31128 containerd
+      1       0 1654600  0.0 13640 systemd
+      2       0 1654600  0.0     0 kthreadd
+      3       2 1654600  0.0     0 rcu_gp
+      4       2 1654600  0.0     0 rcu_par_gp
+      5       2 1654600  0.0     0 slub_flushwq
+      6       2 1654600  0.0     0 netns
+      8       2 1654600  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654600  0.0     0 mm_percpu_wq
+     11       2 1654600  0.0     0 rcu_tasks_rude_
+     12       2 1654600  0.0     0 rcu_tasks_trace
+     13       2 1654600  0.0     0 ksoftirqd/0
+     14       2 1654600  0.0     0 rcu_sched
+     15       2 1654600  0.0     0 migration/0
+     16       2 1654600  0.0     0 idle_inject/0
+     18       2 1654600  0.0     0 cpuhp/0
+     19       2 1654600  0.0     0 cpuhp/1
+     20       2 1654600  0.0     0 idle_inject/1
+     21       2 1654600  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3178732   8756 113272832    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3175680   8756 113272832    0    0     0     4 5732 10470 25  0 75  0  0
+2026-09-13T05:59:30+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869370 2868800      15  911 262708 ARCH
+2868800 2868768     140  3.8 61496 python3
+2868768 2868720     141  0.4 22520 python3
+3754921       1 1506130  0.2 76016 tailscaled
+   1102       1 1654566  0.1 31128 containerd
+      1       0 1654610  0.0 13640 systemd
+      2       0 1654610  0.0     0 kthreadd
+      3       2 1654610  0.0     0 rcu_gp
+      4       2 1654610  0.0     0 rcu_par_gp
+      5       2 1654610  0.0     0 slub_flushwq
+      6       2 1654610  0.0     0 netns
+      8       2 1654610  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654610  0.0     0 mm_percpu_wq
+     11       2 1654610  0.0     0 rcu_tasks_rude_
+     12       2 1654610  0.0     0 rcu_tasks_trace
+     13       2 1654610  0.0     0 ksoftirqd/0
+     14       2 1654610  0.0     0 rcu_sched
+     15       2 1654610  0.0     0 migration/0
+     16       2 1654610  0.0     0 idle_inject/0
+     18       2 1654610  0.0     0 cpuhp/0
+     19       2 1654610  0.0     0 cpuhp/1
+     20       2 1654610  0.0     0 idle_inject/1
+     21       2 1654610  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3171900   8756 113272864    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3169848   8756 113272864    0    0     0     4 5649 10089 26  0 74  0  0
+2026-09-13T05:59:40+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869370 2868800      25  863 263636 ARCH
+2868800 2868768     150  3.5 61496 python3
+2869474    1115       3  0.6 10828 sshd
+2869525 2869474       2  0.5  8372 sshd
+2868768 2868720     151  0.4 22520 python3
+3754921       1 1506140  0.2 76016 tailscaled
+   1102       1 1654576  0.1 31128 containerd
+      1       0 1654620  0.0 13640 systemd
+      2       0 1654620  0.0     0 kthreadd
+      3       2 1654620  0.0     0 rcu_gp
+      4       2 1654620  0.0     0 rcu_par_gp
+      5       2 1654620  0.0     0 slub_flushwq
+      6       2 1654620  0.0     0 netns
+      8       2 1654620  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654620  0.0     0 mm_percpu_wq
+     11       2 1654620  0.0     0 rcu_tasks_rude_
+     12       2 1654620  0.0     0 rcu_tasks_trace
+     13       2 1654620  0.0     0 ksoftirqd/0
+     14       2 1654620  0.0     0 rcu_sched
+     15       2 1654620  0.0     0 migration/0
+     16       2 1654620  0.0     0 idle_inject/0
+     18       2 1654620  0.0     0 cpuhp/0
+     19       2 1654620  0.0     0 cpuhp/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3164368   8756 113272896    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3164336   8756 113273024    0    0     0   732 6196 10394 25  0 74  0  0
+2026-09-13T05:59:50+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869370 2868800      35  843 268140 ARCH
+2868800 2868768     160  3.3 61496 python3
+2868768 2868720     161  0.4 22520 python3
+3754921       1 1506150  0.2 76016 tailscaled
+   1102       1 1654586  0.1 31128 containerd
+      1       0 1654630  0.0 13640 systemd
+      2       0 1654630  0.0     0 kthreadd
+      3       2 1654630  0.0     0 rcu_gp
+      4       2 1654630  0.0     0 rcu_par_gp
+      5       2 1654630  0.0     0 slub_flushwq
+      6       2 1654630  0.0     0 netns
+      8       2 1654630  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654630  0.0     0 mm_percpu_wq
+     11       2 1654630  0.0     0 rcu_tasks_rude_
+     12       2 1654630  0.0     0 rcu_tasks_trace
+     13       2 1654630  0.0     0 ksoftirqd/0
+     14       2 1654630  0.0     0 rcu_sched
+     15       2 1654630  0.0     0 migration/0
+     16       2 1654630  0.0     0 idle_inject/0
+     18       2 1654630  0.0     0 cpuhp/0
+     19       2 1654630  0.0     0 cpuhp/1
+     20       2 1654630  0.0     0 idle_inject/1
+     21       2 1654630  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3167464   8756 113274872    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3167392   8756 113274872    0    0     0     4 4917 7694 25  0 75  0  0
+2026-09-13T06:00:00+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869370 2868800      45  837 268140 ARCH
+2868800 2868768     170  3.1 61496 python3
+2868768 2868720     171  0.4 22520 python3
+3754921       1 1506160  0.2 76016 tailscaled
+   1102       1 1654596  0.1 31128 containerd
+      1       0 1654640  0.0 13640 systemd
+      2       0 1654640  0.0     0 kthreadd
+      3       2 1654640  0.0     0 rcu_gp
+      4       2 1654640  0.0     0 rcu_par_gp
+      5       2 1654640  0.0     0 slub_flushwq
+      6       2 1654640  0.0     0 netns
+      8       2 1654640  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654640  0.0     0 mm_percpu_wq
+     11       2 1654640  0.0     0 rcu_tasks_rude_
+     12       2 1654640  0.0     0 rcu_tasks_trace
+     13       2 1654640  0.0     0 ksoftirqd/0
+     14       2 1654640  0.0     0 rcu_sched
+     15       2 1654640  0.0     0 migration/0
+     16       2 1654640  0.0     0 idle_inject/0
+     18       2 1654640  0.0     0 cpuhp/0
+     19       2 1654640  0.0     0 cpuhp/1
+     20       2 1654640  0.0     0 idle_inject/1
+     21       2 1654640  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3166136   8756 113274880    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3166352   8756 113274880    0    0     0     0 5004 8209 25  0 75  0  0
+2026-09-13T06:00:10+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869370 2868800      55  826 273152 ARCH
+2868800 2868768     180  2.9 61496 python3
+2868768 2868720     181  0.4 22520 python3
+3754921       1 1506170  0.2 76016 tailscaled
+   1102       1 1654606  0.1 31128 containerd
+      1       0 1654650  0.0 13640 systemd
+      2       0 1654650  0.0     0 kthreadd
+      3       2 1654650  0.0     0 rcu_gp
+      4       2 1654650  0.0     0 rcu_par_gp
+      5       2 1654650  0.0     0 slub_flushwq
+      6       2 1654650  0.0     0 netns
+      8       2 1654650  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654650  0.0     0 mm_percpu_wq
+     11       2 1654650  0.0     0 rcu_tasks_rude_
+     12       2 1654650  0.0     0 rcu_tasks_trace
+     13       2 1654650  0.0     0 ksoftirqd/0
+     14       2 1654650  0.0     0 rcu_sched
+     15       2 1654650  0.0     0 migration/0
+     16       2 1654650  0.0     0 idle_inject/0
+     18       2 1654650  0.0     0 cpuhp/0
+     19       2 1654650  0.0     0 cpuhp/1
+     20       2 1654650  0.0     0 idle_inject/1
+     21       2 1654650  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3160056   8756 113274888    0    0     1     9    0    1  4  0 96  0  0
+14  0   5640 3161532   8756 113274896    0    0     0   768 5821 8741 23  0 76  0  0
+2026-09-13T06:00:20+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869639 2868800       5  125 410648 ARCH
+2869755 2869754       2  3.0 17752 git-remote-http
+2868800 2868768     190  2.9 61496 python3
+2869632    1115       6  0.5 11088 sshd
+2868768 2868720     191  0.3 22520 python3
+3754921       1 1506180  0.2 76016 tailscaled
+   1102       1 1654616  0.1 31128 containerd
+      1       0 1654660  0.0 13640 systemd
+      2       0 1654660  0.0     0 kthreadd
+      3       2 1654660  0.0     0 rcu_gp
+      4       2 1654660  0.0     0 rcu_par_gp
+      5       2 1654660  0.0     0 slub_flushwq
+      6       2 1654660  0.0     0 netns
+      8       2 1654660  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654660  0.0     0 mm_percpu_wq
+     11       2 1654660  0.0     0 rcu_tasks_rude_
+     12       2 1654660  0.0     0 rcu_tasks_trace
+     13       2 1654660  0.0     0 ksoftirqd/0
+     14       2 1654660  0.0     0 rcu_sched
+     15       2 1654660  0.0     0 migration/0
+     16       2 1654660  0.0     0 idle_inject/0
+     18       2 1654660  0.0     0 cpuhp/0
+     19       2 1654660  0.0     0 cpuhp/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+25 %, 547 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3020856   8756 113294656    0    0     1     9    0    1  4  0 96  0  0
+ 2  0   5640 3024344   8756 113294672    0    0     4     0 2865 2285  4  0 96  0  0
+2026-09-13T06:00:30+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869639 2868800      16  102 426320 ARCH
+2868800 2868768     201  2.8 61496 python3
+2868768 2868720     202  0.3 22520 python3
+3754921       1 1506191  0.2 76016 tailscaled
+   1102       1 1654627  0.1 31128 containerd
+      1       0 1654671  0.0 13640 systemd
+      2       0 1654671  0.0     0 kthreadd
+      3       2 1654671  0.0     0 rcu_gp
+      4       2 1654671  0.0     0 rcu_par_gp
+      5       2 1654671  0.0     0 slub_flushwq
+      6       2 1654671  0.0     0 netns
+      8       2 1654671  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654671  0.0     0 mm_percpu_wq
+     11       2 1654671  0.0     0 rcu_tasks_rude_
+     12       2 1654671  0.0     0 rcu_tasks_trace
+     13       2 1654671  0.0     0 ksoftirqd/0
+     14       2 1654671  0.0     0 rcu_sched
+     15       2 1654671  0.0     0 migration/0
+     16       2 1654671  0.0     0 idle_inject/0
+     18       2 1654671  0.0     0 cpuhp/0
+     19       2 1654671  0.0     0 cpuhp/1
+     20       2 1654671  0.0     0 idle_inject/1
+     21       2 1654671  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+26 %, 553 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3016900   8756 113294680    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3012080   8756 113294680    0    0     0     0  463  293  3  0 97  0  0
+2026-09-13T06:00:40+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869639 2868800      26  101 443632 ARCH
+2868800 2868768     211  2.6 61496 python3
+2868768 2868720     212  0.3 22520 python3
+3754921       1 1506201  0.2 76016 tailscaled
+   1102       1 1654637  0.1 31128 containerd
+      1       0 1654681  0.0 13640 systemd
+      2       0 1654681  0.0     0 kthreadd
+      3       2 1654681  0.0     0 rcu_gp
+      4       2 1654681  0.0     0 rcu_par_gp
+      5       2 1654681  0.0     0 slub_flushwq
+      6       2 1654681  0.0     0 netns
+      8       2 1654681  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654681  0.0     0 mm_percpu_wq
+     11       2 1654681  0.0     0 rcu_tasks_rude_
+     12       2 1654681  0.0     0 rcu_tasks_trace
+     13       2 1654681  0.0     0 ksoftirqd/0
+     14       2 1654681  0.0     0 rcu_sched
+     15       2 1654681  0.0     0 migration/0
+     16       2 1654681  0.0     0 idle_inject/0
+     18       2 1654681  0.0     0 cpuhp/0
+     19       2 1654681  0.0     0 cpuhp/1
+     20       2 1654681  0.0     0 idle_inject/1
+     21       2 1654681  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+21 %, 569 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2999912   8756 113294704    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2998616   8756 113294704    0    0     0     4  514  362  3  0 97  0  0
+2026-09-13T06:00:50+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869639 2868800      36  101 460528 ARCH
+2868800 2868768     221  2.5 61496 python3
+2868768 2868720     222  0.3 22520 python3
+3754921       1 1506211  0.2 76016 tailscaled
+   1102       1 1654647  0.1 31128 containerd
+      1       0 1654691  0.0 13640 systemd
+      2       0 1654691  0.0     0 kthreadd
+      3       2 1654691  0.0     0 rcu_gp
+      4       2 1654691  0.0     0 rcu_par_gp
+      5       2 1654691  0.0     0 slub_flushwq
+      6       2 1654691  0.0     0 netns
+      8       2 1654691  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654691  0.0     0 mm_percpu_wq
+     11       2 1654691  0.0     0 rcu_tasks_rude_
+     12       2 1654691  0.0     0 rcu_tasks_trace
+     13       2 1654691  0.0     0 ksoftirqd/0
+     14       2 1654691  0.0     0 rcu_sched
+     15       2 1654691  0.0     0 migration/0
+     16       2 1654691  0.0     0 idle_inject/0
+     18       2 1654691  0.0     0 cpuhp/0
+     19       2 1654691  0.0     0 cpuhp/1
+     20       2 1654691  0.0     0 idle_inject/1
+     21       2 1654691  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+21 %, 581 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2981232   8756 113294736    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3357328   8756 113308392    0    0     0  5236 1309  546  2  1 97  0  0
+2026-09-13T06:01:00+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869903 2868800       7  104 412192 ARCH
+2868800 2868768     231  3.5 147556 python3
+2868768 2868720     232  0.3 22520 python3
+3754921       1 1506221  0.2 76016 tailscaled
+   1102       1 1654657  0.1 31128 containerd
+      1       0 1654701  0.0 13640 systemd
+      2       0 1654701  0.0     0 kthreadd
+      3       2 1654701  0.0     0 rcu_gp
+      4       2 1654701  0.0     0 rcu_par_gp
+      5       2 1654701  0.0     0 slub_flushwq
+      6       2 1654701  0.0     0 netns
+      8       2 1654701  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654701  0.0     0 mm_percpu_wq
+     11       2 1654701  0.0     0 rcu_tasks_rude_
+     12       2 1654701  0.0     0 rcu_tasks_trace
+     13       2 1654701  0.0     0 ksoftirqd/0
+     14       2 1654701  0.0     0 rcu_sched
+     15       2 1654701  0.0     0 migration/0
+     16       2 1654701  0.0     0 idle_inject/0
+     18       2 1654701  0.0     0 cpuhp/0
+     19       2 1654701  0.0     0 cpuhp/1
+     20       2 1654701  0.0     0 idle_inject/1
+     21       2 1654701  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+24 %, 547 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2913240   8756 113319680    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2912452   8756 113319680    0    0     0     4  555  357  3  0 97  0  0
+2026-09-13T06:01:11+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869903 2868800      17  102 428436 ARCH
+2868800 2868768     241  3.4 147556 python3
+2868768 2868720     242  0.3 22520 python3
+3754921       1 1506231  0.2 76016 tailscaled
+   1102       1 1654667  0.1 31128 containerd
+      1       0 1654711  0.0 13640 systemd
+      2       0 1654711  0.0     0 kthreadd
+      3       2 1654711  0.0     0 rcu_gp
+      4       2 1654711  0.0     0 rcu_par_gp
+      5       2 1654711  0.0     0 slub_flushwq
+      6       2 1654711  0.0     0 netns
+      8       2 1654711  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654711  0.0     0 mm_percpu_wq
+     11       2 1654711  0.0     0 rcu_tasks_rude_
+     12       2 1654711  0.0     0 rcu_tasks_trace
+     13       2 1654711  0.0     0 ksoftirqd/0
+     14       2 1654711  0.0     0 rcu_sched
+     15       2 1654711  0.0     0 migration/0
+     16       2 1654711  0.0     0 idle_inject/0
+     18       2 1654711  0.0     0 cpuhp/0
+     19       2 1654711  0.0     0 cpuhp/1
+     20       2 1654711  0.0     0 idle_inject/1
+     21       2 1654711  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+25 %, 553 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2893552   8756 113319696    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2893700   8756 113319704    0    0     0     0  441  261  3  0 97  0  0
+2026-09-13T06:01:21+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869903 2868800      27  101 445332 ARCH
+2868800 2868768     251  3.2 147556 python3
+2868768 2868720     252  0.3 22520 python3
+3754921       1 1506241  0.2 76016 tailscaled
+   1102       1 1654677  0.1 31128 containerd
+      1       0 1654721  0.0 13640 systemd
+      2       0 1654721  0.0     0 kthreadd
+      3       2 1654721  0.0     0 rcu_gp
+      4       2 1654721  0.0     0 rcu_par_gp
+      5       2 1654721  0.0     0 slub_flushwq
+      6       2 1654721  0.0     0 netns
+      8       2 1654721  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654721  0.0     0 mm_percpu_wq
+     11       2 1654721  0.0     0 rcu_tasks_rude_
+     12       2 1654721  0.0     0 rcu_tasks_trace
+     13       2 1654721  0.0     0 ksoftirqd/0
+     14       2 1654721  0.0     0 rcu_sched
+     15       2 1654721  0.0     0 migration/0
+     16       2 1654721  0.0     0 idle_inject/0
+     18       2 1654721  0.0     0 cpuhp/0
+     19       2 1654721  0.0     0 cpuhp/1
+     20       2 1654721  0.0     0 idle_inject/1
+     21       2 1654721  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+21 %, 569 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2884380   8756 113319712    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2883804   8756 113319712    0    0     0     0  469  257  3  0 97  0  0
+2026-09-13T06:01:31+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868800 2868768     261  3.3 217512 python3
+2868768 2868720     262  0.3 22520 python3
+3754921       1 1506251  0.2 76016 tailscaled
+   1102       1 1654687  0.1 31128 containerd
+      1       0 1654731  0.0 13640 systemd
+      2       0 1654731  0.0     0 kthreadd
+      3       2 1654731  0.0     0 rcu_gp
+      4       2 1654731  0.0     0 rcu_par_gp
+      5       2 1654731  0.0     0 slub_flushwq
+      6       2 1654731  0.0     0 netns
+      8       2 1654731  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654731  0.0     0 mm_percpu_wq
+     11       2 1654731  0.0     0 rcu_tasks_rude_
+     12       2 1654731  0.0     0 rcu_tasks_trace
+     13       2 1654731  0.0     0 ksoftirqd/0
+     14       2 1654731  0.0     0 rcu_sched
+     15       2 1654731  0.0     0 migration/0
+     16       2 1654731  0.0     0 idle_inject/0
+     18       2 1654731  0.0     0 cpuhp/0
+     19       2 1654731  0.0     0 cpuhp/1
+     20       2 1654731  0.0     0 idle_inject/1
+     21       2 1654731  0.0     0 migration/1
+     22       2 1654731  0.0     0 ksoftirqd/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3195404   8756 113333360    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3213852   8756 113333248    0    0     0     0  466  293  3  0 97  0  0
+2026-09-13T06:01:41+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869971 2868800       8 1028 267468 ARCH
+2868800 2868768     271  3.9 149888 python3
+2868768 2868720     272  0.3 22520 python3
+3754921       1 1506261  0.2 76016 tailscaled
+   1102       1 1654697  0.1 31128 containerd
+      1       0 1654741  0.0 13640 systemd
+      2       0 1654741  0.0     0 kthreadd
+      3       2 1654741  0.0     0 rcu_gp
+      4       2 1654741  0.0     0 rcu_par_gp
+      5       2 1654741  0.0     0 slub_flushwq
+      6       2 1654741  0.0     0 netns
+      8       2 1654741  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654741  0.0     0 mm_percpu_wq
+     11       2 1654741  0.0     0 rcu_tasks_rude_
+     12       2 1654741  0.0     0 rcu_tasks_trace
+     13       2 1654741  0.0     0 ksoftirqd/0
+     14       2 1654741  0.0     0 rcu_sched
+     15       2 1654741  0.0     0 migration/0
+     16       2 1654741  0.0     0 idle_inject/0
+     18       2 1654741  0.0     0 cpuhp/0
+     19       2 1654741  0.0     0 cpuhp/1
+     20       2 1654741  0.0     0 idle_inject/1
+     21       2 1654741  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3021136   8756 113336368    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3021100   8756 113336368    0    0     0     0 5469 10676 24  0 76  0  0
+2026-09-13T06:01:51+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869971 2868800      18  904 268524 ARCH
+2868800 2868768     281  3.8 149888 python3
+2868768 2868720     282  0.3 22520 python3
+3754921       1 1506271  0.2 76016 tailscaled
+   1102       1 1654707  0.1 31128 containerd
+      1       0 1654751  0.0 13640 systemd
+      2       0 1654751  0.0     0 kthreadd
+      3       2 1654751  0.0     0 rcu_gp
+      4       2 1654751  0.0     0 rcu_par_gp
+      5       2 1654751  0.0     0 slub_flushwq
+      6       2 1654751  0.0     0 netns
+      8       2 1654751  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654751  0.0     0 mm_percpu_wq
+     11       2 1654751  0.0     0 rcu_tasks_rude_
+     12       2 1654751  0.0     0 rcu_tasks_trace
+     13       2 1654751  0.0     0 ksoftirqd/0
+     14       2 1654751  0.0     0 rcu_sched
+     15       2 1654751  0.0     0 migration/0
+     16       2 1654751  0.0     0 idle_inject/0
+     18       2 1654751  0.0     0 cpuhp/0
+     19       2 1654751  0.0     0 cpuhp/1
+     20       2 1654751  0.0     0 idle_inject/1
+     21       2 1654751  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3022124   8756 113336384    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3018056   8756 113336400    0    0     0     0 5330 9636 24  0 76  0  0
+2026-09-13T06:02:01+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869971 2868800      28  866 270516 ARCH
+2868800 2868768     291  3.6 149888 python3
+2868768 2868720     292  0.3 22520 python3
+3754921       1 1506281  0.2 76016 tailscaled
+   1102       1 1654717  0.1 31128 containerd
+      1       0 1654761  0.0 13640 systemd
+      2       0 1654761  0.0     0 kthreadd
+      3       2 1654761  0.0     0 rcu_gp
+      4       2 1654761  0.0     0 rcu_par_gp
+      5       2 1654761  0.0     0 slub_flushwq
+      6       2 1654761  0.0     0 netns
+      8       2 1654761  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654761  0.0     0 mm_percpu_wq
+     11       2 1654761  0.0     0 rcu_tasks_rude_
+     12       2 1654761  0.0     0 rcu_tasks_trace
+     13       2 1654761  0.0     0 ksoftirqd/0
+     14       2 1654761  0.0     0 rcu_sched
+     15       2 1654761  0.0     0 migration/0
+     16       2 1654761  0.0     0 idle_inject/0
+     18       2 1654761  0.0     0 cpuhp/0
+     19       2 1654761  0.0     0 cpuhp/1
+     20       2 1654761  0.0     0 idle_inject/1
+     21       2 1654761  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3017020   8756 113336432    0    0     1     9    0    1  4  0 96  0  0
+ 3  0   5640 3016516   8756 113336440    0    0     0     0 5547 10224 25  0 75  0  0
+2026-09-13T06:02:11+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869971 2868800      38  847 273332 ARCH
+2868800 2868768     301  3.5 149888 python3
+2868768 2868720     302  0.2 22520 python3
+3754921       1 1506291  0.2 76016 tailscaled
+   1102       1 1654727  0.1 31128 containerd
+      1       0 1654771  0.0 13640 systemd
+      2       0 1654771  0.0     0 kthreadd
+      3       2 1654771  0.0     0 rcu_gp
+      4       2 1654771  0.0     0 rcu_par_gp
+      5       2 1654771  0.0     0 slub_flushwq
+      6       2 1654771  0.0     0 netns
+      8       2 1654771  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654771  0.0     0 mm_percpu_wq
+     11       2 1654771  0.0     0 rcu_tasks_rude_
+     12       2 1654771  0.0     0 rcu_tasks_trace
+     13       2 1654771  0.0     0 ksoftirqd/0
+     14       2 1654771  0.0     0 rcu_sched
+     15       2 1654771  0.0     0 migration/0
+     16       2 1654771  0.0     0 idle_inject/0
+     18       2 1654771  0.0     0 cpuhp/0
+     19       2 1654771  0.0     0 cpuhp/1
+     20       2 1654771  0.0     0 idle_inject/1
+     21       2 1654771  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+15  0   5640 3014252   8756 113336472    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3013964   8756 113336480    0    0     0     0 5165 8519 26  0 74  0  0
+2026-09-13T06:02:21+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869971 2868800      48  837 277368 ARCH
+2868800 2868768     311  3.4 149888 python3
+2868768 2868720     312  0.2 22520 python3
+3754921       1 1506301  0.2 76016 tailscaled
+   1102       1 1654737  0.1 31128 containerd
+      1       0 1654781  0.0 13640 systemd
+      2       0 1654781  0.0     0 kthreadd
+      3       2 1654781  0.0     0 rcu_gp
+      4       2 1654781  0.0     0 rcu_par_gp
+      5       2 1654781  0.0     0 slub_flushwq
+      6       2 1654781  0.0     0 netns
+      8       2 1654781  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654781  0.0     0 mm_percpu_wq
+     11       2 1654781  0.0     0 rcu_tasks_rude_
+     12       2 1654781  0.0     0 rcu_tasks_trace
+     13       2 1654781  0.0     0 ksoftirqd/0
+     14       2 1654781  0.0     0 rcu_sched
+     15       2 1654781  0.0     0 migration/0
+     16       2 1654781  0.0     0 idle_inject/0
+     18       2 1654781  0.0     0 cpuhp/0
+     19       2 1654781  0.0     0 cpuhp/1
+     20       2 1654781  0.0     0 idle_inject/1
+     21       2 1654781  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3007920   8756 113336456    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3008136   8756 113336464    0    0     0     0 4805 8247 25  0 75  0  0
+2026-09-13T06:02:31+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2869971 2868800      59  815 276992 ARCH
+2868800 2868768     322  3.3 149888 python3
+2868768 2868720     323  0.2 22520 python3
+3754921       1 1506312  0.2 76016 tailscaled
+   1102       1 1654748  0.1 31128 containerd
+      1       0 1654792  0.0 13640 systemd
+      2       0 1654792  0.0     0 kthreadd
+      3       2 1654792  0.0     0 rcu_gp
+      4       2 1654792  0.0     0 rcu_par_gp
+      5       2 1654792  0.0     0 slub_flushwq
+      6       2 1654792  0.0     0 netns
+      8       2 1654792  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654792  0.0     0 mm_percpu_wq
+     11       2 1654792  0.0     0 rcu_tasks_rude_
+     12       2 1654792  0.0     0 rcu_tasks_trace
+     13       2 1654792  0.0     0 ksoftirqd/0
+     14       2 1654792  0.0     0 rcu_sched
+     15       2 1654792  0.0     0 migration/0
+     16       2 1654792  0.0     0 idle_inject/0
+     18       2 1654792  0.0     0 cpuhp/0
+     19       2 1654792  0.0     0 cpuhp/1
+     20       2 1654792  0.0     0 idle_inject/1
+     21       2 1654792  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3009400   8756 113336464    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3266164   8756 113343024    0    0     0  5760 3800 5918 18  0 82  0  0
+2026-09-13T06:02:41+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870060 2868800       9 1054 258788 ARCH
+2868800 2868768     332  3.4 149092 python3
+2868768 2868720     333  0.2 22520 python3
+3754921       1 1506322  0.2 76016 tailscaled
+   1102       1 1654758  0.1 31128 containerd
+      1       0 1654802  0.0 13640 systemd
+      2       0 1654802  0.0     0 kthreadd
+      3       2 1654802  0.0     0 rcu_gp
+      4       2 1654802  0.0     0 rcu_par_gp
+      5       2 1654802  0.0     0 slub_flushwq
+      6       2 1654802  0.0     0 netns
+      8       2 1654802  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654802  0.0     0 mm_percpu_wq
+     11       2 1654802  0.0     0 rcu_tasks_rude_
+     12       2 1654802  0.0     0 rcu_tasks_trace
+     13       2 1654802  0.0     0 ksoftirqd/0
+     14       2 1654802  0.0     0 rcu_sched
+     15       2 1654802  0.0     0 migration/0
+     16       2 1654802  0.0     0 idle_inject/0
+     18       2 1654802  0.0     0 cpuhp/0
+     19       2 1654802  0.0     0 cpuhp/1
+     20       2 1654802  0.0     0 idle_inject/1
+     21       2 1654802  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 3019844   8756 113346328    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3019812   8756 113346328    0    0     0     0 6171 9949 24  0 76  0  0
+2026-09-13T06:02:51+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870060 2868800      19  911 260368 ARCH
+2868800 2868768     342  3.3 149092 python3
+2868768 2868720     343  0.2 22520 python3
+3754921       1 1506332  0.2 76016 tailscaled
+   1102       1 1654768  0.1 31128 containerd
+      1       0 1654812  0.0 13640 systemd
+      2       0 1654812  0.0     0 kthreadd
+      3       2 1654812  0.0     0 rcu_gp
+      4       2 1654812  0.0     0 rcu_par_gp
+      5       2 1654812  0.0     0 slub_flushwq
+      6       2 1654812  0.0     0 netns
+      8       2 1654812  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654812  0.0     0 mm_percpu_wq
+     11       2 1654812  0.0     0 rcu_tasks_rude_
+     12       2 1654812  0.0     0 rcu_tasks_trace
+     13       2 1654812  0.0     0 ksoftirqd/0
+     14       2 1654812  0.0     0 rcu_sched
+     15       2 1654812  0.0     0 migration/0
+     16       2 1654812  0.0     0 idle_inject/0
+     18       2 1654812  0.0     0 cpuhp/0
+     19       2 1654812  0.0     0 cpuhp/1
+     20       2 1654812  0.0     0 idle_inject/1
+     21       2 1654812  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3017804   8756 113346344    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3012984   8756 113346352    0    0     0  4868 5688 9493 24  0 75  0  0
+2026-09-13T06:03:01+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870060 2868800      29  879 263112 ARCH
+2868800 2868768     352  3.2 149092 python3
+2868768 2868720     353  0.2 22520 python3
+3754921       1 1506342  0.2 76016 tailscaled
+   1102       1 1654778  0.1 31128 containerd
+      1       0 1654822  0.0 13640 systemd
+      2       0 1654822  0.0     0 kthreadd
+      3       2 1654822  0.0     0 rcu_gp
+      4       2 1654822  0.0     0 rcu_par_gp
+      5       2 1654822  0.0     0 slub_flushwq
+      6       2 1654822  0.0     0 netns
+      8       2 1654822  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654822  0.0     0 mm_percpu_wq
+     11       2 1654822  0.0     0 rcu_tasks_rude_
+     12       2 1654822  0.0     0 rcu_tasks_trace
+     13       2 1654822  0.0     0 ksoftirqd/0
+     14       2 1654822  0.0     0 rcu_sched
+     15       2 1654822  0.0     0 migration/0
+     16       2 1654822  0.0     0 idle_inject/0
+     18       2 1654822  0.0     0 cpuhp/0
+     19       2 1654822  0.0     0 cpuhp/1
+     20       2 1654822  0.0     0 idle_inject/1
+     21       2 1654822  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3014508   8756 113346368    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3014976   8756 113346384    0    0     0    28 5346 9498 24  0 76  0  0
+2026-09-13T06:03:12+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870060 2868800      39  857 267876 ARCH
+2868800 2868768     362  3.1 149092 python3
+2868768 2868720     363  0.2 22520 python3
+3754921       1 1506352  0.2 76016 tailscaled
+   1102       1 1654788  0.1 31128 containerd
+      1       0 1654832  0.0 13640 systemd
+      2       0 1654832  0.0     0 kthreadd
+      3       2 1654832  0.0     0 rcu_gp
+      4       2 1654832  0.0     0 rcu_par_gp
+      5       2 1654832  0.0     0 slub_flushwq
+      6       2 1654832  0.0     0 netns
+      8       2 1654832  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654832  0.0     0 mm_percpu_wq
+     11       2 1654832  0.0     0 rcu_tasks_rude_
+     12       2 1654832  0.0     0 rcu_tasks_trace
+     13       2 1654832  0.0     0 ksoftirqd/0
+     14       2 1654832  0.0     0 rcu_sched
+     15       2 1654832  0.0     0 migration/0
+     16       2 1654832  0.0     0 idle_inject/0
+     18       2 1654832  0.0     0 cpuhp/0
+     19       2 1654832  0.0     0 cpuhp/1
+     20       2 1654832  0.0     0 idle_inject/1
+     21       2 1654832  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3011464   8756 113346400    0    0     1     9    0    1  4  0 96  0  0
+ 6  0   5640 3011180   8756 113346416    0    0     0    16 5626 8137 24  0 76  0  0
+2026-09-13T06:03:22+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870060 2868800      49  843 272452 ARCH
+2868800 2868768     372  3.0 149092 python3
+2868768 2868720     373  0.2 22520 python3
+3754921       1 1506362  0.2 76016 tailscaled
+   1102       1 1654798  0.1 31128 containerd
+      1       0 1654842  0.0 13640 systemd
+      2       0 1654842  0.0     0 kthreadd
+      3       2 1654842  0.0     0 rcu_gp
+      4       2 1654842  0.0     0 rcu_par_gp
+      5       2 1654842  0.0     0 slub_flushwq
+      6       2 1654842  0.0     0 netns
+      8       2 1654842  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654842  0.0     0 mm_percpu_wq
+     11       2 1654842  0.0     0 rcu_tasks_rude_
+     12       2 1654842  0.0     0 rcu_tasks_trace
+     13       2 1654842  0.0     0 ksoftirqd/0
+     14       2 1654842  0.0     0 rcu_sched
+     15       2 1654842  0.0     0 migration/0
+     16       2 1654842  0.0     0 idle_inject/0
+     18       2 1654842  0.0     0 cpuhp/0
+     19       2 1654842  0.0     0 cpuhp/1
+     20       2 1654842  0.0     0 idle_inject/1
+     21       2 1654842  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3014720   8756 113346432    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3012888   8756 113346440    0    0     0    16 5191 7242 24  0 76  0  0
+2026-09-13T06:03:32+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870060 2868800      59  830 269192 ARCH
+2868800 2868768     382  2.9 149092 python3
+2868768 2868720     383  0.2 22520 python3
+3754921       1 1506372  0.2 76016 tailscaled
+   1102       1 1654808  0.1 31128 containerd
+      1       0 1654852  0.0 13640 systemd
+      2       0 1654852  0.0     0 kthreadd
+      3       2 1654852  0.0     0 rcu_gp
+      4       2 1654852  0.0     0 rcu_par_gp
+      5       2 1654852  0.0     0 slub_flushwq
+      6       2 1654852  0.0     0 netns
+      8       2 1654852  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654852  0.0     0 mm_percpu_wq
+     11       2 1654852  0.0     0 rcu_tasks_rude_
+     12       2 1654852  0.0     0 rcu_tasks_trace
+     13       2 1654852  0.0     0 ksoftirqd/0
+     14       2 1654852  0.0     0 rcu_sched
+     15       2 1654852  0.0     0 migration/0
+     16       2 1654852  0.0     0 idle_inject/0
+     18       2 1654852  0.0     0 cpuhp/0
+     19       2 1654852  0.0     0 cpuhp/1
+     20       2 1654852  0.0     0 idle_inject/1
+     21       2 1654852  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3012144   8756 113346440    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 3011352   8756 113346440    0    0     0    12 5201 7200 23  0 76  0  0
+2026-09-13T06:03:42+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870152 2868800       7  113 412504 ARCH
+2868800 2868768     392  3.0 149404 python3
+2868768 2868720     393  0.2 22520 python3
+3754921       1 1506382  0.2 76016 tailscaled
+   1102       1 1654818  0.1 31128 containerd
+      1       0 1654862  0.0 13640 systemd
+      2       0 1654862  0.0     0 kthreadd
+      3       2 1654862  0.0     0 rcu_gp
+      4       2 1654862  0.0     0 rcu_par_gp
+      5       2 1654862  0.0     0 slub_flushwq
+      6       2 1654862  0.0     0 netns
+      8       2 1654862  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654862  0.0     0 mm_percpu_wq
+     11       2 1654862  0.0     0 rcu_tasks_rude_
+     12       2 1654862  0.0     0 rcu_tasks_trace
+     13       2 1654862  0.0     0 ksoftirqd/0
+     14       2 1654862  0.0     0 rcu_sched
+     15       2 1654862  0.0     0 migration/0
+     16       2 1654862  0.0     0 idle_inject/0
+     18       2 1654862  0.0     0 cpuhp/0
+     19       2 1654862  0.0     0 cpuhp/1
+     20       2 1654862  0.0     0 idle_inject/1
+     21       2 1654862  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+24 %, 547 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2879340   8756 113364536    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2876280   8756 113364544    0    0     0     0  457  270  3  0 97  0  0
+2026-09-13T06:03:52+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870152 2868800      17  106 428424 ARCH
+2868800 2868768     402  2.9 149404 python3
+2868768 2868720     403  0.2 22520 python3
+3754921       1 1506392  0.2 76016 tailscaled
+   1102       1 1654828  0.1 31128 containerd
+      1       0 1654872  0.0 13640 systemd
+      2       0 1654872  0.0     0 kthreadd
+      3       2 1654872  0.0     0 rcu_gp
+      4       2 1654872  0.0     0 rcu_par_gp
+      5       2 1654872  0.0     0 slub_flushwq
+      6       2 1654872  0.0     0 netns
+      8       2 1654872  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654872  0.0     0 mm_percpu_wq
+     11       2 1654872  0.0     0 rcu_tasks_rude_
+     12       2 1654872  0.0     0 rcu_tasks_trace
+     13       2 1654872  0.0     0 ksoftirqd/0
+     14       2 1654872  0.0     0 rcu_sched
+     15       2 1654872  0.0     0 migration/0
+     16       2 1654872  0.0     0 idle_inject/0
+     18       2 1654872  0.0     0 cpuhp/0
+     19       2 1654872  0.0     0 cpuhp/1
+     20       2 1654872  0.0     0 idle_inject/1
+     21       2 1654872  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+25 %, 553 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2860332   8756 113364576    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2860044   8756 113364576    0    0     0     0  510  347  3  0 97  0  0
+2026-09-13T06:04:02+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870152 2868800      27  104 445320 ARCH
+2868800 2868768     412  2.8 149404 python3
+2868768 2868720     413  0.2 22520 python3
+3754921       1 1506402  0.2 76016 tailscaled
+   1102       1 1654838  0.1 31128 containerd
+      1       0 1654882  0.0 13640 systemd
+      2       0 1654882  0.0     0 kthreadd
+      3       2 1654882  0.0     0 rcu_gp
+      4       2 1654882  0.0     0 rcu_par_gp
+      5       2 1654882  0.0     0 slub_flushwq
+      6       2 1654882  0.0     0 netns
+      8       2 1654882  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654882  0.0     0 mm_percpu_wq
+     11       2 1654882  0.0     0 rcu_tasks_rude_
+     12       2 1654882  0.0     0 rcu_tasks_trace
+     13       2 1654882  0.0     0 ksoftirqd/0
+     14       2 1654882  0.0     0 rcu_sched
+     15       2 1654882  0.0     0 migration/0
+     16       2 1654882  0.0     0 idle_inject/0
+     18       2 1654882  0.0     0 cpuhp/0
+     19       2 1654882  0.0     0 cpuhp/1
+     20       2 1654882  0.0     0 idle_inject/1
+     21       2 1654882  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+21 %, 569 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2842404   8756 113364608    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2837076   8756 113364624    0    0     0     0  458  288  3  0 97  0  0
+2026-09-13T06:04:12+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868800 2868768     422  3.0 341336 python3
+2868768 2868720     423  0.2 22520 python3
+3754921       1 1506412  0.2 76016 tailscaled
+   1102       1 1654848  0.1 31128 containerd
+      1       0 1654892  0.0 13640 systemd
+      2       0 1654892  0.0     0 kthreadd
+      3       2 1654892  0.0     0 rcu_gp
+      4       2 1654892  0.0     0 rcu_par_gp
+      5       2 1654892  0.0     0 slub_flushwq
+      6       2 1654892  0.0     0 netns
+      8       2 1654892  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654892  0.0     0 mm_percpu_wq
+     11       2 1654892  0.0     0 rcu_tasks_rude_
+     12       2 1654892  0.0     0 rcu_tasks_trace
+     13       2 1654892  0.0     0 ksoftirqd/0
+     14       2 1654892  0.0     0 rcu_sched
+     15       2 1654892  0.0     0 migration/0
+     16       2 1654892  0.0     0 idle_inject/0
+     18       2 1654892  0.0     0 cpuhp/0
+     19       2 1654892  0.0     0 cpuhp/1
+     20       2 1654892  0.0     0 idle_inject/1
+     21       2 1654892  0.0     0 migration/1
+     22       2 1654892  0.0     0 ksoftirqd/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3028100   8756 113378096    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3096356   8756 113378104    0    0     0     0  501  321  3  0 97  0  0
+2026-09-13T06:04:22+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870220 2868800       8  110 413932 ARCH
+2868800 2868768     432  3.3 150840 python3
+2868768 2868720     433  0.2 22520 python3
+3754921       1 1506422  0.2 76016 tailscaled
+   1102       1 1654858  0.1 31128 containerd
+      1       0 1654902  0.0 13640 systemd
+      2       0 1654902  0.0     0 kthreadd
+      3       2 1654902  0.0     0 rcu_gp
+      4       2 1654902  0.0     0 rcu_par_gp
+      5       2 1654902  0.0     0 slub_flushwq
+      6       2 1654902  0.0     0 netns
+      8       2 1654902  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654902  0.0     0 mm_percpu_wq
+     11       2 1654902  0.0     0 rcu_tasks_rude_
+     12       2 1654902  0.0     0 rcu_tasks_trace
+     13       2 1654902  0.0     0 ksoftirqd/0
+     14       2 1654902  0.0     0 rcu_sched
+     15       2 1654902  0.0     0 migration/0
+     16       2 1654902  0.0     0 idle_inject/0
+     18       2 1654902  0.0     0 cpuhp/0
+     19       2 1654902  0.0     0 cpuhp/1
+     20       2 1654902  0.0     0 idle_inject/1
+     21       2 1654902  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+24 %, 547 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2839904   8756 113389496    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2840336   8756 113389496    0    0     0     0  474  343  3  0 97  0  0
+2026-09-13T06:04:32+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870220 2868800      18  105 429368 ARCH
+2868800 2868768     442  3.3 150840 python3
+2868768 2868720     443  0.2 22520 python3
+3754921       1 1506432  0.2 76016 tailscaled
+   1102       1 1654868  0.1 31128 containerd
+      1       0 1654912  0.0 13640 systemd
+      2       0 1654912  0.0     0 kthreadd
+      3       2 1654912  0.0     0 rcu_gp
+      4       2 1654912  0.0     0 rcu_par_gp
+      5       2 1654912  0.0     0 slub_flushwq
+      6       2 1654912  0.0     0 netns
+      8       2 1654912  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654912  0.0     0 mm_percpu_wq
+     11       2 1654912  0.0     0 rcu_tasks_rude_
+     12       2 1654912  0.0     0 rcu_tasks_trace
+     13       2 1654912  0.0     0 ksoftirqd/0
+     14       2 1654912  0.0     0 rcu_sched
+     15       2 1654912  0.0     0 migration/0
+     16       2 1654912  0.0     0 idle_inject/0
+     18       2 1654912  0.0     0 cpuhp/0
+     19       2 1654912  0.0     0 cpuhp/1
+     20       2 1654912  0.0     0 idle_inject/1
+     21       2 1654912  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+25 %, 553 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2823636   8756 113389536    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2823604   8756 113389552    0    0     0     0  452  275  3  0 97  0  0
+2026-09-13T06:04:42+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870220 2868800      29  100 446000 ARCH
+2868800 2868768     453  3.2 150840 python3
+2868768 2868720     454  0.2 22520 python3
+3754921       1 1506443  0.2 76016 tailscaled
+   1102       1 1654879  0.1 31128 containerd
+      1       0 1654923  0.0 13640 systemd
+      2       0 1654923  0.0     0 kthreadd
+      3       2 1654923  0.0     0 rcu_gp
+      4       2 1654923  0.0     0 rcu_par_gp
+      5       2 1654923  0.0     0 slub_flushwq
+      6       2 1654923  0.0     0 netns
+      8       2 1654923  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654923  0.0     0 mm_percpu_wq
+     11       2 1654923  0.0     0 rcu_tasks_rude_
+     12       2 1654923  0.0     0 rcu_tasks_trace
+     13       2 1654923  0.0     0 ksoftirqd/0
+     14       2 1654923  0.0     0 rcu_sched
+     15       2 1654923  0.0     0 migration/0
+     16       2 1654923  0.0     0 idle_inject/0
+     18       2 1654923  0.0     0 cpuhp/0
+     19       2 1654923  0.0     0 cpuhp/1
+     20       2 1654923  0.0     0 idle_inject/1
+     21       2 1654923  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+21 %, 569 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2808492   8756 113389520    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2801680   8756 113389520    0    0     0     0  433  261  3  0 97  0  0
+2026-09-13T06:04:52+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868800 2868768     463  3.4 259220 python3
+2868768 2868720     464  0.2 22520 python3
+3754921       1 1506453  0.2 76016 tailscaled
+   1102       1 1654889  0.1 31128 containerd
+      1       0 1654933  0.0 13640 systemd
+      2       0 1654933  0.0     0 kthreadd
+      3       2 1654933  0.0     0 rcu_gp
+      4       2 1654933  0.0     0 rcu_par_gp
+      5       2 1654933  0.0     0 slub_flushwq
+      6       2 1654933  0.0     0 netns
+      8       2 1654933  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654933  0.0     0 mm_percpu_wq
+     11       2 1654933  0.0     0 rcu_tasks_rude_
+     12       2 1654933  0.0     0 rcu_tasks_trace
+     13       2 1654933  0.0     0 ksoftirqd/0
+     14       2 1654933  0.0     0 rcu_sched
+     15       2 1654933  0.0     0 migration/0
+     16       2 1654933  0.0     0 idle_inject/0
+     18       2 1654933  0.0     0 cpuhp/0
+     19       2 1654933  0.0     0 cpuhp/1
+     20       2 1654933  0.0     0 idle_inject/1
+     21       2 1654933  0.0     0 migration/1
+     22       2 1654933  0.0     0 ksoftirqd/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3149200   8756 113403088    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3196036   8756 113403104    0    0     0     0  463  304  3  0 97  0  0
+2026-09-13T06:05:02+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870289 2868800       9  970 266680 ARCH
+2868800 2868768     473  3.6 153068 python3
+2868768 2868720     474  0.2 22520 python3
+3754921       1 1506463  0.2 76016 tailscaled
+   1102       1 1654899  0.1 31128 containerd
+      1       0 1654943  0.0 13640 systemd
+      2       0 1654943  0.0     0 kthreadd
+      3       2 1654943  0.0     0 rcu_gp
+      4       2 1654943  0.0     0 rcu_par_gp
+      5       2 1654943  0.0     0 slub_flushwq
+      6       2 1654943  0.0     0 netns
+      8       2 1654943  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654943  0.0     0 mm_percpu_wq
+     11       2 1654943  0.0     0 rcu_tasks_rude_
+     12       2 1654943  0.0     0 rcu_tasks_trace
+     13       2 1654943  0.0     0 ksoftirqd/0
+     14       2 1654943  0.0     0 rcu_sched
+     15       2 1654943  0.0     0 migration/0
+     16       2 1654943  0.0     0 idle_inject/0
+     18       2 1654943  0.0     0 cpuhp/0
+     19       2 1654943  0.0     0 cpuhp/1
+     20       2 1654943  0.0     0 idle_inject/1
+     21       2 1654943  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2948872   8756 113406272    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 2949088   8756 113406280    0    0     0     0 4163 6808 21  0 79  0  0
+2026-09-13T06:05:13+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870289 2868800      19  873 265500 ARCH
+2868800 2868768     483  3.5 153068 python3
+2868768 2868720     484  0.2 22520 python3
+3754921       1 1506473  0.2 76016 tailscaled
+   1102       1 1654909  0.1 31128 containerd
+      1       0 1654953  0.0 13640 systemd
+      2       0 1654953  0.0     0 kthreadd
+      3       2 1654953  0.0     0 rcu_gp
+      4       2 1654953  0.0     0 rcu_par_gp
+      5       2 1654953  0.0     0 slub_flushwq
+      6       2 1654953  0.0     0 netns
+      8       2 1654953  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654953  0.0     0 mm_percpu_wq
+     11       2 1654953  0.0     0 rcu_tasks_rude_
+     12       2 1654953  0.0     0 rcu_tasks_trace
+     13       2 1654953  0.0     0 ksoftirqd/0
+     14       2 1654953  0.0     0 rcu_sched
+     15       2 1654953  0.0     0 migration/0
+     16       2 1654953  0.0     0 idle_inject/0
+     18       2 1654953  0.0     0 cpuhp/0
+     19       2 1654953  0.0     0 cpuhp/1
+     20       2 1654953  0.0     0 idle_inject/1
+     21       2 1654953  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2949344   8756 113406312    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2949056   8756 113406320    0    0     0     0 5206 9129 24  0 76  0  0
+2026-09-13T06:05:23+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870289 2868800      29  862 265668 ARCH
+2868800 2868768     493  3.5 153068 python3
+2868768 2868720     494  0.2 22520 python3
+3754921       1 1506483  0.2 76016 tailscaled
+   1102       1 1654919  0.1 31128 containerd
+      1       0 1654963  0.0 13640 systemd
+      2       0 1654963  0.0     0 kthreadd
+      3       2 1654963  0.0     0 rcu_gp
+      4       2 1654963  0.0     0 rcu_par_gp
+      5       2 1654963  0.0     0 slub_flushwq
+      6       2 1654963  0.0     0 netns
+      8       2 1654963  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654963  0.0     0 mm_percpu_wq
+     11       2 1654963  0.0     0 rcu_tasks_rude_
+     12       2 1654963  0.0     0 rcu_tasks_trace
+     13       2 1654963  0.0     0 ksoftirqd/0
+     14       2 1654963  0.0     0 rcu_sched
+     15       2 1654963  0.0     0 migration/0
+     16       2 1654963  0.0     0 idle_inject/0
+     18       2 1654963  0.0     0 cpuhp/0
+     19       2 1654963  0.0     0 cpuhp/1
+     20       2 1654963  0.0     0 idle_inject/1
+     21       2 1654963  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2949060   8756 113406320    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2949276   8756 113406320    0    0     0     0 5513 8847 28  0 71  0  0
+2026-09-13T06:05:33+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870289 2868800      39  857 269000 ARCH
+2868800 2868768     503  3.4 153068 python3
+2868768 2868720     504  0.2 22520 python3
+3754921       1 1506493  0.2 76016 tailscaled
+   1102       1 1654929  0.1 31128 containerd
+      1       0 1654973  0.0 13640 systemd
+      2       0 1654973  0.0     0 kthreadd
+      3       2 1654973  0.0     0 rcu_gp
+      4       2 1654973  0.0     0 rcu_par_gp
+      5       2 1654973  0.0     0 slub_flushwq
+      6       2 1654973  0.0     0 netns
+      8       2 1654973  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654973  0.0     0 mm_percpu_wq
+     11       2 1654973  0.0     0 rcu_tasks_rude_
+     12       2 1654973  0.0     0 rcu_tasks_trace
+     13       2 1654973  0.0     0 ksoftirqd/0
+     14       2 1654973  0.0     0 rcu_sched
+     15       2 1654973  0.0     0 migration/0
+     16       2 1654973  0.0     0 idle_inject/0
+     18       2 1654973  0.0     0 cpuhp/0
+     19       2 1654973  0.0     0 cpuhp/1
+     20       2 1654973  0.0     0 idle_inject/1
+     21       2 1654973  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2947272   8756 113406336    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2945724   8756 113406336    0    0     0     4 5137 7059 23  0 77  0  0
+2026-09-13T06:05:43+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870289 2868800      49  839 275068 ARCH
+2868800 2868768     513  3.3 153068 python3
+2868768 2868720     514  0.2 22520 python3
+3754921       1 1506503  0.2 76016 tailscaled
+   1102       1 1654939  0.1 31128 containerd
+      1       0 1654983  0.0 13640 systemd
+      2       0 1654983  0.0     0 kthreadd
+      3       2 1654983  0.0     0 rcu_gp
+      4       2 1654983  0.0     0 rcu_par_gp
+      5       2 1654983  0.0     0 slub_flushwq
+      6       2 1654983  0.0     0 netns
+      8       2 1654983  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654983  0.0     0 mm_percpu_wq
+     11       2 1654983  0.0     0 rcu_tasks_rude_
+     12       2 1654983  0.0     0 rcu_tasks_trace
+     13       2 1654983  0.0     0 ksoftirqd/0
+     14       2 1654983  0.0     0 rcu_sched
+     15       2 1654983  0.0     0 migration/0
+     16       2 1654983  0.0     0 idle_inject/0
+     18       2 1654983  0.0     0 cpuhp/0
+     19       2 1654983  0.0     0 cpuhp/1
+     20       2 1654983  0.0     0 idle_inject/1
+     21       2 1654983  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2944180   8756 113406336    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2939392   8756 113406336    0    0     0     0 4622 6819 22  0 77  0  0
+2026-09-13T06:05:53+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870289 2868800      59  829 276592 ARCH
+2868800 2868768     523  3.3 153068 python3
+2868768 2868720     524  0.2 22520 python3
+3754921       1 1506513  0.2 76016 tailscaled
+   1102       1 1654949  0.1 31128 containerd
+      1       0 1654993  0.0 13640 systemd
+      2       0 1654993  0.0     0 kthreadd
+      3       2 1654993  0.0     0 rcu_gp
+      4       2 1654993  0.0     0 rcu_par_gp
+      5       2 1654993  0.0     0 slub_flushwq
+      6       2 1654993  0.0     0 netns
+      8       2 1654993  0.0     0 kworker/0:0H-events_highpri
+     10       2 1654993  0.0     0 mm_percpu_wq
+     11       2 1654993  0.0     0 rcu_tasks_rude_
+     12       2 1654993  0.0     0 rcu_tasks_trace
+     13       2 1654993  0.0     0 ksoftirqd/0
+     14       2 1654993  0.0     0 rcu_sched
+     15       2 1654993  0.0     0 migration/0
+     16       2 1654993  0.0     0 idle_inject/0
+     18       2 1654993  0.0     0 cpuhp/0
+     19       2 1654993  0.0     0 cpuhp/1
+     20       2 1654993  0.0     0 idle_inject/1
+     21       2 1654993  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2943700   8756 113406384    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 2943628   8756 113406384    0    0     0     0 4500 7272 24  0 75  0  0
+2026-09-13T06:06:03+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870381 2868800       6 1292 266796 ARCH
+2868800 2868768     533  3.4 152540 python3
+2868768 2868720     534  0.2 22520 python3
+3754921       1 1506523  0.2 76016 tailscaled
+   1102       1 1654959  0.1 31128 containerd
+      1       0 1655003  0.0 13640 systemd
+      2       0 1655003  0.0     0 kthreadd
+      3       2 1655003  0.0     0 rcu_gp
+      4       2 1655003  0.0     0 rcu_par_gp
+      5       2 1655003  0.0     0 slub_flushwq
+      6       2 1655003  0.0     0 netns
+      8       2 1655003  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655003  0.0     0 mm_percpu_wq
+     11       2 1655003  0.0     0 rcu_tasks_rude_
+     12       2 1655003  0.0     0 rcu_tasks_trace
+     13       2 1655003  0.0     0 ksoftirqd/0
+     14       2 1655003  0.0     0 rcu_sched
+     15       2 1655003  0.0     0 migration/0
+     16       2 1655003  0.0     0 idle_inject/0
+     18       2 1655003  0.0     0 cpuhp/0
+     19       2 1655003  0.0     0 cpuhp/1
+     20       2 1655003  0.0     0 idle_inject/1
+     21       2 1655003  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2941304   8756 113416224    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2941268   8756 113416224    0    0     0     0 5177 9589 24  0 76  0  0
+2026-09-13T06:06:13+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870381 2868800      16  987 266796 ARCH
+2868800 2868768     543  3.3 152540 python3
+2868768 2868720     544  0.2 22520 python3
+3754921       1 1506533  0.2 76016 tailscaled
+   1102       1 1654969  0.1 31128 containerd
+      1       0 1655013  0.0 13640 systemd
+      2       0 1655013  0.0     0 kthreadd
+      3       2 1655013  0.0     0 rcu_gp
+      4       2 1655013  0.0     0 rcu_par_gp
+      5       2 1655013  0.0     0 slub_flushwq
+      6       2 1655013  0.0     0 netns
+      8       2 1655013  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655013  0.0     0 mm_percpu_wq
+     11       2 1655013  0.0     0 rcu_tasks_rude_
+     12       2 1655013  0.0     0 rcu_tasks_trace
+     13       2 1655013  0.0     0 ksoftirqd/0
+     14       2 1655013  0.0     0 rcu_sched
+     15       2 1655013  0.0     0 migration/0
+     16       2 1655013  0.0     0 idle_inject/0
+     18       2 1655013  0.0     0 cpuhp/0
+     19       2 1655013  0.0     0 cpuhp/1
+     20       2 1655013  0.0     0 idle_inject/1
+     21       2 1655013  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2938964   8756 113416256    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 2938964   8756 113416256    0    0     0     0 5290 9673 25  0 75  0  0
+2026-09-13T06:06:23+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870381 2868800      27  888 265812 ARCH
+2868800 2868768     554  3.3 152540 python3
+2868768 2868720     555  0.2 22520 python3
+3754921       1 1506544  0.2 76016 tailscaled
+   1102       1 1654980  0.1 31128 containerd
+      1       0 1655024  0.0 13640 systemd
+      2       0 1655024  0.0     0 kthreadd
+      3       2 1655024  0.0     0 rcu_gp
+      4       2 1655024  0.0     0 rcu_par_gp
+      5       2 1655024  0.0     0 slub_flushwq
+      6       2 1655024  0.0     0 netns
+      8       2 1655024  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655024  0.0     0 mm_percpu_wq
+     11       2 1655024  0.0     0 rcu_tasks_rude_
+     12       2 1655024  0.0     0 rcu_tasks_trace
+     13       2 1655024  0.0     0 ksoftirqd/0
+     14       2 1655024  0.0     0 rcu_sched
+     15       2 1655024  0.0     0 migration/0
+     16       2 1655024  0.0     0 idle_inject/0
+     18       2 1655024  0.0     0 cpuhp/0
+     19       2 1655024  0.0     0 cpuhp/1
+     20       2 1655024  0.0     0 idle_inject/1
+     21       2 1655024  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2937212   8756 113416288    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2937176   8756 113416296    0    0     0     0 5429 9251 27  0 73  0  0
+2026-09-13T06:06:33+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870381 2868800      37  876 271632 ARCH
+2868800 2868768     564  3.2 152540 python3
+2868768 2868720     565  0.2 22520 python3
+3754921       1 1506554  0.2 76016 tailscaled
+   1102       1 1654990  0.1 31128 containerd
+      1       0 1655034  0.0 13640 systemd
+      2       0 1655034  0.0     0 kthreadd
+      3       2 1655034  0.0     0 rcu_gp
+      4       2 1655034  0.0     0 rcu_par_gp
+      5       2 1655034  0.0     0 slub_flushwq
+      6       2 1655034  0.0     0 netns
+      8       2 1655034  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655034  0.0     0 mm_percpu_wq
+     11       2 1655034  0.0     0 rcu_tasks_rude_
+     12       2 1655034  0.0     0 rcu_tasks_trace
+     13       2 1655034  0.0     0 ksoftirqd/0
+     14       2 1655034  0.0     0 rcu_sched
+     15       2 1655034  0.0     0 migration/0
+     16       2 1655034  0.0     0 idle_inject/0
+     18       2 1655034  0.0     0 cpuhp/0
+     19       2 1655034  0.0     0 cpuhp/1
+     20       2 1655034  0.0     0 idle_inject/1
+     21       2 1655034  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2936676   8756 113416344    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2936856   8756 113416344    0    0     0     0 4563 7158 25  0 75  0  0
+2026-09-13T06:06:43+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870381 2868800      47  860 271632 ARCH
+2868800 2868768     574  3.1 152540 python3
+2868768 2868720     575  0.2 22520 python3
+3754921       1 1506564  0.2 76016 tailscaled
+   1102       1 1655000  0.1 31128 containerd
+      1       0 1655044  0.0 13640 systemd
+      2       0 1655044  0.0     0 kthreadd
+      3       2 1655044  0.0     0 rcu_gp
+      4       2 1655044  0.0     0 rcu_par_gp
+      5       2 1655044  0.0     0 slub_flushwq
+      6       2 1655044  0.0     0 netns
+      8       2 1655044  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655044  0.0     0 mm_percpu_wq
+     11       2 1655044  0.0     0 rcu_tasks_rude_
+     12       2 1655044  0.0     0 rcu_tasks_trace
+     13       2 1655044  0.0     0 ksoftirqd/0
+     14       2 1655044  0.0     0 rcu_sched
+     15       2 1655044  0.0     0 migration/0
+     16       2 1655044  0.0     0 idle_inject/0
+     18       2 1655044  0.0     0 cpuhp/0
+     19       2 1655044  0.0     0 cpuhp/1
+     20       2 1655044  0.0     0 idle_inject/1
+     21       2 1655044  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2935356   8756 113416304    0    0     1     9    0    1  4  0 96  0  0
+17  0   5640 2935572   8756 113416304    0    0     0     0 4686 7779 25  0 75  0  0
+2026-09-13T06:06:54+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870381 2868800      57  844 275404 ARCH
+2868800 2868768     584  3.1 152540 python3
+2868768 2868720     585  0.2 22520 python3
+3754921       1 1506574  0.2 76016 tailscaled
+   1102       1 1655010  0.1 31128 containerd
+      1       0 1655054  0.0 13640 systemd
+      2       0 1655054  0.0     0 kthreadd
+      3       2 1655054  0.0     0 rcu_gp
+      4       2 1655054  0.0     0 rcu_par_gp
+      5       2 1655054  0.0     0 slub_flushwq
+      6       2 1655054  0.0     0 netns
+      8       2 1655054  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655054  0.0     0 mm_percpu_wq
+     11       2 1655054  0.0     0 rcu_tasks_rude_
+     12       2 1655054  0.0     0 rcu_tasks_trace
+     13       2 1655054  0.0     0 ksoftirqd/0
+     14       2 1655054  0.0     0 rcu_sched
+     15       2 1655054  0.0     0 migration/0
+     16       2 1655054  0.0     0 idle_inject/0
+     18       2 1655054  0.0     0 cpuhp/0
+     19       2 1655054  0.0     0 cpuhp/1
+     20       2 1655054  0.0     0 idle_inject/1
+     21       2 1655054  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2929788   8756 113416312    0    0     1     9    0    1  4  0 96  0  0
+13  0   5640 2930260   8756 113416320    0    0     0     0 5225 7431 23  0 77  0  0
+2026-09-13T06:07:04+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870471 2868800       4  128 408960 ARCH
+2868800 2868768     594  3.2 152824 python3
+2868768 2868720     595  0.2 22520 python3
+3754921       1 1506584  0.2 76016 tailscaled
+   1102       1 1655020  0.1 31128 containerd
+      1       0 1655064  0.0 13640 systemd
+      2       0 1655064  0.0     0 kthreadd
+      3       2 1655064  0.0     0 rcu_gp
+      4       2 1655064  0.0     0 rcu_par_gp
+      5       2 1655064  0.0     0 slub_flushwq
+      6       2 1655064  0.0     0 netns
+      8       2 1655064  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655064  0.0     0 mm_percpu_wq
+     11       2 1655064  0.0     0 rcu_tasks_rude_
+     12       2 1655064  0.0     0 rcu_tasks_trace
+     13       2 1655064  0.0     0 ksoftirqd/0
+     14       2 1655064  0.0     0 rcu_sched
+     15       2 1655064  0.0     0 migration/0
+     16       2 1655064  0.0     0 idle_inject/0
+     18       2 1655064  0.0     0 cpuhp/0
+     19       2 1655064  0.0     0 cpuhp/1
+     20       2 1655064  0.0     0 idle_inject/1
+     21       2 1655064  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+30 %, 547 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2799684   8756 113434400    0    0     1     9    0    1  4  0 96  0  0
+ 2  0   5640 2799684   8756 113434400    0    0     0     0  649  609  3  0 97  0  0
+2026-09-13T06:07:14+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870471 2868800      14  108 424368 ARCH
+2868800 2868768     604  3.1 152824 python3
+2868768 2868720     605  0.2 22520 python3
+3754921       1 1506594  0.2 76016 tailscaled
+   1102       1 1655030  0.1 31128 containerd
+      1       0 1655074  0.0 13640 systemd
+      2       0 1655074  0.0     0 kthreadd
+      3       2 1655074  0.0     0 rcu_gp
+      4       2 1655074  0.0     0 rcu_par_gp
+      5       2 1655074  0.0     0 slub_flushwq
+      6       2 1655074  0.0     0 netns
+      8       2 1655074  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655074  0.0     0 mm_percpu_wq
+     11       2 1655074  0.0     0 rcu_tasks_rude_
+     12       2 1655074  0.0     0 rcu_tasks_trace
+     13       2 1655074  0.0     0 ksoftirqd/0
+     14       2 1655074  0.0     0 rcu_sched
+     15       2 1655074  0.0     0 migration/0
+     16       2 1655074  0.0     0 idle_inject/0
+     18       2 1655074  0.0     0 cpuhp/0
+     19       2 1655074  0.0     0 cpuhp/1
+     20       2 1655074  0.0     0 idle_inject/1
+     21       2 1655074  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+24 %, 553 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2786856   8756 113434400    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2785844   8756 113434408    0    0     0  4880  463  285  3  0 97  0  0
+2026-09-13T06:07:24+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870471 2868800      24  105 441716 ARCH
+2868800 2868768     614  3.1 152824 python3
+2868768 2868720     615  0.2 22520 python3
+3754921       1 1506604  0.2 76016 tailscaled
+   1102       1 1655040  0.1 31128 containerd
+      1       0 1655084  0.0 13640 systemd
+      2       0 1655084  0.0     0 kthreadd
+      3       2 1655084  0.0     0 rcu_gp
+      4       2 1655084  0.0     0 rcu_par_gp
+      5       2 1655084  0.0     0 slub_flushwq
+      6       2 1655084  0.0     0 netns
+      8       2 1655084  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655084  0.0     0 mm_percpu_wq
+     11       2 1655084  0.0     0 rcu_tasks_rude_
+     12       2 1655084  0.0     0 rcu_tasks_trace
+     13       2 1655084  0.0     0 ksoftirqd/0
+     14       2 1655084  0.0     0 rcu_sched
+     15       2 1655084  0.0     0 migration/0
+     16       2 1655084  0.0     0 idle_inject/0
+     18       2 1655084  0.0     0 cpuhp/0
+     19       2 1655084  0.0     0 cpuhp/1
+     20       2 1655084  0.0     0 idle_inject/1
+     21       2 1655084  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+20 %, 569 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2769900   8756 113434424    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2768612   8756 113434424    0    0     0    28  476  306  3  0 97  0  0
+2026-09-13T06:07:34+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870471 2868800      34  104 458612 ARCH
+2868800 2868768     624  3.0 152824 python3
+2868768 2868720     625  0.2 22520 python3
+3754921       1 1506614  0.2 76016 tailscaled
+   1102       1 1655050  0.1 31128 containerd
+      1       0 1655094  0.0 13640 systemd
+      2       0 1655094  0.0     0 kthreadd
+      3       2 1655094  0.0     0 rcu_gp
+      4       2 1655094  0.0     0 rcu_par_gp
+      5       2 1655094  0.0     0 slub_flushwq
+      6       2 1655094  0.0     0 netns
+      8       2 1655094  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655094  0.0     0 mm_percpu_wq
+     11       2 1655094  0.0     0 rcu_tasks_rude_
+     12       2 1655094  0.0     0 rcu_tasks_trace
+     13       2 1655094  0.0     0 ksoftirqd/0
+     14       2 1655094  0.0     0 rcu_sched
+     15       2 1655094  0.0     0 migration/0
+     16       2 1655094  0.0     0 idle_inject/0
+     18       2 1655094  0.0     0 cpuhp/0
+     19       2 1655094  0.0     0 cpuhp/1
+     20       2 1655094  0.0     0 idle_inject/1
+     21       2 1655094  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+22 %, 581 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2752740   8756 113434440    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2751444   8756 113434440    0    0     0    20  479  303  3  0 97  0  0
+2026-09-13T06:07:44+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870542 2868800       3  151 408840 ARCH
+2868800 2868768     634  3.4 153268 python3
+2868768 2868720     635  0.2 22520 python3
+3754921       1 1506624  0.2 76016 tailscaled
+   1102       1 1655060  0.1 31128 containerd
+      1       0 1655104  0.0 13640 systemd
+      2       0 1655104  0.0     0 kthreadd
+      3       2 1655104  0.0     0 rcu_gp
+      4       2 1655104  0.0     0 rcu_par_gp
+      5       2 1655104  0.0     0 slub_flushwq
+      6       2 1655104  0.0     0 netns
+      8       2 1655104  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655104  0.0     0 mm_percpu_wq
+     11       2 1655104  0.0     0 rcu_tasks_rude_
+     12       2 1655104  0.0     0 rcu_tasks_trace
+     13       2 1655104  0.0     0 ksoftirqd/0
+     14       2 1655104  0.0     0 rcu_sched
+     15       2 1655104  0.0     0 migration/0
+     16       2 1655104  0.0     0 idle_inject/0
+     18       2 1655104  0.0     0 cpuhp/0
+     19       2 1655104  0.0     0 cpuhp/1
+     20       2 1655104  0.0     0 idle_inject/1
+     21       2 1655104  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+33 %, 547 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2772944   8756 113459328    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2772404   8756 113459328    0    0     0     0  471  316  3  0 97  0  0
+2026-09-13T06:07:54+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870542 2868800      13  112 424244 ARCH
+2868800 2868768     644  3.4 153268 python3
+2868768 2868720     645  0.2 22520 python3
+3754921       1 1506634  0.2 76016 tailscaled
+   1102       1 1655070  0.1 31128 containerd
+      1       0 1655114  0.0 13640 systemd
+      2       0 1655114  0.0     0 kthreadd
+      3       2 1655114  0.0     0 rcu_gp
+      4       2 1655114  0.0     0 rcu_par_gp
+      5       2 1655114  0.0     0 slub_flushwq
+      6       2 1655114  0.0     0 netns
+      8       2 1655114  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655114  0.0     0 mm_percpu_wq
+     11       2 1655114  0.0     0 rcu_tasks_rude_
+     12       2 1655114  0.0     0 rcu_tasks_trace
+     13       2 1655114  0.0     0 ksoftirqd/0
+     14       2 1655114  0.0     0 rcu_sched
+     15       2 1655114  0.0     0 migration/0
+     16       2 1655114  0.0     0 idle_inject/0
+     18       2 1655114  0.0     0 cpuhp/0
+     19       2 1655114  0.0     0 cpuhp/1
+     20       2 1655114  0.0     0 idle_inject/1
+     21       2 1655114  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+23 %, 553 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2760528   8756 113459376    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2759016   8756 113459376    0    0     0     0  425  246  3  0 97  0  0
+2026-09-13T06:08:04+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870542 2868800      24  102 441640 ARCH
+2868800 2868768     655  3.3 153268 python3
+2868768 2868720     656  0.2 22520 python3
+3754921       1 1506645  0.2 76016 tailscaled
+   1102       1 1655081  0.1 31128 containerd
+      1       0 1655125  0.0 13640 systemd
+      2       0 1655125  0.0     0 kthreadd
+      3       2 1655125  0.0     0 rcu_gp
+      4       2 1655125  0.0     0 rcu_par_gp
+      5       2 1655125  0.0     0 slub_flushwq
+      6       2 1655125  0.0     0 netns
+      8       2 1655125  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655125  0.0     0 mm_percpu_wq
+     11       2 1655125  0.0     0 rcu_tasks_rude_
+     12       2 1655125  0.0     0 rcu_tasks_trace
+     13       2 1655125  0.0     0 ksoftirqd/0
+     14       2 1655125  0.0     0 rcu_sched
+     15       2 1655125  0.0     0 migration/0
+     16       2 1655125  0.0     0 idle_inject/0
+     18       2 1655125  0.0     0 cpuhp/0
+     19       2 1655125  0.0     0 cpuhp/1
+     20       2 1655125  0.0     0 idle_inject/1
+     21       2 1655125  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+20 %, 569 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2743100   8756 113459408    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2741296   8756 113459424    0    0     0  6732  479  351  3  0 97  0  0
+2026-09-13T06:08:14+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870542 2868800      34  102 458536 ARCH
+2868800 2868768     665  3.3 153268 python3
+2868768 2868720     666  0.2 22520 python3
+3754921       1 1506655  0.2 76016 tailscaled
+   1102       1 1655091  0.1 31128 containerd
+      1       0 1655135  0.0 13640 systemd
+      2       0 1655135  0.0     0 kthreadd
+      3       2 1655135  0.0     0 rcu_gp
+      4       2 1655135  0.0     0 rcu_par_gp
+      5       2 1655135  0.0     0 slub_flushwq
+      6       2 1655135  0.0     0 netns
+      8       2 1655135  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655135  0.0     0 mm_percpu_wq
+     11       2 1655135  0.0     0 rcu_tasks_rude_
+     12       2 1655135  0.0     0 rcu_tasks_trace
+     13       2 1655135  0.0     0 ksoftirqd/0
+     14       2 1655135  0.0     0 rcu_sched
+     15       2 1655135  0.0     0 migration/0
+     16       2 1655135  0.0     0 idle_inject/0
+     18       2 1655135  0.0     0 cpuhp/0
+     19       2 1655135  0.0     0 cpuhp/1
+     20       2 1655135  0.0     0 idle_inject/1
+     21       2 1655135  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+22 %, 581 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2723160   8756 113459456    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2721620   8756 113459456    0    0     0     0  419  234  3  0 97  0  0
+2026-09-13T06:08:24+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870613 2868800       4  977 260456 ARCH
+2868800 2868768     675  3.6 154608 python3
+2868768 2868720     676  0.2 22520 python3
+3754921       1 1506665  0.2 76016 tailscaled
+   1102       1 1655101  0.1 31128 containerd
+      1       0 1655145  0.0 13640 systemd
+      2       0 1655145  0.0     0 kthreadd
+      3       2 1655145  0.0     0 rcu_gp
+      4       2 1655145  0.0     0 rcu_par_gp
+      5       2 1655145  0.0     0 slub_flushwq
+      6       2 1655145  0.0     0 netns
+      8       2 1655145  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655145  0.0     0 mm_percpu_wq
+     11       2 1655145  0.0     0 rcu_tasks_rude_
+     12       2 1655145  0.0     0 rcu_tasks_trace
+     13       2 1655145  0.0     0 ksoftirqd/0
+     14       2 1655145  0.0     0 rcu_sched
+     15       2 1655145  0.0     0 migration/0
+     16       2 1655145  0.0     0 idle_inject/0
+     18       2 1655145  0.0     0 cpuhp/0
+     19       2 1655145  0.0     0 cpuhp/1
+     20       2 1655145  0.0     0 idle_inject/1
+     21       2 1655145  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2877400   8756 113476200    0    0     1     9    0    1  4  0 96  0  0
+16  0   5640 2882404   8756 113476200    0    0     0     0 8930 12545 35  0 64  0  0
+2026-09-13T06:08:35+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870613 2868800      14  886 270024 ARCH
+2868800 2868768     685  3.6 154608 python3
+2868768 2868720     686  0.2 22520 python3
+3754921       1 1506675  0.2 76016 tailscaled
+   1102       1 1655111  0.1 31128 containerd
+      1       0 1655155  0.0 13640 systemd
+      2       0 1655155  0.0     0 kthreadd
+      3       2 1655155  0.0     0 rcu_gp
+      4       2 1655155  0.0     0 rcu_par_gp
+      5       2 1655155  0.0     0 slub_flushwq
+      6       2 1655155  0.0     0 netns
+      8       2 1655155  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655155  0.0     0 mm_percpu_wq
+     11       2 1655155  0.0     0 rcu_tasks_rude_
+     12       2 1655155  0.0     0 rcu_tasks_trace
+     13       2 1655155  0.0     0 ksoftirqd/0
+     14       2 1655155  0.0     0 rcu_sched
+     15       2 1655155  0.0     0 migration/0
+     16       2 1655155  0.0     0 idle_inject/0
+     18       2 1655155  0.0     0 cpuhp/0
+     19       2 1655155  0.0     0 cpuhp/1
+     20       2 1655155  0.0     0 idle_inject/1
+     21       2 1655155  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2869572   8756 113476176    0    0     1     9    0    1  4  0 96  0  0
+ 9  0   5640 2869788   8756 113476176    0    0     0     0 4852 7712 24  0 75  0  0
+2026-09-13T06:08:45+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870613 2868800      24  860 271712 ARCH
+2868800 2868768     695  3.5 154608 python3
+2868768 2868720     696  0.2 22520 python3
+3754921       1 1506685  0.2 76016 tailscaled
+   1102       1 1655121  0.1 31128 containerd
+      1       0 1655165  0.0 13640 systemd
+      2       0 1655165  0.0     0 kthreadd
+      3       2 1655165  0.0     0 rcu_gp
+      4       2 1655165  0.0     0 rcu_par_gp
+      5       2 1655165  0.0     0 slub_flushwq
+      6       2 1655165  0.0     0 netns
+      8       2 1655165  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655165  0.0     0 mm_percpu_wq
+     11       2 1655165  0.0     0 rcu_tasks_rude_
+     12       2 1655165  0.0     0 rcu_tasks_trace
+     13       2 1655165  0.0     0 ksoftirqd/0
+     14       2 1655165  0.0     0 rcu_sched
+     15       2 1655165  0.0     0 migration/0
+     16       2 1655165  0.0     0 idle_inject/0
+     18       2 1655165  0.0     0 cpuhp/0
+     19       2 1655165  0.0     0 cpuhp/1
+     20       2 1655165  0.0     0 idle_inject/1
+     21       2 1655165  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2867268   8756 113476192    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2867992   8756 113476192    0    0     0     0 5147 7802 27  0 73  0  0
+2026-09-13T06:08:55+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870613 2868800      34  877 271712 ARCH
+2868800 2868768     705  3.5 154608 python3
+2868768 2868720     706  0.2 22520 python3
+3754921       1 1506695  0.2 76016 tailscaled
+   1102       1 1655131  0.1 31128 containerd
+      1       0 1655175  0.0 13640 systemd
+      2       0 1655175  0.0     0 kthreadd
+      3       2 1655175  0.0     0 rcu_gp
+      4       2 1655175  0.0     0 rcu_par_gp
+      5       2 1655175  0.0     0 slub_flushwq
+      6       2 1655175  0.0     0 netns
+      8       2 1655175  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655175  0.0     0 mm_percpu_wq
+     11       2 1655175  0.0     0 rcu_tasks_rude_
+     12       2 1655175  0.0     0 rcu_tasks_trace
+     13       2 1655175  0.0     0 ksoftirqd/0
+     14       2 1655175  0.0     0 rcu_sched
+     15       2 1655175  0.0     0 migration/0
+     16       2 1655175  0.0     0 idle_inject/0
+     18       2 1655175  0.0     0 cpuhp/0
+     19       2 1655175  0.0     0 cpuhp/1
+     20       2 1655175  0.0     0 idle_inject/1
+     21       2 1655175  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 2865724   8756 113476208    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2864180   8756 113476224    0    0     0     0 4780 6088 25  0 75  0  0
+2026-09-13T06:09:05+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870613 2868800      44  855 274860 ARCH
+2868800 2868768     715  3.4 154608 python3
+2868768 2868720     716  0.2 22520 python3
+3754921       1 1506705  0.2 76016 tailscaled
+   1102       1 1655141  0.1 31128 containerd
+      1       0 1655185  0.0 13640 systemd
+      2       0 1655185  0.0     0 kthreadd
+      3       2 1655185  0.0     0 rcu_gp
+      4       2 1655185  0.0     0 rcu_par_gp
+      5       2 1655185  0.0     0 slub_flushwq
+      6       2 1655185  0.0     0 netns
+      8       2 1655185  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655185  0.0     0 mm_percpu_wq
+     11       2 1655185  0.0     0 rcu_tasks_rude_
+     12       2 1655185  0.0     0 rcu_tasks_trace
+     13       2 1655185  0.0     0 ksoftirqd/0
+     14       2 1655185  0.0     0 rcu_sched
+     15       2 1655185  0.0     0 migration/0
+     16       2 1655185  0.0     0 idle_inject/0
+     18       2 1655185  0.0     0 cpuhp/0
+     19       2 1655185  0.0     0 cpuhp/1
+     20       2 1655185  0.0     0 idle_inject/1
+     21       2 1655185  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2869224   8756 113476248    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2867644   8756 113476256    0    0     0     0 5041 6292 24  0 76  0  0
+2026-09-13T06:09:15+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2870613 2868800      54  839 276212 ARCH
+2868800 2868768     725  3.4 154608 python3
+2868768 2868720     726  0.2 22520 python3
+3754921       1 1506715  0.2 76016 tailscaled
+   1102       1 1655151  0.1 31128 containerd
+      1       0 1655195  0.0 13640 systemd
+      2       0 1655195  0.0     0 kthreadd
+      3       2 1655195  0.0     0 rcu_gp
+      4       2 1655195  0.0     0 rcu_par_gp
+      5       2 1655195  0.0     0 slub_flushwq
+      6       2 1655195  0.0     0 netns
+      8       2 1655195  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655195  0.0     0 mm_percpu_wq
+     11       2 1655195  0.0     0 rcu_tasks_rude_
+     12       2 1655195  0.0     0 rcu_tasks_trace
+     13       2 1655195  0.0     0 ksoftirqd/0
+     14       2 1655195  0.0     0 rcu_sched
+     15       2 1655195  0.0     0 migration/0
+     16       2 1655195  0.0     0 idle_inject/0
+     18       2 1655195  0.0     0 cpuhp/0
+     19       2 1655195  0.0     0 cpuhp/1
+     20       2 1655195  0.0     0 idle_inject/1
+     21       2 1655195  0.0     0 migration/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+16  0   5640 2870936   8756 113476216    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 2868852   8756 113476216    0    0     0     0 4801 6095 23  0 77  0  0
+2026-09-13T06:09:25+00:00
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2868800 2868768     735  3.5 154976 python3
+2868768 2868720     736  0.2 22520 python3
+3754921       1 1506725  0.2 76016 tailscaled
+   1102       1 1655161  0.1 31128 containerd
+      1       0 1655205  0.0 13640 systemd
+      2       0 1655205  0.0     0 kthreadd
+      3       2 1655205  0.0     0 rcu_gp
+      4       2 1655205  0.0     0 rcu_par_gp
+      5       2 1655205  0.0     0 slub_flushwq
+      6       2 1655205  0.0     0 netns
+      8       2 1655205  0.0     0 kworker/0:0H-events_highpri
+     10       2 1655205  0.0     0 mm_percpu_wq
+     11       2 1655205  0.0     0 rcu_tasks_rude_
+     12       2 1655205  0.0     0 rcu_tasks_trace
+     13       2 1655205  0.0     0 ksoftirqd/0
+     14       2 1655205  0.0     0 rcu_sched
+     15       2 1655205  0.0     0 migration/0
+     16       2 1655205  0.0     0 idle_inject/0
+     18       2 1655205  0.0     0 cpuhp/0
+     19       2 1655205  0.0     0 cpuhp/1
+     20       2 1655205  0.0     0 idle_inject/1
+     21       2 1655205  0.0     0 migration/1
+     22       2 1655205  0.0     0 ksoftirqd/1
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+0 %, 0 MiB, 20480 MiB
+procs -----------memory---------- ---swap-- -----io---- -system-- ------cpu-----
+ r  b   swpd   free   buff  cache   si   so    bi    bo   in   cs us sy id wa st
+ 1  0   5640 3118812   8756 113483232    0    0     1     9    0    1  4  0 96  0  0
+ 1  0   5640 3256640   8756 113483248    0    0     0  4864  656  482  2  1 97  0  0

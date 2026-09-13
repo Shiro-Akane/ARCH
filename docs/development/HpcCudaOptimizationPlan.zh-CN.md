@@ -1,6 +1,6 @@
 # ARCH：HPC＋CUDA 性能优化计划表
 
-日期：2026-09-12。状态：S0 实施中，已采纳返送意见。第 9 节修订优先于前文旧约定；实际进度见 [S0 记录](../../validation/backend/results/hpc-cuda-optimization/S0/README.md)。生产优化尚未开始。
+初版：2026-09-12；当前更新：2026-09-14。S1–S4 已实现，主要数值及原两档 Sedov 线程扫描通过，安全验收仍受 vGPU 限制。前文阶段状态是历史快照；当前范围和燃烧/扩散/耦合后续执行见 [多物理优化计划](MultiphysicsCudaOptimizationPlan.zh-CN.md)。第 9 节修订继续约束科学边界和双端同步。
 
 ## 1. 结论与范围
 

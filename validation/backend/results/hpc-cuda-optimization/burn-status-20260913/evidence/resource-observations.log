@@ -1,0 +1,33 @@
+2026-09-13T14:57:48+00:00
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+99 %, 10526 MiB, 20480 MiB
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2898262 2898231     229  100 340448 arch_cuda_gener
+2898228 2898226     231  2.7 20420 python
+2899032    1115       3  1.0 10840 sshd
+2898231 2898228     231  0.7 30516 python
+3754921       1 1538428  0.2 73956 tailscaled
+   1102       1 1686864  0.1 35068 containerd
+      1       0 1686908  0.0 13632 systemd
+2026-09-13T14:57:51+00:00
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+99 %, 10526 MiB, 20480 MiB
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2898262 2898231     232  100 340448 arch_cuda_gener
+2898228 2898226     234  2.7 20420 python
+2898231 2898228     234  0.7 30516 python
+2899032    1115       6  0.5 10840 sshd
+3754921       1 1538431  0.2 73956 tailscaled
+   1102       1 1686867  0.1 35068 containerd
+      1       0 1686911  0.0 13632 systemd
+2026-09-13T14:57:54+00:00
+utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+99 %, 10526 MiB, 20480 MiB
+    PID    PPID ELAPSED %CPU   RSS COMMAND
+2898262 2898231     235  100 340448 arch_cuda_gener
+2898228 2898226     237  2.7 20420 python
+2898231 2898228     237  0.7 30516 python
+2899032    1115       9  0.3 10840 sshd
+3754921       1 1538434  0.2 73956 tailscaled
+   1102       1 1686870  0.1 35068 containerd
+2899101 2899100       6  0.1  3584 bash

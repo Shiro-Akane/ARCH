@@ -1,0 +1,7 @@
+scope,test-only-not-qualification
+shadow_residual_rejections,10000000,0,refinement_solves,0
+cell,custom:audit150,cudss_refine,0,10000000,3.0545973378735239e+22,763649334468.38098,1,0,4,36,1.9442715464672168e-16
+shadow_residual_rejections,10500000,0,refinement_solves,2
+cell,custom:audit150,cudss_refine,1,10500000,3.2232544593769709e+22,805813614844.2428,4,1,14,114,3.8688215429227129e-09
+shadow_residual_rejections,11000000,0,refinement_solves,3
+cell,custom:audit150,cudss_refine,2,11000000,3.3930805589865782e+22,848270139746.64453,4,1,14,114,1.4853068449183346e-10
