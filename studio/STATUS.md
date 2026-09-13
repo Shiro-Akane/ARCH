@@ -396,3 +396,9 @@ User requested running Cellular with the existing executable, then importing tho
 - Retained Mock preview across config/source changes, canvas-relative status centering, and nearby Hotspot Update Preview implemented.
 - Production browser reproduction and existing Sod Config/Plotfile regression passed; final 49/49 tests, lint, typecheck, build and diff checks passed. See TARGETED_FIX_REGRESSION_REPORT.md for evidence and limitations.
 - Focused commit only; no release tag/push or Phase 2. Historical human UAT / Windows Save As acceptance is not claimed.
+
+## Final targeted-fix checkpoint
+- Focused implementation: 5ce8a07027d6fef9062e3641d7f00746544daaac; branch studio/preview-targeted-fixes was clean before this documentation update.
+- User explicitly confirmed Windows Save As disk persistence passed manual acceptance, superseding that specific pending item above. No broader UAT result is inferred.
+- Final local checkpoint: studio-phase1c2-v0.4.2, on the subsequent documentation-only acceptance commit. Existing 49/49 tests, lint, typecheck and build remain applicable; implementation unchanged.
+- No feature changes, push, or Phase 2 work.
