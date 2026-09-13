@@ -1,6 +1,6 @@
 # ARCH：自适应反应流 CUDA 流体力学框架
 
-英文原文：[README.md](README.md)。
+英文原文：[README.md](README.md) · [文档总览](docs/README.zh-CN.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -245,14 +245,14 @@ linear_solver = Auto
 [网络验证](validation/network/README.zh-CN.md)。完整契约和生成器要求见
 [研究与 API 参考](docs/Reference.zh-CN.md)。
 
-## 文档路径
+## 文档总览
+
+[文档总览](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与许可信息。
 
 [模拟算例指南](docs/guides/SimulationCase.zh-CN.md)提供从首次运行、核心 CFD 参数到新建 `Setup`/`Init` 算例的连续学生学习路径。
 
 参数名、可接受取值、API 签名、输出格式和扩展要求统一收录在可搜索的
 [研究与 API 参考](docs/Reference.zh-CN.md)中。
-
-[文档索引](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与法律文件入口。
 
 [CUDA 与 GPU-AMR 指南](docs/CudaBackendStatus.zh-CN.md)介绍支持的功能、后端职责与求解器选择。
 
@@ -261,8 +261,9 @@ linear_solver = Auto
 复现与审阅使用，不是首次运行前必须完成的额外配置步骤。修改源码的开发者还应
 阅读[贡献者指南](docs/development/README.md)。
 
-发现疑似安全漏洞时，请先按[安全报告指南](SECURITY.zh-CN.md)联系维护者，不要直接公开
-漏洞细节。普通构建问题和数值差异可以提交到 [GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues)。
+构建、运行和数值问题可以在 [GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues) 中讨论。
+[科研计算与问题反馈指南](docs/guides/Reporting.zh-CN.md)说明了反馈时应提供的信息，
+以及涉及研究数据或需要私下协调的问题如何处理。
 
 ## 仓库结构
 
@@ -274,8 +275,6 @@ linear_solver = Auto
 ARCH/
 ├── README.md                 # 英文入口与首次运行，规范文本
 ├── README.zh-CN.md           # 中文辅助入口
-├── SECURITY.md               # 安全问题报告说明
-├── SECURITY.zh-CN.md         # 中文安全报告指南
 ├── .gitleaks.toml            # 共用凭据扫描规则
 ├── .github/                  # 审阅归属、维护说明与持续集成
 │   ├── CODEOWNERS            # 默认代码审阅负责人
@@ -298,6 +297,8 @@ ARCH/
 │   └── templates/            # 生成的轻量绑定，不复制物理实现
 ├── simulation/               # 算例实现与可复用示例输入
 ├── docs/                     # 指南、参考、物理说明和法律索引
+│   ├── README.md             # 文档总览
+│   └── guides/               # 构建、算例与问题反馈指南
 ├── validation/               # 唯一 V&V 目录：输入、记录、指标与图像
 ├── tests/                    # 本地编译的检查与小型参考
 │   ├── host/                 # 宿主契约与共用接口

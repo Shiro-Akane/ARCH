@@ -12,12 +12,14 @@ public description when behavior changes and retain a separate record of the
 verification. The [comment and documentation guide](CommentAndDocumentationStyle.md)
 describes how to explain this flow without turning source comments into a change log.
 
-## Security and contributions
+## Reporting problems and contributing
 
-Report suspected vulnerabilities through the [security guide](../../SECURITY.md)
-([中文](../../SECURITY.zh-CN.md)) before sharing details in a public issue or pull
-request. Ordinary bug reports should include a minimal input, the tested commit
-and the expected behavior. Remove credentials and private data from shared logs.
+Use Issues for build, runtime and numerical questions, with a small reproducer,
+the tested commit and the expected behavior. Follow the
+[research computing and reporting guide](../guides/Reporting.md)
+([中文](../guides/Reporting.zh-CN.md)) when preparing inputs and logs for sharing.
+Problems involving unintended file access, credentials or effects on other users'
+jobs need private coordination; ordinary numerical discrepancies do not.
 
 [CODEOWNERS](../../.github/CODEOWNERS) names the default reviewer; it is separate
 from the implementation ownership map and does not itself require approval.

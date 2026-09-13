@@ -1,4 +1,4 @@
-# ARCH documentation
+# ARCH documentation overview
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
@@ -30,6 +30,9 @@ To run your first calculation, follow the [Simulation case guide](guides/Simulat
   integrity requirements.
 - [Legal and provenance index](legal/README.md): project and third-party
   licensing pointers.
+- [Research computing and issue reporting](guides/Reporting.md): what to include in
+  a build, runtime or numerical report, and how to protect research data when
+  asking for help.
 
 ## For contributors and reviewers
 
