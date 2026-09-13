@@ -1,6 +1,6 @@
 # ARCH: Adaptive Reactive CUDA Hydrodynamics
 
-Chinese translation: [README.zh-CN.md](README.zh-CN.md).
+Chinese translation: [README.zh-CN.md](README.zh-CN.md) · [Documentation overview](docs/README.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -282,7 +282,10 @@ and generator requirements are in the
 [Research and API Reference](docs/Reference.md); checks across network sizes
 are kept with the same validation results.
 
-## Documentation paths
+## Documentation overview
+
+The [documentation overview](docs/README.md) groups learning guides, physics
+notes, API reference material and licensing information by audience.
 
 The [Simulation Case Guide](docs/guides/SimulationCase.md) provides a continuous
 student path through the first run, core CFD parameters, and a new
@@ -291,9 +294,6 @@ student path through the first run, core CFD parameters, and a new
 For exact parameter names, accepted values, API signatures, output formats
 and extension requirements, use the searchable
 [Research and API Reference](docs/Reference.md).
-
-The [documentation index](docs/README.md) groups learning guides, physics
-notes, API reference material, and legal-document pointers by audience.
 
 The [CUDA and GPU-AMR guide](docs/CudaBackendStatus.md) describes supported
 features, backend responsibilities and solver selection.
@@ -305,9 +305,10 @@ records are intended for reproduction and review; they are not extra setup
 steps for a first simulation. Developers changing the code should also read
 the [contributor guide](docs/development/README.md).
 
-For suspected security vulnerabilities, follow the [security reporting guide](SECURITY.md)
-before sharing details publicly. Ordinary build and numerical issues can use
-[GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues).
+For build, runtime and numerical questions, use
+[GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues). The
+[research computing and reporting guide](docs/guides/Reporting.md) explains what to include
+and how to handle research data or problems that need private coordination.
 
 ## Repository map
 
@@ -321,8 +322,6 @@ application, optional backend and test groups.
 ARCH/
 ├── README.md                 # Entry point and first run
 ├── README.zh-CN.md           # Chinese guide
-├── SECURITY.md               # Security reporting instructions
-├── SECURITY.zh-CN.md         # Chinese security reporting guide
 ├── .gitleaks.toml            # Shared secret-scanning policy
 ├── .github/                  # Review ownership, maintenance notes and CI
 │   ├── CODEOWNERS            # Default code-review owner
@@ -345,6 +344,8 @@ ARCH/
 │   └── templates/            # Thin generated bindings, not copied physics
 ├── simulation/               # Case implementations and reusable example inputs
 ├── docs/                     # Guides, reference, physics notes, legal index
+│   ├── README.md             # Documentation overview
+│   └── guides/               # Build, simulation and issue-reporting guides
 ├── validation/               # Single V&V tree: inputs, records, metrics, figures
 ├── tests/                    # Locally compiled checks and small references
 │   ├── host/                 # Host contracts and shared interfaces

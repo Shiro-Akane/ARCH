@@ -1,4 +1,4 @@
-# ARCH 文档
+# ARCH 文档总览
 
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
@@ -19,7 +19,9 @@
 - [物理说明](physics/README.md)：模型来源，并区分维护中的说明与历史数值分析；
 - [Verification 与 Validation](../validation/README.zh-CN.md)：测了什么、如何衡量误差，以及 CPU 与 GPU 结果如何比较；
 - [EOS 运行时表](../EOS_toolkit/README.zh-CN.md)：表目录、来源和完整性要求；
-- [法律与来源索引](legal/README.zh-CN.md)：项目及第三方许可证入口。
+- [法律与来源索引](legal/README.zh-CN.md)：项目及第三方许可证入口；
+- [科研计算与问题反馈](guides/Reporting.zh-CN.md)：构建、运行和数值问题的反馈方式，
+  以及求助时如何保护研究数据。
 
 ## 开发与审阅入口
 
