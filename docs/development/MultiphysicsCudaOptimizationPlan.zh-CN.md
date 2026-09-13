@@ -14,8 +14,8 @@
 
 | 阶段 | 工作 | 验收与交付 | 当前状态 |
 |---|---|---|---|
-| V0：冻结当前证据 | 归档 S1–S4 数值/线程扫描；收齐 150/200 原四步、源码/构建身份和失败日志 | 区分正确性、性能、安全、集成和同步；保留全部样本/失败；两端同 SHA | 线程扫描和跨线程比较通过；200 原四步通过；150 BD 失败已复现；归档中 |
-| V1：燃烧正确性门槛 | 定位 150 的 BD/ENUC 首个分歧；检查接受/拒绝路径、增量能量和原矩阵残差；排除 CPU 参考自身误差 | 不放宽 2e-10 原场预算；150/200 三 ODE、池尾部/存储更换通过后再扩大容量/轨迹；补完整应用与独立参考 | 进行中；ROS4 定向诊断通过不代替全矩阵 |
+| V0：冻结当前证据 | 归档 S1–S4 数值/线程扫描；收齐 150/200 原四步、源码/构建身份和失败日志 | 区分正确性、性能、安全、集成和同步；保留全部样本/失败；两端同 SHA | 已在 7abe86d4 双端归档；保留原 150 BD 失败及诊断 |
+| V1：燃烧正确性门槛 | 定位 150 的 BD/ENUC 首个分歧；检查接受/拒绝路径、增量能量和原矩阵残差；排除 CPU 参考自身误差 | 不放宽 2e-10 原场预算；150/200 三 ODE、池尾部/存储更换通过后再扩大容量/轨迹；补完整应用与独立参考 | 有界残差修正通过 150/200 原四步、2/3 单元存储更换及附加失败合同；容量/长期/全应用尚未验收 |
 | P1：燃烧执行层 | 先分解 RHS/Jacobian、矩阵装配、symbolic/numeric factor、solve、同步与内存成本；小网络批量和大网络有界 lane 调度分别优化 | 逐个可回退改动；不复制 ODE；缓存显式绑定 matrix token/世代；不接受残差失效的解；报告冷启动和稳态及全应用规模扫描 | 待 V1/热点证据；单 factor owner 的换 lane 重分解是待检验假设 |
 | P2：扩散执行层 | RKL1/RKL2 stage 的跨块提交、系数/通量临时存储复用、dt/status 批量归约 | 所有方向、曲线/Cartesian、负 gamma、F(Y0) 跨步隔离、AMR reflux 和 restart 原回归；与同轮 CPU 对照 | 待模块基线；不改 RKL 递推/源项/边界通量 |
 | P3：四模块耦合 | Hydro＋burn＋diffusion＋动态 AMR，真实 EOS、网络、算子顺序和燃烧 limiter | 质量/电荷及含源项能量、组分演化、接受步/子步工作量、regrid、split-run、CPU↔GPU restart 和 restart 后 regrid；同输入全应用计时 | 待单模块门槛；不能由四个孤立微测试替代 |
@@ -32,6 +32,15 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 4. 150/200 先原四步，再有界容量与长步、完整应用；不从 2/3 单元微测试外推全网格速度。记录实际 workspace 容量、分解次数/复用、显存高水位，不能无限扩大 factor 池换速度。
 5. 验证失败先定位。任何参考/比较器/预算变化都独立审查，不与候选优化混在同一通过声明里。允许 test-only shadow solve/高精度残差诊断，但不冒充生产路线通过或独立反应物理 oracle。
 
+## 2026-09-14 实施入口核对
+
+- 燃烧正确性：已隔离出原系统残差拒绝造成 BD 多子步的触发链；设备驻留、有界两轮残差修正通过 audit150/200 原四步三 ODE、provider 合同和两个原失败路径回归；原预算不变。不提前标记 V1 的容量、长期和全应用验收完成。
+- 燃烧 kernel 资源：独立 runtime attributes 探针观察到 audit150 BD 的 `advance_ode` 每线程 47152 bytes local memory、255 registers；2/3 单元诊断只发 1 block × 32 threads。这是局部状态/利用率分析入口，不是耗时归因，也不能外推全网格性能。
+- 燃烧调度：`SparseOdeBatch.cuh` 当前只有一个 resident factor owner，不同 lane/token 可相互驱逐因子。优先量化恢复分解次数和 factor cache 的真实显存成本，再比较有界复用方案；不能用 2/3 单元微测试掩盖生产池最多一个 warp 的行为。
+- 扩散 dt：`Driver.h` 逐块调用 `compute_diffusion_dt`；`CudaBackendMicrophysicsControl.cpp` 每块下载 int/double 后 `quiesce()`。可沿已有 Hydro batch 完成契约合并回传，但必须保留每块错误及确定性全局 minimum。
+- 扩散 stage/copy：同一控制文件的 `copy_state_slot`、`execute_diffusion_stage` 仍逐块完成等待。批量化需要保留每 stage 的 ghost → operator → register → reflux → publish 顺序，不能跨越 RKL 依赖合并。
+- 编译成本：旧 focused 记录中，两个 `test_generated_sparse_burn_factory.cu` 实例约耗时 3575/6756 秒。当前 provider 私有接口内的修正可重编两个小 TU、重链接旧对象验证；这不替代最终 clean/full build，也不允许假改旧产物的源码身份。
+
 ## 协作和同步
 
 沿用固定分支 `codex/hpc-cuda-optimization`，本地 commit 后向 `personal`（Arsenic-er）和 `friend`（Shiro-Akane）显式 fast-forward push 同一个 SHA；不碰 main，不强推。开始/发布前 fetch，遇别人新提交先整合和复测。按总计划第 9 节，诊断/开发快照可同步供协作，但“同步”不等于“验收”；只有相应证据完整才能标记已验收，不给失败阶段发验收标签。
@@ -40,4 +49,5 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 
 - [S1–S4 数值验证](../../validation/backend/results/hpc-cuda-optimization/S4/validation-20260913/README.md)：24/24 合同/设备测试、121 组 checkpoint。
 - [完整线程扫描](../../validation/backend/results/hpc-cuda-optimization/S4/timing-20260913/README.md)：120 次运行、140 组线程内＋16 组跨线程比较；最快 CPU16 同线程比 1.588/1.667，仅无燃烧 Sedov。
-- [150/200 燃烧诊断](../../validation/backend/results/hpc-cuda-optimization/burn-status-20260913/README.md)：200 focused gate 通过；150 BD 首个 ENUC 相对差 1.378861e-9，超过原 2e-10 预算，未修复。
+- [150/200 原燃烧诊断](../../validation/backend/results/hpc-cuda-optimization/burn-status-20260913/README.md)：200 focused gate 通过；保留原 150 BD 首个 ENUC 相对差 1.378861e-9 的失败基线。
+- [V1 原系统残差修正](../../validation/backend/results/hpc-cuda-optimization/V1-residual-20260914/README.md)：150/200 focused 三 ODE 全通过，150 BD 最大场差降至 1.796e-14；无库/ODE/预算改动。附加失败合同通过；资源探针单独记录，不混入正式性能。

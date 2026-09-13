@@ -114,8 +114,11 @@ void run(int extent)
         const auto downloaded_before = solver.bytes_d2h();
         if (round != 1) require_result(solver.factorize(device_values.value, token));
         require_result(solver.solve(device_rhs.value, device_solution.value, token));
-        require(solver.kernel_count() - kernels_before == (round == 1 ? 2 : 4)
-            && solver.bytes_d2h() - downloaded_before == sizeof(int) * (round == 0 ? 3 : round == 1 ? 1 : 2)
+        // One original-system residual kernel per solve; its integer status
+        // shares the pre-existing completion download/fence. This well-scaled
+        // manufactured matrix must not need any extra correction solves.
+        require(solver.kernel_count() - kernels_before == (round == 1 ? 3 : 5)
+            && solver.bytes_d2h() - downloaded_before == sizeof(int) * (round == 0 ? 4 : round == 1 ? 2 : 3)
             && solver.bytes_h2d() == metadata_bytes,
             "Provider factor/reuse omitted preparation kernels or scalar transfers, or recopied numeric Host state");
         check(cudaMemcpyAsync(solved.data(), device_solution.value, solved.size() * sizeof(double), cudaMemcpyDeviceToHost, stream.value));

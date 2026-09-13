@@ -83,17 +83,21 @@ struct CuDssSparseSolver::Impl
     std::uint64_t peak_device_bytes = 0;
     int extent = 0;
     const int* row_offsets = nullptr;
+    const int* column_indices = nullptr;
+    const double* original_values = nullptr;
+    const double* original_rhs = nullptr;
     DeviceAllocation<double> scaled_values, row_divisors, column_divisors,
-        scaled_rhs, scaled_solution;
+        scaled_rhs, scaled_solution, original_residual, correction;
     DeviceAllocation<int> column_offsets, column_slots;
     DeviceAllocation<int> invalid_equilibration;
     double* caller_solution = nullptr;
-    int equilibration_error = 0;
+    std::array<int, 2> completion{}; // Invalid arithmetic; original residual state.
 
     std::uint64_t equilibration_bytes() const
     {
         return (scaled_values.size() + row_divisors.size() + column_divisors.size()
-            + scaled_rhs.size() + scaled_solution.size()) * sizeof(double)
+            + scaled_rhs.size() + scaled_solution.size() + original_residual.size()
+            + correction.size()) * sizeof(double)
             + (invalid_equilibration.size() + column_offsets.size() + column_slots.size())
                 * sizeof(int);
     }
@@ -111,27 +115,40 @@ struct CuDssSparseSolver::Impl
         if (handle != nullptr) cudssDestroy(handle);
     }
 
-    CuDssResult execute(int phase)
+    CuDssResult execute(int phase, bool correction_solve = false)
     {
         CuDssResult result;
         result.library_status = cudssExecute(handle, phase, config, data, matrix, solution, rhs);
         if (result.library_status != CUDSS_STATUS_SUCCESS) return result;
         if (phase == CUDSS_PHASE_SOLVE) {
             result.cuda_status = equilibrate_sparse_vector(extent, scaled_solution.get(),
-                column_divisors.get(), caller_solution, invalid_equilibration.get(), false, stream);
+                column_divisors.get(), correction_solve ? correction.get() : caller_solution,
+                invalid_equilibration.get(), false, stream);
+            if (result.cuda_status != cudaSuccess) return result;
+            ++kernels;
+            if (correction_solve) {
+                result.cuda_status = accumulate_sparse_correction(extent, correction.get(),
+                    caller_solution, invalid_equilibration.get(), stream);
+                if (result.cuda_status != cudaSuccess) return result;
+                ++kernels;
+            }
+            result.cuda_status = original_sparse_residual(extent, row_offsets, column_indices,
+                original_values, original_rhs, caller_solution, original_residual.get(),
+                invalid_equilibration.get() + 1, stream);
             if (result.cuda_status != cudaSuccess) return result;
             ++kernels;
         }
         // Only a scalar failure latch returns to Host, using the completion
         // fence already required by cuDSS. Matrix/RHS preparation stays on GPU.
-        result.cuda_status = cudaMemcpyAsync(&equilibration_error,
-            invalid_equilibration.get(), sizeof(int), cudaMemcpyDeviceToHost, stream);
+        const auto status_bytes = (phase == CUDSS_PHASE_SOLVE ? 2 : 1) * sizeof(int);
+        result.cuda_status = cudaMemcpyAsync(completion.data(),
+            invalid_equilibration.get(), status_bytes, cudaMemcpyDeviceToHost, stream);
         if (result.cuda_status != cudaSuccess) return result;
-        downloaded_bytes += sizeof(int);
+        downloaded_bytes += status_bytes;
         result.cuda_status = cudaStreamSynchronize(stream);
         ++synchronizations;
         if (result.cuda_status != cudaSuccess) return result;
-        if (equilibration_error != 0) {
+        if (completion[0] != 0) {
             result.cuda_status = cudaErrorInvalidValue;
             return result;
         }
@@ -155,6 +172,7 @@ CuDssSparseSolver::CuDssSparseSolver(
     p.stream = stream;
     p.extent = extent;
     p.row_offsets = row_offsets;
+    p.column_indices = column_indices;
     checked_cuda(cudaGetDevice(&p.device), "current device");
     for (const void* pointer : {static_cast<const void*>(row_offsets),
             static_cast<const void*>(column_indices), static_cast<const void*>(values),
@@ -213,9 +231,11 @@ CuDssSparseSolver::CuDssSparseSolver(
     p.column_divisors.allocate(extent);
     p.scaled_rhs.allocate(extent);
     p.scaled_solution.allocate(extent);
+    p.original_residual.allocate(extent);
+    p.correction.allocate(extent);
     p.column_offsets.allocate(column_offsets.size());
     p.column_slots.allocate(column_slots.size());
-    p.invalid_equilibration.allocate(1);
+    p.invalid_equilibration.allocate(2);
     p.peak_device_bytes = p.equilibration_bytes();
     // Immutable index permutation, not numeric state: gather each CSR column
     // in linear work without an atomic floating reduction or a dense N*N scan.
@@ -283,6 +303,7 @@ CuDssResult CuDssSparseSolver::factorize(const double* values, std::uint64_t tok
     auto& p = *impl_;
     p.factored = false;
     device_buffer(values, p.device);
+    p.original_values = values;
     checked_cuda(equilibrate_sparse_rows(p.extent, p.row_offsets, values,
         p.row_divisors.get(), p.scaled_values.get(), p.invalid_equilibration.get(), p.stream),
         "normalize matrix row units");
@@ -352,7 +373,20 @@ CuDssResult CuDssSparseSolver::solve(
         p.scaled_rhs.get(), p.invalid_equilibration.get(), true, p.stream), "normalize RHS row units");
     ++p.kernels;
     p.caller_solution = solution;
-    const auto result = p.execute(CUDSS_PHASE_SOLVE);
+    p.original_rhs = rhs;
+    auto result = p.execute(CUDSS_PHASE_SOLVE);
+    // Native refinement operates on the equilibrated equations and can miss a
+    // componentwise error in the original system. Reuse these same GPU factors
+    // for at most two original-system corrections. No numeric data returns to
+    // Host, no unbounded retry, and no change to the ODE's final residual gate.
+    // State 2 is unrefinable: leave numerical rejection to the existing caller.
+    for (int retry = 0; result.success() && p.completion[1] == 1 && retry < 2; ++retry) {
+        checked_cuda(equilibrate_sparse_vector(p.extent, p.original_residual.get(),
+            p.row_divisors.get(), p.scaled_rhs.get(), p.invalid_equilibration.get(),
+            true, p.stream), "normalize original residual row units");
+        ++p.kernels;
+        result = p.execute(CUDSS_PHASE_SOLVE, true);
+    }
     if (!result.success()) {
         p.factored = false;
         p.reset_required = true;

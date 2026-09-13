@@ -17,4 +17,9 @@ cudaError_t equilibrate_sparse_columns(int extent, const int* offsets, const int
 cudaError_t equilibrate_sparse_vector(int extent, const double* values,
     const double* divisors, double* scaled_values, int* invalid,
     bool clear_invalid, cudaStream_t stream);
+cudaError_t original_sparse_residual(int extent, const int* offsets, const int* columns,
+    const double* values, const double* rhs, const double* solution,
+    double* residual, int* residual_state, cudaStream_t stream);
+cudaError_t accumulate_sparse_correction(int extent, const double* correction,
+    double* solution, int* invalid, cudaStream_t stream);
 } // namespace arch::cuda

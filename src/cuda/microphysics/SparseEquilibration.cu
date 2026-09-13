@@ -9,11 +9,38 @@
 
 #include "SparseEquilibration.h"
 #include "numerics/linalg/LinearEquilibration.h"
+#include "numerics/linalg/SparseResidual.h"
 #include <algorithm>
 #include <cstddef>
 
 namespace arch::cuda {
 namespace {
+__global__ void residual_rows(int extent, const int* offsets, const int* columns,
+    const double* values, const double* rhs, const double* solution,
+    double* residual, int* state)
+{
+    const auto lane = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    const auto stride = static_cast<std::size_t>(gridDim.x) * blockDim.x;
+    for (auto row = lane; row < static_cast<std::size_t>(extent); row += stride) {
+        const auto result = linalg::sparse_residual_row(extent, offsets[row], offsets[row + 1],
+            columns, values, solution, rhs[row]);
+        residual[row] = result.correction_rhs;
+        atomicMax(state, static_cast<int>(result.state));
+    }
+}
+
+__global__ void accumulate_correction(int extent, const double* correction,
+    double* solution, int* invalid)
+{
+    const auto lane = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+    const auto stride = static_cast<std::size_t>(gridDim.x) * blockDim.x;
+    for (auto row = lane; row < static_cast<std::size_t>(extent); row += stride) {
+        const double next = solution[row] + correction[row];
+        if (!std::isfinite(next)) atomicExch(invalid, 1);
+        else solution[row] = next;
+    }
+}
+
 __global__ void normalize_rows(int extent, const int* offsets,
     const double* values, double* divisors, double* scaled_values, int* invalid)
 {
@@ -98,5 +125,19 @@ cudaError_t equilibrate_sparse_vector(int extent, const double* values,
 {
     return launch(normalize_vector, extent, invalid, clear_invalid, stream,
                   values, divisors, scaled_values);
+}
+
+cudaError_t original_sparse_residual(int extent, const int* offsets, const int* columns,
+    const double* values, const double* rhs, const double* solution,
+    double* residual, int* residual_state, cudaStream_t stream)
+{
+    return launch(residual_rows, extent, residual_state, true, stream,
+                  offsets, columns, values, rhs, solution, residual);
+}
+
+cudaError_t accumulate_sparse_correction(int extent, const double* correction,
+    double* solution, int* invalid, cudaStream_t stream)
+{
+    return launch(accumulate_correction, extent, invalid, false, stream, correction, solution);
 }
 } // namespace arch::cuda

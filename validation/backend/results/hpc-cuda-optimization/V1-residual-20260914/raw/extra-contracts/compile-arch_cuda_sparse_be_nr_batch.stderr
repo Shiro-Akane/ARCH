@@ -1,0 +1,32 @@
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(71): warning #20014-D: calling a __host__ function from a __host__ __device__ function is not allowed
+          matrix.set(1, 1, RATE);
+                    ^
+          detected during:
+            instantiation of "void SparseSingularRetryNetwork<Species>::eval_jacobian(const double *, double, double, Matrix &, double *) [with Species=31, Matrix=arch::linalg::CsrPatternBuilder]" at line 112 of /home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/test_sparse_be_nr_batch.cu
+            instantiation of "void <unnamed>::run<Species,Solver,SingularRetry>(const char *) [with Species=31, Solver=Solver_BE_NR, SingularRetry=true]" at line 294 of /home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/test_sparse_be_nr_batch.cu
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(72): warning #20014-D: calling a __host__ function from a __host__ __device__ function is not allowed
+          matrix.set(2, 1, -RATE);
+                    ^
+          detected during:
+            instantiation of "void SparseSingularRetryNetwork<Species>::eval_jacobian(const double *, double, double, Matrix &, double *) [with Species=31, Matrix=arch::linalg::CsrPatternBuilder]" at line 112 of /home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/test_sparse_be_nr_batch.cu
+            instantiation of "void <unnamed>::run<Species,Solver,SingularRetry>(const char *) [with Species=31, Solver=Solver_BE_NR, SingularRetry=true]" at line 294 of /home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/test_sparse_be_nr_batch.cu
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(37): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseTransferNetwork<(int)31> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(38): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseTransferNetwork<(int)31> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(37): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseTransferNetwork<(int)150> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(38): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseTransferNetwork<(int)150> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(37): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseTransferNetwork<(int)200> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(38): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseTransferNetwork<(int)200> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(71): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseSingularRetryNetwork<(int)31> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
+/home/ubuntu/projects/ARCH-perf-20260909/tests/cuda/../fixtures/SparseTransferNetwork.h(72): warning #20011-D: calling a __host__ function("arch::linalg::CsrPatternBuilder::set(int, int, double)") from a __host__ __device__ function("SparseSingularRetryNetwork<(int)31> ::eval_jacobian< ::arch::linalg::CsrPatternBuilder> ") is not allowed
+
