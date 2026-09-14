@@ -1,0 +1,3 @@
+# These generated proof/log bytes are evidence, including their original EOLs.
+local-proof.json -text
+*.log -text
