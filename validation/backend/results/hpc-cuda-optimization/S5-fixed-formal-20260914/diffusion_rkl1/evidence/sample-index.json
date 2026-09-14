@@ -1,0 +1,1082 @@
+[
+  {
+    "index": 0,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8"
+  },
+  {
+    "index": 1,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8"
+  },
+  {
+    "index": 2,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1"
+  },
+  {
+    "index": 3,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8"
+  },
+  {
+    "index": 4,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16"
+  },
+  {
+    "index": 5,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8"
+  },
+  {
+    "index": 6,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8"
+  },
+  {
+    "index": 7,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8"
+  },
+  {
+    "index": 8,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1"
+  },
+  {
+    "index": 9,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8"
+  },
+  {
+    "index": 10,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16"
+  },
+  {
+    "index": 11,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8"
+  },
+  {
+    "index": 12,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8"
+  },
+  {
+    "index": 13,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16"
+  },
+  {
+    "index": 14,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8"
+  },
+  {
+    "index": 15,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1"
+  },
+  {
+    "index": 16,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8"
+  },
+  {
+    "index": 17,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8"
+  },
+  {
+    "index": 18,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8"
+  },
+  {
+    "index": 19,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8"
+  },
+  {
+    "index": 20,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1"
+  },
+  {
+    "index": 21,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8"
+  },
+  {
+    "index": 22,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16"
+  },
+  {
+    "index": 23,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8"
+  },
+  {
+    "index": 24,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8"
+  },
+  {
+    "index": 25,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16"
+  },
+  {
+    "index": 26,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8"
+  },
+  {
+    "index": 27,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1"
+  },
+  {
+    "index": 28,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8"
+  },
+  {
+    "index": 29,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8"
+  },
+  {
+    "index": 30,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8"
+  },
+  {
+    "index": 31,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8"
+  },
+  {
+    "index": 32,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1"
+  },
+  {
+    "index": 33,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8"
+  },
+  {
+    "index": 34,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16"
+  },
+  {
+    "index": 35,
+    "case": "diffusion_rkl1_b8",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8"
+  },
+  {
+    "index": 36,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8"
+  },
+  {
+    "index": 37,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8"
+  },
+  {
+    "index": 38,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1"
+  },
+  {
+    "index": 39,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8"
+  },
+  {
+    "index": 40,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16"
+  },
+  {
+    "index": 41,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8"
+  },
+  {
+    "index": 42,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8"
+  },
+  {
+    "index": 43,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8"
+  },
+  {
+    "index": 44,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1"
+  },
+  {
+    "index": 45,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8"
+  },
+  {
+    "index": 46,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16"
+  },
+  {
+    "index": 47,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8"
+  },
+  {
+    "index": 48,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8"
+  },
+  {
+    "index": 49,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16"
+  },
+  {
+    "index": 50,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8"
+  },
+  {
+    "index": 51,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1"
+  },
+  {
+    "index": 52,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8"
+  },
+  {
+    "index": 53,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8"
+  },
+  {
+    "index": 54,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8"
+  },
+  {
+    "index": 55,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8"
+  },
+  {
+    "index": 56,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1"
+  },
+  {
+    "index": 57,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8"
+  },
+  {
+    "index": 58,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16"
+  },
+  {
+    "index": 59,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8"
+  },
+  {
+    "index": 60,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8"
+  },
+  {
+    "index": 61,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16"
+  },
+  {
+    "index": 62,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8"
+  },
+  {
+    "index": 63,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1"
+  },
+  {
+    "index": 64,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8"
+  },
+  {
+    "index": 65,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8"
+  },
+  {
+    "index": 66,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8"
+  },
+  {
+    "index": 67,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8"
+  },
+  {
+    "index": 68,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1"
+  },
+  {
+    "index": 69,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8"
+  },
+  {
+    "index": 70,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16"
+  },
+  {
+    "index": 71,
+    "case": "diffusion_rkl1_b32",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8"
+  },
+  {
+    "index": 72,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8"
+  },
+  {
+    "index": 73,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8"
+  },
+  {
+    "index": 74,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1"
+  },
+  {
+    "index": 75,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8"
+  },
+  {
+    "index": 76,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16"
+  },
+  {
+    "index": 77,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "warmup",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8"
+  },
+  {
+    "index": 78,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8"
+  },
+  {
+    "index": 79,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8"
+  },
+  {
+    "index": 80,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1"
+  },
+  {
+    "index": 81,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8"
+  },
+  {
+    "index": 82,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16"
+  },
+  {
+    "index": 83,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 0,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8"
+  },
+  {
+    "index": 84,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8"
+  },
+  {
+    "index": 85,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16"
+  },
+  {
+    "index": 86,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8"
+  },
+  {
+    "index": 87,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1"
+  },
+  {
+    "index": 88,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8"
+  },
+  {
+    "index": 89,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 1,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8"
+  },
+  {
+    "index": 90,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8"
+  },
+  {
+    "index": 91,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8"
+  },
+  {
+    "index": 92,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1"
+  },
+  {
+    "index": 93,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8"
+  },
+  {
+    "index": 94,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16"
+  },
+  {
+    "index": 95,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 2,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8"
+  },
+  {
+    "index": 96,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8"
+  },
+  {
+    "index": 97,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16"
+  },
+  {
+    "index": 98,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8"
+  },
+  {
+    "index": 99,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1"
+  },
+  {
+    "index": 100,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8"
+  },
+  {
+    "index": 101,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 3,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8"
+  },
+  {
+    "index": 102,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8"
+  },
+  {
+    "index": 103,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "baseline",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8"
+  },
+  {
+    "index": 104,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 1,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1"
+  },
+  {
+    "index": 105,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8"
+  },
+  {
+    "index": 106,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cpu",
+    "threads": 16,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16"
+  },
+  {
+    "index": 107,
+    "case": "diffusion_rkl1_b128",
+    "backend": "cuda",
+    "threads": 8,
+    "phase": "measured",
+    "repeat": 4,
+    "version": "candidate",
+    "original_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8"
+  }
+]

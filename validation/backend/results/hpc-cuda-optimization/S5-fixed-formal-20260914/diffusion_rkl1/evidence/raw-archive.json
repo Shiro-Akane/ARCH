@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "module": "diffusion_rkl1",
+  "scope": "ARCH startup-to-exit including initial/final I/O; excludes qualification; no steady-state claim",
+  "runs": 108,
+  "comparisons": 105,
+  "archive": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fixed-formal-diffusion_rkl1-v1.tar.zst",
+  "bytes": 41096162,
+  "sha256": "13a6a15b48fd984e57b53fd7596ea4b888fcadaadc673cd776a7b305c96c27fc",
+  "files": 1164,
+  "binary_archived_in_this_pack": false
+}

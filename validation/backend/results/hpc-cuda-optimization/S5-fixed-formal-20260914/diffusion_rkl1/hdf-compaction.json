@@ -1,0 +1,2174 @@
+{
+  "scope": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1",
+  "archive": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fixed-formal-diffusion_rkl1-v1.tar.zst",
+  "archive_sha256": "13a6a15b48fd984e57b53fd7596ea4b888fcadaadc673cd776a7b305c96c27fc",
+  "windows_copy": "C:/tmp/ARCH-perf-20260909/build/fixed-formal-diffusion_rkl1-v1.tar.zst",
+  "windows_copy_bytes": 41096162,
+  "windows_copy_sha256": "13a6a15b48fd984e57b53fd7596ea4b888fcadaadc673cd776a7b305c96c27fc",
+  "verified": {
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "1eb7cea73859a08b8c5241240ce1bda503eabda7c3fd0d4afe5e7ce849abeda4",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "1989436979e2410d486a5eb4e417566d63ac188ea6886f3c0fde844752355b72",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3ec1fdc40359b08999d8c67b81843f87c6b5ece7e4ddd6d9f39c6596c3e614ea",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "f3af8a05d5d6435a4c99f39d82a0aa01e4b6183215c1f11693bfee1454808ef2",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "dedb803907fd409c56b04bf0475dc6b811655093510edff1091b94954b555c2d",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "13f5e508c7500447d9acc229db847cbe3dcc42a19d157d0a51b10cb0fa3108c3",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "c1419a5a9c5159e5bf95a9ae46d988671a2870071fe299b7c7d41a7e5e63d8c2",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "6bf604c37fadbc5f2527917fcce1bae9649cc83db18d6fcd48e34dad69f10db6",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "3d0ad6f4df8e95d3cb2478b4e7677f298094e468b25ec0ec1fd1e54bd0318648",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "f96f50bb08b1c973bdd5a745f9ba352fc21c11e57aab0accc4986547e904362c",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "4ebf3083203eca2889f2f63be017f33585faa79fc49fb4c5c88d939919781392",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2d2cb145597f52d5d30b103c66fee0530b976aaa4ec5856f0901473917583460",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "b55f874acd347937b1b738230ca471e67b72ed73c5c35a4f2d8f6c164907a2c7",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "ba0efa6b90ca36bafec8579a917a1d68156bbc5c7341f8f85cb039be5d0bad47",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "5dcd40daed1d6ef9641abee4203dbffe50013990836bdc9e1428ef704c2436ea",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "c3dc53bf2d8f63ddca3b825197493e50525f0265525156b03796fd60a87eea52",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "12931d94fa20700e613861371d2e886674180fbb20160417a0823934d0187efc",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "40bcc9fd2e939786fe0d2fbad112a99b2128895ffa9fc2fe616da04d38c070df",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "95b96aeb3d5a4a02d1b7e5d731f681665918c16480267fedf981a3323891523e",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "e8c70676046a2fa532b45c7d3cf662b755a4d34a95d07b9c47402e544e39f08f",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "84750ecea4ff5c92bd474ec1fae7c5609bc9b119ef149ccd6f9e2adc199edba9",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "a3f731cbd246c03ee926e346ac8f191e11a815f26b3d02c060fa2b6d655015e5",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "b3cd8b2ef8823aa795d503fea751b1bafc47e03ca6b298cdebc8611b23b1a2be",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "dae5b524ee756867a749a51637bbea3274e4564f7e3d78e5a756f0f25c43d9ab",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4447f835a1a8b816cf178e98cbeecf29e86c1616a4a827c56afb82b43bcfa3da",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "c5c4abfe9999483ee476530b122e726d18267d7a6a4647740d6e2f62caaea17d",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "2be276e8fbc8ec299ae053c1dffb8918337ffcac9b35620d3b71b77ee5c53d7a",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "e2379e390e167d6f8b30b46997c3afc110876c9a60ce9cfb42c20e35213459a3",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "73c8d5185c0ec3c459f52b09aca4a901ad6e44bcc5ba9d48c05dba73580cef78",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "52c44e9f5793b79767d652e711ae7f039a08bbe50306290a73d8d3a13a793300",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "2cd2d46b6d185873c5709fd17d707ea00ba11392733dab49459be3e9caf9f404",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7e1d2d5164c7c1beb0dcaffeefc6281c5ef78edfa7d8b6a5985de8bef7641fb1",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f5c7665bc2b6a5326273ce90d63055b341b544abfe4d6030cbc3dd333a7b7dd6",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "88f944ca41ccb1ee3c0eecacefc877573eac73efdd8120df3fbdd5fa518b48c9",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3ecf09510bd29b1778a8f0fa7b8c1f22f0d8f9f622cc902f20b40932243671e9",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "606240a92a7e025a1fcf91b6609bf36c7c80ccb642a5111131c70f8e5a8b4dc3",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "e04e8d8eb30e2090120ff473d08cb1fbbb97369b6685f08dacc86f6dec8c621e",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "e8ebb12124e8b71d11440004bb5a650c2d09278d03ff3a857192b26fa5909bac",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "852e7deed1daef6653cda432b111b094422df3c6ab104e81303a6e809785182e",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2ce4f19406c7cda9189bba252e4ce8c59ec5b1529843b52049312b105158f22a",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f3afe5b623f40625a3acff34123d0c4db6aaa0ca61c1931bd52c5e29d93e1602",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "4f74c9b0a2783a650b1e44514aa907896ceb232212c4a125634b34d3ff593d2a",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "50067de64a8f864453b507dd0fcea03ef469bc63c20d655d1d37b8668b7d1b5e",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "584d875208b3c2d47c9cea8623b5f915435cb504a88544b14e54e1ec3ebe2b03",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "b357e41840bde4958eff59957f9afb83755e782891e94899b8bdcb860b179291",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "656395d73526f5ebd72f35c9832ef85a900eec3ccfd3b1bd1f5d23106c85c938",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "37f45e53510c01409c6819feb60ae4686370862f4a1472454340467faee9df65",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "f6dca9baff7894395b8a5bf035edbc2479eb16b1a9ab40435fd52d145c0ee29d",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "575df5b24daf0e9fe8e288c937ccb04078bd2caf8b584c6251b10eae140ae9cc",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8b960a833734940840a6f7e4184b652f6483914a2662851a664e0bbf0c09cfa3",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "7dee056edc9605abccf04ce825e7fd61bb2d73aaba5d68f2f82f731badd79171",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "d87b4dbde82f775fc41f6de9dd23340f34bb82c6d82b6f2af7c33e83c5542723",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "dfa20f2ae7896b87e2d5156228861f9eafc5096c344aa91d87265a35b972c77d",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "dab6dd2ef0bcb7b5621c52707eba760e77435fcc42d079e3704a70e019cd20db",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "4d87bf14be251ae8e96791aca5bfbbbb0a15eba94fa686cb3ef894e75e8b71ff",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "948013d5e3900199121ff5e48974deaaa249a06283e213b8d89cf8842d208651",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "38d4d435cdec34f9c032bb32ef8a8241b755b6891fb6d8527fa186da1f3d3875",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8aedb2e11676bd277763aceddbb0fca5562293b2d01d4c297ff9924cd04c7996",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "adb384dbfab50a9612ff1bfeec8262e56ad1583cdba86f72fb3c6f13b23a1b5c",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "f899afb2e160c57a3becda16e50e653ed27ba06d0011eb38bc2f50acdcb5310e",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "fb5be50c8f187426041d9baf8f70dd85866be129bdc029b7f7d08744c08bf0c9",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "6708fd4333a49bccaa49b0d5f91317f0c0ebb252bb85f82706555b4a7d34687b",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "a6a0733ebd1d3328d25b9ac05b442785302060d5d0dc0ceb0098eb11c6835baf",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "c3df6c24ac8ff28b5f2c984f23dce1886fe9ac97a0860607e7d711568565ac82",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "8dfeab9ae723f7f4e4e1e8cfdc49f2a45b51065f44a11e2caa0632716186cd7d",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "f3486ae9e3650b855d5c35aa68670fc9ca316e4c5fdd4df75dd4fd3ef7645928",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "c8be3560900e95e266604ee6135f041248a7e2601161ffe1ed26f19935e40f52",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "491272589a1b14a8f52f1e333b6f97d3deda28c9bad577eb485e5c2fe1c6f485",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "0f68cfcac98f1578a56b37533b4bce3e9bca8f29073db1923e96d39233439dd1",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "814a5f1851104dc17bee7f05f9c6a925243f50328000971aa26eea8122292841",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "06eb9a9690e8ab6a8e14ecc965e5dc97660d5b52a95245b8be2e141b99a463fc",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "ff2df94aa9e13640204a3c535bf12445ddbe9fe33e0a8180945f50033a4db563",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "6d60309fddaf1eaa25e1f8922a91963b8126b87767a79876a57afcb6c2cd2713",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "edbc161991b82c53f17a217830242495a86ae6105da131759b1cf3a0e7372123",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "e133013d34236ca98207cbe2dfe599838756fc826cc56010d51b1c00f88cde53",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "4451313dfd8ffac8b8ffc9416f26fa9eadc47036643cec11ee9fa07f85db4d79",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "82b693c789bdc9f611f5af47ce7517a4cdc76c0faa72f9c51ed2553c1cd97372",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "54ee64fe6b863927bd9ffbb1a79b501a6aa48c5a8bc59aee6d4b4851ba20561c",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "8db4c30f999d39fddf87fcc252543ed08da9ce21ddd3aba06fbb678162d3ffb4",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "ba0b8bbb3f0b9650c99837e24745ba8fd2f585e9ed0e7fc7814077d4b081af52",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "63281352ee1a4451bca107c6ef4f1884d9022303c07e4a8e422fcea8438838ff",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5bf6232fccad8084d3283b3dc6f04e806dbcae3ef68b263a9cb7ee606cc3cf9e",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "db5c850b10fed91cf575512d19011888eca35ff569caa33f69c2f383f56eb157",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9fb2f39669e9af07ca06cdb58adab92c7d67adfeb63d852e8f1cb1e123853726",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "5886ef82ad8dbf88feffc3cef53e02d1e30be6393057a37eb77779c11304ecf0",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "d58d1b764995b3e9e890c1b2a45d4c82f71abae3b025e0374ed4047d85189cc9",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "66f7e2b6409adab9db9793f246bd285008f4a837a3c0ef88ea673f6897bf0fe0",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "86f5c56ee3371b20a282462c2bde1323f604c3b51694704831db40f325983251",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "be9c54c07acea9ed66e25fa0fe560a21931ad6d861d6a578f92c5064c0c14d5e",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "34f0f2834b8de536034a7a27e9dc67998ee8f648583525ac64b04360296edee2",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "621185630d78c3a759b691d460b2df19f688fa139b7a53c007112695140ea900",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "8f755dadeb3012666e706401c8064e0332f70108e196b83505ec3ac254ce9121",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "00f6d4694d77d9e52e9d28e132813572454766ecf666850318d31f7b7f89e363",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "db18bdc52bacee84df08c6b03f53159f13c0a3208c7fc1e06ef1dd656b4b4aae",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "12ea73aad4767be29f63fe02904c92dd7189b3013fa146f6cca5990584616b21",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "a619a4b1c78ac5314ea38330f16521d81e9ee6d9df29494d4f1abdecc299ae8a",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "daad48e561f6483b0fddf1f08184ffa690bb38774029daf784f1ff651d2d8b91",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "cd60ca1cda286863480c0a1b853d245e3ee1a2676208c739afdbb140b476f26f",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "5e109095ffdafb53da50354c1ec7b2251e1596f08eb28571d9065f01a8840f0f",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "560c930bc6894bf978854cd425798feaf16fdfb745fdc0fbd5920571c609a773",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "6ec666d310f65069eb0ba040888645812d04ab6644ab973708a6e9d89c53bed6",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "3c2890623b1630a9a98a913f349b1c18c6079e5bea464c05b49e9962aee7c14e",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "0aa65893673335cb901eac40d852d49d38ed897a0b89446f7b5ad49e29f2afa4",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "3eb0dcfb397a09743e6403cf411e62a5a01c02b7d321f5df6427962bd159ea4d",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "45e5691ebe515be6b55b7856a19ed2fd62e54d77e3c2c905da05e7bb474c9523",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "eee172be8eb7f166e734bb38b9e1eeaa8ca8d7caaeb77f29fe482ac8b89c4702",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "7982b7795e16207df4fa4e5e269274c1ad4d11b5a7b9491c6c25324fa5acb509",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "888d91d5af13a88e743b0d899d7a64d3000f61a9a4f3bba78b29d0b5a3410ea5",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "26397787b3cec178e4a9857ec891fc18cb7e32d1080ffd9d2bd1a371da80cb4c",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "230b62b4319d692463affa6296339bf1efceb1cf940b8fd9b233129c63df21cb",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "da03fed03e8d2b0da33794bcf0f4ea3b5ad1e5cdd14cfadb550ba918d1336526",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "146db1af235aeffd3f0fd2013bca5a8cebe610facf4dbc4218f6918614509e24",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4eee55dc9323282592f4f3c18fdaffda6ca3ecabcb589c888be679b16e6b946d",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "536de623a195b9a1439c8f69245ef190a8c65ebcea759522c741c62ca9ec406b",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "777f48b055df9470bd6e286b1773fc29a9eb83a862ed19219431bad36685ddfa",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "af5d3b03a17921157ae7e322b5c3bec7b19b7b28ae54c50145e18afe8e99ab7f",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "2ef4785b3beea36549bdb2e63a69d67825b2047298549d950aece3b682f44d1a",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "2a082db08fcbca1a2c960879178c2277cc50a071e5fec2cc301ba04158a13d75",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "441cf7f5007950edd0cb03e47edb76158866ef1c971aa33610241e730b962592",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "dfa90a4414c841a73427cf6daafe20af925f707362ac3325836d941931640898",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "aa5d13c486049c1dfe9e3e4089de7a0a91a82057740d19b43a6ba808c301b889",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "c6be85fc4056f98afd13e08c010c5fe9b7b17ace7fc1efcfc72ead4be5a74c22",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "0d8a06e2ca20143c82fb884f3b68855a73b736d24d1cb69a68e51bd2a3f044fc",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "3082da854ddf6cee811763974bf6d46ce39bb9fbfae00289a6561d7786567110",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f9d4649738c913f40e0b0e6bc1a955eed7811a2595310e9018d703f7e81ad040",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "9d6d34daf6390fac802cc31d689742b617faf1253094079530d528ad989248b4",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "53dfe974aa82dbfdf6a7d0e224dcd5d771181d35a87cd75a2fb9aff51e1f6743",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "c1784b0c420a45c76188b7c6969770345b22e7911c3fee16d5665cbf4cf20235",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "eaeecece38aa1ad2c3e31d96d3bdc72aed3d1dd1d65c1d4e387eb9d6bcb82fbc",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "efcbf2b32b1e1de40059f494265afcae0db402787ad9f058a6bb4d2b907fbb5a",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "af1ee2e9ed400764c11396e6673e580cd8531a80bc7ed9994b0359de1dba026b",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "a9e114f34065686364d02ae498db4356aba938de719f98b0db1dfa29ab2aa718",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "22de7990b4b8d65b71298fc5ad7f0ed340063f0b39185db01d4068cd32ea52f6",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "ec13ff1a7e86d74a27fd9e8193824f7eb91595947ae61c57aca82a8e391a7bbf",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "b5fce2b42411edcfad9ce6c0a364f7ea1a2780bf5d5e7c72e37ae7f63d0d001d",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "fb780c5c4d881820fe71c4da84bc811e8da0d11edc48c320c83883026c75325a",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "1ebcea3310dd3de919f450f014fdd7b38500c64b8580656901f3e0c5459995ca",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "367837a1ef0cdfd1ecc50b7eacddd83ea937f42852ab9d4945ab4f15b44af2d7",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "a04030fb7bcf3de8c0e920179daa035b710ece46dc6ee9b570d47db9d9b71dc3",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "1314a3875f37937e0a036b10d15f2500a285ab7fb5275c5e8d38bd764e6fa741",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "ea55f532b394d822a2fad1320b577dcbd4105d24280fd9fa7f9ce8c76da7f91e",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8302113581733f427a862f6573215e0c8f5665c16c5a1091a3b44f18dff42d98",
+      "bytes": 124928
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d13e5863cee5704507c324d944e1e7342d2c48569bef25bf0d3826f96aeced70",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "0aa6bdee8e0f245febec73346dd2d921a6945c6773fb66f1c0403f85f83165ac",
+      "bytes": 180052
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f45dc6f78700ebf659d5cf4fcc3a196d12e7206df302b6bdda60534d38bd2ead",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "727c242080632baad1f0ffcbefb2f31478d3176191e3307253fea8acb0edf61e",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f6bb7dd24b2dfcd4a2fca9ac37367f0f76099d31adc7e8fb92955137c3e234f3",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "e6b038139436819fa546829b850e4cb0c6381e103a7fcfb5066ce958c7efd6f7",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9ae6048c54f8c94ec2c8995388e7b1e6b542886afbc64657f4cf49958f81d31e",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "49399b61655cd50c08ad1bb563be81003c58b3008f043a9d32f743697e0f9424",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "4bbe413c20b56882e2930222c5fde3a3b04af23911cf5fe285916b456a662fc2",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "16632a63d8c7449a90d1027712f20eafcd67853385e6daa5d8cfcbc150c0d5b4",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "404bd0584b26378daf76d6d4bd276454042bdd1f6c417e7dc94f294130ebcdf8",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8f1d009fc63a4de69a4652058863caf2cc1f668f2f7101a11aff59346635885c",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "a3f9dd34f02ec3f3f811277b97e2560d66ed061b378260d07cb802160a7aedf4",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "37f4294337f8a5d00405e18dc3ee5c9498bc26c3bccf905d5d9d1c7549388bd6",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "517572c3a7c0e99470f1742a8b65d1ad923dee0bea99017a3951cf52130ee4a5",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "1b909265f2af70f6fd777ca16e6d549786b8c0870c70e7d50e3a0276b07bbce5",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "9cb3daf4acb935f3bba7c0114900d66092a4a694857781b228e9b83f0ea17b1e",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "345470445618207577ac397b0815b03e787eafcadbe5b809c2ad61cb36d81c90",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "b887866987c0e77b8617570cfe65272ec901319482102d13004b9823cc1da56a",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8f1d009fc63a4de69a4652058863caf2cc1f668f2f7101a11aff59346635885c",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "59052b7c9da65f0846aba786a54e8bc36c907d2e3e787dcd6968142f09ac84a8",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "37f4294337f8a5d00405e18dc3ee5c9498bc26c3bccf905d5d9d1c7549388bd6",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "b5754858669d26ea57385ba6f1c3a4502566f7e7af6a0d3417956acacab5a559",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "ad94bfa9c63e31f568e7f1774763be59d224318bb43355ac7e0dceeb4a5be0bc",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "5934e9635506204e8e23a52f98fa803ffa887b3050aa80eada74732f44bf7dca",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "f3295816c882d1d8c04ac99eaf7286c69f598e04bb6c5438b6bd46f95c4e1d63",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "5894c3f92410618e9fa0aa312f5cafec243cad7de59d85d8de32744f432c4cbe",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "7bf2ff186f71c1b10dd4f86b1a2d7ab2436202c20ac94b259cf14b9fd5c28823",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "c51778f79cfded3a65b2802d2b9130c673e5b98e4ed5215497f4617d1d7e913c",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9932b0aa10d937996bddf4933ab088175de3d5ec46a0c4fcc24f70ac61b67401",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "6f02c3111c552da9ab0c2802253d8127aaafb214a987d05db508afc86d108c16",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "c2e531aac5c9a513773b87e8d4a94b6cddb0da79d7bc81b06a1ff1d42da2fa61",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "9bd8f3553d5cf6e2bd6a6cfc8d3b0b5c1bef7627f12f74584e180aba1a457e62",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "1f9c78aa36c1d6a28a1d33ee1f4334c069153a8d7f7f630985b9d2a782ee210d",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "babbc49798e77198a6f7ed5d1e479816ec99cca7903d780c3380f56a38b56ec4",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "78e5f2cd20cc200868d97a76059f6d876c094dd10744e425cb250598257f7604",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "8c968df44d57be218dde7c6c0af3c25dd9bae24d27aeea2d339c4469ed698525",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "e9e81a5fe3d4bef05b0eb2682398e9c1f5e2e8b379ab1a2c2799b0ac689f73da",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9dbf56b075686c82e9604a9e9f0386b58d238044e1abaa5a1b708a4649de846c",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "d8a74cb9f6924de5cf1830e3adc55e2aa3c56bca8e4bcaae2c7c963415422b7d",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "b0f1297f203f6041228ff679d2dad8f56f8df362b2930d5851d12267ca9762ab",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "be166d7a4926d46238585a72f34b9ffae3e18938e7178312627a550be033f7c3",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "a4b264f239d12d99d1d8f7ae3223dfff17df6bbafe32e30ac2eeff63932a85ef",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "434a54923ddabe7b1cda4605c14e265fa7fe5501b0e6b31e74d0a52ed493cb85",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "4f790b0ad03f56e60c8297b81f68fe6fa12426e3dbbc03d510ceb6f2fa30cd68",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7478ab3f18d190f9c4de0eb3e038a515fb9dcd825930b87c74d16df7e6107559",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f9777fc7fcca4bbde4aa015efd0896e4a77ae398736f1e8784565da6a70edef1",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "7fc1aea9144e6283c046e751f002f8907afc2db0e306f4a4a444e076cf454f97",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "b3bd9f4085e92826f3d2529218dd0dd9e3ffd70aa88e702bc6980a5dd6367eb6",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "b858d586d36c0c8f9c669312c557f74486b78a2a39d4ea9f30125ff8e671cd4c",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4be0632695148c9b03410f798e9ebe79f1efafd2c9af66f9a1726fbf2e96245f",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "9c98e1a2f80f512d0d291cc915ec2d3f2a886683bc5da52ee78a82dba2a84922",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f4711354f4e006f17875d25d93bc12590a9f6b4b5f8c8700d3879c9180c25694",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7dd36bc611d90f98325f459138377facea9946e3db526e69e6dd92a35f1c8fee",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "c12f4a249417c52b0ef5ed1ceb48d7d0c22f3fdc98552f8321d1cea6ed8733c3",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "16611336eb518e2ea78d17a0c8ff82962f0e6813bb3b6edee0e25bebafbabcd1",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d9a57586e05c3cc6d7a8698a8a3933da0bc007ff42202022188256f664c73da8",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2559a901e03eb34d7cc9ef07f41856986f52edf93f1080e3082eeb70b88d5daa",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "0b1e4737a69fc359fe63e0c819e0b337fd44512b6c982ac8f3f38482ca7d3f9a",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "2b05bd5d1fae4f1fd1569314091e3d64fc7b4d83cf7b339c5c53e41921d27269",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "487f7555d16d1fff6e4adef77e3bd41109a44b7999785a9f6fd8000cefaff158",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "d3e6bd5a30df4008aafde52f21bc4e1a0011c83df554d6e3e452fe433b9975a8",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "d8cbea8250b9ea3f6f2e6c1681e861906b1481cae4175d93c5a353c14100faa7",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "b910c50ebe0d561a7127a57296ebd51f276ef66ed58bd5efb5a89fb64b9a3b78",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "409d320d6f22bb544e6cbcdba2d4d627a775eb125f68456e9e1590678e6a6a13",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "db60f2c2ea743a477a27f4cd4cc345136bd3962a0a8eaca8fcb76409bc4644a5",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4badf28c1964a06917deac1b27637ed51382a00bd800bfc1356c15e762661718",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "0b58830aa9faf16a8af8f57293bf7e0613e163fa731a885f304a0c680c6690f3",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "5d7facc131251ea0a7c95f7fcd45eda196afda98d912d4fc1f6dee56af961091",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "111d647d01a548615985fb6f4479893d06f1ebed6314eeb40a43438e447cf24d",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "5ce3cce606ca3c3aaa62274788ee3ce696ff33f44fc67eca6aaa7b29b757e318",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5cf0c87269ca4a5ed6a9693e7037ae660752a3fe6c5f5a8945d0e07c5beaa131",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "427fa3e2904f61e0ec23854f54472888a7e463cd743ba13f80f76ae57877d04f",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "506d76054a00239c3417e0455c06025131fcfe59471e119afc250bea42bf4b2d",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "85017563f258baa3dc838f630091677df997caac9adfe476337d6b0cbfb01502",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "cab2b5ecbddd2faf42a19b6b485a8fe28ececfe5b6e28e009dd8eef1c0394965",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "1fc29296165cab257d11a560267cc3d0f58b47377bf1c1be1c84f104f0d197a5",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "ecdb8482b6a7fb19b1eb311c60827f3849861212147e46c9b293c533507d0deb",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "ade550d36d321b819c3556e2ddd10bd9e1de25425d60f7663caf089cf9e13e9e",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "392a888a4af68da4deb8b27649ebbd9fc9f7837af7ca1e4754a6d75332520693",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "4c24ca3b6357afef52eff0958dfcc7d1451fa58d1cb1a09e3c4c86bb356e3912",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "4e491344c705434775ce1dc895f2481e01da686e293664de11a9ee2b4cef8f57",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "ade550d36d321b819c3556e2ddd10bd9e1de25425d60f7663caf089cf9e13e9e",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "6bf6652e29cd38595a2fdae31c71c4ee369853ff26b70f281f6b4c1414deeaad",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "4c24ca3b6357afef52eff0958dfcc7d1451fa58d1cb1a09e3c4c86bb356e3912",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2082595ffb1e28da8bc10d0135a7df2ca5a2a240d8e1f9c6c5a29d10ea8fd883",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9e341cb80f9caad6257be7373cce6f9bb7d85bbfe2b0d9c280e8a9913ff5ac80",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "86d4ed14cbb5d42c2ea6518b110b27ac9f9596482c7853e724a7d9d97cbe1f94",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "1afdf169e3aaf5b6359daf4723a5d0daae5ced3e3f45406d78a46de64c625eac",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2b05be107ab99b7269e0317ec00e5eda3bc86ee6c7715f5f91e32248ed97582a",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "c5fe24bc67ffc7e751b88385563e51a80c8598aab9aa4c2f6f8a0d72ff831a93",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "6a05e849a75e31573b54228aedee5151c697de6a68831a4bf11a46d301b2e2f1",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "aa95382b01accd2366eb09069bb72cc4329374adfc76d817fb654e1e18dada7a",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "bcdb56246b6612766a0b366333d1076d520c8ae654ddd8188dcabbaced35f9a1",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9b98d9c2d91daabb748d36b24b3d03893bdfef3c01872fe2d3e2e5dd1e2b32da",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "d386a351aa22dd56e7cfd05446e699cc158dbb77bb99ed5636e6700809413b8b",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3ac357bf319695cc153bced0b831da13bba6ebb10db269939524eda9eaf74cf3",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "af652e857d23d8b8fa521a83f7fb23d610b79d3d20382a3917c31622a34936ef",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4690f3b8dfc8f3eeaeded3152d1dcdf3f23d76c1d4c584d2d9d7b9bc9a836ac2",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "54dd997036338a55088dfefe129aa9042589aab4e8023e389c389bbe698ddb5c",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "6278da7fa5a48570a5a8ddead5a225f62834ceb6596ebdf7355c7993c571f42c",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "c4955a55af8c7c234b7d74bd24e5b8e10568349f778fb8577f2324868cb9629b",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "192cb6e89944ed0ca2b4201a4f22630d3c34b892fa03048006b8a2ab360f8aee",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "b312d4ca9eb4e33155600c862f8b507ec5abcee34ea2dc06274e7a6a8573e936",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d1226a0841c113e3eb8762a00d211bd5f612b1d8aee6ee233c73dce80ddd07c5",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "a3c70f01aea7fa7af1bc698245599531d5ffe2e87cd2eb76dba958baf8a21b49",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "238c9ef8d0aece710cfe8d6744c56364a15de1d5b677483253ca7d1a5c3ee504",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "bc58113d0578e14d54e8c73eba2df6cc13c8b22d611506567bfec349f99f2dc5",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "b5e74a0c0f3ec93a960dcf2d88a8f93b0825edf09d8502ecfa601bb056f5f651",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "4d04715974caaded5fcaea30cb33ed0272ab700ab8ce53422e8698c1146e1c17",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "a01a374dae18f4b04ee9376594db2e5f3dcce251b03349687878d1e4d07d955b",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "3a77b8292ac72ee85b418abe64f3e113d80c16b836a771753f0b6e464267c155",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "2d41006cbb935223026165d0c04122580b03c8bb70ea004cfe206246ed1fd1d5",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "871ca8108a37c941890a4cfbd03aa6ccffc49bb1b86d1b06d94c91b61e2bdf89",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "238c9ef8d0aece710cfe8d6744c56364a15de1d5b677483253ca7d1a5c3ee504",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "b65bea527aed2a0b391d2deab6be6260163373fbb90da8b3933219885f0cb01e",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "b5e74a0c0f3ec93a960dcf2d88a8f93b0825edf09d8502ecfa601bb056f5f651",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "6857ad3871d8ef5862e9a0ca5ffb5345289b13e131826fa84fc9ade20788e737",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4685ecab2adf0f2215bb1924bfff47bc43a8a440e2ba6acdcb108b7aba47e119",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "0c8f27fd43f56ee172f334520492cc4a610bd26cbb1fe57de6f7480ffd689256",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "13be3f8d16366daae6b53c1fb1924ff2cbb160f53d102ef571f55030e630cc1d",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "be67d6cdaf4789a72ffe3810ea01de0db8d98849ee5f1a7df963f2a88426a6da",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "d96d60e0cb1131c3bc3d852696bb94013e78cb9a3be3887b5e2f05ad5793d5fe",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "0eaa05891b5fbf344b708653adbac597648225087db239a088fd36da12e2153b",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "98126e2cb41f3a25dbd6b3c5d0abd6364c5e0f68c2d6e49ea2c3a1656c282084",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "5e381c2ffccbffa55881712860e01ba4b236ed656ab68cc498d2216bac944ae3",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "d241853e93ba3a73035212b7156a8f49500067fb3fe1cde56b5fff7376595aca",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "0fb193b75013cc16789c2117701e54bebaf2484d6428dd8fde6582947b0be4f3",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f8162144e83a7194687371d0a2d55d338222c120065c9e422ff6fd5a3b990a37",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "0d2653e35331ee6e5bea78bf3701dbcd1f2fc5a09975e4ca2e2fd3bf21d4d84e",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4e1dceaa0d349664c1131964db1f60ceb7f1339b0ddbdee8397c4f81eedd6ce7",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "519b45bdac46b4bd1fc7716e3136f002b1afb2b72c1ca82407883591c1c91556",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "c0c38ff9d4d941d8d804174217d532c5798ed328e3fd054db95bfe0892caf864",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7b2ab9274f820b468363218c33dca0a6e4f7e1b06e6e57ce575310aa3c99d448",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "aff8f3feb05b99fbab83b904e8681c04748e19480fc5a04ae8ed24cea351735b",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "4b87065983d618dcc0b128fd0697389b15785b5a84ac1ee7088a53b7db7a7081",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "7adc3c905b62911b2feea8361e5b800db92c139f79576c1b99cce18962f3dacd",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "b3db3c3999a685123b11d33a12f4a848841d5d384a38f7803851897c1e553b77",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "05808c80568e40d11bbb66dbea781dc490525886c7bb522b4fa5d09b744b32ac",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5751a80a3c55fc3146a37a1bde4e32723fa1f11c5f8e039d3bc728273692e09b",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "8b1e483cd9e00b845c9515ec71a4e37ed373566c6380fcced5a8e6ae35380689",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "5fe56901cd0aa346ad03436ee6cd24ce12b1db801a733aa8d40cc2f6439bceed",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "6bd3d2f7db444d21daf4b30fc77fc06832cc6a66a4938ba68fb8d4cf1b9311cd",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5b2da5ced92e623c61328727142a7ecf87cafc9c8621da6fdf09e81ae3994ad7",
+      "bytes": 38912
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "33dea5d7c8d17110518d360cf7982874dc805b6302bf137666c35fb595527e6a",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "10d491829cbac27cfb50c8b99a4999b7e86fde69176c1e32500ff2aa67c37ba0",
+      "bytes": 55124
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "00d3c80011aebd985796c9ea88d2417e37b027fba6f3982f5102d4e72e1714fa",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5f830dfd6f6a4999780762606bd85c57eb91327cb748bc6c83af6aada95d7a1e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d4f6cd6815f72890c779af74b1984e28428ff974a5207934bc8784df57cabbc5",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "dc90466af07596c1d46ce146debf2e5f404a1c5251dbcd2900e2ba19e46eb04f",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4eb5d52f0e8b7a9a8d3108d63d16423e8e454e84b2f672ec50a4b603d6783d65",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5f830dfd6f6a4999780762606bd85c57eb91327cb748bc6c83af6aada95d7a1e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "24f2dd45b9dde16fc543f24967e42b6a509bf645157852d2ffb09f08130363cf",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "dc90466af07596c1d46ce146debf2e5f404a1c5251dbcd2900e2ba19e46eb04f",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4eb5d52f0e8b7a9a8d3108d63d16423e8e454e84b2f672ec50a4b603d6783d65",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5f830dfd6f6a4999780762606bd85c57eb91327cb748bc6c83af6aada95d7a1e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "24f2dd45b9dde16fc543f24967e42b6a509bf645157852d2ffb09f08130363cf",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "dc90466af07596c1d46ce146debf2e5f404a1c5251dbcd2900e2ba19e46eb04f",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4eb5d52f0e8b7a9a8d3108d63d16423e8e454e84b2f672ec50a4b603d6783d65",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "dcd60f5baf71bedbcef176b5d419ada4cbfcfb9e034f442edb358c2fa593ae1a",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "24f2dd45b9dde16fc543f24967e42b6a509bf645157852d2ffb09f08130363cf",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2906a0c1aa094c08eff6726a592d5fa2c5c3e785e4a4aaf95d0b26e99d7fe1df",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "4eb5d52f0e8b7a9a8d3108d63d16423e8e454e84b2f672ec50a4b603d6783d65",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "5f830dfd6f6a4999780762606bd85c57eb91327cb748bc6c83af6aada95d7a1e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "24f2dd45b9dde16fc543f24967e42b6a509bf645157852d2ffb09f08130363cf",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "dc90466af07596c1d46ce146debf2e5f404a1c5251dbcd2900e2ba19e46eb04f",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "544f59d261ec0c7fb5348bfc56466fee0fe16454c4c4d7b4a1e849dee2120c29",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "dcd60f5baf71bedbcef176b5d419ada4cbfcfb9e034f442edb358c2fa593ae1a",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "904e236aca4e73ab837b5640d58be85368fd2895ec96821601c341013dc0ced9",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "2906a0c1aa094c08eff6726a592d5fa2c5c3e785e4a4aaf95d0b26e99d7fe1df",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "801c0bd9374b6a8f2cefecdb6c50f9f9961f19b35705c99ba331f9f1c451753f",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "12878b53166221fca101ec8df30eb1513309d7f9366d93447d97c0ca32c5cd32",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f7c0fa57cfdc2e4a5f2753db53a38c42f84da97b8ffaf03efaa5d26aff06566c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "a7d0948362f2777bd3ae0b314ad94057cd8175a7a24aff4809ee636d0ac9f35c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "2b38fc7d33ae41fe6a73a4ff2b03b53f72194ffc0699177228d60cd1b62063f5",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "12878b53166221fca101ec8df30eb1513309d7f9366d93447d97c0ca32c5cd32",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3314646a6ef7c2ba443d66655433cecabedeffdb82654eb2c797d18b34993b63",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "a7d0948362f2777bd3ae0b314ad94057cd8175a7a24aff4809ee636d0ac9f35c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "2b38fc7d33ae41fe6a73a4ff2b03b53f72194ffc0699177228d60cd1b62063f5",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8d9975b2af50b086d6ef2b4a1b5f2b9713347e244ad6627ba655ddc8902f3e39",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3314646a6ef7c2ba443d66655433cecabedeffdb82654eb2c797d18b34993b63",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "b4654e0e38af149b0586f9e0f2728b7a036d5406070dae4e4a1ab5d9436f719c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "2b38fc7d33ae41fe6a73a4ff2b03b53f72194ffc0699177228d60cd1b62063f5",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8d9975b2af50b086d6ef2b4a1b5f2b9713347e244ad6627ba655ddc8902f3e39",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3314646a6ef7c2ba443d66655433cecabedeffdb82654eb2c797d18b34993b63",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "b4654e0e38af149b0586f9e0f2728b7a036d5406070dae4e4a1ab5d9436f719c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "2b38fc7d33ae41fe6a73a4ff2b03b53f72194ffc0699177228d60cd1b62063f5",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8d9975b2af50b086d6ef2b4a1b5f2b9713347e244ad6627ba655ddc8902f3e39",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "3314646a6ef7c2ba443d66655433cecabedeffdb82654eb2c797d18b34993b63",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "b4654e0e38af149b0586f9e0f2728b7a036d5406070dae4e4a1ab5d9436f719c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "544f59d261ec0c7fb5348bfc56466fee0fe16454c4c4d7b4a1e849dee2120c29",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "8d9975b2af50b086d6ef2b4a1b5f2b9713347e244ad6627ba655ddc8902f3e39",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "904e236aca4e73ab837b5640d58be85368fd2895ec96821601c341013dc0ced9",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "b4654e0e38af149b0586f9e0f2728b7a036d5406070dae4e4a1ab5d9436f719c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "801c0bd9374b6a8f2cefecdb6c50f9f9961f19b35705c99ba331f9f1c451753f",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "12878b53166221fca101ec8df30eb1513309d7f9366d93447d97c0ca32c5cd32",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f7c0fa57cfdc2e4a5f2753db53a38c42f84da97b8ffaf03efaa5d26aff06566c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "a7d0948362f2777bd3ae0b314ad94057cd8175a7a24aff4809ee636d0ac9f35c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "801c0bd9374b6a8f2cefecdb6c50f9f9961f19b35705c99ba331f9f1c451753f",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "1240f59d2e1241caab40855ef72bbb06d5e39e8bd20f485d73a86d229b736aa3",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f7c0fa57cfdc2e4a5f2753db53a38c42f84da97b8ffaf03efaa5d26aff06566c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9eabdfbda65aa34e43697c40508f98f06b22e1db6ea1e42e8c1a3e4d6bb64f76",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9cf545647374774b609857b15c2c4b573d8c3691d79cdfba275c5415f8228f07",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "1240f59d2e1241caab40855ef72bbb06d5e39e8bd20f485d73a86d229b736aa3",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "154b509aff0fc003ef244c3f01fa96504eb4f54cdddc06effe3464328d11da23",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9eabdfbda65aa34e43697c40508f98f06b22e1db6ea1e42e8c1a3e4d6bb64f76",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9cf545647374774b609857b15c2c4b573d8c3691d79cdfba275c5415f8228f07",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "1240f59d2e1241caab40855ef72bbb06d5e39e8bd20f485d73a86d229b736aa3",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "154b509aff0fc003ef244c3f01fa96504eb4f54cdddc06effe3464328d11da23",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9eabdfbda65aa34e43697c40508f98f06b22e1db6ea1e42e8c1a3e4d6bb64f76",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "9cf545647374774b609857b15c2c4b573d8c3691d79cdfba275c5415f8228f07",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "1240f59d2e1241caab40855ef72bbb06d5e39e8bd20f485d73a86d229b736aa3",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "154b509aff0fc003ef244c3f01fa96504eb4f54cdddc06effe3464328d11da23",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9eabdfbda65aa34e43697c40508f98f06b22e1db6ea1e42e8c1a3e4d6bb64f76",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "098c129dc8f2692121c746962fd1780ff1df5435b2fea050f593a4e80a172b74",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "cc2bec7a5b5d8bb3f3d0302d4f68a3693844f2d58622be24fa78fa816bf3a4c2",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "7d9878af371f5526611cad0339bc4a1c6db949fa77a719b40033aeda0482fdee",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "8087e85db1c3a1475856428125cabf8cb9d53c475ff25dc075f4d6cab92ce238",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "04e00afe528dc44347529dafcb22b2a0f139b339195a655fcf645181471365b5",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "61070d8545bfbf70964c8a65b6e38c5b6f6fc534949662e7e40128cef334584d",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "0af3ae72fd85ad1f943431cf9ac1c9defe83a488c80fb98c5751a0e107c3a67d",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7f97e4649aee75e71bc983549297eeacd96978b0605e034a20c89c4afc3b90fd",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f3dd99537edf6a51310c1c071fbe3dd831016eb92bd69ee8eea9313962f0c5b8",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "61070d8545bfbf70964c8a65b6e38c5b6f6fc534949662e7e40128cef334584d",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f57e29457173fd0a1f83c2b1072b5ac4eb3cad85e20c167d6e0b25b14f698284",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7f97e4649aee75e71bc983549297eeacd96978b0605e034a20c89c4afc3b90fd",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f3dd99537edf6a51310c1c071fbe3dd831016eb92bd69ee8eea9313962f0c5b8",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "ee22a13696afaa7c383007c21ba8fc5280f4b043ddfc155acbe98ec6a595cdcf",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f57e29457173fd0a1f83c2b1072b5ac4eb3cad85e20c167d6e0b25b14f698284",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9c17824efbb7321710853026a0d17ae5ff9be5236ceefe3fcd97b63448065f8c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f3dd99537edf6a51310c1c071fbe3dd831016eb92bd69ee8eea9313962f0c5b8",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "ee22a13696afaa7c383007c21ba8fc5280f4b043ddfc155acbe98ec6a595cdcf",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f57e29457173fd0a1f83c2b1072b5ac4eb3cad85e20c167d6e0b25b14f698284",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9c17824efbb7321710853026a0d17ae5ff9be5236ceefe3fcd97b63448065f8c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "f3dd99537edf6a51310c1c071fbe3dd831016eb92bd69ee8eea9313962f0c5b8",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "ee22a13696afaa7c383007c21ba8fc5280f4b043ddfc155acbe98ec6a595cdcf",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "f57e29457173fd0a1f83c2b1072b5ac4eb3cad85e20c167d6e0b25b14f698284",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "9c17824efbb7321710853026a0d17ae5ff9be5236ceefe3fcd97b63448065f8c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "098c129dc8f2692121c746962fd1780ff1df5435b2fea050f593a4e80a172b74",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "cc2bec7a5b5d8bb3f3d0302d4f68a3693844f2d58622be24fa78fa816bf3a4c2",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "7d9878af371f5526611cad0339bc4a1c6db949fa77a719b40033aeda0482fdee",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "8087e85db1c3a1475856428125cabf8cb9d53c475ff25dc075f4d6cab92ce238",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "04e00afe528dc44347529dafcb22b2a0f139b339195a655fcf645181471365b5",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "61070d8545bfbf70964c8a65b6e38c5b6f6fc534949662e7e40128cef334584d",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "0af3ae72fd85ad1f943431cf9ac1c9defe83a488c80fb98c5751a0e107c3a67d",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "7f97e4649aee75e71bc983549297eeacd96978b0605e034a20c89c4afc3b90fd",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "1c7e49fe6615493293e1ac36907147d9aa673a7624f50b6317b5a1de64b0fa7e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "f3d103626f47898b985bcf6387020bed3abe6771f6065d2baa49035a3d8039d7",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "158f43508d4e7c56761280ade0f8e21e87250f287f4d13347519310cb6dcc4a6",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "fcb45054f34fdc85c7ba2a4d92cecbb11dd1ecd24dfce7e7cea5ad8beeb6d590",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "1c7e49fe6615493293e1ac36907147d9aa673a7624f50b6317b5a1de64b0fa7e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "f3d103626f47898b985bcf6387020bed3abe6771f6065d2baa49035a3d8039d7",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "158f43508d4e7c56761280ade0f8e21e87250f287f4d13347519310cb6dcc4a6",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "fcb45054f34fdc85c7ba2a4d92cecbb11dd1ecd24dfce7e7cea5ad8beeb6d590",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "a8aa08f1277efe8290f6727d40a0a75730494c2eeea5d8ef210c2dd23fa117ee",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "87b6165257f16cf3fdce737fd44cd5cd74e2fcddea0f8606d4878fb2113c12e8",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "5e1f47254d4d360f39c3354aa8cf0fb4bd3e0630cb33094c6b6e1ddf216e81b6",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "1a0dc661b9cee9a7cc1ee283c0a84c788f490008b6bd3ab977945c12e4711c82",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "1c7e49fe6615493293e1ac36907147d9aa673a7624f50b6317b5a1de64b0fa7e",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "f3d103626f47898b985bcf6387020bed3abe6771f6065d2baa49035a3d8039d7",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "158f43508d4e7c56761280ade0f8e21e87250f287f4d13347519310cb6dcc4a6",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "fcb45054f34fdc85c7ba2a4d92cecbb11dd1ecd24dfce7e7cea5ad8beeb6d590",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "a8aa08f1277efe8290f6727d40a0a75730494c2eeea5d8ef210c2dd23fa117ee",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "87b6165257f16cf3fdce737fd44cd5cd74e2fcddea0f8606d4878fb2113c12e8",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "5e1f47254d4d360f39c3354aa8cf0fb4bd3e0630cb33094c6b6e1ddf216e81b6",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "1a0dc661b9cee9a7cc1ee283c0a84c788f490008b6bd3ab977945c12e4711c82",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "84a3523ecd3b12184e6eaf62a98cb815b5f2ce23032a73b3161415736a000df4",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "22d30e0c1712e42d3eae14b21dbb23e3b937ba9026d536b4048f11e8e8838044",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "bbeb24825c9e9b50a9b9cfe18853d2f55ebf99b78842dc71f1eef38766862816",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "855e03576bc3f6725e0cc280c1c952f02328a08f983896db9295343f199ae17c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "84a3523ecd3b12184e6eaf62a98cb815b5f2ce23032a73b3161415736a000df4",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "22d30e0c1712e42d3eae14b21dbb23e3b937ba9026d536b4048f11e8e8838044",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "bbeb24825c9e9b50a9b9cfe18853d2f55ebf99b78842dc71f1eef38766862816",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "855e03576bc3f6725e0cc280c1c952f02328a08f983896db9295343f199ae17c",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "84a3523ecd3b12184e6eaf62a98cb815b5f2ce23032a73b3161415736a000df4",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "e0a2acddc4e6ea3a222cc44fee682a53eae89d8fe7209a3a0207239378cd3412",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "bbeb24825c9e9b50a9b9cfe18853d2f55ebf99b78842dc71f1eef38766862816",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "01ede8a51ca4ed4ed01f15bde69f23b51a738fb7d4efcc224c6a0f57228a95f2",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "00d3c80011aebd985796c9ea88d2417e37b027fba6f3982f5102d4e72e1714fa",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "e0a2acddc4e6ea3a222cc44fee682a53eae89d8fe7209a3a0207239378cd3412",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d4f6cd6815f72890c779af74b1984e28428ff974a5207934bc8784df57cabbc5",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "01ede8a51ca4ed4ed01f15bde69f23b51a738fb7d4efcc224c6a0f57228a95f2",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "00d3c80011aebd985796c9ea88d2417e37b027fba6f3982f5102d4e72e1714fa",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "e0a2acddc4e6ea3a222cc44fee682a53eae89d8fe7209a3a0207239378cd3412",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d4f6cd6815f72890c779af74b1984e28428ff974a5207934bc8784df57cabbc5",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "01ede8a51ca4ed4ed01f15bde69f23b51a738fb7d4efcc224c6a0f57228a95f2",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+      "sha256": "00d3c80011aebd985796c9ea88d2417e37b027fba6f3982f5102d4e72e1714fa",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+      "sha256": "e0a2acddc4e6ea3a222cc44fee682a53eae89d8fe7209a3a0207239378cd3412",
+      "bytes": 15424
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+      "sha256": "d4f6cd6815f72890c779af74b1984e28428ff974a5207934bc8784df57cabbc5",
+      "bytes": 23380
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+      "sha256": "01ede8a51ca4ed4ed01f15bde69f23b51a738fb7d4efcc224c6a0f57228a95f2",
+      "bytes": 23380
+    }
+  },
+  "bytes": 31523040,
+  "applied": true,
+  "removed": [
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b8/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-1-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-3-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl1-v1/diffusion_rkl1_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5"
+  ]
+}

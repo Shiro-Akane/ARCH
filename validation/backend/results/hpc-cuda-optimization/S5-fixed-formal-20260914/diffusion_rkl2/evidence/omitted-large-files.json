@@ -1,0 +1,149 @@
+{
+  "policy": "TSV files larger than 2 MiB remain byte-complete in the raw archive; no raw samples or logs are truncated.",
+  "files": {
+    "samples/037/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/041/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/043/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/047/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/048/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/052/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/055/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/059/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/060/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/064/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/067/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/071/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 3154894,
+      "sha256": "06363d3f67c182231e707a94c24fe564a86053f4a14906034e604654e7231000",
+      "available_in": "complete raw archive"
+    },
+    "samples/073/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/077/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/079/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/083/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/084/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/088/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/091/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/095/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/096/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/100/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/103/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    },
+    "samples/107/MicrophysicsTiming_backend_trace.tsv": {
+      "original_path": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-diffusion_rkl2-v1/diffusion_rkl2_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "bytes": 54714168,
+      "sha256": "e3e8175483c9244e6e48dfa4b4b14fa272bfeb59085b67ac290dcdaf765ba15c",
+      "available_in": "complete raw archive"
+    }
+  }
+}
