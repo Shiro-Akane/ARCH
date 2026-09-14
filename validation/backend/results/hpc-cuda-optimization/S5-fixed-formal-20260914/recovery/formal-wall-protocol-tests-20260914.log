@@ -1,0 +1,9 @@
+test_only_five_not_started_coupled_modules_use_the_longer_wall_guard (__main__.FormalWallProtocolTests.test_only_five_not_started_coupled_modules_use_the_longer_wall_guard) ... ok
+test_only_runtime_wall_timeout_changes_in_the_scientific_command (__main__.FormalWallProtocolTests.test_only_runtime_wall_timeout_changes_in_the_scientific_command) ... ok
+test_original_completed_science_and_frozen_product_checks_remain (__main__.FormalWallProtocolTests.test_original_completed_science_and_frozen_product_checks_remain) ... ok
+test_outer_resource_and_no_overwrite_gates_remain (__main__.FormalWallProtocolTests.test_outer_resource_and_no_overwrite_gates_remain) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK

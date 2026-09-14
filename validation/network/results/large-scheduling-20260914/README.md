@@ -69,8 +69,13 @@ Host API 的累积时间不是 GPU kernel 时间，尤其不能将分解、同�
 - [provider 完成边界](../../../../src/cuda/microphysics/CuDssSparseSolver.cpp#L161) 在每次原生执行后检查设备状态并同步；solve 还保留原系统残差检查及有界修正。往返主要是请求和状态整数，不能将其描述成每次把完整矩阵或 RHS 搬回 CPU。一次性的 CSR 元数据读取也不等于 CPU 数值求解。
 
 由代码结构与上述观察可推断，下一项可测量的执行层目标是减少逐块、逐 lane 的串行提交与完成等待，
-而非仅把状态缓冲区固定页化或无限扩大因子缓存。是否存在合适的有界多矩阵提交方案、
-当前库接口是否满足其要求及实际收益，都还需要独立候选和真实测试；这里不宣称已经实现或必然加速。
+而非仅把状态缓冲区固定页化或无限扩大因子缓存。已有
+[non-uniform API 探针](../../../../validation/network/probe_cudss_nonuniform.cpp) 和
+[32 系统原始日志](../../../backend/results/hpc-cuda-optimization/P12-kernel-batch-20260914/evidence/nonuniform-batch-32.log)：
+在现有 cuDSS 0.8.0.10 上保留 BTF_COLAMD、GPU-only 和 IR=2，1／2／8／32 个制造解系统已通过，
+最大相对误差 2.40862e-16。这不是实际核反应矩阵，更不覆盖自适应 ODE。
+因此接口能力并非完全未知；尚待独立候选验证的是把它接入有界多 lane 请求、因子复用、
+原系统残差、失败隔离及生命周期约束后的正确性与端到端收益。这里不宣称该接入已经实现或必然加速。
 任何候选仍须保留同一 ODE、矩阵 token／世代、残差、错误传播和内存／退休边界，
 不通过减少核素、改库、换 CPU fallback 或放宽预算来获得“通过”。
 
