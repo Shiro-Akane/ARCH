@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "description": "Longer observations from existing sustained AMR recipe; unchanged inputs/budgets",
+  "cases": [
+    {
+      "id": "hydro_amr_regrid_cycle_1d",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {
+        "time_integrator": "RK3",
+        "lrefinemax": "1",
+        "regrid_interval": "1",
+        "derefine_threshold": "0.03"
+      },
+      "accepted_steps": [
+        1,
+        5,
+        10,
+        20,
+        100,
+        500
+      ],
+      "topology_policy": {
+        "require_refined": true,
+        "require_mixed": true,
+        "require_count_change": true,
+        "require_refine_transition": true,
+        "require_derefine_transition": true
+      },
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "id": "diffusion_amr_rkl2_5stage",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "overrides": {
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "lrefinemax": "1"
+      },
+      "rkl_policy": {
+        "order": 2,
+        "stages": 5,
+        "lanes_per_step": 2
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5,
+        25,
+        100
+      ],
+      "topology_policy": {
+        "require_refined": true,
+        "require_mixed": true
+      },
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 1e-08,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    }
+  ]
+}

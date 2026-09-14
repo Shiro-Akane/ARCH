@@ -1,0 +1,2003 @@
+{
+  "schema": 1,
+  "scope": "actual-ARCH-aprox13-Helm-cross-solver-verification",
+  "focused_gate_pass": true,
+  "release_qualified": false,
+  "recipe": {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/burn/results/application-first-law-20260907/replay.py",
+    "sha256": "99fbbb9518acd378caa2b94b9ea210356ddbbc84f70dc4fa509be66cb93b4296"
+  },
+  "derived_cases": [
+    {
+      "id": "be_nr",
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/be_nr_reference.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1200,
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "be_nr",
+        "linear": "denselu"
+      },
+      "reduction_policy": {
+        "rtol": 2e-08,
+        "atol": 1e-12
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-12
+      }
+    },
+    {
+      "id": "bd",
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1200,
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": "denselu"
+      },
+      "reduction_policy": {
+        "rtol": 2e-08,
+        "atol": 1e-12
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-12
+      }
+    },
+    {
+      "id": "ros4",
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/ros4.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1200,
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "ros4",
+        "linear": "denselu"
+      },
+      "reduction_policy": {
+        "rtol": 2e-08,
+        "atol": 1e-12
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-12
+      }
+    }
+  ],
+  "runtime_inputs": {
+    "be_nr": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/burn/inputs/be_nr_reference.par",
+      "parameter_sha256": "623429caa572b33ce99fccd0e833c792a1b89098befa0832f3adbe7ff57469fc",
+      "scientific_overrides": {},
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "bd": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/burn/inputs/bd.par",
+      "parameter_sha256": "0e79ba7c86c838b2ae35f5f8798cf3d1e43c7217c2553ca5a491671cfc48d7ff",
+      "scientific_overrides": {},
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "ros4": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/burn/inputs/ros4.par",
+      "parameter_sha256": "d6b249af06afe413fead6593c6175cd62fc907ff206ef5e3cba987be33c254d2",
+      "scientific_overrides": {},
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "be_nr",
+      "checkpoints": [],
+      "scientific": {
+        "cpu": {
+          "backend": "cpu",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific.par",
+          "parameter_sha256": "a651078bcd7bac87c5f8f970c9c0dd796d44f3ff6f19595d3fda839ce74d81be",
+          "checkpoint": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_chk_0001.h5",
+          "checkpoint_sha256": "220180b4eeeb9b4186a8e371ed67fd619b37690b3561299cd09ddfaa368832e7",
+          "plan": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "be_nr",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": null,
+          "trace_summary": null,
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_regrid.tsv",
+              "sha256": "5b3781be28553013653cc87928b1e4e7a095dc7ee80edec6e49a2134fb9fed22"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 4.1367e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00010988,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.9462e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000108817,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.8878e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000122126,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 8.4161e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.5393e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.7304e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000144122,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.00094151,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "a651078bcd7bac87c5f8f970c9c0dd796d44f3ff6f19595d3fda839ce74d81be",
+            "checkpoint_sha256": "220180b4eeeb9b4186a8e371ed67fd619b37690b3561299cd09ddfaa368832e7",
+            "command": [
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific.par"
+            ]
+          }
+        },
+        "cuda": {
+          "backend": "cuda",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific.par",
+          "parameter_sha256": "149265528af51d00356b8882ee8d75cc97da7c43be935cfa999cf54b2b4b6d27",
+          "checkpoint": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_chk_0001.h5",
+          "checkpoint_sha256": "0a0fe4e42f626ea05697a5aabe30037871bc042a9d9ce50883d51ab87246f4ca",
+          "plan": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cuda",
+            "resolved": "cuda",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "NVIDIA H100-20C",
+            "compute_capability": "9.0",
+            "runtime_version": "12080",
+            "driver_version": "12080",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "be_nr",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_backend_trace.tsv",
+          "trace_summary": {
+            "records": 93,
+            "max_macro_step": 20,
+            "unfinished_transfers": 0,
+            "stale_ghost_publications": 0
+          },
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_regrid.tsv",
+              "sha256": "434fcdd6b7c2186f53100bf7b0674b5fb279891e05f6d5001e3b5bdbc323c460"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.001427275,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000125973,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000113112,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000105165,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000110245,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000100696,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.6968e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000111883,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000100786,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000102124,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.002394227,
+              "bytes_h2d": 8640,
+              "bytes_d2h": 80,
+              "kernel_count": 60,
+              "stream_sync_count": 30,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "149265528af51d00356b8882ee8d75cc97da7c43be935cfa999cf54b2b4b6d27",
+            "checkpoint_sha256": "0a0fe4e42f626ea05697a5aabe30037871bc042a9d9ce50883d51ab87246f4ca",
+            "command": [
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific.par"
+            ]
+          }
+        },
+        "parity": {
+          "status": "pass",
+          "step": 20,
+          "time": 1e-10,
+          "candidate_step": 20,
+          "candidate_time": 1e-10,
+          "comparison_mode": "physical-time",
+          "target_time": 1e-10,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 1,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 5.24288e-11,
+          "candidate_dt_old": 5.24288e-11,
+          "dt_burn": 9.108972575851695e+24,
+          "candidate_dt_burn": 9.108972575851555e+24,
+          "dt_burn_relative": 1.5441936812599106e-14,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 696254464,
+          "max_rel": 1.06658516158982e-13,
+          "max_field_normalized": 1.549689520923808e-14,
+          "max_enuc_normalized": 1.549689520923808e-14,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12
+          }
+        },
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198198424e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.0925377198198413e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198198424e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.0925377198198413e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "checkpoints": [],
+      "scientific": {
+        "cpu": {
+          "backend": "cpu",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific.par",
+          "parameter_sha256": "38318283d38d04590e6f3d006d5017ea3956f209015a863e6b53f619299f0c33",
+          "checkpoint": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_chk_0001.h5",
+          "checkpoint_sha256": "c2864d858672592184b7a038cfc50d13c6a37c273ab51e5804ddd1cd1b0aacf9",
+          "plan": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "bd",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": null,
+          "trace_summary": null,
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_regrid.tsv",
+              "sha256": "2b8cdb1b295e4e722ef9eed3500324f045c857893d17301b57c680347f7bb219"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 4.3099e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000147187,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000117157,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000154645,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000121637,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000119555,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000117001,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.0001001,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.7015e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.8836e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.001116232,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "38318283d38d04590e6f3d006d5017ea3956f209015a863e6b53f619299f0c33",
+            "checkpoint_sha256": "c2864d858672592184b7a038cfc50d13c6a37c273ab51e5804ddd1cd1b0aacf9",
+            "command": [
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific.par"
+            ]
+          }
+        },
+        "cuda": {
+          "backend": "cuda",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific.par",
+          "parameter_sha256": "cd426c14e254d9ec1326ba7f8c29a9f0126dd27eea2860724e54a695874c2c5c",
+          "checkpoint": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_chk_0001.h5",
+          "checkpoint_sha256": "5f2b0280ce3f4ed8d4d9ca4f546e3fbd79e261aa663252b2173c14589944b662",
+          "plan": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cuda",
+            "resolved": "cuda",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "NVIDIA H100-20C",
+            "compute_capability": "9.0",
+            "runtime_version": "12080",
+            "driver_version": "12080",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "bd",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_backend_trace.tsv",
+          "trace_summary": {
+            "records": 93,
+            "max_macro_step": 20,
+            "unfinished_transfers": 0,
+            "stale_ghost_publications": 0
+          },
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_regrid.tsv",
+              "sha256": "59fe2cbad5f83d481ac8a564bf97b5442b1e7742667224d2543a6da593772247"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.001412866,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000128894,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000109499,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000101889,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00010471,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.0001073,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.8912e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000120509,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.8521e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.0001032,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.0023863,
+              "bytes_h2d": 8640,
+              "bytes_d2h": 80,
+              "kernel_count": 60,
+              "stream_sync_count": 30,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "cd426c14e254d9ec1326ba7f8c29a9f0126dd27eea2860724e54a695874c2c5c",
+            "checkpoint_sha256": "5f2b0280ce3f4ed8d4d9ca4f546e3fbd79e261aa663252b2173c14589944b662",
+            "command": [
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific.par"
+            ]
+          }
+        },
+        "parity": {
+          "status": "pass",
+          "step": 20,
+          "time": 1e-10,
+          "candidate_step": 20,
+          "candidate_time": 1e-10,
+          "comparison_mode": "physical-time",
+          "target_time": 1e-10,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 1,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 5.24288e-11,
+          "candidate_dt_old": 5.24288e-11,
+          "dt_burn": 9.108974814100915e+24,
+          "candidate_dt_burn": 9.10897481409834e+24,
+          "dt_burn_relative": 2.826698883793263e-13,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 12700352512,
+          "max_rel": 2.8267837484306604e-13,
+          "max_field_normalized": 2.8267837484306604e-13,
+          "max_enuc_normalized": 2.8267837484306604e-13,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12
+          }
+        },
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198098164e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809816e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198098164e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809816e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        }
+      }
+    },
+    {
+      "id": "ros4",
+      "checkpoints": [],
+      "scientific": {
+        "cpu": {
+          "backend": "cpu",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific.par",
+          "parameter_sha256": "83894ccb2c09d726f64453465962888fbb22c70738632d497c29973e4660a5b0",
+          "checkpoint": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_chk_0001.h5",
+          "checkpoint_sha256": "2c007031097bf7d3be6a092a8291b6927e663621203276462d83485a914620e1",
+          "plan": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "ros4",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": null,
+          "trace_summary": null,
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_regrid.tsv",
+              "sha256": "9b919039fdea0d4357c9636847bc114f08ceaf368a377b647b6de79ff993e797"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 4.4459e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000137131,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.59e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.065e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 8.5196e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.4908e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.121e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.2281e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.7536e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.0493e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.000729764,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "83894ccb2c09d726f64453465962888fbb22c70738632d497c29973e4660a5b0",
+            "checkpoint_sha256": "2c007031097bf7d3be6a092a8291b6927e663621203276462d83485a914620e1",
+            "command": [
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific.par"
+            ]
+          }
+        },
+        "cuda": {
+          "backend": "cuda",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific.par",
+          "parameter_sha256": "77bec74dc9554e2ce1a8e1533dc253c427492eced68435a495ed22bdf85baf3b",
+          "checkpoint": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_chk_0001.h5",
+          "checkpoint_sha256": "1a5165cb7b60605e05b78568e3d1634b5dc59aea0fac5d54ce7e9630cc71cc31",
+          "plan": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cuda",
+            "resolved": "cuda",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "NVIDIA H100-20C",
+            "compute_capability": "9.0",
+            "runtime_version": "12080",
+            "driver_version": "12080",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "ros4",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_backend_trace.tsv",
+          "trace_summary": {
+            "records": 93,
+            "max_macro_step": 20,
+            "unfinished_transfers": 0,
+            "stale_ghost_publications": 0
+          },
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_regrid.tsv",
+              "sha256": "99a99d79190289704beff0ae62efd8e933467d80cb681c994c638ca7d0f5e1ea"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.001431868,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000135786,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00011553,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000108584,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000105917,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000105642,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000105402,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000117525,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000100892,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000113197,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.0024403429999999998,
+              "bytes_h2d": 8640,
+              "bytes_d2h": 80,
+              "kernel_count": 60,
+              "stream_sync_count": 30,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "77bec74dc9554e2ce1a8e1533dc253c427492eced68435a495ed22bdf85baf3b",
+            "checkpoint_sha256": "1a5165cb7b60605e05b78568e3d1634b5dc59aea0fac5d54ce7e9630cc71cc31",
+            "command": [
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific.par"
+            ]
+          }
+        },
+        "parity": {
+          "status": "pass",
+          "step": 20,
+          "time": 1e-10,
+          "candidate_step": 20,
+          "candidate_time": 1e-10,
+          "comparison_mode": "physical-time",
+          "target_time": 1e-10,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 1,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 5.24288e-11,
+          "candidate_dt_old": 5.24288e-11,
+          "dt_burn": 9.108974822150367e+24,
+          "candidate_dt_burn": 9.108974822149743e+24,
+          "dt_burn_relative": 6.848674103555469e-14,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 3078619136,
+          "max_rel": 6.852243306413745e-14,
+          "max_field_normalized": 6.852243306413745e-14,
+          "max_enuc_normalized": 6.852243306413745e-14,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12
+          }
+        },
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198097863e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809788e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 2.220446049250313e-16
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198097863e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809788e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 2.220446049250313e-16
+        }
+      }
+    }
+  ],
+  "cross_solver": [
+    {
+      "method": "be_nr",
+      "backend": "cpu",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 0.0
+        },
+        "max_rel": {
+          "fractions": 0.0
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 0.0
+        },
+        "max_rel": {
+          "energy": 0.0
+        }
+      },
+      "species_l1": 0.0,
+      "species_l2": 0.0,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "be_nr",
+      "backend": "cuda",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 5.551115123125783e-16
+        },
+        "max_rel": {
+          "fractions": 1.065901814981669e-13
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 0.0
+        },
+        "max_rel": {
+          "energy": 0.0
+        }
+      },
+      "species_l1": 8.113639113588445e-17,
+      "species_l2": 2.0713230899424906e-16,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "bd",
+      "backend": "cpu",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.156041504867203e-12
+        },
+        "max_rel": {
+          "fractions": 0.0028066360707533077
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10025527410688.0
+        },
+        "max_rel": {
+          "energy": 2.4497092261691693e-12
+        }
+      },
+      "species_l1": 6.443902940850247e-13,
+      "species_l2": 1.385353666443995e-12,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "bd",
+      "backend": "cuda",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.156041498090939e-12
+        },
+        "max_rel": {
+          "fractions": 0.002806636070751176
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10025527410688.0
+        },
+        "max_rel": {
+          "energy": 2.4497092261691693e-12
+        }
+      },
+      "species_l1": 6.443902935047244e-13,
+      "species_l2": 1.38535366486419e-12,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "ros4",
+      "backend": "cpu",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.167845640823658e-12
+        },
+        "max_rel": {
+          "fractions": 0.0028066367254716207
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10053444698112.0
+        },
+        "max_rel": {
+          "energy": 2.4565307362773837e-12
+        }
+      },
+      "species_l1": 6.462266429831142e-13,
+      "species_l2": 1.3893410247297537e-12,
+      "abundance_sum_residual": 2.220446049250313e-16
+    },
+    {
+      "method": "ros4",
+      "backend": "cuda",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.167845650988053e-12
+        },
+        "max_rel": {
+          "fractions": 0.0028066367254704024
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10053444698112.0
+        },
+        "max_rel": {
+          "energy": 2.4565307362773837e-12
+        }
+      },
+      "species_l1": 6.462266435644305e-13,
+      "species_l2": 1.3893410270273032e-12,
+      "abundance_sum_residual": 2.220446049250313e-16
+    }
+  ],
+  "species_absolute_budget": 1e-08,
+  "energy_relative_budget": 1e-08,
+  "abundance_sum_budget": 1e-12,
+  "started_utc": "2026-09-14T00:55:50.421953+00:00",
+  "finished_utc": "2026-09-14T00:56:08.975345+00:00",
+  "provenance": {
+    "schema": 1,
+    "source": {
+      "commit": "32cc416220a69cad5ab12030ba7b26db360bcd22",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "664b20168718b2861fe83344a92cb9765bd346148b200755c14b343157d8de0d",
+      "dirty": true,
+      "modified_files": [
+        "src/cuda/amr/RefinementIndicators.cu",
+        "src/cuda/amr/RefinementIndicators.h",
+        "src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+        "src/cuda/runtime/control/CudaBackendInternal.h",
+        "tests/cuda/test_cuda_multiblock_hydro.cu",
+        "tests/cuda/test_refinement_indicators.cpp"
+      ],
+      "untracked_source_files": []
+    },
+    "build": {
+      "source_directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "4ed12050d260ddaf04aa34f859283a3af17728779ec63ed935322468cdf77f01",
+      "compile_commands_sha256": "cf292a40be4c238a72910b7f4b2fbdf1c0254acd90566089b6a011a523020697",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "4",
+        "ARCH_CUSTOM_NETWORKS": "",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/custom",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "OFF",
+        "ARCH_ENABLE_KLU": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "OFF",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin",
+        "ARCH_SOURCE_DIR": "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CUDA_COMPILER_LAUNCHER": "/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-11",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_BUILD_DATABASE": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/home/ubuntu/projects/.envs/arch/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PROJECT_COMPAT_VERSION": "",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_SPDX_LICENSE": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [],
+      "sparse_link": {
+        "required_providers": [],
+        "libraries": []
+      },
+      "configured_sparse_libraries": {},
+      "artifact_paths": {
+        "arch": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "checkpoint_validator": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": "8",
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_PROC_BIND": "close",
+      "OMP_PLACES": "cores",
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "64e8bf0ac6f0ad85f1a930d166b8d1a31b71c62bfa2d20468154c578f6ec593e",
+      "checkpoint_validator_sha256": "2a3492b170f00fbd196659e1f83c8e84e5c45a483790831fcbee0a48b5913f85"
+    },
+    "artifact_observation": {
+      "arch": [
+        64768,
+        85353075,
+        172139800,
+        1789346407717049719,
+        1789346407717049719
+      ],
+      "checkpoint_validator": [
+        64768,
+        616634850,
+        333352,
+        1789346367140852625,
+        1789346367140852625
+      ]
+    }
+  },
+  "binary_sha256": "64e8bf0ac6f0ad85f1a930d166b8d1a31b71c62bfa2d20468154c578f6ec593e",
+  "identity_verified_after_run": true
+}

@@ -1,0 +1,65 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test",
+      "include"
+    ],
+    "files" : 
+    [
+      "/home/ubuntu/projects/ARCH-s5-indicator-20260914/cmake/tests/CudaTests.cmake",
+      "/home/ubuntu/projects/ARCH-s5-indicator-20260914/CMakeLists.txt"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 0
+      },
+      {
+        "file" : 0,
+        "parent" : 1
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 165,
+        "parent" : 2
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_refinement_indicators"
+      ],
+      "name" : "cuda_refinement_indicators",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

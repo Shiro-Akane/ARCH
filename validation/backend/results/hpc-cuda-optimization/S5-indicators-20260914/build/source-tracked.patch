@@ -1,0 +1,2903 @@
+diff --git a/src/cuda/amr/RefinementIndicators.cu b/src/cuda/amr/RefinementIndicators.cu
+index 572f68ed..a7cbc29c 100644
+--- a/src/cuda/amr/RefinementIndicators.cu
++++ b/src/cuda/amr/RefinementIndicators.cu
+@@ -1,128 +1,226 @@
+-/**
+- * @file RefinementIndicators.cu
+- * @brief Device traversal and block reduction for AMR refinement indicators.
+- *
+- * Optional thermodynamic fields are evaluated through shared EOS views, then
+- * amr::indicator::cell_error evaluates the selected stencils. A final device
+- * reduction preserves nonfinite/EOS failures. Launches enqueue work only;
+- * runtime control owns buffers, synchronization and refine/derefine decisions.
+- */
+-
+-#include "RefinementIndicators.h"
+-#include "cuda/common/DeviceEosStatus.h"
+-#include "cuda/hydro/GridGeometryAdapter.cuh"
+-
+-namespace arch::cuda {
+-namespace {
+-
+-template<class Eos>
++/**
++ * @file RefinementIndicators.cu
++ * @brief Device traversal and block reduction for AMR refinement indicators.
++ *
++ * Optional thermodynamic fields are evaluated through shared EOS views, then
++ * amr::indicator::cell_error evaluates the selected stencils. A final device
++ * reduction preserves nonfinite/EOS failures. Launches enqueue work only;
++ * runtime control owns buffers, synchronization and refine/derefine decisions.
++ */
++
++#include "RefinementIndicators.h"
++#include "cuda/common/DeviceEosStatus.h"
++#include "cuda/hydro/GridGeometryAdapter.cuh"
++
++namespace arch::cuda {
++namespace {
++
++template<class Eos>
+ __global__ void thermodynamics_kernel(DeviceStateView state, Eos eos,
+-                                      DeviceIndicatorWorkspace workspace)
++                                      DeviceIndicatorWorkspace workspace,
++                                      const DeviceIndicatorBatchBlock* batch = nullptr)
+ {
+-    const int cell = blockIdx.x * blockDim.x + threadIdx.x;
+-    if (cell >= state.total_size) return;
+-    double* composition = state.n_species > 0
+-        ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species : nullptr;
+-    for (int species = 0; species < state.n_species; ++species)
+-        composition[species] = state.species(species, cell);
+-    const auto value = amr::indicator::thermodynamics(state.load(cell), composition,
+-        eos, workspace.pressure, workspace.temperature, workspace.gamma1);
+-    workspace.thermodynamics[cell] = value.pressure;
+-    workspace.thermodynamics[state.total_size + cell] = value.temperature;
+-    workspace.thermodynamics[2 * state.total_size + cell] = value.gamma1;
+-}
+-
++    if (batch) {
++        state = batch[blockIdx.y].state;
++        workspace = batch[blockIdx.y].workspace;
++        eos = bind_device_eos_status(eos, workspace.eos_status);
++        if (!workspace.pressure && !workspace.temperature && !workspace.gamma1) return;
++    }
++    const int cell = blockIdx.x * blockDim.x + threadIdx.x;
++    if (cell >= state.total_size) return;
++    double* composition = state.n_species > 0
++        ? workspace.composition + static_cast<std::size_t>(cell) * state.n_species : nullptr;
++    for (int species = 0; species < state.n_species; ++species)
++        composition[species] = state.species(species, cell);
++    const auto value = amr::indicator::thermodynamics(state.load(cell), composition,
++        eos, workspace.pressure, workspace.temperature, workspace.gamma1);
++    workspace.thermodynamics[cell] = value.pressure;
++    workspace.thermodynamics[state.total_size + cell] = value.temperature;
++    workspace.thermodynamics[2 * state.total_size + cell] = value.gamma1;
++}
++
+ __global__ void indicators_kernel(DeviceStateView state, DeviceGridView grid,
+-                                  DeviceIndicatorWorkspace workspace)
++                                  DeviceIndicatorWorkspace workspace,
++                                  const DeviceIndicatorBatchBlock* batch = nullptr)
+ {
+-    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
+-    if (linear >= grid.active_cell_count()) return;
+-    const int cell = grid.active_cell(linear);
+-    const int k = cell / grid.stride_z;
+-    const int j = (cell - k * grid.stride_z) / grid.stride_y;
+-    const int i = cell - k * grid.stride_z - j * grid.stride_y;
+-    const auto* thermo = workspace.thermodynamics;
+-    const amr::indicator::StateView view{
+-        state.rho, {state.mom_u, state.mom_v, state.mom_w}, state.eng,
+-        state.enuc_rate, state.mass_fractions, thermo,
+-        thermo ? thermo + state.total_size : nullptr,
+-        thermo ? thermo + 2 * state.total_size : nullptr, state.total_size,
+-        grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, workspace.density_floor,
+-        state.n_species};
+-    workspace.cell_errors[linear] = amr::indicator::cell_error(view,
+-        make_grid_geometry_view(grid), workspace.selection, workspace.selection_count, i, j, k);
+-}
+-
++    if (batch) {
++        state = batch[blockIdx.y].state;
++        grid = batch[blockIdx.y].grid;
++        workspace = batch[blockIdx.y].workspace;
++    }
++    const int linear = blockIdx.x * blockDim.x + threadIdx.x;
++    if (linear >= grid.active_cell_count()) return;
++    const int cell = grid.active_cell(linear);
++    const int k = cell / grid.stride_z;
++    const int j = (cell - k * grid.stride_z) / grid.stride_y;
++    const int i = cell - k * grid.stride_z - j * grid.stride_y;
++    const auto* thermo = workspace.thermodynamics;
++    const amr::indicator::StateView view{
++        state.rho, {state.mom_u, state.mom_v, state.mom_w}, state.eng,
++        state.enuc_rate, state.mass_fractions, thermo,
++        thermo ? thermo + state.total_size : nullptr,
++        thermo ? thermo + 2 * state.total_size : nullptr, state.total_size,
++        grid.is, grid.ie, grid.js, grid.je, grid.ks, grid.ke, workspace.density_floor,
++        state.n_species};
++    workspace.cell_errors[linear] = amr::indicator::cell_error(view,
++        make_grid_geometry_view(grid), workspace.selection, workspace.selection_count, i, j, k);
++}
++
+ __global__ void maximum_kernel(const double* errors, int count, double* result,
+-                               const int* eos_status)
++                               const int* eos_status,
++                               const DeviceIndicatorBatchBlock* batch = nullptr)
+ {
+     if (blockIdx.x || threadIdx.x) return;
+-    // A thermodynamic query can fail in an intermediate inversion or a ghost
+-    // that does not enter the selected stencil. Host evaluation still throws;
+-    // retain that failure even when every final cell-error value is finite.
+-    if (eos_status != nullptr && *eos_status != 0) {
+-        *result = std::numeric_limits<double>::quiet_NaN();
+-        return;
+-    }
+-    double maximum = 0.0;
+-    for (int cell = 0; cell < count; ++cell) {
+-        if (!std::isfinite(errors[cell])) {
+-            *result = std::numeric_limits<double>::quiet_NaN();
+-            return;
+-        }
+-        maximum = std::max(maximum, errors[cell]);
++    if (batch) {
++        const auto& b = batch[blockIdx.y];
++        errors = b.workspace.cell_errors;
++        count = b.grid.active_cell_count();
++        result = b.workspace.block_error;
++        eos_status = b.workspace.eos_status;
+     }
++    // A thermodynamic query can fail in an intermediate inversion or a ghost
++    // that does not enter the selected stencil. Host evaluation still throws;
++    // retain that failure even when every final cell-error value is finite.
++    if (eos_status != nullptr && *eos_status != 0) {
++        *result = std::numeric_limits<double>::quiet_NaN();
++        return;
++    }
++    double maximum = 0.0;
++    for (int cell = 0; cell < count; ++cell) {
++        if (!std::isfinite(errors[cell])) {
++            *result = std::numeric_limits<double>::quiet_NaN();
++            return;
++        }
++        maximum = std::max(maximum, errors[cell]);
++    }
+     *result = maximum;
+ }
+ 
+-template<class Eos>
+-cudaError_t launch(DeviceStateView state, DeviceGridView grid, Eos eos,
+-                   DeviceIndicatorWorkspace workspace, cudaStream_t stream)
++__global__ void reset_batch_status(const DeviceIndicatorBatchBlock* batch)
+ {
+-    if (!valid_hydro_view(state) || !valid_hydro_grid(grid)
+-        || state.total_size != grid.total_size || workspace.selection_count < 0
+-        || (workspace.selection_count > 0 && workspace.selection == nullptr)
+-        || workspace.cell_errors == nullptr || workspace.block_error == nullptr)
+-        return cudaErrorInvalidValue;
+-    int minimum_grid = 0, threads = 0;
+-    cudaError_t error = cudaSuccess;
+-    if (workspace.eos_status != nullptr) {
+-        error = cudaMemsetAsync(workspace.eos_status, 0, sizeof(int), stream);
+-        if (error != cudaSuccess) return error;
+-    }
+-    if (workspace.pressure || workspace.temperature || workspace.gamma1) {
+-        if (!workspace.thermodynamics || workspace.eos_status == nullptr
+-            || (state.n_species > 0 && !workspace.composition))
+-            return cudaErrorInvalidValue;
+-        error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &threads,
+-            thermodynamics_kernel<Eos>);
+-        if (error != cudaSuccess) return error;
+-        thermodynamics_kernel<<<detail::hydro_launch_blocks(state.total_size, threads), threads, 0, stream>>>(
+-            state, bind_device_eos_status(eos, workspace.eos_status), workspace);
+-        error = cudaGetLastError();
+-        if (error != cudaSuccess) return error;
+-    }
+-    error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &threads, indicators_kernel);
+-    if (error != cudaSuccess) return error;
+-    indicators_kernel<<<detail::hydro_launch_blocks(grid.active_cell_count(), threads), threads, 0, stream>>>(state, grid, workspace);
+-    error = cudaGetLastError();
+-    if (error != cudaSuccess) return error;
+-    maximum_kernel<<<1, 1, 0, stream>>>(workspace.cell_errors,
+-        grid.active_cell_count(), workspace.block_error, workspace.eos_status);
+-    return cudaGetLastError();
++    if (threadIdx.x == 0 && batch[blockIdx.y].workspace.eos_status)
++        *batch[blockIdx.y].workspace.eos_status = 0;
+ }
+ 
+-} // namespace
++bool valid_indicator_binding(DeviceStateView state, DeviceGridView grid,
++                             DeviceIndicatorWorkspace workspace)
++{
++    return valid_hydro_view(state) && valid_hydro_grid(grid)
++        && state.total_size == grid.total_size && workspace.selection_count >= 0
++        && (workspace.selection_count == 0 || workspace.selection != nullptr)
++        && workspace.cell_errors != nullptr && workspace.block_error != nullptr
++        && (!(workspace.pressure || workspace.temperature || workspace.gamma1)
++            || (workspace.thermodynamics && workspace.eos_status
++                && (state.n_species == 0 || workspace.composition)));
++}
++
++template<class Eos>
++cudaError_t launch(DeviceStateView state, DeviceGridView grid, Eos eos,
++                   DeviceIndicatorWorkspace workspace, cudaStream_t stream)
++{
++    if (!valid_indicator_binding(state, grid, workspace))
++        return cudaErrorInvalidValue;
++    int minimum_grid = 0, threads = 0;
++    cudaError_t error = cudaSuccess;
++    if (workspace.eos_status != nullptr) {
++        error = cudaMemsetAsync(workspace.eos_status, 0, sizeof(int), stream);
++        if (error != cudaSuccess) return error;
++    }
++    if (workspace.pressure || workspace.temperature || workspace.gamma1) {
++        error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &threads,
++            thermodynamics_kernel<Eos>);
++        if (error != cudaSuccess) return error;
++        thermodynamics_kernel<<<detail::hydro_launch_blocks(state.total_size, threads), threads, 0, stream>>>(
++            state, bind_device_eos_status(eos, workspace.eos_status), workspace);
++        error = cudaGetLastError();
++        if (error != cudaSuccess) return error;
++    }
++    error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &threads, indicators_kernel);
++    if (error != cudaSuccess) return error;
++    indicators_kernel<<<detail::hydro_launch_blocks(grid.active_cell_count(), threads), threads, 0, stream>>>(state, grid, workspace);
++    error = cudaGetLastError();
++    if (error != cudaSuccess) return error;
++    maximum_kernel<<<1, 1, 0, stream>>>(workspace.cell_errors,
++        grid.active_cell_count(), workspace.block_error, workspace.eos_status);
++    return cudaGetLastError();
++}
+ 
+-#define ARCH_DEFINE_REFINEMENT_INDICATORS(EOS) \
+-cudaError_t launch_cuda_refinement_indicators( \
+-    DeviceStateView state, DeviceGridView grid, EOS eos, \
+-    DeviceIndicatorWorkspace workspace, cudaStream_t stream) \
+-{ return launch(state, grid, eos, workspace, stream); }
+-ARCH_DEFINE_REFINEMENT_INDICATORS(IdealGasView)
+-ARCH_DEFINE_REFINEMENT_INDICATORS(HelmEosView)
+-ARCH_DEFINE_REFINEMENT_INDICATORS(Tabular3DEOSView)
+-ARCH_DEFINE_REFINEMENT_INDICATORS(Tabular4DEOSView)
++template<class Eos>
++CudaBackendLaunchResult launch_batch(std::span<const DeviceIndicatorBatchBlock> host,
++    const DeviceIndicatorBatchBlock* device, std::size_t wave_capacity,
++    Eos eos, cudaStream_t stream)
++{
++    CudaBackendLaunchResult result{};
++    if (host.empty()) return result;
++    if (!device || wave_capacity == 0 || wave_capacity > 1024)
++        return {cudaErrorInvalidValue, 0, true};
++    for (const auto& b : host)
++        if (!valid_indicator_binding(b.state, b.grid, b.workspace))
++            return {cudaErrorInvalidValue, 0, true};
++    const auto record = [&] {
++        result.error = cudaGetLastError();
++        if (result.error == cudaSuccess) ++result.kernels_launched;
++        return result.error == cudaSuccess;
++    };
++    int minimum_grid = 0, indicator_threads = 0, thermo_threads = 0;
++    result.error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &indicator_threads, indicators_kernel);
++    if (result.error != cudaSuccess) return result;
++    for (std::size_t first = 0; first < host.size(); first += wave_capacity) {
++        const auto count = std::min(wave_capacity, host.size() - first);
++        const auto wave = host.subspan(first, count);
++        int storage = 0, cells = 0;
++        bool thermo = false;
++        for (const auto& b : wave) {
++            storage = std::max(storage, b.state.total_size);
++            cells = std::max(cells, b.grid.active_cell_count());
++            thermo |= b.workspace.pressure || b.workspace.temperature || b.workspace.gamma1;
++        }
++        if (thermo && thermo_threads == 0) {
++            result.error = cudaOccupancyMaxPotentialBlockSize(&minimum_grid, &thermo_threads,
++                thermodynamics_kernel<Eos>);
++            if (result.error != cudaSuccess) return result;
++        }
++        const auto* bindings = device + first;
++        const auto& b = wave.front();
++        const dim3 reduction_grid(1, static_cast<unsigned>(count));
++        reset_batch_status<<<reduction_grid, 1, 0, stream>>>(bindings);
++        if (!record()) return result;
++        if (thermo) {
++            thermodynamics_kernel<<<dim3(detail::hydro_launch_blocks(storage, thermo_threads),
++                static_cast<unsigned>(count)), thermo_threads, 0, stream>>>(b.state, eos, b.workspace, bindings);
++            if (!record()) return result;
++        }
++        indicators_kernel<<<dim3(detail::hydro_launch_blocks(cells, indicator_threads),
++            static_cast<unsigned>(count)), indicator_threads, 0, stream>>>(b.state, b.grid, b.workspace, bindings);
++        if (!record()) return result;
++        maximum_kernel<<<reduction_grid, 1, 0, stream>>>(nullptr, 0, nullptr, nullptr, bindings);
++        if (!record()) return result;
++    }
++    return result;
++}
++
++} // namespace
++
++#define ARCH_DEFINE_REFINEMENT_INDICATORS(EOS) \
++cudaError_t launch_cuda_refinement_indicators( \
++    DeviceStateView state, DeviceGridView grid, EOS eos, \
++    DeviceIndicatorWorkspace workspace, cudaStream_t stream) \
++{ return launch(state, grid, eos, workspace, stream); }
++ARCH_DEFINE_REFINEMENT_INDICATORS(IdealGasView)
++ARCH_DEFINE_REFINEMENT_INDICATORS(HelmEosView)
++ARCH_DEFINE_REFINEMENT_INDICATORS(Tabular3DEOSView)
++ARCH_DEFINE_REFINEMENT_INDICATORS(Tabular4DEOSView)
+ #undef ARCH_DEFINE_REFINEMENT_INDICATORS
+ 
+-} // namespace arch::cuda
++#define ARCH_DEFINE_BATCH_REFINEMENT_INDICATORS(EOS) \
++CudaBackendLaunchResult launch_cuda_refinement_indicators_batch( \
++    std::span<const DeviceIndicatorBatchBlock> host, const DeviceIndicatorBatchBlock* device, \
++    std::size_t blocks_per_wave, EOS eos, cudaStream_t stream) \
++{ return launch_batch(host, device, blocks_per_wave, eos, stream); }
++ARCH_DEFINE_BATCH_REFINEMENT_INDICATORS(IdealGasView)
++ARCH_DEFINE_BATCH_REFINEMENT_INDICATORS(HelmEosView)
++ARCH_DEFINE_BATCH_REFINEMENT_INDICATORS(Tabular3DEOSView)
++ARCH_DEFINE_BATCH_REFINEMENT_INDICATORS(Tabular4DEOSView)
++#undef ARCH_DEFINE_BATCH_REFINEMENT_INDICATORS
++
++} // namespace arch::cuda
+diff --git a/src/cuda/amr/RefinementIndicators.h b/src/cuda/amr/RefinementIndicators.h
+index 974f5719..388d5220 100644
+--- a/src/cuda/amr/RefinementIndicators.h
++++ b/src/cuda/amr/RefinementIndicators.h
+@@ -1,43 +1,82 @@
+-/**
+- * @file RefinementIndicators.h
+- * @brief Borrowed device workspace and typed launches for shared AMR indicators.
+- *
+- * The runtime supplies state, selected fields, scratch arrays and a stream.
+- * The launch produces one block error; its owner fences the stream and checks
+- * EOS status before using that scalar to make host-side topology decisions.
+- */
+-
++/**
++ * @file RefinementIndicators.h
++ * @brief Borrowed device workspace and typed launches for shared AMR indicators.
++ *
++ * The runtime supplies state, selected fields, scratch arrays and a stream.
++ * The launch produces one block error; its owner fences the stream and checks
++ * EOS status before using that scalar to make host-side topology decisions.
++ */
++
+ #pragma once
+ 
+-#include "amr/RefinementIndicatorMath.h"
++#include <algorithm>
++#include <limits>
++#include <span>
++#include <stdexcept>
++#include <type_traits>
++
++#include "amr/RefinementIndicatorMath.h"
+ #include "cuda/common/CudaCommon.cuh"
+-#include "physics/eos/IdealGas.h"
+-#include "physics/eos/HelmEos.h"
+-#include "physics/eos/Tabular3DEOS.h"
+-#include "physics/eos/Tabular4DEOS.h"
+-
+-namespace arch::cuda {
+-
++#include "cuda/runtime/hydro/CudaBackendHydro.h"
++#include "physics/eos/IdealGas.h"
++#include "physics/eos/HelmEos.h"
++#include "physics/eos/Tabular3DEOS.h"
++#include "physics/eos/Tabular4DEOS.h"
++
++namespace arch::cuda {
++
+ struct DeviceIndicatorWorkspace {
+-    const amr::indicator::Selection* selection = nullptr;
+-    int selection_count = 0;
+-    double density_floor = 0.0;
+-    bool pressure = false, temperature = false, gamma1 = false;
+-    double* thermodynamics = nullptr;
+-    double* composition = nullptr;
+-    double* cell_errors = nullptr;
+-    double* block_error = nullptr;
+-    int* eos_status = nullptr;
++    const amr::indicator::Selection* selection = nullptr;
++    int selection_count = 0;
++    double density_floor = 0.0;
++    bool pressure = false, temperature = false, gamma1 = false;
++    double* thermodynamics = nullptr;
++    double* composition = nullptr;
++    double* cell_errors = nullptr;
++    double* block_error = nullptr;
++    int* eos_status = nullptr;
++};
++
++struct DeviceIndicatorBatchBlock {
++    DeviceStateView state;
++    DeviceGridView grid;
++    DeviceIndicatorWorkspace workspace;
+ };
++static_assert(std::is_trivially_copyable_v<DeviceIndicatorBatchBlock>);
+ 
+-#define ARCH_DECLARE_REFINEMENT_INDICATORS(EOS) \
+-cudaError_t launch_cuda_refinement_indicators( \
+-    DeviceStateView state, DeviceGridView grid, EOS eos, \
+-    DeviceIndicatorWorkspace workspace, cudaStream_t stream)
+-ARCH_DECLARE_REFINEMENT_INDICATORS(IdealGasView);
+-ARCH_DECLARE_REFINEMENT_INDICATORS(HelmEosView);
+-ARCH_DECLARE_REFINEMENT_INDICATORS(Tabular3DEOSView);
++// Limit optional cross-block scratch, not the already-required single-block
++// allocation. Layout/stencil ownership remains with the Host runtime.
++inline std::size_t indicator_wave_capacity(std::size_t cells, int species,
++                                          bool thermodynamics, std::size_t blocks)
++{
++    if (!cells || species < 0 || !blocks)
++        throw std::invalid_argument("invalid indicator batch extent");
++    const std::size_t fields = 1 + (thermodynamics ? 3 + static_cast<std::size_t>(species) : 0);
++    if (cells > std::numeric_limits<std::size_t>::max() / fields / sizeof(double))
++        throw std::overflow_error("indicator scratch extent overflow");
++    constexpr std::size_t scratch_budget = 64 * 1024 * 1024;
++    const auto capacity = std::max(std::size_t{1}, scratch_budget / (cells * fields * sizeof(double)));
++    return std::min({blocks, std::size_t{1024}, capacity});
++}
++
++#define ARCH_DECLARE_REFINEMENT_INDICATORS(EOS) \
++cudaError_t launch_cuda_refinement_indicators( \
++    DeviceStateView state, DeviceGridView grid, EOS eos, \
++    DeviceIndicatorWorkspace workspace, cudaStream_t stream)
++ARCH_DECLARE_REFINEMENT_INDICATORS(IdealGasView);
++ARCH_DECLARE_REFINEMENT_INDICATORS(HelmEosView);
++ARCH_DECLARE_REFINEMENT_INDICATORS(Tabular3DEOSView);
+ ARCH_DECLARE_REFINEMENT_INDICATORS(Tabular4DEOSView);
+ #undef ARCH_DECLARE_REFINEMENT_INDICATORS
+ 
+-} // namespace arch::cuda
++#define ARCH_DECLARE_BATCH_REFINEMENT_INDICATORS(EOS) \
++CudaBackendLaunchResult launch_cuda_refinement_indicators_batch( \
++    std::span<const DeviceIndicatorBatchBlock> host, const DeviceIndicatorBatchBlock* device, \
++    std::size_t blocks_per_wave, EOS eos, cudaStream_t stream)
++ARCH_DECLARE_BATCH_REFINEMENT_INDICATORS(IdealGasView);
++ARCH_DECLARE_BATCH_REFINEMENT_INDICATORS(HelmEosView);
++ARCH_DECLARE_BATCH_REFINEMENT_INDICATORS(Tabular3DEOSView);
++ARCH_DECLARE_BATCH_REFINEMENT_INDICATORS(Tabular4DEOSView);
++#undef ARCH_DECLARE_BATCH_REFINEMENT_INDICATORS
++
++} // namespace arch::cuda
+diff --git a/src/cuda/runtime/amr/CudaBackendIndicators.cpp b/src/cuda/runtime/amr/CudaBackendIndicators.cpp
+index 5ca355f4..78b391ca 100644
+--- a/src/cuda/runtime/amr/CudaBackendIndicators.cpp
++++ b/src/cuda/runtime/amr/CudaBackendIndicators.cpp
+@@ -1,101 +1,131 @@
+-/**
+- * @file CudaBackendIndicators.cpp
+- * @brief Gather device refinement summaries for host mesh decisions.
+- *
+- * Reuse backend-owned scratch across stream-ordered blocks, evaluate shared
+- * indicators with the selected EOS and download one scalar per block. Complete
+- * the batch before host consumption or scratch retirement, then reject invalid
+- * summaries before topology work.
+- */
+-
+-#include "cuda/runtime/control/CudaBackendInternal.h"
+-#include "cuda/amr/RefinementIndicators.h"
+-#include <cmath>
+-
+-namespace arch::cuda {
+-namespace {
+-template <class T>
+-T* reserve_indicator_scratch(std::unique_ptr<DeviceAllocation<T>>& owner, std::size_t count)
+-{
+-    if (count == 0) return nullptr;
+-    if (!owner || owner->size() < count) {
+-        auto replacement = std::make_unique<DeviceAllocation<T>>();
+-        replacement->allocate(count);
+-        owner.swap(replacement);
+-    }
+-    return owner->get();
+-}
+-} // namespace
+-
+-std::vector<double> CudaBackend::evaluate_refinement_indicators(
+-    std::span<const backend::BackendStateAccess> accesses,
+-    const AmrConfig& config, double density_floor, std::span<const int> species)
+-{
++/**
++ * @file CudaBackendIndicators.cpp
++ * @brief Gather device refinement summaries for host mesh decisions.
++ *
++ * Reuse backend-owned scratch across stream-ordered blocks, evaluate shared
++ * indicators with the selected EOS and download one scalar per block. Complete
++ * the batch before host consumption or scratch retirement, then reject invalid
++ * summaries before topology work.
++ */
++
++#include "cuda/runtime/control/CudaBackendInternal.h"
++#include "cuda/amr/RefinementIndicators.h"
++#include <cmath>
++
++namespace arch::cuda {
++namespace {
++template <class T>
++T* reserve_indicator_scratch(std::unique_ptr<DeviceAllocation<T>>& owner, std::size_t count)
++{
++    if (count == 0) return nullptr;
++    if (!owner || owner->size() < count) {
++        auto replacement = std::make_unique<DeviceAllocation<T>>();
++        replacement->allocate(count);
++        owner.swap(replacement);
++    }
++    return owner->get();
++}
++} // namespace
++
++std::vector<double> CudaBackend::evaluate_refinement_indicators(
++    std::span<const backend::BackendStateAccess> accesses,
++    const AmrConfig& config, double density_floor, std::span<const int> species)
++{
+     if (accesses.empty()) throw std::invalid_argument("empty CUDA refinement topology");
++    // The sequential evaluator tolerated repeated accesses; concurrent blocks
++    // must not share the same mutable EOS latch. Reuse the backend's complete
++    // Current-slot / generation / unique-handle preflight before any upload.
++    validate_hydro_batch_accesses(accesses);
+     impl_->select_device();
+-    const auto& first = impl_->require_block(accesses.front());
+-    const auto selection = amr::indicator::make_selection(config, first.grid.dim, species);
+-    for (int index : species)
+-        if (index < 0 || index >= impl_->species_count)
+-            throw std::invalid_argument("invalid CUDA refinement species");
+-    std::size_t largest_cells = 0;
+-    for (const auto& access : accesses) {
+-        const auto& block = impl_->require_block(access);
+-        if (access.slot != state::StateSlot::Current || block.grid.dim != first.grid.dim)
+-            throw std::invalid_argument("invalid CUDA refinement source");
+-        largest_cells = std::max(largest_cells, static_cast<std::size_t>(block.grid.total_size));
+-    }
+-    auto& scratch = impl_->refinement_scratch;
+-    DeviceIndicatorWorkspace workspace;
+-    workspace.selection_count = static_cast<int>(selection.size());
+-    workspace.density_floor = density_floor;
+-    workspace.pressure = config.refine_on_p || config.refine_on_entropy;
+-    workspace.temperature = config.refine_on_temp;
+-    workspace.gamma1 = config.refine_on_entropy;
+-    workspace.cell_errors = reserve_indicator_scratch(scratch.errors, largest_cells);
++    const auto& first = impl_->require_block(accesses.front());
++    const auto selection = amr::indicator::make_selection(config, first.grid.dim, species);
++    for (int index : species)
++        if (index < 0 || index >= impl_->species_count)
++            throw std::invalid_argument("invalid CUDA refinement species");
++    std::size_t largest_cells = 0;
++    for (const auto& access : accesses) {
++        const auto& block = impl_->require_block(access);
++        if (access.slot != state::StateSlot::Current || block.grid.dim != first.grid.dim)
++            throw std::invalid_argument("invalid CUDA refinement source");
++        largest_cells = std::max(largest_cells, static_cast<std::size_t>(block.grid.total_size));
++    }
++    auto& scratch = impl_->refinement_scratch;
++    DeviceIndicatorWorkspace workspace;
++    workspace.selection_count = static_cast<int>(selection.size());
++    workspace.density_floor = density_floor;
++    workspace.pressure = config.refine_on_p || config.refine_on_entropy;
++    workspace.temperature = config.refine_on_temp;
++    workspace.gamma1 = config.refine_on_entropy;
+     double* summary = reserve_indicator_scratch(scratch.summary, accesses.size());
+-    auto* device_selection = reserve_indicator_scratch(scratch.selection,
+-        selection.size() * sizeof(amr::indicator::Selection));
++    auto* device_selection = reserve_indicator_scratch(scratch.selection,
++        selection.size() * sizeof(amr::indicator::Selection));
+     const bool thermo = workspace.pressure || workspace.temperature || workspace.gamma1;
++    const auto wave_capacity = indicator_wave_capacity(largest_cells, impl_->species_count,
++        thermo, accesses.size());
++    const auto scratch_cells = largest_cells * wave_capacity;
++    const auto scratch_fields = 1 + (thermo ? 3 + static_cast<std::size_t>(impl_->species_count) : 0);
++    // A single high-water arena prevents separately retained thermo/error
++    // allocations from exceeding the optional scratch budget after a route
++    // change. Compact metadata, output summaries and a required oversized
++    // single-block allocation are not claims of a total-VRAM cap.
++    auto* arena = reserve_indicator_scratch(scratch.arena, scratch_cells * scratch_fields);
++    workspace.cell_errors = arena;
+     if (thermo) {
+-        workspace.thermodynamics = reserve_indicator_scratch(scratch.thermodynamics, 3 * largest_cells);
++        workspace.thermodynamics = arena + scratch_cells;
+         if (impl_->species_count > 0)
+-            workspace.composition = reserve_indicator_scratch(scratch.composition,
+-                largest_cells * static_cast<std::size_t>(impl_->species_count));
+-    }
++            workspace.composition = arena + 4 * scratch_cells;
++    }
+     workspace.selection = reinterpret_cast<const amr::indicator::Selection*>(device_selection);
+-    std::vector<double> result(accesses.size());
+-    try {
+-        if (!selection.empty()) {
+-            const auto bytes = selection.size() * sizeof(selection.front());
+-            enqueue_cuda_metadata_upload(device_selection, selection.data(), bytes,
+-                impl_->stream.get(), impl_->runtime_counters, "upload AMR indicator selection");
+-        }
+-        // All blocks share a stream-ordered scratch arena. Only one scalar per
+-        // block crosses to the Host, after the complete batch has been queued.
+-        for (std::size_t index = 0; index < accesses.size(); ++index) {
+-            auto& block = impl_->require_block(accesses[index]);
+-            workspace.block_error = summary + index;
+-            workspace.eos_status = block.cfl_status.get();
+-            visit_eos(impl_->eos, [&](const auto& eos) {
+-                check_cuda(launch_cuda_refinement_indicators(block.require_access(accesses[index]),
+-                    block.grid, eos, workspace, impl_->stream.get()), "evaluate CUDA AMR indicators");
+-            });
+-            impl_->runtime_counters.kernel_count += thermo ? 3 : 2;
++    std::vector<DeviceIndicatorBatchBlock> bindings;
++    bindings.reserve(accesses.size());
++    for (std::size_t index = 0; index < accesses.size(); ++index) {
++        auto& block = impl_->require_block(accesses[index]);
++        auto block_workspace = workspace;
++        const auto offset = (index % wave_capacity) * largest_cells;
++        block_workspace.cell_errors += offset;
++        if (thermo) {
++            block_workspace.thermodynamics += 3 * offset;
++            if (impl_->species_count > 0)
++                block_workspace.composition += offset * static_cast<std::size_t>(impl_->species_count);
+         }
+-        const auto bytes = result.size() * sizeof(double);
+-        check_cuda(cudaMemcpyAsync(result.data(), summary, bytes,
+-            cudaMemcpyDeviceToHost, impl_->stream.get()), "download AMR block indicators");
+-        impl_->runtime_counters.bytes_d2h += bytes;
+-        quiesce();
+-    } catch (...) {
+-        impl_->quiesce_or_terminate();
+-        throw;
++        block_workspace.block_error = summary + index;
++        block_workspace.eos_status = block.cfl_status.get();
++        bindings.push_back({block.require_access(accesses[index]), block.grid, block_workspace});
+     }
+-    for (double value : result)
+-        if (!std::isfinite(value))
+-            throw std::runtime_error("Non-finite AMR indicator value encountered.");
+-    return result;
+-}
+-
+-} // namespace arch::cuda
++    const auto binding_bytes = bindings.size() * sizeof(DeviceIndicatorBatchBlock);
++    auto* device_bindings = reinterpret_cast<DeviceIndicatorBatchBlock*>(
++        reserve_indicator_scratch(scratch.bindings, binding_bytes));
++    std::vector<double> result(accesses.size());
++    try {
++        if (!selection.empty()) {
++            const auto bytes = selection.size() * sizeof(selection.front());
++            enqueue_cuda_metadata_upload(device_selection, selection.data(), bytes,
++                impl_->stream.get(), impl_->runtime_counters, "upload AMR indicator selection");
++        }
++        // Each block in a wave has private scratch and an EOS latch. Later
++        // waves reuse that arena only after the earlier kernels on this stream.
++        // Borrowed Host bindings survive until the final completion boundary.
++        enqueue_cuda_metadata_upload(device_bindings, bindings.data(), binding_bytes,
++            impl_->stream.get(), impl_->runtime_counters, "upload AMR indicator bindings");
++        visit_eos(impl_->eos, [&](const auto& eos) {
++            const auto launched = launch_cuda_refinement_indicators_batch(bindings, device_bindings,
++                wave_capacity, eos, impl_->stream.get());
++            check_cuda(launched.error, "evaluate CUDA AMR indicators");
++            impl_->runtime_counters.kernel_count += launched.kernels_launched;
++        });
++        const auto bytes = result.size() * sizeof(double);
++        check_cuda(cudaMemcpyAsync(result.data(), summary, bytes,
++            cudaMemcpyDeviceToHost, impl_->stream.get()), "download AMR block indicators");
++        impl_->runtime_counters.bytes_d2h += bytes;
++        quiesce();
++    } catch (...) {
++        impl_->quiesce_or_terminate();
++        throw;
++    }
++    for (double value : result)
++        if (!std::isfinite(value))
++            throw std::runtime_error("Non-finite AMR indicator value encountered.");
++    return result;
++}
++
++} // namespace arch::cuda
+diff --git a/src/cuda/runtime/control/CudaBackendInternal.h b/src/cuda/runtime/control/CudaBackendInternal.h
+index f7496c7d..c9fd8d85 100644
+--- a/src/cuda/runtime/control/CudaBackendInternal.h
++++ b/src/cuda/runtime/control/CudaBackendInternal.h
+@@ -1,251 +1,251 @@
+-/**
+- * @file CudaBackendInternal.h
+- * @brief Private resource layout shared by CUDA host-control units.
+- *
+- * The implementation owns the stream, block stores, immutable EOS/network data
+- * and reusable workspaces. Functional control units define its methods; typed
+- * kernel launch interfaces remain separate from this ownership declaration.
+- */
+-
+-#pragma once
+-
+-#include "cuda/runtime/CudaBackend.h"
++/**
++ * @file CudaBackendInternal.h
++ * @brief Private resource layout shared by CUDA host-control units.
++ *
++ * The implementation owns the stream, block stores, immutable EOS/network data
++ * and reusable workspaces. Functional control units define its methods; typed
++ * kernel launch interfaces remain separate from this ownership declaration.
++ */
++
++#pragma once
++
++#include "cuda/runtime/CudaBackend.h"
+ #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
+ #include "cuda/runtime/hydro/CudaBackendHydro.h"
+-#include "cuda/runtime/amr/CudaBackendExchange.h"
+-#include "cuda/runtime/amr/CudaBackendAmrFlux.h"
+-#include "amr/AmrFluxExecutionPlan.h"
+-#include "cuda/runtime/CudaBackendTypes.h"
++#include "cuda/runtime/amr/CudaBackendExchange.h"
++#include "cuda/runtime/amr/CudaBackendAmrFlux.h"
++#include "amr/AmrFluxExecutionPlan.h"
++#include "cuda/runtime/CudaBackendTypes.h"
+ #include "cuda/runtime/burn/CudaBackendBurnSparse.h"
+ #include "cuda/runtime/burn/CudaBackendBurn.h"
+-#include "cuda/runtime/DeviceBlockStore.h"
+-
+-#include "cuda/hydro/BoundaryPlan.h"
+-#include "cuda/common/DeviceAllocation.h"
+-#include "cuda/microphysics/helm_eos_loader.h"
+-#include "cuda/microphysics/device_network_owner.h"
+-#include "physics/eos/IdealGas.h"
+-#include "physics/eos/HelmEos.h"
+-#include "physics/eos/Tabular3DEOS.h"
+-#include "physics/eos/Tabular4DEOS.h"
+-
+-#include <cuda_runtime.h>
+-
+-#include <array>
+-#include <cstddef>
+-#include <cstdint>
+-#include <exception>
+-#include <functional>
+-#include <limits>
+-#include <list>
+-#include <map>
+-#include <memory>
+-#include <span>
+-#include <stdexcept>
+-#include <type_traits>
+-#include <utility>
+-#include <variant>
+-#include <vector>
+-
+-namespace arch::cuda {
+-
+-std::size_t slot_index(state::StateSlot slot);
+-
+-inline bool complete_token(state::CompletionToken token) noexcept
+-{
+-    return state::is_complete(token);
+-}
+-
+-std::size_t burn_workspace_bytes(
+-    const dispatch::ResolvedExecutionPlan& plan, std::size_t active_cells,
+-    int species_count);
+-
+-template <class Function>
+-decltype(auto) visit_eos(
+-    std::variant<std::monostate, IdealGasView, HelmEosView,
+-                 Tabular3DEOSView, Tabular4DEOSView>& eos,
+-    Function&& function)
+-{
+-    return std::visit(
+-        [&]<class Eos>(Eos& value) -> decltype(auto) {
+-            if constexpr (std::is_same_v<Eos, std::monostate>)
+-                throw std::logic_error("CUDA EOS owner is unavailable");
+-            else
+-                return function(value);
+-        },
+-        eos);
+-}
+-
+-
+-class StreamOwner {
+-public:
+-    StreamOwner() = default;
+-    ~StreamOwner();
+-    StreamOwner(const StreamOwner&) = delete;
+-    StreamOwner& operator=(const StreamOwner&) = delete;
+-
+-    void create(int device_ordinal);
+-    cudaStream_t get() const noexcept { return stream_; }
+-
+-private:
+-    cudaStream_t stream_ = nullptr;
+-    int device_ordinal_ = -1;
+-};
+-
+-class EventOwner {
+-public:
+-    EventOwner() = default;
+-    ~EventOwner();
+-    EventOwner(const EventOwner&) = delete;
+-    EventOwner& operator=(const EventOwner&) = delete;
+-    EventOwner(EventOwner&& other) noexcept;
+-    EventOwner& operator=(EventOwner&& other) noexcept;
+-
+-    void create(int device_ordinal);
+-    void record(cudaStream_t stream);
+-    bool ready() const;
+-
+-private:
+-    void release() noexcept;
+-
+-    cudaEvent_t event_ = nullptr;
+-    int device_ordinal_ = -1;
+-};
+-
+-struct DeviceStateStorage {
+-    DeviceAllocation<double> rho;
+-    DeviceAllocation<double> mom_u;
+-    DeviceAllocation<double> mom_v;
+-    DeviceAllocation<double> mom_w;
+-    DeviceAllocation<double> eng;
+-    DeviceAllocation<double> enuc_rate;
+-    DeviceAllocation<double> species;
+-    int total_size = 0;
+-    int species_count = 0;
+-
+-    void allocate(int total, int count);
+-    DeviceStateView view() const noexcept;
+-};
+-
+-struct DeviceAmrFluxSurfaceStorage {
+-    DeviceAllocation<double> values;
+-    int cell_count = 0;
+-    int species_count = 0;
+-
+-    void allocate(int cells, int species);
+-    DeviceAmrFluxSurfaceView view() const noexcept;
+-};
+-
+-// Account explicit backend metadata at the actual enqueue site. Field-region
+-// transfers and native sparse-provider traffic retain their existing owners.
+-void enqueue_cuda_metadata_upload(void* destination, const void* source,
+-    std::size_t bytes, cudaStream_t stream, backend::BackendCounters& counters,
+-    const char* operation);
+-
+-struct CudaBlockRuntime {
+-    amr::BlockHandle handle;
+-    backend::StorageGeneration generation;
+-    std::array<DeviceStateStorage, 3> state_storage;
+-    std::array<DeviceStateView, 3> slots{};
+-    DeviceStateStorage face_flux;
+-    DeviceStateStorage hydro_delta;
+-    DeviceStateStorage diffusion_delta;
+-    DeviceStateStorage diffusion_initial_delta;
+-    std::array<DeviceAmrFluxSurfaceStorage, 6> amr_flux_register;
+-    std::array<DeviceAmrFluxSurfaceStorage, 6> amr_initial_flux;
+-    DeviceAllocation<double> cfl_candidates;
++#include "cuda/runtime/DeviceBlockStore.h"
++
++#include "cuda/hydro/BoundaryPlan.h"
++#include "cuda/common/DeviceAllocation.h"
++#include "cuda/microphysics/helm_eos_loader.h"
++#include "cuda/microphysics/device_network_owner.h"
++#include "physics/eos/IdealGas.h"
++#include "physics/eos/HelmEos.h"
++#include "physics/eos/Tabular3DEOS.h"
++#include "physics/eos/Tabular4DEOS.h"
++
++#include <cuda_runtime.h>
++
++#include <array>
++#include <cstddef>
++#include <cstdint>
++#include <exception>
++#include <functional>
++#include <limits>
++#include <list>
++#include <map>
++#include <memory>
++#include <span>
++#include <stdexcept>
++#include <type_traits>
++#include <utility>
++#include <variant>
++#include <vector>
++
++namespace arch::cuda {
++
++std::size_t slot_index(state::StateSlot slot);
++
++inline bool complete_token(state::CompletionToken token) noexcept
++{
++    return state::is_complete(token);
++}
++
++std::size_t burn_workspace_bytes(
++    const dispatch::ResolvedExecutionPlan& plan, std::size_t active_cells,
++    int species_count);
++
++template <class Function>
++decltype(auto) visit_eos(
++    std::variant<std::monostate, IdealGasView, HelmEosView,
++                 Tabular3DEOSView, Tabular4DEOSView>& eos,
++    Function&& function)
++{
++    return std::visit(
++        [&]<class Eos>(Eos& value) -> decltype(auto) {
++            if constexpr (std::is_same_v<Eos, std::monostate>)
++                throw std::logic_error("CUDA EOS owner is unavailable");
++            else
++                return function(value);
++        },
++        eos);
++}
++
++
++class StreamOwner {
++public:
++    StreamOwner() = default;
++    ~StreamOwner();
++    StreamOwner(const StreamOwner&) = delete;
++    StreamOwner& operator=(const StreamOwner&) = delete;
++
++    void create(int device_ordinal);
++    cudaStream_t get() const noexcept { return stream_; }
++
++private:
++    cudaStream_t stream_ = nullptr;
++    int device_ordinal_ = -1;
++};
++
++class EventOwner {
++public:
++    EventOwner() = default;
++    ~EventOwner();
++    EventOwner(const EventOwner&) = delete;
++    EventOwner& operator=(const EventOwner&) = delete;
++    EventOwner(EventOwner&& other) noexcept;
++    EventOwner& operator=(EventOwner&& other) noexcept;
++
++    void create(int device_ordinal);
++    void record(cudaStream_t stream);
++    bool ready() const;
++
++private:
++    void release() noexcept;
++
++    cudaEvent_t event_ = nullptr;
++    int device_ordinal_ = -1;
++};
++
++struct DeviceStateStorage {
++    DeviceAllocation<double> rho;
++    DeviceAllocation<double> mom_u;
++    DeviceAllocation<double> mom_v;
++    DeviceAllocation<double> mom_w;
++    DeviceAllocation<double> eng;
++    DeviceAllocation<double> enuc_rate;
++    DeviceAllocation<double> species;
++    int total_size = 0;
++    int species_count = 0;
++
++    void allocate(int total, int count);
++    DeviceStateView view() const noexcept;
++};
++
++struct DeviceAmrFluxSurfaceStorage {
++    DeviceAllocation<double> values;
++    int cell_count = 0;
++    int species_count = 0;
++
++    void allocate(int cells, int species);
++    DeviceAmrFluxSurfaceView view() const noexcept;
++};
++
++// Account explicit backend metadata at the actual enqueue site. Field-region
++// transfers and native sparse-provider traffic retain their existing owners.
++void enqueue_cuda_metadata_upload(void* destination, const void* source,
++    std::size_t bytes, cudaStream_t stream, backend::BackendCounters& counters,
++    const char* operation);
++
++struct CudaBlockRuntime {
++    amr::BlockHandle handle;
++    backend::StorageGeneration generation;
++    std::array<DeviceStateStorage, 3> state_storage;
++    std::array<DeviceStateView, 3> slots{};
++    DeviceStateStorage face_flux;
++    DeviceStateStorage hydro_delta;
++    DeviceStateStorage diffusion_delta;
++    DeviceStateStorage diffusion_initial_delta;
++    std::array<DeviceAmrFluxSurfaceStorage, 6> amr_flux_register;
++    std::array<DeviceAmrFluxSurfaceStorage, 6> amr_initial_flux;
++    DeviceAllocation<double> cfl_candidates;
+     // Refinement indicators still own a separate per-block EOS latch.
+-    DeviceAllocation<int> cfl_status;
+-    DeviceAllocation<double> diffusion_dt_candidates;
+-    DeviceAllocation<double> diffusion_dt_result;
+-    DeviceAllocation<int> diffusion_status;
+-    DeviceAllocation<std::byte> burn_workspace_storage;
+-    DeviceAllocation<reduction::ReductionCandidate> burn_candidates;
+-    DeviceAllocation<int> burn_statuses;
+-    DeviceAllocation<DeviceBurnSummary> burn_summary;
+-    DeviceAllocation<double> cell_volume;
+-    std::array<DeviceAllocation<double>, 3> face_area_lower;
+-    std::array<DeviceAllocation<double>, 3> face_area_upper;
+-    DeviceGridView grid{};
+-    DeviceCompiledBoundaryPlan boundary;
+-    DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
+-
+-    CudaBlockRuntime(
+-        const amr::Block& block, amr::BlockHandle requested_handle,
+-        backend::StorageGeneration requested_generation,
+-        int expected_species_count, int device_ordinal,
+-        const boundary::BoundaryPlan& logical_boundary,
+-        const CudaLaunchConfig& launch, cudaStream_t stream,
+-        backend::BackendCounters& counters);
+-
+-    DeviceStateView require_access(
+-        backend::BackendStateAccess access) const;
+-
+-    std::uint64_t copy_host_device_region(
+-        DeviceStateView device, const backend::HostStateTransferView& host,
+-        state::StateRegion region, cudaMemcpyKind direction,
+-        cudaStream_t stream);
+-};
+-
+-struct CudaAmrFluxRouteStorage {
+-    amr::BlockHandle source{};
+-    int direction = -1;
+-    amr::AmrCompiledFluxRegistrationRoute compiled{};
+-    DeviceAllocation<amr::AmrFluxRegistrationTarget> targets;
+-    DeviceAllocation<amr::AmrFluxRegistrationTerm> terms;
+-};
+-
+-struct CudaAmrFluxPlanRuntime {
+-    amr::TopologyEpoch epoch{};
+-    std::uint64_t topology_fingerprint = 0;
+-    std::uint64_t reflux_fingerprint = 0;
+-    int dimension = 0;
+-    int species_count = 0;
+-    std::vector<CudaBlockRuntime*> runtime_blocks;
+-    std::vector<DeviceAmrFluxBlockView> host_blocks;
+-    DeviceAllocation<DeviceAmrFluxBlockView> device_blocks;
+-    std::vector<std::unique_ptr<CudaAmrFluxRouteStorage>> routes;
+-    std::map<std::pair<amr::BlockHandle, int>, std::size_t> route_index;
+-    amr::AmrCompiledRefluxPlan compiled_reflux{};
+-    DeviceAllocation<amr::AmrRefluxTarget> reflux_targets;
+-    DeviceAllocation<amr::AmrRefluxContribution> reflux_contributions;
+-    std::vector<amr::AmrFluxSurfaceRequirement> surface_requirements;
+-
+-    const CudaAmrFluxRouteStorage* find_route(
+-        amr::BlockHandle source, int direction) const noexcept;
+-};
+-
+-std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
+-    const amr::AmrFluxTopologyPlan& topology,
+-    const amr::RefluxPlan& reflux,
+-    std::span<const DeviceStoreEntry> entries,
+-    const std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>&
+-        resources,
+-    int expected_species_count, bool cache_initial_operator,
+-    cudaStream_t stream, backend::BackendCounters& counters);
+-
+-std::array<CudaAmrFluxDirectionRouteView, 3> make_cuda_amr_route_views(
+-    const CudaAmrFluxPlanRuntime* plan, amr::BlockHandle source);
+-
+-struct CudaBackend::Impl {
+-    struct RetiredCudaResources {
+-        DeviceRetirementFence fence{};
+-        EventOwner event;
+-        std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>> resources;
+-        std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
+-    };
+-
+-    int device_ordinal;
+-    CudaLaunchConfig launch;
+-    StreamOwner stream;
+-    std::unique_ptr<DeviceSpeciesOwner> species_owner;
+-    std::unique_ptr<HelmEosDeviceOwner> helm_owner;
+-    std::unique_ptr<Tabular3DEOSDeviceOwner> tabular3_owner;
+-    std::unique_ptr<Tabular4DEOSDeviceOwner> tabular4_owner;
+-    SpeciesPODView species_view{};
+-    // All transport launches on this backend are ordered on `stream`. One
+-    // bounded scratch allocation is therefore shared across every block/stage.
+-    DeviceAllocation<double> species_workspace_storage;
++    DeviceAllocation<int> cfl_status;
++    DeviceAllocation<double> diffusion_dt_candidates;
++    DeviceAllocation<double> diffusion_dt_result;
++    DeviceAllocation<int> diffusion_status;
++    DeviceAllocation<std::byte> burn_workspace_storage;
++    DeviceAllocation<reduction::ReductionCandidate> burn_candidates;
++    DeviceAllocation<int> burn_statuses;
++    DeviceAllocation<DeviceBurnSummary> burn_summary;
++    DeviceAllocation<double> cell_volume;
++    std::array<DeviceAllocation<double>, 3> face_area_lower;
++    std::array<DeviceAllocation<double>, 3> face_area_upper;
++    DeviceGridView grid{};
++    DeviceCompiledBoundaryPlan boundary;
++    DeviceAllocation<DeviceBoundaryTransfer> boundary_transfers;
++
++    CudaBlockRuntime(
++        const amr::Block& block, amr::BlockHandle requested_handle,
++        backend::StorageGeneration requested_generation,
++        int expected_species_count, int device_ordinal,
++        const boundary::BoundaryPlan& logical_boundary,
++        const CudaLaunchConfig& launch, cudaStream_t stream,
++        backend::BackendCounters& counters);
++
++    DeviceStateView require_access(
++        backend::BackendStateAccess access) const;
++
++    std::uint64_t copy_host_device_region(
++        DeviceStateView device, const backend::HostStateTransferView& host,
++        state::StateRegion region, cudaMemcpyKind direction,
++        cudaStream_t stream);
++};
++
++struct CudaAmrFluxRouteStorage {
++    amr::BlockHandle source{};
++    int direction = -1;
++    amr::AmrCompiledFluxRegistrationRoute compiled{};
++    DeviceAllocation<amr::AmrFluxRegistrationTarget> targets;
++    DeviceAllocation<amr::AmrFluxRegistrationTerm> terms;
++};
++
++struct CudaAmrFluxPlanRuntime {
++    amr::TopologyEpoch epoch{};
++    std::uint64_t topology_fingerprint = 0;
++    std::uint64_t reflux_fingerprint = 0;
++    int dimension = 0;
++    int species_count = 0;
++    std::vector<CudaBlockRuntime*> runtime_blocks;
++    std::vector<DeviceAmrFluxBlockView> host_blocks;
++    DeviceAllocation<DeviceAmrFluxBlockView> device_blocks;
++    std::vector<std::unique_ptr<CudaAmrFluxRouteStorage>> routes;
++    std::map<std::pair<amr::BlockHandle, int>, std::size_t> route_index;
++    amr::AmrCompiledRefluxPlan compiled_reflux{};
++    DeviceAllocation<amr::AmrRefluxTarget> reflux_targets;
++    DeviceAllocation<amr::AmrRefluxContribution> reflux_contributions;
++    std::vector<amr::AmrFluxSurfaceRequirement> surface_requirements;
++
++    const CudaAmrFluxRouteStorage* find_route(
++        amr::BlockHandle source, int direction) const noexcept;
++};
++
++std::unique_ptr<CudaAmrFluxPlanRuntime> make_cuda_amr_flux_plan_runtime(
++    const amr::AmrFluxTopologyPlan& topology,
++    const amr::RefluxPlan& reflux,
++    std::span<const DeviceStoreEntry> entries,
++    const std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>&
++        resources,
++    int expected_species_count, bool cache_initial_operator,
++    cudaStream_t stream, backend::BackendCounters& counters);
++
++std::array<CudaAmrFluxDirectionRouteView, 3> make_cuda_amr_route_views(
++    const CudaAmrFluxPlanRuntime* plan, amr::BlockHandle source);
++
++struct CudaBackend::Impl {
++    struct RetiredCudaResources {
++        DeviceRetirementFence fence{};
++        EventOwner event;
++        std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>> resources;
++        std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
++    };
++
++    int device_ordinal;
++    CudaLaunchConfig launch;
++    StreamOwner stream;
++    std::unique_ptr<DeviceSpeciesOwner> species_owner;
++    std::unique_ptr<HelmEosDeviceOwner> helm_owner;
++    std::unique_ptr<Tabular3DEOSDeviceOwner> tabular3_owner;
++    std::unique_ptr<Tabular4DEOSDeviceOwner> tabular4_owner;
++    SpeciesPODView species_view{};
++    // All transport launches on this backend are ordered on `stream`. One
++    // bounded scratch allocation is therefore shared across every block/stage.
++    DeviceAllocation<double> species_workspace_storage;
+     SpeciesWorkspaceView species_workspace{};
+     // Compact per-block results, reused only after the previous batch drained.
+     // Capacity follows the largest requested batch (no field-sized staging).
+@@ -284,100 +284,100 @@ struct CudaBackend::Impl {
+         ReusableDeviceAllocation<double> coarse_values;
+         ReusableDeviceAllocation<int> status;
+     } exchange_scratch;
+-    // Indicators retain capacity across regrids, not field values. The ordered
+-    // evaluator completes before any buffer is grown or reused.
++    // Indicators retain capacity across regrids, not field values. The ordered
++    // evaluator completes before any buffer is grown or reused.
+     struct RefinementScratch {
+-        std::unique_ptr<DeviceAllocation<std::byte>> selection;
+-        std::unique_ptr<DeviceAllocation<double>> errors, summary, thermodynamics, composition;
+-    } refinement_scratch;
+-    std::variant<std::monostate, IdealGasView, HelmEosView,
+-                 Tabular3DEOSView, Tabular4DEOSView> eos;
+-    // One bounded sparse ODE/factor pool serves all blocks on the ordered stream;
+-    // AMR topology changes must not allocate a separate solver pool per block.
+-    std::unique_ptr<CudaSparseBurnOwner> sparse_burn_owner;
+-    std::unique_ptr<DeviceNetworkOwner> dense_network_owner;
+-    backend::BackendCounters runtime_counters{};
+-    std::vector<backend::BackendTraceRecord> runtime_trace;
+-    int species_count = 0;
+-    std::uint64_t immutable_owner_constructions = 0;
+-    std::uint64_t next_retirement_fence = 1;
+-    std::size_t staged_resource_count = 0;
+-    std::vector<DeviceStoreEntry> initial_entries;
+-    DeviceBlockStoreLifecycle store;
+-    std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>
+-        active_resources;
+-    std::unique_ptr<CudaAmrFluxPlanRuntime> active_amr_flux;
+-    std::list<RetiredCudaResources> retired_resources;
+-
+-    static std::vector<DeviceStoreEntry> make_initial_entries(
+-        std::span<const CudaBlockBinding> bindings);
+-
+-    Impl(std::span<const CudaBlockBinding> bindings, int device,
+-         const CudaLaunchConfig& launch_config,
+-         const SpeciesManager& species);
+-    ~Impl() noexcept;
+-
+-    void select_device() const;
+-    void initialize_species_workspace();
+-    void checked_quiesce(const char* operation);
+-    void quiesce_or_terminate() noexcept;
+-    CudaBlockRuntime& require_block(backend::BackendStateAccess access);
+-    const CudaBlockRuntime& require_block(
+-        backend::BackendStateAccess access) const;
+-    using BlockResolver = std::function<
+-        CudaBlockRuntime&(backend::BackendStateAccess)>;
+-    // One lowering/execution path serves active slots and the unpublished
+-    // regrid namespace; only the validated storage resolver differs.
+-    void execute_same_level_exchange(
+-        std::span<const backend::BackendStateAccess>,
+-        const amr::SameLevelExchangePlan&, state::StateSlot,
+-        const BlockResolver&);
+-    void execute_coarse_fine_exchange(
+-        std::span<const backend::BackendStateAccess>,
+-        const amr::CoarseFineTransferPlan&, state::StateSlot,
+-        const BlockResolver&);
+-    CudaBlockRuntime& first_block() noexcept;
+-    const CudaBlockRuntime& first_block() const noexcept;
+-
+-    void initialize_eos(const IdealGas& host, const SpeciesManager& species);
+-    void initialize_eos(const HelmEos& host, const SpeciesManager&);
+-    void initialize_eos(
+-        const Tabular3DEOSHostView& host, const SpeciesManager&);
+-    void initialize_eos(
+-        const Tabular4DEOSHostView& host, const SpeciesManager&);
+-    void finish_eos_upload(const char* operation);
+-};
+-
+-// Declare after asynchronous Host-copy sources/destinations and device owners.
+-// It proves completion before those objects unwind on a recoverable failure.
+-struct CudaQuiescenceGuard {
+-    CudaBackend::Impl& owner;
+-    bool completed = false;
+-    ~CudaQuiescenceGuard() { if (!completed) owner.quiesce_or_terminate(); }
+-};
+-
+-struct CudaBackend::StoreTransaction::Impl {
+-    static constexpr std::uint8_t kInteriorUploaded = 1U;
+-    static constexpr std::uint8_t kGhostUploaded = 2U;
+-    static constexpr std::uint8_t kCompleteCurrent =
+-        kInteriorUploaded | kGhostUploaded;
+-
+-    std::shared_ptr<CudaBackend::Impl> owner;
+-    DeviceBlockStoreLifecycle::Candidate candidate;
+-    std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>> resources;
+-    std::map<DeviceArenaSlot, std::uint8_t> uploaded_current;
+-    std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
+-    bool upload_failed = false;
+-    bool consumed = false;
+-
+-    Impl(std::shared_ptr<CudaBackend::Impl> requested_owner,
+-         DeviceBlockStoreLifecycle::Candidate requested_candidate,
+-         std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>
+-             requested_resources,
+-         std::map<DeviceArenaSlot, std::uint8_t> requested_uploaded_current)
+-        noexcept;
+-
+-    bool current_upload_complete() const noexcept;
+-};
+-
+-} // namespace arch::cuda
++        std::unique_ptr<DeviceAllocation<std::byte>> selection, bindings;
++        std::unique_ptr<DeviceAllocation<double>> arena, summary;
++    } refinement_scratch;
++    std::variant<std::monostate, IdealGasView, HelmEosView,
++                 Tabular3DEOSView, Tabular4DEOSView> eos;
++    // One bounded sparse ODE/factor pool serves all blocks on the ordered stream;
++    // AMR topology changes must not allocate a separate solver pool per block.
++    std::unique_ptr<CudaSparseBurnOwner> sparse_burn_owner;
++    std::unique_ptr<DeviceNetworkOwner> dense_network_owner;
++    backend::BackendCounters runtime_counters{};
++    std::vector<backend::BackendTraceRecord> runtime_trace;
++    int species_count = 0;
++    std::uint64_t immutable_owner_constructions = 0;
++    std::uint64_t next_retirement_fence = 1;
++    std::size_t staged_resource_count = 0;
++    std::vector<DeviceStoreEntry> initial_entries;
++    DeviceBlockStoreLifecycle store;
++    std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>
++        active_resources;
++    std::unique_ptr<CudaAmrFluxPlanRuntime> active_amr_flux;
++    std::list<RetiredCudaResources> retired_resources;
++
++    static std::vector<DeviceStoreEntry> make_initial_entries(
++        std::span<const CudaBlockBinding> bindings);
++
++    Impl(std::span<const CudaBlockBinding> bindings, int device,
++         const CudaLaunchConfig& launch_config,
++         const SpeciesManager& species);
++    ~Impl() noexcept;
++
++    void select_device() const;
++    void initialize_species_workspace();
++    void checked_quiesce(const char* operation);
++    void quiesce_or_terminate() noexcept;
++    CudaBlockRuntime& require_block(backend::BackendStateAccess access);
++    const CudaBlockRuntime& require_block(
++        backend::BackendStateAccess access) const;
++    using BlockResolver = std::function<
++        CudaBlockRuntime&(backend::BackendStateAccess)>;
++    // One lowering/execution path serves active slots and the unpublished
++    // regrid namespace; only the validated storage resolver differs.
++    void execute_same_level_exchange(
++        std::span<const backend::BackendStateAccess>,
++        const amr::SameLevelExchangePlan&, state::StateSlot,
++        const BlockResolver&);
++    void execute_coarse_fine_exchange(
++        std::span<const backend::BackendStateAccess>,
++        const amr::CoarseFineTransferPlan&, state::StateSlot,
++        const BlockResolver&);
++    CudaBlockRuntime& first_block() noexcept;
++    const CudaBlockRuntime& first_block() const noexcept;
++
++    void initialize_eos(const IdealGas& host, const SpeciesManager& species);
++    void initialize_eos(const HelmEos& host, const SpeciesManager&);
++    void initialize_eos(
++        const Tabular3DEOSHostView& host, const SpeciesManager&);
++    void initialize_eos(
++        const Tabular4DEOSHostView& host, const SpeciesManager&);
++    void finish_eos_upload(const char* operation);
++};
++
++// Declare after asynchronous Host-copy sources/destinations and device owners.
++// It proves completion before those objects unwind on a recoverable failure.
++struct CudaQuiescenceGuard {
++    CudaBackend::Impl& owner;
++    bool completed = false;
++    ~CudaQuiescenceGuard() { if (!completed) owner.quiesce_or_terminate(); }
++};
++
++struct CudaBackend::StoreTransaction::Impl {
++    static constexpr std::uint8_t kInteriorUploaded = 1U;
++    static constexpr std::uint8_t kGhostUploaded = 2U;
++    static constexpr std::uint8_t kCompleteCurrent =
++        kInteriorUploaded | kGhostUploaded;
++
++    std::shared_ptr<CudaBackend::Impl> owner;
++    DeviceBlockStoreLifecycle::Candidate candidate;
++    std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>> resources;
++    std::map<DeviceArenaSlot, std::uint8_t> uploaded_current;
++    std::unique_ptr<CudaAmrFluxPlanRuntime> amr_flux;
++    bool upload_failed = false;
++    bool consumed = false;
++
++    Impl(std::shared_ptr<CudaBackend::Impl> requested_owner,
++         DeviceBlockStoreLifecycle::Candidate requested_candidate,
++         std::map<DeviceArenaSlot, std::unique_ptr<CudaBlockRuntime>>
++             requested_resources,
++         std::map<DeviceArenaSlot, std::uint8_t> requested_uploaded_current)
++        noexcept;
++
++    bool current_upload_complete() const noexcept;
++};
++
++} // namespace arch::cuda
+diff --git a/tests/cuda/test_cuda_multiblock_hydro.cu b/tests/cuda/test_cuda_multiblock_hydro.cu
+index 1e101806..e99c1834 100644
+--- a/tests/cuda/test_cuda_multiblock_hydro.cu
++++ b/tests/cuda/test_cuda_multiblock_hydro.cu
+@@ -1,401 +1,448 @@
+-/**
+- * @file test_cuda_multiblock_hydro.cu
+- * @brief Check multiblock hydro exchange in the production CUDA backend.
+- *
+- * The cases include neighboring blocks and two-dimensional corners, where
+- * ghost exchange ordering must agree with the host calculation.
+- */
+-#include "amr/Block.h"
+-#include "amr/BoundaryPlan.h"
+-#include "amr/ExchangePlan.h"
+-#include "cuda/runtime/CudaBackend.h"
+-#include "cuda/runtime/amr/CudaBackendExchange.h"
+-#include "physics/eos/IdealGas.h"
+-#include "physics/species/Species.h"
+-
++/**
++ * @file test_cuda_multiblock_hydro.cu
++ * @brief Check multiblock hydro exchange in the production CUDA backend.
++ *
++ * The cases include neighboring blocks and two-dimensional corners, where
++ * ghost exchange ordering must agree with the host calculation.
++ */
++#include "amr/Block.h"
++#include "amr/BoundaryPlan.h"
++#include "amr/ExchangePlan.h"
++#include "cuda/runtime/CudaBackend.h"
++#include "cuda/runtime/amr/CudaBackendExchange.h"
++#include "physics/eos/IdealGas.h"
++#include "physics/species/Species.h"
++
+ #include <algorithm>
+ #include <array>
+ #include <bit>
+ #include <cmath>
+ #include <iostream>
+ #include <limits>
+-#include <optional>
+-#include <span>
++#include <optional>
++#include <span>
+ #include <stdexcept>
+ #include <string>
+ #include <utility>
+-#include <vector>
+-
+-namespace {
+-
+-void require(bool condition, const char* message)
+-{
+-    if (!condition) throw std::runtime_error(message);
+-}
+-
+-arch::boundary::BoundaryPlan make_boundary_plan()
+-{
+-    using namespace arch::boundary;
+-    BoundaryPlanInput input{};
+-    input.dimension = 1;
+-    input.active_extent = {amr::BLOCK_NX, 1, 1};
+-    input.ghost_depth = amr::MAX_NG;
+-    input.faces.fill(BoundaryType::Inactive);
+-    input.faces[face_index(BoundaryAxis::X1, BoundarySide::Lower)] =
+-        BoundaryType::Outflow;
+-    input.faces[face_index(BoundaryAxis::X1, BoundarySide::Upper)] =
+-        BoundaryType::Outflow;
+-    return arch::boundary::make_boundary_plan(input);
+-}
+-
+-arch::boundary::BoundaryPlan make_boundary_plan_2d()
+-{
+-    using namespace arch::boundary;
+-    BoundaryPlanInput input{};
+-    input.dimension = 2;
+-    input.active_extent = {amr::BLOCK_NX, amr::BLOCK_NY, 1};
+-    input.ghost_depth = amr::MAX_NG;
+-    input.faces.fill(BoundaryType::Inactive);
+-    for (const BoundaryAxis axis : {BoundaryAxis::X1, BoundaryAxis::X2}) {
+-        input.faces[face_index(axis, BoundarySide::Lower)] =
+-            BoundaryType::Outflow;
+-        input.faces[face_index(axis, BoundarySide::Upper)] =
+-            BoundaryType::Outflow;
+-    }
+-    return arch::boundary::make_boundary_plan(input);
+-}
+-
+-amr::Block make_block(int id)
+-{
+-    amr::Block block{};
+-    block.id = id;
+-    block.level = 0;
+-    block.logical_x1 = id;
+-    block.active = true;
+-    block.grid = Grid(
+-        amr::MAX_NG, static_cast<double>(id), static_cast<double>(id + 1),
+-        0.0, 1.0, 0.0, 1.0, 1, 0, 0);
+-    block.grid.dim = 1;
+-    block.grid.geometry = "cartesian";
+-    block.grid.InitializeTopology();
+-    const int total = block.grid.GetTotalSize();
+-    for (FluidState* state : {
+-             &block.fluid_state, &block.state_next, &block.state_scratch}) {
+-        state->Preallocate(total);
+-        state->InitSpecies(0);
+-    }
+-    for (int i = 0; i < block.grid.GetTotalX(); ++i) {
+-        const int cell = block.grid.GetIndex(i);
+-        const double value = 1000.0 * id + i;
+-        block.fluid_state.set(
+-            cell, {value, value + 0.25, value + 0.5, value + 0.75,
+-                   value + 1.0});
+-        block.fluid_state.enuc_rate[cell] = (i & 1) ? 0.0 : -0.0;
+-    }
+-    return block;
+-}
+-
+-amr::Block make_block_2d(int logical_x, int logical_y)
+-{
+-    amr::Block block{};
+-    block.id = 2 * logical_y + logical_x;
+-    block.level = 0;
+-    block.logical_x1 = logical_x;
+-    block.logical_x2 = logical_y;
+-    block.active = true;
+-    block.grid = Grid(
+-        amr::MAX_NG, static_cast<double>(logical_x),
+-        static_cast<double>(logical_x + 1), static_cast<double>(logical_y),
+-        static_cast<double>(logical_y + 1), 0.0, 1.0, 1, 1, 0);
+-    block.grid.dim = 2;
+-    block.grid.geometry = "cartesian";
+-    block.grid.InitializeTopology();
+-    const int total = block.grid.GetTotalSize();
+-    for (FluidState* state : {
+-             &block.fluid_state, &block.state_next, &block.state_scratch}) {
+-        state->Preallocate(total);
+-        state->InitSpecies(0);
+-    }
+-    for (int j = 0; j < block.grid.GetTotalY(); ++j) {
+-        for (int i = 0; i < block.grid.GetTotalX(); ++i) {
+-            const int cell = block.grid.GetIndex(i, j);
+-            const double value = 100000.0 * block.id + 100.0 * j + i;
+-            block.fluid_state.set(
+-                cell, {value, value + 0.25, value + 0.5, value + 0.75,
+-                       value + 1.0});
+-            block.fluid_state.enuc_rate[cell] = ((i + j) & 1) ? 0.0 : -0.0;
+-        }
+-    }
+-    return block;
+-}
+-
+-arch::backend::HostStateTransferView transfer_view(FluidState& state)
+-{
+-    return {
+-        state.rho.data(), state.mom_u.data(), state.mom_v.data(),
+-        state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
+-        nullptr, state.rho.size(), 0, 0};
+-}
+-
++#include <vector>
++
++namespace {
++
++void require(bool condition, const char* message)
++{
++    if (!condition) throw std::runtime_error(message);
++}
++
++arch::boundary::BoundaryPlan make_boundary_plan()
++{
++    using namespace arch::boundary;
++    BoundaryPlanInput input{};
++    input.dimension = 1;
++    input.active_extent = {amr::BLOCK_NX, 1, 1};
++    input.ghost_depth = amr::MAX_NG;
++    input.faces.fill(BoundaryType::Inactive);
++    input.faces[face_index(BoundaryAxis::X1, BoundarySide::Lower)] =
++        BoundaryType::Outflow;
++    input.faces[face_index(BoundaryAxis::X1, BoundarySide::Upper)] =
++        BoundaryType::Outflow;
++    return arch::boundary::make_boundary_plan(input);
++}
++
++arch::boundary::BoundaryPlan make_boundary_plan_2d()
++{
++    using namespace arch::boundary;
++    BoundaryPlanInput input{};
++    input.dimension = 2;
++    input.active_extent = {amr::BLOCK_NX, amr::BLOCK_NY, 1};
++    input.ghost_depth = amr::MAX_NG;
++    input.faces.fill(BoundaryType::Inactive);
++    for (const BoundaryAxis axis : {BoundaryAxis::X1, BoundaryAxis::X2}) {
++        input.faces[face_index(axis, BoundarySide::Lower)] =
++            BoundaryType::Outflow;
++        input.faces[face_index(axis, BoundarySide::Upper)] =
++            BoundaryType::Outflow;
++    }
++    return arch::boundary::make_boundary_plan(input);
++}
++
++amr::Block make_block(int id)
++{
++    amr::Block block{};
++    block.id = id;
++    block.level = 0;
++    block.logical_x1 = id;
++    block.active = true;
++    block.grid = Grid(
++        amr::MAX_NG, static_cast<double>(id), static_cast<double>(id + 1),
++        0.0, 1.0, 0.0, 1.0, 1, 0, 0);
++    block.grid.dim = 1;
++    block.grid.geometry = "cartesian";
++    block.grid.InitializeTopology();
++    const int total = block.grid.GetTotalSize();
++    for (FluidState* state : {
++             &block.fluid_state, &block.state_next, &block.state_scratch}) {
++        state->Preallocate(total);
++        state->InitSpecies(0);
++    }
++    for (int i = 0; i < block.grid.GetTotalX(); ++i) {
++        const int cell = block.grid.GetIndex(i);
++        const double value = 1000.0 * id + i;
++        block.fluid_state.set(
++            cell, {value, value + 0.25, value + 0.5, value + 0.75,
++                   value + 1.0});
++        block.fluid_state.enuc_rate[cell] = (i & 1) ? 0.0 : -0.0;
++    }
++    return block;
++}
++
++amr::Block make_block_2d(int logical_x, int logical_y)
++{
++    amr::Block block{};
++    block.id = 2 * logical_y + logical_x;
++    block.level = 0;
++    block.logical_x1 = logical_x;
++    block.logical_x2 = logical_y;
++    block.active = true;
++    block.grid = Grid(
++        amr::MAX_NG, static_cast<double>(logical_x),
++        static_cast<double>(logical_x + 1), static_cast<double>(logical_y),
++        static_cast<double>(logical_y + 1), 0.0, 1.0, 1, 1, 0);
++    block.grid.dim = 2;
++    block.grid.geometry = "cartesian";
++    block.grid.InitializeTopology();
++    const int total = block.grid.GetTotalSize();
++    for (FluidState* state : {
++             &block.fluid_state, &block.state_next, &block.state_scratch}) {
++        state->Preallocate(total);
++        state->InitSpecies(0);
++    }
++    for (int j = 0; j < block.grid.GetTotalY(); ++j) {
++        for (int i = 0; i < block.grid.GetTotalX(); ++i) {
++            const int cell = block.grid.GetIndex(i, j);
++            const double value = 100000.0 * block.id + 100.0 * j + i;
++            block.fluid_state.set(
++                cell, {value, value + 0.25, value + 0.5, value + 0.75,
++                       value + 1.0});
++            block.fluid_state.enuc_rate[cell] = ((i + j) & 1) ? 0.0 : -0.0;
++        }
++    }
++    return block;
++}
++
++arch::backend::HostStateTransferView transfer_view(FluidState& state)
++{
++    return {
++        state.rho.data(), state.mom_u.data(), state.mom_v.data(),
++        state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
++        nullptr, state.rho.size(), 0, 0};
++}
++
+ arch::cuda::CudaLaunchConfig make_launch_config(
+     arch::dispatch::TimeIntegratorId method = arch::dispatch::TimeIntegratorId::Euler)
+-{
+-    SimConfig config{};
+-    config.physics.burn.use_burn = false;
+-    config.physics.diffusion.use_diffusion = false;
+-    const arch::dispatch::ResolvedExecutionPlan plan{
+-        arch::dispatch::FluxId::Hllc,
+-        arch::dispatch::ReconstructionId::Ppm,
+-        arch::dispatch::LimiterId::MinMod,
++{
++    SimConfig config{};
++    config.physics.burn.use_burn = false;
++    config.physics.diffusion.use_diffusion = false;
++    const arch::dispatch::ResolvedExecutionPlan plan{
++        arch::dispatch::FluxId::Hllc,
++        arch::dispatch::ReconstructionId::Ppm,
++        arch::dispatch::LimiterId::MinMod,
+         method,
+-        arch::dispatch::EosId::Ideal,
+-        arch::dispatch::NetworkId::None,
+-        arch::dispatch::OdeSolverId::None,
+-        arch::dispatch::LinearSolverId::None,
+-        arch::dispatch::DiffusionIntegratorId::None};
+-    return arch::cuda::make_cuda_launch_config(plan, config);
+-}
+-
+-amr::SameLevelExchangePlan make_exchange_plan(
+-    std::array<amr::BlockHandle, 2> handles)
++        arch::dispatch::EosId::Ideal,
++        arch::dispatch::NetworkId::None,
++        arch::dispatch::OdeSolverId::None,
++        arch::dispatch::LinearSolverId::None,
++        arch::dispatch::DiffusionIntegratorId::None};
++    return arch::cuda::make_cuda_launch_config(plan, config);
++}
++
++amr::SameLevelExchangePlan make_exchange_plan(
++    std::array<amr::BlockHandle, 2> handles)
++{
++    const amr::LogicalBlockKey left{1, 0, 0, 0, 0};
++    const amr::LogicalBlockKey right{1, 0, 1, 0, 0};
++    std::array<amr::SameLevelTopologyEntry, 2> topology{};
++    topology[0].logical = left;
++    topology[0].handle = handles[0];
++    topology[0].neighbors[1] = right;
++    topology[1].logical = right;
++    topology[1].handle = handles[1];
++    topology[1].neighbors[0] = left;
++    return amr::make_same_level_exchange_plan(
++        topology, 1, {amr::BLOCK_NX, 1, 1}, amr::MAX_NG,
++        handles[0].epoch);
++}
++
++amr::SameLevelExchangePlan make_exchange_plan_2d(
++    std::array<amr::BlockHandle, 4> handles)
++{
++    std::array<amr::SameLevelTopologyEntry, 4> topology{};
++    for (int y = 0; y < 2; ++y) {
++        for (int x = 0; x < 2; ++x) {
++            const int index = 2 * y + x;
++            topology[index].logical = {2, 0,
++                static_cast<std::uint32_t>(x),
++                static_cast<std::uint32_t>(y), 0};
++            topology[index].handle = handles[index];
++            if (x > 0) topology[index].neighbors[0] = topology[index - 1].logical;
++            if (x < 1) topology[index].neighbors[1] =
++                amr::LogicalBlockKey{2, 0, static_cast<std::uint32_t>(x + 1),
++                                     static_cast<std::uint32_t>(y), 0};
++            if (y > 0) topology[index].neighbors[2] = topology[index - 2].logical;
++            if (y < 1) topology[index].neighbors[3] =
++                amr::LogicalBlockKey{2, 0, static_cast<std::uint32_t>(x),
++                                     static_cast<std::uint32_t>(y + 1), 0};
++        }
++    }
++    return amr::make_same_level_exchange_plan(
++        topology, 2, {amr::BLOCK_NX, amr::BLOCK_NY, 1}, amr::MAX_NG,
++        handles[0].epoch);
++}
++
++void run_multiblock_exchange()
++{
++    std::array<amr::Block, 2> blocks{make_block(0), make_block(1)};
++    const std::array<amr::BlockHandle, 2> handles{
++        amr::BlockHandle{{101}, {7}}, amr::BlockHandle{{102}, {7}}};
++    const std::array<arch::backend::StorageGeneration, 2> storage{{{201}, {202}}};
++    require(handles[0].epoch == handles[1].epoch,
++            "multi-block fixture mixed topology epochs");
++    require(storage[0] != storage[1],
++            "multi-block fixture reused a storage generation");
++    const auto boundary = make_boundary_plan();
++    std::array<arch::cuda::CudaBlockBinding, 2> bindings{};
++    for (std::size_t index = 0; index < bindings.size(); ++index) {
++        bindings[index] = {
++            &blocks[index], handles[index], storage[index], &boundary};
++    }
++    SpeciesManager species;
++    IdealGas eos(1.4, species);
++    auto backend = arch::cuda::make_cuda_backend(
++        bindings, 0, make_launch_config(), species, eos);
++    std::array<arch::backend::BackendStateAccess, 2> accesses{};
++    for (std::size_t index = 0; index < accesses.size(); ++index) {
++        accesses[index] = {
++            handles[index], storage[index], arch::state::StateSlot::Current};
++        backend->enqueue_upload_slot(
++            accesses[index], arch::state::StateRegion::Interior,
++            transfer_view(blocks[index].fluid_state));
++        backend->enqueue_upload_slot(
++            accesses[index], arch::state::StateRegion::Ghost,
++            transfer_view(blocks[index].fluid_state));
++    }
++    backend->quiesce();
++    require(backend->contains(accesses[0]) && backend->contains(accesses[1]),
++            "multi-block backend lost a valid binding");
++    auto stale = accesses[1];
++    stale.storage.value += 1;
++    require(!backend->contains(stale),
++            "multi-block backend accepted stale storage");
++
++    const auto plan = make_exchange_plan(handles);
++    const arch::state::CompletionToken completion{
++        33, arch::state::CompletionState::Complete};
++
++    // A malformed later phase must be rejected before an earlier valid phase
++    // writes any destination ghost.  This is the device-side transaction
++    // boundary for compiled same-level exchange metadata.
++    auto malformed = plan;
++    malformed.phases[1].first += 1;
++    bool malformed_rejected = false;
++    try {
++        (void)backend->execute_same_level_exchange(
++            accesses, malformed, arch::state::StateSlot::Current,
++            {9}, completion);
++    } catch (const std::invalid_argument&) {
++        malformed_rejected = true;
++    }
++    require(malformed_rejected,
++            "CUDA exchange accepted malformed later phase metadata");
++    std::array<FluidState, 2> rejected_download{};
++    for (std::size_t index = 0; index < rejected_download.size(); ++index) {
++        rejected_download[index].Preallocate(
++            blocks[index].grid.GetTotalSize());
++        rejected_download[index].InitSpecies(0);
++        backend->enqueue_materialize_host_current(
++            accesses[index], arch::state::StateRegion::Ghost,
++            transfer_view(rejected_download[index]));
++    }
++    backend->quiesce();
++    for (std::size_t index = 0; index < rejected_download.size(); ++index) {
++        for (int i = 0; i < blocks[index].grid.GetTotalX(); ++i) {
++            if (i >= blocks[index].grid.Is()
++                && i < blocks[index].grid.Ie())
++                continue;
++            const int cell = blocks[index].grid.GetIndex(i);
++            require(
++                std::bit_cast<std::uint64_t>(
++                    rejected_download[index].rho[cell])
++                    == std::bit_cast<std::uint64_t>(
++                        blocks[index].fluid_state.rho[cell]),
++                "rejected CUDA exchange partially wrote an earlier phase");
++        }
++    }
++
++    require(backend->execute_same_level_exchange(
++                accesses, plan, arch::state::StateSlot::Current,
++                {9}, completion) == completion,
++            "CUDA exchange completion token drifted");
++
++    std::array<FluidState, 2> downloaded{};
++    for (std::size_t index = 0; index < downloaded.size(); ++index) {
++        downloaded[index].Preallocate(blocks[index].grid.GetTotalSize());
++        downloaded[index].InitSpecies(0);
++        backend->enqueue_materialize_host_current(
++            accesses[index], arch::state::StateRegion::Ghost,
++            transfer_view(downloaded[index]));
++    }
++    backend->quiesce();
++
++    for (int depth = 0; depth < amr::MAX_NG; ++depth) {
++        const int left_source = blocks[0].grid.GetIndex(
++            blocks[0].grid.Ie() - amr::MAX_NG + depth);
++        const int right_ghost = blocks[1].grid.GetIndex(
++            blocks[1].grid.Is() - amr::MAX_NG + depth);
++        const int right_source = blocks[1].grid.GetIndex(
++            blocks[1].grid.Is() + depth);
++        const int left_ghost = blocks[0].grid.GetIndex(
++            blocks[0].grid.Ie() + depth);
++        require(
++            std::bit_cast<std::uint64_t>(downloaded[1].rho[right_ghost])
++                == std::bit_cast<std::uint64_t>(
++                    blocks[0].fluid_state.rho[left_source]),
++            "right lower ghost did not receive left active state");
++        require(
++            std::bit_cast<std::uint64_t>(downloaded[0].rho[left_ghost])
++                == std::bit_cast<std::uint64_t>(
++                    blocks[1].fluid_state.rho[right_source]),
++            "left upper ghost did not receive right active state");
++    }
++    std::cout << "CUDA_MULTIBLOCK_EXCHANGE_PASS blocks=2 operations="
++              << plan.operations.size() << '\n';
++}
++
++void run_2d_corner_exchange()
++{
++    std::array<amr::Block, 4> blocks{
++        make_block_2d(0, 0), make_block_2d(1, 0),
++        make_block_2d(0, 1), make_block_2d(1, 1)};
++    const std::array<amr::BlockHandle, 4> handles{
++        amr::BlockHandle{{111}, {8}}, amr::BlockHandle{{112}, {8}},
++        amr::BlockHandle{{113}, {8}}, amr::BlockHandle{{114}, {8}}};
++    const std::array<arch::backend::StorageGeneration, 4> storage{
++        arch::backend::StorageGeneration{211},
++        arch::backend::StorageGeneration{212},
++        arch::backend::StorageGeneration{213},
++        arch::backend::StorageGeneration{214}};
++    const auto boundary = make_boundary_plan_2d();
++    std::array<arch::cuda::CudaBlockBinding, 4> bindings{};
++    for (std::size_t index = 0; index < bindings.size(); ++index)
++        bindings[index] = {
++            &blocks[index], handles[index], storage[index], &boundary};
++    SpeciesManager species;
++    IdealGas eos(1.4, species);
++    auto backend = arch::cuda::make_cuda_backend(
++        bindings, 0, make_launch_config(), species, eos);
++    std::array<arch::backend::BackendStateAccess, 4> ordered{};
++    for (std::size_t index = 0; index < ordered.size(); ++index) {
++        ordered[index] = {
++            handles[index], storage[index], arch::state::StateSlot::Current};
++        backend->enqueue_upload_slot(
++            ordered[index], arch::state::StateRegion::Interior,
++            transfer_view(blocks[index].fluid_state));
++        backend->enqueue_upload_slot(
++            ordered[index], arch::state::StateRegion::Ghost,
++            transfer_view(blocks[index].fluid_state));
++    }
++    backend->quiesce();
++    const std::array accesses{
++        ordered[3], ordered[1], ordered[0], ordered[2]};
++    const auto plan = make_exchange_plan_2d(handles);
++    const arch::state::CompletionToken completion{
++        34, arch::state::CompletionState::Complete};
++    const auto before_exchange = backend->counters();
++    require(backend->execute_same_level_exchange(
++                accesses, plan, arch::state::StateSlot::Current,
++                {10}, completion) == completion,
++            "2D CUDA exchange completion token drifted");
++    const auto after_exchange = backend->counters();
++    const auto metadata_bytes = accesses.size() * sizeof(arch::cuda::DeviceExchangeBlock)
++        + plan.operations.size() * sizeof(arch::cuda::DeviceExchangeOperation);
++    require(after_exchange.bytes_h2d - before_exchange.bytes_h2d == metadata_bytes,
++            "same-level metadata uploads are missing from transfer counters");
++    require(after_exchange.bytes_d2h == before_exchange.bytes_d2h,
++            "same-level exchange unexpectedly downloads state");
++
++    FluidState downloaded{};
++    downloaded.Preallocate(blocks[3].grid.GetTotalSize());
++    downloaded.InitSpecies(0);
++    backend->enqueue_materialize_host_current(
++        ordered[3], arch::state::StateRegion::Ghost,
++        transfer_view(downloaded));
++    backend->quiesce();
++    for (int dy = 0; dy < amr::MAX_NG; ++dy) {
++        for (int dx = 0; dx < amr::MAX_NG; ++dx) {
++            const int destination = blocks[3].grid.GetIndex(
++                blocks[3].grid.Is() - amr::MAX_NG + dx,
++                blocks[3].grid.Js() - amr::MAX_NG + dy);
++            const int source = blocks[0].grid.GetIndex(
++                blocks[0].grid.Ie() - amr::MAX_NG + dx,
++                blocks[0].grid.Je() - amr::MAX_NG + dy);
++            require(std::bit_cast<std::uint64_t>(downloaded.eng[destination])
++                        == std::bit_cast<std::uint64_t>(
++                            blocks[0].fluid_state.eng[source]),
++                    "2D CUDA Y phase did not consume the X ghost corner");
++        }
++    }
++    std::cout << "CUDA_MULTIBLOCK_CORNER_PASS blocks=4 operations="
++              << plan.operations.size() << '\n';
++}
++
++void verify_indicator_batch(arch::cuda::CudaBackend& scalar, arch::cuda::CudaBackend& batch,
++    const std::array<arch::backend::BackendStateAccess,2>& accesses)
+ {
+-    const amr::LogicalBlockKey left{1, 0, 0, 0, 0};
+-    const amr::LogicalBlockKey right{1, 0, 1, 0, 0};
+-    std::array<amr::SameLevelTopologyEntry, 2> topology{};
+-    topology[0].logical = left;
+-    topology[0].handle = handles[0];
+-    topology[0].neighbors[1] = right;
+-    topology[1].logical = right;
+-    topology[1].handle = handles[1];
+-    topology[1].neighbors[0] = left;
+-    return amr::make_same_level_exchange_plan(
+-        topology, 1, {amr::BLOCK_NX, 1, 1}, amr::MAX_NG,
+-        handles[0].epoch);
+-}
+-
+-amr::SameLevelExchangePlan make_exchange_plan_2d(
+-    std::array<amr::BlockHandle, 4> handles)
+-{
+-    std::array<amr::SameLevelTopologyEntry, 4> topology{};
+-    for (int y = 0; y < 2; ++y) {
+-        for (int x = 0; x < 2; ++x) {
+-            const int index = 2 * y + x;
+-            topology[index].logical = {2, 0,
+-                static_cast<std::uint32_t>(x),
+-                static_cast<std::uint32_t>(y), 0};
+-            topology[index].handle = handles[index];
+-            if (x > 0) topology[index].neighbors[0] = topology[index - 1].logical;
+-            if (x < 1) topology[index].neighbors[1] =
+-                amr::LogicalBlockKey{2, 0, static_cast<std::uint32_t>(x + 1),
+-                                     static_cast<std::uint32_t>(y), 0};
+-            if (y > 0) topology[index].neighbors[2] = topology[index - 2].logical;
+-            if (y < 1) topology[index].neighbors[3] =
+-                amr::LogicalBlockKey{2, 0, static_cast<std::uint32_t>(x),
+-                                     static_cast<std::uint32_t>(y + 1), 0};
++    AmrConfig config{};
++    config.refine_on_rho=true;
++    // Grow/shrink the binding list and change the arena layout in both
++    // directions. Repeat this whole check after Hydro rotates Current slots.
++    for (bool thermo : {false,true,false}) {
++        config.refine_on_p=config.refine_on_temp=config.refine_on_entropy=thermo;
++        std::vector<double> expected;
++        for (const auto& access : accesses) {
++            const auto one=scalar.evaluate_refinement_indicators(
++                std::span(&access,1),config,1e-12,{});
++            require(one.size()==1 && std::isfinite(one[0]),"invalid scalar indicator control");
++            expected.push_back(one[0]);
+         }
+-    }
+-    return amr::make_same_level_exchange_plan(
+-        topology, 2, {amr::BLOCK_NX, amr::BLOCK_NY, 1}, amr::MAX_NG,
+-        handles[0].epoch);
+-}
+-
+-void run_multiblock_exchange()
+-{
+-    std::array<amr::Block, 2> blocks{make_block(0), make_block(1)};
+-    const std::array<amr::BlockHandle, 2> handles{
+-        amr::BlockHandle{{101}, {7}}, amr::BlockHandle{{102}, {7}}};
+-    const std::array<arch::backend::StorageGeneration, 2> storage{{{201}, {202}}};
+-    require(handles[0].epoch == handles[1].epoch,
+-            "multi-block fixture mixed topology epochs");
+-    require(storage[0] != storage[1],
+-            "multi-block fixture reused a storage generation");
+-    const auto boundary = make_boundary_plan();
+-    std::array<arch::cuda::CudaBlockBinding, 2> bindings{};
+-    for (std::size_t index = 0; index < bindings.size(); ++index) {
+-        bindings[index] = {
+-            &blocks[index], handles[index], storage[index], &boundary};
+-    }
+-    SpeciesManager species;
+-    IdealGas eos(1.4, species);
+-    auto backend = arch::cuda::make_cuda_backend(
+-        bindings, 0, make_launch_config(), species, eos);
+-    std::array<arch::backend::BackendStateAccess, 2> accesses{};
+-    for (std::size_t index = 0; index < accesses.size(); ++index) {
+-        accesses[index] = {
+-            handles[index], storage[index], arch::state::StateSlot::Current};
+-        backend->enqueue_upload_slot(
+-            accesses[index], arch::state::StateRegion::Interior,
+-            transfer_view(blocks[index].fluid_state));
+-        backend->enqueue_upload_slot(
+-            accesses[index], arch::state::StateRegion::Ghost,
+-            transfer_view(blocks[index].fluid_state));
+-    }
+-    backend->quiesce();
+-    require(backend->contains(accesses[0]) && backend->contains(accesses[1]),
+-            "multi-block backend lost a valid binding");
+-    auto stale = accesses[1];
+-    stale.storage.value += 1;
+-    require(!backend->contains(stale),
+-            "multi-block backend accepted stale storage");
+-
+-    const auto plan = make_exchange_plan(handles);
+-    const arch::state::CompletionToken completion{
+-        33, arch::state::CompletionState::Complete};
+-
+-    // A malformed later phase must be rejected before an earlier valid phase
+-    // writes any destination ghost.  This is the device-side transaction
+-    // boundary for compiled same-level exchange metadata.
+-    auto malformed = plan;
+-    malformed.phases[1].first += 1;
+-    bool malformed_rejected = false;
+-    try {
+-        (void)backend->execute_same_level_exchange(
+-            accesses, malformed, arch::state::StateSlot::Current,
+-            {9}, completion);
+-    } catch (const std::invalid_argument&) {
+-        malformed_rejected = true;
+-    }
+-    require(malformed_rejected,
+-            "CUDA exchange accepted malformed later phase metadata");
+-    std::array<FluidState, 2> rejected_download{};
+-    for (std::size_t index = 0; index < rejected_download.size(); ++index) {
+-        rejected_download[index].Preallocate(
+-            blocks[index].grid.GetTotalSize());
+-        rejected_download[index].InitSpecies(0);
+-        backend->enqueue_materialize_host_current(
+-            accesses[index], arch::state::StateRegion::Ghost,
+-            transfer_view(rejected_download[index]));
+-    }
+-    backend->quiesce();
+-    for (std::size_t index = 0; index < rejected_download.size(); ++index) {
+-        for (int i = 0; i < blocks[index].grid.GetTotalX(); ++i) {
+-            if (i >= blocks[index].grid.Is()
+-                && i < blocks[index].grid.Ie())
+-                continue;
+-            const int cell = blocks[index].grid.GetIndex(i);
+-            require(
+-                std::bit_cast<std::uint64_t>(
+-                    rejected_download[index].rho[cell])
+-                    == std::bit_cast<std::uint64_t>(
+-                        blocks[index].fluid_state.rho[cell]),
+-                "rejected CUDA exchange partially wrote an earlier phase");
++        const auto first=batch.evaluate_refinement_indicators(std::span(accesses).first(1),config,1e-12,{});
++        require(first==std::vector<double>{expected[0]},"indicator small binding reuse changed value");
++        const std::array reversed{accesses[1],accesses[0]};
++        const auto before=batch.counters();
++        const auto actual=batch.evaluate_refinement_indicators(reversed,config,1e-12,{});
++        const auto after=batch.counters();
++        require(actual.size()==2 && after.kernel_count-before.kernel_count==(thermo?4:3)
++            && after.stream_sync_count-before.stream_sync_count==1
++            && after.bytes_d2h-before.bytes_d2h==2*sizeof(double),
++            "production indicator batch was not fused with one completion boundary");
++        for (std::size_t i=0;i<2;++i)
++            require(std::bit_cast<std::uint64_t>(actual[i])==std::bit_cast<std::uint64_t>(expected[1-i]),
++                "production indicator batch changed block result/order");
++        for (int fault=0;fault<4;++fault) {
++            auto invalid=accesses;
++            if (fault==0) invalid[1]=invalid[0];
++            if (fault==1) ++invalid[1].storage.value;
++            if (fault==2) invalid[1].slot=arch::state::StateSlot::Next;
++            if (fault==3) ++invalid[1].block.epoch.value;
++            bool rejected=false;
++            try { (void)batch.evaluate_refinement_indicators(invalid,config,1e-12,{}); }
++            catch (const std::invalid_argument&) { rejected=true; }
++            const auto done=batch.counters();
++            require(rejected && done.kernel_count==after.kernel_count
++                && done.bytes_h2d==after.bytes_h2d && done.bytes_d2h==after.bytes_d2h
++                && done.stream_sync_count==after.stream_sync_count,
++                "invalid late indicator access submitted work before rejection");
+         }
+     }
+-
+-    require(backend->execute_same_level_exchange(
+-                accesses, plan, arch::state::StateSlot::Current,
+-                {9}, completion) == completion,
+-            "CUDA exchange completion token drifted");
+-
+-    std::array<FluidState, 2> downloaded{};
+-    for (std::size_t index = 0; index < downloaded.size(); ++index) {
+-        downloaded[index].Preallocate(blocks[index].grid.GetTotalSize());
+-        downloaded[index].InitSpecies(0);
+-        backend->enqueue_materialize_host_current(
+-            accesses[index], arch::state::StateRegion::Ghost,
+-            transfer_view(downloaded[index]));
+-    }
+-    backend->quiesce();
+-
+-    for (int depth = 0; depth < amr::MAX_NG; ++depth) {
+-        const int left_source = blocks[0].grid.GetIndex(
+-            blocks[0].grid.Ie() - amr::MAX_NG + depth);
+-        const int right_ghost = blocks[1].grid.GetIndex(
+-            blocks[1].grid.Is() - amr::MAX_NG + depth);
+-        const int right_source = blocks[1].grid.GetIndex(
+-            blocks[1].grid.Is() + depth);
+-        const int left_ghost = blocks[0].grid.GetIndex(
+-            blocks[0].grid.Ie() + depth);
+-        require(
+-            std::bit_cast<std::uint64_t>(downloaded[1].rho[right_ghost])
+-                == std::bit_cast<std::uint64_t>(
+-                    blocks[0].fluid_state.rho[left_source]),
+-            "right lower ghost did not receive left active state");
+-        require(
+-            std::bit_cast<std::uint64_t>(downloaded[0].rho[left_ghost])
+-                == std::bit_cast<std::uint64_t>(
+-                    blocks[1].fluid_state.rho[right_source]),
+-            "left upper ghost did not receive right active state");
+-    }
+-    std::cout << "CUDA_MULTIBLOCK_EXCHANGE_PASS blocks=2 operations="
+-              << plan.operations.size() << '\n';
+-}
+-
+-void run_2d_corner_exchange()
+-{
+-    std::array<amr::Block, 4> blocks{
+-        make_block_2d(0, 0), make_block_2d(1, 0),
+-        make_block_2d(0, 1), make_block_2d(1, 1)};
+-    const std::array<amr::BlockHandle, 4> handles{
+-        amr::BlockHandle{{111}, {8}}, amr::BlockHandle{{112}, {8}},
+-        amr::BlockHandle{{113}, {8}}, amr::BlockHandle{{114}, {8}}};
+-    const std::array<arch::backend::StorageGeneration, 4> storage{
+-        arch::backend::StorageGeneration{211},
+-        arch::backend::StorageGeneration{212},
+-        arch::backend::StorageGeneration{213},
+-        arch::backend::StorageGeneration{214}};
+-    const auto boundary = make_boundary_plan_2d();
+-    std::array<arch::cuda::CudaBlockBinding, 4> bindings{};
+-    for (std::size_t index = 0; index < bindings.size(); ++index)
+-        bindings[index] = {
+-            &blocks[index], handles[index], storage[index], &boundary};
+-    SpeciesManager species;
+-    IdealGas eos(1.4, species);
+-    auto backend = arch::cuda::make_cuda_backend(
+-        bindings, 0, make_launch_config(), species, eos);
+-    std::array<arch::backend::BackendStateAccess, 4> ordered{};
+-    for (std::size_t index = 0; index < ordered.size(); ++index) {
+-        ordered[index] = {
+-            handles[index], storage[index], arch::state::StateSlot::Current};
+-        backend->enqueue_upload_slot(
+-            ordered[index], arch::state::StateRegion::Interior,
+-            transfer_view(blocks[index].fluid_state));
+-        backend->enqueue_upload_slot(
+-            ordered[index], arch::state::StateRegion::Ghost,
+-            transfer_view(blocks[index].fluid_state));
+-    }
+-    backend->quiesce();
+-    const std::array accesses{
+-        ordered[3], ordered[1], ordered[0], ordered[2]};
+-    const auto plan = make_exchange_plan_2d(handles);
+-    const arch::state::CompletionToken completion{
+-        34, arch::state::CompletionState::Complete};
+-    const auto before_exchange = backend->counters();
+-    require(backend->execute_same_level_exchange(
+-                accesses, plan, arch::state::StateSlot::Current,
+-                {10}, completion) == completion,
+-            "2D CUDA exchange completion token drifted");
+-    const auto after_exchange = backend->counters();
+-    const auto metadata_bytes = accesses.size() * sizeof(arch::cuda::DeviceExchangeBlock)
+-        + plan.operations.size() * sizeof(arch::cuda::DeviceExchangeOperation);
+-    require(after_exchange.bytes_h2d - before_exchange.bytes_h2d == metadata_bytes,
+-            "same-level metadata uploads are missing from transfer counters");
+-    require(after_exchange.bytes_d2h == before_exchange.bytes_d2h,
+-            "same-level exchange unexpectedly downloads state");
+-
+-    FluidState downloaded{};
+-    downloaded.Preallocate(blocks[3].grid.GetTotalSize());
+-    downloaded.InitSpecies(0);
+-    backend->enqueue_materialize_host_current(
+-        ordered[3], arch::state::StateRegion::Ghost,
+-        transfer_view(downloaded));
+-    backend->quiesce();
+-    for (int dy = 0; dy < amr::MAX_NG; ++dy) {
+-        for (int dx = 0; dx < amr::MAX_NG; ++dx) {
+-            const int destination = blocks[3].grid.GetIndex(
+-                blocks[3].grid.Is() - amr::MAX_NG + dx,
+-                blocks[3].grid.Js() - amr::MAX_NG + dy);
+-            const int source = blocks[0].grid.GetIndex(
+-                blocks[0].grid.Ie() - amr::MAX_NG + dx,
+-                blocks[0].grid.Je() - amr::MAX_NG + dy);
+-            require(std::bit_cast<std::uint64_t>(downloaded.eng[destination])
+-                        == std::bit_cast<std::uint64_t>(
+-                            blocks[0].fluid_state.eng[source]),
+-                    "2D CUDA Y phase did not consume the X ghost corner");
+-        }
+-    }
+-    std::cout << "CUDA_MULTIBLOCK_CORNER_PASS blocks=4 operations="
+-              << plan.operations.size() << '\n';
+ }
+ 
+ void run_hydro_batch_contract()
+@@ -438,6 +485,7 @@ void run_hydro_batch_contract()
+         };
+         upload(*scalar);
+         upload(*batch);
++        verify_indicator_batch(*scalar,*batch,accesses);
+         const std::array<double, 2> reference_dt{
+             scalar->compute_hydro_dt(accesses[0], 0.8),
+             scalar->compute_hydro_dt(accesses[1], 0.8)};
+@@ -519,6 +567,7 @@ void run_hydro_batch_contract()
+             scalar->rotate_slots(access, plan.final_rotation);
+             batch->rotate_slots(access, plan.final_rotation);
+         }
++        verify_indicator_batch(*scalar,*batch,accesses);
+         for (std::size_t i = 0; i < blocks.size(); ++i) {
+             FluidState a, b;
+             a.Preallocate(blocks[i].grid.GetTotalSize()); a.InitSpecies(0);
+@@ -585,16 +634,16 @@ void run_hydro_batch_contract()
+ }
+ 
+ } // namespace
+-
+-int main()
+-{
+-    try {
+-        run_multiblock_exchange();
++
++int main()
++{
++    try {
++        run_multiblock_exchange();
+         run_2d_corner_exchange();
+         run_hydro_batch_contract();
+-        return 0;
+-    } catch (const std::exception& error) {
+-        std::cerr << error.what() << '\n';
+-        return 1;
+-    }
+-}
++        return 0;
++    } catch (const std::exception& error) {
++        std::cerr << error.what() << '\n';
++        return 1;
++    }
++}
+diff --git a/tests/cuda/test_refinement_indicators.cpp b/tests/cuda/test_refinement_indicators.cpp
+index fd556d50..7393a596 100644
+--- a/tests/cuda/test_refinement_indicators.cpp
++++ b/tests/cuda/test_refinement_indicators.cpp
+@@ -1,238 +1,410 @@
+-/**
+- * @file test_refinement_indicators.cpp
+- * @brief Compare production GPU refinement indicators with shared host math.
+- *
+- * Cases cover different fields and species layouts, including recovered
+- * tabular temperatures and propagation of invalid EOS states.
+- */
+-#include "cuda/amr/RefinementIndicators.h"
+-#include "cuda/hydro/GridGeometryAdapter.cuh"
+-
++/**
++ * @file test_refinement_indicators.cpp
++ * @brief Compare production GPU refinement indicators with shared host math.
++ *
++ * Cases cover different fields and species layouts, including recovered
++ * tabular temperatures and propagation of invalid EOS states.
++ */
++#include "cuda/amr/RefinementIndicators.h"
++#include "cuda/hydro/GridGeometryAdapter.cuh"
++
++#include <array>
++#include <bit>
++#include <cstdint>
+ #include <iostream>
+-#include <stdexcept>
+-#include <string>
+-#include <vector>
+-
+-namespace {
+-void check(cudaError_t status) {
+-    if (status != cudaSuccess) throw std::runtime_error(cudaGetErrorString(status));
+-}
+-void require(bool condition, const char* message) {
+-    if (!condition) throw std::runtime_error(message);
+-}
++#include <stdexcept>
++#include <string>
++#include <vector>
++
++namespace {
++void check(cudaError_t status) {
++    if (status != cudaSuccess) throw std::runtime_error(cudaGetErrorString(status));
++}
++void require(bool condition, const char* message) {
++    if (!condition) throw std::runtime_error(message);
++}
+ template<class T> struct Buffer {
+-    T* data = nullptr;
+-    explicit Buffer(std::size_t count) {
+-        check(cudaMalloc(reinterpret_cast<void**>(&data), count * sizeof(T)));
+-    }
+-    ~Buffer() { if (data) cudaFree(data); }
+-    Buffer(const Buffer&) = delete;
+-    Buffer& operator=(const Buffer&) = delete;
++    T* data = nullptr;
++    explicit Buffer(std::size_t count) {
++        check(cudaMalloc(reinterpret_cast<void**>(&data), count * sizeof(T)));
++    }
++    ~Buffer() { if (data) cudaFree(data); }
++    Buffer(const Buffer&) = delete;
++    Buffer& operator=(const Buffer&) = delete;
+ };
+ 
+-void run(int dimension, const std::string& geometry) {
+-    Grid grid(2, 1.0, 2.0, 0.4, 1.1, 0.2, 0.8);
+-    grid.dim = dimension;
+-    grid.geometry = geometry;
++void test_batch_wave(std::size_t count) {
++    Grid grid(2, 1.0, 2.0);
++    grid.dim = 1;
+     grid.InitializeTopology();
+-    const int cells = grid.GetTotalSize();
+-    constexpr int species_count = 2;
+-    constexpr int field_count = 6 + species_count;
+-    std::vector<double> fields(static_cast<std::size_t>(field_count) * cells);
+-    for (int k = 0; k < grid.GetTotalZ(); ++k)
+-        for (int j = 0; j < grid.GetTotalY(); ++j)
+-            for (int i = 0; i < grid.GetTotalX(); ++i) {
+-                const int cell = grid.GetIndex(i, j, k);
+-                const double x = grid.GetCellCenterX(i);
+-                const double y = grid.GetCellCenterY(j);
+-                const double z = grid.GetCellCenterZ(k);
+-                const double density = 2.0 + x * x + y * y + z * z;
+-                fields[cell] = density;
+-                fields[cells + cell] = density * (0.2 + x * y);
+-                fields[2 * cells + cell] = density * (0.3 + x * x);
+-                fields[3 * cells + cell] = density * (0.4 + z * x);
+-                fields[4 * cells + cell] = 100.0 + x * x * x + y * y;
+-                fields[5 * cells + cell] = std::sin(x * x);
+-                fields[6 * cells + cell] = 0.2 + 0.05 * std::sin(x + y);
+-                fields[7 * cells + cell] = 1.0 - fields[6 * cells + cell];
+-            }
+-    IdealGasView eos;
+-    std::vector<double> thermo(3 * cells);
+-    for (int cell = 0; cell < cells; ++cell) {
+-        const FluidVector fluid{fields[cell], fields[cells + cell],
+-            fields[2 * cells + cell], fields[3 * cells + cell], fields[4 * cells + cell]};
+-        const auto value = amr::indicator::thermodynamics(fluid, nullptr, eos, true, true, true);
+-        thermo[cell] = value.pressure;
+-        thermo[cells + cell] = value.temperature;
+-        thermo[2 * cells + cell] = value.gamma1;
++    const auto device_grid = arch::cuda::make_device_grid_view(grid);
++    const std::size_t cells = grid.GetTotalSize();
++    const auto capacity = count == 3 ? 2 : arch::cuda::indicator_wave_capacity(cells, 0, false, count);
++    std::vector<double> fields(6 * cells * count, 0.0);
++    for (std::size_t b = 0; b < count; ++b)
++        for (std::size_t i = 0; i < cells; ++i) {
++            const double x = static_cast<double>(i) / cells;
++            fields[b*6*cells+i] = 1.0 + 0.001*(b+1)*x*x;
++            fields[b*6*cells+4*cells+i] = 10.0;
++        }
++    Buffer<double> state(fields.size()), errors(capacity*cells), summaries(count);
++    Buffer<int> status(count);
++    Buffer<amr::indicator::Selection> selections(1);
++    Buffer<arch::cuda::DeviceIndicatorBatchBlock> device(count);
++    const amr::indicator::Selection density{amr::indicator::Field::Density};
++    check(cudaMemcpy(state.data,fields.data(),fields.size()*sizeof(double),cudaMemcpyHostToDevice));
++    check(cudaMemcpy(selections.data,&density,sizeof(density),cudaMemcpyHostToDevice));
++    std::vector<arch::cuda::DeviceIndicatorBatchBlock> blocks(count);
++    for (std::size_t b = 0; b < count; ++b) {
++        auto* values = state.data + b*6*cells;
++        blocks[b].state = {values,values+cells,values+2*cells,values+3*cells,
++            values+4*cells,values+5*cells,nullptr,static_cast<int>(cells),0};
++        blocks[b].grid = device_grid;
++        if (count == 3 && b == 1) --blocks[b].grid.ie;
++        blocks[b].workspace = {selections.data,1,1e-12,false,false,false,nullptr,nullptr,
++            errors.data+(b%capacity)*cells,summaries.data+b,status.data+b};
++        check(arch::cuda::launch_cuda_refinement_indicators(blocks[b].state,blocks[b].grid,
++            IdealGasView{},blocks[b].workspace,nullptr));
+     }
+-    AmrConfig config;
+-    config.refine_on_p = config.refine_on_temp = config.refine_on_eng = true;
+-    config.refine_on_velx = config.refine_on_vorticity = config.refine_on_div_v = true;
+-    config.refine_on_vely = dimension >= 2;
+-    config.refine_on_velz = dimension == 3;
+-    config.refine_on_entropy = config.refine_on_enuc = config.refine_on_species = true;
+-    const int species[] = {0, 1};
+-    const auto selections = amr::indicator::make_selection(config, dimension, species);
+-    constexpr double density_floor = 1.e-12;
+-    const amr::indicator::StateView host{
+-        fields.data(), {fields.data() + cells, fields.data() + 2 * cells,
+-            fields.data() + 3 * cells}, fields.data() + 4 * cells,
+-        fields.data() + 5 * cells, fields.data() + 6 * cells,
+-        thermo.data(), thermo.data() + cells, thermo.data() + 2 * cells, cells,
+-        grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(), density_floor,
+-        species_count};
+-    Buffer<double> device_fields(fields.size()), device_thermo(thermo.size()),
+-        composition(static_cast<std::size_t>(cells) * species_count), errors(cells), summary(1);
+-    Buffer<amr::indicator::Selection> selection(1);
++    std::vector<double> reference(count), actual(count);
++    check(cudaMemcpy(reference.data(),summaries.data,count*sizeof(double),cudaMemcpyDeviceToHost));
++    check(cudaMemcpy(device.data,blocks.data(),count*sizeof(blocks[0]),cudaMemcpyHostToDevice));
++    check(cudaMemset(status.data,0x7f,count*sizeof(int)));
++    const auto launched=arch::cuda::launch_cuda_refinement_indicators_batch(
++        blocks,device.data,capacity,IdealGasView{},nullptr);
++    check(launched.error);
++    require(launched.kernels_launched==3*static_cast<int>((count+capacity-1)/capacity),
++        "indicator batch did not fuse its launches");
++    check(cudaMemcpy(actual.data(),summaries.data,count*sizeof(double),cudaMemcpyDeviceToHost));
++    std::vector<int> flags(count);
++    check(cudaMemcpy(flags.data(),status.data,count*sizeof(int),cudaMemcpyDeviceToHost));
++    for (std::size_t b = 0; b < count; ++b) {
++        require(std::isfinite(reference[b]) && std::bit_cast<std::uint64_t>(actual[b])
++            == std::bit_cast<std::uint64_t>(reference[b]),"indicator batch changed ordered block maximum");
++        require(flags[b]==0,"indicator batch failed to reset a reused status");
++    }
++    blocks.back().workspace.cell_errors=nullptr;
++    check(cudaMemset(status.data,0x7f,count*sizeof(int)));
++    const auto rejected=arch::cuda::launch_cuda_refinement_indicators_batch(
++        blocks,device.data,capacity,IdealGasView{},nullptr);
++    check(cudaMemcpy(flags.data(),status.data,count*sizeof(int),cudaMemcpyDeviceToHost));
++    require(rejected.error==cudaErrorInvalidValue && rejected.kernels_launched==0 && flags[0]==0x7f7f7f7f,
++        "late invalid indicator binding partially wrote an earlier block");
++}
++
++void run(int dimension, const std::string& geometry) {
++    Grid grid(2, 1.0, 2.0, 0.4, 1.1, 0.2, 0.8);
++    grid.dim = dimension;
++    grid.geometry = geometry;
++    grid.InitializeTopology();
++    const int cells = grid.GetTotalSize();
++    constexpr int species_count = 2;
++    constexpr int field_count = 6 + species_count;
++    std::vector<double> fields(static_cast<std::size_t>(field_count) * cells);
++    for (int k = 0; k < grid.GetTotalZ(); ++k)
++        for (int j = 0; j < grid.GetTotalY(); ++j)
++            for (int i = 0; i < grid.GetTotalX(); ++i) {
++                const int cell = grid.GetIndex(i, j, k);
++                const double x = grid.GetCellCenterX(i);
++                const double y = grid.GetCellCenterY(j);
++                const double z = grid.GetCellCenterZ(k);
++                const double density = 2.0 + x * x + y * y + z * z;
++                fields[cell] = density;
++                fields[cells + cell] = density * (0.2 + x * y);
++                fields[2 * cells + cell] = density * (0.3 + x * x);
++                fields[3 * cells + cell] = density * (0.4 + z * x);
++                fields[4 * cells + cell] = 100.0 + x * x * x + y * y;
++                fields[5 * cells + cell] = std::sin(x * x);
++                fields[6 * cells + cell] = 0.2 + 0.05 * std::sin(x + y);
++                fields[7 * cells + cell] = 1.0 - fields[6 * cells + cell];
++            }
++    IdealGasView eos;
++    std::vector<double> thermo(3 * cells);
++    for (int cell = 0; cell < cells; ++cell) {
++        const FluidVector fluid{fields[cell], fields[cells + cell],
++            fields[2 * cells + cell], fields[3 * cells + cell], fields[4 * cells + cell]};
++        const auto value = amr::indicator::thermodynamics(fluid, nullptr, eos, true, true, true);
++        thermo[cell] = value.pressure;
++        thermo[cells + cell] = value.temperature;
++        thermo[2 * cells + cell] = value.gamma1;
++    }
++    AmrConfig config;
++    config.refine_on_p = config.refine_on_temp = config.refine_on_eng = true;
++    config.refine_on_velx = config.refine_on_vorticity = config.refine_on_div_v = true;
++    config.refine_on_vely = dimension >= 2;
++    config.refine_on_velz = dimension == 3;
++    config.refine_on_entropy = config.refine_on_enuc = config.refine_on_species = true;
++    const int species[] = {0, 1};
++    const auto selections = amr::indicator::make_selection(config, dimension, species);
++    constexpr double density_floor = 1.e-12;
++    const amr::indicator::StateView host{
++        fields.data(), {fields.data() + cells, fields.data() + 2 * cells,
++            fields.data() + 3 * cells}, fields.data() + 4 * cells,
++        fields.data() + 5 * cells, fields.data() + 6 * cells,
++        thermo.data(), thermo.data() + cells, thermo.data() + 2 * cells, cells,
++        grid.Is(), grid.Ie(), grid.Js(), grid.Je(), grid.Ks(), grid.Ke(), density_floor,
++        species_count};
++    Buffer<double> device_fields(fields.size()), device_thermo(thermo.size()),
++        composition(static_cast<std::size_t>(cells) * species_count), errors(cells), summary(1);
++    Buffer<amr::indicator::Selection> selection(1);
+     Buffer<int> eos_status(1);
+-    check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
+-    arch::cuda::DeviceStateView device{device_fields.data, device_fields.data + cells,
+-        device_fields.data + 2 * cells, device_fields.data + 3 * cells,
+-        device_fields.data + 4 * cells, device_fields.data + 5 * cells,
+-        device_fields.data + 6 * cells, cells, species_count};
++    Buffer<double> peer_errors(cells), peer_summary(1);
++    Buffer<int> peer_status(1);
++    Buffer<amr::indicator::Selection> peer_selection(1);
++    Buffer<arch::cuda::DeviceIndicatorBatchBlock> device_batch(2);
++    const amr::indicator::Selection peer_density{amr::indicator::Field::Density};
++    check(cudaMemcpy(peer_selection.data,&peer_density,sizeof(peer_density),cudaMemcpyHostToDevice));
++    check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
++    arch::cuda::DeviceStateView device{device_fields.data, device_fields.data + cells,
++        device_fields.data + 2 * cells, device_fields.data + 3 * cells,
++        device_fields.data + 4 * cells, device_fields.data + 5 * cells,
++        device_fields.data + 6 * cells, cells, species_count};
+     arch::cuda::DeviceIndicatorWorkspace workspace{selection.data, 1, density_floor,
+         true, true, true, device_thermo.data, composition.data, errors.data, summary.data,
+         eos_status.data};
+-    for (const auto selected : selections) {
+-        double expected = 0.0;
+-        for (int k = grid.Ks(); k < grid.Ke(); ++k)
+-            for (int j = grid.Js(); j < grid.Je(); ++j)
+-                for (int i = grid.Is(); i < grid.Ie(); ++i) {
+-                    const auto value = amr::indicator::cell_error(host, grid, &selected, 1, i, j, k);
+-                    require(std::isfinite(value), "nonfinite Host fixture");
+-                    expected = std::max(expected, value);
+-                }
+-        check(cudaMemcpy(selection.data, &selected, sizeof(selected), cudaMemcpyHostToDevice));
+-        check(arch::cuda::launch_cuda_refinement_indicators(device,
+-            arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr));
+-        check(cudaDeviceSynchronize());
+-        double actual = 0.0;
+-        check(cudaMemcpy(&actual, summary.data, sizeof(actual), cudaMemcpyDeviceToHost));
++    double expected_peer=0.0;
++    for (int k=grid.Ks(); k<grid.Ke(); ++k)
++        for (int j=grid.Js(); j<grid.Je(); ++j)
++            for (int i=grid.Is(); i<grid.Ie(); ++i)
++                expected_peer=std::max(expected_peer,amr::indicator::cell_error(host,grid,&peer_density,1,i,j,k));
++    for (const auto selected : selections) {
++        double expected = 0.0;
++        for (int k = grid.Ks(); k < grid.Ke(); ++k)
++            for (int j = grid.Js(); j < grid.Je(); ++j)
++                for (int i = grid.Is(); i < grid.Ie(); ++i) {
++                    const auto value = amr::indicator::cell_error(host, grid, &selected, 1, i, j, k);
++                    require(std::isfinite(value), "nonfinite Host fixture");
++                    expected = std::max(expected, value);
++                }
++        check(cudaMemcpy(selection.data, &selected, sizeof(selected), cudaMemcpyHostToDevice));
++        check(arch::cuda::launch_cuda_refinement_indicators(device,
++            arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr));
++        check(cudaDeviceSynchronize());
++        double actual = 0.0;
++        check(cudaMemcpy(&actual, summary.data, sizeof(actual), cudaMemcpyDeviceToHost));
+         require(std::isfinite(actual) && std::abs(actual - expected) <= 2.e-13,
+             "CUDA AMR indicator differs from Host math");
+-    }
+-    // A nonfinite selected field must propagate to the backend, not disappear
+-    // behind a max reduction (the Host executor rejects the same sentinel).
+-    fields[grid.GetIndex(grid.Is(), grid.Js(), grid.Ks())] = std::numeric_limits<double>::quiet_NaN();
+-    check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
+-    const amr::indicator::Selection density{amr::indicator::Field::Density};
+-    check(cudaMemcpy(selection.data, &density, sizeof(density), cudaMemcpyHostToDevice));
+-    workspace.pressure = workspace.temperature = workspace.gamma1 = false;
+-    check(arch::cuda::launch_cuda_refinement_indicators(device,
+-        arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr));
+-    check(cudaDeviceSynchronize());
+-    double invalid = 0.0;
+-    check(cudaMemcpy(&invalid, summary.data, sizeof(invalid), cudaMemcpyDeviceToHost));
++        auto peer = workspace;
++        peer.selection=peer_selection.data;
++        peer.pressure=peer.temperature=peer.gamma1=false;
++        peer.thermodynamics=peer.composition=nullptr;
++        peer.cell_errors=peer_errors.data; peer.block_error=peer_summary.data; peer.eos_status=peer_status.data;
++        const std::array<arch::cuda::DeviceIndicatorBatchBlock,2> batch{{
++            {device,arch::cuda::make_device_grid_view(grid),workspace},
++            {device,arch::cuda::make_device_grid_view(grid),peer}}};
++        check(cudaMemcpy(device_batch.data,batch.data(),sizeof(batch),cudaMemcpyHostToDevice));
++        const auto fused=arch::cuda::launch_cuda_refinement_indicators_batch(batch,device_batch.data,2,eos,nullptr);
++        check(fused.error);
++        require(fused.kernels_launched==4,"thermodynamic indicator batch was not fused");
++        double fused_value=0.0;
++        check(cudaMemcpy(&fused_value,summary.data,sizeof(double),cudaMemcpyDeviceToHost));
++        require(std::bit_cast<std::uint64_t>(fused_value)==std::bit_cast<std::uint64_t>(actual),
++            "batched thermodynamic/curved indicator changed scalar result");
++        double peer_value=0.0;
++        int peer_flag=-1;
++        check(cudaMemcpy(&peer_value,peer_summary.data,sizeof(double),cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&peer_flag,peer_status.data,sizeof(int),cudaMemcpyDeviceToHost));
++        require(std::isfinite(peer_value) && std::abs(peer_value-expected_peer)<=2.e-13 && peer_flag==0,
++            "thermodynamic block contaminated a nonthermodynamic peer");
++    }
++    // A nonfinite selected field must propagate to the backend, not disappear
++    // behind a max reduction (the Host executor rejects the same sentinel).
++    fields[grid.GetIndex(grid.Is(), grid.Js(), grid.Ks())] = std::numeric_limits<double>::quiet_NaN();
++    check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
++    const amr::indicator::Selection density{amr::indicator::Field::Density};
++    check(cudaMemcpy(selection.data, &density, sizeof(density), cudaMemcpyHostToDevice));
++    workspace.pressure = workspace.temperature = workspace.gamma1 = false;
++    check(arch::cuda::launch_cuda_refinement_indicators(device,
++        arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr));
++    check(cudaDeviceSynchronize());
++    double invalid = 0.0;
++    check(cudaMemcpy(&invalid, summary.data, sizeof(invalid), cudaMemcpyDeviceToHost));
+     require(!std::isfinite(invalid), "nonfinite indicator was silently accepted");
+-}
+-
+-template<class Eos>
+-void test_recovered_tabular_temperature(Eos eos, int compositions) {
+-    Grid grid(1, 1.0, 2.0);
+-    grid.dim = 1;
+-    grid.InitializeTopology();
+-    const int cells = grid.GetTotalSize();
+-    std::vector<double> fields(6 * cells, 0.0);
+-    std::fill_n(fields.data(), cells, 1.0);
+-    std::fill_n(fields.data() + 4 * cells, cells, 3.0);
+-    Buffer<double> device_fields(fields.size()), thermo(3 * cells), errors(cells), summary(1);
+-    Buffer<int> eos_status(1);
+-    Buffer<amr::indicator::Selection> selection(1);
+-    const amr::indicator::Selection temperature{amr::indicator::Field::Temperature};
+-    check(cudaMemcpy(selection.data, &temperature, sizeof(temperature), cudaMemcpyHostToDevice));
+-    check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
+-    arch::cuda::DeviceStateView state{device_fields.data, device_fields.data + cells,
+-        device_fields.data + 2 * cells, device_fields.data + 3 * cells,
+-        device_fields.data + 4 * cells, device_fields.data + 5 * cells,
+-        nullptr, cells, 0};
+-    arch::cuda::DeviceIndicatorWorkspace workspace{selection.data, 1, 1.e-12,
+-        false, true, false, thermo.data, nullptr, errors.data, summary.data, eos_status.data};
+-
+-    // At both rho knots P=2 and e=3. The valid upper-temperature knot has Cv>0;
+-    // only the lower-temperature knot is made invalid. Device inversion first
+-    // encounters that failed boundary query, then converges to finite T=10.
+-    // A final-only temperature/Lohner check would therefore report zero error.
+-    const int extent = 4 * compositions;
+-    const double jets[]{3.0, 2.0, 0.0, 0.0, 2.0, -3.0, 0.0, 0.0, 0.0};
+-    std::vector<double> table(tabular_eos::FieldCount * extent);
+-    Buffer<double> device_table(table.size());
+-    eos.uses_free_energy = true;
+-    for (const bool fail : {true, false}) {
+-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
+-            std::fill_n(table.data() + field * extent, extent, jets[field]);
+-        if (fail)
+-            for (int rho = 0; rho < 2; ++rho)
+-                std::fill_n(table.data() + tabular_eos::Fyy * extent
+-                    + rho * 2 * compositions, compositions, 0.0);
+-        Eos host = eos;
+-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
+-            host.free_energy_fields[field] = table.data() + field * extent;
+-        bool host_threw = false;
+-        try { static_cast<void>(host.get_temperature(1.0, 3.0, nullptr)); }
+-        catch (const std::runtime_error&) { host_threw = true; }
+-        require(host_threw == fail, "Tabular temperature fixture does not exercise Host failure");
+-        check(cudaMemcpy(device_table.data, table.data(), table.size() * sizeof(double), cudaMemcpyHostToDevice));
+-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
+-            eos.free_energy_fields[field] = device_table.data + field * extent;
+-        check(arch::cuda::launch_cuda_refinement_indicators(state,
+-            arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr));
+-        std::vector<double> actual_thermo(3 * cells);
+-        double actual = 0.0;
+-        int status = -1;
+-        check(cudaMemcpy(actual_thermo.data(), thermo.data, actual_thermo.size() * sizeof(double), cudaMemcpyDeviceToHost));
+-        check(cudaMemcpy(&actual, summary.data, sizeof(actual), cudaMemcpyDeviceToHost));
+-        check(cudaMemcpy(&status, eos_status.data, sizeof(status), cudaMemcpyDeviceToHost));
+-        for (int cell = 0; cell < cells; ++cell)
+-            require(std::isfinite(actual_thermo[cells + cell])
+-                && std::abs(actual_thermo[cells + cell] - (fail ? 10.0 : 1.0)) < 1.e-10,
+-                "Tabular fixture did not recover a finite temperature");
+-        require(status == (fail ? 1 : 0) && (fail ? std::isnan(actual) : actual == 0.0),
+-            "AMR discarded an intermediate EOS failure or failed to reset the next launch");
++    // Density is invalid, energy remains finite. With thermodynamics disabled,
++    // a different block's selected field must retain its own reduction result.
++    const amr::indicator::Selection energy{amr::indicator::Field::Energy};
++    check(cudaMemcpy(peer_selection.data,&energy,sizeof(energy),cudaMemcpyHostToDevice));
++    auto peer=workspace;
++    peer.selection=peer_selection.data;
++    peer.cell_errors=peer_errors.data; peer.block_error=peer_summary.data; peer.eos_status=peer_status.data;
++    std::array<arch::cuda::DeviceIndicatorBatchBlock,2> mixed{{
++        {device,arch::cuda::make_device_grid_view(grid),workspace},
++        {device,arch::cuda::make_device_grid_view(grid),peer}}};
++    for (int ordering=0; ordering<2; ++ordering) {
++        if (ordering) std::swap(mixed[0],mixed[1]);
++        check(cudaMemcpy(device_batch.data,mixed.data(),sizeof(mixed),cudaMemcpyHostToDevice));
++        check(arch::cuda::launch_cuda_refinement_indicators_batch(mixed,device_batch.data,2,eos,nullptr).error);
++        double valid_peer=0.0;
++        check(cudaMemcpy(&invalid,summary.data,sizeof(double),cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&valid_peer,peer_summary.data,sizeof(double),cudaMemcpyDeviceToHost));
++        require(std::isnan(invalid) && std::isfinite(valid_peer),
++            "nonfinite block indicator contaminated its peer or disappeared");
+     }
+-    workspace.eos_status = nullptr;
+-    require(arch::cuda::launch_cuda_refinement_indicators(state,
+-        arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr) == cudaErrorInvalidValue,
+-        "Thermodynamic indicators accepted an unbound failure latch");
+-}
+-
+-void test_tabular_temperature_failures() {
+-    Tabular3DEOSView eos3{};
+-    eos3.n_rho = eos3.n_T = eos3.n_X = 2;
+-    eos3.log_rho_max = eos3.log_T_max = eos3.dlog_rho = eos3.dlog_T = 1.0;
+-    eos3.X_max = eos3.dX = 1.0;
+-    eos3.target_species_id = -1;
+-    test_recovered_tabular_temperature(eos3, 2);
+-    Tabular4DEOSView eos4{};
+-    eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
+-    eos4.log_rho_max = eos4.log_T_max = eos4.dlog_rho = eos4.dlog_T = 1.0;
+-    eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
+-    eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
+-    test_recovered_tabular_temperature(eos4, 4);
+-}
+-}
+-
+-int main() {
+-    int devices = 0;
+-    const auto probe = cudaGetDeviceCount(&devices);
+-    if (probe == cudaErrorNoDevice || probe == cudaErrorInsufficientDriver
+-        || (probe == cudaSuccess && devices == 0)) return 77;
+-    if (probe != cudaSuccess) {
+-        std::cerr << cudaGetErrorString(probe) << '\n';
+-        return 1;
++}
++
++template<class Eos>
++void test_recovered_tabular_temperature(Eos eos, int compositions) {
++    Grid grid(1, 1.0, 2.0);
++    grid.dim = 1;
++    grid.InitializeTopology();
++    const int cells = grid.GetTotalSize();
++    std::vector<double> fields(6 * cells, 0.0);
++    std::fill_n(fields.data(), cells, 1.0);
++    std::fill_n(fields.data() + 4 * cells, cells, 3.0);
++    Buffer<double> device_fields(fields.size()), thermo(3 * cells), errors(cells), summary(1);
++    Buffer<int> eos_status(1);
++    Buffer<amr::indicator::Selection> selection(1);
++    const amr::indicator::Selection temperature{amr::indicator::Field::Temperature};
++    check(cudaMemcpy(selection.data, &temperature, sizeof(temperature), cudaMemcpyHostToDevice));
++    check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
++    arch::cuda::DeviceStateView state{device_fields.data, device_fields.data + cells,
++        device_fields.data + 2 * cells, device_fields.data + 3 * cells,
++        device_fields.data + 4 * cells, device_fields.data + 5 * cells,
++        nullptr, cells, 0};
++    arch::cuda::DeviceIndicatorWorkspace workspace{selection.data, 1, 1.e-12,
++        false, true, false, thermo.data, nullptr, errors.data, summary.data, eos_status.data};
++
++    // At both rho knots P=2 and e=3. The valid upper-temperature knot has Cv>0;
++    // only the lower-temperature knot is made invalid. Device inversion first
++    // encounters that failed boundary query, then converges to finite T=10.
++    // A final-only temperature/Lohner check would therefore report zero error.
++    const int extent = 4 * compositions;
++    const double jets[]{3.0, 2.0, 0.0, 0.0, 2.0, -3.0, 0.0, 0.0, 0.0};
++    std::vector<double> table(tabular_eos::FieldCount * extent);
++    Buffer<double> device_table(table.size());
++    eos.uses_free_energy = true;
++    for (const bool fail : {true, false}) {
++        for (int field = 0; field < tabular_eos::FieldCount; ++field)
++            std::fill_n(table.data() + field * extent, extent, jets[field]);
++        if (fail)
++            for (int rho = 0; rho < 2; ++rho)
++                std::fill_n(table.data() + tabular_eos::Fyy * extent
++                    + rho * 2 * compositions, compositions, 0.0);
++        Eos host = eos;
++        for (int field = 0; field < tabular_eos::FieldCount; ++field)
++            host.free_energy_fields[field] = table.data() + field * extent;
++        bool host_threw = false;
++        try { static_cast<void>(host.get_temperature(1.0, 3.0, nullptr)); }
++        catch (const std::runtime_error&) { host_threw = true; }
++        require(host_threw == fail, "Tabular temperature fixture does not exercise Host failure");
++        check(cudaMemcpy(device_table.data, table.data(), table.size() * sizeof(double), cudaMemcpyHostToDevice));
++        for (int field = 0; field < tabular_eos::FieldCount; ++field)
++            eos.free_energy_fields[field] = device_table.data + field * extent;
++        check(arch::cuda::launch_cuda_refinement_indicators(state,
++            arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr));
++        std::vector<double> actual_thermo(3 * cells);
++        double actual = 0.0;
++        int status = -1;
++        check(cudaMemcpy(actual_thermo.data(), thermo.data, actual_thermo.size() * sizeof(double), cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&actual, summary.data, sizeof(actual), cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&status, eos_status.data, sizeof(status), cudaMemcpyDeviceToHost));
++        for (int cell = 0; cell < cells; ++cell)
++            require(std::isfinite(actual_thermo[cells + cell])
++                && std::abs(actual_thermo[cells + cell] - (fail ? 10.0 : 1.0)) < 1.e-10,
++                "Tabular fixture did not recover a finite temperature");
++        require(status == (fail ? 1 : 0) && (fail ? std::isnan(actual) : actual == 0.0),
++            "AMR discarded an intermediate EOS failure or failed to reset the next launch");
++    }
++    // Mix one failed EOS endpoint with a valid endpoint in both binding orders.
++    // This also exercises a reset after the original scalar failure/recovery.
++    std::fill_n(table.data()+tabular_eos::Fyy*extent,compositions,0.0);
++    Eos host=eos;
++    for (int field=0; field<tabular_eos::FieldCount; ++field)
++        host.free_energy_fields[field]=table.data()+field*extent;
++    bool lower_failed=false;
++    try { static_cast<void>(host.get_temperature(1.0,3.0,nullptr)); }
++    catch (const std::runtime_error&) { lower_failed=true; }
++    require(lower_failed && std::isfinite(host.get_temperature(10.0,3.0,nullptr)),
++        "mixed AMR EOS fixture did not isolate two density endpoints");
++    check(cudaMemcpy(device_table.data,table.data(),table.size()*sizeof(double),cudaMemcpyHostToDevice));
++    auto peer_fields=fields;
++    std::fill_n(peer_fields.data(),cells,10.0);
++    std::fill_n(peer_fields.data()+4*cells,cells,30.0);
++    Buffer<double> peer_state(peer_fields.size()),peer_thermo(3*cells),peer_errors(cells),peer_summary(1);
++    Buffer<int> peer_status(1);
++    Buffer<arch::cuda::DeviceIndicatorBatchBlock> device_batch(2);
++    check(cudaMemcpy(peer_state.data,peer_fields.data(),peer_fields.size()*sizeof(double),cudaMemcpyHostToDevice));
++    arch::cuda::DeviceStateView valid_state{peer_state.data,peer_state.data+cells,peer_state.data+2*cells,
++        peer_state.data+3*cells,peer_state.data+4*cells,peer_state.data+5*cells,nullptr,cells,0};
++    auto peer_workspace=workspace;
++    peer_workspace.thermodynamics=peer_thermo.data; peer_workspace.cell_errors=peer_errors.data;
++    peer_workspace.block_error=peer_summary.data; peer_workspace.eos_status=peer_status.data;
++    std::array<arch::cuda::DeviceIndicatorBatchBlock,2> mixed{{
++        {state,arch::cuda::make_device_grid_view(grid),workspace},
++        {valid_state,arch::cuda::make_device_grid_view(grid),peer_workspace}}};
++    for (int ordering=0; ordering<2; ++ordering) {
++        if (ordering) std::swap(mixed[0],mixed[1]);
++        check(cudaMemcpy(device_batch.data,mixed.data(),sizeof(mixed),cudaMemcpyHostToDevice));
++        check(arch::cuda::launch_cuda_refinement_indicators_batch(mixed,device_batch.data,2,eos,nullptr).error);
++        double failed=0.0,valid=-1.0;
++        int failed_status=0,valid_status=-1;
++        check(cudaMemcpy(&failed,summary.data,sizeof(double),cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&valid,peer_summary.data,sizeof(double),cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&failed_status,eos_status.data,sizeof(int),cudaMemcpyDeviceToHost));
++        check(cudaMemcpy(&valid_status,peer_status.data,sizeof(int),cudaMemcpyDeviceToHost));
++        require(std::isnan(failed) && valid==0.0 && failed_status==1 && valid_status==0,
++            "AMR batch lost or cross-contaminated its EOS failure latch");
+     }
+-    try {
+-        require(std::abs(amr::indicator::loehner_error(1.0, 2.0, 4.0) - 1.0 / 3.09) < 1.e-15,
+-            "frozen Lohner stencil changed");
+-        require(amr::indicator::refinement_flag(0.8, 1, 0, 2, 0.8, 0.2) == 0,
+-            "refinement equality boundary changed");
+-        for (int dimension = 1; dimension <= 3; ++dimension)
+-            for (const auto* geometry : {"cartesian", "cylindrical", "spherical"})
+-                run(dimension, geometry);
++    workspace.eos_status = nullptr;
++    require(arch::cuda::launch_cuda_refinement_indicators(state,
++        arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr) == cudaErrorInvalidValue,
++        "Thermodynamic indicators accepted an unbound failure latch");
++}
++
++void test_tabular_temperature_failures() {
++    Tabular3DEOSView eos3{};
++    eos3.n_rho = eos3.n_T = eos3.n_X = 2;
++    eos3.log_rho_max = eos3.log_T_max = eos3.dlog_rho = eos3.dlog_T = 1.0;
++    eos3.X_max = eos3.dX = 1.0;
++    eos3.target_species_id = -1;
++    test_recovered_tabular_temperature(eos3, 2);
++    Tabular4DEOSView eos4{};
++    eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
++    eos4.log_rho_max = eos4.log_T_max = eos4.dlog_rho = eos4.dlog_T = 1.0;
++    eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
++    eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
++    test_recovered_tabular_temperature(eos4, 4);
++}
++}
++
++int main() {
++    int devices = 0;
++    const auto probe = cudaGetDeviceCount(&devices);
++    if (probe == cudaErrorNoDevice || probe == cudaErrorInsufficientDriver
++        || (probe == cudaSuccess && devices == 0)) return 77;
++    if (probe != cudaSuccess) {
++        std::cerr << cudaGetErrorString(probe) << '\n';
++        return 1;
++    }
++    try {
++        require(std::abs(amr::indicator::loehner_error(1.0, 2.0, 4.0) - 1.0 / 3.09) < 1.e-15,
++            "frozen Lohner stencil changed");
++        require(amr::indicator::refinement_flag(0.8, 1, 0, 2, 0.8, 0.2) == 0,
++            "refinement equality boundary changed");
++        for (int dimension = 1; dimension <= 3; ++dimension)
++            for (const auto* geometry : {"cartesian", "cylindrical", "spherical"})
++                run(dimension, geometry);
+         test_tabular_temperature_failures();
+-        std::cout << "CUDA_REFINEMENT_INDICATORS_PASS\n";
+-    } catch (const std::exception& error) {
+-        std::cerr << error.what() << '\n';
+-        return 1;
+-    }
+-}
++        for (std::size_t count : {1,3,1024,1025}) test_batch_wave(count);
++        require(arch::cuda::indicator_wave_capacity(1024,200,true,1024)<1024,
++            "thermodynamic indicator scratch cap was ignored");
++        require(arch::cuda::indicator_wave_capacity(1<<24,0,false,1024)==1,
++            "required oversized single-block scratch was multiplied");
++        for (const auto invalid : {std::array<std::size_t,2>{0,1}, {1,0}}) {
++            bool rejected=false;
++            try { static_cast<void>(arch::cuda::indicator_wave_capacity(invalid[0],0,false,invalid[1])); }
++            catch (const std::invalid_argument&) { rejected=true; }
++            require(rejected,"empty indicator scratch extent was accepted");
++        }
++        bool overflow_rejected=false;
++        try {
++            static_cast<void>(arch::cuda::indicator_wave_capacity(
++                std::numeric_limits<std::size_t>::max(),200,true,1024));
++        } catch (const std::overflow_error&) { overflow_rejected=true; }
++        require(overflow_rejected,"indicator scratch allocation overflow was accepted");
++        std::cout << "CUDA_REFINEMENT_INDICATORS_PASS\n";
++    } catch (const std::exception& error) {
++        std::cerr << error.what() << '\n';
++        return 1;
++    }
++}

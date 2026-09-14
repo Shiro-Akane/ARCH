@@ -8,6 +8,9 @@
 #include "cuda/amr/RefinementIndicators.h"
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 
+#include <array>
+#include <bit>
+#include <cstdint>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -29,6 +32,65 @@ template<class T> struct Buffer {
     Buffer(const Buffer&) = delete;
     Buffer& operator=(const Buffer&) = delete;
 };
+
+void test_batch_wave(std::size_t count) {
+    Grid grid(2, 1.0, 2.0);
+    grid.dim = 1;
+    grid.InitializeTopology();
+    const auto device_grid = arch::cuda::make_device_grid_view(grid);
+    const std::size_t cells = grid.GetTotalSize();
+    const auto capacity = count == 3 ? 2 : arch::cuda::indicator_wave_capacity(cells, 0, false, count);
+    std::vector<double> fields(6 * cells * count, 0.0);
+    for (std::size_t b = 0; b < count; ++b)
+        for (std::size_t i = 0; i < cells; ++i) {
+            const double x = static_cast<double>(i) / cells;
+            fields[b*6*cells+i] = 1.0 + 0.001*(b+1)*x*x;
+            fields[b*6*cells+4*cells+i] = 10.0;
+        }
+    Buffer<double> state(fields.size()), errors(capacity*cells), summaries(count);
+    Buffer<int> status(count);
+    Buffer<amr::indicator::Selection> selections(1);
+    Buffer<arch::cuda::DeviceIndicatorBatchBlock> device(count);
+    const amr::indicator::Selection density{amr::indicator::Field::Density};
+    check(cudaMemcpy(state.data,fields.data(),fields.size()*sizeof(double),cudaMemcpyHostToDevice));
+    check(cudaMemcpy(selections.data,&density,sizeof(density),cudaMemcpyHostToDevice));
+    std::vector<arch::cuda::DeviceIndicatorBatchBlock> blocks(count);
+    for (std::size_t b = 0; b < count; ++b) {
+        auto* values = state.data + b*6*cells;
+        blocks[b].state = {values,values+cells,values+2*cells,values+3*cells,
+            values+4*cells,values+5*cells,nullptr,static_cast<int>(cells),0};
+        blocks[b].grid = device_grid;
+        if (count == 3 && b == 1) --blocks[b].grid.ie;
+        blocks[b].workspace = {selections.data,1,1e-12,false,false,false,nullptr,nullptr,
+            errors.data+(b%capacity)*cells,summaries.data+b,status.data+b};
+        check(arch::cuda::launch_cuda_refinement_indicators(blocks[b].state,blocks[b].grid,
+            IdealGasView{},blocks[b].workspace,nullptr));
+    }
+    std::vector<double> reference(count), actual(count);
+    check(cudaMemcpy(reference.data(),summaries.data,count*sizeof(double),cudaMemcpyDeviceToHost));
+    check(cudaMemcpy(device.data,blocks.data(),count*sizeof(blocks[0]),cudaMemcpyHostToDevice));
+    check(cudaMemset(status.data,0x7f,count*sizeof(int)));
+    const auto launched=arch::cuda::launch_cuda_refinement_indicators_batch(
+        blocks,device.data,capacity,IdealGasView{},nullptr);
+    check(launched.error);
+    require(launched.kernels_launched==3*static_cast<int>((count+capacity-1)/capacity),
+        "indicator batch did not fuse its launches");
+    check(cudaMemcpy(actual.data(),summaries.data,count*sizeof(double),cudaMemcpyDeviceToHost));
+    std::vector<int> flags(count);
+    check(cudaMemcpy(flags.data(),status.data,count*sizeof(int),cudaMemcpyDeviceToHost));
+    for (std::size_t b = 0; b < count; ++b) {
+        require(std::isfinite(reference[b]) && std::bit_cast<std::uint64_t>(actual[b])
+            == std::bit_cast<std::uint64_t>(reference[b]),"indicator batch changed ordered block maximum");
+        require(flags[b]==0,"indicator batch failed to reset a reused status");
+    }
+    blocks.back().workspace.cell_errors=nullptr;
+    check(cudaMemset(status.data,0x7f,count*sizeof(int)));
+    const auto rejected=arch::cuda::launch_cuda_refinement_indicators_batch(
+        blocks,device.data,capacity,IdealGasView{},nullptr);
+    check(cudaMemcpy(flags.data(),status.data,count*sizeof(int),cudaMemcpyDeviceToHost));
+    require(rejected.error==cudaErrorInvalidValue && rejected.kernels_launched==0 && flags[0]==0x7f7f7f7f,
+        "late invalid indicator binding partially wrote an earlier block");
+}
 
 void run(int dimension, const std::string& geometry) {
     Grid grid(2, 1.0, 2.0, 0.4, 1.1, 0.2, 0.8);
@@ -86,6 +148,12 @@ void run(int dimension, const std::string& geometry) {
         composition(static_cast<std::size_t>(cells) * species_count), errors(cells), summary(1);
     Buffer<amr::indicator::Selection> selection(1);
     Buffer<int> eos_status(1);
+    Buffer<double> peer_errors(cells), peer_summary(1);
+    Buffer<int> peer_status(1);
+    Buffer<amr::indicator::Selection> peer_selection(1);
+    Buffer<arch::cuda::DeviceIndicatorBatchBlock> device_batch(2);
+    const amr::indicator::Selection peer_density{amr::indicator::Field::Density};
+    check(cudaMemcpy(peer_selection.data,&peer_density,sizeof(peer_density),cudaMemcpyHostToDevice));
     check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
     arch::cuda::DeviceStateView device{device_fields.data, device_fields.data + cells,
         device_fields.data + 2 * cells, device_fields.data + 3 * cells,
@@ -94,6 +162,11 @@ void run(int dimension, const std::string& geometry) {
     arch::cuda::DeviceIndicatorWorkspace workspace{selection.data, 1, density_floor,
         true, true, true, device_thermo.data, composition.data, errors.data, summary.data,
         eos_status.data};
+    double expected_peer=0.0;
+    for (int k=grid.Ks(); k<grid.Ke(); ++k)
+        for (int j=grid.Js(); j<grid.Je(); ++j)
+            for (int i=grid.Is(); i<grid.Ie(); ++i)
+                expected_peer=std::max(expected_peer,amr::indicator::cell_error(host,grid,&peer_density,1,i,j,k));
     for (const auto selected : selections) {
         double expected = 0.0;
         for (int k = grid.Ks(); k < grid.Ke(); ++k)
@@ -111,6 +184,28 @@ void run(int dimension, const std::string& geometry) {
         check(cudaMemcpy(&actual, summary.data, sizeof(actual), cudaMemcpyDeviceToHost));
         require(std::isfinite(actual) && std::abs(actual - expected) <= 2.e-13,
             "CUDA AMR indicator differs from Host math");
+        auto peer = workspace;
+        peer.selection=peer_selection.data;
+        peer.pressure=peer.temperature=peer.gamma1=false;
+        peer.thermodynamics=peer.composition=nullptr;
+        peer.cell_errors=peer_errors.data; peer.block_error=peer_summary.data; peer.eos_status=peer_status.data;
+        const std::array<arch::cuda::DeviceIndicatorBatchBlock,2> batch{{
+            {device,arch::cuda::make_device_grid_view(grid),workspace},
+            {device,arch::cuda::make_device_grid_view(grid),peer}}};
+        check(cudaMemcpy(device_batch.data,batch.data(),sizeof(batch),cudaMemcpyHostToDevice));
+        const auto fused=arch::cuda::launch_cuda_refinement_indicators_batch(batch,device_batch.data,2,eos,nullptr);
+        check(fused.error);
+        require(fused.kernels_launched==4,"thermodynamic indicator batch was not fused");
+        double fused_value=0.0;
+        check(cudaMemcpy(&fused_value,summary.data,sizeof(double),cudaMemcpyDeviceToHost));
+        require(std::bit_cast<std::uint64_t>(fused_value)==std::bit_cast<std::uint64_t>(actual),
+            "batched thermodynamic/curved indicator changed scalar result");
+        double peer_value=0.0;
+        int peer_flag=-1;
+        check(cudaMemcpy(&peer_value,peer_summary.data,sizeof(double),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(&peer_flag,peer_status.data,sizeof(int),cudaMemcpyDeviceToHost));
+        require(std::isfinite(peer_value) && std::abs(peer_value-expected_peer)<=2.e-13 && peer_flag==0,
+            "thermodynamic block contaminated a nonthermodynamic peer");
     }
     // A nonfinite selected field must propagate to the backend, not disappear
     // behind a max reduction (the Host executor rejects the same sentinel).
@@ -125,6 +220,26 @@ void run(int dimension, const std::string& geometry) {
     double invalid = 0.0;
     check(cudaMemcpy(&invalid, summary.data, sizeof(invalid), cudaMemcpyDeviceToHost));
     require(!std::isfinite(invalid), "nonfinite indicator was silently accepted");
+    // Density is invalid, energy remains finite. With thermodynamics disabled,
+    // a different block's selected field must retain its own reduction result.
+    const amr::indicator::Selection energy{amr::indicator::Field::Energy};
+    check(cudaMemcpy(peer_selection.data,&energy,sizeof(energy),cudaMemcpyHostToDevice));
+    auto peer=workspace;
+    peer.selection=peer_selection.data;
+    peer.cell_errors=peer_errors.data; peer.block_error=peer_summary.data; peer.eos_status=peer_status.data;
+    std::array<arch::cuda::DeviceIndicatorBatchBlock,2> mixed{{
+        {device,arch::cuda::make_device_grid_view(grid),workspace},
+        {device,arch::cuda::make_device_grid_view(grid),peer}}};
+    for (int ordering=0; ordering<2; ++ordering) {
+        if (ordering) std::swap(mixed[0],mixed[1]);
+        check(cudaMemcpy(device_batch.data,mixed.data(),sizeof(mixed),cudaMemcpyHostToDevice));
+        check(arch::cuda::launch_cuda_refinement_indicators_batch(mixed,device_batch.data,2,eos,nullptr).error);
+        double valid_peer=0.0;
+        check(cudaMemcpy(&invalid,summary.data,sizeof(double),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(&valid_peer,peer_summary.data,sizeof(double),cudaMemcpyDeviceToHost));
+        require(std::isnan(invalid) && std::isfinite(valid_peer),
+            "nonfinite block indicator contaminated its peer or disappeared");
+    }
 }
 
 template<class Eos>
@@ -190,6 +305,46 @@ void test_recovered_tabular_temperature(Eos eos, int compositions) {
         require(status == (fail ? 1 : 0) && (fail ? std::isnan(actual) : actual == 0.0),
             "AMR discarded an intermediate EOS failure or failed to reset the next launch");
     }
+    // Mix one failed EOS endpoint with a valid endpoint in both binding orders.
+    // This also exercises a reset after the original scalar failure/recovery.
+    std::fill_n(table.data()+tabular_eos::Fyy*extent,compositions,0.0);
+    Eos host=eos;
+    for (int field=0; field<tabular_eos::FieldCount; ++field)
+        host.free_energy_fields[field]=table.data()+field*extent;
+    bool lower_failed=false;
+    try { static_cast<void>(host.get_temperature(1.0,3.0,nullptr)); }
+    catch (const std::runtime_error&) { lower_failed=true; }
+    require(lower_failed && std::isfinite(host.get_temperature(10.0,3.0,nullptr)),
+        "mixed AMR EOS fixture did not isolate two density endpoints");
+    check(cudaMemcpy(device_table.data,table.data(),table.size()*sizeof(double),cudaMemcpyHostToDevice));
+    auto peer_fields=fields;
+    std::fill_n(peer_fields.data(),cells,10.0);
+    std::fill_n(peer_fields.data()+4*cells,cells,30.0);
+    Buffer<double> peer_state(peer_fields.size()),peer_thermo(3*cells),peer_errors(cells),peer_summary(1);
+    Buffer<int> peer_status(1);
+    Buffer<arch::cuda::DeviceIndicatorBatchBlock> device_batch(2);
+    check(cudaMemcpy(peer_state.data,peer_fields.data(),peer_fields.size()*sizeof(double),cudaMemcpyHostToDevice));
+    arch::cuda::DeviceStateView valid_state{peer_state.data,peer_state.data+cells,peer_state.data+2*cells,
+        peer_state.data+3*cells,peer_state.data+4*cells,peer_state.data+5*cells,nullptr,cells,0};
+    auto peer_workspace=workspace;
+    peer_workspace.thermodynamics=peer_thermo.data; peer_workspace.cell_errors=peer_errors.data;
+    peer_workspace.block_error=peer_summary.data; peer_workspace.eos_status=peer_status.data;
+    std::array<arch::cuda::DeviceIndicatorBatchBlock,2> mixed{{
+        {state,arch::cuda::make_device_grid_view(grid),workspace},
+        {valid_state,arch::cuda::make_device_grid_view(grid),peer_workspace}}};
+    for (int ordering=0; ordering<2; ++ordering) {
+        if (ordering) std::swap(mixed[0],mixed[1]);
+        check(cudaMemcpy(device_batch.data,mixed.data(),sizeof(mixed),cudaMemcpyHostToDevice));
+        check(arch::cuda::launch_cuda_refinement_indicators_batch(mixed,device_batch.data,2,eos,nullptr).error);
+        double failed=0.0,valid=-1.0;
+        int failed_status=0,valid_status=-1;
+        check(cudaMemcpy(&failed,summary.data,sizeof(double),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(&valid,peer_summary.data,sizeof(double),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(&failed_status,eos_status.data,sizeof(int),cudaMemcpyDeviceToHost));
+        check(cudaMemcpy(&valid_status,peer_status.data,sizeof(int),cudaMemcpyDeviceToHost));
+        require(std::isnan(failed) && valid==0.0 && failed_status==1 && valid_status==0,
+            "AMR batch lost or cross-contaminated its EOS failure latch");
+    }
     workspace.eos_status = nullptr;
     require(arch::cuda::launch_cuda_refinement_indicators(state,
         arch::cuda::make_device_grid_view(grid), eos, workspace, nullptr) == cudaErrorInvalidValue,
@@ -230,6 +385,23 @@ int main() {
             for (const auto* geometry : {"cartesian", "cylindrical", "spherical"})
                 run(dimension, geometry);
         test_tabular_temperature_failures();
+        for (std::size_t count : {1,3,1024,1025}) test_batch_wave(count);
+        require(arch::cuda::indicator_wave_capacity(1024,200,true,1024)<1024,
+            "thermodynamic indicator scratch cap was ignored");
+        require(arch::cuda::indicator_wave_capacity(1<<24,0,false,1024)==1,
+            "required oversized single-block scratch was multiplied");
+        for (const auto invalid : {std::array<std::size_t,2>{0,1}, {1,0}}) {
+            bool rejected=false;
+            try { static_cast<void>(arch::cuda::indicator_wave_capacity(invalid[0],0,false,invalid[1])); }
+            catch (const std::invalid_argument&) { rejected=true; }
+            require(rejected,"empty indicator scratch extent was accepted");
+        }
+        bool overflow_rejected=false;
+        try {
+            static_cast<void>(arch::cuda::indicator_wave_capacity(
+                std::numeric_limits<std::size_t>::max(),200,true,1024));
+        } catch (const std::overflow_error&) { overflow_rejected=true; }
+        require(overflow_rejected,"indicator scratch allocation overflow was accepted");
         std::cout << "CUDA_REFINEMENT_INDICATORS_PASS\n";
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';

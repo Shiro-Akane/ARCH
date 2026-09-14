@@ -398,6 +398,53 @@ void run_2d_corner_exchange()
               << plan.operations.size() << '\n';
 }
 
+void verify_indicator_batch(arch::cuda::CudaBackend& scalar, arch::cuda::CudaBackend& batch,
+    const std::array<arch::backend::BackendStateAccess,2>& accesses)
+{
+    AmrConfig config{};
+    config.refine_on_rho=true;
+    // Grow/shrink the binding list and change the arena layout in both
+    // directions. Repeat this whole check after Hydro rotates Current slots.
+    for (bool thermo : {false,true,false}) {
+        config.refine_on_p=config.refine_on_temp=config.refine_on_entropy=thermo;
+        std::vector<double> expected;
+        for (const auto& access : accesses) {
+            const auto one=scalar.evaluate_refinement_indicators(
+                std::span(&access,1),config,1e-12,{});
+            require(one.size()==1 && std::isfinite(one[0]),"invalid scalar indicator control");
+            expected.push_back(one[0]);
+        }
+        const auto first=batch.evaluate_refinement_indicators(std::span(accesses).first(1),config,1e-12,{});
+        require(first==std::vector<double>{expected[0]},"indicator small binding reuse changed value");
+        const std::array reversed{accesses[1],accesses[0]};
+        const auto before=batch.counters();
+        const auto actual=batch.evaluate_refinement_indicators(reversed,config,1e-12,{});
+        const auto after=batch.counters();
+        require(actual.size()==2 && after.kernel_count-before.kernel_count==(thermo?4:3)
+            && after.stream_sync_count-before.stream_sync_count==1
+            && after.bytes_d2h-before.bytes_d2h==2*sizeof(double),
+            "production indicator batch was not fused with one completion boundary");
+        for (std::size_t i=0;i<2;++i)
+            require(std::bit_cast<std::uint64_t>(actual[i])==std::bit_cast<std::uint64_t>(expected[1-i]),
+                "production indicator batch changed block result/order");
+        for (int fault=0;fault<4;++fault) {
+            auto invalid=accesses;
+            if (fault==0) invalid[1]=invalid[0];
+            if (fault==1) ++invalid[1].storage.value;
+            if (fault==2) invalid[1].slot=arch::state::StateSlot::Next;
+            if (fault==3) ++invalid[1].block.epoch.value;
+            bool rejected=false;
+            try { (void)batch.evaluate_refinement_indicators(invalid,config,1e-12,{}); }
+            catch (const std::invalid_argument&) { rejected=true; }
+            const auto done=batch.counters();
+            require(rejected && done.kernel_count==after.kernel_count
+                && done.bytes_h2d==after.bytes_h2d && done.bytes_d2h==after.bytes_d2h
+                && done.stream_sync_count==after.stream_sync_count,
+                "invalid late indicator access submitted work before rejection");
+        }
+    }
+}
+
 void run_hydro_batch_contract()
 {
     using namespace arch;
@@ -438,6 +485,7 @@ void run_hydro_batch_contract()
         };
         upload(*scalar);
         upload(*batch);
+        verify_indicator_batch(*scalar,*batch,accesses);
         const std::array<double, 2> reference_dt{
             scalar->compute_hydro_dt(accesses[0], 0.8),
             scalar->compute_hydro_dt(accesses[1], 0.8)};
@@ -519,6 +567,7 @@ void run_hydro_batch_contract()
             scalar->rotate_slots(access, plan.final_rotation);
             batch->rotate_slots(access, plan.final_rotation);
         }
+        verify_indicator_batch(*scalar,*batch,accesses);
         for (std::size_t i = 0; i < blocks.size(); ++i) {
             FluidState a, b;
             a.Preallocate(blocks[i].grid.GetTotalSize()); a.InitSpecies(0);

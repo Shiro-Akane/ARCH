@@ -1,0 +1,7 @@
+S5_STAGED_SOURCE_MATCH src/cuda/amr/RefinementIndicators.h LF-normalized
+S5_STAGED_SOURCE_MATCH src/cuda/amr/RefinementIndicators.cu LF-normalized
+S5_STAGED_SOURCE_MATCH src/cuda/runtime/amr/CudaBackendIndicators.cpp LF-normalized
+S5_STAGED_SOURCE_MATCH src/cuda/runtime/control/CudaBackendInternal.h LF-normalized
+S5_STAGED_SOURCE_MATCH tests/cuda/test_refinement_indicators.cpp LF-normalized
+S5_STAGED_SOURCE_MATCH tests/cuda/test_cuda_multiblock_hydro.cu LF-normalized
+S5_INDEX_BUILD_OVERLAY_MATCH_PASS

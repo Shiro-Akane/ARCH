@@ -19,7 +19,7 @@
 | P1：燃烧执行层 | 先分解 RHS/Jacobian、矩阵装配、symbolic/numeric factor、solve、同步与内存成本；小网络批量和大网络有界 lane 调度分别优化 | 逐个可回退改动；不复制 ODE；缓存显式绑定 matrix token/世代；不接受残差失效的解；报告冷启动和稳态及全应用规模扫描 | 跨块 dense kernel、原科学门槛和 3/1024/1025 块逐位对照通过；三 ODE 正式 324 次运行/315 比较通过，128 块对最快 CPU 约 1.80–2.37x；有界 cache 的 BD/ROS4 容量四步通过，长轨迹和完整 cuDSS 应用仍在继续 |
 | P2：扩散执行层 | RKL1/RKL2 stage 的跨块提交、系数/通量临时存储复用、dt/status 批量归约 | 所有方向、曲线/Cartesian、负 gamma、F(Y0) 跨步隔离、AMR reflux 和 restart 原回归；与同轮 CPU 对照 | 跨块 kernel/slot-copy 已通过 canonical、完整 AMR/曲线/长期/restart、33 组分全局 scratch 和混合 EOS 失败隔离；正式 216 次运行/210 比较通过。128 块 RKL2 对最快 CPU 约 1.30x，RKL1 仍慢约 4.7%，小规模仍慢，继续 S5 剩余热点 |
 | P3：四模块耦合 | Hydro＋burn＋diffusion＋动态 AMR，真实 EOS、网络、算子顺序和燃烧 limiter | 质量/电荷及含源项能量、组分演化、接受步/子步工作量、regrid、split-run、CPU↔GPU restart 和 restart 后 regrid；同输入全应用计时 | 联合候选的六组 Helm/组分扩散/AMR，以及六组全热传导/黏性/组分输运耦合均通过；两组均已完成跨后端 split-run 回归，正式耦合性能尚未验收 |
-| S5：按剩余热点深调 | 有证据再做 Graph 或 kernel 调优；可分别用于合格模块，不要求强行采用 | 含建图/失效/更新/额外显存的端到端收益；保留普通 CUDA；无收益记录拒绝/延期 | API 观测定位到逐块 AMR 指标 launch；已准备共享数学的批量候选与有界 scratch，待独立构建/回归/计时，不跳过固定层级的 NaN/EOS 错误检查 |
+| S5：按剩余热点深调 | 有证据再做 Graph 或 kernel 调优；可分别用于合格模块，不要求强行采用 | 含建图/失效/更新/额外显存的端到端收益；保留普通 CUDA；无收益记录拒绝/延期 | S5a 指标批量化已完成独立 clean Release 构建、叶测试及全部 15 项原数值回归；每波 3/4 kernel、有界 scratch，保留 NaN/EOS 检查；正式性能仍待空闲窗口，不把数值候选同步视为 S5 最终验收 |
 | V2：联合收尾 | 合格版本 clean 构建、完整回归、性能与内存总结、双端交付 | memcheck/racecheck、失败注入及长期资源增长；适用资源上的 Debug 构建门槛；证据缺失明确标受阻，不发完整验收标签 | vGPU 调试限制仍阻塞安全资格 |
 
 V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于声称耦合性能已达标。不并发运行正式计时、编译和 cuDSS 压测，不终止他人作业。所有阶段有明确 timeout、Host RAM/显存观测和失败日志。
@@ -55,3 +55,4 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 - [V1 原系统残差修正](../../validation/backend/results/hpc-cuda-optimization/V1-residual-20260914/README.md)：150/200 focused 三 ODE 全通过，150 BD 最大场差降至 1.796e-14；无库/ODE/预算改动。附加失败合同通过；资源探针单独记录，不混入正式性能。
 - [P1/P2 执行层当前证据](../../validation/backend/results/hpc-cuda-optimization/P12-microphysics-20260914/README.md)：串行完整 CUDA 构建、24 个合同、canonical 7 算例、燃烧独立时间积分与大网络容量门槛；包含被否决的 64 MiB 缓存淘汰设计和原始日志。开发记录不等于联合验收。
 - [P1/P2 跨块 kernel 联合版本](../../validation/backend/results/hpc-cuda-optimization/P12-kernel-batch-20260914/README.md)：完整 Release 链接、全套原科学/长期/耦合/restart 回归、波尾与 EOS 错误隔离；五模块正式 540 次运行/525 比较，含完整 CPU1/8/16 规模表与 raw 归档。大网络完整应用及 S5 另行验收。
+- [S5a 指标批量数值检查点](../../validation/backend/results/hpc-cuda-optimization/S5-indicators-20260914/README.md)：独立构建和全部原数值门槛通过、完整原始数据归档；性能尚未验收。下一步是在此版本上做单模块与全输运耦合正式计时。

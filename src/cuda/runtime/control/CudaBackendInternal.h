@@ -287,8 +287,8 @@ struct CudaBackend::Impl {
     // Indicators retain capacity across regrids, not field values. The ordered
     // evaluator completes before any buffer is grown or reused.
     struct RefinementScratch {
-        std::unique_ptr<DeviceAllocation<std::byte>> selection;
-        std::unique_ptr<DeviceAllocation<double>> errors, summary, thermodynamics, composition;
+        std::unique_ptr<DeviceAllocation<std::byte>> selection, bindings;
+        std::unique_ptr<DeviceAllocation<double>> arena, summary;
     } refinement_scratch;
     std::variant<std::monostate, IdealGasView, HelmEosView,
                  Tabular3DEOSView, Tabular4DEOSView> eos;

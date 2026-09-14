@@ -1,0 +1,231 @@
+{
+  "schema": 1,
+  "description": "S4 single-level 1024-block wave boundary controls",
+  "cases": [
+    {
+      "id": "batch_boundary_1_euler",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {
+        "nblockx1": "1",
+        "nblockx2": "0",
+        "nblockx3": "0",
+        "max_blocks": "128",
+        "lrefinemin": "0",
+        "lrefinemax": "0",
+        "regrid_interval": "1",
+        "reconstruct": "ppm",
+        "time_integrator": "Euler"
+      },
+      "accepted_steps": [
+        1,
+        2
+      ],
+      "timeout_seconds": 1200,
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "id": "batch_boundary_1024_euler",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {
+        "nblockx1": "1024",
+        "nblockx2": "0",
+        "nblockx3": "0",
+        "max_blocks": "1040",
+        "lrefinemin": "0",
+        "lrefinemax": "0",
+        "regrid_interval": "1",
+        "reconstruct": "ppm",
+        "time_integrator": "Euler"
+      },
+      "accepted_steps": [
+        1,
+        2
+      ],
+      "timeout_seconds": 1200,
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "id": "batch_boundary_1025_euler",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {
+        "nblockx1": "1025",
+        "nblockx2": "0",
+        "nblockx3": "0",
+        "max_blocks": "1041",
+        "lrefinemin": "0",
+        "lrefinemax": "0",
+        "regrid_interval": "1",
+        "reconstruct": "ppm",
+        "time_integrator": "Euler"
+      },
+      "accepted_steps": [
+        1,
+        2
+      ],
+      "timeout_seconds": 1200,
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "id": "batch_boundary_1025_rk2",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {
+        "nblockx1": "1025",
+        "nblockx2": "0",
+        "nblockx3": "0",
+        "max_blocks": "1041",
+        "lrefinemin": "0",
+        "lrefinemax": "0",
+        "regrid_interval": "1",
+        "reconstruct": "ppm",
+        "time_integrator": "RK2"
+      },
+      "accepted_steps": [
+        1,
+        2
+      ],
+      "timeout_seconds": 1200,
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "id": "batch_boundary_1025_rk3",
+      "problem": "SmoothAdvection",
+      "input": "validation/amr/inputs/smooth_amr80_l1.par",
+      "overrides": {
+        "nblockx1": "1025",
+        "nblockx2": "0",
+        "nblockx3": "0",
+        "max_blocks": "1041",
+        "lrefinemin": "0",
+        "lrefinemax": "0",
+        "regrid_interval": "1",
+        "reconstruct": "ppm",
+        "time_integrator": "RK3"
+      },
+      "accepted_steps": [
+        1,
+        2
+      ],
+      "timeout_seconds": 1200,
+      "conservation_policy": {
+        "rtol": 2e-12,
+        "atol": 2e-11,
+        "fields": [
+          "mass",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "energy",
+          "rhoX"
+        ]
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      }
+    }
+  ]
+}

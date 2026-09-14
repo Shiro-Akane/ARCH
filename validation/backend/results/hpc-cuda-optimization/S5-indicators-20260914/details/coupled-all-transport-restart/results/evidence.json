@@ -1,0 +1,1679 @@
+{
+  "status": "passed",
+  "release_qualified": false,
+  "started_utc": "2026-09-14T01:23:24.254443+00:00",
+  "recipe": {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/backend/verify_microphysics_coupling.py",
+    "sha256": "57fcdb4a219f983821c421b56706920ad925ff33dc8aa4de87a36047d845aaea"
+  },
+  "cases": [
+    {
+      "id": "coupled_be_nr_rkl1_all_transport",
+      "command": [
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/validation-python/bin/python",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "--build-dir",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_be_nr_rkl1_all_transport/coupled.par",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_be_nr_rkl1_all_transport/runs"
+      ],
+      "parameter": {
+        "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_be_nr_rkl1_all_transport/coupled.par",
+        "sha256": "6e25d95a99c1739ce918d8ec26de7b0e0d65656cdc000a09eed3a83e401ef2d7"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 8,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 8,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "coupled_be_nr_rkl2_all_transport",
+      "command": [
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/validation-python/bin/python",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "--build-dir",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_be_nr_rkl2_all_transport/coupled.par",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_be_nr_rkl2_all_transport/runs"
+      ],
+      "parameter": {
+        "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_be_nr_rkl2_all_transport/coupled.par",
+        "sha256": "47dc6386a11fae98c3925623b99032813d2f927179f70dd91de7f71c055dd98f"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 8,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 8,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 8,
+            "initial_operator_records": 8,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 6,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 6,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 2,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 2,
+            "stage_counts": [
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 2,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 2,
+            "stage_counts": [
+              2,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "coupled_bd_rkl1_all_transport",
+      "command": [
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/validation-python/bin/python",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "--build-dir",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_bd_rkl1_all_transport/coupled.par",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_bd_rkl1_all_transport/runs"
+      ],
+      "parameter": {
+        "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_bd_rkl1_all_transport/coupled.par",
+        "sha256": "85adef5652b54e31319d820def777bc0c3f62e4d7fd0919b52b30d4d1fa6702a"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 8,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 8,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "coupled_bd_rkl2_all_transport",
+      "command": [
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/validation-python/bin/python",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "--build-dir",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_bd_rkl2_all_transport/coupled.par",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_bd_rkl2_all_transport/runs"
+      ],
+      "parameter": {
+        "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_bd_rkl2_all_transport/coupled.par",
+        "sha256": "b45d36494c5996c97bea18fa627e43ebec41f82dfb8afeb819df558406ed09e1"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 8,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 8,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 8,
+            "initial_operator_records": 8,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 6,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 6,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 2,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 2,
+            "stage_counts": [
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 2,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 2,
+            "stage_counts": [
+              2,
+              2
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "coupled_ros4_rkl1_all_transport",
+      "command": [
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/validation-python/bin/python",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "--build-dir",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_ros4_rkl1_all_transport/coupled.par",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_ros4_rkl1_all_transport/runs"
+      ],
+      "parameter": {
+        "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_ros4_rkl1_all_transport/coupled.par",
+        "sha256": "8acc56f824a03bb038ab54c7af8f6021ae095ae0f3468579cc714dfae59430c8"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 8,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 8,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1,
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 1,
+            "stages": null,
+            "negative_gamma_records": 0,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 0,
+            "stage_counts": [
+              1,
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "coupled_ros4_rkl2_all_transport",
+      "command": [
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/validation-python/bin/python",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/tools/validate_cuda_amr_restart.py",
+        "--arch",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+        "--checkpoint-validator",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_single_level_validation",
+        "--source-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914",
+        "--build-dir",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release",
+        "--problem",
+        "BurnGradient",
+        "--input",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_ros4_rkl2_all_transport/coupled.par",
+        "--output-root",
+        "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_ros4_rkl2_all_transport/runs"
+      ],
+      "parameter": {
+        "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/coupled-all-transport-restart/results/coupled_ros4_rkl2_all_transport/coupled.par",
+        "sha256": "bb4a948c190b00ddc432e7fc989fc6dd4e3155caf5ae5bb05ad63de9e3e02f02"
+      },
+      "status": "passed",
+      "returncode": 0,
+      "schedules": [
+        {
+          "lane": "cuda_continuous",
+          "summary": {
+            "records": 8,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 8,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 8,
+            "initial_operator_records": 8,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_source",
+          "summary": {
+            "records": 6,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 6,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "macro_steps": [
+              0,
+              0,
+              1,
+              1,
+              2,
+              2
+            ],
+            "valid_timestep_records": 6,
+            "initial_operator_records": 6,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "summary": {
+            "records": 4,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 4,
+            "cache_generations": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "macro_steps": [
+              2,
+              2,
+              3,
+              3
+            ],
+            "valid_timestep_records": 4,
+            "initial_operator_records": 4,
+            "stage_counts": [
+              2,
+              2,
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 2,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 2,
+            "stage_counts": [
+              2,
+              2
+            ]
+          }
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "summary": {
+            "records": 2,
+            "order": 2,
+            "stages": null,
+            "negative_gamma_records": 2,
+            "cache_generations": [
+              1,
+              2
+            ],
+            "macro_steps": [
+              3,
+              3
+            ],
+            "valid_timestep_records": 2,
+            "initial_operator_records": 2,
+            "stage_counts": [
+              2,
+              2
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "derived_cases": [
+    {
+      "id": "coupled_be_nr_rkl1_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "be_nr",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL1",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "rkl1"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "id": "coupled_be_nr_rkl2_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "be_nr",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "be_nr",
+        "linear": "denselu",
+        "diffusion": "rkl2"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "id": "coupled_bd_rkl1_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "bd",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL1",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": "denselu",
+        "diffusion": "rkl1"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "id": "coupled_bd_rkl2_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "bd",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": "denselu",
+        "diffusion": "rkl2"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "id": "coupled_ros4_rkl1_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "ros4",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL1",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "ros4",
+        "linear": "denselu",
+        "diffusion": "rkl1"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    },
+    {
+      "id": "coupled_ros4_rkl2_all_transport",
+      "problem": "BurnGradient",
+      "input": "validation/amr/inputs/burn_enuc_amr.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1800,
+      "overrides": {
+        "ode_solver": "ros4",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "diff_cfl": "0.8",
+        "lrefinemin": "0",
+        "lrefinemax": "1"
+      },
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "ros4",
+        "linear": "denselu",
+        "diffusion": "rkl2"
+      },
+      "reduction_policy": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX",
+          "X"
+        ]
+      }
+    }
+  ],
+  "restart": true,
+  "runtime_inputs": {
+    "coupled_be_nr_rkl1_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL1",
+        "diff_max_stages": "5",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "be_nr",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "coupled_be_nr_rkl2_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "be_nr",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "coupled_bd_rkl1_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL1",
+        "diff_max_stages": "5",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "bd",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "coupled_bd_rkl2_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "bd",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "coupled_ros4_rkl1_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL1",
+        "diff_max_stages": "5",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "ros4",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "coupled_ros4_rkl2_all_transport": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/validation/amr/inputs/burn_enuc_amr.par",
+      "parameter_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+      "scientific_overrides": {
+        "diff_cfl": "0.8",
+        "diff_integrator": "RKL2",
+        "diff_max_stages": "5",
+        "lrefinemax": "1",
+        "lrefinemin": "0",
+        "ode_solver": "ros4",
+        "use_diffusion": "true",
+        "use_species_diff": "true",
+        "use_thermal_diff": "true",
+        "use_viscous_diff": "true"
+      },
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    }
+  },
+  "finished_utc": "2026-09-14T01:25:56.988475+00:00"
+}
