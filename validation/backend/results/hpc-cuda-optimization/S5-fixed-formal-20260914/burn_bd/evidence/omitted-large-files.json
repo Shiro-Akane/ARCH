@@ -1,0 +1,4 @@
+{
+  "policy": "TSV files larger than 2 MiB remain byte-complete in the raw archive; no raw samples or logs are truncated.",
+  "files": {}
+}

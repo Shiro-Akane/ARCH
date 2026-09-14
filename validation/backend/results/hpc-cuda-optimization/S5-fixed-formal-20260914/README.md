@@ -2,7 +2,9 @@
 
 本阶段尚在执行，不是 11 模块全部完成的性能验收报告。
 扩散 RKL1／RKL2 已完成正式 216 次运行、210 次字段与工作量比较，全部通过；
-详见 [扩散阶段汇总](diffusion-summary.zh-CN.md)。燃烧及六种全输运耦合正式计时继续执行。
+详见 [扩散阶段汇总](diffusion-summary.zh-CN.md)。三种燃烧方法也已完成正式 324 次运行、315 次比较，
+全部通过，详见 [燃烧阶段汇总](burn-summary.zh-CN.md)。目前共 5／11 模块、540 次运行、525 次比较；
+六种全输运耦合正式计时仍需完成，不能以单模块结果替代它们。
 两侧均应用经过数值验证的 coarse/fine 痕量组分闭合和 MUSCL 面归一化修复，
 不使用原来数值失败的 128 块耦合结果计算加速比。
 
@@ -44,3 +46,12 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 
 已经保存产品和配方不代表 11 模块正式采样已完成。后续各模块的结果与失败将分别保留。
 超大网络性能及 vGPU sanitizer 限制仍单列，不用本阶段的内置网络结果覆盖。
+
+## 证据完整性复核
+
+`integrity-audit-diffusion.json`、`integrity-audit-burn-all.json` 重新检查各模块完整样本门槛、
+前后身份、本机 raw SHA、Git 投影文件 SHA 以及 HDF／trace 后处理清单。
+这是存储及报告复核，不是新的独立物理或 sanitizer 验证。
+`recipes/` 保存配方及八项含篡改负例的检查器测试。
+`git-blob-audit-diffusion.json` 另核对发布提交 `b80efc92` 两扩散目录的 1,438 个文件，
+本地原件与 Git blob 字节一致；原始大包的 SHA-256 校验单独记录。

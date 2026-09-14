@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "modules": 1,
+  "complete_11_module_coverage": false,
+  "runs": 108,
+  "comparisons": 105,
+  "records": [
+    {
+      "module": "burn_be_nr",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "d6a84449232a458b468bb7e3748b31fd1c24cfce5ba99fae3e07f0da3d23d6f3",
+      "archive_bytes": 1139085,
+      "verified_projected_files": 698,
+      "documented_large_tsv_omissions": 0,
+      "status": "passed"
+    }
+  ],
+  "scope": "read-only report and local backup integrity audit; not new physics or sanitizer validation"
+}

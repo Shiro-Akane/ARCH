@@ -1,0 +1,461 @@
+2026-09-14T20:12:29+09:00
+    PID %CPU %MEM ELAPSED COMMAND
+3421034  8.9  0.1   56817 TdxW.exe
+3420968  3.2  0.0   56818 wineserver
+3416439  2.9  0.0   57019 x11vnc
+3648094  2.8  0.0    1610 python
+3416434  2.5  0.0   57019 Xvfb
+3754921  0.2  0.0 1611309 tailscaled
+   1102  0.1  0.0 1759745 containerd
+      1  0.0  0.0 1759789 systemd
+      2  0.0  0.0 1759789 kthreadd
+      3  0.0  0.0 1759789 rcu_gp
+      4  0.0  0.0 1759789 rcu_par_gp
+      5  0.0  0.0 1759789 slub_flushwq
+      6  0.0  0.0 1759789 netns
+      8  0.0  0.0 1759789 kworker/0:0H-events_highpri
+     10  0.0  0.0 1759789 mm_percpu_wq
+     11  0.0  0.0 1759789 rcu_tasks_rude_
+     12  0.0  0.0 1759789 rcu_tasks_trace
+     13  0.0  0.0 1759789 ksoftirqd/0
+     14  0.0  0.0 1759789 rcu_sched
+     15  0.0  0.0 1759789 migration/0
+     16  0.0  0.0 1759789 idle_inject/0
+     18  0.0  0.0 1759789 cpuhp/0
+     19  0.0  0.0 1759789 cpuhp/1
+     20  0.0  0.0 1759789 idle_inject/1
+     21  0.0  0.0 1759789 migration/1
+     22  0.0  0.0 1759789 ksoftirqd/1
+     24  0.0  0.0 1759789 kworker/1:0H-events_highpri
+     25  0.0  0.0 1759789 cpuhp/2
+     26  0.0  0.0 1759789 idle_inject/2
+     27  0.0  0.0 1759789 migration/2
+     28  0.0  0.0 1759789 ksoftirqd/2
+     30  0.0  0.0 1759789 kworker/2:0H-events_highpri
+     31  0.0  0.0 1759789 cpuhp/3
+     32  0.0  0.0 1759789 idle_inject/3
+     33  0.0  0.0 1759789 migration/3
+     34  0.0  0.0 1759789 ksoftirqd/3
+     36  0.0  0.0 1759789 kworker/3:0H-events_highpri
+     37  0.0  0.0 1759789 cpuhp/4
+     38  0.0  0.0 1759789 idle_inject/4
+     39  0.0  0.0 1759789 migration/4
+     40  0.0  0.0 1759789 ksoftirqd/4
+     42  0.0  0.0 1759789 kworker/4:0H-events_highpri
+     43  0.0  0.0 1759789 cpuhp/5
+     44  0.0  0.0 1759789 idle_inject/5
+     45  0.0  0.0 1759789 migration/5
+     46  0.0  0.0 1759789 ksoftirqd/5
+     48  0.0  0.0 1759789 kworker/5:0H-events_highpri
+     49  0.0  0.0 1759789 cpuhp/6
+     50  0.0  0.0 1759789 idle_inject/6
+     51  0.0  0.0 1759789 migration/6
+     52  0.0  0.0 1759789 ksoftirqd/6
+     54  0.0  0.0 1759789 kworker/6:0H-events_highpri
+     55  0.0  0.0 1759789 cpuhp/7
+     56  0.0  0.0 1759789 idle_inject/7
+     57  0.0  0.0 1759789 migration/7
+     58  0.0  0.0 1759789 ksoftirqd/7
+     60  0.0  0.0 1759789 kworker/7:0H-events_highpri
+     61  0.0  0.0 1759789 cpuhp/8
+     62  0.0  0.0 1759789 idle_inject/8
+     63  0.0  0.0 1759789 migration/8
+     64  0.0  0.0 1759789 ksoftirqd/8
+     66  0.0  0.0 1759789 kworker/8:0H-events_highpri
+     67  0.0  0.0 1759789 cpuhp/9
+     68  0.0  0.0 1759789 idle_inject/9
+     69  0.0  0.0 1759789 migration/9
+     70  0.0  0.0 1759789 ksoftirqd/9
+     72  0.0  0.0 1759789 kworker/9:0H-events_highpri
+     73  0.0  0.0 1759789 cpuhp/10
+     74  0.0  0.0 1759789 idle_inject/10
+     75  0.0  0.0 1759789 migration/10
+     76  0.0  0.0 1759789 ksoftirqd/10
+     78  0.0  0.0 1759789 kworker/10:0H-events_highpri
+     79  0.0  0.0 1759789 cpuhp/11
+     80  0.0  0.0 1759789 idle_inject/11
+     81  0.0  0.0 1759789 migration/11
+     82  0.0  0.0 1759789 ksoftirqd/11
+     84  0.0  0.0 1759789 kworker/11:0H-events_highpri
+     85  0.0  0.0 1759789 cpuhp/12
+     86  0.0  0.0 1759789 idle_inject/12
+     87  0.0  0.0 1759789 migration/12
+     88  0.0  0.0 1759789 ksoftirqd/12
+     90  0.0  0.0 1759789 kworker/12:0H-events_highpri
+     91  0.0  0.0 1759789 cpuhp/13
+     92  0.0  0.0 1759789 idle_inject/13
+     93  0.0  0.0 1759789 migration/13
+     94  0.0  0.0 1759789 ksoftirqd/13
+     96  0.0  0.0 1759789 kworker/13:0H-events_highpri
+     97  0.0  0.0 1759789 cpuhp/14
+     98  0.0  0.0 1759789 idle_inject/14
+     99  0.0  0.0 1759789 migration/14
+    100  0.0  0.0 1759789 ksoftirqd/14
+    102  0.0  0.0 1759789 kworker/14:0H-kblockd
+    103  0.0  0.0 1759789 cpuhp/15
+    104  0.0  0.0 1759789 idle_inject/15
+    105  0.0  0.0 1759789 migration/15
+    106  0.0  0.0 1759789 ksoftirqd/15
+    108  0.0  0.0 1759789 kworker/15:0H-events_highpri
+    109  0.0  0.0 1759789 cpuhp/16
+    110  0.0  0.0 1759789 idle_inject/16
+    111  0.0  0.0 1759789 migration/16
+    112  0.0  0.0 1759789 ksoftirqd/16
+    114  0.0  0.0 1759789 kworker/16:0H-kblockd
+    115  0.0  0.0 1759789 cpuhp/17
+    116  0.0  0.0 1759789 idle_inject/17
+    117  0.0  0.0 1759789 migration/17
+    118  0.0  0.0 1759789 ksoftirqd/17
+    120  0.0  0.0 1759789 kworker/17:0H-events_highpri
+    121  0.0  0.0 1759789 cpuhp/18
+    122  0.0  0.0 1759789 idle_inject/18
+    123  0.0  0.0 1759789 migration/18
+    124  0.0  0.0 1759789 ksoftirqd/18
+    126  0.0  0.0 1759789 kworker/18:0H-events_highpri
+    127  0.0  0.0 1759789 cpuhp/19
+    128  0.0  0.0 1759789 idle_inject/19
+    129  0.0  0.0 1759789 migration/19
+    130  0.0  0.0 1759789 ksoftirqd/19
+    132  0.0  0.0 1759789 kworker/19:0H-events_highpri
+    133  0.0  0.0 1759789 cpuhp/20
+    134  0.0  0.0 1759789 idle_inject/20
+    135  0.0  0.0 1759789 migration/20
+    136  0.0  0.0 1759789 ksoftirqd/20
+    138  0.0  0.0 1759789 kworker/20:0H-events_highpri
+    139  0.0  0.0 1759789 cpuhp/21
+    140  0.0  0.0 1759789 idle_inject/21
+    141  0.0  0.0 1759789 migration/21
+    142  0.0  0.0 1759789 ksoftirqd/21
+    144  0.0  0.0 1759789 kworker/21:0H-events_highpri
+    145  0.0  0.0 1759789 cpuhp/22
+    146  0.0  0.0 1759789 idle_inject/22
+    147  0.0  0.0 1759789 migration/22
+    148  0.0  0.0 1759789 ksoftirqd/22
+    150  0.0  0.0 1759789 kworker/22:0H-events_highpri
+    151  0.0  0.0 1759789 cpuhp/23
+    152  0.0  0.0 1759789 idle_inject/23
+    153  0.0  0.0 1759789 migration/23
+    154  0.0  0.0 1759789 ksoftirqd/23
+    156  0.0  0.0 1759789 kworker/23:0H-events_highpri
+    157  0.0  0.0 1759789 cpuhp/24
+    158  0.0  0.0 1759789 idle_inject/24
+    159  0.0  0.0 1759789 migration/24
+    160  0.0  0.0 1759789 ksoftirqd/24
+    162  0.0  0.0 1759789 kworker/24:0H-events_highpri
+    163  0.0  0.0 1759789 cpuhp/25
+    164  0.0  0.0 1759789 idle_inject/25
+    165  0.0  0.0 1759789 migration/25
+    166  0.0  0.0 1759789 ksoftirqd/25
+    168  0.0  0.0 1759789 kworker/25:0H-events_highpri
+    169  0.0  0.0 1759789 cpuhp/26
+    170  0.0  0.0 1759789 idle_inject/26
+    171  0.0  0.0 1759789 migration/26
+    172  0.0  0.0 1759789 ksoftirqd/26
+    174  0.0  0.0 1759789 kworker/26:0H-events_highpri
+    175  0.0  0.0 1759789 cpuhp/27
+    176  0.0  0.0 1759789 idle_inject/27
+    177  0.0  0.0 1759789 migration/27
+    178  0.0  0.0 1759789 ksoftirqd/27
+    180  0.0  0.0 1759789 kworker/27:0H-events_highpri
+    181  0.0  0.0 1759789 cpuhp/28
+    182  0.0  0.0 1759789 idle_inject/28
+    183  0.0  0.0 1759789 migration/28
+    184  0.0  0.0 1759789 ksoftirqd/28
+    186  0.0  0.0 1759789 kworker/28:0H-events_highpri
+    187  0.0  0.0 1759789 cpuhp/29
+    188  0.0  0.0 1759789 idle_inject/29
+    189  0.0  0.0 1759789 migration/29
+    190  0.0  0.0 1759789 ksoftirqd/29
+    192  0.0  0.0 1759789 kworker/29:0H-events_highpri
+    193  0.0  0.0 1759788 cpuhp/30
+    194  0.0  0.0 1759788 idle_inject/30
+    195  0.0  0.0 1759788 migration/30
+    196  0.0  0.0 1759788 ksoftirqd/30
+    198  0.0  0.0 1759788 kworker/30:0H-events_highpri
+    199  0.0  0.0 1759788 cpuhp/31
+    200  0.0  0.0 1759788 idle_inject/31
+    201  0.0  0.0 1759788 migration/31
+    202  0.0  0.0 1759788 ksoftirqd/31
+    204  0.0  0.0 1759788 kworker/31:0H-events_highpri
+    205  0.0  0.0 1759788 kdevtmpfs
+    206  0.0  0.0 1759788 inet_frag_wq
+    207  0.0  0.0 1759788 kauditd
+    209  0.0  0.0 1759788 khungtaskd
+    210  0.0  0.0 1759788 oom_reaper
+    211  0.0  0.0 1759788 writeback
+    212  0.0  0.0 1759788 kcompactd0
+    213  0.0  0.0 1759788 ksmd
+    214  0.0  0.0 1759788 khugepaged
+    262  0.0  0.0 1759788 kintegrityd
+    263  0.0  0.0 1759788 kblockd
+    264  0.0  0.0 1759788 blkcg_punt_bio
+    295  0.0  0.0 1759787 tpm_dev_wq
+    296  0.0  0.0 1759787 ata_sff
+    297  0.0  0.0 1759787 md
+    298  0.0  0.0 1759787 edac-poller
+    299  0.0  0.0 1759787 devfreq_wq
+    300  0.0  0.0 1759786 watchdogd
+    301  0.0  0.0 1759786 kworker/2:1H-kblockd
+    303  0.0  0.0 1759786 kswapd0
+    304  0.0  0.0 1759786 ecryptfs-kthrea
+    306  0.0  0.0 1759786 kthrotld
+    307  0.0  0.0 1759786 irq/24-aerdrv
+    308  0.0  0.0 1759786 irq/25-aerdrv
+    309  0.0  0.0 1759786 irq/26-aerdrv
+    310  0.0  0.0 1759786 irq/27-aerdrv
+    311  0.0  0.0 1759786 irq/28-aerdrv
+    312  0.0  0.0 1759786 irq/29-aerdrv
+    313  0.0  0.0 1759786 irq/30-aerdrv
+    314  0.0  0.0 1759786 irq/31-aerdrv
+    315  0.0  0.0 1759786 irq/32-aerdrv
+    316  0.0  0.0 1759786 irq/33-aerdrv
+    317  0.0  0.0 1759786 irq/34-aerdrv
+    318  0.0  0.0 1759786 irq/35-aerdrv
+    319  0.0  0.0 1759786 irq/36-aerdrv
+    320  0.0  0.0 1759786 irq/37-aerdrv
+    321  0.0  0.0 1759786 acpi_thermal_pm
+    323  0.0  0.0 1759786 khvcd
+    324  0.0  0.0 1759786 vfio-irqfd-clea
+    325  0.0  0.0 1759786 mld
+    326  0.0  0.0 1759786 ipv6_addrconf
+    336  0.0  0.0 1759785 kstrp
+    339  0.0  0.0 1759785 zswap-shrink
+    371  0.0  0.0 1759785 kworker/u65:0
+    376  0.0  0.0 1759785 charger_manager
+    399  0.0  0.0 1759785 kworker/9:1H-kblockd
+    444  0.0  0.0 1759785 kworker/11:1H-kblockd
+    445  0.0  0.0 1759785 kworker/25:1H-kblockd
+    455  0.0  0.0 1759785 cryptd
+    456  0.0  0.0 1759785 hwrng
+    476  0.0  0.0 1759784 scsi_eh_0
+    477  0.0  0.0 1759784 scsi_tmf_0
+    478  0.0  0.0 1759784 scsi_eh_1
+    479  0.0  0.0 1759784 scsi_tmf_1
+    480  0.0  0.0 1759784 scsi_eh_2
+    481  0.0  0.0 1759784 scsi_tmf_2
+    482  0.0  0.0 1759784 scsi_eh_3
+    483  0.0  0.0 1759784 scsi_tmf_3
+    484  0.0  0.0 1759784 scsi_eh_4
+    485  0.0  0.0 1759784 scsi_tmf_4
+    486  0.0  0.0 1759784 scsi_eh_5
+    487  0.0  0.0 1759784 scsi_tmf_5
+    499  0.0  0.0 1759784 kworker/6:1H-kblockd
+    500  0.0  0.0 1759784 kworker/22:1H-xfs-log/dm-0
+    505  0.0  0.0 1759784 kworker/30:1H-kblockd
+    506  0.0  0.0 1759784 kworker/19:1H-kblockd
+    519  0.0  0.0 1759784 kdmflush
+    526  0.0  0.0 1759784 kworker/15:1H-kblockd
+    531  0.0  0.0 1759784 kworker/5:1H-kblockd
+    547  0.0  0.0 1759782 kworker/4:1H-kblockd
+    548  0.0  0.0 1759782 raid5wq
+    596  0.0  0.0 1759782 xfsalloc
+    597  0.0  0.0 1759782 xfs_mru_cache
+    598  0.0  0.0 1759782 xfs-buf/dm-0
+    599  0.0  0.0 1759782 xfs-conv/dm-0
+    600  0.0  0.0 1759782 xfs-reclaim/dm-
+    601  0.0  0.0 1759782 xfs-blockgc/dm-
+    602  0.0  0.0 1759782 xfs-inodegc/dm-
+    603  0.0  0.0 1759782 xfs-log/dm-0
+    604  0.0  0.0 1759782 xfs-cil/dm-0
+    605  0.0  0.0 1759782 xfsaild/dm-0
+    606  0.0  0.0 1759782 kworker/14:1H-kblockd
+    620  0.0  0.0 1759782 kworker/24:1H-kblockd
+    627  0.0  0.0 1759782 kworker/27:1H-kblockd
+    628  0.0  0.0 1759782 kworker/31:1H-kblockd
+    636  0.0  0.0 1759782 kworker/20:1H-xfs-log/dm-0
+    643  0.0  0.0 1759781 kworker/12:1H-kblockd
+    677  0.0  0.0 1759781 kworker/26:1H-kblockd
+    682  0.0  0.0 1759781 systemd-journal
+    695  0.0  0.0 1759781 kworker/8:1H-xfs-log/dm-0
+    704  0.0  0.0 1759781 kworker/17:1H-kblockd
+    706  0.0  0.0 1759781 kworker/29:1H-kblockd
+    707  0.0  0.0 1759781 kworker/10:1H-kblockd
+    713  0.0  0.0 1759781 kworker/23:1H-kblockd
+    723  0.0  0.0 1759781 kaluad
+    725  0.0  0.0 1759781 kworker/0:1H-kblockd
+    726  0.0  0.0 1759781 kmpath_rdacd
+    728  0.0  0.0 1759781 kmpathd
+    729  0.0  0.0 1759781 kmpath_handlerd
+    730  0.0  0.0 1759781 multipathd
+    733  0.0  0.0 1759781 systemd-udevd
+    748  0.0  0.0 1759779 kworker/28:1H-xfs-log/dm-0
+    783  0.0  0.0 1759779 kworker/3:1H-kblockd
+    793  0.0  0.0 1759778 kworker/7:1H-xfs-log/dm-0
+    835  0.0  0.0 1759778 kworker/13:1H-kblockd
+    845  0.0  0.0 1759778 kworker/21:1H-kblockd
+    923  0.0  0.0 1759778 xfs-buf/vda2
+    924  0.0  0.0 1759778 xfs-conv/vda2
+    925  0.0  0.0 1759778 xfs-reclaim/vda
+    926  0.0  0.0 1759778 xfs-blockgc/vda
+    927  0.0  0.0 1759778 xfs-inodegc/vda
+    928  0.0  0.0 1759778 xfs-log/vda2
+    929  0.0  0.0 1759778 xfs-cil/vda2
+    930  0.0  0.0 1759778 xfsaild/vda2
+    956  0.0  0.0 1759778 nfit
+    964  0.0  0.0 1759777 kworker/1:1H-kblockd
+    966  0.0  0.0 1759776 nv_queue
+    967  0.0  0.0 1759776 nv_queue
+    968  0.0  0.0 1759776 nv_open_q
+    969  0.0  0.0 1759776 nvidia-modeset/
+    970  0.0  0.0 1759776 nvidia-modeset/
+   1002  0.0  0.0 1759776 kworker/16:1H-kblockd
+   1003  0.0  0.0 1759750 systemd-timesyn
+   1011  0.0  0.0 1759748 systemd-network
+   1013  0.0  0.0 1759748 systemd-resolve
+   1040  0.0  0.0 1759745 cron
+   1041  0.0  0.0 1759745 dbus-daemon
+   1049  0.0  0.0 1759745 irqbalance
+   1052  0.0  0.0 1759745 networkd-dispat
+   1062  0.0  0.0 1759745 nvidia-persiste
+   1070  0.0  0.0 1759745 polkitd
+   1072  0.0  0.0 1759745 rsyslogd
+   1081  0.0  0.0 1759745 systemd-logind
+   1094  0.0  0.0 1759745 udisksd
+   1115  0.0  0.0 1759745 sshd
+   1125  0.0  0.0 1759745 ModemManager
+   1162  0.0  0.0 1759745 agetty
+   1172  0.0  0.0 1759745 agetty
+   1199  0.0  0.0 1759745 agetty
+   1280  0.0  0.0 1759745 kworker/18:1H-kblockd
+   1310  0.0  0.0 1759744 unattended-upgr
+   1314  0.0  0.0 1759743 irq/94-nvidia
+   1315  0.0  0.0 1759743 irq/95-nvidia
+   1316  0.0  0.0 1759743 irq/96-nvidia
+   1317  0.0  0.0 1759743 irq/97-nvidia
+   1318  0.0  0.0 1759743 irq/98-nvidia
+   1319  0.0  0.0 1759743 irq/99-nvidia
+   1320  0.0  0.0 1759743 irq/100-nvidia
+   1321  0.0  0.0 1759743 irq/101-nvidia
+   1322  0.0  0.0 1759743 nvidia
+   1323  0.0  0.0 1759743 nv_queue
+   1329  0.0  0.0 1759743 nvidia-gridd
+   1361  0.0  0.0 1759743 dockerd
+   2914  0.0  0.0 1742255 UVM global queu
+   2915  0.0  0.0 1742255 UVM deferred re
+   2916  0.0  0.0 1742255 UVM Tools Event
+  33250  0.0  0.0 1740616 systemd
+  33251  0.0  0.0 1740616 (sd-pam)
+  39266  0.0  0.0 1740137 upowerd
+  62984  0.0  0.0 1736681 dbus-daemon
+ 575527  0.0  0.0 1280434 node
+ 575701  0.0  0.2 1280433 node
+2257886  0.0  0.0  841651 bash
+2257889  0.0  0.0  841650 grep
+2257890  0.0  0.0  841650 head
+2394230  0.0  0.0  614915 snapd
+2450392  0.0  0.0 1383207 bash
+2484426  0.0  0.0  516905 packagekitd
+2929169  0.0  0.0   62520 sshd
+2929232  0.0  0.0   62518 sshd
+2956665  0.0  0.0   61078 sshd
+2956724  0.0  0.0   61076 sshd
+3005713  0.0  0.0   60366 kworker/8:2-mm_percpu_wq
+3115058  0.0  0.0   59838 MainThread
+3147964  0.0  0.0   59665 kworker/19:2-events
+3213331  0.0  0.0   58627 kworker/2:1-events
+3331352  0.0  0.0   57703 kworker/0:0-events
+3404512  0.0  0.0   57195 kworker/3:1-events
+3408955  0.0  0.0   57124 kworker/1:1-mm_percpu_wq
+3409395  0.0  0.0   57121 kworker/5:2-mm_percpu_wq
+3416372  0.0  0.0   57020 docker-proxy
+3416388  0.0  0.0   57020 containerd-shim
+3416408  0.0  0.0   57020 docker-init
+3416430  0.0  0.0   57019 tdx-desktop-ent
+3416438  0.0  0.0   57019 openbox
+3416440  0.0  0.0   57019 websockify
+3416612  0.0  0.0   57015 websockify
+3417304  0.0  0.0   56987 kworker/6:2-mm_percpu_wq
+3420961  0.0  0.0   56818 start.exe
+3420974  0.0  0.0   56818 services.exe
+3420979  0.0  0.0   56817 winedevice.exe
+3420981  0.0  0.0   56817 explorer.exe
+3420990  0.0  0.0   56817 plugplay.exe
+3420999  0.0  0.0   56817 svchost.exe
+3421007  0.0  0.0   56817 winedevice.exe
+3421025  0.0  0.0   56817 rpcss.exe
+3423166  0.0  0.0   56712 kworker/7:0-events
+3440168  0.0  0.0   54994 kworker/27:1-mm_percpu_wq
+3454410  0.0  0.0   51237 kworker/31:3-events
+3458238  0.0  0.0   50486 kworker/14:0-mm_percpu_wq
+3467364  0.0  0.0   49191 kworker/3:2
+3474824  0.0  0.0   48251 kworker/21:0-events
+3476254  0.0  0.0   48124 kworker/14:1
+3478918  0.0  0.0   47699 kworker/4:0-mm_percpu_wq
+3480373  0.0  0.0   46998 kworker/18:1-mm_percpu_wq
+3485388  0.0  0.0   44258 kworker/22:2-events
+3485394  0.0  0.0   44258 kworker/26:0-events
+3485397  0.0  0.0   44257 kworker/20:2-mm_percpu_wq
+3491113  0.0  0.0   40727 kworker/28:1-events
+3497561  0.0  0.0   39970 kworker/8:1
+3505112  0.0  0.0   38865 kworker/4:1-events
+3507900  0.0  0.0   38260 kworker/22:0
+3510046  0.0  0.0   37939 kworker/27:0
+3510048  0.0  0.0   37939 kworker/6:1
+3510050  0.0  0.0   37939 kworker/18:2
+3545299  0.0  0.0   30436 kworker/25:2-events
+3551471  0.0  0.0   28416 kworker/2:2-mm_percpu_wq
+3551782  0.0  0.0   28381 kworker/25:0
+3551783  0.0  0.0   28381 kworker/7:1
+3552297  0.0  0.0   28255 kworker/5:1
+3554529  0.0  0.0   27799 kworker/21:1-events
+3556422  0.0  0.0   27749 kworker/28:2-events
+3569761  0.0  0.0   25446 kworker/19:1-events
+3570179  0.0  0.0   25319 kworker/1:2
+3572732  0.0  0.0   25112 kworker/15:0-mm_percpu_wq
+3573843  0.0  0.0   25018 kworker/12:0-events
+3575923  0.0  0.0   24777 kworker/31:0-events
+3576942  0.0  0.0   24444 kworker/26:2-events
+3579115  0.0  0.0   23826 kworker/30:2-events
+3585780  0.0  0.0   21583 kworker/29:1-events
+3586272  0.0  0.0   21440 kworker/10:1-events
+3593218  0.0  0.0   19343 kworker/20:0
+3600691  0.0  0.0   17576 kworker/17:0-mm_percpu_wq
+3604200  0.0  0.0   16573 kworker/13:2-events
+3612397  0.0  0.0   13208 kworker/11:2-events
+3618041  0.0  0.0   11409 kworker/12:1-xfs-conv/dm-0
+3620628  0.0  0.0   10582 kworker/15:2-events
+3621592  0.0  0.0   10273 kworker/29:0-events
+3624084  0.0  0.0    9447 kworker/30:0-mm_percpu_wq
+3625352  0.0  0.0    9034 kworker/13:0
+3631461  0.0  0.0    7071 kworker/23:1-cgwb_release
+3633540  0.0  0.0    6250 kworker/23:0-events
+3636971  0.0  0.0    5269 kworker/11:0-cgroup_destroy
+3637169  0.0  0.0    5207 kworker/10:0-events
+3637685  0.0  0.0    4637 kworker/0:1-events
+3637816  0.0  0.0    4627 kworker/9:1-events
+3645268  0.0  0.0    2316 kworker/16:1-events
+3645875  0.0  0.0    2102 kworker/24:0-events
+3647067  0.0  0.0    1783 kworker/9:0-events
+3648021  0.0  0.0    1614 sshd
+3648083  0.0  0.0    1613 sshd
+3648084  0.0  0.0    1612 bash
+3648093  0.0  0.0    1610 timeout
+3648097  0.0  0.0    1610 bash
+3648542  0.0  0.0    1539 kworker/u64:2-events_power_efficient
+3649532  0.0  0.0    1334 kworker/17:2
+3651225  0.0  0.0     863 kworker/u64:3-flush-253:0
+3651470  0.0  0.0     783 kworker/16:2-cgwb_release
+3652858  0.0  0.0     340 kworker/u64:4-flush-253:0
+3652910  0.0  0.0     320 kworker/24:2-kdmflush
+3653867  0.0  0.0       2 sleep
+3653926  0.0  0.0       0 ps
+Mon Sep 14 20:12:29 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 570.133.20             Driver Version: 570.133.20     CUDA Version: 12.8     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA H100-20C                On  |   00000000:07:00.0 Off |                    0 |
+| N/A   N/A    P0            N/A  /  N/A  |       0MiB /  20480MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+                                                                                         
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|  No running processes found                                                             |
++-----------------------------------------------------------------------------------------+
