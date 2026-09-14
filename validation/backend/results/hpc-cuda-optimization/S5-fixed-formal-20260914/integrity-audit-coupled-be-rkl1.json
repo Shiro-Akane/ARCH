@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "modules": 1,
+  "complete_11_module_coverage": false,
+  "runs": 108,
+  "comparisons": 105,
+  "records": [
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "f9f2adc4f461572a2b5d6938817d6304430d9e1379776ec32431f1403fc9d6ea",
+      "archive_bytes": 55775330,
+      "verified_projected_files": 710,
+      "documented_large_tsv_omissions": 24,
+      "status": "passed"
+    }
+  ],
+  "scope": "read-only report and local backup integrity audit; not new physics or sanitizer validation"
+}

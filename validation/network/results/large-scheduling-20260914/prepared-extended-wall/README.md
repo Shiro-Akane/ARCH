@@ -26,5 +26,14 @@
 另有相关 microphysics timing 13 项和 large application 8 项工具回归通过。
 PowerShell／Bash／Python 配方已完成本机语法检查；真实服务器执行状态尚待产生。
 
+2026-09-15（北京时间）另完成 15 项本机归档合同测试，
+见 [测试日志](recipes/large-be-archive-contract-tests-20260915.log) 与
+[测试代码](recipes/test-large-be-archive-contract-20260915.py)。
+覆盖完整矩阵、失败的部分矩阵、缺步／乱序／重复完成、身份改变、越界路径、
+协议改变、原归档拒绝覆盖，以及打包期间文件改变不能获得合格回执。
+失败的部分矩阵能保留证据，但仍报告 scientific_status=failed、complete_matrix=false。
+这些测试只使用临时目录与模拟进程／tar，没有连接服务器或运行实际 CUDA、编译器和物理轨迹；
+归档器及生产代码均未修改，不能把 15 项工具通过计入大网络数值验收。
+
 完整应用已确认的 150／200 网络性能差距仍为 GPU 耗时约 CPU8 的 5.0–10.3 倍；
 不能用这份补测准备记录声明大网络已经提速或已达到 CPU 水平。
