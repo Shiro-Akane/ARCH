@@ -47,6 +47,9 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 已经保存产品和配方不代表 11 模块正式采样已完成。后续各模块的结果与失败将分别保留。
 超大网络性能及 vGPU sanitizer 限制仍单列，不用本阶段的内置网络结果覆盖。
 
+一次 SSH 连接重置后，已接回仍在运行的第一项耦合实验，并准备独立进程控制后五项。
+见 [断线恢复检查点](recovery/README.md)；只调整运行管理，不重启当前样本或修改计时／科学协议。
+
 ## 证据完整性复核
 
 `integrity-audit-diffusion.json`、`integrity-audit-burn-all.json` 重新检查各模块完整样本门槛、

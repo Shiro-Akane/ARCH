@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "git_commit": "43a72b91af7a687fd37e24c14e7ce075762bbd1e",
+  "files": {
+    "burn_be_nr": 707,
+    "burn_bd": 707,
+    "burn_ros4": 707
+  },
+  "bytes": 39821993,
+  "scope": "all tracked selected-module files byte-identical to Git blobs; raw archive SHA-256 checks are separate"
+}

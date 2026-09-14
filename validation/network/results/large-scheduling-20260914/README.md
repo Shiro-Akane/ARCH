@@ -55,3 +55,24 @@ Host API 的累积时间不是 GPU kernel 时间，尤其不能将分解、同�
 - 服务器 `/home/ubuntu/projects/ARCH-microphysics-20260914/build/`；本地 `C:/tmp/ARCH-perf-20260909/build/`。
 
 150／200 核素的完整 ARCH＋Helm 应用验证单独进行；不能把本目录的部分执行结果外推成全应用验收。
+
+## 正式结果闭合后的只读结构核对
+
+完整应用的后续 [正式六算例结果](../large-application-20260914/formal/summary.zh-CN.md)
+已通过 144 次运行／138 次字段与宏步、regrid 比较，但原 32 物理单元短算例的 CUDA 耗时
+仍为最快 CPU8 的约 5.0–10.3 倍。以下是对同一生产代码的结构核对，不是新的 GPU profiling，
+也没有在正式采样时改变源码或二进制。
+
+- [运行控制层](../../../../src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp#L299) 在块循环内调用稀疏 owner；与 DenseLU 的跨块 bindings 不同，当前稀疏路线没有把多个块的单元一起提交给该 owner。
+- [稀疏 owner](../../../../src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh#L79) 的容量取首个块 active cells、硬件 warp 宽度和可容纳的 lane 数的最小值。因此“两块合计 32 个物理单元”不能直接写成“生产程序同时执行一个 32-lane 批次”；实际每批还受块内单元数限制。
+- [ODE continuation 调度](../../../../src/cuda/microphysics/SparseOdeBatch.cuh#L213) 先下载一批请求并等待，然后在 Host 的 lane 循环中逐个调用 factorize／solve。已有有界因子缓存不等于已经实现多矩阵批量求解。
+- [provider 完成边界](../../../../src/cuda/microphysics/CuDssSparseSolver.cpp#L161) 在每次原生执行后检查设备状态并同步；solve 还保留原系统残差检查及有界修正。往返主要是请求和状态整数，不能将其描述成每次把完整矩阵或 RHS 搬回 CPU。一次性的 CSR 元数据读取也不等于 CPU 数值求解。
+
+由代码结构与上述观察可推断，下一项可测量的执行层目标是减少逐块、逐 lane 的串行提交与完成等待，
+而非仅把状态缓冲区固定页化或无限扩大因子缓存。是否存在合适的有界多矩阵提交方案、
+当前库接口是否满足其要求及实际收益，都还需要独立候选和真实测试；这里不宣称已经实现或必然加速。
+任何候选仍须保留同一 ODE、矩阵 token／世代、残差、错误传播和内存／退休边界，
+不通过减少核素、改库、换 CPU fallback 或放宽预算来获得“通过”。
+
+原 BE 大容量长轨迹另已准备 [只延长 wall 护栏的补测配方](prepared-extended-wall/README.md)，
+须等全部耦合正式计时及双端备份完成后再执行。目前只是准备检查点，原超时结论没有被改写。
