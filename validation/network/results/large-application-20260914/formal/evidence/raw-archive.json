@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "module": "large",
+  "scope": "same-binary KLU/cuDSS startup-to-exit including I/O, excluding qualification; not steady-state",
+  "runs": 144,
+  "comparisons": 138,
+  "archive": "/home/ubuntu/projects/ARCH-large-application-20260914/build/large-application-formal-v1.tar.zst",
+  "bytes": 1775255,
+  "sha256": "34be7d84dad7c362a562bfabca2f80e86ec59513fde474ab52cacd294afc8f3e",
+  "files": 1488,
+  "binary_archived_in_this_pack": false
+}

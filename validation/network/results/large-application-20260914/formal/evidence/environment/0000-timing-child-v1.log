@@ -1,0 +1,291 @@
+LARGE_TIMING_START generated_audit150_be_nr_helm warmup 0 cpu t1
+LARGE_TIMING_PASS 25.586037s
+LARGE_TIMING_START generated_audit150_be_nr_helm warmup 0 cpu t8
+LARGE_TIMING_PASS 18.555806s
+LARGE_TIMING_START generated_audit150_be_nr_helm warmup 0 cpu t16
+LARGE_TIMING_PASS 19.502869s
+LARGE_TIMING_START generated_audit150_be_nr_helm warmup 0 cuda t8
+LARGE_TIMING_PASS 97.582665s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 0 cpu t1
+LARGE_TIMING_PASS 24.096606s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 0 cpu t8
+LARGE_TIMING_PASS 19.456651s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 0 cpu t16
+LARGE_TIMING_PASS 20.074328s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 0 cuda t8
+LARGE_TIMING_PASS 97.335751s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 1 cuda t8
+LARGE_TIMING_PASS 98.409225s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 1 cpu t16
+LARGE_TIMING_PASS 20.053884s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 1 cpu t8
+LARGE_TIMING_PASS 19.467162s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 1 cpu t1
+LARGE_TIMING_PASS 24.290348s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 2 cpu t1
+LARGE_TIMING_PASS 24.480688s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 2 cpu t8
+LARGE_TIMING_PASS 19.818949s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 2 cpu t16
+LARGE_TIMING_PASS 20.130955s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 2 cuda t8
+LARGE_TIMING_PASS 98.196874s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 3 cuda t8
+LARGE_TIMING_PASS 98.257389s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 3 cpu t16
+LARGE_TIMING_PASS 20.159760s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 3 cpu t8
+LARGE_TIMING_PASS 18.748147s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 3 cpu t1
+LARGE_TIMING_PASS 24.209767s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 4 cpu t1
+LARGE_TIMING_PASS 25.881572s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 4 cpu t8
+LARGE_TIMING_PASS 19.789166s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 4 cpu t16
+LARGE_TIMING_PASS 19.823297s
+LARGE_TIMING_START generated_audit150_be_nr_helm measured 4 cuda t8
+LARGE_TIMING_PASS 97.513349s
+LARGE_TIMING_START generated_audit150_bd_helm warmup 0 cpu t1
+LARGE_TIMING_PASS 31.056166s
+LARGE_TIMING_START generated_audit150_bd_helm warmup 0 cpu t8
+LARGE_TIMING_PASS 20.595969s
+LARGE_TIMING_START generated_audit150_bd_helm warmup 0 cpu t16
+LARGE_TIMING_PASS 23.687305s
+LARGE_TIMING_START generated_audit150_bd_helm warmup 0 cuda t8
+LARGE_TIMING_PASS 224.022792s
+LARGE_TIMING_START generated_audit150_bd_helm measured 0 cpu t1
+LARGE_TIMING_PASS 31.332203s
+LARGE_TIMING_START generated_audit150_bd_helm measured 0 cpu t8
+LARGE_TIMING_PASS 21.882549s
+LARGE_TIMING_START generated_audit150_bd_helm measured 0 cpu t16
+LARGE_TIMING_PASS 25.178648s
+LARGE_TIMING_START generated_audit150_bd_helm measured 0 cuda t8
+LARGE_TIMING_PASS 224.277771s
+LARGE_TIMING_START generated_audit150_bd_helm measured 1 cuda t8
+LARGE_TIMING_PASS 223.389751s
+LARGE_TIMING_START generated_audit150_bd_helm measured 1 cpu t16
+LARGE_TIMING_PASS 25.309126s
+LARGE_TIMING_START generated_audit150_bd_helm measured 1 cpu t8
+LARGE_TIMING_PASS 22.534396s
+LARGE_TIMING_START generated_audit150_bd_helm measured 1 cpu t1
+LARGE_TIMING_PASS 34.128284s
+LARGE_TIMING_START generated_audit150_bd_helm measured 2 cpu t1
+LARGE_TIMING_PASS 31.133977s
+LARGE_TIMING_START generated_audit150_bd_helm measured 2 cpu t8
+LARGE_TIMING_PASS 21.304348s
+LARGE_TIMING_START generated_audit150_bd_helm measured 2 cpu t16
+LARGE_TIMING_PASS 24.733076s
+LARGE_TIMING_START generated_audit150_bd_helm measured 2 cuda t8
+LARGE_TIMING_PASS 224.366629s
+LARGE_TIMING_START generated_audit150_bd_helm measured 3 cuda t8
+LARGE_TIMING_PASS 224.568789s
+LARGE_TIMING_START generated_audit150_bd_helm measured 3 cpu t16
+LARGE_TIMING_PASS 23.668616s
+LARGE_TIMING_START generated_audit150_bd_helm measured 3 cpu t8
+LARGE_TIMING_PASS 23.071173s
+LARGE_TIMING_START generated_audit150_bd_helm measured 3 cpu t1
+LARGE_TIMING_PASS 32.572710s
+LARGE_TIMING_START generated_audit150_bd_helm measured 4 cpu t1
+LARGE_TIMING_PASS 31.125906s
+LARGE_TIMING_START generated_audit150_bd_helm measured 4 cpu t8
+LARGE_TIMING_PASS 21.615464s
+LARGE_TIMING_START generated_audit150_bd_helm measured 4 cpu t16
+LARGE_TIMING_PASS 24.494670s
+LARGE_TIMING_START generated_audit150_bd_helm measured 4 cuda t8
+LARGE_TIMING_PASS 224.816994s
+LARGE_TIMING_START generated_audit150_ros4_helm warmup 0 cpu t1
+LARGE_TIMING_PASS 22.746217s
+LARGE_TIMING_START generated_audit150_ros4_helm warmup 0 cpu t8
+LARGE_TIMING_PASS 16.553873s
+LARGE_TIMING_START generated_audit150_ros4_helm warmup 0 cpu t16
+LARGE_TIMING_PASS 17.634672s
+LARGE_TIMING_START generated_audit150_ros4_helm warmup 0 cuda t8
+LARGE_TIMING_PASS 110.364244s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 0 cpu t1
+LARGE_TIMING_PASS 21.953266s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 0 cpu t8
+LARGE_TIMING_PASS 16.635695s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 0 cpu t16
+LARGE_TIMING_PASS 17.161492s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 0 cuda t8
+LARGE_TIMING_PASS 110.192580s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 1 cuda t8
+LARGE_TIMING_PASS 110.724226s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 1 cpu t16
+LARGE_TIMING_PASS 17.578126s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 1 cpu t8
+LARGE_TIMING_PASS 15.769988s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 1 cpu t1
+LARGE_TIMING_PASS 22.550025s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 2 cpu t1
+LARGE_TIMING_PASS 22.374107s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 2 cpu t8
+LARGE_TIMING_PASS 15.239235s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 2 cpu t16
+LARGE_TIMING_PASS 15.734510s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 2 cuda t8
+LARGE_TIMING_PASS 110.425591s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 3 cuda t8
+LARGE_TIMING_PASS 110.026493s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 3 cpu t16
+LARGE_TIMING_PASS 17.572136s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 3 cpu t8
+LARGE_TIMING_PASS 16.959812s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 3 cpu t1
+LARGE_TIMING_PASS 22.525518s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 4 cpu t1
+LARGE_TIMING_PASS 22.759468s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 4 cpu t8
+LARGE_TIMING_PASS 16.917949s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 4 cpu t16
+LARGE_TIMING_PASS 16.247291s
+LARGE_TIMING_START generated_audit150_ros4_helm measured 4 cuda t8
+LARGE_TIMING_PASS 110.279612s
+LARGE_TIMING_START generated_audit200_be_nr_helm warmup 0 cpu t1
+LARGE_TIMING_PASS 34.824412s
+LARGE_TIMING_START generated_audit200_be_nr_helm warmup 0 cpu t8
+LARGE_TIMING_PASS 24.345832s
+LARGE_TIMING_START generated_audit200_be_nr_helm warmup 0 cpu t16
+LARGE_TIMING_PASS 24.997613s
+LARGE_TIMING_START generated_audit200_be_nr_helm warmup 0 cuda t8
+LARGE_TIMING_PASS 136.553960s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 0 cpu t1
+LARGE_TIMING_PASS 34.628473s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 0 cpu t8
+LARGE_TIMING_PASS 21.568975s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 0 cpu t16
+LARGE_TIMING_PASS 26.397972s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 0 cuda t8
+LARGE_TIMING_PASS 136.525208s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 1 cuda t8
+LARGE_TIMING_PASS 137.089700s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 1 cpu t16
+LARGE_TIMING_PASS 27.708658s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 1 cpu t8
+LARGE_TIMING_PASS 25.268564s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 1 cpu t1
+LARGE_TIMING_PASS 36.466748s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 2 cpu t1
+LARGE_TIMING_PASS 34.493611s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 2 cpu t8
+LARGE_TIMING_PASS 25.100691s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 2 cpu t16
+LARGE_TIMING_PASS 28.397167s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 2 cuda t8
+LARGE_TIMING_PASS 137.335829s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 3 cuda t8
+LARGE_TIMING_PASS 137.029874s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 3 cpu t16
+LARGE_TIMING_PASS 27.438430s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 3 cpu t8
+LARGE_TIMING_PASS 22.612864s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 3 cpu t1
+LARGE_TIMING_PASS 35.147635s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 4 cpu t1
+LARGE_TIMING_PASS 35.678033s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 4 cpu t8
+LARGE_TIMING_PASS 24.419135s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 4 cpu t16
+LARGE_TIMING_PASS 27.998859s
+LARGE_TIMING_START generated_audit200_be_nr_helm measured 4 cuda t8
+LARGE_TIMING_PASS 136.872968s
+LARGE_TIMING_START generated_audit200_bd_helm warmup 0 cpu t1
+LARGE_TIMING_PASS 45.529929s
+LARGE_TIMING_START generated_audit200_bd_helm warmup 0 cpu t8
+LARGE_TIMING_PASS 29.823268s
+LARGE_TIMING_START generated_audit200_bd_helm warmup 0 cpu t16
+LARGE_TIMING_PASS 32.992970s
+LARGE_TIMING_START generated_audit200_bd_helm warmup 0 cuda t8
+LARGE_TIMING_PASS 291.702367s
+LARGE_TIMING_START generated_audit200_bd_helm measured 0 cpu t1
+LARGE_TIMING_PASS 46.114246s
+LARGE_TIMING_START generated_audit200_bd_helm measured 0 cpu t8
+LARGE_TIMING_PASS 31.582142s
+LARGE_TIMING_START generated_audit200_bd_helm measured 0 cpu t16
+LARGE_TIMING_PASS 31.905606s
+LARGE_TIMING_START generated_audit200_bd_helm measured 0 cuda t8
+LARGE_TIMING_PASS 291.483419s
+LARGE_TIMING_START generated_audit200_bd_helm measured 1 cuda t8
+LARGE_TIMING_PASS 292.755041s
+LARGE_TIMING_START generated_audit200_bd_helm measured 1 cpu t16
+LARGE_TIMING_PASS 34.320483s
+LARGE_TIMING_START generated_audit200_bd_helm measured 1 cpu t8
+LARGE_TIMING_PASS 29.201037s
+LARGE_TIMING_START generated_audit200_bd_helm measured 1 cpu t1
+LARGE_TIMING_PASS 44.326334s
+LARGE_TIMING_START generated_audit200_bd_helm measured 2 cpu t1
+LARGE_TIMING_PASS 44.443540s
+LARGE_TIMING_START generated_audit200_bd_helm measured 2 cpu t8
+LARGE_TIMING_PASS 28.471933s
+LARGE_TIMING_START generated_audit200_bd_helm measured 2 cpu t16
+LARGE_TIMING_PASS 32.001378s
+LARGE_TIMING_START generated_audit200_bd_helm measured 2 cuda t8
+LARGE_TIMING_PASS 292.447955s
+LARGE_TIMING_START generated_audit200_bd_helm measured 3 cuda t8
+LARGE_TIMING_PASS 292.027784s
+LARGE_TIMING_START generated_audit200_bd_helm measured 3 cpu t16
+LARGE_TIMING_PASS 33.109024s
+LARGE_TIMING_START generated_audit200_bd_helm measured 3 cpu t8
+LARGE_TIMING_PASS 26.939529s
+LARGE_TIMING_START generated_audit200_bd_helm measured 3 cpu t1
+LARGE_TIMING_PASS 44.515509s
+LARGE_TIMING_START generated_audit200_bd_helm measured 4 cpu t1
+LARGE_TIMING_PASS 44.327268s
+LARGE_TIMING_START generated_audit200_bd_helm measured 4 cpu t8
+LARGE_TIMING_PASS 29.120626s
+LARGE_TIMING_START generated_audit200_bd_helm measured 4 cpu t16
+LARGE_TIMING_PASS 32.596200s
+LARGE_TIMING_START generated_audit200_bd_helm measured 4 cuda t8
+LARGE_TIMING_PASS 291.764448s
+LARGE_TIMING_START generated_audit200_ros4_helm warmup 0 cpu t1
+LARGE_TIMING_PASS 30.848336s
+LARGE_TIMING_START generated_audit200_ros4_helm warmup 0 cpu t8
+LARGE_TIMING_PASS 22.736870s
+LARGE_TIMING_START generated_audit200_ros4_helm warmup 0 cpu t16
+LARGE_TIMING_PASS 22.726064s
+LARGE_TIMING_START generated_audit200_ros4_helm warmup 0 cuda t8
+LARGE_TIMING_PASS 146.337148s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 0 cpu t1
+LARGE_TIMING_PASS 31.359884s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 0 cpu t8
+LARGE_TIMING_PASS 22.592652s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 0 cpu t16
+LARGE_TIMING_PASS 23.473514s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 0 cuda t8
+LARGE_TIMING_PASS 146.400372s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 1 cuda t8
+LARGE_TIMING_PASS 145.787960s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 1 cpu t16
+LARGE_TIMING_PASS 22.939088s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 1 cpu t8
+LARGE_TIMING_PASS 21.521077s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 1 cpu t1
+LARGE_TIMING_PASS 30.561669s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 2 cpu t1
+LARGE_TIMING_PASS 30.544337s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 2 cpu t8
+LARGE_TIMING_PASS 20.990472s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 2 cpu t16
+LARGE_TIMING_PASS 24.236022s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 2 cuda t8
+LARGE_TIMING_PASS 145.746569s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 3 cuda t8
+LARGE_TIMING_PASS 145.981942s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 3 cpu t16
+LARGE_TIMING_PASS 24.168125s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 3 cpu t8
+LARGE_TIMING_PASS 22.613428s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 3 cpu t1
+LARGE_TIMING_PASS 30.601337s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 4 cpu t1
+LARGE_TIMING_PASS 32.106535s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 4 cpu t8
+LARGE_TIMING_PASS 21.225051s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 4 cpu t16
+LARGE_TIMING_PASS 24.203232s
+LARGE_TIMING_START generated_audit200_ros4_helm measured 4 cuda t8
+LARGE_TIMING_PASS 145.981352s
+MEMORY_GUARD_RESULT min_available_kib=114315076 baseline_swap_kib=9256 peak_swap_kib=9256 guard_stopped=False peak_owned_rss_kib=544064 elapsed_seconds=8939.185 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=15620 min_free_mib=4143 samples=8411 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.188 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=8410 complete=True

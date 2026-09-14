@@ -1,6 +1,7 @@
 # 150／200 核素完整应用构建与验证
 
-当前已完成 **clean Release 完整构建、修复阶段增量整合和原六组完整应用数值矩阵**；正式性能仍单独进行。
+当前已完成 **clean Release 完整构建、修复阶段增量整合、原六组完整应用数值矩阵和正式计时**。
+这六个原定 32 单元算例的 CUDA 端到端耗时约为 CPU8 的 5.0–10.3 倍，性能尚未达到齐平目标。
 不是 focused harness 的通过代替完整 ARCH 验收。
 
 ## 原始 clean 构建
@@ -107,3 +108,39 @@ Git 中采用浅目录投影，避免超过 Windows 路径限制；原 compact �
 原 clean 构建四个产物的独立备份也已双端核验：服务器 `fixed-integration-v1/base-products.tar.zst`，
 本机 `build/large-base-products-20260914.tar.zst`，262,029,070 bytes，
 SHA-256 `f27f6e9dd0344043f5112021d7754a2fc801ac78397950281d39dbd954a5414d`。
+
+## 正式端到端计时
+
+2026-09-14 06:54–09:23 UTC，原六算例、CPU1／8／16 和 CUDA/Host8，
+每配置一次预热、五次交替正式运行，**144 次运行、138 次字段及宏步／regrid 对照全部通过**。
+源码、输入、构建和产物前后身份不变；物理终止时间、网络、EOS、求解器和原预算未改。
+完整样本表见 [正式性能汇总](formal/summary.zh-CN.md)，完整记录见 `formal/evidence/evidence.json`。
+
+在这六组实测中 CPU8 的中位数均优于 CPU1／CPU16。CUDA 仍明显较慢，不能因为数值通过就称为性能通过，
+也不能拿内置小网络的收益覆盖这一结果。适用范围限定为当前 H100-20C／20 GiB vGPU、
+32 个物理单元、20 宏步至 1e-10；不是独占整卡或大规模全网格结论。
+口径为进程启动到退出，包含初始化与初末输出，不包含事后资格检查；没有声称稳态或纯矩阵 kernel 性能。
+
+诊断入口仍见 [调度观测与被否决候选](../large-scheduling-20260914/README.md)：
+当前 executor 按 lane 调用同步的线性 provider；原长 BE 观测中 symbolic analysis 很少，
+主要问题不能简单归结为反复 symbolic analysis 或传输字节量。
+固定页状态试验没有显示明确端到端收益，未采用。真正合并多 lane 的提交／完成与批量求解，
+需要独立实现和重新通过自适应 ODE、原残差、失败状态及有界生命周期门槛；本轮没有把它冒称为已完成能力。
+
+guard 没有资源终止或 swap 增长；进程组峰值 RSS 544,064 KiB，
+全设备显存峰值 15,620 MiB、最低可用 4,143 MiB，观测完整。
+8939.185 秒是整个测试链耗时，不用于计算加速比。
+另有两次只读进程环境／线程快照，未发现启用 `CUDA_LAUNCH_BLOCKING`；
+它们只是补充抽查，不是整段时间的环境证明，也没有据此修改线程亲和性。
+
+全部输入、HDF5、日志和后处理配方共 1488 个文件已双端备份并核验：
+
+- raw：`large-application-formal-v1.tar.zst`，1,775,255 bytes；SHA-256 `34be7d84dad7c362a562bfabca2f80e86ec59513fde474ab52cacd294afc8f3e`。
+- compact：`large-application-formal-v1-compact.tar.zst`，474,487 bytes；SHA-256 `cb34cd5d477a5ef1ce1ba467fc7e83460b06e0579e7235ef8a478314dae50330`。
+- 服务器本工作树 `build/` 与本机 `C:/tmp/ARCH-perf-20260909/build/`。二进制在前述独立 runtime 原始包中，不重复放入此计时包。
+
+双端 raw 核验后，逐一校验 tar 成员／manifest／展开文件 SHA，再清理了 576 个重复展开的 CHK／PLT HDF，
+共 64,822,032 bytes；两份原始包完整保留。`formal/hdf-compaction.json` 记录每个成员。
+因此证据中的服务器 HDF 路径是原执行路径，后续读取需从 raw 恢复，不能冒称它们仍全部展开存在。
+本机后处理门槛用既有完整正式记录作正控，并拒绝 16 种损坏记录；执行时脚本与日志保存在 `formal/recipes/`，
+原执行入口为本机仓库 `build/test-formal-archive-20260914.py`，不是一个新的物理 oracle。
