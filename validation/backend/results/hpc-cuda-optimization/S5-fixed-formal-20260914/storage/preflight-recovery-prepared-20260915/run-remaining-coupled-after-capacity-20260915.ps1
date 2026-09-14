@@ -31,6 +31,9 @@ for name in ARCH nvcc ptxas cc1plus; do
  pgrep -x "$name" >/dev/null || status=$?
  if [[ "$status" -ne 1 ]]; then echo "Active $name or failed process check; refusing second workflow" >&2; exit 2; fi
 done
+status=0
+pgrep -f '^/home/ubuntu/projects/.*/arch_cuda_generated_sparse_burn_' >/dev/null || status=$?
+if [[ "$status" -ne 1 ]]; then echo 'Sparse harness active or failed process check; refusing second workflow' >&2; exit 2; fi
 gpu_processes=$(nvidia-smi --query-compute-apps=pid --format=csv,noheader)
 test -z "$gpu_processes"
 test "$(df -Pk "$base" | awk 'NR==2 {print $4}')" -ge 8388608
@@ -38,7 +41,7 @@ test ! -e "$base/controller-v3-formal-coupled_bd_rkl1_all_transport-v1"
 test ! -e "$base/formal-coupled_bd_rkl1_all_transport-v1"
 test ! -e "$base/formal-coupled_bd_rkl1_all_transport-v1.stdout"
 test ! -e "$base/formal-coupled_bd_rkl1_all_transport-v1.stderr"
-"$recipes/validation-python/bin/python" -c 'import hashlib,json,pathlib,sys; p=pathlib.Path(sys.argv[1]); r=json.loads((p/"preservation.json").read_text()); assert r["status"]=="preserved_never_started_preflight" and r["sample_output_absent"] and r["scientific_validation"] is False and r["module"]=="coupled_bd_rkl1_all_transport" and r["pending_move"] is None; assert r["before"] and all((p/k).stat().st_size==v["bytes"] and hashlib.sha256((p/k).read_bytes()).hexdigest()==v["sha256"] for k,v in r["before"].items()); print("PRESERVED_PREFLIGHT_IDENTITY_PASS_NOT_SCIENCE_PASS")' "$base/__PRESERVED__"
+"$recipes/validation-python/bin/python" -c 'import hashlib,json,pathlib,sys; sys.flags.optimize and sys.exit("Receipt checks require assertions enabled; refusing optimized Python"); p=pathlib.Path(sys.argv[1]); assert p.is_dir() and not p.is_symlink(); r=json.loads((p/"preservation.json").read_text()); assert r["status"]=="preserved_never_started_preflight" and r["sample_output_absent"] and r["scientific_validation"] is False and r["module"]=="coupled_bd_rkl1_all_transport" and r["pending_move"] is None; assert r["before"] and all(not pathlib.PurePosixPath(k).is_absolute() and ".." not in pathlib.PurePosixPath(k).parts and "\\" not in k and not (p/k).is_symlink() and (p/k).resolve().is_relative_to(p.resolve()) and (p/k).is_file() and (p/k).stat().st_size==v["bytes"] and hashlib.sha256((p/k).read_bytes()).hexdigest()==v["sha256"] for k,v in r["before"].items()); print("PRESERVED_PREFLIGHT_IDENTITY_PASS_NOT_SCIENCE_PASS")' "$base/__PRESERVED__"
 printf 'CAPACITY_RESUME_BARRIER_PASS\n'
 '@
 $probe=$probe.Replace('__BASE__',$base).Replace('__PRESERVED__',$preserved)

@@ -1,0 +1,17 @@
+test_active_application_refuses_cleanup (__main__.ReclaimContract.test_active_application_refuses_cleanup) ... ok
+test_apply_only_verified_hdf_copies (__main__.ReclaimContract.test_apply_only_verified_hdf_copies) ... ok
+test_changed_archive_refuses_all_removals (__main__.ReclaimContract.test_changed_archive_refuses_all_removals) ... ok
+test_changed_live_hdf_refuses_all_removals (__main__.ReclaimContract.test_changed_live_hdf_refuses_all_removals) ... ok
+test_decoder_failure_preserves_all_hdf (__main__.ReclaimContract.test_decoder_failure_preserves_all_hdf) ... ok
+test_decoder_output_is_drained_before_wait (__main__.ReclaimContract.test_decoder_output_is_drained_before_wait) ... ok
+test_dry_run_preserves_all (__main__.ReclaimContract.test_dry_run_preserves_all) ... ok
+test_existing_receipt_not_overwritten (__main__.ReclaimContract.test_existing_receipt_not_overwritten) ... ok
+test_partial_failure_has_pending_and_removed_journal (__main__.ReclaimContract.test_partial_failure_has_pending_and_removed_journal) ... ok
+test_traversal_member_refused (__main__.ReclaimContract.test_traversal_member_refused) ... ok
+test_unlisted_hdf_requires_investigation (__main__.ReclaimContract.test_unlisted_hdf_requires_investigation) ... ok
+test_wrong_local_member_hash_refuses_removal (__main__.ReclaimContract.test_wrong_local_member_hash_refuses_removal) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.708s
+
+OK

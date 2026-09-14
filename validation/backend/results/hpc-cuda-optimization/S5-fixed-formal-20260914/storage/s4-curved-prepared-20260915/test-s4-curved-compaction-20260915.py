@@ -84,6 +84,33 @@ class ReclaimContract(unittest.TestCase):
         self.assertFalse(result['applied'])
         self.assert_all_originals_exist()
 
+    def test_decoder_output_is_drained_before_wait(self):
+        with self.archive.open('ab') as stream:
+            stream.write(b'\0' * 131072)
+        self.archive_sha = reclaim.file_hash(self.archive)
+        self.proof['archive'].update(sha256=self.archive_sha, bytes=self.archive.stat().st_size)
+        class MustDrain(FakeDecoder):
+            def wait(self):
+                if self.stdout.read(1):
+                    raise RuntimeError('decoder stdout not drained before wait')
+                return 0
+        with patch.object(reclaim, 'SHA', self.archive_sha), \
+             patch.object(reclaim, 'ARCHIVE_BYTES', self.archive.stat().st_size), \
+             patch.object(reclaim.subprocess, 'Popen', MustDrain):
+            result = self.run_cleanup()
+        self.assertEqual(result['status'], 'verified_only')
+        self.assert_all_originals_exist()
+
+    def test_decoder_failure_preserves_all_hdf(self):
+        class BadDecoder(FakeDecoder):
+            def wait(self):
+                return 1
+        with patch.object(reclaim.subprocess, 'Popen', BadDecoder):
+            with self.assertRaisesRegex(RuntimeError, 'Canonical archive decoder failed'):
+                self.run_cleanup(apply=True)
+        self.assertFalse(self.output.exists())
+        self.assert_all_originals_exist()
+
     def test_apply_only_verified_hdf_copies(self):
         result = self.run_cleanup(apply=True)
         self.assertTrue(result['applied'])

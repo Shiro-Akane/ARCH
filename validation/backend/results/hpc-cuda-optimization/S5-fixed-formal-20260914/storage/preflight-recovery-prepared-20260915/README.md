@@ -25,5 +25,12 @@ GPU/ARCH/编译均空闲且磁盘恢复到原 8 GiB 门槛，才依次调用原 
 另已通过 Python AST、PowerShell parser 和内嵌 Bash `-n` 检查。
 这些均不是服务器清理执行记录、CUDA 测试、sanitizer 或物理验证。
 
+后续本机补充：接续入口同样拒绝活动的 sparse harness（包括尚未初始化 CUDA context 的 CPU 阶段），
+读取保存记录时拒绝越界／绝对／反斜杠路径、缺失或变更的文件、错误状态／模块／pending move。
+若 Python 用 `-O` 关闭断言，入口直接拒绝，不能静默绕过记录检查。
+`test-coupled-resume-receipt-20260915.py` 直接抽取入口内的 Python 读取代码，13 项临时 fixture 测试通过；
+较早的 12 项测试日志和增加 `-O` 拒绝测试后的 13 项日志分别保留。
+这些补充仍未在服务器执行；正在运行的正式 worker、生产代码及计时协议不变。
+
 如需空间，使用另一个已准备的 [S4 归档副本核验方案](../s4-curved-prepared-20260915/README.md)，
 且必须在正式采样全部退出的阶段间隙执行。两项工具不降低任何资源或科学门槛。

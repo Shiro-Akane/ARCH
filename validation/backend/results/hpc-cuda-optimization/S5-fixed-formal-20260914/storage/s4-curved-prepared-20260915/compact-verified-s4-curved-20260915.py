@@ -105,6 +105,10 @@ def main():
                 require(data is not None and digest(data) == row['sha256'] == file_hash(path),
                         'Local tar, server tar and live HDF hashes differ')
                 verified[member.name] = row
+        # Tar iteration can stop before decoder EOF (for example at tar padding).
+        # Drain before wait so a decoder cannot block on a full stdout pipe.
+        while process.stdout.read(1024 * 1024):
+            pass
         require(process.wait() == 0, 'Canonical archive decoder failed')
     require(verified.keys() == expected.keys() and file_hash(archive) == SHA, 'Incomplete or changed archive')
     quiescent()
