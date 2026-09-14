@@ -1,0 +1,126 @@
+{
+  "status": "focused-passed",
+  "tests": {
+    "host-contract": {
+      "returncode": 0,
+      "passed": true
+    },
+    "provider-contract": {
+      "returncode": 0,
+      "passed": true
+    },
+    "audit150": {
+      "returncode": 0,
+      "focused_gate_pass": true,
+      "summary": {
+        "methods": {
+          "1": {
+            "attempts": 8981,
+            "rejections": 90,
+            "max_field_error": 6.056968180508399e-15,
+            "max_limiter_error": 6.193672758475039e-15,
+            "max_evolution": 2.5734306900671022e-05,
+            "pool_capacity": 2,
+            "workspace_bytes_per_lane": 36060,
+            "cpu_seconds": 12.787387331999998,
+            "gpu_seconds": 376.143069488,
+            "kernels": 112012,
+            "synchronizations": 46987
+          },
+          "2": {
+            "attempts": 29,
+            "rejections": 3,
+            "max_field_error": 1.7955028982469307e-14,
+            "max_limiter_error": 1.0439440018241819e-14,
+            "max_evolution": 2.5734290716561414e-05,
+            "pool_capacity": 2,
+            "workspace_bytes_per_lane": 116676,
+            "cpu_seconds": 0.109494571,
+            "gpu_seconds": 3.34052678,
+            "kernels": 4802,
+            "synchronizations": 1873
+          },
+          "3": {
+            "attempts": 343,
+            "rejections": 45,
+            "max_field_error": 8.517513014283897e-15,
+            "max_limiter_error": 6.408566701459062e-15,
+            "max_evolution": 2.5734290711232344e-05,
+            "pool_capacity": 2,
+            "workspace_bytes_per_lane": 60996,
+            "cpu_seconds": 0.338320327,
+            "gpu_seconds": 9.110349164,
+            "kernels": 7168,
+            "synchronizations": 2831
+          }
+        },
+        "steps": 4,
+        "storage_sizes": [
+          2,
+          3
+        ],
+        "field_budget": 2e-10,
+        "limiter_budget": 2e-08,
+        "timing_scope": "diagnostic per-step wall time; not a controlled speedup/build benchmark"
+      }
+    },
+    "audit200": {
+      "returncode": 0,
+      "focused_gate_pass": true,
+      "summary": {
+        "methods": {
+          "1": {
+            "attempts": 8397,
+            "rejections": 90,
+            "max_field_error": 5.3147099802342285e-15,
+            "max_limiter_error": 5.465610646430048e-15,
+            "max_evolution": 2.5741808936163846e-05,
+            "pool_capacity": 2,
+            "workspace_bytes_per_lane": 48540,
+            "cpu_seconds": 18.201307675,
+            "gpu_seconds": 528.962876031,
+            "kernels": 104712,
+            "synchronizations": 43930
+          },
+          "2": {
+            "attempts": 23,
+            "rejections": 1,
+            "max_field_error": 1.8515004976658877e-14,
+            "max_limiter_error": 1.8466660790184656e-14,
+            "max_evolution": 2.5741791456757035e-05,
+            "pool_capacity": 2,
+            "workspace_bytes_per_lane": 156436,
+            "cpu_seconds": 0.141441027,
+            "gpu_seconds": 3.6068255799999998,
+            "kernels": 3754,
+            "synchronizations": 1474
+          },
+          "3": {
+            "attempts": 336,
+            "rejections": 45,
+            "max_field_error": 1.1909800079599705e-14,
+            "max_limiter_error": 1.1848395357205585e-14,
+            "max_evolution": 2.5741791450539786e-05,
+            "pool_capacity": 2,
+            "workspace_bytes_per_lane": 82356,
+            "cpu_seconds": 0.505049895,
+            "gpu_seconds": 12.845511891,
+            "kernels": 6788,
+            "synchronizations": 2718
+          }
+        },
+        "steps": 4,
+        "storage_sizes": [
+          2,
+          3
+        ],
+        "field_budget": 2e-10,
+        "limiter_budget": 2e-08,
+        "timing_scope": "diagnostic per-step wall time; not a controlled speedup/build benchmark"
+      }
+    }
+  }
+}
+MEMORY_GUARD_RESULT min_available_kib=110509456 baseline_swap_kib=13096 peak_swap_kib=13096 guard_stopped=False peak_owned_rss_kib=1049460 elapsed_seconds=995.686 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=14600 min_free_mib=5163 samples=934 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=2.287 peak_io_full_percent=4.241 peak_swap_in_mib_s=0.026 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=933 complete=True

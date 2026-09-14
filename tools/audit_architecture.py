@@ -182,8 +182,8 @@ _CUDA_COMPLETION_LAUNCHES = {
     "execute_diffusion_stage":
         r"\blaunch_cuda_backend_diffusion_stage\s*\(",
     "execute_burn": r"\blaunch_cuda_burn_route\s*\(",
-    "compute_diffusion_dt_batch": r"\blaunch_cuda_backend_diffusion_dt\s*\(",
-    "execute_diffusion_stage_batch": r"\blaunch_cuda_backend_diffusion_stage\s*\(",
+    "compute_diffusion_dt_batch": r"\blaunch_cuda_backend_diffusion_dt_batch\s*\(",
+    "execute_diffusion_stage_batch": r"\blaunch_cuda_backend_diffusion_stage_batch\s*\(",
     "execute_burn_batch": r"\blaunch_cuda_burn_route\s*\(",
 }
 

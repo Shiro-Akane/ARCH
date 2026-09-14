@@ -238,10 +238,10 @@ public:
                 }
                 CuDssResult result;
                 if (request == OdeLinearRequest::SolveWithFactors) {
-                    // Keep one resident factorization, not one unpredictable
-                    // fill-in allocation per cell/lane. Another lane can evict
-                    // it; restore the original device matrix before resuming a
-                    // factored solve for this token. No ODE policy is changed.
+                    // Select this lane/token through the provider's bounded
+                    // factor cache. A miss may restore the original device
+                    // matrix; a hit reuses completed factors. Count/estimated
+                    // memory caps stay with the provider, not the ODE policy.
                     if (cached_factor_token_ != factor_tokens_[lane])
                         result = provider_->factorize(values, factor_tokens_[lane]);
                     if (result.success())
@@ -277,8 +277,8 @@ public:
 private:
     SparseOdeBatchView<Network, Solver> batch_;
     cudaStream_t stream_;
-    // One resident numerical factor set bounds fill-in memory independently of
-    // pool capacity; a different lane's token can evict the current factors.
+    // One provider owns the required factor and a count/memory-bounded optional
+    // cache; a different lane's token can still evict the selected factors.
     std::unique_ptr<CuDssSparseSolver> provider_;
     std::vector<int> requests_, responses_;
     std::vector<std::uint64_t> factor_tokens_;

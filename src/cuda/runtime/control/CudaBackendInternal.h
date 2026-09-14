@@ -17,6 +17,7 @@
 #include "amr/AmrFluxExecutionPlan.h"
 #include "cuda/runtime/CudaBackendTypes.h"
 #include "cuda/runtime/burn/CudaBackendBurnSparse.h"
+#include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 
 #include "cuda/hydro/BoundaryPlan.h"
@@ -266,7 +267,10 @@ struct CudaBackend::Impl {
         }
     } hydro_batch;
     HydroBatchScratch diffusion_batch;
+    ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
+    ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
     ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
+    ReusableDeviceAllocation<DeviceBurnBatchBlock> burn_bindings;
     ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
     ReusableDeviceAllocation<DeviceBoundaryBatchBlock> boundary_bindings;
     struct ExchangeScratch {

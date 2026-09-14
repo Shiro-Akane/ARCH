@@ -884,10 +884,10 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
         cases = {
             "compute_diffusion_dt_batch": (
                 "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
-                "launch_cuda_backend_diffusion_dt();"),
+                "launch_cuda_backend_diffusion_dt_batch();"),
             "execute_diffusion_stage_batch": (
                 "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
-                "launch_cuda_backend_diffusion_stage();"),
+                "launch_cuda_backend_diffusion_stage_batch();"),
             "execute_burn_batch": (
                 "src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
                 "launch_cuda_burn_route(block.burn_workspace_storage.get(), "
@@ -953,12 +953,12 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "double CudaBackend::compute_diffusion_dt() {"
                 "return compute_diffusion_dt_batch({&current, 1}).front(); }\n"
                 "double CudaBackend::compute_diffusion_dt_batch() {"
-                "launch_cuda_backend_diffusion_dt(); quiesce();"
+                "launch_cuda_backend_diffusion_dt_batch(); quiesce();"
                 "impl_->runtime_counters.kernel_count += 2; }\n"
                 "void CudaBackend::execute_diffusion_stage() {"
                 "return execute_diffusion_stage_batch({&current, 1}, plan, descriptor, dt, dt_fe, expected); }\n"
                 "void CudaBackend::execute_diffusion_stage_batch() {"
-                "launch_cuda_backend_diffusion_stage(); quiesce();"
+                "launch_cuda_backend_diffusion_stage_batch(); quiesce();"
                 "impl_->runtime_counters.kernel_count += 2; }\n"
                 "void CudaBackend::execute_burn() {"
                 "return execute_burn_batch({&current, 1}, dt, expected).front(); }\n"

@@ -1,0 +1,7 @@
+probe_cudss_calls.cpp:32:26: error: conflicting declaration of C function ‘cudssStatus_t cudssExecute(cudssHandle_t, cudssPhase_t, cudssConfig_t, cudssData_t, cudssMatrix_t, cudssMatrix_t, cudssMatrix_t)’
+   32 | extern "C" cudssStatus_t cudssExecute(cudssHandle_t handle,cudssPhase_t phase,cudssConfig_t config,
+      |                          ^~~~~~~~~~~~
+In file included from probe_cudss_calls.cpp:4:
+/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include/cudss.h:94:24: note: previous declaration ‘cudssStatus_t cudssExecute(cudssHandle_t, int, cudssConfig_t, cudssData_t, cudssMatrix_t, cudssMatrix_t, cudssMatrix_t)’
+   94 | cudssStatus_t CUDSSAPI cudssExecute(cudssHandle_t handle, int phase, const cudssConfig_t solverConfig, cudssData_t solverData, const cudssMatrix_t inputMatrix, cudssMatrix_t solution, const cudssMatrix_t rhs);
+      |                        ^~~~~~~~~~~~

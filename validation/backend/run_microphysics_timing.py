@@ -74,6 +74,18 @@ def make_cases(modules, blocks):
     return cases
 
 
+def lane_configurations(threads, baseline_threads=None, gpu_threads=None):
+    """Keep a complete CPU/cuda pair per version while avoiding redundant GPU scans."""
+    baseline_threads = threads if baseline_threads is None else baseline_threads
+    gpu_selection = threads if gpu_threads is None else [gpu_threads]
+    for selection in (threads, baseline_threads, gpu_selection):
+        require(selection and min(selection) > 0 and len(selection) == len(set(selection)),
+                'thread selections must be positive, nonempty and unique')
+    return [(v,backend,t) for v in ('baseline','candidate') for backend in ('cpu','cuda')
+            for t in (gpu_selection if backend == 'cuda' else
+                      baseline_threads if v == 'baseline' else threads)]
+
+
 def timed_process(command, cwd, env, directory, timeout):
     expired = False
     with (directory / 'arch.stdout').open('w') as stdout, (directory / 'arch.stderr').open('w') as stderr:
@@ -213,6 +225,10 @@ def main():
     p.add_argument('--timeout',type=float,default=1200)
     p.add_argument('--pilot',action='store_true')
     p.add_argument('--preload',type=Path,help='test-only CUDA API observer; requires --pilot')
+    p.add_argument('--baseline-threads',type=int,nargs='+',
+                   help='optional baseline CPU selection; candidate CPU still scans --threads')
+    p.add_argument('--gpu-threads',type=int,
+                   help='optional fixed Host OpenMP count for both CUDA lanes; default scans --threads')
     args = p.parse_args()
     require(not os.environ.get('LD_PRELOAD'), 'inherited LD_PRELOAD is not a controlled timing environment')
     require(not args.preload or args.pilot, 'instrumented runs cannot be formal speedup samples')
@@ -220,6 +236,7 @@ def main():
     require(min(args.threads) > 0 and args.repeats >= 5 and args.warmups >= 1 and math.isfinite(args.timeout) and args.timeout > 0,
             'formal protocol requires positive threads/timeout, >=1 warmup and >=5 repeats')
     require(all(len(v)==len(set(v)) for v in (args.threads,args.blocks,args.modules)), 'duplicate selection')
+    configurations = lane_configurations(args.threads,args.baseline_threads,args.gpu_threads)
     if args.pilot: args.warmups,args.repeats = 0,1
     args.output_root = args.output_root.resolve()
     require(args.output_root.is_relative_to(ROOT/'build') and args.output_root != ROOT/'build','output must be a new build subdirectory')
@@ -232,7 +249,8 @@ def main():
         timing_scope='ARCH startup-to-exit including initial/final I/O; excludes qualification; no steady-state claim',
         cases=cases,identities_before={v:provenance.capture(**kw) for v,kw in identities.items()},
         inputs={v:validation.runtime_case_inputs(cases,s) for v,(s,b) in args.versions.items()},
-        recipe=provenance.file_identity(Path(__file__)),lanes=[],comparisons=[],statistics=[])
+        recipe=provenance.file_identity(Path(__file__)),configurations=configurations,
+        lanes=[],comparisons=[],statistics=[])
     if args.preload: report['observer']=provenance.file_identity(args.preload)
     def save():
         (args.output_root/'evidence.json').write_text(json.dumps(report,indent=2,default=str)+'\n')
@@ -250,8 +268,6 @@ def main():
                 'baseline and candidate build/physics settings differ')
         for case in cases:
             reference = None
-            configurations = [(v,backend,t) for v in ('baseline','candidate')
-                              for backend in ('cpu','cuda') for t in args.threads]
             for phase,count in [('warmup',args.warmups),('measured',args.repeats)]:
                 for repeat in range(count):
                     order = configurations if repeat%2 == 0 else list(reversed(configurations))

@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/run_sparse_capacity_v3.py", line 115, in <module>
+    main()
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/run_sparse_capacity_v3.py", line 94, in main
+    run(name, command, observe=True)
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/run_sparse_capacity_v3.py", line 55, in run
+    rc = subprocess.run(command, cwd=build, stdout=stdout, stderr=stderr, timeout=timeout,env=env).returncode
+  File "/usr/lib/python3.10/subprocess.py", line 505, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+  File "/usr/lib/python3.10/subprocess.py", line 1154, in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+  File "/usr/lib/python3.10/subprocess.py", line 2047, in _communicate
+    self.wait(timeout=self._remaining_time(endtime))
+  File "/usr/lib/python3.10/subprocess.py", line 1209, in wait
+    return self._wait(timeout=timeout)
+  File "/usr/lib/python3.10/subprocess.py", line 1953, in _wait
+    time.sleep(delay)
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/run_sparse_capacity_v3.py", line 34, in interrupted
+    raise KeyboardInterrupt(f'interrupted by signal {signum}')
+KeyboardInterrupt: interrupted by signal 15
+MEMORY_GUARD_RESULT min_available_kib=112505080 baseline_swap_kib=12584 peak_swap_kib=12584 guard_stopped=False peak_owned_rss_kib=976880 elapsed_seconds=547.887 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=11851 min_free_mib=7912 samples=512 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.792 peak_io_full_percent=2.868 peak_swap_in_mib_s=0.140 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=511 complete=True

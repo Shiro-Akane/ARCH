@@ -1,0 +1,216 @@
+TIMING_START burn_ros4_b8 warmup 0 baseline cpu t8
+TIMING_PASS 3.731767s
+TIMING_START burn_ros4_b8 warmup 0 baseline cuda t8
+TIMING_PASS 5.880630s
+TIMING_START burn_ros4_b8 warmup 0 candidate cpu t1
+TIMING_PASS 6.595948s
+TIMING_START burn_ros4_b8 warmup 0 candidate cpu t8
+TIMING_PASS 2.809206s
+TIMING_START burn_ros4_b8 warmup 0 candidate cpu t16
+TIMING_PASS 2.914799s
+TIMING_START burn_ros4_b8 warmup 0 candidate cuda t8
+TIMING_PASS 3.498867s
+TIMING_START burn_ros4_b8 measured 0 baseline cpu t8
+TIMING_PASS 2.763621s
+TIMING_START burn_ros4_b8 measured 0 baseline cuda t8
+TIMING_PASS 5.885567s
+TIMING_START burn_ros4_b8 measured 0 candidate cpu t1
+TIMING_PASS 6.628047s
+TIMING_START burn_ros4_b8 measured 0 candidate cpu t8
+TIMING_PASS 2.798180s
+TIMING_START burn_ros4_b8 measured 0 candidate cpu t16
+TIMING_PASS 2.823278s
+TIMING_START burn_ros4_b8 measured 0 candidate cuda t8
+TIMING_PASS 2.915669s
+TIMING_START burn_ros4_b8 measured 1 candidate cuda t8
+TIMING_PASS 2.838555s
+TIMING_START burn_ros4_b8 measured 1 candidate cpu t16
+TIMING_PASS 2.813278s
+TIMING_START burn_ros4_b8 measured 1 candidate cpu t8
+TIMING_PASS 2.755678s
+TIMING_START burn_ros4_b8 measured 1 candidate cpu t1
+TIMING_PASS 6.618557s
+TIMING_START burn_ros4_b8 measured 1 baseline cuda t8
+TIMING_PASS 5.947075s
+TIMING_START burn_ros4_b8 measured 1 baseline cpu t8
+TIMING_PASS 2.741357s
+TIMING_START burn_ros4_b8 measured 2 baseline cpu t8
+TIMING_PASS 2.740099s
+TIMING_START burn_ros4_b8 measured 2 baseline cuda t8
+TIMING_PASS 5.913636s
+TIMING_START burn_ros4_b8 measured 2 candidate cpu t1
+TIMING_PASS 6.681495s
+TIMING_START burn_ros4_b8 measured 2 candidate cpu t8
+TIMING_PASS 2.790637s
+TIMING_START burn_ros4_b8 measured 2 candidate cpu t16
+TIMING_PASS 2.818559s
+TIMING_START burn_ros4_b8 measured 2 candidate cuda t8
+TIMING_PASS 2.924949s
+TIMING_START burn_ros4_b8 measured 3 candidate cuda t8
+TIMING_PASS 2.851841s
+TIMING_START burn_ros4_b8 measured 3 candidate cpu t16
+TIMING_PASS 2.778615s
+TIMING_START burn_ros4_b8 measured 3 candidate cpu t8
+TIMING_PASS 2.752064s
+TIMING_START burn_ros4_b8 measured 3 candidate cpu t1
+TIMING_PASS 6.608180s
+TIMING_START burn_ros4_b8 measured 3 baseline cuda t8
+TIMING_PASS 5.934188s
+TIMING_START burn_ros4_b8 measured 3 baseline cpu t8
+TIMING_PASS 2.730789s
+TIMING_START burn_ros4_b8 measured 4 baseline cpu t8
+TIMING_PASS 2.690030s
+TIMING_START burn_ros4_b8 measured 4 baseline cuda t8
+TIMING_PASS 5.886124s
+TIMING_START burn_ros4_b8 measured 4 candidate cpu t1
+TIMING_PASS 6.710249s
+TIMING_START burn_ros4_b8 measured 4 candidate cpu t8
+TIMING_PASS 2.795950s
+TIMING_START burn_ros4_b8 measured 4 candidate cpu t16
+TIMING_PASS 2.810830s
+TIMING_START burn_ros4_b8 measured 4 candidate cuda t8
+TIMING_PASS 2.859749s
+TIMING_START burn_ros4_b32 warmup 0 baseline cpu t8
+TIMING_PASS 5.214998s
+TIMING_START burn_ros4_b32 warmup 0 baseline cuda t8
+TIMING_PASS 16.600087s
+TIMING_START burn_ros4_b32 warmup 0 candidate cpu t1
+TIMING_PASS 21.364382s
+TIMING_START burn_ros4_b32 warmup 0 candidate cpu t8
+TIMING_PASS 5.023791s
+TIMING_START burn_ros4_b32 warmup 0 candidate cpu t16
+TIMING_PASS 4.004182s
+TIMING_START burn_ros4_b32 warmup 0 candidate cuda t8
+TIMING_PASS 3.115290s
+TIMING_START burn_ros4_b32 measured 0 baseline cpu t8
+TIMING_PASS 4.524545s
+TIMING_START burn_ros4_b32 measured 0 baseline cuda t8
+TIMING_PASS 16.595754s
+TIMING_START burn_ros4_b32 measured 0 candidate cpu t1
+TIMING_PASS 21.404760s
+TIMING_START burn_ros4_b32 measured 0 candidate cpu t8
+TIMING_PASS 5.075727s
+TIMING_START burn_ros4_b32 measured 0 candidate cpu t16
+TIMING_PASS 4.025812s
+TIMING_START burn_ros4_b32 measured 0 candidate cuda t8
+TIMING_PASS 3.184742s
+TIMING_START burn_ros4_b32 measured 1 candidate cuda t8
+TIMING_PASS 3.097582s
+TIMING_START burn_ros4_b32 measured 1 candidate cpu t16
+TIMING_PASS 3.796863s
+TIMING_START burn_ros4_b32 measured 1 candidate cpu t8
+TIMING_PASS 4.415894s
+TIMING_START burn_ros4_b32 measured 1 candidate cpu t1
+TIMING_PASS 21.247168s
+TIMING_START burn_ros4_b32 measured 1 baseline cuda t8
+TIMING_PASS 16.691179s
+TIMING_START burn_ros4_b32 measured 1 baseline cpu t8
+TIMING_PASS 4.919750s
+TIMING_START burn_ros4_b32 measured 2 baseline cpu t8
+TIMING_PASS 4.377851s
+TIMING_START burn_ros4_b32 measured 2 baseline cuda t8
+TIMING_PASS 16.604050s
+TIMING_START burn_ros4_b32 measured 2 candidate cpu t1
+TIMING_PASS 21.364182s
+TIMING_START burn_ros4_b32 measured 2 candidate cpu t8
+TIMING_PASS 5.229967s
+TIMING_START burn_ros4_b32 measured 2 candidate cpu t16
+TIMING_PASS 4.015557s
+TIMING_START burn_ros4_b32 measured 2 candidate cuda t8
+TIMING_PASS 3.155358s
+TIMING_START burn_ros4_b32 measured 3 candidate cuda t8
+TIMING_PASS 3.083533s
+TIMING_START burn_ros4_b32 measured 3 candidate cpu t16
+TIMING_PASS 4.064460s
+TIMING_START burn_ros4_b32 measured 3 candidate cpu t8
+TIMING_PASS 4.394643s
+TIMING_START burn_ros4_b32 measured 3 candidate cpu t1
+TIMING_PASS 21.292982s
+TIMING_START burn_ros4_b32 measured 3 baseline cuda t8
+TIMING_PASS 16.706658s
+TIMING_START burn_ros4_b32 measured 3 baseline cpu t8
+TIMING_PASS 4.865815s
+TIMING_START burn_ros4_b32 measured 4 baseline cpu t8
+TIMING_PASS 4.407897s
+TIMING_START burn_ros4_b32 measured 4 baseline cuda t8
+TIMING_PASS 16.763915s
+TIMING_START burn_ros4_b32 measured 4 candidate cpu t1
+TIMING_PASS 21.464331s
+TIMING_START burn_ros4_b32 measured 4 candidate cpu t8
+TIMING_PASS 5.227121s
+TIMING_START burn_ros4_b32 measured 4 candidate cpu t16
+TIMING_PASS 3.948502s
+TIMING_START burn_ros4_b32 measured 4 candidate cuda t8
+TIMING_PASS 3.038448s
+TIMING_START burn_ros4_b128 warmup 0 baseline cpu t8
+TIMING_PASS 12.580924s
+TIMING_START burn_ros4_b128 warmup 0 baseline cuda t8
+TIMING_PASS 59.591901s
+TIMING_START burn_ros4_b128 warmup 0 candidate cpu t1
+TIMING_PASS 81.306321s
+TIMING_START burn_ros4_b128 warmup 0 candidate cpu t8
+TIMING_PASS 13.067253s
+TIMING_START burn_ros4_b128 warmup 0 candidate cpu t16
+TIMING_PASS 7.953162s
+TIMING_START burn_ros4_b128 warmup 0 candidate cuda t8
+TIMING_PASS 4.194742s
+TIMING_START burn_ros4_b128 measured 0 baseline cpu t8
+TIMING_PASS 12.965657s
+TIMING_START burn_ros4_b128 measured 0 baseline cuda t8
+TIMING_PASS 59.445242s
+TIMING_START burn_ros4_b128 measured 0 candidate cpu t1
+TIMING_PASS 79.821504s
+TIMING_START burn_ros4_b128 measured 0 candidate cpu t8
+TIMING_PASS 13.251893s
+TIMING_START burn_ros4_b128 measured 0 candidate cpu t16
+TIMING_PASS 7.938525s
+TIMING_START burn_ros4_b128 measured 0 candidate cuda t8
+TIMING_PASS 4.653417s
+TIMING_START burn_ros4_b128 measured 1 candidate cuda t8
+TIMING_PASS 4.188386s
+TIMING_START burn_ros4_b128 measured 1 candidate cpu t16
+TIMING_PASS 8.399587s
+TIMING_START burn_ros4_b128 measured 1 candidate cpu t8
+TIMING_PASS 12.578236s
+TIMING_START burn_ros4_b128 measured 1 candidate cpu t1
+TIMING_PASS 80.050971s
+TIMING_START burn_ros4_b128 measured 1 baseline cuda t8
+TIMING_PASS 59.991289s
+TIMING_START burn_ros4_b128 measured 1 baseline cpu t8
+TIMING_PASS 12.899462s
+TIMING_START burn_ros4_b128 measured 2 baseline cpu t8
+TIMING_PASS 12.446764s
+TIMING_START burn_ros4_b128 measured 2 baseline cuda t8
+TIMING_PASS 59.503814s
+TIMING_START burn_ros4_b128 measured 2 candidate cpu t1
+TIMING_PASS 80.345643s
+TIMING_START burn_ros4_b128 measured 2 candidate cpu t8
+TIMING_PASS 13.075237s
+TIMING_START burn_ros4_b128 measured 2 candidate cpu t16
+TIMING_PASS 7.979758s
+TIMING_START burn_ros4_b128 measured 2 candidate cuda t8
+TIMING_PASS 4.593227s
+TIMING_START burn_ros4_b128 measured 3 candidate cuda t8
+TIMING_PASS 4.200062s
+TIMING_START burn_ros4_b128 measured 3 candidate cpu t16
+TIMING_PASS 8.344795s
+TIMING_START burn_ros4_b128 measured 3 candidate cpu t8
+TIMING_PASS 12.461692s
+TIMING_START burn_ros4_b128 measured 3 candidate cpu t1
+TIMING_PASS 79.849248s
+TIMING_START burn_ros4_b128 measured 3 baseline cuda t8
+TIMING_PASS 60.241059s
+TIMING_START burn_ros4_b128 measured 3 baseline cpu t8
+TIMING_PASS 12.879532s
+TIMING_START burn_ros4_b128 measured 4 baseline cpu t8
+TIMING_PASS 12.521293s
+TIMING_START burn_ros4_b128 measured 4 baseline cuda t8
+TIMING_PASS 59.540560s
+TIMING_START burn_ros4_b128 measured 4 candidate cpu t1
+TIMING_PASS 80.781795s
+TIMING_START burn_ros4_b128 measured 4 candidate cpu t8
+TIMING_PASS 13.562131s
+TIMING_START burn_ros4_b128 measured 4 candidate cpu t16
+TIMING_PASS 8.171037s
+TIMING_START burn_ros4_b128 measured 4 candidate cuda t8
+TIMING_PASS 4.548395s

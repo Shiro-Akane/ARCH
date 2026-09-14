@@ -1,0 +1,50 @@
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/cuda/diffusion/../../numerics/diffusion/../../physics/diffusionCoe/diffusion_math.hpp(184): warning #177-D: variable "opac_total" was declared but never referenced
+          double opac_total = opac_ee + opac_ei + orad;
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/driver/StateResidency.h:44:23: warning: inline function ‘constexpr bool arch::state::operator==(const arch::state::StateVersion&, const arch::state::StateVersion&)’ used but never defined
+   44 | struct StateVersion {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/amr/BlockHandle.h:26:23: warning: inline function ‘constexpr bool amr::operator==(const amr::TopologyEpoch&, const amr::TopologyEpoch&)’ used but never defined
+   26 | struct TopologyEpoch {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/ExchangePlan.h:36:23: warning: inline function ‘constexpr bool amr::operator==(const amr::LogicalBlockKey&, const amr::LogicalBlockKey&)’ used but never defined
+   36 | struct LogicalBlockKey {
+      |                       ^~      
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/amr/BlockHandle.h:31:23: warning: inline function ‘constexpr bool amr::operator==(const amr::BlockHandle&, const amr::BlockHandle&)’ used but never defined
+   31 | struct BlockHandle {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:65:23: warning: inline function ‘constexpr bool amr::operator==(const amr::AmrEndpoint&, const amr::AmrEndpoint&)’ used but never defined
+   65 | struct AmrEndpoint {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:72:23: warning: inline function ‘constexpr bool amr::operator==(const amr::AmrPlanScope&, const amr::AmrPlanScope&)’ used but never defined
+   72 | struct AmrPlanScope {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:58:23: warning: inline function ‘constexpr bool amr::operator==(const amr::LogicalAmrBox&, const amr::LogicalAmrBox&)’ used but never defined
+   58 | struct LogicalAmrBox {
+      |                       ^       
+	Command being timed: "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/batch-compile-overlay-v1/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -O3 -DNDEBUG -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c build/p12-20260914/batch-compile-overlay-v1/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu -o build/p12-20260914/batch-compile-overlay-v1/CudaBackendDiffusion.cu.o"
+	User time (seconds): 74.83
+	System time (seconds): 1.58
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 1:16.42
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 944232
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 891969
+	Voluntary context switches: 84
+	Involuntary context switches: 299
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 136432
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

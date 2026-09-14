@@ -1,0 +1,70 @@
+ M EOS_toolkit/tables/baryon/eos2.tab
+ M EOS_toolkit/tables/baryon/eos4.tab
+ M EOS_toolkit/tables/helmholtz/helm_table.dat
+ M cmake/tests/CudaTests.cmake
+ M src/cuda/diffusion/DiffusionKernels.cuh
+ M src/cuda/microphysics/CuDssSparseSolver.cpp
+ M src/cuda/microphysics/CuDssSparseSolver.h
+ M src/cuda/microphysics/SparseOdeBatch.cuh
+ M src/cuda/runtime/CudaBackend.h
+ M src/cuda/runtime/burn/CudaBackendBurn.h
+ M src/cuda/runtime/burn/CudaBackendBurnImpl.cuh
+ M src/cuda/runtime/burn/CudaBackendBurnReduction.cuh
+ M src/cuda/runtime/control/CudaBackendInternal.h
+ M src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp
+ M src/cuda/runtime/diffusion/CudaBackendDiffusion.cu
+ M src/cuda/runtime/diffusion/CudaBackendDiffusion.h
+ M src/driver/ComputeBackend.h
+ M src/driver/Driver.h
+ M tests/cuda/test_burn_eos_failure.cu
+ M tests/cuda/test_cuda_multiblock_burn.cu
+ M tests/cuda/test_cuda_multiblock_diffusion.cu
+ M tests/cuda/test_cudss_sparse_solver.cpp
+ M tests/cuda/test_diffusion_rkl_parity.cu
+ M tests/host/test_compute_backend.cpp
+ M tests/tooling/test_audit_architecture.py
+ M tests/tooling/test_validate_backend_results.py
+ M tools/audit_architecture.py
+ M tools/validate_backend_results.py
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-1-eos2-static/Static_HLLC_plt_0000.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-1-eos2-static/Static_HLLC_plt_0001.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-1-eos2-static/Static_HLLC_plt_0002.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-1-eos2-static/Static_HLLC_plt_0003.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-1-eos2-static/Static_chk_0000.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-1-eos2-static/Static_chk_0001.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-2-eos4-static/Static_HLLC_plt_0000.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-2-eos4-static/Static_HLLC_plt_0001.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-2-eos4-static/Static_HLLC_plt_0002.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-2-eos4-static/Static_HLLC_plt_0003.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-2-eos4-static/Static_chk_0000.h5
+ M validation/eos/results/tabular-extension-20260908/diagnostics/first-static/raw-2-eos4-static/Static_chk_0001.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-1-eos2-static/Static_HLLC_plt_0000.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-1-eos2-static/Static_HLLC_plt_0001.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-1-eos2-static/Static_HLLC_plt_0002.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-1-eos2-static/Static_HLLC_plt_0003.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-1-eos2-static/Static_chk_0000.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-1-eos2-static/Static_chk_0001.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-2-eos4-static/Static_HLLC_plt_0000.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-2-eos4-static/Static_HLLC_plt_0001.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-2-eos4-static/Static_HLLC_plt_0002.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-2-eos4-static/Static_HLLC_plt_0003.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-2-eos4-static/Static_chk_0000.h5
+ M validation/eos/results/tabular-extension-20260908/static/raw-2-eos4-static/Static_chk_0001.h5
+ M validation/network/run_sparse_provider_candidate.py
+?? src/cuda/diffusion/DiffusionBatchKernels.cuh
+?? tests/tooling/test_large_network_runtime_manifest.py
+?? tests/tooling/test_microphysics_coupling.py
+?? tests/tooling/test_microphysics_progress.py
+?? tests/tooling/test_microphysics_timing.py
+?? tests/tooling/test_microphysics_validation.py
+?? tests/tooling/test_sparse_capacity_recipe.py
+?? validation/backend/probe_cuda_calls.cpp
+?? validation/backend/run_microphysics_progress.py
+?? validation/backend/run_microphysics_timing.py
+?? validation/backend/run_microphysics_validation.py
+?? validation/backend/verify_microphysics_coupling.py
+?? validation/network/large_runtime_cases.json
+?? validation/network/probe_cudss_calls.cpp
+?? validation/network/probe_cudss_nonuniform.cpp
+?? validation/network/run_burn_failure_candidate.py
+?? validation/network/run_sparse_capacity.py

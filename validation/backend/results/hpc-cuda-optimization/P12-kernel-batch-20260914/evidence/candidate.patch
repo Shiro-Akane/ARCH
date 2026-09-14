@@ -1,0 +1,758 @@
+diff --git a/src/cuda/runtime/CudaBackend.h b/src/cuda/runtime/CudaBackend.h
+index 357eb8c1..5ea47c90 100644
+--- a/src/cuda/runtime/CudaBackend.h
++++ b/src/cuda/runtime/CudaBackend.h
+@@ -135,6 +135,17 @@ public:
+     backend::BurnExecutionResult execute_burn(
+         backend::BackendStateAccess current, double dt,
+         state::CompletionToken expected) override;
++    std::vector<double> compute_diffusion_dt_batch(
++        std::span<const backend::BackendStateAccess> currents) override;
++    void copy_state_slot_batch(std::span<const backend::BackendStateAccess> sources,
++                               state::StateSlot destination) override;
++    state::CompletionToken execute_diffusion_stage_batch(
++        std::span<const backend::BackendStateAccess> currents, const scheduler::RklPlan& plan,
++        const scheduler::RklStageDescriptor& descriptor, double dt, double dt_fe,
++        state::CompletionToken expected) override;
++    std::vector<backend::BurnExecutionResult> execute_burn_batch(
++        std::span<const backend::BackendStateAccess> currents, double dt,
++        state::CompletionToken expected) override;
+     void enqueue_materialize_host_current(
+         backend::BackendStateAccess current, state::StateRegion region,
+         backend::HostStateTransferView host) override;
+diff --git a/src/cuda/runtime/control/CudaBackendInternal.h b/src/cuda/runtime/control/CudaBackendInternal.h
+index 4bee9ea2..f08092b5 100644
+--- a/src/cuda/runtime/control/CudaBackendInternal.h
++++ b/src/cuda/runtime/control/CudaBackendInternal.h
+@@ -265,6 +265,8 @@ struct CudaBackend::Impl {
+             status.swap(next_status);
+         }
+     } hydro_batch;
++    HydroBatchScratch diffusion_batch;
++    ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
+     ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
+     ReusableDeviceAllocation<DeviceBoundaryBatchBlock> boundary_bindings;
+     struct ExchangeScratch {
+diff --git a/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp b/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp
+index 7819e221..c32914ab 100644
+--- a/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp
++++ b/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp
+@@ -46,37 +46,51 @@ bool same_rkl_descriptor(
+ double CudaBackend::compute_diffusion_dt(
+     backend::BackendStateAccess current)
+ {
+-    auto& block = impl_->require_block(current);
+-    const DeviceStateView selected = block.require_access(current);
+-    if (current.slot != state::StateSlot::Current)
+-        throw std::invalid_argument("diffusion dt requires Current");
+-    const CudaBackendDiffusionWorkspace workspace{
+-        block.face_flux.view(), block.diffusion_dt_candidates.get(),
+-        block.diffusion_dt_result.get(), block.diffusion_status.get(),
+-        impl_->species_workspace};
+-    CudaBackendLaunchResult result{};
+-    int status = 0;
+-    double dt = 0.0;
++    return compute_diffusion_dt_batch({&current, 1}).front();
++}
++
++std::vector<double> CudaBackend::compute_diffusion_dt_batch(
++    std::span<const backend::BackendStateAccess> currents)
++{
++    validate_hydro_batch_accesses(currents);
++    std::vector<double> dt(currents.size());
++    if (currents.empty()) return dt;
++    impl_->select_device();
++    auto& scratch = impl_->diffusion_batch;
++    scratch.ensure_capacity(currents.size());
++    std::uint64_t kernels = 0;
+     CudaQuiescenceGuard work_guard{*impl_};
+-    visit_eos(impl_->eos, [&](const auto& eos) {
+-        result = launch_cuda_backend_diffusion_dt(
+-            selected, eos, impl_->species_view, block.grid,
+-            impl_->launch.diffusion, workspace, impl_->stream.get());
+-    });
+-    check_cuda(result.error, "launch diffusion dt");
++    for (std::size_t index = 0; index < currents.size(); ++index) {
++        auto& block = impl_->require_block(currents[index]);
++        const CudaBackendDiffusionWorkspace workspace{
++            block.face_flux.view(), block.diffusion_dt_candidates.get(),
++            scratch.dt->get() + index, scratch.status->get() + index,
++            impl_->species_workspace};
++        CudaBackendLaunchResult result{};
++        visit_eos(impl_->eos, [&](const auto& eos) {
++            result = launch_cuda_backend_diffusion_dt(
++                block.require_access(currents[index]), eos, impl_->species_view, block.grid,
++                impl_->launch.diffusion, workspace, impl_->stream.get());
++        });
++        check_cuda(result.error, "launch diffusion dt batch");
++        kernels += result.kernels_launched;
++    }
+     check_cuda(cudaMemcpyAsync(
+-                   &status, block.diffusion_status.get(), sizeof(int),
++                   scratch.host_status.data(), scratch.status->get(), currents.size() * sizeof(int),
+                    cudaMemcpyDeviceToHost, impl_->stream.get()),
+-               "download diffusion status");
++               "download diffusion batch status");
+     check_cuda(cudaMemcpyAsync(
+-                   &dt, block.diffusion_dt_result.get(), sizeof(double),
++                   dt.data(), scratch.dt->get(), dt.size() * sizeof(double),
+                    cudaMemcpyDeviceToHost, impl_->stream.get()),
+-               "download diffusion dt");
++               "download diffusion batch dt");
+     quiesce();
+     work_guard.completed = true;
+-    impl_->runtime_counters.kernel_count += result.kernels_launched;
+-    impl_->runtime_counters.bytes_d2h += sizeof(int) + sizeof(double);
+-    if (status != 0) throw std::runtime_error("diffusion dt candidate failed");
++    impl_->runtime_counters.kernel_count += kernels;
++    impl_->runtime_counters.bytes_d2h += currents.size() * (sizeof(int) + sizeof(double));
++    for (std::size_t index = 0; index < currents.size(); ++index)
++        if (scratch.host_status[index] != 0)
++            throw std::runtime_error("diffusion dt candidate failed: block="
++                + std::to_string(currents[index].block.uid.value));
+     return dt;
+ }
+ 
+@@ -92,9 +106,34 @@ void CudaBackend::copy_state_slot(
+     const DeviceStateView to = block.require_access(destination);
+     if (source.slot == destination.slot)
+         throw std::invalid_argument("state copy aliases one logical slot");
++    CudaQuiescenceGuard work_guard{*impl_};
+     check_cuda(copy_cuda_backend_state_slot(from, to, impl_->stream.get()),
+                "copy state slot");
+     quiesce();
++    work_guard.completed = true;
++}
++
++void CudaBackend::copy_state_slot_batch(
++    std::span<const backend::BackendStateAccess> sources, state::StateSlot destination)
++{
++    validate_hydro_batch_accesses(sources);
++    if (destination != state::StateSlot::Next && destination != state::StateSlot::Scratch)
++        throw std::invalid_argument("Batch Current copy needs a distinct destination");
++    // Bind and validate ALL views before the first write, including late entries.
++    std::vector<std::pair<DeviceStateView, DeviceStateView>> bindings;
++    bindings.reserve(sources.size());
++    for (const auto source : sources) {
++        auto& block = impl_->require_block(source);
++        bindings.emplace_back(block.require_access(source),
++            block.require_access({source.block, source.storage, destination}));
++    }
++    if (bindings.empty()) return;
++    CudaQuiescenceGuard work_guard{*impl_};
++    for (const auto& [from, to] : bindings)
++        check_cuda(copy_cuda_backend_state_slot(from, to, impl_->stream.get()),
++                   "copy state slot batch");
++    quiesce();
++    work_guard.completed = true;
+ }
+ 
+ state::CompletionToken CudaBackend::execute_diffusion_stage(
+@@ -102,13 +141,20 @@ state::CompletionToken CudaBackend::execute_diffusion_stage(
+     const scheduler::RklStageDescriptor& descriptor,
+     double dt, double dt_fe, state::CompletionToken expected)
+ {
+-    auto& block = impl_->require_block(current);
+-    static_cast<void>(block.require_access(current));
++    return execute_diffusion_stage_batch({&current, 1}, plan, descriptor, dt, dt_fe, expected);
++}
++
++state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
++    std::span<const backend::BackendStateAccess> currents, const scheduler::RklPlan& plan,
++    const scheduler::RklStageDescriptor& descriptor,
++    double dt, double dt_fe, state::CompletionToken expected)
++{
++    validate_hydro_batch_accesses(currents);
+     const bool frozen_rkl1 = impl_->launch.plan.diffusion_integrator
+         == dispatch::DiffusionIntegratorId::Rkl1;
+     const bool frozen_rkl2 = impl_->launch.plan.diffusion_integrator
+         == dispatch::DiffusionIntegratorId::Rkl2;
+-    if (current.slot != state::StateSlot::Current || !complete_token(expected)
++    if (!complete_token(expected)
+         || !impl_->launch.diffusion.use_diffusion
+         || (!frozen_rkl1 && !frozen_rkl2)
+         || plan.second_order != frozen_rkl2
+@@ -118,6 +164,15 @@ state::CompletionToken CudaBackend::execute_diffusion_stage(
+             descriptor, plan.stages[descriptor.stage - 1])
+         || !(dt > 0.0) || !(dt_fe > 0.0))
+         throw std::invalid_argument("invalid diffusion stage contract");
++    if (currents.empty()) return expected;
++    impl_->select_device();
++    auto& scratch = impl_->diffusion_batch;
++    scratch.ensure_capacity(currents.size());
++    std::uint64_t kernels = 0;
++    CudaQuiescenceGuard work_guard{*impl_};
++    for (std::size_t index = 0; index < currents.size(); ++index) {
++    const auto current = currents[index];
++    auto& block = impl_->require_block(current);
+     const DeviceStateView state_n =
+         block.slots[slot_index(descriptor.state_n_slot)];
+     const DeviceStateView previous =
+@@ -128,13 +183,11 @@ state::CompletionToken CudaBackend::execute_diffusion_stage(
+         block.slots[slot_index(descriptor.output_slot)];
+     const CudaBackendDiffusionWorkspace workspace{
+         block.face_flux.view(), block.diffusion_dt_candidates.get(),
+-        block.diffusion_dt_result.get(), block.diffusion_status.get(),
++        block.diffusion_dt_result.get(), scratch.status->get() + index,
+         impl_->species_workspace};
+     const auto amr_routes = make_cuda_amr_route_views(
+         impl_->active_amr_flux.get(), current.block);
+     CudaBackendLaunchResult operation{};
+-    int status = 0;
+-    CudaQuiescenceGuard work_guard{*impl_};
+     visit_eos(impl_->eos, [&](const auto& eos) {
+         operation = launch_cuda_backend_diffusion_stage(
+             plan, descriptor, state_n, previous, older, output,
+@@ -145,16 +198,21 @@ state::CompletionToken CudaBackend::execute_diffusion_stage(
+             impl_->stream.get());
+     });
+     check_cuda(operation.error, "launch diffusion operator");
++    kernels += operation.kernels_launched;
++    }
+     check_cuda(cudaMemcpyAsync(
+-                   &status, block.diffusion_status.get(), sizeof(int),
++                   scratch.host_status.data(), scratch.status->get(), currents.size() * sizeof(int),
+                    cudaMemcpyDeviceToHost, impl_->stream.get()),
+                "download diffusion stage status");
+     quiesce();
+     work_guard.completed = true;
+     impl_->runtime_counters.kernel_count +=
+-        operation.kernels_launched;
+-    impl_->runtime_counters.bytes_d2h += sizeof(int);
+-    if (status != 0) throw std::runtime_error("diffusion stage failed");
++        kernels;
++    impl_->runtime_counters.bytes_d2h += currents.size() * sizeof(int);
++    for (std::size_t index = 0; index < currents.size(); ++index)
++        if (scratch.host_status[index] != 0)
++            throw std::runtime_error("diffusion stage failed: block="
++                + std::to_string(currents[index].block.uid.value));
+     return expected;
+ }
+ 
+@@ -162,11 +220,26 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
+     backend::BackendStateAccess current, double dt,
+     state::CompletionToken expected)
+ {
+-    auto& block = impl_->require_block(current);
+-    static_cast<void>(block.require_access(current));
+-    if (current.slot != state::StateSlot::Current || !complete_token(expected)
++    return execute_burn_batch({&current, 1}, dt, expected).front();
++}
++
++std::vector<backend::BurnExecutionResult> CudaBackend::execute_burn_batch(
++    std::span<const backend::BackendStateAccess> currents, double dt,
++    state::CompletionToken expected)
++{
++    validate_hydro_batch_accesses(currents);
++    if (!complete_token(expected)
+         || !(dt > 0.0))
+         throw std::invalid_argument("invalid burn contract");
++    std::vector<backend::BurnExecutionResult> results(currents.size());
++    std::vector<DeviceBurnSummary> summaries(currents.size());
++    if (currents.empty()) return results;
++    impl_->select_device();
++    auto& scratch = impl_->burn_batch_summaries;
++    scratch.reserve(currents.size());
++    CudaQuiescenceGuard summary_guard{*impl_};
++    for (std::size_t index = 0; index < currents.size(); ++index) {
++    auto& block = impl_->require_block(currents[index]);
+     if (!impl_->launch.burn.use_burn) {
+         check_cuda(cudaMemsetAsync(
+                        block.slots[slot_index(state::StateSlot::Current)].enuc_rate,
+@@ -175,8 +248,8 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
+                            * sizeof(double),
+                        impl_->stream.get()),
+                    "clear disabled burn diagnostic");
+-        quiesce();
+-        return {DriverBurn::INACTIVE_LIMITER_CANDIDATE, 0, 0, expected};
++        results[index] = {DriverBurn::INACTIVE_LIMITER_CANDIDATE, 0, 0, expected};
++        continue;
+     }
+     DeviceStateView selected =
+         block.slots[slot_index(state::StateSlot::Current)];
+@@ -205,7 +278,7 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
+         }
+         const auto counters = impl_->sparse_burn_owner->execute(
+             selected, block.grid, dt, impl_->launch.burn,
+-            block.burn_candidates.get(), block.burn_statuses.get(), block.burn_summary.get());
++            block.burn_candidates.get(), block.burn_statuses.get(), scratch.get() + index);
+         burn_kernels = counters.kernels;
+         impl_->runtime_counters.bytes_d2h += counters.bytes_d2h;
+         impl_->runtime_counters.bytes_h2d += counters.bytes_h2d;
+@@ -220,7 +293,7 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
+             launch_error = launch_cuda_burn_route(
+                 impl_->launch.plan, selected, block.grid,
+                 block.burn_workspace_storage.get(), block.burn_candidates.get(),
+-                block.burn_statuses.get(), block.burn_summary.get(), dt, eos,
++                block.burn_statuses.get(), scratch.get() + index, dt, eos,
+                 CudaBurnArguments{impl_->launch.burn, &impl_->dense_network_owner}, impl_->stream.get());
+         });
+         if (!had_network_owner && impl_->dense_network_owner) {
+@@ -231,19 +304,23 @@ backend::BurnExecutionResult CudaBackend::execute_burn(
+         check_cuda(launch_error, "launch burn route");
+         burn_kernels = 2;
+     }
+-    DeviceBurnSummary summary{};
+-    // The asynchronous download borrows this stack buffer.  Keep it alive
+-    // through the exception path as well as the successful stream fence.
+-    CudaQuiescenceGuard summary_guard{*impl_};
++    impl_->runtime_counters.kernel_count += burn_kernels;
++    }
++    if (impl_->launch.burn.use_burn) {
+     check_cuda(cudaMemcpyAsync(
+-                   &summary, block.burn_summary.get(), sizeof(summary),
++                   summaries.data(), scratch.get(), summaries.size() * sizeof(DeviceBurnSummary),
+                    cudaMemcpyDeviceToHost, impl_->stream.get()),
+                "download burn summary");
++    impl_->runtime_counters.bytes_d2h += summaries.size() * sizeof(DeviceBurnSummary);
++    }
+     quiesce();
+     summary_guard.completed = true;
+-    impl_->runtime_counters.kernel_count += burn_kernels;
+-    impl_->runtime_counters.bytes_d2h += sizeof(summary);
+-    return {summary.limiter, summary.failed_cells, summary.status, expected};
++    if (impl_->launch.burn.use_burn)
++        for (std::size_t index = 0; index < summaries.size(); ++index) {
++            const auto& summary = summaries[index];
++            results[index] = {summary.limiter, summary.failed_cells, summary.status, expected};
++        }
++    return results;
+ }
+ 
+ 
+diff --git a/src/driver/ComputeBackend.h b/src/driver/ComputeBackend.h
+index 17191d3f..69d4a5d3 100644
+--- a/src/driver/ComputeBackend.h
++++ b/src/driver/ComputeBackend.h
+@@ -325,6 +325,57 @@ public:
+     virtual BurnExecutionResult execute_burn(
+         BackendStateAccess current, double dt,
+         state::CompletionToken expected) = 0;
++    // Like Hydro batches, these calls return only after every requested block
++    // completed. The Host retains reduction keys and stage publication order.
++    virtual std::vector<double> compute_diffusion_dt_batch(
++        std::span<const BackendStateAccess> currents)
++    {
++        validate_hydro_batch_accesses(currents);
++        std::vector<double> result;
++        result.reserve(currents.size());
++        for (const auto current : currents) result.push_back(compute_diffusion_dt(current));
++        return result;
++    }
++    virtual void copy_state_slot_batch(std::span<const BackendStateAccess> sources,
++                                      state::StateSlot destination)
++    {
++        validate_hydro_batch_accesses(sources);
++        if (destination != state::StateSlot::Next && destination != state::StateSlot::Scratch)
++            throw std::invalid_argument("Batch Current copy needs a distinct destination");
++        for (const auto source : sources)
++            if (!contains({source.block, source.storage, destination}))
++                throw std::invalid_argument("Batch state copy has a stale destination");
++        for (const auto source : sources)
++            copy_state_slot(source, {source.block, source.storage, destination});
++    }
++    virtual state::CompletionToken execute_diffusion_stage_batch(
++        std::span<const BackendStateAccess> currents, const scheduler::RklPlan& plan,
++        const scheduler::RklStageDescriptor& descriptor, double dt, double dt_fe,
++        state::CompletionToken expected)
++    {
++        validate_hydro_batch_accesses(currents);
++        if (!state::is_complete(expected))
++            throw std::invalid_argument("Diffusion batch requires a completion token");
++        for (const auto current : currents)
++            if (execute_diffusion_stage(current, plan, descriptor, dt, dt_fe, expected) != expected)
++                throw std::logic_error("Diffusion batch returned incomplete work");
++        return expected;
++    }
++    virtual std::vector<BurnExecutionResult> execute_burn_batch(
++        std::span<const BackendStateAccess> currents, double dt, state::CompletionToken expected)
++    {
++        validate_hydro_batch_accesses(currents);
++        if (!state::is_complete(expected))
++            throw std::invalid_argument("Burn batch requires a completion token");
++        std::vector<BurnExecutionResult> result;
++        result.reserve(currents.size());
++        for (const auto current : currents) {
++            result.push_back(execute_burn(current, dt, expected));
++            if (result.back().completion != expected)
++                throw std::logic_error("Burn batch returned incomplete work");
++        }
++        return result;
++    }
+     virtual void enqueue_materialize_host_current(
+         BackendStateAccess current, state::StateRegion region,
+         HostStateTransferView host) = 0;
+diff --git a/src/driver/Driver.h b/src/driver/Driver.h
+index 789ab8ce..95573370 100644
+--- a/src/driver/Driver.h
++++ b/src/driver/Driver.h
+@@ -898,6 +898,14 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+     std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
+     std::vector<arch::reduction::ReductionCandidate> diffusion_dt_candidates;
+     std::vector<arch::backend::BackendStateAccess> hydro_currents;
++    std::vector<arch::backend::BackendStateAccess> microphysics_currents;
++    const auto current_microphysics_accesses = [&]() {
++        microphysics_currents.clear();
++        microphysics_currents.reserve(stage_handles.size());
++        for (std::size_t index = 0; index < stage_handles.size(); ++index)
++            microphysics_currents.push_back(backend_access(index, StateSlot::Current));
++        return std::span<const arch::backend::BackendStateAccess>(microphysics_currents);
++    };
+     while (!ctrl.is_finished())
+     {
+         // Step A: IO Routine & AMR Regrid
+@@ -975,12 +983,16 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+             else synchronize_fluid_ghosts();
+             diffusion_dt_candidates.clear();
+             diffusion_dt_candidates.reserve(active_blocks.size());
++            const auto device_diffusion_dt = compute_backend
++                ? compute_backend->compute_diffusion_dt_batch(current_microphysics_accesses())
++                : std::vector<double>{};
++            if (compute_backend && device_diffusion_dt.size() != active_blocks.size())
++                throw std::logic_error("Diffusion batch lost a required block result");
+             for (std::size_t index = 0; index < active_blocks.size(); ++index) {
+                 const int block_id = active_blocks[index];
+                 const amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
+                 const double block_dt = compute_backend
+-                    ? compute_backend->compute_diffusion_dt(
+-                        backend_access(index, StateSlot::Current))
++                    ? device_diffusion_dt[index]
+                     : DiffFlux::adaptive_dt_diff(
+                         block.fluid_state, eos, block.grid, config, 1.0);
+                 diffusion_dt_candidates.push_back({
+@@ -1030,12 +1042,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                     (void)arch::scheduler::copy_slot(
+                         stage_context, stage_handles, StateSlot::Current,
+                         destination, [&] {
+-                            for (std::size_t index = 0;
+-                                 index < stage_handles.size(); ++index) {
+-                                compute_backend->copy_state_slot(
+-                                    backend_access(index, StateSlot::Current),
+-                                    backend_access(index, destination));
+-                            }
++                            compute_backend->copy_state_slot_batch(
++                                current_microphysics_accesses(), destination);
+                         });
+                     trace_backend_operation(
+                         arch::backend::BackendOperation::DiffusionCopy,
+@@ -1079,13 +1087,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                     const arch::scheduler::RklStageDescriptor& descriptor,
+                     arch::state::CompletionToken token) {
+                     (void)compute_backend->clear_amr_flux_register(token);
+-                    for (std::size_t index = 0;
+-                         index < stage_handles.size(); ++index) {
+-                        (void)compute_backend->execute_diffusion_stage(
+-                            backend_access(index, StateSlot::Current), plan,
+-                            descriptor, diffusion_dt, dt_diff_fe, token);
+-                    }
+-                    return token;
++                    return compute_backend->execute_diffusion_stage_batch(
++                        current_microphysics_accesses(), plan,
++                        descriptor, diffusion_dt, dt_diff_fe, token);
+                 };
+                 const auto reflux = [&] (
+                     const arch::scheduler::RklPlan&,
+@@ -1171,11 +1175,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                     DriverReduction::make_accumulator_reduction_key(
+                         DriverReduction::BlockReductionComponent::BurnFirstHalf),
+                     true});
++                const auto burn_results = compute_backend->execute_burn_batch(
++                    current_microphysics_accesses(), 0.5 * dt, token);
++                if (burn_results.size() != stage_handles.size())
++                    throw std::logic_error("Burn batch lost a required block result");
+                 for (std::size_t index = 0;
+                      index < stage_handles.size(); ++index) {
+-                    const auto result = compute_backend->execute_burn(
+-                        backend_access(index, StateSlot::Current),
+-                        0.5 * dt, token);
++                    const auto& result = burn_results[index];
+                     if (!arch::state::is_complete(result.completion)
+                         || result.completion.value != token.value
+                         || result.status != 0 || result.failed_cells != 0) {
+@@ -1317,11 +1323,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
+                     DriverReduction::make_accumulator_reduction_key(
+                         DriverReduction::BlockReductionComponent::BurnSecondHalf),
+                     true});
++                const auto burn_results = compute_backend->execute_burn_batch(
++                    current_microphysics_accesses(), 0.5 * dt, token);
++                if (burn_results.size() != stage_handles.size())
++                    throw std::logic_error("Burn batch lost a required block result");
+                 for (std::size_t index = 0;
+                      index < stage_handles.size(); ++index) {
+-                    const auto result = compute_backend->execute_burn(
+-                        backend_access(index, StateSlot::Current),
+-                        0.5 * dt, token);
++                    const auto& result = burn_results[index];
+                     if (!arch::state::is_complete(result.completion)
+                         || result.completion.value != token.value
+                         || result.status != 0 || result.failed_cells != 0) {
+diff --git a/tests/cuda/test_cuda_multiblock_burn.cu b/tests/cuda/test_cuda_multiblock_burn.cu
+index a52d1d4d..7c4c891c 100644
+--- a/tests/cuda/test_cuda_multiblock_burn.cu
++++ b/tests/cuda/test_cuda_multiblock_burn.cu
+@@ -155,7 +155,7 @@ amr::SameLevelExchangePlan make_exchange_plan(
+         handles[0].epoch);
+ }
+ 
+-void run_route(arch::dispatch::OdeSolverId ode, const char* name)
++std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char* name, bool batched)
+ {
+     SpeciesManager species;
+     NetAprox13::RegisterSpecies(species);
+@@ -197,13 +197,17 @@ void run_route(arch::dispatch::OdeSolverId ode, const char* name)
+     std::array<arch::backend::BurnExecutionResult, 2> results{};
+     (void)arch::scheduler::execute_burn_first_lane(
+         context, handles, [&](arch::state::CompletionToken token) {
++            const auto before = backend->counters();
++            const auto batch = batched ? backend->execute_burn_batch(current, burn_dt, token)
++                : std::vector<arch::backend::BurnExecutionResult>{};
+             for (std::size_t index = 0; index < current.size(); ++index) {
+-                results[index] = backend->execute_burn(
+-                    current[index], burn_dt, token);
++                results[index] = batched ? batch[index] : backend->execute_burn(current[index], burn_dt, token);
+                 require(results[index].completion.value == token.value
+                             && arch::state::is_complete(results[index].completion),
+                         "multi-block burn completion token drifted");
+             }
++            require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
++                "Dense burn summary completion was not batched");
+             return token;
+         });
+ 
+@@ -269,6 +273,7 @@ void run_route(arch::dispatch::OdeSolverId ode, const char* name)
+     }
+     std::cout << "CUDA_MULTIBLOCK_BURN_PASS route=" << name
+               << " blocks=2 limiter=" << global << '\n';
++    return downloaded;
+ }
+ 
+ } // namespace
+@@ -276,9 +281,21 @@ void run_route(arch::dispatch::OdeSolverId ode, const char* name)
+ int main()
+ {
+     try {
+-        run_route(arch::dispatch::OdeSolverId::BeNr, "aprox13.be_nr");
+-        run_route(arch::dispatch::OdeSolverId::Bd, "aprox13.bd");
+-        run_route(arch::dispatch::OdeSolverId::Ros4, "aprox13.ros4");
++        for (const auto ode : {arch::dispatch::OdeSolverId::BeNr, arch::dispatch::OdeSolverId::Bd,
++                              arch::dispatch::OdeSolverId::Ros4}) {
++            const auto sequential = run_route(ode, "sequential", false);
++            const auto batched = run_route(ode, "batched", true);
++            for (std::size_t i = 0; i < sequential.size(); ++i)
++                for (const auto member : {&FluidState::rho, &FluidState::mom_u, &FluidState::mom_v,
++                     &FluidState::mom_w, &FluidState::eng, &FluidState::enuc_rate, &FluidState::mass_fractions}) {
++                    const auto& a = sequential[i].*member;
++                    const auto& b = batched[i].*member;
++                    require(a.size() == b.size(), "Batch changed storage size");
++                    for (std::size_t j = 0; j < a.size(); ++j)
++                        require(std::bit_cast<std::uint64_t>(a[j]) == std::bit_cast<std::uint64_t>(b[j]),
++                            "Burn batch changed field bits");
++                }
++        }
+         return 0;
+     } catch (const std::exception& error) {
+         std::cerr << error.what() << '\n';
+diff --git a/tests/cuda/test_cuda_multiblock_diffusion.cu b/tests/cuda/test_cuda_multiblock_diffusion.cu
+index 31be735d..07822d2e 100644
+--- a/tests/cuda/test_cuda_multiblock_diffusion.cu
++++ b/tests/cuda/test_cuda_multiblock_diffusion.cu
+@@ -143,7 +143,7 @@ amr::SameLevelExchangePlan make_exchange_plan(
+         handles[0].epoch);
+ }
+ 
+-void run_route(DiffFunction::RKLOrder order)
++std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
+ {
+     std::array<amr::Block, 2> blocks{make_block(0), make_block(1)};
+     const std::array<amr::BlockHandle, 2> handles{
+@@ -179,9 +179,12 @@ void run_route(DiffFunction::RKLOrder order)
+         arch::state::ExecutionSide::Device, ledger, clock};
+     const auto exchange_plan = make_exchange_plan(handles);
+ 
+-    const double dt_fe = std::min(
+-        backend->compute_diffusion_dt(current[0]),
+-        backend->compute_diffusion_dt(current[1]));
++    const auto before_dt = backend->counters();
++    const auto dts = batched ? backend->compute_diffusion_dt_batch(current)
++        : std::vector<double>{backend->compute_diffusion_dt(current[0]), backend->compute_diffusion_dt(current[1])};
++    require(backend->counters().stream_sync_count - before_dt.stream_sync_count == (batched ? 1 : 2),
++        "Diffusion dt completion was not batched");
++    const double dt_fe = std::min(dts[0], dts[1]);
+     require(std::isfinite(dt_fe) && dt_fe > 0.0,
+             "multi-block diffusion dt is invalid");
+     const double dt = 2.0 * dt_fe;
+@@ -191,11 +194,16 @@ void run_route(DiffFunction::RKLOrder order)
+     const auto copy = [&](StateSlot destination) {
+         (void)arch::scheduler::copy_slot(
+             context, handles, StateSlot::Current, destination, [&] {
++                const auto before = backend->counters();
++                if (batched) backend->copy_state_slot_batch(current, destination);
++                else
+                 for (std::size_t index = 0; index < current.size(); ++index) {
+                     auto target = current[index];
+                     target.slot = destination;
+                     backend->copy_state_slot(current[index], target);
+                 }
++                require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
++                    "Diffusion slot copy completion was not batched");
+             });
+     };
+     copy(StateSlot::Scratch);
+@@ -206,9 +214,14 @@ void run_route(DiffFunction::RKLOrder order)
+         const arch::scheduler::RklPlan& plan,
+         const arch::scheduler::RklStageDescriptor& descriptor,
+         arch::state::CompletionToken token) {
++        const auto before = backend->counters();
++        if (batched) (void)backend->execute_diffusion_stage_batch(current, plan, descriptor, dt, dt_fe, token);
++        else
+         for (const auto& access : current)
+             (void)backend->execute_diffusion_stage(
+                 access, plan, descriptor, dt, dt_fe, token);
++        require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
++            "Diffusion stage completion was not batched");
+         return token;
+     };
+     const auto boundary = [&] (
+@@ -271,6 +284,7 @@ void run_route(DiffFunction::RKLOrder order)
+     std::cout << "CUDA_MULTIBLOCK_DIFFUSION_PASS order="
+               << (order == DiffFunction::RKLOrder::First ? 1 : 2)
+               << " stages=" << stages << " exchanges=" << exchange_count << '\n';
++    return downloaded;
+ }
+ 
+ } // namespace
+@@ -278,8 +292,20 @@ void run_route(DiffFunction::RKLOrder order)
+ int main()
+ {
+     try {
+-        run_route(DiffFunction::RKLOrder::First);
+-        run_route(DiffFunction::RKLOrder::Second);
++        for (const auto order : {DiffFunction::RKLOrder::First, DiffFunction::RKLOrder::Second}) {
++            const auto sequential = run_route(order, false);
++            const auto batched = run_route(order, true);
++            for (std::size_t i = 0; i < sequential.size(); ++i)
++                for (const auto member : {&FluidState::rho, &FluidState::mom_u, &FluidState::mom_v,
++                     &FluidState::mom_w, &FluidState::eng, &FluidState::enuc_rate, &FluidState::mass_fractions}) {
++                    const auto& a = sequential[i].*member;
++                    const auto& b = batched[i].*member;
++                    require(a.size() == b.size(), "Batch changed storage size");
++                    for (std::size_t j = 0; j < a.size(); ++j)
++                        require(std::bit_cast<std::uint64_t>(a[j]) == std::bit_cast<std::uint64_t>(b[j]),
++                            "Diffusion batch changed field bits");
++                }
++        }
+         return 0;
+     } catch (const std::exception& error) {
+         std::cerr << error.what() << '\n';
+diff --git a/tests/host/test_compute_backend.cpp b/tests/host/test_compute_backend.cpp
+index b4e943e0..ce70c388 100644
+--- a/tests/host/test_compute_backend.cpp
++++ b/tests/host/test_compute_backend.cpp
+@@ -248,9 +248,10 @@ public:
+         arch::state::CompletionToken token) override { return token; }
+     void rotate_slots(arch::backend::BackendStateAccess,
+                       arch::state::SlotRotation) override {}
+-    double compute_diffusion_dt(arch::backend::BackendStateAccess) override
++    double compute_diffusion_dt(arch::backend::BackendStateAccess access) override
+     {
+-        return 1.0;
++        ++microphysics_calls;
++        return access.block == block ? 1.0 : 2.0;
+     }
+ 
+     arch::state::CompletionToken execute_same_level_exchange(
+@@ -270,15 +271,21 @@ public:
+         return expected;
+     }
+     void copy_state_slot(arch::backend::BackendStateAccess,
+-                         arch::backend::BackendStateAccess) override {}
++                         arch::backend::BackendStateAccess) override { ++microphysics_calls; }
+     arch::state::CompletionToken execute_diffusion_stage(
+         arch::backend::BackendStateAccess, const arch::scheduler::RklPlan&,
+         const arch::scheduler::RklStageDescriptor&, double, double,
+-        arch::state::CompletionToken token) override { return token; }
++        arch::state::CompletionToken token) override {
++        ++microphysics_calls;
++        if (incomplete_microphysics) token.state = arch::state::CompletionState::Pending;
++        return token;
++    }
+     arch::backend::BurnExecutionResult execute_burn(
+         arch::backend::BackendStateAccess, double dt,
+         arch::state::CompletionToken token) override
+     {
++        ++microphysics_calls;
++        if (incomplete_microphysics) token.state = arch::state::CompletionState::Pending;
+         return {dt, 0, 0, token};
+     }
+     void enqueue_materialize_host_current(
+@@ -338,6 +345,8 @@ public:
+     std::vector<int> calls;
+     int enqueue_count = 0;
+     int hydro_dt_calls = 0;
++    int microphysics_calls = 0;
++    bool incomplete_microphysics = false;
+     int hydro_stage_calls = 0;
+     int fail_hydro_stage = 0;
+     bool incomplete_hydro_stage = false;
+@@ -350,6 +359,53 @@ public:
+     std::vector<arch::backend::BackendTraceRecord> trace;
+ };
+ 
++void test_microphysics_batch_contract()
++{
++    using namespace arch::state;
++    using arch::backend::BackendStateAccess;
++    FakeBackend backend;
++    const std::array<BackendStateAccess, 2> accesses{{
++        {backend.second_block, backend.second_storage, StateSlot::Current},
++        {backend.block, backend.storage, StateSlot::Current}}};
++    const CompletionToken token{91, CompletionState::Complete};
++    const arch::scheduler::RklPlan plan{};
++    const arch::scheduler::RklStageDescriptor descriptor{};
++    require(backend.compute_diffusion_dt_batch({}).empty()
++        && backend.execute_burn_batch({}, 0.1, token).empty(), "Empty microphysics batch launched work");
++    backend.copy_state_slot_batch({}, StateSlot::Next);
++    require(backend.microphysics_calls == 0, "Empty copy launched work");
++    require(backend.compute_diffusion_dt_batch(accesses) == std::vector<double>({2.0, 1.0}),
++        "Diffusion batch changed request ordering");
++    require(backend.execute_burn_batch(accesses, 0.1, token).size() == 2,
++        "Burn batch lost a result");
++    backend.copy_state_slot_batch(accesses, StateSlot::Scratch);
++    require(backend.execute_diffusion_stage_batch(accesses, plan, descriptor, 0.1, 0.1, token) == token,
++        "Diffusion batch lost completion");
++    for (int fault = 0; fault < 4; ++fault) {
++        auto invalid = accesses;
++        if (fault == 0) ++invalid[1].storage.value;
++        if (fault == 1) invalid[1].slot = StateSlot::Next;
++        if (fault == 2) invalid[1] = invalid[0];
++        if (fault == 3) ++invalid[1].block.epoch.value;
++        const int before = backend.microphysics_calls;
++        require_failure([&] { backend.compute_diffusion_dt_batch(invalid); }, "Invalid dt batch accepted");
++        require_failure([&] { backend.copy_state_slot_batch(invalid, StateSlot::Next); }, "Invalid copy accepted");
++        require_failure([&] { backend.execute_burn_batch(invalid, 0.1, token); }, "Invalid burn accepted");
++        require_failure([&] { backend.execute_diffusion_stage_batch(invalid, plan, descriptor, 0.1, 0.1, token); },
++            "Invalid stage accepted");
++        require(before == backend.microphysics_calls, "Late invalid access allowed earlier writes");
++    }
++    const int before = backend.microphysics_calls;
++    require_failure([&] { backend.copy_state_slot_batch(accesses, StateSlot::Current); }, "Aliased batch copy accepted");
++    require_failure([&] { backend.execute_burn_batch(accesses, 0.1, {91, CompletionState::Pending}); },
++        "Pending burn batch accepted");
++    require(before == backend.microphysics_calls, "Invalid batch submitted work");
++    backend.incomplete_microphysics = true;
++    require_failure([&] { backend.execute_burn_batch(accesses, 0.1, token); }, "Incomplete burn accepted");
++    require_failure([&] { backend.execute_diffusion_stage_batch(accesses, plan, descriptor, 0.1, 0.1, token); },
++        "Incomplete diffusion accepted");
++}
++
+ void test_hydro_batch_contract()
+ {
+     using namespace arch::state;
+@@ -718,6 +774,7 @@ int main()
+     test_host_transfer_view();
+     test_cuda_launch_config();
+     test_hydro_batch_contract();
++    test_microphysics_batch_contract();
+     test_transfer_transaction();
+     test_multiblock_exchange_contract();
+     test_dynamic_topology_store_is_fail_closed_by_default();

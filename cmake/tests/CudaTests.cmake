@@ -442,6 +442,20 @@ add_test(NAME cuda_multiblock_diffusion
     COMMAND arch_cuda_multiblock_diffusion)
 add_test(NAME cuda_multiblock_burn
     COMMAND arch_cuda_multiblock_burn)
+# Production batch boundaries: compare every stored bit with the scalar API.
+# The wider species case must serialize its shared global scratch, not alias it.
+foreach(blocks IN ITEMS 3 1024 1025)
+    foreach(module IN ITEMS burn diffusion)
+        add_test(NAME "cuda_multiblock_${module}_b${blocks}"
+            COMMAND "arch_cuda_multiblock_${module}" "${blocks}")
+        set_tests_properties("cuda_multiblock_${module}_b${blocks}" PROPERTIES
+            LABELS "cuda;microphysics;batch-boundary" RUN_SERIAL TRUE TIMEOUT 600)
+    endforeach()
+endforeach()
+add_test(NAME cuda_multiblock_diffusion_global_species
+    COMMAND arch_cuda_multiblock_diffusion 3 33)
+set_tests_properties(cuda_multiblock_diffusion_global_species PROPERTIES
+    LABELS "cuda;microphysics;batch-boundary" RUN_SERIAL TRUE TIMEOUT 600)
 add_test(NAME cuda_store_lifecycle
     COMMAND arch_cuda_store_lifecycle)
 set_tests_properties(cuda_store_lifecycle PROPERTIES

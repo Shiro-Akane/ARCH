@@ -6,6 +6,7 @@ compile/link recipes and every failed sample are retained in a new output dir.
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shlex
@@ -18,6 +19,19 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def positive_duration(text):
+    value = float(text)
+    if not math.isfinite(value) or value <= 0:
+        raise argparse.ArgumentTypeError('finite positive physical duration required')
+    return value
+
+
+def trajectory_command(exe, method, pool, storage, steps, duration=1e-10):
+    return [str(exe), '1e7', '3e9', str(duration), '1e8', '1e-7', str(steps),
+            '--ode', method, '--storage-cells', *map(str, storage), '--pool-cells', str(pool),
+            'c12=0.5', 'o16=0.5']
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--build-dir', type=Path, required=True)
@@ -28,6 +42,8 @@ def main():
     p.add_argument('--pools', type=int, nargs='+', default=[1, 8, 32])
     p.add_argument('--storage', type=int, nargs=2, default=[32, 33])
     p.add_argument('--steps', type=int, default=4)
+    p.add_argument('--duration', type=positive_duration, default=1e-10,
+                   help='same physical trajectory duration for CPU/GPU; original gate is 1e-10')
     p.add_argument('--preload', type=Path, help='optional test-only native API observer; never formal timing')
     a = p.parse_args()
     def interrupted(signum, frame):
@@ -38,6 +54,7 @@ def main():
         p.error('new output and valid positive bounded capacity/storage required')
     out.mkdir(parents=True)
     record = dict(status='running', scope='capacity-numerical-diagnostic-not-formal-speedup',
+                  duration=a.duration, steps=a.steps,
                   source_sha256=digest(source), provider_sha256=digest(provider),
                   compile_commands_sha256=digest(build / 'compile_commands.json'), commands=[], runs=[])
     if a.preload:
@@ -88,9 +105,7 @@ def main():
             for method in a.methods:
                 for pool in a.pools:
                     name = f'{network}-{method}-pool{pool}'
-                    command = [str(exe), '1e7', '3e9', '1e-10', '1e8', '1e-7', str(a.steps),
-                        '--ode', method, '--storage-cells', *map(str, a.storage), '--pool-cells', str(pool),
-                        'c12=0.5', 'o16=0.5']
+                    command = trajectory_command(exe, method, pool, a.storage, a.steps, a.duration)
                     run(name, command, observe=True)
                     lines = (out / (name + '.stdout')).read_text().splitlines()
                     if 'GENERATED_SPARSE_BURN_PARITY_PASS' not in lines:

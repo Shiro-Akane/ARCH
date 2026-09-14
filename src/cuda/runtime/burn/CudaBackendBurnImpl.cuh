@@ -22,6 +22,7 @@
 #include "numerics/burnsolver/ode_ros4.h"
 
 #include <type_traits>
+#include <algorithm>
 
 namespace arch::cuda::burn_detail {
 
@@ -31,8 +32,18 @@ __global__ void burn_cells_kernel(
     DeviceStateView state, DeviceGridView grid,
     BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>* workspaces,
     reduction::ReductionCandidate* candidates, int* statuses,
-    double burn_dt, Eos eos, BurnConfigView config, Network network)
+    double burn_dt, Eos eos, BurnConfigView config, Network network,
+    const DeviceBurnBatchBlock* blocks = nullptr)
 {
+    if (blocks) {
+        const auto& block = blocks[blockIdx.y];
+        state = block.state;
+        grid = block.grid;
+        workspaces = reinterpret_cast<BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>*>(
+            block.workspace_storage);
+        candidates = block.candidates;
+        statuses = block.statuses;
+    }
     const int linear = blockIdx.x * blockDim.x + threadIdx.x;
     const int count = grid.active_cell_count();
     if (linear >= count) return;
@@ -90,20 +101,50 @@ cudaError_t launch_route(
     BurnOdeMatrixWorkspaceFor<Network::ODE_NEQ>* workspaces,
     reduction::ReductionCandidate* candidates, int* statuses,
     DeviceBurnSummary* summary, double burn_dt, Eos eos,
-    BurnConfigView config, cudaStream_t stream, Network network)
+    CudaBurnArguments config, cudaStream_t stream, Network network)
 {
     OdeMath::check_burn_state_layout<Network>();
     static_assert(BurnLimits::uses_compact_matrix(Network::ODE_NEQ),
                   "Compact burn storage is bounded by the full ODE extent");
     if (state.n_species != Network::NUM_SPECIES)
         return cudaErrorInvalidValue;
+    if (config.host_blocks.empty() != (config.device_blocks == nullptr))
+        return cudaErrorInvalidValue;
+    // Validate every borrowed record before any wave writes. The backend has
+    // already checked unique handles, generations and Current-slot ownership.
+    for (const auto& block : config.host_blocks)
+        if (block.state.n_species != Network::NUM_SPECIES
+            || block.grid.active_cell_count() <= 0 || !block.workspace_storage
+            || !block.candidates || !block.statuses || !block.summary)
+            return cudaErrorInvalidValue;
+    if (!config.host_blocks.empty()) {
+        for (std::size_t first = 0; first < config.host_blocks.size(); first += BURN_BATCH_WAVE_LIMIT) {
+            const auto count = std::min(BURN_BATCH_WAVE_LIMIT, config.host_blocks.size() - first);
+            int cells = 0;
+            for (const auto& block : config.host_blocks.subspan(first, count))
+                cells = std::max(cells, block.grid.active_cell_count());
+            const auto* bindings = config.device_blocks + first;
+            constexpr int threads = 128;
+            burn_cells_kernel<Network, OdeBinding>
+                <<<dim3((cells + threads - 1) / threads, static_cast<unsigned>(count)), threads, 0, stream>>>(
+                    state, grid, workspaces, candidates, statuses, burn_dt, eos,
+                    config.controls, network, bindings);
+            auto error = cudaGetLastError();
+            if (error != cudaSuccess) return error;
+            reduce_burn_kernel<Eos><<<dim3(1, static_cast<unsigned>(count)), 1, 0, stream>>>(
+                candidates, statuses, 0, summary, bindings);
+            error = cudaGetLastError();
+            if (error != cudaSuccess) return error;
+        }
+        return cudaSuccess;
+    }
     const int count = grid.active_cell_count();
     constexpr int threads = 128;
     const int blocks = (count + threads - 1) / threads;
     burn_cells_kernel<Network, OdeBinding>
         <<<blocks, threads, 0, stream>>>(
             state, grid, workspaces, candidates, statuses, burn_dt, eos,
-            config, network);
+            config.controls, network);
     cudaError_t error = cudaGetLastError();
     if (error == cudaSuccess) {
         reduce_burn_kernel<Eos><<<1, 1, 0, stream>>>(
@@ -159,7 +200,7 @@ struct OdeRouteVisitor {
             context.result = launch_route<Network, OdeBinding>(
                 context.state, context.grid, workspaces,
                 context.candidates, context.statuses, context.summary,
-                context.burn_dt, context.eos, context.config.controls,
+                context.burn_dt, context.eos, context.config,
                 context.stream, network);
             context.invoked = true;
         }

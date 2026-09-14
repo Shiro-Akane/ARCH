@@ -117,7 +117,7 @@ amr::Block make_block(int id, const HelmEos& eos)
     constexpr double temperature = 2.0e9;
     const double eint = eos.get_eint_from_T(
         rho, temperature, composition.data());
-    const int burn_cell = block.grid.GetIndex(block.grid.Is() + id);
+    const int burn_cell = block.grid.GetIndex(block.grid.Is() + id % 2);
     for (int cell = 0; cell < total; ++cell) {
         const double cell_rho = cell == burn_cell ? rho : 1.0e-2;
         block.fluid_state.set(
@@ -155,25 +155,31 @@ amr::SameLevelExchangePlan make_exchange_plan(
         handles[0].epoch);
 }
 
-std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char* name, bool batched)
+std::vector<FluidState> run_route(arch::dispatch::OdeSolverId ode, const char* name, bool batched,
+    std::size_t count = 2)
 {
     SpeciesManager species;
     NetAprox13::RegisterSpecies(species);
     const std::string table = std::string(ARCH_SOURCE_DIR)
         + "/EOS_toolkit/tables/helmholtz/helm_table.dat";
     HelmEos eos(table, &species);
-    std::array<amr::Block, 2> blocks{make_block(0, eos), make_block(1, eos)};
-    const std::array<amr::BlockHandle, 2> handles{
-        amr::BlockHandle{{501}, {13}}, amr::BlockHandle{{502}, {13}}};
-    const std::array<arch::backend::StorageGeneration, 2> storage{{{601}, {602}}};
+    std::vector<amr::Block> blocks;
+    std::vector<amr::BlockHandle> handles;
+    std::vector<arch::backend::StorageGeneration> storage;
+    blocks.reserve(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        blocks.push_back(make_block(static_cast<int>(i), eos));
+        handles.push_back({{501 + i}, {13}});
+        storage.push_back({601 + i});
+    }
     const auto boundary_plan = make_boundary_plan();
-    std::array<arch::cuda::CudaBlockBinding, 2> bindings{};
+    std::vector<arch::cuda::CudaBlockBinding> bindings(count);
     for (std::size_t index = 0; index < bindings.size(); ++index)
         bindings[index] = {
             &blocks[index], handles[index], storage[index], &boundary_plan};
     auto backend = arch::cuda::make_cuda_backend(
         bindings, 0, make_launch_config(ode), species, eos);
-    std::array<arch::backend::BackendStateAccess, 2> current{};
+    std::vector<arch::backend::BackendStateAccess> current(count);
     arch::state::StateResidencyLedger ledger({13});
     for (std::size_t index = 0; index < current.size(); ++index) {
         current[index] = {
@@ -194,7 +200,7 @@ std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char*
     arch::scheduler::StageExecutionContext context{
         arch::state::ExecutionSide::Device, ledger, clock};
     constexpr double burn_dt = 1.0e-16;
-    std::array<arch::backend::BurnExecutionResult, 2> results{};
+    std::vector<arch::backend::BurnExecutionResult> results(count);
     (void)arch::scheduler::execute_burn_first_lane(
         context, handles, [&](arch::state::CompletionToken token) {
             const auto before = backend->counters();
@@ -206,8 +212,10 @@ std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char*
                             && arch::state::is_complete(results[index].completion),
                         "multi-block burn completion token drifted");
             }
-            require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
+            require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : count),
                 "Dense burn summary completion was not batched");
+            require(backend->counters().kernel_count - before.kernel_count == (batched ? 2 * ((count + 1023) / 1024) : 2 * count),
+                "Dense burn cell/reduction kernels were not batched");
             return token;
         });
 
@@ -232,14 +240,16 @@ std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char*
                 == std::bit_cast<std::uint64_t>(permuted),
             "multi-block burn reduction depends on traversal order");
 
-    const auto exchange_plan = make_exchange_plan(handles);
+    // Only the first two blocks participate in this exchange sub-contract;
+    // the optional capacity scan below qualifies burn, not a global mesh.
+    const auto exchange_plan = make_exchange_plan({handles[0], handles[1]});
     const auto version = ledger.inspect({handles[0], current[0].slot})
         .interior.version;
     (void)arch::scheduler::complete_boundary(
         context, handles, current[0].slot, version,
         [&](arch::state::StateSlot slot, arch::state::StateVersion selected,
             arch::state::CompletionToken token) {
-            std::array<arch::backend::BackendStateAccess, 2> accesses{};
+            std::vector<arch::backend::BackendStateAccess> accesses(count);
             for (std::size_t index = 0; index < current.size(); ++index) {
                 accesses[index] = current[index];
                 accesses[index].slot = slot;
@@ -247,10 +257,10 @@ std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char*
                     accesses[index], selected, token);
             }
             return backend->execute_same_level_exchange(
-                accesses, exchange_plan, slot, selected, token);
+                {accesses.data(), 2}, exchange_plan, slot, selected, token);
         });
 
-    std::array<FluidState, 2> downloaded{};
+    std::vector<FluidState> downloaded(count);
     for (std::size_t index = 0; index < downloaded.size(); ++index) {
         downloaded[index].Preallocate(blocks[index].grid.GetTotalSize());
         downloaded[index].InitSpecies(NetAprox13::NUM_SPECIES);
@@ -258,7 +268,7 @@ std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char*
             *backend, ledger, clock, current[index], transfer_view(downloaded[index]),
             arch::state::PendingTransferPhase::PendingD2H);
         const int burn_cell = blocks[index].grid.GetIndex(
-            blocks[index].grid.Is() + static_cast<int>(index));
+            blocks[index].grid.Is() + static_cast<int>(index % 2));
         double sum = 0.0;
         for (int species_index = 0;
              species_index < NetAprox13::NUM_SPECIES; ++species_index)
@@ -272,19 +282,27 @@ std::array<FluidState, 2> run_route(arch::dispatch::OdeSolverId ode, const char*
                 "multi-block burn did not clear whole-field ENUC");
     }
     std::cout << "CUDA_MULTIBLOCK_BURN_PASS route=" << name
-              << " blocks=2 limiter=" << global << '\n';
+              << " blocks=" << count << " limiter=" << global << '\n';
     return downloaded;
 }
 
 } // namespace
 
-int main()
+int main(int argc, char** argv)
 {
     try {
+        std::size_t count = 2;
+        if (argc == 2) {
+            const std::string arg = argv[1];
+            std::size_t used = 0;
+            count = std::stoull(arg, &used);
+            require(used == arg.size() && count >= 2 && count <= 1025,
+                    "burn test block count must be 2..1025");
+        } else require(argc == 1, "burn test accepts at most one block count");
         for (const auto ode : {arch::dispatch::OdeSolverId::BeNr, arch::dispatch::OdeSolverId::Bd,
                               arch::dispatch::OdeSolverId::Ros4}) {
-            const auto sequential = run_route(ode, "sequential", false);
-            const auto batched = run_route(ode, "batched", true);
+            const auto sequential = run_route(ode, "sequential", false, count);
+            const auto batched = run_route(ode, "batched", true, count);
             for (std::size_t i = 0; i < sequential.size(); ++i)
                 for (const auto member : {&FluidState::rho, &FluidState::mom_u, &FluidState::mom_v,
                      &FluidState::mom_w, &FluidState::eng, &FluidState::enuc_rate, &FluidState::mass_fractions}) {

@@ -1,0 +1,9 @@
+[0/2] Re-checking globbed directories...
+[1/7] Linking CXX executable arch_cuda_regrid_transaction
+[2/7] Linking CXX executable arch_cuda_hydro_block
+[3/7] Linking CXX executable arch_cuda_multiblock_hydro
+[4/7] Linking CXX executable arch_cuda_store_lifecycle
+[5/7] Linking CXX executable arch_cuda_amr_exchange
+[6/7] Linking CXX executable arch_cuda_single_level_validation
+MEMORY_GUARD_RESULT min_available_kib=115188516 baseline_swap_kib=7720 peak_swap_kib=7720 guard_stopped=False peak_owned_rss_kib=513140 elapsed_seconds=16.667 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=1.375 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=17 complete=True

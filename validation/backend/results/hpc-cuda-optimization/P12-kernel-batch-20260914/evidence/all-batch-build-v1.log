@@ -1,0 +1,284 @@
+[0/2] Re-checking globbed directories...
+[1/2] Re-running CMake...
+-- ===================================================================
+-- Configuring ARCH Framework
+-- C++ Standard: C++20 Required
+-- ===================================================================
+-- [OPT] Build Type: Release
+-- [OPT] LTO enabled for optimized configurations
+-- [OPT] Using default linker; combined C/C++ optimized LTO link passed
+-- [CUDA] Compiled code images: 90
+-- [DEP] OpenMP enabled for target ARCH
+-- [DEP] HDF5 C++ libraries linked successfully
+CMake Warning (author) at /home/ubuntu/projects/.envs/arch/share/cmake-4.4/Modules/FetchContent.cmake:1968 (message):
+  Calling FetchContent_Populate(highfive) is deprecated, call
+  FetchContent_MakeAvailable(highfive) instead.  Policy CMP0169 can be set to
+  OLD to allow FetchContent_Populate(highfive) to be called directly for now,
+  but the ability to call it with declared details will be removed completely
+  in a future version.
+Call Stack (most recent call first):
+  cmake/Dependencies.cmake:58 (FetchContent_Populate)
+  CMakeLists.txt:27 (include)
+This warning is for project developers.  Use -Wno-author to suppress it.
+
+-- [DEP] HighFive headers configured via FetchContent
+-- [DEP] SuiteSparse KLU disabled; SparseKLU selection will be unavailable
+-- ===================================================================
+-- [SUCCESS] ARCH Framework build environment configured successfully!
+-- [SUCCESS] Executable : /home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/bin/ARCH
+-- [SUCCESS] Data Output: /home/ubuntu/projects/ARCH-microphysics-20260914/output/
+-- ===================================================================
+-- Configuring done (1.2s)
+CMake Warning at cmake/Application.cmake:104 (add_executable):
+  Cannot generate a safe runtime search path for target ARCH because files in
+  some directories may conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:13 (include)
+
+
+CMake Warning at cmake/tests/HostTests.cmake:145 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_runtime_probe_capabilities because files in some directories may
+  conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:17 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:288 (add_executable):
+  Cannot generate a safe runtime search path for target arch_cuda_hydro_block
+  because files in some directories may conflict with libraries in implicit
+  directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:303 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_multiblock_hydro because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:314 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_multiblock_diffusion because files in some directories may
+  conflict with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:323 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_multiblock_burn because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:334 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_store_lifecycle because files in some directories may conflict
+  with libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+CMake Warning at cmake/tests/CudaTests.cmake:341 (add_executable):
+  Cannot generate a safe runtime search path for target
+  arch_cuda_amr_exchange because files in some directories may conflict with
+  libraries in implicit directories:
+
+    runtime library [libgomp.so.1] in /usr/lib/gcc/x86_64-linux-gnu/11 may be hidden by files in:
+      /home/ubuntu/projects/.envs/arch/lib
+
+  Some of these libraries may not be found correctly.
+Call Stack (most recent call first):
+  CMakeLists.txt:23 (include)
+
+
+-- Generating done (0.1s)
+-- Build files have been written to: /home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release
+[0/4] Re-checking globbed directories...
+[1/21] Building CUDA object CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/../../physics/diffusionCoe/diffusion_math.hpp(184): warning #177-D: variable "opac_total" was declared but never referenced
+          double opac_total = opac_ee + opac_ei + orad;
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/driver/StateResidency.h:44:23: warning: inline function ‘constexpr bool arch::state::operator==(const arch::state::StateVersion&, const arch::state::StateVersion&)’ used but never defined
+   44 | struct StateVersion {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/amr/BlockHandle.h:26:23: warning: inline function ‘constexpr bool amr::operator==(const amr::TopologyEpoch&, const amr::TopologyEpoch&)’ used but never defined
+   26 | struct TopologyEpoch {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/ExchangePlan.h:36:23: warning: inline function ‘constexpr bool amr::operator==(const amr::LogicalBlockKey&, const amr::LogicalBlockKey&)’ used but never defined
+   36 | struct LogicalBlockKey {
+      |                       ^~      
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/amr/BlockHandle.h:31:23: warning: inline function ‘constexpr bool amr::operator==(const amr::BlockHandle&, const amr::BlockHandle&)’ used but never defined
+   31 | struct BlockHandle {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:65:23: warning: inline function ‘constexpr bool amr::operator==(const amr::AmrEndpoint&, const amr::AmrEndpoint&)’ used but never defined
+   65 | struct AmrEndpoint {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:72:23: warning: inline function ‘constexpr bool amr::operator==(const amr::AmrPlanScope&, const amr::AmrPlanScope&)’ used but never defined
+   72 | struct AmrPlanScope {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:58:23: warning: inline function ‘constexpr bool amr::operator==(const amr::LogicalAmrBox&, const amr::LogicalAmrBox&)’ used but never defined
+   58 | struct LogicalAmrBox {
+      |                       ^       
+ARCH_COMPILE_METRIC elapsed_seconds=78.68 peak_rss_kib=944264 exit_code=0 command=/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -O3 -DNDEBUG -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o -MF CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu -o CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o
+[2/21] Building CXX object CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=3.95 peak_rss_kib=431056 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o -MF CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o.d -o CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/control/CudaBackendResources.cpp
+[3/21] Building CXX object CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=2.84 peak_rss_kib=344404 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o -MF CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o.d -o CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/control/CudaBackendCore.cpp
+[4/21] Building CXX object CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=2.67 peak_rss_kib=344272 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o -MF CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o.d -o CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/CudaBackendFactory.cpp
+[5/21] Building CXX object CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=3.18 peak_rss_kib=388788 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o -MF CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o.d -o CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp
+[6/21] Building CXX object CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=3.05 peak_rss_kib=367816 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o -MF CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o.d -o CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp
+[7/21] Building CXX object CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=2.87 peak_rss_kib=380648 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o -MF CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o.d -o CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/control/CudaBackendStore.cpp
+[8/21] Building CXX object CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=2.66 peak_rss_kib=342304 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o -MF CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o.d -o CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/amr/CudaBackendIndicators.cpp
+[9/21] Building CXX object CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o
+ARCH_COMPILE_METRIC elapsed_seconds=2.89 peak_rss_kib=383832 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o -MF CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o.d -o CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/runtime/amr/CudaBackendMigration.cpp
+[10/21] Linking CXX static library libarch_cuda_backend.a
+[11/21] Completing arch_cuda_backend before the next heavy phase
+[12/21] Building CUDA object CMakeFiles/arch_cuda_diffusion_rkl_parity.dir/tests/cuda/test_diffusion_rkl_parity.cu.o
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/../../physics/diffusionCoe/diffusion_math.hpp(184): warning #177-D: variable "opac_total" was declared but never referenced
+          double opac_total = opac_ee + opac_ei + orad;
+                 ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(113): warning #20014-D: calling a __host__ function from a __host__ __device__ function is not allowed
+          eos.evaluate_state(state);
+                            ^
+          detected during:
+            instantiation of "DiffFlux::DiffusionCoefficients DiffFlux::evaluate_diffusion_coefficients_from_eos(const EosType &, const SpeciesAccessor &, const DiffFlux::DiffusionConfigView &, double, double, const double *, double *, double *) [with EosType=IdealGas, SpeciesAccessor=SpeciesHostView]" at line 378
+            instantiation of "DiffFlux::DiffusionDtCandidate DiffFlux::evaluate_diffusion_dt_candidate(const FluidVector &, const double *, int, int, const EosType &, const SpeciesAccessor &, const DiffFlux::DiffusionConfigView &, const GridMetrics::GeometryView &, int, int, int, double *, double *, double *, double *, double *, const StateReader &) [with EosType=IdealGas, SpeciesAccessor=SpeciesHostView, StateReader=DiffFlux::HostDiffusionStateReader]" at line 776
+            instantiation of "double DiffFlux::adaptive_dt_diff(const FluidState &, const EosType &, const Grid &, const SimConfig &, double) [with EosType=IdealGas]" at line 501 of /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(395): warning #20014-D: calling a __host__ function from a __host__ __device__ function is not allowed
+                  const auto adjacent = read_state(neighbour);
+                                                  ^
+          detected during:
+            instantiation of "DiffFlux::DiffusionDtCandidate DiffFlux::evaluate_diffusion_dt_candidate(const FluidVector &, const double *, int, int, const EosType &, const SpeciesAccessor &, const DiffFlux::DiffusionConfigView &, const GridMetrics::GeometryView &, int, int, int, double *, double *, double *, double *, double *, const StateReader &) [with EosType=IdealGas, SpeciesAccessor=SpeciesHostView, StateReader=DiffFlux::HostDiffusionStateReader]" at line 776
+            instantiation of "double DiffFlux::adaptive_dt_diff(const FluidState &, const EosType &, const Grid &, const SimConfig &, double) [with EosType=IdealGas]" at line 501 of /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(586): warning #20014-D: calling a __host__ function from a __host__ __device__ function is not allowed
+              const auto left = read_state(cell - stride), right = read_state(cell + stride);
+                                          ^
+          detected during:
+            instantiation of "DiffFlux::DiffusionFaceStatus DiffFlux::evaluate_geometric_diffusion_cell(const FluidVector &, const double *, const EosType &, const SpeciesAccessor &, const DiffFlux::DiffusionConfigView &, const GridMetrics::GeometryView &, int, int, int, double, double *, double *, FluidVector &, const StateReader &) [with EosType=IdealGas, SpeciesAccessor=SpeciesHostView, StateReader=lambda [](int)->FluidVector]" at line 634
+            instantiation of "void DiffFlux::add_geometric_sources(std::vector<FluidVector, std::allocator<FluidVector>> &, const FluidState &, const EosType &, const Grid &, const SimConfig &, double) [with EosType=IdealGas]" at line 688
+            instantiation of "void DiffFlux::compute_diffusion_operator(const FluidState &, FluidState &, const EosType &, const Grid &, const SimConfig &) [with EosType=IdealGas]" at line 559 of /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(586): warning #20014-D: calling a __host__ function from a __host__ __device__ function is not allowed
+              const auto left = read_state(cell - stride), right = read_state(cell + stride);
+                                                                             ^
+          detected during:
+            instantiation of "DiffFlux::DiffusionFaceStatus DiffFlux::evaluate_geometric_diffusion_cell(const FluidVector &, const double *, const EosType &, const SpeciesAccessor &, const DiffFlux::DiffusionConfigView &, const GridMetrics::GeometryView &, int, int, int, double, double *, double *, FluidVector &, const StateReader &) [with EosType=IdealGas, SpeciesAccessor=SpeciesHostView, StateReader=lambda [](int)->FluidVector]" at line 634
+            instantiation of "void DiffFlux::add_geometric_sources(std::vector<FluidVector, std::allocator<FluidVector>> &, const FluidState &, const EosType &, const Grid &, const SimConfig &, double) [with EosType=IdealGas]" at line 688
+            instantiation of "void DiffFlux::compute_diffusion_operator(const FluidState &, FluidState &, const EosType &, const Grid &, const SimConfig &) [with EosType=IdealGas]" at line 559 of /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu(445): warning #20208-D: 'long double' is treated as 'double' in device code
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu(445): warning #20208-D: 'long double' is treated as 'double' in device code
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(374): warning #20011-D: calling a __host__ function("IdealGas::get_temperature(double, double, const double *) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_dt_candidate<    ::IdealGas,     ::SpeciesHostView,  ::DiffFlux::HostDiffusionStateReader> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(382): warning #20011-D: calling a __host__ function("IdealGas::get_cv(double, double, const double *) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_dt_candidate<    ::IdealGas,     ::SpeciesHostView,  ::DiffFlux::HostDiffusionStateReader> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(395): warning #20011-D: calling a __host__ function("DiffFlux::HostDiffusionStateReader::operator ()(int) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_dt_candidate<    ::IdealGas,     ::SpeciesHostView,  ::DiffFlux::HostDiffusionStateReader> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(398): warning #20011-D: calling a __host__ function("DiffFlux::HostDiffusionStateReader::fraction(int, int) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_dt_candidate<    ::IdealGas,     ::SpeciesHostView,  ::DiffFlux::HostDiffusionStateReader> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(113): warning #20011-D: calling a __host__ function("IdealGas::evaluate_state(    ::eos_state_t &) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_coefficients_from_eos<    ::IdealGas,     ::SpeciesHostView> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(252): warning #20011-D: calling a __host__ function("IdealGas::get_temperature(double, double, const double *) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_face_properties<    ::IdealGas,     ::SpeciesHostView> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(254): warning #20011-D: calling a __host__ function("IdealGas::get_temperature(double, double, const double *) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_face_properties<    ::IdealGas,     ::SpeciesHostView> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(266): warning #20011-D: calling a __host__ function("IdealGas::get_cv(double, double, const double *) const") from a __host__ __device__ function("DiffFlux::evaluate_diffusion_face_properties<    ::IdealGas,     ::SpeciesHostView> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(563): warning #20011-D: calling a __host__ function("IdealGas::get_temperature(double, double, const double *) const") from a __host__ __device__ function("DiffFlux::evaluate_geometric_diffusion_cell<    ::IdealGas,     ::SpeciesHostView,  ::void DiffFlux::add_geometric_sources<    ::IdealGas> (    ::std::vector<    ::FluidVector, ::std::allocator<    ::FluidVector> >  &, const     ::FluidState &, const T1 &, const     ::Grid &, const     ::SimConfig &, double)   ::[lambda(int) (instance 1)]> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(586): warning #20011-D: calling a __host__ function("void DiffFlux::add_geometric_sources<    ::IdealGas> (    ::std::vector<    ::FluidVector, ::std::allocator<    ::FluidVector> >  &, const     ::FluidState &, const T1 &, const     ::Grid &, const     ::SimConfig &, double)::[lambda(int) (instance 1)]::operator ()(int) const") from a __host__ __device__ function("DiffFlux::evaluate_geometric_diffusion_cell<    ::IdealGas,     ::SpeciesHostView,  ::void DiffFlux::add_geometric_sources<    ::IdealGas> (    ::std::vector<    ::FluidVector, ::std::allocator<    ::FluidVector> >  &, const     ::FluidState &, const T1 &, const     ::Grid &, const     ::SimConfig &, double)   ::[lambda(int) (instance 1)]> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../../numerics/diffusion/DiffFlux.h(586): warning #20011-D: calling a __host__ function("void DiffFlux::add_geometric_sources<    ::IdealGas> (    ::std::vector<    ::FluidVector, ::std::allocator<    ::FluidVector> >  &, const     ::FluidState &, const T1 &, const     ::Grid &, const     ::SimConfig &, double)::[lambda(int) (instance 1)]::operator ()(int) const") from a __host__ __device__ function("DiffFlux::evaluate_geometric_diffusion_cell<    ::IdealGas,     ::SpeciesHostView,  ::void DiffFlux::add_geometric_sources<    ::IdealGas> (    ::std::vector<    ::FluidVector, ::std::allocator<    ::FluidVector> >  &, const     ::FluidState &, const T1 &, const     ::Grid &, const     ::SimConfig &, double)   ::[lambda(int) (instance 1)]> ") is not allowed
+
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/amr/BlockHandle.h:26:23: warning: inline function ‘constexpr bool amr::operator==(const amr::TopologyEpoch&, const amr::TopologyEpoch&)’ used but never defined
+   26 | struct TopologyEpoch {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/ExchangePlan.h:36:23: warning: inline function ‘constexpr bool amr::operator==(const amr::LogicalBlockKey&, const amr::LogicalBlockKey&)’ used but never defined
+   36 | struct LogicalBlockKey {
+      |                       ^~      
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/amr/BlockHandle.h:31:23: warning: inline function ‘constexpr bool amr::operator==(const amr::BlockHandle&, const amr::BlockHandle&)’ used but never defined
+   31 | struct BlockHandle {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:65:23: warning: inline function ‘constexpr bool amr::operator==(const amr::AmrEndpoint&, const amr::AmrEndpoint&)’ used but never defined
+   65 | struct AmrEndpoint {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:72:23: warning: inline function ‘constexpr bool amr::operator==(const amr::AmrPlanScope&, const amr::AmrPlanScope&)’ used but never defined
+   72 | struct AmrPlanScope {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/cuda/diffusion/../hydro/../../numerics/integrator/../../amr/AmrTransferPlans.h:58:23: warning: inline function ‘constexpr bool amr::operator==(const amr::LogicalAmrBox&, const amr::LogicalAmrBox&)’ used but never defined
+   58 | struct LogicalAmrBox {
+      |                       ^       
+/home/ubuntu/projects/ARCH-microphysics-20260914/src/driver/StateResidency.h:44:23: warning: inline function ‘constexpr bool arch::state::operator==(const arch::state::StateVersion&, const arch::state::StateVersion&)’ used but never defined
+   44 | struct StateVersion {
+      |                       ^       
+ARCH_COMPILE_METRIC elapsed_seconds=77.24 peak_rss_kib=917096 exit_code=0 command=/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -O3 -DNDEBUG -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_diffusion_rkl_parity.dir/tests/cuda/test_diffusion_rkl_parity.cu.o -MF CMakeFiles/arch_cuda_diffusion_rkl_parity.dir/tests/cuda/test_diffusion_rkl_parity.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_diffusion_rkl_parity.cu -o CMakeFiles/arch_cuda_diffusion_rkl_parity.dir/tests/cuda/test_diffusion_rkl_parity.cu.o
+[13/21] Building CXX object CMakeFiles/arch_cuda_multiblock_diffusion.dir/tests/cuda/test_cuda_multiblock_diffusion.cu.o
+/home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_cuda_multiblock_diffusion.cu: In function ‘arch::backend::HostStateTransferView {anonymous}::transfer_view(FluidState&)’:
+/home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_cuda_multiblock_diffusion.cu:104:56: warning: narrowing conversion of ‘{anonymous}::test_species_count’ from ‘int’ to ‘std::size_t’ {aka ‘long unsigned int’} [-Wnarrowing]
+  104 |         state.mass_fractions.data(), state.rho.size(), test_species_count, state.rho.size()};
+      |                                                        ^~~~~~~~~~~~~~~~~~
+ARCH_COMPILE_METRIC elapsed_seconds=2.07 peak_rss_kib=294844 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -x c++ -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -x c++ -MD -MT CMakeFiles/arch_cuda_multiblock_diffusion.dir/tests/cuda/test_cuda_multiblock_diffusion.cu.o -MF CMakeFiles/arch_cuda_multiblock_diffusion.dir/tests/cuda/test_cuda_multiblock_diffusion.cu.o.d -o CMakeFiles/arch_cuda_multiblock_diffusion.dir/tests/cuda/test_cuda_multiblock_diffusion.cu.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_cuda_multiblock_diffusion.cu
+[14/21] Building CXX object CMakeFiles/arch_cuda_multiblock_burn.dir/tests/cuda/test_cuda_multiblock_burn.cu.o
+ARCH_COMPILE_METRIC elapsed_seconds=2.42 peak_rss_kib=328332 exit_code=0 command=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_SOURCE_DIR="/home/ubuntu/projects/ARCH-microphysics-20260914" -I/home/ubuntu/projects/ARCH-microphysics-20260914/src -I/home/ubuntu/projects/ARCH-microphysics-20260914/cases -I/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/generated -x c++ -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -x c++ -MD -MT CMakeFiles/arch_cuda_multiblock_burn.dir/tests/cuda/test_cuda_multiblock_burn.cu.o -MF CMakeFiles/arch_cuda_multiblock_burn.dir/tests/cuda/test_cuda_multiblock_burn.cu.o.d -o CMakeFiles/arch_cuda_multiblock_burn.dir/tests/cuda/test_cuda_multiblock_burn.cu.o -c /home/ubuntu/projects/ARCH-microphysics-20260914/tests/cuda/test_cuda_multiblock_burn.cu
+[15/21] Linking CXX executable bin/ARCH
+[16/21] Linking CXX executable arch_cuda_multiblock_diffusion
+[17/21] Linking CXX executable arch_cuda_multiblock_burn
+[18/21] Linking CXX executable arch_cuda_diffusion_rkl_parity
+MEMORY_GUARD_RESULT min_available_kib=114494920 baseline_swap_kib=7720 peak_swap_kib=7720 guard_stopped=False peak_owned_rss_kib=1507484 elapsed_seconds=198.200 stop_reason=none
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=1.612 peak_io_full_percent=4.442 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=193 complete=True

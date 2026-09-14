@@ -1,0 +1,15 @@
+diff --git a/build/CudaBackendBurnSparseImpl.server-frozen.cuh b/src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh
+index 773955f1..23e29a06 100644
+--- a/build/CudaBackendBurnSparseImpl.server-frozen.cuh
++++ b/src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh
+@@ -73,8 +73,8 @@ public:
+         check_cuda(cudaMemGetInfo(&available, &total), "sparse burn pool memory budget");
+         const std::size_t fitting = available / lane_bytes_;
+         // A hardware-sized active group bounds ODE storage and is shared across
+-        // ALL blocks and AMR generations. The executor retains only ONE cuDSS
+-        // factor set; its analysis checks predicted peak memory before factoring.
++        // ALL blocks and AMR generations. The provider's private factor cache
++        // is separately bounded by owner count and native peak-memory estimates.
+         // This is not a claim that cuDSS's opaque factor memory equals lane_bytes_.
+         capacity_ = static_cast<int>(std::min({static_cast<std::size_t>(max_cells),
+             static_cast<std::size_t>(std::max(warp, 0)), fitting}));

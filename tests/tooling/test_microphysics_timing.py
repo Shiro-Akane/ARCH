@@ -16,6 +16,18 @@ spec.loader.exec_module(timing)
 
 
 class MicrophysicsTimingTests(unittest.TestCase):
+    def test_default_thread_matrix_is_unchanged(self):
+        self.assertEqual(timing.lane_configurations([1,8,16]),
+            [(v,b,t) for v in ('baseline','candidate') for b in ('cpu','cuda') for t in (1,8,16)])
+
+    def test_fixed_gpu_hosts_preserve_all_candidate_cpu_controls(self):
+        self.assertEqual(timing.lane_configurations([1,8,16],[8],8),
+            [('baseline','cpu',8),('baseline','cuda',8),('candidate','cpu',1),
+             ('candidate','cpu',8),('candidate','cpu',16),('candidate','cuda',8)])
+        for selection in ([],[0],[8,8]):
+            with self.assertRaises(RuntimeError): timing.lane_configurations([1,8],selection,8)
+        with self.assertRaises(RuntimeError): timing.lane_configurations([1,8],[8],0)
+
     def test_observer_cannot_enter_formal_timing(self):
         args=['timing','--candidate-source','unused','--candidate-build','unused',
               '--baseline-source','unused','--baseline-build','unused','--output-root','unused',

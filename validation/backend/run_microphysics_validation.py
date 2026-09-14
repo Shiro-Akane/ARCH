@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 
@@ -21,7 +22,8 @@ def main():
     p.add_argument('--build-dir',type=Path,required=True)
     p.add_argument('--output-dir',type=Path,required=True)
     p.add_argument('--phase',required=True,choices=('canonical','first-law','nse','independent',
-        'coupled','coupled-restart','contracts','amr','curved','lifecycle','restart','tails'))
+        'coupled','coupled-restart','coupled-all-transport','coupled-all-transport-restart',
+        'contracts','batch-contracts','amr','curved','lifecycle','restart','tails'))
     a=p.parse_args()
     build,out=a.build_dir.resolve(),a.output_dir.resolve()
     if not out.is_relative_to(ROOT/'build') or out == ROOT/'build':
@@ -52,10 +54,20 @@ def main():
     elif a.phase=='independent':
         command=[sys.executable,str(ROOT/'validation/burn/time_reference.py'),
             '--binary',str(build/'arch_burn_mainline_reference'),'--build-dir',str(build)]
-    elif a.phase in ('coupled','coupled-restart'):
+    elif a.phase.startswith('coupled'):
         command=[sys.executable,str(ROOT/'validation/backend/verify_microphysics_coupling.py'),
             '--build-dir',str(build),'--output-dir',str(out/'results')]
-        if a.phase=='coupled-restart': command+=['--restart']
+        if a.phase.endswith('restart'): command+=['--restart']
+        if 'all-transport' in a.phase: command+=['--all-transport']
+    elif a.phase=='batch-contracts':
+        tests=['cuda_multiblock_burn','cuda_multiblock_diffusion','diffusion_rkl_parity',
+               'cuda_multiblock_diffusion_global_species']
+        tests += [f'cuda_multiblock_{module}_b{count}'
+                  for module in ('burn','diffusion') for count in (3,1024,1025)]
+        expression='^('+'|'.join(map(re.escape,tests))+')$'
+        report['required_tests']=tests
+        command=['ctest','--test-dir',str(build),'--output-on-failure','--no-tests=error',
+                 '--parallel','1','--timeout','600','-R',expression]
     else:
         command=[sys.executable,str(ROOT/'validation/backend/results/hpc-cuda-optimization/S4/validation-20260913/verify_s4.py'),
             '--source-root',str(ROOT),'--build-dir',str(build),'--output-root',str(out/'results'),'--phase',a.phase]
@@ -65,10 +77,21 @@ def main():
         (out/'record.json').write_text(json.dumps(report,indent=2)+'\n')
     save()
     try:
+        if a.phase=='batch-contracts':
+            inventory=subprocess.run(['ctest','--test-dir',str(build),'--show-only=json-v1',
+                '-R',expression],capture_output=True,text=True,check=True)
+            (out/'ctest-inventory.json').write_text(inventory.stdout)
+            found=[entry['name'] for entry in json.loads(inventory.stdout)['tests']]
+            if sorted(found)!=sorted(tests):
+                raise RuntimeError('required microphysics batch CTest inventory differs')
         with (out/'stdout.log').open('w') as stdout,(out/'stderr.log').open('w') as stderr:
             rc=subprocess.run(command,cwd=ROOT,env=env,stdout=stdout,stderr=stderr,timeout=21600).returncode
         report['returncode']=rc
         if rc: raise RuntimeError(f'{a.phase} exited {rc}; original logs retained')
+        if a.phase=='batch-contracts':
+            transcript=(out/'stdout.log').read_text()+(out/'stderr.log').read_text()
+            if any(value in transcript for value in ('***Skipped','Not Run','tests did not run')):
+                raise RuntimeError('skipped/unexecuted batch test is not a pass')
         report['status']='passed'
     except BaseException as error:
         report.update(status='failed',error=repr(error))

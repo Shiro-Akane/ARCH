@@ -1,9 +1,10 @@
 /**
  * @file test_cuda_multiblock_diffusion.cu
- * @brief Compare multiblock RKL diffusion on CPU and CUDA.
+ * @brief Compare scalar and batched production CUDA RKL execution bitwise.
  *
  * Both RKL1 and RKL2 use the production backend so stage storage and block
- * exchange are tested together with the shared diffusion operator.
+ * exchange are tested together with the shared diffusion operator. Independent
+ * CPU/analytic comparisons live in the canonical application/leaf regressions.
  */
 #include "amr/Block.h"
 #include "amr/BoundaryPlan.h"
@@ -14,15 +15,18 @@
 #include "physics/species/Species.h"
 
 #include <array>
+#include <algorithm>
 #include <bit>
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace {
 
 using arch::state::StateSlot;
+int test_species_count = 2;
 
 void require(bool condition, const char* message)
 {
@@ -49,6 +53,8 @@ SpeciesManager make_species()
     SpeciesManager species;
     species.add_species("a", 1.0, 1.0, 1.4, 3.5);
     species.add_species("b", 4.0, 2.0, 1.5, 7.25);
+    for (int s = 2; s < test_species_count; ++s)
+        species.add_species("inactive" + std::to_string(s), 1.0, 1.0, 1.4, 3.5);
     return species;
 }
 
@@ -69,11 +75,11 @@ amr::Block make_block(int id)
     for (FluidState* state : {
              &block.fluid_state, &block.state_next, &block.state_scratch}) {
         state->Preallocate(total);
-        state->InitSpecies(2);
+        state->InitSpecies(test_species_count);
     }
     for (int i = 0; i < block.grid.GetTotalX(); ++i) {
         const int cell = block.grid.GetIndex(i);
-        const double global_x = static_cast<double>(id * amr::BLOCK_NX
+        const double global_x = static_cast<double>((id % 2) * amr::BLOCK_NX
             + i - block.grid.Is());
         const double rho = 1.0 + 0.002 * global_x;
         const double u = 0.015 + 1.0e-4 * global_x * global_x;
@@ -84,6 +90,7 @@ amr::Block make_block(int id)
         const double x0 = 0.35 + 0.002 * global_x;
         block.fluid_state.X(0, cell) = x0;
         block.fluid_state.X(1, cell) = 1.0 - x0;
+        for (int s = 2; s < test_species_count; ++s) block.fluid_state.X(s, cell) = 0.0;
         block.fluid_state.enuc_rate[cell] = (i & 1) ? 0.0 : -0.0;
     }
     return block;
@@ -94,7 +101,7 @@ arch::backend::HostStateTransferView transfer_view(FluidState& state)
     return {
         state.rho.data(), state.mom_u.data(), state.mom_v.data(),
         state.mom_w.data(), state.eng.data(), state.enuc_rate.data(),
-        state.mass_fractions.data(), state.rho.size(), 2, state.rho.size()};
+        state.mass_fractions.data(), state.rho.size(), test_species_count, state.rho.size()};
 }
 
 arch::cuda::CudaLaunchConfig make_launch_config(
@@ -143,14 +150,19 @@ amr::SameLevelExchangePlan make_exchange_plan(
         handles[0].epoch);
 }
 
-std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
+std::vector<FluidState> run_route(DiffFunction::RKLOrder order, bool batched, std::size_t count = 2)
 {
-    std::array<amr::Block, 2> blocks{make_block(0), make_block(1)};
-    const std::array<amr::BlockHandle, 2> handles{
-        amr::BlockHandle{{301}, {11}}, amr::BlockHandle{{302}, {11}}};
-    const std::array<arch::backend::StorageGeneration, 2> storage{{{401}, {402}}};
+    std::vector<amr::Block> blocks;
+    std::vector<amr::BlockHandle> handles;
+    std::vector<arch::backend::StorageGeneration> storage;
+    blocks.reserve(count);
+    for (std::size_t i = 0; i < count; ++i) {
+        blocks.push_back(make_block(static_cast<int>(i)));
+        handles.push_back({{301 + i}, {11}});
+        storage.push_back({401 + i});
+    }
     const auto boundary_plan = make_boundary_plan();
-    std::array<arch::cuda::CudaBlockBinding, 2> bindings{};
+    std::vector<arch::cuda::CudaBlockBinding> bindings(count);
     for (std::size_t index = 0; index < bindings.size(); ++index)
         bindings[index] = {
             &blocks[index], handles[index], storage[index], &boundary_plan};
@@ -158,7 +170,7 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
     IdealGas eos(1.4, species);
     auto backend = arch::cuda::make_cuda_backend(
         bindings, 0, make_launch_config(order), species, eos);
-    std::array<arch::backend::BackendStateAccess, 2> current{};
+    std::vector<arch::backend::BackendStateAccess> current(count);
     arch::state::StateResidencyLedger ledger({11});
     for (std::size_t index = 0; index < current.size(); ++index) {
         current[index] = {handles[index], storage[index], StateSlot::Current};
@@ -177,14 +189,19 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
             arch::state::PendingTransferPhase::PendingH2D);
     arch::scheduler::StageExecutionContext context{
         arch::state::ExecutionSide::Device, ledger, clock};
-    const auto exchange_plan = make_exchange_plan(handles);
+    // Capacity scans leave blocks beyond the first pair as isolated outflow
+    // blocks. This checks kernels/storage, not a global mesh convergence claim.
+    const auto exchange_plan = make_exchange_plan({handles[0], handles[1]});
+    const auto waves = test_species_count > 30 ? count : (count + 1023) / 1024;
 
     const auto before_dt = backend->counters();
-    const auto dts = batched ? backend->compute_diffusion_dt_batch(current)
-        : std::vector<double>{backend->compute_diffusion_dt(current[0]), backend->compute_diffusion_dt(current[1])};
-    require(backend->counters().stream_sync_count - before_dt.stream_sync_count == (batched ? 1 : 2),
+    auto dts = batched ? backend->compute_diffusion_dt_batch(current) : std::vector<double>{};
+    if (!batched) for (const auto access : current) dts.push_back(backend->compute_diffusion_dt(access));
+    require(backend->counters().stream_sync_count - before_dt.stream_sync_count == (batched ? 1 : count),
         "Diffusion dt completion was not batched");
-    const double dt_fe = std::min(dts[0], dts[1]);
+    require(backend->counters().kernel_count - before_dt.kernel_count == (batched ? 3 * waves : 3 * count),
+        "Diffusion dt kernels were not batched");
+    const double dt_fe = *std::min_element(dts.begin(), dts.end());
     require(std::isfinite(dt_fe) && dt_fe > 0.0,
             "multi-block diffusion dt is invalid");
     const double dt = 2.0 * dt_fe;
@@ -202,8 +219,10 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
                     target.slot = destination;
                     backend->copy_state_slot(current[index], target);
                 }
-                require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
+                require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : count),
                     "Diffusion slot copy completion was not batched");
+                require(backend->counters().kernel_count - before.kernel_count == (batched ? (count + 1023) / 1024 : 0),
+                    "Diffusion slot copy was not fused");
             });
     };
     copy(StateSlot::Scratch);
@@ -220,14 +239,16 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
         for (const auto& access : current)
             (void)backend->execute_diffusion_stage(
                 access, plan, descriptor, dt, dt_fe, token);
-        require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : 2),
+        require(backend->counters().stream_sync_count - before.stream_sync_count == (batched ? 1 : count),
             "Diffusion stage completion was not batched");
+        require(backend->counters().kernel_count - before.kernel_count == (batched ? 5 * waves : 5 * count),
+            "Diffusion stage kernels were not batched");
         return token;
     };
     const auto boundary = [&] (
         StateSlot slot, arch::state::StateVersion version,
         arch::state::CompletionToken token) {
-        std::array<arch::backend::BackendStateAccess, 2> selected{};
+        std::vector<arch::backend::BackendStateAccess> selected(count);
         for (std::size_t index = 0; index < current.size(); ++index) {
             selected[index] = current[index];
             selected[index].slot = slot;
@@ -236,7 +257,7 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
         }
         ++exchange_count;
         return backend->execute_same_level_exchange(
-            selected, exchange_plan, slot, version, token);
+            {selected.data(), 2}, exchange_plan, slot, version, token);
     };
     const auto rotation = [&] (arch::state::SlotRotation value) {
         for (const auto& access : current) backend->rotate_slots(access, value);
@@ -254,10 +275,10 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
     require(exchange_count == static_cast<std::uint64_t>(stages),
             "multi-block RKL did not exchange after every stage");
 
-    std::array<FluidState, 2> downloaded{};
+    std::vector<FluidState> downloaded(count);
     for (std::size_t index = 0; index < current.size(); ++index) {
         downloaded[index].Preallocate(blocks[index].grid.GetTotalSize());
-        downloaded[index].InitSpecies(2);
+        downloaded[index].InitSpecies(test_species_count);
         (void)arch::backend::transfer_state_regions(
             *backend, ledger, clock, current[index], transfer_view(downloaded[index]),
             arch::state::PendingTransferPhase::PendingD2H);
@@ -283,18 +304,34 @@ std::array<FluidState, 2> run_route(DiffFunction::RKLOrder order, bool batched)
             require(std::isfinite(value), "multi-block RKL produced non-finite energy");
     std::cout << "CUDA_MULTIBLOCK_DIFFUSION_PASS order="
               << (order == DiffFunction::RKLOrder::First ? 1 : 2)
-              << " stages=" << stages << " exchanges=" << exchange_count << '\n';
+              << " stages=" << stages << " exchanges=" << exchange_count
+              << " blocks=" << count << " species=" << test_species_count << '\n';
     return downloaded;
 }
 
 } // namespace
 
-int main()
+int main(int argc, char** argv)
 {
     try {
+        std::size_t count = 2;
+        require(argc <= 3, "diffusion test accepts block/species counts");
+        if (argc >= 2) {
+            const std::string arg = argv[1];
+            std::size_t used = 0;
+            count = std::stoull(arg, &used);
+            require(used == arg.size() && count >= 2 && count <= 1025, "block count must be 2..1025");
+        }
+        if (argc == 3) {
+            const std::string arg = argv[2];
+            std::size_t used = 0;
+            test_species_count = std::stoi(arg, &used);
+            require(used == arg.size() && test_species_count >= 2 && test_species_count <= 33,
+                    "species count must be 2..33");
+        }
         for (const auto order : {DiffFunction::RKLOrder::First, DiffFunction::RKLOrder::Second}) {
-            const auto sequential = run_route(order, false);
-            const auto batched = run_route(order, true);
+            const auto sequential = run_route(order, false, count);
+            const auto batched = run_route(order, true, count);
             for (std::size_t i = 0; i < sequential.size(); ++i)
                 for (const auto member : {&FluidState::rho, &FluidState::mom_u, &FluidState::mom_v,
                      &FluidState::mom_w, &FluidState::eng, &FluidState::enuc_rate, &FluidState::mass_fractions}) {
