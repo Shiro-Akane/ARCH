@@ -6,6 +6,7 @@
  * species, closure roundoff and invalid parent-density controls.
  */
 #include "cuda/amr/CoarseFineExchangeKernels.cuh"
+#include "cuda/hydro/HydroReconstructionPolicies.cuh"
 #include "../fixtures/amr_composition_test_cases.h"
 
 #include <algorithm>
@@ -126,7 +127,7 @@ void run_case(const amr::test::CompositionCase& example, int dimension,
     auto stencil = example.stencil(dimension);
     stencil.species_count = species_count;
     const auto family = classify_composition_family(stencil);
-    require(family == example.family, "CPU family differs from independent fixture expectation");
+    require(family == example.family[dimension-1], "CPU family differs from independent fixture expectation");
     std::array<double, amr::test::CompositionCase::species> integrals{};
     for (int child = 0; child < children; ++child) {
         const double* position = transfers[child].fine_position;
@@ -145,6 +146,11 @@ void run_case(const amr::test::CompositionCase& example, int dimension,
                 // old -2.77556e-17 last species must fail this regression.
                 require(actual >= 0.0 && actual <= 1.0,
                         "production CUDA AMR kernel produced negative/invalid X");
+                if (example.preserve_last_trace && field+1==fields) {
+                    const double trace=example.fractions[(species_count-1)*cells];
+                    require(std::abs(actual-trace) <= 16.0*std::numeric_limits<double>::epsilon()*trace,
+                            "CUDA closure invented or erased a zero/1e-20 trace species");
+                }
                 composition_sum += actual;
                 integrals[field - 6] += density * actual;
             }
@@ -157,6 +163,40 @@ void run_case(const amr::test::CompositionCase& example, int dimension,
         const double parent = example.density[0] * example.fractions[species * cells];
         require(std::abs(integrals[species] / children - parent) <= 4.0e-16,
                 "production CUDA AMR family failed rhoX conservation");
+    }
+}
+
+__global__ void reconstruct_muscl_composition(arch::cuda::DeviceStateView state, double* faces)
+{
+    FluidVector left{}, right{};
+    arch::cuda::CudaMusclReconstruction<McLimiter>::reconstruct(
+        state,1,1,0,left,right,faces,faces+4,nullptr);
+}
+
+void test_muscl_face_composition_closure()
+{
+    std::vector<double> source(10*4,0.0);
+    std::fill_n(source.begin(),4,1.0);
+    for (int cell=0; cell<4; ++cell)
+        for (int species=0; species<4; ++species)
+            source[(6+species)*4+cell]=amr::test::muscl_composition_cells[cell][species];
+    DeviceBuffer<double> input(source.size()), output(8);
+    check(cudaMemcpy(input.get(),source.data(),source.size()*sizeof(double),cudaMemcpyHostToDevice));
+    reconstruct_muscl_composition<<<1,1>>>(view(input.get(),4,4),output.get());
+    check(cudaGetLastError());
+    check(cudaDeviceSynchronize());
+    double faces[8]{};
+    check(cudaMemcpy(faces,output.get(),sizeof(faces),cudaMemcpyDeviceToHost));
+    for (int i=0; i<8; ++i) {
+        const double expected=amr::test::muscl_composition_faces[i];
+        require(std::abs(faces[i]-expected)<=8*std::numeric_limits<double>::epsilon()*expected,
+                "CUDA MUSCL face differs from independent normalized composition");
+    }
+    for (int side=0; side<2; ++side) {
+        double sum=0;
+        for (int i=0; i<4; ++i) sum+=faces[side*4+i];
+        require(std::abs(sum-1.0)<=4*std::numeric_limits<double>::epsilon(),
+                "CUDA MUSCL species flux would not sum to the mass flux");
     }
 }
 
@@ -174,6 +214,7 @@ int main()
     }
     try {
         check(probe);
+        test_muscl_face_composition_closure();
         const auto cases = amr::test::composition_cases();
         for (int dimension = 1; dimension <= 3; ++dimension) {
             for (const auto& example : cases) run_case(example, dimension);
@@ -184,7 +225,7 @@ int main()
                 run_case(cases[0], dimension, true, density, 0);
             }
         }
-        std::cout << "CUDA_AMR_COMPOSITION_PASS valid=12 invalid_no_scatter=24\n";
+        std::cout << "CUDA_AMR_COMPOSITION_PASS valid=21 invalid_no_scatter=24\n";
         return 0;
     } catch (const std::exception& error) {
         std::cerr << "FAIL: " << error.what() << '\n';

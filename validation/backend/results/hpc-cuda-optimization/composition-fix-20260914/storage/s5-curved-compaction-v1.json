@@ -1,0 +1,1934 @@
+{
+  "scope": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/validation-v1/curved",
+  "archive": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-numeric-validation-v1.tar.zst",
+  "archive_sha256": "658ec5c364fde845d64fa2f6af56ab04cfd02b977781915c45894e3e0370deff",
+  "windows_copy": "C:/tmp/ARCH-perf-20260909/build/s5-numeric-validation-v1.tar.zst",
+  "windows_copy_bytes": 1521541667,
+  "windows_copy_sha256": "658ec5c364fde845d64fa2f6af56ab04cfd02b977781915c45894e3e0370deff",
+  "verified": {
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "c9a9b315a68b84716a95c31f4561128843ba5556284cea56ffc7fed2da161375"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "e915cc3131b85fff142a0dc9210af8121e79b34145ee32298457d3ebf9fa19f7"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "3a58b98b10a535d486be3c2c0d994e2139f03ab738f07e837b1e881112509cb1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "6949091cb300eab7f7c12ad24776cf04b7148a2b43677fc9ebb80c2496b8032f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "c9a9b315a68b84716a95c31f4561128843ba5556284cea56ffc7fed2da161375"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "e915cc3131b85fff142a0dc9210af8121e79b34145ee32298457d3ebf9fa19f7"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "80854f28fe94cbc968fd77db1e76f1f387ef9ab63967fdfb1f5e24a8cee1817f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "e4e21a225616a16b4d4af6dda78b447cb01168836d58208c81ec040c7e584f17"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "87c84dc5bec75199d4f19bd30ed1758e2f56f3546115de5ae92cb61c8fce6a22"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "73a18c21351959ea2024bebdb7f4c308fff86d66bf27edbd272521dd9d2c8905"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "ce2d642aa9fbe4924f4be7491cee80d6724d17d6d907d4452444f635f313c4ad"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "fd219f1521fd03f82205d278c5fd05516bd17bd86354f636752a320bd5494a66"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "87c84dc5bec75199d4f19bd30ed1758e2f56f3546115de5ae92cb61c8fce6a22"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "73a18c21351959ea2024bebdb7f4c308fff86d66bf27edbd272521dd9d2c8905"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "20ec5f9880eac15a7cca19fce05776ffcd129ebc952d5b90a9d32c21cd1a378b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "460117887c7979c3d04eb52e7eb986ca971cbb6a994d0771124a6686b2c3615f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "87c84dc5bec75199d4f19bd30ed1758e2f56f3546115de5ae92cb61c8fce6a22"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "73a18c21351959ea2024bebdb7f4c308fff86d66bf27edbd272521dd9d2c8905"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "bb118eb63823b9efc4923749e4f1dd245c05c345495fa1a58da6a65de00f82e8"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "783df8b6627c19fa62d24e56b0357495a65a7c3ef8c31a6a9244d184031c6437"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "87c84dc5bec75199d4f19bd30ed1758e2f56f3546115de5ae92cb61c8fce6a22"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "73a18c21351959ea2024bebdb7f4c308fff86d66bf27edbd272521dd9d2c8905"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "c89fd200f0306378751acb247820d7d185016c9ff4ff2f0540dcb870a88aad6b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "9d73cd6bd231b73b18f30d0a0c5fadedb5ef6957a37abc7e78157a5d3958b330"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "72662acb73d1b8b3387c2b4f6bb81e2b127016e7578f33eb52d32ed6de908308"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "5e4a58f6897beb498fc6fd841e9aba8b1fb7881fb78f7681ceee68ee69ee1ee2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "38d3be300d12cb2f5062d8ffa56830e2ddcda95ec006fc421cb50038b6465038"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "7f10591745776c7407b1230a6aca58a136d6c34fbe6d243baa7ac6246bd138b8"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "72662acb73d1b8b3387c2b4f6bb81e2b127016e7578f33eb52d32ed6de908308"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "5e4a58f6897beb498fc6fd841e9aba8b1fb7881fb78f7681ceee68ee69ee1ee2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "f8ca7d421d5b98feb1e0954a91efc9b27696f5089ea2c382af6f402774280652"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "59cc852af48148cd8b0fdfcd10aa5ba8e396affcf5ba548a7588c2cede70f7a1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "1ce2864658ab7c470d9ab654eda5d227794ea12d928c8d7c19a1733fcb691e71"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "d0afb2f1f09132361fa8a33d1a3efae1e85e054914919240445fcf72a76d7c39"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "ed9ac1edb74d52ff3712792c4c6b90dc7f05bb6643b4f37cb04d2c9c7ee66592"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "8f369c1d9d10733ec64b605ca1f05de90f9f553140bbe6e5ca4ee95cdde0b47f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "1ce2864658ab7c470d9ab654eda5d227794ea12d928c8d7c19a1733fcb691e71"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "d0afb2f1f09132361fa8a33d1a3efae1e85e054914919240445fcf72a76d7c39"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "27cd022f97515efb9edb38e7330fc0e0d99eef9d9700e3cdf004976ac73dfcb0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "99ee624b514ee0efa8e752414a05159f842d7aac583038291debaa8e3c921b7b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "d982c9a1ffe4832bd6133bc7b6be528403568e00043153ecb5ca71812c0b8e4c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "b34f9f06330a0831eac4524b075faa84e3d56144d2d076f67fa70be92c2adec2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "dee4b19a5f10260fbb324fd4dce17a14735008ac44ba35d74971fb2b4d30488e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "545350e45fab7c092a9efa98412e8b895ba2b3f96f24b858736fcc8623f8d263"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "d982c9a1ffe4832bd6133bc7b6be528403568e00043153ecb5ca71812c0b8e4c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "b34f9f06330a0831eac4524b075faa84e3d56144d2d076f67fa70be92c2adec2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "8b0933a708756255a1774b7cdc61172ddf97004480f05552c85f5f86bcc564f1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "ffd28045277a861a634c82a8a71b46791ab8ee39ba048d8e53e27b5e10725072"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "7fe5291aa922db341fe89532aa2aad0cc8dd533a9713a544c6ae5da42030fbe4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "541f6335554d04637bfae1aa33fa67d00b4078d847b5d8384d7466cbbbf8999c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "2be09f92ad171025e626a018a867ab6af11f164a3b20c4c276ba590224d67adc"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "2aaab2446f0dd10a01dd8edcac0b4364dc5436273fb12a68c72690677f5f3763"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "7fe5291aa922db341fe89532aa2aad0cc8dd533a9713a544c6ae5da42030fbe4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "541f6335554d04637bfae1aa33fa67d00b4078d847b5d8384d7466cbbbf8999c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "9da3362d9ad06a46b90924f9c37184ff781768d21af70608d7ec0f4470a2f474"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "c2e690c97c3b8323b0a77f45bd27db145d7befc5aa7b326901bd8bed12f88626"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "7fe5291aa922db341fe89532aa2aad0cc8dd533a9713a544c6ae5da42030fbe4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "541f6335554d04637bfae1aa33fa67d00b4078d847b5d8384d7466cbbbf8999c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "b749ac53f3c3292069e0945b925c391a47306b8654e9cafd7491ba6b8cf0d499"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "734c432001e7530dab7d03473765b16659d25ccfb7151492c03f5f00c8fe224d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "7fe5291aa922db341fe89532aa2aad0cc8dd533a9713a544c6ae5da42030fbe4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "541f6335554d04637bfae1aa33fa67d00b4078d847b5d8384d7466cbbbf8999c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "5fd4fa2237e454ac13ec69f9c6aae5ff1f2fdc96df9e4e0a771774fc3a051427"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "5b19abc1e50739ed33da29f5f5680d9290d5b31977dbaa4d4d6c88e272000bbf"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "0bd311df2cf898df26baef1c877a0abf1d48be20c698509bb93e6501ea847371"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "a70e684edbffea8800e41071329a967db4e55a60356ca2d62645c172904e7eab"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "68e302cce30f22812e191662c15cea9da4a934e86d6a722b186e4311d44d0a20"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "a3c2e8346007517b3d22e4ab8175e5728a27ef283b8dc94aec4f8acadaf838fa"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "0bd311df2cf898df26baef1c877a0abf1d48be20c698509bb93e6501ea847371"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "a70e684edbffea8800e41071329a967db4e55a60356ca2d62645c172904e7eab"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "cb06fbaa7bd715feb700ac2a2e0d6f723f4860cf7be0d58e2a0d51934d739443"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "faee2561d6c034bd765b66f0c07197f80bedb47b968df621d501a3fa100b06c5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "6670f013d946ffb4ec0841543ec4d3728a721b8a8512ce421fbe565f05cf3838"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "28296182a696b042483c7db3afa8375b0589941a5c3b21f8dbfe2badeb455b20"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "97a22415e9190f945a356dec8ed791f35a8daca06ed77b869a27a71b2c354de3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "88bb6ad914a9294ee590fab3cada80c3bb809d789ce062abaa3404e49bae228f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "6670f013d946ffb4ec0841543ec4d3728a721b8a8512ce421fbe565f05cf3838"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "28296182a696b042483c7db3afa8375b0589941a5c3b21f8dbfe2badeb455b20"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "4464407cf116dfa68ead73b9a9106f0f6ee7d8a6805971268cb5514601ee6a98"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "1b948329cd3de1ef2878dae11497c3f44ec7fc094eb43c37eada8362ef26faa9"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "b81d05a3923d7d73e845fca3d295d4268ecf8cba3a5e5ee04d6998d7f874a2b0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "4c111d8b127c0e3b52cd52d82324829856f8a04514acabdf8a45f38b0d9b77f4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "a27fb5350d2a6692731c786aecb113af739b3e5582e0860d54c6d9a165954769"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "8cd29a5a8d7884c0ee26a2b4c257ddc16f2943786485572f7b24ab7e211ee1a1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "2d1e4eea992db67bf145cbee36a7a6710e3dae6df204d7deedc1d81769af7060"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "180b1b9972c41ba5c088c01bdee7ad9ea055d18aa6e2d9e266d105971ba98bd6"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "4df6ee1092d7baded796c8ec4755cd1c1bb67165760abd3b9c25dc4bfe586c89"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "97a820bf556d53a6b259fb02467c25fa871124890ce4d5919a5d86ecf8caeccc"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "2d1e4eea992db67bf145cbee36a7a6710e3dae6df204d7deedc1d81769af7060"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "180b1b9972c41ba5c088c01bdee7ad9ea055d18aa6e2d9e266d105971ba98bd6"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "b982b5d00391f2ff1618817d0313b9f1804f8cc74a6f5b317b1c1547a41cdea0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "2350f55a466b845eab9427590782f775a8932bb93115c79bd01b667bae01ea14"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "2e93950e403eee286083d73a4c63ff815e07ab5f755da561d515a32e1e96a198"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "4a8e82cf74527650e41ce710ccd3088e34ae8db02c07b993737e02c8e6f59d5c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "273368b2196bda4c34ec57ef4d81987a968e93eaf740ac7972545e6def25a4d0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "27827bbb55137a0bed675f6b5c7ec8e975e22ce0c7867d76e5aa53f872201fac"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "68daf77d92c94f905c014ef4bc1aa38f2567c62e59f5053845319ced50a30be6"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "eec04ef002870a66ed2cc6523447eac087568900498157bf947cf2be1cf0a55a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "7232247703dc2aa919d8ffff2a2045f41718b85140b7eb1f36fa98c01577423f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "ca8e8c17d5e18262bc3179a70e98826cd51e8f26bf60cf9b4b8872eb490abfa6"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "9badea2d609779cc814b65ee3482c32f71d29a70e1adf1b5ac482bbf78fa3e48"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "16f0c9dded4e23b5c59f717f61d0419d0171ae207f7a22dde052e2a1ecd8d615"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "d0bfa4be1cdc9b1551941a144d4007ba96c7559a2f5fc1565ac652590afd0455"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "670d245eb819e11e606a9394c6f92fa7cbe3ba5348655377a814c06094891410"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "817feaaf9ce9a79c99bfb6f814313be8fc023308430cce8d0bb9b9e672eab4d4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "83ece2d039141c164efb992e0ded86bc242dff25d1a95eccac51bb2608997ec2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "4ffedc7bf563feebca1fe9c643f8687e04e367e1da6b611f579e09b4291e5189"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "da33ae902632aaf1bf4da17abf7f9d4c8ce4909a8c08139a73e13d1f2045cabd"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "00e27dd8cfeccaea5fd86541e4f9da618a81ad81ada9c01d3c1bde910c2806e5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "e3f609b0f9909ebf4d078393c7218bed27a1937f4f5f00ba2c77a3806a34db37"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "4869770e030b4bb7ad888691f47ba4d04687fa58fe45de50910b64e275c9a388"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "593c78dceed16a8281f88c77b3bcbf3b7c48e15313c008feccc86aee6fe1ab00"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "b8e9916c0bb55250b5c12982714f841b14e707a2d342bf88dedc41ee3617261a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "b35cf163b1b87bb22cbacd1e338f66a5b08368952a5f1c640e41f16b6b392a3a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "31cb4c60c8f68ae38e7d89d696e9ff6cfea17596b3274d606c028cfccaa82548"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "b1f9cb6af17c0322b230a01bf3c01f8d5fa23691100599a8ddfbe9bdedfcd0af"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "fd6db73877b4311ca12f57f5a648521cbed4254d3b95e384df1731405cb33ae8"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "fd00c2e7eceed5bc40c4f7fde40e8a61aed42baa2096d0b37a74af6698bfd6ae"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "d3c8b633ba2551a2f1a37d43de1d71202a85030f9db2a41a1b9502c37131c393"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "94364f83963af8fabbb69e2d1886f2076c925ee1f23b752743187badccc0cf03"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "f753f939cb84a23da3680764fb5e30e40ddd1ecb7dcd4588c55801750773316b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "1c088a2015ab312ac6080bfa3c6d3b70d7841742e0a2fda5e0f7590e30bbf619"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "f7d0a80f58bcd55eda07aac96d633134044b02ed1d74122f79b7cfcfec62eced"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "caab9d6c6f54f1a43b5c7e9af60e7ca2bc9e5ce2c49d260f358dd91713fc5132"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "5201a0d7dd0d9d1e4d55cca181fb03d4c00c7e81635345e513524bd0ce69d86f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "15558f21933b413126a2ee066a196e4a5ce4c43f25c7efedcbc29893605e8a4a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "9857ec971f5a69db2103db7c65ceac9019465db50cfb986c51fa0fd73b1a1136"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "e01dc6d53a23d39432397f5588b0f934abae8582fb8f8df2c172746418d74065"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "21aed987560f825ac10f195ac981005a043735c2011d6e63097ecb422554e3a3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "54a9d0c1483150e7b251026924b0256fe398812947a2940e8bff0fd132daace0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "41d4215351cdf08b53d10a1ddd525cc7d11a1c0838917924a4920443765060c1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "982c92c382f9afd7177e8110c2483d2a6b10651126f1aaf73bb1d032d87a7507"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "21aed987560f825ac10f195ac981005a043735c2011d6e63097ecb422554e3a3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "54a9d0c1483150e7b251026924b0256fe398812947a2940e8bff0fd132daace0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "64e8e8daea972be53e12d9a8c5a01dadecf93e70c974083ecef30356ee638c0d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "f623502e1caa2b2bb14b1b8093cc167faf6e60acc6fd7ec1f6182fd4a378da10"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "ebd388e700d373d1a9440c8d3582e75b95d398bd29c7afc233fb032f1dfb2376"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "da647f7967e2d577dd26a0e8ad4fbc1a66b7f4f77b6ff9928b5dc07163a27b6b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "8ddbe97fa0726e39ac4528451a8bfe628bb1d8eb049791d941552356cd92b8b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "65dc73953cd79ee1cdfd86a06f307cb9989f95aa7e5777f1f7bc0a5695e14feb"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "95d372b98f415901bcdc2ada0f6a5ffe4c842ca1ce46bf119fae314eef276971"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "a5998d1da579fe3973bba2668443915ebe6395d7c34baf3bc8b50ef5bf3b46ed"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "bf1b0d20cf594f8c2f44d0c95bf39f0ffbd071030b7e2487ec3cf763a0205cb1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "5637d1c77134a993864f222932fb71ee9699b6da9f0cad95489597ab768d4bd4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "95d372b98f415901bcdc2ada0f6a5ffe4c842ca1ce46bf119fae314eef276971"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "a5998d1da579fe3973bba2668443915ebe6395d7c34baf3bc8b50ef5bf3b46ed"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "e8f53841a9546a748074b0565d8ec4f10bb25fbc0cfb4c3e6a069fca92dd2c19"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "b1c73603bab03d9f890f8d90ebec950742754f7470b31343af00e1377bca9e35"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "df0b6d4be539faca41604d5e97c85b7996c49cef6bbe8fac0c798db3e9a0542e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "cd89594484950a1ec5524429b7122a3da1005cb7d7992d046e5ae8c437660a0e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "19c348141a8b1d994cee2bf2244a958bafc8493d5a0001ebd0e1e051045441ec"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "5bea28798e01e41b4cb442820192f1d2f6ded55f27df8c46743a0f76601a6114"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "df0b6d4be539faca41604d5e97c85b7996c49cef6bbe8fac0c798db3e9a0542e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "cd89594484950a1ec5524429b7122a3da1005cb7d7992d046e5ae8c437660a0e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "bf03ed47467742030c402ab3df4e4efa3ca0b2d043ee8d76db0d26819a833a44"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "bc89363980748cf2606f55a6dd427fc05fe31eb5d38fb002108349e29efc023b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "fa2f23e22ad9d95d9ba581c3e58900b8e22dd7569b6cb41aae1b328a9c2da973"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "284af90733e5cc86d837f1856e52d21e764d25b0938de5d95074e5507c73e911"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "cdcb0f8cd827b69994da2b8a7f0a7658c8a67c7ac89e0208b4e7fcb5ad2377da"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "b7e8ef4e8e6df3d00af8d6780d71c6a573b3fcecb77e533198b6b1fc46522e9e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "87e9be3a2be041aea676118945bf3a23f87057d5d7cd358136799db4405c01c9"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "bc3e181f18f0f97156c4aa1692ec3096c79d7d4dd5989b8c16b9a55921e06824"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "35d22c166ce074228ba901b26350b36500ed75ac6df15575508e9032a3cf28c3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "65e834713f34e2fdce5ec8fe82c1f732edb2a250750059e9781da7ade8095406"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "0421d09bc2c1e955d9eee804a268f1015cb6fb60a31091c930495cae75d0c519"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "74419c86b1644f2193acd027b1d538d488083c65b6477177049344fad36e22c0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "8e587b16266da89a444c6971613b952a8be188a36e4527c643d6fb53631ec3e1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "6363b8de9d40befb93889366fba680b336844ab7b5edcf3fab8bf68c1b38ca81"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "3dac0312cedadb40bd005242ea0ff7f4110316a8188a683ec59a296480b3387a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "817d694042b163476b95f1b7556b5e310050c7a3b8c07876862722d4e8fddf7c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "235338f9bf46c95f9a8ba58021b20db42ecf77f62c9a6d56a75249dce58deb1c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "166b41adc501ff2b82a1da1a243cbedc215846978894991c049149134a24ff3d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "d7d40cfd86f57394aa5f67beb8c22c626493e71c0482a841bc96903686e2f66d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "a858417cb7bc51694113c9a388dabb39cbca01c2073e1c443a6b2757a5541af1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "835f28445d9051f33b2056fecfaf07d61cdcf87387365cf4ddc3b3057c70387a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "98e254390da82ac597c7a074fcbb6ba231b25f5da562c3e93883f828b1ab8ac1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "170f87f2d229eb03aff33eb22c22863b2644b2ff369c50fb7dbc3cb64e588eaa"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "e8cd0458ad2d4c88717b5357aa88d9993882df8a739c341e63a4fcf484f77988"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "c16e34330c1de248908a06270da27184362c7ffa88860d24c8d2d735550244aa"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "3bb347226fff88acfec0cbeaa83d38165f64b1a3f61d2e2f51257f00c675d748"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "1679bfe5bb52c1681e17ccdb0e0fc5432596a785c143bf18c55122ac4c87a012"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "29e0ca76261fdd5b23eaedf0d23fcc35de0c55806248530b9611f0407ce131b5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "e8d821c953ba147cd1d36cff5badbbb0a4679477cf78e9fca2c9a830bb99ab4c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "87708af112fbb32b0ba4a40f16ed77d137394eec0b514af5c68bd1ab4aa62a40"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "5c099e313bb328bbbcc5f72ee1d957a1aff3c186634ca7f882d58be812714028"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "7b1cb066c8807e5d453a7eb0c9e1d2f514d083d656514cc0b3e181246122efda"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "8b7894a462f9832346f65230b158f5433162bc1a571136d6233ef9055a8940c7"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "0584a84579c9e7ef75730305792569daeb6833c1e81afd8bfd7da4c161571493"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "1bcf5fd8fe7620267522d49a29c5088ccc45283838db5806074fb192db1fc723"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "eff0756e02bef0468433b587ee4c4311708a35194dedba13c0e008232ea909ce"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "77d39ea6b9f1ad8520d741fe36a8a95edb9bfc04c4ae2885319ec924431ed653"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "f6c251c2c414fbfaed40534f0c7a7d0dffe64ee0348f9ff4758a65875e858ead"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "caee4b2ac1c6210bdf1cb314b50d54f8260113aa39ac3bae36be5e4cd604f5e4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "6a1e93aa989a7a4e42783b371c04fa45c84cf7690d037b1a99b7ddcb8ae63395"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "3ef062e7131c13a6c664b0f34653c436fb5976e22968fcd7ec978d7fd8e85f40"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "438e19aa57ae0ba4dcbb8efc9a4d72b3a907197f1cd7360f40cfc2612c2d77a5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "caee4b2ac1c6210bdf1cb314b50d54f8260113aa39ac3bae36be5e4cd604f5e4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "6a1e93aa989a7a4e42783b371c04fa45c84cf7690d037b1a99b7ddcb8ae63395"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "f809623448c7d3fbcbe6dc0193c157cdadd977a33db0d63990af09f9be8b6818"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "87c4aab68b607f3f468494a0e2d885491364b3f56febd4922c4476f4c3a3f7da"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "0861f9c8b55f32350484ea1fcaa1cfa66d2ec05ee1b2c9f46c5645c6ad6b8804"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "d98a0abfca4fdc208ce535863ff2e9c75911833d7a6c72ab2f57cad26f3d01b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "34b51a519e82710cb7149b0063ccb06f88b0c63fd7c36864941d0026a09f0e10"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "ca38b8e6f5e6d54dff4378154a7c15722116cbaf47f10113f35de65ee7448edf"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "0861f9c8b55f32350484ea1fcaa1cfa66d2ec05ee1b2c9f46c5645c6ad6b8804"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "d98a0abfca4fdc208ce535863ff2e9c75911833d7a6c72ab2f57cad26f3d01b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "cac852d2670927d2a0b486ffd4f7421597ec6c6725b432ac1ad0ba4123b04ac2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "ed344388a74f414c94f1d1df5ce547b6506469281d139a6d52d10e46daea7c35"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "0861f9c8b55f32350484ea1fcaa1cfa66d2ec05ee1b2c9f46c5645c6ad6b8804"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "d98a0abfca4fdc208ce535863ff2e9c75911833d7a6c72ab2f57cad26f3d01b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "872bc1e74d6b1a14174fef554824aa87aad963a535c0c306acc3df17c0b4c93e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "dd7fbca6be79554aea6afc1cd03565bf8606557a2c3ad727865a887399e6c855"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "0861f9c8b55f32350484ea1fcaa1cfa66d2ec05ee1b2c9f46c5645c6ad6b8804"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "d98a0abfca4fdc208ce535863ff2e9c75911833d7a6c72ab2f57cad26f3d01b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "914063c0731f3c692e5e2a39902aa017568add299832e2c1b2c64ba2b5f7dad7"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "fbefd38f84b2388fabb90abded71a9f151727c2318220c29ccef3da012cad8c2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "78a05858293ab144d8ac2dad04444adcb51afa7445ff4a43713d37795f2c7763"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "9290e2a482a487b87d782c11d258f3f994dc1ea2b75724b5f74f8bdd36336037"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "b8c57d8756586fd3587d80491a3679205e5d0c137e4aad414dab73a334c739e2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "76bfa3e78c4012b26040b4fb5976bc80670d1d4c14c6fd7b8fdc2a3af7b23c7f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "78a05858293ab144d8ac2dad04444adcb51afa7445ff4a43713d37795f2c7763"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "9290e2a482a487b87d782c11d258f3f994dc1ea2b75724b5f74f8bdd36336037"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "79a04dad3bbb5e41bf3a427bdd51bafb06d1a3dc5fd0536b5b52e6d2b19c9f38"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "6db2cd9b8ef374d29cf8bc770ccf32ef4b3062acba9ce7f9b91f055a83de35ca"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "d97aff8a0292234a806ef218848508ea66cfcf4c5cba4c546dda115ae3a49e06"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "acdc2fb3a90fe59f214fd812ba090610950be3e708a86c0f171c3150c2597b4c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "2000f187455185a84dbc4b7cbfa6eb504fe60c46dc47b76dbc922c0c3af6b121"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "adcf44e1404a58b1a17a29e7d0f69e364a8415e9bf77a95cc0904f32cb273bff"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "309e7472d926941487b4b96f0b1efa0741cfe3654b6a5b610821098d792b54fc"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "07b0b1e3e1164d6fbf2b9d874e68274389a2a20378cb951cc9cc4de6fe41ec00"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "843f2ef00b1bfc668174d017e0bd1f79eef5e7a30971086ed8b250d503e25324"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "bf6811e933924d2e77f993f2546d5e338c88c7c3fe5a5d7791737bc7190e49a0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "309e7472d926941487b4b96f0b1efa0741cfe3654b6a5b610821098d792b54fc"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "07b0b1e3e1164d6fbf2b9d874e68274389a2a20378cb951cc9cc4de6fe41ec00"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "260f3c35e5da4db5b4b8ef92e9b2ef7b245f4818e1389d8ab11a04c9db916faa"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "3db380a70c1cd3f3d80f5c118aaf6d1c74cf8d7d3e658dfc4262961a2856498c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "309e7472d926941487b4b96f0b1efa0741cfe3654b6a5b610821098d792b54fc"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "07b0b1e3e1164d6fbf2b9d874e68274389a2a20378cb951cc9cc4de6fe41ec00"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "70681f6a56f93cc009d6a203f000390b6caf2d9d99482480a3e7122c8265104e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "e3eb1cde938e17add9a48ad2d80b8f8966b0cbc3f1f80192d9781048378be337"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "632582d03fc88360a3bc088a4b69bdad6137bd8c0dd04a7d4bf727282d0e1235"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "a3fc874206f4d6d7f3c697612e27b730caf996818286a168ef44c6502213768e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "d7ebb701aa9b4de7cba1f0b915d6a016d95ed2980768f35d841e4e8bce1a8386"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "58999ee7c7c57ea31dadb051984fd44c70ddaa987f876dcb74bd1e479323e9a1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "632582d03fc88360a3bc088a4b69bdad6137bd8c0dd04a7d4bf727282d0e1235"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "a3fc874206f4d6d7f3c697612e27b730caf996818286a168ef44c6502213768e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "4d166ebcd0fbd71d77d2c0f2aa2adf0bdf73b56b1a6b0c984f66dfdd395e2d71"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "708d3339d97792f876a05d1de76b0f8c9b202bf1ac4d65dbe98fd62d8ffedcee"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "632582d03fc88360a3bc088a4b69bdad6137bd8c0dd04a7d4bf727282d0e1235"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "a3fc874206f4d6d7f3c697612e27b730caf996818286a168ef44c6502213768e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "b5b6f2fab0c111198a2ba25c7c8697fc434990884dec4a85bf688f252fcca1ac"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "8bd86d89435385c34c9df454f4e5e9ae70383f0bcc2e557abf81be32990ef4eb"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 13616,
+      "sha256": "632582d03fc88360a3bc088a4b69bdad6137bd8c0dd04a7d4bf727282d0e1235"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5": {
+      "bytes": 20820,
+      "sha256": "a3fc874206f4d6d7f3c697612e27b730caf996818286a168ef44c6502213768e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 13616,
+      "sha256": "a1752ac9a79e94adb327d1fc1b46c2042936161cf60ade9c25437f9fc2460314"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5": {
+      "bytes": 20820,
+      "sha256": "5c8418b3f733b6199dfff166518d51b8a10aef4ca3c8d3a4512247f1c2155da1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "fa99b2f3799c1621af30ca9112e31a009faf23353a3bdc58013cf5905e20ac3f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "d31d163555eaf293d6bab24a81ca17f767a3be99e179a84caaed17103e50bef1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "9b943529ffec8a51709a201b6b2c069490467760ecbbda60722671a33a54f403"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "bd977b8f032cafe9081cc3d5cf6987fd7758ae66eccaecce954c18791f8f2f82"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "fa99b2f3799c1621af30ca9112e31a009faf23353a3bdc58013cf5905e20ac3f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "d31d163555eaf293d6bab24a81ca17f767a3be99e179a84caaed17103e50bef1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "4875f6d39a21f0614b5788a636cf81a4e885232aceed9a2423c0c5b02fe8808a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "3b19340540be3b3e9959ea6d08db6a574339279662348ac18a45edceed297e49"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "225ddb508fc8fce94d5abc96dd3bbff86f1ff75d045aa5ef27803006aa24f8e7"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "ca0727e9c1487155c5bed56d70be1bc794d1626ce86dc70a989ea859c0d953d5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "f40a1c78e5a94340e7e2ab6595f71daf21176baa8535e4183ec8cca1932a6f95"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "d515c0af62519cd40eae9e545385340fcbe766eef5340dba6d8ea9fbffffe8ca"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "225ddb508fc8fce94d5abc96dd3bbff86f1ff75d045aa5ef27803006aa24f8e7"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "ca0727e9c1487155c5bed56d70be1bc794d1626ce86dc70a989ea859c0d953d5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "f9f9c96493fd2119a292d103e5e1411739ff0b105acf40ddf53fe66c1ea5aa21"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "dcbf301d5fdfd59cf41747f69b171b5e86e4a69c7b84ac917543bf2b899acfec"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "a2f74fadfd741832951f8e513b130703d017e2bf89efcd0c73433e13ad26a92d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "1ca6d0ec74c0780d3a2f777a7aaae1a8bf5f569236cc1eb1eeb38f059553ddaf"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "84b50c5ce94fd8be237a5d32daba954e720ce5329541e04ddfb1055a9fdfd87b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "1ab808254aba9f18551569665460b1c43b1db046b5ad448ecf0cbb7728faffe9"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "a2f74fadfd741832951f8e513b130703d017e2bf89efcd0c73433e13ad26a92d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "1ca6d0ec74c0780d3a2f777a7aaae1a8bf5f569236cc1eb1eeb38f059553ddaf"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "65682e0c87c6ee8b9e998f1f76609579f1a639fb89f3210b1006d75f084bfd01"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "58ec1ec7781d80115a6c17ce50eae5c6300934ec200ad654ce773811b90c5a5c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "29f936ddf862ae1cc990bf9bc2bcefa723723c81ee4dae8dada62c9becd31264"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "86fac99d5e06a151f695182dbbf219c47217ef28da46198d8561dde93886ea1c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "aaf1c0ee52759273a5606ba7d222b804d5d2a974bc09212cf62603109385cfa1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "e1cc52d8c9fe040c96f5715e4a85cf6700d94d1683d12593ed7a2709dca4d0d5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "d05a0a3a4e51bf2880dc8f02211dace059303ac5ef9bb6675fc6a7f83fb3bcd2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "675ee3e8142ef5aadb2be928514d9e77f2e78afe9ee2982d061fb1d246e9e388"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "799a480b2c189831c4f383698562f8b14bf8808434bc0be9fa5d994b6c4ad5ea"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "d986044c82f012cbcc4aa43eae1577edae20921a6b353f19f4b217b6caee2e14"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "e6f622624e66acbf45b7d9cedf43cb7a401cd96b4be14730770d9cad4d73f247"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "c66212c6719b94f18f64957e6804da746746b9070d80d4f3ddd1d8d90a559ed3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "9b6977b3d5587b7485d75632c112b0735a1231495302045210d148f7f4508e76"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "fc96aacd3ca39815f52068a76447ca431f8004c869b44361473907430582c6c1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "d4583c3c739fc166b18f28dedb2a6c657aed86834f68f0c81bfcfd42c06c1dcd"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "10aa8e7cc884f2f3d79ec5a4a2e6d2cfc239d44b17433549272f0c7b4158905a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "df9eafa56280b6e4da71737cedd96c41a9b950a07a2392b8e5ef0c688af1a4a6"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "32b5d09589f4eb42432d6eaf462edf416f069c3f40681e18c19c8764f5684e92"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "4a72dd8ddf65ed36fc9021e155e55249c64bfed3d9d0533a20b9b168fcb85880"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "00774d403507322d1b7b853cdc3b4f8524174e72659dac30875ea2336b425dba"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "adc75cd7ed6ecfb03466a7fe11a6f183ab75765371cb1806967a55ce82db46e3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "589d4ca3782971605085f811c9efb567dc3882637bac5f59edfe81eae557bd25"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "efa6b4f308c7bc229b32ad487218c31128a5f53f06b86315550ea351cfe8227d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "a881b6f11a7d728ca164898870f551762235f0d9fcb0037eb3bdf349f045ad64"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "aab7e1d5210db6a994217e026a65156d879306f648299dd16bb8cb887e51741b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "fe08fe7797eee6eabde1720406cee1b71f4145e6b34e7dddf51ba4b9c73ac2b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "c513e52db18267b11faa44cb55045d352a33538c3d95724724a73dd453ba0eee"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "3185455380f8c2b77b86fcb23425c22bc2e79dd00b7bf8efcd40e672baf85387"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "cb7a8fd34a491470de7a23ce24f35c8d27ae4973531cb2399e985fb489d99847"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "37604c098d1767e17c159210d1becd0e36d573456209354bb3df7bec9f018ce0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "c7d7632177bca55b903be7a16c6d6a1f97cc254dfb1f12d905b8a1a053d50adb"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "1432edfd0bc447153a32246ab975703e890a4dcaf727a7c7ae737e91971080ac"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "a67672898f9dfa4b2172431baeb4ae1181ed6f7d1e6ebd1c3f937473891f8a08"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "f044c9ce731875a31e84d6895140fafc36e1290116ce82db9678fa6cee187a94"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "89a2bd61881f202f5990a03045099268a60ffdf3fd187d480c557e04c4487f5e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "5cad9cd0452d17a191a95784e2affb989802245e80b22d880eee66164f77723c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "3b5390f4f40d0c2b90150edbe6459bb002683986483b9b61117397cfb765cc22"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "0fac84fa37ca17139ca60d24c6d363709f2fef72d64db55b84d11f2ace917eb2"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "9cfde24cd625896c3847797fd46f50f8542460f11488afbc58f23a25927babab"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "2e4d9b4f00bd446247227012d086bba11bce46c02481b0fe59f4042407d35954"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "069efdc0dee0d09931c3615983de872414f3f170c45cbbd7258853102025a042"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "d517d233501b5459670df25beef80eeff2f1f223957d162b9c876ced7220f0f3"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "c07358a9c3f5c5f0e9bd539d9391b83fbca5c848d63387ff744295fb945480d5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "ac190aa84d20ae9f5cc7c478632125ec667f46c113c35b4806149500c648ce65"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "fea3eb7380604f49e62dc765d4a8a4024a8ccdc512a438597a871a1b876aa2fa"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "e0ff96146a9d09e1abd147ae55ba81912ded316cdf7e316c8a5ddb0f528e228d"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "c07358a9c3f5c5f0e9bd539d9391b83fbca5c848d63387ff744295fb945480d5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "ac190aa84d20ae9f5cc7c478632125ec667f46c113c35b4806149500c648ce65"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "f7031494a4fd13a4e42936eb74230c5ebbe6775273a3f9ce6d820d84fc641a86"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "4c0c0dfe8bd66cccce0b4ada360600786330a9a303201b5f8df100af5cfbba96"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "dcde1230560e6d39e55af8e8cd715f6abc0a50629b15362e51711565253d6976"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "2e93c67469a7c95724387d34b38f26f164789d706786e7fe197d395f88cdcbff"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "d99440547eb656791ee943ac46c50f44781b87bdc94bb6e847a281b09d7423b4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "c889741496feabc41773811f9ff40241a022325eefed2ca64685469abc000fe8"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "dcde1230560e6d39e55af8e8cd715f6abc0a50629b15362e51711565253d6976"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "2e93c67469a7c95724387d34b38f26f164789d706786e7fe197d395f88cdcbff"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 669696,
+      "sha256": "c8dcfb32a8aeacc0ff40560203198d3043b67174d01063a1bd36d0efd97a53b6"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 956244,
+      "sha256": "92ab9babdb05554ff545bd7ac92b7e19cf68971f375f5707049473c013b85e26"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "492fb4fe4c022f05bec93b6b02fb34cbf8f82796714ae2a37a403fd419e1143e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "088d32b4c09377a8f988c1c0ad07e037fd724c1d94d9a2476d06f83b4ee19c41"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "70e55bfb1a121e7839ba0329215305dbfd086c3a35ac957065005d710e89bcad"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "2ba283daaa875b37c461ba4474ac659aeb468355aac5160e5b26b6bc5b4c13f5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "492fb4fe4c022f05bec93b6b02fb34cbf8f82796714ae2a37a403fd419e1143e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "088d32b4c09377a8f988c1c0ad07e037fd724c1d94d9a2476d06f83b4ee19c41"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "c70edecb4db2012e70a6377e2d9c6411d7e311eb36ad2accefb0ee6c3ec5df6f"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "477ea32f31da77b588b2af5a433f8c87d18d731952ca38f363075ec30d966bb1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "7b5b2259eb39b51c68be2f6d385ff733d7f9e2743e26bbe6d1580f4d00f78836"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "38655bc601183ca36ce7ed87281a448f116470394ca01a2e78b3bb9e4b473799"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "0cf6df3b8f5744afc85c20cf9e13f42b809ad3c10cee3a5a6a7817159e5a0370"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "99160488f86894e637e467ad1a189b31b229b614df94c5368c929b94d9063c50"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 583680,
+      "sha256": "449a59408649ffca40194d3415c933c21a79bc9ce514be61a41ca01535cf9b1a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5": {
+      "bytes": 833364,
+      "sha256": "bd04907cc2261cc14b6f8f8f15d212a20c14c5786cbfa0ffd1d529c9f61766fe"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 583680,
+      "sha256": "f6c765b36ebcc302995f75d218290c2f4ebe0a009d9ae3158fb94c02b9ee1327"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5": {
+      "bytes": 833364,
+      "sha256": "8f5d9eedcfa79877162318f9fc36ce626f4c51a9652c361ec3311b6eef1792ca"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "1b9ea4ba6db6b87d0dee74c62f0d298eb65cee560d009e087623beaa77a82e19"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "4221d577eb174eff9d8e6392ae47adf2718e06090c5466e4bdd3f9749bcb46c0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "3eae07bc5d60e5e9a73194d2997d14025242560fc09d4154a9e9ffa595869614"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "522951104fb8766766647ed1562ca1e2f9a1794b5f912314a00428eed6a09d9c"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "d19fa884d7ff236f5c7f85aa7130bb0288c3058add1f18ab87e5d0eee606c52e"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "f52f8b9b5c4cea99d4e9446c32e6c640399dcd1c503c542f6cba878a08a75d04"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "c5470cfd8dba7c926606c49d8fb9b2c4b3fe1a0888eaff9cf8ff62f8e545bf44"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "dfad705d9f35a74d94d3b9bcd256c9edc9675cbcbe35ade41436d7dd4e731ead"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "2060caf60c4e4837e8731bffa10a2e7c5c58041711ce1a80b58fb3aa2333fc67"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "8ba0bef66bfe460bf9621e033c106ee93cf6640e62aab0895f206ff72e28f4d4"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "14284b6f20bde3b25378207ba242121e2dd1d61c9179c036fc15ad0da430c9ec"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "6f19f8de5329c62cc46ff66088ec028a7f02857c47bbb8e83e4781311542d2a8"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "43a63debda8df28a5d5d0d35fbac323b8e490856927d4eca1f7dae8a734236b1"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "48686c2a594a4cfc6f4ab33f72d62b3355ab4bb3e9957ce0e70cec39db9740c0"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "ec769230d16174c2110393cc96a2e9dffe6da947c7241aebe26ab2cb6b920263"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "f6426cd7bcccfd0ec2bb78c0372d7582eff4b99304319b97d88dd76be320c60b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "e6e2a75294da31fcb79370ca01084b0ea01c40a4684b5c9fe0b00a658eda2e06"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "7b40c151cf38311f9390317c47732ca2a3039d993591462f430013cfbc64b449"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "ca05bc43f84d296a1408f616dbd75e61db76214a4c786d76e05fb161cd2c6072"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "7a5f9f3dcaaeb69b3a64d867a9ca5feb033a9fb0698ad1b26ac4f196ec98c831"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "97158eddcb90b655d29b452ba20dc9d114af834a430824ec64fe2031ed45c713"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "f812fbc12ca9ea2759674fc9809ae0cbc6e5ec1b126f13cb58b3c7216e266bf8"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "34d6f159e3a707e1a53e6de1a99c48f4b59fd2492917de0609f0a55f7543f019"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "7b21f3825fbe75ff222800e2b052beba8073a9e0143f64325e3fbe52ceaf5d9b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "1b158cb21a7639f0b4f14ed8e582742336b71d56da208cbda9c33bfc654f31bf"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "8ebb14eaf881ae060e7930fb2042f62ccd6d755dadbb9fd51a3636854b9e99ea"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "8f93700889eba8176b42e8db823596752178c46e5afda926c815cff02b0c3a0a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "6503095ca945b9d4993d6667a2b9b6b1f7021fd32ff121d8a197b09b1b68975a"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5": {
+      "bytes": 33040384,
+      "sha256": "e7ec66fd962098085c4357718e12992f15dcda9342426797406850f1a880821b"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5": {
+      "bytes": 47200660,
+      "sha256": "71d900e6cf62b5d2e660c9e20cb06ab8504664398ff80661d9223ac914713797"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5": {
+      "bytes": 33040384,
+      "sha256": "0bbbc614dbad0e7d6ef626306e1cd06a0bbb1aa5560397baafff2ca982de6ef5"
+    },
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5": {
+      "bytes": 47200660,
+      "sha256": "8b5bd9b14fcf329d6ece9d547cbe3368808ffda630add8fd03173eb8a46bf9f0"
+    }
+  },
+  "bytes": 5229992704,
+  "applied": true,
+  "removed": [
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cpu/spherical_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-2/cuda/spherical_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cpu/spherical_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_annulus_1d/step-5/cuda/spherical_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cpu/spherical_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-2/cuda/spherical_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cpu/spherical_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_annulus_1d/step-5/cuda/spherical_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cpu/spherical_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-2/cuda/spherical_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cpu/spherical_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_2d/step-5/cuda/spherical_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cpu/spherical_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-2/cuda/spherical_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cpu/spherical_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_2d/step-5/cuda/spherical_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cpu/spherical_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-2/cuda/spherical_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cpu/spherical_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl1_wedge_3d/step-5/cuda/spherical_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cpu/spherical_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-2/cuda/spherical_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cpu/spherical_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_amr_rkl2_wedge_3d/step-5/cuda/spherical_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-2/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cpu/cylindrical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_annulus_1d/step-5/cuda/cylindrical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl1_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl1_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-2/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cpu/spherical_coupled_amr_rkl2_annulus_1d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_annulus_1d/step-5/cuda/spherical_coupled_amr_rkl2_annulus_1d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_2d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl1_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-2/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cpu/cylindrical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/cylindrical_coupled_amr_rkl2_wedge_3d/step-5/cuda/cylindrical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_2d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_2d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_2d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl1_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl1_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl1_wedge_3d_cuda_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-2/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s2_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cpu/spherical_coupled_amr_rkl2_wedge_3d_cpu_s5_chk_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0000.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_HLLC_plt_0001.h5",
+    "build/s5-20260914/validation-v1/curved/results/matrix/spherical_coupled_amr_rkl2_wedge_3d/step-5/cuda/spherical_coupled_amr_rkl2_wedge_3d_cuda_s5_chk_0001.h5"
+  ]
+}

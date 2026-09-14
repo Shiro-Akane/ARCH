@@ -1,0 +1,1210 @@
+{
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/artifacts.sha256": {
+    "bytes": 109,
+    "sha256": "3154691e2c5d9d54b02783d02f67c601e7138c267aa5ac7b5437189a490f9a66"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/build-child.log": {
+    "bytes": 38578,
+    "sha256": "3270dee6fffaff93cbfdbed83fe39835094fcd5e95b4d3e338809166c29812bb"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/build-guard.log": {
+    "bytes": 429,
+    "sha256": "84fa758bd8fd72b18965750325f7631f9eb23961fd3b21dcf8dba20fd483d396"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/ARCH-closure-only": {
+    "bytes": 5434680,
+    "sha256": "ab67e556e1df9e8feb98f2ee21554ed56a1c62b3acfe98e0cc449cd487498108"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/Localization_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "38d5d40870b553634eab43c6c34a3a620185b3b9838f16f06ec382a38e929109"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/Localization_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/Localization_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "142a7ed4791daff307b41a69b0fc9483e1c931db8f7c18a17a4b7ef1321ac67d"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/Localization_log.dat": {
+    "bytes": 12491,
+    "sha256": "4aa811cf6fb99f09de18b2cb9cce8ddec590c12699ac77ba71ee89ac8d3ba956"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/arch.stderr": {
+    "bytes": 53093,
+    "sha256": "bd229e0ae9274a72095bc30192dd6752270ec4f9871fd206a0da3843e88179ce"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/arch.stdout": {
+    "bytes": 12633,
+    "sha256": "db25149b81fe7c531352ebe3388783def8acad6d90cb39220dbb0f15080377eb"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/record.json": {
+    "bytes": 1648,
+    "sha256": "6e928c7e2a01d8547bd76ca80b64f6b5a929c25bfcd13e968ca50e9e44e0273e"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-b128-v1/run.par": {
+    "bytes": 1678,
+    "sha256": "3836596b1ccf47b830a1314f6e25c844da95ce85db6096c21f73675275de473b"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-diagnostic-build.log": {
+    "bytes": 443,
+    "sha256": "77d217540e6724497b712216fb7482338eafeda0cd6a0afddc021868eab6b730"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-diagnostic-source.patch": {
+    "bytes": 328241,
+    "sha256": "4da8a39e2652b987265e180e69f5c3f951e2bff37de738b8ddfa2c7477f8a287"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/ARCH-bd-diagnostic": {
+    "bytes": 5438816,
+    "sha256": "c687413f628b233757fa09fe0b6b6e74bf7059d81627dc14359cccb5cfed2d24"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/Localization_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "f43af425e49874ec4b9eb07971c2e348b50548029067e4eaefb7f135f17249ff"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/Localization_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/Localization_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "b68fb7816e66a9ee71d847ca3fe0e41662074ad6a164b1d9c22f16f3270fdcc2"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/Localization_log.dat": {
+    "bytes": 12507,
+    "sha256": "e810e64712e26a897aff52f276672c12568b5592b3d135b36ff022b1290ce169"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/arch.stderr": {
+    "bytes": 55320,
+    "sha256": "9350c712041ee98bfa79abbd1e11e9a69197937d19e350824d86823f15efd569"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/arch.stdout": {
+    "bytes": 12653,
+    "sha256": "afe2bf85f7994611218b047e8fc259adad3e38ac0610bba59b25c7222b7155c6"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/record.json": {
+    "bytes": 1652,
+    "sha256": "29aa4f8ec42852128fc3360162c60876352c0056bfd80a65ee4e00f933c271c4"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-bd-stall-v1/run.par": {
+    "bytes": 1682,
+    "sha256": "c71554a5f1bae92d56241bf9a01c90862619d78a99c65fc8495c46a79cb2aa99"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-build-v1.log": {
+    "bytes": 39,
+    "sha256": "84f634703fbedd004748be14eaa46e64fc7522ce3741563315a3c131b669078a"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-build-v2.log": {
+    "bytes": 1806,
+    "sha256": "570dced54bf250d01afd2301c75edef3d4207dc60b76a81a0b220d3b13716c1f"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-source-files.sha256": {
+    "bytes": 48643,
+    "sha256": "adbfe296ab8b7ed90cde24d0c3921f7076d7a885fdffcb97af3e3c4a5f06a582"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-source-identity-after.log": {
+    "bytes": 19441,
+    "sha256": "37bb2de1ff511a9872026ec10030feeeedb58cb294040919e7eb7812aae8e4d6"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-fix-source.patch": {
+    "bytes": 283487,
+    "sha256": "eb41f68a2605b0cfa68d2a73aebf1d952501bf4386280226cd3ff4c3c5609336"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "0df1bbdf7e08d555a67a8795e3973cc9a233ee998c69ca6ee2fdfcdb16475df7"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_HLLC_plt_0001.h5": {
+    "bytes": 439552,
+    "sha256": "27c2b4aed0bae93beb4916ed10227c60740b70f73ab176fe523d41fc1b7da192"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "5b972a621462e5555686b4d89ca298edfda16a78649e13579330b43ca701a83a"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_chk_0001.h5": {
+    "bytes": 664012,
+    "sha256": "f502533c6ab89e0dfe8c5d8fbb7c6f34399bb3d9b95a7b7fac3368d820c5f3c8"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_log.dat": {
+    "bytes": 61940,
+    "sha256": "376a76c6cf51b24e6701c8232a115724129f1c9c791633eb2b98c35e905182cc"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/Localization_regrid.tsv": {
+    "bytes": 48240,
+    "sha256": "a8e1f28c524bd4f43e834254be3f113ad4e3518d15b168f4d80aa39a1c46f96a"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/arch.stderr": {
+    "bytes": 525796,
+    "sha256": "8588570849b0e9c163ae8c88afd7144546056dbf61478ab592fa41c83369db47"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/arch.stdout": {
+    "bytes": 62084,
+    "sha256": "ee134fe8eaf907630bc770d803e06ddfd99c110a2f598c7399ceee0915fd5746"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/checkpoint-qualification.json": {
+    "bytes": 251614,
+    "sha256": "535d04219e642dc71ed6ce123463502780e7150c41203c6115a7d83da3083c44"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/record.json": {
+    "bytes": 1648,
+    "sha256": "7052c5f7a5dcb41d171a84b8d2507bcef34ab398e64c55f5137d6b6571c78ed3"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-b128-v1/run.par": {
+    "bytes": 1680,
+    "sha256": "c6f5de94de8b042ec56112eba90f375b4ffaa2ae63a131a230dca455452a7d36"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-build.log": {
+    "bytes": 443,
+    "sha256": "77d217540e6724497b712216fb7482338eafeda0cd6a0afddc021868eab6b730"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/closure-muscl-source.patch": {
+    "bytes": 367685,
+    "sha256": "68ad9e9abf1b022b62ce73e49a8c5ec3d55a23633e1e7e0e61923ddab7fea1b8"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/configure.log": {
+    "bytes": 2998,
+    "sha256": "31093eafd14862656806f18680ec29df1cf551f80afec2bf78b4339a9654ffc9"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/diagnostic-source.patch": {
+    "bytes": 208290,
+    "sha256": "c004a902c60adef06f4eaa1d9f335c525508b51cd1876c1a0cb1cfa208817214"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/ARCH-logging-only": {
+    "bytes": 5434680,
+    "sha256": "9a426371549fe6e999a4df813eb89cfeb2ab41a7be0ec429c742633120c8a350"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/Localization_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "2e4c54f84aacee1a20148a03d10d084a6b1914c5c1d2573e9a81960b63984df6"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/Localization_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/Localization_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "9f7c8664500f8486be6b935539dc248caa82456022368b88acac73e9d8ebe1f3"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/Localization_log.dat": {
+    "bytes": 7187,
+    "sha256": "3cae7ca46bed56e39575e16a0ce4035e2e291a48a002ade0f90dc9004a2e8c03"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/arch.stderr": {
+    "bytes": 4165,
+    "sha256": "12ae906ef0aeaac4b25f8471ddbd97bf39cd4792ecf55ef6ed0865bec9c7f057"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/arch.stdout": {
+    "bytes": 7326,
+    "sha256": "725e02c8cc97ebba595ed61c05d199a6f42f2d24ccd5dc1a0f4dc1a976dac1fa"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/record.json": {
+    "bytes": 1644,
+    "sha256": "f839ef1cdeff8cfcfbfa4550aa331540b4af0d27e9ccc3b5aacbffa060fdb2f0"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/original-b128-v1/run.par": {
+    "bytes": 1675,
+    "sha256": "ea58264078b46712561f69667c5757a46466456a62ef4dbebb3119bceabb2a5a"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/release/CMakeCache.txt": {
+    "bytes": 19939,
+    "sha256": "e69ca81804e102d8c4d0a610723a35363213794d7da638ee68fe291087938156"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/release/bin/ARCH": {
+    "bytes": 5451216,
+    "sha256": "d9d242c1725fa7bae6b98f1a0b3a84c1c962deaa913ad9c69d990b13561fc3e7"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/release/build.ninja": {
+    "bytes": 82329,
+    "sha256": "fc73470405020bec31f114c9f3ee4cbbe7cd5abcaa3d4ff3370081b8b0452957"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/release/compile_commands.json": {
+    "bytes": 43467,
+    "sha256": "2036647e6169cb72b162bff6382c7b75e93dbd5a3ed4068904eb0445850e47f3"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/source-files.sha256": {
+    "bytes": 48643,
+    "sha256": "cd82e33824f26aa3680b31809032343081652eea8b92e0b9ae1fb0605a9e5880"
+  },
+  "ARCH-coupled-diagnostic-20260914/build/diagnostic-20260914/source-identity-after.log": {
+    "bytes": 19441,
+    "sha256": "37bb2de1ff511a9872026ec10030feeeedb58cb294040919e7eb7812aae8e4d6"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/archive-composition-diagnostics-20260914.py": {
+    "bytes": 3812,
+    "sha256": "68a41d16cdb0b7fbe4617ec9296f55115364bc3d390f479af5bdbb76d3b44953"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/coupled-diagnostic-overlay-v1.tar": {
+    "bytes": 111616,
+    "sha256": "5c1ea0f8913beb9c93a79041e8b2a52c1500f2d738bddf88376e425e54900396"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/diagnose-coupled-ablation-20260914.py": {
+    "bytes": 2641,
+    "sha256": "0131b7e92c6b70b68ea3098419e9b6d0b4dc4ae256d3d87a3b2dc69da7dd1feb"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/diagnose-coupled-scale-20260914.py": {
+    "bytes": 2227,
+    "sha256": "7c32247904ee4ba49a4ce6310b4f68a145abb6a472a816b8fd150187d9da43ad"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/multiphysics-closure-muscl-overlay-v2.tar": {
+    "bytes": 149504,
+    "sha256": "27eadcba880b1c13101a27ae2e81fba41875fef9afbd90181222ce52a2d6940c"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/multiphysics-closure-muscl-overlay-v3.tar": {
+    "bytes": 150016,
+    "sha256": "1e6666421875ae937b83940f9fd08895f531bacb6ab30e57266ffc6187c9928c"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/multiphysics-closure-overlay-v1.tar": {
+    "bytes": 121344,
+    "sha256": "11f7add61f26207448a2e4c5b1b3b3a3680b013450b7aed2096c4f0c893de927"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/qualify-coupled-diagnostic-20260914.py": {
+    "bytes": 2369,
+    "sha256": "b8d4d873de9966257d899a1359ba0633bbbfc733a6a6df11e62832ae9d4159a8"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/replay-coupled-diagnostic-build-20260914.sh": {
+    "bytes": 1948,
+    "sha256": "da1a1c51cbc072c36b5efc20084ff2bab10e5adaf53a78bddd09e9cab5e136d8"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/replay-coupled-localization-20260914.py": {
+    "bytes": 1646,
+    "sha256": "961748d839af5f2ee0031d906b5a5360209abe029a2a4120f727b48b3fe7c61f"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/replay-coupled-localization-pre-fix-20260914.py": {
+    "bytes": 1459,
+    "sha256": "8fe364c66367dc10fc92f7e38378ab3194e222fa41abdad9f7efa48ca058e210"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/reproduce-composition-defects-20260914.cpp": {
+    "bytes": 1590,
+    "sha256": "a0a6a7d77a25a6a01af5f041f22e72ccc8f04e0403b530352b3e5e184828aa4a"
+  },
+  "ARCH-microphysics-20260914/build/p12-20260914/reproduce-composition-defects-v2-20260914.cpp": {
+    "bytes": 1675,
+    "sha256": "1964185a2bc06cfe040b3cfc657688b0e6259cfb889603ce476906e3eb537794"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v1/old": {
+    "bytes": 26024,
+    "sha256": "6ed0aa141be18625a6766de2776cd3c864dfd5bb5066c990abe5c85d640056a0"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v1/old-command.txt": {
+    "bytes": 493,
+    "sha256": "564b9baafa647e4d9ab366210c973672fb2791cc335b07c4fc67cbabee6ce4bb"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v1/old-compile.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v1/old-compile.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v1/old-trace.log": {
+    "bytes": 63,
+    "sha256": "5c26325a2dfc88dedd81445cba12673572e2bf13c403f8a0dda5e4cbd7719d73"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/artifacts.sha256": {
+    "bytes": 348,
+    "sha256": "6623bb340c7a83320027150219f276999011475da2f5874673a978d988a31ad0"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/fixed": {
+    "bytes": 26120,
+    "sha256": "de47e6209f4810ffb4ac6821257a0e6190d9a22a90f8b91350819f648aea79c7"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/fixed-command.txt": {
+    "bytes": 502,
+    "sha256": "c5a8b6c9c560dfc622df9f2ba9a6252cb293f369c92c5df393ab01c249c4c965"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/fixed-compile.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/fixed-compile.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/fixed-muscl.log": {
+    "bytes": 40,
+    "sha256": "40a7bc5bceef86e93af0861ba025dd8d77f30524e6fe626fc95517abe94ee7cb"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/fixed-trace.log": {
+    "bytes": 63,
+    "sha256": "5c26325a2dfc88dedd81445cba12673572e2bf13c403f8a0dda5e4cbd7719d73"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/old": {
+    "bytes": 26024,
+    "sha256": "7d38d5440218fb7c223c35676043d0b6492ebf2c7f21813a8b0c40027256da15"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/old-command.txt": {
+    "bytes": 496,
+    "sha256": "625f3ea308c08149a530fd65802efba1094689f7691168bd5254c8c08d0f4a0f"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/old-compile.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/old-compile.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/old-muscl.log": {
+    "bytes": 58,
+    "sha256": "5a769edb88bb4abc40176c8ea3d07aea3bb6359d7f752724dc20e7c1118ae2ae"
+  },
+  "ARCH-multiphysics-fix-20260914/build/fix-20260914/independent-counterexamples-v2/old-trace.log": {
+    "bytes": 63,
+    "sha256": "356f465aef437cab1f1fe8e20cb6bfca5bff37d9ce922ea92e0baa7e28b4a4e8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "13c0d7eeebceb5cd8739ba5d938c58208eb9f9b259af986f04ba03d4f034779f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "426d50a3a2d16b806423f954eb6da656706fc180934233009762a4fb354efbf8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 7541,
+    "sha256": "e75f6949e94aa37e834a5f008409fa39f278651c8922412ecf2e883d8536b74f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/arch.stderr": {
+    "bytes": 260,
+    "sha256": "35f886b6a29608a12291123a9685042e3354baa359fb25984e32c0ca8c375747"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/arch.stdout": {
+    "bytes": 7764,
+    "sha256": "9ae7abfb7854fb4f7205080336159ffa27dcbdbeaf2f09d11035133ab30270ab"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/coupled_bd_rkl2_all_transport_b128/measured-0-baseline-cpu-t8/run.par": {
+    "bytes": 1765,
+    "sha256": "5df9b2794fc7aea9c22d75f652ff8e124cadc1aab9e6d329bd7e53cfce017ca3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1/evidence.json": {
+    "bytes": 45565,
+    "sha256": "556319cc608bbda316f593b5d4eaa8f893ce58fdab404a957f61f8d1dc750c74"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1-context.txt": {
+    "bytes": 103,
+    "sha256": "48ca3949b4e549a161803523481ebf0064a9462e19a73845c410686bf58e0340"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1-gpu-snapshot.txt": {
+    "bytes": 101,
+    "sha256": "b5e17f399ac0a76ce166ccae5ab31361f80dfdc2f5251c671d0f4eb410a96427"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1-process-snapshot.txt": {
+    "bytes": 19625,
+    "sha256": "e7f5069a7c2bf34f73b9b31b6856828e53fecc74ab66a6a002444f6418e675a9"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1.stderr": {
+    "bytes": 956,
+    "sha256": "8a0585f2d7766e600949439013dc76fb09c027257e3ab48da5c9cb72d6d97a5d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b128-v1.stdout": {
+    "bytes": 75,
+    "sha256": "b22fa6c564fc97b5949198ddf8f4cacc13cfe5958638ab850ca7614428322a1c"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 100864,
+    "sha256": "55346e8fbd03013e4057bf63dd7c22040555b6082d79994a5572e5f077ed78d9"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 133120,
+    "sha256": "8091e06754eae99ce8652df2eae816ade73627b1b87f571395de4ccb79eeffca"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 145236,
+    "sha256": "ff493348afba55fb085eb14d623346f78562842215b1284a04345c7f453686e4"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 194388,
+    "sha256": "c88a43dbedaa7cecd1610c37208319290950d4f5bc0ce09bc604c3d83067f443"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 19419,
+    "sha256": "8d07e66345ba947815fef0e3269a42f70052e63093768f1ec2f052f412157418"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 13143,
+    "sha256": "0fb8a706dfdaa81996c0fdf5a4f7034e901d54c375407f1bc2d8b5534ddbbc70"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/arch.stdout": {
+    "bytes": 19640,
+    "sha256": "f9ed6cbf4197af93e9f01b3da2106ba33815fffff5f927d6f540fad41238b46d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cpu-t8/run.par": {
+    "bytes": 1761,
+    "sha256": "16b8f20f23031502303d3ceab4faac078031df0697fe5890a4f97c9cbba6d3ed"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 100864,
+    "sha256": "6ed4f813d02b8deabf61e0367e0d29901e0d66588a5f0341d71a87e7e3f02e55"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 133120,
+    "sha256": "67ed123ed90d823dc324d07c788f2021fe55c91165307da28b706b4ec9821226"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+    "bytes": 6872446,
+    "sha256": "c86837d100401395bb50275bb5198f04dd31fc81fa846d0d39065911e0bf9057"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 145236,
+    "sha256": "429b652efe70f8bbd0803ee0cf5f37e9234471e1f150430f6e409d3e8511f168"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 194388,
+    "sha256": "c9da1361202c349954e3b79df3ce533b12a37c7ff5b016de42a1efe3a985b49f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_diffusion_schedule.tsv": {
+    "bytes": 23637,
+    "sha256": "1b01432c458e8bb177e3a8863dd3d07c7276ffc308a986748cc0048820d47f22"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 19196,
+    "sha256": "6d566d5fb2bff93a629fd379966586be33fd53029877ba5b75fe31302e15a817"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 14960,
+    "sha256": "6376088d371a2c3f4af98ff77a15417a7f9817d0a75dc084700195f26c37848e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/arch.stdout": {
+    "bytes": 19418,
+    "sha256": "0393eba03115e670ea2f2fce947c0fc51fa77b65ecef087d881f893bb3d9e8fe"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-baseline-cuda-t8/run.par": {
+    "bytes": 1763,
+    "sha256": "e8ef57b5beb95c335a42be1085db2934121c93d398f3815ea1583a3f1351835e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 100864,
+    "sha256": "0637d4701d1f38538109472894129e60a1cb094ec4a7f09a6bc61d85309e3246"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 133120,
+    "sha256": "cdbf62a7aaca9301bfe461edbe50a3ec64973f8599d8fbbcadd42aad78c830c0"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 145236,
+    "sha256": "bdc89786998fad18d454faed1895c97ceab2f933bae3515f0359d2b645ee2184"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 194388,
+    "sha256": "b48018ba1a80184351b038c6d08f7e0c24f0be93a3bf6345ebe38ba862e376f8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_log.dat": {
+    "bytes": 19425,
+    "sha256": "9f03df6ea73aaee35343c9b987cde8f3482e6a51fc13504ea558799b2cb37118"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 13109,
+    "sha256": "471b14dd9558901fab1f0c7f4cbbbb525482f28de408eb49215e2cd68e6b6592"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/arch.stdout": {
+    "bytes": 19647,
+    "sha256": "0a9d77fdcbb6532bb2e26235e41f3e420274acc36ebc2c0de53187c08b5f86ad"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t1/run.par": {
+    "bytes": 1762,
+    "sha256": "e8febf0ac5dc7291829c18c269190fc8fe56569cbcdff4d178e52a15bf98e468"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 100864,
+    "sha256": "37c640c7ebacdedf5bcdf742f5420b535d3a21a2c2205f6164147709406f9731"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 133120,
+    "sha256": "2e75ff453156c735bd20bf243ebe864c5208f9641b4348b22625b3ddec9bac4c"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 145236,
+    "sha256": "5d2cd0d1f9fd5fb434520ceae53d5c40eb910a7e29bd4e774e46eb0211ce9793"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 194388,
+    "sha256": "bb3f2bbab46d08c2a21d20a21a87638e83cccc5bfab21e6253c9b1eb5f6e4fc0"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_log.dat": {
+    "bytes": 19432,
+    "sha256": "83d0a7e31e254c9e78c60271b1b46cd68b667d5000f2d6dc0a0c7e12c07f687b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 13244,
+    "sha256": "a86f60aba90863056f7a85b2de15c15d047d6e9478b38b61e2216b6c3a358319"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/arch.stdout": {
+    "bytes": 19655,
+    "sha256": "79e8f82d655a29f752a95fd743669da39acada76c1060c8a183db1ec43aa406e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t16/run.par": {
+    "bytes": 1763,
+    "sha256": "283a62f811be0606bfaf92cfcb5603861179db0f906cd60c6d1e366ad4bec686"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 100864,
+    "sha256": "590c0b59eb9b9c671069d2ec17c8f33f69e883958bdeacbe65f50d43fc01d9b3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 133120,
+    "sha256": "98551fabe06c5d2be6babc9905513f7184e140cbf751624228856c1543224be1"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 145236,
+    "sha256": "55eee8833fe65c6ae58bd5a8ef0c7456dbd3207ad70e33f95d7c83714e29337b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 194388,
+    "sha256": "6187a04b244fc73923c4d65403e52d122799972a51c7bdcf56291ef6fa79ec26"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 19425,
+    "sha256": "c1eb2a11f160987664f867b8c490cdee6c32f5a737ab16c9e888885cf6f1268a"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 13077,
+    "sha256": "ad07fe36c647093be742f4a59a38a4998e388d9b491dc6d1280c8db5de6a8b8d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/arch.stdout": {
+    "bytes": 19647,
+    "sha256": "524e33b3e5f17cf30d101931c01cebc33a3582ce2984e63c82fde5fb0f8b4945"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cpu-t8/run.par": {
+    "bytes": 1762,
+    "sha256": "a8f0f951f716c3127f4a8c453023b365440f2e107bfd5e80c859d1d86ce142ab"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 100864,
+    "sha256": "5a5b51732386ac2f49fec58453d0680abf110908c9313bd64b81dbe57fc88ad1"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 133120,
+    "sha256": "bec2aed574f01526ea4f3301a2f3b677ede9cebd4257a69209528a6a84391c82"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+    "bytes": 6872446,
+    "sha256": "c86837d100401395bb50275bb5198f04dd31fc81fa846d0d39065911e0bf9057"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 145236,
+    "sha256": "5c453df70e41eaf7a387ffd6036cf788323065be1f02a70c4d8f87a8452e5b71"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 194388,
+    "sha256": "aab0f83f66479dd559f73bf67e396722232f509f808573a59cb688ac1ea9f509"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_diffusion_schedule.tsv": {
+    "bytes": 23637,
+    "sha256": "1b01432c458e8bb177e3a8863dd3d07c7276ffc308a986748cc0048820d47f22"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 19202,
+    "sha256": "5376a022116fe7d9b306f976b0fbbce36bb3e83bce6457716e16f360e0227951"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 14703,
+    "sha256": "49c4d8190d68867d4c44243a791170c7f501addbb8332dc0498d5bc766959ba6"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/arch.stdout": {
+    "bytes": 19425,
+    "sha256": "88b426d56016c595174a814a73c31a3c48022ba01d4bc1512101838e524984a4"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/coupled_bd_rkl2_all_transport_b32/measured-0-candidate-cuda-t8/run.par": {
+    "bytes": 1764,
+    "sha256": "43c4ff86f21b6f9bd7219752e6aa33d19831086ef76953704932523f755e7ca8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1/evidence.json": {
+    "bytes": 640216,
+    "sha256": "21e5d2b9e7f71754334eff706d35cf916d11d9c44ca48e9b901a605d6e9bef20"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1-context.txt": {
+    "bytes": 103,
+    "sha256": "48ca3949b4e549a161803523481ebf0064a9462e19a73845c410686bf58e0340"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1-gpu-snapshot.txt": {
+    "bytes": 101,
+    "sha256": "b5e17f399ac0a76ce166ccae5ab31361f80dfdc2f5251c671d0f4eb410a96427"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1-process-snapshot.txt": {
+    "bytes": 19926,
+    "sha256": "199dbecbd217782d77a84f7b95b872824a9e74e0130885c3d3957361203261f8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b32-v1.stdout": {
+    "bytes": 590,
+    "sha256": "333c7ba24be35a15f672a96f9eee76dc3038e38e648ddd6f446c3c0aaaa68fbe"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 34368,
+    "sha256": "af49b952d94eb86dc81f7fe7bbc159572a8b45b46e3942bb3c15b82a3cbd550d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 45152,
+    "sha256": "a64b53a80bfb164bd12d2bacbd2a7e9a4bd63ad4c7fcf013344046cff2f0aa46"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 45908,
+    "sha256": "5a3314fb86025c6d39974ea45839ddce61b70bc1cd872def970557dc6c2f748a"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 62264,
+    "sha256": "0a65e49994c823e3465271810c6e977af971a3426532dfa0bbb73fe9e07f7d1f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 8146,
+    "sha256": "68f67efd6ffb584ae4b840e5e87a889e5038edcf79e1cab5cddedfe7a6859694"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 3914,
+    "sha256": "f2afbde2d3fae4f95beb26a5d24a5dd96bcaac376e4b4fb577bb78e913b1c77e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/arch.stdout": {
+    "bytes": 8365,
+    "sha256": "7805bed219e4708b3c234fd31575f93837bd5e0a10cddba176cbe39dae791c4d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cpu-t8/run.par": {
+    "bytes": 1758,
+    "sha256": "96d7ea4bb6c739933ce9db49dd490912d781fef5d72ad6ed9b25ccd2c0d4a00d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 34368,
+    "sha256": "9be3bbf9dcacb05451e1ec00832d4f9c35c9bc06ed6e42e7e4bc34354d86290e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 45152,
+    "sha256": "422f3b35cf244c131eab9a70b33dff5092787ad4092d7fa2111cf893e2a4bd99"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+    "bytes": 547201,
+    "sha256": "c1628c0a3f5acc0513e62a7890707010cdd0df140e9ec6f84b46593d8a30edfe"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 45908,
+    "sha256": "9c04940d8c62ca1476f97129792bd252189dec4e8376df36d22fcf02f875b09d"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 62264,
+    "sha256": "78840cd529bb8222337384587927b0d1c423414ede7c3b66ab1c88686ef6db15"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_diffusion_schedule.tsv": {
+    "bytes": 7139,
+    "sha256": "87a6bb22ecaa46d8fd050e8df00da5b64f902ed90d2a3e09a1c7fac8f565462f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 7923,
+    "sha256": "cad0126c95cec68a3dc89a71d09f3e5dd81e9bc8c26ba0f7697dd8dc956c75b3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 4619,
+    "sha256": "979e4165748c8851b0b1cf58121a714f1038523227797804fa0c9f2db4b6246f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/arch.stdout": {
+    "bytes": 8143,
+    "sha256": "31a065e52904978b1dd189e6ac58001b96c02ffa2e202e1219031e5ed24c67fc"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-baseline-cuda-t8/run.par": {
+    "bytes": 1760,
+    "sha256": "fce9ebee3fc6b4b965158b4e34e0a6ffdb7c32bd9e77fae48ec8d840df9e07fb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 34368,
+    "sha256": "ce9a766889635b843816ed38e39f6362d392dafe298977cfe927eda3aea67ea4"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 45152,
+    "sha256": "0a4f8baac4ea2efd35bab4753b8af5b7b4aabd4f9c1326a498487384b30d9084"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 45908,
+    "sha256": "73c8f3301394a3f844511fff52373995f6c20505f9488254e37f163103e6945e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 62264,
+    "sha256": "6c93b59f211074ba38b06911be3cb31c057e87c2f09216e4876beb5fdc832006"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_log.dat": {
+    "bytes": 8152,
+    "sha256": "18203a1901a8cc05a67814f4c05f782548ac59dcae885eea2fa25b839dab3381"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 3927,
+    "sha256": "1bd947af07fb804e2b78932968935e65ba33d215bc7bcf89554e0d60e9333dc7"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/arch.stdout": {
+    "bytes": 8372,
+    "sha256": "91c6571f07e313f98ec1b28edd736f58cfd1451f39cd39d79fa222c248699ad3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t1/run.par": {
+    "bytes": 1759,
+    "sha256": "ff232cc19e1ff9debcb13511e2e0d3e7081de068611cc8533b880d0b696023f1"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 34368,
+    "sha256": "4905125447cf13e47425e43602be4f50824cfa06e82814e8ac8387a1f46cf14f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 45152,
+    "sha256": "a34b285bfb3d011a61b82f86f23bac9e9f920bafc78d229abacc03b581997d0c"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 45908,
+    "sha256": "eb4f7f8979aa062c42a4290e925d40fb9791908f693e297c5ccab8ab59b915ef"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 62264,
+    "sha256": "8f7a990bdc18cd1078a608bab4e27ea1e9a110f320c6de782bb40422a63d3209"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_log.dat": {
+    "bytes": 8159,
+    "sha256": "5db4d8967126c40b3d4c376f75fc8b7c4fd154d2847377838febafda82a1f9fe"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 4157,
+    "sha256": "94c37098acc2dd9c18cdf76142beaf871a02eef94577818e7fd22cd2efc837f0"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/arch.stdout": {
+    "bytes": 8380,
+    "sha256": "44548dac388a3773d89f4927aeda3f0cbbfee55aba75bc4695ad45327deb0619"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t16/run.par": {
+    "bytes": 1760,
+    "sha256": "a018931afd8ad11dbdc3d7584c63b10d86eaa99f16222973dbc850ff55db7c00"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 34368,
+    "sha256": "44ac20c6238cbfea922f0445909b158e0c970fbf48a17375dda359d5a3fcc7a3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 45152,
+    "sha256": "dff91ca24f4fb45e56a6457e3bff9ac48279628a3fc677e465291be268605d65"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 45908,
+    "sha256": "8be65822cf500657e26571c8a22804f33d05777e0de1f8b5758aa73a5f7f6c71"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 62264,
+    "sha256": "c11dba27530983e0f692032db5a63313e8b5970d346cfb48c73b5be389fda4db"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 8152,
+    "sha256": "7f322a05104d3367d0ee1d5b459de98d58b31c157666a6e0077ebc96e687b751"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 4010,
+    "sha256": "39694cd516668a5b047760c3842a650e9204d7b5e027d28e7baa479c2a4d0a51"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/arch.stdout": {
+    "bytes": 8372,
+    "sha256": "b194a3f4749fc204a38451ff498c99cec5906025f02b79edd5c899b6d33ee07b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cpu-t8/run.par": {
+    "bytes": 1759,
+    "sha256": "1cd7a801a1c231aab87c0da35f3209d7dd3c7ec259df0c4375a154fd41b19df0"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 34368,
+    "sha256": "31c691e8a36479f62f8205e9b2e575d8b28cc656fc3f38068a6aea88c109240e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0001.h5": {
+    "bytes": 45152,
+    "sha256": "0fb1aa5435d80c94c4bf18d7c63c9e720af8717984ae0a9d92ee9791700e98dd"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+    "bytes": 547201,
+    "sha256": "c1628c0a3f5acc0513e62a7890707010cdd0df140e9ec6f84b46593d8a30edfe"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 45908,
+    "sha256": "11786782ff56d9da7c8e9738f6b55af3895730864033209175112d431ede5509"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_chk_0001.h5": {
+    "bytes": 62264,
+    "sha256": "96a6530762734a923f4f668f2aca628eaa5027913fec5029ad34b8d63d485bb3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_diffusion_schedule.tsv": {
+    "bytes": 7139,
+    "sha256": "87a6bb22ecaa46d8fd050e8df00da5b64f902ed90d2a3e09a1c7fac8f565462f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 7929,
+    "sha256": "9b39f84114de882f2b75959ce4c79f229a8871a89670fa8560f05298fb8e6dd8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/MicrophysicsTiming_regrid.tsv": {
+    "bytes": 4577,
+    "sha256": "bcd1d5c7d2dd65933f4351549bdc372fa27ba8aaa0ed9b9d20260df313714848"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/arch.stdout": {
+    "bytes": 8150,
+    "sha256": "c164847fe3b5f9dc62d1c63fd8e97fb1532d75e835548bdad11935b708a499f7"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/coupled_bd_rkl2_all_transport_b8/measured-0-candidate-cuda-t8/run.par": {
+    "bytes": 1761,
+    "sha256": "6eb29c7d8b103ee6820f7586071ba48e6a44684060a105e59fa9db9b6e349185"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1/evidence.json": {
+    "bytes": 282972,
+    "sha256": "668b50299dc3024d9658cebe4d8323a7f20795104a0d6dce9ad5a7725f01b416"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1-context.txt": {
+    "bytes": 103,
+    "sha256": "48ca3949b4e549a161803523481ebf0064a9462e19a73845c410686bf58e0340"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1-gpu-snapshot.txt": {
+    "bytes": 101,
+    "sha256": "b5e17f399ac0a76ce166ccae5ab31361f80dfdc2f5251c671d0f4eb410a96427"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1-process-snapshot.txt": {
+    "bytes": 19706,
+    "sha256": "e04607705c973055bfd1c75d083c934f71abbc4a2987a34f55c576bf690ff672"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/numeric-pilots/coupled_bd_rkl2_all_transport-b8-v1.stdout": {
+    "bytes": 578,
+    "sha256": "66fd8b08d3220b9be47be028f1e5625c1a60896e0aa46ce964a193047f88beb0"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "156b29dce033797ba0cae960e5b9c60830f94d98f9deda33101782e0fd95786a"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_HLLC_plt_0001.h5": {
+    "bytes": 418048,
+    "sha256": "357f08cc3618f4d160ae4b033403ce864c78675efa92d7d84e734e5f1e5eadfa"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "153cd383ca56c34bd4b848af98c1d8a81f0437c704169871156ee1e1c55455fd"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_chk_0001.h5": {
+    "bytes": 631212,
+    "sha256": "7823bd1013934ef961e0015e34b86fee7ae1044163cc43419ca35db2f3a6173f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_log.dat": {
+    "bytes": 7768,
+    "sha256": "dc02d7e4de4dace95ee9b13e356a676be18b61ae19fb38a52d2ed6c03a77fc14"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/Ablation_regrid.tsv": {
+    "bytes": 4127,
+    "sha256": "63c2180801f59e858c1e1289c26cfb852c146aaf8127609264456a8f21136088"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/arch.stdout": {
+    "bytes": 7924,
+    "sha256": "0737527d9ae64dfda8b476bca0d79f60da999d88d9a1a53234eb70d63aa417ce"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cpu-prefix60/run.par": {
+    "bytes": 1685,
+    "sha256": "f54577cb32d464e18d8810933968e5f55f7726daad08a8af2dd51881cd42a0d4"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "ff688e3ee429fe57d0bf862d1c0d8aae09c1f679a14ed62d3ef500a81aec33d2"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_HLLC_plt_0001.h5": {
+    "bytes": 358912,
+    "sha256": "4314112ed84940bc879692f2e9d9e6a54c1c41fa99d86a7d9e8a55b4d137374c"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_backend_trace.tsv": {
+    "bytes": 6962382,
+    "sha256": "fe611832bbf1437df9ac1919c16e99ff6f970fe286107273d65d3a3d65411b34"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "9f890c3ef51a3cff7294dd2459f91d270f706617eee80de6b5dbf11f6cd88f36"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_chk_0001.h5": {
+    "bytes": 540500,
+    "sha256": "d8d96a997ee439ef548bddceaa137950da8e92c5ebe76ce0176793c32d6e9e4b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_diffusion_schedule.tsv": {
+    "bytes": 8383,
+    "sha256": "975640807d9f02218876c4ba88d92226da0d506f452c8c161e1a106ede3de2b8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_log.dat": {
+    "bytes": 8284,
+    "sha256": "931dd96dba0aaa0156b5cb98ce340185ebd68823b5cd6f083a22a4d09badd19e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/Ablation_regrid.tsv": {
+    "bytes": 5550,
+    "sha256": "fdc42fb5459a1a350c1d54a2e147ea333045e83748d21933fcacb338d4ae2275"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/arch.stderr": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/arch.stdout": {
+    "bytes": 8439,
+    "sha256": "c92fe95ec6180e00e855214cfa9648ff9b4cb9eec035617c323d1a470cffff53"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-amr/run.par": {
+    "bytes": 1685,
+    "sha256": "0c23f9200d7d7fe1e1b6be465cc2a5c5d2d626fe71cdf02432f9541f7e1b27ec"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/Ablation_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "fd47b1c3d4a036c6d69b513549e9131fdfd22b9a76fe5daf1c0a810a6639f227"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/Ablation_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "a660096d2b4288eed5f76939db3f9c8ab71ab68f8b47026841ca08ff7bc7f163"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/Ablation_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "102f0d7cc5fbd243b753b4609433bd7241293edd069bfcad7f59e831a57f6b37"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/Ablation_log.dat": {
+    "bytes": 6038,
+    "sha256": "17eda9be7a5128f5eae3d8a8532fecff28a6c973425c39a195f4b017a0ad744b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/arch.stderr": {
+    "bytes": 38,
+    "sha256": "3d2f8366fb726dce7425abb6824b29ae128d633ac9f9e088a42d643c40638abb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/arch.stdout": {
+    "bytes": 6199,
+    "sha256": "e577db489319eb50c3167fb238953dd2385aa83af94d06300cc6d99eff7ad041"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-diffusion/run.par": {
+    "bytes": 1692,
+    "sha256": "c6f9eabff00bef9abed477e8dc97cc4464a89b2d125f03eb99003f44cbc44eeb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/Ablation_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "8a168d00fb65c6d16d3aee89d0ee959910557c3f5ab27ff3a0b0dbe182d43ab7"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/Ablation_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/Ablation_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "4b877fef9a1c2ef0f5a917eb4a6961f0c4a0a0253b358b73a2089f25bf760eea"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/Ablation_log.dat": {
+    "bytes": 7318,
+    "sha256": "8cdcfd7dc81b7c3c12c474f389034edeac9133a446c949f3601f36f7ebe617d6"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/arch.stderr": {
+    "bytes": 38,
+    "sha256": "3d2f8366fb726dce7425abb6824b29ae128d633ac9f9e088a42d643c40638abb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/arch.stdout": {
+    "bytes": 7487,
+    "sha256": "b37903cc2ef84e55127bf926756f58415178404918415e76ddb36afb40feb208"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-no-species-diffusion/run.par": {
+    "bytes": 1700,
+    "sha256": "9bd4c1cdd97309a00ecc85a18fd327530fd0f3a61a07e809e6c3b245033904e3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/Ablation_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "3b4bd826a3d8d3b5e4ae38dc89cc8c5bc03e389bbf4bc9b1d45d262bd0336270"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/Ablation_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "6bda66dda9b27ece8d692cc87b798f75db75119cc0d72996a5d6ef711a4b1492"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/Ablation_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "3efbf39d321e93f72617e0edda569f1f0cac778ef4da710a1b9518aa7da6e12f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/Ablation_log.dat": {
+    "bytes": 7086,
+    "sha256": "efd6c9bea2169347d46152745157d206dcb09f91c3372e26d1dd3ec3e73e484f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/arch.stderr": {
+    "bytes": 38,
+    "sha256": "3d2f8366fb726dce7425abb6824b29ae128d633ac9f9e088a42d643c40638abb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/arch.stdout": {
+    "bytes": 7239,
+    "sha256": "a7444fcf761011bd08dbf56b3e84786db4de0783984fe31773327746d481c9b1"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/cuda-rkl1/run.par": {
+    "bytes": 1683,
+    "sha256": "bef89b660bfe2db3591bc459552445f13911e8a463688cf67acf4fd5e9b928e3"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/ablation-b128-v1/record.json": {
+    "bytes": 23128,
+    "sha256": "14f0eeee36fa6d903343d2bd11d7433fb381bd1eeaff697c9dcde4624de5aae8"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "5f0e2a433c4c3a76fa7403f0588d3f86e1d8ad78a81684b7b62c7ddf8a0f6efe"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 275,
+    "sha256": "ff2dd68fe64ae3f1c815a8893e148d8f9eef714d0e7d364bd9c0fcf64c06d43b"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "ad56a81dc10ac01f837db4fb59092fb7f228a49ed924c2f8b716467670c1034e"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 7513,
+    "sha256": "d647d16051f12707fa318bb7271fd3a8306bc78b7ea1703f289457904d63a661"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/arch.stderr": {
+    "bytes": 260,
+    "sha256": "35f886b6a29608a12291123a9685042e3354baa359fb25984e32c0ca8c375747"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/arch.stdout": {
+    "bytes": 7729,
+    "sha256": "6ff3aa39bd1569e3c166e867cb50b94ebf8e370a0f0c7825d76ce40db045ce5f"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cpu-t8/run.par": {
+    "bytes": 1758,
+    "sha256": "a499120aac210d4bf2c826bccc1a1278d13fa2f49a13b35b5151eff2eb2c1fdb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/MicrophysicsTiming_HLLC_plt_0000.h5": {
+    "bytes": 358912,
+    "sha256": "478e264a0234bb6cdb6b053bd5f8c581310344681ad391c465df57d47a4d0b55"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/MicrophysicsTiming_backend_plan.txt": {
+    "bytes": 300,
+    "sha256": "28630901893e3b28cd8e20314165f690f6727a8134e448fa476acea5e59cb220"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/MicrophysicsTiming_chk_0000.h5": {
+    "bytes": 540500,
+    "sha256": "8cc188e2157c076640b3eea9391df65878011a06d52dd839080d9ac03101799a"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/MicrophysicsTiming_log.dat": {
+    "bytes": 7540,
+    "sha256": "83f2e2b86b5bb41e9521f6e33ef5228268e10602be0f96574385b9f0569cfe49"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/arch.stderr": {
+    "bytes": 38,
+    "sha256": "3d2f8366fb726dce7425abb6824b29ae128d633ac9f9e088a42d643c40638abb"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/arch.stdout": {
+    "bytes": 7757,
+    "sha256": "eaf0d5dec1133663169fbb6d838ce70cc1cd20895e06ea6f8b2071595a0c85f5"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/coupled_bd_rkl2_all_transport_b128/diagnostic-0-candidate-cuda-t8/run.par": {
+    "bytes": 1760,
+    "sha256": "a071f953d8a921b0cea05cfcb512649c99dd7ca027e240bfd8650d7d61a647dc"
+  },
+  "ARCH-s5-indicator-20260914/build/s5-20260914/scale-diagnostics/bd-rkl2-b128-original-v1/record.json": {
+    "bytes": 25178,
+    "sha256": "f414b1d4146ea9b59992647ecec79675f91d7629b7acea6b66e1da678b4babe9"
+  }
+}

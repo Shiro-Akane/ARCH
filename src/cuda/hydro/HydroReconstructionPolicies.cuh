@@ -60,6 +60,8 @@ struct CudaMusclReconstruction
                 state.species(species, cell + 2 * stride),
                 species_left[species], species_right[species]);
         }
+        MusclReconstruction<Limiter>::normalize_species_faces(
+            state.n_species, species_left, species_right);
     }
 };
 

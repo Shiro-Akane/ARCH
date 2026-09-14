@@ -1,0 +1,2005 @@
+{
+  "schema": 1,
+  "scope": "actual-ARCH-aprox13-Helm-cross-solver-verification",
+  "focused_gate_pass": true,
+  "release_qualified": false,
+  "recipe": {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/validation/burn/results/application-first-law-20260907/replay.py",
+    "sha256": "99fbbb9518acd378caa2b94b9ea210356ddbbc84f70dc4fa509be66cb93b4296"
+  },
+  "derived_cases": [
+    {
+      "id": "be_nr",
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/be_nr_reference.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1200,
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "be_nr",
+        "linear": "denselu"
+      },
+      "reduction_policy": {
+        "rtol": 2e-08,
+        "atol": 1e-12
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-12
+      }
+    },
+    {
+      "id": "bd",
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1200,
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": "denselu"
+      },
+      "reduction_policy": {
+        "rtol": 2e-08,
+        "atol": 1e-12
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-12
+      }
+    },
+    {
+      "id": "ros4",
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/ros4.par",
+      "accepted_steps": [],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 1200,
+      "plan_policy": {
+        "network": "aprox13",
+        "eos": "helmholtz",
+        "ode": "ros4",
+        "linear": "denselu"
+      },
+      "reduction_policy": {
+        "rtol": 2e-08,
+        "atol": 1e-12
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-12
+      }
+    }
+  ],
+  "runtime_inputs": {
+    "be_nr": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/validation/burn/inputs/be_nr_reference.par",
+      "parameter_sha256": "623429caa572b33ce99fccd0e833c792a1b89098befa0832f3adbe7ff57469fc",
+      "scientific_overrides": {},
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "bd": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/validation/burn/inputs/bd.par",
+      "parameter_sha256": "0e79ba7c86c838b2ae35f5f8798cf3d1e43c7217c2553ca5a491671cfc48d7ff",
+      "scientific_overrides": {},
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    },
+    "ros4": {
+      "schema": 1,
+      "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/validation/burn/inputs/ros4.par",
+      "parameter_sha256": "d6b249af06afe413fead6593c6175cd62fc907ff206ef5e3cba987be33c254d2",
+      "scientific_overrides": {},
+      "eos_type": "helmholtz",
+      "dependencies": [
+        {
+          "parameter": "eos_table_path",
+          "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/EOS_toolkit/tables/helmholtz/helm_table.dat",
+          "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "be_nr",
+      "checkpoints": [],
+      "scientific": {
+        "cpu": {
+          "backend": "cpu",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific.par",
+          "parameter_sha256": "d207428a1078d4b71d6d824cd256174aefcd3c0bcc3db24a86ff56dd9c1648ae",
+          "checkpoint": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_chk_0001.h5",
+          "checkpoint_sha256": "1aab07f3f9642597708b518ae31b1a47b402dfd7dcfd8a1c862253a49fdc5d76",
+          "plan": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "be_nr",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": null,
+          "trace_summary": null,
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_regrid.tsv",
+              "sha256": "9368291748ffc60ae801465dea614c7feda9dbaeb8599d942cb95cbeb0ca0660"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 4.3865e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000106021,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000130673,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.3543e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.2578e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000109048,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 8.9837e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000111797,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00010326,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000148769,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.001029391,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "d207428a1078d4b71d6d824cd256174aefcd3c0bcc3db24a86ff56dd9c1648ae",
+            "checkpoint_sha256": "1aab07f3f9642597708b518ae31b1a47b402dfd7dcfd8a1c862253a49fdc5d76",
+            "command": [
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cpu/be_nr_cpu_scientific.par"
+            ]
+          }
+        },
+        "cuda": {
+          "backend": "cuda",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific.par",
+          "parameter_sha256": "f063d4e276de2a2e4de1559b4bc92d824d99af738eba0cff64f8bc67f2c7ebcd",
+          "checkpoint": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_chk_0001.h5",
+          "checkpoint_sha256": "a9a68d99e3fbe8aa542394cf0c412f68e2323313016681014294038a8543e3a9",
+          "plan": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cuda",
+            "resolved": "cuda",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "NVIDIA H100-20C",
+            "compute_capability": "9.0",
+            "runtime_version": "12080",
+            "driver_version": "12080",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "be_nr",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_backend_trace.tsv",
+          "trace_summary": {
+            "records": 93,
+            "max_macro_step": 20,
+            "unfinished_transfers": 0,
+            "stale_ghost_publications": 0
+          },
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_regrid.tsv",
+              "sha256": "c208e4ba28d7f9fdd4c85554d60299cb9dab413182eae13d241255911f2e7b2d"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.001648957,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000135603,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00010614,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000100693,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000104099,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.9746e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.5535e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000125683,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.9912e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.7858e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.002614226,
+              "bytes_h2d": 8640,
+              "bytes_d2h": 80,
+              "kernel_count": 60,
+              "stream_sync_count": 30,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "f063d4e276de2a2e4de1559b4bc92d824d99af738eba0cff64f8bc67f2c7ebcd",
+            "checkpoint_sha256": "a9a68d99e3fbe8aa542394cf0c412f68e2323313016681014294038a8543e3a9",
+            "command": [
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/be_nr/scientific/cuda/be_nr_cuda_scientific.par"
+            ]
+          }
+        },
+        "parity": {
+          "status": "pass",
+          "step": 20,
+          "time": 1e-10,
+          "candidate_step": 20,
+          "candidate_time": 1e-10,
+          "comparison_mode": "physical-time",
+          "target_time": 1e-10,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 1,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 5.24288e-11,
+          "candidate_dt_old": 5.24288e-11,
+          "dt_burn": 9.108972575851695e+24,
+          "candidate_dt_burn": 9.108972575851555e+24,
+          "dt_burn_relative": 1.5441936812599106e-14,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 696254464,
+          "max_rel": 1.06658516158982e-13,
+          "max_field_normalized": 1.549689520923808e-14,
+          "max_enuc_normalized": 1.549689520923808e-14,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12
+          }
+        },
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198198424e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.0925377198198413e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198198424e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.0925377198198413e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        }
+      }
+    },
+    {
+      "id": "bd",
+      "checkpoints": [],
+      "scientific": {
+        "cpu": {
+          "backend": "cpu",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific.par",
+          "parameter_sha256": "3558dd61f23eb5cacd4dfcdc87b77a68f067617123f0fc8e6d71282fd5da5456",
+          "checkpoint": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_chk_0001.h5",
+          "checkpoint_sha256": "9dfebb6808fce4d9a14053a145bac670f2767cc22309e1f8ed4f55609ec75ac3",
+          "plan": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "bd",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": null,
+          "trace_summary": null,
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_regrid.tsv",
+              "sha256": "95c2b086cb26ce95fdd180ffc24ef200db1b7f94c10746426f559f32befe3364"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 4.8348e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000131847,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.5827e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000123204,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000170061,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000128372,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.4642e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000110652,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000130665,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00014095,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.001174568,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "3558dd61f23eb5cacd4dfcdc87b77a68f067617123f0fc8e6d71282fd5da5456",
+            "checkpoint_sha256": "9dfebb6808fce4d9a14053a145bac670f2767cc22309e1f8ed4f55609ec75ac3",
+            "command": [
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cpu/bd_cpu_scientific.par"
+            ]
+          }
+        },
+        "cuda": {
+          "backend": "cuda",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific.par",
+          "parameter_sha256": "2ecbce4961d5d8f849c17c1ee9559e9aa8fffe0908fe322e76e3d4c0a72c9ad5",
+          "checkpoint": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_chk_0001.h5",
+          "checkpoint_sha256": "91e324120d7e5acab3f71b6e0be425e422e5afb9b8227ca381ed5505d711ec47",
+          "plan": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cuda",
+            "resolved": "cuda",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "NVIDIA H100-20C",
+            "compute_capability": "9.0",
+            "runtime_version": "12080",
+            "driver_version": "12080",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "bd",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_backend_trace.tsv",
+          "trace_summary": {
+            "records": 93,
+            "max_macro_step": 20,
+            "unfinished_transfers": 0,
+            "stale_ghost_publications": 0
+          },
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_regrid.tsv",
+              "sha256": "af52e0d6c7d3f8407957b0af254edea3972c26bfe6830bb8e707a7736fc87d64"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.001684158,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000146975,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000105523,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000101341,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000106649,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.9281e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.4664e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000113764,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000106168,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000100318,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.002658841,
+              "bytes_h2d": 8640,
+              "bytes_d2h": 80,
+              "kernel_count": 60,
+              "stream_sync_count": 30,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "2ecbce4961d5d8f849c17c1ee9559e9aa8fffe0908fe322e76e3d4c0a72c9ad5",
+            "checkpoint_sha256": "91e324120d7e5acab3f71b6e0be425e422e5afb9b8227ca381ed5505d711ec47",
+            "command": [
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/bd/scientific/cuda/bd_cuda_scientific.par"
+            ]
+          }
+        },
+        "parity": {
+          "status": "pass",
+          "step": 20,
+          "time": 1e-10,
+          "candidate_step": 20,
+          "candidate_time": 1e-10,
+          "comparison_mode": "physical-time",
+          "target_time": 1e-10,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 1,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 5.24288e-11,
+          "candidate_dt_old": 5.24288e-11,
+          "dt_burn": 9.108974814100915e+24,
+          "candidate_dt_burn": 9.10897481409834e+24,
+          "dt_burn_relative": 2.826698883793263e-13,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 12700352512,
+          "max_rel": 2.8267837484306604e-13,
+          "max_field_normalized": 2.8267837484306604e-13,
+          "max_enuc_normalized": 2.8267837484306604e-13,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12
+          }
+        },
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198098164e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809816e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198098164e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809816e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 0
+        }
+      }
+    },
+    {
+      "id": "ros4",
+      "checkpoints": [],
+      "scientific": {
+        "cpu": {
+          "backend": "cpu",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific.par",
+          "parameter_sha256": "2c20c4e834be8a95b62bef6d69e6ec3df9a1fe1db676bd751eb7fddea91cced0",
+          "checkpoint": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_chk_0001.h5",
+          "checkpoint_sha256": "a2027811c927eba453976c10a01ccae7bc2a4d58682e52dc846bde5a9d23ab14",
+          "plan": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cpu",
+            "resolved": "cpu",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "",
+            "compute_capability": "0.0",
+            "runtime_version": "0",
+            "driver_version": "0",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "ros4",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": null,
+          "trace_summary": null,
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_regrid.tsv",
+              "sha256": "acab17d18ec44e6fa7667b55ee280927f9142ffdedbb797b3cb590770f324440"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 4.2889e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.752e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000125446,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.9666e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000107126,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000125833,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 6.7964e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.6333e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.4591e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cpu",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 7.1578e-05,
+                "bytes_h2d": 0,
+                "bytes_d2h": 0,
+                "kernel_count": 0,
+                "stream_sync_count": 0
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.000858946,
+              "bytes_h2d": 0,
+              "bytes_d2h": 0,
+              "kernel_count": 0,
+              "stream_sync_count": 0,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "2c20c4e834be8a95b62bef6d69e6ec3df9a1fe1db676bd751eb7fddea91cced0",
+            "checkpoint_sha256": "a2027811c927eba453976c10a01ccae7bc2a4d58682e52dc846bde5a9d23ab14",
+            "command": [
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cpu/ros4_cpu_scientific.par"
+            ]
+          }
+        },
+        "cuda": {
+          "backend": "cuda",
+          "steps": 20,
+          "terminal_time": 1e-10,
+          "parameter_file": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific.par",
+          "parameter_sha256": "1ad466f25f20853dcc4e7e46dd141eef5e2b06325b629a431e7bc5d7c70f0349",
+          "checkpoint": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_chk_0001.h5",
+          "checkpoint_sha256": "96e4f23d1c77fb3a7257e4b217eef705c4b2d0bd8b748d2ea8a2599fb81a9485",
+          "plan": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_backend_plan.txt",
+          "resolved_plan": {
+            "schema": "1",
+            "requested": "cuda",
+            "resolved": "cuda",
+            "capability_code": "0",
+            "fallback_reason": "",
+            "device_ordinal": "0",
+            "device_name": "NVIDIA H100-20C",
+            "compute_capability": "9.0",
+            "runtime_version": "12080",
+            "driver_version": "12080",
+            "flux": "hllc",
+            "reconstruction": "plm",
+            "limiter": "mc",
+            "time": "rk2",
+            "eos": "helmholtz",
+            "network": "aprox13",
+            "ode": "ros4",
+            "linear": "denselu",
+            "diffusion": "none"
+          },
+          "trace": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_backend_trace.tsv",
+          "trace_summary": {
+            "records": 93,
+            "max_macro_step": 20,
+            "unfinished_transfers": 0,
+            "stale_ghost_publications": 0
+          },
+          "regrid": {
+            "file": {
+              "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_regrid.tsv",
+              "sha256": "572fc13b1267e74a8f1d43e82fd46ddd6b00c214ea27f77ae72cf1486aa67960"
+            },
+            "records": [
+              {
+                "macro_step": 0,
+                "physical_time": 0.0,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.001699004,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 2,
+                "physical_time": 3e-16,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000142108,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 4,
+                "physical_time": 1.5e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000107819,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 6,
+                "physical_time": 6.3e-15,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000105026,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 8,
+                "physical_time": 2.55e-14,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.00010539,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 10,
+                "physical_time": 1.023e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.877e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 12,
+                "physical_time": 4.095e-13,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.6874e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 14,
+                "physical_time": 1.6383e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000114043,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 16,
+                "physical_time": 6.5535e-12,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 9.8935e-05,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              },
+              {
+                "macro_step": 18,
+                "physical_time": 2.62143e-11,
+                "backend": "cuda",
+                "old_blocks": 1,
+                "new_blocks": 1,
+                "topology_changed": 0,
+                "wall_seconds": 0.000101273,
+                "bytes_h2d": 864,
+                "bytes_d2h": 8,
+                "kernel_count": 6,
+                "stream_sync_count": 3
+              }
+            ],
+            "summary": {
+              "records": 10,
+              "topology_changes": 0,
+              "wall_seconds": 0.002669242,
+              "bytes_h2d": 8640,
+              "bytes_d2h": 80,
+              "kernel_count": 60,
+              "stream_sync_count": 30,
+              "overlaps_backend_trace": true
+            }
+          },
+          "sanitizer": null,
+          "checkpoint_metadata": {
+            "step": 20,
+            "time": 1e-10,
+            "resume_after_regrid": false,
+            "chk_file_index": 1,
+            "plt_file_index": 2,
+            "measure": "physical_cell_volume",
+            "geometry": "cartesian",
+            "parameter_sha256": "1ad466f25f20853dcc4e7e46dd141eef5e2b06325b629a431e7bc5d7c70f0349",
+            "checkpoint_sha256": "96e4f23d1c77fb3a7257e4b217eef705c4b2d0bd8b748d2ea8a2599fb81a9485",
+            "command": [
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation",
+              "--metrics",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific_chk_0001.h5",
+              "--parameters",
+              "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/validation-v1/first-law/results/ros4/scientific/cuda/ros4_cuda_scientific.par"
+            ]
+          }
+        },
+        "parity": {
+          "status": "pass",
+          "step": 20,
+          "time": 1e-10,
+          "candidate_step": 20,
+          "candidate_time": 1e-10,
+          "comparison_mode": "physical-time",
+          "target_time": 1e-10,
+          "time_roundoff_matches": true,
+          "controller_matches": true,
+          "output_indices_match": true,
+          "native_composition_compared": true,
+          "dimension": 1,
+          "blocks": 1,
+          "min_level": 0,
+          "max_level": 0,
+          "dt_old": 5.24288e-11,
+          "candidate_dt_old": 5.24288e-11,
+          "dt_burn": 9.108974822150367e+24,
+          "candidate_dt_burn": 9.108974822149743e+24,
+          "dt_burn_relative": 6.848674103555469e-14,
+          "chk_file_index": 1,
+          "plt_file_index": 2,
+          "candidate_chk_file_index": 1,
+          "candidate_plt_file_index": 2,
+          "output_index_offsets": {
+            "checkpoint": 0,
+            "plot": 0
+          },
+          "resume_after_regrid": false,
+          "topology": [
+            [
+              0,
+              0,
+              0,
+              0
+            ]
+          ],
+          "max_abs": 3078619136,
+          "max_rel": 6.852243306413745e-14,
+          "max_field_normalized": 6.852243306413745e-14,
+          "max_enuc_normalized": 6.852243306413745e-14,
+          "passed": true,
+          "tolerance": {
+            "rtol": 2e-08,
+            "atol": 1e-12
+          }
+        },
+        "cpu_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198097863e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809788e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 2.220446049250313e-16
+        },
+        "cuda_qualification": {
+          "status": "pass",
+          "mode": "burn",
+          "step": 20,
+          "time": 1e-10,
+          "l1": 0,
+          "l2": 0,
+          "linf": 0,
+          "mean": 0,
+          "mass": 10000000,
+          "mom_u": 0,
+          "mom_v": 0,
+          "mom_w": 0,
+          "eng_total": 4.0925377198097863e+24,
+          "min_rho": 10000000,
+          "min_eng": 4.092537719809788e+24,
+          "min_fraction": 0,
+          "max_fraction": 0,
+          "species_sum_error": 2.220446049250313e-16
+        }
+      }
+    }
+  ],
+  "cross_solver": [
+    {
+      "method": "be_nr",
+      "backend": "cpu",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 0.0
+        },
+        "max_rel": {
+          "fractions": 0.0
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 0.0
+        },
+        "max_rel": {
+          "energy": 0.0
+        }
+      },
+      "species_l1": 0.0,
+      "species_l2": 0.0,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "be_nr",
+      "backend": "cuda",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 5.551115123125783e-16
+        },
+        "max_rel": {
+          "fractions": 1.065901814981669e-13
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 0.0
+        },
+        "max_rel": {
+          "energy": 0.0
+        }
+      },
+      "species_l1": 8.113639113588445e-17,
+      "species_l2": 2.0713230899424906e-16,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "bd",
+      "backend": "cpu",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.156041504867203e-12
+        },
+        "max_rel": {
+          "fractions": 0.0028066360707533077
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10025527410688.0
+        },
+        "max_rel": {
+          "energy": 2.4497092261691693e-12
+        }
+      },
+      "species_l1": 6.443902940850247e-13,
+      "species_l2": 1.385353666443995e-12,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "bd",
+      "backend": "cuda",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.156041498090939e-12
+        },
+        "max_rel": {
+          "fractions": 0.002806636070751176
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10025527410688.0
+        },
+        "max_rel": {
+          "energy": 2.4497092261691693e-12
+        }
+      },
+      "species_l1": 6.443902935047244e-13,
+      "species_l2": 1.38535366486419e-12,
+      "abundance_sum_residual": 0.0
+    },
+    {
+      "method": "ros4",
+      "backend": "cpu",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.167845640823658e-12
+        },
+        "max_rel": {
+          "fractions": 0.0028066367254716207
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10053444698112.0
+        },
+        "max_rel": {
+          "energy": 2.4565307362773837e-12
+        }
+      },
+      "species_l1": 6.462266429831142e-13,
+      "species_l2": 1.3893410247297537e-12,
+      "abundance_sum_residual": 2.220446049250313e-16
+    },
+    {
+      "method": "ros4",
+      "backend": "cuda",
+      "species": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "fractions": 4.167845650988053e-12
+        },
+        "max_rel": {
+          "fractions": 0.0028066367254704024
+        }
+      },
+      "energy": {
+        "passed": true,
+        "first_mismatch": null,
+        "max_abs": {
+          "energy": 10053444698112.0
+        },
+        "max_rel": {
+          "energy": 2.4565307362773837e-12
+        }
+      },
+      "species_l1": 6.462266435644305e-13,
+      "species_l2": 1.3893410270273032e-12,
+      "abundance_sum_residual": 2.220446049250313e-16
+    }
+  ],
+  "species_absolute_budget": 1e-08,
+  "energy_relative_budget": 1e-08,
+  "abundance_sum_budget": 1e-12,
+  "started_utc": "2026-09-14T03:46:59.606242+00:00",
+  "finished_utc": "2026-09-14T03:47:18.440259+00:00",
+  "provenance": {
+    "schema": 1,
+    "source": {
+      "commit": "81c046f60de1971f255b3d1deff1eda67c9c773a",
+      "scope": "code-and-validation-inputs-v1",
+      "scope_policy": {
+        "directories": [
+          "cmake",
+          "simulation",
+          "src",
+          "tests",
+          "tools",
+          "validation"
+        ],
+        "suffixes": [
+          ".c",
+          ".cc",
+          ".cmake",
+          ".cpp",
+          ".cu",
+          ".cuh",
+          ".cxx",
+          ".def",
+          ".h",
+          ".hh",
+          ".hpp",
+          ".hxx",
+          ".in",
+          ".inc",
+          ".ipp",
+          ".json",
+          ".par",
+          ".py",
+          ".sh",
+          ".tpp",
+          ".yaml",
+          ".yml"
+        ],
+        "root_configuration": [
+          "CMakeLists.txt",
+          "CMakePresets.json",
+          "CMakeUserPresets.json"
+        ],
+        "nested_cmakelists": true,
+        "excluded": [
+          "validation/**/results/**",
+          "**/__pycache__/**"
+        ],
+        "include_untracked_and_gitignored_source": true
+      },
+      "worktree_sha256": "7163a7157d7a893834a67bdadeee2d47fbe6216e29ea508395926e8f3cc387da",
+      "dirty": true,
+      "modified_files": [
+        "src/amr/GhostExchange.h",
+        "src/amr/LimitedLinearProlongation.h",
+        "src/cuda/amr/CoarseFineExchangeKernels.cuh",
+        "src/cuda/hydro/HydroReconstructionPolicies.cuh",
+        "src/numerics/reconstruction/Reconstruction.h",
+        "tests/cuda/test_cuda_amr_composition.cu",
+        "tests/fixtures/amr_composition_test_cases.h",
+        "tests/host/test_amr_operation_plans.cpp"
+      ],
+      "untracked_source_files": []
+    },
+    "build": {
+      "source_directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914",
+      "configuration": "Release",
+      "multi_config": false,
+      "cmake_cache_sha256": "9eac8cfb734ad2b7885a6b3d1264841cf4461476452001638b72e12824dfd405",
+      "compile_commands_sha256": "c182ff1dbdf113b0a01718a76f9080c433fab297643994b5d6a5f6398af69ab6",
+      "cmake_options": {
+        "ARCH_BINARY_DIR": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release",
+        "ARCH_CUDA_DEBUG_PTXAS_OPT_LEVEL": "1",
+        "ARCH_CUDA_HEAVY_COMPILE_JOBS": "4",
+        "ARCH_CUSTOM_NETWORKS": "",
+        "ARCH_CUSTOM_NETWORK_ROOT": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/network/custom",
+        "ARCH_ENABLE_CUDA": "ON",
+        "ARCH_ENABLE_CUDSS": "OFF",
+        "ARCH_ENABLE_KLU": "OFF",
+        "ARCH_ENABLE_OPENMP": "ON",
+        "ARCH_FETCH_SUITESPARSE": "OFF",
+        "ARCH_IS_TOP_LEVEL": "ON",
+        "ARCH_RUNTIME_OUTPUT_DIRECTORY": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/bin",
+        "ARCH_SOURCE_DIR": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914",
+        "ARCH_VERBOSE_BUILD": "OFF",
+        "BUILD_TESTING": "ON",
+        "CMAKE_ADDR2LINE": "/usr/bin/addr2line",
+        "CMAKE_AR": "/usr/bin/ar",
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CUDA_ARCHITECTURES": "90",
+        "CMAKE_CUDA_COMPILER": "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "CMAKE_CUDA_COMPILER_LAUNCHER": "/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C",
+        "CMAKE_CUDA_FLAGS": "",
+        "CMAKE_CUDA_FLAGS_DEBUG": "-g",
+        "CMAKE_CUDA_FLAGS_MINSIZEREL": "-O1 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CUDA_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER": "/usr/bin/g++-11",
+        "CMAKE_CXX_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_CXX_COMPILER_LAUNCHER": "/usr/bin/time;-f;ARCH_COMPILE_METRIC elapsed_seconds=%e peak_rss_kib=%M exit_code=%x command=%C",
+        "CMAKE_CXX_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_C_COMPILER": "/usr/bin/gcc-11",
+        "CMAKE_C_COMPILER_AR": "/usr/bin/gcc-ar-11",
+        "CMAKE_C_COMPILER_RANLIB": "/usr/bin/gcc-ranlib-11",
+        "CMAKE_C_FLAGS": "",
+        "CMAKE_C_FLAGS_DEBUG": "-g",
+        "CMAKE_C_FLAGS_MINSIZEREL": "-Os -DNDEBUG",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_C_FLAGS_RELWITHDEBINFO": "-O2 -g -DNDEBUG",
+        "CMAKE_DLLTOOL": "CMAKE_DLLTOOL-NOTFOUND",
+        "CMAKE_EXE_LINKER_FLAGS": "",
+        "CMAKE_EXE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_EXE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_EXPORT_BUILD_DATABASE": "",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "",
+        "CMAKE_FIND_PACKAGE_REDIRECTS_DIR": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/CMakeFiles/pkgRedirects",
+        "CMAKE_INSTALL_PREFIX": "/usr/local",
+        "CMAKE_LINKER": "/usr/bin/ld",
+        "CMAKE_MAKE_PROGRAM": "/home/ubuntu/projects/.envs/arch/bin/ninja",
+        "CMAKE_MODULE_LINKER_FLAGS": "",
+        "CMAKE_MODULE_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_NM": "/usr/bin/nm",
+        "CMAKE_OBJCOPY": "/usr/bin/objcopy",
+        "CMAKE_OBJDUMP": "/usr/bin/objdump",
+        "CMAKE_PROJECT_COMPAT_VERSION": "",
+        "CMAKE_PROJECT_DESCRIPTION": "",
+        "CMAKE_PROJECT_HOMEPAGE_URL": "",
+        "CMAKE_PROJECT_NAME": "ARCH",
+        "CMAKE_PROJECT_SPDX_LICENSE": "",
+        "CMAKE_RANLIB": "/usr/bin/ranlib",
+        "CMAKE_READELF": "/usr/bin/readelf",
+        "CMAKE_SHARED_LINKER_FLAGS": "",
+        "CMAKE_SHARED_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_SKIP_INSTALL_RPATH": "NO",
+        "CMAKE_SKIP_RPATH": "NO",
+        "CMAKE_STATIC_LINKER_FLAGS": "",
+        "CMAKE_STATIC_LINKER_FLAGS_DEBUG": "",
+        "CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELEASE": "",
+        "CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO": "",
+        "CMAKE_STRIP": "/usr/bin/strip",
+        "CMAKE_TAPI": "CMAKE_TAPI-NOTFOUND",
+        "CMAKE_VERBOSE_MAKEFILE": "FALSE",
+        "CUDSS_ROOT": "",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "registered_networks": [],
+      "sparse_link": {
+        "required_providers": [],
+        "libraries": []
+      },
+      "configured_sparse_libraries": {},
+      "artifact_paths": {
+        "arch": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/bin/ARCH",
+        "checkpoint_validator": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_single_level_validation"
+      }
+    },
+    "execution_environment": {
+      "OMP_NUM_THREADS": "8",
+      "OMP_DYNAMIC": "FALSE",
+      "OMP_PROC_BIND": "close",
+      "OMP_PLACES": "cores",
+      "OMP_SCHEDULE": null,
+      "CUDA_VISIBLE_DEVICES": null,
+      "CUDA_MODULE_LOADING": null
+    },
+    "artifacts": {
+      "arch_sha256": "0647c3c1b10d9351081a5b030d3611c3d5551290f297536b517dbc98ed16179a",
+      "checkpoint_validator_sha256": "2a3492b170f00fbd196659e1f83c8e84e5c45a483790831fcbee0a48b5913f85"
+    },
+    "artifact_observation": {
+      "arch": [
+        64768,
+        86478717,
+        173204736,
+        1789356596924115167,
+        1789356596924115167
+      ],
+      "checkpoint_validator": [
+        64768,
+        932096866,
+        333352,
+        1789356555187887850,
+        1789356555187887850
+      ]
+    }
+  },
+  "binary_sha256": "0647c3c1b10d9351081a5b030d3611c3d5551290f297536b517dbc98ed16179a",
+  "identity_verified_after_run": true
+}

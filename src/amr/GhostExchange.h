@@ -490,8 +490,10 @@ public:
                 static_cast<std::size_t>(species_count));
             if (transfer.rule == RefinementRule::CoarseGhostInjection) {
                 const double fine_density = values.fields[0];
+                const int closure_species =
+                    prolongation_math::composition_closure_species(stencil);
                 const auto family =
-                    prolongation_math::classify_composition_family(stencil);
+                    prolongation_math::classify_composition_family(stencil, closure_species);
                 if (family == prolongation_math::CompositionFamily::InvalidDensity)
                     throw std::runtime_error(
                         prolongation_math::invalid_prolongation_density_message());
@@ -499,7 +501,7 @@ public:
                     values.mass_fractions[species] =
                         prolongation_math::reconstruct_mass_fraction(
                             stencil, family, fine_density, species,
-                            transfer.fine_position.data());
+                            transfer.fine_position.data(), closure_species);
             } else {
                 for (int species = 0; species < species_count; ++species) {
                     double species_density_integral = 0.0;

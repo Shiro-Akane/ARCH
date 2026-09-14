@@ -13,6 +13,32 @@
 
 #include "../../data/FluidState.h"
 
+namespace ReconstructionMath {
+// One simplex normalization for all reconstructed face compositions. Applying
+// independent nonlinear limiters does not preserve sum(X)=1 even when all
+// stencil cells are normalized. The Riemann species flux must sum to the mass
+// flux before AMR registration; normalizing only the updated cell is too late.
+ARCH_INLINE void normalize_species_faces(int n_spec, double* X_L, double* X_R)
+{
+    double sum_X_L = 0.0;
+    double sum_X_R = 0.0;
+    for (int species = 0; species < n_spec; ++species) {
+        sum_X_L += X_L[species];
+        sum_X_R += X_R[species];
+    }
+    if (sum_X_L > 1e-12) {
+        const double inv = 1.0 / sum_X_L;
+        for (int species = 0; species < n_spec; ++species)
+            X_L[species] *= inv;
+    }
+    if (sum_X_R > 1e-12) {
+        const double inv = 1.0 / sum_X_R;
+        for (int species = 0; species < n_spec; ++species)
+            X_R[species] *= inv;
+    }
+}
+} // namespace ReconstructionMath
+
 /**
  * @brief Helper to calculate slope ratio r and apply limiter.
  * r_i = (q_i - q_{i-1}) / (q_{i+1} - q_i)
@@ -133,6 +159,12 @@ struct MusclReconstruction
 
     static constexpr int NG = 2;
 
+    static ARCH_INLINE void normalize_species_faces(
+        int n_spec, double* X_L, double* X_R)
+    {
+        ReconstructionMath::normalize_species_faces(n_spec, X_L, X_R);
+    }
+
     static ARCH_INLINE void reconstruct_species(
         double X_im1, double X_i, double X_ip1, double X_ip2,
         double& X_L, double& X_R)
@@ -200,6 +232,7 @@ struct MusclReconstruction
 
             reconstruct_species(x_im1, x_i, x_ip1, x_ip2, X_L[k], X_R[k]);
         }
+        normalize_species_faces(n_spec, X_L, X_R);
     }
 };
 
@@ -304,22 +337,7 @@ public:
     static ARCH_INLINE void normalize_species_faces(
         int n_spec, double* X_L, double* X_R)
     {
-        double sum_X_L = 0.0;
-        double sum_X_R = 0.0;
-        for (int species = 0; species < n_spec; ++species) {
-            sum_X_L += X_L[species];
-            sum_X_R += X_R[species];
-        }
-        if (sum_X_L > 1e-12) {
-            const double inv = 1.0 / sum_X_L;
-            for (int species = 0; species < n_spec; ++species)
-                X_L[species] *= inv;
-        }
-        if (sum_X_R > 1e-12) {
-            const double inv = 1.0 / sum_X_R;
-            for (int species = 0; species < n_spec; ++species)
-                X_R[species] *= inv;
-        }
+        ReconstructionMath::normalize_species_faces(n_spec, X_L, X_R);
     }
 
     template <typename EosType>

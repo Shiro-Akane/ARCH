@@ -1,0 +1,138 @@
+{
+  "backtraceGraph" : 
+  {
+    "commands" : 
+    [
+      "add_test",
+      "include"
+    ],
+    "files" : 
+    [
+      "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cmake/tests/HostTests.cmake",
+      "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/CMakeLists.txt",
+      "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cmake/tests/CudaTests.cmake"
+    ],
+    "nodes" : 
+    [
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 17,
+        "parent" : 0
+      },
+      {
+        "file" : 0,
+        "parent" : 1
+      },
+      {
+        "command" : 0,
+        "file" : 0,
+        "line" : 134,
+        "parent" : 2
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 4
+      },
+      {
+        "file" : 2,
+        "parent" : 5
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 165,
+        "parent" : 6
+      },
+      {
+        "file" : 1
+      },
+      {
+        "command" : 1,
+        "file" : 1,
+        "line" : 23,
+        "parent" : 8
+      },
+      {
+        "file" : 2,
+        "parent" : 9
+      },
+      {
+        "command" : 0,
+        "file" : 2,
+        "line" : 180,
+        "parent" : 10
+      }
+    ]
+  },
+  "kind" : "ctestInfo",
+  "tests" : 
+  [
+    {
+      "backtrace" : 3,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_amr_operation_plans"
+      ],
+      "name" : "amr_operation_plans",
+      "properties" : 
+      [
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 7,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_refinement_indicators"
+      ],
+      "name" : "cuda_refinement_indicators",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release"
+        }
+      ]
+    },
+    {
+      "backtrace" : 11,
+      "command" : 
+      [
+        "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_amr_composition"
+      ],
+      "name" : "cuda_amr_composition",
+      "properties" : 
+      [
+        {
+          "name" : "SKIP_RETURN_CODE",
+          "value" : 77
+        },
+        {
+          "name" : "WORKING_DIRECTORY",
+          "value" : "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release"
+        }
+      ]
+    }
+  ],
+  "version" : 
+  {
+    "major" : 1,
+    "minor" : 0
+  }
+}

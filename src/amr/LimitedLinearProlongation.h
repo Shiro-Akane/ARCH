@@ -128,22 +128,45 @@ ARCH_HOST_DEVICE inline double reconstruct_species_density(
         lower, upper, position, stencil.dimension);
 }
 
-// Use the identical sum-then-subtract operation for both validation and
-// output.  Successively subtracting each species from rho can yield a
-// negative trace species even when rho - sum(rhoX) passes admissibility.
+// One parent-wide choice for every sibling, with stable first-index tie
+// breaking. Closing a trace/zero last species by rho - sum(other rhoX)
+// invents O(epsilon) abundance; its fine-face flux can then drain a coarse
+// cell whose true abundance is O(1e-20). Put closure roundoff in the dominant
+// species, as the shared regrid transfer already does, not in a network-order
+// dependent trace species. This does not clip abundances or relax a budget.
+ARCH_HOST_DEVICE inline int composition_closure_species(
+    const CompositionStencilView& stencil)
+{
+    int selected = -1;
+    double largest = -1.0;
+    for (int species = 0; species < stencil.species_count; ++species) {
+        const double value = stencil.mass_fractions[
+            static_cast<std::size_t>(species) * stencil.species_stride + stencil.center];
+        if (value > largest) {
+            largest = value;
+            selected = species;
+        }
+    }
+    return selected;
+}
+
+// Use identical sum-then-subtract operations for validation and output.
 ARCH_HOST_DEVICE inline double reconstructed_closure(
     const CompositionStencilView& stencil, double density,
-    const double position[3])
+    const double position[3], int closure_species = -1)
 {
+    if (closure_species < 0) closure_species = composition_closure_species(stencil);
     double partial = 0.0;
-    for (int species = 0; species + 1 < stencil.species_count; ++species)
-        partial += reconstruct_species_density(stencil, species, position);
+    for (int species = 0; species < stencil.species_count; ++species)
+        if (species != closure_species)
+            partial += reconstruct_species_density(stencil, species, position);
     return density - partial;
 }
 
 ARCH_HOST_DEVICE inline CompositionFamily classify_composition_family(
-    const CompositionStencilView& stencil)
+    const CompositionStencilView& stencil, int closure_species = -1)
 {
+    if (closure_species < 0) closure_species = composition_closure_species(stencil);
     bool linear = true;
     for (int sibling = 0; sibling < (1 << stencil.dimension); ++sibling) {
         double position[3]{};
@@ -153,12 +176,13 @@ ARCH_HOST_DEVICE inline CompositionFamily classify_composition_family(
             stencil, stencil.density, position);
         if (!finite_number(density) || density <= 0.0)
             return CompositionFamily::InvalidDensity;
-        for (int species = 0; species + 1 < stencil.species_count; ++species) {
+        for (int species = 0; species < stencil.species_count; ++species) {
+            if (species == closure_species) continue;
             const double candidate = reconstruct_species_density(
                 stencil, species, position);
             if (!finite_number(candidate) || candidate < 0.0) linear = false;
         }
-        const double closure = reconstructed_closure(stencil, density, position);
+        const double closure = reconstructed_closure(stencil, density, position, closure_species);
         if (!finite_number(closure) || closure < 0.0) linear = false;
     }
     // All siblings must use one decision, including siblings outside a
@@ -171,15 +195,16 @@ ARCH_HOST_DEVICE inline CompositionFamily classify_composition_family(
 // parent's X exactly and hence its rhoX average with symmetric density slopes.
 ARCH_HOST_DEVICE inline double reconstruct_mass_fraction(
     const CompositionStencilView& stencil, CompositionFamily family,
-    double density, int species, const double position[3])
+    double density, int species, const double position[3], int closure_species = -1)
 {
     if (family == CompositionFamily::Constant)
         return stencil.mass_fractions[
             static_cast<std::size_t>(species) * stencil.species_stride
             + stencil.center];
-    const double species_density = species + 1 < stencil.species_count
+    if (closure_species < 0) closure_species = composition_closure_species(stencil);
+    const double species_density = species != closure_species
         ? reconstruct_species_density(stencil, species, position)
-        : reconstructed_closure(stencil, density, position);
+        : reconstructed_closure(stencil, density, position, closure_species);
     return species_density / density;
 }
 

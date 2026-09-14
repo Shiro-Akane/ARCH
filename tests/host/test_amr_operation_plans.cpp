@@ -13,6 +13,7 @@
 #include "amr/GhostExchange.h"
 #include "amr/LimitedLinearProlongation.h"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
+#include "numerics/reconstruction/Reconstruction.h"
 #include "../fixtures/amr_composition_test_cases.h"
 
 #include <bit>
@@ -101,6 +102,30 @@ void test_limited_linear_prolongation_math()
            "limited-linear prolongation did not flatten an extremum");
 }
 
+void test_muscl_face_composition_closure()
+{
+    FluidState state;
+    state.Preallocate(4);
+    state.InitSpecies(4);
+    for (int cell=0; cell<4; ++cell)
+        for (int species=0; species<4; ++species)
+            state.X(species,cell)=amr::test::muscl_composition_cells[cell][species];
+    double faces[8]{};
+    MusclReconstruction<McLimiter>::run_species(state,1,4,faces,faces+4);
+    for (int i=0; i<8; ++i) {
+        const double expected=amr::test::muscl_composition_faces[i];
+        expect(std::abs(faces[i]-expected)<=8*std::numeric_limits<double>::epsilon()*expected,
+               "MUSCL face differs from independent normalized composition");
+    }
+    for (int side=0; side<2; ++side) {
+        double sum=0;
+        for (int i=0; i<4; ++i) sum+=faces[4*side+i];
+        expect(std::abs(sum-1.0)<=4*std::numeric_limits<double>::epsilon(),
+               "MUSCL species flux would not sum to the mass flux");
+    }
+    MusclReconstruction<McLimiter>::normalize_species_faces(0,nullptr,nullptr);
+}
+
 void test_shared_composition_prolongation()
 {
     using namespace amr::prolongation_math;
@@ -108,7 +133,7 @@ void test_shared_composition_prolongation()
         for (const auto& example : amr::test::composition_cases()) {
             const auto stencil = example.stencil(dimension);
             const auto family = classify_composition_family(stencil);
-            expect(family == example.family, "composition family decision drifted");
+            expect(family == example.family[dimension-1], "composition family decision drifted");
             std::array<double, amr::test::CompositionCase::species> integrals{};
             for (int child = 0; child < (1 << dimension); ++child) {
                 double position[3]{};
@@ -123,6 +148,11 @@ void test_shared_composition_prolongation()
                     expect(std::isfinite(fraction) && fraction >= 0.0
                                && fraction <= 1.0,
                            "prolongation produced a negative/invalid species");
+                    if (example.preserve_last_trace && species+1==stencil.species_count) {
+                        const double trace=example.fractions[species*amr::test::CompositionCase::cells];
+                        expect(std::abs(fraction-trace) <= 16.0*std::numeric_limits<double>::epsilon()*trace,
+                               "closure invented or erased a zero/1e-20 trace species");
+                    }
                     if (family == CompositionFamily::Constant)
                         expect(fraction == example.fractions[
                                    species * amr::test::CompositionCase::cells],
@@ -143,6 +173,10 @@ void test_shared_composition_prolongation()
         }
     }
     auto invalid = amr::test::composition_cases()[0];
+    expect(composition_closure_species(invalid.stencil(1))==1,
+           "closure did not select the dominant parent species");
+    expect(composition_closure_species(amr::test::composition_cases()[2].stencil(1))==0,
+           "equal parent fractions lost deterministic first-index tie break");
     for (const double density : {0.0, -1.0,
                                 std::numeric_limits<double>::quiet_NaN(),
                                 std::numeric_limits<double>::infinity()}) {
@@ -1103,6 +1137,7 @@ int main()
         test_conservative_restriction_math();
         test_limited_linear_prolongation_math();
         test_shared_composition_prolongation();
+        test_muscl_face_composition_closure();
         test_amr_interface_stencil_predicate();
         test_multidimensional_cell_lowering();
         test_curvilinear_host_restriction();

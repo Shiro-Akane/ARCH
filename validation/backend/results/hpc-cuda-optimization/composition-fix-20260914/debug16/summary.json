@@ -1,0 +1,591 @@
+{
+  "status": "passed",
+  "scope": "clean serial builtin CUDA Debug archive and ARCH executable under a dedicated cgroup; not a physical 16-GiB machine and not runtime timing",
+  "source_head": "81c046f60de1971f255b3d1deff1eda67c9c773a",
+  "source_overlay_sha256": "bbee0e9107a745ebe45502a87e884c55036e76bd22344c30ab440634fc19774d",
+  "source_scope": "81c046f6 plus the eight-file shared composition and MUSCL fix overlay v3",
+  "memory_max_bytes": 17179869184,
+  "swap_max_bytes": 0,
+  "swap_current_after_bytes": 0,
+  "aggregate_cgroup_peak_bytes": null,
+  "aggregate_peak_reason": "memory.peak unavailable on Linux 5.15",
+  "events": {
+    "before": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0
+    },
+    "after": {
+      "low": 0,
+      "high": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_kill": 0
+    }
+  },
+  "targets": [
+    {
+      "target": "arch_cuda_backend",
+      "peak_rss_kib": 4002584,
+      "elapsed": "1:00:34",
+      "exit_code": 0
+    },
+    {
+      "target": "ARCH",
+      "peak_rss_kib": 1246096,
+      "elapsed": "2:14.53",
+      "exit_code": 0
+    }
+  ],
+  "compile_calls": 78,
+  "compile_metrics": [
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 1044.5,
+      "peak_rss_kib": 4002584,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_tabular4.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu.o -MF CMakeFiles/arch_cuda_backend_hydro_tabular4.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu -o CMakeFiles/arch_cuda_backend_hydro_tabular4.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 219.76,
+      "peak_rss_kib": 2842436,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 221.53,
+      "peak_rss_kib": 2715216,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 183.22,
+      "peak_rss_kib": 2518720,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 152.58,
+      "peak_rss_kib": 2447716,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_helm_aprox21.dir/generated/cuda_dense_burn/helm_aprox21.cu.o -MF CMakeFiles/arch_cuda_backend_burn_helm_aprox21.dir/generated/cuda_dense_burn/helm_aprox21.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/helm_aprox21.cu -o CMakeFiles/arch_cuda_backend_burn_helm_aprox21.dir/generated/cuda_dense_burn/helm_aprox21.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 150.6,
+      "peak_rss_kib": 2360804,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_ideal_aprox21.dir/generated/cuda_dense_burn/ideal_aprox21.cu.o -MF CMakeFiles/arch_cuda_backend_burn_ideal_aprox21.dir/generated/cuda_dense_burn/ideal_aprox21.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/ideal_aprox21.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_aprox21.dir/generated/cuda_dense_burn/ideal_aprox21.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 170.32,
+      "peak_rss_kib": 2332260,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 432.91,
+      "peak_rss_kib": 2185136,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_tabular3.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu.o -MF CMakeFiles/arch_cuda_backend_hydro_tabular3.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu -o CMakeFiles/arch_cuda_backend_hydro_tabular3.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 131.2,
+      "peak_rss_kib": 1985048,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_helm_aprox19.dir/generated/cuda_dense_burn/helm_aprox19.cu.o -MF CMakeFiles/arch_cuda_backend_burn_helm_aprox19.dir/generated/cuda_dense_burn/helm_aprox19.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/helm_aprox19.cu -o CMakeFiles/arch_cuda_backend_burn_helm_aprox19.dir/generated/cuda_dense_burn/helm_aprox19.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 128.14,
+      "peak_rss_kib": 1929556,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_ideal_aprox19.dir/generated/cuda_dense_burn/ideal_aprox19.cu.o -MF CMakeFiles/arch_cuda_backend_burn_ideal_aprox19.dir/generated/cuda_dense_burn/ideal_aprox19.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/ideal_aprox19.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_aprox19.dir/generated/cuda_dense_burn/ideal_aprox19.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 116.54,
+      "peak_rss_kib": 1277964,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu.o"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 22.16,
+      "peak_rss_kib": 1246096,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o -MF CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o.d -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/driver/dispatch/Dispatch_Euler.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 20.65,
+      "peak_rss_kib": 1245728,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o -MF CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o.d -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/driver/dispatch/Dispatch_RK3.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 20.68,
+      "peak_rss_kib": 1245724,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o -MF CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o.d -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/driver/dispatch/Dispatch_RK2.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 118.48,
+      "peak_rss_kib": 1111804,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 74.38,
+      "peak_rss_kib": 895916,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o -MF CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu -o CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 62.73,
+      "peak_rss_kib": 841008,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_helm_aprox13.dir/generated/cuda_dense_burn/helm_aprox13.cu.o -MF CMakeFiles/arch_cuda_backend_burn_helm_aprox13.dir/generated/cuda_dense_burn/helm_aprox13.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/helm_aprox13.cu -o CMakeFiles/arch_cuda_backend_burn_helm_aprox13.dir/generated/cuda_dense_burn/helm_aprox13.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 63.56,
+      "peak_rss_kib": 802152,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o -MF CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu -o CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 58.84,
+      "peak_rss_kib": 791856,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_ideal.dir/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu.o -MF CMakeFiles/arch_cuda_backend_hydro_ideal.dir/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu -o CMakeFiles/arch_cuda_backend_hydro_ideal.dir/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 59.82,
+      "peak_rss_kib": 790956,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_ideal_aprox13.dir/generated/cuda_dense_burn/ideal_aprox13.cu.o -MF CMakeFiles/arch_cuda_backend_burn_ideal_aprox13.dir/generated/cuda_dense_burn/ideal_aprox13.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/ideal_aprox13.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_aprox13.dir/generated/cuda_dense_burn/ideal_aprox13.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 61.23,
+      "peak_rss_kib": 667356,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular4d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular4d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 49.92,
+      "peak_rss_kib": 542008,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular3d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular3d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 6.68,
+      "peak_rss_kib": 503424,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_amr_flux.dir/src/cuda/runtime/amr/CudaBackendAmrFlux.cu.o -MF CMakeFiles/arch_cuda_backend_amr_flux.dir/src/cuda/runtime/amr/CudaBackendAmrFlux.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/amr/CudaBackendAmrFlux.cu -o CMakeFiles/arch_cuda_backend_amr_flux.dir/src/cuda/runtime/amr/CudaBackendAmrFlux.cu.o"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 3.77,
+      "peak_rss_kib": 456172,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/core/ProblemHelper.cpp.o -MF CMakeFiles/ARCH.dir/src/core/ProblemHelper.cpp.o.d -o CMakeFiles/ARCH.dir/src/core/ProblemHelper.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/core/ProblemHelper.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 5.66,
+      "peak_rss_kib": 437724,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o -MF CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o.d -o CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/control/CudaBackendResources.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 3.65,
+      "peak_rss_kib": 425084,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o -MF CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o.d -o CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/driver/SolverDispatch.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 4.11,
+      "peak_rss_kib": 424528,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/main.cpp.o -MF CMakeFiles/ARCH.dir/src/main.cpp.o.d -o CMakeFiles/ARCH.dir/src/main.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/main.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.87,
+      "peak_rss_kib": 404408,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o -MF CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o.d -o CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 3.46,
+      "peak_rss_kib": 400360,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o -MF CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o.d -o CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/io/plot/PlotIO.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 22.36,
+      "peak_rss_kib": 397952,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o -MF CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/helm_iso7.cu -o CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.19,
+      "peak_rss_kib": 394540,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o -MF CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o.d -o CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/amr/CudaBackendMigration.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 3.24,
+      "peak_rss_kib": 393792,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/io/chk/ChkIO.cpp.o -MF CMakeFiles/ARCH.dir/src/io/chk/ChkIO.cpp.o.d -o CMakeFiles/ARCH.dir/src/io/chk/ChkIO.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/io/chk/ChkIO.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.47,
+      "peak_rss_kib": 391984,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o -MF CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o.d -o CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/control/CudaBackendStore.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 21.6,
+      "peak_rss_kib": 391388,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_amr_indicators.dir/src/cuda/amr/RefinementIndicators.cu.o -MF CMakeFiles/arch_cuda_backend_amr_indicators.dir/src/cuda/amr/RefinementIndicators.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/amr/RefinementIndicators.cu -o CMakeFiles/arch_cuda_backend_amr_indicators.dir/src/cuda/amr/RefinementIndicators.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 4.24,
+      "peak_rss_kib": 383128,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_helm.dir/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu.o -MF CMakeFiles/arch_cuda_backend_burn_helm.dir/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu -o CMakeFiles/arch_cuda_backend_burn_helm.dir/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 21.02,
+      "peak_rss_kib": 379156,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o -MF CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated/cuda_dense_burn/ideal_iso7.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.05,
+      "peak_rss_kib": 377712,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o -MF CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o.d -o CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.86,
+      "peak_rss_kib": 375856,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/CooperativeHotspots/CooperativeHotspots.cpp.o -MF CMakeFiles/ARCH.dir/simulation/CooperativeHotspots/CooperativeHotspots.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/CooperativeHotspots/CooperativeHotspots.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/CooperativeHotspots/CooperativeHotspots.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.98,
+      "peak_rss_kib": 375604,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/GaussianPulse/Gaussian.cpp.o -MF CMakeFiles/ARCH.dir/simulation/GaussianPulse/Gaussian.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/GaussianPulse/Gaussian.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/GaussianPulse/Gaussian.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 3.39,
+      "peak_rss_kib": 373748,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/DiffusionMode/DiffusionMode.cpp.o -MF CMakeFiles/ARCH.dir/simulation/DiffusionMode/DiffusionMode.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/DiffusionMode/DiffusionMode.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/DiffusionMode/DiffusionMode.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.98,
+      "peak_rss_kib": 373568,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/RTinstability/RT_instab.cpp.o -MF CMakeFiles/ARCH.dir/simulation/RTinstability/RT_instab.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/RTinstability/RT_instab.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/RTinstability/RT_instab.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.77,
+      "peak_rss_kib": 373448,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/Sedov/Sedov.cpp.o -MF CMakeFiles/ARCH.dir/simulation/Sedov/Sedov.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/Sedov/Sedov.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/Sedov/Sedov.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.94,
+      "peak_rss_kib": 373252,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/Sod/Sod.cpp.o -MF CMakeFiles/ARCH.dir/simulation/Sod/Sod.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/Sod/Sod.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/Sod/Sod.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.86,
+      "peak_rss_kib": 372764,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/BurnGradient/BurnGradient.cpp.o -MF CMakeFiles/ARCH.dir/simulation/BurnGradient/BurnGradient.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/BurnGradient/BurnGradient.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/BurnGradient/BurnGradient.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.94,
+      "peak_rss_kib": 372660,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/Cellular/Cellular.cpp.o -MF CMakeFiles/ARCH.dir/simulation/Cellular/Cellular.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/Cellular/Cellular.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/Cellular/Cellular.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.7,
+      "peak_rss_kib": 372316,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/BurnOneZone/BurnOneZone.cpp.o -MF CMakeFiles/ARCH.dir/simulation/BurnOneZone/BurnOneZone.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/BurnOneZone/BurnOneZone.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/BurnOneZone/BurnOneZone.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.66,
+      "peak_rss_kib": 370504,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/SmoothAdvection/SmoothAdvection.cpp.o -MF CMakeFiles/ARCH.dir/simulation/SmoothAdvection/SmoothAdvection.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/SmoothAdvection/SmoothAdvection.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/SmoothAdvection/SmoothAdvection.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.9,
+      "peak_rss_kib": 369992,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/simulation/ExternalGravity/ExternalGravity.cpp.o -MF CMakeFiles/ARCH.dir/simulation/ExternalGravity/ExternalGravity.cpp.o.d -o CMakeFiles/ARCH.dir/simulation/ExternalGravity/ExternalGravity.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/simulation/ExternalGravity/ExternalGravity.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 4.06,
+      "peak_rss_kib": 364116,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular3d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular3d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 4.28,
+      "peak_rss_kib": 363672,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_tabular4d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu.o -MF CMakeFiles/arch_cuda_backend_burn_tabular4d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 4.57,
+      "peak_rss_kib": 362000,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_burn_ideal.dir/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu.o -MF CMakeFiles/arch_cuda_backend_burn_ideal.dir/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu -o CMakeFiles/arch_cuda_backend_burn_ideal.dir/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.39,
+      "peak_rss_kib": 355044,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o -MF CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o.d -o CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/amr/CudaBackendIndicators.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 2.85,
+      "peak_rss_kib": 349044,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o -MF CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o.d -o CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/control/CudaBackendCore.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 2.93,
+      "peak_rss_kib": 347548,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o -MF CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o.d -o CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/CudaBackendFactory.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.88,
+      "peak_rss_kib": 318424,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_exchange.dir/src/cuda/runtime/amr/CudaBackendExchange.cu.o -MF CMakeFiles/arch_cuda_backend_exchange.dir/src/cuda/runtime/amr/CudaBackendExchange.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/amr/CudaBackendExchange.cu -o CMakeFiles/arch_cuda_backend_exchange.dir/src/cuda/runtime/amr/CudaBackendExchange.cu.o"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 3.02,
+      "peak_rss_kib": 283560,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_grid_metrics.dir/src/cuda/common/GridMetricsCache.cu.o -MF CMakeFiles/arch_cuda_backend_grid_metrics.dir/src/cuda/common/GridMetricsCache.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/common/GridMetricsCache.cu -o CMakeFiles/arch_cuda_backend_grid_metrics.dir/src/cuda/common/GridMetricsCache.cu.o"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.03,
+      "peak_rss_kib": 279732,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/eos/eosdispatch.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 2.15,
+      "peak_rss_kib": 258264,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o -MF CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o.d -o CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/io/hdf5/HDF5Writer.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 1.93,
+      "peak_rss_kib": 233992,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/eos/Tabular3DEOS.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/eos/Tabular3DEOS.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/eos/Tabular3DEOS.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/eos/Tabular3DEOS.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 1.86,
+      "peak_rss_kib": 228772,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/eos/Tabular4DEOS.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/eos/Tabular4DEOS.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/eos/Tabular4DEOS.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/eos/Tabular4DEOS.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 2.34,
+      "peak_rss_kib": 220116,
+      "exit_code": 0,
+      "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=c++20 --generate-code=arch=compute_90,code=[compute_90,sm_90] --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_amr_migration.dir/src/cuda/amr/RegridMigration.cu.o -MF CMakeFiles/arch_cuda_backend_amr_migration.dir/src/cuda/amr/RegridMigration.cu.o.d -x cu -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/amr/RegridMigration.cu -o CMakeFiles/arch_cuda_backend_amr_migration.dir/src/cuda/amr/RegridMigration.cu.o"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 1.59,
+      "peak_rss_kib": 202360,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -x c++-header -include /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.gch -MF CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.gch.d -o CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.gch -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 1.12,
+      "peak_rss_kib": 171504,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_sparse_factory.dir/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp.o -MF CMakeFiles/arch_cuda_backend_sparse_factory.dir/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp.o.d -o CMakeFiles/arch_cuda_backend_sparse_factory.dir/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.96,
+      "peak_rss_kib": 164848,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/eos/TabularCompletion.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/eos/TabularCompletion.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/eos/TabularCompletion.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/eos/TabularCompletion.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.98,
+      "peak_rss_kib": 159088,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/eos/TabularBaryonSource.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/eos/TabularBaryonSource.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/eos/TabularBaryonSource.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/eos/TabularBaryonSource.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 1.01,
+      "peak_rss_kib": 151560,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/io/chk/CheckpointCompatibility.cpp.o -MF CMakeFiles/ARCH.dir/src/io/chk/CheckpointCompatibility.cpp.o.d -o CMakeFiles/ARCH.dir/src/io/chk/CheckpointCompatibility.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/io/chk/CheckpointCompatibility.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 1.06,
+      "peak_rss_kib": 135140,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_eos_helm.dir/src/cuda/microphysics/helm_eos_device_owner.cpp.o -MF CMakeFiles/arch_cuda_backend_eos_helm.dir/src/cuda/microphysics/helm_eos_device_owner.cpp.o.d -o CMakeFiles/arch_cuda_backend_eos_helm.dir/src/cuda/microphysics/helm_eos_device_owner.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/microphysics/helm_eos_device_owner.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.97,
+      "peak_rss_kib": 134264,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/network/aprox21/NetAprox21.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/network/aprox21/NetAprox21.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/network/aprox21/NetAprox21.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/network/aprox21/NetAprox21.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.92,
+      "peak_rss_kib": 133900,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/network/aprox19/NetAprox19.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/network/aprox19/NetAprox19.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/network/aprox19/NetAprox19.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/network/aprox19/NetAprox19.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.85,
+      "peak_rss_kib": 131392,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/network/aprox13/NetAprox13.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/network/aprox13/NetAprox13.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/network/aprox13/NetAprox13.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/network/aprox13/NetAprox13.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 0.83,
+      "peak_rss_kib": 129628,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_eos_tabular3.dir/src/cuda/microphysics/tabular3_eos_device_owner.cpp.o -MF CMakeFiles/arch_cuda_backend_eos_tabular3.dir/src/cuda/microphysics/tabular3_eos_device_owner.cpp.o.d -o CMakeFiles/arch_cuda_backend_eos_tabular3.dir/src/cuda/microphysics/tabular3_eos_device_owner.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/microphysics/tabular3_eos_device_owner.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.64,
+      "peak_rss_kib": 129264,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/core/FileFingerprint.cpp.o -MF CMakeFiles/ARCH.dir/src/core/FileFingerprint.cpp.o.d -o CMakeFiles/ARCH.dir/src/core/FileFingerprint.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/core/FileFingerprint.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.6,
+      "peak_rss_kib": 128640,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/physics/network/iso7/NetIso7.cpp.o -MF CMakeFiles/ARCH.dir/src/physics/network/iso7/NetIso7.cpp.o.d -o CMakeFiles/ARCH.dir/src/physics/network/iso7/NetIso7.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/physics/network/iso7/NetIso7.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 0.99,
+      "peak_rss_kib": 127860,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_eos_tabular4.dir/src/cuda/microphysics/tabular4_eos_device_owner.cpp.o -MF CMakeFiles/arch_cuda_backend_eos_tabular4.dir/src/cuda/microphysics/tabular4_eos_device_owner.cpp.o.d -o CMakeFiles/arch_cuda_backend_eos_tabular4.dir/src/cuda/microphysics/tabular4_eos_device_owner.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/microphysics/tabular4_eos_device_owner.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 0.9,
+      "peak_rss_kib": 118968,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_eos_species.dir/src/cuda/microphysics/device_species_owner.cpp.o -MF CMakeFiles/arch_cuda_backend_eos_species.dir/src/cuda/microphysics/device_species_owner.cpp.o.d -o CMakeFiles/arch_cuda_backend_eos_species.dir/src/cuda/microphysics/device_species_owner.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/microphysics/device_species_owner.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 0.56,
+      "peak_rss_kib": 118344,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -g -std=gnu++20 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o -MF CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o.d -o CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/numerics/diffusion/DiffFunction.cpp"
+    },
+    {
+      "target": "ARCH",
+      "elapsed_seconds": 0.34,
+      "peak_rss_kib": 115456,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -DARCH_CUDA_CODE_IMAGES=\"90\" -DARCH_CUDA_PTX_VERSION=12080 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -MD -MT CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/RuntimeProbe.cpp.o -MF CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/RuntimeProbe.cpp.o.d -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/RuntimeProbe.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/driver/dispatch/RuntimeProbe.cpp"
+    },
+    {
+      "target": "arch_cuda_backend",
+      "elapsed_seconds": 0.77,
+      "peak_rss_kib": 106424,
+      "exit_code": 0,
+      "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/generated -I/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -MD -MT CMakeFiles/arch_cuda_backend_eos_utils.dir/src/cuda/microphysics/device_eos_owner_utils.cpp.o -MF CMakeFiles/arch_cuda_backend_eos_utils.dir/src/cuda/microphysics/device_eos_owner_utils.cpp.o.d -o CMakeFiles/arch_cuda_backend_eos_utils.dir/src/cuda/microphysics/device_eos_owner_utils.cpp.o -c /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/src/cuda/microphysics/device_eos_owner_utils.cpp"
+    }
+  ]
+}

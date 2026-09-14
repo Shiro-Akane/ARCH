@@ -1,0 +1,470 @@
+[
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=gnu++20 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/numerics/diffusion/DiffFunction.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/numerics/diffusion/DiffFunction.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_diffusion_math.dir/src/numerics/diffusion/DiffFunction.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -x c++-header -include /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -o CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.gch -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.cxx",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx.gch"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -o CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/SolverDispatch.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/SolverDispatch.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/src/driver/SolverDispatch.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/Dispatch_Euler.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/Dispatch_Euler.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/Dispatch_RK2.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/Dispatch_RK2.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/Dispatch_RK3.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/Dispatch_RK3.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -DARCH_CUDA_CODE_IMAGES=\\\"90\\\" -DARCH_CUDA_PTX_VERSION=12080 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-inline-functions-called-once -fno-fast-math -ffp-contract=off -fopenmp -Winvalid-pch -include /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/cmake_pch.hxx -o CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/RuntimeProbe.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/RuntimeProbe.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/driver/dispatch/RuntimeProbe.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/RuntimeProbe.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/main.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/main.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/main.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/core/FileFingerprint.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/core/FileFingerprint.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/core/FileFingerprint.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/core/FileFingerprint.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/core/ProblemHelper.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/core/ProblemHelper.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/core/ProblemHelper.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/core/ProblemHelper.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/eos/Tabular3DEOS.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/Tabular3DEOS.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/Tabular3DEOS.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/eos/Tabular3DEOS.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/eos/Tabular4DEOS.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/Tabular4DEOS.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/Tabular4DEOS.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/eos/Tabular4DEOS.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/eos/TabularBaryonSource.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/TabularBaryonSource.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/TabularBaryonSource.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/eos/TabularBaryonSource.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/eos/TabularCompletion.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/TabularCompletion.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/TabularCompletion.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/eos/TabularCompletion.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/eosdispatch.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/eos/eosdispatch.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/eos/eosdispatch.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/network/aprox13/NetAprox13.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/aprox13/NetAprox13.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/aprox13/NetAprox13.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/network/aprox13/NetAprox13.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/network/aprox19/NetAprox19.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/aprox19/NetAprox19.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/aprox19/NetAprox19.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/network/aprox19/NetAprox19.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/network/aprox21/NetAprox21.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/aprox21/NetAprox21.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/aprox21/NetAprox21.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/network/aprox21/NetAprox21.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/physics/network/iso7/NetIso7.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/iso7/NetIso7.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/physics/network/iso7/NetIso7.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/physics/network/iso7/NetIso7.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/io/chk/CheckpointCompatibility.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/chk/CheckpointCompatibility.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/chk/CheckpointCompatibility.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/io/chk/CheckpointCompatibility.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/io/chk/ChkIO.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/chk/ChkIO.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/chk/ChkIO.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/io/chk/ChkIO.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/hdf5/HDF5Writer.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/hdf5/HDF5Writer.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/io/hdf5/HDF5Writer.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/plot/PlotIO.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/io/plot/PlotIO.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/src/io/plot/PlotIO.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/BurnGradient/BurnGradient.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/BurnGradient/BurnGradient.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/BurnGradient/BurnGradient.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/BurnGradient/BurnGradient.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/BurnOneZone/BurnOneZone.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/BurnOneZone/BurnOneZone.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/BurnOneZone/BurnOneZone.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/BurnOneZone/BurnOneZone.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/Cellular/Cellular.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/Cellular/Cellular.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/Cellular/Cellular.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/Cellular/Cellular.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/CooperativeHotspots/CooperativeHotspots.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/CooperativeHotspots/CooperativeHotspots.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/DiffusionMode/DiffusionMode.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/DiffusionMode/DiffusionMode.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/DiffusionMode/DiffusionMode.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/DiffusionMode/DiffusionMode.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/ExternalGravity/ExternalGravity.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/ExternalGravity/ExternalGravity.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/ExternalGravity/ExternalGravity.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/ExternalGravity/ExternalGravity.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/GaussianPulse/Gaussian.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/GaussianPulse/Gaussian.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/GaussianPulse/Gaussian.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/GaussianPulse/Gaussian.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/RTinstability/RT_instab.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/RTinstability/RT_instab.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/RTinstability/RT_instab.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/RTinstability/RT_instab.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/Sedov/Sedov.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/Sedov/Sedov.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/Sedov/Sedov.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/Sedov/Sedov.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/SmoothAdvection/SmoothAdvection.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/SmoothAdvection/SmoothAdvection.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/SmoothAdvection/SmoothAdvection.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/SmoothAdvection/SmoothAdvection.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -DARCH_OPENMP_ENABLED=1 -DH5_BUILT_AS_DYNAMIC_LIB -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE -D_LARGEFILE_SOURCE -D_POSIX_C_SOURCE=200809L -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/_deps/highfive-src/include -isystem /home/ubuntu/projects/.envs/arch/include -g -std=gnu++20 -fno-fast-math -ffp-contract=off -fopenmp -o CMakeFiles/ARCH.dir/simulation/Sod/Sod.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/Sod/Sod.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/simulation/Sod/Sod.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/ARCH.dir/simulation/Sod/Sod.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu -o CMakeFiles/arch_cuda_backend_burn_ideal.dir/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_ideal.dir/src/cuda/runtime/burn/routes/CudaBackendBurnIdeal.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu -o CMakeFiles/arch_cuda_backend_burn_helm.dir/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_helm.dir/src/cuda/runtime/burn/routes/CudaBackendBurnHelm.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular3d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3D.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox13.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox19.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular3d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DAprox21.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu -o CMakeFiles/arch_cuda_backend_burn_tabular3d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular3d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular3DIso7.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular4d.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4D.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox13.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox13.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox19.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox19.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular4d_aprox21.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DAprox21.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu -o CMakeFiles/arch_cuda_backend_burn_tabular4d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_tabular4d_iso7.dir/src/cuda/runtime/burn/routes/CudaBackendBurnTabular4DIso7.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu -o CMakeFiles/arch_cuda_backend_hydro_ideal.dir/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_hydro_ideal.dir/src/cuda/runtime/hydro/CudaBackendHydroIdeal.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu -o CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_hydro_helm.dir/src/cuda/runtime/hydro/CudaBackendHydroHelm.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu -o CMakeFiles/arch_cuda_backend_hydro_tabular3.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_hydro_tabular3.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular3.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu -o CMakeFiles/arch_cuda_backend_hydro_tabular4.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_hydro_tabular4.dir/src/cuda/runtime/hydro/CudaBackendHydroTabular4.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu -o CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_diffusion.dir/src/cuda/runtime/diffusion/CudaBackendDiffusion.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendExchange.cu -o CMakeFiles/arch_cuda_backend_exchange.dir/src/cuda/runtime/amr/CudaBackendExchange.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendExchange.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_exchange.dir/src/cuda/runtime/amr/CudaBackendExchange.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendAmrFlux.cu -o CMakeFiles/arch_cuda_backend_amr_flux.dir/src/cuda/runtime/amr/CudaBackendAmrFlux.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendAmrFlux.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_amr_flux.dir/src/cuda/runtime/amr/CudaBackendAmrFlux.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/amr/RefinementIndicators.cu -o CMakeFiles/arch_cuda_backend_amr_indicators.dir/src/cuda/amr/RefinementIndicators.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/amr/RefinementIndicators.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_amr_indicators.dir/src/cuda/amr/RefinementIndicators.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/amr/RegridMigration.cu -o CMakeFiles/arch_cuda_backend_amr_migration.dir/src/cuda/amr/RegridMigration.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/amr/RegridMigration.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_amr_migration.dir/src/cuda/amr/RegridMigration.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/common/GridMetricsCache.cu -o CMakeFiles/arch_cuda_backend_grid_metrics.dir/src/cuda/common/GridMetricsCache.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/common/GridMetricsCache.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_grid_metrics.dir/src/cuda/common/GridMetricsCache.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_eos_utils.dir/src/cuda/microphysics/device_eos_owner_utils.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/device_eos_owner_utils.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/device_eos_owner_utils.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_eos_utils.dir/src/cuda/microphysics/device_eos_owner_utils.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_eos_species.dir/src/cuda/microphysics/device_species_owner.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/device_species_owner.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/device_species_owner.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_eos_species.dir/src/cuda/microphysics/device_species_owner.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_eos_helm.dir/src/cuda/microphysics/helm_eos_device_owner.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/helm_eos_device_owner.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/helm_eos_device_owner.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_eos_helm.dir/src/cuda/microphysics/helm_eos_device_owner.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_eos_tabular3.dir/src/cuda/microphysics/tabular3_eos_device_owner.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/tabular3_eos_device_owner.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_eos_tabular3.dir/src/cuda/microphysics/tabular3_eos_device_owner.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g0 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_eos_tabular4.dir/src/cuda/microphysics/tabular4_eos_device_owner.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/microphysics/tabular4_eos_device_owner.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_eos_tabular4.dir/src/cuda/microphysics/tabular4_eos_device_owner.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendResources.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendResources.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_resources.dir/src/cuda/runtime/control/CudaBackendResources.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendCore.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendCore.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_core.dir/src/cuda/runtime/control/CudaBackendCore.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/CudaBackendFactory.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/CudaBackendFactory.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_factory.dir/src/cuda/runtime/CudaBackendFactory.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_hydro_control.dir/src/cuda/runtime/hydro/CudaBackendHydroControl.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_microphysics_control.dir/src/cuda/runtime/control/CudaBackendMicrophysicsControl.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendStore.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/control/CudaBackendStore.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_store.dir/src/cuda/runtime/control/CudaBackendStore.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendIndicators.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_indicators.dir/src/cuda/runtime/amr/CudaBackendIndicators.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendMigration.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/amr/CudaBackendMigration.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_migration.dir/src/cuda/runtime/amr/CudaBackendMigration.cpp.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_aprox13.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_aprox13.dir/generated/cuda_dense_burn/ideal_aprox13.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_aprox13.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_ideal_aprox13.dir/generated/cuda_dense_burn/ideal_aprox13.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_aprox13.cu -o CMakeFiles/arch_cuda_backend_burn_helm_aprox13.dir/generated/cuda_dense_burn/helm_aprox13.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_aprox13.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_helm_aprox13.dir/generated/cuda_dense_burn/helm_aprox13.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_aprox19.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_aprox19.dir/generated/cuda_dense_burn/ideal_aprox19.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_aprox19.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_ideal_aprox19.dir/generated/cuda_dense_burn/ideal_aprox19.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_aprox19.cu -o CMakeFiles/arch_cuda_backend_burn_helm_aprox19.dir/generated/cuda_dense_burn/helm_aprox19.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_aprox19.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_helm_aprox19.dir/generated/cuda_dense_burn/helm_aprox19.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_aprox21.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_aprox21.dir/generated/cuda_dense_burn/ideal_aprox21.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_aprox21.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_ideal_aprox21.dir/generated/cuda_dense_burn/ideal_aprox21.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_aprox21.cu -o CMakeFiles/arch_cuda_backend_burn_helm_aprox21.dir/generated/cuda_dense_burn/helm_aprox21.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_aprox21.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_helm_aprox21.dir/generated/cuda_dense_burn/helm_aprox21.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_iso7.cu -o CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/ideal_iso7.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_ideal_iso7.dir/generated/cuda_dense_burn/ideal_iso7.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/home/ubuntu/projects/.envs/arch/bin/nvcc -forward-unknown-to-host-compiler -ccbin=/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=c++20 \"--generate-code=arch=compute_90,code=[compute_90,sm_90]\" --expt-relaxed-constexpr -Xcompiler=-march=native -Xptxas=-O1 --fmad=false --ftz=false --prec-div=true --prec-sqrt=true -Xcompiler=-fno-fast-math,-ffp-contract=off -x cu -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_iso7.cu -o CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated/cuda_dense_burn/helm_iso7.cu",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_burn_helm_iso7.dir/generated/cuda_dense_burn/helm_iso7.cu.o"
+},
+{
+  "directory": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug",
+  "command": "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_KLU=0 -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/src -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/generated -I/home/ubuntu/projects/ARCH-s5-indicator-20260914/cases -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -g -std=gnu++20 -g1 -fno-fast-math -ffp-contract=off -o CMakeFiles/arch_cuda_backend_sparse_factory.dir/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp.o -c /home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp",
+  "file": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp",
+  "output": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/CMakeFiles/arch_cuda_backend_sparse_factory.dir/src/cuda/runtime/burn/CudaBackendBurnSparseFactory.cpp.o"
+}
+]

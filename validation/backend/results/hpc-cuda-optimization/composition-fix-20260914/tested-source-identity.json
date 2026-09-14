@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "source_head": "81c046f60de1971f255b3d1deff1eda67c9c773a",
+  "tested_root": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914",
+  "local_root": "C:/tmp/ARCH-perf-20260909",
+  "scope": "All eight modified production/test files are byte-identical between the tested server overlay and the local worktree; their normalized Git blobs match with core.autocrlf=input. The first check compared normalized local blobs with raw server blobs and failed due only to CRLF/LF normalization; no source was changed in response.",
+  "files": [
+    {"path":"src/amr/LimitedLinearProlongation.h","sha256":"a5a50cd8b586b6852a664311ab215420b5ec5b21def58d8c48b0b1905331aec2","tested_raw_git_blob":"e2fdcaa1814ab6cf40721dff9ac266ee429ab6a8","commit_normalized_git_blob":"7fd9e0604a3aa6785f89aadb3ebe8a2b8a88c9ab"},
+    {"path":"src/amr/GhostExchange.h","sha256":"1c032ba84087a70fb3d5ac1b579ee8d6a3af168e8cb0dcbb96e5bd36c57ee397","tested_raw_git_blob":"12b9050d153931701e2d1a8086fdb4ca09dbd4d1","commit_normalized_git_blob":"f0b501a3f42b7f38bb2dfdc0fb6f13f74d706c30"},
+    {"path":"src/cuda/amr/CoarseFineExchangeKernels.cuh","sha256":"3c0de69e3698451d781d9052ae92447055dc4e148a98a6e176ae73873b111599","tested_raw_git_blob":"f886acbc8de8bad75bea7fa08dc0164ed739f9a0","commit_normalized_git_blob":"814a271a0afff0afe01f4c0d2de94e63cd3786e7"},
+    {"path":"src/cuda/hydro/HydroReconstructionPolicies.cuh","sha256":"3cd8613a35c71bb38618ad26d8f96945a07a57add7ab730b31582aa5c3b23fc0","tested_raw_git_blob":"fecf6f3999408475bd94d2d64516c4765a3b7752","commit_normalized_git_blob":"a1e7ff9a361d6752ce58a64d2659cb87ae837a5e"},
+    {"path":"src/numerics/reconstruction/Reconstruction.h","sha256":"7d9b7619a90069a3329cb33df2916fcd6e4f1cf9e945b27d109092a83583ac0d","tested_raw_git_blob":"84f0ebc0573c0b009c4e7c910ab2451e0c74c21f","commit_normalized_git_blob":"5d72f5346f03d202d5e114e54f81ddf6b41ad822"},
+    {"path":"tests/cuda/test_cuda_amr_composition.cu","sha256":"787adfd4b2a863ec8a728ec9b39317ae37436d638dbbdb064eec4acc73be62d4","tested_raw_git_blob":"6aeb10c98f723ccf503bf9f5002a61c2fb4d9c83","commit_normalized_git_blob":"090e8f7ef9ea379dd9fdae42cb10879c2703da48"},
+    {"path":"tests/host/test_amr_operation_plans.cpp","sha256":"56e24cd6c2ba54480ec7ac8faee2add297ab0fc476f59d38854d3d4a7dd8e919","tested_raw_git_blob":"3aa2ab707ceb21aea4011adb3f8799b0378b7c98","commit_normalized_git_blob":"3fa0dc2e2aad65b3465e6253a92e56d7852c1504"},
+    {"path":"tests/fixtures/amr_composition_test_cases.h","sha256":"4af90495de0220b972d326d137cae6fe8ddd5a1c5a42e65b09f66a114fc11269","tested_raw_git_blob":"4ea640f37acc4f0a536086443ab374b2b1f19f0a","commit_normalized_git_blob":"e9163eb91cb3b1587f317d8988d2969fbc2ecac6"}
+  ]
+}

@@ -1,0 +1,13 @@
+test_changed_source_binary_is_not_qualified_by_matching_fields (test_large_application_timing.LargeApplicationTimingTests.test_changed_source_binary_is_not_qualified_by_matching_fields) ... ok
+test_cpu_thread_sweep_has_one_fixed_gpu_host (test_large_application_timing.LargeApplicationTimingTests.test_cpu_thread_sweep_has_one_fixed_gpu_host) ... ok
+test_layout_species_metadata_and_original_budget_are_bound (test_large_application_timing.LargeApplicationTimingTests.test_layout_species_metadata_and_original_budget_are_bound) ... ok
+test_nan_momentum_density_and_bounds_are_rejected (test_large_application_timing.LargeApplicationTimingTests.test_nan_momentum_density_and_bounds_are_rejected) ... ok
+test_no_burn_cannot_be_a_fast_pass (test_large_application_timing.LargeApplicationTimingTests.test_no_burn_cannot_be_a_fast_pass) ... ok
+test_only_original_two_networks_and_real_sparse_routes_are_accepted (test_large_application_timing.LargeApplicationTimingTests.test_only_original_two_networks_and_real_sparse_routes_are_accepted) ... ok
+test_original_matrix_requires_all_observation_steps_and_scientific_gate (test_large_application_timing.LargeApplicationTimingTests.test_original_matrix_requires_all_observation_steps_and_scientific_gate) ... ok
+test_weak_charge_change_is_not_rejected_as_aprox13_conservation (test_large_application_timing.LargeApplicationTimingTests.test_weak_charge_change_is_not_rejected_as_aprox13_conservation) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.012s
+
+OK
