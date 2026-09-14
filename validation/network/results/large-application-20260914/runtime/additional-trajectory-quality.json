@@ -1,0 +1,134 @@
+[
+  {
+    "case": "generated_audit150_be_nr_helm",
+    "backend": "cpu",
+    "species": 150,
+    "max_species_evolution": 2.3194314683672168e-05,
+    "species_sum_error": 1.1102230246251565e-16,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.1155112231809373e-16,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit150_be_nr_helm",
+    "backend": "cuda",
+    "species": 150,
+    "max_species_evolution": 2.3194314683672168e-05,
+    "species_sum_error": 1.1102230246251565e-16,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.1159234470726582e-16,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit150_bd_helm",
+    "backend": "cpu",
+    "species": 150,
+    "max_species_evolution": 2.3193811099941897e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.307265542135906e-16,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit150_bd_helm",
+    "backend": "cuda",
+    "species": 150,
+    "max_species_evolution": 2.3193811099941897e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.307839482582266e-16,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit150_ros4_helm",
+    "backend": "cpu",
+    "species": 150,
+    "max_species_evolution": 2.3193811181376756e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 5.960664218619496e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit150_ros4_helm",
+    "backend": "cuda",
+    "species": 150,
+    "max_species_evolution": 2.3193811181376756e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 5.96559556796304e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit200_be_nr_helm",
+    "backend": "cpu",
+    "species": 200,
+    "max_species_evolution": 2.320104489256236e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.2352718910838554e-16,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit200_be_nr_helm",
+    "backend": "cuda",
+    "species": 200,
+    "max_species_evolution": 2.3201044892617873e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 9.572671346832142e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit200_bd_helm",
+    "backend": "cpu",
+    "species": 200,
+    "max_species_evolution": 2.3200511701348958e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.1912990541334859e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit200_bd_helm",
+    "backend": "cuda",
+    "species": 200,
+    "max_species_evolution": 2.3200511701348958e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 1.1880840604973625e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit200_ros4_helm",
+    "backend": "cpu",
+    "species": 200,
+    "max_species_evolution": 2.320051178394955e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 6.385562925512188e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  },
+  {
+    "case": "generated_audit200_ros4_helm",
+    "backend": "cuda",
+    "species": 200,
+    "max_species_evolution": 2.320051178394955e-05,
+    "species_sum_error": 0.0,
+    "species_sum_budget": 1e-08,
+    "max_ye_change": 6.382279718735128e-17,
+    "require_constant_ye": false,
+    "independent_weak_source_energy_oracle": false
+  }
+]

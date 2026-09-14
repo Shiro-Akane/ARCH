@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/pinned-status-overlay-v1/run_sparse_provider_candidate.py", line 159, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/pinned-status-overlay-v1/run_sparse_provider_candidate.py", line 40, in main
+    before = provenance.capture_focused(source_root=root, build_dir=build, artifacts=artifacts)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/ARCH-microphysics-20260914/tools/validation_provenance.py", line 374, in capture_focused
+    raise RuntimeError("focused build belongs to a different --source-root")
+RuntimeError: focused build belongs to a different --source-root
+MEMORY_GUARD_RESULT min_available_kib=110833712 baseline_swap_kib=9256 peak_swap_kib=9256 guard_stopped=False peak_owned_rss_kib=24516 elapsed_seconds=2.240 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=0 min_free_mib=19763 samples=4 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.165 peak_io_full_percent=0.202 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=3 complete=True

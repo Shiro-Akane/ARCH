@@ -1,0 +1,33 @@
+{
+  "status": "diagnostic_completed_not_qualification",
+  "scope": "API attribution only; bounded incomplete prefix, not numerical qualification or formal timing",
+  "overlap": "separate full large application integration build may be active",
+  "duration": 1e-09,
+  "steps": 16,
+  "diagnostic_wall_limit_seconds": 300,
+  "original_full_trajectory_timeout_seconds": 1800,
+  "executable": {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/long-be-observer-v1/arch_cuda_generated_sparse_burn_audit150",
+    "sha256": "6da062dded8e770a353835760cb5fa8cda794ff5fa317b6a5c5a86eda7413a6c"
+  },
+  "observer": {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/cuda-progress-observer-v1.so",
+    "sha256": "c93de2eb6e92109fead22d3fb98c1c95c03639b0e41ab4ff0f0756509d0b0109"
+  },
+  "contract": {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/candidate-v2/arch_cuda_cudss_sparse_solver",
+    "sha256": "40d81d6508e9a7d929f703cfa00c813237d03da8b5307cd86280cb94b6d981c2",
+    "passed": true
+  },
+  "numerical_gate_passed": false,
+  "formal_timing": false,
+  "start_utc": "2026-09-14T05:58:22Z",
+  "returncode": null,
+  "timed_out": true,
+  "error": "TimeoutExpired(['/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/long-be-observer-v1/arch_cuda_generated_sparse_burn_audit150', '1e7', '3e9', '1e-9', '1e8', '1e-7', '16', '--ode', 'be_nr', '--storage-cells', '32', '33', '--pool-cells', '8', 'c12=0.5', 'o16=0.5'], 299.9999635030981)",
+  "elapsed_seconds": 300.17851860495284,
+  "identity_verified_after": true
+}
+MEMORY_GUARD_RESULT min_available_kib=108897528 baseline_swap_kib=9256 peak_swap_kib=9256 guard_stopped=False peak_owned_rss_kib=360112 elapsed_seconds=302.482 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=11006 min_free_mib=8757 samples=286 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=0.147 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=285 complete=True
