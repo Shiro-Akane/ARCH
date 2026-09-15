@@ -74,6 +74,9 @@ equilibration、原系统残差、最多两轮原系统修正均调用现有共�
 测试的上传显式完成后才调用候选，保证异常分支中的 Host 输入寿命；
 这是正确性测试设置，不计作性能结果。测试 provider 的析构先于借用的设备数组，
 其完成屏障也不能被 test fixture 的销毁顺序绕过。
+随后代码审阅补充了 test-only 传输完成 guard，覆盖 metadata 上传／结果下载途中异常的
+Host 和设备缓冲寿命；新 payload 以 `overlay-preparation-v3.json` 为准，v1/v2 保留。
+这个改动仍未经过真实 C++／CUDA 编译或故障注入，不当成安全资格通过。
 
 构建时需携带当前提交的 canonical `SparseEquilibration.cu/.h`、设备分配和共享残差头，
 不要直接拿旧 factory 构建树的同名源码假定它已包含本轮残差修正。

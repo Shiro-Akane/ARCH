@@ -38,6 +38,23 @@ struct Stream {
         require_cuda_success_or_terminate(cudaStreamDestroy(value));
     }
 };
+// Declared after each Host result/device metadata owner, so exceptional
+// unwinding cannot free a transfer buffer before its completion witness.
+struct TransferCompletion {
+    cudaStream_t stream;
+    int device = 0;
+    bool finished = false;
+    explicit TransferCompletion(cudaStream_t value) : stream(value) {
+        check_cuda(cudaGetDevice(&device), "test transfer device");
+    }
+    ~TransferCompletion() {
+        if (!finished) set_device_and_quiesce_or_terminate(device, stream);
+    }
+    void finish() {
+        check_cuda(cudaStreamSynchronize(stream), "test transfer completion");
+        finished = true;
+    }
+};
 struct System {
     std::vector<double> matrix, b, exact, x;
     DeviceAllocation<double> a_device, b_device, x_device;
@@ -46,17 +63,19 @@ struct System {
     }
 };
 void upload(const std::vector<double>& values, double* to, cudaStream_t stream) {
+    TransferCompletion completion(stream);
     check_cuda(cudaMemcpyAsync(to, values.data(), values.size() * sizeof(double),
         cudaMemcpyHostToDevice, stream), "test vector upload");
     // Test-owned Host input may otherwise unwind before the provider is reached.
     // This is correctness-only setup, never a performance sample.
-    check_cuda(cudaStreamSynchronize(stream), "test upload completion");
+    completion.finish();
 }
 std::vector<double> download(const double* from, std::size_t count, cudaStream_t stream) {
     std::vector<double> result(count);
+    TransferCompletion completion(stream);
     check_cuda(cudaMemcpyAsync(result.data(), from, count * sizeof(double),
         cudaMemcpyDeviceToHost, stream), "test vector download");
-    check_cuda(cudaStreamSynchronize(stream), "test download fence");
+    completion.finish();
     return result;
 }
 template<int N> void verify(System& s, const std::vector<int>& rows,
@@ -84,10 +103,12 @@ template<int N> void run(int capacity) {
     }
     DeviceAllocation<int> device_rows, device_columns;
     device_rows.allocate(rows.size()); device_columns.allocate(columns.size());
+    TransferCompletion metadata_completion(stream.value);
     check_cuda(cudaMemcpyAsync(device_rows.get(), rows.data(), rows.size() * sizeof(int),
         cudaMemcpyHostToDevice, stream.value), "test rows upload");
     check_cuda(cudaMemcpyAsync(device_columns.get(), columns.data(), columns.size() * sizeof(int),
         cudaMemcpyHostToDevice, stream.value), "test columns upload");
+    metadata_completion.finish();
     std::vector<std::unique_ptr<System>> systems;
     std::vector<SparseWaveTask> tasks(capacity);
     auto fill = [&](int lane, int round) {
