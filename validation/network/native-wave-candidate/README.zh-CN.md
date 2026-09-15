@@ -80,3 +80,23 @@ equilibration、原系统残差、最多两轮原系统修正均调用现有共�
 沿用冻结的真实编译／链接命令及依赖，改写输出到新目录；用新的共享 kernel 对象及候选对象链接测试。
 若借用旧 factor-cache v2 provider 库解析 `CuDssResult::require_success`，须记录原库 SHA；
 这不代表生产 SparseOdeBatch 已切换到新候选。首个编译或链接失败也必须保存，不跳过。
+
+## 独立构建与合同 runner（未在服务器执行）
+
+`run_standalone_contracts.py` 根据已成功的原始 compile database／link record，
+分别重新编译候选、当前 canonical `SparseEquilibration.cu` 和真实 CUDA 测试。
+三个新对象在已锁定 helper archive 之前链接；保留原 strict-FP、IR=2 和库设置。
+输出必须是冻结源码、构建树和 payload 之外的新目录，首次失败即保留命令、stdout/stderr 和状态。
+逐命令 `/usr/bin/time -v` 记录峰值 RSS，输入、链接库、产物在前后校验身份。
+
+配方的十二项本地单元检查通过，见 `standalone-recipe-tests-v1.log`。
+这些测试没有启动编译器、SSH 或 GPU，不是下面八组 CUDA 合同已通过。
+真实运行矩阵固定为 151／201 阶 × capacity 1／2／8／32，单次合同 300 秒、单次构建 1800 秒；
+不接受无参数退出或只有 return code 0，必须出现匹配维度和容量的唯一完成标记。
+即使全部通过，状态也仅为 `standalone-provider-contracts-passed`，`release_qualified` 始终为 false。
+
+只在当前四组耦合计时和原 BE 长轨迹补测结束后，确认服务器空闲，再执行。
+必须外包现有 `tools/run_memory_guarded.py`（Host headroom 32768 MiB、swap growth 64 MiB、
+pressure guard、GPU memory observation），以及 10800 秒总 wall guard；一次只运行一个 GPU 作业。
+runner 参数为 `--build-dir`、`--recorded-link`、`--payload`、`--shared-manifest`、
+`--helper-library` 和 `--output-dir`。它不自动修改当前队列，也不自动启用生产 SparseOdeBatch。
