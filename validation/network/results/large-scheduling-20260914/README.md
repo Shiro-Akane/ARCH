@@ -81,3 +81,9 @@ Host API 的累积时间不是 GPU kernel 时间，尤其不能将分解、同�
 
 原 BE 大容量长轨迹另已准备 [只延长 wall 护栏的补测配方](prepared-extended-wall/README.md)，
 须等全部耦合正式计时及双端备份完成后再执行。目前只是准备检查点，原超时结论没有被改写。
+
+2026-09-15 补充：[隔离 native-wave 候选源码](../../native-wave-candidate/README.zh-CN.md)
+已在本机准备，尝试固定、有界 cohort 的原生非均匀批处理；尚未编译、未接入生产、未完成 GPU 合同。
+整个 cohort 的额外分解／solve 工作也计数，不预设调用数减少等于端到端加速。
+它保持原共享 equilibration／residual／ODE 语义及 native 错误传播；通过独立合同后才进行实际网络集成验证。
+当前正式计时和排队的原 BE 补测仍使用原冻结产品，不能将这个开发快照误认为实验已切换版本。
