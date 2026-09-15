@@ -70,6 +70,8 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 本地原件与 Git blob 字节一致；原始大包的 SHA-256 校验单独记录。
 `git-blob-audit-coupled-be-rkl2.json` 同样核对 `6534c969` 第二组耦合的 725 个文件，
 总计 35,177,678 bytes，与本机原件逐文件一致。
+`git-blob-audit-coupled-bd-rkl1.json` 核对 `35278ff9` 第三组的 729 个文件，
+总计 35,090,912 bytes，与本机原件逐文件一致。
 
 ## 阶段间容量恢复
 
