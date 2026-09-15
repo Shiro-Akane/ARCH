@@ -1,0 +1,17 @@
+test_ambiguous_anchor_rejected (__main__.OverlayRecipe.test_ambiguous_anchor_rejected) ... ok
+test_canonical_output_rejected (__main__.OverlayRecipe.test_canonical_output_rejected) ... ok
+test_changed_canonical_input_rejected_before_output (__main__.OverlayRecipe.test_changed_canonical_input_rejected_before_output) ... ok
+test_changed_controller_rejected (__main__.OverlayRecipe.test_changed_controller_rejected) ... ok
+test_changed_kernel_rejected (__main__.OverlayRecipe.test_changed_kernel_rejected) ... ok
+test_extra_inventory_rejected_before_output (__main__.OverlayRecipe.test_extra_inventory_rejected_before_output) ... ok
+test_missing_anchor_rejected (__main__.OverlayRecipe.test_missing_anchor_rejected) ... ok
+test_missing_inventory_rejected_before_output (__main__.OverlayRecipe.test_missing_inventory_rejected_before_output) ... ok
+test_new_overlay_has_no_runtime_claim (__main__.OverlayRecipe.test_new_overlay_has_no_runtime_claim) ... ok
+test_pinned_scheduler (__main__.OverlayRecipe.test_pinned_scheduler) ... ok
+test_provider_shared_include_closure (__main__.OverlayRecipe.test_provider_shared_include_closure) ... ok
+test_unsafe_manifest_paths_rejected_before_output (__main__.OverlayRecipe.test_unsafe_manifest_paths_rejected_before_output) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.165s
+
+OK
