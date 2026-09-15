@@ -1,0 +1,304 @@
+{
+  "scope": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1",
+  "archive": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fixed-formal-coupled_bd_rkl1_all_transport-v1.tar.zst",
+  "archive_sha256": "6bd1508b392609e1a6e90002b0abb9d150450a9dafb5ded7449c0b62fae4870f",
+  "windows_copy": "C:/tmp/ARCH-perf-20260909/build/fixed-formal-coupled_bd_rkl1_all_transport-v1.tar.zst",
+  "windows_copy_bytes": 55978168,
+  "windows_copy_sha256": "6bd1508b392609e1a6e90002b0abb9d150450a9dafb5ded7449c0b62fae4870f",
+  "verified": {
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310",
+      "bytes": 100460581
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    },
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv": {
+      "sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab",
+      "bytes": 6802618
+    }
+  },
+  "bytes": 1287158388,
+  "applied": true,
+  "removed": [
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+    "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv"
+  ],
+  "compressed": [
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 252938,
+      "sha256": "f8c6679d29970d42b6efdbb11a2df9ab0ed5fe82f0ceeb8868346881c554ecbc",
+      "decompressed_sha256": "9bdea8159a23aa15bd0781704854f1ea8e8859015269ff85c277b37f09cfd1ab"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/warmup-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-baseline-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    },
+    {
+      "original": "ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv",
+      "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-candidate-cuda-t8/MicrophysicsTiming_backend_trace.tsv.zst",
+      "bytes": 3440645,
+      "sha256": "bfc3c681559f40bf133b5409201924136ee58879fab54224267ec7c1765ee23d",
+      "decompressed_sha256": "06e81ff6e25f8ad17967c058fdf97af1c46f5403f973f586e72dcd5c65b5f310"
+    }
+  ]
+}
