@@ -1,0 +1,1660 @@
+{
+  "status": "derived_interval_analysis_not_new_runtime_qualification",
+  "release_qualified": false,
+  "modules": [
+    "coupled_be_nr_rkl1_all_transport",
+    "coupled_be_nr_rkl2_all_transport",
+    "coupled_bd_rkl1_all_transport"
+  ],
+  "warmups_excluded": true,
+  "scope": "Host wall intervals around perform_regrid, including its device waits; not exclusive GPU time",
+  "steady_state_burn_diffusion_timing_available": false,
+  "ratio_policy": "median of five per-sample interval/application percentages, not ratio of medians",
+  "inputs": {
+    "coupled_be_nr_rkl1_all_transport/evidence/evidence.json": "cddbaa1673cb7f4764883b84a4013e3768872dd508e1ab8a2cc4aaa0f856b3ac",
+    "coupled_be_nr_rkl2_all_transport/evidence/evidence.json": "f8a9141a9c7ada5ada9d1833daba0bbd27ac4ff6256f0e016d5460201e446ca9",
+    "coupled_bd_rkl1_all_transport/evidence/evidence.json": "866d941de5bed79750ed5622f5a76376b970291c8b00dbe0788626341972ff25"
+  },
+  "groups": [
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "initial_blocks": 8,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 5.160593161126599,
+          "interval_seconds": 0.030091621,
+          "initial_step_zero_seconds": 0.001731294,
+          "positive_step_interval_seconds": 0.028360327,
+          "interval_fraction_percent": 0.5831039196554444,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 5.165929273003712,
+          "interval_seconds": 0.029833701,
+          "initial_step_zero_seconds": 0.0017255760000000001,
+          "positive_step_interval_seconds": 0.028108125,
+          "interval_fraction_percent": 0.5775088938190843,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 5.167587110074237,
+          "interval_seconds": 0.029747559,
+          "initial_step_zero_seconds": 0.001715325,
+          "positive_step_interval_seconds": 0.028032234,
+          "interval_fraction_percent": 0.5756566530249095,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 5.168635247973725,
+          "interval_seconds": 0.030159403,
+          "initial_step_zero_seconds": 0.0017559779999999998,
+          "positive_step_interval_seconds": 0.028403425,
+          "interval_fraction_percent": 0.5835080548936681,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 5.172360305907205,
+          "interval_seconds": 0.030151431,
+          "initial_step_zero_seconds": 0.0017301609999999998,
+          "positive_step_interval_seconds": 0.02842127,
+          "interval_fraction_percent": 0.5829336940345187,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 5.167587110074237,
+          "minimum": 5.160593161126599,
+          "maximum": 5.172360305907205,
+          "population_stdev": 0.0038456064573080782
+        },
+        "interval_seconds": {
+          "median": 0.030091621,
+          "minimum": 0.029747559,
+          "maximum": 0.030159403,
+          "population_stdev": 0.00017208361191467357
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.0017301609999999998,
+          "minimum": 0.001715325,
+          "maximum": 0.0017559779999999998,
+          "population_stdev": 1.33984561110599e-05
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.028360327,
+          "minimum": 0.028032234,
+          "maximum": 0.02842127,
+          "population_stdev": 0.00016214732671419497
+        },
+        "interval_fraction_percent": {
+          "median": 0.5829336940345187,
+          "minimum": 0.5756566530249095,
+          "maximum": 0.5835080548936681,
+          "population_stdev": 0.0032908194172345108
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "initial_blocks": 8,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 6.126453926088288,
+          "interval_seconds": 0.030165556,
+          "initial_step_zero_seconds": 0.0028469059999999997,
+          "positive_step_interval_seconds": 0.02731865,
+          "interval_fraction_percent": 0.4923819939548711,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 5.07935624406673,
+          "interval_seconds": 0.023441249,
+          "initial_step_zero_seconds": 0.001643489,
+          "positive_step_interval_seconds": 0.02179776,
+          "interval_fraction_percent": 0.4615003924440635,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 5.165303030982614,
+          "interval_seconds": 0.023551022,
+          "initial_step_zero_seconds": 0.001607792,
+          "positive_step_interval_seconds": 0.02194323,
+          "interval_fraction_percent": 0.45594657000249234,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 5.193933891132474,
+          "interval_seconds": 0.026517316,
+          "initial_step_zero_seconds": 0.004509275,
+          "positive_step_interval_seconds": 0.022008041,
+          "interval_fraction_percent": 0.5105439644750315,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 5.1600794810801744,
+          "interval_seconds": 0.023492728,
+          "initial_step_zero_seconds": 0.001609975,
+          "positive_step_interval_seconds": 0.021882753,
+          "interval_fraction_percent": 0.45527841356199805,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b8/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 5.165303030982614,
+          "minimum": 5.07935624406673,
+          "maximum": 6.126453926088288,
+          "population_stdev": 0.39256704107730706
+        },
+        "interval_seconds": {
+          "median": 0.023551022,
+          "minimum": 0.023441249,
+          "maximum": 0.030165556,
+          "population_stdev": 0.002639939185092444
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.001643489,
+          "minimum": 0.001607792,
+          "maximum": 0.004509275,
+          "population_stdev": 0.0011369566515639195
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.02194323,
+          "minimum": 0.02179776,
+          "maximum": 0.02731865,
+          "population_stdev": 0.002165392058358892
+        },
+        "interval_fraction_percent": {
+          "median": 0.4615003924440635,
+          "minimum": 0.45527841356199805,
+          "maximum": 0.5105439644750315,
+          "population_stdev": 0.02235905117667177
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "initial_blocks": 32,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 15.443731050007045,
+          "interval_seconds": 0.182964433,
+          "initial_step_zero_seconds": 0.002223737,
+          "positive_step_interval_seconds": 0.180740696,
+          "interval_fraction_percent": 1.1847165196516196,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 16.09563035913743,
+          "interval_seconds": 0.230486153,
+          "initial_step_zero_seconds": 0.027715652,
+          "positive_step_interval_seconds": 0.202770501,
+          "interval_fraction_percent": 1.43197966067327,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 15.64465345395729,
+          "interval_seconds": 0.189739287,
+          "initial_step_zero_seconds": 0.0038666300000000002,
+          "positive_step_interval_seconds": 0.185872657,
+          "interval_fraction_percent": 1.2128059439501728,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 15.453185384860262,
+          "interval_seconds": 0.18363563,
+          "initial_step_zero_seconds": 0.0022952489999999996,
+          "positive_step_interval_seconds": 0.181340381,
+          "interval_fraction_percent": 1.1883351259081563,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 15.458014391828328,
+          "interval_seconds": 0.183369593,
+          "initial_step_zero_seconds": 0.002189153,
+          "positive_step_interval_seconds": 0.18118044,
+          "interval_fraction_percent": 1.1862428663343454,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 15.458014391828328,
+          "minimum": 15.443731050007045,
+          "maximum": 16.09563035913743,
+          "population_stdev": 0.24978576708905664
+        },
+        "interval_seconds": {
+          "median": 0.18363563,
+          "minimum": 0.182964433,
+          "maximum": 0.230486153,
+          "population_stdev": 0.01839344927419527
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.0022952489999999996,
+          "minimum": 0.002189153,
+          "maximum": 0.027715652,
+          "population_stdev": 0.010048706288325228
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.181340381,
+          "minimum": 0.180740696,
+          "maximum": 0.202770501,
+          "population_stdev": 0.008404056747103766
+        },
+        "interval_fraction_percent": {
+          "median": 1.1883351259081563,
+          "minimum": 1.1847165196516196,
+          "maximum": 1.43197966067327,
+          "population_stdev": 0.09613295913557278
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "initial_blocks": 32,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 15.35130203096196,
+          "interval_seconds": 0.099435482,
+          "initial_step_zero_seconds": 0.001890123,
+          "positive_step_interval_seconds": 0.097545359,
+          "interval_fraction_percent": 0.6477332137655106,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 15.386968104168773,
+          "interval_seconds": 0.10221217,
+          "initial_step_zero_seconds": 0.0017785379999999999,
+          "positive_step_interval_seconds": 0.100433632,
+          "interval_fraction_percent": 0.6642775191839632,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 15.399139653891325,
+          "interval_seconds": 0.10272179,
+          "initial_step_zero_seconds": 0.001909108,
+          "positive_step_interval_seconds": 0.100812682,
+          "interval_fraction_percent": 0.6670618768889628,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 15.357766466215253,
+          "interval_seconds": 0.099309289,
+          "initial_step_zero_seconds": 0.0018026020000000002,
+          "positive_step_interval_seconds": 0.097506687,
+          "interval_fraction_percent": 0.6466388795432285,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 15.522942390991375,
+          "interval_seconds": 0.108212515,
+          "initial_step_zero_seconds": 0.001884468,
+          "positive_step_interval_seconds": 0.106328047,
+          "interval_fraction_percent": 0.6971134226639939,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b32/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 15.386968104168773,
+          "minimum": 15.35130203096196,
+          "maximum": 15.522942390991375,
+          "population_stdev": 0.06224935100577986
+        },
+        "interval_seconds": {
+          "median": 0.10221217,
+          "minimum": 0.099309289,
+          "maximum": 0.108212515,
+          "population_stdev": 0.003233037442083427
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.001884468,
+          "minimum": 0.0017785379999999999,
+          "maximum": 0.001909108,
+          "population_stdev": 5.215554137538986e-05
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.100433632,
+          "minimum": 0.097506687,
+          "maximum": 0.106328047,
+          "population_stdev": 0.003217295043594143
+        },
+        "interval_fraction_percent": {
+          "median": 0.6642775191839632,
+          "minimum": 0.6466388795432285,
+          "maximum": 0.6971134226639939,
+          "population_stdev": 0.018277700510758443
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "initial_blocks": 128,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 86.73981654201634,
+          "interval_seconds": 11.119913195,
+          "initial_step_zero_seconds": 0.039369807,
+          "positive_step_interval_seconds": 11.080543388,
+          "interval_fraction_percent": 12.819848644265427,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 83.44400001503527,
+          "interval_seconds": 10.883197191,
+          "initial_step_zero_seconds": 0.005790155,
+          "positive_step_interval_seconds": 10.877407036,
+          "interval_fraction_percent": 13.042516165379205,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 84.14844862488098,
+          "interval_seconds": 10.939978974,
+          "initial_step_zero_seconds": 0.010735471,
+          "positive_step_interval_seconds": 10.929243503,
+          "interval_fraction_percent": 13.000808871436842,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 84.291176303057,
+          "interval_seconds": 11.243562641,
+          "initial_step_zero_seconds": 0.008269341,
+          "positive_step_interval_seconds": 11.2352933,
+          "interval_fraction_percent": 13.338955670253506,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 83.51994182006456,
+          "interval_seconds": 11.04716076,
+          "initial_step_zero_seconds": 0.004142009,
+          "positive_step_interval_seconds": 11.043018751,
+          "interval_fraction_percent": 13.22697372538886,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 84.14844862488098,
+          "minimum": 83.44400001503527,
+          "maximum": 86.73981654201634,
+          "population_stdev": 1.2028456890660675
+        },
+        "interval_seconds": {
+          "median": 11.04716076,
+          "minimum": 10.883197191,
+          "maximum": 11.243562641,
+          "population_stdev": 0.1282480487343764
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.008269341,
+          "minimum": 0.004142009,
+          "maximum": 0.039369807,
+          "population_stdev": 0.013047090511693856
+        },
+        "positive_step_interval_seconds": {
+          "median": 11.043018751,
+          "minimum": 10.877407036,
+          "maximum": 11.2352933,
+          "population_stdev": 0.12510624145283714
+        },
+        "interval_fraction_percent": {
+          "median": 13.042516165379205,
+          "minimum": 12.819848644265427,
+          "maximum": 13.338955670253506,
+          "population_stdev": 0.18102205273815997
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "initial_blocks": 128,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 83.50775320199318,
+          "interval_seconds": 10.16139215,
+          "initial_step_zero_seconds": 0.0049191239999999995,
+          "positive_step_interval_seconds": 10.156473026,
+          "interval_fraction_percent": 12.16820206552685,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 83.35243330593221,
+          "interval_seconds": 10.050913362,
+          "initial_step_zero_seconds": 0.002972581,
+          "positive_step_interval_seconds": 10.047940781,
+          "interval_fraction_percent": 12.058332268608975,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 83.6043934149202,
+          "interval_seconds": 10.337867385,
+          "initial_step_zero_seconds": 0.007667634,
+          "positive_step_interval_seconds": 10.330199751,
+          "interval_fraction_percent": 12.365220250680133,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 82.81954625202343,
+          "interval_seconds": 9.80969323,
+          "initial_step_zero_seconds": 0.002718537,
+          "positive_step_interval_seconds": 9.806974693,
+          "interval_fraction_percent": 11.844659472232175,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 82.32852530409582,
+          "interval_seconds": 9.738862381,
+          "initial_step_zero_seconds": 0.0027779140000000003,
+          "positive_step_interval_seconds": 9.736084467,
+          "interval_fraction_percent": 11.829268585860962,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl1_all_transport-v1/coupled_be_nr_rkl1_all_transport_b128/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 83.35243330593221,
+          "minimum": 82.32852530409582,
+          "maximum": 83.6043934149202,
+          "population_stdev": 0.4807675955649205
+        },
+        "interval_seconds": {
+          "median": 10.050913362,
+          "minimum": 9.738862381,
+          "maximum": 10.337867385,
+          "population_stdev": 0.22147416348863055
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.002972581,
+          "minimum": 0.002718537,
+          "maximum": 0.007667634,
+          "population_stdev": 0.0019112624620306862
+        },
+        "positive_step_interval_seconds": {
+          "median": 10.047940781,
+          "minimum": 9.736084467,
+          "maximum": 10.330199751,
+          "population_stdev": 0.2197806039602975
+        },
+        "interval_fraction_percent": {
+          "median": 12.058332268608975,
+          "minimum": 11.829268585860962,
+          "maximum": 12.365220250680133,
+          "population_stdev": 0.20211029756442273
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "initial_blocks": 8,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 5.294709949987009,
+          "interval_seconds": 0.02982666,
+          "initial_step_zero_seconds": 0.001652051,
+          "positive_step_interval_seconds": 0.028174609,
+          "interval_fraction_percent": 0.5633294416830743,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 5.280425495002419,
+          "interval_seconds": 0.029959005,
+          "initial_step_zero_seconds": 0.00165428,
+          "positive_step_interval_seconds": 0.028304725,
+          "interval_fraction_percent": 0.5673596763812738,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 5.271510292077437,
+          "interval_seconds": 0.029752433,
+          "initial_step_zero_seconds": 0.0016860220000000001,
+          "positive_step_interval_seconds": 0.028066411,
+          "interval_fraction_percent": 0.5644005484484207,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 5.274279574165121,
+          "interval_seconds": 0.029768357,
+          "initial_step_zero_seconds": 0.0016106889999999998,
+          "positive_step_interval_seconds": 0.028157668,
+          "interval_fraction_percent": 0.564406125640621,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 5.278520613908768,
+          "interval_seconds": 0.029560992,
+          "initial_step_zero_seconds": 0.001628355,
+          "positive_step_interval_seconds": 0.027932637,
+          "interval_fraction_percent": 0.560024184088768,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 5.278520613908768,
+          "minimum": 5.271510292077437,
+          "maximum": 5.294709949987009,
+          "population_stdev": 0.008043497626992609
+        },
+        "interval_seconds": {
+          "median": 0.029768357,
+          "minimum": 0.029560992,
+          "maximum": 0.029959005,
+          "population_stdev": 0.0001287385016731202
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.001652051,
+          "minimum": 0.0016106889999999998,
+          "maximum": 0.0016860220000000001,
+          "population_stdev": 2.5552909459394355e-05
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.028157668,
+          "minimum": 0.027932637,
+          "maximum": 0.028304725,
+          "population_stdev": 0.00012348368387766858
+        },
+        "interval_fraction_percent": {
+          "median": 0.5644005484484207,
+          "minimum": 0.560024184088768,
+          "maximum": 0.5673596763812738,
+          "population_stdev": 0.002358960726132446
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "initial_blocks": 8,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 5.282554264180362,
+          "interval_seconds": 0.023476629,
+          "initial_step_zero_seconds": 0.001568812,
+          "positive_step_interval_seconds": 0.021907817,
+          "interval_fraction_percent": 0.4444181323264195,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 5.2794202491641045,
+          "interval_seconds": 0.023522547,
+          "initial_step_zero_seconds": 0.001516375,
+          "positive_step_interval_seconds": 0.022006172,
+          "interval_fraction_percent": 0.44555170624510043,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 5.27552376803942,
+          "interval_seconds": 0.023442142,
+          "initial_step_zero_seconds": 0.0015575040000000001,
+          "positive_step_interval_seconds": 0.021884638,
+          "interval_fraction_percent": 0.4443566749148012,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 5.262750325957313,
+          "interval_seconds": 0.023401451,
+          "initial_step_zero_seconds": 0.001527474,
+          "positive_step_interval_seconds": 0.021873977,
+          "interval_fraction_percent": 0.4446620027664564,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 6.230073211016133,
+          "interval_seconds": 0.02922211,
+          "initial_step_zero_seconds": 0.002852795,
+          "positive_step_interval_seconds": 0.026369315,
+          "interval_fraction_percent": 0.46904922318294606,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b8/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 5.2794202491641045,
+          "minimum": 5.262750325957313,
+          "maximum": 6.230073211016133,
+          "population_stdev": 0.3820638212214933
+        },
+        "interval_seconds": {
+          "median": 0.023476629,
+          "minimum": 0.023401451,
+          "maximum": 0.02922211,
+          "population_stdev": 0.0023049113310314906
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.0015575040000000001,
+          "minimum": 0.001516375,
+          "maximum": 0.002852795,
+          "population_stdev": 0.000524449738748338
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.021907817,
+          "minimum": 0.021873977,
+          "maximum": 0.026369315,
+          "population_stdev": 0.0017810793197024551
+        },
+        "interval_fraction_percent": {
+          "median": 0.4446620027664564,
+          "minimum": 0.4443566749148012,
+          "maximum": 0.46904922318294606,
+          "population_stdev": 0.009730248785175654
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "initial_blocks": 32,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 15.88365353201516,
+          "interval_seconds": 0.18627617900000001,
+          "initial_step_zero_seconds": 0.0022188940000000003,
+          "positive_step_interval_seconds": 0.18405728500000001,
+          "interval_fraction_percent": 1.1727539802133113,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 15.914385705022141,
+          "interval_seconds": 0.185806192,
+          "initial_step_zero_seconds": 0.002136367,
+          "positive_step_interval_seconds": 0.183669825,
+          "interval_fraction_percent": 1.1675360610454772,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 15.949956335127354,
+          "interval_seconds": 0.188991134,
+          "initial_step_zero_seconds": 0.004080145,
+          "positive_step_interval_seconds": 0.184910989,
+          "interval_fraction_percent": 1.18490063564485,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 15.966806217096746,
+          "interval_seconds": 0.18598040799999999,
+          "initial_step_zero_seconds": 0.0040014149999999995,
+          "positive_step_interval_seconds": 0.181978993,
+          "interval_fraction_percent": 1.1647940450411312,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 15.931379902875051,
+          "interval_seconds": 0.184360305,
+          "initial_step_zero_seconds": 0.002130953,
+          "positive_step_interval_seconds": 0.182229352,
+          "interval_fraction_percent": 1.1572149187574736,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 15.931379902875051,
+          "minimum": 15.88365353201516,
+          "maximum": 15.966806217096746,
+          "population_stdev": 0.02878799217719033
+        },
+        "interval_seconds": {
+          "median": 0.18598040799999999,
+          "minimum": 0.184360305,
+          "maximum": 0.188991134,
+          "population_stdev": 0.0015066320065659842
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.0022188940000000003,
+          "minimum": 0.002130953,
+          "maximum": 0.004080145,
+          "population_stdev": 0.000921239663754096
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.183669825,
+          "minimum": 0.181978993,
+          "maximum": 0.184910989,
+          "population_stdev": 0.0011111146299906936
+        },
+        "interval_fraction_percent": {
+          "median": 1.1675360610454772,
+          "minimum": 1.1572149187574736,
+          "maximum": 1.18490063564485,
+          "population_stdev": 0.00921603181179364
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "initial_blocks": 32,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 15.799288850044832,
+          "interval_seconds": 0.099940837,
+          "initial_step_zero_seconds": 0.0016162939999999999,
+          "positive_step_interval_seconds": 0.098324543,
+          "interval_fraction_percent": 0.6325654144851995,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 15.786053297109902,
+          "interval_seconds": 0.099241141,
+          "initial_step_zero_seconds": 0.0016960819999999998,
+          "positive_step_interval_seconds": 0.097545059,
+          "interval_fraction_percent": 0.6286634102405381,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 15.895148978102952,
+          "interval_seconds": 0.100325046,
+          "initial_step_zero_seconds": 0.00175318,
+          "positive_step_interval_seconds": 0.098571866,
+          "interval_fraction_percent": 0.6311676986369055,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 15.810546580003574,
+          "interval_seconds": 0.099696908,
+          "initial_step_zero_seconds": 0.0017582309999999999,
+          "positive_step_interval_seconds": 0.097938677,
+          "interval_fraction_percent": 0.6305721784855427,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 15.835164048010483,
+          "interval_seconds": 0.100310791,
+          "initial_step_zero_seconds": 0.001780004,
+          "positive_step_interval_seconds": 0.098530787,
+          "interval_fraction_percent": 0.6334685936682983,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b32/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 15.810546580003574,
+          "minimum": 15.786053297109902,
+          "maximum": 15.895148978102952,
+          "population_stdev": 0.03849859323737027
+        },
+        "interval_seconds": {
+          "median": 0.099940837,
+          "minimum": 0.099241141,
+          "maximum": 0.100325046,
+          "population_stdev": 0.0004065413133656139
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.00175318,
+          "minimum": 0.0016162939999999999,
+          "maximum": 0.001780004,
+          "population_stdev": 5.913904395710167e-05
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.098324543,
+          "minimum": 0.097545059,
+          "maximum": 0.098571866,
+          "population_stdev": 0.00038958083173051177
+        },
+        "interval_fraction_percent": {
+          "median": 0.6311676986369055,
+          "minimum": 0.6286634102405381,
+          "maximum": 0.6334685936682983,
+          "population_stdev": 0.001661452335420366
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "initial_blocks": 128,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 86.46364058693871,
+          "interval_seconds": 10.923192257,
+          "initial_step_zero_seconds": 0.0052452340000000005,
+          "positive_step_interval_seconds": 10.917947023,
+          "interval_fraction_percent": 12.633278199773223,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 86.09742478304543,
+          "interval_seconds": 10.741971406,
+          "initial_step_zero_seconds": 0.006654658,
+          "positive_step_interval_seconds": 10.735316748,
+          "interval_fraction_percent": 12.47653043406165,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 87.02441437519155,
+          "interval_seconds": 11.303260982,
+          "initial_step_zero_seconds": 0.011263209,
+          "positive_step_interval_seconds": 11.291997773,
+          "interval_fraction_percent": 12.988609073848902,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 87.07709519192576,
+          "interval_seconds": 11.213113212,
+          "initial_step_zero_seconds": 0.009019280000000001,
+          "positive_step_interval_seconds": 11.204093932,
+          "interval_fraction_percent": 12.877224702185217,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 88.4858386660926,
+          "interval_seconds": 11.42477709,
+          "initial_step_zero_seconds": 0.024385779,
+          "positive_step_interval_seconds": 11.400391311,
+          "interval_fraction_percent": 12.911418665660369,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 87.02441437519155,
+          "minimum": 86.09742478304543,
+          "maximum": 88.4858386660926,
+          "population_stdev": 0.813901025273633
+        },
+        "interval_seconds": {
+          "median": 11.213113212,
+          "minimum": 10.741971406,
+          "maximum": 11.42477709,
+          "population_stdev": 0.2517040572722964
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.009019280000000001,
+          "minimum": 0.0052452340000000005,
+          "maximum": 0.024385779,
+          "population_stdev": 0.006850972395033014
+        },
+        "positive_step_interval_seconds": {
+          "median": 11.204093932,
+          "minimum": 10.735316748,
+          "maximum": 11.400391311,
+          "population_stdev": 0.24640448185898392
+        },
+        "interval_fraction_percent": {
+          "median": 12.877224702185217,
+          "minimum": 12.47653043406165,
+          "maximum": 12.988609073848902,
+          "population_stdev": 0.19174401427442722
+        }
+      }
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "initial_blocks": 128,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 86.41971127595752,
+          "interval_seconds": 10.2652274,
+          "initial_step_zero_seconds": 0.0049194040000000005,
+          "positive_step_interval_seconds": 10.260307996,
+          "interval_fraction_percent": 11.878340309678688,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 86.1861642349977,
+          "interval_seconds": 10.055153745,
+          "initial_step_zero_seconds": 0.003931698,
+          "positive_step_interval_seconds": 10.051222047,
+          "interval_fraction_percent": 11.666784145983485,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 86.82927610888146,
+          "interval_seconds": 10.698123838,
+          "initial_step_zero_seconds": 0.002890536,
+          "positive_step_interval_seconds": 10.695233302,
+          "interval_fraction_percent": 12.320871850393935,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 85.36568271298893,
+          "interval_seconds": 9.831196722,
+          "initial_step_zero_seconds": 0.0027576420000000003,
+          "positive_step_interval_seconds": 9.82843908,
+          "interval_fraction_percent": 11.516567793470152,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 86.3062002370134,
+          "interval_seconds": 10.281685346,
+          "initial_step_zero_seconds": 0.004569406,
+          "positive_step_interval_seconds": 10.27711594,
+          "interval_fraction_percent": 11.913032108660232,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_be_nr_rkl2_all_transport-v1/coupled_be_nr_rkl2_all_transport_b128/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 86.3062002370134,
+          "minimum": 85.36568271298893,
+          "maximum": 86.82927610888146,
+          "population_stdev": 0.4794841895837995
+        },
+        "interval_seconds": {
+          "median": 10.2652274,
+          "minimum": 9.831196722,
+          "maximum": 10.698123838,
+          "population_stdev": 0.2872623370589072
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.003931698,
+          "minimum": 0.0027576420000000003,
+          "maximum": 0.0049194040000000005,
+          "population_stdev": 0.0008689173361599825
+        },
+        "positive_step_interval_seconds": {
+          "median": 10.260307996,
+          "minimum": 9.82843908,
+          "maximum": 10.695233302,
+          "population_stdev": 0.28723135606695327
+        },
+        "interval_fraction_percent": {
+          "median": 11.878340309678688,
+          "minimum": 11.516567793470152,
+          "maximum": 12.320871850393935,
+          "population_stdev": 0.27233281184698066
+        }
+      }
+    },
+    {
+      "module": "coupled_bd_rkl1_all_transport",
+      "initial_blocks": 8,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 5.179777778917924,
+          "interval_seconds": 0.029881097,
+          "initial_step_zero_seconds": 0.001607439,
+          "positive_step_interval_seconds": 0.028273658,
+          "interval_fraction_percent": 0.5768799024857448,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 5.1753173030447215,
+          "interval_seconds": 0.029726743,
+          "initial_step_zero_seconds": 0.0016330650000000002,
+          "positive_step_interval_seconds": 0.028093678,
+          "interval_fraction_percent": 0.5743945976512644,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 5.183442136039957,
+          "interval_seconds": 0.029708822,
+          "initial_step_zero_seconds": 0.0015995590000000002,
+          "positive_step_interval_seconds": 0.028109263,
+          "interval_fraction_percent": 0.5731485221651751,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 5.673883238108829,
+          "interval_seconds": 0.030193019,
+          "initial_step_zero_seconds": 0.001904294,
+          "positive_step_interval_seconds": 0.028288725,
+          "interval_fraction_percent": 0.5321402949783592,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 5.188573622843251,
+          "interval_seconds": 0.029913156,
+          "initial_step_zero_seconds": 0.001658807,
+          "positive_step_interval_seconds": 0.028254349,
+          "interval_fraction_percent": 0.5765198332794996,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 5.183442136039957,
+          "minimum": 5.1753173030447215,
+          "maximum": 5.673883238108829,
+          "population_stdev": 0.1968903104764133
+        },
+        "interval_seconds": {
+          "median": 0.029881097,
+          "minimum": 0.029708822,
+          "maximum": 0.030193019,
+          "population_stdev": 0.00017422211577477825
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.0016330650000000002,
+          "minimum": 0.0015995590000000002,
+          "maximum": 0.001904294,
+          "population_stdev": 0.000113748570920957
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.028254349,
+          "minimum": 0.028093678,
+          "maximum": 0.028288725,
+          "population_stdev": 8.451225456370266e-05
+        },
+        "interval_fraction_percent": {
+          "median": 0.5743945976512644,
+          "minimum": 0.5321402949783592,
+          "maximum": 0.5768799024857448,
+          "population_stdev": 0.017292705224329383
+        }
+      }
+    },
+    {
+      "module": "coupled_bd_rkl1_all_transport",
+      "initial_blocks": 8,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 5.168282486032695,
+          "interval_seconds": 0.023623475,
+          "initial_step_zero_seconds": 0.001523585,
+          "positive_step_interval_seconds": 0.02209989,
+          "interval_fraction_percent": 0.45708559978759955,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 5.384286391083151,
+          "interval_seconds": 0.032994313,
+          "initial_step_zero_seconds": 0.002640884,
+          "positive_step_interval_seconds": 0.030353429,
+          "interval_fraction_percent": 0.612788967812735,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 5.16568735986948,
+          "interval_seconds": 0.023190646999999998,
+          "initial_step_zero_seconds": 0.001364284,
+          "positive_step_interval_seconds": 0.021826363,
+          "interval_fraction_percent": 0.4489363251086482,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 5.1679949020035565,
+          "interval_seconds": 0.023231862,
+          "initial_step_zero_seconds": 0.001504144,
+          "positive_step_interval_seconds": 0.021727718,
+          "interval_fraction_percent": 0.44953337688071915,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 5.178361157886684,
+          "interval_seconds": 0.023532315,
+          "initial_step_zero_seconds": 0.001526407,
+          "positive_step_interval_seconds": 0.022005908,
+          "interval_fraction_percent": 0.45443556914063643,
+          "interval_count": 61,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b8/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 5.168282486032695,
+          "minimum": 5.16568735986948,
+          "maximum": 5.384286391083151,
+          "population_stdev": 0.0857932956677905
+        },
+        "interval_seconds": {
+          "median": 0.023532315,
+          "minimum": 0.023190646999999998,
+          "maximum": 0.032994313,
+          "population_stdev": 0.003843524664730621
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.001523585,
+          "minimum": 0.001364284,
+          "maximum": 0.002640884,
+          "population_stdev": 0.0004683761086645646
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.022005908,
+          "minimum": 0.021727718,
+          "maximum": 0.030353429,
+          "population_stdev": 0.00337791223240999
+        },
+        "interval_fraction_percent": {
+          "median": 0.45443556914063643,
+          "minimum": 0.4489363251086482,
+          "maximum": 0.612788967812735,
+          "population_stdev": 0.06418863239945317
+        }
+      }
+    },
+    {
+      "module": "coupled_bd_rkl1_all_transport",
+      "initial_blocks": 32,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 14.404912597965449,
+          "interval_seconds": 0.191301112,
+          "initial_step_zero_seconds": 0.0021546250000000003,
+          "positive_step_interval_seconds": 0.189146487,
+          "interval_fraction_percent": 1.3280268845714438,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 14.12395002716221,
+          "interval_seconds": 0.184729823,
+          "initial_step_zero_seconds": 0.002346331,
+          "positive_step_interval_seconds": 0.182383492,
+          "interval_fraction_percent": 1.307918979072712,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 14.09658659202978,
+          "interval_seconds": 0.182721153,
+          "initial_step_zero_seconds": 0.002153326,
+          "positive_step_interval_seconds": 0.18056782700000001,
+          "interval_fraction_percent": 1.2962084956319189,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 14.402143214130774,
+          "interval_seconds": 0.198880631,
+          "initial_step_zero_seconds": 0.008503346,
+          "positive_step_interval_seconds": 0.190377285,
+          "interval_fraction_percent": 1.3809099662671507,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 14.170024583116174,
+          "interval_seconds": 0.185459402,
+          "initial_step_zero_seconds": 0.0038995149999999997,
+          "positive_step_interval_seconds": 0.181559887,
+          "interval_fraction_percent": 1.308814962967517,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 14.170024583116174,
+          "minimum": 14.09658659202978,
+          "maximum": 14.404912597965449,
+          "population_stdev": 0.1359536773181602
+        },
+        "interval_seconds": {
+          "median": 0.185459402,
+          "minimum": 0.182721153,
+          "maximum": 0.198880631,
+          "population_stdev": 0.005871765499359098
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.002346331,
+          "minimum": 0.002153326,
+          "maximum": 0.008503346,
+          "population_stdev": 0.0024356790215836403
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.182383492,
+          "minimum": 0.18056782700000001,
+          "maximum": 0.190377285,
+          "population_stdev": 0.004104800701351019
+        },
+        "interval_fraction_percent": {
+          "median": 1.308814962967517,
+          "minimum": 1.2962084956319189,
+          "maximum": 1.3809099662671507,
+          "population_stdev": 0.03005264052825132
+        }
+      }
+    },
+    {
+      "module": "coupled_bd_rkl1_all_transport",
+      "initial_blocks": 32,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 13.969835662981495,
+          "interval_seconds": 0.099724008,
+          "initial_step_zero_seconds": 0.0018313390000000002,
+          "positive_step_interval_seconds": 0.097892669,
+          "interval_fraction_percent": 0.713852406039804,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 13.962554258992895,
+          "interval_seconds": 0.09963016499999999,
+          "initial_step_zero_seconds": 0.001707977,
+          "positive_step_interval_seconds": 0.097922188,
+          "interval_fraction_percent": 0.7135525717712499,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 13.99921032297425,
+          "interval_seconds": 0.10047141500000001,
+          "initial_step_zero_seconds": 0.0017394930000000002,
+          "positive_step_interval_seconds": 0.098731922,
+          "interval_fraction_percent": 0.7176934461447109,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 14.00816414388828,
+          "interval_seconds": 0.100135355,
+          "initial_step_zero_seconds": 0.001747644,
+          "positive_step_interval_seconds": 0.098387711,
+          "interval_fraction_percent": 0.714835677048293,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 14.002141849137843,
+          "interval_seconds": 0.101032716,
+          "initial_step_zero_seconds": 0.002921921,
+          "positive_step_interval_seconds": 0.098110795,
+          "interval_fraction_percent": 0.7215518674824802,
+          "interval_count": 195,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b32/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 13.99921032297425,
+          "minimum": 13.962554258992895,
+          "maximum": 14.00816414388828,
+          "population_stdev": 0.018487607000641917
+        },
+        "interval_seconds": {
+          "median": 0.100135355,
+          "minimum": 0.09963016499999999,
+          "maximum": 0.101032716,
+          "population_stdev": 0.0005143021066530452
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.001747644,
+          "minimum": 0.001707977,
+          "maximum": 0.002921921,
+          "population_stdev": 0.00046790526705751023
+        },
+        "positive_step_interval_seconds": {
+          "median": 0.098110795,
+          "minimum": 0.097892669,
+          "maximum": 0.098731922,
+          "population_stdev": 0.000315390446998638
+        },
+        "interval_fraction_percent": {
+          "median": 0.714835677048293,
+          "minimum": 0.7135525717712499,
+          "maximum": 0.7215518674824802,
+          "population_stdev": 0.0030068948970020763
+        }
+      }
+    },
+    {
+      "module": "coupled_bd_rkl1_all_transport",
+      "initial_blocks": 128,
+      "version": "baseline",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 80.98632907005958,
+          "interval_seconds": 10.778651516,
+          "initial_step_zero_seconds": 0.013805295,
+          "positive_step_interval_seconds": 10.764846221,
+          "interval_fraction_percent": 13.309223469896523,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-baseline-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 81.0161937540397,
+          "interval_seconds": 10.792571729,
+          "initial_step_zero_seconds": 0.014053728000000001,
+          "positive_step_interval_seconds": 10.778518001,
+          "interval_fraction_percent": 13.321499355753,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-baseline-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 81.51500702695921,
+          "interval_seconds": 11.056671227,
+          "initial_step_zero_seconds": 0.014817446000000001,
+          "positive_step_interval_seconds": 11.041853781,
+          "interval_fraction_percent": 13.563970157474516,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-baseline-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 81.63429934019223,
+          "interval_seconds": 11.194089412,
+          "initial_step_zero_seconds": 0.011327677,
+          "positive_step_interval_seconds": 11.182761735,
+          "interval_fraction_percent": 13.71248299118879,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-baseline-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 81.51270107901655,
+          "interval_seconds": 10.956848692,
+          "initial_step_zero_seconds": 0.010443456,
+          "positive_step_interval_seconds": 10.946405236,
+          "interval_fraction_percent": 13.44189132118034,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-baseline-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 81.51270107901655,
+          "minimum": 80.98632907005958,
+          "maximum": 81.63429934019223,
+          "population_stdev": 0.2744985300793141
+        },
+        "interval_seconds": {
+          "median": 10.956848692,
+          "minimum": 10.778651516,
+          "maximum": 11.194089412,
+          "population_stdev": 0.15810312855455505
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.013805295,
+          "minimum": 0.010443456,
+          "maximum": 0.014817446000000001,
+          "population_stdev": 0.0016931335108673036
+        },
+        "positive_step_interval_seconds": {
+          "median": 10.946405236,
+          "minimum": 10.764846221,
+          "maximum": 11.182761735,
+          "population_stdev": 0.15878436732628445
+        },
+        "interval_fraction_percent": {
+          "median": 13.44189132118034,
+          "minimum": 13.309223469896523,
+          "maximum": 13.71248299118879,
+          "population_stdev": 0.15252530893132704
+        }
+      }
+    },
+    {
+      "module": "coupled_bd_rkl1_all_transport",
+      "initial_blocks": 128,
+      "version": "candidate",
+      "backend": "cuda",
+      "host_threads": 8,
+      "samples": [
+        {
+          "repeat": 0,
+          "arch_wall_seconds": 81.10377129609697,
+          "interval_seconds": 10.308986929,
+          "initial_step_zero_seconds": 0.004619966,
+          "positive_step_interval_seconds": 10.304366963,
+          "interval_fraction_percent": 12.710860129257775,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-0-candidate-cuda-t8"
+        },
+        {
+          "repeat": 1,
+          "arch_wall_seconds": 80.90878196805716,
+          "interval_seconds": 9.573532649,
+          "initial_step_zero_seconds": 0.002742511,
+          "positive_step_interval_seconds": 9.570790138,
+          "interval_fraction_percent": 11.832501263929098,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-1-candidate-cuda-t8"
+        },
+        {
+          "repeat": 2,
+          "arch_wall_seconds": 81.3869892298244,
+          "interval_seconds": 10.212429271,
+          "initial_step_zero_seconds": 0.008803522999999999,
+          "positive_step_interval_seconds": 10.203625748,
+          "interval_fraction_percent": 12.54798754400616,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-2-candidate-cuda-t8"
+        },
+        {
+          "repeat": 3,
+          "arch_wall_seconds": 79.96732522384264,
+          "interval_seconds": 9.595621143,
+          "initial_step_zero_seconds": 0.0027115060000000002,
+          "positive_step_interval_seconds": 9.592909637,
+          "interval_fraction_percent": 11.999427411308513,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-3-candidate-cuda-t8"
+        },
+        {
+          "repeat": 4,
+          "arch_wall_seconds": 80.35120896901935,
+          "interval_seconds": 9.739721849,
+          "initial_step_zero_seconds": 0.004609713,
+          "positive_step_interval_seconds": 9.735112136,
+          "interval_fraction_percent": 12.121437840164047,
+          "interval_count": 707,
+          "directory": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_bd_rkl1_all_transport-v1/coupled_bd_rkl1_all_transport_b128/measured-4-candidate-cuda-t8"
+        }
+      ],
+      "metrics": {
+        "arch_wall_seconds": {
+          "median": 80.90878196805716,
+          "minimum": 79.96732522384264,
+          "maximum": 81.3869892298244,
+          "population_stdev": 0.5152730139010729
+        },
+        "interval_seconds": {
+          "median": 9.739721849,
+          "minimum": 9.573532649,
+          "maximum": 10.308986929,
+          "population_stdev": 0.31267459683503857
+        },
+        "initial_step_zero_seconds": {
+          "median": 0.004609713,
+          "minimum": 0.0027115060000000002,
+          "maximum": 0.008803522999999999,
+          "population_stdev": 0.0022198782442926362
+        },
+        "positive_step_interval_seconds": {
+          "median": 9.735112136,
+          "minimum": 9.570790138,
+          "maximum": 10.304366963,
+          "population_stdev": 0.3110742007619095
+        },
+        "interval_fraction_percent": {
+          "median": 12.121437840164047,
+          "minimum": 11.832501263929098,
+          "maximum": 12.710860129257775,
+          "population_stdev": 0.33302346084944673
+        }
+      }
+    }
+  ],
+  "measured_runs_analyzed": 90,
+  "analysis_recipe_sha256": "f088d724a2d26db68abe7b5acb3f21abb100027833b3064cdbe9315ad140e359"
+}
