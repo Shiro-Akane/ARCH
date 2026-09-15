@@ -1,0 +1,80 @@
+{
+  "status": "passed",
+  "modules": 7,
+  "complete_11_module_coverage": false,
+  "runs": 756,
+  "comparisons": 735,
+  "records": [
+    {
+      "module": "diffusion_rkl1",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "13a6a15b48fd984e57b53fd7596ea4b888fcadaadc673cd776a7b305c96c27fc",
+      "archive_bytes": 41096162,
+      "verified_projected_files": 708,
+      "documented_large_tsv_omissions": 24,
+      "status": "passed"
+    },
+    {
+      "module": "diffusion_rkl2",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "897f4b7c7a846a2db472a733795f9327ce58ea1525094b58d84dbf7480d43cd1",
+      "archive_bytes": 23823452,
+      "verified_projected_files": 710,
+      "documented_large_tsv_omissions": 24,
+      "status": "passed"
+    },
+    {
+      "module": "burn_be_nr",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "d6a84449232a458b468bb7e3748b31fd1c24cfce5ba99fae3e07f0da3d23d6f3",
+      "archive_bytes": 1139085,
+      "verified_projected_files": 698,
+      "documented_large_tsv_omissions": 0,
+      "status": "passed"
+    },
+    {
+      "module": "burn_bd",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "7338504789db71ee2cd1b079cb1f0ab114362f044d5d05e711cb7e4a6fa19f41",
+      "archive_bytes": 1115002,
+      "verified_projected_files": 698,
+      "documented_large_tsv_omissions": 0,
+      "status": "passed"
+    },
+    {
+      "module": "burn_ros4",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "a2b3e1f3dc9ae8d854658b8acbbd5af9c9bdcd2088cbbecdc2eb2be34f9b8af0",
+      "archive_bytes": 1111760,
+      "verified_projected_files": 698,
+      "documented_large_tsv_omissions": 0,
+      "status": "passed"
+    },
+    {
+      "module": "coupled_be_nr_rkl1_all_transport",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "f9f2adc4f461572a2b5d6938817d6304430d9e1379776ec32431f1403fc9d6ea",
+      "archive_bytes": 55775330,
+      "verified_projected_files": 710,
+      "documented_large_tsv_omissions": 24,
+      "status": "passed"
+    },
+    {
+      "module": "coupled_be_nr_rkl2_all_transport",
+      "runs": 108,
+      "comparisons": 105,
+      "archive_sha256": "14b9e7d80d070f31c7f99a0a9985b284f956a616e960f57dc429c045410b342a",
+      "archive_bytes": 53899140,
+      "verified_projected_files": 713,
+      "documented_large_tsv_omissions": 24,
+      "status": "passed"
+    }
+  ],
+  "scope": "read-only report and local backup integrity audit; not new physics or sanitizer validation"
+}

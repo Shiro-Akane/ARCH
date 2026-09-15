@@ -1,0 +1,12 @@
+{
+  "status": "passed",
+  "scope": "capacity recovery and preflight storage audit only",
+  "scientific_validation": false,
+  "removed_redundant_hdf": 384,
+  "source_commit": "20f388dd8a81fa9fb2761d3651e5db5d89740fb7",
+  "free_bytes_before": 4785303552,
+  "free_bytes_after": 10016047104,
+  "preserved_preflight_files": 10,
+  "server_fixture_tests": 25,
+  "qualified_formal_modules": 7
+}

@@ -1,0 +1,62 @@
+{
+  "status": "preserved_never_started_preflight",
+  "module": "coupled_bd_rkl1_all_transport",
+  "controller_pid": 3874056,
+  "controller_exit_code": 1,
+  "sample_output_absent": true,
+  "scientific_validation": false,
+  "source_and_binaries_changed": false,
+  "preflight_cause": "inspect original logs; no automatic causal claim",
+  "before": {
+    "controller-v3-formal-coupled_bd_rkl1_all_transport-v1/pid": {
+      "bytes": 8,
+      "sha256": "4b905a09b7d09dfe7ac69f7bbb41e47356d3b616d0995adadaa35f04ba4270f6"
+    },
+    "controller-v3-formal-coupled_bd_rkl1_all_transport-v1/worker.log": {
+      "bytes": 52,
+      "sha256": "01acdf1a43b587c05c45566d3a7d28d1d1b083f4daf9e833b18a05dd323d5cdb"
+    },
+    "controller-v3-formal-coupled_bd_rkl1_all_transport-v1/lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "controller-v3-formal-coupled_bd_rkl1_all_transport-v1/exit-code": {
+      "bytes": 2,
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
+    },
+    "formal-coupled_bd_rkl1_all_transport-v1-child.log": {
+      "bytes": 959,
+      "sha256": "1c750240a168221ed41f2ed141065828f015cbdc1a11af873c8c09253876bf3b"
+    },
+    "formal-coupled_bd_rkl1_all_transport-v1-controller-recipe-v3.sh": {
+      "bytes": 6052,
+      "sha256": "5a9e5830f2dd487459fd91f5e72dc48a20ecc43a64c0149af7c6fecf1b4553ce"
+    },
+    "formal-coupled_bd_rkl1_all_transport-v1-controller-recipe-v3.sha256": {
+      "bytes": 173,
+      "sha256": "387473868a8c68f6f2b5205ff8b1373a87ffa18dc9ec883e515ad62a7e993c95"
+    },
+    "formal-coupled_bd_rkl1_all_transport-v1-guard.log": {
+      "bytes": 605,
+      "sha256": "d7550907bf89e627626f3baa08c4cad8cba898aeda93375ec165ab77737c7209"
+    },
+    "formal-coupled_bd_rkl1_all_transport-v1-idle-preflight.log": {
+      "bytes": 417,
+      "sha256": "beb7e182fbcb9d200fe7c2d0db0b2613c2e7407cb22c02bf8c48f20cfef482be"
+    },
+    "formal-coupled_bd_rkl1_all_transport-v1-wall-policy-v3.json": {
+      "bytes": 251,
+      "sha256": "fd992b62d390bb0b8eb8189593e2c27d1fa78910c52475072372637da1945513"
+    }
+  },
+  "moved": [
+    "controller-v3-formal-coupled_bd_rkl1_all_transport-v1",
+    "formal-coupled_bd_rkl1_all_transport-v1-child.log",
+    "formal-coupled_bd_rkl1_all_transport-v1-controller-recipe-v3.sh",
+    "formal-coupled_bd_rkl1_all_transport-v1-controller-recipe-v3.sha256",
+    "formal-coupled_bd_rkl1_all_transport-v1-guard.log",
+    "formal-coupled_bd_rkl1_all_transport-v1-idle-preflight.log",
+    "formal-coupled_bd_rkl1_all_transport-v1-wall-policy-v3.json"
+  ],
+  "pending_move": null
+}

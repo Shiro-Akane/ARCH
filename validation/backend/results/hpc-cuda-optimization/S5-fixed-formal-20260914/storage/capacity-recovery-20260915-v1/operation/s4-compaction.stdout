@@ -1,0 +1,20 @@
+{
+  "status": "applied",
+  "scope": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/curved",
+  "archive": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst",
+  "archive_sha256": "ffa2287b0e61c5b9f7090138add48e52b41bc454ba07db872103d1b421b0a493",
+  "local_archive": "C:\\tmp\\ARCH-perf-20260909\\build\\s4-validation-20260913-evidence.tar.zst",
+  "local_archive_sha256": "ffa2287b0e61c5b9f7090138add48e52b41bc454ba07db872103d1b421b0a493",
+  "local_proof_sha256": "dd5f1a40d6add5097305f7b28e23055eb5b25abff2d9cee0a3d6a748be6c5640",
+  "logical_bytes": 5229992704,
+  "files": 384,
+  "allocated_bytes_before": 5230919680,
+  "free_bytes_before": 4785303552,
+  "pending_removal": null,
+  "applied": true,
+  "original_archives_retained": true,
+  "source_binaries_logs_retained": true,
+  "scientific_validation": false,
+  "free_bytes_after": 10016047104
+}
+VERIFIED_S4_CURVED_COMPACTION_COMPLETE_NOT_SCIENCE_PASS 384

@@ -5,7 +5,8 @@
 详见 [扩散阶段汇总](diffusion-summary.zh-CN.md)。三种燃烧方法也已完成正式 324 次运行、315 次比较，
 全部通过，详见 [燃烧阶段汇总](burn-summary.zh-CN.md)。
 第一组 [BE_NR＋RKL1 全输运耦合](coupled-be-rkl1-summary.zh-CN.md) 也已完成 108 次运行、105 次比较及双端备份。
-目前共 6／11 模块、648 次运行、630 次比较通过；其余五组耦合正式计时仍需完成，不能提前标为全完成。
+第二组 [BE_NR＋RKL2 全输运耦合](coupled-be-rkl2-summary.zh-CN.md) 完成另外 108 次运行、105 次比较及双端备份。
+目前共 7／11 模块、756 次运行、735 次比较通过；其余四组耦合正式计时仍需完成，不能提前标为全完成。
 两侧均应用经过数值验证的 coarse/fine 痕量组分闭合和 MUSCL 面归一化修复，
 不使用原来数值失败的 128 块耦合结果计算加速比。
 
@@ -59,7 +60,15 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 `integrity-audit-diffusion.json`、`integrity-audit-burn-all.json` 重新检查各模块完整样本门槛、
 前后身份、本机 raw SHA、Git 投影文件 SHA 以及 HDF／trace 后处理清单。
 第一组耦合的同类复核见 `integrity-audit-coupled-be-rkl1.json`。
+第二组见 `integrity-audit-coupled-be-rkl2.json`，前七组全量回读见 `integrity-audit-seven.json`。
 这是存储及报告复核，不是新的独立物理或 sanitizer 验证。
 `recipes/` 保存配方及八项含篡改负例的检查器测试。
 `git-blob-audit-diffusion.json` 另核对发布提交 `b80efc92` 两扩散目录的 1,438 个文件，
 本地原件与 Git blob 字节一致；原始大包的 SHA-256 校验单独记录。
+
+## 阶段间容量恢复
+
+第二组完成后，下一组 BD/RKL1 首次 preflight 因磁盘不足原 8 GiB 门槛而退出，未启动样本。
+现已保全该记录，仅在无活动采样的间隙核验并移除旧 S4 的 384 个冗余展开 HDF，原始包保留两端。
+恢复到原容量门槛后接续后四组，没有重跑前七组或降低护栏；
+详见 [实际操作与身份记录](storage/capacity-recovery-20260915-v1/README.md)。

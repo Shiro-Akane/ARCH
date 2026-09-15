@@ -1,0 +1,20 @@
+{
+  "status": "preserved_never_started_preflight",
+  "module": "coupled_bd_rkl1_all_transport",
+  "controller_pid": 3874056,
+  "controller_exit_code": 1,
+  "sample_output_absent": true,
+  "scientific_validation": false,
+  "source_and_binaries_changed": false,
+  "preflight_cause": "inspect original logs; no automatic causal claim",
+  "moved": [
+    "controller-v3-formal-coupled_bd_rkl1_all_transport-v1",
+    "formal-coupled_bd_rkl1_all_transport-v1-child.log",
+    "formal-coupled_bd_rkl1_all_transport-v1-controller-recipe-v3.sh",
+    "formal-coupled_bd_rkl1_all_transport-v1-controller-recipe-v3.sha256",
+    "formal-coupled_bd_rkl1_all_transport-v1-guard.log",
+    "formal-coupled_bd_rkl1_all_transport-v1-idle-preflight.log",
+    "formal-coupled_bd_rkl1_all_transport-v1-wall-policy-v3.json"
+  ],
+  "pending_move": null
+}
