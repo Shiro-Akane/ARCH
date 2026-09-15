@@ -1,0 +1,22 @@
+LOCAL SYNTHETIC RECEIPT / RECIPE TESTS ONLY; NOT C++/CUDA/ODE VALIDATION
+Command: python validation/network/native-wave-candidate/test_factory_overlay.py -v
+Tool-returned test output:
+test_canonical_and_evidence_outputs_rejected (__main__.FactoryOverlayContracts.test_canonical_and_evidence_outputs_rejected) ... ok
+test_changed_artifact_rejected (__main__.FactoryOverlayContracts.test_changed_artifact_rejected) ... ok
+test_changed_cmake_cannot_be_fuzzy_patched (__main__.FactoryOverlayContracts.test_changed_cmake_cannot_be_fuzzy_patched) ... ok
+test_cmake_changes_one_source_only (__main__.FactoryOverlayContracts.test_cmake_changes_one_source_only) ... ok
+test_duplicate_command_ledger_rejected (__main__.FactoryOverlayContracts.test_duplicate_command_ledger_rejected) ... ok
+test_existing_partial_output_preserved (__main__.FactoryOverlayContracts.test_existing_partial_output_preserved) ... ok
+test_failed_standalone_cannot_prepare (__main__.FactoryOverlayContracts.test_failed_standalone_cannot_prepare) ... ok
+test_isolated_overlay_preserves_payload_and_production (__main__.FactoryOverlayContracts.test_isolated_overlay_preserves_payload_and_production) ... ok
+test_missing_completion_marker_rejected (__main__.FactoryOverlayContracts.test_missing_completion_marker_rejected) ... ok
+test_missing_fresh_shared_math_object_rejected (__main__.FactoryOverlayContracts.test_missing_fresh_shared_math_object_rejected) ... ok
+test_missing_input_binding_rejected (__main__.FactoryOverlayContracts.test_missing_input_binding_rejected) ... ok
+test_missing_one_of_eight_contracts_rejected (__main__.FactoryOverlayContracts.test_missing_one_of_eight_contracts_rejected) ... ok
+test_old_payload_receipt_cannot_authorize_new_scheduler (__main__.FactoryOverlayContracts.test_old_payload_receipt_cannot_authorize_new_scheduler) ... ok
+test_payload_modified_after_qualification_rejected (__main__.FactoryOverlayContracts.test_payload_modified_after_qualification_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.468s
+
+OK

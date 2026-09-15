@@ -103,3 +103,19 @@ Host 和设备缓冲寿命；新 payload 以 `overlay-preparation-v3.json` 为�
 pressure guard、GPU memory observation），以及 10800 秒总 wall guard；一次只运行一个 GPU 作业。
 runner 参数为 `--build-dir`、`--recorded-link`、`--payload`、`--shared-manifest`、
 `--helper-library` 和 `--output-dir`。它不自动修改当前队列，也不自动启用生产 SparseOdeBatch。
+
+## Factory 接入前置门槛（仅本机配方测试）
+
+`prepare_factory_overlay.py` 只有在同一十三文件 payload 的真实独立合同记录通过后，
+才允许生成供独立源码树使用的十四文件 overlay。它检查八组完成标记、逐命令成功状态、
+四个新对象／可执行文件及输入 SHA，不接受仅有 exit code 0、失败记录或旧候选记录。
+增加的唯一 CMake 注册是在原 strict-FP／IR=2 provider target 中加入新执行层源文件；
+旧 provider 保留供原合同和结果处理使用。该步骤不修改本仓库的生产 CMake／源文件。
+
+后续必须使用新源码树和新构建目录，重新编译实际包含新调度器的 factory／网络实例；
+旧对象不能证明新路线通过。这个准备脚本不执行构建，也不能证明这些后续要求已完成。
+现有 canonical 源码、全部 EOS／network 注册、数学、库和原测试不删减。
+
+十四项本机配方测试使用明确标记的合成记录，只测试拒绝旧输入、遗漏合同、改动产物、
+覆盖生产文件／失败现场等机械行为。它们不编译或调用 CUDA，不能算 GPU／ODE 验收；
+当前还没有用真实通过记录生成 factory overlay，服务器原采样队列未变化。
