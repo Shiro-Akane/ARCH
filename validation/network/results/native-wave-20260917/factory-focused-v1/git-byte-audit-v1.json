@@ -1,0 +1,13 @@
+{
+  "status": "committed_evidence_inventory_and_bytes_match",
+  "git_commit": "70bace5692cc0e0531693cda14f1dda476326753",
+  "scopes": [
+    {
+      "scope": "validation/network/results/native-wave-20260917/factory-focused-v1",
+      "files": 637,
+      "bytes": 24380024
+    }
+  ],
+  "recipe_sha256": "7029383ed3b48fa693bd84909561a8255217be484d878af3912c4a295efb50b3",
+  "additional_scientific_or_performance_qualification": false
+}
