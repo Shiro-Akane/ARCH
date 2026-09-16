@@ -48,6 +48,8 @@ GPU 观测 peak_used=2,975 MiB、min_free=16,788 MiB；4,861 条观测被明确�
 - [完整失败记录与原始报告](evidence/failure-record.json)、[原报告](evidence/evidence.json)。
 - [原始清单](evidence/raw-manifest.json)、[文本投影映射](evidence/projection-map.json)、[省略项索引](evidence/omissions.json)。
 - [归档身份](archive.json)、[九组复核](pre-retry-nine-module-audit.json)。
+- [Git 字节复核](git-byte-verification.json)：提交 `9db2e1b9` 内本目录 559 个文件、
+  20,242,806 bytes 与本机原件完全一致；这仍是失败证据完整性检查，不是物理通过。
 - [保全配方](preserve_failed_formal.py)、[本地复核器](verify_local_backup.py)、[接续配方](resume-after-io-pressure.ps1)。
 - [20 项本地机械测试](local-mechanical-tests.log) 通过，涵盖非目标失败拒绝、换行字节、路径边界、
   覆盖拒绝和中途迁移失败账本；它们不是 CUDA、物理或 sanitizer 测试。
