@@ -77,6 +77,6 @@ rho／T／cv／rtol／组成不变，并要求实际组分演化大于零。
 1,800／7,200／21,600 秒，仅控制墙钟等待，不改变物理时长。
 
 本机准备包 `batch-trajectory-input-v1.tar`：24,576 bytes，SHA
-`19403eec2bf3e8138fb5e17c17a3bcdbEfff026c54e49bda00d03eac8014d79b`（十六进制 SHA，不区分字母大小写）。
+`19403eec2bf3e8138fb5e17c17a3bcdbefff026c54e49bda00d03eac8014d79b`。
 `trajectory-recipe-tests-v2.log` 记录 15 个合成工具测试通过（0.188 s）；
 两个 shell 配方只通过语法检查。准备包尚未上传，尚无此候选的实际核反应结果。

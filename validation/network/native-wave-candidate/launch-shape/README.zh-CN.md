@@ -32,3 +32,15 @@ Host 取 warp 宽度为线程数，故当前 1–32 单元的推进落在一个 
 冻结 CUDA 源身份及没有新增设备操作。这不是 C++ 编译或 GPU 验证；
 冻结 `SparseOdeBatch.cuh` SHA 为
 `ae3cc59770f4b952a31ded69734fa80304e06665648d40ef173551fa28edbe58`。
+
+## NVIDIA 12.8 文档核对
+
+通过 agent-reach 的 Exa／Jina 只读核对了与当前工具链同代的归档文档，未下载到项目、
+未安装或升级库。文档说明 local memory 实际位于设备内存，
+warp 内线程访问相同相对位置有利于合并访问；因此不能把大 local-memory 数字
+单独当作总显存或实际 spill 带宽的测量。[CUDA 12.8.1 编程指南](https://docs.nvidia.com/cuda/archive/12.8.1/cuda-c-programming-guide/index.html#local-memory)
+
+官方通常建议线程块为 warp 大小的整数倍，也强调更高 occupancy 不一定更快，
+block size 需要结合资源和实测选择。本候选的 1-thread block 刻意偏离通常建议，
+仅用于区分“小批次集中一个 block”与访存／资源代价；不是建议生产默认如此。
+只有完整结果证明有益才采纳。[CUDA 12.8.1 最佳实践](https://docs.nvidia.com/cuda/archive/12.8.1/cuda-c-best-practices-guide/index.html)
