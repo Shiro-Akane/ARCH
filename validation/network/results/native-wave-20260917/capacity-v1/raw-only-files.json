@@ -1,0 +1,7 @@
+[
+  "ARCH-native-wave-v4-20260916/capacity-v1/arch_cuda_generated_sparse_burn_audit150",
+  "ARCH-native-wave-v4-20260916/capacity-v1/audit150.o",
+  "ARCH-native-wave-v4-20260916/factory-release/CMakeFiles/arch_cuda_generated_sparse_burn_audit150.dir/tests/cuda/test_generated_sparse_burn_factory.cu.o",
+  "ARCH-native-wave-v4-20260916/factory-release/CMakeFiles/arch_cuda_generated_sparse_burn_audit200.dir/tests/cuda/test_generated_sparse_burn_factory.cu.o",
+  "ARCH-native-wave-v4-20260916/factory-release/libarch_cuda_sparse_provider.a"
+]

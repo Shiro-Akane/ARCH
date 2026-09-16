@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-16T21:37:12.707663+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-focused-raw-v1.tar.zst",
+    "bytes": 33603707,
+    "sha256": "59d5a1649d79b3ef483c84e512747f5b057cfc8e4d5c6070604d3bbe758f1f56",
+    "files": 637
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-focused-compact-v1.tar.zst",
+    "bytes": 2464308,
+    "sha256": "b2e5005caa88c67dd3e51aaf8ed398f04b08c1b03ee4f9d5a99ccbb4d7f0fff0"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\native-wave-factory-focused-v1-download\\factory-focused-raw-v1.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\native-wave-factory-focused-v1-download\\factory-focused-compact-v1.tar.zst"
+  },
+  "raw_files": 637,
+  "raw_file_bytes": 99951698,
+  "projected_files": 628,
+  "raw_only_files": 9,
+  "receipt_sha256": "9253a7596afcee42b5765e0527d920993189bc090a12a5d3032f7e88f0f87d48",
+  "verification_recipe_sha256": "3cf11672c5b0064b23ef8b08e9d42c5669098b38798c8fae5981348e67f500c6",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}

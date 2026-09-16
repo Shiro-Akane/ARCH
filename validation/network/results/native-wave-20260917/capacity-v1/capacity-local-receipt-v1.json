@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-16T22:17:00.804432+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/capacity-raw-v1.tar.zst",
+    "bytes": 13513415,
+    "sha256": "3bbf408a9eb31b8493822a59878f4d08a12a11022a3a12737e049f2fb5698ed9",
+    "files": 40
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/capacity-compact-v1.tar.zst",
+    "bytes": 105736,
+    "sha256": "c2d31307a115aa1388f099434895a246c4dd76db88ebaa6c184cc6cf18f3b3bb"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\native-wave-capacity-v1-download\\capacity-raw-v1.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\native-wave-capacity-v1-download\\capacity-compact-v1.tar.zst"
+  },
+  "raw_files": 40,
+  "raw_file_bytes": 22900658,
+  "projected_files": 35,
+  "raw_only_files": 5,
+  "receipt_sha256": "5ba578016ab746366c66e5d54854730cf236dc9580c9231d5ca08d59ac005769",
+  "verification_recipe_sha256": "495a065afe1e0ce5de9de08c96e3a72c98ebf38a94a1b022fd684de777c105a4",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}

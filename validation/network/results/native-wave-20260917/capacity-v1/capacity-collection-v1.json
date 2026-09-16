@@ -1,0 +1,35 @@
+{
+  "completed_harnesses": [],
+  "planned_harnesses": [
+    "audit150-bd-pool32",
+    "audit150-bd-pool8",
+    "audit150-be_nr-pool32",
+    "audit150-be_nr-pool8",
+    "audit150-ros4-pool32",
+    "audit150-ros4-pool8",
+    "audit200-bd-pool32",
+    "audit200-bd-pool8",
+    "audit200-be_nr-pool32",
+    "audit200-be_nr-pool8",
+    "audit200-ros4-pool32",
+    "audit200-ros4-pool8"
+  ],
+  "complete_matrix": false,
+  "worker_exit_code": 1,
+  "capacity_matrix_pass": false,
+  "application_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/capacity-raw-v1.tar.zst",
+    "bytes": 13513415,
+    "sha256": "3bbf408a9eb31b8493822a59878f4d08a12a11022a3a12737e049f2fb5698ed9",
+    "files": 40
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/capacity-compact-v1.tar.zst",
+    "bytes": 105736,
+    "sha256": "c2d31307a115aa1388f099434895a246c4dd76db88ebaa6c184cc6cf18f3b3bb"
+  },
+  "embedded_compact": "ARCH-native-wave-v4-20260916/capacity-evidence-v1/compact"
+}
