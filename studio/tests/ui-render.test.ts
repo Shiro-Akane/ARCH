@@ -40,5 +40,5 @@ test('controls preserve raw fallback, bool tri-state and exact numeric values',a
 });
 
 test('Local Host area is optional and disconnected without changing existing modes',async()=>{
- const Panel=await component('host/ProjectPanel.tsx','ProjectPanel');const html=renderToStaticMarkup(createElement(Panel));assert.match(html,/Connect Local Host/);assert.match(html,/Not connected/);assert.match(html,/Refresh Project State/);assert.doesNotMatch(html,/Connected/);assert.match(html,/Read only/);
+ const Panel=await component('host/ProjectPanel.tsx','ProjectPanel');const html=renderToStaticMarkup(createElement(Panel));assert.match(html,/Connect Local Host/);assert.match(html,/Not connected/);assert.match(html,/Refresh Project State/);assert.doesNotMatch(html,/Connected/);assert.match(html,/Config lifecycle/);
 });

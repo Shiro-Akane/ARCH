@@ -1,3 +1,7 @@
+import {atomicSave,publishConfig} from './atomicConfig.ts';
+import {ConfigError} from './config.ts';
+import type {SaveConfigRequest,SaveConfigAsRequest,ConfigReadResponse,ConfigWriteResponse} from '../src/host/contracts.ts';
+import {readConfig} from './config.ts';
 import path from 'node:path';import {randomUUID} from 'node:crypto';
 import {fingerprint,projectRoot,selectedPath} from './files.ts';
 import {PROTOCOL_VERSION} from '../src/host/contracts.ts';
@@ -9,7 +13,7 @@ export async function openProject(options:ProjectOptions) {
  const read=async(value:string|undefined,kind:ProjectFileRef['kind'])=>value===undefined?undefined:await fingerprint(root,value,kind);
  const [caseSource,parameterFile,executable]=await Promise.all([read(options.case,'case-source'),read(options.config,'parameter'),read(options.binary,'executable')]);
  const state=(file:ProjectFileRef|undefined)=>!file||file.error?'unknown' as const:!file.exists?'missing' as const:'available' as const;
- let result:ProjectSnapshot={host:{protocolVersion:PROTOCOL_VERSION,hostKind:'local',platform:process.platform,projectRoot:root,capabilities:{readProject:true,writeConfig:false,build:false,preview:false,watchFiles:false}},session:{projectId:randomUUID(),displayName:path.basename(root),projectRoot:root,caseSource,parameterFile,executable,sourceState:state(caseSource),configFileState:state(parameterFile),binaryState:state(executable),mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
+ let result:ProjectSnapshot={host:{protocolVersion:PROTOCOL_VERSION,hostKind:'local',platform:process.platform,projectRoot:root,capabilities:{readProject:true,writeConfig:process.platform==='linux',build:false,preview:false,watchFiles:false}},session:{projectId:randomUUID(),displayName:path.basename(root),projectRoot:root,caseSource,parameterFile,executable,sourceState:state(caseSource),configFileState:state(parameterFile),binaryState:state(executable),mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
  const baseline=structuredClone(result.session);
  const changed=(a:ProjectFileRef|undefined,b:ProjectFileRef|undefined)=>Boolean(a&&b&&(a.exists!==b.exists||a.sha256!==b.sha256||a.size!==b.size||a.modifiedTime!==b.modifiedTime));
  async function refresh(){
@@ -27,6 +31,11 @@ export async function openProject(options:ProjectOptions) {
   session.binaryState=state(session.executable);session.refreshedAt=new Date().toISOString();
   result={host:result.host,session};return structuredClone(result);
  }
- let pending:Promise<ProjectSnapshot>|undefined;
- return {snapshot:()=>structuredClone(result),refresh:()=>{if(!pending)pending=refresh().finally(()=>{pending=undefined;});return pending;}};
+ let queue:Promise<unknown>=Promise.resolve();
+ function serial<T>(operation:()=>Promise<T>):Promise<T>{const next=queue.then(operation);queue=next.catch(()=>undefined);return next;}
+ async function saved(read:ConfigReadResponse):Promise<ConfigWriteResponse>{options.config=read.relativePath;const current=await fingerprint(root,read.relativePath,'parameter');result.session.parameterFile=current;baseline.parameterFile=structuredClone(current);result.session.configFileState=current.error?'unknown':current.exists?'available':'missing';result.session.refreshedAt=new Date().toISOString();return {...read,project:structuredClone(result)};}
+ function projectId(id:string){if(id!==result.session.projectId)throw new ConfigError('protocol-error','Project session changed. Reconnect before saving.');}
+ return {snapshot:()=>structuredClone(result),refresh:()=>serial(refresh),readConfig:()=>serial(()=>readConfig(root,options.config,result.session.projectId)),
+  saveConfig:(request:SaveConfigRequest)=>serial(async()=>{projectId(request.projectId);if(request.relativePath!==options.config)throw new ConfigError('invalid-path','Save may only update the current associated configuration.');return saved(await atomicSave(root,request.relativePath,result.session.projectId,request.text,request.expectedFingerprint));}),
+  saveConfigAs:(request:SaveConfigAsRequest)=>serial(async()=>{projectId(request.projectId);return saved(await publishConfig(root,request.destinationRelativePath,result.session.projectId,request.text,undefined,true));})};
 }

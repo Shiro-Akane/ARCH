@@ -1,3 +1,4 @@
+import {LocalHostProvider} from './host/LocalHostProvider';
 import { ProjectPanel } from './host/ProjectPanel';
 import { modeDescriptions } from './data/modePresentation';
 import { ParameterInspector } from './components/Inspector/ParameterInspector';
@@ -22,7 +23,7 @@ export default function App() {
   const sampleView = source === 'cellular';
   const realView = source === 'plotfile';
   const configView = source === 'config';
-  return <div className="studio-shell" onKeyDown={e=>{if(source!=='mock')return;const action=historyShortcut(e.key,e.ctrlKey,e.metaKey,e.shiftKey);if(action){e.preventDefault();dispatch({type:'history/restore',working:mockHistory.current[action](state.working)});}}} onPointerDownCapture={e=>{if(source==='mock' && e.target instanceof HTMLInputElement && (e.target.type==='range'||e.target.dataset.numeric==='true'))mockHistory.current.begin(state.working);}} onPointerUp={()=>mockHistory.current.end()} onPointerCancel={()=>mockHistory.current.end()}>
+  return <LocalHostProvider><div className="studio-shell" onKeyDown={e=>{if(source!=='mock')return;const action=historyShortcut(e.key,e.ctrlKey,e.metaKey,e.shiftKey);if(action){e.preventDefault();dispatch({type:'history/restore',working:mockHistory.current[action](state.working)});}}} onPointerDownCapture={e=>{if(source==='mock' && e.target instanceof HTMLInputElement && (e.target.type==='range'||e.target.dataset.numeric==='true'))mockHistory.current.begin(state.working);}} onPointerUp={()=>mockHistory.current.end()} onPointerCancel={()=>mockHistory.current.end()}>
     <header className="topbar">
       <div className="brand" aria-label="ARCH Studio"><svg width="27" height="28" viewBox="0 0 27 28" aria-hidden="true"><path d="M3 23 13.5 4 24 23h-7l-3.5-7-3.5 7Z" fill="currentColor" /></svg><span>ARCH<span className="brand-light">STUDIO</span></span></div>
       <span className="header-divider" />
@@ -35,5 +36,5 @@ export default function App() {
     {!configView && <StatusBar state={state} onPreview={() => dispatch({ type: 'preview/start', revision: state.revision })} onSave={() => dispatch({ type: 'config/save' })} onRevert={() => {mockHistory.current.reset();dispatch({ type: 'config/revert' });}} />}</div>
     {sampleView && <CellularSample />}
     {realView && <PlotfileWorkspace />}
-  </div>;
+  </div></LocalHostProvider>;
 }

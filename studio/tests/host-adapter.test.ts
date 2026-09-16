@@ -3,7 +3,7 @@ test('adapter restricts connection origin and rejects offline, malformed and inc
  assert.throws(()=>new HttpLocalHostAdapter('http://192.168.0.1:4180'));assert.throws(()=>new HttpLocalHostAdapter('https://127.0.0.1:4180'));
  await assert.rejects(new HttpLocalHostAdapter(undefined,async()=>{throw new Error('offline');}).connect(),/unavailable/);
  await assert.rejects(new HttpLocalHostAdapter(undefined,async()=>new Response('{}',{headers:{'content-type':'application/json'}})).connect(),/Malformed/);
- assert.throws(()=>validateSnapshot({host:{protocolVersion:'2'},session:{}}),/incompatible/);
+ assert.throws(()=>validateSnapshot({host:{protocolVersion:'1.0'},session:{}}),/incompatible/);
  await assert.rejects(new HttpLocalHostAdapter(undefined,async()=>new Response('x'.repeat(65537),{headers:{'content-type':'application/json'}})).connect(),/limit/);
 });
 

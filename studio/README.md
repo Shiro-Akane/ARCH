@@ -1,6 +1,6 @@
-# Phase 2 — Local Host foundation
+# Phase 2B — Local Config Lifecycle
 
-Phase 1C2 Manual UAT was confirmed passed by the user. Phase 2 adopts the original Phase 3A Local Host Foundation scope with renamed milestones; see PHASE2_TARGET.md. This stage adds read-only project identity, not Build or real IC preview.
+Phase 1C2 Manual UAT was confirmed passed by the user. Phase 2B extends the sealed Local Host foundation with explicit config load, safe Save, Save As, Revert and external-change conflict handling. See PHASE2B_TARGET.md and PHASE2B_CONFIG_LIFECYCLE_REPORT.md. Build and real IC preview remain unavailable.
 
 Use the documented WSL Node environment (Node 24.21.0 / npm 11.19.0 tested). In a fresh checkout run `npm ci` in `studio/`.
 
@@ -8,10 +8,10 @@ Terminal 1, from `studio/`:
 
 ```bash
 export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
-npm run local-host -- --project /home/arch/projects/ARCH-phase2-local-host --case simulation/Sod/Sod.cpp --config simulation/Sod/Sod_beginner.par --binary build/not-configured/ARCH
+npm run local-host -- --project /home/arch/projects/ARCH-phase2b-config-lifecycle --case simulation/Sod/Sod.cpp --config simulation/Sod/Sod_beginner.par --binary build/not-configured/ARCH
 ```
 
-The binary path above intentionally demonstrates `missing`; replace it with an explicitly chosen project-relative executable path, or omit `--binary` for unknown. No executable is launched or claimed compatible. Source/config/binary selection is configured only at service startup; it is not inferred from filenames. The root must exist. All selected paths must be plain relative paths; symlink components are refused.
+The binary path above intentionally demonstrates `missing`; replace it with an explicitly chosen project-relative executable path, or omit `--binary` for unknown. No executable is launched or claimed compatible. Initial source/config/binary selection is configured at service startup; successful Save As updates the current config in the running session. Selection is not inferred from filenames. The root must exist. All selected paths must be plain relative paths; symlink components are refused.
 
 Terminal 2, from `studio/`:
 
@@ -22,13 +22,17 @@ npm run dev
 
 Open `http://127.0.0.1:5173/`, expand **Project / Local Host**, then **Connect Local Host**. For a production frontend instead, run `npm run build` then `npm run preview -- --port 4177`, and launch the host with `--origin http://127.0.0.1:4177`. Both servers bind only 127.0.0.1. Stop each using Ctrl+C. The UI connects to host port 4180. Exact origin matching is intentional: localhost and 127.0.0.1 are different origins. The host CLI supports an alternate port for programmatic clients; the current UI uses 4180.
 
-**Refresh Project State** inspects only the configured files, bounded to 64 MiB each, and compares fingerprints with the service's initial session. No recursive scan/watcher. Errors retain previous known identity and mark it unknown; UI request failure retains the last session with a warning. Restarting the host creates a new snapshot/session. Reconnect does not reset a running host's baseline.
+**Refresh Project State** inspects only the configured files, bounded to 64 MiB each, and compares fingerprints with the session baseline (updated for config after a successful Save/Save As). No recursive scan/watcher. Errors retain previous known identity and mark it unknown; UI request failure retains the last session with a warning. Restarting the host creates a new snapshot/session. Reconnect does not reset a running host's baseline.
 
-Project identity does not auto-open a file in the existing editor. Continue using **Real Config → Open Config** to edit a working copy. Host refresh never reloads it. Save As remains the existing browser download. This stage writes no project files and exposes no file-content, arbitrary path, shell or execution API.
+Project identity never auto-opens or replaces the editor. Select **Real Config → Open Project Config** to load the selected `.par` explicitly. Save requires a compatible connected host with write capability and matching config association. The existing serializer supplies exact UTF-8 text; comments, unknown keys, BOM and line endings are preserved.
 
-Protocol 1.0 endpoints: GET /api/health, /api/host, /api/project, /api/project/files; POST /api/project/refresh. All requests require exact authorized Origin/Host and `X-ARCH-Studio: 1`; no body/query arguments. `/api/project` and refresh return the validated host+session envelope. Build/Preview/binding contracts are declarations only. Browser-origin controls are not an authentication boundary against other programs already running as the same OS user.
+**Save** compares the last saved fingerprint, writes and syncs a same-directory temporary file, checks the fingerprint again, then atomically replaces the original. Write/rename failures preserve the original. **Save Working Copy As…** takes a plain project-relative `.par` destination in an existing directory and refuses overwrite; success makes the new file current. **Revert** restores the latest loaded/saved in-memory snapshot. **Reload disk version** reads disk explicitly, with an unsaved-change guard. Refresh reports external changes without replacing edits. Conflicts keep the Working Copy and offer Reload, Save As or Cancel. No force overwrite or merge is implemented. **Download Copy…** remains the browser export fallback.
 
-Run `npm run test:host` for host-specific checks and `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` for all gates. The supported/verified service environment is WSL Linux; native Windows filesystem race behavior has not been qualified. See PHASE2_LOCAL_HOST_REPORT.md.
+Protocol **1.1** endpoints: GET /api/health, /api/host, /api/project, /api/project/files, /api/config; POST /api/project/refresh, /api/config/save, /api/config/save-as. All requests require exact authorized Origin/Host, `X-ARCH-Studio: 1` and `X-ARCH-Protocol: 1.1`. Only the two config writes accept bodies: strict JSON fields, at most 1 MiB including JSON overhead. Config reads/text are also limited to 1 MiB; JSON escaping can make a near-limit config too large to save. No generic filesystem or command API exists. Build/Preview/binding contracts remain declarations only. Browser-origin controls are not authentication against programs already running as the same OS user.
+
+Writes are supported only by the WSL/Linux service, using directory descriptors and same-directory atomic publication. Native Windows host writes remain disabled. Save As uses atomic no-clobber linking; no directory creation is performed. This is optimistic concurrency, not an OS transaction with unrelated external editors: an external writer can race the final check/rename interval. Avoid simultaneous external editing during Save. Post-publication changes are detected by final readback where observable. Saves do not generate or clear stale Preview state.
+
+Run `npm run test:host` for host-specific checks and `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` for all gates. The supported/verified service environment is WSL Linux; native Windows filesystem race behavior has not been qualified. See PHASE2B_CONFIG_LIFECYCLE_REPORT.md.
 
 ---
 Historical frontend documentation follows.

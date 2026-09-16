@@ -1,0 +1,16 @@
+import {PROTOCOL_VERSION} from './contracts.ts';import type {ConfigReadResponse,ConfigWriteResponse,SaveConfigRequest,SaveConfigAsRequest,ConfigFileError} from './contracts.ts';import {validateSnapshot} from './LocalHostAdapter.ts';
+export class ConfigRequestError extends Error { info:ConfigFileError;constructor(info:ConfigFileError){super(info.message);this.info=info;} }
+export function validateConfigResponse(value:unknown):ConfigReadResponse {
+ if(!value||typeof value!=='object')throw new Error('Malformed configuration response.');const v=value as ConfigReadResponse;
+ if(typeof v.projectId!=='string'||!v.projectId||typeof v.relativePath!=='string'||!v.relativePath.endsWith('.par')||v.relativePath.startsWith('/')||/[\\%:\0]/.test(v.relativePath)||v.relativePath.split('/').some(x=>!x||x==='.'||x==='..')||typeof v.text!=='string'||!v.fingerprint||typeof v.fingerprint.sha256!=='string'||!/^[a-f0-9]{64}$/.test(v.fingerprint.sha256)||!Number.isSafeInteger(v.fingerprint.size)||v.fingerprint.size<0||v.fingerprint.size>1024*1024||new TextEncoder().encode(v.text).length!==v.fingerprint.size||!Number.isFinite(Date.parse(v.fingerprint.modifiedTime)))throw new Error('Malformed configuration response.');return v;
+}
+export class ConfigAdapter {
+ async request(route:string,payload?:SaveConfigRequest|SaveConfigAsRequest):Promise<unknown>{
+  let response:Response;try{response=await fetch('http://127.0.0.1:4180'+route,{method:payload?'POST':'GET',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,...(payload?{'Content-Type':'application/json'}:{})},body:payload?JSON.stringify(payload):undefined,credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});}catch{throw new ConfigRequestError({code:'read-error',message:'Local Host unavailable. Working Copy has been kept.'});}
+  const reader=response.body?.getReader();if(!reader)throw new Error('Empty configuration response.');const chunks:Uint8Array[]=[];let size=0;try{while(true){const r=await reader.read();if(r.done)break;size+=r.value.length;if(size>8*1024*1024){await reader.cancel();throw new Error('Configuration response too large.');}chunks.push(r.value);}}finally{reader.releaseLock();}const bytes=new Uint8Array(size);let offset=0;for(const c of chunks){bytes.set(c,offset);offset+=c.length;}let data:unknown;try{data=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}catch{throw new Error('Malformed configuration response.');}
+  if(!response.ok){const e=(data as {error?:ConfigFileError})?.error;if(e&&typeof e.code==='string'&&typeof e.message==='string')throw new ConfigRequestError(e);throw new Error(`Configuration request failed (${response.status}). Working Copy kept.`);}return data;
+ }
+ async read(){return validateConfigResponse(await this.request('/api/config'));}
+ async save(request:SaveConfigRequest):Promise<ConfigWriteResponse>{const data=await this.request('/api/config/save',request);const read=validateConfigResponse(data);const project=validateSnapshot((data as ConfigWriteResponse).project);return {...read,project};}
+ async saveAs(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>{const data=await this.request('/api/config/save-as',request);const read=validateConfigResponse(data);const project=validateSnapshot((data as ConfigWriteResponse).project);return {...read,project};}
+}

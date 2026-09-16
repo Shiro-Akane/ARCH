@@ -1,7 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {mkdtemp,writeFile,rm,chmod} from 'node:fs/promises';import path from 'node:path';import os from 'node:os';import {openProject} from '../host/project.ts';
 test('project identity separates missing, available and unknown without guessing binary mapping',async t=>{
  const root=await mkdtemp(path.join(os.tmpdir(),'arch-project-'));t.after(()=>rm(root,{recursive:true,force:true}));await writeFile(path.join(root,'source.cpp'),'not parsed');
- const project=await openProject({project:root,case:'source.cpp',config:'absent.par'});const {host,session}=project.snapshot();assert.equal(session.sourceState,'available');assert.equal(session.configFileState,'missing');assert.equal(session.binaryState,'unknown');assert.equal(session.mapping,'unknown');assert.equal(session.metadata,'unavailable');assert.equal(host.capabilities.build,false);assert.equal(host.capabilities.writeConfig,false);
+ const project=await openProject({project:root,case:'source.cpp',config:'absent.par'});const {host,session}=project.snapshot();assert.equal(session.sourceState,'available');assert.equal(session.configFileState,'missing');assert.equal(session.binaryState,'unknown');assert.equal(session.mapping,'unknown');assert.equal(session.metadata,'unavailable');assert.equal(host.capabilities.build,false);assert.equal(host.capabilities.writeConfig,true);
  session.sourceState='missing';assert.equal(project.snapshot().session.sourceState,'available');
 });
 

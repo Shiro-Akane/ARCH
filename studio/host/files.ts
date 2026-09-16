@@ -13,7 +13,7 @@ export async function projectRoot(value: string): Promise<string> {
 }
 // Refuse all selected-path symlinks, including inside-root links. This conservative policy
 // avoids reading an escape target and keeps the same behavior across supported hosts.
-async function checkedPath(root:string,relative:string):Promise<string> {
+export async function checkedPath(root:string,relative:string):Promise<string> {
   selectedPath(relative);if (await realpath(root)!==root) throw new Error('Project root identity changed');
   let current=root;
   for (const part of relative.split('/')) {current=path.join(current,part);const s=await lstat(current);if(s.isSymbolicLink())throw new Error('Symlinks are not permitted for selected files');}

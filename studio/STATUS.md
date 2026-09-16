@@ -435,3 +435,33 @@ New host tests cover path confinement, permission/missing/root errors, bounded a
 
 ## P2-M9 complete
 PHASE2_TARGET.md preserves the authorized scope/naming; README documents WSL startup, exact origin, fixed UI host port, read-only limitations and separate editor identity. PHASE2_LOCAL_HOST_REPORT.md includes all required report sections. Final tests 59/59; host-specific 9/9; lint/typecheck/build/diff check PASS. Only studio/ changed; Core/parser/solver/fixtures unchanged. Local checkpoint studio-phase2-v0.5.0; no push, no subsequent-stage implementation. Development QA servers stopped after verification.
+
+## P2B-M0 complete
+Baseline studio-phase2-v0.5.0 / 92e260a419120679d313f23753c59061991b8371 verified clean; independent studio/phase2b-config-lifecycle branch/worktree created. npm ci and all 59 baseline tests passed. Target fully read and copied to PHASE2B_TARGET.md. No original worktree or Core changes.
+
+## P2B-M1 complete
+Protocol 1.1 and lifecycle/read/write/error contracts declared. Adapter rejects 1.0. writeConfig remains false until safe write endpoints are implemented; validation now permits explicit true or false capability. Protocol tests and typecheck passed. Scope reviewed.
+
+## P2B-M2 complete
+GET /api/config reads only the launch-selected .par, returns exact UTF-8 (including BOM/CRLF), fingerprint and project identity. Read capped at 1 MiB with existing no-follow/descriptor consistency protection. Explicit association helper feeds unchanged loadPar and keeps loaded/saved fingerprints distinct. Both server and adapter require protocol 1.1. Host suite 10/10 and typecheck passed; lifecycle round-trip test added. Scope reviewed.
+
+## P2B-M3 complete
+Save preparation validates exact text/size and expected fingerprint, rereads selected disk version, rejects conflict and checks file permission without truncation. Conflict preserves original bytes. Config/lifecycle tests 3/3 and typecheck passed. Save route remains unexposed pending atomic implementation. Scope reviewed.
+
+## P2B-M4 complete
+Same-directory exclusive temporary file, bounded exact text, mode preservation, file fsync, second fingerprint check and atomic rename implemented. Linux directory descriptor pins destination parent. Injected write/rename failure and intervening external change preserve original and clean temp. Atomic tests 2/2 and typecheck passed. Scope reviewed.
+
+## P2B-M5 complete
+Save/Save As narrow endpoints implemented with protocol/header checks, strict request fields and 1 MiB JSON body limit. Project operations serialize. Save As atomically links completed temporary file without overwrite and changes current parameter association only on success. Traversal/absolute/encoded/backslash/NUL/symlink/existing target/missing parent tests pass. Linux writeConfig now true because safe write methods exist; other platforms remain false. Host suite 14/14 and typecheck passed. Scope reviewed.
+
+## P2B-M6 complete
+Frontend explicit project load, local Save/Save As, association, separate disk state, conflict message and explicit Reload integrated around unchanged ParDocument/parState. Successful saves rebuild only the saved snapshot using existing parser and leave Preview state unchanged; failed calls keep the editor. Typecheck/lint pass. Unsaved replacement guard follows in M7 before UAT. Scope reviewed.
+
+## P2B-M7 complete
+Unsaved replacement guard covers Open Project Config, Reload and browser file open. Save/Save As/explicit discard/cancel offered; unassociated configs cannot Save in place, browser download fallback remains. Reconnect updates identity only and never replaces editor. Busy operations disable editing. Revert remains saved in-memory snapshot; Reload goes through guard. Tests 65/65, typecheck/lint pass. Scope reviewed.
+
+## P2B-M8 complete
+HTTP end-to-end tests cover exact text, strict protocol/fields, 413 limit, concurrent saves (one succeeds, one conflicts), Save As current identity and no-clobber. Atomic/write-security tests include outside/encoded/backslash/NUL/symlink/missing-parent and cleanup. Host suite 15/15; full suite previously 65/65 before newest HTTP test; lint/typecheck/build pass. Existing parser/serializer untouched. Limited UAT follows using disposable configuration copies only. Scope reviewed.
+
+## P2B-M9 complete
+Finite production-browser UAT verified explicit Load, 4->8 Save/Reload, 8->12 Revert, external-edit conflict without Refresh, Working Copy retention, rejected outside Save As, successful new current config and guarded Discard/Reload. Actual disk bytes/original preservation/temp cleanup checked on disposable copies. This is agent QA, not new human acceptance. Final tests 67/67, host subset 16/16, lint/typecheck/build/diff check PASS. README and PHASE2B_CONFIG_LIFECYCLE_REPORT.md document scope, algorithms and limitations. Target reviewed; Core/parser/root STATUS untouched. Local checkpoint studio-phase2b-v0.6.0; no push or Phase 2C.

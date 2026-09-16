@@ -1,0 +1,2 @@
+import {useState} from 'react';import type {ReactNode} from 'react';import type {ProjectSnapshot} from './contracts';import {HostContext} from './hostContext';
+export function LocalHostProvider({children}:{children:ReactNode}){const [snapshot,setSnapshot]=useState<ProjectSnapshot|null>(null);const [connected,setConnected]=useState(false);return <HostContext.Provider value={{snapshot,connected,update:s=>{setSnapshot(s);setConnected(true);},failed:()=>setConnected(false)}}>{children}</HostContext.Provider>;}
