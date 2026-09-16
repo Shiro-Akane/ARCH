@@ -12,7 +12,7 @@ test('confined selected files, missing, symlink and permissions',async t=>{
 });
 
 test('bounded hashing rejects oversized files and reports a file changing during inspection',async t=>{
- const root=await mkdtemp(path.join(os.tmpdir(),'arch-bounds-'));t.after(()=>rm(root,{recursive:true,force:true}));const file=path.join(root,'binary');await writeFile(file,'');await truncate(file,65*1024*1024);assert.match((await fingerprint(root,'binary','executable')).error!,/limit/);
+ const root=await mkdtemp(path.join(os.tmpdir(),'arch-bounds-'));t.after(()=>rm(root,{recursive:true,force:true}));const file=path.join(root,'binary');await writeFile(file,'');await truncate(file,65*1024*1024);assert.match((await fingerprint(root,'binary','case-source')).error!,/limit/);assert.equal((await fingerprint(root,'binary','executable')).exists,true);await truncate(file,513*1024*1024);assert.match((await fingerprint(root,'binary','executable')).error!,/limit/);
  await truncate(file,32*1024*1024);let stop=false;let tick=0;
  const writer=(async()=>{while(!stop){await utimes(file,new Date(),new Date(Date.now()+ ++tick*1000));await new Promise(r=>setTimeout(r,1));}})();
  let result;try{result=await fingerprint(root,'binary','executable');}finally{stop=true;await writer;}assert.match(result.error!,/changed during refresh/);

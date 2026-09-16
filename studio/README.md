@@ -1,3 +1,35 @@
+# Phase 2C — Controlled Build integration
+
+Studio development and the managed ARCH project are separate. The fixed Host profile `arch-existing-cuda-release` builds `/home/arch/projects/ARCH-linux/build-cuda`, target `ARCH`, expected executable `/home/arch/projects/ARCH-linux/build-cuda/bin/ARCH`. It never treats the Studio checkout as the binary's source root. This is a unified ARCH executable with explicitly configured registered case ID `Sod`; mapping is **configured**, not independently verified by Core.
+
+Use Node 24.21.0 / npm 11.19.0 in the Phase 2C `studio/` directory; run `npm ci` for a fresh checkout. Example production launch in two terminals:
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run local-host -- --project /home/arch/projects/ARCH-linux --build-profile arch-existing-cuda-release --config simulation/Sod/Sod_beginner.par --origin http://127.0.0.1:4179
+```
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run build
+npm run preview -- --port 4179
+```
+
+Open `http://127.0.0.1:4179/`, expand Project, connect, inspect Build Profile, then explicitly choose Build. Both services bind only 127.0.0.1. Without `--build-profile`, Build stays Not configured. Source/binary selections cannot contradict the fixed profile. The profile source root must match the managed project and the existing CMake cache bindings. Config operations remain explicit and independent.
+
+The Host invokes only `/usr/bin/cmake --build <fixed-directory> --target ARCH --parallel 4` with shell disabled and an allowlisted PATH/HOME/LANG environment. Existing CMake/Ninja internal regeneration is allowed; Studio never invokes standalone configure, edits CMakeCache, migrates trees or runs the binary. A trusted existing build tree may itself execute its configured build rules; this service is not a sandbox for untrusted CMake projects. No browser-provided program, argv, cwd, environment or binary path is accepted.
+
+Protocol **1.2** adds GET `/api/build/profile`, `/api/build/status`, `/api/build/<buildId>/events`, `/api/source` and POST `/api/build` (exactly projectId/profileId). Existing config and project routes also require 1.2. Build output uses bounded one-second polling with project/build IDs and ordered sequences; retained logs are limited to 1024 events/256 Ki characters, 4096 characters per event. Clear view changes only the UI. Completed output is session-local, not a persistent compiler log. Reconnect is blocked during an active Build. Cancellation is deferred; the CLI refuses normal shutdown while its Build is active, so wait for completion before Ctrl+C.
+
+Successful builds require exit 0 plus a confined regular expected executable and a valid final fingerprint. Manifests persist atomically under the **managed project's** ignored `studio/.local/build-*.json`, including source root/Git HEAD/repository dirty, profile hash, pre/post tracked inputs and binary fingerprints, output path and timestamps. Repository dirty is separate from tracked-input freshness. Failed attempts keep the last successful manifest. Executable hashing streams up to 512 MiB; other project identity files remain capped at 64 MiB, config reads/writes at 1 MiB.
+
+Refresh Project State updates provenance without altering the Working Copy or Mock Preview. Changed explicit inputs produce needs-build; matching inputs with incomplete dependency coverage remain freshness-unknown. The fixed profile does not claim complete C++ dependencies and does not parse include graphs. Runtime `.par` edits and unrelated Studio changes do not imply a rebuild. The selected source viewer is read-only, limited to 256 KiB, with search only in the loaded text. Open in external editor remains deferred.
+
+Run `npm test`, `npm run test:host`, `npm run lint`, `npm run typecheck`, `npm run build`, and `git diff --check`. See PHASE2C_TARGET.md, STATUS.md and PHASE2C_BUILD_INTEGRATION_REPORT.md. Build does not save config, run simulation or generate real Initial Preview. No Phase 2D features are included.
+
+---
+Historical Phase 2B and earlier usage follows; protocol 1.2 above supersedes the older version numbers.
+
 # Phase 2B — Local Config Lifecycle
 
 Phase 1C2 Manual UAT was confirmed passed by the user. Phase 2B extends the sealed Local Host foundation with explicit config load, safe Save, Save As, Revert and external-change conflict handling. See PHASE2B_TARGET.md and PHASE2B_CONFIG_LIFECYCLE_REPORT.md. Build and real IC preview remain unavailable.

@@ -23,6 +23,7 @@ export async function checkedPath(root:string,relative:string):Promise<string> {
 }
 export async function fingerprint(root:string,relative:string,kind:ProjectFileRef['kind']):Promise<ProjectFileRef> {
   selectedPath(relative);
+  const limit=kind==='executable'?512*1024*1024:MAX_FILE_BYTES;
   try {
     const target=await checkedPath(root,relative);
     const handle=await open(target,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
@@ -30,9 +31,9 @@ export async function fingerprint(root:string,relative:string,kind:ProjectFileRe
       // On Linux verify the opened descriptor too, before reading, to detect parent swaps.
       if (process.platform==='linux') {const actual=await realpath(`/proc/self/fd/${handle.fd}`);if(actual!==target)throw new Error('Selected file identity changed during open');}
       const before=await handle.stat();if(!before.isFile())throw new Error('Selected object is not a regular file');
-      if(before.size>MAX_FILE_BYTES)throw new Error('Selected file exceeds 64 MiB fingerprint limit');
+      if(before.size>limit)throw new Error(`Selected file exceeds ${limit/1024/1024} MiB fingerprint limit`);
       const hash=createHash('sha256');const buffer=Buffer.alloc(65536);let bytes=0;
-      while(true){const result=await handle.read(buffer,0,buffer.length,null);if(!result.bytesRead)break;bytes+=result.bytesRead;if(bytes>MAX_FILE_BYTES)throw new Error('File grew beyond fingerprint limit');hash.update(buffer.subarray(0,result.bytesRead));}
+      while(true){const result=await handle.read(buffer,0,buffer.length,null);if(!result.bytesRead)break;bytes+=result.bytesRead;if(bytes>limit)throw new Error('File grew beyond fingerprint limit');hash.update(buffer.subarray(0,result.bytesRead));}
       const after=await handle.stat();const latest=await stat(await checkedPath(root,relative));
       if(bytes!==before.size||before.size!==after.size||before.mtimeMs!==after.mtimeMs||before.ctimeMs!==after.ctimeMs||latest.ino!==after.ino||latest.dev!==after.dev||latest.mtimeMs!==after.mtimeMs||latest.ctimeMs!==after.ctimeMs)throw new Error('File changed during refresh; retry');
       return {relativePath:relative,kind,exists:true,size:after.size,modifiedTime:after.mtime.toISOString(),sha256:hash.digest('hex'),changed:false};

@@ -1046,3 +1046,5 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .config-lifecycle-fieldset { border:0; padding:0; margin:0; min-width:0; }
 .config-conflict { padding:12px; border:1px solid #86633e; display:grid; gap:8px; margin:8px 0; }
 .config-conflict input { width:100%; color:inherit; background:#17232d; border:1px solid var(--line); padding:7px; }
+
+.build-panel{border-top:1px solid var(--border);padding:12px 0;min-width:0;overflow-wrap:anywhere}.build-panel dd{margin-left:0;overflow-wrap:anywhere}.build-log{max-height:280px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.source-code{max-height:360px;overflow:auto;white-space:pre-wrap;font-size:12px}

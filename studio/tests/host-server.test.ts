@@ -1,11 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {createHostServer,listenLocal} from '../host/server.ts';
 import type {ProjectSnapshot} from '../src/host/contracts.ts';
-const snapshot:ProjectSnapshot={host:{protocolVersion:'1.1',hostKind:'local',platform:'test',projectRoot:'/project',capabilities:{readProject:true,writeConfig:false,build:false,preview:false,watchFiles:false}},session:{projectId:'id',displayName:'project',projectRoot:'/project',sourceState:'unknown',configFileState:'unknown',binaryState:'unknown',mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
+const snapshot:ProjectSnapshot={host:{protocolVersion:'1.2',hostKind:'local',platform:'test',projectRoot:'/project',capabilities:{readProject:true,writeConfig:false,build:false,preview:false,watchFiles:false}},session:{projectId:'id',displayName:'project',projectRoot:'/project',sourceState:'unknown',configFileState:'unknown',binaryState:'unknown',mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
 test('loopback host skeleton, narrow routes, exact Origin and body rejection',async t=>{
  const server=createHostServer({snapshot:()=>snapshot,refresh:async()=>snapshot},'http://127.0.0.1:5173');await listenLocal(server,0);t.after(()=>new Promise<void>(r=>server.close(()=>r())));
  const address=server.address();assert.ok(address&&typeof address!=='string');assert.equal(address.address,'127.0.0.1');const base=`http://127.0.0.1:${address.port}`;
- const headers={Origin:'http://127.0.0.1:5173','X-ARCH-Studio':'1','X-ARCH-Protocol':'1.1'};
+ const headers={Origin:'http://127.0.0.1:5173','X-ARCH-Studio':'1','X-ARCH-Protocol':'1.2'};
  assert.equal((await fetch(base+'/api/project',{headers})).status,200);
  assert.equal((await fetch(base+'/api/project')).status,403);
  assert.equal((await fetch(base+'/api/project',{headers:{...headers,Origin:'http://evil.example'}})).status,403);

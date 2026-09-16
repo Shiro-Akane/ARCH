@@ -7,12 +7,12 @@ export function validateSnapshot(value:unknown):ProjectSnapshot {
  if(!record(value)||!record(value.host)||!record(value.session))throw new Error('Malformed Local Host response');
  const h=value.host,s=value.session;
  if(h.protocolVersion!==PROTOCOL_VERSION)throw new Error('Local Host version is incompatible with this Studio build.');
- if(h.hostKind!=='local'||!text(h.platform)||!text(h.projectRoot)||!record(h.capabilities)||h.capabilities.readProject!==true||typeof h.capabilities.writeConfig!=='boolean'||h.capabilities.build!==false||h.capabilities.preview!==false||h.capabilities.watchFiles!==false)throw new Error('Malformed Local Host capabilities');
+ if(h.hostKind!=='local'||!text(h.platform)||!text(h.projectRoot)||!record(h.capabilities)||h.capabilities.readProject!==true||typeof h.capabilities.writeConfig!=='boolean'||typeof h.capabilities.build!=='boolean'||h.capabilities.preview!==false||h.capabilities.watchFiles!==false)throw new Error('Malformed Local Host capabilities');
  if(!text(s.projectId)||!text(s.displayName)||s.projectRoot!==h.projectRoot||!date(s.openedAt)||!date(s.refreshedAt)||s.mapping!=='unknown'||s.metadata!=='unavailable'||!['missing','available','changed','unknown'].includes(String(s.sourceState))||!['missing','available','changed-externally','unknown'].includes(String(s.configFileState))||!['missing','available','unknown'].includes(String(s.binaryState)))throw new Error('Malformed Project Session');
  for(const [key,kind] of [['caseSource','case-source'],['parameterFile','parameter'],['executable','executable']]) {
   const f=s[key];if(f===undefined)continue;
   if(!record(f)||!text(f.relativePath)||f.relativePath.startsWith('/')||/[\\%:]/.test(f.relativePath)||f.relativePath.split('/').some(x=>!x||x==='.'||x==='..')||f.kind!==kind||typeof f.exists!=='boolean'||typeof f.changed!=='boolean'||(f.error!==undefined&&!text(f.error)))throw new Error('Malformed selected file identity');
-  if(f.exists&&(!Number.isSafeInteger(f.size)||Number(f.size)<0||Number(f.size)>64*1024*1024||!date(f.modifiedTime)||typeof f.sha256!=='string'||!/^[a-f0-9]{64}$/.test(f.sha256)))throw new Error('Malformed selected file fingerprint');
+  if(f.exists&&(!Number.isSafeInteger(f.size)||Number(f.size)<0||Number(f.size)>(kind==='executable'?512:64)*1024*1024||!date(f.modifiedTime)||typeof f.sha256!=='string'||!/^[a-f0-9]{64}$/.test(f.sha256)))throw new Error('Malformed selected file fingerprint');
  }
  return value as unknown as ProjectSnapshot;
 }

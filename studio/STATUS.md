@@ -465,3 +465,36 @@ HTTP end-to-end tests cover exact text, strict protocol/fields, 413 limit, concu
 
 ## P2B-M9 complete
 Finite production-browser UAT verified explicit Load, 4->8 Save/Reload, 8->12 Revert, external-edit conflict without Refresh, Working Copy retention, rejected outside Save As, successful new current config and guarded Discard/Reload. Actual disk bytes/original preservation/temp cleanup checked on disposable copies. This is agent QA, not new human acceptance. Final tests 67/67, host subset 16/16, lint/typecheck/build/diff check PASS. README and PHASE2B_CONFIG_LIFECYCLE_REPORT.md document scope, algorithms and limitations. Target reviewed; Core/parser/root STATUS untouched. Local checkpoint studio-phase2b-v0.6.0; no push or Phase 2C.
+
+## P2C-M0 complete
+Phase 2B tag 71d97b0ff8de2d1d4924a71f5e19fa2b2d8d984e verified clean. Independent studio/phase2c-build-integration worktree created. Read-only audit confirmed original ARCH-linux source root and existing CUDA Release tree; Ninja dry-run regeneration is glob-check conservatism (all seven inventories match, no newer/missing regeneration inputs). User authorized managed project separate from Studio checkout, standard build including internal regeneration, no standalone configure. Unified ARCH binary/runtime registry; mapping configured only. Scope reviewed.
+
+## P2C-M1 complete
+Protocol 1.2 and typed Build/Profile/Event/Manifest/Provenance contracts added. Existing 67 tests and typecheck PASS. Build capability still false until runner validation. Scope reviewed against PHASE2C_TARGET.md and user M0 resolution.
+
+## P2C-M2 complete
+Host-owned existing CUDA profile, cache source/build binding validation, fixed /usr/bin/cmake argv runner, shell:false and allowlisted environment implemented. One active build per session enforced before async validation. Module-only test seams are not HTTP inputs. Profile/path/missing-CMake tests 2/2 and typecheck PASS. Scope reviewed; no ARCH build executed.
+
+## P2C-M3 complete
+Typed bounded polling endpoints expose latest build state and build-ID-scoped events. Logs strip terminal controls, split to 4096 characters/event and retain at most 256 Ki characters/1024 events with explicit truncation. Strict two-field Build request; no argv/env injection path. Focused tests 4/4 and typecheck PASS. Scope reviewed.
+
+## P2C-M4 complete
+Independent Build panel displays managed source root, profile paths/target, configured case identity, build result, bounded plain-text output and clear-view. Polling validates project/build IDs and sequences; reconnect disabled during active Build. No editor/Preview callbacks. Adapter/UI tests 4/4; lint/typecheck PASS. Scope reviewed.
+
+## P2C-M5 complete
+Success now requires exit 0, expected regular confined binary fingerprint and successful atomic manifest publication under ignored managed-project studio/.local. Manifest records pre/post inputs/binary, managed root, Git HEAD/repository dirty, profile hash, target/directory and timestamps. Failed attempts retain last successful manifest, including across service initialization. Process/manifest tests 3/3 and typecheck PASS. Scope reviewed.
+
+## P2C-M6 complete
+Freshness compares profile hash, saved binary and explicit tracked-input fingerprints. Changed tracked inputs (or unstable during-build snapshot) require build; incomplete dependency coverage and changed profile/binary stay unknown. Repository dirt and .par edits do not cause needs-build. Refresh updates only provenance. Focused tests 4/4 and typecheck PASS. Scope reviewed.
+
+## P2C-M7 complete
+Fixed selected-source endpoint uses confined no-follow bounded reads; UI provides plain read-only source and in-text search, no editor launch/file browser. Managed source/build/output paths and configured registry case identity shown separately from Studio checkout. Source/UI tests 4/4, lint/typecheck PASS. Scope reviewed.
+
+## P2C-M8 complete
+Security/concurrency tests reject command/args/cwd/env/shell/binary injection, unknown profile and stale event IDs; exercise spawn/nonzero/missing-output failure, bounded logs, symlink/cache binding and input changes during build. Fixed finish-before-freshness race; active reservation remains until provenance finalization. 77/77 tests, host subset 25/25, lint/typecheck/build PASS. Scope reviewed. Real Build not yet executed.
+
+## P2C-M9 complete
+Production UI initiated authorized real ARCH existing CUDA Release target ARCH with parallelism 4. Actual output: glob recheck, ninja no work to do; succeeded, binary and all 11 tracked inputs unchanged, manifest on disk. Repository dirty true correctly independent of freshness unknown. Dirty nblockx1=8 and old Mock Preview retained. Source viewer located real Sod registration. Isolated non-ARCH process fixture verified copied-source change -> needs-build, failed output/last success/editor/Preview preservation; concurrent requests returned 202/409. No simulation, standalone configure or Core edits. Scope reviewed.
+
+## P2C-M10 complete
+PHASE2C_BUILD_INTEGRATION_REPORT.md and README document managed/development checkout separation, real build/no-op evidence, manifest, truthful freshness and deferred limits. Final 78/78 tests, host subset 26/26, lint/typecheck/build/diff check PASS. Core/parser and original managed worktree status unchanged. Delivery limited to studio/; no runtime artifacts. Target and M0 resolution reviewed. Local checkpoint studio-phase2c-v0.7.0; no push, no Phase 2D.
