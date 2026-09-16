@@ -1,0 +1,1 @@
+{"module":"coupled_bd_rkl2_all_transport","runtime_wall_timeout_seconds":3600,"outer_guard_hours":24,"physics_changed":false,"samples_changed":false,"policy":"v3.1 prospective wall-budget adjustment; original first phase and prior failures retained"}

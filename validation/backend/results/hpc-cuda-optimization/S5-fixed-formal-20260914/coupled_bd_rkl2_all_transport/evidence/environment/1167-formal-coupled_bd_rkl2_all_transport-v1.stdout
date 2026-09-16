@@ -1,0 +1,216 @@
+TIMING_START coupled_bd_rkl2_all_transport_b8 warmup 0 baseline cpu t8
+TIMING_PASS 8.131125s
+TIMING_START coupled_bd_rkl2_all_transport_b8 warmup 0 baseline cuda t8
+TIMING_PASS 5.319356s
+TIMING_START coupled_bd_rkl2_all_transport_b8 warmup 0 candidate cpu t1
+TIMING_PASS 18.250417s
+TIMING_START coupled_bd_rkl2_all_transport_b8 warmup 0 candidate cpu t8
+TIMING_PASS 7.841703s
+TIMING_START coupled_bd_rkl2_all_transport_b8 warmup 0 candidate cpu t16
+TIMING_PASS 8.721358s
+TIMING_START coupled_bd_rkl2_all_transport_b8 warmup 0 candidate cuda t8
+TIMING_PASS 6.375922s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 0 baseline cpu t8
+TIMING_PASS 7.759547s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 0 baseline cuda t8
+TIMING_PASS 5.298539s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 0 candidate cpu t1
+TIMING_PASS 17.891004s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 0 candidate cpu t8
+TIMING_PASS 7.836519s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 0 candidate cpu t16
+TIMING_PASS 8.418703s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 0 candidate cuda t8
+TIMING_PASS 5.332272s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 1 candidate cuda t8
+TIMING_PASS 5.246562s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 1 candidate cpu t16
+TIMING_PASS 8.679453s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 1 candidate cpu t8
+TIMING_PASS 7.832912s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 1 candidate cpu t1
+TIMING_PASS 17.772808s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 1 baseline cuda t8
+TIMING_PASS 5.375111s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 1 baseline cpu t8
+TIMING_PASS 7.770230s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 2 baseline cpu t8
+TIMING_PASS 7.754698s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 2 baseline cuda t8
+TIMING_PASS 5.280126s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 2 candidate cpu t1
+TIMING_PASS 17.830113s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 2 candidate cpu t8
+TIMING_PASS 7.767927s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 2 candidate cpu t16
+TIMING_PASS 8.811537s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 2 candidate cuda t8
+TIMING_PASS 6.434925s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 3 candidate cuda t8
+TIMING_PASS 5.280715s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 3 candidate cpu t16
+TIMING_PASS 8.333144s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 3 candidate cpu t8
+TIMING_PASS 7.785189s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 3 candidate cpu t1
+TIMING_PASS 17.764948s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 3 baseline cuda t8
+TIMING_PASS 5.301518s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 3 baseline cpu t8
+TIMING_PASS 7.734700s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 4 baseline cpu t8
+TIMING_PASS 7.688716s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 4 baseline cuda t8
+TIMING_PASS 5.271482s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 4 candidate cpu t1
+TIMING_PASS 17.771647s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 4 candidate cpu t8
+TIMING_PASS 7.734117s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 4 candidate cpu t16
+TIMING_PASS 8.881693s
+TIMING_START coupled_bd_rkl2_all_transport_b8 measured 4 candidate cuda t8
+TIMING_PASS 6.215717s
+TIMING_START coupled_bd_rkl2_all_transport_b32 warmup 0 baseline cpu t8
+TIMING_PASS 50.618780s
+TIMING_START coupled_bd_rkl2_all_transport_b32 warmup 0 baseline cuda t8
+TIMING_PASS 14.500777s
+TIMING_START coupled_bd_rkl2_all_transport_b32 warmup 0 candidate cpu t1
+TIMING_PASS 214.052993s
+TIMING_START coupled_bd_rkl2_all_transport_b32 warmup 0 candidate cpu t8
+TIMING_PASS 51.429754s
+TIMING_START coupled_bd_rkl2_all_transport_b32 warmup 0 candidate cpu t16
+TIMING_PASS 41.214108s
+TIMING_START coupled_bd_rkl2_all_transport_b32 warmup 0 candidate cuda t8
+TIMING_PASS 14.496515s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 0 baseline cpu t8
+TIMING_PASS 50.928568s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 0 baseline cuda t8
+TIMING_PASS 14.604672s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 0 candidate cpu t1
+TIMING_PASS 216.525944s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 0 candidate cpu t8
+TIMING_PASS 54.604815s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 0 candidate cpu t16
+TIMING_PASS 41.398645s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 0 candidate cuda t8
+TIMING_PASS 14.492864s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 1 candidate cuda t8
+TIMING_PASS 14.487964s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 1 candidate cpu t16
+TIMING_PASS 62.134821s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 1 candidate cpu t8
+TIMING_PASS 51.864709s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 1 candidate cpu t1
+TIMING_PASS 213.333566s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 1 baseline cuda t8
+TIMING_PASS 14.813909s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 1 baseline cpu t8
+TIMING_PASS 49.901215s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 2 baseline cpu t8
+TIMING_PASS 49.224386s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 2 baseline cuda t8
+TIMING_PASS 14.629424s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 2 candidate cpu t1
+TIMING_PASS 215.286855s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 2 candidate cpu t8
+TIMING_PASS 55.388514s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 2 candidate cpu t16
+TIMING_PASS 41.214892s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 2 candidate cuda t8
+TIMING_PASS 14.614141s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 3 candidate cuda t8
+TIMING_PASS 14.483581s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 3 candidate cpu t16
+TIMING_PASS 52.995758s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 3 candidate cpu t8
+TIMING_PASS 50.757640s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 3 candidate cpu t1
+TIMING_PASS 215.460090s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 3 baseline cuda t8
+TIMING_PASS 14.737542s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 3 baseline cpu t8
+TIMING_PASS 51.442207s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 4 baseline cpu t8
+TIMING_PASS 49.978887s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 4 baseline cuda t8
+TIMING_PASS 14.603759s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 4 candidate cpu t1
+TIMING_PASS 218.778025s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 4 candidate cpu t8
+TIMING_PASS 50.864486s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 4 candidate cpu t16
+TIMING_PASS 40.487495s
+TIMING_START coupled_bd_rkl2_all_transport_b32 measured 4 candidate cuda t8
+TIMING_PASS 14.509068s
+TIMING_START coupled_bd_rkl2_all_transport_b128 warmup 0 baseline cpu t8
+TIMING_PASS 562.596381s
+TIMING_START coupled_bd_rkl2_all_transport_b128 warmup 0 baseline cuda t8
+TIMING_PASS 83.364331s
+TIMING_START coupled_bd_rkl2_all_transport_b128 warmup 0 candidate cpu t1
+TIMING_PASS 2692.440588s
+TIMING_START coupled_bd_rkl2_all_transport_b128 warmup 0 candidate cpu t8
+TIMING_PASS 563.613803s
+TIMING_START coupled_bd_rkl2_all_transport_b128 warmup 0 candidate cpu t16
+TIMING_PASS 420.234797s
+TIMING_START coupled_bd_rkl2_all_transport_b128 warmup 0 candidate cuda t8
+TIMING_PASS 83.691612s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 0 baseline cpu t8
+TIMING_PASS 563.044438s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 0 baseline cuda t8
+TIMING_PASS 83.803901s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 0 candidate cpu t1
+TIMING_PASS 2697.976021s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 0 candidate cpu t8
+TIMING_PASS 564.665429s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 0 candidate cpu t16
+TIMING_PASS 424.241326s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 0 candidate cuda t8
+TIMING_PASS 82.853860s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 1 candidate cuda t8
+TIMING_PASS 83.346980s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 1 candidate cpu t16
+TIMING_PASS 421.613286s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 1 candidate cpu t8
+TIMING_PASS 563.559122s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 1 candidate cpu t1
+TIMING_PASS 2697.671280s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 1 baseline cuda t8
+TIMING_PASS 87.498019s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 1 baseline cpu t8
+TIMING_PASS 563.767314s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 2 baseline cpu t8
+TIMING_PASS 561.807483s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 2 baseline cuda t8
+TIMING_PASS 83.498412s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 2 candidate cpu t1
+TIMING_PASS 2735.361891s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 2 candidate cpu t8
+TIMING_PASS 568.766269s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 2 candidate cpu t16
+TIMING_PASS 423.554466s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 2 candidate cuda t8
+TIMING_PASS 86.633518s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 3 candidate cuda t8
+TIMING_PASS 84.284013s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 3 candidate cpu t16
+TIMING_PASS 424.795981s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 3 candidate cpu t8
+TIMING_PASS 566.870235s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 3 candidate cpu t1
+TIMING_PASS 2717.935904s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 3 baseline cuda t8
+TIMING_PASS 83.303019s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 3 baseline cpu t8
+TIMING_PASS 561.453904s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 4 baseline cpu t8
+TIMING_PASS 562.670425s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 4 baseline cuda t8
+TIMING_PASS 83.241702s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 4 candidate cpu t1
+TIMING_PASS 2708.484060s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 4 candidate cpu t8
+TIMING_PASS 564.356664s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 4 candidate cpu t16
+TIMING_PASS 421.578585s
+TIMING_START coupled_bd_rkl2_all_transport_b128 measured 4 candidate cuda t8
+TIMING_PASS 83.007891s

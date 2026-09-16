@@ -1,0 +1,17 @@
+build/fix-20260914/release/bin/ARCH: OK
+build/fix-20260914/release/libarch_cuda_backend.a: OK
+build/fix-20260914/release/arch_cuda_single_level_validation: OK
+build/corrected-fused-20260914/release/bin/ARCH: OK
+build/corrected-fused-20260914/release/libarch_cuda_backend.a: OK
+build/corrected-fused-20260914/release/arch_cuda_single_level_validation: OK
+FIXED_TIMING_START formal coupled_bd_rkl2_all_transport wall_seconds=3600
+build/fix-20260914/release/bin/ARCH: OK
+build/fix-20260914/release/libarch_cuda_backend.a: OK
+build/fix-20260914/release/arch_cuda_single_level_validation: OK
+build/corrected-fused-20260914/release/bin/ARCH: OK
+build/corrected-fused-20260914/release/libarch_cuda_backend.a: OK
+build/corrected-fused-20260914/release/arch_cuda_single_level_validation: OK
+FIXED_TIMING_PASS formal coupled_bd_rkl2_all_transport wall_seconds=3600
+MEMORY_GUARD_RESULT min_available_kib=112573276 baseline_swap_kib=9256 peak_swap_kib=9256 guard_stopped=False peak_owned_rss_kib=1925632 elapsed_seconds=29424.943 stop_reason=none
+GPU_MEMORY_OBSERVATION scope=whole_device uuid=GPU-d302c354-a02b-11f1-b791-c76e9cfc2730 total_mib=20480 baseline_used_mib=0 peak_used_mib=4158 min_free_mib=15605 samples=27674 complete=True
+SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.000 peak_io_full_percent=5.527 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=27673 complete=True
