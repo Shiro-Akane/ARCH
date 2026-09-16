@@ -35,4 +35,7 @@ cudaError_t wave_normalize_columns(WaveKernelBatch batch, cudaStream_t stream);
 cudaError_t wave_normalize_rhs(WaveKernelBatch batch, bool correction, cudaStream_t stream);
 cudaError_t wave_denormalize_solution(WaveKernelBatch batch, bool correction, cudaStream_t stream);
 cudaError_t wave_original_residual(WaveKernelBatch batch, cudaStream_t stream);
+// Test-only static resource query, never called by the runtime provider.
+// Five entries in the function order above; not dynamic occupancy/spill timing.
+cudaError_t wave_kernel_attributes(cudaFuncAttributes (&attributes)[5]);
 } // namespace arch::cuda::experimental

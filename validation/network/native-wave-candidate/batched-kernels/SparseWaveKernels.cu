@@ -109,4 +109,14 @@ cudaError_t wave_denormalize_solution(WaveKernelBatch b, bool correction, cudaSt
 cudaError_t wave_original_residual(WaveKernelBatch b, cudaStream_t stream) {
     return launch(original_residual, b, stream);
 }
+cudaError_t wave_kernel_attributes(cudaFuncAttributes (&attributes)[5]) {
+    const void* functions[] = {reinterpret_cast<const void*>(normalize_rows),
+        reinterpret_cast<const void*>(normalize_columns), reinterpret_cast<const void*>(normalize_rhs),
+        reinterpret_cast<const void*>(denormalize_solution), reinterpret_cast<const void*>(original_residual)};
+    for (int i = 0; i < 5; ++i) {
+        const auto status = cudaFuncGetAttributes(&attributes[i], functions[i]);
+        if (status != cudaSuccess) return status;
+    }
+    return cudaSuccess;
+}
 } // namespace arch::cuda::experimental

@@ -174,6 +174,14 @@ void run(int n, int count, int scenario, bool all_active) {
 
 int main() {
     try {
+        cudaFuncAttributes attributes[5]{};
+        check_cuda(wave_kernel_attributes(attributes), "test-only kernel attributes");
+        for (int i = 0; i < 5; ++i)
+            std::cout << "WAVE_KERNEL_STATIC_RESOURCES index=" << i
+                      << " registers=" << attributes[i].numRegs
+                      << " local_bytes=" << attributes[i].localSizeBytes
+                      << " shared_bytes=" << attributes[i].sharedSizeBytes
+                      << " max_threads=" << attributes[i].maxThreadsPerBlock << '\n';
         int cases = 0;
         for (int n : {1, 151, 201, 513}) for (int capacity : {1, 2, 8, 32})
             for (int scenario : {0, 1, 2, 3}) for (bool all : {false, true}) {

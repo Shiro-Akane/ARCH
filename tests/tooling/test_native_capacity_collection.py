@@ -22,9 +22,13 @@ class CapacityCollectionTests(unittest.TestCase):
 
     def add_run(self, n=150, method='be_nr', pool=8):
         name = f'audit{n}-{method}-pool{pool}'
-        metrics = [f'{kind},1,{storage},{step},0,0,0' for storage in (32, 33)
+        method_id = {'be_nr': '1', 'bd': '2', 'ros4': '3'}[method]
+        metrics = [f'{kind},{method_id},{storage},{step},0,0,0' for storage in (32, 33)
                    for step in range(4) for kind in ('cpu_step', 'gpu_step')]
-        (self.output / (name + '.stdout')).write_text('\n'.join(metrics + ['GENERATED_SPARSE_BURN_PARITY_PASS']))
+        metrics += [f'metrics,{method_id},8,0,1e-15,1e-15,1e-5,{pool},1000']
+        controls = [f'controls,custom:audit{n},{n+1},1e7,3e9,1e-10,1e8,1e-7,4,selected_ode,{method_id}',
+                    f'storage_controls,32,33,{pool}']
+        (self.output / (name + '.stdout')).write_text('\n'.join(controls + metrics + ['GENERATED_SPARSE_BURN_PARITY_PASS']))
         self.record['commands'].append(dict(name=name, returncode=0, timed_out=False,
             command=['exe', '1e7', '3e9', '1e-10', '1e8', '1e-7', '4', '--ode', method,
                      '--storage-cells', '32', '33', '--pool-cells', str(pool), 'c12=0.5', 'o16=0.5']))
@@ -66,6 +70,21 @@ class CapacityCollectionTests(unittest.TestCase):
     def test_timed_out_command_cannot_be_passed(self):
         self.add_run()
         self.record['commands'][0]['timed_out'] = True
+        with self.assertRaises(ValueError):
+            collector.matrix_status(self.record, self.output, 1)
+
+    def test_wrong_runtime_method_rejected(self):
+        name = self.add_run(method='bd')
+        path = self.output / (name + '.stdout')
+        path.write_text(path.read_text().replace('selected_ode,2', 'selected_ode,1'))
+        with self.assertRaises(ValueError):
+            collector.matrix_status(self.record, self.output, 1)
+
+    def test_optimistic_pass_marker_does_not_override_original_budget(self):
+        name = self.add_run()
+        path = self.output / (name + '.stdout')
+        path.write_text(path.read_text().replace('metrics,1,8,0,1e-15', 'metrics,1,8,0,1e-5'))
+        self.record['runs'][0]['metrics'][-1] = self.record['runs'][0]['metrics'][-1].replace('1e-15', '1e-5', 1)
         with self.assertRaises(ValueError):
             collector.matrix_status(self.record, self.output, 1)
 

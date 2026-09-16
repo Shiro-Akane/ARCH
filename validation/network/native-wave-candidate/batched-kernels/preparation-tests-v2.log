@@ -1,0 +1,24 @@
+test_changed_or_shortened_trajectory_rejected (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_changed_or_shortened_trajectory_rejected) ... ok
+test_changed_transcript_rejected (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_changed_transcript_rejected) ... ok
+test_complete_matrix_requires_twelve (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_complete_matrix_requires_twelve) ... ok
+test_optimistic_pass_marker_does_not_override_original_budget (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_optimistic_pass_marker_does_not_override_original_budget) ... ok
+test_partial_success_not_complete (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_partial_success_not_complete) ... ok
+test_timed_out_command_cannot_be_passed (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_timed_out_command_cannot_be_passed) ... ok
+test_timeout_stays_failed (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_timeout_stays_failed) ... ok
+test_wrong_runtime_method_rejected (tests.tooling.test_native_capacity_collection.CapacityCollectionTests.test_wrong_runtime_method_rejected) ... ok
+test_all_guard_observations_must_be_complete (tests.tooling.test_native_factory_collection.CollectionContracts.test_all_guard_observations_must_be_complete) ... ok
+test_both_complete_reports_required (tests.tooling.test_native_factory_collection.CollectionContracts.test_both_complete_reports_required) ... ok
+test_duplicate_or_empty_manifest_is_rejected (tests.tooling.test_native_factory_collection.CollectionContracts.test_duplicate_or_empty_manifest_is_rejected) ... ok
+test_exit_code_is_required (tests.tooling.test_native_factory_collection.CollectionContracts.test_exit_code_is_required) ... ok
+test_failure_is_preserved_not_promoted (tests.tooling.test_native_factory_collection.CollectionContracts.test_failure_is_preserved_not_promoted) ... ok
+test_manifest_preserves_original_crlf_bytes (tests.tooling.test_native_factory_collection.CollectionContracts.test_manifest_preserves_original_crlf_bytes) ... ok
+test_missing_ode_cannot_pass (tests.tooling.test_native_factory_collection.CollectionContracts.test_missing_ode_cannot_pass) ... ok
+test_link_preserves_strict_flags_and_native_libraries (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_link_preserves_strict_flags_and_native_libraries) ... ok
+test_shared_numeric_leaves_and_bounded_launch (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_shared_numeric_leaves_and_bounded_launch) ... ok
+test_three_regions_only_and_same_contract_tail (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_three_regions_only_and_same_contract_tail) ... ok
+test_unreviewed_base_rejected (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_unreviewed_base_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.133s
+
+OK

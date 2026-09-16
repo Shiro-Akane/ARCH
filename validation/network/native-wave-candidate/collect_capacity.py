@@ -6,6 +6,7 @@ It never starts a test, changes a budget, or promotes a partial matrix to a pass
 """
 import argparse
 import json
+import math
 from pathlib import Path
 import re
 import shutil
@@ -40,14 +41,32 @@ def matrix_status(record, output, code):
         lines = (output / (name + '.stdout')).read_text().splitlines()
         if lines.count('GENERATED_SPARSE_BURN_PARITY_PASS') != 1:
             raise ValueError('missing/ambiguous completion marker')
+        method_id = {'be_nr': '1', 'bd': '2', 'ros4': '3'}[method]
+        controls = [line.split(',') for line in lines if line.startswith('controls,')]
+        if (len(controls) != 1 or len(controls[0]) != 11
+                or controls[0][1] != 'custom:' + name.split('-')[0]
+                or int(controls[0][2]) != int(name.split('-')[0][5:]) + 1
+                or [float(value) for value in controls[0][3:8]] != [1e7, 3e9, 1e-10, 1e8, 1e-7]
+                or controls[0][8:] != ['4', 'selected_ode', method_id]
+                or lines.count('storage_controls,32,33,' + pool) != 1):
+            raise ValueError('actual harness controls differ from the requested trajectory')
         metrics = [line for line in lines if line.startswith(('metrics,', 'gpu_step,', 'cpu_step,'))]
         if metrics != run['metrics']:
             raise ValueError('record/transcript mismatch')
         for kind in ('cpu_step', 'gpu_step'):
+            if any(v.split(',')[1] != method_id for v in metrics if v.startswith(kind + ',')):
+                raise ValueError('wrong ODE actually executed')
             keys = [(int(v.split(',')[2]), int(v.split(',')[3]))
                     for v in metrics if v.startswith(kind + ',')]
             if keys != [(storage, step) for storage in (32, 33) for step in range(4)]:
                 raise ValueError('incomplete or reordered physical trajectory')
+        aggregate = [line.split(',') for line in metrics if line.startswith('metrics,')]
+        if (len(aggregate) != 1 or len(aggregate[0]) != 9 or aggregate[0][1] != method_id
+                or aggregate[0][7] != pool):
+            raise ValueError('missing original aggregate field/limiter result')
+        for value, bound in zip(aggregate[0][4:6], (2e-10, 2e-8)):
+            if not math.isfinite(float(value)) or not 0 <= float(value) <= bound:
+                raise ValueError('original field/limiter budget exceeded')
         passed.add(name)
     if code == 0 and (record['status'] != 'passed' or passed != expected):
         raise ValueError('worker success without all twelve complete harnesses')
