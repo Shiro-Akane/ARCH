@@ -1,3 +1,7 @@
+# Core initial-preview interface
+
+ARCH now provides a CPU-only initial-preview command for local Host integration. See [the interface README](../src/api/README.md) for build steps, stdin/JSON calls, EOS/grid/AMR state, limits and response examples. This delivers the Core entry point; wiring it into Studio remains a separate frontend/Host change. The sections below describe the existing Studio UI checkpoint.
+
 # Current Phase 1A checkpoint
 
 Real local 1D ARCH Plotfiles are now supported alongside the preserved Phase 0 Mock workspace. Select **Real Plotfile → Open Plotfile**, open `tests/fixtures/sod-1d.h5`, select an actual field, then click the plot or enter a sample number to inspect x/value. Files are read locally and read-only; maximum file size is 16 MiB. Only simple uniform 1D data is supported. Build/Start/Monitor remain disabled.

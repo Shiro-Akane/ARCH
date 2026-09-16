@@ -57,8 +57,16 @@ public:
             return false;
         }
 
+        return Load(file, filename);
+    }
+
+    // The application API uses the same parser for an unsaved working copy.
+    bool Load(std::istream &input, const std::string &source = "<memory>")
+    {
+        parameters.clear();
+
         std::string line;
-        while (std::getline(file, line))
+        while (std::getline(input, line))
         {
             // 1. Strip comments (content after '#')
             size_t commentPos = line.find('#');
@@ -81,7 +89,7 @@ public:
                 parameters[key] = value;
             }
         }
-        std::cout << "[Info] Loaded " << parameters.size() << " parameters from " << filename << std::endl;
+        std::cout << "[Info] Loaded " << parameters.size() << " parameters from " << source << std::endl;
         return true;
     }
 

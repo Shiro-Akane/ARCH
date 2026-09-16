@@ -1,0 +1,193 @@
+# ARCH 本地应用接口
+
+本目录集中管理 GUI 等本地工具调用 ARCH 的接口。当前提供 **1.0 版初始状态预览**，由现有 `ARCH` 可执行程序提供，不需要单独的服务进程。
+
+## 当前提供什么
+
+- 支持已注册的 **一维 Cartesian Sod**；直接调用 `SodProblem::Setup/Init`。
+- 使用 CPU 生成显示采样。配置中的 `compute_backend=cuda` 不会触发设备检测或 CUDA 初始化。
+- 接收尚未保存的 `.par` 文本，返回坐标、密度、压力、温度、速度和能量。
+- 同时返回 EOS、基础网格、AMR 配置、已注册组分及各阶段状态。
+- 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制 Sod 公式。
+- 不进入时间推进，不建立 AMR 层级，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
+
+当前没有二维预览、实际 AMR 细化布局、参数读取追踪、位置标记或拖动绑定。能力查询会明确返回这些限制。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
+
+这里的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
+
+## CPU 构建
+
+使用现有 ARCH CPU 构建流程即可。例如在项目根目录：
+
+```sh
+cmake -S . -B build-studio-cpu \
+  -DARCH_ENABLE_CUDA=OFF \
+  -DARCH_RUNTIME_OUTPUT_DIRECTORY="$PWD/build-studio-cpu/bin"
+cmake --build build-studio-cpu --target ARCH -j 1
+```
+
+依赖与普通 ARCH CPU 构建相同：C++20、HDF5、HighFive，以及所选构建选项需要的依赖。仅验证预览时，可在配置命令中增加 `-DARCH_ENABLE_KLU=OFF`，避免为大反应网络准备 KLU。已有 CPU 构建目录可以直接更新和重新编译。
+
+该命令入口在创建科学输出目录、启动持久日志和解析计算后端之前分流。GUI 预览固定使用 CPU；它不修改配置中对正式计算后端的选择。
+
+## 调用方式
+
+### 查询当前程序能力
+
+```sh
+build-studio-cpu/bin/ARCH --preview-capabilities
+```
+
+返回一个 JSON 对象，包括 `schemaVersion`、支持的模型和维度、EOS 输入名称、字段列表、数量限制，以及 `amrHierarchy`、`parameterTracing`、`markers` 等能力开关。
+
+`eosTypes` 是 `.par` 接受的名称：`ideal`、`helmholtz`、`tabular`。表格 EOS 由实际数据确定为 `tabular3d` 或 `tabular4d`。能力列表说明可调用的现有 CPU 路径；具体数据是否加载成功、输入是否在 EOS 的适用范围内，以本次请求结果为准。
+
+### 生成预览
+
+```sh
+build-studio-cpu/bin/ARCH --preview Sod --config-stdin \
+  --samples 512 --request-id preview-001 < simulation/Sod/Sod.par
+```
+
+Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，然后关闭 stdin。上面的重定向仅用于手动试验，不要求用户先保存文件。
+
+- `--config-stdin` 必须提供。输入是原始 `.par` 文本，不是 JSON。
+- `--samples` 可省略，默认 512，允许 2–4096。
+- `--request-id` 可省略，原样回传，最多 128 UTF-8 字节。
+- 配置最多 1 MiB，必须为不含 NUL 的 UTF-8；参数名称、重复键和默认值规则沿用现有解析器。
+- 参数文本不会自动保存，也不会改变当前文件关联。
+- **工作目录由 Host 设为所管理项目的运行目录。** EOS 相对路径仍相对于该工作目录解析，不相对于临时文件目录。接口不自动切换目录，也不改写配置中的路径。
+- stdout 只返回一个完整 JSON 对象及换行。应同时收集 stderr；底层库可能向其报告错误。
+- 每个进程处理一次请求。Host 负责超时、取消和终止进程；未正常退出或未收到完整响应时，不接纳结果。
+
+接口不需要 WebSocket、HTTP 或 SSH。本地 Host 可以使用已有的进程管理方式调用。
+
+## 响应结构
+
+成功和执行失败使用同一份快照结构：
+
+```text
+schemaVersion: "1.0"
+kind: "initial-state-preview"
+status: "ok" | "error"
+stage: input | configuration | support | setup | eos | sampling | complete
+identity: { requestId, caseId, configRevision }
+execution: { previewBackend, simulationReadiness, timeStepping, scientificOutput }
+state: { configuration, setup, grid, amr, eos, species, computeBackendRequested }
+data: { dimension, kind, sampling, axes, fields } | null
+diagnostics: [{ severity, code, message }]
+```
+
+`configRevision` 是 **实际收到的原始 UTF-8 字节**的 SHA-256。换行、注释或空格变化也会改变摘要。Host 可与提交前的摘要比较，用于丢弃过期结果。
+
+可直接查看实际程序生成的响应样例：
+
+- [Sod 成功响应](examples/sod.json)：使用 `simulation/Sod/Sod.par`，4 个采样点。
+- [EOS 文件缺失响应](examples/missing-eos.json)：同一输入末尾追加 `eos_type = helmholtz` 和 `eos_table_path = missing-eos-table.dat`。保留已确认的网格和 AMR 配置，场数据为 `null`。
+
+命令参数、编码、输入大小等错误可能发生在请求建立之前，此时 `identity/state/data` 为 `null`，也可能没有 `execution`。配置解析失败时，`state.configuration=not_loaded`；解析成功后的错误尽量保留已确认的状态，`data` 仍为 `null`。`status=error` 不发布部分曲线。
+
+### 场数据
+
+当前 `dimension=1`、`kind=line`。
+
+- `axes` 是坐标轴列表，目前只有 `x1`，包含 `name/unit/values`。
+- `sampling.kind=uniform`、`valueLocation=init-sample`、`position=bin-center`。
+- 采样坐标为 `x1_min + (i + 0.5) * (x1_max - x1_min) / count`，不采两端边界。
+- `shape=[count]`、`order=x1-fastest`；字段与坐标按相同顺序排列。
+- `fields` 是列表，每项包含 `key/displayName/unit/values/min/max`。前端按 `key` 匹配，不依赖列表顺序。
+
+| key | 含义 |
+|---|---|
+| DENS | 密度 |
+| PRES | 由初始守恒状态和实际 EOS 得到的压力 |
+| TEMP | 由同一状态和 EOS 得到的温度 |
+| VELX | x 方向速度 |
+| ENER | 单位体积的总能量，包含动能 |
+| EINT | 单位质量的内能 |
+
+当前所有 `unit` 均为 `null`，表示接口没有提供可靠单位标签。前端保持原始值，不自行标为 SI、CGS 或无量纲。数值以 double 精度输出，所有成功样本均为有限数值；出现无效数据时整个请求失败。
+
+### EOS 状态
+
+`state.eos` 包含：
+
+- `requested`：配置选择的 EOS 名称。
+- `resolved`：本次解析出的策略名称，解析前为 `null`。
+- `status`：`not_loaded/ready/error`。`ready` 表示 EOS 已构造，不等于之后所有采样成功，仍要检查顶层 `status`。
+- `configuredGamma`：配置中的 gamma；并不表示所有 EOS 都使用一个固定 gamma。
+- `tablePath/componentTablePath`：配置中的表文件选择。
+- `loadedTablePath`：已成功加载的主表路径，去除配置引号；相对路径仍相对于进程工作目录。理想气体为 `null`。
+- `sourceFingerprint`：加载器绑定的数据身份；理想气体为 `null`。组合表的摘要可能包含多个文件与解释规则，不应一律当成单个文件的摘要。
+
+`state.species` 返回本次 Setup 实际注册的 `{index,name}` 列表，尚未完成 Setup 时为 `null`。当前不返回完整组分场。
+
+### 基础网格状态
+
+`state.grid.status=configured` 表示描述来自已解析配置，`hierarchy=not_constructed` 表示本次没有分配实际网格。
+
+`geometry/dimension` 描述模型区域。各轴返回：`min/max`、`rootBlocks`、`activeCellsPerBlock`、`rootCells`、`coordinateSpacing`、两端边界条件，以及尚未提供的 `unit=null`。
+
+基础单元数使用 **当前编译程序**的有效块尺寸计算，不包含 ghost 或内存填充单元。调整 `--samples` 只调整显示采样，不改变这些网格设置。
+
+### AMR 状态
+
+`state.amr` 返回配置是否开启细化、最低/最高级别、阈值、重建间隔及块数量上限。
+
+- `requestedIndicators`：解析后的请求名称文本。
+- `parsedIndicators`：经过现有解析器开关筛选后的指标；尚未执行实际指标求值，组分指标也尚未绑定到实际细化网格。
+- `maxBlocks`：原配置值；`effectiveMaxBlocks`：按照现有调度规则解释后的上限。
+- `indicatorEvaluation=not_executed`。
+- `initialRefinement=not_executed`。
+- `actualHierarchy=null`。
+
+前端可以显示“AMR 配置已读取；本次未生成细化网格”。不要把 `null` 显示成零块或零级。
+
+## 错误与日志
+
+| 退出码 | 主要错误码 | 含义 |
+|---|---|---|
+| 0 | — | 完整响应成功 |
+| 2 | INVALID_REQUEST | 命令参数、输入编码、大小或数量错误 |
+| 3 | INVALID_CONFIGURATION | 配置解析或当前预览所需的基础检查失败 |
+| 4 | UNSUPPORTED_PREVIEW | 未支持的模型、维度、坐标系或 restart 请求 |
+| 5 | SETUP_FAILED / EOS_FAILED | 模型准备或 EOS 加载失败 |
+| 6 | INITIALIZATION_FAILED | 初始采样、数据转换或数值检查失败 |
+
+`diagnostics` 中 `severity` 为 `info/warning/error`。`CORE_LOG` 保存现有核心的文本报告，不作为前端解析接口；每个日志通道最多保留 16 KiB，截断时提供 `LOG_TRUNCATED`。完整响应限制为 8 MiB。
+
+部分现有解析规则会使用默认值，预览与正式配置读取保持一致。本版本没有逐项参数来源追踪，也不提供完整模拟配置审查。错误文字用于展示，前端逻辑按退出码、`status/stage` 和稳定错误码处理。
+
+## Host 与前端接入
+
+1. 使用最后一次成功编译且与已跟踪输入匹配的 ARCH 程序。
+2. 查询能力后提交当前参数文本，并记录配置摘要和请求 ID。
+3. 给结果关联 Host 自己管理的 project/profile/build ID 和可执行文件指纹。本接口没有另一个 helper，不新增另一套构建身份。
+4. 检查退出码、JSON 版本、请求 ID 和配置摘要，再接纳结果。
+5. 参数、源码或构建发生变化后，把旧图和旧状态一起标记过期。旧请求较晚返回时丢弃；不能将旧 EOS 状态与新参数混在一起。
+6. 失败或取消保留编辑内容及旧图。只有完整成功响应才能成为新的当前预览。
+
+本协议与 Studio Host 的协议版本独立。前端可以先使用曲线和基础摘要，其余信息按需显示。客户端应忽略未知可选字段；不支持的主版本应明确拒绝。后续增加模型、字段或可选元数据时优先保持 1.x 的现有含义。
+
+## 文件与验证
+
+| 文件 | 负责内容 |
+|---|---|
+| Preview.h | 请求、结果和数量限制 |
+| Preview.cpp | 初始化、状态快照、数据检查和结果组织 |
+| PreviewCommand.cpp | 命令选项、stdin 和 stdout 边界 |
+| Json.h | 内部 JSON 输出工具 |
+| ../core/InitialStateConversion.h | 正式网格初始化和预览共用的数据转换 |
+
+测试入口：
+
+```sh
+cmake --build build-studio-cpu --target ARCH arch_preview_initial_conversion -j 1
+ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
+```
+
+`preview_api_contract` 使用实际 ARCH 程序测试配置修改、默认值、CPU 预览与 CUDA 请求分离、EOS 加载和错误、AMR 状态、输入限制，以及无文件输出。安装了 `h5dump` 时，还会在独立临时目录运行一次普通 ARCH 的零步初始化，将正式初始输出与预览在相同坐标上的结果比较。该输出只由测试对照流程生成，预览实现不读取它。
+
+`preview_initial_conversion` 检查压力和温度两种初始化输入共用的转换，以及内存参数解析。测试源位于 `tests/api/`。
+
+本次交付在 Linux CPU Debug 构建中验证，CUDA 和 KLU 关闭。测试覆盖理想气体、实际 Helmholtz 表加载、正式初始输出对照，以及失败和输入边界。表格 EOS 复用现有加载和求值路径，本次接口测试覆盖其缺失文件错误；具体科学表与模型组合仍需随对应算例验证。

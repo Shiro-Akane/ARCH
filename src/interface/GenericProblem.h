@@ -37,6 +37,12 @@ public:
      */
     GenericProblemGenerator(SetupFunc s, InitFunc i) : user_setup(s), user_init(i) {}
 
+    void SampleInitialPrimitive(const PointCoords &point, PrimitiveData &data) const override
+    {
+        if (!user_init) throw std::logic_error("Missing problem initializer");
+        user_init(point, data);
+    }
+
     /**
      * @brief Invokes the registered callback to configure the simulation and species.
      */
@@ -78,6 +84,11 @@ class TypedProblemGenerator : public ProblemGenerator
 
 public:
     TypedProblemGenerator() = default;
+
+    void SampleInitialPrimitive(const PointCoords &point, PrimitiveData &data) const override
+    {
+        user_model.Init(point, data);
+    }
 
     void Setup(SimConfig &config, SpeciesManager &specs) override
     {

@@ -2,6 +2,7 @@
 # Target ownership stays in the project directory, including when tests are off.
 
 set(APP_SRC_DIRS
+    "src/api"
     "src/core"
     "src/physics"
     "src/numerics"

@@ -13,6 +13,7 @@
 #include <stdexcept>
 
 #include "ProblemHelper.h"
+#include "InitialStateConversion.h"
 
 #include "../amr/AMRControl.h"
 #include "../amr/AmrDefines.h"
@@ -182,24 +183,12 @@ namespace ProblemHelper
 
                                 init_callback(p, data);
 
-                                b.fluid_state.rho[idx] = data.rho;
-                                b.fluid_state.mom_u[idx] = data.rho * data.u;
-                                b.fluid_state.mom_v[idx] = data.rho * data.v;
-                                b.fluid_state.mom_w[idx] = data.rho * data.w;
-                                if (data.has_temperature) {
-                                    const double specific_internal_energy = eos.get_eint_from_T(
-                                        data.rho, data.temperature, data.mass_fractions.data());
-                                    if (!std::isfinite(specific_internal_energy)) {
-                                        throw std::runtime_error("EOS returned non-finite internal energy for temperature-based initialization.");
-                                    }
-                                    const double kinetic_energy = 0.5 * data.rho *
-                                        (data.u * data.u + data.v * data.v + data.w * data.w);
-                                    b.fluid_state.eng[idx] = data.rho * specific_internal_energy + kinetic_energy;
-                                } else {
-                                    b.fluid_state.eng[idx] = eos.get_total_energy_primitive(
-                                        data.rho, data.u, data.v, data.w, data.p,
-                                        data.mass_fractions.data());
-                                }
+                                const FluidVector state = InitialConservedState(data, eos);
+                                b.fluid_state.rho[idx] = state.rho;
+                                b.fluid_state.mom_u[idx] = state.mom_u;
+                                b.fluid_state.mom_v[idx] = state.mom_v;
+                                b.fluid_state.mom_w[idx] = state.mom_w;
+                                b.fluid_state.eng[idx] = state.eng;
 
                                 for (int s = 0; s < n_species; ++s)
                                     b.fluid_state.X(s, idx) = data.mass_fractions[s];
