@@ -1,0 +1,20 @@
+test_longer_trajectory_does_not_change_accuracy_or_initial_state (test_sparse_capacity_recipe.SparseCapacityRecipeTests.test_longer_trajectory_does_not_change_accuracy_or_initial_state) ... ok
+test_original_gate_command_preserved (test_sparse_capacity_recipe.SparseCapacityRecipeTests.test_original_gate_command_preserved) ... ok
+test_timeout_preserves_pre_run_artifacts_and_native_build_limits (test_sparse_capacity_recipe.SparseCapacityRecipeTests.test_timeout_preserves_pre_run_artifacts_and_native_build_limits) ... ERROR
+test_wall_budget_is_finite_and_bounded (test_sparse_capacity_recipe.SparseCapacityRecipeTests.test_wall_budget_is_finite_and_bounded) ... ok
+test_wall_budget_is_separate_from_physical_trajectory (test_sparse_capacity_recipe.SparseCapacityRecipeTests.test_wall_budget_is_separate_from_physical_trajectory) ... ok
+
+======================================================================
+ERROR: test_timeout_preserves_pre_run_artifacts_and_native_build_limits (test_sparse_capacity_recipe.SparseCapacityRecipeTests.test_timeout_preserves_pre_run_artifacts_and_native_build_limits)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_sparse_capacity_recipe.py", line 93, in test_timeout_preserves_pre_run_artifacts_and_native_build_limits
+    capacity.main()
+  File "C:\tmp\ARCH-perf-20260909\validation\network\run_sparse_capacity.py", line 124, in main
+    raise RuntimeError('ambiguous object/provider binding')
+RuntimeError: ambiguous object/provider binding
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.051s
+
+FAILED (errors=1)
