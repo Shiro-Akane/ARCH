@@ -18,6 +18,7 @@ class LaunchOverlayTests(unittest.TestCase):
         self.original = (DIRECTORY.parent / 'CuDssSparseWaveSolver.cpp').read_bytes()
 
     def test_three_regions_only_and_same_contract_tail(self):
+        self.assertEqual(len(builder.KERNEL_COMBINATIONS), 128)
         changed, regions = prepare.transform(self.original)
         self.assertEqual(len(regions), 3)
         anchor = b'    if (!p.analyzed)'

@@ -29,7 +29,7 @@ inactive 和 factor-only lane 不得写物理解。
    ABI header 不变；准备工具通过不等于编译通过。
 2. `test_wave_kernels.cpp` 对原／新 CUDA kernel 做逐字节比较：
    extent 1/151/201/513，容量 1/2/8/32，全部／部分 active，正常／大尺度差／NaN／Inf。
-   比较全部私有缓冲、物理解和状态，检查 inactive 哨兵与原输入不变，共 256 个组合。
+   比较全部私有缓冲、物理解和状态，检查 inactive 哨兵与原输入不变，共 128 个组合。
    该测试不是独立物理 oracle，也不是 sanitizer。
 3. 重跑 v4 的 151/201 × 容量 1/2/8/32 provider 合同，包括因子复用、初始空槽、
    混合 factor-only、失效恢复、别名／主机指针拒绝及负例失败分类。
@@ -45,8 +45,17 @@ inactive 和 factor-only lane 不得写物理解。
 
 已准备串行控制配方：完整 v4 capacity → 归档／本机全字节核验 → 独立候选编译／合同。
 任一容量失败或保全失败都会阻止后续构建；不自动重启失败的服务器实验。
-冻结候选输入包为 68,096 bytes，SHA
-`9fcfb256409b6591cc5e00bb04ea22748a1de29e869403621ccb257bc3609e25`。
+旧准备包为 68,096 bytes，SHA
+`9fcfb256409b6591cc5e00bb04ea22748a1de29e869403621ccb257bc3609e25`；
+准备检查发现它把 4×4×4×2 错算为 256（实际 128），**该包从未上传或执行**。
+原包与失败工具测试日志保留。新版完成条件从组合全集推导数量，并逐个核对组合，
+不通过重复运行／重复计数凑足错误的数字；物理代码及测试组合本身未缩减。
+修正后的准备包为 68,608 bytes，SHA
+`0417c3246d42cc77b56cc1d83e057cb6d90cf02529b8b5fee8402f81159e839b`。
+`count-check-failure-v1.log` 保留首次合成归档测试的计数失败；
+`count-check-fixed-v2.log` 记录修正后 8 个工具测试通过（0.136 s），不是 GPU 验证。
+`collect_contracts.py` 会在实际服务器任务结束后保留失败或成功结果，
+并要求 128 个不同组合、8 个 provider 合同及产物身份一致；目前尚未执行实际归档。
 其中改动的 provider SHA 为
 `0b478540e0b736bc7f201657341f16222bfd3d42351ce0031f4bcf3337bcc865`，
 公开 ABI header 与已编译 factory 相同。

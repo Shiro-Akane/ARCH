@@ -1,0 +1,13 @@
+test_complete_synthetic_matrix (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_complete_synthetic_matrix) ... ok
+test_failed_command_not_promoted (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_failed_command_not_promoted) ... ok
+test_missing_artifact_not_promoted (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_missing_artifact_not_promoted) ... ok
+test_missing_case_cannot_hide_behind_count (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_missing_case_cannot_hide_behind_count) ... ok
+test_link_preserves_strict_flags_and_native_libraries (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_link_preserves_strict_flags_and_native_libraries) ... ok
+test_shared_numeric_leaves_and_bounded_launch (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_shared_numeric_leaves_and_bounded_launch) ... ok
+test_three_regions_only_and_same_contract_tail (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_three_regions_only_and_same_contract_tail) ... ok
+test_unreviewed_base_rejected (tests.tooling.test_sparse_wave_launch_overlay.LaunchOverlayTests.test_unreviewed_base_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.136s
+
+OK

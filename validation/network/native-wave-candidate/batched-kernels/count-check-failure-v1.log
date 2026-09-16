@@ -1,0 +1,19 @@
+test_complete_synthetic_matrix (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_complete_synthetic_matrix) ... ERROR
+test_failed_command_not_promoted (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_failed_command_not_promoted) ... ok
+test_missing_artifact_not_promoted (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_missing_artifact_not_promoted) ... ok
+test_missing_case_cannot_hide_behind_count (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_missing_case_cannot_hide_behind_count) ... ok
+
+======================================================================
+ERROR: test_complete_synthetic_matrix (tests.tooling.test_wave_contract_collection.ContractCollectionTests.test_complete_synthetic_matrix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\tmp\ARCH-perf-20260909\tests\tooling\test_wave_contract_collection.py", line 34, in test_complete_synthetic_matrix
+    collector.require_complete(self.record, self.output)
+  File "C:\tmp\ARCH-perf-20260909\validation\network\native-wave-candidate\batched-kernels\collect_contracts.py", line 38, in require_complete
+    raise ValueError('missing/duplicate kernel execution combination')
+ValueError: missing/duplicate kernel execution combination
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.065s
+
+FAILED (errors=1)

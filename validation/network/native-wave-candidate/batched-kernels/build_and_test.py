@@ -19,6 +19,8 @@ ROOT = Path('/home/ubuntu/projects/ARCH-native-wave-v4-20260916')
 HOST_MEMBER = 'CuDssSparseWaveSolver.cpp.o'
 CUDA_MEMBER = 'SparseWaveKernels.cu.o'
 BASE_PROVIDER = '699e13a64c93b1322118f692c7d488f2b29a4360e669d285ff8405f3db67cd5f'
+KERNEL_COMBINATIONS = {(n, p, s, a) for n in (1, 151, 201, 513)
+                       for p in (1, 2, 8, 32) for s in range(4) for a in (0, 1)}
 
 
 def sha(path):
@@ -158,10 +160,13 @@ def main():
              private, out / 'kernel-test', out / 'provider-test')}
         run('kernel-matrix', [str(out / 'kernel-test')], timeout=300)
         lines = (out / 'kernel-matrix.stdout').read_text().splitlines()
-        if (len([line for line in lines if line.startswith('WAVE_KERNEL_BITWISE_PARITY_PASS ')]) != 256
-                or lines[-1] != 'WAVE_KERNEL_MATRIX_PASS cases=256 scope=execution-equivalence-not-nuclear-or-performance'):
+        expected_lines = {f'WAVE_KERNEL_BITWISE_PARITY_PASS extent={n} capacity={p} scenario={s} all_active={a}'
+                          for n, p, s, a in KERNEL_COMBINATIONS}
+        results = [line for line in lines if line.startswith('WAVE_KERNEL_BITWISE_PARITY_PASS ')]
+        if (len(results) != len(expected_lines) or set(results) != expected_lines or not lines
+                or lines[-1] != f'WAVE_KERNEL_MATRIX_PASS cases={len(KERNEL_COMBINATIONS)} scope=execution-equivalence-not-nuclear-or-performance'):
             raise ValueError('missing complete kernel matrix')
-        record['tests']['kernel-matrix'] = dict(passed=True, cases=256)
+        record['tests']['kernel-matrix'] = dict(passed=True, cases=len(KERNEL_COMBINATIONS))
         for extent in (151, 201):
             for capacity in (1, 2, 8, 32):
                 name = f'provider-n{extent}-c{capacity}'
