@@ -1,0 +1,25 @@
+test_matching_attestations (__main__.BackupGate.test_matching_attestations) ... ok
+test_mismatches_rejected (__main__.BackupGate.test_mismatches_rejected) ... ok
+test_after_identity_not_fabricated (__main__.FailureGate.test_after_identity_not_fabricated) ... ok
+test_changed_lane_inventory_rejected (__main__.FailureGate.test_changed_lane_inventory_rejected) ... ok
+test_completed_report_rejected (__main__.FailureGate.test_completed_report_rejected) ... ok
+test_earlier_failure_rejected (__main__.FailureGate.test_earlier_failure_rejected) ... ok
+test_failed_comparison_rejected (__main__.FailureGate.test_failed_comparison_rejected) ... ok
+test_inspected_failure_accepted (__main__.FailureGate.test_inspected_failure_accepted) ... ok
+test_other_guard_cause_rejected (__main__.FailureGate.test_other_guard_cause_rejected) ... ok
+test_success_exit_rejected (__main__.FailureGate.test_success_exit_rejected) ... ok
+test_wrong_interrupted_lane_rejected (__main__.FailureGate.test_wrong_interrupted_lane_rejected) ... ok
+test_existing_destination_rejected (__main__.Storage.test_existing_destination_rejected) ... ok
+test_modified_original_rejected (__main__.Storage.test_modified_original_rejected) ... ok
+test_outside_root_rejected (__main__.Storage.test_outside_root_rejected) ... ok
+test_overlapping_inventory_rejected (__main__.Storage.test_overlapping_inventory_rejected) ... ok
+test_partial_move_has_recovery_journal (__main__.Storage.test_partial_move_has_recovery_journal) ... ok
+test_prefix_inventory_keeps_control_last (__main__.Storage.test_prefix_inventory_keeps_control_last) ... ok
+test_raw_byte_identity (__main__.Storage.test_raw_byte_identity) ... ok
+test_relocation_preserves_every_byte (__main__.Storage.test_relocation_preserves_every_byte) ... ok
+test_unexpected_prefix_rejected (__main__.Storage.test_unexpected_prefix_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.146s
+
+OK

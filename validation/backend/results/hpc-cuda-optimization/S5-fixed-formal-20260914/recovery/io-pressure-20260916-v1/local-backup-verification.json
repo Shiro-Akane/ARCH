@@ -1,0 +1,19 @@
+{
+  "status": "failed_attempt_backup_identity_verified",
+  "scientific_validation_complete": false,
+  "raw": {
+    "bytes": 18076049,
+    "sha256": "19f502879195af86717968734de9701b1fbba74d79b6683fb0b49a61f006df87"
+  },
+  "compact": {
+    "bytes": 612944,
+    "sha256": "d4bdd1283687574d9a26d41ff7b397cc8fd083ec90e02f160efed431904a0fa0"
+  },
+  "raw_manifest_files": 878,
+  "projected_files": 541,
+  "omitted_files": 337,
+  "completed_runs": 80,
+  "incomplete_runs": 1,
+  "comparisons_recorded": 77,
+  "samples_may_be_mixed_with_retry": false
+}

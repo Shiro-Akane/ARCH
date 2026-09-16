@@ -84,6 +84,10 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 恢复到原容量门槛后接续后四组，没有重跑前七组或降低护栏；
 详见 [实际操作与身份记录](storage/capacity-recovery-20260915-v1/README.md)。
 
+ROS4／RKL1 首轮随后在 80 条完成运行之后触发原系统 I/O 压力护栏，未计入正式通过总数。
+完整保全、双端备份、迁移旧目录及安静检查后，按同一冻结协议从头重跑全部样本；
+不把首轮与重试拼接。详见 [I/O 护栏中止与接续记录](recovery/io-pressure-20260916-v1/README.md)。
+
 ## 已有计时字段的派生分析
 
 [regrid 调用区间分析](regrid-intervals-note.zh-CN.md) 汇总前三组已完成耦合算例的 90 条既有
