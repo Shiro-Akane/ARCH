@@ -1,0 +1,11 @@
+19d48b73319f890f651b67278287ac6df3d7316da9d8ebd26679c97daa0eaebc  /home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include/cudss_data_types.h
+typedef enum cudssStatus_t {
+    CUDSS_STATUS_SUCCESS,
+    CUDSS_STATUS_NOT_INITIALIZED,
+    CUDSS_STATUS_ALLOC_FAILED,
+    CUDSS_STATUS_INVALID_VALUE,
+    CUDSS_STATUS_NOT_SUPPORTED,
+    CUDSS_STATUS_EXECUTION_FAILED,
+    CUDSS_STATUS_INTERNAL_ERROR,
+    CUDSS_STATUS_IR_FAILED
+} cudssStatus_t;

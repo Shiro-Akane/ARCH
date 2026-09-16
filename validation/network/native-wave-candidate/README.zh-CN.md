@@ -1,6 +1,6 @@
 # 大网络原生批处理候选：开发中，未编译／未启用／未验收
 
-2026-09-15。本目录为隔离执行层候选，不在生产 CMake、网络注册表或当前正式计时中启用。
+2026-09-15；2026-09-16 收紧负向测试判据。本目录为隔离执行层候选，不在生产 CMake、网络注册表或当前正式计时中启用。
 服务器仍运行已冻结版本；本地没有 C++／CUDA 编译器，当前只有代码准备，不能称合同测试通过。
 仓库原有 Python 架构审计 100 项通过，日志见 `existing-architecture-tests.log`；
 它只说明现有架构检查未被改变／破坏，不验证本目录 C++ 是否可编译或 CUDA 是否正确。
@@ -66,7 +66,7 @@ equilibration、原系统残差、最多两轮原系统修正均调用现有共�
 
 初版十二文件准备包遗漏该归一化头文件的显式清单锁定，尚未上传或编译；旧准备记录保留，
 由包含九个共享输入、共十三文件的新准备包取代。生产公式没有变化。
-当前十二项生成器测试通过，见 `overlay-recipe-tests-v2.log`；十三文件准备记录见
+此前十二项生成器测试通过，见 `overlay-recipe-tests-v2.log`；对应十三文件准备记录见
 `overlay-preparation-v2.json`。初版记录和十一项旧机械测试日志保留为历史证据。
 生成器测试只验证 SHA、输入依赖清单、重写边界、输出记录和拒绝覆盖等机械合同，
 不证明 C++ 可编译、ODE 行为正确或实际加速。
@@ -75,7 +75,7 @@ equilibration、原系统残差、最多两轮原系统修正均调用现有共�
 这是正确性测试设置，不计作性能结果。测试 provider 的析构先于借用的设备数组，
 其完成屏障也不能被 test fixture 的销毁顺序绕过。
 随后代码审阅补充了 test-only 传输完成 guard，覆盖 metadata 上传／结果下载途中异常的
-Host 和设备缓冲寿命；新 payload 以 `overlay-preparation-v3.json` 为准，v1/v2 保留。
+Host 和设备缓冲寿命；该次 payload 记录为 `overlay-preparation-v3.json`，v1/v2 保留。
 这个改动仍未经过真实 C++／CUDA 编译或故障注入，不当成安全资格通过。
 
 构建时需携带当前提交的 canonical `SparseEquilibration.cu/.h`、设备分配和共享残差头，
@@ -98,7 +98,7 @@ Host 和设备缓冲寿命；新 payload 以 `overlay-preparation-v3.json` 为�
 不接受无参数退出或只有 return code 0，必须出现匹配维度和容量的唯一完成标记。
 即使全部通过，状态也仅为 `standalone-provider-contracts-passed`，`release_qualified` 始终为 false。
 
-只在当前四组耦合计时和原 BE 长轨迹补测结束后，确认服务器空闲，再执行。
+只在全部冻结耦合计时和原 BE 长轨迹补测结束后，确认服务器空闲，再执行。
 必须外包现有 `tools/run_memory_guarded.py`（Host headroom 32768 MiB、swap growth 64 MiB、
 pressure guard、GPU memory observation），以及 10800 秒总 wall guard；一次只运行一个 GPU 作业。
 runner 参数为 `--build-dir`、`--recorded-link`、`--payload`、`--shared-manifest`、
@@ -119,3 +119,24 @@ runner 参数为 `--build-dir`、`--recorded-link`、`--payload`、`--shared-man
 十四项本机配方测试使用明确标记的合成记录，只测试拒绝旧输入、遗漏合同、改动产物、
 覆盖生产文件／失败现场等机械行为。它们不编译或调用 CUDA，不能算 GPU／ODE 验收；
 当前还没有用真实通过记录生成 factory overlay，服务器原采样队列未变化。
+
+## 2026-09-16：负向测试不能靠任意异常通过
+
+代码复核发现，旧测试的通用拒绝 helper 捕获任意 `std::exception`，奇异系统分支还捕获
+任意 `std::runtime_error`。虽然显式排除了 Host `bad_alloc`，CUDA／cuDSS 的资源或 API
+错误仍可能被误认成预期拒绝。旧 v1/v2/v3 尚未编译或运行，不存在可保留的 GPU 通过资格。
+
+当前仅收紧测试：输入合同必须是匹配原因的 `logic_error`；NaN／奇异系统检查返回的
+CUDA／库状态，不再吞掉任意运行异常。明确的内存分配、启动资源、非法地址、未初始化、
+不支持、API 参数及内部错误不计作负向通过。允许的 native execution／IR 失败及非零
+INFO 仍是 opaque 失败，不被解释为某种刚性或奇异性代码；后续正常矩阵恢复检查仍保留。
+枚举核对来自服务器原 cuDSS 0.8.0.10 的 `cudss_data_types.h`，没有升级或修改库。
+所读头文件 SHA-256 和枚举摘录保存在 `cudss-status-enum-evidence-v4.log`。
+
+测试内另加纯 Host 的合成分类检查，供之后编译后的同一测试程序实际执行；
+它们目前未运行，也不是 CUDA 内存耗尽／非法访问的真实故障注入。
+后续使用 `overlay-preparation-v4.json` 对应的十三文件 payload，旧包保留。
+v4 只改变 `test_sparse_wave.cpp`；provider、调度器、九个共享输入及科学容差不变。
+十三文件逐项回读及 v3/v4 差异核对见 `payload-identity-v4.log`。
+现有 38 项本机生成／构建配方回归通过（1.814 秒），见 `recipe-tests-v4.log`；
+这不执行新 C++ 分类检查、编译器或 GPU，不能算负向 CUDA 合同已通过。

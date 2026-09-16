@@ -2,12 +2,14 @@
 #include "CuDssSparseWaveSolver.h"
 #include "cuda/common/DeviceAllocation.h"
 #include "numerics/linalg/CsrMatrixView.h"
+#include <cudss.h>
 #include <algorithm>
 #include <climits>
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -17,14 +19,84 @@ using namespace arch::cuda::experimental;
 using Op = SparseWaveOperation;
 namespace {
 void require(bool ok, const char* message) { if (!ok) throw std::runtime_error(message); }
-template<class F> void rejected(F&& f, const char* message, const char* expected_reason = nullptr) {
+template<class F> void rejected(F&& f, const char* message, const char* expected_reason) {
     bool failed = false;
     try { f(); }
-    catch (const std::bad_alloc&) { throw; } // Resource exhaustion is not a passing negative contract.
-    catch (const std::exception& error) {
-        failed = expected_reason == nullptr || std::string(error.what()).find(expected_reason) != std::string::npos;
+    catch (const std::logic_error& error) {
+        if (std::string(error.what()).find(expected_reason) == std::string::npos) throw;
+        failed = true;
     }
+    // Runtime/allocator/CUDA failures must escape and fail the whole test.
     require(failed, message);
+}
+bool numeric_rejection(const CuDssResult& result) {
+    // Used only for the deliberately malformed matrices below. Opaque INFO
+    // is not interpreted as a particular singularity or an ODE stiffness code.
+    // The provider maps its shared invalid-arithmetic flag to InvalidValue.
+    require(result.cuda_status == cudaSuccess || result.cuda_status == cudaErrorInvalidValue,
+        "negative contract encountered an unexpected CUDA execution/resource failure");
+    require(result.library_status == CUDSS_STATUS_SUCCESS
+        || result.library_status == CUDSS_STATUS_EXECUTION_FAILED
+        || result.library_status == CUDSS_STATUS_IR_FAILED,
+        "negative contract encountered an unexpected cuDSS API/resource failure");
+    return !result.success();
+}
+void verify_negative_gate() {
+    rejected([] { throw std::invalid_argument("expected input rejection"); },
+        "negative gate missed its expected logic error", "expected input rejection");
+    bool escaped = false;
+    try {
+        rejected([] { throw std::runtime_error("synthetic runtime failure"); },
+            "runtime failure was accepted", "expected input rejection");
+    } catch (const std::runtime_error& error) {
+        escaped = std::string(error.what()) == "synthetic runtime failure";
+    }
+    require(escaped, "negative gate swallowed an infrastructure exception");
+    escaped = false;
+    try {
+        rejected([] { throw std::bad_alloc(); },
+            "allocation failure was accepted", "expected input rejection");
+    } catch (const std::bad_alloc&) { escaped = true; }
+    require(escaped, "negative gate swallowed Host allocation failure");
+    escaped = false;
+    try {
+        rejected([] { throw std::invalid_argument("wrong input reason"); },
+            "wrong rejection was accepted", "expected input rejection");
+    } catch (const std::logic_error& error) {
+        escaped = std::string(error.what()) == "wrong input reason";
+    }
+    require(escaped, "negative gate accepted the wrong rejection reason");
+    for (auto status : {cudaErrorMemoryAllocation, cudaErrorLaunchOutOfResources,
+                        cudaErrorLaunchFailure, cudaErrorIllegalAddress}) {
+        CuDssResult result;
+        result.cuda_status = status;
+        escaped = false;
+        try { (void)numeric_rejection(result); }
+        catch (const std::runtime_error&) { escaped = true; }
+        require(escaped, "negative gate credited a CUDA infrastructure failure");
+    }
+    for (auto status : {CUDSS_STATUS_NOT_INITIALIZED, CUDSS_STATUS_ALLOC_FAILED,
+                        CUDSS_STATUS_INVALID_VALUE, CUDSS_STATUS_NOT_SUPPORTED,
+                        CUDSS_STATUS_INTERNAL_ERROR}) {
+        CuDssResult result;
+        result.library_status = status;
+        escaped = false;
+        try { (void)numeric_rejection(result); }
+        catch (const std::runtime_error&) { escaped = true; }
+        require(escaped, "negative gate credited a cuDSS infrastructure failure");
+    }
+    require(!numeric_rejection({}), "negative gate rejected a successful result");
+    CuDssResult invalid;
+    invalid.cuda_status = cudaErrorInvalidValue;
+    require(numeric_rejection(invalid), "negative gate missed shared invalid arithmetic");
+    for (auto status : {CUDSS_STATUS_EXECUTION_FAILED, CUDSS_STATUS_IR_FAILED}) {
+        CuDssResult result;
+        result.library_status = status;
+        require(numeric_rejection(result), "negative gate missed an allowed native failure result");
+    }
+    CuDssResult info;
+    info.device_info = 1; // Opaque nonzero status, not a claimed singularity code.
+    require(numeric_rejection(info), "negative gate missed nonzero native INFO");
 }
 struct Stream {
     cudaStream_t value{};
@@ -145,20 +217,24 @@ template<int N> void run(int capacity) {
         && provider.statistics().native_solve_calls == before.native_solve_calls, "idle wave ran dummy work");
     auto malformed = tasks;
     malformed[0].operation = Op::SolveWithFactors;
-    rejected([&] { provider.execute(malformed); }, "cold factor reuse accepted");
+    rejected([&] { provider.execute(malformed); }, "cold factor reuse accepted",
+        "absent, stale, or relocated factor token");
     malformed = tasks; malformed[0].values = systems[0]->matrix.data();
-    rejected([&] { provider.execute(malformed); }, "host numeric input accepted");
+    rejected([&] { provider.execute(malformed); }, "host numeric input accepted",
+        "buffer must belong to the selected device");
     malformed = tasks; malformed[0].solution = const_cast<double*>(malformed[0].rhs);
-    rejected([&] { provider.execute(malformed); }, "RHS/output alias accepted");
+    rejected([&] { provider.execute(malformed); }, "RHS/output alias accepted",
+        "outputs overlap borrowed inputs/other outputs");
     malformed = tasks; malformed[0].solution = reinterpret_cast<double*>(device_rows.get());
     rejected([&] { provider.execute(malformed); }, "output/CSR metadata alias accepted",
         "output overlaps immutable CSR metadata");
     if (capacity > 1) {
         malformed = tasks; malformed[0].solution = malformed[1].solution;
-        rejected([&] { provider.execute(malformed); }, "cross-lane output alias accepted");
+        rejected([&] { provider.execute(malformed); }, "cross-lane output alias accepted",
+            "outputs overlap borrowed inputs/other outputs");
     }
     rejected([&] { provider.execute(std::span<const SparseWaveTask>(tasks.data(), capacity - 1)); },
-        "wrong wave length accepted");
+        "wrong wave length accepted", "task vector must match fixed capacity");
     // Initially unused slots must be private identity placeholders, not reads
     // from uninitialized per-lane matrices. Later activation must replace them.
     auto first_lane = tasks;
@@ -191,9 +267,10 @@ template<int N> void run(int capacity) {
     for (auto& s : systems) verify<N>(*s, rows, columns, stream.value);
     for (auto& t : tasks) t.operation = Op::SolveWithFactors;
     malformed = tasks; ++malformed[0].token;
-    rejected([&] { provider.execute(malformed); }, "stale token accepted");
+    rejected([&] { provider.execute(malformed); }, "stale token accepted",
+        "absent, stale, or relocated factor token");
     malformed = tasks; malformed[0].token = 0;
-    rejected([&] { provider.execute(malformed); }, "zero token accepted");
+    rejected([&] { provider.execute(malformed); }, "zero token accepted", "token zero is reserved");
     // No stale output publication when only one lane remains active.
     auto tail = tasks;
     for (int i = 1; i < capacity; ++i) tail[i] = {};
@@ -210,7 +287,7 @@ template<int N> void run(int capacity) {
     broken[0] = std::numeric_limits<double>::quiet_NaN();
     upload(broken, systems[0]->a_device.get(), stream.value);
     malformed = tasks; malformed[0].operation = Op::FactorizeAndSolve; malformed[0].token = 77;
-    rejected([&] { provider.execute(malformed).require_success(); }, "nonfinite factor accepted");
+    require(numeric_rejection(provider.execute(malformed)), "nonfinite factor accepted");
     upload(systems[0]->matrix, systems[0]->a_device.get(), stream.value);
     for (auto& t : tasks) { t.operation = Op::FactorizeAndSolve; t.token += 100; }
     provider.execute(tasks).require_success();
@@ -224,16 +301,12 @@ template<int N> void run(int capacity) {
     upload(singular, systems[0]->a_device.get(), stream.value);
     upload(singular_rhs, systems[0]->b_device.get(), stream.value);
     malformed = tasks; malformed[0].operation = Op::FactorizeAndSolve; malformed[0].token += 1000;
-    bool singular_rejected = false;
-    try {
-        const auto result = provider.execute(malformed);
-        if (!result.success()) singular_rejected = true;
-        else {
-            const auto x = download(systems[0]->x_device.get(), N, stream.value);
-            CsrMatrixView<N> a{rows.data(), columns.data(), singular.data(), static_cast<int>(columns.size()), true};
-            singular_rejected = !a.solution_accurate(singular_rhs.data(), x.data());
-        }
-    } catch (const std::runtime_error&) { singular_rejected = true; }
+    bool singular_rejected = numeric_rejection(provider.execute(malformed));
+    if (!singular_rejected) {
+        const auto x = download(systems[0]->x_device.get(), N, stream.value);
+        CsrMatrixView<N> a{rows.data(), columns.data(), singular.data(), static_cast<int>(columns.size()), true};
+        singular_rejected = !a.solution_accurate(singular_rhs.data(), x.data());
+    }
     require(singular_rejected, "singular inconsistent system was accepted");
     provider.invalidate();
     upload(systems[0]->matrix, systems[0]->a_device.get(), stream.value);
@@ -257,6 +330,7 @@ int main(int argc, char** argv) {
         const int n = std::stoi(argv[1]), capacity = std::stoi(argv[2]);
         require(n == 151 || n == 201, "unsupported manufactured extent");
         require(capacity >= 1 && capacity <= 32, "capacity outside 1..32");
+        verify_negative_gate(); // Synthetic classifier checks; still not a GPU fault injection.
         rejected([&] { CuDssSparseWaveSolver bad(0, 151, 451, nullptr, nullptr, nullptr); },
             "zero capacity accepted", "invalid bounded batch dimensions");
         rejected([&] { CuDssSparseWaveSolver bad(32, INT_MAX, INT_MAX, nullptr, nullptr, nullptr); },
