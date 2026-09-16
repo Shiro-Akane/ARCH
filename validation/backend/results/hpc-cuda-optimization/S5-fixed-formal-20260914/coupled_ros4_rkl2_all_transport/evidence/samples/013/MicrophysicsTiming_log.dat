@@ -1,0 +1,96 @@
+[Main] Console output is being recorded to log file: /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_ros4_rkl2_all_transport-v1/coupled_ros4_rkl2_all_transport_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_log.dat
+[Main] Parameters loaded from: /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_ros4_rkl2_all_transport-v1/coupled_ros4_rkl2_all_transport_b8/measured-1-candidate-cpu-t16/run.par
+[Main] Problem created: BurnGradient
+[Problem] Burn gradient: rho=1e+07, T_bg=5e+07, T_peak=3e+09, network=aprox13
+[Main] Configuration:
+       Grid: 128 cells, CFL: 0.3
+       Solver: HLLC
+       Species Count: 13
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[Dispatch] Initializing Data via Problem Generator...
+[EOS Dispatch] Resolving EOS Policy: helmholtz
+[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...
+[HelmEos] Loaded complete 541x201 electron/positron table.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.0078125
+    Level 1   | dx1(x): 0.00390625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+           -> Diffusion Solver Initialized: RKL2 (CFL_diff = 0.8)
+[Burn Dispatch] Resolving Network: aprox13 | ODE Solver: ros4 | Linear Solver: DenseLU
+[Burn Dispatch] Matrix backend: DenseLU (N=14)
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+[Dispatch] Performing initial AMR refinement loop...
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=16)
+[IO] Saved PLT: /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_ros4_rkl2_all_transport-v1/coupled_ros4_rkl2_all_transport_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_ros4_rkl2_all_transport-v1/coupled_ros4_rkl2_all_transport_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0000.h5 at step 0 with 8 AMR leaves.
+Step    Time           dt             dt_hydro       dt_burn        dt_diff        
+-----------------------------------------------------------------------------------
+[Diffusion] multi-block AMR uses composite RKL2 STS with stage ghost synchronization and reflux.
+1       1.00000e-16    1.00000e-16    4.59326e-12    5.00000e-17    1.92361e-09    
+2       3.00000e-16    2.00000e-16    2.29663e-12    1.00000e-16    4.75103e-10    
+3       7.00000e-16    4.00000e-16    2.29663e-12    2.00000e-16    4.75103e-10    
+4       1.50000e-15    8.00000e-16    2.29663e-12    4.00000e-16    4.75103e-10    
+5       3.10000e-15    1.60000e-15    2.29663e-12    8.00000e-16    4.75103e-10    
+6       6.30000e-15    3.20000e-15    2.29663e-12    1.60000e-15    4.75103e-10    
+7       1.27000e-14    6.40000e-15    2.29663e-12    3.20000e-15    4.75103e-10    
+8       2.55000e-14    1.28000e-14    2.29662e-12    6.40000e-15    4.75103e-10    
+9       5.11000e-14    2.56000e-14    2.29661e-12    1.28000e-14    4.75103e-10    
+10      1.02300e-13    5.12000e-14    2.29659e-12    2.56000e-14    4.75104e-10    
+11      2.04700e-13    1.02400e-13    2.29655e-12    5.12000e-14    4.75105e-10    
+12      4.09500e-13    2.04800e-13    2.29647e-12    1.02400e-13    4.75107e-10    
+13      8.19100e-13    4.09600e-13    2.29631e-12    2.04800e-13    4.75111e-10    
+14      1.63830e-12    8.19200e-13    2.29598e-12    4.09600e-13    4.75119e-10    
+15      3.27670e-12    1.63840e-12    2.29529e-12    8.19200e-13    4.75133e-10    
+16      5.57045e-12    2.29375e-12    2.29375e-12    1.14688e-12    4.75147e-10    
+17      7.86163e-12    2.29118e-12    2.29118e-12    1.14559e-12    4.75117e-10    
+18      1.01498e-11    2.28816e-12    2.28816e-12    1.14408e-12    4.74978e-10    
+19      1.24347e-11    2.28489e-12    2.28489e-12    1.14244e-12    4.74674e-10    
+20      1.47163e-11    2.28164e-12    2.28164e-12    1.14082e-12    4.74198e-10    
+21      1.69916e-11    2.27529e-12    2.27529e-12    1.13765e-12    4.73570e-10    
+22      1.92605e-11    2.26893e-12    2.26893e-12    1.13446e-12    4.72800e-10    
+23      2.15234e-11    2.26287e-12    2.26287e-12    1.13143e-12    4.71902e-10    
+24      2.37805e-11    2.25709e-12    2.25709e-12    1.12854e-12    4.70889e-10    
+25      2.60321e-11    2.25157e-12    2.25157e-12    1.12578e-12    4.69772e-10    
+26      2.82784e-11    2.24632e-12    2.24632e-12    1.12316e-12    4.68561e-10    
+27      3.05191e-11    2.24068e-12    2.24068e-12    1.12034e-12    4.67268e-10    
+28      3.27533e-11    2.23426e-12    2.23426e-12    1.11713e-12    4.65900e-10    
+29      3.49805e-11    2.22719e-12    2.22719e-12    1.11359e-12    4.64468e-10    
+30      3.72011e-11    2.22056e-12    2.22056e-12    1.11028e-12    4.62977e-10    
+31      3.94154e-11    2.21437e-12    2.21437e-12    1.10719e-12    4.61434e-10    
+32      4.16240e-11    2.20860e-12    2.20860e-12    1.10430e-12    4.59841e-10    
+33      4.38273e-11    2.20322e-12    2.20322e-12    1.10161e-12    4.58203e-10    
+34      4.60255e-11    2.19825e-12    2.19825e-12    1.09912e-12    4.56522e-10    
+35      4.82189e-11    2.19344e-12    2.19344e-12    1.09672e-12    4.54803e-10    
+36      5.04070e-11    2.18801e-12    2.18801e-12    1.09400e-12    4.53049e-10    
+37      5.25900e-11    2.18300e-12    2.18300e-12    1.09150e-12    4.51268e-10    
+38      5.47684e-11    2.17842e-12    2.17842e-12    1.08921e-12    4.49464e-10    
+39      5.69426e-11    2.17427e-12    2.17427e-12    1.08714e-12    4.47642e-10    
+40      5.91122e-11    2.16956e-12    2.16956e-12    1.08478e-12    4.45807e-10    
+41      6.12774e-11    2.16520e-12    2.16520e-12    1.08260e-12    4.43964e-10    
+42      6.34387e-11    2.16126e-12    2.16126e-12    1.08063e-12    4.42116e-10    
+43      6.55964e-11    2.15773e-12    2.15773e-12    1.07886e-12    4.40266e-10    
+44      6.77510e-11    2.15462e-12    2.15462e-12    1.07731e-12    4.38416e-10    
+45      6.99029e-11    2.15187e-12    2.15187e-12    1.07593e-12    4.36569e-10    
+46      7.20514e-11    2.14849e-12    2.14849e-12    1.07424e-12    4.34726e-10    
+47      7.41969e-11    2.14552e-12    2.14552e-12    1.07276e-12    4.32891e-10    
+48      7.63398e-11    2.14295e-12    2.14295e-12    1.07148e-12    4.31064e-10    
+49      7.84806e-11    2.14078e-12    2.14078e-12    1.07039e-12    4.29247e-10    
+50      8.06196e-11    2.13900e-12    2.13900e-12    1.06950e-12    4.27440e-10    
+51      8.27567e-11    2.13707e-12    2.13707e-12    1.06853e-12    4.25645e-10    
+52      8.48917e-11    2.13505e-12    2.13505e-12    1.06752e-12    4.23862e-10    
+53      8.70251e-11    2.13341e-12    2.13341e-12    1.06670e-12    4.22091e-10    
+54      8.91573e-11    2.13214e-12    2.13214e-12    1.06607e-12    4.20334e-10    
+55      9.12885e-11    2.13124e-12    2.13124e-12    1.06562e-12    4.18591e-10    
+56      9.34192e-11    2.13068e-12    2.13068e-12    1.06534e-12    4.16862e-10    
+57      9.55492e-11    2.13003e-12    2.13003e-12    1.06501e-12    4.15147e-10    
+58      9.76785e-11    2.12924e-12    2.12924e-12    1.06462e-12    4.13448e-10    
+59      9.98072e-11    2.12878e-12    2.12878e-12    1.06439e-12    4.11765e-10    
+60      1.00000e-10    1.92765e-13    2.12865e-12    9.63824e-14    4.10099e-10    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_ros4_rkl2_all_transport-v1/coupled_ros4_rkl2_all_transport_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_HLLC_plt_0001.h5 at t=1.00000e-10
+[IO] Saved CHK: /home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/timing/formal-coupled_ros4_rkl2_all_transport-v1/coupled_ros4_rkl2_all_transport_b8/measured-1-candidate-cpu-t16/MicrophysicsTiming_chk_0001.h5 at step 60 with 12 AMR leaves.
+>>> Simulation Done. Total Steps: 60 | Final Time: 1.00000e-10

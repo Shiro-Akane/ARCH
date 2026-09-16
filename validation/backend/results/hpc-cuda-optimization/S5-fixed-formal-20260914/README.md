@@ -1,6 +1,6 @@
 # 同一组分修复基线与 S5 候选：正式规模验证
 
-本阶段尚在执行，不是 11 模块全部完成的性能验收报告。
+本阶段 11／11 模块正式矩阵已完整通过；[阶段总表](all-modules-summary.zh-CN.md) 区分本轮性能结果与仍待完成的大网络优化。
 扩散 RKL1／RKL2 已完成正式 216 次运行、210 次字段与工作量比较，全部通过；
 详见 [扩散阶段汇总](diffusion-summary.zh-CN.md)。三种燃烧方法也已完成正式 324 次运行、315 次比较，
 全部通过，详见 [燃烧阶段汇总](burn-summary.zh-CN.md)。
@@ -9,7 +9,8 @@
 第三组 [BD＋RKL1 全输运耦合](coupled-bd-rkl1-summary.zh-CN.md) 也已完成 108 次运行、105 次比较及双端备份。
 第四组 [BD＋RKL2 全输运耦合](coupled-bd-rkl2-summary.zh-CN.md) 完成另外 108 次运行、105 次比较及双端备份。
 第五组 [ROS4＋RKL1 全输运耦合](coupled-ros4-rkl1-summary.zh-CN.md) 完成另外 108 次运行、105 次比较及双端备份。
-目前共 10／11 模块、1,080 次运行、1,050 次比较通过；最后一组 ROS4＋RKL2 正式计时仍在执行，不能提前标为全完成。
+第六组 [ROS4＋RKL2 全输运耦合](coupled-ros4-rkl2-summary.zh-CN.md) 也已完成 108 次运行、105 次比较及双端备份。
+合计 11／11 模块、1,188 次运行、1,155 次比较通过，不等于超大网络优化或 sanitizer 全部验收。
 两侧均应用经过数值验证的 coarse/fine 痕量组分闭合和 MUSCL 面归一化修复，
 不使用原来数值失败的 128 块耦合结果计算加速比。
 
@@ -49,7 +50,7 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 - 服务器候选树 `build/`；本机 `C:/tmp/ARCH-perf-20260909/build/`。
 - 包内 24 个文件，完整映射见 `products/manifest.json`；包外身份见 `products/archive.json`。
 
-已经保存产品和配方不代表 11 模块正式采样已完成。后续各模块的结果与失败将分别保留。
+完整采样及身份核验现已完成；各模块全部样本和独立失败记录均保留。
 超大网络性能及 vGPU sanitizer 限制仍单列，不用本阶段的内置网络结果覆盖。
 
 一次 SSH 连接重置后，已接回当时仍在运行的第一项耦合实验；该组现已完整结束、归档，后五项使用独立进程控制。
@@ -69,6 +70,7 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 这是存储及报告复核，不是新的独立物理或 sanitizer 验证。
 第四组及前九组的同类复核见 `integrity-audit-nine.json`；原队列自动接续后两组，未重采样。
 第五组及前十组全量回读见 `integrity-audit-ten.json`；只计入首轮 I/O 中止后重新完成的 108 条样本。
+第六组及十一组全量回读见 `integrity-audit-eleven.json`；原 BE 补测启动前另通过同范围的 `integrity-audit-all-pre-be.json`。
 `recipes/` 保存配方及八项含篡改负例的检查器测试。
 `git-blob-audit-diffusion.json` 另核对发布提交 `b80efc92` 两扩散目录的 1,438 个文件，
 本地原件与 Git blob 字节一致；原始大包的 SHA-256 校验单独记录。
@@ -91,7 +93,8 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 ROS4／RKL1 首轮随后在 80 条完成运行之后触发原系统 I/O 压力护栏，未计入正式通过总数。
 完整保全、双端备份、迁移旧目录及安静检查后，按同一冻结协议从头重跑全部样本；
 不把首轮与重试拼接。详见 [I/O 护栏中止与接续记录](recovery/io-pressure-20260916-v1/README.md)。
-重试现已全部通过并双端归档，原队列已接续 ROS4／RKL2。重试中的 SSH 暂时失联未中止独立 worker，未再次重跑样本。
+重试现已全部通过并双端归档，随后 ROS4／RKL2 也完整通过，原队列已接续 BE 长轨迹补测。
+重试中的 SSH 暂时失联未中止独立 worker，未再次重跑样本。
 
 ## 已有计时字段的派生分析
 
