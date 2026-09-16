@@ -1,0 +1,13 @@
+{
+  "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/standalone-raw-v1.tar.zst",
+  "bytes": 1148716,
+  "sha256": "c8800b600c7e745c3d61a16889b8791c200b754a3e809a507ef562a6e7dc6fc3",
+  "files": 70,
+  "status": "standalone-provider-contracts-passed",
+  "contracts": 8,
+  "ODE_qualified": false,
+  "application_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "external_dependencies_hash_only": 11
+}

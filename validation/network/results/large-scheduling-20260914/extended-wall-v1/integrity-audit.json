@@ -1,0 +1,138 @@
+{
+  "status": "collected_original_BE_matrix_and_bytes_verified",
+  "formal_speedup_qualified": false,
+  "full_Helm_application_qualified": false,
+  "independent_reaction_oracle": false,
+  "auditor_sha256": "6556a5121a32e42e91261ddf523a67b3304912d1b2d45aa086eb1254384f9fe0",
+  "raw_bytes": 21154280,
+  "compact_bytes": 39748,
+  "recorded_input_product_sha256": {
+    "ARCH-microphysics-20260914/build/p12-20260914/be-extended-wall-recipes-v1/validation/network/run_sparse_capacity.py": "ac8c012e71754548f19cdcd6929eb07fba0dc5959344a8801d8be87f039386e7",
+    "ARCH-microphysics-20260914/tests/cuda/test_generated_sparse_burn.cpp": "551d021ac6ce26378dff6823e135a499cc9bbdc76276a7612a45ef21b5cab205",
+    "ARCH-microphysics-20260914/build/p12-20260914/factor-cache/candidate-v2/libarch_cuda_sparse_provider.a": "24bb9be952ef34c68cd4ea65de498f0cd0de8bb70dc5419d6ef9d33ecf6b4fcd",
+    "ARCH-perf-20260909/build/large-network-20260909/release/compile_commands.json": "1e9fa83512f95fcad62194a45b654b784e977e04592b9c53666d089546ee1df1",
+    "ARCH-perf-20260909/build/large-network-20260909/release/CMakeFiles/arch_cuda_generated_sparse_burn_audit150.dir/tests/cuda/test_generated_sparse_burn_factory.cu.o": "7fa74571ae1334eee4e14c75ae89b94d5a5f0acdceaaa5617b0251092f29aff4",
+    "ARCH-microphysics-20260914/build/p12-20260914/factor-cache/long-be-extended-wall-v1/arch_cuda_generated_sparse_burn_audit150": "6da062dded8e770a353835760cb5fa8cda794ff5fa317b6a5c5a86eda7413a6c",
+    "ARCH-perf-20260909/build/large-network-20260909/release/CMakeFiles/arch_cuda_generated_sparse_burn_audit200.dir/tests/cuda/test_generated_sparse_burn_factory.cu.o": "67ccdf320e6214d4d2463ed4327e9d64ce4c8eb2eabc1196a299aaa0de89fe67",
+    "ARCH-microphysics-20260914/build/p12-20260914/factor-cache/long-be-extended-wall-v1/arch_cuda_generated_sparse_burn_audit200": "b07cf086aee8da5a85920801dbc25042ac9df29f5eda1eeea56effc86d8c287e"
+  },
+  "raw_sha256": "fbebcb08b34f4876f6625ea2c27944fb77c41e3eb3de9a753e239d7ff38104c7",
+  "compact_sha256": "5d8109bb24aeb02aac866d669f5392ab0b25b85c91d6510c1efc164533b6cc00",
+  "raw_files": 38,
+  "projected_files": 31,
+  "harnesses": [
+    {
+      "network": "audit150",
+      "capacity": 8,
+      "storage_cells": [
+        32,
+        33
+      ],
+      "steps_per_storage": 16,
+      "cpu_attempts": 318193,
+      "cpu_rejections": 4351,
+      "max_field_error": 1.0540686239923728e-14,
+      "max_limiter_error": 7.186727549888983e-15,
+      "max_abundance_evolution": 0.0006698012376694651,
+      "workspace_bytes_per_lane": 36060,
+      "diagnostic_cpu_seconds": 442.637760485,
+      "diagnostic_gpu_seconds": 5226.443499274,
+      "kernels": 3387854,
+      "synchronizations": 1374023,
+      "harness_wall_seconds": 5669.7437678810675
+    },
+    {
+      "network": "audit150",
+      "capacity": 32,
+      "storage_cells": [
+        32,
+        33
+      ],
+      "steps_per_storage": 16,
+      "cpu_attempts": 318193,
+      "cpu_rejections": 4351,
+      "max_field_error": 1.0540686239923728e-14,
+      "max_limiter_error": 7.186727549888983e-15,
+      "max_abundance_evolution": 0.0006698012376694651,
+      "workspace_bytes_per_lane": 36060,
+      "diagnostic_cpu_seconds": 449.718340152,
+      "diagnostic_gpu_seconds": 2726.735402123,
+      "kernels": 3269754,
+      "synchronizations": 1315125,
+      "harness_wall_seconds": 3177.593336832011
+    },
+    {
+      "network": "audit200",
+      "capacity": 8,
+      "storage_cells": [
+        32,
+        33
+      ],
+      "steps_per_storage": 16,
+      "cpu_attempts": 298476,
+      "cpu_rejections": 4339,
+      "max_field_error": 9.868707245895761e-15,
+      "max_limiter_error": 5.889650077396807e-15,
+      "max_abundance_evolution": 0.000670168070488919,
+      "workspace_bytes_per_lane": 48540,
+      "diagnostic_cpu_seconds": 638.490825397,
+      "diagnostic_gpu_seconds": 6226.136904722,
+      "kernels": 3178987,
+      "synchronizations": 1289341,
+      "harness_wall_seconds": 6865.377394129988
+    },
+    {
+      "network": "audit200",
+      "capacity": 32,
+      "storage_cells": [
+        32,
+        33
+      ],
+      "steps_per_storage": 16,
+      "cpu_attempts": 298476,
+      "cpu_rejections": 4339,
+      "max_field_error": 9.868707245895761e-15,
+      "max_limiter_error": 5.889650077396807e-15,
+      "max_abundance_evolution": 0.000670168070488919,
+      "workspace_bytes_per_lane": 48540,
+      "diagnostic_cpu_seconds": 638.501008698,
+      "diagnostic_gpu_seconds": 3610.14890087,
+      "kernels": 3068159,
+      "synchronizations": 1234047,
+      "harness_wall_seconds": 4249.755163107999
+    }
+  ],
+  "resource_observations": {
+    "MEMORY_GUARD_RESULT": {
+      "min_available_kib": "113118388",
+      "baseline_swap_kib": "9256",
+      "peak_swap_kib": "9256",
+      "guard_stopped": "False",
+      "peak_owned_rss_kib": "1360712",
+      "elapsed_seconds": "19991.672",
+      "stop_reason": "none"
+    },
+    "GPU_MEMORY_OBSERVATION": {
+      "scope": "whole_device",
+      "uuid": "GPU-d302c354-a02b-11f1-b791-c76e9cfc2730",
+      "total_mib": "20480",
+      "baseline_used_mib": "0",
+      "peak_used_mib": "16315",
+      "min_free_mib": "3448",
+      "samples": "18872",
+      "complete": "True"
+    },
+    "SYSTEM_PRESSURE_OBSERVATION": {
+      "scope": "linux_system",
+      "peak_memory_full_percent": "0.000",
+      "peak_io_full_percent": "0.504",
+      "peak_swap_in_mib_s": "0.000",
+      "peak_swap_out_mib_s": "0.000",
+      "memory_limit_percent": "20.0",
+      "io_limit_percent": "50.0",
+      "sustain_seconds": "10.0",
+      "samples": "18871",
+      "complete": "True"
+    }
+  }
+}

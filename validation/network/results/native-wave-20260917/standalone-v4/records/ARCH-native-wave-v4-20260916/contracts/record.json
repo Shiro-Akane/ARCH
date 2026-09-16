@@ -1,0 +1,490 @@
+{
+  "artifacts": {
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/CuDssSparseWaveSolver.cpp.o": "9c650c56103e5bce6a6458b665637196dd9780bb485c7bb752431d5e3364dff4",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/SparseEquilibration.cu.o": "0dd6140d6ebc66b6c9b74d8915088d51838e9b4523b30e3d74d66c2bf2e8b88d",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave": "1048fbc8609d27f17771505070e8cdcc06ed5195da55d873d6b05d18f9d3e8cd",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave.cpp.o": "492cdb5c0168259f658c578a4e5b89e6de164bcdb97dda7fcf8f1d17283f2404"
+  },
+  "command_timeouts": {
+    "build": 1800,
+    "contract": 300
+  },
+  "commands": [
+    {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=name,driver_version,memory.total",
+        "--format=csv"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "hardware",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 30,
+      "wall_seconds": 0.06560640409588814
+    },
+    {
+      "command": [
+        "/usr/bin/g++-11",
+        "--version"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "host-compiler",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 30,
+      "wall_seconds": 0.016820707824081182
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "--version"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "cuda-compiler",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 30,
+      "wall_seconds": 0.016932199941948056
+    },
+    {
+      "command": [
+        "uname",
+        "-a"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "kernel",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 30,
+      "wall_seconds": 0.011599316960200667
+    },
+    {
+      "command": [
+        "/usr/bin/g++-11",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src/cuda/microphysics",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_CUDSS_IR_STEPS=2",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/src",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/cases",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-march=native",
+        "-DNDEBUG",
+        "-std=gnu++20",
+        "-flto=auto",
+        "-fno-fat-lto-objects",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/CuDssSparseWaveSolver.cpp.o",
+        "-c",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src/cuda/microphysics/CuDssSparseWaveSolver.cpp"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release",
+      "name": "compile-provider",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 1800,
+      "wall_seconds": 1.570752372033894
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src/cuda/microphysics",
+        "-forward-unknown-to-host-compiler",
+        "-ccbin=/usr/bin/g++-11",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_CUDSS_IR_STEPS=2",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/src",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/cases",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-DNDEBUG",
+        "-std=c++20",
+        "--generate-code=arch=compute_90,code=[compute_90,sm_90]",
+        "--expt-relaxed-constexpr",
+        "--fmad=false",
+        "--ftz=false",
+        "--prec-div=true",
+        "--prec-sqrt=true",
+        "-Xcompiler=-fno-fast-math,-ffp-contract=off",
+        "-x",
+        "cu",
+        "-c",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src/cuda/microphysics/SparseEquilibration.cu",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/SparseEquilibration.cu.o"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release",
+      "name": "compile-shared-math",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 1800,
+      "wall_seconds": 2.926008776994422
+    },
+    {
+      "command": [
+        "/usr/bin/g++-11",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src/cuda/microphysics",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/src",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/cases",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-march=native",
+        "-DNDEBUG",
+        "-std=gnu++20",
+        "-flto=auto",
+        "-fno-fat-lto-objects",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave.cpp.o",
+        "-c",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/tests/cuda/test_sparse_wave.cpp"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release",
+      "name": "compile-test",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 1800,
+      "wall_seconds": 1.2697708688210696
+    },
+    {
+      "command": [
+        "/usr/bin/g++-11",
+        "-O3",
+        "-march=native",
+        "-DNDEBUG",
+        "-flto=auto",
+        "-fno-fat-lto-objects",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/CuDssSparseWaveSolver.cpp.o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/SparseEquilibration.cu.o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave.cpp.o",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "-L/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/stubs",
+        "-L/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib",
+        "-Wl,-rpath,/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib:/home/ubuntu/projects/.envs/arch/lib:/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib",
+        "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/candidate-v2/libarch_cuda_sparse_provider.a",
+        "_deps/suitesparse-build/KLU/libklu.a",
+        "_deps/suitesparse-build/AMD/libamd.a",
+        "_deps/suitesparse-build/COLAMD/libcolamd.a",
+        "_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+        "_deps/suitesparse-build/BTF/libbtf.a",
+        "-lm",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0",
+        "/home/ubuntu/projects/.envs/arch/lib/libcudart.so",
+        "-ldl",
+        "/usr/lib/x86_64-linux-gnu/librt.a",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12",
+        "/home/ubuntu/projects/.envs/arch/lib/libculibos.a",
+        "-lcudadevrt",
+        "-lcudart_static",
+        "-lrt",
+        "-lpthread",
+        "-ldl"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release",
+      "name": "link-test",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 1800,
+      "wall_seconds": 1.3701985361985862
+    },
+    {
+      "command": [
+        "ldd",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "dynamic-libraries",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 30,
+      "wall_seconds": 0.032775554805994034
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "151",
+        "1"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n151-c1",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.6671901720110327
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "151",
+        "2"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n151-c2",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.5695723141543567
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "151",
+        "8"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n151-c8",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.617261114064604
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "151",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n151-c32",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.6669864030554891
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "201",
+        "1"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n201-c1",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.5670049740001559
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "201",
+        "2"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n201-c2",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.5669500059448183
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "201",
+        "8"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n201-c8",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.617112159030512
+    },
+    {
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave",
+        "201",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts",
+      "name": "contract-n201-c32",
+      "returncode": 0,
+      "status": "passed",
+      "timeout": 300,
+      "wall_seconds": 0.6670983131043613
+    }
+  ],
+  "environment": {
+    "CUDA_VISIBLE_DEVICES": "0",
+    "LD_LIBRARY_PATH": null,
+    "OMP_NUM_THREADS": "8",
+    "OMP_PLACES": "cores",
+    "OMP_PROC_BIND": "close"
+  },
+  "identities_verified_after_run": true,
+  "inputs": {
+    "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/libcudart.so.12.8.90": "7b15fc50d4d6bc77dd66f64603d40d045545d92a7f1b38654389ad2b1e88de9e",
+    "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/libculibos.a": "385075313a7f493a9c4dd550683a11d812729e1645efae94dca2dec7ac4e6d45",
+    "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/candidate-v2/libarch_cuda_sparse_provider.a": "24bb9be952ef34c68cd4ea65de498f0cd0de8bb70dc5419d6ef9d33ecf6b4fcd",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/overlay-record.json": "138bb431933e3c4c15ba0eee5cbfcb778fe11f8720f1ce246e97089a755d1b80",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/recorded-link.json": "d87df76438acddc99a0a05fb0388c59721d2b68b44cfe0085694ddbd4fd3a81a",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/run_standalone_contracts.py": "25b351a92f2b3b58bc143abd594e56074fdd4f6d1a15601f2ebc68efd99604f3",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/shared-inputs.json": "f09dfef44710783aef6380e037c5021b9a88b84d594d3483b6c03f0f57332a2e",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/CMakeCache.txt": "727d8999a072030d61c62f763b9857b689def1d2d05066c08c07ae98d6d941d5",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/AMD/libamd.a": "21c303b2fa1a8e8ded3b0f04b4cceb89b58321e4ce19669b3df22e6daef2aa5d",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/BTF/libbtf.a": "70cf906aa61bda3b27cb344c0d025dffc5c11681ed8311bff59319ed0de7a7ca",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/COLAMD/libcolamd.a": "92498bdaf1a8b61586c517881c3afd3dc4773f721ab77cd77734bdc2e86dac8c",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/KLU/libklu.a": "e0c3c0722585286f95c4c2caf2f5fa7c011aa49562b8f061cb672100bfe0f250",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a": "f903ed420a097c4ddfde0ec5d75702a829f2b659768e9814d672a327ba68362b",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/compile_commands.json": "1e9fa83512f95fcad62194a45b654b784e977e04592b9c53666d089546ee1df1",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12": "5757ab5839fb4f203ca47ecb336110d10f4a5606b1e097f195fbca89774569e2",
+    "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12": "2c9006a75c74b3bea2dc7ae2ec38ab038b0e45ea02cb4b717a915e8a5796acb1",
+    "/usr/lib/x86_64-linux-gnu/librt.a": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+  },
+  "payload": {
+    "canonical_commit": "6534c969df1fc3a0ed5876c21467dd60d8d59c64",
+    "canonical_scheduler_sha256": "dc7d736d6845019e0537a0327bba57433be3b13771dbf8aa7bea9c814dbf179f",
+    "files": {
+      "src/core/ArchPortability.h": {
+        "bytes": 843,
+        "sha256": "2ac53f18180f32a2970ee1a660fd293975b4e7d6f2a98c1a23c686795b3e75e3"
+      },
+      "src/core/CompensatedSum.h": {
+        "bytes": 1588,
+        "sha256": "aa19747db6eb6a0c5c0469716167074e47316b96b73d4a09864533cc6a8f65c7"
+      },
+      "src/cuda/common/DeviceAllocation.h": {
+        "bytes": 3521,
+        "sha256": "3fade70271f3268e7f93d51a69ec79268f6971b2010454340d5fe06322993eaf"
+      },
+      "src/cuda/microphysics/CuDssSparseSolver.h": {
+        "bytes": 3340,
+        "sha256": "076e5f9d9e94deaf62a3f2e350e2352aaabb6fc42b56413017ce780bece3c569"
+      },
+      "src/cuda/microphysics/CuDssSparseWaveSolver.cpp": {
+        "bytes": 24232,
+        "sha256": "b0fae9269348dbc0bd7b3d15c93e999c3f2e3125bf7679d61cc094904cac385a"
+      },
+      "src/cuda/microphysics/CuDssSparseWaveSolver.h": {
+        "bytes": 2554,
+        "sha256": "990c313a0e0add56694c2c0b1576778eae82f22b35254b81b035a0724a99a671"
+      },
+      "src/cuda/microphysics/SparseEquilibration.cu": {
+        "bytes": 6430,
+        "sha256": "1e02463def9eb22c7ba34aed2cbfb2cbed82af1cc97504a61e6cfdecb03282cb"
+      },
+      "src/cuda/microphysics/SparseEquilibration.h": {
+        "bytes": 1258,
+        "sha256": "5b89ed2b3ac1961e939384ff5ebe86dd4bcbd1c48b569587db687f0287cc1d1e"
+      },
+      "src/cuda/microphysics/SparseOdeBatch.cuh": {
+        "bytes": 15134,
+        "sha256": "ae3cc59770f4b952a31ded69734fa80304e06665648d40ef173551fa28edbe58"
+      },
+      "src/numerics/linalg/CsrMatrixView.h": {
+        "bytes": 5114,
+        "sha256": "69169d605351ff52aeec43e86391cf375dfe7219626d6a4ea3d1057f4495e8c8"
+      },
+      "src/numerics/linalg/LinearEquilibration.h": {
+        "bytes": 1939,
+        "sha256": "e790951a514c59508961754f5a532cae41978e19180def88bcff07950f90e22f"
+      },
+      "src/numerics/linalg/SparseResidual.h": {
+        "bytes": 1979,
+        "sha256": "1495f3769a2bef808e524d19da1e2a61cb21a832c0bf16f7ce953d4bbcaa76b6"
+      },
+      "tests/cuda/test_sparse_wave.cpp": {
+        "bytes": 18533,
+        "sha256": "d9c769a9893cd1706ab6de8fcd62552d546e6c2586b315d447f745b77a414875"
+      }
+    },
+    "pending": null,
+    "recipe_sha256": "752151b642cfc18bd3ffadd926ad7991f7dabe6cb0cc5842d427908ca1cf10fe",
+    "release_qualified": false,
+    "scope": "test-only generated overlay; no compile or runtime",
+    "shared_manifest_sha256": "f09dfef44710783aef6380e037c5021b9a88b84d594d3483b6c03f0f57332a2e",
+    "status": "prepared_not_compiled_not_runtime_validated",
+    "unchanged_device_math_and_response_regions": true
+  },
+  "release_qualified": false,
+  "scope": "standalone-native-wave-provider-not-ODE-or-ARCH",
+  "status": "standalone-provider-contracts-passed",
+  "tests": {
+    "contract-n151-c1": {
+      "capacity": 1,
+      "extent": 151,
+      "passed": true
+    },
+    "contract-n151-c2": {
+      "capacity": 2,
+      "extent": 151,
+      "passed": true
+    },
+    "contract-n151-c32": {
+      "capacity": 32,
+      "extent": 151,
+      "passed": true
+    },
+    "contract-n151-c8": {
+      "capacity": 8,
+      "extent": 151,
+      "passed": true
+    },
+    "contract-n201-c1": {
+      "capacity": 1,
+      "extent": 201,
+      "passed": true
+    },
+    "contract-n201-c2": {
+      "capacity": 2,
+      "extent": 201,
+      "passed": true
+    },
+    "contract-n201-c32": {
+      "capacity": 32,
+      "extent": 201,
+      "passed": true
+    },
+    "contract-n201-c8": {
+      "capacity": 8,
+      "extent": 201,
+      "passed": true
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/libcudart.so.12.8.90": {
+    "resolved": "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/libcudart.so.12.8.90",
+    "bytes": 746033,
+    "sha256": "7b15fc50d4d6bc77dd66f64603d40d045545d92a7f1b38654389ad2b1e88de9e"
+  },
+  "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/libculibos.a": {
+    "resolved": "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/libculibos.a",
+    "bytes": 30794,
+    "sha256": "385075313a7f493a9c4dd550683a11d812729e1645efae94dca2dec7ac4e6d45"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/AMD/libamd.a": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/AMD/libamd.a",
+    "bytes": 196234,
+    "sha256": "21c303b2fa1a8e8ded3b0f04b4cceb89b58321e4ce19669b3df22e6daef2aa5d"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/BTF/libbtf.a": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/BTF/libbtf.a",
+    "bytes": 53402,
+    "sha256": "70cf906aa61bda3b27cb344c0d025dffc5c11681ed8311bff59319ed0de7a7ca"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/COLAMD/libcolamd.a": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/COLAMD/libcolamd.a",
+    "bytes": 118246,
+    "sha256": "92498bdaf1a8b61586c517881c3afd3dc4773f721ab77cd77734bdc2e86dac8c"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/KLU/libklu.a": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/KLU/libklu.a",
+    "bytes": 948576,
+    "sha256": "e0c3c0722585286f95c4c2caf2f5fa7c011aa49562b8f061cb672100bfe0f250"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+    "bytes": 33898,
+    "sha256": "f903ed420a097c4ddfde0ec5d75702a829f2b659768e9814d672a327ba68362b"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0",
+    "bytes": 149210177,
+    "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12",
+    "bytes": 105140976,
+    "sha256": "5757ab5839fb4f203ca47ecb336110d10f4a5606b1e097f195fbca89774569e2"
+  },
+  "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12": {
+    "resolved": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12",
+    "bytes": 749210000,
+    "sha256": "2c9006a75c74b3bea2dc7ae2ec38ab038b0e45ea02cb4b717a915e8a5796acb1"
+  },
+  "/usr/lib/x86_64-linux-gnu/librt.a": {
+    "resolved": "/usr/lib/x86_64-linux-gnu/librt.a",
+    "bytes": 8,
+    "sha256": "f0a17a43c74d2fe5474fa2fd29c8f14799e777d7d75a2cc4d11c20a6e7b161c5"
+  }
+}

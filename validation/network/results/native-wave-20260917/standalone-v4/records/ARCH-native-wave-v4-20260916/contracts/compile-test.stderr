@@ -1,0 +1,23 @@
+	Command being timed: "/usr/bin/g++-11 -I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src -I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/src/cuda/microphysics -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_CUDSS_PROVIDER=1 -DARCH_HAS_KLU=1 -I/home/ubuntu/projects/ARCH-perf-20260909/src -I/home/ubuntu/projects/ARCH-perf-20260909/cases -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/generated -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include -isystem /home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -o /home/ubuntu/projects/ARCH-native-wave-v4-20260916/contracts/test_sparse_wave.cpp.o -c /home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/payload/tests/cuda/test_sparse_wave.cpp"
+	User time (seconds): 1.17
+	System time (seconds): 0.08
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.26
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 162880
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 38748
+	Voluntary context switches: 7
+	Involuntary context switches: 15
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 2584
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0
