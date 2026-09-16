@@ -8,7 +8,8 @@
 第二组 [BE_NR＋RKL2 全输运耦合](coupled-be-rkl2-summary.zh-CN.md) 完成另外 108 次运行、105 次比较及双端备份。
 第三组 [BD＋RKL1 全输运耦合](coupled-bd-rkl1-summary.zh-CN.md) 也已完成 108 次运行、105 次比较及双端备份。
 第四组 [BD＋RKL2 全输运耦合](coupled-bd-rkl2-summary.zh-CN.md) 完成另外 108 次运行、105 次比较及双端备份。
-目前共 9／11 模块、972 次运行、945 次比较通过；其余两组 ROS4 耦合正式计时仍需完成，不能提前标为全完成。
+第五组 [ROS4＋RKL1 全输运耦合](coupled-ros4-rkl1-summary.zh-CN.md) 完成另外 108 次运行、105 次比较及双端备份。
+目前共 10／11 模块、1,080 次运行、1,050 次比较通过；最后一组 ROS4＋RKL2 正式计时仍在执行，不能提前标为全完成。
 两侧均应用经过数值验证的 coarse/fine 痕量组分闭合和 MUSCL 面归一化修复，
 不使用原来数值失败的 128 块耦合结果计算加速比。
 
@@ -67,6 +68,7 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 服务器独立 worker，未重跑该组；回执随第三组证据保留。
 这是存储及报告复核，不是新的独立物理或 sanitizer 验证。
 第四组及前九组的同类复核见 `integrity-audit-nine.json`；原队列自动接续后两组，未重采样。
+第五组及前十组全量回读见 `integrity-audit-ten.json`；只计入首轮 I/O 中止后重新完成的 108 条样本。
 `recipes/` 保存配方及八项含篡改负例的检查器测试。
 `git-blob-audit-diffusion.json` 另核对发布提交 `b80efc92` 两扩散目录的 1,438 个文件，
 本地原件与 Git blob 字节一致；原始大包的 SHA-256 校验单独记录。
@@ -87,6 +89,7 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 ROS4／RKL1 首轮随后在 80 条完成运行之后触发原系统 I/O 压力护栏，未计入正式通过总数。
 完整保全、双端备份、迁移旧目录及安静检查后，按同一冻结协议从头重跑全部样本；
 不把首轮与重试拼接。详见 [I/O 护栏中止与接续记录](recovery/io-pressure-20260916-v1/README.md)。
+重试现已全部通过并双端归档，原队列已接续 ROS4／RKL2。重试中的 SSH 暂时失联未中止独立 worker，未再次重跑样本。
 
 ## 已有计时字段的派生分析
 
