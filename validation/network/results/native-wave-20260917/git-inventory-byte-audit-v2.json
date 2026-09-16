@@ -1,0 +1,18 @@
+{
+  "status": "committed_evidence_inventory_and_bytes_match",
+  "git_commit": "b5bbf1c89e002780d22d4677a9856def38bbe08d",
+  "scopes": [
+    {
+      "scope": "validation/network/results/large-scheduling-20260914/extended-wall-v1",
+      "files": 40,
+      "bytes": 723427
+    },
+    {
+      "scope": "validation/network/results/native-wave-20260917",
+      "files": 86,
+      "bytes": 2675034
+    }
+  ],
+  "recipe_sha256": "7029383ed3b48fa693bd84909561a8255217be484d878af3912c4a295efb50b3",
+  "additional_scientific_or_performance_qualification": false
+}
