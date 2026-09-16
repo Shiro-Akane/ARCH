@@ -1,0 +1,18 @@
+{
+  "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-focused-raw-v1.tar.zst",
+  "bytes": 33603707,
+  "sha256": "59d5a1649d79b3ef483c84e512747f5b057cfc8e4d5c6070604d3bbe758f1f56",
+  "files": 637,
+  "factory_build_pass": true,
+  "focused_worker_exit_code": 0,
+  "focused_networks_passed": [
+    "audit150",
+    "audit200"
+  ],
+  "focused_gate_pass": true,
+  "application_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "external_dependencies_hash_only": 3,
+  "raw_only_files": 9
+}

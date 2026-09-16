@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "kind": "development-smoke",
+  "cases": [
+    {
+      "id": "cartesian_dynamic_sedov",
+      "problem": "Sedov",
+      "input": "validation/amr/inputs/sedov_amr_species.par",
+      "steps": 3,
+      "require_device_topology_change": true,
+      "overrides": {
+        "nblockx1": "5", "nblockx2": "0", "nblockx3": "0",
+        "max_blocks": "32", "refine_var": "DIVV",
+        "center_x": "0.5", "deposit_radius": "0.03"
+      }
+    },
+    {
+      "id": "cylindrical_amr_diffusion",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "steps": 2,
+      "restart_steps": 1,
+      "require_initial_refinement": true,
+      "diffusion": true,
+      "overrides": {
+        "geometry": "cylindrical", "nblockx1": "4", "max_blocks": "32",
+        "x1_min": "1.0", "x1_max": "2.0", "xc": "1.5"
+      }
+    },
+    {
+      "id": "spherical_amr_diffusion",
+      "problem": "Gaussian",
+      "input": "validation/amr/inputs/gaussian_diffusion_amr.par",
+      "steps": 2,
+      "restart_steps": 1,
+      "require_initial_refinement": true,
+      "diffusion": true,
+      "overrides": {
+        "geometry": "spherical", "nblockx1": "4", "max_blocks": "32",
+        "x1_min": "1.0", "x1_max": "2.0", "xc": "1.5"
+      }
+    }
+  ]
+}

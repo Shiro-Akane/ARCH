@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/install_factory_overlay.py", line 21, in <module>
+    raise ValueError('canonical shared math changed: ' + name)
+ValueError: canonical shared math changed: src/cuda/microphysics/CuDssSparseSolver.h

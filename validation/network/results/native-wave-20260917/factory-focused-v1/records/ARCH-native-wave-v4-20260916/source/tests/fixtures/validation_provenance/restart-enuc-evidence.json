@@ -1,0 +1,522 @@
+{
+  "schema": 1,
+  "problem": "BurnGradient",
+  "input": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source-fixed/validation/amr/inputs/burn_enuc_amr.par",
+  "input_sha256": "2f2f0f5c0d001134e513503fa47007a8d4ac22e4560c6cc18b41982ceb83f741",
+  "binary_sha256": "d42711fa4a19357713be49df77cd3ab714faf4ccfe89c5d9bb16efa09231490b",
+  "continuous": {
+    "cpu": {
+      "name": "cpu_continuous",
+      "backend": "cpu",
+      "steps": 4,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_continuous/RestartAMR_cpu_continuous.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_continuous/RestartAMR_cpu_continuous_chk_0002.h5",
+      "checkpoint_sha256": "83baf07d38b97402de1223d00efccf87d7232bf6fc95b32c2293d1864e3cb2d3",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_continuous/RestartAMR_cpu_continuous_backend_plan.txt"
+    },
+    "cuda": {
+      "name": "cuda_continuous",
+      "backend": "cuda",
+      "steps": 4,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_continuous/RestartAMR_cuda_continuous.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_continuous/RestartAMR_cuda_continuous_chk_0002.h5",
+      "checkpoint_sha256": "129d9e7f85c211bb0a56a0b5e9a0150a0daaf7d78492f381d05d91fd25b3b733",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_continuous/RestartAMR_cuda_continuous_backend_plan.txt"
+    }
+  },
+  "sources": {
+    "cpu": {
+      "name": "cpu_source",
+      "backend": "cpu",
+      "steps": 3,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_source/RestartAMR_cpu_source.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_source/RestartAMR_cpu_source_chk_0001.h5",
+      "checkpoint_sha256": "ac9fbb573b876e1113dec3675642118fc60bc27198533ddd400865c8a7f82f12",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_source/RestartAMR_cpu_source_backend_plan.txt"
+    },
+    "cuda": {
+      "name": "cuda_source",
+      "backend": "cuda",
+      "steps": 3,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_source/RestartAMR_cuda_source.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_source/RestartAMR_cuda_source_chk_0001.h5",
+      "checkpoint_sha256": "edcf0debc033fa96c3521bbb879cdb3d46f9b1cf725842ea147b16f3647c89f4",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_source/RestartAMR_cuda_source_backend_plan.txt"
+    }
+  },
+  "resumed": [
+    {
+      "name": "cpu_to_cpu",
+      "backend": "cpu",
+      "steps": 4,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_to_cpu/RestartAMR_cpu_to_cpu.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_to_cpu/RestartAMR_cpu_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "6e3b8ac2877a7c5bd81e9dd51d7b1269b25b6c264f133cf8393c2739f6c1b057",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_to_cpu/RestartAMR_cpu_to_cpu_backend_plan.txt"
+    },
+    {
+      "name": "cuda_to_cuda",
+      "backend": "cuda",
+      "steps": 4,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_to_cuda/RestartAMR_cuda_to_cuda.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_to_cuda/RestartAMR_cuda_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "4097ff5429fababff8d34b073b653f326643a873817e8c9d2b65f20f7ab30699",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_to_cuda/RestartAMR_cuda_to_cuda_backend_plan.txt"
+    },
+    {
+      "name": "cpu_to_cuda",
+      "backend": "cuda",
+      "steps": 4,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_to_cuda/RestartAMR_cpu_to_cuda.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_to_cuda/RestartAMR_cpu_to_cuda_chk_0002.h5",
+      "checkpoint_sha256": "3edd187d181a04f6d5a3fb44c80d1582f224bd372aad955c179c4952123972ce",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cpu_to_cuda/RestartAMR_cpu_to_cuda_backend_plan.txt"
+    },
+    {
+      "name": "cuda_to_cpu",
+      "backend": "cpu",
+      "steps": 4,
+      "parameter": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_to_cpu/RestartAMR_cuda_to_cpu.par",
+      "checkpoint": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_to_cpu/RestartAMR_cuda_to_cpu_chk_0002.h5",
+      "checkpoint_sha256": "bf5006d5ebb54bf651f53468dcf8600368afe81203ff80ee4a69f222401de99d",
+      "plan": "/tmp/arch-gpu-amr-h100-final-restart-enuc-20260903/cuda_to_cpu/RestartAMR_cuda_to_cpu_backend_plan.txt"
+    }
+  ],
+  "comparisons": [
+    {
+      "route": "cpu_vs_cuda_continuous",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "dt_burn": 9.98824e+24,
+      "candidate_dt_burn": 9.98824e+24,
+      "dt_burn_relative": 0,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 2.104e+19,
+      "max_rel": 1.98701,
+      "max_field_normalized": 0.000517833,
+      "max_enuc_normalized": 0.000517833,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cpu",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "dt_burn": 9.98824e+24,
+      "candidate_dt_burn": 9.98836e+24,
+      "dt_burn_relative": 1.164e-05,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 1.504e+19,
+      "max_rel": 0.833333,
+      "max_field_normalized": 0.000370162,
+      "max_enuc_normalized": 0.000370162,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cuda",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "dt_burn": 9.98824e+24,
+      "candidate_dt_burn": 9.98836e+24,
+      "dt_burn_relative": 1.164e-05,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 1.192e+19,
+      "max_rel": 1,
+      "max_field_normalized": 0.000293373,
+      "max_enuc_normalized": 0.000293373,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "route": "cpu_to_cuda",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "dt_burn": 9.98824e+24,
+      "candidate_dt_burn": 9.98836e+24,
+      "dt_burn_relative": 1.164e-05,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 2.688e+19,
+      "max_rel": 1.92063,
+      "max_field_normalized": 0.000661566,
+      "max_enuc_normalized": 0.000661566,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX"
+        ]
+      }
+    },
+    {
+      "route": "cuda_to_cpu",
+      "status": "pass",
+      "step": 4,
+      "time": 1.5e-15,
+      "dimension": 1,
+      "blocks": 8,
+      "min_level": 0,
+      "max_level": 1,
+      "dt_old": 8e-16,
+      "dt_burn": 9.98824e+24,
+      "candidate_dt_burn": 9.98836e+24,
+      "dt_burn_relative": 1.164e-05,
+      "chk_file_index": 2,
+      "plt_file_index": 2,
+      "resume_after_regrid": false,
+      "topology": [
+        [
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          4,
+          0,
+          0
+        ],
+        [
+          1,
+          5,
+          0,
+          0
+        ],
+        [
+          1,
+          6,
+          0,
+          0
+        ],
+        [
+          1,
+          7,
+          0,
+          0
+        ]
+      ],
+      "max_abs": 2.728e+19,
+      "max_rel": 1.95775,
+      "max_field_normalized": 0.000671411,
+      "max_enuc_normalized": 0.000671411,
+      "passed": true,
+      "tolerance": {
+        "rtol": 5e-09,
+        "atol": 5e-12,
+        "enuc_scale_rtol": 0.001,
+        "dt_burn_rtol": 0.001,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "enuc_rate",
+          "rhoX"
+        ]
+      }
+    }
+  ]
+}

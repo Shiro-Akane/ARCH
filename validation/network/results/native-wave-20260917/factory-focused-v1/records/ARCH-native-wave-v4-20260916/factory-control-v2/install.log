@@ -1,0 +1,41 @@
+ISOLATED_FACTORY_OVERLAY_INSTALLED_NOT_BUILT files=14
+{
+  "shared_math_line_endings_only": {
+    "src/cuda/microphysics/CuDssSparseSolver.h": {
+      "canonical_raw_sha256": "884fdac1a4225d8f36623a025a4343f6d65301e11d5c7262e3b78881857ea4c6",
+      "tested_payload_raw_sha256": "076e5f9d9e94deaf62a3f2e350e2352aaabb6fc42b56413017ce780bece3c569"
+    },
+    "src/cuda/microphysics/SparseEquilibration.h": {
+      "canonical_raw_sha256": "6f917b6009a8b6c7ebad6a2d2587f7a8adba60686fd18257e6e534a9c1353259",
+      "tested_payload_raw_sha256": "5b89ed2b3ac1961e939384ff5ebe86dd4bcbd1c48b569587db687f0287cc1d1e"
+    },
+    "src/cuda/microphysics/SparseEquilibration.cu": {
+      "canonical_raw_sha256": "18fa0d81be9def456b1e4343bb3e2968456a1d09d30d949cc2b4fe894ed12268",
+      "tested_payload_raw_sha256": "1e02463def9eb22c7ba34aed2cbfb2cbed82af1cc97504a61e6cfdecb03282cb"
+    },
+    "src/cuda/common/DeviceAllocation.h": {
+      "canonical_raw_sha256": "cad64109933c5a6ac7560e9fc703d84b175b3158062befaa8b66bf1116733a3d",
+      "tested_payload_raw_sha256": "3fade70271f3268e7f93d51a69ec79268f6971b2010454340d5fe06322993eaf"
+    },
+    "src/numerics/linalg/CsrMatrixView.h": {
+      "canonical_raw_sha256": "0d4c3e724ade1fb833bf92b323df03abb1140d7a3be95d3f5b8f22122a6aec00",
+      "tested_payload_raw_sha256": "69169d605351ff52aeec43e86391cf375dfe7219626d6a4ea3d1057f4495e8c8"
+    },
+    "src/numerics/linalg/LinearEquilibration.h": {
+      "canonical_raw_sha256": "c8b64edb4d16591b2443a2f1bbc0726e532c4ba29b13022a1a98ca99d6174977",
+      "tested_payload_raw_sha256": "e790951a514c59508961754f5a532cae41978e19180def88bcff07950f90e22f"
+    },
+    "src/numerics/linalg/SparseResidual.h": {
+      "canonical_raw_sha256": "1495f3769a2bef808e524d19da1e2a61cb21a832c0bf16f7ce953d4bbcaa76b6",
+      "tested_payload_raw_sha256": "1495f3769a2bef808e524d19da1e2a61cb21a832c0bf16f7ce953d4bbcaa76b6"
+    },
+    "src/core/CompensatedSum.h": {
+      "canonical_raw_sha256": "38342246ec1acda27ee7c17c65a5404d1593af37135d4cb2a42e9bf96f7c0d4c",
+      "tested_payload_raw_sha256": "aa19747db6eb6a0c5c0469716167074e47316b96b73d4a09864533cc6a8f65c7"
+    },
+    "src/core/ArchPortability.h": {
+      "canonical_raw_sha256": "4bb1e0e6f7b2bb56a5a92f88a93fe444e33d1a8fb3fe8b50067b1ad07a7db204",
+      "tested_payload_raw_sha256": "2ac53f18180f32a2970ee1a660fd293975b4e7d6f2a98c1a23c686795b3e75e3"
+    }
+  }
+}

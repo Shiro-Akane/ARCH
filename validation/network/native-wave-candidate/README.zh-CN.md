@@ -2,7 +2,7 @@
 
 2026-09-15；2026-09-16 收紧负向测试判据。本目录为隔离执行层候选，不在生产 CMake、网络注册表或当前正式计时中启用。
 2026-09-17：在冻结正式矩阵和原 BE 长程补测结束且双端归档后，v4 已在服务器隔离目录重新编译、链接并通过 151/201 阶 × 容量 1/2/8/32 八组真实 GPU 合同。
-详见 [原始证据及限定范围](../results/native-wave-20260917/standalone-v4/README.zh-CN.md)。正在全新 source/build 重编实际核反应 factory；尚未证明 ODE、真实 Helm 应用或性能收益。下文“未编译”表述保留为运行前准备历史，不覆盖本次结果。
+详见 [原始证据及限定范围](../results/native-wave-20260917/standalone-v4/README.zh-CN.md)。随后已在全新 source/build 完整编译、链接两个实际核反应 factory，并通过 150/200 × 三 ODE × 2→3 单元、原四步轨迹，见 [factory 与 focused 证据](../results/native-wave-20260917/factory-focused-v1/README.zh-CN.md)。尚未通过本候选的大容量／长轨迹、真实 Helm 应用或性能验收。下文“未编译／未运行”表述保留为运行前准备历史，不覆盖本次结果。
 仓库原有 Python 架构审计 100 项通过，日志见 `existing-architecture-tests.log`；
 它只说明现有架构检查未被改变／破坏，不验证本目录 C++ 是否可编译或 CUDA 是否正确。
 

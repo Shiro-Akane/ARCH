@@ -1,0 +1,21 @@
+{
+  "status": "prepared_not_compiled_not_runtime_validated",
+  "canonical_commit": "6534c969df1fc3a0ed5876c21467dd60d8d59c64",
+  "scope": "canonical project headers and shared CUDA math required by isolated candidate; original bytes",
+  "sha256": {
+    "src/cuda/microphysics/CuDssSparseSolver.h": "076e5f9d9e94deaf62a3f2e350e2352aaabb6fc42b56413017ce780bece3c569",
+    "src/cuda/microphysics/SparseEquilibration.h": "5b89ed2b3ac1961e939384ff5ebe86dd4bcbd1c48b569587db687f0287cc1d1e",
+    "src/cuda/microphysics/SparseEquilibration.cu": "1e02463def9eb22c7ba34aed2cbfb2cbed82af1cc97504a61e6cfdecb03282cb",
+    "src/cuda/common/DeviceAllocation.h": "3fade70271f3268e7f93d51a69ec79268f6971b2010454340d5fe06322993eaf",
+    "src/numerics/linalg/CsrMatrixView.h": "69169d605351ff52aeec43e86391cf375dfe7219626d6a4ea3d1057f4495e8c8",
+    "src/numerics/linalg/LinearEquilibration.h": "e790951a514c59508961754f5a532cae41978e19180def88bcff07950f90e22f",
+    "src/numerics/linalg/SparseResidual.h": "1495f3769a2bef808e524d19da1e2a61cb21a832c0bf16f7ce953d4bbcaa76b6",
+    "src/core/CompensatedSum.h": "aa19747db6eb6a0c5c0469716167074e47316b96b73d4a09864533cc6a8f65c7",
+    "src/core/ArchPortability.h": "2ac53f18180f32a2970ee1a660fd293975b4e7d6f2a98c1a23c686795b3e75e3"
+  },
+  "optional_frozen_result_helper_archive": {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/factor-cache/candidate-v2/libarch_cuda_sparse_provider.a",
+    "sha256": "24bb9be952ef34c68cd4ea65de498f0cd0de8bb70dc5419d6ef9d33ecf6b4fcd",
+    "purpose": "CuDssResult::require_success helper; never evidence of native-wave production routing"
+  }
+}

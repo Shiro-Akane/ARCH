@@ -32,7 +32,7 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 最后 ROS4/RKL2 也已完整通过；十一组总完整性门槛通过后进行的 BE 延长 wall 补测，
 现已四组数值通过、双端保全并核对原文件身份。见 [BE 长程结果](../../validation/network/results/large-scheduling-20260914/extended-wall-v1/README.zh-CN.md)。
 长程正确性缺口已补齐，但原超时仍保留；
-大网络性能仍未齐平。native-wave 已新编译并通过八组真实 GPU provider 合同，正在全新 factory 验证，尚非 ODE／应用／性能验收。
+大网络性能仍未齐平。native-wave 已通过八组真实 GPU provider 合同；随后两个 factory 全新编译／链接完成，150/200 × 三 ODE × 2→3 单元、四步的 12 条轨迹／48 对宏步通过，见 [新 factory 小规模数值门槛](../../validation/network/results/native-wave-20260917/factory-focused-v1/README.zh-CN.md)。下一步为 32→33 单元、pool 8/32 及长轨迹；本候选的完整 Helm 应用与性能仍未验收，不因同步次数减少就宣称已提速。
 
 ## 实验协议
 
