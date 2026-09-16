@@ -82,6 +82,8 @@ RKL1 使用原 v1 compact，未改写它；其 Git 投影差异另见 `git-proje
 总计 35,130,888 bytes，同样与 Git blob 字节一致，未归一化原始换行。
 `git-blob-audit-coupled-ros4-rkl1.json` 核对 `d88beea0` 第五组的 726 个文件，
 总计 35,116,367 bytes，与本机原件逐字节一致；失败首轮仍在独立恢复目录，不计入本组。
+`git-blob-audit-coupled-ros4-rkl2.json` 核对 `525d595c` 第六组的 726 个文件，
+总计 35,163,730 bytes，与本机原件逐字节一致；原始包身份仍由独立 SHA 校验记录负责。
 
 ## 阶段间容量恢复
 
