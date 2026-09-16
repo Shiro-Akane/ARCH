@@ -402,3 +402,36 @@ User requested running Cellular with the existing executable, then importing tho
 - User explicitly confirmed Windows Save As disk persistence passed manual acceptance, superseding that specific pending item above. No broader UAT result is inferred.
 - Final local checkpoint: studio-phase1c2-v0.4.2, on the subsequent documentation-only acceptance commit. Existing 49/49 tests, lint, typecheck and build remain applicable; implementation unchanged.
 - No feature changes, push, or Phase 2 work.
+
+## Phase 1C2 final human acceptance
+User explicitly confirmed the independent Manual UAT passed. v0.4.2 remains immutable.
+
+## P2-M0 complete
+Baseline defc0ff7ccbf5304b63e90cd4792575f49a74006 / studio-phase1c2-v0.4.2 verified clean before creating independent studio/phase2-local-host worktree. npm ci passed. Architecture audit: isolated Node service, shared versioned contracts, selected-file read-only identity, explicit UI connection. Existing editor/viewers remain independent. Original target fully read; scope unchanged except phase naming authorized by user.
+
+## P2-M1 complete
+Shared version 1.0 contracts define separate file states, project identity and disabled capabilities. Build/Preview/metadata/binding are declarations only. Typecheck passed. Scope reviewed against PHASE2_TARGET.md.
+
+## P2-M2 complete
+Loopback-only service skeleton with exact Host/Origin validation, dedicated request header, fixed routes and no request bodies. Socket/API test passed. No filesystem or process endpoint. Scope reviewed.
+
+## P2-M3 complete
+Plain relative paths only; symlink components refused, regular files only, no-follow/nonblocking opens, Linux descriptor target recheck before reading. Selected files bounded at 64 MiB. Traversal/encoded paths/absolute paths/symlink escapes/permission denied/missing root and API tests passed (3). Scope reviewed.
+
+## P2-M4 complete
+CLI requires an explicit root; only selected files receive bounded SHA-256 inspection. Session UUID, timestamps, paths, separate states and explicit unknown mapping/unavailable metadata implemented. Capabilities deny write/build/preview/watch. Four host tests and typecheck passed. Scope reviewed.
+
+## P2-M5 complete
+Loopback-only HTTP adapter validates protocol, capabilities, session and selected fingerprints with response size/time limits. Offline, mismatch, malformed and oversized response checks passed; typecheck passed. No automatic connection/reload. Scope reviewed.
+
+## P2-M6 complete
+Compact collapsible Project area shows protocol, connection, separate identities/states, expandable fingerprints and project details. No connection on mount; no link to working-copy mutations. Render tests 3/3, lint and typecheck passed. Scope reviewed.
+
+## P2-M7 complete
+Refresh compares against immutable session-open fingerprints, detects external changes/removal, leaves binary mapping unknown, and retains previous known data on refresh errors. Concurrent refreshes share one in-flight operation. Six host tests and typecheck passed. No editor reload, writes or watcher. Scope reviewed.
+
+## P2-M8 complete
+New host tests cover path confinement, permission/missing/root errors, bounded and changing-file reads, explicit changed states, failed-refresh retention/recovery, narrow HTTP API and invalid adapter responses. Original 49 regressions preserved. Browser integration found native fetch receiver bug; corrected and protected by a regression test. Both Edge and in-app browser connected and displayed protocol/source/config/missing binary. Browser refresh retained Mock edit and stale image; real sod.par nblockx1 4->8 remained Dirty/8 after refresh, Revert returned 4. Existing parser/viewer components unchanged. Scope reviewed. Final gates recorded in report after M9 documentation.
+
+## P2-M9 complete
+PHASE2_TARGET.md preserves the authorized scope/naming; README documents WSL startup, exact origin, fixed UI host port, read-only limitations and separate editor identity. PHASE2_LOCAL_HOST_REPORT.md includes all required report sections. Final tests 59/59; host-specific 9/9; lint/typecheck/build/diff check PASS. Only studio/ changed; Core/parser/solver/fixtures unchanged. Local checkpoint studio-phase2-v0.5.0; no push, no subsequent-stage implementation. Development QA servers stopped after verification.

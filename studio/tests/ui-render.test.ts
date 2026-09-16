@@ -38,3 +38,7 @@ test('controls preserve raw fallback, bool tri-state and exact numeric values',a
  const ranged=render({name:'refine_threshold',value:'0.7654321',meta:{type:'float',range:[0,1]}});assert.match(ranged,/type="range"/);assert.match(ranged,/value="0.7654321"/);
  assert.doesNotMatch(render({value:'0.5'}),/type="range"/);
 });
+
+test('Local Host area is optional and disconnected without changing existing modes',async()=>{
+ const Panel=await component('host/ProjectPanel.tsx','ProjectPanel');const html=renderToStaticMarkup(createElement(Panel));assert.match(html,/Connect Local Host/);assert.match(html,/Not connected/);assert.match(html,/Refresh Project State/);assert.doesNotMatch(html,/Connected/);assert.match(html,/Read only/);
+});

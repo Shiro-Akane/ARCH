@@ -1,3 +1,38 @@
+# Phase 2 — Local Host foundation
+
+Phase 1C2 Manual UAT was confirmed passed by the user. Phase 2 adopts the original Phase 3A Local Host Foundation scope with renamed milestones; see PHASE2_TARGET.md. This stage adds read-only project identity, not Build or real IC preview.
+
+Use the documented WSL Node environment (Node 24.21.0 / npm 11.19.0 tested). In a fresh checkout run `npm ci` in `studio/`.
+
+Terminal 1, from `studio/`:
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run local-host -- --project /home/arch/projects/ARCH-phase2-local-host --case simulation/Sod/Sod.cpp --config simulation/Sod/Sod_beginner.par --binary build/not-configured/ARCH
+```
+
+The binary path above intentionally demonstrates `missing`; replace it with an explicitly chosen project-relative executable path, or omit `--binary` for unknown. No executable is launched or claimed compatible. Source/config/binary selection is configured only at service startup; it is not inferred from filenames. The root must exist. All selected paths must be plain relative paths; symlink components are refused.
+
+Terminal 2, from `studio/`:
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run dev
+```
+
+Open `http://127.0.0.1:5173/`, expand **Project / Local Host**, then **Connect Local Host**. For a production frontend instead, run `npm run build` then `npm run preview -- --port 4177`, and launch the host with `--origin http://127.0.0.1:4177`. Both servers bind only 127.0.0.1. Stop each using Ctrl+C. The UI connects to host port 4180. Exact origin matching is intentional: localhost and 127.0.0.1 are different origins. The host CLI supports an alternate port for programmatic clients; the current UI uses 4180.
+
+**Refresh Project State** inspects only the configured files, bounded to 64 MiB each, and compares fingerprints with the service's initial session. No recursive scan/watcher. Errors retain previous known identity and mark it unknown; UI request failure retains the last session with a warning. Restarting the host creates a new snapshot/session. Reconnect does not reset a running host's baseline.
+
+Project identity does not auto-open a file in the existing editor. Continue using **Real Config → Open Config** to edit a working copy. Host refresh never reloads it. Save As remains the existing browser download. This stage writes no project files and exposes no file-content, arbitrary path, shell or execution API.
+
+Protocol 1.0 endpoints: GET /api/health, /api/host, /api/project, /api/project/files; POST /api/project/refresh. All requests require exact authorized Origin/Host and `X-ARCH-Studio: 1`; no body/query arguments. `/api/project` and refresh return the validated host+session envelope. Build/Preview/binding contracts are declarations only. Browser-origin controls are not an authentication boundary against other programs already running as the same OS user.
+
+Run `npm run test:host` for host-specific checks and `npm test`, `npm run lint`, `npm run typecheck`, `npm run build` for all gates. The supported/verified service environment is WSL Linux; native Windows filesystem race behavior has not been qualified. See PHASE2_LOCAL_HOST_REPORT.md.
+
+---
+Historical frontend documentation follows.
+
 # Current Phase 1A checkpoint
 
 Real local 1D ARCH Plotfiles are now supported alongside the preserved Phase 0 Mock workspace. Select **Real Plotfile → Open Plotfile**, open `tests/fixtures/sod-1d.h5`, select an actual field, then click the plot or enter a sample number to inspect x/value. Files are read locally and read-only; maximum file size is 16 MiB. Only simple uniform 1D data is supported. Build/Start/Monitor remain disabled.

@@ -1032,3 +1032,13 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 
 .nearby-preview-action { display:grid; gap:8px; padding:12px 14px; font-size:12px; }
 .nearby-preview-action button { background:#344b5b; color:#e9eff4; border:1px solid #678194; border-radius:4px; padding:8px; }
+
+.project-panel { flex:none; border-bottom:1px solid var(--line); background:#151e27; padding:8px 20px; }
+.project-panel summary { cursor:pointer; color:#cbd8e3; }
+.project-content { display:grid; gap:12px; padding:12px 0; max-height:40vh; overflow:auto; overflow-wrap:anywhere; }
+.project-actions { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+.project-actions button { color:#e9eff4; }
+.project-files { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.project-file { display:grid; align-content:start; gap:6px; padding:10px; border:1px solid var(--line); }
+.project-panel dd { margin:4px 0 10px; }
+@media(max-width:900px) { .project-files { grid-template-columns:1fr; } }
