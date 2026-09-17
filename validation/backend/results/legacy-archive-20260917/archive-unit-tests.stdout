@@ -1,0 +1,19 @@
+test_corrupt_pack_rejected (__main__.ArchiveTests.test_corrupt_pack_rejected) ... ok
+test_traversal_origin_rejected (__main__.ArchiveTests.test_traversal_origin_rejected) ... ok
+test_unpublished_source_detection (__main__.ArchiveTests.test_unpublished_source_detection) ... ok
+test_verify_restore_and_refuse_overwrite (__main__.ArchiveTests.test_verify_restore_and_refuse_overwrite) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.146s
+
+OK
+{
+  "all_passed": true,
+  "files_verified": 1,
+  "logical_bytes_verified": 22,
+  "chunks_verified": 1,
+  "packs_verified": 1,
+  "source_payload_uploaded": false,
+  "git_blobs_checked_against_local_published_history": true
+}
+{"restored_origin": "ARCH-example/logs/failure.stdout", "destination": "C:\\Users\\jiang\\AppData\\Local\\Temp\\legacy-pack-test-b9himsgo\\restored.log", "bytes": 22, "sha256": "2e6143c86e90bcb3b3331d4226bcf72045312dc18eb133b0aa032f719da56226"}

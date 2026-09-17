@@ -1,0 +1,67 @@
+{
+  "roots": [
+    "/home/ubuntu/projects/ARCH",
+    "/home/ubuntu/projects/ARCH-c8-task5-golden",
+    "/home/ubuntu/projects/ARCH-cuda-v2-build",
+    "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build",
+    "/home/ubuntu/projects/ARCH-cuda-v2-recovery-test",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task10-4fbcfab",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task10-clean-4fbcfab",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task2-104c61a",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task3-a237d8a",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task4-8bdcf94",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task5",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task5-build",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task6",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task6-build",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7-build",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7-cpu-final-20260821",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7-cpu-smoke",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7-cuda-final-20260821",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7-pristine",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task7-sanitize-20260821",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task8-final-cpu-fb82a74",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task8-final-cuda-fb82a74",
+    "/home/ubuntu/projects/ARCH-cuda-v2-task8-final-sanitize-fb82a74",
+    "/home/ubuntu/projects/ARCH-hydro-policy-test",
+    "/home/ubuntu/projects/ARCH-latest-diffusion-redo",
+    "/home/ubuntu/projects/ARCH-main-baseline",
+    "/home/ubuntu/projects/ARCH-main-cuda-redo-983e04e",
+    "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox",
+    "/home/ubuntu/projects/ARCH-personal-gpu-amr-integration-20260903",
+    "/home/ubuntu/projects/ARCH-runs",
+    "/home/ubuntu/projects/ARCH-v2-latest-diffusion-redo",
+    "/home/ubuntu/projects/ARCH-v2-verify2"
+  ],
+  "categories": {
+    "source_log_or_data": {
+      "files": 80846,
+      "bytes": 5469938108
+    },
+    "compiled_elf_or_core": {
+      "files": 1085,
+      "bytes": 12252829324
+    },
+    "generated_cmake_internals_already_archived_separately": {
+      "files": 107007,
+      "bytes": 5919133880
+    },
+    "git_history_bundle": {
+      "files": 9,
+      "bytes": 1514465143
+    },
+    "container_to_inspect": {
+      "files": 1135,
+      "bytes": 6209146608
+    },
+    "third_party_or_vcs_storage": {
+      "files": 4,
+      "bytes": 344
+    },
+    "compiled_artifact": {
+      "files": 28,
+      "bytes": 827394576
+    }
+  }
+}

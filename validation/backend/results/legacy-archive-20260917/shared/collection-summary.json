@@ -1,0 +1,12 @@
+{
+  "files": 49642,
+  "logical_bytes": 5083816930,
+  "git_references": 20603,
+  "payload_files": 29039,
+  "visibility": "shared",
+  "unique_payload_bytes": 1500491583,
+  "compressed_payload_bytes": 131028106,
+  "pack_count": 47,
+  "source_payload_uploaded": false,
+  "original_scope": "Loose legacy working copies only; existing archive containers are not republished."
+}

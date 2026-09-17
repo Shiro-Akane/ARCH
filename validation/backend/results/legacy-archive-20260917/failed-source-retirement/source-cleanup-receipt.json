@@ -1,0 +1,10 @@
+{
+  "deleted_files": 199,
+  "deleted_bytes": 2659309,
+  "retained_files_verified": 1130,
+  "source_payload_uploaded": false,
+  "no_recursive_deletion": true,
+  "no_processes_stopped": true,
+  "failure_log_sha256": "4b6e989e6d9a54f844de5d6453789a417993f415fdb85c50c6c4195dee81fc72",
+  "successor_log_sha256": "5a36cc1ff811ac91322045075ea782dde03b8079de4fc58f91a9e4d1b222cfef"
+}

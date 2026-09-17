@@ -1,0 +1,1793 @@
+[
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/CMakeLists.txt",
+    "bytes": 37082,
+    "mtime_ns": 1787978162741466772,
+    "inode": 320272768,
+    "nlink": 1,
+    "sha256": "039e26dfb64cf65855f814c89f05e75a484ac508f51512f7d844a949d80838c1",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/CMakePresets.json",
+    "bytes": 964,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320272769,
+    "nlink": 1,
+    "sha256": "773f4e262e82f8229ff73afbfd925dc46d1318678a9fdaca276b5258a595e52e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/BurnOneZone/BurnOneZone.cpp",
+    "bytes": 1790,
+    "mtime_ns": 1787958415000000000,
+    "inode": 107753657,
+    "nlink": 1,
+    "sha256": "dc80456c1c9e421db92feb739a972a5bd16b2cd11ced118247fe854259af618e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/Cellular/Cellular.cpp",
+    "bytes": 3798,
+    "mtime_ns": 1787958415000000000,
+    "inode": 870483834,
+    "nlink": 1,
+    "sha256": "764c6fa8ee27b8d368b40c74a43b622e171267afa80b3b6abe5aa078b2e9704d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/CudaBurnPulse/CudaBurnPulse.cpp",
+    "bytes": 2511,
+    "mtime_ns": 1787958415000000000,
+    "inode": 870483840,
+    "nlink": 1,
+    "sha256": "819c34386d8768b63291d9f6a4ca54bec3a14c6d59ebc0a3fa1f29d28434ef67",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/DiffusionMode/DiffusionMode.cpp",
+    "bytes": 2755,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608797856,
+    "nlink": 1,
+    "sha256": "d7591686480e0cee282cf15d882ccadee9f57c0102a0c827b1985c718d7a8dba",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/ExternalGravity/ExternalGravity.cpp",
+    "bytes": 1521,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608797858,
+    "nlink": 1,
+    "sha256": "a76673ff7e41456851018703293675d74659db6a276f770af8a23b93e38f97e6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/GaussianPulse/Gaussian.cpp",
+    "bytes": 2747,
+    "mtime_ns": 1787958415000000000,
+    "inode": 870487078,
+    "nlink": 1,
+    "sha256": "c5723e2f89bfa5346bc777176217d2a0db790b946202975cd2ef9f6675af9891",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/RTinstability/RT_instab.cpp",
+    "bytes": 4252,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320272778,
+    "nlink": 1,
+    "sha256": "0e53fe2e24cdf24aac834011dd911a1b775c396ca017f2e501009f2d6a0aa5ef",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/Sedov/Sedov.cpp",
+    "bytes": 3806,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608797860,
+    "nlink": 1,
+    "sha256": "c2612bc8b0f8cc0c99a00a69be4d97a7451d32db9fa530fe4755eba7b9781a10",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/SmoothAdvection/SmoothAdvection.cpp",
+    "bytes": 2321,
+    "mtime_ns": 1787958415000000000,
+    "inode": 107753655,
+    "nlink": 1,
+    "sha256": "6f0b596224dd6aa1faa6e4574afeba27ab19a4478b164d6b3961265ab6ff13ee",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/simulation/Sod/Sod.cpp",
+    "bytes": 2401,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320272781,
+    "nlink": 1,
+    "sha256": "0d72fec5ce420a7ad3e8014ad3402b18370ccbb90551a67195b12dcc91b7a261",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/AMRControl.h",
+    "bytes": 5493,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393637,
+    "nlink": 1,
+    "sha256": "e0ff165cd5aff9d7fd41edb3c74838818bf814d085f7aa267aeac7348931b534",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/AMRFluxRegistering.h",
+    "bytes": 6522,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393638,
+    "nlink": 1,
+    "sha256": "8571198485baddd52709536e9401a115c5622bb6f2b4ede1ead3a37f3c44601b",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/AmrDefines.h",
+    "bytes": 1069,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393639,
+    "nlink": 1,
+    "sha256": "49a511f837420c2747e634bcc893dd4968d63ab9e977f86d066ae9c18a107a5e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/AmrTree.h",
+    "bytes": 34071,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393640,
+    "nlink": 1,
+    "sha256": "8b4f6003b4bea413c3957f5dd600142f85f7a8bf66a71ff1860f5ebd605b1da7",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/Block.h",
+    "bytes": 15047,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393641,
+    "nlink": 1,
+    "sha256": "d7244c895c1260ab93452531f4ad8097aab70b0489da079d0e12a8dd0631b04e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/BlockHandle.h",
+    "bytes": 3706,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393642,
+    "nlink": 1,
+    "sha256": "af2b8b3b2d451ed0591f867a57d06cf09ae652fa59ea59c7e2eebb99282816c5",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/BoundaryPlan.h",
+    "bytes": 19001,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393643,
+    "nlink": 1,
+    "sha256": "0bba691059aecf8ad36dd5f6c6697c47c6ad7f93239dc48531e164aa8a5466fb",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/ExchangePlan.h",
+    "bytes": 28364,
+    "mtime_ns": 1787976601587179343,
+    "inode": 872393648,
+    "nlink": 1,
+    "sha256": "efc70044fbf417c3e4a8d60940d1f7f67d837aa720df485b0065119bfb65c488",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/FluxRegister.h",
+    "bytes": 7181,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393644,
+    "nlink": 1,
+    "sha256": "63038679bc2a0645e00b040132434c8c5bc12638f6b94c1c81a6bab2533017d6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/GhostExchange.h",
+    "bytes": 13885,
+    "mtime_ns": 1787976601583179324,
+    "inode": 872393645,
+    "nlink": 1,
+    "sha256": "91d4767be7638348b9243b81b844773734c47c8bb2871563caa6856b285db522",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/MemoryPool.h",
+    "bytes": 2720,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393646,
+    "nlink": 1,
+    "sha256": "e5c476683e33e87bdec85c003789743e40ab54191bcd2691d27087e7f1a0a2aa",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/amr/Morton.h",
+    "bytes": 2245,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393647,
+    "nlink": 1,
+    "sha256": "5b3f3678c55c3936fe531c961e3db286f496a10e3b4699fc406aa4e0c7a47089",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/core/ArchPortability.h",
+    "bytes": 583,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111197670,
+    "nlink": 1,
+    "sha256": "264f070090f191d37a14a3a640ff3ecd6596c4855a5562a9dd193c25ffe12e07",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/core/ProblemHelper.cpp",
+    "bytes": 9220,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111197675,
+    "nlink": 1,
+    "sha256": "e40ce6fb187556795d35dd3e73662db107f14a6acd63863c72754ea51e16d379",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/core/ProblemHelper.h",
+    "bytes": 3538,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111197676,
+    "nlink": 1,
+    "sha256": "2464135b9566b1dd23a5721a32a955a43055190ef8cf9a765ceef19007509537",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/core/ProblemRegistry.h",
+    "bytes": 2379,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111197677,
+    "nlink": 1,
+    "sha256": "8e6ea5c69b482112df89ff87aad5bb97e70af19163320e699d8752ba1197cdbb",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/core/RuntimeParams.h",
+    "bytes": 24123,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111197678,
+    "nlink": 1,
+    "sha256": "82cb7701db7bed44cc30739c754267b83b782618b7bc93cadf3c9ae24c54d956",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/core/UserInterface.h",
+    "bytes": 4805,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111197679,
+    "nlink": 1,
+    "sha256": "8393bb8f78deedbfa16a75573f42d9b2d4304d8729bdd3d7ea17cfd49ed59e7a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/common/CudaCommon.cuh",
+    "bytes": 6079,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956767,
+    "nlink": 1,
+    "sha256": "bb0f1b00a14d6d8b5dc5e51839a87633844069b9423572ccf36e6f50af71f7d6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/common/CudaLaunchConfig.h",
+    "bytes": 1354,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956768,
+    "nlink": 1,
+    "sha256": "7ef24f6253fcd9696087f08196f5049e08ef48aabeafc2b82e4341ae34ff02b6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/common/DiffusionConfigViewAdapter.h",
+    "bytes": 542,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956769,
+    "nlink": 1,
+    "sha256": "06357fe94fbd123af44f3d64fe802c10ca6379671f93cfa870ff6cfe4a49de2e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/diffusion/DiffusionKernels.cuh",
+    "bytes": 22405,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393650,
+    "nlink": 1,
+    "sha256": "decf56ef75d74d7f51f0a79534009d57e779c04c3d5122d68275ca563b7def40",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/diffusion/DiffusionSolver.cuh",
+    "bytes": 3036,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393651,
+    "nlink": 1,
+    "sha256": "6832d5ee71dceb097dabd8126297577ee21623173cd99e4c9243e26af5c8343a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/Boundary.cuh",
+    "bytes": 7659,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273061,
+    "nlink": 1,
+    "sha256": "6c10854a9de82b51a449da02b63b08b42f90525fc1ed975cdf8db4b920fca969",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/ExchangeKernels.cuh",
+    "bytes": 5536,
+    "mtime_ns": 1787976601599179398,
+    "inode": 320273070,
+    "nlink": 1,
+    "sha256": "31dc8245b2fb29174388e2127cf950ce4811082008fe38e6d693b9a5652b6ab0",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/HydroFaceKernel.cuh",
+    "bytes": 3556,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273064,
+    "nlink": 1,
+    "sha256": "2b63d35e29846621c9c2552e9ba1c09e0a3864be14b86a9a1d02224376f41302",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/HydroFluxPolicies.cuh",
+    "bytes": 1168,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273065,
+    "nlink": 1,
+    "sha256": "1ab85f33ab0bbf07030d70ceeef991117c5dda2b6493d54635edcd1916e969e2",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/HydroIntegratorPolicies.cuh",
+    "bytes": 5654,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273066,
+    "nlink": 1,
+    "sha256": "cfd4d8e74748f96a27bc6c5d3bd4a6e8b56bc3429e61e5396de3c6cc81782b50",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/HydroReconstructionPolicies.cuh",
+    "bytes": 4001,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273067,
+    "nlink": 1,
+    "sha256": "3606bb00f0b54e129b8fcb26a0454a6e59b1b00d4c4a5eed70946b78b248b400",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/HydroStageKernels.cuh",
+    "bytes": 2696,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273068,
+    "nlink": 1,
+    "sha256": "69fca8c90be75ca77ac209e2e5db9a07139bd5edc760e0b5d9eb751a32eaadfe",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/hydro/HydroStateKernels.cuh",
+    "bytes": 5921,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273069,
+    "nlink": 1,
+    "sha256": "e57501a988c233e7f2d69de707d6666352b160c67a276c867d80b8fc0561d1d6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/microphysics/common.h",
+    "bytes": 1412,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393653,
+    "nlink": 1,
+    "sha256": "1815e25dfd78c22627e50dfb603dd4210959f467baa06b6b85ab9c904f1a4f0f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/microphysics/helm_eos_loader.cpp",
+    "bytes": 21410,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393654,
+    "nlink": 1,
+    "sha256": "026a0e6933737405c049eb550af8d9e4541dd788ee23e8c7b8701768ff68b3cb",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/microphysics/helm_eos_loader.h",
+    "bytes": 4405,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393659,
+    "nlink": 1,
+    "sha256": "66f15b58d47f9355bdaa0b8478c4cef799e81bbb1a27ea972bf77680fb358af8",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/microphysics/microphysics_api.h",
+    "bytes": 3104,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393660,
+    "nlink": 1,
+    "sha256": "07f2a97960c6695f7a88e5664fa10f82830f0cde04168135273dcf6881cc333b",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackend.cu",
+    "bytes": 52220,
+    "mtime_ns": 1787977883908287893,
+    "inode": 608956771,
+    "nlink": 1,
+    "sha256": "c832156359eacd97f5cfb848c2e0e0118c78adc7dcfdffac709db06650cf05be",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackend.h",
+    "bytes": 5706,
+    "mtime_ns": 1787976601591179361,
+    "inode": 608956772,
+    "nlink": 1,
+    "sha256": "cc3c1523ae76c572c400308170a6e588dd508e6a2ab648f12aaa3b0a00734dd4",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackendBurn.h",
+    "bytes": 1247,
+    "mtime_ns": 1787976601571179269,
+    "inode": 608956775,
+    "nlink": 1,
+    "sha256": "e0307e30d98264011ffffdf641cbbe79c5374a628399183848823670999fc577",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackendBurnHelm.cu",
+    "bytes": 579,
+    "mtime_ns": 1787976601571179269,
+    "inode": 608956774,
+    "nlink": 1,
+    "sha256": "2d60edcf94350658c07ebcb02b4b8aa872caf859bbd8f6877e021551e7bf7d8c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackendBurnIdeal.cu",
+    "bytes": 580,
+    "mtime_ns": 1787976601575179287,
+    "inode": 608956776,
+    "nlink": 1,
+    "sha256": "3bb3e5de62592d617f525ccf63f7ce62d4050f7de3b7906c7e4e17eaa143c96f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackendBurnImpl.cuh",
+    "bytes": 7953,
+    "mtime_ns": 1787977884772291510,
+    "inode": 608956777,
+    "nlink": 1,
+    "sha256": "fef8364c60c1ae11e6aff470920117dd78b1bafe86359201eeba18e6cc44a1d6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackendBurnTabular3D.cu",
+    "bytes": 584,
+    "mtime_ns": 1787976601663179693,
+    "inode": 608956779,
+    "nlink": 1,
+    "sha256": "a79d36d99001565a3544af8a6eeb464d5e379e2a3be27cc507b97e8476bb55f2",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/CudaBackendBurnTabular4D.cu",
+    "bytes": 584,
+    "mtime_ns": 1787976601587179343,
+    "inode": 608956778,
+    "nlink": 1,
+    "sha256": "f67c052b4c123f508ca45538f46beea99f789134e1be8a30066a612ff1989ac4",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/cuda/runtime/DeviceBlockStore.h",
+    "bytes": 3227,
+    "mtime_ns": 1787977884324289635,
+    "inode": 608956773,
+    "nlink": 1,
+    "sha256": "a04753435b9c1ffe1da227c1852610f2fba1071770f4872e8c19fb6ccf51ee41",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/data/FluidState.h",
+    "bytes": 5032,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181622,
+    "nlink": 1,
+    "sha256": "af77d4e150de423e6db02473a6eb034ed16254fbff1c23ce2c8e39b3adb7b633",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/data/GlobalDefs.h",
+    "bytes": 15415,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181630,
+    "nlink": 1,
+    "sha256": "aacfde57e2c8264951b36cc083e7c15e85a7a2dc5f282efb0992ff7315dfa591",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/data/UserTypes.h",
+    "bytes": 2164,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181631,
+    "nlink": 1,
+    "sha256": "108652b939c661cd4830afd594660e2e2d900ff83e317f23a427baf3dd1c55f6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/ComputeBackend.h",
+    "bytes": 13264,
+    "mtime_ns": 1787976601587179343,
+    "inode": 320273017,
+    "nlink": 1,
+    "sha256": "8e3bb36f382e7530aa51bf04fd0fbc5996a09af1f112b33fd98de2b8ad08b5c4",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/Driver.h",
+    "bytes": 54230,
+    "mtime_ns": 1787976601595179380,
+    "inode": 320273018,
+    "nlink": 1,
+    "sha256": "159b200039ac0133611cff4dc9541b50077dcc8024c5e3fecd42e095446d138c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/DriverBurn.h",
+    "bytes": 13773,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273019,
+    "nlink": 1,
+    "sha256": "d93f017e14723a510b0a1ae0844c2cba5a19e1b61d5223d5584f63c6e3a2ae75",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/DriverControl.h",
+    "bytes": 6571,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273020,
+    "nlink": 1,
+    "sha256": "c1ba3ab384899b59437e8f170a1585e848922e2918617f2945feb7fe7a2f603d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/DriverUtils.h",
+    "bytes": 22166,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273021,
+    "nlink": 1,
+    "sha256": "923bbed79e6d25f60a3783bc2338b0ad2ebbf9b12a8b9e10e0343048e55d34a1",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/ReductionSpec.h",
+    "bytes": 9228,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273023,
+    "nlink": 1,
+    "sha256": "02dffc245c64942b8dd4e873efdd165d9be72f827f8b24421faf589d3d1ea8b2",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/SolverDispatch.cpp",
+    "bytes": 14205,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273024,
+    "nlink": 1,
+    "sha256": "00d0501a0cc9bc653d34c1cc0aec65e5a1b63dc0e078717d2370cc6fd9418451",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/SolverDispatch.h",
+    "bytes": 626,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273025,
+    "nlink": 1,
+    "sha256": "8f0674ca6e8944c286d6849f3d6f348dbf872d908ac6fdc6e615790a759bfae8",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/StageScheduler.h",
+    "bytes": 31192,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273026,
+    "nlink": 1,
+    "sha256": "93a80fda966825e9ac25c0e039bbce9ffd1e661c3fea1b1edd7ada46f97369db",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/StateResidency.h",
+    "bytes": 21908,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273027,
+    "nlink": 1,
+    "sha256": "4e7d31a5ffade8382320df800d258dde42ada7aa7e7531cc5838fa984e917492",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/TopologyIdentityRegistry.h",
+    "bytes": 20751,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273028,
+    "nlink": 1,
+    "sha256": "2bb2d42c436cb1b6190a6ac41ccab9377bd9b9605795761af7edc8d03641393b",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/BackendCapabilities.h",
+    "bytes": 15051,
+    "mtime_ns": 1787976601875180672,
+    "inode": 608799674,
+    "nlink": 1,
+    "sha256": "6801ae67569a5666360b210311822440494db7bc2be0e0668e78cf62a0744b80",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/DispatchImpl.h",
+    "bytes": 11880,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799675,
+    "nlink": 1,
+    "sha256": "c5ecbb9647857c75226c4a06a5c42b726ed2054777c8ee65b76856a91105b61e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/Dispatch_Euler.cpp",
+    "bytes": 2385,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799676,
+    "nlink": 1,
+    "sha256": "16bbc58c509ad688a05718970d1e655faa07c3c51749f6b030510c0bcb8a4eee",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/Dispatch_RK2.cpp",
+    "bytes": 2161,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799677,
+    "nlink": 1,
+    "sha256": "53302cd9bc1111e75b8dc809de9f7d628251c5bb8cde63e61199254d39cd55f9",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/Dispatch_RK3.cpp",
+    "bytes": 2155,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799678,
+    "nlink": 1,
+    "sha256": "6e0df1294bdd9b743793f774772319579722ab5e9ae9280b6c9be658ce4c0e50",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/PolicyDescriptor.h",
+    "bytes": 27856,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799679,
+    "nlink": 1,
+    "sha256": "9e012ac6bd0e6c743f3f74592d335767ea99f76f600d25481faa7f4925451b9b",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/ResolvedExecutionPlan.h",
+    "bytes": 3251,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956736,
+    "nlink": 1,
+    "sha256": "050e442d14346412a7e1f6477adc5747474b4f7ddf6fe062d4ef6564bd51e426",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/RuntimeProbe.cpp",
+    "bytes": 7150,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956737,
+    "nlink": 1,
+    "sha256": "e6678b73848b237189959a70526e533ffe651e8a74c3a4325554eb863d83507b",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/driver/dispatch/RuntimeProbe.h",
+    "bytes": 1358,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956738,
+    "nlink": 1,
+    "sha256": "28bb918b2504be60fadb82a9e792af8a2118fb40da9d0f4a8257f0c4a5818e6d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/grid/Grid.h",
+    "bytes": 14056,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181373,
+    "nlink": 1,
+    "sha256": "32dd42dd827094fe5047303c0c6c56ef8477d5b69165952994d5e098a88a4fff",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/grid/GridMetrics.h",
+    "bytes": 3366,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181374,
+    "nlink": 1,
+    "sha256": "b08134b558569ee0f0c0796bbbfadc6fe05dcf13504bf3412e912adc2ded0fe0",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/interface/GenericProblem.h",
+    "bytes": 3650,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393618,
+    "nlink": 1,
+    "sha256": "a4c1846766051fd3dbb2236c0c7ef56cf0dccc5c6716c05f19a5d35ed02c5deb",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/interface/ProblemGenerator.h",
+    "bytes": 2154,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393619,
+    "nlink": 1,
+    "sha256": "2aed3c98e467f43f7c814ff44f61e00ffaa2df083dd799c6d45f2644cfbce456",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/ConfigParser.h",
+    "bytes": 5575,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393621,
+    "nlink": 1,
+    "sha256": "8a3972d2d693793049f55c65f19baab0198847c6eaacba57c93a0f7a916e0860",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/IO.h",
+    "bytes": 1630,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393622,
+    "nlink": 1,
+    "sha256": "de529b7715a746cfdec95b6780b642e2fed6ed4dcc467b872d4a5572b64877ce",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/Logger.h",
+    "bytes": 3023,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393623,
+    "nlink": 1,
+    "sha256": "c2bf33a1d253687f789c3dac7e057fb6b650b139a79e150c63c3c4c059687c4c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/chk/ChkIO.cpp",
+    "bytes": 7502,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181440,
+    "nlink": 1,
+    "sha256": "41aa9d7e97f3e4048f5b43cc18856e88f0efd4a82cf1128f69a61c32d5be4fd2",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/hdf5/HDF5Writer.cpp",
+    "bytes": 7867,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273030,
+    "nlink": 1,
+    "sha256": "8fb3958e0c035804598db83277ac1e0a62eb2dfd62483018f3624cd620814d71",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/hdf5/HDF5Writer.h",
+    "bytes": 1650,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273031,
+    "nlink": 1,
+    "sha256": "8ce5dc7a95523f5b7c36f6010b76ae8a8f7e74070235f51aaa79a9a23a71851a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/io/plot/PlotIO.cpp",
+    "bytes": 9800,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956740,
+    "nlink": 1,
+    "sha256": "3ad52a42e349fc3a56fbe14f986ea2b73c00687ff400e70f54568bd40d8c19a7",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/main.cpp",
+    "bytes": 5153,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956762,
+    "nlink": 1,
+    "sha256": "8d1030b3dcfe461b356f9a67a9bfbe219faeb0115f3a39039cd7a561a87e2e2a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/BurnDispatch.h",
+    "bytes": 11606,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181444,
+    "nlink": 1,
+    "sha256": "e22aa4cc1454e65be48369f3ab899f7155214b1ff83a77a519c3a9db89c99e37",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/BurnerHandle.h",
+    "bytes": 2155,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181461,
+    "nlink": 1,
+    "sha256": "b439ad381b026c7a211b7989cc209835a4092e7be4f55918b2d401ab8d82ee11",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/Networks.h",
+    "bytes": 1450,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181462,
+    "nlink": 1,
+    "sha256": "027bd6424077ee4fe7a1e316535a55252fe5fd8012365b0fdb7afce5c96b1c99",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/odeFunction.h",
+    "bytes": 11900,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181463,
+    "nlink": 1,
+    "sha256": "c378a483bb89cf98769f1d5fea214a3be269cbe56837bd7c71e5a54f97ca3c2e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/ode_bd.h",
+    "bytes": 17622,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181464,
+    "nlink": 1,
+    "sha256": "41d09144ff96cad5271a6265adcf89f251ac550a0e7677159054759c359ec87a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/ode_be-nr.h",
+    "bytes": 14053,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181467,
+    "nlink": 1,
+    "sha256": "69ed03e3f5e3f4136104f3b6cfce86b24a826d1f8bd6f2456022ad1631ff246a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/burnsolver/ode_ros4.h",
+    "bytes": 16665,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181468,
+    "nlink": 1,
+    "sha256": "fea2663993a78ac5e0dbe0e03b3c4dd32ced4849236ad78415f3fae96507412a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/DiffDispatch.h",
+    "bytes": 4532,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181470,
+    "nlink": 1,
+    "sha256": "455818fb1d52308daba9985e82ece19fbc957563a3cd7d72b34748babe2f0b7c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/DiffFlux.h",
+    "bytes": 31728,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181471,
+    "nlink": 1,
+    "sha256": "08a5ed187ba8874381b8338f51f0226a83c6f02e2e61a1de4da8a371704ed370",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/DiffFunction.cpp",
+    "bytes": 5129,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181472,
+    "nlink": 1,
+    "sha256": "dc26d95ec746c72993b833fcf169de9c69bc801da636761318eed7496f775dc2",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/DiffFunction.h",
+    "bytes": 2216,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181473,
+    "nlink": 1,
+    "sha256": "3515ebf1ddc15906aff93c8bfb255dc59528262b2db4c9eb5d28375c3b9a8d10",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/DiffusionAMRStages.h",
+    "bytes": 41283,
+    "mtime_ns": 1787976601587179343,
+    "inode": 111181474,
+    "nlink": 1,
+    "sha256": "c39b16e9b99b94241ec428fb9587466c926fb65a7ac6d29a88f1b4991db083ea",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/RKL1TimeIntegrator.h",
+    "bytes": 1188,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181475,
+    "nlink": 1,
+    "sha256": "fbee76199b6267702d38059890b5e542d3b96735a7cd8dedaef7e18a6a9630cc",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/diffusion/RKL2TimeIntegrator.h",
+    "bytes": 1189,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181478,
+    "nlink": 1,
+    "sha256": "c73b59d6ea45f05aea054b72f41ebb2eaf880e7b10a84cc4c6d9374ae1c02ed1",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/flux/FluxFunctions.h",
+    "bytes": 22578,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273037,
+    "nlink": 1,
+    "sha256": "51e804a383cebd34b11c5c5bd586e70f3bb048bfcb29b00416bdd45f69378c19",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/flux/FluxHLL.h",
+    "bytes": 5493,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273038,
+    "nlink": 1,
+    "sha256": "50b008cdd462305a510cbeb395091863446c0fff47fb136b0d23864a64c6fc1a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/flux/FluxHLLC.h",
+    "bytes": 8722,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273039,
+    "nlink": 1,
+    "sha256": "0d1fb3cc99fb2b1c39df8b57a26ecfdb890ef960fdc78ae97b86a4a14cb52565",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/flux/FluxRoe.h",
+    "bytes": 5278,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273040,
+    "nlink": 1,
+    "sha256": "51d8ba9e099ce38ee0ff5980889c8c79913b9b6dc5e9b43dddd6d60e43bd3e49",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/flux/FluxSW.h",
+    "bytes": 4797,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273041,
+    "nlink": 1,
+    "sha256": "815d62f723928e8b4258dcff4a3654afa47c372b7ee979004e916963b9ca305e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/flux/FluxVL.h",
+    "bytes": 4814,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273042,
+    "nlink": 1,
+    "sha256": "d89b956592e8a5c0175bdade534597d62464814f2323ce4228acccf3b894626b",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/integrator/HydroSolverImpl.h",
+    "bytes": 2427,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956742,
+    "nlink": 1,
+    "sha256": "4aab505d44e1c8e0cb0254d506b0e0842083e881b14996b7a74497018339beec",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/integrator/IHydroSolver.h",
+    "bytes": 3065,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956743,
+    "nlink": 1,
+    "sha256": "c9ff16b14c67299988d3495747be016fc5bc6f681450b2e5f497af3b1af97af4",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/integrator/TimeIntegratorEuler.h",
+    "bytes": 5496,
+    "mtime_ns": 1787976601883180709,
+    "inode": 608956744,
+    "nlink": 1,
+    "sha256": "3a984c1b9c1fc188680a49f2900cce0019bf68664c8cab60022facf1a4718672",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/integrator/TimeIntegratorHelper.h",
+    "bytes": 14422,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956745,
+    "nlink": 1,
+    "sha256": "a54b621bdd9dbd9d48f407523a2e116836eec786c3773399b1d44659ddad1516",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/integrator/TimeIntegratorRK2.h",
+    "bytes": 5395,
+    "mtime_ns": 1787976601571179269,
+    "inode": 608956746,
+    "nlink": 1,
+    "sha256": "d3afa0be1606c61cfc78165a3e247aa8667a6be41afe9be90b224ca0fc89387e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/integrator/TimeIntegratorRK3.h",
+    "bytes": 5742,
+    "mtime_ns": 1787976601879180691,
+    "inode": 608956747,
+    "nlink": 1,
+    "sha256": "b723d8be3a85d58045a18e7d8d6c389c85310750ac98c966c264cb5b30a9f025",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/linalg/DenseWrap.h",
+    "bytes": 5956,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393626,
+    "nlink": 1,
+    "sha256": "32c15b8e430a9f8675ca00d83de15b1cf0125ce27f0384be8d1643ca299c610e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/linalg/SparseWrap.h",
+    "bytes": 3569,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393627,
+    "nlink": 1,
+    "sha256": "505082758dc19a84bd8396352e4d2094667ec7f3506c636524748a00cf8e0b9a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/reconstruction/AMRInterfaceReconstruction.h",
+    "bytes": 3128,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273033,
+    "nlink": 1,
+    "sha256": "d89a3ea90aeaab272c164702d8d6d9ddd0640880645dc971fd55f369dce0960d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/reconstruction/Limiters.h",
+    "bytes": 3055,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273034,
+    "nlink": 1,
+    "sha256": "7610ebff96a10c3acfd1f895138bcd2836bfc041922a4a31cf555d181f9a9396",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/numerics/reconstruction/Reconstruction.h",
+    "bytes": 19160,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273035,
+    "nlink": 1,
+    "sha256": "5f3ed4de3392bfb9c194d2225f69096ad8a836ae9efba60fafa1d57d233b7f33",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/diagnostics/VelocityDiagnostics.h",
+    "bytes": 5878,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393635,
+    "nlink": 1,
+    "sha256": "6bb8040b2b67c867ced22aab329c4f725e055860d9510b4a2381ed01c538a48d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/diffusionCoe/diffusion_math.hpp",
+    "bytes": 13314,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273044,
+    "nlink": 1,
+    "sha256": "6de03781c6b6c5b46f39f3476b46ab88dd403ce8fc7ec17a8dc76453a6e9a902",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/HelmEos.h",
+    "bytes": 24551,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181481,
+    "nlink": 1,
+    "sha256": "ace3f283b396bbf38330198637136837c3bca0139467f6983e2d1b5a5001585f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/IdealGas.h",
+    "bytes": 8206,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181484,
+    "nlink": 1,
+    "sha256": "39e971b61a343b6ae2f0ae117fc39a04393a8a1eddd43b722aa1e70c6d4649a7",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/Tabular3DEOS.cpp",
+    "bytes": 6723,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181485,
+    "nlink": 1,
+    "sha256": "b3e1f81ae193c10868c30cdf7c2b7c5816b00bd5fa8d42e2bd6c615d8a2fa358",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/Tabular3DEOS.h",
+    "bytes": 22214,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181570,
+    "nlink": 1,
+    "sha256": "72cf058ed3459d8efdbd07d6b87f933a7cc0edc8ccbf06f8bb03b3e342687e2d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/Tabular4DEOS.cpp",
+    "bytes": 5985,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181571,
+    "nlink": 1,
+    "sha256": "94fcf8bcc2f35861a762bf7097be370c5019ea1ed50cfffc065e729d47bb3ce8",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/Tabular4DEOS.h",
+    "bytes": 22802,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181572,
+    "nlink": 1,
+    "sha256": "dae9bcc26f5d4876e589aa98f6c73ded1461e774558d2a41438cd80aa4c54bf1",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/TabularFreeEnergy.h",
+    "bytes": 8180,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181597,
+    "nlink": 1,
+    "sha256": "c56158f0ca0e5402395366e01113c53c1ca8ad48d722d167bb57981dd4b31da9",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/TabularFreeEnergyMath.h",
+    "bytes": 8304,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181599,
+    "nlink": 1,
+    "sha256": "faebbce30c1d2f9b7f93e018b04bead5960c9f8eae07b24365fd4172d4ea5767",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/eos.h",
+    "bytes": 1916,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181600,
+    "nlink": 1,
+    "sha256": "687cdb05e10ea9ec92f1312c5aadd7383572f5015bfe6b6c6322fefd91e20001",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/eos_Utils.h",
+    "bytes": 8197,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181601,
+    "nlink": 1,
+    "sha256": "87d048708b69efcaf826f1007266e39fcca0191fb37a572d505f536b0b57c1d6",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/eos_state.h",
+    "bytes": 832,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181603,
+    "nlink": 1,
+    "sha256": "3634704e7dfdff50370734a7dace4928eab83b520c8b7c233c988f94e27fea56",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/eosdispatch.cpp",
+    "bytes": 973,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181604,
+    "nlink": 1,
+    "sha256": "a64b6d4568fccc02b4e94a4a17644612bb51abcde21c4f7ba4a0e23430afc6ab",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/eos/eosdispatch.h",
+    "bytes": 4533,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181605,
+    "nlink": 1,
+    "sha256": "968b168afa89b4dc4478cd8a24c11f597b4759ebf40c8635704203a0f10500d0",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/gravity/ExternalGravity.h",
+    "bytes": 2791,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956758,
+    "nlink": 1,
+    "sha256": "eba1c1f63c12d93c055ac01db8af7cfe3583c3c4d6ed9a4b28cac87c42f8b284",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/gravity/GravityDispatch.h",
+    "bytes": 2541,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956759,
+    "nlink": 1,
+    "sha256": "2e38ada954ef6f5bc040596d5f88f3b2aa7bdae95bbe911fb421890a9e9c81dc",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/gravity/GravityNone.h",
+    "bytes": 1055,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956760,
+    "nlink": 1,
+    "sha256": "6c651266227c92db16588b5ab9323e0ed4b5d7f2557034eb6a1375a2cfbb7b2d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/gravity/IGravityPolicy.h",
+    "bytes": 1693,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956761,
+    "nlink": 1,
+    "sha256": "55b4b93b4e64215137f1511dda201e548d6eb79c8169b8d40c7bd2e47d970280",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox13/NetAprox13.cpp",
+    "bytes": 235,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273046,
+    "nlink": 1,
+    "sha256": "525268f2eb6e4560ddae0df8b9bc04cfe926b0f8617d239d5be66e83e3d8a487",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox13/NetAprox13.h",
+    "bytes": 9084,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273047,
+    "nlink": 1,
+    "sha256": "78f9ce8f815f01bb93a1ce53fb5a7b771960783ba13d208fd5148fa13339b555",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox13/TimmesRateLibrary.h",
+    "bytes": 50670,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273049,
+    "nlink": 1,
+    "sha256": "444470dd8ebc2d18b95c15d99f972d9b3cb66799ac3eb18a5030bb1a4bbdbdb0",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox19/NetAprox19.cpp",
+    "bytes": 235,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273052,
+    "nlink": 1,
+    "sha256": "f0d9f3785c17de69ce2f57b74d3c869d0f1cc1677a719f1672c1cecf3002a4d8",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox19/NetAprox19.h",
+    "bytes": 13222,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273053,
+    "nlink": 1,
+    "sha256": "1936f1d507090f9f9f1d7e34de9f31702857c84de8bfb4f6ada721ed9e2521fd",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox19/TimmesRateLibrary.h",
+    "bytes": 74244,
+    "mtime_ns": 1787958415000000000,
+    "inode": 320273055,
+    "nlink": 1,
+    "sha256": "b1d87c2a695a60d7baa7a8e6a6a8d523fae1ac150d78656028e3e887de1695f8",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox21/NetAprox21.cpp",
+    "bytes": 235,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956752,
+    "nlink": 1,
+    "sha256": "c914acd1a783cfd561d8e7b489d34eae3fc5c7f64c70dbf6a92c2144f2f6eb93",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox21/NetAprox21.h",
+    "bytes": 13739,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956753,
+    "nlink": 1,
+    "sha256": "44c133229436e8bcd07c3dc6d59d2fc88218b270c7b93b6b4e3e17df106a18a3",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/aprox21/TimmesRateLibrary.h",
+    "bytes": 79326,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956755,
+    "nlink": 1,
+    "sha256": "e6d59a4e802d56f75c833fd71d5b8cec9e046d4f39092edad877117008bbc544",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/iso7/NetIso7.cpp",
+    "bytes": 221,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181607,
+    "nlink": 1,
+    "sha256": "b85ac3990752cea2b5caee8ba3cf500b7de848a4287a6ca11cc377ffeb2c2967",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/iso7/NetIso7.h",
+    "bytes": 10964,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181608,
+    "nlink": 1,
+    "sha256": "3fe7cbed350f00b7e257ecbb3e7ff5aeb748522e708e2dff96eda2afd4384b4f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/iso7/TimmesRateLibrary.h",
+    "bytes": 19328,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181609,
+    "nlink": 1,
+    "sha256": "c0b4d20c34e69b274dd4dc37c55566aab7e97928e51d02611a335624bbb1aa1e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/AproxRateAssembly.h",
+    "bytes": 15415,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181612,
+    "nlink": 1,
+    "sha256": "3127728f61097b9e29028af18f24346ac16d1950414a0668a161ba3c72ddf1db",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/DeterministicReduction.h",
+    "bytes": 4389,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181613,
+    "nlink": 1,
+    "sha256": "32a347a182b27d0a74fd32209f18271ddd88331628ee6548410d0f6e6bd6204f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/Dual.h",
+    "bytes": 5871,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181614,
+    "nlink": 1,
+    "sha256": "5b2116d1459da28f6a1f84b36dff7d1eee8e9b1b5890a2864f4a659772176ec5",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/Ecapnuc.h",
+    "bytes": 4942,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181615,
+    "nlink": 1,
+    "sha256": "6149b3fc1fcd111f16a0f9df5ffb34b35adbb5be4cfb7c72f5966dd6bc760244",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/NuclearConstants.h",
+    "bytes": 882,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181616,
+    "nlink": 1,
+    "sha256": "37cc57b814cd28d9f1200c3f4e9d610855df85d0fb57ffc0cc1699acba75ab19",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/RatePair.h",
+    "bytes": 1066,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181617,
+    "nlink": 1,
+    "sha256": "17debfcd1b6d87ded959da7d357619be2855a6438351dd6844bdfc9f01c4e0c3",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/ScreeningTimmes.h",
+    "bytes": 4131,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181618,
+    "nlink": 1,
+    "sha256": "1c443d31072a544aee3a1196ac3e1489ee29ec0c1d78cbc7384e7946ab4b95f9",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/TfactorsData.h",
+    "bytes": 3449,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181619,
+    "nlink": 1,
+    "sha256": "f9ef74e9a9bbcb003495aace40d3312fd20b6f032efdd5898c94f61fde6170a8",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/network/timmes_common/TimmesNetworkSupport.h",
+    "bytes": 5805,
+    "mtime_ns": 1787958415000000000,
+    "inode": 111181620,
+    "nlink": 1,
+    "sha256": "ef742448b456e3d7a5ff466e239be277c52788c2c8324e1cc1195006869400af",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/nse/nse_solver.h",
+    "bytes": 25737,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956750,
+    "nlink": 1,
+    "sha256": "15629387d156fbe97bd5db904e362e002bc490400a4418c87a76d5c22c6e5e44",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/physics/species/Species.h",
+    "bytes": 7090,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393629,
+    "nlink": 1,
+    "sha256": "cf31877696298d652fe05ea0fca322ba3b6d97dd0c9f7e67fb2790a80725a70f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/src/runtime/predictive_amr/PatchFeatureRecorder.h",
+    "bytes": 25117,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608956764,
+    "nlink": 1,
+    "sha256": "d85b928fd3e271684559391f65a561ddbadeb80a2fe30105895e92eb33632717",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/check_amr_checkpoint.cpp",
+    "bytes": 15711,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392860,
+    "nlink": 1,
+    "sha256": "4754f026493d4a83e81c878026b22d440c5211fbd6cc75482d7ab39d7eea393a",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_boundary_plan_parity.cu",
+    "bytes": 22850,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392889,
+    "nlink": 1,
+    "sha256": "88ea3f43effbe2210e4fbf52f2e23dafe7842cd3ae54f1d1cade7429468c4765",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_burn_policy_parity.cu",
+    "bytes": 38592,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392890,
+    "nlink": 1,
+    "sha256": "e0c96a28dfd753e6fe3b963706a64be811c5dc47e594b272119240a80be2dd90",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_burn_be_parity.cu",
+    "bytes": 7967,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392891,
+    "nlink": 1,
+    "sha256": "e7474ffa20e7489a56e190384a33e6071d367474eb1a30b74fa1f8bbaa7b9dfb",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_compile_probe.cu",
+    "bytes": 684,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392892,
+    "nlink": 1,
+    "sha256": "cabcaa7cdb1c815f2b54e6b4e16451dc985047aa9813251ea1414bca3dee6e74",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_diffusion_math_parity.cu",
+    "bytes": 4293,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392893,
+    "nlink": 1,
+    "sha256": "87a5ae91f6a594b8aef331675a8b69afbca2a9869a9c0060a9d7e92fae41f1f1",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_external_gravity_parity.cu",
+    "bytes": 4151,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392894,
+    "nlink": 1,
+    "sha256": "fd469adeb4d3c0a9224250e9205907366d751e7ac3f6d0d80d77b11602249a1c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_hydro_block.cu",
+    "bytes": 53919,
+    "mtime_ns": 1787969711619318417,
+    "inode": 872393611,
+    "nlink": 1,
+    "sha256": "530265253c96ea0413d6ef80dd548c777d82bbfc0a4b140b2b775018eb51391c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_multiblock_burn.cu",
+    "bytes": 11451,
+    "mtime_ns": 1787978457174729193,
+    "inode": 877409495,
+    "nlink": 1,
+    "sha256": "f6f39687ade31ca4152953895036cac4686c0081964fdbc9727382ec61b02e32",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_multiblock_diffusion.cu",
+    "bytes": 11446,
+    "mtime_ns": 1787978456706727176,
+    "inode": 877409493,
+    "nlink": 1,
+    "sha256": "42846dff447c5648a03f4b646f683c7079da687ebcb350e6facae0c1f60896fd",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_multiblock_hydro.cu",
+    "bytes": 9122,
+    "mtime_ns": 1787976601919180875,
+    "inode": 872393612,
+    "nlink": 1,
+    "sha256": "823d17a398608b7f86f8392550ee6c9d5322ed8394464499ffe3ef97bee26dea",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_policy_resolution.cu",
+    "bytes": 22923,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872392895,
+    "nlink": 1,
+    "sha256": "2e8b4978d538ee3cfbb255439f63cc53239460d4a3999a4d017b63e0e61d70c2",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_reduction_contract.cu",
+    "bytes": 24262,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393600,
+    "nlink": 1,
+    "sha256": "9a902720477bbb7e07c91d231849210204e1ab51aac170898bbb6d78e1086fd0",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_shared_hllc_parity.cu",
+    "bytes": 7902,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393601,
+    "nlink": 1,
+    "sha256": "a53d0b7d4d9f395a614722abf86c629ede90461795256094abd5e899affffa2f",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_cuda_single_level_validation.cpp",
+    "bytes": 28833,
+    "mtime_ns": 1787963363614842196,
+    "inode": 872393602,
+    "nlink": 1,
+    "sha256": "a12528e334a7adc3b587df46908ebbbd10198460e44c1ab7ee62477ba1ffa3e5",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_diffusion_rkl_parity.cu",
+    "bytes": 70230,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393603,
+    "nlink": 1,
+    "sha256": "422eab9b0baabf859db00e9e2ee21ce20220e95adf03a378f5ff3623ae498c93",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_eos_host_device_parity.cu",
+    "bytes": 83402,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393604,
+    "nlink": 1,
+    "sha256": "f0cda8427ab8df7629af8146ebed1af2603c8a014b37e59f8ffc71fe0e84e723",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_euler_update_golden.cpp",
+    "bytes": 3611,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393605,
+    "nlink": 1,
+    "sha256": "29716d9b1c7f439c47ff2514f6920ce67c054799bab8813a6475bf195aa8f799",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_hllc_cpu_golden.cpp",
+    "bytes": 5523,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393606,
+    "nlink": 1,
+    "sha256": "4ef6e4aae7c933c37fe2b3230e3f042d94053e91c0bc94489803d6df574f6619",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_hydro_leaf_parity.cu",
+    "bytes": 75863,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393607,
+    "nlink": 1,
+    "sha256": "443e3b2e87187a611c7d4664f8ca3b10fe06e50ec48d1f8fe65c779f81497f2c",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_mainline_authority.cpp",
+    "bytes": 10591,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393608,
+    "nlink": 1,
+    "sha256": "90d0228bb46ebabde384c3e9d41c8170962e837f42bb10770fbf320b6925896e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/cuda/test_network_nse_device.cu",
+    "bytes": 260815,
+    "mtime_ns": 1787958415000000000,
+    "inode": 872393609,
+    "nlink": 1,
+    "sha256": "abed12ff80aebf60bea4a30c659d7e4343ce196d22c6d8e003b63e88a789e47d",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_block_handle.cpp",
+    "bytes": 11525,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799657,
+    "nlink": 1,
+    "sha256": "a9aef0bc66f650a106128a713c3654ecc2818285e79142e6ce99eae4779617b7",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_boundary_plan.cpp",
+    "bytes": 32754,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799658,
+    "nlink": 1,
+    "sha256": "2a4f7d1a162cd4865ff7f7f0233c22db65fb3f85d9ef745ac2fc0c9d0e71d4e5",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_compute_backend.cpp",
+    "bytes": 24451,
+    "mtime_ns": 1787976601583179324,
+    "inode": 608799659,
+    "nlink": 1,
+    "sha256": "cebbc5a8573ed1a85ef7cde11809fad3a14762622f9379cd0404af5a40b4e723",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_deterministic_nuclear_reduction.cpp",
+    "bytes": 3402,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799660,
+    "nlink": 1,
+    "sha256": "9ce20661f029e570ac34d679ead883fb73bcce1315f66a1dbfd621cbd3ffe601",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_reduction_contract.cpp",
+    "bytes": 22671,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799661,
+    "nlink": 1,
+    "sha256": "6c50eb7584a37f87cc614035f03abf6f542f364c7cff138b061d16f74bf5ce5e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_resolved_execution_plan.cpp",
+    "bytes": 25594,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799662,
+    "nlink": 1,
+    "sha256": "86320e85866c3a8d3a8a160ff38d018089712ad06e99a2ffd914c6d27a156a0e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_runtime_probe_and_capabilities.cpp",
+    "bytes": 21502,
+    "mtime_ns": 1787976601883180709,
+    "inode": 608799663,
+    "nlink": 1,
+    "sha256": "e3cf654925d6eaa050969a3a2354352d47143acc4e676fcf019855bfd38b6406",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_same_level_exchange_plan.cpp",
+    "bytes": 12251,
+    "mtime_ns": 1787976601911180838,
+    "inode": 608799668,
+    "nlink": 1,
+    "sha256": "35fd3aaca12867ab59c8b63bc53d40c15ed82318097e586c0e01439f26d0178e",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_shared_stage_scheduler.cpp",
+    "bytes": 77305,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799664,
+    "nlink": 1,
+    "sha256": "af5f6d14fefd5e8da7bd307b71b381414ebc5e71f11f190310c7d6fee82c24b4",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_state_residency.cpp",
+    "bytes": 32670,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799665,
+    "nlink": 1,
+    "sha256": "d28e78a9013fc4ad66dfa17e38944dda7ab2effed19e0f77d330f8a46d7f50d3",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_tabular_eos_alignment.cpp",
+    "bytes": 10903,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799666,
+    "nlink": 1,
+    "sha256": "855b5ca66f471e6a7b99a0e14e38b6125e1e7a6b491ab1abfe45bf777885f5fc",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source/tests/test_tabular_eos_hdf.cpp",
+    "bytes": 6526,
+    "mtime_ns": 1787958415000000000,
+    "inode": 608799667,
+    "nlink": 1,
+    "sha256": "4803b330fd024b1cb60967d24a4691be500aa588d48ae4750d553021a3b9b6cb",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  }
+]

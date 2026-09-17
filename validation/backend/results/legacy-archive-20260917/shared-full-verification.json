@@ -1,0 +1,9 @@
+{
+  "all_passed": true,
+  "files_verified": 49642,
+  "logical_bytes_verified": 5083816930,
+  "chunks_verified": 16909,
+  "packs_verified": 47,
+  "source_payload_uploaded": false,
+  "git_blobs_checked_against_local_published_history": true
+}

@@ -1,0 +1,172 @@
+[
+  {
+    "path": "/home/ubuntu/projects/ARCH",
+    "head": "8f077ae6c46d66e4344b750e48f0658c1a5337d6",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-c8-task5-golden",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-a-20260822T/source",
+    "head": "d64666834cfc49f70b231cac174e2ae5bdf996bc",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/source",
+    "head": "d64666834cfc49f70b231cac174e2ae5bdf996bc",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/source-main",
+    "head": "4200c492248f74d035d5eae5159d78cfb7325821",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/final-source-a92f225",
+    "head": "a92f2253911cf2d27c73cd4be659179eb5ad695a",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/commit1-source-52f0fd9",
+    "head": "52f0fd98ec60d3cea8278b325b11bc91c9c332ec",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix1-source-706a79f",
+    "head": "706a79f19ed2df5bdae5988091c7467be92ecd0f",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix2-final-source-a1b37c6",
+    "head": "a1b37c67077f59d672659b3140a1821965595367",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-c1-20260822T/source",
+    "head": "a1b37c67077f59d672659b3140a1821965595367",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-c1-20260822T/fix1-base",
+    "head": "a1b37c67077f59d672659b3140a1821965595367",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-c4-20260822/base-source",
+    "head": "366d9002afde3be7e91265866f608e1f10119537",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d0-20260822T/source",
+    "head": "c86a2c5911e26cf89fbeedcdf9891b638bbec529",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d1-20260822T/source",
+    "head": "e75a30e9f7da72e25caaab4d4eb6954182ab954f",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d1-resume-20260825T/source",
+    "head": "625b83f8ae45a1c3857185ce94792b48231776bc",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source",
+    "head": "21d6b2ceb49700e83b7050bb3c04025cd596175a",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source-fixed",
+    "head": "21d6b2ceb49700e83b7050bb3c04025cd596175a",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-recovery-test",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task10-4fbcfab",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task10-clean-4fbcfab",
+    "head": "4fbcfab4e3c58028046fe0083f01042012b6280f",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task2-104c61a",
+    "head": "104c61a8000a6b901732f0cf1b41796614f90b0c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task3-a237d8a",
+    "head": "a237d8ae009e6dad94a8f86829778c8f829050ce",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task4-8bdcf94",
+    "head": "8bdcf9499974e890649421536cad29d83454ab17",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task5",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task6",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task7",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task7-pristine",
+    "head": "c8c5840de442f01b596fb78d9b78a83b7811a03c",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-latest-diffusion-redo",
+    "head": "983e04e930d5995a09d421c1c3cd79c69f6ecc6a",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-main-baseline",
+    "head": "7875e1da2a1fc6c6d2e184a227d6c9f7656d3f78",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-main-cuda-redo-983e04e",
+    "head": "983e04e930d5995a09d421c1c3cd79c69f6ecc6a",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox",
+    "head": "82bf936e6ce55940d7a55210e71a42577b6fb553",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-personal-gpu-amr-integration-20260903",
+    "head": "ba79dc23a50476085bf55a161f57185d7584f108",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-v2-latest-diffusion-redo",
+    "head": "5f3af122d54426f8155f614008d281461f3222ff",
+    "exit_code": 0
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-v2-verify2",
+    "head": "53e3e72c314a4371e1d29d8b2afe8ab0186b5236",
+    "exit_code": 0
+  }
+]

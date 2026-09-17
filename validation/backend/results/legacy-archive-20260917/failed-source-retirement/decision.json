@@ -1,0 +1,27 @@
+{
+  "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source",
+  "decision": "discard superseded, failed Task-G red C++ snapshot",
+  "failure": {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/logs/taskg-formal-red.stderr",
+    "bytes": 1495,
+    "mtime_ns": 1787978175181519813,
+    "inode": 114623449,
+    "nlink": 1,
+    "sha256": "4b6e989e6d9a54f844de5d6453789a417993f415fdb85c50c6c4195dee81fc72",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  "successor_evidence": {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/logs/taskgh-cpu-ctest.stdout",
+    "bytes": 1711,
+    "mtime_ns": 1787979518079336200,
+    "inode": 116902093,
+    "nlink": 1,
+    "sha256": "5a36cc1ff811ac91322045075ea782dde03b8079de4fc58f91a9e4d1b222cfef",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskg-red-source"
+  },
+  "delete_count": 199,
+  "delete_bytes": 2659309,
+  "source_payload_backed_up": false,
+  "log_data_and_scripts_retained": true,
+  "not_applied_to_mutation_tests": "Expected-negative tests are not failed experiments."
+}
