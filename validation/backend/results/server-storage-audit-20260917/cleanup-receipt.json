@@ -1,0 +1,35 @@
+{
+  "utc": "2026-09-17T13:21:57.235978+00:00",
+  "published_preflight_commit": "99654ee1fc8389fab4b86bcae9db87412cfbea9b",
+  "removed_files": 3123,
+  "removed_logical_bytes": 19174860771,
+  "removed_allocated_bytes": 19180769280,
+  "available_before_bytes": 4677943296,
+  "available_after_bytes": 23857991680,
+  "retained_file_check": {
+    "missing": [],
+    "changed": [
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-a-20260822T/source/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/source-main/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/source-main/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/final-source-a92f225/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/final-source-a92f225/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/commit1-source-52f0fd9/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/commit1-source-52f0fd9/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix1-source-706a79f/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix1-source-706a79f/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix2-final-source-a1b37c6/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix2-final-source-a1b37c6/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-task2-104c61a/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-task2-104c61a/.git/index",
+      "/home/ubuntu/projects/ARCH-cuda-v2-task3-a237d8a/.git/config",
+      "/home/ubuntu/projects/ARCH-cuda-v2-task3-a237d8a/.git/index"
+    ]
+  },
+  "protected_hash_failures": [],
+  "protected_hash_count": 23286,
+  "checked_enclosing_git_repos": 3,
+  "no_recursive_deletion": true,
+  "no_processes_stopped": true
+}
