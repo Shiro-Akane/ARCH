@@ -46,7 +46,9 @@ class AdvanceShapeRecipeTests(unittest.TestCase):
         for condition in ('count > 32', 'grid.x != 1', 'block.x != 32', 'shared != 0'):
             self.assertIn(condition, source)
         self.assertIn('if (index < 0) return original(function, grid, block, arguments, shared, stream);', source)
-        self.assertIn('return cudaErrorInvalidConfiguration;', source)
+        self.assertIn('std::_Exit(78);', source)
+        self.assertNotIn('return cudaErrorInvalidConfiguration;', source)
+        self.assertIn('reject("unexpected frozen launch/count ABI");', source)
         self.assertIn('matched_launches=%llu', source)
 
 

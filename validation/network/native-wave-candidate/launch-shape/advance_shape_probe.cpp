@@ -14,6 +14,14 @@
 #include <string>
 
 namespace {
+[[noreturn]] void reject(const char* reason) {
+    std::fprintf(stderr, "ADVANCE_SHAPE_PROBE_REJECTED %s\n", reason);
+    std::fflush(stderr);
+    // A generated kernel stub can discard cudaLaunchKernel's return value.
+    // Returning a made-up CUDA error would not set the runtime last-error latch.
+    // Reject the diagnostic explicitly, without generating a large core dump.
+    std::_Exit(78);
+}
 constexpr const char* allowed[] = {
     "_ZN4arch4cuda18sparse_burn_detail11advance_odeI18NetCustom_audit15012Solver_BE_NR12IdealGasViewEEvNS0_18SparseOdeBatchViewIT_T0_EEiT1_14BurnConfigViewb",
     "_ZN4arch4cuda18sparse_burn_detail11advance_odeI18NetCustom_audit1509Solver_BD12IdealGasViewEEvNS0_18SparseOdeBatchViewIT_T0_EEiT1_14BurnConfigViewb",
@@ -38,7 +46,7 @@ template<class F> F resolve(const char* symbol) {
     auto function = reinterpret_cast<F>(dlsym(RTLD_NEXT, symbol));
     if (!function) {
         std::fprintf(stderr, "ADVANCE_SHAPE_PROBE_UNAVAILABLE symbol=%s\n", symbol);
-        std::abort();
+        reject("required runtime symbol unavailable");
     }
     return function;
 }
@@ -47,8 +55,7 @@ unsigned threads() {
         const char* setting = std::getenv("ARCH_SPARSE_ADVANCE_THREADS");
         if (setting) for (unsigned candidate : {1u, 2u, 4u, 8u, 16u, 32u})
             if (std::to_string(candidate) == setting) return candidate;
-        std::fputs("ADVANCE_SHAPE_PROBE_REJECTED explicit threads in 1/2/4/8/16/32 required\n", stderr);
-        std::abort();
+        reject("explicit threads in 1/2/4/8/16/32 required");
     }();
     return value;
 }
@@ -61,8 +68,7 @@ int identify(const void* function) {
     static auto query = resolve<Query>("cudaFuncGetName");
     const char* name = nullptr;
     if (query(&name, function) != cudaSuccess || name == nullptr || r.functions.size() >= 512) {
-        std::fputs("ADVANCE_SHAPE_PROBE_UNAVAILABLE kernel identity or bounded registry\n", stderr);
-        std::abort();
+        reject("kernel identity or bounded registry unavailable");
     }
     int index = -1;
     for (int i = 0; i < 6; ++i) if (std::strcmp(name, allowed[i]) == 0) index = i;
@@ -97,8 +103,7 @@ extern "C" cudaError_t cudaLaunchKernel(const void* function, dim3 grid, dim3 bl
         std::memcpy(&count, arguments[1], sizeof(count));
     if (count < 1 || count > 32 || grid.x != 1 || grid.y != 1 || grid.z != 1
             || block.x != 32 || block.y != 1 || block.z != 1 || shared != 0) {
-        std::fputs("ADVANCE_SHAPE_PROBE_REJECTED unexpected frozen launch/count ABI\n", stderr);
-        return cudaErrorInvalidConfiguration;
+        reject("unexpected frozen launch/count ABI");
     }
     const unsigned selected = threads();
     grid.x = (static_cast<unsigned>(count) + selected - 1) / selected;

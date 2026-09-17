@@ -44,3 +44,19 @@ warp 内线程访问相同相对位置有利于合并访问；因此不能把大
 block size 需要结合资源和实测选择。本候选的 1-thread block 刻意偏离通常建议，
 仅用于区分“小批次集中一个 block”与访存／资源代价；不是建议生产默认如此。
 只有完整结果证明有益才采纳。[CUDA 12.8.1 最佳实践](https://docs.nvidia.com/cuda/archive/12.8.1/cuda-c-best-practices-guide/index.html)
+
+## 诊断归因与拒绝路径
+
+源码复核修正了尚未运行的探针拒绝路径：不伪造一个 `cudaLaunchKernel` 返回码，
+而是输出诊断错误并以 78 退出。生成的 kernel stub 可能丢弃该返回码，
+仅返回错误并不会设置 CUDA 自身的 last-error 状态，可能漏掉一次实际未发出的 launch。
+正常路径仍原样返回真实 CUDA 调用结果。旧准备版本没有上传或运行。
+
+另有 `prepare_wait_probe.py`：在已归档 API 观察器的两个可逆位置添加标签，
+区分 D2H 等待前最近观察到的 ARCH launch，避免把小量状态回读的等待全部说成传输带宽。
+不增加 CUDA 调用、事件或 fence，也不改变启动形状；不追踪 cuDSS 内部 kernel，
+标签不能解释为精确的 GPU kernel 耗时或唯一因果归属。
+该观察器仍未编译／运行；准备后源码 SHA 为
+`c046281beb191b5a3f00ce62c41b17880c9a71ae15e3cad5ce9c3349708ab7d2`。
+`diagnostic-source-tests-v2.log` 记录修正后六项源码／准备测试通过（0.003 s），
+包括等待标签只改两个可逆位置及拒绝未审阅基准；仍不构成 C++ 或真实 GPU 资格。

@@ -1,0 +1,11 @@
+test_only_labels_change (tests.tooling.test_cuda_wait_probe_recipe.WaitProbeRecipeTests.test_only_labels_change) ... ok
+test_unreviewed_base_rejected (tests.tooling.test_cuda_wait_probe_recipe.WaitProbeRecipeTests.test_unreviewed_base_rejected) ... ok
+test_each_original_cell_covered_exactly_once (tests.tooling.test_sparse_advance_shape_recipe.AdvanceShapeRecipeTests.test_each_original_cell_covered_exactly_once) ... ok
+test_frozen_device_mapping_not_modified (tests.tooling.test_sparse_advance_shape_recipe.AdvanceShapeRecipeTests.test_frozen_device_mapping_not_modified) ... ok
+test_only_six_exact_frozen_symbols (tests.tooling.test_sparse_advance_shape_recipe.AdvanceShapeRecipeTests.test_only_six_exact_frozen_symbols) ... ok
+test_shape_only_and_fail_closed (tests.tooling.test_sparse_advance_shape_recipe.AdvanceShapeRecipeTests.test_shape_only_and_fail_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.005s
+
+OK
