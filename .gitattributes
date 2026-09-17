@@ -5,3 +5,6 @@
 # Runtime text logs are immutable evidence, not scientific table assets.
 # Keep their exact bytes in ordinary Git; retain LFS for the EOS tables above.
 /validation/**/results/**/*_log.dat -filter diff merge -text
+
+# Retirement receipts are immutable byte-level audit evidence.
+/validation/backend/results/mainline-retirement-20260918/** -text

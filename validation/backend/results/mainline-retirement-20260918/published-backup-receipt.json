@@ -1,0 +1,10 @@
+{
+  "commit": "3351e4c1abedcd873d2cd57580f21262df3f90de",
+  "remote": "https://github.com/Arsenic-er/ARCH.git",
+  "local_fetch_and_pack_verification_passed": true,
+  "supplement_manifest_sha256": "b0ce368bdbabd30cc3db3f63853805ea332ed982d1aa0c1fdf16662cf9498e6e",
+  "volumes_manifest_sha256": "6dcb4c5ba2f9f097c91ee9e29e16e0354d45e7e1d5de87dbb1b37cbbde4c265f",
+  "pack_count": 65,
+  "compressed_bytes": 207664638,
+  "full_reconstruction_receipt_in_commit": "archives/mainline-retirement-20260918/supplement/verification.json"
+}
