@@ -96,6 +96,17 @@ class SafetyTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             cleanup.validate_entry(entry)
 
+    def test_known_pam_identity(self):
+        self.assertTrue(cleanup.is_auth_identity('(sd-pam)', '(sd-pam)'))
+
+    def test_known_ssh_identity(self):
+        self.assertTrue(cleanup.is_auth_identity('sshd', 'sshd: ubuntu@notty'))
+        self.assertTrue(cleanup.is_auth_identity('sshd', 'sshd: ubuntu'))
+
+    def test_name_alone_is_not_auth_identity(self):
+        self.assertFalse(cleanup.is_auth_identity('sshd', 'python ARCH-run.py'))
+        self.assertFalse(cleanup.is_auth_identity('sshd', 'sshd: ubuntu /home/ubuntu/projects/ARCH/build'))
+
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

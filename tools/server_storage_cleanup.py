@@ -50,6 +50,11 @@ def validate_entry(entry):
         raise ValueError(f'Different filesystem: {p}')
 
 
+def is_auth_identity(comm, cmdline):
+    return bool((comm == '(sd-pam)' and cmdline.strip() == '(sd-pam)') or
+                (comm == 'sshd' and re.fullmatch(r'sshd: ubuntu(?:@\S+)?', cmdline.strip())))
+
+
 def active_references(entries):
     """Fail closed on visible matching cwd/exe/maps/fds; never stop a process."""
     paths = {e['path'] for e in entries}
@@ -85,7 +90,8 @@ def active_references(entries):
                 cmdline = (proc / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
                 compiler = comm in {'ARCH', 'nvcc', 'cc1plus', 'cc1', 'ptxas', 'cicc',
                                     'ninja', 'make', 'g++', 'g++-11', 'g++-12', 'ld', 'ld.gold', 'cmake'}
-                if uid == os.getuid() or compiler or '/home/ubuntu/projects/ARCH' in cmdline:
+                auth_service = is_auth_identity(comm, cmdline)
+                if (uid == os.getuid() and not auth_service) or compiler or '/home/ubuntu/projects/ARCH' in cmdline:
                     unsafe_visibility.append({'pid': int(proc.name), 'uid': uid, 'comm': comm})
             except FileNotFoundError:
                 pass
@@ -142,10 +148,10 @@ def check_survivors(audit, removed):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--audit', required=True, type=Path)
-    parser.add_argument('--published-commit', required=True)
+    parser.add_argument('--published-commit')
     parser.add_argument('--apply', action='store_true')
     args = parser.parse_args()
-    if not re.fullmatch('[0-9a-f]{40}', args.published_commit):
+    if args.apply and not re.fullmatch('[0-9a-f]{40}', args.published_commit or ''):
         raise ValueError('Full published commit required')
     lock = (args.audit / 'cleanup.lock').open('a')
     fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
