@@ -71,6 +71,9 @@ def main():
     paths.add(factory/'source/tests/cuda/test_generated_sparse_burn.cpp')
     if any(p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(ROOT) for p in paths):
         raise ValueError('unsafe focused archive input')
+    # Compiler dependency aliases remain in the record, not as duplicate tar
+    # members/hard links. No relaxation of the download verifier is permitted.
+    paths = {p.resolve(strict=True) for p in paths}
     evidence = ROOT/'window-focused-evidence-v1'
     raw, packed = ROOT/'window-focused-raw-v1.tar.zst', ROOT/'window-focused-compact-v1.tar.zst'
     receipt = ROOT/'window-focused-collection-v1.json'

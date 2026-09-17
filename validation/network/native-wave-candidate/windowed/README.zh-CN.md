@@ -9,7 +9,7 @@
 `CuDssSparseWindowSolver` 是 Host 调度封装，最多 128 个逻辑槽，仅持有一个原有
 `CuDssSparseWaveSolver`（最多 32 个 native 槽）。不增加 device 分配，不修改原 provider、
 cuDSS、共享数学、精度、数值门槛或 256 MiB native 估计预算。
-ODE 工作窗口的隔离接入正在重新编译，尚未实际运行，因此不能声称增加了实际核反应并发。
+ODE 工作窗口的两份隔离 factory 已全部重新编译/链接，尚未实际运行，因此不能声称增加了实际核反应并发。
 
 - `(逻辑槽, caller token, matrix address)` 对应独立、单调递增的内部 token；各单元可以有相同 caller token。
 - 调用方修改系数必须换 token，不能以地址相同为由复用旧因子。
@@ -57,7 +57,7 @@ tail、Factorize-only／Solve／Idle 混合、逐出恢复、重复相同 caller
 即便合同通过，后续仍需独立 fresh factory 接入、真实三 ODE／容量／长轨迹／Helm 及配对性能，
 不能用这里的制造解替代上述验收。
 
-## 后续 factory 接入配方：新构建进行中
+## 后续 factory 接入配方：构建通过，严格归档恢复中
 
 `prepare_factory.py` 只从已归档的两份 SHA 固定 execution/owner 头生成可逆的隔离 overlay，
 保留所有 device 数学、launch shape、response/residual 检查、block gather/scatter 和生命周期代码。
@@ -81,7 +81,7 @@ ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256
 新 runner 必须先核验 18 项真实窗口合同、原输入／产物身份及双端完整备份，
 之后也只能放在原资源护栏内串行运行。现已准备 `factory-worker.sh`／`factory-dispatch.sh`，
 在完整窗口证据双端保全并发布后，已用新的五文件冻结包单独启动 factory worker 384860。
-wrapper Host 编译及 150 核素依赖预扫描成功，正在新编 CUDA 对象；没有实际 ODE 结果。
+wrapper、150/200 新 CUDA/Host 对象、链接、依赖及 ldd 共 11 项命令已全部成功；没有实际 ODE 结果。
 包身份见 `prepared-factory-input-v1.json`，不修改旧七文件合同包。
 另已准备独立 `collect_factory.py`，只在构建结束后上传；25 项本机配方/合成门槛检查通过，
 见 `factory-collection-preparation-checks-v1.log`，不等于实际编译或科学资格。
@@ -119,3 +119,14 @@ raw 保留全部私有源码/产物；外部原网络、SDK 和库以哈希依�
 Helm／完整应用或性能通过。`collect_focused.py` 在结束后独立收集，保留失败与原始输出。
 31 项本机配方／合成检查全过，包含 6 项新 focused 门槛检查；详细口径见
 `focused-preparation-checks-v1.log`。它们不构成新 factory 的 CUDA／核反应运行证据。
+
+### 归档入口与路径恢复（不重编、不放宽验证）
+
+首次收集因登录 PATH 不含原 Ninja 而失败；随后读取已校验 CMakeCache 的绝对 Ninja 路径。
+第一份归档又因 NVCC 的 `../` 路径别名产生重复 inode/hard-link 成员，被独立下载校验器拒绝。
+旧 collector 与失败归档全部保留；新 collector 规范化、去重实际文件路径后另写 v2 归档，
+原依赖路径/哈希仍在 build record 中。完整说明见 `collection-recovery-v1.md` 与 `collection-recovery-v2.md`。
+原严格校验器未改，34 项本机准备检查通过（1.222 s），不代替新归档的实际字节核验。
+
+focused 输入 v1 从未上传/运行。新包 v2 仅改为要求 factory 的合格 v2 归档及本机回执；
+原数值 validator、六组科学输入、CPU/CUDA 产物和误差预算保持不变。

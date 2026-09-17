@@ -59,8 +59,8 @@ def parse_owner(text):
 
 
 def factory_gate(root):
-    collection_path = root/'window-factory-collection-v1.json'
-    receipt_path = root/'window-factory-local-receipt-v1.json'
+    collection_path = root/'window-factory-collection-v2.json'
+    receipt_path = root/'window-factory-local-receipt-v2.json'
     collection, receipt = json.loads(collection_path.read_text()), json.loads(receipt_path.read_text())
     if (collection.get('factory_build_pass') is not True or collection.get('worker_exit_code') != 0
             or collection.get('fresh_factories') != 2

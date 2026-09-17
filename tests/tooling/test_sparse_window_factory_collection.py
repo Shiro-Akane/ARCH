@@ -3,6 +3,7 @@ import copy
 import importlib.util
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +39,29 @@ def fixture():
 
 
 class FactoryCollectionTests(unittest.TestCase):
+    def test_compiler_dotdot_aliases_archive_once_without_relaxing_safety(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            sub = root/'nested'
+            sub.mkdir()
+            original = root/'header.h'
+            original.write_bytes(b'synthetic header')
+            alias = sub/'../header.h'
+            self.assertEqual(module.canonical_archive_paths({original, alias}, root), {original.resolve()})
+            with self.assertRaises(ValueError): module.canonical_archive_paths({original}, sub)
+            with self.assertRaises(ValueError): module.canonical_archive_paths({sub}, root)
+            with self.assertRaises(ValueError): module.canonical_archive_paths({root/'missing'}, root)
+
+    def test_collection_uses_frozen_absolute_ninja_not_login_path(self):
+        cache = ROOT/'validation/network/results/native-wave-20260917/factory-focused-v1/records/ARCH-native-wave-v4-20260916/factory-release/CMakeCache.txt'
+        self.assertEqual(module.configured_ninja(cache.read_text()), '/home/ubuntu/projects/.envs/arch/bin/ninja')
+
+    def test_missing_ambiguous_or_relative_ninja_rejected(self):
+        for text in ('', 'CMAKE_MAKE_PROGRAM:FILEPATH=ninja\n',
+                     'CMAKE_MAKE_PROGRAM:FILEPATH=/usr/bin/make\n',
+                     'CMAKE_MAKE_PROGRAM:FILEPATH=/one/ninja\nCMAKE_MAKE_PROGRAM:FILEPATH=/two/ninja\n'):
+            with self.subTest(text=text), self.assertRaises(ValueError): module.configured_ninja(text)
+
     def test_completed_build_transcript_only(self):
         record, expected = fixture()
         module.validate_transcript(record, expected)

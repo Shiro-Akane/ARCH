@@ -3,8 +3,8 @@ set -euo pipefail
 root=/home/ubuntu/projects/ARCH-native-wave-v4-20260916
 control="$root/window-focused-control-v1"
 test "$(cat "$root/window-factory-control-v1/exit-code")" = 0
-test -s "$root/window-factory-collection-v1.json"
-test -s "$root/window-factory-local-receipt-v1.json"
+test -s "$root/window-factory-collection-v2.json"
+test -s "$root/window-factory-local-receipt-v2.json"
 test ! -e "$control"
 test ! -e "$root/window-focused-v1"
 # Exact prior source/product/archive checks happen before running any physics.

@@ -120,8 +120,8 @@ class FocusedPreparationTests(unittest.TestCase):
                 path.write_bytes(b'synthetic archive identity fixture')
                 collection[kind] = dict(path=str(path), bytes=path.stat().st_size, sha256=module.sha(path))
             receipt = dict(status='both_archives_and_all_members_byte_verified', raw=collection['raw'], compact=collection['compact'])
-            parent = root/'window-factory-collection-v1.json'
-            local = root/'window-factory-local-receipt-v1.json'
+            parent = root/'window-factory-collection-v2.json'
+            local = root/'window-factory-local-receipt-v2.json'
             parent.write_text(json.dumps(collection))
             local.write_text(json.dumps(receipt))
             module.factory_gate(root)

@@ -7,7 +7,7 @@ import hashlib
 import importlib.util
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 import shlex
 import shutil
@@ -25,6 +25,25 @@ spec.loader.exec_module(archive)
 sys.path.insert(0, str(ROOT/'window-factory-input-v1' if (ROOT/'window-factory-input-v1').is_dir() else HERE))
 from factory_recipe import compile_recipe, dependency_recipe, link_recipe, source_plan, verify_factory_dependencies
 from build_factory import require_backup
+
+
+def configured_ninja(cache_text):
+    matches = re.findall(r'^CMAKE_MAKE_PROGRAM:FILEPATH=(.+)$', cache_text, re.MULTILINE)
+    if len(matches) != 1:
+        raise ValueError('one frozen CMake build tool required')
+    value = matches[0].strip()
+    if not PurePosixPath(value).is_absolute() or PurePosixPath(value).name != 'ninja':
+        raise ValueError('frozen absolute Ninja path required')
+    return value
+
+
+def canonical_archive_paths(paths, root):
+    root = root.resolve(strict=True)
+    if any(p.is_symlink() or not p.is_file() or not p.resolve(strict=True).is_relative_to(root) for p in paths):
+        raise ValueError('unsafe factory archive input')
+    # NVCC records legitimate ../ include aliases. Keep those strings in the
+    # build record, but archive each canonical regular file exactly once.
+    return {p.resolve(strict=True) for p in paths}
 
 
 def validate_transcript(record, expected):
@@ -53,6 +72,12 @@ def validate(record, output):
     payload = ROOT/'window-factory-input-v1'
     window = ROOT/'window-input-v1'
     parents = require_backup(ROOT)
+    cache = build/'CMakeCache.txt'
+    if record.get('inputs', {}).get(str(cache)) != archive.sha(cache):
+        raise ValueError('frozen CMake cache changed before recipe audit')
+    ninja = configured_ninja(cache.read_text())
+    if not Path(ninja).is_file():
+        raise ValueError('original configured Ninja is unavailable')
     entries = json.loads((build/'compile_commands.json').read_text())
     provider = ROOT/'batch-launch-contract-v1/libarch_cuda_sparse_provider.a'
     expected = []
@@ -80,7 +105,7 @@ def validate(record, output):
             add(f'compile-audit{network}-{kind}', recipe['command'], Path(recipe['cwd']), timeout)
             products.append(obj)
         target = f'arch_cuda_generated_sparse_burn_audit{network}'
-        native = shlex.split(subprocess.run(['ninja', '-t', 'commands', target], cwd=build,
+        native = shlex.split(subprocess.run([ninja, '-t', 'commands', target], cwd=build,
             capture_output=True, text=True, check=True).stdout.splitlines()[-1])
         exe = output/target
         add(f'link-audit{network}', link_recipe(native, host, factory, wrapper, provider, exe))
@@ -154,11 +179,19 @@ def main():
     paths.update(ROOT/name for name in ('window-collection-v1.json', 'window-local-receipt-v1.json',
                                         'factory-focused-collection-v1.json'))
     paths.update((ROOT/'input/collect_factory.py', Path(__file__).resolve()))
-    if any(p.is_symlink() or not p.is_file() or not p.resolve().is_relative_to(ROOT) for p in paths):
-        raise ValueError('unsafe factory archive input')
-    evidence = ROOT/'window-factory-evidence-v1'
-    raw, packed = ROOT/'window-factory-raw-v1.tar.zst', ROOT/'window-factory-compact-v1.tar.zst'
-    receipt = ROOT/'window-factory-collection-v1.json'
+    for name in ('collect_window_factory_v1.py', 'collect_window_factory_v2.py',
+                 'window-factory-collection-recovery-v1.md', 'window-factory-collection-recovery-v2.md'):
+        previous = ROOT/'input'/name
+        if previous.is_file():
+            paths.add(previous)
+    # Preserve the rejected alias-containing archives as opaque evidence, never
+    # as an accepted predecessor or inputs to a new scientific execution.
+    paths.update(ROOT/name for name in ('window-factory-raw-v1.tar.zst',
+        'window-factory-compact-v1.tar.zst', 'window-factory-collection-v1.json'))
+    paths = canonical_archive_paths(paths, ROOT)
+    evidence = ROOT/'window-factory-evidence-v2'
+    raw, packed = ROOT/'window-factory-raw-v2.tar.zst', ROOT/'window-factory-compact-v2.tar.zst'
+    receipt = ROOT/'window-factory-collection-v2.json'
     if any(path.exists() for path in (evidence, raw, packed, receipt)):
         raise ValueError('preserve existing/partial factory archive')
     compact = evidence/'compact'
