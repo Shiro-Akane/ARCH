@@ -1,0 +1,27 @@
+2026-09-17 local preparation, while the sole server job builds fresh window factories.
+No new CUDA execution, server upload, archive or cleanup by these checks.
+
+python -m unittest discover -s tests/tooling -p test_sparse_window*.py -v
+Previously established 25 window/fresh-build/collection preparation checks: passed.
+New focused preparation checks:
+test_backup_gate_rejects_missing_partial_or_tampered_prior_archives ... ok
+test_complete_synthetic_execution_retains_limited_scope ... ok
+test_execution_or_scope_mutations_rejected ... ok
+test_original_numerical_budget_not_relaxed ... ok
+test_original_validator_and_harness_pins ... ok
+test_synthetic_owner_requires_capacity_budget_warp_and_transcript_identity ... ok
+Ran 31 tests in 0.957s
+OK (no skips)
+
+Git Bash -n focused-worker.sh: exit 0
+Git Bash -n focused-dispatch.sh: exit 0
+
+The parser fixture uses previously archived numerical transcripts and explicitly
+synthetic WINDOW_OWNER declarations. It is NOT evidence of a window ODE run.
+The numerical validator itself is unchanged, SHA-256:
+1e0806d57fc539c72afe3ebd88e3ebd9b1181e8386c48d45442ff168c09173f6
+The original C++ trajectory harness remains unchanged, SHA-256:
+551d021ac6ce26378dff6823e135a499cc9bbdc76276a7612a45ef21b5cab205
+
+Actual execution requires verified prior factory archives and all current
+input/product/dependency/source identities. No main/production/library changes.

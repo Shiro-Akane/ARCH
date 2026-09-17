@@ -9,7 +9,7 @@
 `CuDssSparseWindowSolver` 是 Host 调度封装，最多 128 个逻辑槽，仅持有一个原有
 `CuDssSparseWaveSolver`（最多 32 个 native 槽）。不增加 device 分配，不修改原 provider、
 cuDSS、共享数学、精度、数值门槛或 256 MiB native 估计预算。
-它还没有接到 ODE 工作窗口，因此此阶段不能声称增加了实际核反应并发。
+ODE 工作窗口的隔离接入正在重新编译，尚未实际运行，因此不能声称增加了实际核反应并发。
 
 - `(逻辑槽, caller token, matrix address)` 对应独立、单调递增的内部 token；各单元可以有相同 caller token。
 - 调用方修改系数必须换 token，不能以地址相同为由复用旧因子。
@@ -29,7 +29,7 @@ cuDSS、共享数学、精度、数值门槛或 256 MiB native 估计预算。
 或增加物理单元来冒充同输入收益。后续跨 block gather/scatter 若确有必要，应独立实现并验证
 每块网格映射、EOS 错误、summary/reduction、slot、AMR generation 及退休契约。
 
-## 待执行的独立合同
+## 已完成的独立合同
 
 两个制造解维度 151、201，各覆盖 `(window, cohort)`：
 `(1,1), (2,1), (3,2), (8,8), (9,8), (32,32), (33,32), (64,32), (128,32)`，共 18 组。
@@ -53,11 +53,11 @@ tail、Factorize-only／Solve／Idle 混合、逐出恢复、重复相同 caller
 收集器不在该输入包内，只在实验结束后另行上传，不改运行中的冻结配方。
 
 本机的 6 项源码／配方检查及两项 shell 语法检查已通过（最近一轮 0.054 s），
-日志见 `preparation-checks-v1.log`，只验证准备逻辑；C++/CUDA 合同仍全部待跑。
+日志见 `preparation-checks-v1.log`，只验证准备逻辑；实际 18 项合同结果见开头的原始证据。
 即便合同通过，后续仍需独立 fresh factory 接入、真实三 ODE／容量／长轨迹／Helm 及配对性能，
 不能用这里的制造解替代上述验收。
 
-## 后续 factory 接入配方：也仅准备
+## 后续 factory 接入配方：新构建进行中
 
 `prepare_factory.py` 只从已归档的两份 SHA 固定 execution/owner 头生成可逆的隔离 overlay，
 保留所有 device 数学、launch shape、response/residual 检查、block gather/scatter 和生命周期代码。
@@ -65,7 +65,8 @@ Host 实验选择项 `ARCH_NATIVE_WINDOW_CELLS` 仅接受 32／64／128；有效
 ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256 MiB 估计预算不变，
 不设置或伪造硬件 warp，不改 stack/cache/runtime 限制。
 
-本机已生成 `build/window-factory-overlay-v1`，没有上传、编译或运行；它不在上面的七文件合同包内。
+本机先生成了 `build/window-factory-overlay-v1` 供审查；实际部署由下述完整源码副本配方生成同样两头，
+不在上面的七文件合同包内，尚无新 factory 的运行结果。
 合计 9 项准备测试通过，包含原 kernel 数学区域、allocation 后的执行/析构区域字节不变检查。
 这些测试不说明两份 factory overlay 可编译；18 项合同只编译/验证窗口 wrapper。
 
@@ -73,7 +74,7 @@ ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256
 同一新二进制的 32／64／128 对照只隔离窗口大小的作用；wrapper 的 32 模式本身仍有额外 Host 工作，
 还须保留原 native-wave 的独立对照，才能评价整个封装的净收益。
 
-### 全新编译配方的接入约束（仍未执行）
+### 全新编译配方的接入约束
 
 `factory_recipe.py` 和 `build_factory.py` 在合同通过前仅做本机准备；
 本次后续部署不改变上述七文件合同包。
@@ -95,7 +96,7 @@ raw 保留全部私有源码/产物；外部原网络、SDK 和库以哈希依�
 包含新 executor／owner／window 头，且不能引用旧 source 下任何头。
 链接明确使用两份新 CUDA factory 对象，不借用旧对象来证明新路径。
 
-原网络（不叠加正在测试的 sink 内联）、共享物理、sm90、编译优化级别和 strict-FP 均保留。
+原网络（不叠加已完成独立诊断的 sink 内联）、共享物理、sm90、编译优化级别和 strict-FP 均保留。
 这里只构建 factory，状态最多为 `factory-built-not-runtime-qualified`，不是三 ODE 运行通过。
 尚未构建完整 ARCH 或证明跨 block 聚合；原小输入必须保留。
 
@@ -104,3 +105,17 @@ raw 保留全部私有源码/产物；外部原网络、SDK 和库以哈希依�
 首次完整复制测试误用不含大表的 Git compact 投影而失败，改用已核验 raw 源库存后通过；
 仍显式测试不完整 compact 必须被拒绝，没有取消原表或完整性门槛。
 依赖文件检查使用合成文本，本机没有运行 C++／NVCC，不能当作实际编译证据。
+
+## 原六项真实轨迹配方：本机准备，尚未部署
+
+`run_focused.py`、`focused-worker.sh`、`focused-dispatch.sh` 只会在两份新 factory
+完整编译、逐项归档并通过本机字节核验后，串行运行 audit150／audit200 的 BE_NR、BD、ROS4。
+复用已修正默认 storage-controls 解析的原 validator，文件字节 SHA 固定；没有重写数值验收。
+仍是原 2→3 单元、pool=2、四步、interval=1e-10、IdealGas、原组分和误差预算。
+实际 `WINDOW_OWNER` 必须报告 selected=32、capacity/native=2、32 MiB workspace 上限和硬件 warp=32；
+工作区字节必须与原 harness 的真实 lane-bytes 相符。没有 observer 或编译器改动。
+
+该小输入只验证封装接入，没有超过一个 native page，因此即使通过也不能标为多页 ODE、
+Helm／完整应用或性能通过。`collect_focused.py` 在结束后独立收集，保留失败与原始输出。
+31 项本机配方／合成检查全过，包含 6 项新 focused 门槛检查；详细口径见
+`focused-preparation-checks-v1.log`。它们不构成新 factory 的 CUDA／核反应运行证据。
