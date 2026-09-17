@@ -1,7 +1,8 @@
 # ODE 启动形状诊断候选
 
-2026-09-17状态：已在服务器隔离目录启动下述ABBA诊断，结果尚未收齐；
-不属于生产实现，也尚未证明更快。
+2026-09-17状态：[16次真实ABBA诊断已完成并双端保全](../../results/native-wave-20260917/advance-shape-v1/README.zh-CN.md)。
+四组BD/ROS4的1-thread方案均慢5.37%–9.79%，数值一致；**不采用该生产布局**。
+下文准备描述为历史，不能覆盖此实测否决结论。
 2026-09-17 已增加 `run_diagnostic.py`、worker/dispatch 和 `collect_diagnostic.py`：
 只在批量 kernel 的真实 focused 轨迹通过且双端保全后单独运行。
 使用相同的已编译两份 factory harness，先测 150/200 × BD/ROS4 × ABBA，

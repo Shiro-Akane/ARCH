@@ -41,12 +41,13 @@ def trajectory_args(profile, method, pool):
             '--pool-cells', str(pool), 'c12=0.5', 'o16=0.5']
 
 
-def validate(profile, record, output, exit_code):
+def validate(profile, record, output, exit_code, *, diagnostic=False):
     p = PROFILES[profile]
     expected = {f'audit{n}-{method}-pool{pool}' for n in (150, 200)
                 for method in METHODS for pool in p['pools']}
     if (record.get('steps') != p['steps'] or record.get('duration') != p['duration']
-            or record.get('runtime_timeout_seconds') != p['wall'] or record.get('observer')):
+            or record.get('runtime_timeout_seconds') != p['wall']
+            or bool(record.get('observer')) != diagnostic):
         raise ValueError('frozen physical/wall profile without observers required')
     commands = {row['name']: row for row in record['commands']}
     if len(commands) != len(record['commands']):
@@ -97,7 +98,8 @@ def validate(profile, record, output, exit_code):
     if exit_code != 0 and record['status'] != 'failed':
         raise ValueError('failure state not retained')
     return dict(completed_harnesses=sorted(completed), planned_harnesses=sorted(expected),
-                trajectory_matrix_pass=(exit_code == 0 and completed == expected),
+                trajectory_matrix_pass=(not diagnostic and exit_code == 0 and completed == expected),
+                diagnostic_numerical_pass=(diagnostic and exit_code == 0 and completed == expected),
                 performance_qualified=False, application_qualified=False, release_qualified=False)
 
 

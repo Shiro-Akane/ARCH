@@ -99,6 +99,17 @@ class TrajectoryRecipeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.validate('focused', record, self.output, 0)
 
+    def test_explicit_diagnostic_is_not_production_qualification(self):
+        record = self.matrix('focused')
+        record['observer'] = {'path': 'test-only.so'}
+        result = module.validate('focused', record, self.output, 0, diagnostic=True)
+        self.assertTrue(result['diagnostic_numerical_pass'])
+        self.assertFalse(result['trajectory_matrix_pass'])
+        self.assertFalse(result['performance_qualified'])
+        record.pop('observer')
+        with self.assertRaises(ValueError):
+            module.validate('focused', record, self.output, 0, diagnostic=True)
+
     def test_wrong_runtime_ode_rejected(self):
         record = self.matrix('focused')
         path = self.output / (record['runs'][0]['name'] + '.stdout')
