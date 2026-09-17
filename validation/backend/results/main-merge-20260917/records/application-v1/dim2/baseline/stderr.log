@@ -1,0 +1,2 @@
+terminate called after throwing an instance of 'std::invalid_argument'
+  what():  Sod benchmark requires a one-dimensional Cartesian grid (nblockx2 = nblockx3 = 0).

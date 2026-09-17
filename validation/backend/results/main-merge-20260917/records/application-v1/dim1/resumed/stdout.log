@@ -1,0 +1,36 @@
+[Info] Loaded 61 parameters from /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/input.par
+[RuntimeParams] Restart Enabled. Target file: '/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/partial/witness_chk_0001.h5'
+[Main] Console output is being recorded to log file: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/witness_log.dat
+[Main] Parameters loaded from: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/input.par
+[Main] Problem created: Sod
+[Problem] Sod shock tube: x0=0.35, left=(1, 1), right=(0.125, 0.1)
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.35
+       Solver: HLLC
+       Species Count: 1
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 1 (Static MAX_NG: 4)
+[Dispatch] Restarting from checkpoint: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/partial/witness_chk_0001.h5
+[IO] Restored CHK: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/partial/witness_chk_0001.h5 at step 3 with 5 AMR leaves.
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 128 | Finest Level: 1
+    Level 0   | dx1(x): 0.015625
+    Level 1   | dx1(x): 0.0078125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: none
+[EOS Dispatch] Resolving EOS Policy: ideal
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: Euler/RK1 + HLLC + pcm (minmod)
+[Adaptive Runtime] Predictive AMR Phase 0 observer enabled: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/witness_predictive_amr
+>>> Simulation Started | Solver: Euler (1st Order) + HLLC + PCM (1st Order) | Entropy Fix Coeff: 0 | OpenMP: ON (max threads=1)
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+4       7.15398e-03    1.52592e-03    1.52592e-03    
+5       8.65152e-03    1.49754e-03    1.49754e-03    
+6       1.01150e-02    1.46348e-03    1.46348e-03    
+[Terminate] Max simulation steps reached.
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/witness_HLLC_plt_0002.h5 at t=1.01150e-02
+[IO] Saved CHK: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/witness_chk_0002.h5 at step 6 with 5 AMR leaves.
+[ADAPTIVE RUNTIME DATA] events=3 nodes=15 edges=24 conservation_snapshots=4 observer_ms=0.518 prefix=/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/witness_predictive_amr
+>>> Simulation Done. Total Steps: 6 | Final Time: 0.0101

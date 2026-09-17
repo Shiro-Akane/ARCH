@@ -1,0 +1,16 @@
+{
+  "schema_version": 2,
+  "observer_authority": "read_only",
+  "node_identity": "morton_level_logical_coordinates",
+  "graph_edges": "directed_face_neighbors",
+  "conservation_totals": "canonical_gridmetrics_cell_volume",
+  "geometry": "cartesian",
+  "dimension": 2,
+  "compute_backend": "cpu",
+  "lrefinemin": 0,
+  "lrefinemax": 1,
+  "regrid_interval": 2,
+  "prediction_horizon_events": 4,
+  "history_events": 4,
+  "action_columns_are_targets_not_features": true
+}

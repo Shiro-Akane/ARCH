@@ -1,0 +1,603 @@
+{
+  "status": "failed",
+  "gpu_run": false,
+  "performance_qualification": false,
+  "candidate_binary_sha256": "76be5fd466d8cd6caf8c5a25dc9004bcaee3babdaee6ac80e7d5906f00bc3d4c",
+  "baseline_binary_sha256": "0647c3c1b10d9351081a5b030d3611c3d5551290f297536b517dbc98ed16179a",
+  "recipe_sha256": "2a15d46d1663a438bb405d49657ca2dd89ecfbd425617cfc39318a071859248c",
+  "comparisons": [
+    {
+      "left": "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/baseline/witness_chk_0001.h5",
+      "right": "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/disabled/witness_chk_0001.h5",
+      "exact_required": false,
+      "datasets": {
+        "Blocks/level": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x1": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x2": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x3": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/X": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/eng": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/enuc_rate": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_u": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_v": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_w": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/rho": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/rhoX": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/A": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/Cv": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/Z": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/gamma": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/name": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        }
+      }
+    },
+    {
+      "left": "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/disabled/witness_chk_0001.h5",
+      "right": "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/enabled/witness_chk_0001.h5",
+      "exact_required": true,
+      "datasets": {
+        "Blocks/level": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x1": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x2": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x3": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/X": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/eng": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/enuc_rate": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_u": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_v": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_w": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/rho": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/rhoX": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/A": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/Cv": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/Z": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/gamma": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/name": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        }
+      }
+    },
+    {
+      "left": "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/enabled/witness_chk_0001.h5",
+      "right": "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/resumed/witness_chk_0002.h5",
+      "exact_required": true,
+      "datasets": {
+        "Blocks/level": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x1": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x2": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Blocks/logical_x3": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/X": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/eng": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/enuc_rate": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_u": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_v": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/mom_w": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/rho": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Data/rhoX": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/A": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/Cv": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/Z": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/gamma": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        },
+        "Species/name": {
+          "array_equal": true,
+          "max_scaled_error": 0.0
+        }
+      }
+    }
+  ],
+  "error": "AssertionError(PosixPath('/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim2/baseline'))",
+  "files": [
+    {
+      "path": "dim1/baseline/execution.json",
+      "bytes": 440,
+      "sha256": "4c094145bd8db3dc3eb94893d0b9c183957096e0951490e87d6b7b489a160303"
+    },
+    {
+      "path": "dim1/baseline/input.par",
+      "bytes": 1135,
+      "sha256": "f6f98429d59228964743a1d3faf474fc9efa8673fbee4e50e5b09d95fd257b57"
+    },
+    {
+      "path": "dim1/baseline/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "dim1/baseline/stdout.log",
+      "bytes": 2523,
+      "sha256": "21b8479058197f5c2274777f11a5df41ceb8bccfc7a3947437e4c1c885085c08"
+    },
+    {
+      "path": "dim1/baseline/witness_HLLC_plt_0000.h5",
+      "bytes": 12800,
+      "sha256": "17dd0cffde6c84f8804a9c6673b7a901d89f3aeb596541402b970a8c30d916e2"
+    },
+    {
+      "path": "dim1/baseline/witness_HLLC_plt_0001.h5",
+      "bytes": 12800,
+      "sha256": "bfc5ef8b77e3b04dae1f76a8136071b490c132fe890225af360e46d1a4df39b8"
+    },
+    {
+      "path": "dim1/baseline/witness_backend_plan.txt",
+      "bytes": 273,
+      "sha256": "dcd1d809acf33ce7efda5ae761511233111c4543dfb95da286aa8cf4859db2f2"
+    },
+    {
+      "path": "dim1/baseline/witness_chk_0000.h5",
+      "bytes": 18260,
+      "sha256": "882adfa8a4def8345b48502dd4860d69ac615ebf905553303fa437a4d87da33a"
+    },
+    {
+      "path": "dim1/baseline/witness_chk_0001.h5",
+      "bytes": 18260,
+      "sha256": "bdb6a23bba5b170202ba56071672afd429eacd632e5171ae5f2032895f601b2f"
+    },
+    {
+      "path": "dim1/baseline/witness_log.dat",
+      "bytes": 2404,
+      "sha256": "92ca95fd78ca7f0f7db3b8daa5a765fb6b54ce8c17e6b83df24fbbbd08359f8c"
+    },
+    {
+      "path": "dim1/baseline/witness_regrid.tsv",
+      "bytes": 538,
+      "sha256": "ae7cac19d1026302212155c1bf0947d241c65950a9ff723663de59055c9644ec"
+    },
+    {
+      "path": "dim1/disabled/execution.json",
+      "bytes": 420,
+      "sha256": "00a495600652662ab9f053a3446435cd5eeddf2491ea89fe63582526d4f2dc18"
+    },
+    {
+      "path": "dim1/disabled/input.par",
+      "bytes": 1135,
+      "sha256": "c1ba47efd5281d425d703a269ed255de00d286ee04d21d88b24a13c4c17ae5d9"
+    },
+    {
+      "path": "dim1/disabled/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "dim1/disabled/stdout.log",
+      "bytes": 2523,
+      "sha256": "279a8f8cd9997327cb3a94ebbf29ba1f1c337669b0e08615d5e3541674058ae0"
+    },
+    {
+      "path": "dim1/disabled/witness_HLLC_plt_0000.h5",
+      "bytes": 12800,
+      "sha256": "17dd0cffde6c84f8804a9c6673b7a901d89f3aeb596541402b970a8c30d916e2"
+    },
+    {
+      "path": "dim1/disabled/witness_HLLC_plt_0001.h5",
+      "bytes": 12800,
+      "sha256": "bfc5ef8b77e3b04dae1f76a8136071b490c132fe890225af360e46d1a4df39b8"
+    },
+    {
+      "path": "dim1/disabled/witness_backend_plan.txt",
+      "bytes": 273,
+      "sha256": "dcd1d809acf33ce7efda5ae761511233111c4543dfb95da286aa8cf4859db2f2"
+    },
+    {
+      "path": "dim1/disabled/witness_chk_0000.h5",
+      "bytes": 18260,
+      "sha256": "882adfa8a4def8345b48502dd4860d69ac615ebf905553303fa437a4d87da33a"
+    },
+    {
+      "path": "dim1/disabled/witness_chk_0001.h5",
+      "bytes": 18260,
+      "sha256": "bdb6a23bba5b170202ba56071672afd429eacd632e5171ae5f2032895f601b2f"
+    },
+    {
+      "path": "dim1/disabled/witness_log.dat",
+      "bytes": 2404,
+      "sha256": "a84680089a7896d81d5cf99ffeb9ab9577d7ad50b04000161067fd2615bd0705"
+    },
+    {
+      "path": "dim1/disabled/witness_regrid.tsv",
+      "bytes": 515,
+      "sha256": "ddffc19f4abf3e9f67cd776f3a3d2020dcd3d55428402a10c1576a30fc7de370"
+    },
+    {
+      "path": "dim1/enabled/execution.json",
+      "bytes": 419,
+      "sha256": "c5cc1f97b22f968ed66bb1f75a1f8a6860d19c126983646686ef0f7aea693810"
+    },
+    {
+      "path": "dim1/enabled/input.par",
+      "bytes": 1134,
+      "sha256": "cf280c6a7350ba8d4a6e00ea830962c9f5d9840dd40f30b817e2a84a91d6ed7b"
+    },
+    {
+      "path": "dim1/enabled/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "dim1/enabled/stdout.log",
+      "bytes": 2868,
+      "sha256": "b183368a406d02bc724038e4fed98e10b4ba6a7cecf8af5dba58ac3c78708b8e"
+    },
+    {
+      "path": "dim1/enabled/witness_HLLC_plt_0000.h5",
+      "bytes": 12800,
+      "sha256": "e02b8243db44fce875f29e87a6dd7effcd5ff0d3226aea6f226def81b682d14a"
+    },
+    {
+      "path": "dim1/enabled/witness_HLLC_plt_0001.h5",
+      "bytes": 12800,
+      "sha256": "a4f961a11d9187952aa67d52c8aee4e1fa8bd6c1d52bbaa3f7dba23f0de81d94"
+    },
+    {
+      "path": "dim1/enabled/witness_backend_plan.txt",
+      "bytes": 273,
+      "sha256": "dcd1d809acf33ce7efda5ae761511233111c4543dfb95da286aa8cf4859db2f2"
+    },
+    {
+      "path": "dim1/enabled/witness_chk_0000.h5",
+      "bytes": 18260,
+      "sha256": "ac3b2d550731ee5a71eb15c0f3a9014acf5106727517086c3de5b6f1f8cde690"
+    },
+    {
+      "path": "dim1/enabled/witness_chk_0001.h5",
+      "bytes": 18260,
+      "sha256": "4681a154cf108437d877d53e115a821c1f7ddda6724680af4cd3cd2c1b792293"
+    },
+    {
+      "path": "dim1/enabled/witness_log.dat",
+      "bytes": 2750,
+      "sha256": "cfc15c27d272dbab205b7f10672fddb6b1db4bedd851f42d6fdc06713d6311ab"
+    },
+    {
+      "path": "dim1/enabled/witness_predictive_amr_conservation.csv",
+      "bytes": 2893,
+      "sha256": "29ef0dbac4141bf61ecb285d737f17756f8fb9a845498efddc24bc47a5f8d8dc"
+    },
+    {
+      "path": "dim1/enabled/witness_predictive_amr_edges.csv",
+      "bytes": 3591,
+      "sha256": "881608cc9bafbf763ee96461f2543d08fe216cd9d3044ebf6c89407b774ba5a1"
+    },
+    {
+      "path": "dim1/enabled/witness_predictive_amr_events.csv",
+      "bytes": 659,
+      "sha256": "42832b6998299d7fe757104cc0eea6a9007a4a7ff4dcb2cd7b2bb2f77b4a0508"
+    },
+    {
+      "path": "dim1/enabled/witness_predictive_amr_manifest.json",
+      "bytes": 467,
+      "sha256": "d5afa419d35a759a91945755626abfc3d36dcc22113a7b8ac375de466f08c9fb"
+    },
+    {
+      "path": "dim1/enabled/witness_predictive_amr_nodes.csv",
+      "bytes": 11801,
+      "sha256": "1634d8a2e4dad6a5e29ae4245b5b4f92fdb56072358c249edc05b80580c2b332"
+    },
+    {
+      "path": "dim1/enabled/witness_regrid.tsv",
+      "bytes": 539,
+      "sha256": "44db9c268c542f3aacabe9a20aae2210d5aff8365153e2a22e98c3019e0b3e35"
+    },
+    {
+      "path": "dim1/partial/execution.json",
+      "bytes": 419,
+      "sha256": "2dcbe5cd54d3fefa6d8e80f29677d05d98f5df0437c3987c6a12efd16077745d"
+    },
+    {
+      "path": "dim1/partial/input.par",
+      "bytes": 1134,
+      "sha256": "6d1bfaf061ecfb6d1cded0902773cbcc9eb78906947e4886ee149f3e9114e4fb"
+    },
+    {
+      "path": "dim1/partial/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "dim1/partial/stdout.log",
+      "bytes": 2707,
+      "sha256": "1da0a5433c3317d11979c969e49831ece4bca5e7843b4336f98e9a96e3749e5e"
+    },
+    {
+      "path": "dim1/partial/witness_HLLC_plt_0000.h5",
+      "bytes": 12800,
+      "sha256": "e02b8243db44fce875f29e87a6dd7effcd5ff0d3226aea6f226def81b682d14a"
+    },
+    {
+      "path": "dim1/partial/witness_HLLC_plt_0001.h5",
+      "bytes": 12800,
+      "sha256": "4e4db7a00e615ce0f8fe5e1d4f07616366180ebece63c655173c9f1569aa8086"
+    },
+    {
+      "path": "dim1/partial/witness_backend_plan.txt",
+      "bytes": 273,
+      "sha256": "dcd1d809acf33ce7efda5ae761511233111c4543dfb95da286aa8cf4859db2f2"
+    },
+    {
+      "path": "dim1/partial/witness_chk_0000.h5",
+      "bytes": 18260,
+      "sha256": "ac3b2d550731ee5a71eb15c0f3a9014acf5106727517086c3de5b6f1f8cde690"
+    },
+    {
+      "path": "dim1/partial/witness_chk_0001.h5",
+      "bytes": 18260,
+      "sha256": "02f6e848e1abca1889fb0de7542bed4e26d6ad8cb1a9312a81d390b5f24f7155"
+    },
+    {
+      "path": "dim1/partial/witness_log.dat",
+      "bytes": 2589,
+      "sha256": "fb4d8d49bfe661acbb09b9e4284d93dff47759aa003ddf90237f89f60eede988"
+    },
+    {
+      "path": "dim1/partial/witness_predictive_amr_conservation.csv",
+      "bytes": 1732,
+      "sha256": "5c41d270d7fbb2d9f7515af0d06e997cf367e0ad5fda6eaace63b953c3be762b"
+    },
+    {
+      "path": "dim1/partial/witness_predictive_amr_edges.csv",
+      "bytes": 1895,
+      "sha256": "fc4afefda6d002a2a95cbb237cc86a24ed50e11b248d06a8e8aaa1528d1294e4"
+    },
+    {
+      "path": "dim1/partial/witness_predictive_amr_events.csv",
+      "bytes": 451,
+      "sha256": "48bb3ef5cdfcd8d74f362633d450c3156675f6d3ee5310e5b8f509798ce7946a"
+    },
+    {
+      "path": "dim1/partial/witness_predictive_amr_manifest.json",
+      "bytes": 467,
+      "sha256": "d5afa419d35a759a91945755626abfc3d36dcc22113a7b8ac375de466f08c9fb"
+    },
+    {
+      "path": "dim1/partial/witness_predictive_amr_nodes.csv",
+      "bytes": 6382,
+      "sha256": "818e362d7121fd5764b8b853c9912926637ee9aaffc46f66dd7b712e8ee805d9"
+    },
+    {
+      "path": "dim1/partial/witness_regrid.tsv",
+      "bytes": 345,
+      "sha256": "18f94bb8808b7be21b23d4b637a344f72eb109c1559352ed693e31a1a63815b5"
+    },
+    {
+      "path": "dim1/resumed/execution.json",
+      "bytes": 419,
+      "sha256": "f12d7c10564943bc3492e3208c63739dd05e640d3040da4382a8d1f3947f2fd0"
+    },
+    {
+      "path": "dim1/resumed/input.par",
+      "bytes": 1243,
+      "sha256": "b816b8c26d4f7b56b445004309558213c945ee2afe6d9a7e16de3fa68c7033fe"
+    },
+    {
+      "path": "dim1/resumed/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "dim1/resumed/stdout.log",
+      "bytes": 2656,
+      "sha256": "3c38883512b34de877d93f7d0ce200ad27f8eb89e3fe01d2e493011bf723e009"
+    },
+    {
+      "path": "dim1/resumed/witness_HLLC_plt_0002.h5",
+      "bytes": 12800,
+      "sha256": "a4f961a11d9187952aa67d52c8aee4e1fa8bd6c1d52bbaa3f7dba23f0de81d94"
+    },
+    {
+      "path": "dim1/resumed/witness_backend_plan.txt",
+      "bytes": 273,
+      "sha256": "dcd1d809acf33ce7efda5ae761511233111c4543dfb95da286aa8cf4859db2f2"
+    },
+    {
+      "path": "dim1/resumed/witness_chk_0002.h5",
+      "bytes": 18260,
+      "sha256": "5acec97879145cfbf9b56b6f2251f188a41b42ed4bdedb366a41fc7d837c1b0c"
+    },
+    {
+      "path": "dim1/resumed/witness_log.dat",
+      "bytes": 2395,
+      "sha256": "724126f9fd312cb63f20c9d623f03e573475e8da63f28c55c76628661017d13f"
+    },
+    {
+      "path": "dim1/resumed/witness_predictive_amr_conservation.csv",
+      "bytes": 1609,
+      "sha256": "1f60fcad14c20486ba4e38b1a2c1315da02977bd321c0b06f4e428da27c44831"
+    },
+    {
+      "path": "dim1/resumed/witness_predictive_amr_edges.csv",
+      "bytes": 1858,
+      "sha256": "29d2edd922c1618338e15413151fb3608e4641b71a3d19bcae856b5a2173c195"
+    },
+    {
+      "path": "dim1/resumed/witness_predictive_amr_events.csv",
+      "bytes": 405,
+      "sha256": "cedde12d22c32251d605a90f686723e61b9d85fdd2d91d37eeea33491ca4c665"
+    },
+    {
+      "path": "dim1/resumed/witness_predictive_amr_manifest.json",
+      "bytes": 467,
+      "sha256": "d5afa419d35a759a91945755626abfc3d36dcc22113a7b8ac375de466f08c9fb"
+    },
+    {
+      "path": "dim1/resumed/witness_predictive_amr_nodes.csv",
+      "bytes": 6060,
+      "sha256": "ecb001b0be449bc49dcb57e353bc93bc9226a043a1ece287b7b550c9562ac669"
+    },
+    {
+      "path": "dim1/resumed/witness_regrid.tsv",
+      "bytes": 319,
+      "sha256": "1d5c402c29e512b52b6736a79d7f2aad63fa34d752809dc36c92fbf886cb806a"
+    },
+    {
+      "path": "dim2/baseline/execution.json",
+      "bytes": 441,
+      "sha256": "b8d6aecaf381af590b1316d262b5058166de4c6fa72c3639f6243074a325446c"
+    },
+    {
+      "path": "dim2/baseline/input.par",
+      "bytes": 1135,
+      "sha256": "87a3e7f1221fd6c99b8828334c918a3ddb6af9d827450df26b76f3bb0eb5d77e"
+    },
+    {
+      "path": "dim2/baseline/stderr.log",
+      "bytes": 165,
+      "sha256": "2519f17ba5bb0f4f2248721ebf4eba507ec3c2c831d5684ffbffa9a64ba4037c"
+    },
+    {
+      "path": "dim2/baseline/stdout.log",
+      "bytes": 409,
+      "sha256": "7bfba5012776643c5ebb513d599b04b68b9e6a8d7585be6bc8d9ecc83d84d78f"
+    },
+    {
+      "path": "dim2/baseline/witness_log.dat",
+      "bytes": 290,
+      "sha256": "d17c7e9a03aeb3a73f1587237610eef8d67d47aeda1415a374804063f2bc3932"
+    }
+  ]
+}

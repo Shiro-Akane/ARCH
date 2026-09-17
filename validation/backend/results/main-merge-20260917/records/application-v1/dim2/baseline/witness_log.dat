@@ -1,0 +1,3 @@
+[Main] Console output is being recorded to log file: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim2/baseline/witness_log.dat
+[Main] Parameters loaded from: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim2/baseline/input.par
+[Main] Problem created: Sod

@@ -67,6 +67,9 @@ struct Block {
     // Status flags
     bool active = false;      ///< Whether this block is currently active in the simulation
     int refine_flag = 0;      ///< 1: refine, -1: coarsen, 0: keep
+    // Diagnostic snapshots of the canonical criterion, before 2:1 closure.
+    double refinement_indicator = 0.0;
+    int criterion_refine_flag = 0;
 
     Block() = default;
 
@@ -88,6 +91,8 @@ struct Block {
         }
         active = true;
         refine_flag = 0;
+        refinement_indicator = 0.0;
+        criterion_refine_flag = 0;
 
         fluid_state.Reset();
         state_next.Reset();

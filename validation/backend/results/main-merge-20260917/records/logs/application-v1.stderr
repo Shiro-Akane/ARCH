@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/projects/ARCH-main-merge-20260917/run-regression-v1.py", line 138, in <module>
+    main()
+  File "/home/ubuntu/projects/ARCH-main-merge-20260917/run-regression-v1.py", line 117, in main
+    baseline = run(args.baseline, args.source, root / "baseline", dimension, False, 6)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/ubuntu/projects/ARCH-main-merge-20260917/run-regression-v1.py", line 75, in run
+    assert completed.returncode == 0, output
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: /home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim2/baseline

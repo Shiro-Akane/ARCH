@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/bin/ARCH",
+    "Sod",
+    "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v2/dim1/baseline/input.par"
+  ],
+  "returncode": 0,
+  "input_sha256": "5e509789cbf713b8dca6d90d0d53dc5eff73fda2c27ec8a24eb103565b9aec7f",
+  "binary_sha256": "0647c3c1b10d9351081a5b030d3611c3d5551290f297536b517dbc98ed16179a",
+  "OMP_NUM_THREADS": "1"
+}

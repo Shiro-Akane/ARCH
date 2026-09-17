@@ -1,0 +1,18 @@
+[Info] Loaded 0 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 3 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Info] Loaded 1 parameters from ../recorder-data/recorder.par
+[Adaptive Runtime] Predictive AMR Phase 0 observer enabled: ../recorder-data/dim1
+[ADAPTIVE RUNTIME DATA] events=2 nodes=2 edges=0 conservation_snapshots=3 observer_ms=0.301 prefix=../recorder-data/dim1
+[Adaptive Runtime] Predictive AMR Phase 0 observer enabled: ../recorder-data/dim2
+[ADAPTIVE RUNTIME DATA] events=2 nodes=2 edges=0 conservation_snapshots=3 observer_ms=0.559 prefix=../recorder-data/dim2
+[Adaptive Runtime] Predictive AMR Phase 0 observer enabled: ../recorder-data/dim3
+[ADAPTIVE RUNTIME DATA] events=2 nodes=2 edges=0 conservation_snapshots=3 observer_ms=4.932 prefix=../recorder-data/dim3
+predictive AMR recorder contracts passed (Host; no GPU qualification)

@@ -1,0 +1,34 @@
+[
+  {
+    "label": "git-preservation",
+    "command": [
+      "C:\\Users\\jiang\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "C:\\tmp\\ARCH-main-integration-20260917\\validation\\backend\\results\\main-merge-20260917\\verify_merge.py"
+    ],
+    "returncode": 0
+  },
+  {
+    "label": "architecture",
+    "command": [
+      "C:\\Users\\jiang\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "tools/audit_architecture.py",
+      "."
+    ],
+    "returncode": 0
+  },
+  {
+    "label": "architecture-tests",
+    "command": [
+      "C:\\Users\\jiang\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests/tooling",
+      "-p",
+      "test_audit_architecture.py",
+      "-v"
+    ],
+    "returncode": 0
+  }
+]

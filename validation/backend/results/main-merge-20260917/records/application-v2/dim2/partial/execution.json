@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/bin/ARCH",
+    "Sedov",
+    "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v2/dim2/partial/input.par"
+  ],
+  "returncode": 0,
+  "input_sha256": "3aa381128f02b9337a336703b8055ce56550923102d84c5a51032178c814d8d4",
+  "binary_sha256": "76be5fd466d8cd6caf8c5a25dc9004bcaee3babdaee6ac80e7d5906f00bc3d4c",
+  "OMP_NUM_THREADS": "1"
+}

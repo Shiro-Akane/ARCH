@@ -1,0 +1,18 @@
+{
+  "status": "both_archives_and_all_members_verified",
+  "raw_files": 329,
+  "compact_files": 254,
+  "raw": {
+    "name": "main-merge-raw-v1.tar.gz",
+    "bytes": 3435564,
+    "sha256": "fbbb1a74e4065b738d0d4e8e0df92e46673e291dccef890bdc614e61facf6a75"
+  },
+  "compact": {
+    "name": "main-merge-compact-v1.tar.gz",
+    "bytes": 124169,
+    "sha256": "2ce8d9d5b47e63e6176ecb5da8d899dc2bc01aa4a3501ecf5ab9b7f9b5c5e385"
+  },
+  "raw_committed_to_git": true,
+  "gpu_qualification_added": false,
+  "verifier_sha256": "27258be40855a33dc4bb1f4d72b0cde99973be76232bce6e373148d77aa522e9"
+}

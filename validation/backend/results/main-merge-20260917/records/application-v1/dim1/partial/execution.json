@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/bin/ARCH",
+    "Sod",
+    "/home/ubuntu/projects/ARCH-main-merge-20260917/application-v1/dim1/partial/input.par"
+  ],
+  "returncode": 0,
+  "input_sha256": "6d1bfaf061ecfb6d1cded0902773cbcc9eb78906947e4886ee149f3e9114e4fb",
+  "binary_sha256": "76be5fd466d8cd6caf8c5a25dc9004bcaee3babdaee6ac80e7d5906f00bc3d4c",
+  "OMP_NUM_THREADS": "1"
+}
