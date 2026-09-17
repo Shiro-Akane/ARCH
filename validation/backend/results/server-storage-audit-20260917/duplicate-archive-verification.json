@@ -1,0 +1,155 @@
+{
+  "canonical": {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst",
+    "bytes": 1236911980,
+    "blocks": 2415848,
+    "inode": 583457477,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246346237758284,
+    "sha256": "ffa2287b0e61c5b9f7090138add48e52b41bc454ba07db872103d1b421b0a493"
+  },
+  "decoded_zstd": {
+    "sha256": "4a96dd7befd9917e8f8ec56fc1664edcefdb772ac6c9e56ee3bd94e3c2a15cad",
+    "bytes": 8018995200
+  },
+  "decoded_gzip": {
+    "sha256": "4a96dd7befd9917e8f8ec56fc1664edcefdb772ac6c9e56ee3bd94e3c2a15cad",
+    "bytes": 8018995200
+  },
+  "parts_combined_sha256": "ffa2287b0e61c5b9f7090138add48e52b41bc454ba07db872103d1b421b0a493",
+  "duplicates": [
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.gz",
+      "bytes": 2968560281,
+      "blocks": 5797976,
+      "inode": 583457474,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789245907395587791,
+      "sha256": "7000634ad10a1b1e57df4b6c99271a092ca4ba2e11026ed93360ed29463ba29f",
+      "category": "identical_decoded_archive",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-00",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537669,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246551882774160,
+      "sha256": "2a8bb7cc8a63559583af9cef15622eee29bf45826a98e461bcba358539f3ca3e",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-01",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537670,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246551950774496,
+      "sha256": "18853b6cfd0a349e36beba50d963e23d006b881943992f80263d839aeb959b05",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-02",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537671,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552022774852,
+      "sha256": "1caed009ecf716565be710eb2aa809b5a0d6642f4c67dae8caadc7b39b0c2fd2",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-03",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537672,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552094775206,
+      "sha256": "7f82b4685c2fd4d2f2c37ec3c0b786e9b2fee26f3a165621dfe9cabd094f89b8",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-04",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537673,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552170775582,
+      "sha256": "7038b52de4f1bdeef2f9d0ccc33febe8078412559f58a553c8416f4972616018",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-05",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537674,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552290776174,
+      "sha256": "063afb4c0d91a108874318a56b9a1adfdfb7c071a4ee08a4f2a305696b4cdb43",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-06",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537675,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552414776788,
+      "sha256": "9bb85726a6ec68481c11557ef65d0d186ef78f655edbcca837e01de93ec98deb",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-07",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537676,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552554777479,
+      "sha256": "bddaf315af59aef5b9f306ab0a34cb724ccda14030129fc37dca35595ae899ee",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-08",
+      "bytes": 134217728,
+      "blocks": 262144,
+      "inode": 866537677,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552678778091,
+      "sha256": "f1003b740a069164c7155cebd30860594223a0a5a2cb0405d02750cba8ddfec3",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    },
+    {
+      "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-09",
+      "bytes": 28952428,
+      "blocks": 56552,
+      "inode": 866537678,
+      "device": 64768,
+      "nlink": 1,
+      "mtime_ns": 1789246552714778269,
+      "sha256": "eb7c1f761af5e57ef579a5e1fda6c1e25b78585ab18b4770905a4403c73b156c",
+      "category": "verified_transfer_part",
+      "retained_copy": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst"
+    }
+  ]
+}

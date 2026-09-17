@@ -1,0 +1,2335 @@
+[
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.gz",
+    "bytes": 2968560281,
+    "blocks": 5797976,
+    "inode": 583457474,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789245907395587791
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fixed-science-v1.tar.zst",
+    "bytes": 1601189714,
+    "blocks": 3127328,
+    "inode": 375648799,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789363038368506476
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-numeric-validation-v1.tar.zst",
+    "bytes": 1521541667,
+    "blocks": 2971768,
+    "inode": 932673820,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789349240998215901
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-application-validation-v1.tar.zst",
+    "bytes": 1500981790,
+    "blocks": 2931608,
+    "inode": 81159414,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789330348820636881
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-fused-validation-timing-v1.tar.zst",
+    "bytes": 1488897148,
+    "blocks": 2908008,
+    "inode": 84052614,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789344441831474387
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-evidence.tar.zst",
+    "bytes": 1236911980,
+    "blocks": 2415848,
+    "inode": 583457477,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246346237758284
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12",
+    "bytes": 749210000,
+    "blocks": 1463304,
+    "inode": 858489818,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887156765427012
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-a-20260822T/r3-final-captures.tgz",
+    "bytes": 345075632,
+    "blocks": 673976,
+    "inode": 378319439,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787332511761291877
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-application-20260914/build/p12-20260914/large-application-v2/release/libarch_cuda_backend.a",
+    "bytes": 337505232,
+    "blocks": 659192,
+    "inode": 616634304,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789366173002919684
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-application-20260914/build/p12-20260914/large-application-v2/release/bin/ARCH",
+    "bytes": 335243120,
+    "blocks": 654776,
+    "inode": 616634959,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789366228707131300
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-integration-20260909/build/large-integration-20260909/release/libarch_cuda_backend.a",
+    "bytes": 314273266,
+    "blocks": 613816,
+    "inode": 323371188,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788907694835307017
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-integration-20260909/build/large-integration-20260909/release/bin/ARCH",
+    "bytes": 312998504,
+    "blocks": 611328,
+    "inode": 574365837,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788907753063597994
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fixed-timing-products-v1.tar.zst",
+    "bytes": 297792308,
+    "blocks": 581632,
+    "inode": 357998760,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789377960362587110
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-application-20260914/build/large-application-runtime-v1.tar.zst",
+    "bytes": 285199568,
+    "blocks": 557032,
+    "inode": 375493106,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789368200923734770
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-final-asan/libarch_solver_dispatch.a",
+    "bytes": 262121850,
+    "blocks": 511960,
+    "inode": 31091891,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788221043166850634,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-final-asan",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/source-authoritative",
+    "sha256": "af7ba44d62c6f8779b97df174a80f2e463a6002bc6abfb63f355d76b6b5ef2af"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-application-20260914/build/p12-20260914/large-application-v2/fixed-integration-v1/base-products.tar.zst",
+    "bytes": 262029070,
+    "blocks": 511776,
+    "inode": 373164510,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789365273659631407
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task5-asan/libarch_solver_dispatch.a",
+    "bytes": 261717278,
+    "blocks": 511168,
+    "inode": 279598813,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788193505017635101,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task5-asan",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/source-task5-cpu-fix",
+    "sha256": "3e0dac9c38ad9bd011f4df76bf308502034ab75988c5b88edf1eb6bc0f53996f"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/base.tar",
+    "bytes": 257454080,
+    "blocks": 502840,
+    "inode": 277148420,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788085289584115594
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i0-20260830T/baseline-4645975.tar",
+    "bytes": 257157120,
+    "blocks": 502264,
+    "inode": 270847872,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788037016026579635
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task5-base.tar",
+    "bytes": 257044480,
+    "blocks": 502040,
+    "inode": 810865928,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787958601150730457
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task3-base.tar",
+    "bytes": 256931840,
+    "blocks": 501824,
+    "inode": 810753752,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787927453814693667
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task4-base.tar",
+    "bytes": 256931840,
+    "blocks": 501824,
+    "inode": 810719487,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787928794588762730
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/base.tar",
+    "bytes": 256921600,
+    "blocks": 501800,
+    "inode": 810616730,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787839348215507681
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/merge-personal-main-642883c/source.tar",
+    "bytes": 256901120,
+    "blocks": 501760,
+    "inode": 928633159,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787798792187157847
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-final-asan-20260829/libarch_solver_dispatch.a",
+    "bytes": 227317912,
+    "blocks": 443984,
+    "inode": 609508186,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788001145275676487,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-final-asan-20260829",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskf-source",
+    "sha256": "a3517fe34ab1150b1af20a794a891e920257bb64684bcd19d24a1a9d8e82bb5c"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-asan/libarch_solver_dispatch.a",
+    "bytes": 227015712,
+    "blocks": 443392,
+    "inode": 870411970,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787974666502132351,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-asan",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskf-source",
+    "sha256": "b7c9878d9edcc42e032d997bccb1b48f9f61c4c98fc11d81e4cb7c6ee870c0cb"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/.git/objects/pack/pack-1e138ef77ee8f1fbfea8ec6a175714c999b0bcc0.pack",
+    "bytes": 223542243,
+    "blocks": 436608,
+    "inode": 286278879,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887385986565384
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/bin/ARCH",
+    "bytes": 221752416,
+    "blocks": 433112,
+    "inode": 86478672,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789360328552510738
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/bin/ARCH",
+    "bytes": 221062312,
+    "blocks": 431768,
+    "inode": 607775108,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789354001537794719
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/bin-fixed-16g/ARCH",
+    "bytes": 204248832,
+    "blocks": 398928,
+    "inode": 830383756,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788545009198905393
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/libarch_cuda_backend.a",
+    "bytes": 198622746,
+    "blocks": 387936,
+    "inode": 608003876,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789360193591897015
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/libarch_cuda_backend.a",
+    "bytes": 197936866,
+    "blocks": 386600,
+    "inode": 87590398,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789353862813099616
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/head-4c89537.tar.gz",
+    "bytes": 193586405,
+    "blocks": 378104,
+    "inode": 27115112,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788212593496698268
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-personal-gpu-amr-integration-20260903/bin/ARCH",
+    "bytes": 188882048,
+    "blocks": 368912,
+    "inode": 44341548,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788450077758354156
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/libarch_cuda_backend.a",
+    "bytes": 176691142,
+    "blocks": 345104,
+    "inode": 561263506,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788542911645119725,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source-fixed",
+    "sha256": "9fa494d579c5450265789b19a16e83c4c2ba380785980a4fef8a11a9f81a4eb8"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-personal-gpu-amr-integration-20260903/.git/objects/pack/pack-4c5e328f57fe6a7ee26c6e8f4923a1d08c2bd864.pack",
+    "bytes": 175751620,
+    "blocks": 343272,
+    "inode": 560686217,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788441685159779393
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/bin/ARCH",
+    "bytes": 173204736,
+    "blocks": 338296,
+    "inode": 86478717,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356596924115167
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-corrected-fused-baseline-20260914/build/corrected-fused-20260914/release/bin/ARCH",
+    "bytes": 173165120,
+    "blocks": 338216,
+    "inode": 375228371,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789357201359347230
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/libarch_cuda_backend.a",
+    "bytes": 172770796,
+    "blocks": 337448,
+    "inode": 932096860,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356552915875453
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-corrected-fused-baseline-20260914/build/corrected-fused-20260914/release/libarch_cuda_backend.a",
+    "bytes": 172650668,
+    "blocks": 337216,
+    "inode": 84038340,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789357162487141641
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/bin/ARCH",
+    "bytes": 172139800,
+    "blocks": 336216,
+    "inode": 85353075,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346407717049719
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/bin/ARCH",
+    "bytes": 172099832,
+    "blocks": 336136,
+    "inode": 76837968,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333702628428185
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/burn-fused-binaries/ARCH",
+    "bytes": 171926328,
+    "blocks": 335800,
+    "inode": 81119114,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333507187450182
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/unfused-binaries/ARCH",
+    "bytes": 171798768,
+    "blocks": 335552,
+    "inode": 607553550,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789330892675086494
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/bin/ARCH",
+    "bytes": 171792328,
+    "blocks": 335536,
+    "inode": 583404000,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243542103679026
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/libarch_cuda_backend.a",
+    "bytes": 171722788,
+    "blocks": 335400,
+    "inode": 616634750,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346364844841472
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/libarch_cuda_backend.a",
+    "bytes": 171596564,
+    "blocks": 335152,
+    "inode": 891806582,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333615543995055
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/burn-fused-binaries/libarch_cuda_backend.a",
+    "bytes": 171342264,
+    "blocks": 334656,
+    "inode": 81119115,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333507331450911
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/unfused-binaries/libarch_cuda_backend.a",
+    "bytes": 171176196,
+    "blocks": 334336,
+    "inode": 607553551,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789330892675086494
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/libarch_cuda_backend.a",
+    "bytes": 170992026,
+    "blocks": 333976,
+    "inode": 350567763,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243319398474320
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-a-20260822T/source/.git/objects/pack/pack-8d20307ce0b8be1b87e16ac52e7c7a08d8f51331.pack",
+    "bytes": 169818619,
+    "blocks": 331680,
+    "inode": 930548439,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787330404081734091
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/source/.git/objects/pack/pack-8d20307ce0b8be1b87e16ac52e7c7a08d8f51331.pack",
+    "bytes": 169818619,
+    "blocks": 331680,
+    "inode": 926198263,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787330404081734091
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-c8-task5-golden/.git/objects/pack/pack-e682335707b9f3146a31abd813b588ec07463252.pack",
+    "bytes": 169324773,
+    "blocks": 330720,
+    "inode": 346987264,
+    "device": 64768,
+    "nlink": 4,
+    "mtime_ns": 1787226296463599268
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-recovery-test/.git/objects/pack/pack-e682335707b9f3146a31abd813b588ec07463252.pack",
+    "bytes": 169324773,
+    "blocks": 330720,
+    "inode": 346987264,
+    "device": 64768,
+    "nlink": 4,
+    "mtime_ns": 1787226296463599268
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task10-4fbcfab/.git/objects/pack/pack-e682335707b9f3146a31abd813b588ec07463252.pack",
+    "bytes": 169324773,
+    "blocks": 330720,
+    "inode": 346987264,
+    "device": 64768,
+    "nlink": 4,
+    "mtime_ns": 1787226296463599268
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task5/.git/objects/pack/pack-e682335707b9f3146a31abd813b588ec07463252.pack",
+    "bytes": 169324773,
+    "blocks": 330720,
+    "inode": 346987264,
+    "device": 64768,
+    "nlink": 4,
+    "mtime_ns": 1787226296463599268
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source/.git/objects/pack/pack-763eb6badd40c502deb1845228d7d12331090985.pack",
+    "bytes": 169165132,
+    "blocks": 330408,
+    "inode": 42064606,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788385763589917468
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d1-resume-20260825T/source/.git/objects/pack/pack-14d9e4bb9875fb905c65a4afe845bd1de5946672.pack",
+    "bytes": 168923045,
+    "blocks": 329928,
+    "inode": 24806110,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787643827735657984
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d1-20260822T/base.bundle",
+    "bytes": 168464481,
+    "blocks": 329040,
+    "inode": 140119727,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787401771285914390
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d1-resume-20260825T/base.bundle",
+    "bytes": 168464481,
+    "blocks": 329040,
+    "inode": 678107693,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787643856723754508
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d1-20260822T/source/.git/objects/pack/pack-261e2fa6000978080d5ea1d85ff6999e4679e760.pack",
+    "bytes": 168464418,
+    "blocks": 329040,
+    "inode": 940988669,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787401773645924660
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/d0-base.bundle",
+    "bytes": 168454539,
+    "blocks": 329016,
+    "inode": 939180032,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787400102611024164
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-d0-20260822T/source/.git/objects/pack/pack-d6c1c20594235315d7053a48b56ed40b3afa8b26.pack",
+    "bytes": 168454476,
+    "blocks": 329016,
+    "inode": 140112430,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787400105387036931
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-c4-20260822/base.bundle",
+    "bytes": 168433057,
+    "blocks": 328976,
+    "inode": 852662904,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787389152559584450
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-c4-20260822/base-source/.git/objects/pack/pack-b1afaae6cbab592d75e6ffc274c53111b2e1d0db.pack",
+    "bytes": 168432994,
+    "blocks": 328976,
+    "inode": 937067948,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787389156479602812
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/task-b-fix2-a1b37c6.bundle",
+    "bytes": 168332406,
+    "blocks": 328776,
+    "inode": 913886371,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787340403423629118
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix2-final-source-a1b37c6/.git/objects/pack/pack-0349997655dfaedd3cd7f2f228040a9d74e0df46.pack",
+    "bytes": 168332343,
+    "blocks": 328776,
+    "inode": 111252186,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787340422527716860
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/task-b-fix1-706a79f.bundle",
+    "bytes": 168329895,
+    "blocks": 328776,
+    "inode": 913889456,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787339043966116507
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/fix1-source-706a79f/.git/objects/pack/pack-9e58fd37604f3bf400397b64149cd909e61ad017.pack",
+    "bytes": 168329832,
+    "blocks": 328776,
+    "inode": 358445474,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787339046870131152
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/task-b-a92f225.bundle",
+    "bytes": 168325297,
+    "blocks": 328768,
+    "inode": 926523004,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787336728262457933
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/final-source-a92f225/.git/objects/pack/pack-963c9c8f6b7736e9caf30fb3dc2f8b9fd8b09fad.pack",
+    "bytes": 168325234,
+    "blocks": 328768,
+    "inode": 117114682,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787336730818470927
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/commit1-source-52f0fd9/.git/objects/pack/pack-963c9c8f6b7736e9caf30fb3dc2f8b9fd8b09fad.pack",
+    "bytes": 168325234,
+    "blocks": 328768,
+    "inode": 111168101,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787337121148450068
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/base.bundle",
+    "bytes": 168298811,
+    "blocks": 328712,
+    "inode": 926198269,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787334948761075755
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-b-20260822T1/source-main/.git/objects/pack/pack-2facad2baa7f28ee690b29e579fd0f23708022c4.pack",
+    "bytes": 168298748,
+    "blocks": 328712,
+    "inode": 380071998,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787334951881091151
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task4-8bdcf94/.git/objects/pack/pack-3e661636238cf1a7288c66b1ee833ae18b740cde.pack",
+    "bytes": 168250051,
+    "blocks": 328616,
+    "inode": 904709789,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787233074430391766
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task3-a237d8a/.git/objects/pack/pack-f6f461d44f431610f65e61ecdcf8719aec6a4e74.pack",
+    "bytes": 168237982,
+    "blocks": 328592,
+    "inode": 904618025,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787231192344107164
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task2-104c61a/.git/objects/pack/pack-e11eb383a0e5cbfee908715f3be4b9729c46eb79.pack",
+    "bytes": 168229439,
+    "blocks": 328576,
+    "inode": 346986869,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787229295265675558
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task10-clean-4fbcfab/.git/objects/pack/pack-d9e716fad7b9296a3e8e6a1fe3e9c6e681d16421.pack",
+    "bytes": 168114076,
+    "blocks": 328352,
+    "inode": 904910962,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787300919614031779
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_regrid_transaction",
+    "bytes": 168057128,
+    "blocks": 328240,
+    "inode": 932096865,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356556491894964
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_hydro_block",
+    "bytes": 168003128,
+    "blocks": 328136,
+    "inode": 931964341,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356576268002760
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_amr_exchange",
+    "bytes": 167914136,
+    "blocks": 327960,
+    "inode": 931964350,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356594368101267
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_multiblock_burn",
+    "bytes": 167880688,
+    "blocks": 327896,
+    "inode": 931964343,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356576468003849
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_multiblock_diffusion",
+    "bytes": 167862776,
+    "blocks": 327864,
+    "inode": 931964338,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356576160002172
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_multiblock_hydro",
+    "bytes": 167856112,
+    "blocks": 327848,
+    "inode": 931964342,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356576156002150
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/fix-20260914/release/arch_cuda_store_lifecycle",
+    "bytes": 167816904,
+    "blocks": 327768,
+    "inode": 931964344,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789356591664086561
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-b0e23a3d1cd0f455a8f0c78bbef0c82d88cbbf8d.pack",
+    "bytes": 167787815,
+    "blocks": 327712,
+    "inode": 541431842,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1785530943498629360
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-41235330ae1ac8057ee7d3d6f8f88f951e62c6de.pack",
+    "bytes": 167616438,
+    "blocks": 327376,
+    "inode": 585558105,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786028063782676396
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-e249fc2a8bcc4e1523735cf5bff566df5f728460.pack",
+    "bytes": 167615810,
+    "blocks": 327376,
+    "inode": 585557106,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786027760521454770
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-978330f6cb327a4817764d687bce8569646b7ddd.pack",
+    "bytes": 167615453,
+    "blocks": 327376,
+    "inode": 579914450,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786027672357093131
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-25a85543d4cdb89d486567edd8b500fb8fe77b10.pack",
+    "bytes": 167615075,
+    "blocks": 327376,
+    "inode": 579343368,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786027496988361416
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-c235d569fa7a50a62ab33f1d4cc97e5d2d5fcc5e.pack",
+    "bytes": 167614681,
+    "blocks": 327376,
+    "inode": 579916700,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786025791587916060
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/.git/objects/pack/pack-52b1cd74bc4f0259158373e75303f294bed9e493.pack",
+    "bytes": 167614299,
+    "blocks": 327376,
+    "inode": 585557719,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786025659955466167
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH/.git/objects/pack/pack-a05ac65d80ebfa9641e5ac5df1ce522b18f77852.pack",
+    "bytes": 167533455,
+    "blocks": 327216,
+    "inode": 811099702,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1785163435338476813
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-runs/main-structure-1d-20260724/main-structure-publish.bundle",
+    "bytes": 167362176,
+    "blocks": 326880,
+    "inode": 811488676,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1784902307385586357
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_regrid_transaction",
+    "bytes": 167012632,
+    "blocks": 326200,
+    "inode": 616634849,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346368252858027
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_regrid_transaction",
+    "bytes": 166972952,
+    "blocks": 326120,
+    "inode": 891806668,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333744340634363
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_hydro_block",
+    "bytes": 166954552,
+    "blocks": 326088,
+    "inode": 617502369,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346387348950788
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_hydro_block",
+    "bytes": 166918808,
+    "blocks": 326016,
+    "inode": 891806669,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333746960647287
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_amr_exchange",
+    "bytes": 166869496,
+    "blocks": 325920,
+    "inode": 625923072,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346403513029300
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_multiblock_burn",
+    "bytes": 166836208,
+    "blocks": 325856,
+    "inode": 617502376,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346387056949369
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_amr_exchange",
+    "bytes": 166829880,
+    "blocks": 325840,
+    "inode": 892596728,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333755016687009
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_multiblock_diffusion",
+    "bytes": 166818296,
+    "blocks": 325824,
+    "inode": 617502371,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346387548951759
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_multiblock_hydro",
+    "bytes": 166807536,
+    "blocks": 325800,
+    "inode": 617502370,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346387372950904
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_multiblock_burn",
+    "bytes": 166796504,
+    "blocks": 325776,
+    "inode": 891806584,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333707252451079
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-latest-diffusion-redo/.git/objects/pack/pack-1956e205ea492ba281eb01123db376ad53a9c3cd.pack",
+    "bytes": 166782920,
+    "blocks": 325752,
+    "inode": 43587546,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786020128262085933
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-main-cuda-redo-983e04e/.git/objects/pack/pack-1956e205ea492ba281eb01123db376ad53a9c3cd.pack",
+    "bytes": 166782920,
+    "blocks": 325752,
+    "inode": 306276142,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786042284798485562
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_multiblock_diffusion",
+    "bytes": 166777232,
+    "blocks": 325744,
+    "inode": 891806583,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333705060440228
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/s5-20260914/release/arch_cuda_store_lifecycle",
+    "bytes": 166772424,
+    "blocks": 325728,
+    "inode": 620019446,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789346402481024288
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_multiblock_hydro",
+    "bytes": 166757568,
+    "blocks": 325704,
+    "inode": 891806853,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333749668660642
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release/arch_cuda_store_lifecycle",
+    "bytes": 166732752,
+    "blocks": 325656,
+    "inode": 892596725,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789333751988672082
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_regrid_transaction",
+    "bytes": 166663848,
+    "blocks": 325520,
+    "inode": 308064963,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243479347344273
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_hydro_block",
+    "bytes": 166605392,
+    "blocks": 325408,
+    "inode": 308064966,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243543983689004
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_amr_exchange",
+    "bytes": 166521072,
+    "blocks": 325240,
+    "inode": 308064994,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243555651750877
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_burn",
+    "bytes": 166460448,
+    "blocks": 325120,
+    "inode": 308064992,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243550399723040
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_hydro",
+    "bytes": 166448408,
+    "blocks": 325096,
+    "inode": 306564853,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789245522585678589
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH/.git/objects/pack/pack-d20425cd356b79fe5d49ae717dcfabb22c4d6b33.pack",
+    "bytes": 166442002,
+    "blocks": 325088,
+    "inode": 814175526,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1784888426943204661
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_multiblock_diffusion",
+    "bytes": 166441896,
+    "blocks": 325088,
+    "inode": 308064990,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243548007710355
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913/release/arch_cuda_store_lifecycle",
+    "bytes": 166419456,
+    "blocks": 325040,
+    "inode": 308064991,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789243553151737629
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/arch_cuda_amr_exchange",
+    "bytes": 165914648,
+    "blocks": 324056,
+    "inode": 559932123,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788439448540935933
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/arch_cuda_hydro_block",
+    "bytes": 165198832,
+    "blocks": 322656,
+    "inode": 559932103,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788439444212917035
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/arch_cuda_multiblock_burn",
+    "bytes": 165037128,
+    "blocks": 322344,
+    "inode": 559932115,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788439446796928319
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/arch_cuda_multiblock_diffusion",
+    "bytes": 165006392,
+    "blocks": 322280,
+    "inode": 559932111,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788439446016924913
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH/bin/ARCH",
+    "bytes": 164776392,
+    "blocks": 321832,
+    "inode": 816199445,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1785133251785531196
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/arch_cuda_multiblock_hydro",
+    "bytes": 164722744,
+    "blocks": 321728,
+    "inode": 559932107,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788439444984920406
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/arch_cuda_store_lifecycle",
+    "bytes": 164398696,
+    "blocks": 321096,
+    "inode": 559932119,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788439447540931567
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-personal-gpu-amr-integration-20260903/build-cuda/libarch_cuda_backend.a",
+    "bytes": 162479508,
+    "blocks": 317344,
+    "inode": 831001105,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788448354746109451
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-personal-gpu-amr-integration-20260903/build-cuda/arch_cuda_amr_regrid",
+    "bytes": 156415608,
+    "blocks": 305504,
+    "inode": 831001144,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788450128422557893
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/source-authoritative/bin/ARCH",
+    "bytes": 153401064,
+    "blocks": 299616,
+    "inode": 826388819,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788231567645181479
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/source-task2-green/bin/ARCH",
+    "bytes": 153386888,
+    "blocks": 299584,
+    "inode": 550793978,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788210461306489349
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/source/bin/ARCH",
+    "bytes": 153017744,
+    "blocks": 298864,
+    "inode": 32273499,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788084410011665985
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/source/bin/ARCH",
+    "bytes": 152369536,
+    "blocks": 297600,
+    "inode": 826712867,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248704381367460
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskf-source/bin/ARCH",
+    "bytes": 152325784,
+    "blocks": 297512,
+    "inode": 870432005,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788005937445584463
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/bin/ARCH",
+    "bytes": 151010552,
+    "blocks": 294944,
+    "inode": 597224985,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887699280073927
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909/release/libarch_cuda_backend.a",
+    "bytes": 149552262,
+    "blocks": 292096,
+    "inode": 286274187,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887659675885375
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0",
+    "bytes": 149210177,
+    "blocks": 291432,
+    "inode": 568034582,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887156117423736
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/libarch_cuda_backend.a",
+    "bytes": 149174906,
+    "blocks": 291360,
+    "inode": 32608247,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248699449343833,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/source",
+    "sha256": "fdc0519b67342e7acf5ac79063569ff345448780f765f25f08b6b3854ca4131f"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90/arch_cuda_amr_regrid",
+    "bytes": 148421248,
+    "blocks": 289888,
+    "inode": 542135874,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788200339838491180
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90/arch_cuda_amr_regrid",
+    "bytes": 148421248,
+    "blocks": 289888,
+    "inode": 30567413,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788225753908689290
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90/arch_cuda_hydro_block",
+    "bytes": 148346432,
+    "blocks": 289744,
+    "inode": 542361083,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788200321782413228
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90/arch_cuda_hydro_block",
+    "bytes": 148346432,
+    "blocks": 289744,
+    "inode": 30567406,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788225752832684314
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90/arch_cuda_multiblock_burn",
+    "bytes": 148239432,
+    "blocks": 289536,
+    "inode": 542135873,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788200337250479991
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90/arch_cuda_multiblock_burn",
+    "bytes": 148239432,
+    "blocks": 289536,
+    "inode": 30567399,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788225752384682243
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90/arch_cuda_multiblock_diffusion",
+    "bytes": 148235360,
+    "blocks": 289528,
+    "inode": 542135872,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788200331690455971
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90/arch_cuda_multiblock_diffusion",
+    "bytes": 148235360,
+    "blocks": 289528,
+    "inode": 30567396,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788225751756679339
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90/arch_cuda_multiblock_hydro",
+    "bytes": 148211000,
+    "blocks": 289480,
+    "inode": 542361086,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788200326222432372
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90/arch_cuda_multiblock_hydro",
+    "bytes": 148211000,
+    "blocks": 289480,
+    "inode": 30567394,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788225751704679098
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/mutation-m20/arch_cuda_amr_regrid-mutant",
+    "bytes": 148088224,
+    "blocks": 289240,
+    "inode": 543523335,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788093370412385846
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90/arch_cuda_hydro_block",
+    "bytes": 148022024,
+    "blocks": 289112,
+    "inode": 544448955,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788060315282935876
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/build-sm90/arch_cuda_hydro_block",
+    "bytes": 147994584,
+    "blocks": 289056,
+    "inode": 271212378,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788024956840874726
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90/arch_cuda_multiblock_burn",
+    "bytes": 147919208,
+    "blocks": 288912,
+    "inode": 544448931,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788060314606932512
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90/arch_cuda_multiblock_diffusion",
+    "bytes": 147911032,
+    "blocks": 288896,
+    "inode": 543293311,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788060314526932114
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/build-sm90/arch_cuda_multiblock_burn",
+    "bytes": 147887656,
+    "blocks": 288848,
+    "inode": 271212380,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788024965316908446
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90/arch_cuda_multiblock_hydro",
+    "bytes": 147886680,
+    "blocks": 288848,
+    "inode": 544448915,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788060313690927952
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/build-sm90/arch_cuda_multiblock_diffusion",
+    "bytes": 147879648,
+    "blocks": 288832,
+    "inode": 271212376,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788024962616897699
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-sm90/arch_cuda_amr_regrid",
+    "bytes": 147860920,
+    "blocks": 288792,
+    "inode": 823004882,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788055332690841566
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90/arch_cuda_amr_regrid",
+    "bytes": 147860920,
+    "blocks": 288792,
+    "inode": 543262142,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788060312958924309
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/build-sm90/arch_cuda_multiblock_hydro",
+    "bytes": 147850952,
+    "blocks": 288776,
+    "inode": 271212379,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788024959216884173
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90/libarch_cuda_backend.a",
+    "bytes": 147805634,
+    "blocks": 288688,
+    "inode": 543304962,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788205226157932420,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-green-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/source-task2-green",
+    "sha256": "de6bbf2771d281b0b4ad1a3006f2dc56352172abcfd1e850bbfc679a551626fd"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task5-testing-off-cuda-fresh/libarch_cuda_backend.a",
+    "bytes": 147805634,
+    "blocks": 288688,
+    "inode": 279424550,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788210288901657610,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task5-testing-off-cuda-fresh",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/source-task2-green",
+    "sha256": "04642f38d473d7054254d938d6fef37b9ca61388a8bdf0c33d69ddc5391c12d5"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90/libarch_cuda_backend.a",
+    "bytes": 147805634,
+    "blocks": 288688,
+    "inode": 29091375,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788231560337148314,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/build-authoritative-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-restart-20260901T/source-authoritative",
+    "sha256": "2e93377e8a5faba0adae37f6e2c477fc64f63f4aecd3cfef2382f8a5f239e104"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-final-notests-sm90/libarch_cuda_backend.a",
+    "bytes": 147779596,
+    "blocks": 288640,
+    "inode": 825599197,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788185416516164941,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/build-task2-final-notests-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/source-task2-green",
+    "sha256": "e7cc0036219cc1c5ab3455e12724d22cb3d536bc054cb3a59d2446f9a9c16523"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i2-20260830T/mutation-m20/libarch_cuda_backend-mutant.a",
+    "bytes": 147644106,
+    "blocks": 288368,
+    "inode": 543523333,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788093367992374728
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-sm90/arch_cuda_hydro_block",
+    "bytes": 147481992,
+    "blocks": 288056,
+    "inode": 359928030,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787999639488151851
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-sm90/libarch_cuda_backend.a",
+    "bytes": 147388942,
+    "blocks": 287872,
+    "inode": 823004876,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788055211926361454,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/source",
+    "sha256": "49b83f5e8b5c131fcbb56bf53c6a1f45b1d60fc34d53298c06c03f0ad0bae48a"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90/libarch_cuda_backend.a",
+    "bytes": 147388942,
+    "blocks": 287872,
+    "inode": 542759455,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788060307806898666,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/source",
+    "sha256": "024925453350eb8b173d023792e1692c87c5eb0a3428eeeebfc1b8ac31fb738e"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-no-tests-sm90/libarch_cuda_backend.a",
+    "bytes": 147388942,
+    "blocks": 287872,
+    "inode": 542743329,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788084401723622021,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/build-final-no-tests-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i1-20260830T/source",
+    "sha256": "e62bc606f04fa748215c25be3fd2c681805ab3847b5a0aa16a9294048508848a"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/arch_cuda_amr_regrid",
+    "bytes": 147384376,
+    "blocks": 287864,
+    "inode": 26805330,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248961042595228
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-sm90/arch_cuda_multiblock_burn",
+    "bytes": 147375312,
+    "blocks": 287848,
+    "inode": 359928058,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787999638936148749
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-sm90/arch_cuda_multiblock_diffusion",
+    "bytes": 147371400,
+    "blocks": 287840,
+    "inode": 359928014,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787999638696147400
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-sm90/arch_cuda_multiblock_hydro",
+    "bytes": 147342704,
+    "blocks": 287784,
+    "inode": 359927227,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787999637472140521
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/build-sm90/libarch_cuda_backend.a",
+    "bytes": 147332998,
+    "blocks": 287760,
+    "inode": 271255527,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788030176348650434,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/build-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-eos-amr-20260829T/source",
+    "sha256": "e5670517685e24220e56b8e2689a59ed4d594847710ffde29b9b21128a252194"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i0-20260830T/build-task7-final-no-tests-sm90/libarch_cuda_backend.a",
+    "bytes": 147332998,
+    "blocks": 287760,
+    "inode": 542403978,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788042824822100413,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i0-20260830T/build-task7-final-no-tests-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-amr-i0-20260830T/source",
+    "sha256": "3656505c02dd4352f37d35fb80aac673163da35b22cba48df4f041b1ae175503"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/arch_cuda_hydro_block",
+    "bytes": 147240040,
+    "blocks": 287584,
+    "inode": 26805328,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248957374577702
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/arch_cuda_multiblock_burn",
+    "bytes": 147114608,
+    "blocks": 287336,
+    "inode": 26805354,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248958350582365
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/arch_cuda_multiblock_diffusion",
+    "bytes": 147096208,
+    "blocks": 287304,
+    "inode": 26805329,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248958014580760
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-buildopt-20260901T/build-sm90/arch_cuda_multiblock_hydro",
+    "bytes": 147090216,
+    "blocks": 287288,
+    "inode": 26805327,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788248957162576690
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-sm90/libarch_cuda_backend.a",
+    "bytes": 146819606,
+    "blocks": 286760,
+    "inode": 320272588,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787999582219827070,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskf-source",
+    "sha256": "0c6b2ccc37281a0050f8d47e3703f9738de212191a8767ff273f3ca80307c9bd"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-notests-sm90-20260829/libarch_cuda_backend.a",
+    "bytes": 146819606,
+    "blocks": 286760,
+    "inode": 877808755,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788005913729475210,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-taskf-notests-sm90-20260829",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/taskf-source",
+    "sha256": "292b75a501d89f6525de2f66e49514e26f4d82fb68988ae7a96611bef3d40945"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-corrected-fused-baseline-20260914/EOS_toolkit/tables/baryon/eos4.tab",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 381703580,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789355732019107531
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-coupled-diagnostic-20260914/EOS_toolkit/tables/baryon/eos4.tab",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 357445004,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789353130829401277
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/EOS_toolkit/tables/baryon/eos4.tab",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 866311861,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789239349679167376
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-integration-20260909/EOS_toolkit/tables/baryon/eos4.tab",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 609887754,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788890987268375415
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/.git/lfs/objects/5e/e3/5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 891806550,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789322761056974819
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/EOS_toolkit/tables/baryon/eos4.tab",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 311384131,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789322757376957311
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/EOS_toolkit/tables/baryon/eos4.tab",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 377888699,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789354284059201045
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/.git/lfs/objects/5e/e3/5ee37819f873387af9c38207bcada72a48abe695b9491df9ad5c6a5e69487c34",
+    "bytes": 143167115,
+    "blocks": 279624,
+    "inode": 609887651,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788890986896373349
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-corrected-fused-baseline-20260914/EOS_toolkit/tables/baryon/eos2.tab",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 381703579,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789355731571104662
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-coupled-diagnostic-20260914/EOS_toolkit/tables/baryon/eos2.tab",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 357444994,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789353130437399375
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/EOS_toolkit/tables/baryon/eos2.tab",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 866311860,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789239349679167376
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-large-integration-20260909/EOS_toolkit/tables/baryon/eos2.tab",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 609887755,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788890997480432081
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/.git/lfs/objects/d5/2d/d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 891806549,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789322760236970918
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/EOS_toolkit/tables/baryon/eos2.tab",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 311384130,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789322757372957292
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/EOS_toolkit/tables/baryon/eos2.tab",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 377888698,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789354283667199100
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/.git/lfs/objects/d5/2d/d52d37d30fec10ffb5279689a172e61a7ebb3538a4acaf2270dc32469c0d3c58",
+    "bytes": 143166842,
+    "blocks": 279624,
+    "inode": 609887652,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788890997084429886
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task5-source/bin/ARCH",
+    "bytes": 140937760,
+    "blocks": 275272,
+    "inode": 589217722,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787963085029273088
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_burn_policy_parity_strict",
+    "bytes": 139642784,
+    "blocks": 272744,
+    "inode": 913575337,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787295669235082284
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_burn_policy_parity",
+    "bytes": 138090400,
+    "blocks": 269712,
+    "inode": 913575334,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787295604146829902
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task8-final-sanitize-fb82a74/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK3.cpp.o",
+    "bytes": 137918968,
+    "blocks": 269376,
+    "inode": 115004681,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787275047157513857
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task8-final-sanitize-fb82a74/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_RK2.cpp.o",
+    "bytes": 137918896,
+    "blocks": 269376,
+    "inode": 115004678,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787274810784617422
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task8-final-sanitize-fb82a74/CMakeFiles/arch_solver_dispatch.dir/src/driver/dispatch/Dispatch_Euler.cpp.o",
+    "bytes": 137863376,
+    "blocks": 269272,
+    "inode": 115004680,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787274831112694967
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-e3-20260826T/artifacts/final-sm90-testing-off/ARCH",
+    "bytes": 137742544,
+    "blocks": 269032,
+    "inode": 930269275,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787775719433191228
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/logs/multiblock-transaction-red",
+    "bytes": 137206712,
+    "blocks": 267984,
+    "inode": 74338149,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787976323029892842
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task6-sm90/arch_cuda_hydro_block",
+    "bytes": 136153160,
+    "blocks": 265928,
+    "inode": 313343729,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787969407818004393
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/logs/libarch_cuda_backend_pretransaction.a",
+    "bytes": 135442442,
+    "blocks": 264544,
+    "inode": 74338100,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787976218269408474
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task6-sm90/libarch_cuda_backend.a",
+    "bytes": 135442442,
+    "blocks": 264544,
+    "inode": 316756015,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787980683068420750,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task6-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task6-source",
+    "sha256": "6a05a8d1d9086dfdf3b7378f3515fe4dacb69409d3fc12688da876af031d515f"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task5-sm90/libarch_cuda_backend.a",
+    "bytes": 135301706,
+    "blocks": 264264,
+    "inode": 589217685,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787962941172420654,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task5-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task5-source",
+    "sha256": "b242b1c9297f770eb069f175b5e652a6646ad2c0520eaeb36ea5ae01584483b2"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-free-energy-final2-sm90/libarch_cuda_backend.a",
+    "bytes": 134690154,
+    "blocks": 263072,
+    "inode": 811049291,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787931318576151487,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-free-energy-final2-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/source",
+    "sha256": "8f9c8cd4e99122a8c48d40d5371edcabea4637f90f41d954e0d62568a6be9b11"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-tabular-sm90/libarch_cuda_backend.a",
+    "bytes": 134665578,
+    "blocks": 263024,
+    "inode": 278264358,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787926452870046474,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-tabular-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/source",
+    "sha256": "56fcaf96c6adf51b6c3d5b0035640c972e9861e3a2e7be6553de565ae4bc5e38"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-00",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537669,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246551882774160
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-01",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537670,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246551950774496
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-02",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537671,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552022774852
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-03",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537672,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552094775206
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-04",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537673,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552170775582
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-05",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537674,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552290776174
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-06",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537675,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552414776788
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-07",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537676,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552554777479
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-validation-20260913-transfer/part-08",
+    "bytes": 134217728,
+    "blocks": 262144,
+    "inode": 866537677,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789246552678778091
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task4-sm90/libarch_cuda_backend.a",
+    "bytes": 133198124,
+    "blocks": 260160,
+    "inode": 542091412,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787958157724491715,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/build-task4-sm90",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-stage1-20260827T/task4-source",
+    "sha256": "1dc4f2498f9c694484b1742a36ca9aa827a678fc74502c86c7d0f6770fc611e1"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-e3-20260826T/artifacts/final-sm90-testing-off/libarch_cuda_backend.a",
+    "bytes": 132270540,
+    "blocks": 258344,
+    "inode": 930269277,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787775719549191768
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-timing-20260913-evidence.tar.zst",
+    "bytes": 132056370,
+    "blocks": 257928,
+    "inode": 590661907,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789318686654688797
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_network_nse_parity_strict",
+    "bytes": 127419808,
+    "blocks": 248872,
+    "inode": 913575755,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294786747748582
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-build-v1.tar.zst",
+    "bytes": 127089865,
+    "blocks": 248224,
+    "inode": 375648797,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789360352940623931
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-build-v1.tar.zst",
+    "bytes": 126740428,
+    "blocks": 247544,
+    "inode": 931668033,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789355940992401115
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_network_nse_parity",
+    "bytes": 126387616,
+    "blocks": 246856,
+    "inode": 913575752,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294786743748568
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_burn_policy_focus",
+    "bytes": 121318464,
+    "blocks": 236952,
+    "inode": 913575748,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294725583530029
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/bin/ARCH",
+    "bytes": 120573248,
+    "blocks": 235496,
+    "inode": 52534305,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786018543255916517
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-v2-latest-diffusion-redo/bin/ARCH",
+    "bytes": 120168368,
+    "blocks": 234704,
+    "inode": 859429839,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786027389203901244
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_eos_host_device_parity_strict",
+    "bytes": 117936192,
+    "blocks": 230352,
+    "inode": 913575756,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294786703748424
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_eos_host_device_parity",
+    "bytes": 117641280,
+    "blocks": 229776,
+    "inode": 913575754,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294786703748424
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task10-4fbcfab/bin/ARCH",
+    "bytes": 116689272,
+    "blocks": 227912,
+    "inode": 904917013,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787299342408013108
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-task10-clean-4fbcfab/bin/ARCH",
+    "bytes": 116689272,
+    "blocks": 227912,
+    "inode": 911957822,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787302331283374477
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH/build-coreless-cuda/CMakeFiles/ARCH.dir/src/cuda/runtime/CudaBackend.cu.o",
+    "bytes": 114561824,
+    "blocks": 223760,
+    "inode": 553048904,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1785082589223711773
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_hydro_block",
+    "bytes": 114186528,
+    "blocks": 223024,
+    "inode": 913575751,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294786707748438
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_single_level_validation",
+    "bytes": 113713056,
+    "blocks": 222096,
+    "inode": 913575750,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294786691748381
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/cuda-split/arch_cuda_single_level_validation",
+    "bytes": 113684672,
+    "blocks": 222048,
+    "inode": 109063889,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787291279245875844
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-multiphysics-fix-20260914/build/debug16-fix-20260914-v1/debug/libarch_solver_dispatch.a",
+    "bytes": 113648932,
+    "blocks": 221976,
+    "inode": 610121149,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789360263980214266
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-s5-indicator-20260914/build/debug16-20260914-v2/debug/libarch_solver_dispatch.a",
+    "bytes": 113626976,
+    "blocks": 221928,
+    "inode": 82525131,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1789353937201472814
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-v2-verify2/bin-verify/ARCH",
+    "bytes": 113618320,
+    "blocks": 221912,
+    "inode": 42779193,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1785357830958287386
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_diffusion_rkl_parity",
+    "bytes": 112909368,
+    "blocks": 220528,
+    "inode": 913575749,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294734355561205
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_cuda_diffusion_rkl_parity_strict",
+    "bytes": 112909368,
+    "blocks": 220528,
+    "inode": 913575757,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787294796379783240
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-build/task9-final-cuda-20260821/arch_compute_backend_test",
+    "bytes": 112836528,
+    "blocks": 220384,
+    "inode": 913575278,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1787296521725960636
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/performance-20260909-evidence.tar.gz",
+    "bytes": 112232065,
+    "blocks": 219208,
+    "inode": 858591847,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788888994298222587
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/logs/archive-process-samples.tsv",
+    "bytes": 111027489,
+    "blocks": 216856,
+    "inode": 559935612,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788407850053531006
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib/libnvrtc.alt.so.12",
+    "bytes": 106723760,
+    "blocks": 208448,
+    "inode": 858489812,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887156117423736
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cuda_nvrtc/lib/libnvrtc.so.12",
+    "bytes": 106244480,
+    "blocks": 207512,
+    "inode": 858489814,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887156117423736
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903/libarch_solver_dispatch.a",
+    "bytes": 106196258,
+    "blocks": 207416,
+    "inode": 561263512,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788544998794857250,
+    "category": "rebuildable_arch_static_archive",
+    "build_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/build-fixed-16g-debug-20260903",
+    "source_root": "/home/ubuntu/projects/ARCH-cuda-v2-mainline-build/task-gpu-amr-handoff-20260903T/source-fixed",
+    "sha256": "87e30f0ae25f4f45725a49e8d47d95416b8bd1168704fd29d1c4cd2d24e2074f"
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-ns-diffusion-sandbox/build-cuda-diffusion/CMakeFiles/ARCH.dir/src/cuda/runtime/CudaBackend.cu.o",
+    "bytes": 106164984,
+    "blocks": 207360,
+    "inode": 579372782,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786017805700357992
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-v2-latest-diffusion-redo/build-cuda-latest/CMakeFiles/ARCH.dir/src/cuda/runtime/CudaBackend.cu.o",
+    "bytes": 105772272,
+    "blocks": 206592,
+    "inode": 298511773,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1786027387887895566
+  },
+  {
+    "path": "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12",
+    "bytes": 105140976,
+    "blocks": 205360,
+    "inode": 858489817,
+    "device": 64768,
+    "nlink": 1,
+    "mtime_ns": 1788887156117423736
+  }
+]

@@ -1,0 +1,231 @@
+{
+  "ARCH": {
+    "files": 3422,
+    "logical_bytes": 1562581045,
+    "allocated_bytes": 1571819520
+  },
+  "ARCH-c8-task5-golden": {
+    "files": 253,
+    "logical_bytes": 240259122,
+    "allocated_bytes": 240881664
+  },
+  "ARCH-corrected-fused-baseline-20260914": {
+    "files": 19298,
+    "logical_bytes": 1330902118,
+    "allocated_bytes": 1372868608
+  },
+  "ARCH-coupled-diagnostic-20260914": {
+    "files": 19368,
+    "logical_bytes": 838583059,
+    "allocated_bytes": 880762880
+  },
+  "ARCH-cuda-v2-build": {
+    "files": 37720,
+    "logical_bytes": 7681238639,
+    "allocated_bytes": 7784701952,
+    "candidate_bytes": 3246205501,
+    "candidate_allocated_bytes": 3248242688
+  },
+  "ARCH-cuda-v2-mainline-build": {
+    "files": 377062,
+    "logical_bytes": 55730910911,
+    "allocated_bytes": 56733233152,
+    "candidate_bytes": 11723183009,
+    "candidate_allocated_bytes": 11727048704
+  },
+  "ARCH-cuda-v2-recovery-test": {
+    "files": 304,
+    "logical_bytes": 341304788,
+    "allocated_bytes": 342073344
+  },
+  "ARCH-cuda-v2-task10-4fbcfab": {
+    "files": 308,
+    "logical_bytes": 357784383,
+    "allocated_bytes": 358551552
+  },
+  "ARCH-cuda-v2-task10-clean-4fbcfab": {
+    "files": 297,
+    "logical_bytes": 296498375,
+    "allocated_bytes": 297234432
+  },
+  "ARCH-cuda-v2-task2-104c61a": {
+    "files": 257,
+    "logical_bytes": 183010467,
+    "allocated_bytes": 183631872
+  },
+  "ARCH-cuda-v2-task3-a237d8a": {
+    "files": 257,
+    "logical_bytes": 183108018,
+    "allocated_bytes": 183730176
+  },
+  "ARCH-cuda-v2-task4-8bdcf94": {
+    "files": 270,
+    "logical_bytes": 183189678,
+    "allocated_bytes": 183853056
+  },
+  "ARCH-cuda-v2-task5": {
+    "files": 279,
+    "logical_bytes": 244674048,
+    "allocated_bytes": 245358592
+  },
+  "ARCH-cuda-v2-task5-build": {
+    "files": 11353,
+    "logical_bytes": 1592424450,
+    "allocated_bytes": 1623388160
+  },
+  "ARCH-cuda-v2-task6": {
+    "files": 285,
+    "logical_bytes": 75399314,
+    "allocated_bytes": 76115968
+  },
+  "ARCH-cuda-v2-task6-build": {
+    "files": 8142,
+    "logical_bytes": 965139133,
+    "allocated_bytes": 987480064
+  },
+  "ARCH-cuda-v2-task7": {
+    "files": 292,
+    "logical_bytes": 75701962,
+    "allocated_bytes": 76431360
+  },
+  "ARCH-cuda-v2-task7-build": {
+    "files": 1234,
+    "logical_bytes": 210026832,
+    "allocated_bytes": 213495808
+  },
+  "ARCH-cuda-v2-task7-cpu-final-20260821": {
+    "files": 1181,
+    "logical_bytes": 184196653,
+    "allocated_bytes": 187346944
+  },
+  "ARCH-cuda-v2-task7-cpu-smoke": {
+    "files": 1121,
+    "logical_bytes": 95190049,
+    "allocated_bytes": 98230272
+  },
+  "ARCH-cuda-v2-task7-cuda-final-20260821": {
+    "files": 1343,
+    "logical_bytes": 399071848,
+    "allocated_bytes": 402739200
+  },
+  "ARCH-cuda-v2-task7-pristine": {
+    "files": 253,
+    "logical_bytes": 70858596,
+    "allocated_bytes": 71479296
+  },
+  "ARCH-cuda-v2-task7-sanitize-20260821": {
+    "files": 1126,
+    "logical_bytes": 271395172,
+    "allocated_bytes": 274477056
+  },
+  "ARCH-cuda-v2-task8-final-cpu-fb82a74": {
+    "files": 1182,
+    "logical_bytes": 184477661,
+    "allocated_bytes": 187654144
+  },
+  "ARCH-cuda-v2-task8-final-cuda-fb82a74": {
+    "files": 1392,
+    "logical_bytes": 403845392,
+    "allocated_bytes": 407625728
+  },
+  "ARCH-cuda-v2-task8-final-sanitize-fb82a74": {
+    "files": 1181,
+    "logical_bytes": 987455588,
+    "allocated_bytes": 990650368
+  },
+  "ARCH-hpc-s4-validation-20260913": {
+    "files": 21600,
+    "logical_bytes": 9563654524,
+    "allocated_bytes": 9610166272
+  },
+  "ARCH-hydro-policy-test": {
+    "files": 837,
+    "logical_bytes": 315669037,
+    "allocated_bytes": 318033920
+  },
+  "ARCH-large-application-20260914": {
+    "files": 22808,
+    "logical_bytes": 2254159673,
+    "allocated_bytes": 2304065536
+  },
+  "ARCH-large-integration-20260909": {
+    "files": 18814,
+    "logical_bytes": 1734357082,
+    "allocated_bytes": 1774747648
+  },
+  "ARCH-large-networks-20260909": {
+    "files": 50,
+    "logical_bytes": 11027478,
+    "allocated_bytes": 11157504
+  },
+  "ARCH-latest-diffusion-redo": {
+    "files": 175,
+    "logical_bytes": 177081053,
+    "allocated_bytes": 177512448
+  },
+  "ARCH-main-baseline": {
+    "files": 936,
+    "logical_bytes": 274637029,
+    "allocated_bytes": 277008384
+  },
+  "ARCH-main-cuda-redo-983e04e": {
+    "files": 1105,
+    "logical_bytes": 378797218,
+    "allocated_bytes": 381628416
+  },
+  "ARCH-main-merge-20260917": {
+    "files": 1045,
+    "logical_bytes": 218552213,
+    "allocated_bytes": 221040640
+  },
+  "ARCH-microphysics-20260914": {
+    "files": 38110,
+    "logical_bytes": 8858611202,
+    "allocated_bytes": 8941903872
+  },
+  "ARCH-multiphysics-fix-20260914": {
+    "files": 42820,
+    "logical_bytes": 9058634488,
+    "allocated_bytes": 9151176704
+  },
+  "ARCH-native-wave-v4-20260916": {
+    "files": 22518,
+    "logical_bytes": 983059763,
+    "allocated_bytes": 1032491008
+  },
+  "ARCH-ns-diffusion-sandbox": {
+    "files": 3271,
+    "logical_bytes": 1854589008,
+    "allocated_bytes": 1863000064
+  },
+  "ARCH-perf-20260909": {
+    "files": 48604,
+    "logical_bytes": 4318441877,
+    "allocated_bytes": 4429611008
+  },
+  "ARCH-personal-gpu-amr-integration-20260903": {
+    "files": 3436,
+    "logical_bytes": 2114971807,
+    "allocated_bytes": 2123325440
+  },
+  "ARCH-runs": {
+    "files": 128,
+    "logical_bytes": 289778385,
+    "allocated_bytes": 290045952
+  },
+  "ARCH-s5-indicator-20260914": {
+    "files": 23533,
+    "logical_bytes": 4934232593,
+    "allocated_bytes": 4985262080
+  },
+  "ARCH-v2-latest-diffusion-redo": {
+    "files": 1563,
+    "logical_bytes": 349246407,
+    "allocated_bytes": 353427456
+  },
+  "ARCH-v2-verify2": {
+    "files": 1191,
+    "logical_bytes": 378428601,
+    "allocated_bytes": 381353984
+  }
+}

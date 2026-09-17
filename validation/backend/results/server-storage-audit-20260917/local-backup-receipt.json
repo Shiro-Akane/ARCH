@@ -1,0 +1,11 @@
+{
+  "utc": "2026-09-17T12:54:37.029484+00:00",
+  "all_passed": true,
+  "metadata_files_verified": 47118,
+  "metadata_archive_sha256": "68d09b0551adf6234b44b2431e567e9e4bb05c1568cf5f0b4e5c61d215c2d7db",
+  "metadata_archive_local_path": "C:\\tmp\\ARCH-perf-20260909\\build\\server-storage-audit-20260917\\arch-storage-audit-20260917-v1\\rebuild-metadata.tar.gz",
+  "canonical_s4_sha256": "ffa2287b0e61c5b9f7090138add48e52b41bc454ba07db872103d1b421b0a493",
+  "canonical_s4_local_path": "C:\\tmp\\ARCH-perf-20260909\\build\\s4-validation-20260913-evidence.tar.zst",
+  "deletion_allowlist_sha256": "1565f7715ec48d114f30e5fbfa75d9559768656b323c49d66b153c3242ed22bf",
+  "note": "Compiler intermediates are discarded as rebuildable, not backed up byte-for-byte."
+}
