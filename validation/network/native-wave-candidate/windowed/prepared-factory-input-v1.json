@@ -1,0 +1,25 @@
+{
+  "source_commit": "888af44d678698a3a0d544a1d537ecdd7cbe19e1",
+  "status": "deployed_isolated_factory_build_started_not_runtime_qualified",
+  "archive": "build/window-factory-input-v1.tar",
+  "bytes": 32768,
+  "sha256": "c3acb7b5f303be21d843dfd9a31c8a5eff5f20d657e35ea3683ee735b9554d5c",
+  "server_root": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916",
+  "worker_pid": 384860,
+  "predecessor": "window-collection-v1.json",
+  "predecessor_contract_count": 18,
+  "predecessor_locally_byte_verified": true,
+  "files": {
+    "build_factory.py": {"bytes": 9903, "sha256": "6127b8088ca98321ddceec69717a12b396c6e7c47ead9ac47f8e70d26ba46ece"},
+    "factory_recipe.py": {"bytes": 8034, "sha256": "93ff798633755b5e63b00632df09d9a762e565f90b2af595d0ad5044e153a1bd"},
+    "factory-dispatch.sh": {"bytes": 682, "sha256": "dc6b4a3e029411af20a31c5fe1578cd5cc2cc5416dc332f327b772d1124525ba"},
+    "factory-worker.sh": {"bytes": 1723, "sha256": "f23251b262b8e4bff86eff357a6487a60caeb06dd942898bbd6f81759b0b7eb2"},
+    "prepare_factory.py": {"bytes": 6929, "sha256": "34a36738c519a55550371028079e705d1199559040124873e47191eb1eb52877"}
+  },
+  "leaf_inline_combined": false,
+  "original_source_build_provider_modified": false,
+  "requires_two_fresh_cuda_factory_objects": true,
+  "nuclear_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false
+}

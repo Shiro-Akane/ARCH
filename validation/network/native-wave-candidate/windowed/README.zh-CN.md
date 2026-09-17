@@ -75,10 +75,18 @@ ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256
 
 ### 全新编译配方的接入约束（仍未执行）
 
-随后准备 `factory_recipe.py` 和 `build_factory.py`，没有上传、启动或改变上述七文件合同包。
+`factory_recipe.py` 和 `build_factory.py` 在合同通过前仅做本机准备；
+本次后续部署不改变上述七文件合同包。
 新 runner 必须先核验 18 项真实窗口合同、原输入／产物身份及双端完整备份，
 之后也只能放在原资源护栏内串行运行。现已准备 `factory-worker.sh`／`factory-dispatch.sh`，
-仍未打包、上传或启动 factory；后续收集器和真实燃烧运行队列尚待接续。
+在完整窗口证据双端保全并发布后，已用新的五文件冻结包单独启动 factory worker 384860。
+wrapper Host 编译及 150 核素依赖预扫描成功，正在新编 CUDA 对象；没有实际 ODE 结果。
+包身份见 `prepared-factory-input-v1.json`，不修改旧七文件合同包。
+另已准备独立 `collect_factory.py`，只在构建结束后上传；25 项本机配方/合成门槛检查通过，
+见 `factory-collection-preparation-checks-v1.log`，不等于实际编译或科学资格。
+收集器将重新核对完整副本、实际依赖、编译/链接命令、七个新产物及原资源护栏，
+raw 保留全部私有源码/产物；外部原网络、SDK 和库以哈希依赖及父归档引用保留。
+真实燃烧轨迹尚未运行。
 
 不能只把两份改动头放到较早的 `-I`：原 `SparseBurnCells.cuh` 用同目录的
 `#include "SparseOdeBatch.cuh"`，可能仍读到原调度器。配方改为复制原清单的全部 474 个文件，
