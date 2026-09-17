@@ -2,6 +2,12 @@
 
 日期：2026-09-14。依据：用户提供的合作者聊天意见，以及既有 [HPC＋CUDA 总计划](HpcCudaOptimizationPlan.zh-CN.md)。这是执行计划，不是承诺所有规模必定加速或已完成验收。
 
+2026-09-17 准备续记：服务器仍单独运行 Jacobian sink 内联叶函数对照，不能提前认定提速。
+本机另准备[有界工作窗口／因子 cohort 分离封装与制造解合同](../../validation/network/native-wave-candidate/windowed/README.zh-CN.md)，
+6 项配方检查和两项 shell 语法检查通过，C++/CUDA 尚未编译／运行，未接入生产 ODE 调度。
+保留至多 32 个 native 因子槽与原 256 MiB provider 预算；必须先收齐并归档当前实验，
+再决定是否独立测试较大的逻辑窗口。即便制造解通过，也不能替代真实核反应和完整 Helm 性能验收。
+
 ## 范围与目标
 
 本轮覆盖已有流体、燃烧、扩散、AMR 及其耦合路径。EOS 是这些路径的依赖，性能检查不能跳过真实表 EOS；不新增引力/广相物理、MPI、多 GPU 或更换依赖库。现有相关模块的回归仍需保留。

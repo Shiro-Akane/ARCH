@@ -12,6 +12,12 @@
 当前单独进行[小型 Jacobian sink 内联叶函数对照](leaf-inline/README.zh-CN.md)，未接入生产。
 两项仍不提供完整 Helm 应用、长程或正式性能资格。
 
+等待内联编译期间，仅在本机准备了[逻辑工作窗口与 native 因子 cohort 分离候选](windowed/README.zh-CN.md)：
+至多 128 个逻辑槽、仍至多 32 个 native 槽，原 256 MiB provider 估计预算不变。
+封装、制造解合同、构建／收集配方的准备检查通过；尚未上传、编译、运行或接入 ODE owner。
+不并行启动，不把准备代码当成并发提升／性能通过。原生内存估计与整卡高水位的区别见
+[来源与约束](bounded-window-followup.zh-CN.md)。
+
 2026-09-15；2026-09-16 收紧负向测试判据。本目录为隔离执行层候选，不在生产 CMake、网络注册表或当前正式计时中启用。
 2026-09-17：在冻结正式矩阵和原 BE 长程补测结束且双端归档后，v4 已在服务器隔离目录重新编译、链接并通过 151/201 阶 × 容量 1/2/8/32 八组真实 GPU 合同。
 详见 [原始证据及限定范围](../results/native-wave-20260917/standalone-v4/README.zh-CN.md)。随后已在全新 source/build 完整编译、链接两个实际核反应 factory，并通过 150/200 × 三 ODE × 2→3 单元、原四步轨迹，见 [factory 与 focused 证据](../results/native-wave-20260917/factory-focused-v1/README.zh-CN.md)。尚未通过本候选的大容量／长轨迹、真实 Helm 应用或性能验收。下文“未编译／未运行”表述保留为运行前准备历史，不覆盖本次结果。
