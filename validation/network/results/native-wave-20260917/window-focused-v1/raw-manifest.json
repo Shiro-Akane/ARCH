@@ -1,0 +1,450 @@
+{
+  "ARCH-native-wave-v4-20260916/batch-launch-contract-v1/libarch_cuda_sparse_provider.a": {
+    "bytes": 640062,
+    "sha256": "0b902a1e7d87174bc395d4be328713390d36a28320353d55113678e57f697204"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/artifacts.sha256": {
+    "bytes": 512,
+    "sha256": "6ac5472ec6ca7bfb873130e77fefb65795c0310bf6489845665ed8d8fcbdcef7"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/network-files.sha256": {
+    "bytes": 7514,
+    "sha256": "62f21a3b2809f6522acfaf357188c9291fc501db24f4a06107949ad5f182c2a0"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/source-files.sha256": {
+    "bytes": 48967,
+    "sha256": "af807299a6d4b922657fa17f1139ecdc4231fc8c94ffa6b462a0b69b636ab6da"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/vendor.sha256": {
+    "bytes": 598,
+    "sha256": "350539d47fa823dc48d6bb7341a1d90a451332a3e37ebc519f575e46a73db4e5"
+  },
+  "ARCH-native-wave-v4-20260916/factory-release/CMakeCache.txt": {
+    "bytes": 50971,
+    "sha256": "bb1bc5f63df46325462fc7671bf3368694f694082bb87717dc546446e878d936"
+  },
+  "ARCH-native-wave-v4-20260916/factory-release/compile_commands.json": {
+    "bytes": 583614,
+    "sha256": "6a17407cf53fba1ad868e783245ea21c56274db29829e4eea0dd32bc0ba62049"
+  },
+  "ARCH-native-wave-v4-20260916/factory-release/generated/CustomNetworkRegistry.generated.h": {
+    "bytes": 1044,
+    "sha256": "93a4de22f376825c2f0eb6b7550d339259b1718ccf0d3c4d025a070a3c1742ac"
+  },
+  "ARCH-native-wave-v4-20260916/input/collect_factory.py": {
+    "bytes": 9141,
+    "sha256": "bc31e52cc6d75d7a5e9ecd8153212f8a6e0805e900841af6c7f0e9d074525f9b"
+  },
+  "ARCH-native-wave-v4-20260916/input/collect_window_focused_v1.py": {
+    "bytes": 7183,
+    "sha256": "e60705b714b369023ca541f84c3906495518f255536684a265505bff59b65070"
+  },
+  "ARCH-native-wave-v4-20260916/window-collection-v1.json": {
+    "bytes": 690,
+    "sha256": "ca63e5758f604d99a75324ead6c82899a81cd3c3a3d2ab429f2eb419a109540b"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/record.json": {
+    "bytes": 23711,
+    "sha256": "52a573ff57a0466946b5e429b5babe4fcc7d490ed44c6f42dc62f77f9a08c198"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-collection-v2.json": {
+    "bytes": 721,
+    "sha256": "0f19fb54a67af664c08f459f3ec28f91eed0c5200823a906fcea6f21fd36f1ce"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-input-v1/build_factory.py": {
+    "bytes": 9903,
+    "sha256": "6127b8088ca98321ddceec69717a12b396c6e7c47ead9ac47f8e70d26ba46ece"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-input-v1/factory-dispatch.sh": {
+    "bytes": 682,
+    "sha256": "dc6b4a3e029411af20a31c5fe1578cd5cc2cc5416dc332f327b772d1124525ba"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-input-v1/factory-worker.sh": {
+    "bytes": 1723,
+    "sha256": "f23251b262b8e4bff86eff357a6487a60caeb06dd942898bbd6f81759b0b7eb2"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-input-v1/factory_recipe.py": {
+    "bytes": 8034,
+    "sha256": "93ff798633755b5e63b00632df09d9a762e565f90b2af595d0ad5044e153a1bd"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-input-v1/prepare_factory.py": {
+    "bytes": 6929,
+    "sha256": "34a36738c519a55550371028079e705d1199559040124873e47191eb1eb52877"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-local-receipt-v2.json": {
+    "bytes": 1215,
+    "sha256": "b8045a09262e4771b682db1a5179f7af916b77bffcafc6ea8b8afb6c9f1df804"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150": {
+    "bytes": 5944568,
+    "sha256": "0b2ba61e835d050db3ab057a36cb8dc37ee2f70c76e0b5a61f7f25a8b61810a5"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200": {
+    "bytes": 7732616,
+    "sha256": "584d82d8aeaef8df61e292f68cbb8a3e9ad27636ad588c3a0bdf150f18e173dc"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/audit150-factory.o": {
+    "bytes": 4715768,
+    "sha256": "a7492d522ef9a101604551c932a0f6bc30bcd4ddc4f60ff4a156d8662077d46e"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/audit150-host.o": {
+    "bytes": 3703232,
+    "sha256": "d08f479f42849661c4bad221a47ba84d45c2115afd2558f39e31832c57c8338d"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/audit200-factory.o": {
+    "bytes": 6156664,
+    "sha256": "6b6a4cf08d203b859da658879ca1c54091b9b4ce7720b3b4a6682bdcb3dfad3f"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/audit200-host.o": {
+    "bytes": 4829984,
+    "sha256": "123832278220455150f4c6cc6b558ded0ee79c4530734bb02be1895fcbb3b332"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/record.json": {
+    "bytes": 251872,
+    "sha256": "ce3a80df9ef4d67f88b1cb5ffa6afd209b37d5e94bddd85230500475b72efa41"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/amr/AmrDefines.h": {
+    "bytes": 982,
+    "sha256": "6e5316d40e37fd3837f05890dc11d3c0c9b60312ac54ed8ee09ac9e2432cbc46"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/amr/BlockHandle.h": {
+    "bytes": 3874,
+    "sha256": "7bf654929544efa91970b4bc2989b157ec56f9d3ddcc1598a95f865d37b825d2"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/core/ArchPortability.h": {
+    "bytes": 843,
+    "sha256": "2ac53f18180f32a2970ee1a660fd293975b4e7d6f2a98c1a23c686795b3e75e3"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/core/CompensatedSum.h": {
+    "bytes": 1588,
+    "sha256": "aa19747db6eb6a0c5c0469716167074e47316b96b73d4a09864533cc6a8f65c7"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/common/CudaCommon.cuh": {
+    "bytes": 9381,
+    "sha256": "1ff8d26628cd6194fd358dbb508de2581bd8751f2c1a752a97efe1363eebbea4"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/common/DeviceAllocation.h": {
+    "bytes": 3521,
+    "sha256": "3fade70271f3268e7f93d51a69ec79268f6971b2010454340d5fe06322993eaf"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/common/DeviceEosStatus.h": {
+    "bytes": 897,
+    "sha256": "8f662edf66e0926bdc342ce345cef5ac56c6c8cd129882b18149ca613f4a2173"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/microphysics/CuDssSparseSolver.h": {
+    "bytes": 3340,
+    "sha256": "076e5f9d9e94deaf62a3f2e350e2352aaabb6fc42b56413017ce780bece3c569"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/microphysics/CuDssSparseWaveSolver.h": {
+    "bytes": 2554,
+    "sha256": "990c313a0e0add56694c2c0b1576778eae82f22b35254b81b035a0724a99a671"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/microphysics/CuDssSparseWindowSolver.h": {
+    "bytes": 1944,
+    "sha256": "e6a56e08299fab35c1fd99e35bb611ac45b82a5f237b91fa032dfc99cbf9e7f5"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/microphysics/SparseBurnCells.cuh": {
+    "bytes": 7442,
+    "sha256": "f4f1c15a46cbe0d47462febbdf856da240e64633001af16a583b0423cb7e8341"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/microphysics/SparseOdeBatch.cuh": {
+    "bytes": 15171,
+    "sha256": "845c69244faa8d93123af32930343e98842f21221dc8f875f54be62383fa6713"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/microphysics/device_network_owner.h": {
+    "bytes": 2624,
+    "sha256": "3c46d02a9d7c0e51f6f4bcea44910178c689a0de2b3e79d7fbc68736d38e898e"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/runtime/CudaBackendTypes.h": {
+    "bytes": 306,
+    "sha256": "1194ca7ab99c3f2e7850ac63f237db88b05bddb3a19deba89fd2ab787f163777"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/runtime/burn/CudaBackendBurn.h": {
+    "bytes": 2633,
+    "sha256": "c9a42062b9dedb94ad0742b18782528bbbe78100f5bb37741230905b7ef60f90"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/runtime/burn/CudaBackendBurnReduction.cuh": {
+    "bytes": 2367,
+    "sha256": "84fac599e7e1a19c0449c58ef45bd1e626afba3aa6e6abaca172db7f045d16dd"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/runtime/burn/CudaBackendBurnSparse.h": {
+    "bytes": 2261,
+    "sha256": "865460430efca973a566c60e518cb05f7b268c86225cd6bb6b0c003ece8cfea0"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/runtime/burn/CudaBackendBurnSparseImpl.cuh": {
+    "bytes": 11139,
+    "sha256": "f034991deaae13d16e9b5377181ed9243ca260b22dfbfec201d9d59125a97dd6"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/cuda/runtime/burn/CudaBurnOdeTypes.h": {
+    "bytes": 1088,
+    "sha256": "c6926feeefd91c4dc27a982a7e921bae205f8f8fbcc297e6aa0bab78656c90bf"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/data/FluidState.h": {
+    "bytes": 4780,
+    "sha256": "2b18455125b3acb1ae96832fa6194dfd7ac455787385304df8336c69e20d5e52"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/data/GlobalDefs.h": {
+    "bytes": 16069,
+    "sha256": "f9ed46a8990d3e99ff406f210859452c0d6bb06e07fce3d166474f635315afe7"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/driver/DriverBurnPolicy.h": {
+    "bytes": 6641,
+    "sha256": "1d9825d28d73453d7bed48d09c699cc70727f362d0fa1818e986b14ca416ec8c"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/driver/ReductionSpec.h": {
+    "bytes": 9187,
+    "sha256": "7afa52769d2107b7f45053796957946b50cde506ac5a7f3b2e91400e36c39cff"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/driver/dispatch/PolicyDescriptor.h": {
+    "bytes": 34522,
+    "sha256": "4ad2a5586a67af4e10e5f317f5ac83618451799ee18e6d032699b294139b0b66"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/driver/dispatch/ResolvedExecutionPlan.h": {
+    "bytes": 3970,
+    "sha256": "990caea624eb2ebb48284842bb68afb6c0cdec42d56a3cc6c4a2b70f4cf54572"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/BurnThermodynamics.h": {
+    "bytes": 5032,
+    "sha256": "fd50b2c493be567c35e9b7e912c00664241f4c59c3c187ab1cd0f919de6b3abf"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/NetworkDerivative.h": {
+    "bytes": 3973,
+    "sha256": "2903eb9f0cc32de7bc22075f4c55f4c9a405c64b0c5aed6d7820175d85d3427d"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/OdeContinuation.h": {
+    "bytes": 1076,
+    "sha256": "7574eca5081352718fc2d0e06422eb027aa67c366327147125f5e6f63f0506ac"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/odeFunction.h": {
+    "bytes": 22324,
+    "sha256": "ce63416dd5b7cb5fcde434cce97e40423555f2e54f22cbdf76f5463ebda829ba"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/ode_bd.h": {
+    "bytes": 21144,
+    "sha256": "fcf7fd725fb346a9373438f48452a4318ed6917bd9fb16e772e132f18f69f5b4"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/ode_be-nr.h": {
+    "bytes": 14825,
+    "sha256": "c450640c9e07a83cff6d56b7c5c93be6f2ee2ee4e306053881e337370d8e0563"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/burnsolver/ode_ros4.h": {
+    "bytes": 21357,
+    "sha256": "8157d9a980a8201c23ebf07dafbfb1586118d274cf86823640a85355ccf7ec23"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/linalg/CsrMatrixView.h": {
+    "bytes": 5114,
+    "sha256": "69169d605351ff52aeec43e86391cf375dfe7219626d6a4ea3d1057f4495e8c8"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/numerics/linalg/CsrPattern.h": {
+    "bytes": 2881,
+    "sha256": "2a5218631086ef9f7c5bd1b24c0133d248ee5469ca946d43d55cdc1bdd2030b5"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/constant/PhysicalConstants.h": {
+    "bytes": 2560,
+    "sha256": "fbac1db45fb0301fefc4a547ea2c5957182c680ea7ea6ed7a57742714f81734e"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/eos/IdealGas.h": {
+    "bytes": 9969,
+    "sha256": "fc1410b340e349006ad2be06ab9961577a6843a1a7c30e681a8c1955b089c0c0"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/eos/eos.h": {
+    "bytes": 2476,
+    "sha256": "3b88fb3365945546a199819358aecd7ef49a5ace042cebd29eee0163b7d8d94f"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/eos/eos_Utils.h": {
+    "bytes": 12258,
+    "sha256": "3c17d571e0fb9f19a4144f432428fb9e60888a32f3b6af38c7238f373775210c"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/eos/eos_state.h": {
+    "bytes": 1021,
+    "sha256": "32509a04b372f8b2846c96f7eff6236c4692b681fa5b41d4e6fbb02061935e47"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/network/NuclearEnergy.h": {
+    "bytes": 1365,
+    "sha256": "58bd463da4bda28846157665cbe5e5be79b5ec594c75d70472770d0ad3cdb121"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/network/WeakTableView.h": {
+    "bytes": 1878,
+    "sha256": "49cb1439e5250025af0ed78154c213a6a7342cd20cf25080315de562de3289ba"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/nse/nse_solver.h": {
+    "bytes": 31310,
+    "sha256": "96e5e4ca6dd2fec1f75c468632ee2a9443aa5f55a4ca97c9a449dc211b5fabc0"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/src/physics/species/Species.h": {
+    "bytes": 7106,
+    "sha256": "a2ea7ebc5b28e9d52bead7692220e1d55b1d4fd5d5581a01c390d4a013c20ad4"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/tests/cuda/GeneratedSparseBurnFactory.h": {
+    "bytes": 473,
+    "sha256": "57f7dd82230a3c322667bb2d7f77496c36dbda13e57a6dc511f341c6deaa570e"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/tests/cuda/test_generated_sparse_burn.cpp": {
+    "bytes": 18078,
+    "sha256": "551d021ac6ce26378dff6823e135a499cc9bbdc76276a7612a45ef21b5cab205"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/source/tests/cuda/test_generated_sparse_burn_factory.cu": {
+    "bytes": 574,
+    "sha256": "884071f1f8411c099f2f8985ce5c89fc4c4a618510b1b3039b33408ff503afbb"
+  },
+  "ARCH-native-wave-v4-20260916/window-factory-v1/window.o": {
+    "bytes": 147224,
+    "sha256": "3983fe1de7425a63a38d05b20356d43087ec5ecd96fa3c599365c4bc50887bc8"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/artifacts-check-after.log": {
+    "bytes": 326,
+    "sha256": "e7c77ff7da95adb16013b0323be9959e82a8da5cb5c25a71abe0441b37f03efa"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/artifacts-check-before.log": {
+    "bytes": 326,
+    "sha256": "e7c77ff7da95adb16013b0323be9959e82a8da5cb5c25a71abe0441b37f03efa"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/exit-code": {
+    "bytes": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/lock": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/network-files-check-after.log": {
+    "bytes": 4414,
+    "sha256": "dfed2309dd3307a9142065659da429b8050505c218571c2619ac74e9a372bde0"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/network-files-check-before.log": {
+    "bytes": 4414,
+    "sha256": "dfed2309dd3307a9142065659da429b8050505c218571c2619ac74e9a372bde0"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/pid": {
+    "bytes": 7,
+    "sha256": "68f7cd706bc26c880fae8c591d03719ef22cbd3f9ee97d3901accfe59fb99763"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/recipes-check-after.log": {
+    "bytes": 394,
+    "sha256": "47b715c49e19fabe177c64d074a99c679182acb2d6af362743fea220c6a32efb"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/recipes.sha256": {
+    "bytes": 642,
+    "sha256": "d09da003035ac1aa4f9a0712ca24c49c6211c2383603d30852593da53eb94632"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/runtime-exit-code": {
+    "bytes": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/source-files-check-after.log": {
+    "bytes": 19579,
+    "sha256": "3ade00404934191642461dd7773bd49967c3e682f8708d6d4c2b0ff738852a89"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/source-files-check-before.log": {
+    "bytes": 19579,
+    "sha256": "3ade00404934191642461dd7773bd49967c3e682f8708d6d4c2b0ff738852a89"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/started-utc.txt": {
+    "bytes": 32,
+    "sha256": "9a6454af8081d3eba063e1e71c5436a9847793837f251cafaea6a08bde4f1c13"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/vendor-check-after.log": {
+    "bytes": 412,
+    "sha256": "7d58fd61a01dbec5bdc0de9d2ef9aeceacede9b8b825ea3b8563787c7ddd6d9b"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/vendor-check-before.log": {
+    "bytes": 412,
+    "sha256": "7d58fd61a01dbec5bdc0de9d2ef9aeceacede9b8b825ea3b8563787c7ddd6d9b"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/window-focused-child.log": {
+    "bytes": 1212,
+    "sha256": "5d11c89dff01cd1a700a814ae95fb6f0fd8d1b3eb3af699c1accd5d4c568ce64"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/window-focused-guard.log": {
+    "bytes": 618,
+    "sha256": "cd415b3bde37f39815bb90e706e4b9520ed2528673fe130eba0f3e96bd898bc1"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-control-v1/worker.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-input-v1/focused-dispatch.sh": {
+    "bytes": 707,
+    "sha256": "0e66821014270b652e7e75f0a622ebc579c4025aa37cd677144b4a3664d0e991"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-input-v1/focused-worker.sh": {
+    "bytes": 1721,
+    "sha256": "6fc48fad0deacb5f4ba3268f9ea249228ff9e1abd2cb9a545d8a1a6baa07b462"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-input-v1/run_focused.py": {
+    "bytes": 11887,
+    "sha256": "f7f449b2ac96e053f496f777abf77e6400b1a562a0f0a348a58ae30d082c3e37"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-input-v1/trajectory_validation.py": {
+    "bytes": 10383,
+    "sha256": "1e0806d57fc539c72afe3ebd88e3ebd9b1181e8386c48d45442ff168c09173f6"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit150-bd-pool2.stderr": {
+    "bytes": 913,
+    "sha256": "334580d2737921527f0509ba15cb94e1db54f23e65d95d549f86b8a8aae00a1a"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit150-bd-pool2.stdout": {
+    "bytes": 7996,
+    "sha256": "eaf97f5e7c33f69ebb5baf25e1ae0a39cf5d3bf34249bb51a44c37f2775e5d30"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit150-be_nr-pool2.stderr": {
+    "bytes": 925,
+    "sha256": "ed2a03964321356a22a975b5ca1618704b29f9995c4f61e9afd21438b6d566e4"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit150-be_nr-pool2.stdout": {
+    "bytes": 8065,
+    "sha256": "08c1c1a04a5b1f184d3e84acc9de1d1913334193a3be6bc0b3ab5f92690f399b"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit150-ros4-pool2.stderr": {
+    "bytes": 918,
+    "sha256": "05aa14d6425d8dcc01bedc9a95c6a9ded0a2158cb6a1ae3ee44a8639f1ea026a"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit150-ros4-pool2.stdout": {
+    "bytes": 7993,
+    "sha256": "49d15a433448f0ad4bee1555c2585f4fb2316bfdb13707c8d80936b757ea649e"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit200-bd-pool2.stderr": {
+    "bytes": 913,
+    "sha256": "df998ec6f592a02f7e9900a027967eca1101614648ecd4651c089e15274a2893"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit200-bd-pool2.stdout": {
+    "bytes": 10265,
+    "sha256": "a130baf0b3ba49b9c2103afea669d3e65fe4ef33a618f4796d50c7953d104048"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit200-be_nr-pool2.stderr": {
+    "bytes": 923,
+    "sha256": "47f7bb9f5327c226771dd2e193723c6abe870ec1df0a4e04f306d4f0a27418cb"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit200-be_nr-pool2.stdout": {
+    "bytes": 10334,
+    "sha256": "b59ade7858122a62d58ee19a7f0758bb8afbd106e78b6acfff8080c75e0398a2"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit200-ros4-pool2.stderr": {
+    "bytes": 919,
+    "sha256": "21306a12462550e2fc7e6789c92cf564612b187b42a304ce0411986f2fdecf17"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/audit200-ros4-pool2.stdout": {
+    "bytes": 10300,
+    "sha256": "c10170ac2ebf63b1e5fb751a0dc83adb34e4f8e53ef290bedca4c3af3c7a2239"
+  },
+  "ARCH-native-wave-v4-20260916/window-focused-v1/record.json": {
+    "bytes": 14513,
+    "sha256": "ae8eea5b5d805beb9b0aee32a249d4413bfb006a234273871da454f6febbbb3e"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.cpp": {
+    "bytes": 9333,
+    "sha256": "a675a6a5b978b077545057f6f09c64519097a7532d7ae7f058ae0c956aa50708"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.h": {
+    "bytes": 1944,
+    "sha256": "e6a56e08299fab35c1fd99e35bb611ac45b82a5f237b91fa032dfc99cbf9e7f5"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/protocol.py": {
+    "bytes": 6194,
+    "sha256": "808ffb3eb39783993bdd0906c6b65fe697173dfe814ab1538c27c6e685e6314c"
+  },
+  "ARCH-native-wave-v4-20260916/window-local-receipt-v1.json": {
+    "bytes": 1177,
+    "sha256": "c175bea86c9eeedaaf41466e462ccde1cb0e35d9c05042fa506de17258219d7e"
+  }
+}

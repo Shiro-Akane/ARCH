@@ -1,4 +1,9 @@
-# 有界工作窗口／因子 cohort 分离：合同通过，核反应未验收
+# 有界工作窗口／因子 cohort 分离：小轨迹通过，容量待验收
+
+2026-09-18 最新：[新 factory 六组真实燃烧小轨迹](../../results/native-wave-20260917/window-focused-v1/README.zh-CN.md)
+已完成、独立复核并双端保全，12 条轨迹／48 对宏步通过。
+这仅补齐原 2→3/pool2 小输入，尚非多页 ODE、Helm 全应用或性能资格。
+下文保留此前准备时间线；当前继续同一 factory 的容量回归。
 
 2026-09-17：leaf-inline 完整结束和双端保全后，独立 18 项真实 GPU 合同全过并已双端核验。
 见[原始证据](../../results/native-wave-20260917/window-contract-v1/README.zh-CN.md)。
@@ -135,3 +140,28 @@ v2 归档现已实际通过全部 560 个原始成员的严格字节核验并上
 见 [构建与归档证据](../../results/native-wave-20260917/window-factory-v2/README.zh-CN.md)。
 09:54–09:55 UTC 启动前发现 ComfyUI 占用 GPU，六组 focused 尚未上传/启动；
 不停止其他项目、不绕过 GPU 空闲检查，不把构建通过当作核反应或性能通过。
+
+## 2026-09-18 接续：小轨迹运行中，容量脚本已准备
+
+用户安排了空闲窗口。20:34 UTC 再检查 GPU 无其他计算进程、显存 0 MiB，
+原 factory、源码、网络、库及双端构建归档全部通过身份检查后，才部署原 focused v2 输入。
+本节编写时六组运行尚在进行，不能视为通过；最终结论以独立结果目录为准。
+
+新增 `capacity_protocol.py`、`run_capacity.py`、`capacity-worker.sh`／`capacity-dispatch.sh`
+和 `collect_capacity.py` 只用于下一阶段；`prepare_capacity.py` 只在本机制包，不连接服务器。
+容量阶段复用相同的新 factory 和原数值 validator：150/200 × 三 ODE × pool 8/32，
+32→33 非均匀单元、四步至 1e-10、selected window=32、每组 wall 上限 7200 秒。
+12 组均串行，外层最多 26 小时（逐组最大等待之和加清理余量），通常实际时间短得多。
+不改库、公式、误差预算或原 32 MiB workspace／256 MiB provider 预算。
+
+开始前要求六项 focused 真实结果、完整清单、双方 raw/compact 字节核验及 GPU 空闲。
+首次失败即停止矩阵，原超时/错误保留；既有资源护栏负责清理自己启动的全部后代进程。
+收集器独立核对实际命令、每个宏步、真实 owner 容量、原预算及全过程输入身份。
+本机 43 项窗口工具测试和两份 shell 语法检查已过，均只是准备验证，
+新增 owner 元数据测试明确为“旧轨迹＋合成 owner”，不冒充新的 CUDA 运行。
+
+容量 payload 7 文件、51,200 bytes，SHA-256
+`116611b7470ea7e8717f349edbfcbf8cff5614fac45e10f9368b8224f4bbec30`。
+身份见 `prepared-capacity-input-v1.json`，准备日志见 `capacity-preparation-checks-v1.log`。
+本阶段最大实际 window 为 32，没有跨 native page；即使容量矩阵通过，也仍未验证
+64/128 工作窗口、多页 ODE、16 步长轨迹、真实 Helm 全应用或正式性能。

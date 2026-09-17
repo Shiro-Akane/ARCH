@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-17T20:52:23.783475+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-focused-raw-v1.tar.zst",
+    "bytes": 21772408,
+    "sha256": "5bda80e27a523901a2dd35d59a5b65d0e55bdd9ec66b0839c92c63ec1238613b",
+    "files": 112
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-focused-compact-v1.tar.zst",
+    "bytes": 141069,
+    "sha256": "52e051d57ed60b87b0a1be3a3ba2bfe76606cd213a35eb674565eba76e451f74"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\window-focused-v1-download\\window-focused-raw-v1.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\window-focused-v1-download\\window-focused-compact-v1.tar.zst"
+  },
+  "raw_files": 112,
+  "raw_file_bytes": 35391754,
+  "projected_files": 62,
+  "raw_only_files": 50,
+  "receipt_sha256": "e7b4f48fbeb039d207df52e08efe4c8a554c223bd2512a688b94b151bf68c0a0",
+  "verification_recipe_sha256": "495a065afe1e0ce5de9de08c96e3a72c98ebf38a94a1b022fd684de777c105a4",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}

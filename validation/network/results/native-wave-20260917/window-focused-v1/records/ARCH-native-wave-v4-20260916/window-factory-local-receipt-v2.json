@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-17T09:51:06.896138+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-raw-v2.tar.zst",
+    "bytes": 84210446,
+    "sha256": "721fba204dca11336eb18a65f19718e09ae1d924ffc05506f906b3c18d082cca",
+    "files": 560
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-compact-v2.tar.zst",
+    "bytes": 139904,
+    "sha256": "e19915ea690a6506ca90c8de9d2e3cc5c7a29059ed2b6b61daf4705669d45090"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\window-factory-v2-download\\window-factory-raw-v2.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\window-factory-v2-download\\window-factory-compact-v2.tar.zst"
+  },
+  "raw_files": 560,
+  "raw_file_bytes": 143032799,
+  "projected_files": 78,
+  "raw_only_files": 482,
+  "receipt_sha256": "0f19fb54a67af664c08f459f3ec28f91eed0c5200823a906fcea6f21fd36f1ce",
+  "verification_recipe_sha256": "495a065afe1e0ce5de9de08c96e3a72c98ebf38a94a1b022fd684de777c105a4",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}
