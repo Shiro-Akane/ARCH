@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-17T01:04:06.286594+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/advance-shape-raw-v1.tar.zst",
+    "bytes": 7715100,
+    "sha256": "9c42a26afe5013a9d1a8438e37881a17e6d8831da694af3fa8d2647ebf8999d3",
+    "files": 71
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/advance-shape-compact-v1.tar.zst",
+    "bytes": 60733,
+    "sha256": "98c800a3739865eb105f17700f2f98f90118aa47698ec97bf98458e28a5ef387"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\advance-shape-v1-download\\advance-shape-raw-v1.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\advance-shape-v1-download\\advance-shape-compact-v1.tar.zst"
+  },
+  "raw_files": 71,
+  "raw_file_bytes": 14026204,
+  "projected_files": 68,
+  "raw_only_files": 3,
+  "receipt_sha256": "39caff283a5a154045f869f3b7d805b4df11b8601c53d21989eb2f5bb02a7708",
+  "verification_recipe_sha256": "495a065afe1e0ce5de9de08c96e3a72c98ebf38a94a1b022fd684de777c105a4",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}

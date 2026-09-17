@@ -1,0 +1,6 @@
+[
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/cuda_progress_after_launch.so",
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/probe-cudss-progress.so",
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-v1/arch_cuda_generated_sparse_burn_audit150",
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-v1/arch_cuda_generated_sparse_burn_audit200"
+]

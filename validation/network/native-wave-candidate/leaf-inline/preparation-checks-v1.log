@@ -1,0 +1,13 @@
+Scope: local preparation/protocol checks, NOT C++ compilation or GPU validation.
+2026-09-17
+Command: bundled Python tests/tooling/test_leaf_inline_diagnostic.py
+Final result: 10 tests, 0.023 seconds, OK.
+Command: Git Bash -n validation/network/native-wave-candidate/leaf-inline/worker.sh
+Result: exit 0.
+Command: Git Bash -n validation/network/native-wave-candidate/leaf-inline/dispatch.sh
+Result: exit 0.
+
+First local test attempt: 10 tests, one ERROR in original CMake recipe selection.
+Cause: Windows pathlib rendered a Linux path with backslashes in comparison.
+Correction before packaging: explicit as_posix() for the three Linux recipe identities.
+No server build/run occurred with the pre-correction recipe. Numerical budget unchanged.

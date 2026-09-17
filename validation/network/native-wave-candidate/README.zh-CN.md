@@ -7,7 +7,9 @@
 [合并显式 kernel 启动的独立候选](batched-kernels/README.zh-CN.md) 随后实际编译，
 128 个 kernel 对照及 8 项 provider 合同通过并双端保全；真实小规模六组燃烧轨迹已完成，
 汇总器默认日志格式错误的失败保留，[独立复核](../results/native-wave-20260917/batch-launch-focused-reaudit-v1/README.zh-CN.md)
-通过原数值门槛。当前进行同二进制 ODE block 布局原因诊断。
+通过原数值门槛。同二进制 ODE block 布局 ABBA 已完成，1-thread 方案更慢而否决。
+[六组 API 成本诊断](../results/native-wave-20260917/api-cost-v1/README.zh-CN.md)已完成并双端保全，
+当前单独进行[小型 Jacobian sink 内联叶函数对照](leaf-inline/README.zh-CN.md)，未接入生产。
 两项仍不提供完整 Helm 应用、长程或正式性能资格。
 
 2026-09-15；2026-09-16 收紧负向测试判据。本目录为隔离执行层候选，不在生产 CMake、网络注册表或当前正式计时中启用。

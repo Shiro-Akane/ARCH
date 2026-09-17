@@ -1,0 +1,230 @@
+{
+  "ARCH-native-wave-v4-20260916/advance-shape-collection-v1.json": {
+    "bytes": 702,
+    "sha256": "39caff283a5a154045f869f3b7d805b4df11b8601c53d21989eb2f5bb02a7708"
+  },
+  "ARCH-native-wave-v4-20260916/advance-shape-local-receipt-v1.json": {
+    "bytes": 1202,
+    "sha256": "2c15b5cdd1c69dffcfad335dcba55e157e8255dac223b2f8c2c2357e14fe7bba"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/artifacts-check-after.log": {
+    "bytes": 326,
+    "sha256": "e7c77ff7da95adb16013b0323be9959e82a8da5cb5c25a71abe0441b37f03efa"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/artifacts-check-before.log": {
+    "bytes": 326,
+    "sha256": "e7c77ff7da95adb16013b0323be9959e82a8da5cb5c25a71abe0441b37f03efa"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/diagnostic-child.log": {
+    "bytes": 697,
+    "sha256": "10bbc219a56e747013c095990342f105e82f017322b050151a04280f2fbe67b0"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/diagnostic-guard.log": {
+    "bytes": 616,
+    "sha256": "a15c1f1545e4abaaa798f68222cd168e1af92fbc8d10a77fabf313fdcc649743"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/exit-code": {
+    "bytes": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/lock": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/network-files-check-after.log": {
+    "bytes": 4414,
+    "sha256": "dfed2309dd3307a9142065659da429b8050505c218571c2619ac74e9a372bde0"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/network-files-check-before.log": {
+    "bytes": 4414,
+    "sha256": "dfed2309dd3307a9142065659da429b8050505c218571c2619ac74e9a372bde0"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/pid": {
+    "bytes": 7,
+    "sha256": "1e7b3cb2acaac5b6904ee5918787760936f233a4208accfac4405feee11ffed1"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/recipes-check-after.log": {
+    "bytes": 556,
+    "sha256": "81ed7772a8c6e4b662db6742a318d18eb3e2ceeebd1274ad576b2a07ec2ed6ac"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/recipes.sha256": {
+    "bytes": 928,
+    "sha256": "995af01bbcf6b96ac0310fc0804d49b22354bcdd101e7d1b5a07f1f127e78a3a"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/runtime-exit-code": {
+    "bytes": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/source-files-check-after.log": {
+    "bytes": 19579,
+    "sha256": "3ade00404934191642461dd7773bd49967c3e682f8708d6d4c2b0ff738852a89"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/source-files-check-before.log": {
+    "bytes": 19579,
+    "sha256": "3ade00404934191642461dd7773bd49967c3e682f8708d6d4c2b0ff738852a89"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/started-utc.txt": {
+    "bytes": 32,
+    "sha256": "f64b4d91a451b545fd68e1eadc71a1da39b5ae645c7c14c36163c45236746b40"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/vendor-check-after.log": {
+    "bytes": 412,
+    "sha256": "7d58fd61a01dbec5bdc0de9d2ef9aeceacede9b8b825ea3b8563787c7ddd6d9b"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/vendor-check-before.log": {
+    "bytes": 412,
+    "sha256": "7d58fd61a01dbec5bdc0de9d2ef9aeceacede9b8b825ea3b8563787c7ddd6d9b"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-control-v1/worker.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit150-bd-pool2.stderr": {
+    "bytes": 5095,
+    "sha256": "4ec149d30b24b12d6f1eac23cea28ac2e49430c103f6cf6abd07a961130323f5"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit150-bd-pool2.stdout": {
+    "bytes": 7875,
+    "sha256": "92b440c89a4b25281e8557d9f505ccaa550b5cfca4499c54fae90aa0247e790d"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit150-be_nr-pool2.stderr": {
+    "bytes": 36038,
+    "sha256": "8adef981d8976570c0e9248561675fb91b5a11c2bc6a0aeae924855f7b684220"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit150-be_nr-pool2.stdout": {
+    "bytes": 7908,
+    "sha256": "b94be12cb218a57ad7b0e7cd6ddb0b94e6d5551fc7d3caf6b7baca419d23fd77"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit150-ros4-pool2.stderr": {
+    "bytes": 5134,
+    "sha256": "340d3609c9a77cbe5a8b3dac04b9d25aa3efa1b3999c411090c3555b067ea841"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit150-ros4-pool2.stdout": {
+    "bytes": 7905,
+    "sha256": "c9d95ff3f404114593f4a41358328663c5692052d4759dd671eaf4a5122cc42b"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit200-bd-pool2.stderr": {
+    "bytes": 4933,
+    "sha256": "0c28a7875d2dfe023b646bfc0de7213d33b96d6de0c9a07688b3815f25977a8a"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit200-bd-pool2.stdout": {
+    "bytes": 10131,
+    "sha256": "83fee59f0e38c536e8ae1661aacf8b285821f30773c7c6c9d3a2f0a2022d4af3"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit200-be_nr-pool2.stderr": {
+    "bytes": 34931,
+    "sha256": "430e0be3e454a4cc31be6dcfd649077bb62c5a7a763e635db3fed2acddbba6bf"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit200-be_nr-pool2.stdout": {
+    "bytes": 10180,
+    "sha256": "818c6ea7a503f791f377b0e0085c14ae4c5493fba5508600a80ea492c8d727c2"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit200-ros4-pool2.stderr": {
+    "bytes": 4975,
+    "sha256": "8a156d86c9b9315752a59a205b83a0b5b21bbefb2a4fe6aaa3f709c65eef25f0"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/audit200-ros4-pool2.stdout": {
+    "bytes": 10152,
+    "sha256": "7f496500f617d7fbb6982dd5960c3745d29324566fec87d19ce459050f824457"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/compile-cuda_progress_after_launch.stderr": {
+    "bytes": 1201,
+    "sha256": "097d59ba0508ce442a476ecff87ba0a48bfc1defc39f26a161a96f320d664176"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/compile-cuda_progress_after_launch.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/compile-probe-cudss-progress.stderr": {
+    "bytes": 1187,
+    "sha256": "85145dc13b87ceeb267584cdd75371f91c4839384a69756166a4df7a3e682e56"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/compile-probe-cudss-progress.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/cuda_progress_after_launch.so": {
+    "bytes": 34128,
+    "sha256": "75942752865f2617fe0fc8ff295ac4360a8a9b1e006e85d75de8bbf145f3c9b8"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/probe-cudss-progress.so": {
+    "bytes": 17072,
+    "sha256": "b3e4428876f61c1ff30746b82e560e11570a29e37c2735ed7fc7df048a0bac74"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-focused-v1/record.json": {
+    "bytes": 74474,
+    "sha256": "70a9b4fb72a5c3314cb7d3565e9db5c063a99daa3343ac49db2f5bc3c7cc456c"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-input-v1/cuda_progress_after_launch.cpp": {
+    "bytes": 5737,
+    "sha256": "c046281beb191b5a3f00ce62c41b17880c9a71ae15e3cad5ce9c3349708ab7d2"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-input-v1/dispatch.sh": {
+    "bytes": 549,
+    "sha256": "bcea64a9f9c1e099ff066bda431f5352a82dff585699acf36d3c41b90c810e32"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-input-v1/probe-cudss-progress.cpp": {
+    "bytes": 3190,
+    "sha256": "a4196bf3eab9fe6363f871159bb25fb6da6f38fe1d107e0ed3b7611e9fe71b39"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-input-v1/run_focused_cost.py": {
+    "bytes": 8790,
+    "sha256": "944b3edb3118f66c4259d6432f0b67cd2349e97d6f9fc70b4bb4c9bd0f289dc2"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-input-v1/run_trajectories.py": {
+    "bytes": 10383,
+    "sha256": "1e0806d57fc539c72afe3ebd88e3ebd9b1181e8386c48d45442ff168c09173f6"
+  },
+  "ARCH-native-wave-v4-20260916/api-cost-input-v1/worker.sh": {
+    "bytes": 1614,
+    "sha256": "b6182d47b12f79d859b22add218a50598a0a4eba6d6b2be7660be0dc0c18708f"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-reaudit-collection-v1.json": {
+    "bytes": 1268,
+    "sha256": "204413a15b5e2ee9a6d608b207ed4f2111fbc047fab16f1de374ba6608ddb0e5"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-reaudit-local-receipt-v1.json": {
+    "bytes": 1294,
+    "sha256": "63eca6b8a894d42c23a66a2383233ba40efc52c8f38bd7916c9ccbc6321bdfe5"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-v1/arch_cuda_generated_sparse_burn_audit150": {
+    "bytes": 5931232,
+    "sha256": "166f71a0c942f4763fa055e683669a1823b4cd8ae9512a723271edb5e0b60181"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-v1/arch_cuda_generated_sparse_burn_audit200": {
+    "bytes": 7723200,
+    "sha256": "24dbea4bb82186d04b6e570a6a4187b2851e2d7c49a4f36fcfeb0c2f9bb758d2"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-focused-v1/record.json": {
+    "bytes": 21994,
+    "sha256": "d7b74891c792d350f4d9148735da561ca6c69c17a9845e8bb4be4ac34444f0d0"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/artifacts.sha256": {
+    "bytes": 512,
+    "sha256": "6ac5472ec6ca7bfb873130e77fefb65795c0310bf6489845665ed8d8fcbdcef7"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/network-files.sha256": {
+    "bytes": 7514,
+    "sha256": "62f21a3b2809f6522acfaf357188c9291fc501db24f4a06107949ad5f182c2a0"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/source-files.sha256": {
+    "bytes": 48967,
+    "sha256": "af807299a6d4b922657fa17f1139ecdc4231fc8c94ffa6b462a0b69b636ab6da"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/vendor.sha256": {
+    "bytes": 598,
+    "sha256": "350539d47fa823dc48d6bb7341a1d90a451332a3e37ebc519f575e46a73db4e5"
+  },
+  "ARCH-native-wave-v4-20260916/focused-reaudit-v1/qualification.json": {
+    "bytes": 3671,
+    "sha256": "dd7aae35bc4b67cdf4745065d94d1aac13ed2ee56698490afa3903e1b77bdd40"
+  },
+  "ARCH-native-wave-v4-20260916/input/collect_api_cost_v1.py": {
+    "bytes": 6094,
+    "sha256": "00b82c28866b79b24896ab990e613b42b14d79d8e8af628e1f098fb929a678dd"
+  },
+  "ARCH-native-wave-v4-20260916/input/collect_factory.py": {
+    "bytes": 9141,
+    "sha256": "bc31e52cc6d75d7a5e9ecd8153212f8a6e0805e900841af6c7f0e9d074525f9b"
+  }
+}

@@ -50,8 +50,11 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 原数值门槛通过，未修改科学参数或增加GPU运行数。
 小规模单次诊断仍慢；同二进制 ODE block 布局的[16次ABBA对照](../../validation/network/results/native-wave-20260917/advance-shape-v1/README.zh-CN.md)
 现已完成，1-thread方案四组均慢5.37%–9.79%，不采用。
-当前单独测量ODE推进后的等待与cuDSS各phase的Host调用成本，保持原三ODE轨迹；
-这些嵌套API时间不可相加为GPU耗时，不提供完整应用或正式性能资格。
+六组原三ODE的[API成本诊断](../../validation/network/results/native-wave-20260917/api-cost-v1/README.zh-CN.md)
+已完成并双端保全，主要观察到ODE推进后的状态回读等待；嵌套API时间不可相加为GPU耗时，
+不提供完整应用或正式性能资格。接下来隔离测试 generated JacobianSink 小型 set 函数的
+内联注解，其他网络数学字节不变；先比较完整CPU/GPU叶函数向量和ABBA诊断成本，
+有收益才继续生产生成器及三ODE／容量／长程／真实Helm全应用，不跳过门槛。
 
 1. 原基线和候选使用各自不可变源码/构建/二进制身份；同一版本内 CPU/GPU 使用相同输入、EOS/网络、物理时长、输出与比较口径。测试脚本重编和生产重编分别记录。
 2. 单独做 profiling，不把插桩结果混入正式速度中位数。先预热，再至少 5 次交替正式测量；报告原始样本、中位数和离散性。CPU 至少包含合理线程扫描和亲和性设置，不能专挑较慢 CPU 点。
