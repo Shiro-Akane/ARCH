@@ -1,0 +1,25 @@
+{
+  "status": "prepared_locally_not_uploaded_not_compiled_not_runtime_validated",
+  "source_commit": "c6008f133e91947305ecbcf85c9c901b2d921b5c",
+  "archive": {
+    "path": "build/window-input-v1.tar",
+    "bytes": 48128,
+    "sha256": "3f9e7f1fda8f906a9a9fb4b460c734bd801ba3d15c38e80ae084ce61b7330163"
+  },
+  "payload_directory": "window-input-v1",
+  "files": {
+    "CuDssSparseWindowSolver.h": {"bytes": 1944, "sha256": "e6a56e08299fab35c1fd99e35bb611ac45b82a5f237b91fa032dfc99cbf9e7f5"},
+    "CuDssSparseWindowSolver.cpp": {"bytes": 9333, "sha256": "a675a6a5b978b077545057f6f09c64519097a7532d7ae7f058ae0c956aa50708"},
+    "test_sparse_window.cpp": {"bytes": 13196, "sha256": "93bc8dbbe572e191b048fd1e3636595ad4e863ad192505c4aba9e612be8eef1f"},
+    "protocol.py": {"bytes": 6194, "sha256": "808ffb3eb39783993bdd0906c6b65fe697173dfe814ab1538c27c6e685e6314c"},
+    "build_and_test.py": {"bytes": 8049, "sha256": "104bbe8b57b166f7c0408d18ed3f766b01bf95a03c21446d966ced833f7fd2a3"},
+    "worker.sh": {"bytes": 1644, "sha256": "98939cbe4c660e298616b641b376060bc35d277de4805311b26a65f9cc90d776"},
+    "dispatch.sh": {"bytes": 841, "sha256": "56330aa005a65af335bf8936a2ca510a0fd44a80ca1ae2ff177396fef3836db2"}
+  },
+  "actual_gpu_contracts_completed": 0,
+  "planned_gpu_contracts": 18,
+  "nuclear_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "dispatch_automatic": false
+}

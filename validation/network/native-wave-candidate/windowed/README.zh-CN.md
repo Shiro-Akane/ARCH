@@ -46,6 +46,11 @@ tail、Factorize-only／Solve／Idle 混合、逐出恢复、重复相同 caller
 运行必须在 leaf-inline 结束、审查并完成服务器／本机双端归档后，使用既有资源 guard 单独执行。
 `dispatch.sh` 尚未执行，也没有排入自动后续队列。
 
+冻结本机输入包为 48,128 bytes，SHA-256
+`3f9e7f1fda8f906a9a9fb4b460c734bd801ba3d15c38e80ae084ce61b7330163`；
+完整七文件身份见 `prepared-input-v1.json`。尚未上传。
+收集器不在该输入包内，只在实验结束后另行上传，不改运行中的冻结配方。
+
 本机的 6 项源码／配方检查及两项 shell 语法检查已通过（最近一轮 0.054 s），
 日志见 `preparation-checks-v1.log`，只验证准备逻辑；C++/CUDA 合同仍全部待跑。
 即便合同通过，后续仍需独立 fresh factory 接入、真实三 ODE／容量／长轨迹／Helm 及配对性能，
