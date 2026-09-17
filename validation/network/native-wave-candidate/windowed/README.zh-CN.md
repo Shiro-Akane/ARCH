@@ -55,3 +55,19 @@ tail、Factorize-only／Solve／Idle 混合、逐出恢复、重复相同 caller
 日志见 `preparation-checks-v1.log`，只验证准备逻辑；C++/CUDA 合同仍全部待跑。
 即便合同通过，后续仍需独立 fresh factory 接入、真实三 ODE／容量／长轨迹／Helm 及配对性能，
 不能用这里的制造解替代上述验收。
+
+## 后续 factory 接入配方：也仅准备
+
+`prepare_factory.py` 只从已归档的两份 SHA 固定 execution/owner 头生成可逆的隔离 overlay，
+保留所有 device 数学、launch shape、response/residual 检查、block gather/scatter 和生命周期代码。
+Host 实验选择项 `ARCH_NATIVE_WINDOW_CELLS` 仅接受 32／64／128；有效容量仍受真实 caller 单元数限制。
+ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256 MiB 估计预算不变，
+不设置或伪造硬件 warp，不改 stack/cache/runtime 限制。
+
+本机已生成 `build/window-factory-overlay-v1`，没有上传、编译或运行；它不在上面的七文件合同包内。
+合计 9 项准备测试通过，包含原 kernel 数学区域、allocation 后的执行/析构区域字节不变检查。
+这些测试不说明两份 C++ overlay 可编译，也不代表 CUDA 资格。
+
+未来需新编两个真实 factory，不得借用旧 CUDA `.o` 宣称新窗口已验证。
+同一新二进制的 32／64／128 对照只隔离窗口大小的作用；wrapper 的 32 模式本身仍有额外 Host 工作，
+还须保留原 native-wave 的独立对照，才能评价整个封装的净收益。当前未编写/启动此构建或运行队列。
