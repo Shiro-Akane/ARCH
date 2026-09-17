@@ -11,3 +11,10 @@ First local test attempt: 10 tests, one ERROR in original CMake recipe selection
 Cause: Windows pathlib rendered a Linux path with backslashes in comparison.
 Correction before packaging: explicit as_posix() for the three Linux recipe identities.
 No server build/run occurred with the pre-correction recipe. Numerical budget unchanged.
+
+Additional local check while the server compilation was running:
+Command: bundled Python -m unittest discover -s tests/tooling -p test_leaf_inline*.py -v
+Result: 15 tests, 1.335 seconds, OK.
+Includes 5 complete synthetic collection/rejection checks (20 command records,
+16 vector snapshots); these are fixtures, NOT 16 executed CUDA runs.
+The frozen server input package was not changed.
