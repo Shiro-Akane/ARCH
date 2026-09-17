@@ -1,0 +1,20 @@
+{
+  "worker_exit_code": 0,
+  "contracts_pass": true,
+  "contract_count": 18,
+  "nuclear_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-raw-v1.tar.zst",
+    "bytes": 1003438,
+    "sha256": "56e87f7564043f825264fa6bb8e148eec8af64bbd24eb45e3e564facf19c6b42",
+    "files": 93
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-compact-v1.tar.zst",
+    "bytes": 89258,
+    "sha256": "1c653097603ad638a5232d03d6298a6390fea9777670cf864b56eb627e3149bd"
+  },
+  "embedded_compact": "ARCH-native-wave-v4-20260916/window-evidence-v1/compact"
+}

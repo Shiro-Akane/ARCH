@@ -7,8 +7,12 @@
 Host 串行叶函数略慢，未进入生产或完整应用验收。
 随后独立[窗口／因子 cohort 的 18 项真实 GPU 合同](../../validation/network/results/native-wave-20260917/window-contract-v1/README.zh-CN.md)
 也已通过并双端保全，仍只拥有最多 32 个 native 槽，原 256 MiB provider 预算不变。
-下一步为新 factory 的 ODE 接入构建和真实轨迹；保持原网络，不叠加内联，不复用旧 CUDA 对象，
-也不能用制造解代替真实核反应和完整 Helm 性能。所有实验串行，未并行或改库。
+两份 [新 factory 构建及严格双端归档](../../validation/network/results/native-wave-20260917/window-factory-v2/README.zh-CN.md)
+已完成，11 条命令全过，150/200 CUDA 编译分别约 49:43／1:47:00，无 swap；归档工具路径和
+依赖别名问题的失败现场保留，新 v2 归档 560 文件逐项字节核验通过，校验器未放宽。
+仍保持原网络，不叠加内联，不复用旧 CUDA 对象。下一步是原六组 focused 真实轨迹，
+但 09:54–09:55 UTC 的启动前检查发现 ComfyUI 占用 GPU，尚未 dispatch；未停止其他项目。
+不能用构建或制造解代替真实核反应和完整 Helm 性能。所有本项目实验串行，未改库。
 
 ## 范围与目标
 

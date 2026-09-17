@@ -1,0 +1,23 @@
+	Command being timed: "/usr/bin/g++-11 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_CUDSS_PROVIDER=1 -DARCH_HAS_KLU=1 -DARCH_TEST_NETWORK_TYPE=NetCustom_audit150 -I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/source/src -I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/source/cases -I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include -I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include -isystem /home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include -isystem /home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -include /home/ubuntu/projects/ARCH-large-networks-20260909/audit150/NetCustom_audit150.h -fno-fast-math -ffp-contract=off -o /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/audit150-host.o -c /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/source/tests/cuda/test_generated_sparse_burn.cpp -MD -MF /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/audit150-harness.d -MT /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/audit150-host.o"
+	User time (seconds): 6.62
+	System time (seconds): 0.46
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:07.08
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 911088
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 249251
+	Voluntary context switches: 7
+	Involuntary context switches: 29
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 27680
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

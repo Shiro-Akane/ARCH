@@ -1,0 +1,721 @@
+{
+  "status": "window-contracts-passed",
+  "inputs": {
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/batch-launch-contract-v1/libarch_cuda_sparse_provider.a": "0b902a1e7d87174bc395d4be328713390d36a28320353d55113678e57f697204",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/input/run_standalone_contracts.py": "25b351a92f2b3b58bc143abd594e56074fdd4f6d1a15601f2ebc68efd99604f3",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/tests/cuda/test_sparse_wave.cpp": "d9c769a9893cd1706ab6de8fcd62552d546e6c2586b315d447f745b77a414875",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/compile_commands.json": "6a17407cf53fba1ad868e783245ea21c56274db29829e4eea0dd32bc0ba62049",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/CMakeCache.txt": "bb1bc5f63df46325462fc7671bf3368694f694082bb87717dc546446e878d936",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/build_and_test.py": "104bbe8b57b166f7c0408d18ed3f766b01bf95a03c21446d966ced833f7fd2a3",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.cpp": "a675a6a5b978b077545057f6f09c64519097a7532d7ae7f058ae0c956aa50708",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.h": "e6a56e08299fab35c1fd99e35bb611ac45b82a5f237b91fa032dfc99cbf9e7f5",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/dispatch.sh": "56330aa005a65af335bf8936a2ca510a0fd44a80ca1ae2ff177396fef3836db2",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/protocol.py": "808ffb3eb39783993bdd0906c6b65fe697173dfe814ab1538c27c6e685e6314c",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/test_sparse_window.cpp": "93bc8dbbe572e191b048fd1e3636595ad4e863ad192505c4aba9e612be8eef1f",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/worker.sh": "98939cbe4c660e298616b641b376060bc35d277de4805311b26a65f9cc90d776",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src/cuda/microphysics/CuDssSparseWaveSolver.h": "990c313a0e0add56694c2c0b1576778eae82f22b35254b81b035a0724a99a671",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src/cuda/common/DeviceAllocation.h": "3fade70271f3268e7f93d51a69ec79268f6971b2010454340d5fe06322993eaf",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src/numerics/linalg/CsrMatrixView.h": "69169d605351ff52aeec43e86391cf375dfe7219626d6a4ea3d1057f4495e8c8",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/shared_sparse_wave_test_support.h": "af583bed1c84fc424abf9233a8e357dfe570187d50aeba5d414412941e5875e9"
+  },
+  "commands": [
+    {
+      "name": "compile-window",
+      "command": [
+        "/usr/bin/g++-11",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src/cuda/microphysics",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_CUDSS_IR_STEPS=2",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/cases",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-march=native",
+        "-DNDEBUG",
+        "-std=gnu++20",
+        "-flto=auto",
+        "-fno-fat-lto-objects",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window.o",
+        "-c",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.cpp"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 1.1688706639688462
+    },
+    {
+      "name": "compile-test",
+      "command": [
+        "/usr/bin/g++-11",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src/cuda/microphysics",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/cases",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-march=native",
+        "-DNDEBUG",
+        "-std=gnu++20",
+        "-flto=auto",
+        "-fno-fat-lto-objects",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test.o",
+        "-c",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/test_sparse_window.cpp"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 1.3197397021576762
+    },
+    {
+      "name": "link-test",
+      "command": [
+        "/usr/bin/g++-11",
+        "-O3",
+        "-march=native",
+        "-DNDEBUG",
+        "-flto=auto",
+        "-fno-fat-lto-objects",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test.o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window.o",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "-L/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib/stubs",
+        "-L/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/lib",
+        "-Wl,-rpath,/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib:/home/ubuntu/projects/.envs/arch/lib:/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/batch-launch-contract-v1/libarch_cuda_sparse_provider.a",
+        "_deps/suitesparse-build/KLU/libklu.a",
+        "_deps/suitesparse-build/AMD/libamd.a",
+        "_deps/suitesparse-build/COLAMD/libcolamd.a",
+        "_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+        "_deps/suitesparse-build/BTF/libbtf.a",
+        "-lm",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0",
+        "/home/ubuntu/projects/.envs/arch/lib/libcudart.so",
+        "-ldl",
+        "/usr/lib/x86_64-linux-gnu/librt.a",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12",
+        "/home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12",
+        "/home/ubuntu/projects/.envs/arch/lib/libculibos.a",
+        "-lcudadevrt",
+        "-lcudart_static",
+        "-lrt",
+        "-lpthread",
+        "-ldl"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 1.7212912908289582
+    },
+    {
+      "name": "ldd-test",
+      "command": [
+        "ldd",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 30,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.033236960880458355
+    },
+    {
+      "name": "window-n151-w1-c1",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "1",
+        "1"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.6169704480562359
+    },
+    {
+      "name": "window-n151-w2-c1",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "2",
+        "1"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5665690379682928
+    },
+    {
+      "name": "window-n151-w3-c2",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "3",
+        "2"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5673067579045892
+    },
+    {
+      "name": "window-n151-w8-c8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "8",
+        "8"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5671453590039164
+    },
+    {
+      "name": "window-n151-w9-c8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "9",
+        "8"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.6173824139405042
+    },
+    {
+      "name": "window-n151-w32-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "32",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.7176728129852563
+    },
+    {
+      "name": "window-n151-w33-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "33",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.7174299079924822
+    },
+    {
+      "name": "window-n151-w64-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "64",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.8182584680616856
+    },
+    {
+      "name": "window-n151-w128-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "151",
+        "128",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.918451254023239
+    },
+    {
+      "name": "window-n201-w1-c1",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "1",
+        "1"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.516500046942383
+    },
+    {
+      "name": "window-n201-w2-c1",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "2",
+        "1"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5166541410144418
+    },
+    {
+      "name": "window-n201-w3-c2",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "3",
+        "2"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5166156538762152
+    },
+    {
+      "name": "window-n201-w8-c8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "8",
+        "8"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.5667313269805163
+    },
+    {
+      "name": "window-n201-w9-c8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "9",
+        "8"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.6170003719162196
+    },
+    {
+      "name": "window-n201-w32-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "32",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.6167696712072939
+    },
+    {
+      "name": "window-n201-w33-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "33",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.7176416439469904
+    },
+    {
+      "name": "window-n201-w64-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "64",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.7205814600456506
+    },
+    {
+      "name": "window-n201-w128-c32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+        "201",
+        "128",
+        "32"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout": 300,
+      "status": "passed",
+      "returncode": 0,
+      "elapsed_seconds": 0.9682248998433352
+    }
+  ],
+  "tests": {
+    "window-n151-w1-c1": {
+      "pages": 10,
+      "restored": 2,
+      "evicted": 0,
+      "invalidated": 2,
+      "factor_calls": 5,
+      "factor_systems": 5,
+      "solve_calls": 8,
+      "solve_systems": 8,
+      "estimated_peak_bytes": 1680752
+    },
+    "window-n151-w2-c1": {
+      "pages": 17,
+      "restored": 9,
+      "evicted": 7,
+      "invalidated": 2,
+      "factor_calls": 15,
+      "factor_systems": 15,
+      "solve_calls": 15,
+      "solve_systems": 15,
+      "estimated_peak_bytes": 1680752
+    },
+    "window-n151-w3-c2": {
+      "pages": 18,
+      "restored": 13,
+      "evicted": 9,
+      "invalidated": 4,
+      "factor_calls": 17,
+      "factor_systems": 34,
+      "solve_calls": 16,
+      "solve_systems": 32,
+      "estimated_peak_bytes": 3355080
+    },
+    "window-n151-w8-c8": {
+      "pages": 10,
+      "restored": 16,
+      "evicted": 0,
+      "invalidated": 16,
+      "factor_calls": 6,
+      "factor_systems": 48,
+      "solve_calls": 9,
+      "solve_systems": 72,
+      "estimated_peak_bytes": 13400936
+    },
+    "window-n151-w9-c8": {
+      "pages": 18,
+      "restored": 25,
+      "evicted": 9,
+      "invalidated": 16,
+      "factor_calls": 17,
+      "factor_systems": 136,
+      "solve_calls": 17,
+      "solve_systems": 136,
+      "estimated_peak_bytes": 13400936
+    },
+    "window-n151-w32-c32": {
+      "pages": 10,
+      "restored": 64,
+      "evicted": 0,
+      "invalidated": 64,
+      "factor_calls": 6,
+      "factor_systems": 192,
+      "solve_calls": 9,
+      "solve_systems": 288,
+      "estimated_peak_bytes": 38972552
+    },
+    "window-n151-w33-c32": {
+      "pages": 18,
+      "restored": 73,
+      "evicted": 9,
+      "invalidated": 64,
+      "factor_calls": 17,
+      "factor_systems": 544,
+      "solve_calls": 17,
+      "solve_systems": 544,
+      "estimated_peak_bytes": 38972552
+    },
+    "window-n151-w64-c32": {
+      "pages": 18,
+      "restored": 331,
+      "evicted": 267,
+      "invalidated": 64,
+      "factor_calls": 17,
+      "factor_systems": 544,
+      "solve_calls": 17,
+      "solve_systems": 544,
+      "estimated_peak_bytes": 38972552
+    },
+    "window-n151-w128-c32": {
+      "pages": 34,
+      "restored": 682,
+      "evicted": 618,
+      "invalidated": 64,
+      "factor_calls": 33,
+      "factor_systems": 1056,
+      "solve_calls": 33,
+      "solve_systems": 1056,
+      "estimated_peak_bytes": 38972552
+    },
+    "window-n201-w1-c1": {
+      "pages": 10,
+      "restored": 2,
+      "evicted": 0,
+      "invalidated": 2,
+      "factor_calls": 5,
+      "factor_systems": 5,
+      "solve_calls": 8,
+      "solve_systems": 8,
+      "estimated_peak_bytes": 2238032
+    },
+    "window-n201-w2-c1": {
+      "pages": 17,
+      "restored": 9,
+      "evicted": 7,
+      "invalidated": 2,
+      "factor_calls": 15,
+      "factor_systems": 15,
+      "solve_calls": 15,
+      "solve_systems": 15,
+      "estimated_peak_bytes": 2238032
+    },
+    "window-n201-w3-c2": {
+      "pages": 18,
+      "restored": 13,
+      "evicted": 9,
+      "invalidated": 4,
+      "factor_calls": 17,
+      "factor_systems": 34,
+      "solve_calls": 16,
+      "solve_systems": 32,
+      "estimated_peak_bytes": 4467480
+    },
+    "window-n201-w8-c8": {
+      "pages": 10,
+      "restored": 16,
+      "evicted": 0,
+      "invalidated": 16,
+      "factor_calls": 6,
+      "factor_systems": 48,
+      "solve_calls": 9,
+      "solve_systems": 72,
+      "estimated_peak_bytes": 17844536
+    },
+    "window-n201-w9-c8": {
+      "pages": 18,
+      "restored": 25,
+      "evicted": 9,
+      "invalidated": 16,
+      "factor_calls": 17,
+      "factor_systems": 136,
+      "solve_calls": 17,
+      "solve_systems": 136,
+      "estimated_peak_bytes": 17844536
+    },
+    "window-n201-w32-c32": {
+      "pages": 10,
+      "restored": 64,
+      "evicted": 0,
+      "invalidated": 64,
+      "factor_calls": 6,
+      "factor_systems": 192,
+      "solve_calls": 9,
+      "solve_systems": 288,
+      "estimated_peak_bytes": 51902552
+    },
+    "window-n201-w33-c32": {
+      "pages": 18,
+      "restored": 73,
+      "evicted": 9,
+      "invalidated": 64,
+      "factor_calls": 17,
+      "factor_systems": 544,
+      "solve_calls": 17,
+      "solve_systems": 544,
+      "estimated_peak_bytes": 51902552
+    },
+    "window-n201-w64-c32": {
+      "pages": 18,
+      "restored": 331,
+      "evicted": 267,
+      "invalidated": 64,
+      "factor_calls": 17,
+      "factor_systems": 544,
+      "solve_calls": 17,
+      "solve_systems": 544,
+      "estimated_peak_bytes": 51902552
+    },
+    "window-n201-w128-c32": {
+      "pages": 34,
+      "restored": 682,
+      "evicted": 618,
+      "invalidated": 64,
+      "factor_calls": 33,
+      "factor_systems": 1056,
+      "solve_calls": 33,
+      "solve_systems": 1056,
+      "estimated_peak_bytes": 51902552
+    }
+  },
+  "artifacts": {
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window.o": "d11c693cb51041df553103bd4701c4d86b0e865c99f31398042576a217887f17",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test.o": "47e722728fbe280820004ac722127c7725db56bf79594261c5dceec3dd4c59d7",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-contract-v1/window-test": "fe892014dbc45bdfe59d55926840a51a9d84ab2fb85a813cf42c8fdda1cbb099"
+  },
+  "nuclear_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "shared_math_modified": false,
+  "native_provider_modified": false,
+  "manufactured_solution_budget": 1e-12,
+  "provider_budget_bytes": 268435456,
+  "matrix": [
+    [
+      151,
+      1,
+      1
+    ],
+    [
+      151,
+      2,
+      1
+    ],
+    [
+      151,
+      3,
+      2
+    ],
+    [
+      151,
+      8,
+      8
+    ],
+    [
+      151,
+      9,
+      8
+    ],
+    [
+      151,
+      32,
+      32
+    ],
+    [
+      151,
+      33,
+      32
+    ],
+    [
+      151,
+      64,
+      32
+    ],
+    [
+      151,
+      128,
+      32
+    ],
+    [
+      201,
+      1,
+      1
+    ],
+    [
+      201,
+      2,
+      1
+    ],
+    [
+      201,
+      3,
+      2
+    ],
+    [
+      201,
+      8,
+      8
+    ],
+    [
+      201,
+      9,
+      8
+    ],
+    [
+      201,
+      32,
+      32
+    ],
+    [
+      201,
+      33,
+      32
+    ],
+    [
+      201,
+      64,
+      32
+    ],
+    [
+      201,
+      128,
+      32
+    ]
+  ],
+  "identities_verified_after": true
+}

@@ -57,7 +57,7 @@ tail、Factorize-only／Solve／Idle 混合、逐出恢复、重复相同 caller
 即便合同通过，后续仍需独立 fresh factory 接入、真实三 ODE／容量／长轨迹／Helm 及配对性能，
 不能用这里的制造解替代上述验收。
 
-## 后续 factory 接入配方：构建通过，严格归档恢复中
+## 后续 factory 接入配方：构建与双端归档通过，运行待 GPU 空闲
 
 `prepare_factory.py` 只从已归档的两份 SHA 固定 execution/owner 头生成可逆的隔离 overlay，
 保留所有 device 数学、launch shape、response/residual 检查、block gather/scatter 和生命周期代码。
@@ -130,3 +130,8 @@ Helm／完整应用或性能通过。`collect_focused.py` 在结束后独立收�
 
 focused 输入 v1 从未上传/运行。新包 v2 仅改为要求 factory 的合格 v2 归档及本机回执；
 原数值 validator、六组科学输入、CPU/CUDA 产物和误差预算保持不变。
+
+v2 归档现已实际通过全部 560 个原始成员的严格字节核验并上传本机回执，
+见 [构建与归档证据](../../results/native-wave-20260917/window-factory-v2/README.zh-CN.md)。
+09:54–09:55 UTC 启动前发现 ComfyUI 占用 GPU，六组 focused 尚未上传/启动；
+不停止其他项目、不绕过 GPU 空闲检查，不把构建通过当作核反应或性能通过。
