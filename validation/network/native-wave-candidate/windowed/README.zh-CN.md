@@ -70,4 +70,25 @@ ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256
 
 未来需新编两个真实 factory，不得借用旧 CUDA `.o` 宣称新窗口已验证。
 同一新二进制的 32／64／128 对照只隔离窗口大小的作用；wrapper 的 32 模式本身仍有额外 Host 工作，
-还须保留原 native-wave 的独立对照，才能评价整个封装的净收益。当前未编写/启动此构建或运行队列。
+还须保留原 native-wave 的独立对照，才能评价整个封装的净收益。
+
+### 全新编译配方的接入约束（仍未执行）
+
+随后准备 `factory_recipe.py` 和 `build_factory.py`，没有上传、启动或改变上述七文件合同包。
+新 runner 必须先核验 18 项真实窗口合同、原输入／产物身份及双端完整备份，
+之后也只能放在原资源护栏内串行运行；尚未准备这一步的远端 dispatcher／收集器／运行队列。
+
+不能只把两份改动头放到较早的 `-I`：原 `SparseBurnCells.cuh` 用同目录的
+`#include "SparseOdeBatch.cuh"`，可能仍读到原调度器。配方改为复制原清单的全部 474 个文件，
+只变两份已审阅执行头，再增加两份窗口文件；其余字节逐项保持。原源码、构建树和依赖库不动。
+NVCC 的实际依赖文件必须包含新 executor／owner／window 头，且不能引用旧 source 下任何头。
+链接明确使用两份新 CUDA factory 对象，不借用旧对象来证明新路径。
+
+原网络（不叠加正在测试的 sink 内联）、共享物理、sm90、编译优化级别和 strict-FP 均保留。
+这里只构建 factory，状态最多为 `factory-built-not-runtime-qualified`，不是三 ODE 运行通过。
+尚未构建完整 ARCH 或证明跨 block 聚合；原小输入必须保留。
+
+本机 19 项准备／门槛检查通过，见 `fresh-build-preparation-checks-v1.log`。
+首次完整复制测试误用不含大表的 Git compact 投影而失败，改用已核验 raw 源库存后通过；
+仍显式测试不完整 compact 必须被拒绝，没有取消原表或完整性门槛。
+依赖文件检查使用合成文本，本机没有运行 C++／NVCC，不能当作实际编译证据。
