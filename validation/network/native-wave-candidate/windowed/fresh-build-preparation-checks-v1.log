@@ -47,3 +47,13 @@ OK
 No C++/CUDA compilation, manufactured GPU contract, ODE trajectory, complete
 Helm application, performance or release qualification is supplied by this log.
 Frozen standalone input package and currently running leaf diagnostic unchanged.
+
+2026-09-17 after standalone window contracts completed; fresh factory still unbuilt:
+Added NVCC dependency-only preflight and kept the post-compilation dependency audit.
+python -m unittest discover -s tests/tooling -p test_sparse_window*.py -v
+The previous 19 checks and test_dependency_preflight_does_not_compile_an_object passed.
+Ran 20 tests in 4.903s
+OK (no skips)
+Git Bash -n factory-worker.sh: exit 0
+Git Bash -n factory-dispatch.sh: exit 0
+These checks do not compile either actual CUDA factory or run its ODE trajectories.

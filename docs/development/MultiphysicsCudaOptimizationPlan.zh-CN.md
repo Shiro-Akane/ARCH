@@ -2,11 +2,13 @@
 
 日期：2026-09-14。依据：用户提供的合作者聊天意见，以及既有 [HPC＋CUDA 总计划](HpcCudaOptimizationPlan.zh-CN.md)。这是执行计划，不是承诺所有规模必定加速或已完成验收。
 
-2026-09-17 准备续记：服务器仍单独运行 Jacobian sink 内联叶函数对照，不能提前认定提速。
-本机另准备[有界工作窗口／因子 cohort 分离封装与制造解合同](../../validation/network/native-wave-candidate/windowed/README.zh-CN.md)，
-6 项配方检查和两项 shell 语法检查通过，C++/CUDA 尚未编译／运行，未接入生产 ODE 调度。
-保留至多 32 个 native 因子槽与原 256 MiB provider 预算；必须先收齐并归档当前实验，
-再决定是否独立测试较大的逻辑窗口。即便制造解通过，也不能替代真实核反应和完整 Helm 性能验收。
+2026-09-17 续记：[Jacobian sink 叶函数对照](../../validation/network/results/native-wave-20260917/leaf-inline-v1/README.zh-CN.md)
+四份编译、16 次运行全部数值通过，双端归档。两网络 GPU 叶函数时间少约 12%，但编译时间约四倍、
+Host 串行叶函数略慢，未进入生产或完整应用验收。
+随后独立[窗口／因子 cohort 的 18 项真实 GPU 合同](../../validation/network/results/native-wave-20260917/window-contract-v1/README.zh-CN.md)
+也已通过并双端保全，仍只拥有最多 32 个 native 槽，原 256 MiB provider 预算不变。
+下一步为新 factory 的 ODE 接入构建和真实轨迹；保持原网络，不叠加内联，不复用旧 CUDA 对象，
+也不能用制造解代替真实核反应和完整 Helm 性能。所有实验串行，未并行或改库。
 
 ## 范围与目标
 

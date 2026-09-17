@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-17T01:26:02.470927+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-raw-v1.tar.zst",
+    "bytes": 7748210,
+    "sha256": "ab56c01d6d5eb1048220c943c403c1bbc61c89cc6cd783e6428030f2aebd123e",
+    "files": 57
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-compact-v1.tar.zst",
+    "bytes": 76894,
+    "sha256": "fc88b2b1df78a9882401bc119a4cc824dc10800a52c26f7886e8b7d7a4ced574"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\api-cost-v1-download\\api-cost-raw-v1.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\api-cost-v1-download\\api-cost-compact-v1.tar.zst"
+  },
+  "raw_files": 57,
+  "raw_file_bytes": 14113273,
+  "projected_files": 53,
+  "raw_only_files": 4,
+  "receipt_sha256": "87009cbc366257aeb8ba485867f3123982ec57c2fefaa3832860cbbe1f561df8",
+  "verification_recipe_sha256": "495a065afe1e0ce5de9de08c96e3a72c98ebf38a94a1b022fd684de777c105a4",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}

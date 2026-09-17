@@ -1,0 +1,6 @@
+[
+  "ARCH-native-wave-v4-20260916/batch-launch-contract-v1/libarch_cuda_sparse_provider.a",
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-test",
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-test.o",
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window.o"
+]

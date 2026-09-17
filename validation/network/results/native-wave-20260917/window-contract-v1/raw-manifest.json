@@ -1,0 +1,374 @@
+{
+  "ARCH-native-wave-v4-20260916/batch-launch-collection-v1.json": {
+    "bytes": 714,
+    "sha256": "adae7f8601fb33f14a39706b3c1a531578fc1d22f711c7524acab695848a7874"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-contract-v1/libarch_cuda_sparse_provider.a": {
+    "bytes": 640062,
+    "sha256": "0b902a1e7d87174bc395d4be328713390d36a28320353d55113678e57f697204"
+  },
+  "ARCH-native-wave-v4-20260916/batch-launch-local-receipt-v1.json": {
+    "bytes": 1223,
+    "sha256": "25f55e5ea49455bd42170d1a1f0bdb767c71e1dc7610114f190288518259e096"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/artifacts.sha256": {
+    "bytes": 512,
+    "sha256": "6ac5472ec6ca7bfb873130e77fefb65795c0310bf6489845665ed8d8fcbdcef7"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/network-files.sha256": {
+    "bytes": 7514,
+    "sha256": "62f21a3b2809f6522acfaf357188c9291fc501db24f4a06107949ad5f182c2a0"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/source-files.sha256": {
+    "bytes": 48967,
+    "sha256": "af807299a6d4b922657fa17f1139ecdc4231fc8c94ffa6b462a0b69b636ab6da"
+  },
+  "ARCH-native-wave-v4-20260916/factory-control-v2/vendor.sha256": {
+    "bytes": 598,
+    "sha256": "350539d47fa823dc48d6bb7341a1d90a451332a3e37ebc519f575e46a73db4e5"
+  },
+  "ARCH-native-wave-v4-20260916/factory-focused-collection-v1.json": {
+    "bytes": 782,
+    "sha256": "9253a7596afcee42b5765e0527d920993189bc090a12a5d3032f7e88f0f87d48"
+  },
+  "ARCH-native-wave-v4-20260916/factory-release/CMakeCache.txt": {
+    "bytes": 50971,
+    "sha256": "bb1bc5f63df46325462fc7671bf3368694f694082bb87717dc546446e878d936"
+  },
+  "ARCH-native-wave-v4-20260916/factory-release/compile_commands.json": {
+    "bytes": 583614,
+    "sha256": "6a17407cf53fba1ad868e783245ea21c56274db29829e4eea0dd32bc0ba62049"
+  },
+  "ARCH-native-wave-v4-20260916/input/collect_factory.py": {
+    "bytes": 9141,
+    "sha256": "bc31e52cc6d75d7a5e9ecd8153212f8a6e0805e900841af6c7f0e9d074525f9b"
+  },
+  "ARCH-native-wave-v4-20260916/input/collect_window_v1.py": {
+    "bytes": 5731,
+    "sha256": "0c61f2260b6f31299832415472fd762fd4961033f204df1b341f661cfa33650c"
+  },
+  "ARCH-native-wave-v4-20260916/input/run_standalone_contracts.py": {
+    "bytes": 13183,
+    "sha256": "25b351a92f2b3b58bc143abd594e56074fdd4f6d1a15601f2ebc68efd99604f3"
+  },
+  "ARCH-native-wave-v4-20260916/leaf-inline-collection-v1.json": {
+    "bytes": 1670,
+    "sha256": "995cf95066f15eedfa0dc751203942a373be24d714d5b2df37048bf214c3cfa0"
+  },
+  "ARCH-native-wave-v4-20260916/leaf-inline-local-receipt-v1.json": {
+    "bytes": 1195,
+    "sha256": "5c439c57e89c73278613727f247c0de946cd225521c0b3a24dd02d1fea16147e"
+  },
+  "ARCH-native-wave-v4-20260916/source/src/cuda/common/DeviceAllocation.h": {
+    "bytes": 3521,
+    "sha256": "3fade70271f3268e7f93d51a69ec79268f6971b2010454340d5fe06322993eaf"
+  },
+  "ARCH-native-wave-v4-20260916/source/src/cuda/microphysics/CuDssSparseWaveSolver.h": {
+    "bytes": 2554,
+    "sha256": "990c313a0e0add56694c2c0b1576778eae82f22b35254b81b035a0724a99a671"
+  },
+  "ARCH-native-wave-v4-20260916/source/src/numerics/linalg/CsrMatrixView.h": {
+    "bytes": 5114,
+    "sha256": "69169d605351ff52aeec43e86391cf375dfe7219626d6a4ea3d1057f4495e8c8"
+  },
+  "ARCH-native-wave-v4-20260916/source/tests/cuda/test_sparse_wave.cpp": {
+    "bytes": 18533,
+    "sha256": "d9c769a9893cd1706ab6de8fcd62552d546e6c2586b315d447f745b77a414875"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/compile-test.stderr": {
+    "bytes": 2370,
+    "sha256": "3640dfc0895562124b1e25372eee640b8ca95ddff3f00a700b6742bb11ca7555"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/compile-test.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/compile-window.stderr": {
+    "bytes": 2394,
+    "sha256": "c7fce18864642e0e1f5417d50c1089bb26157ddd224b84e466166815055e231b"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/compile-window.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/ldd-test.stderr": {
+    "bytes": 799,
+    "sha256": "01566d644a2b5c18ca1f4654d1fdee7d5bd75c7fe7776b6f6c5576b8b5c50fc6"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/ldd-test.stdout": {
+    "bytes": 1268,
+    "sha256": "a23b9d87fc9a9b7d4d65b7fecaf1a1e63504b046741236416f9a37494fb9ea84"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/link-test.stderr": {
+    "bytes": 2403,
+    "sha256": "1e084ec45b687f5b8699c94d20ec7beac301d47bef2b5ad9ec2a9011031c240c"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/link-test.stdout": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/record.json": {
+    "bytes": 23711,
+    "sha256": "52a573ff57a0466946b5e429b5babe4fcc7d490ed44c6f42dc62f77f9a08c198"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/shared_sparse_wave_test_support.h": {
+    "bytes": 7751,
+    "sha256": "af583bed1c84fc424abf9233a8e357dfe570187d50aeba5d414412941e5875e9"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w1-c1.stderr": {
+    "bytes": 807,
+    "sha256": "c99859377ce0880f793237de0ec0d881514130878820c284d26f484792bc3450"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w1-c1.stdout": {
+    "bytes": 194,
+    "sha256": "2a3eb0e4594791b1396565b7be983b20de03dec77c95e92c9c87fc45a6c9c960"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w128-c32.stderr": {
+    "bytes": 810,
+    "sha256": "ae75bd0413b446d4a89d01140ce1e22561f0db3f9d970bde0b58b8e011cd911a"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w128-c32.stdout": {
+    "bytes": 211,
+    "sha256": "b7fe7ab02f0e4d3860d0fdee9b4ac19d68a2a98682e9eb41d0ce2fa97180cdca"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w2-c1.stderr": {
+    "bytes": 807,
+    "sha256": "7e80c7a119673ccd60380d669d3d9e91292a69cf176ded139038bd9853af16bf"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w2-c1.stdout": {
+    "bytes": 198,
+    "sha256": "46e0d9d8c7a5b29d3e3371d130779cd650070646719632ed6fd20a73785f7403"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w3-c2.stderr": {
+    "bytes": 807,
+    "sha256": "76b8f823d47253a903bec732a67deb4bc618dcac042096a82e0d04b27a86652c"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w3-c2.stdout": {
+    "bytes": 199,
+    "sha256": "82dd91c0b41eae9012ac216805a73860ff880c322d59abb12e463e00f1af10d6"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w32-c32.stderr": {
+    "bytes": 809,
+    "sha256": "f808c08ec10c021cd2aea10c13798068f7a2e649c65e671f5d177f514779ad1d"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w32-c32.stdout": {
+    "bytes": 203,
+    "sha256": "e4047820c355604461500b9083cb4125f67bb477244b2ec123396da16a6a9180"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w33-c32.stderr": {
+    "bytes": 809,
+    "sha256": "34489ffaec61b5092bf6dc594be61b697e31972bff60443d251ad499f2fcacee"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w33-c32.stdout": {
+    "bytes": 205,
+    "sha256": "9cbd78de3d37295e78229798d16ae0c0ba4c901de586c6e92a21b407ccb2fff3"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w64-c32.stderr": {
+    "bytes": 809,
+    "sha256": "78b93402ecd828b41ee6b4102cac477b8d9f1a88aaae7373c7f06c01cfc551b5"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w64-c32.stdout": {
+    "bytes": 208,
+    "sha256": "fdb10472ad4d82040eca4819458a70bbc9f9cf3766044260f7fc66c122e5d86e"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w8-c8.stderr": {
+    "bytes": 807,
+    "sha256": "3d4a5ef2d737dff5d74e09e56ebeca1a92c383d09ef81f015d187965629bcff1"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w8-c8.stdout": {
+    "bytes": 199,
+    "sha256": "7d78feba1eeb88ed4927fe17ab445f7fc91a602b58db8003df93d5f61fcd4194"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w9-c8.stderr": {
+    "bytes": 807,
+    "sha256": "68edb1a738af3e1129c811d7a14c338e7ff7f99451bacd171a040d1e2c9b8c83"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n151-w9-c8.stdout": {
+    "bytes": 203,
+    "sha256": "b6c16a4a0eaf342ee275ca9e3cc2dab1cc5396cc68358dd7271e65fcdaea62b3"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w1-c1.stderr": {
+    "bytes": 807,
+    "sha256": "aba717578c02c00a21e9f46d8f5cd808b1c0a8da04c0440f4e6e9d3ffa6a6759"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w1-c1.stdout": {
+    "bytes": 194,
+    "sha256": "1bc02ec3a8aca2e49ed295e823ecdf56626383ed03ca79333c13e40bf6a595c2"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w128-c32.stderr": {
+    "bytes": 810,
+    "sha256": "c8468065e2613a544b5922440fc6bd5712926bdf6cb46af30f4c3c503520604d"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w128-c32.stdout": {
+    "bytes": 211,
+    "sha256": "6c76ebddafa13c2de7292dde38a6121072e4ed74c41b57b8d3f29a87f8839512"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w2-c1.stderr": {
+    "bytes": 807,
+    "sha256": "64790510f258ca568825fb076344037f7984634171ace49a44df6251d1f0d541"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w2-c1.stdout": {
+    "bytes": 198,
+    "sha256": "fbeb9e8aa3f781d95a09bbfc96d20328598de280be21831dbd539b923e67abfe"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w3-c2.stderr": {
+    "bytes": 807,
+    "sha256": "526e488ffdd6e1c2ae3942ddb6719e1dcb62b0c87df2fb4734d228292b34c583"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w3-c2.stdout": {
+    "bytes": 199,
+    "sha256": "99f6e1c42e12fdeb5a76885a0d2894f997794cf14d2e8f37800249a074dc3a1c"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w32-c32.stderr": {
+    "bytes": 809,
+    "sha256": "f79f6e60cab8d4b22e15a7a4a7ef2087fa465987f19aa93cf6afea92467f7bac"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w32-c32.stdout": {
+    "bytes": 203,
+    "sha256": "dda400c6fff6133d4b917b31579206371c6caaee6f5e7477a5156643834d91e6"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w33-c32.stderr": {
+    "bytes": 809,
+    "sha256": "86acc2b034eb60e94b53a72feeeccf9f4f118b2708ebc3a11a7c20dd708c78ed"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w33-c32.stdout": {
+    "bytes": 205,
+    "sha256": "e05fe52da34481d19c25002ff03d86a2aa6eee1a8512fb56219fa8697d282e57"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w64-c32.stderr": {
+    "bytes": 809,
+    "sha256": "36d929c39833b22e42eaddd7e406b6010270fd2497c8bc646a5d68623bc2324c"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w64-c32.stdout": {
+    "bytes": 208,
+    "sha256": "b4446ecf153d58047f43eaaf7c04bf63050b81a4ac35ca44ac791fd4da7cd319"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w8-c8.stderr": {
+    "bytes": 807,
+    "sha256": "9ea043e8d736a8779c8d095965b92e3b19fe7309773d0a87efe8ce7f650d3789"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w8-c8.stdout": {
+    "bytes": 199,
+    "sha256": "4baf296a21dc6b5e06cb2ac775874127685117c6f032e3d02eabbb5da9f8ed2a"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w9-c8.stderr": {
+    "bytes": 807,
+    "sha256": "5155d3cb428942116b809be4d4a31855971431c40a05d45233fc8fdb7c928d27"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-n201-w9-c8.stdout": {
+    "bytes": 203,
+    "sha256": "698b2a9f8386e82fc4a8dbc32c2c6166b4b8f3de3f5f0f62e973ea207fbd519e"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-test": {
+    "bytes": 209048,
+    "sha256": "fe892014dbc45bdfe59d55926840a51a9d84ab2fb85a813cf42c8fdda1cbb099"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window-test.o": {
+    "bytes": 320824,
+    "sha256": "47e722728fbe280820004ac722127c7725db56bf79594261c5dceec3dd4c59d7"
+  },
+  "ARCH-native-wave-v4-20260916/window-contract-v1/window.o": {
+    "bytes": 146888,
+    "sha256": "d11c693cb51041df553103bd4701c4d86b0e865c99f31398042576a217887f17"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/artifacts-check-after.log": {
+    "bytes": 326,
+    "sha256": "e7c77ff7da95adb16013b0323be9959e82a8da5cb5c25a71abe0441b37f03efa"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/artifacts-check-before.log": {
+    "bytes": 326,
+    "sha256": "e7c77ff7da95adb16013b0323be9959e82a8da5cb5c25a71abe0441b37f03efa"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/exit-code": {
+    "bytes": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/lock": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/network-files-check-after.log": {
+    "bytes": 4414,
+    "sha256": "dfed2309dd3307a9142065659da429b8050505c218571c2619ac74e9a372bde0"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/network-files-check-before.log": {
+    "bytes": 4414,
+    "sha256": "dfed2309dd3307a9142065659da429b8050505c218571c2619ac74e9a372bde0"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/pid": {
+    "bytes": 7,
+    "sha256": "7d8db4e95452b65d6e9cfb1819353dd2edc912931f726cffcad25ce26d4bd7f1"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/recipes-check-after.log": {
+    "bytes": 626,
+    "sha256": "ddf599515a43dd20f956215bcab4a9b2ad1541eb0f40b2de2e5ec2fe173cb6ce"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/recipes.sha256": {
+    "bytes": 1060,
+    "sha256": "9f4c4435bf4f52eda098c63f7f19914c47bdafa42c76e3aec698aadbd6ebf49d"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/runtime-exit-code": {
+    "bytes": 2,
+    "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/source-files-check-after.log": {
+    "bytes": 19579,
+    "sha256": "3ade00404934191642461dd7773bd49967c3e682f8708d6d4c2b0ff738852a89"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/source-files-check-before.log": {
+    "bytes": 19579,
+    "sha256": "3ade00404934191642461dd7773bd49967c3e682f8708d6d4c2b0ff738852a89"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/started-utc.txt": {
+    "bytes": 32,
+    "sha256": "8057f925de0900105d556b47bae6f94bf9df07ed365d63b610a388be40cd7b08"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/vendor-check-after.log": {
+    "bytes": 412,
+    "sha256": "7d58fd61a01dbec5bdc0de9d2ef9aeceacede9b8b825ea3b8563787c7ddd6d9b"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/vendor-check-before.log": {
+    "bytes": 412,
+    "sha256": "7d58fd61a01dbec5bdc0de9d2ef9aeceacede9b8b825ea3b8563787c7ddd6d9b"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/window-child.log": {
+    "bytes": 1446,
+    "sha256": "07db47019c0db489b53f7ecdfebaee2f0879bfd1eb0559cdb1d195ac6c075c16"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/window-guard.log": {
+    "bytes": 612,
+    "sha256": "bf2c64685f756f1ac29de9c11af591301444708179362d5da1c0028ba601875a"
+  },
+  "ARCH-native-wave-v4-20260916/window-control-v1/worker.log": {
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.cpp": {
+    "bytes": 9333,
+    "sha256": "a675a6a5b978b077545057f6f09c64519097a7532d7ae7f058ae0c956aa50708"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.h": {
+    "bytes": 1944,
+    "sha256": "e6a56e08299fab35c1fd99e35bb611ac45b82a5f237b91fa032dfc99cbf9e7f5"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/build_and_test.py": {
+    "bytes": 8049,
+    "sha256": "104bbe8b57b166f7c0408d18ed3f766b01bf95a03c21446d966ced833f7fd2a3"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/dispatch.sh": {
+    "bytes": 841,
+    "sha256": "56330aa005a65af335bf8936a2ca510a0fd44a80ca1ae2ff177396fef3836db2"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/protocol.py": {
+    "bytes": 6194,
+    "sha256": "808ffb3eb39783993bdd0906c6b65fe697173dfe814ab1538c27c6e685e6314c"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/test_sparse_window.cpp": {
+    "bytes": 13196,
+    "sha256": "93bc8dbbe572e191b048fd1e3636595ad4e863ad192505c4aba9e612be8eef1f"
+  },
+  "ARCH-native-wave-v4-20260916/window-input-v1/worker.sh": {
+    "bytes": 1644,
+    "sha256": "98939cbe4c660e298616b641b376060bc35d277de4805311b26a65f9cc90d776"
+  }
+}

@@ -1,7 +1,8 @@
-# 有界工作窗口／因子 cohort 分离：仅候选准备
+# 有界工作窗口／因子 cohort 分离：合同通过，核反应未验收
 
-2026-09-17：本机准备，尚未上传、编译或运行，不属于生产优化，也没有 ODE／核反应／性能资格。
-当前唯一服务器实验仍为 leaf-inline 对照；此目录不能与之并行启动。
+2026-09-17：leaf-inline 完整结束和双端保全后，独立 18 项真实 GPU 合同全过并已双端核验。
+见[原始证据](../../results/native-wave-20260917/window-contract-v1/README.zh-CN.md)。
+这仍不是生产优化，没有 ODE／核反应／性能资格；下文准备检查不替代实际运行证据。
 
 ## 改动范围
 
@@ -44,11 +45,11 @@ tail、Factorize-only／Solve／Idle 混合、逐出恢复、重复相同 caller
 构建只新增两个 Host `.o`，链接已通过合同且冻结的 batch-kernel provider；
 不重编 CUDA factory、不修改归档成员。继承原 g++-11 strict-FP 配方。
 运行必须在 leaf-inline 结束、审查并完成服务器／本机双端归档后，使用既有资源 guard 单独执行。
-`dispatch.sh` 尚未执行，也没有排入自动后续队列。
+`dispatch.sh` 本轮已执行且完成；没有自动并行后续任务。
 
 冻结本机输入包为 48,128 bytes，SHA-256
 `3f9e7f1fda8f906a9a9fb4b460c734bd801ba3d15c38e80ae084ce61b7330163`；
-完整七文件身份见 `prepared-input-v1.json`。尚未上传。
+完整七文件身份见 `prepared-input-v1.json`；本轮上传和执行的就是该包，字节未改变。
 收集器不在该输入包内，只在实验结束后另行上传，不改运行中的冻结配方。
 
 本机的 6 项源码／配方检查及两项 shell 语法检查已通过（最近一轮 0.054 s），
@@ -66,7 +67,7 @@ ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256
 
 本机已生成 `build/window-factory-overlay-v1`，没有上传、编译或运行；它不在上面的七文件合同包内。
 合计 9 项准备测试通过，包含原 kernel 数学区域、allocation 后的执行/析构区域字节不变检查。
-这些测试不说明两份 C++ overlay 可编译，也不代表 CUDA 资格。
+这些测试不说明两份 factory overlay 可编译；18 项合同只编译/验证窗口 wrapper。
 
 未来需新编两个真实 factory，不得借用旧 CUDA `.o` 宣称新窗口已验证。
 同一新二进制的 32／64／128 对照只隔离窗口大小的作用；wrapper 的 32 模式本身仍有额外 Host 工作，
@@ -76,19 +77,22 @@ ODE 全局 workspace 另加 32 MiB 显式上限，原 native cohort≤32 和 256
 
 随后准备 `factory_recipe.py` 和 `build_factory.py`，没有上传、启动或改变上述七文件合同包。
 新 runner 必须先核验 18 项真实窗口合同、原输入／产物身份及双端完整备份，
-之后也只能放在原资源护栏内串行运行；尚未准备这一步的远端 dispatcher／收集器／运行队列。
+之后也只能放在原资源护栏内串行运行。现已准备 `factory-worker.sh`／`factory-dispatch.sh`，
+仍未打包、上传或启动 factory；后续收集器和真实燃烧运行队列尚待接续。
 
 不能只把两份改动头放到较早的 `-I`：原 `SparseBurnCells.cuh` 用同目录的
 `#include "SparseOdeBatch.cuh"`，可能仍读到原调度器。配方改为复制原清单的全部 474 个文件，
 只变两份已审阅执行头，再增加两份窗口文件；其余字节逐项保持。原源码、构建树和依赖库不动。
-NVCC 的实际依赖文件必须包含新 executor／owner／window 头，且不能引用旧 source 下任何头。
+先做 NVCC 依赖预扫描，避免在错误头绑定上白编数小时；实际编译后的依赖文件也必须
+包含新 executor／owner／window 头，且不能引用旧 source 下任何头。
 链接明确使用两份新 CUDA factory 对象，不借用旧对象来证明新路径。
 
 原网络（不叠加正在测试的 sink 内联）、共享物理、sm90、编译优化级别和 strict-FP 均保留。
 这里只构建 factory，状态最多为 `factory-built-not-runtime-qualified`，不是三 ODE 运行通过。
 尚未构建完整 ARCH 或证明跨 block 聚合；原小输入必须保留。
 
-本机 19 项准备／门槛检查通过，见 `fresh-build-preparation-checks-v1.log`。
+本机 19 项准备／门槛检查见 `fresh-build-preparation-checks-v1.log`；新增预扫描检查后
+20 项于 4.903 s 通过，两个 factory shell 脚本语法检查通过，仍没有 factory 编译证据。
 首次完整复制测试误用不含大表的 Git compact 投影而失败，改用已核验 raw 源库存后通过；
 仍显式测试不完整 compact 必须被拒绝，没有取消原表或完整性门槛。
 依赖文件检查使用合成文本，本机没有运行 C++／NVCC，不能当作实际编译证据。

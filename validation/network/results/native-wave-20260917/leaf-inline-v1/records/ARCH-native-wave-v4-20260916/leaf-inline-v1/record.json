@@ -1,0 +1,2173 @@
+{
+  "status": "passed",
+  "scope": "annotation-only-generated-network-leaf-diagnostic",
+  "inputs": {
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/NetCustom_audit150.cpp": "89a25701d10bf9e475e2531c5b2dd487d4d9b1f0b5bdca101d4cee5e7cf29de5",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/NetCustom_audit150.h": "25cf29139a8202887809c8c5e2a042a4944b5d7b2db281da6c355d5b239fdd2b",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/NetCustom_audit150.math.h": "0b2978ad32a148b0c7908e36ec58885eaa29ab30f45309630d88ae42e8c0f5d5",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/GNUmakefile": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/actual_network.H": "e7c0b67a519216f0e845eb89d07e00bba648558e6f6b41e2d1437809b201705a",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/actual_rhs.H": "230cf0d422c7b81980a3c6abea99ae7f1fc3cad25c4af1e2d380a94518b7d709",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/amrex_bridge.H": "8fca5e6c0797a5400ac962b4df91afbff191573e23e4904b1369c70019b1b8d1",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/approximate_rates.H": "1f5866f561f06cb4241ab9400e8dd05487b5f10f38b4e57e93b6486d6c7d5de2",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/burn_type.H": "b1e4aa418c48f2efa7a2edc338a0f0a0ae9901c90bc2d219b138049940b7b800",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/derived_rates.H": "f5d42cd045b67cb24f002e3017ab3a19e40930c550ed044622a26e800e2346a8",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/fundamental_constants.H": "2675a49e4c69db4d834facd8e7978721d8feb0334b90530830f2437c49c6556c",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/interp_tools.H": "3578c92b055b1181d66117c79751998512469ef459dfd0008cfd18159da99377",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/main.cpp": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/modified_rates.H": "307f3dd55d00e906a2ed56c799c94f4a7bb6a051b5465765d4808f410166c86a",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/network_properties.H": "bfe26c6d489783fb7334656d18fe9c722defa5f7156dc4435ff96b1461d88e32",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/partition_functions.H": "f9bb7e9a4b0909717b75ec98a430a49e586703d0d091909c4ecb61ce1ad2e241",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/pynucastro-info.txt": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/rate_type.H": "6d540e3cca7051560075f8439231021c6f05d89daa71f40b65266b0dd5cd321e",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/reaclib_rates.H": "51f2291aada3cf7b30a4cf6b13eac85addd441f9fd215224b134790570a67877",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/screen.H": "495b03658b758145cad28b5521533eed84c33280771c609572a042cfe4ec8efe",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/screen_data.H": "2cb94896ab7aff1e53e5637ffd77e65e918370bbda2036154389b638ffc96387",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/table_rates.H": "1885fa595f904454c202bf6daa264d11dd58af67fb636279a3bd4d06c6693f48",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/generated/tfactors.H": "244d2c130a383984f14b83f2a7a6f9c9c9f56e4039f29d6801a8613cb32d2c29",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/manifest.json": "19495bda42ade7670046e469e02ef26ff43a2a28dc4ad750a62821c25e399734",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit150/network.cmake": "c1717137820944ed6c9a910ca45e9b5ee36cd67d53756ac42cb85b44aa834bfa",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/NetCustom_audit200.cpp": "290647afbd622ac4a2bfcfba05ef1819c5e44c95c85060a9cd947c087529ed92",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/NetCustom_audit200.h": "572da397061ce96584e4763c7fc58b4d732479c7a7ebee3bebf6a81dea6bb3ae",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/NetCustom_audit200.math.h": "65d97aa14ba2448c2d10d8ac5b5409552565824772a4eca98349a35f2c63ab94",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/GNUmakefile": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/actual_network.H": "966712deec8b2a54dfe0d8a81f93c491dd725a61ba3158832260d301c19d6e0b",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/actual_rhs.H": "7d59961aaa9aafe21b762b4cd898e8e7fff5efd7cb272f65d32b94c9c1992c82",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/amrex_bridge.H": "dc971821006f1912b0f9d02847c40d9110d87e4457241b2936d4ff13b7580b81",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/approximate_rates.H": "6eff02ae1e14de220c89f6ae41bb0957f4979b78dec6e1c4551a85ae0f616fab",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/burn_type.H": "692a9fc750d01fc13ae51d8d12ccd69984ed8f472db551bf538f479bdc439c7b",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/derived_rates.H": "163e07e9c732d2d99d08c792517ab04dc67cbdf56d080094312928a1545c4dfa",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/fundamental_constants.H": "dacee1dfcffeb4de8092cb06505867c9a10ca547880103faa648aeae9e173259",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/interp_tools.H": "e0940c6d1bc977bbab8f3ef15d78b1b9bd21f1fbf995912d34b355cae1a21854",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/main.cpp": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/modified_rates.H": "fdfa7071ff5dcd81dbca9f4673843ebabdf5cc57e666a4527ffa31f1788fae7b",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/network_properties.H": "1aac4f585480064bcb495713176e333a37e6f6f0f3c404d4b7b70b56b53c28cb",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/partition_functions.H": "f34cb1bc08f2ca081a09725536dad2511954bc15e66a46b7ea687c748cfa5ae0",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/pynucastro-info.txt": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/rate_type.H": "5a393fb217fd068f966008de6b6121292ebdadf8fc20c73c4636edac765aa972",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/reaclib_rates.H": "4fd47c04812a3007632979d38dcb0b1c9b336c491150fa19f51e6813df16369e",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/screen.H": "afea1d47f593360de3e8d90485fcc469f4493d61037ebffaa38ece0ae2ca04cb",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/screen_data.H": "4d713c564edb4d1f2afc4fda7294e8bffddba331e61ae6a7aaa07b0aa7578a65",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/table_rates.H": "f3b3f8a454ef25f2603e4682285c80f0925c03d0a91afd00544f1cfcb743e07a",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/generated/tfactors.H": "c68072e71b57be022983b0500d2993d1bfa2d2deb3ad1e6a7deda3241d9da5d0",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/manifest.json": "1bcb501d76ef96455ba75573a5c8901e394e755e075e201d98786ee6be985c75",
+    "/home/ubuntu/projects/ARCH-large-networks-20260909/audit200/network.cmake": "46bc319c4f4046fc493601e0be3885643be93909221d9f2d2462620bef27cbfd",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-collection-v1.json": "87009cbc366257aeb8ba485867f3123982ec57c2fefaa3832860cbbe1f561df8",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-local-receipt-v1.json": "82592f7b0177cd92b6e3d472d5fadc57a16669b185b2e8af2d3f2d7d0870de6f",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/compile_commands.json": "6a17407cf53fba1ad868e783245ea21c56274db29829e4eea0dd32bc0ba62049",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-input-v1/dispatch.sh": "169b9c6695063719cd348db0cc9e565a75c7e2952d21fcad34c57b6bbaf38862",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-input-v1/prepare.py": "85081a59dce06f4432785c87f2ebb9ba790aaadc7df903d7d75206dd07955643",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-input-v1/run_leaf.py": "ae046cb378c4c025399c7a8a7e12b123b03ffb81db43f06ac0bcc7faad66e9de",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-input-v1/worker.sh": "6aa351eb13764b80ed4f6187635680df6e55d057424fc8af135fc4d9e8424517",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/tests/cuda/test_generated_network_math.cu": "7358f0970540589bd6b3b63d8e495be770146b950ea3203d6d3548a6f8948950"
+  },
+  "commands": [
+    {
+      "name": "compile-audit150-baseline",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "-forward-unknown-to-host-compiler",
+        "-ccbin=/usr/bin/g++-11",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-DARCH_TEST_NETWORK_TYPE=NetCustom_audit150",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/cases",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-DNDEBUG",
+        "-std=c++20",
+        "--generate-code=arch=compute_90,code=[compute_90,sm_90]",
+        "--expt-relaxed-constexpr",
+        "-include",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-baseline/NetCustom_audit150.h",
+        "--fmad=false",
+        "--ftz=false",
+        "--prec-div=true",
+        "--prec-sqrt=true",
+        "-Xcompiler=-fno-fast-math,-ffp-contract=off",
+        "-x",
+        "cu",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/timed_network_math.cu",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-baseline"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 12000,
+      "environment": {},
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 1082.414809877053
+    },
+    {
+      "name": "compile-audit150-inline",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "-forward-unknown-to-host-compiler",
+        "-ccbin=/usr/bin/g++-11",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-DARCH_TEST_NETWORK_TYPE=NetCustom_audit150",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/cases",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-DNDEBUG",
+        "-std=c++20",
+        "--generate-code=arch=compute_90,code=[compute_90,sm_90]",
+        "--expt-relaxed-constexpr",
+        "-include",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-inline/NetCustom_audit150.h",
+        "--fmad=false",
+        "--ftz=false",
+        "--prec-div=true",
+        "--prec-sqrt=true",
+        "-Xcompiler=-fno-fast-math,-ffp-contract=off",
+        "-x",
+        "cu",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/timed_network_math.cu",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-inline"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 12000,
+      "environment": {},
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 4281.427280734992
+    },
+    {
+      "name": "audit150-co-0-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-0-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.2227216148748994
+    },
+    {
+      "name": "audit150-co-1-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-1-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 1.9716968189459294
+    },
+    {
+      "name": "audit150-co-2-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-2-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 1.9214971461333334
+    },
+    {
+      "name": "audit150-co-3-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-3-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.0721921988297254
+    },
+    {
+      "name": "audit150-uniform-0-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-0-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.07243964006193
+    },
+    {
+      "name": "audit150-uniform-1-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-1-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 1.9214541639667004
+    },
+    {
+      "name": "audit150-uniform-2-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-2-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 1.9214563290588558
+    },
+    {
+      "name": "audit150-uniform-3-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-3-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.072171069914475
+    },
+    {
+      "name": "compile-audit200-baseline",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "-forward-unknown-to-host-compiler",
+        "-ccbin=/usr/bin/g++-11",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-DARCH_TEST_NETWORK_TYPE=NetCustom_audit200",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/cases",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-DNDEBUG",
+        "-std=c++20",
+        "--generate-code=arch=compute_90,code=[compute_90,sm_90]",
+        "--expt-relaxed-constexpr",
+        "-include",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-baseline/NetCustom_audit200.h",
+        "--fmad=false",
+        "--ftz=false",
+        "--prec-div=true",
+        "--prec-sqrt=true",
+        "-Xcompiler=-fno-fast-math,-ffp-contract=off",
+        "-x",
+        "cu",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/timed_network_math.cu",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-baseline"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 12000,
+      "environment": {},
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2436.537554831011
+    },
+    {
+      "name": "compile-audit200-inline",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/ubuntu/projects/.envs/arch/bin/nvcc",
+        "-forward-unknown-to-host-compiler",
+        "-ccbin=/usr/bin/g++-11",
+        "-DARCH_CUDA_BUILD_ENABLED=1",
+        "-DARCH_HAS_CUDSS_PROVIDER=1",
+        "-DARCH_HAS_KLU=1",
+        "-DARCH_TEST_NETWORK_TYPE=NetCustom_audit200",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/src",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/cases",
+        "-I/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release/generated",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/KLU/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/AMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/SuiteSparse_config",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/COLAMD/Include",
+        "-I/home/ubuntu/projects/ARCH-perf-20260909/build/large-network-20260909/release/_deps/suitesparse-src/BTF/Include",
+        "-isystem",
+        "/home/ubuntu/projects/.envs/arch/targets/x86_64-linux/include",
+        "-O3",
+        "-DNDEBUG",
+        "-std=c++20",
+        "--generate-code=arch=compute_90,code=[compute_90,sm_90]",
+        "--expt-relaxed-constexpr",
+        "-include",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-inline/NetCustom_audit200.h",
+        "--fmad=false",
+        "--ftz=false",
+        "--prec-div=true",
+        "--prec-sqrt=true",
+        "-Xcompiler=-fno-fast-math,-ffp-contract=off",
+        "-x",
+        "cu",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/timed_network_math.cu",
+        "-o",
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-inline"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 12000,
+      "environment": {},
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 9521.680204135831
+    },
+    {
+      "name": "audit200-co-0-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-0-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.824968361062929
+    },
+    {
+      "name": "audit200-co-1-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-1-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.523952092975378
+    },
+    {
+      "name": "audit200-co-2-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-2-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.5240238981787115
+    },
+    {
+      "name": "audit200-co-3-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "co",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-3-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.724948002025485
+    },
+    {
+      "name": "audit200-uniform-0-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-0-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.7247755769640207
+    },
+    {
+      "name": "audit200-uniform-1-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-1-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.473665232071653
+    },
+    {
+      "name": "audit200-uniform-2-inline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-inline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-2-inline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.474107376066968
+    },
+    {
+      "name": "audit200-uniform-3-baseline",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-baseline",
+        "1e7",
+        "3e9"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/factory-release",
+      "timeout_seconds": 300,
+      "environment": {
+        "ARCH_LEAF_COMPOSITION": "uniform",
+        "ARCH_LEAF_SNAPSHOT": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-3-baseline.bin"
+      },
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_seconds": 2.775241022929549
+    }
+  ],
+  "runs": [
+    {
+      "samples": [
+        {
+          "cpu_ms": 1.06711925,
+          "gpu_ms": 15.400357055664063
+        },
+        {
+          "cpu_ms": 1.0492512,
+          "gpu_ms": 15.399494934082032
+        },
+        {
+          "cpu_ms": 0.6476623499999999,
+          "gpu_ms": 15.398881530761718
+        },
+        {
+          "cpu_ms": 0.6478517,
+          "gpu_ms": 15.398802185058594
+        },
+        {
+          "cpu_ms": 0.64298455,
+          "gpu_ms": 15.398939514160157
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39696 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 15.398939514160157,
+      "median_cpu_ms": 0.6478517,
+      "name": "audit150-co-0-baseline",
+      "variant": "baseline",
+      "composition": "co",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.5302657393085525e-16,
+        "energy_gradient": 4.8535842869653005e-15,
+        "temperature_gradient": 1.876753960572408e-15,
+        "scalars": 1.698770000761822e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 1.10254995,
+          "gpu_ms": 13.575727844238282
+        },
+        {
+          "cpu_ms": 1.0652792,
+          "gpu_ms": 13.575093078613282
+        },
+        {
+          "cpu_ms": 0.6665251999999999,
+          "gpu_ms": 13.57506866455078
+        },
+        {
+          "cpu_ms": 0.66716875,
+          "gpu_ms": 13.576126098632812
+        },
+        {
+          "cpu_ms": 0.6696809499999999,
+          "gpu_ms": 13.575978088378907
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39632 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 13.575727844238282,
+      "median_cpu_ms": 0.6696809499999999,
+      "name": "audit150-co-1-inline",
+      "variant": "inline",
+      "composition": "co",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.5302657393085525e-16,
+        "energy_gradient": 4.8535842869653005e-15,
+        "temperature_gradient": 1.876753960572408e-15,
+        "scalars": 1.698770000761822e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 1.097409,
+          "gpu_ms": 13.575399780273438
+        },
+        {
+          "cpu_ms": 1.08350965,
+          "gpu_ms": 13.576771545410157
+        },
+        {
+          "cpu_ms": 0.67041425,
+          "gpu_ms": 13.575282287597656
+        },
+        {
+          "cpu_ms": 0.6694511000000001,
+          "gpu_ms": 13.573745727539062
+        },
+        {
+          "cpu_ms": 0.6699799,
+          "gpu_ms": 13.574812316894532
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39632 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 13.575282287597656,
+      "median_cpu_ms": 0.67041425,
+      "name": "audit150-co-2-inline",
+      "variant": "inline",
+      "composition": "co",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.5302657393085525e-16,
+        "energy_gradient": 4.8535842869653005e-15,
+        "temperature_gradient": 1.876753960572408e-15,
+        "scalars": 1.698770000761822e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.6581199,
+          "gpu_ms": 15.398728942871093
+        },
+        {
+          "cpu_ms": 0.6475675,
+          "gpu_ms": 15.396995544433594
+        },
+        {
+          "cpu_ms": 0.64709375,
+          "gpu_ms": 15.397659301757812
+        },
+        {
+          "cpu_ms": 0.6403165000000001,
+          "gpu_ms": 15.397705078125
+        },
+        {
+          "cpu_ms": 0.64283775,
+          "gpu_ms": 15.398052978515626
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39696 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 15.397705078125,
+      "median_cpu_ms": 0.64709375,
+      "name": "audit150-co-3-baseline",
+      "variant": "baseline",
+      "composition": "co",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.5302657393085525e-16,
+        "energy_gradient": 4.8535842869653005e-15,
+        "temperature_gradient": 1.876753960572408e-15,
+        "scalars": 1.698770000761822e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.66982355,
+          "gpu_ms": 15.403434753417969
+        },
+        {
+          "cpu_ms": 0.6487865,
+          "gpu_ms": 15.402320861816406
+        },
+        {
+          "cpu_ms": 0.64420285,
+          "gpu_ms": 15.401608276367188
+        },
+        {
+          "cpu_ms": 0.6416188,
+          "gpu_ms": 15.401670837402344
+        },
+        {
+          "cpu_ms": 0.64272695,
+          "gpu_ms": 15.403486633300782
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39696 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 15.402320861816406,
+      "median_cpu_ms": 0.64420285,
+      "name": "audit150-uniform-0-baseline",
+      "variant": "baseline",
+      "composition": "uniform",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.940780635143417e-15,
+        "rhs": 8.996522520514323e-16,
+        "energy_gradient": 1.2006228586300784e-15,
+        "temperature_gradient": 4.799960429124894e-11,
+        "scalars": 1.6920089701834392e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.6924276500000001,
+          "gpu_ms": 13.568174743652344
+        },
+        {
+          "cpu_ms": 0.66803145,
+          "gpu_ms": 13.5687744140625
+        },
+        {
+          "cpu_ms": 0.6688484,
+          "gpu_ms": 13.569679260253906
+        },
+        {
+          "cpu_ms": 0.66493135,
+          "gpu_ms": 13.568063354492187
+        },
+        {
+          "cpu_ms": 0.66804575,
+          "gpu_ms": 13.566531372070312
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39632 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 13.568174743652344,
+      "median_cpu_ms": 0.66804575,
+      "name": "audit150-uniform-1-inline",
+      "variant": "inline",
+      "composition": "uniform",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.940780635143417e-15,
+        "rhs": 8.996522520514323e-16,
+        "energy_gradient": 1.2006228586300784e-15,
+        "temperature_gradient": 4.799960429124894e-11,
+        "scalars": 1.6920089701834392e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.7047816,
+          "gpu_ms": 13.577005004882812
+        },
+        {
+          "cpu_ms": 0.6734833,
+          "gpu_ms": 13.577906799316406
+        },
+        {
+          "cpu_ms": 0.6764099,
+          "gpu_ms": 13.562179565429688
+        },
+        {
+          "cpu_ms": 0.6732473999999999,
+          "gpu_ms": 13.576280212402343
+        },
+        {
+          "cpu_ms": 0.6848582999999999,
+          "gpu_ms": 13.575311279296875
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39632 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 13.576280212402343,
+      "median_cpu_ms": 0.6764099,
+      "name": "audit150-uniform-2-inline",
+      "variant": "inline",
+      "composition": "uniform",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.940780635143417e-15,
+        "rhs": 8.996522520514323e-16,
+        "energy_gradient": 1.2006228586300784e-15,
+        "temperature_gradient": 4.799960429124894e-11,
+        "scalars": 1.6920089701834392e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.6662581000000001,
+          "gpu_ms": 15.400978088378906
+        },
+        {
+          "cpu_ms": 0.6458374499999999,
+          "gpu_ms": 15.398652648925781
+        },
+        {
+          "cpu_ms": 0.64327745,
+          "gpu_ms": 15.397103881835937
+        },
+        {
+          "cpu_ms": 0.6453126499999999,
+          "gpu_ms": 15.39861602783203
+        },
+        {
+          "cpu_ms": 0.6450388,
+          "gpu_ms": 15.3993896484375
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=39696 shared_bytes=0",
+      "nnz": 2665,
+      "median_gpu_ms": 15.398652648925781,
+      "median_cpu_ms": 0.6453126499999999,
+      "name": "audit150-uniform-3-baseline",
+      "variant": "baseline",
+      "composition": "uniform",
+      "network": 150,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.940780635143417e-15,
+        "rhs": 8.996522520514323e-16,
+        "energy_gradient": 1.2006228586300784e-15,
+        "temperature_gradient": 4.799960429124894e-11,
+        "scalars": 1.6920089701834392e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 1.4761722499999999,
+          "gpu_ms": 20.863597106933593
+        },
+        {
+          "cpu_ms": 0.9115246000000001,
+          "gpu_ms": 20.865797424316405
+        },
+        {
+          "cpu_ms": 0.9096097000000001,
+          "gpu_ms": 20.8669677734375
+        },
+        {
+          "cpu_ms": 0.90442925,
+          "gpu_ms": 20.862632751464844
+        },
+        {
+          "cpu_ms": 0.90357345,
+          "gpu_ms": 20.86436767578125
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54512 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 20.86436767578125,
+      "median_cpu_ms": 0.9096097000000001,
+      "name": "audit200-co-0-baseline",
+      "variant": "baseline",
+      "composition": "co",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.52964189974112e-16,
+        "energy_gradient": 1.8317147264242305e-14,
+        "temperature_gradient": 1.8854275779522922e-15,
+        "scalars": 1.688290666828042e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.9983395500000001,
+          "gpu_ms": 18.367156982421875
+        },
+        {
+          "cpu_ms": 0.9698973499999999,
+          "gpu_ms": 18.36634216308594
+        },
+        {
+          "cpu_ms": 0.9922077,
+          "gpu_ms": 18.367442321777343
+        },
+        {
+          "cpu_ms": 0.9717643,
+          "gpu_ms": 18.334750366210937
+        },
+        {
+          "cpu_ms": 0.9648341500000001,
+          "gpu_ms": 18.36373291015625
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54368 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 18.36634216308594,
+      "median_cpu_ms": 0.9717643,
+      "name": "audit200-co-1-inline",
+      "variant": "inline",
+      "composition": "co",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.52964189974112e-16,
+        "energy_gradient": 1.8317147264242305e-14,
+        "temperature_gradient": 1.8854275779522922e-15,
+        "scalars": 1.688290666828042e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.9945342,
+          "gpu_ms": 18.37171325683594
+        },
+        {
+          "cpu_ms": 0.9676686,
+          "gpu_ms": 18.368894958496092
+        },
+        {
+          "cpu_ms": 0.95816415,
+          "gpu_ms": 18.368130493164063
+        },
+        {
+          "cpu_ms": 0.9567228,
+          "gpu_ms": 18.370216369628906
+        },
+        {
+          "cpu_ms": 0.9597722,
+          "gpu_ms": 18.367832946777344
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54368 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 18.368894958496092,
+      "median_cpu_ms": 0.9597722,
+      "name": "audit200-co-2-inline",
+      "variant": "inline",
+      "composition": "co",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.52964189974112e-16,
+        "energy_gradient": 1.8317147264242305e-14,
+        "temperature_gradient": 1.8854275779522922e-15,
+        "scalars": 1.688290666828042e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.9334829499999999,
+          "gpu_ms": 20.86011199951172
+        },
+        {
+          "cpu_ms": 0.9179116,
+          "gpu_ms": 20.86102752685547
+        },
+        {
+          "cpu_ms": 0.9193026,
+          "gpu_ms": 20.861260986328126
+        },
+        {
+          "cpu_ms": 0.91135695,
+          "gpu_ms": 20.858876037597657
+        },
+        {
+          "cpu_ms": 0.9104931,
+          "gpu_ms": 20.858604431152344
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54512 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 20.86011199951172,
+      "median_cpu_ms": 0.9179116,
+      "name": "audit200-co-3-baseline",
+      "variant": "baseline",
+      "composition": "co",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 3.017186547811023e-16,
+        "rhs": 2.52964189974112e-16,
+        "energy_gradient": 1.8317147264242305e-14,
+        "temperature_gradient": 1.8854275779522922e-15,
+        "scalars": 1.688290666828042e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.921828,
+          "gpu_ms": 20.854266357421874
+        },
+        {
+          "cpu_ms": 0.9106833,
+          "gpu_ms": 20.852496337890624
+        },
+        {
+          "cpu_ms": 0.90908555,
+          "gpu_ms": 20.853878784179688
+        },
+        {
+          "cpu_ms": 0.90638865,
+          "gpu_ms": 20.852603149414062
+        },
+        {
+          "cpu_ms": 0.90253345,
+          "gpu_ms": 20.851686096191408
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54512 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 20.852603149414062,
+      "median_cpu_ms": 0.90908555,
+      "name": "audit200-uniform-0-baseline",
+      "variant": "baseline",
+      "composition": "uniform",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.2935788309943707e-14,
+        "rhs": 3.4969560401375535e-15,
+        "energy_gradient": 5.115847128484341e-15,
+        "temperature_gradient": 4.5186093497833735e-11,
+        "scalars": 2.510071076075966e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.9891799000000001,
+          "gpu_ms": 18.366529846191405
+        },
+        {
+          "cpu_ms": 0.9682156000000001,
+          "gpu_ms": 18.367640686035156
+        },
+        {
+          "cpu_ms": 0.9615938999999999,
+          "gpu_ms": 18.36499481201172
+        },
+        {
+          "cpu_ms": 0.96047575,
+          "gpu_ms": 18.366517639160158
+        },
+        {
+          "cpu_ms": 0.9626048,
+          "gpu_ms": 18.366595458984374
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54368 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 18.366529846191405,
+      "median_cpu_ms": 0.9626048,
+      "name": "audit200-uniform-1-inline",
+      "variant": "inline",
+      "composition": "uniform",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.2935788309943707e-14,
+        "rhs": 3.4969560401375535e-15,
+        "energy_gradient": 5.115847128484341e-15,
+        "temperature_gradient": 4.5186093497833735e-11,
+        "scalars": 2.510071076075966e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.99057955,
+          "gpu_ms": 18.368218994140626
+        },
+        {
+          "cpu_ms": 0.9717247999999999,
+          "gpu_ms": 18.36708221435547
+        },
+        {
+          "cpu_ms": 0.9703679,
+          "gpu_ms": 18.36802978515625
+        },
+        {
+          "cpu_ms": 0.97258385,
+          "gpu_ms": 18.36736145019531
+        },
+        {
+          "cpu_ms": 0.9704294000000001,
+          "gpu_ms": 18.366259765625
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54368 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 18.36736145019531,
+      "median_cpu_ms": 0.9717247999999999,
+      "name": "audit200-uniform-2-inline",
+      "variant": "inline",
+      "composition": "uniform",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.2935788309943707e-14,
+        "rhs": 3.4969560401375535e-15,
+        "energy_gradient": 5.115847128484341e-15,
+        "temperature_gradient": 4.5186093497833735e-11,
+        "scalars": 2.510071076075966e-12
+      }
+    },
+    {
+      "samples": [
+        {
+          "cpu_ms": 0.93271685,
+          "gpu_ms": 20.836595153808595
+        },
+        {
+          "cpu_ms": 0.92087105,
+          "gpu_ms": 20.850442504882814
+        },
+        {
+          "cpu_ms": 0.9200827,
+          "gpu_ms": 20.851316833496092
+        },
+        {
+          "cpu_ms": 0.9185019000000001,
+          "gpu_ms": 20.85299072265625
+        },
+        {
+          "cpu_ms": 0.9125023499999999,
+          "gpu_ms": 20.851834106445313
+        }
+      ],
+      "resources": "LEAF_STATIC_RESOURCES registers=255 local_bytes=54512 shared_bytes=0",
+      "nnz": 3625,
+      "median_gpu_ms": 20.851316833496092,
+      "median_cpu_ms": 0.9200827,
+      "name": "audit200-uniform-3-baseline",
+      "variant": "baseline",
+      "composition": "uniform",
+      "network": 200,
+      "comparison_to_first_baseline": {
+        "jacobian": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "rhs": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "energy_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "temperature_gradient": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        },
+        "scalars": {
+          "cpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          },
+          "gpu": {
+            "max_scaled_error": 0.0,
+            "exactly_equal": true
+          }
+        }
+      },
+      "host_device_errors": {
+        "jacobian": 1.2935788309943707e-14,
+        "rhs": 3.4969560401375535e-15,
+        "energy_gradient": 5.115847128484341e-15,
+        "temperature_gradient": 4.5186093497833735e-11,
+        "scalars": 2.510071076075966e-12
+      }
+    }
+  ],
+  "products": {
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/timed_network_math.cu": "1a313b2b49924bd416cbcb3425272074dc7d805e207775e10f8cea266103c2f2",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-baseline": "506c3ac46c61c142494b37cd6a669ed5813c7ca7db02eed762e5c1056f9e086d",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit150-inline": "b316e89aaeb7a84cf5670aa97c090f690a15f35ee9a730810228d96ec2b22d27",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-0-baseline.bin": "284d0c3857ea200870f1dc0e84cfdc2486f7f9d2641f57d41327b0599c902439",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-1-inline.bin": "284d0c3857ea200870f1dc0e84cfdc2486f7f9d2641f57d41327b0599c902439",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-2-inline.bin": "284d0c3857ea200870f1dc0e84cfdc2486f7f9d2641f57d41327b0599c902439",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-co-3-baseline.bin": "284d0c3857ea200870f1dc0e84cfdc2486f7f9d2641f57d41327b0599c902439",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-0-baseline.bin": "347c180e3b86201ada8e5729684169031286d609cc8317e8e323482e2fef2ed0",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-1-inline.bin": "347c180e3b86201ada8e5729684169031286d609cc8317e8e323482e2fef2ed0",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-2-inline.bin": "347c180e3b86201ada8e5729684169031286d609cc8317e8e323482e2fef2ed0",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-uniform-3-baseline.bin": "347c180e3b86201ada8e5729684169031286d609cc8317e8e323482e2fef2ed0",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-baseline": "d4919875afa438801163075fbdcfe45af28119093ac0153a50fda0f3e0c8a699",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/leaf-audit200-inline": "2cae05bdceb78a31b87b711f10514d80506453724325bfb17dd86e6f9df3a1a2",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-0-baseline.bin": "f04857b754ad20038d08b87916984cb4384bc186d8518e6b6c0be40dea9df4f9",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-1-inline.bin": "f04857b754ad20038d08b87916984cb4384bc186d8518e6b6c0be40dea9df4f9",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-2-inline.bin": "f04857b754ad20038d08b87916984cb4384bc186d8518e6b6c0be40dea9df4f9",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-co-3-baseline.bin": "f04857b754ad20038d08b87916984cb4384bc186d8518e6b6c0be40dea9df4f9",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-0-baseline.bin": "637a22e38b55995bacb6f6fc214e0640befcff348adc9be1388a81802c51471c",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-1-inline.bin": "637a22e38b55995bacb6f6fc214e0640befcff348adc9be1388a81802c51471c",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-2-inline.bin": "637a22e38b55995bacb6f6fc214e0640befcff348adc9be1388a81802c51471c",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-uniform-3-baseline.bin": "637a22e38b55995bacb6f6fc214e0640befcff348adc9be1388a81802c51471c"
+  },
+  "network_copies": {
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-baseline": {
+      "NetCustom_audit150.h": "25cf29139a8202887809c8c5e2a042a4944b5d7b2db281da6c355d5b239fdd2b",
+      "NetCustom_audit150.cpp": "89a25701d10bf9e475e2531c5b2dd487d4d9b1f0b5bdca101d4cee5e7cf29de5",
+      "NetCustom_audit150.math.h": "0b2978ad32a148b0c7908e36ec58885eaa29ab30f45309630d88ae42e8c0f5d5",
+      "manifest.json": "19495bda42ade7670046e469e02ef26ff43a2a28dc4ad750a62821c25e399734",
+      "network.cmake": "c1717137820944ed6c9a910ca45e9b5ee36cd67d53756ac42cb85b44aa834bfa",
+      "generated/GNUmakefile": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+      "generated/actual_network.H": "e7c0b67a519216f0e845eb89d07e00bba648558e6f6b41e2d1437809b201705a",
+      "generated/actual_rhs.H": "230cf0d422c7b81980a3c6abea99ae7f1fc3cad25c4af1e2d380a94518b7d709",
+      "generated/amrex_bridge.H": "8fca5e6c0797a5400ac962b4df91afbff191573e23e4904b1369c70019b1b8d1",
+      "generated/approximate_rates.H": "1f5866f561f06cb4241ab9400e8dd05487b5f10f38b4e57e93b6486d6c7d5de2",
+      "generated/burn_type.H": "b1e4aa418c48f2efa7a2edc338a0f0a0ae9901c90bc2d219b138049940b7b800",
+      "generated/derived_rates.H": "f5d42cd045b67cb24f002e3017ab3a19e40930c550ed044622a26e800e2346a8",
+      "generated/fundamental_constants.H": "2675a49e4c69db4d834facd8e7978721d8feb0334b90530830f2437c49c6556c",
+      "generated/interp_tools.H": "3578c92b055b1181d66117c79751998512469ef459dfd0008cfd18159da99377",
+      "generated/main.cpp": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+      "generated/modified_rates.H": "307f3dd55d00e906a2ed56c799c94f4a7bb6a051b5465765d4808f410166c86a",
+      "generated/partition_functions.H": "f9bb7e9a4b0909717b75ec98a430a49e586703d0d091909c4ecb61ce1ad2e241",
+      "generated/pynucastro-info.txt": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+      "generated/rate_type.H": "6d540e3cca7051560075f8439231021c6f05d89daa71f40b65266b0dd5cd321e",
+      "generated/reaclib_rates.H": "51f2291aada3cf7b30a4cf6b13eac85addd441f9fd215224b134790570a67877",
+      "generated/screen.H": "495b03658b758145cad28b5521533eed84c33280771c609572a042cfe4ec8efe",
+      "generated/screen_data.H": "2cb94896ab7aff1e53e5637ffd77e65e918370bbda2036154389b638ffc96387",
+      "generated/table_rates.H": "1885fa595f904454c202bf6daa264d11dd58af67fb636279a3bd4d06c6693f48",
+      "generated/tfactors.H": "244d2c130a383984f14b83f2a7a6f9c9c9f56e4039f29d6801a8613cb32d2c29",
+      "generated/network_properties.H": "bfe26c6d489783fb7334656d18fe9c722defa5f7156dc4435ff96b1461d88e32"
+    },
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit150-inline": {
+      "NetCustom_audit150.h": "25cf29139a8202887809c8c5e2a042a4944b5d7b2db281da6c355d5b239fdd2b",
+      "NetCustom_audit150.cpp": "89a25701d10bf9e475e2531c5b2dd487d4d9b1f0b5bdca101d4cee5e7cf29de5",
+      "NetCustom_audit150.math.h": "1cc319a65c924bf344e5092ef23db8263f1d652595179d66b4ab73447277bdbc",
+      "manifest.json": "19495bda42ade7670046e469e02ef26ff43a2a28dc4ad750a62821c25e399734",
+      "network.cmake": "c1717137820944ed6c9a910ca45e9b5ee36cd67d53756ac42cb85b44aa834bfa",
+      "generated/GNUmakefile": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+      "generated/actual_network.H": "e7c0b67a519216f0e845eb89d07e00bba648558e6f6b41e2d1437809b201705a",
+      "generated/actual_rhs.H": "230cf0d422c7b81980a3c6abea99ae7f1fc3cad25c4af1e2d380a94518b7d709",
+      "generated/amrex_bridge.H": "8fca5e6c0797a5400ac962b4df91afbff191573e23e4904b1369c70019b1b8d1",
+      "generated/approximate_rates.H": "1f5866f561f06cb4241ab9400e8dd05487b5f10f38b4e57e93b6486d6c7d5de2",
+      "generated/burn_type.H": "b1e4aa418c48f2efa7a2edc338a0f0a0ae9901c90bc2d219b138049940b7b800",
+      "generated/derived_rates.H": "f5d42cd045b67cb24f002e3017ab3a19e40930c550ed044622a26e800e2346a8",
+      "generated/fundamental_constants.H": "2675a49e4c69db4d834facd8e7978721d8feb0334b90530830f2437c49c6556c",
+      "generated/interp_tools.H": "3578c92b055b1181d66117c79751998512469ef459dfd0008cfd18159da99377",
+      "generated/main.cpp": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+      "generated/modified_rates.H": "307f3dd55d00e906a2ed56c799c94f4a7bb6a051b5465765d4808f410166c86a",
+      "generated/partition_functions.H": "f9bb7e9a4b0909717b75ec98a430a49e586703d0d091909c4ecb61ce1ad2e241",
+      "generated/pynucastro-info.txt": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+      "generated/rate_type.H": "6d540e3cca7051560075f8439231021c6f05d89daa71f40b65266b0dd5cd321e",
+      "generated/reaclib_rates.H": "51f2291aada3cf7b30a4cf6b13eac85addd441f9fd215224b134790570a67877",
+      "generated/screen.H": "495b03658b758145cad28b5521533eed84c33280771c609572a042cfe4ec8efe",
+      "generated/screen_data.H": "2cb94896ab7aff1e53e5637ffd77e65e918370bbda2036154389b638ffc96387",
+      "generated/table_rates.H": "1885fa595f904454c202bf6daa264d11dd58af67fb636279a3bd4d06c6693f48",
+      "generated/tfactors.H": "244d2c130a383984f14b83f2a7a6f9c9c9f56e4039f29d6801a8613cb32d2c29",
+      "generated/network_properties.H": "bfe26c6d489783fb7334656d18fe9c722defa5f7156dc4435ff96b1461d88e32"
+    },
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-baseline": {
+      "NetCustom_audit200.h": "572da397061ce96584e4763c7fc58b4d732479c7a7ebee3bebf6a81dea6bb3ae",
+      "NetCustom_audit200.cpp": "290647afbd622ac4a2bfcfba05ef1819c5e44c95c85060a9cd947c087529ed92",
+      "NetCustom_audit200.math.h": "65d97aa14ba2448c2d10d8ac5b5409552565824772a4eca98349a35f2c63ab94",
+      "manifest.json": "1bcb501d76ef96455ba75573a5c8901e394e755e075e201d98786ee6be985c75",
+      "network.cmake": "46bc319c4f4046fc493601e0be3885643be93909221d9f2d2462620bef27cbfd",
+      "generated/GNUmakefile": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+      "generated/actual_network.H": "966712deec8b2a54dfe0d8a81f93c491dd725a61ba3158832260d301c19d6e0b",
+      "generated/actual_rhs.H": "7d59961aaa9aafe21b762b4cd898e8e7fff5efd7cb272f65d32b94c9c1992c82",
+      "generated/amrex_bridge.H": "dc971821006f1912b0f9d02847c40d9110d87e4457241b2936d4ff13b7580b81",
+      "generated/approximate_rates.H": "6eff02ae1e14de220c89f6ae41bb0957f4979b78dec6e1c4551a85ae0f616fab",
+      "generated/burn_type.H": "692a9fc750d01fc13ae51d8d12ccd69984ed8f472db551bf538f479bdc439c7b",
+      "generated/derived_rates.H": "163e07e9c732d2d99d08c792517ab04dc67cbdf56d080094312928a1545c4dfa",
+      "generated/fundamental_constants.H": "dacee1dfcffeb4de8092cb06505867c9a10ca547880103faa648aeae9e173259",
+      "generated/interp_tools.H": "e0940c6d1bc977bbab8f3ef15d78b1b9bd21f1fbf995912d34b355cae1a21854",
+      "generated/main.cpp": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+      "generated/modified_rates.H": "fdfa7071ff5dcd81dbca9f4673843ebabdf5cc57e666a4527ffa31f1788fae7b",
+      "generated/partition_functions.H": "f34cb1bc08f2ca081a09725536dad2511954bc15e66a46b7ea687c748cfa5ae0",
+      "generated/pynucastro-info.txt": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+      "generated/rate_type.H": "5a393fb217fd068f966008de6b6121292ebdadf8fc20c73c4636edac765aa972",
+      "generated/reaclib_rates.H": "4fd47c04812a3007632979d38dcb0b1c9b336c491150fa19f51e6813df16369e",
+      "generated/screen.H": "afea1d47f593360de3e8d90485fcc469f4493d61037ebffaa38ece0ae2ca04cb",
+      "generated/screen_data.H": "4d713c564edb4d1f2afc4fda7294e8bffddba331e61ae6a7aaa07b0aa7578a65",
+      "generated/table_rates.H": "f3b3f8a454ef25f2603e4682285c80f0925c03d0a91afd00544f1cfcb743e07a",
+      "generated/tfactors.H": "c68072e71b57be022983b0500d2993d1bfa2d2deb3ad1e6a7deda3241d9da5d0",
+      "generated/network_properties.H": "1aac4f585480064bcb495713176e333a37e6f6f0f3c404d4b7b70b56b53c28cb"
+    },
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1/audit200-inline": {
+      "NetCustom_audit200.h": "572da397061ce96584e4763c7fc58b4d732479c7a7ebee3bebf6a81dea6bb3ae",
+      "NetCustom_audit200.cpp": "290647afbd622ac4a2bfcfba05ef1819c5e44c95c85060a9cd947c087529ed92",
+      "NetCustom_audit200.math.h": "6acd9a67b69dac8f8b29caef94039c8c9ca6dc60911e38ee3aead3f4f18951b0",
+      "manifest.json": "1bcb501d76ef96455ba75573a5c8901e394e755e075e201d98786ee6be985c75",
+      "network.cmake": "46bc319c4f4046fc493601e0be3885643be93909221d9f2d2462620bef27cbfd",
+      "generated/GNUmakefile": "c862635853b71acfeac5dca94e2ea8904d514823bc9ac86d98ef1363e5a4610d",
+      "generated/actual_network.H": "966712deec8b2a54dfe0d8a81f93c491dd725a61ba3158832260d301c19d6e0b",
+      "generated/actual_rhs.H": "7d59961aaa9aafe21b762b4cd898e8e7fff5efd7cb272f65d32b94c9c1992c82",
+      "generated/amrex_bridge.H": "dc971821006f1912b0f9d02847c40d9110d87e4457241b2936d4ff13b7580b81",
+      "generated/approximate_rates.H": "6eff02ae1e14de220c89f6ae41bb0957f4979b78dec6e1c4551a85ae0f616fab",
+      "generated/burn_type.H": "692a9fc750d01fc13ae51d8d12ccd69984ed8f472db551bf538f479bdc439c7b",
+      "generated/derived_rates.H": "163e07e9c732d2d99d08c792517ab04dc67cbdf56d080094312928a1545c4dfa",
+      "generated/fundamental_constants.H": "dacee1dfcffeb4de8092cb06505867c9a10ca547880103faa648aeae9e173259",
+      "generated/interp_tools.H": "e0940c6d1bc977bbab8f3ef15d78b1b9bd21f1fbf995912d34b355cae1a21854",
+      "generated/main.cpp": "09a53143f0f2ad7aae1a1494b0eed4c79ea08b27a6a2fc036f765dbdf2a867e0",
+      "generated/modified_rates.H": "fdfa7071ff5dcd81dbca9f4673843ebabdf5cc57e666a4527ffa31f1788fae7b",
+      "generated/partition_functions.H": "f34cb1bc08f2ca081a09725536dad2511954bc15e66a46b7ea687c748cfa5ae0",
+      "generated/pynucastro-info.txt": "b0ea1b8ee9a0c8d3a14246240b1222e38aebbe9d6eb6ceaeb262437dd20e56da",
+      "generated/rate_type.H": "5a393fb217fd068f966008de6b6121292ebdadf8fc20c73c4636edac765aa972",
+      "generated/reaclib_rates.H": "4fd47c04812a3007632979d38dcb0b1c9b336c491150fa19f51e6813df16369e",
+      "generated/screen.H": "afea1d47f593360de3e8d90485fcc469f4493d61037ebffaa38ece0ae2ca04cb",
+      "generated/screen_data.H": "4d713c564edb4d1f2afc4fda7294e8bffddba331e61ae6a7aaa07b0aa7578a65",
+      "generated/table_rates.H": "f3b3f8a454ef25f2603e4682285c80f0925c03d0a91afd00544f1cfcb743e07a",
+      "generated/tfactors.H": "c68072e71b57be022983b0500d2993d1bfa2d2deb3ad1e6a7deda3241d9da5d0",
+      "generated/network_properties.H": "1aac4f585480064bcb495713176e333a37e6f6f0f3c404d4b7b70b56b53c28cb"
+    }
+  },
+  "comparisons": [
+    {
+      "network": 150,
+      "composition": "co",
+      "median_gpu_ms": {
+        "baseline": 15.398322296142577,
+        "inline": 13.57550506591797
+      },
+      "baseline_over_inline": 1.134272516666867
+    },
+    {
+      "network": 150,
+      "composition": "uniform",
+      "median_gpu_ms": {
+        "baseline": 15.400486755371094,
+        "inline": 13.572227478027344
+      },
+      "baseline_over_inline": 1.1347059117822478
+    },
+    {
+      "network": 200,
+      "composition": "co",
+      "median_gpu_ms": {
+        "baseline": 20.862239837646484,
+        "inline": 18.367618560791016
+      },
+      "baseline_over_inline": 1.1358162610247517
+    },
+    {
+      "network": 200,
+      "composition": "uniform",
+      "median_gpu_ms": {
+        "baseline": 20.851959991455075,
+        "inline": 18.366945648193358
+      },
+      "baseline_over_inline": 1.135298181355818
+    }
+  ],
+  "budget": 2e-10,
+  "order": [
+    "baseline",
+    "inline",
+    "inline",
+    "baseline"
+  ],
+  "compositions": [
+    "co",
+    "uniform"
+  ],
+  "rho": 10000000.0,
+  "temperature": 3000000000.0,
+  "performance_qualified": false,
+  "application_qualified": false,
+  "release_qualified": false,
+  "identities_verified_after": true,
+  "diagnostic_numerical_pass": true
+}

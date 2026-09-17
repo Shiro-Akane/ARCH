@@ -81,6 +81,19 @@ class FreshWindowBuildTests(unittest.TestCase):
         for bad in (original[:4]+['-ffast-math']+original[4:], original[:5]+['old/extra.o']+original[5:]):
             with self.assertRaises(ValueError): module.link_recipe(bad, 'h', 'f', 'w', 'p', 'e')
 
+    def test_dependency_preflight_does_not_compile_an_object(self):
+        entries = json.loads((ARCHIVE/'factory-release/compile_commands.json').read_text())
+        source = '/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source'
+        command = module.compile_recipe(entries, 200, 'factory', source, '/new/source', '/new/f.o', '/new/f.d')['command']
+        changed = module.dependency_recipe(command, '/new/preflight.d')
+        self.assertNotIn('-c', changed)
+        self.assertNotIn('-MD', changed)
+        self.assertNotIn('-MF', changed)
+        self.assertIn('-M', changed)
+        self.assertEqual(changed[changed.index('-o')+1], '/new/preflight.d')
+        self.assertEqual(changed[changed.index('-MT')+1], '/new/f.o')
+        module.strict(changed, True)
+
     def test_actual_dependency_file_rejects_quoted_include_leakage(self):
         names = list(module.PINS)+['src/cuda/microphysics/SparseBurnCells.cuh',
                                   'src/cuda/microphysics/CuDssSparseWindowSolver.h']

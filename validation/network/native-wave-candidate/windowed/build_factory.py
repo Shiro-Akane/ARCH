@@ -12,7 +12,7 @@ import shlex
 import subprocess
 import time
 
-from factory_recipe import compile_recipe, link_recipe, materialize_source, verify_factory_dependencies
+from factory_recipe import compile_recipe, dependency_recipe, link_recipe, materialize_source, verify_factory_dependencies
 
 ROOT = Path('/home/ubuntu/projects/ARCH-native-wave-v4-20260916')
 COMMANDS_SHA = '6a17407cf53fba1ad868e783245ea21c56274db29829e4eea0dd32bc0ba62049'
@@ -134,6 +134,11 @@ def main():
             for kind, obj, timeout in (('factory', factory, 12000), ('harness', host, 300)):
                 dependency = output/f'audit{network}-{kind}.d'
                 recipe = compile_recipe(entries, network, kind, source, private, obj, dependency)
+                if kind == 'factory':
+                    preflight = output/f'audit{network}-preflight.d'
+                    run(f'dependencies-audit{network}', dependency_recipe(recipe['command'], preflight),
+                        Path(recipe['cwd']), 300)
+                    verify_factory_dependencies(preflight.read_text(), obj, source, private)
                 run(f'compile-audit{network}-{kind}', recipe['command'], Path(recipe['cwd']), timeout)
                 record['artifacts'][str(obj)] = sha(obj)
                 if kind == 'factory':
@@ -156,7 +161,7 @@ def main():
         for path, expected in identities.items():
             if sha(path) != expected:
                 raise ValueError('factory dependency/product changed: '+path)
-        if len(record['commands']) != 9 or len(record['artifacts']) != 7 or len(record['dependencies']) != 2:
+        if len(record['commands']) != 11 or len(record['artifacts']) != 7 or len(record['dependencies']) != 2:
             raise ValueError('incomplete fresh factory build')
         record.update(status='factory-built-not-runtime-qualified', identities_verified_after=True)
     except BaseException as error:

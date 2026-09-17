@@ -1,8 +1,10 @@
 # 小型 Jacobian sink 内联：隔离叶函数对照
 
-2026-09-17 01:36 UTC 已在服务器单独启动，尚未得到编译／GPU 结果。
+2026-09-17 已完整结束：四份全新编译、16 次运行和四组 ABBA 数值对照通过，双端归档已核验。
+两个网络 GPU 叶函数时间均少约 12%，但编译时间约四倍且 Host 串行叶函数略慢，未进入生产。
+见[完整结果及限定范围](../../results/native-wave-20260917/leaf-inline-v1/README.zh-CN.md)。
 输入包 29,184 bytes，SHA `967bca9e2f7a68f0d8c42f14acf448930e58c42292ed1fa58dfabbe96a4c17a1`。
-唯一 worker 302920，目录 `/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1`。
+已结束的 worker 302920，目录 `/home/ubuntu/projects/ARCH-native-wave-v4-20260916/leaf-inline-v1`。
 此前 API 成本诊断与双端保全已经完成；不并行执行编译、实验和归档。
 
 ## 假设和唯一候选差异

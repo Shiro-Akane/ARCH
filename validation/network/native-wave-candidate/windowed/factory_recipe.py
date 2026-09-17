@@ -128,6 +128,21 @@ def link_recipe(tokens, harness_obj, factory_obj, wrapper_obj, provider, executa
     return argv
 
 
+def dependency_recipe(command, output):
+    """NVCC preprocessing only, before spending hours on the fresh factory."""
+    argv = list(command)
+    strict(argv, True)
+    if argv.count('-c') != 1 or argv.count('-o') != 1 or argv.count('-MD') != 1 or argv.count('-MF') != 1:
+        raise ValueError('unreviewed fresh CUDA dependency recipe')
+    argv.remove('-c')
+    argv.remove('-MD')
+    index = argv.index('-MF')
+    del argv[index:index+2]
+    argv[argv.index('-o')+1] = str(output)
+    argv.append('-M')
+    return argv
+
+
 def verify_factory_dependencies(text, obj, old_source, private_source):
     """Audit actual compiler output, not merely command-line include intent."""
     text = text.replace('\\\r\n', '').replace('\\\n', '')

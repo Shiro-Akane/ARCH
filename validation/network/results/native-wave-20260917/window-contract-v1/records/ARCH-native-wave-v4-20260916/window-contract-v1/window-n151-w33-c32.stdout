@@ -1,0 +1,1 @@
+SPARSE_WINDOW_CONTRACT_PASS extent=151 window=33 capacity=32 pages=18 restored=73 evicted=9 invalidated=64 factor_calls=17 factor_systems=544 solve_calls=17 solve_systems=544 estimated_peak_bytes=38972552

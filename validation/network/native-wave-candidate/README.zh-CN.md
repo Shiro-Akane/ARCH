@@ -9,13 +9,15 @@
 汇总器默认日志格式错误的失败保留，[独立复核](../results/native-wave-20260917/batch-launch-focused-reaudit-v1/README.zh-CN.md)
 通过原数值门槛。同二进制 ODE block 布局 ABBA 已完成，1-thread 方案更慢而否决。
 [六组 API 成本诊断](../results/native-wave-20260917/api-cost-v1/README.zh-CN.md)已完成并双端保全，
-当前单独进行[小型 Jacobian sink 内联叶函数对照](leaf-inline/README.zh-CN.md)，未接入生产。
-两项仍不提供完整 Helm 应用、长程或正式性能资格。
+随后[小型 Jacobian sink 内联叶函数对照](../results/native-wave-20260917/leaf-inline-v1/README.zh-CN.md)
+四份编译、16 次运行全部数值通过且双端保全。GPU 叶函数时间少约 12%，编译约四倍、Host 串行略慢；
+未接入生产，不提供完整 Helm 应用、长程或正式性能资格。
 
 等待内联编译期间，仅在本机准备了[逻辑工作窗口与 native 因子 cohort 分离候选](windowed/README.zh-CN.md)：
 至多 128 个逻辑槽、仍至多 32 个 native 槽，原 256 MiB provider 估计预算不变。
-封装、制造解合同、构建／收集配方的准备检查通过；尚未上传、编译、运行或接入 ODE owner。
-不并行启动，不把准备代码当成并发提升／性能通过。原生内存估计与整卡高水位的区别见
+封装随后在独立空闲窗口通过[18 项真实 GPU 合同](../results/native-wave-20260917/window-contract-v1/README.zh-CN.md)，
+双端 raw/compact 已核验；下一步才是新 CUDA factory 的 ODE owner 接入和真实轨迹。
+不并行启动，不把制造解当成核反应并发提升／性能通过。原生内存估计与整卡高水位的区别见
 [来源与约束](bounded-window-followup.zh-CN.md)。
 
 2026-09-15；2026-09-16 收紧负向测试判据。本目录为隔离执行层候选，不在生产 CMake、网络注册表或当前正式计时中启用。
