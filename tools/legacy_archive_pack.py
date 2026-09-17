@@ -62,8 +62,9 @@ def git_index(out, shared_only=False):
 
 
 class Store:
-    def __init__(self, root):
+    def __init__(self, root, compressed_budget=256 * 1024 * 1024):
         self.root = root
+        self.compressed_budget = compressed_budget
         self.objects, self.volumes = {}, []
         self.tar = self.gzip = self.file = None
         self.used = 0
@@ -76,7 +77,7 @@ class Store:
             p = self.root / self.name
             self.volumes.append({'path': self.name, 'bytes': p.stat().st_size, 'sha256': file_sha(p)})
             assert p.stat().st_size < 40 * 1024 * 1024
-            if sum(v['bytes'] for v in self.volumes) > 256 * 1024 * 1024:
+            if sum(v['bytes'] for v in self.volumes) > self.compressed_budget:
                 raise RuntimeError('Compressed archive budget exceeded; keep server originals and review storage choice.')
             self.tar = None
 
