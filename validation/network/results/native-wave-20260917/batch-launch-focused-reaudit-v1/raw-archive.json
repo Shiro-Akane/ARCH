@@ -1,0 +1,31 @@
+{
+  "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/batch-launch-focused-reaudit-raw-v1.tar.zst",
+  "bytes": 21595690,
+  "sha256": "62dd4e3bdb91096aef2583de9a94db4e7c05d186f516c239a9a1c140425d6631",
+  "files": 70,
+  "completed_harnesses": [
+    "audit150-bd-pool2",
+    "audit150-be_nr-pool2",
+    "audit150-ros4-pool2",
+    "audit200-bd-pool2",
+    "audit200-be_nr-pool2",
+    "audit200-ros4-pool2"
+  ],
+  "planned_harnesses": [
+    "audit150-bd-pool2",
+    "audit150-be_nr-pool2",
+    "audit150-ros4-pool2",
+    "audit200-bd-pool2",
+    "audit200-be_nr-pool2",
+    "audit200-ros4-pool2"
+  ],
+  "trajectory_matrix_pass": true,
+  "performance_qualified": false,
+  "application_qualified": false,
+  "release_qualified": false,
+  "original_outer_exit_code": 1,
+  "original_scientific_process_exit_code": 0,
+  "revalidation_pass": true,
+  "new_gpu_runs": 0,
+  "original_failure_preserved": true
+}

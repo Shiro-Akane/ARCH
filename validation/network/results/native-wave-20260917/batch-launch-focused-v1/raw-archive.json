@@ -1,0 +1,13 @@
+{
+  "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/batch-launch-focused-raw-v1.tar.zst",
+  "bytes": 21574449,
+  "sha256": "058b3d74cbb0cf51078eac1ed0a790dac9796c8b3e134609d66d00a79820987f",
+  "files": 65,
+  "profile": "focused",
+  "worker_exit_code": 1,
+  "trajectory_matrix_pass": false,
+  "performance_qualified": false,
+  "application_qualified": false,
+  "release_qualified": false,
+  "validation_error": "ValueError('actual trajectory controls/completion differ')"
+}

@@ -2,7 +2,9 @@
 
 状态（2026-09-17）：已实际编译，128 个 kernel 逐字节组合与 8 项 provider 合同通过，
 见[完整证据与边界](../../results/native-wave-20260917/batch-launch-contract-v1/README.zh-CN.md)。
-双端保全后已启动真实核反应 focused 验证，尚未收齐；不属于生产实现，不宣称提速。
+双端保全后的真实核反应 focused 六组已完成。首版汇总器误要求默认容量打印非默认日志行而失败；
+原失败保留，修正后[独立只读复核](../../results/native-wave-20260917/batch-launch-focused-reaudit-v1/README.zh-CN.md)
+确认全部原数值门槛通过，未重跑／改写原轨迹。候选不属于生产实现，不宣称提速。
 下文保留准备时的顺序和未运行描述为历史，以本段及有日期的结果页为准。
 
 ## 依据与边界

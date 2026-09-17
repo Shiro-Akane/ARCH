@@ -29,8 +29,10 @@ class TrajectoryRecipeTests(unittest.TestCase):
                                for storage in p['storage'] for step in range(p['steps'])
                                for kind in ('cpu_step', 'gpu_step')]
                     metrics += [f'metrics,{method_id},8,0,1e-15,1e-15,1e-5,{pool},1000']
-                    controls = [f'controls,custom:audit{n},{n+1},1e7,3e9,{p["duration"]},1e8,1e-7,{p["steps"]},selected_ode,{method_id}',
-                                'storage_controls,' + ','.join(map(str, (*p['storage'], pool)))]
+                    controls = [f'controls,custom:audit{n},{n+1},1e7,3e9,{p["duration"]},1e8,1e-7,{p["steps"]},selected_ode,{method_id}']
+                    # Match the frozen C++ producer: defaults preserve the old schema.
+                    if (p['storage'], pool) != ((2, 3), 2):
+                        controls.append('storage_controls,' + ','.join(map(str, (*p['storage'], pool))))
                     (self.output / (name + '.stdout')).write_text('\n'.join(controls + metrics + ['GENERATED_SPARSE_BURN_PARITY_PASS']))
                     record['commands'].append(dict(name=name, returncode=0, timed_out=False,
                         command=['exe', *module.trajectory_args(profile, method, pool)]))
@@ -54,6 +56,29 @@ class TrajectoryRecipeTests(unittest.TestCase):
         record['runs'].pop()
         with self.assertRaises(ValueError):
             module.validate('capacity', record, self.output, 0)
+
+    def test_actual_archived_focused_transcripts(self):
+        import json
+        output = ROOT / 'validation/network/results/native-wave-20260917/batch-launch-focused-v1/records/ARCH-native-wave-v4-20260916/batch-launch-focused-v1'
+        record = json.loads((output / 'record.json').read_text())
+        result = module.validate('focused', record, output, 0)
+        self.assertEqual(len(result['completed_harnesses']), 6)
+        self.assertTrue(result['trajectory_matrix_pass'])
+        # This is a read-only parser regression, not a new CUDA run.
+
+    def test_missing_nondefault_storage_line_rejected(self):
+        record = self.matrix('capacity')
+        path = self.output / (record['runs'][0]['name'] + '.stdout')
+        path.write_text(path.read_text().replace('storage_controls,32,33,8', ''))
+        with self.assertRaises(ValueError):
+            module.validate('capacity', record, self.output, 0)
+
+    def test_unexpected_default_storage_line_rejected(self):
+        record = self.matrix('focused')
+        path = self.output / (record['runs'][0]['name'] + '.stdout')
+        path.write_text(path.read_text() + '\nstorage_controls,2,3,2')
+        with self.assertRaises(ValueError):
+            module.validate('focused', record, self.output, 0)
 
     def test_failed_run_remains_partial(self):
         record = self.matrix('focused')

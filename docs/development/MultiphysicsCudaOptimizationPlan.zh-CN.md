@@ -45,7 +45,11 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 共享标量数学及原修正量加法不变；当前[候选](../../validation/network/native-wave-candidate/batched-kernels/README.zh-CN.md)
 在容量队列和备份完成后已实际编译，128 项 kernel 逐字节对照及 8 项 provider 合同通过，
 见[合同证据](../../validation/network/results/native-wave-20260917/batch-launch-contract-v1/README.zh-CN.md)。
-双端保全后正跑真实 150/200 三 ODE focused 轨迹；还不提供完整应用或正式性能资格。
+双端保全后的真实 150/200 三 ODE focused 轨迹全部完成。汇总器误要求默认容量日志行而失败；
+原失败单独保留，按冻结 C++ 格式修正后对六份原日志完成[独立复核](../../validation/network/results/native-wave-20260917/batch-launch-focused-reaudit-v1/README.zh-CN.md)，
+原数值门槛通过，未修改科学参数或增加GPU运行数。
+小规模单次诊断仍慢，下一步已启动同二进制 ODE block 布局 ABBA 原因对照；
+不提供完整应用或正式性能资格，不因显式 kernel 数减少就停止优化。
 
 1. 原基线和候选使用各自不可变源码/构建/二进制身份；同一版本内 CPU/GPU 使用相同输入、EOS/网络、物理时长、输出与比较口径。测试脚本重编和生产重编分别记录。
 2. 单独做 profiling，不把插桩结果混入正式速度中位数。先预热，再至少 5 次交替正式测量；报告原始样本、中位数和离散性。CPU 至少包含合理线程扫描和亲和性设置，不能专挑较慢 CPU 点。

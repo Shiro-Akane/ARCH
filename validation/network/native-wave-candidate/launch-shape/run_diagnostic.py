@@ -86,13 +86,15 @@ def main():
     output, inputs_dir = ROOT / 'advance-shape-diagnostic-v1', Path(__file__).resolve().parent
     if output.exists() or os.environ.get('LD_PRELOAD') or os.environ.get('ARCH_SPARSE_ADVANCE_THREADS'):
         raise ValueError('new output without inherited probe required')
-    parent = ROOT / 'batch-launch-focused-collection-v1.json'
-    receipt = ROOT / 'batch-launch-focused-local-receipt-v1.json'
+    parent = ROOT / 'batch-launch-focused-reaudit-collection-v1.json'
+    receipt = ROOT / 'batch-launch-focused-reaudit-local-receipt-v1.json'
     p, r = json.loads(parent.read_text()), json.loads(receipt.read_text())
-    if p.get('trajectory_matrix_pass') is not True or p['raw'] != r['raw']:
+    if (p.get('trajectory_matrix_pass') is not True or p.get('revalidation_pass') is not True
+            or p.get('original_failure_preserved') is not True or p['raw'] != r['raw']):
         raise ValueError('completed nuclear focused matrix and local backup required')
     focused = ROOT / 'batch-launch-focused-v1'
-    qualified = json.loads((focused / 'qualification.json').read_text())
+    qualification_path = ROOT / 'focused-reaudit-v1/qualification.json'
+    qualified = json.loads(qualification_path.read_text())
     if qualified.get('identities_verified_after') is not True or qualified.get('trajectory_matrix_pass') is not True:
         raise ValueError('focused identity/numerical qualification missing')
     for path, digest in qualified['inputs'].items():
@@ -115,7 +117,7 @@ def main():
                       capture_output=True, text=True, check=True).stdout.strip():
         raise ValueError('GPU not idle')
     probe = inputs_dir / 'advance_shape_probe.cpp'
-    paths = [parent, receipt, focused / 'qualification.json', focused / 'record.json',
+    paths = [parent, receipt, qualification_path, focused / 'qualification.json', focused / 'record.json',
              probe, Path(__file__), *executables.values()]
     identities = {str(p): sha(p) for p in paths}
     output.mkdir()

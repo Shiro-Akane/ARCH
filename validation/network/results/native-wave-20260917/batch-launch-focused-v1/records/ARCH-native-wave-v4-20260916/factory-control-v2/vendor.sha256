@@ -1,0 +1,3 @@
+0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc  /home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cu12/lib/libcudss.so.0
+5757ab5839fb4f203ca47ecb336110d10f4a5606b1e097f195fbca89774569e2  /home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublas.so.12
+2c9006a75c74b3bea2dc7ae2ec38ab038b0e45ea02cb4b717a915e8a5796acb1  /home/ubuntu/projects/ARCH-perf-20260909/build/network-python-20260909/lib/python3.11/site-packages/nvidia/cublas/lib/libcublasLt.so.12
