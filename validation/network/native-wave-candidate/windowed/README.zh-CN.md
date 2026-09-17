@@ -21,6 +21,12 @@ cuDSS、共享数学、精度、数值门槛或 256 MiB native 估计预算。
 风险是更大的窗口会失去部分因子复用、增加 native 调用和等待；不能假定它比原来更快。
 详见 [源码与显存口径](../bounded-window-followup.zh-CN.md)。
 
+另一个已核实的接入边界：生产 `execute_burn_batch` 的 cuDSS 路径仍逐 block 调用 owner，
+首次用该 block 的 active-cell 数创建 pool；`execute_sparse_burn_cells` 也只处理一个 block。
+因此仅放宽 owner 的窗口上限不会自动跨小 block 聚合。原小算例必须保留，不能换大 block
+或增加物理单元来冒充同输入收益。后续跨 block gather/scatter 若确有必要，应独立实现并验证
+每块网格映射、EOS 错误、summary/reduction、slot、AMR generation 及退休契约。
+
 ## 待执行的独立合同
 
 两个制造解维度 151、201，各覆盖 `(window, cohort)`：
