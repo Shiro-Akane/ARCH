@@ -1,0 +1,27 @@
+{
+  "status": "both_archives_and_all_members_byte_verified",
+  "verified_utc": "2026-09-17T00:35:18.714926+00:00",
+  "raw": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/batch-launch-raw-v1.tar.zst",
+    "bytes": 1285581,
+    "sha256": "9caea00ea1dda8c67adae4ba8db4e8878da9143300b8a08469f452e1e8bfcf75",
+    "files": 92
+  },
+  "compact": {
+    "path": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/batch-launch-compact-v1.tar.zst",
+    "bytes": 98294,
+    "sha256": "98044c7a42c4aa635a7d7318cb8650fc531b75ff477a99ca42c3b71b29900460"
+  },
+  "local_archives": {
+    "raw": "C:\\tmp\\ARCH-perf-20260909\\build\\native-wave-batch-contract-v1-download\\batch-launch-raw-v1.tar.zst",
+    "compact": "C:\\tmp\\ARCH-perf-20260909\\build\\native-wave-batch-contract-v1-download\\batch-launch-compact-v1.tar.zst"
+  },
+  "raw_files": 92,
+  "raw_file_bytes": 3393681,
+  "projected_files": 84,
+  "raw_only_files": 8,
+  "receipt_sha256": "adae7f8601fb33f14a39706b3c1a531578fc1d22f711c7524acab695848a7874",
+  "verification_recipe_sha256": "495a065afe1e0ce5de9de08c96e3a72c98ebf38a94a1b022fd684de777c105a4",
+  "scientific_qualification_added": false,
+  "performance_qualified": false
+}

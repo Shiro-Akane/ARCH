@@ -38,11 +38,14 @@ V1 的失败不阻止只读扩散分析/准备；不把燃烧失败版本用于�
 
 2026-09-17 容量门槛续记：native-wave v4 首轮 150/BE/pool8 在 1,800 秒墙钟上限超时，
 0/12 完整 harness，未触发 OOM／swap／资源护栏；原始失败已双端归档。
-仅将单组等待增至 7,200 秒的独立输出轮正在运行，不改物理终点或容差。
+仅将单组等待增至 7,200 秒的独立输出轮现已 12/12 完整通过，
+共 24 条轨迹／96 对宏步，不改物理终点或容差，见[第二轮容量结果](../../validation/network/results/native-wave-20260917/capacity-v2/README.zh-CN.md)。
 见[首轮证据](../../validation/network/results/native-wave-20260917/capacity-v1/README.zh-CN.md)。
 下一项有依据的执行层试验是把仍逐 lane 的五类缩放／残差 kernel 合并提交，
 共享标量数学及原修正量加法不变；当前[候选](../../validation/network/native-wave-candidate/batched-kernels/README.zh-CN.md)
-仅本机准备，必须等待当前队列和备份完成后再实际编译及验证，尚不宣称提速。
+在容量队列和备份完成后已实际编译，128 项 kernel 逐字节对照及 8 项 provider 合同通过，
+见[合同证据](../../validation/network/results/native-wave-20260917/batch-launch-contract-v1/README.zh-CN.md)。
+双端保全后正跑真实 150/200 三 ODE focused 轨迹；还不提供完整应用或正式性能资格。
 
 1. 原基线和候选使用各自不可变源码/构建/二进制身份；同一版本内 CPU/GPU 使用相同输入、EOS/网络、物理时长、输出与比较口径。测试脚本重编和生产重编分别记录。
 2. 单独做 profiling，不把插桩结果混入正式速度中位数。先预热，再至少 5 次交替正式测量；报告原始样本、中位数和离散性。CPU 至少包含合理线程扫描和亲和性设置，不能专挑较慢 CPU 点。

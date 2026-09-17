@@ -1,0 +1,41 @@
+{
+  "status": "prepared_not_compiled_not_runtime_validated",
+  "base_provider_sha256": "b0fae9269348dbc0bd7b3d15c93e999c3f2e3125bf7679d61cc094904cac385a",
+  "replaced_regions": [
+    {
+      "before_sha256": "89f8a8fe1a966f96cee26772a514d2fadf104f3d52a517ee58b2ce16774e8418",
+      "after_sha256": "d1b3efab6a6e5acd4e041fa657386700b3a1b8468ddf6a56898ebda7a519721f"
+    },
+    {
+      "before_sha256": "0d3be760af74e0455159c5980421976d88339e89b65ce15a6a6adc0a457766b1",
+      "after_sha256": "f87c895b93d73a27eb2be33496d64375dab9dc638dffe0881cc91b93e112b146"
+    },
+    {
+      "before_sha256": "6d20aa43e6602b3afa4fd8d6220649726af1d2c81ee4b4a1c3266fb9ebfe5d05",
+      "after_sha256": "bd1dbafb1288ee45fb18bb5ec757b1646f9cfd371b95deaca96fdce2d8cffc06"
+    }
+  ],
+  "shared_math_modified": false,
+  "factory_ABI_modified": false,
+  "scope": "CUDA launch grouping only; maximum 32 matrices; same scalar math and statuses",
+  "scientific_qualified": false,
+  "performance_qualified": false,
+  "files": {
+    "CuDssSparseWaveSolver.cpp": {
+      "bytes": 24364,
+      "sha256": "0b478540e0b736bc7f201657341f16222bfd3d42351ce0031f4bcf3337bcc865"
+    },
+    "SparseWaveKernels.h": {
+      "bytes": 1762,
+      "sha256": "9f603de03edff2421e2fa2431f413fe31b7a6567ce773006a6a7d9cd4d40bdab"
+    },
+    "SparseWaveKernels.cu": {
+      "bytes": 6132,
+      "sha256": "5c25a7f580aea06125e3f79b10b7dac82a53a23977e31c4d1ff46d00f65052b8"
+    },
+    "CuDssSparseWaveSolver.h": {
+      "bytes": 2554,
+      "sha256": "990c313a0e0add56694c2c0b1576778eae82f22b35254b81b035a0724a99a671"
+    }
+  }
+}
