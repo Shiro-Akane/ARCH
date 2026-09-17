@@ -8,7 +8,7 @@ PROVIDER_SHA = '0b902a1e7d87174bc395d4be328713390d36a28320353d55113678e57f697204
 COMMANDS_SHA = '6a17407cf53fba1ad868e783245ea21c56274db29829e4eea0dd32bc0ba62049'
 WINDOWS = ((1, 1), (2, 1), (3, 2), (8, 8), (9, 8), (32, 32), (33, 32), (64, 32), (128, 32))
 MATRIX = tuple((n, w, c) for n in (151, 201) for w, c in WINDOWS)
-FIELDS = ('pages', 'restored', 'factor_calls', 'factor_systems', 'solve_calls', 'solve_systems', 'estimated_peak_bytes')
+FIELDS = ('pages', 'restored', 'evicted', 'invalidated', 'factor_calls', 'factor_systems', 'solve_calls', 'solve_systems', 'estimated_peak_bytes')
 
 
 def extract_support(original):
@@ -60,7 +60,10 @@ def parse_result(text, n, window, capacity):
             or result['factor_systems'] != result['factor_calls']*capacity
             or result['solve_systems'] != result['solve_calls']*capacity
             or not 0 < result['estimated_peak_bytes'] <= 256*1024*1024
-            or result['restored'] < 1):
+            or result['restored'] < 1 or result['invalidated'] < 1
+            or result['restored'] != result['evicted']+result['invalidated']
+            or (window > capacity and result['evicted'] < 1)
+            or (window == capacity and result['evicted'] != 0)):
         raise ValueError('missing work/cost accounting or enlarged memory budget')
     # Even resident single-page cases restore after explicit invalidation.
     return result

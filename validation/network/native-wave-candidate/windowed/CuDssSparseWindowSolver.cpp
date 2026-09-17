@@ -161,7 +161,8 @@ CuDssResult CuDssSparseWindowSolver::execute(std::span<const SparseWaveTask> tas
                 if (tasks[lane].operation == SparseWaveOperation::SolveWithFactors
                     && p.slots[slot] != proposed[lane].native_token) {
                     p.page[slot].operation = SparseWaveOperation::FactorizeAndSolve;
-                    ++p.stats.evicted_factor_restores;
+                    if (p.slots[slot] == 0) ++p.stats.invalidated_factor_restores;
+                    else ++p.stats.evicted_factor_restores;
                 }
             }
             if (!any) continue;

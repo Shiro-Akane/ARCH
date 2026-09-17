@@ -16,7 +16,8 @@ cuDSS、共享数学、精度、数值门槛或 256 MiB native 估计预算。
 - 整个窗口先检查，包括跨页的 output/input、output/output、output/CSR metadata 别名；
   Idle 但保留逻辑身份的原矩阵也不能被其他单元输出覆盖。
 - 只有全部页成功才发布新逻辑身份；部分失败时清空 native 有效性，不回收已用内部 token。
-- 底层物理工作统计原样返回，包括 padding 和额外 factor；上层逻辑请求、分页和逐出恢复另计。
+- 底层物理工作统计原样返回，包括 padding 和额外 factor；上层逻辑请求、分页另计。
+  因为被其他页逐出而恢复、因为显式／失败失效而恢复分别计数，不能混成一种 cache 成本。
 
 风险是更大的窗口会失去部分因子复用、增加 native 调用和等待；不能假定它比原来更快。
 详见 [源码与显存口径](../bounded-window-followup.zh-CN.md)。

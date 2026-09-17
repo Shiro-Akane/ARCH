@@ -16,7 +16,8 @@ ARCHIVE = ROOT/'validation/network/results/native-wave-20260917/factory-focused-
 
 
 def result(n, w, c):
-    values = dict(pages=17, restored=1, factor_calls=3, factor_systems=3*c,
+    evicted = int(w > c)
+    values = dict(pages=17, restored=1+evicted, evicted=evicted, invalidated=1, factor_calls=3, factor_systems=3*c,
                   solve_calls=5, solve_systems=5*c, estimated_peak_bytes=1000)
     line = f'SPARSE_WINDOW_CONTRACT_PASS extent={n} window={w} capacity={c} '
     return line+' '.join(f'{key}={value}' for key, value in values.items()), values
@@ -79,7 +80,8 @@ class WindowProtocolTests(unittest.TestCase):
         for wrong in ('', line+'\n'+line, line.replace('window=33', 'window=32'),
                       line.replace('factor_systems=96', 'factor_systems=3'),
                       line.replace('estimated_peak_bytes=1000', 'estimated_peak_bytes=999999999'),
-                      line.replace('restored=1', 'restored=0'), line+' pages=3'):
+                      line.replace('restored=2', 'restored=0'), line.replace('evicted=1', 'evicted=0'),
+                      line.replace('invalidated=1', 'invalidated=0'), line+' pages=3'):
             with self.assertRaises(ValueError): module.parse_result(wrong, 151, 33, 32)
 
     def test_full_matrix_success_and_reject_missing_overstated_or_forged(self):

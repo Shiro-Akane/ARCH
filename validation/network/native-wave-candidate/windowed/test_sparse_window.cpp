@@ -192,8 +192,12 @@ template<int N> void run_window(int window, int capacity) {
     require(native.native_factor_systems == native.native_factor_calls*capacity
         && native.native_solve_systems == native.native_solve_calls*capacity,
         "window native statistics excluded padded/extra physical work");
+    require(logical.invalidated_factor_restores > 0,
+            "external invalidation restores were omitted or mislabeled as eviction");
     std::cout << "SPARSE_WINDOW_CONTRACT_PASS extent=" << N << " window=" << window << " capacity=" << capacity
-        << " pages=" << logical.native_pages << " restored=" << logical.evicted_factor_restores
+        << " pages=" << logical.native_pages
+        << " restored=" << logical.evicted_factor_restores+logical.invalidated_factor_restores
+        << " evicted=" << logical.evicted_factor_restores << " invalidated=" << logical.invalidated_factor_restores
         << " factor_calls=" << native.native_factor_calls << " factor_systems=" << native.native_factor_systems
         << " solve_calls=" << native.native_solve_calls << " solve_systems=" << native.native_solve_systems
         << " estimated_peak_bytes=" << native.estimated_peak_device_bytes << '\n';

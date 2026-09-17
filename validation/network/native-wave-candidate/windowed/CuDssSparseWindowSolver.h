@@ -6,7 +6,7 @@ namespace arch::cuda::experimental {
 struct SparseWindowStatistics {
     std::uint64_t executions = 0, native_pages = 0;
     std::uint64_t requested_factors = 0, requested_solves = 0;
-    std::uint64_t evicted_factor_restores = 0, invalidations = 0;
+    std::uint64_t evicted_factor_restores = 0, invalidated_factor_restores = 0, invalidations = 0;
 };
 
 // Distinct bounds: at most 128 logical ODE lanes, at most 32 native factor slots.
