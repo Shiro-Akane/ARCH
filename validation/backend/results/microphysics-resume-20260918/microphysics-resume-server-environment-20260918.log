@@ -1,0 +1,61 @@
+2026-09-17T19:46:19+00:00
+Linux gpu-273312 5.15.0-92-generic #102-Ubuntu SMP Wed Jan 10 09:33:48 UTC 2024 x86_64 x86_64 x86_64 GNU/Linux
+g++-11 (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+Copyright (C) 2021 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+cmake version 4.4.0
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+Architecture:                       x86_64
+CPU op-mode(s):                     32-bit, 64-bit
+Address sizes:                      46 bits physical, 57 bits virtual
+Byte Order:                         Little Endian
+CPU(s):                             32
+On-line CPU(s) list:                0-31
+Vendor ID:                          GenuineIntel
+Model name:                         Intel(R) Xeon(R) Gold 6338 CPU @ 2.00GHz
+CPU family:                         6
+Model:                              106
+Thread(s) per core:                 1
+Core(s) per socket:                 1
+Socket(s):                          32
+Stepping:                           6
+BogoMIPS:                           3990.60
+Flags:                              fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault invpcid_single ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow vnmi flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves wbnoinvd arat avx512vbmi umip pku ospke avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid fsrm md_clear arch_capabilities
+Virtualization:                     VT-x
+Hypervisor vendor:                  KVM
+Virtualization type:                full
+L1d cache:                          1 MiB (32 instances)
+L1i cache:                          1 MiB (32 instances)
+L2 cache:                           128 MiB (32 instances)
+L3 cache:                           512 MiB (32 instances)
+NUMA node(s):                       1
+NUMA node0 CPU(s):                  0-31
+Vulnerability Gather data sampling: Unknown: Dependent on hypervisor status
+Vulnerability Itlb multihit:        Not affected
+Vulnerability L1tf:                 Not affected
+Vulnerability Mds:                  Not affected
+Vulnerability Meltdown:             Not affected
+Vulnerability Mmio stale data:      Vulnerable: Clear CPU buffers attempted, no microcode; SMT Host state unknown
+Vulnerability Retbleed:             Not affected
+Vulnerability Spec rstack overflow: Not affected
+Vulnerability Spec store bypass:    Mitigation; Speculative Store Bypass disabled via prctl and seccomp
+Vulnerability Spectre v1:           Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:           Mitigation; Enhanced IBRS, IBPB conditional, RSB filling, PBRSB-eIBRS SW sequence
+Vulnerability Srbds:                Not affected
+Vulnerability Tsx async abort:      Mitigation; TSX disabled
+76be5fd466d8cd6caf8c5a25dc9004bcaee3babdaee6ac80e7d5906f00bc3d4c  bin/ARCH
+463806ba8c21bbccc52e6cca836b0c68c77c1dc80614085e983e5742cc14fa4a  arch_sparse_ode_continuation
+c120adbf321199545a8104e29cbbbf3dbc4dfbf840b4eef4642d1b6dfc42ba04  arch_sparse_residual
+eae32a5dc12a648e13867ebd1313d41b4dff3a5903b189267b9bba46a944a3a7  arch_burn_mainline_reference
+158d39d13dc620fb4c92d77c28c36ee7b5b89534e07998595bab7ae3febdf7df  arch_shared_stage_scheduler
+a748d165056eb1b5f4501cd0bc94e0b16ab5d2a11d95bb3234abff7adb184849  arch_mainline_authority
+920a60886931d45a67dadd13987466cb7ce0f66dc8f43b24ab43cd464b1e5956  arch_helm_components
+550cbd9818719b1df439dd6e7792d607046464eb503b9654fa69a296675a3a0d  arch_generated_nse
+1860fd403656dc1c0b475df98251101de9a4aed9ee5012efe2ba409e29aaf852  arch_amr_flux_surface_plan
+4ac38ea6ed92902141cc99f6dbeb7d84cd6510268949be7dcfe075efcea02723  arch_compensated_sum
+name, uuid, driver_version, utilization.gpu [%], memory.used [MiB], memory.total [MiB]
+NVIDIA H100-20C, GPU-d302c354-a02b-11f1-b791-c76e9cfc2730, 570.133.20, 0 %, 936 MiB, 20480 MiB
+689264, python, 935 MiB

@@ -1,0 +1,23 @@
+	Command being timed: "timeout --kill-after=30s 1700 /home/ubuntu/projects/.envs/arch/bin/cmake --build /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1 --parallel 1 --target arch_sparse_ode_continuation arch_sparse_residual arch_burn_mainline_reference arch_shared_stage_scheduler arch_mainline_authority arch_helm_components arch_generated_nse arch_amr_flux_surface_plan arch_compensated_sum"
+	User time (seconds): 33.21
+	System time (seconds): 2.11
+	Percent of CPU this job got: 98%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:36.01
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 561068
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 160
+	Minor (reclaiming a frame) page faults: 682514
+	Voluntary context switches: 436
+	Involuntary context switches: 399
+	Swaps: 0
+	File system inputs: 18560
+	File system outputs: 31640
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

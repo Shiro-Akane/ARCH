@@ -8,3 +8,4 @@
 
 # Retirement receipts are immutable byte-level audit evidence.
 /validation/backend/results/mainline-retirement-20260918/** -text whitespace=cr-at-eol
+/validation/backend/results/microphysics-resume-20260918/** -text whitespace=cr-at-eol

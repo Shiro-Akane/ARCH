@@ -1,0 +1,77 @@
+{
+  "status": "passed",
+  "scope": "CPU contracts only, not GPU or performance qualification",
+  "source_archive_sha256": "24dcfae52cf22c0d1d5f78a82069cdf815b32ebdb4a284701f5f9a6344e52590",
+  "selected_tests": [
+    "sparse_ode_continuation",
+    "sparse_residual",
+    "burn_mainline_reference",
+    "shared_stage_scheduler",
+    "mainline_authority",
+    "helm_components",
+    "generated_nse",
+    "amr_flux_surface_plan",
+    "compensated_sum"
+  ],
+  "commands": [
+    {
+      "name": "build",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "timeout",
+        "--kill-after=30s",
+        "1700",
+        "/home/ubuntu/projects/.envs/arch/bin/cmake",
+        "--build",
+        "/home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1",
+        "--parallel",
+        "1",
+        "--target",
+        "arch_sparse_ode_continuation",
+        "arch_sparse_residual",
+        "arch_burn_mainline_reference",
+        "arch_shared_stage_scheduler",
+        "arch_mainline_authority",
+        "arch_helm_components",
+        "arch_generated_nse",
+        "arch_amr_flux_surface_plan",
+        "arch_compensated_sum"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-main-merge-20260917",
+      "status": "passed",
+      "timeout_seconds": 1800,
+      "returncode": 0,
+      "wall_seconds_diagnostic_only": 36.069318810943514
+    },
+    {
+      "name": "ctest",
+      "command": [
+        "/home/ubuntu/projects/.envs/arch/bin/ctest",
+        "--test-dir",
+        "/home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1",
+        "--output-on-failure",
+        "--verbose",
+        "--timeout",
+        "300",
+        "-R",
+        "^(sparse_ode_continuation|sparse_residual|burn_mainline_reference|shared_stage_scheduler|mainline_authority|helm_components|generated_nse|amr_flux_surface_plan|compensated_sum)$"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-main-merge-20260917",
+      "status": "passed",
+      "timeout_seconds": 1800,
+      "returncode": 0,
+      "wall_seconds_diagnostic_only": 207.69651470589451
+    }
+  ],
+  "physical_settings_modified": false,
+  "libraries_modified": false,
+  "gpu_executed": false,
+  "helm_runtime_asset": {
+    "restored_missing_asset": true,
+    "source": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/source/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "destination": "/home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat",
+    "sha256": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1"
+  },
+  "inputs_and_production_binary_unchanged": true
+}

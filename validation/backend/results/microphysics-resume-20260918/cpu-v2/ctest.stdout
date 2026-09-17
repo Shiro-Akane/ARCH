@@ -1,0 +1,162 @@
+UpdateCTestConfiguration  from :/home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/DartConfiguration.tcl
+Parse Config file:/home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/DartConfiguration.tcl
+Test project /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 13
+    Start 13: compensated_sum
+
+13: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_compensated_sum
+13: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+13: Test timeout computed to be: 300
+13: COMPENSATED_SUM_PASS
+1/9 Test #13: compensated_sum ..................   Passed    0.00 sec
+test 14
+    Start 14: sparse_ode_continuation
+
+14: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_sparse_ode_continuation
+14: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+14: Test timeout computed to be: 300
+14: [ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22
+14: [ROS4] Fatal Error: Exceeded max substeps (2)
+14: [ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22
+14: [ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22
+14: [BE-NR] Fatal Error: Exceeded max substeps (1)
+14: [BD] Fatal Error: Exceeded max substeps.
+14: [ROS4] Fatal Error: Exceeded max substeps (1)
+14: Sparse matrix and all three shared ODE continuation contracts passed
+2/9 Test #14: sparse_ode_continuation ..........   Passed    0.03 sec
+test 15
+    Start 15: sparse_residual
+
+15: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_sparse_residual
+15: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+15: Test timeout computed to be: 300
+15: Shared sparse residual contracts passed
+3/9 Test #15: sparse_residual ..................   Passed    0.00 sec
+test 17
+    Start 17: burn_mainline_reference
+
+17: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_burn_mainline_reference
+17: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+17: Test timeout computed to be: 300
+17: [HelmEos] Loading 2D Helmholtz table from /home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat...
+17: [HelmEos] Loaded complete 541x201 electron/positron table.
+17: BURN_TIME_PASS aprox13.be_nr species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+17: BURN_TIME_PASS aprox13.bd species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+17: BURN_TIME_PASS aprox13.ros4 species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+17: aprox13: independent time reference and historical checker controls passed
+17: [HelmEos] Loading 2D Helmholtz table from /home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat...
+17: [HelmEos] Loaded complete 541x201 electron/positron table.
+17: BURN_TIME_PASS aprox19.be_nr species_linf=1.6864484531087243e-09 relative_temperature=1.1674347044632327e-09 relative_energy=2.6844712008866622e-09 mass_closure=0
+17: BURN_TIME_PASS aprox19.bd species_linf=2.7755575615628914e-17 relative_temperature=6.6613381477509392e-16 relative_energy=2.2204460492503131e-15 mass_closure=0
+17: BURN_TIME_PASS aprox19.ros4 species_linf=2.3592239273284576e-16 relative_temperature=1.3322676295501878e-15 relative_energy=3.3306690738754696e-15 mass_closure=2.2204460492503131e-16
+17: aprox19: independent time reference and historical checker controls passed
+17: [HelmEos] Loading 2D Helmholtz table from /home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat...
+17: [HelmEos] Loaded complete 541x201 electron/positron table.
+17: BURN_TIME_PASS aprox21.be_nr species_linf=7.7605304404926301e-09 relative_temperature=3.7184970658188377e-09 relative_energy=8.8971304768037385e-09 mass_closure=0
+17: BURN_TIME_PASS aprox21.bd species_linf=1.3877787807814457e-16 relative_temperature=2.2204460492503131e-14 relative_energy=5.4622972811557702e-14 mass_closure=3.3306690738754696e-16
+17: BURN_TIME_PASS aprox21.ros4 species_linf=1.1657341758564144e-15 relative_temperature=2.1760371282653068e-14 relative_energy=5.3290705182007514e-14 mass_closure=4.4408920985006262e-16
+17: aprox21: independent time reference and historical checker controls passed
+17: [HelmEos] Loading 2D Helmholtz table from /home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat...
+17: [HelmEos] Loaded complete 541x201 electron/positron table.
+17: BURN_TIME_PASS iso7.be_nr species_linf=1.1102230246251565e-16 relative_temperature=1.1102230246251565e-16 relative_energy=4.4408920985006262e-16 mass_closure=0
+17: BURN_TIME_PASS iso7.bd species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+17: BURN_TIME_PASS iso7.ros4 species_linf=2.7755575615628914e-17 relative_temperature=0 relative_energy=0 mass_closure=0
+17: iso7: independent time reference and historical checker controls passed
+17: 12 burn routes passed independent time-integration references; historical data from main 8c76be85e2abc8b4a58049767e9ef32b34d6754b preserved
+4/9 Test #17: burn_mainline_reference ..........   Passed  206.69 sec
+test 18
+    Start 18: generated_nse
+
+18: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_generated_nse
+18: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+18: Test timeout computed to be: 300
+18: rank_two=1 rank_one=1 partition=1 energy=1 rejection=1 gauge=1 builtins=1
+5/9 Test #18: generated_nse ....................   Passed    0.01 sec
+test 21
+    Start 21: helm_components
+
+21: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_helm_components "/home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat"
+21: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+21: Test timeout computed to be: 300
+21: [HelmEos] Loading 2D Helmholtz table from /home/ubuntu/projects/ARCH-main-merge-20260917/source/EOS_toolkit/tables/helmholtz/helm_table.dat...
+21: [HelmEos] Loaded complete 541x201 electron/positron table.
+21: Helmholtz electron/photon components: independent fields, strict domain and complete-EOS reference PASS
+6/9 Test #21: helm_components ..................   Passed    0.85 sec
+test 22
+    Start 22: mainline_authority
+
+22: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_mainline_authority
+22: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+22: Test timeout computed to be: 300
+22: [Info] Loaded 9 parameters from /tmp/arch-mainline-authority-694017-2049597814160331-0/bool.par
+22: [Info] Loaded 1 parameters from /tmp/arch-mainline-authority-694017-2049597824217818-25/fallback.par
+22: [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+22: [Info] Loaded 2 parameters from /tmp/arch-mainline-authority-694017-2049597824217818-25/override.par
+22: [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+22: [Info] Loaded 14 parameters from /tmp/arch-mainline-authority-694017-2049597825063893-26/lowercase-enums.par
+22: [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+22: [Info] Loaded 14 parameters from /tmp/arch-mainline-authority-694017-2049597825063893-26/mixed-case-enums.par
+22: [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+22: [Info] Loaded 6 parameters from /tmp/arch-mainline-authority-694017-2049597825063893-26/unknown-enums.par
+22: [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+22: [Info] Loaded 11 parameters from /tmp/arch-mainline-authority-694017-2049597825063893-26/inactive-face-enums.par
+22: [RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled
+22: [RuntimeParams] Warning: PLT variable VELY is disabled: the simulation is one-dimensional
+22: [RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions
+22: [Terminate] Max simulation steps reached.
+22: latest-main authority: PASS
+7/9 Test #22: mainline_authority ...............   Passed    0.02 sec
+test 25
+    Start 25: shared_stage_scheduler
+
+25: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_shared_stage_scheduler
+25: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+25: Test timeout computed to be: 300
+25: LANE_TRACE	physical	euler	stage:1:old=Current:input=Current:output=Next	rotate:Current<-Next:Next<-Current:Scratch<-Scratch	reflux:Current
+25: LANE_TRACE	bookkeeping	euler	stage:1:output=Next:version=2:token=3:ghost-token=0	reflux:version=3:token=4	Current:interior=3:ghost=Invalid:status=success
+25: LANE_TRACE	physical	rk2	stage:1:old=Current:input=Current:output=Scratch	boundary:Scratch	stage:2:old=Current:input=Scratch:output=Next	rotate:Current<-Next:Next<-Current:Scratch<-Scratch	reflux:Current
+25: LANE_TRACE	bookkeeping	rk2	stage:1:output=Scratch:version=2:token=3:ghost-token=4	stage:2:output=Next:version=3:token=5:ghost-token=0	reflux:version=4:token=6	Current:interior=4:ghost=Invalid:status=success
+25: LANE_TRACE	physical	rk3	stage:1:old=Current:input=Current:output=Scratch	boundary:Scratch	stage:2:old=Current:input=Scratch:output=Next	boundary:Next	stage:3:old=Current:input=Next:output=Scratch	rotate:Current<-Scratch:Next<-Next:Scratch<-Current	reflux:Current
+25: LANE_TRACE	bookkeeping	rk3	stage:1:output=Scratch:version=2:token=3:ghost-token=4	stage:2:output=Next:version=3:token=5:ghost-token=6	stage:3:output=Scratch:version=4:token=7:ghost-token=0	reflux:version=5:token=8	Current:interior=5:ghost=Invalid:status=success
+25: LANE_TRACE	physical	single-rkl1	single-rkl1:stage:1:state-n=Current:previous=Current:older=Current:output=Scratch	single-rkl1:reflux:1:output=Scratch	single-rkl1:boundary:Scratch	single-rkl1:stage:2:state-n=Current:previous=Scratch:older=Next:output=Next	single-rkl1:reflux:2:output=Next	single-rkl1:boundary:Next	single-rkl1:rotate:Current<-Next:Next<-Current:Scratch<-Scratch
+25: LANE_TRACE	bookkeeping	single-rkl1	single-rkl1:stage:1:output=Scratch:version=2:token=7:ghost-token=8	single-rkl1:stage:2:output=Next:version=3:token=9:ghost-token=10	single-rkl1:final:Current=3:Next=1:Scratch=2:ghosts=matched:status=success
+25: LANE_TRACE	physical	single-rkl2	single-rkl2:stage:1:state-n=Current:previous=Current:older=Current:output=Scratch	single-rkl2:reflux:1:output=Scratch	single-rkl2:boundary:Scratch	single-rkl2:stage:2:state-n=Current:previous=Scratch:older=Next:output=Next	single-rkl2:reflux:2:output=Next	single-rkl2:boundary:Next	single-rkl2:rotate:Current<-Next:Next<-Current:Scratch<-Scratch
+25: LANE_TRACE	bookkeeping	single-rkl2	single-rkl2:stage:1:output=Scratch:version=2:token=7:ghost-token=8	single-rkl2:stage:2:output=Next:version=3:token=9:ghost-token=10	single-rkl2:final:Current=3:Next=1:Scratch=2:ghosts=matched:status=success
+25: LANE_TRACE	physical	multi-rkl1	multi-rkl1:stage:1:state-n=Current:previous=Current:older=Current:output=Scratch	multi-rkl1:reflux:1:output=Scratch	multi-rkl1:boundary:Scratch	multi-rkl1:stage:2:state-n=Current:previous=Scratch:older=Next:output=Next	multi-rkl1:reflux:2:output=Next	multi-rkl1:boundary:Next	multi-rkl1:rotate:Current<-Next:Next<-Current:Scratch<-Scratch
+25: LANE_TRACE	bookkeeping	multi-rkl1	multi-rkl1:stage:1:output=Scratch:version=2:token=7:ghost-token=8	multi-rkl1:stage:2:output=Next:version=3:token=9:ghost-token=10	multi-rkl1:final:Current=3:Next=1:Scratch=2:ghosts=matched:status=success
+25: LANE_TRACE	physical	multi-rkl2	multi-rkl2:stage:1:state-n=Current:previous=Current:older=Current:output=Scratch	multi-rkl2:reflux:1:output=Scratch	multi-rkl2:boundary:Scratch	multi-rkl2:stage:2:state-n=Current:previous=Scratch:older=Next:output=Next	multi-rkl2:reflux:2:output=Next	multi-rkl2:boundary:Next	multi-rkl2:rotate:Current<-Next:Next<-Current:Scratch<-Scratch
+25: LANE_TRACE	bookkeeping	multi-rkl2	multi-rkl2:stage:1:output=Scratch:version=2:token=7:ghost-token=8	multi-rkl2:stage:2:output=Next:version=3:token=9:ghost-token=10	multi-rkl2:final:Current=3:Next=1:Scratch=2:ghosts=matched:status=success
+25: LANE_TRACE	physical	burn-first	burn-first
+25: LANE_TRACE	bookkeeping	burn-first	burn-first:version=2:token=3:ghost=Invalid:status=success
+25: LANE_TRACE	physical	burn-second	burn-second
+25: LANE_TRACE	bookkeeping	burn-second	burn-second:version=3:token=4:ghost=Invalid:status=success
+8/9 Test #25: shared_stage_scheduler ...........   Passed    0.01 sec
+test 29
+    Start 29: amr_flux_surface_plan
+
+29: Test command: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1/arch_amr_flux_surface_plan
+29: Working Directory: /home/ubuntu/projects/ARCH-main-merge-20260917/cpu-build-v1
+29: Test timeout computed to be: 300
+29: AMR_FLUX_SURFACE_PLAN_PASS
+9/9 Test #29: amr_flux_surface_plan ............   Passed    0.01 sec
+
+The following tests passed:
+	compensated_sum
+	sparse_ode_continuation
+	sparse_residual
+	burn_mainline_reference
+	generated_nse
+	helm_components
+	mainline_authority
+	shared_stage_scheduler
+	amr_flux_surface_plan
+
+100% tests passed out of 9
+
+Total Test time (real) = 207.63 sec

@@ -2,6 +2,15 @@
 
 日期：2026-09-14。依据：用户提供的合作者聊天意见，以及既有 [HPC＋CUDA 总计划](HpcCudaOptimizationPlan.zh-CN.md)。这是执行计划，不是承诺所有规模必定加速或已完成验收。
 
+2026-09-18（北京时间）恢复记录：旧目录依赖迁移后，两份窗口 factory、474 个源码文件、
+50 个网络文件、库与此前归档身份检查全部通过。合并主线的 9 项 CPU 合同补测全部通过，
+包括燃烧独立参考、稀疏 ODE/残差、Helm、NSE、RKL 调度和 AMR 通量计划；
+首次缺少 Helm 运行表的准备中止单独保留，补入相同 Git LFS 对象后重试，无物理或库修改。
+39 项本机准备工具测试也通过。详见[恢复证据](../../validation/backend/results/microphysics-resume-20260918/README.zh-CN.md)。
+这些不是新 GPU 或性能资格。ComfyUI 仍持有设备，用户正在安排空闲窗口；未启动新 GPU 工作。
+下一步仍按已冻结 v2 输入运行 150/200 × BE_NR/BD/ROS4 六组真实轨迹，不重编现有 factory，
+不把已完成的 S5 扩散验收或 CPU 补测替代窗口候选的科学门槛。
+
 2026-09-17 续记：[Jacobian sink 叶函数对照](../../validation/network/results/native-wave-20260917/leaf-inline-v1/README.zh-CN.md)
 四份编译、16 次运行全部数值通过，双端归档。两网络 GPU 叶函数时间少约 12%，但编译时间约四倍、
 Host 串行叶函数略慢，未进入生产或完整应用验收。
