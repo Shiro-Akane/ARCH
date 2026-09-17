@@ -40,7 +40,7 @@ def check(repo, commit, output):
               'volumes_manifest_sha256': hashlib.sha256(raw).hexdigest(),
               'pack_count': len(volumes), 'compressed_bytes': sum(v['bytes'] for v in volumes),
               'full_reconstruction_receipt_in_commit': prefix + 'verification.json'}
-    output.write_text(json.dumps(result, indent=2) + '\n')
+    output.write_text(json.dumps(result, indent=2) + '\n', newline='\n')
     print(json.dumps(result, indent=2))
 
 
