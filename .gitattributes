@@ -12,3 +12,4 @@
 # Frozen capacity payloads and original GPU evidence preserve exact bytes.
 /validation/network/native-wave-candidate/windowed/*capacity* -text whitespace=cr-at-eol
 /validation/network/results/native-wave-20260917/window-focused-v1/** -text whitespace=cr-at-eol,-blank-at-eof
+/validation/network/results/native-wave-20260917/window-capacity-v1/** -text whitespace=cr-at-eol,-blank-at-eof

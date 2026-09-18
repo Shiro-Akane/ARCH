@@ -1,0 +1,23 @@
+	Command being timed: "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150 1e7 3e9 1e-10 1e8 1e-7 4 --ode bd --storage-cells 32 33 --pool-cells 8 c12=0.5 o16=0.5"
+	User time (seconds): 11.74
+	System time (seconds): 0.56
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:12.30
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 425596
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 48985
+	Voluntary context switches: 153
+	Involuntary context switches: 26
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 32
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 0

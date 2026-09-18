@@ -1,0 +1,800 @@
+{
+  "status": "passed",
+  "profile": "capacity",
+  "selected_window": 32,
+  "steps": 4,
+  "duration": 1e-10,
+  "runtime_timeout_seconds": 7200,
+  "commands": [
+    {
+      "name": "audit150-be_nr-pool8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "be_nr",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "8",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 2165.149192599114
+    },
+    {
+      "name": "audit150-be_nr-pool32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "be_nr",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "32",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 1031.1002856870182
+    },
+    {
+      "name": "audit150-bd-pool8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "bd",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "8",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 12.312069769948721
+    },
+    {
+      "name": "audit150-bd-pool32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "bd",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "32",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 6.037782751955092
+    },
+    {
+      "name": "audit150-ros4-pool8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "ros4",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "8",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 39.266820000018924
+    },
+    {
+      "name": "audit150-ros4-pool32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "ros4",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "32",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 19.287674635881558
+    },
+    {
+      "name": "audit200-be_nr-pool8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "be_nr",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "8",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 2561.027921109926
+    },
+    {
+      "name": "audit200-be_nr-pool32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "be_nr",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "32",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 1397.409810604062
+    },
+    {
+      "name": "audit200-bd-pool8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "bd",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "8",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 17.485181087860838
+    },
+    {
+      "name": "audit200-bd-pool32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "bd",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "32",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 8.20074739283882
+    },
+    {
+      "name": "audit200-ros4-pool8",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "ros4",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "8",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 55.02251709694974
+    },
+    {
+      "name": "audit200-ros4-pool32",
+      "command": [
+        "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200",
+        "1e7",
+        "3e9",
+        "1e-10",
+        "1e8",
+        "1e-7",
+        "4",
+        "--ode",
+        "ros4",
+        "--storage-cells",
+        "32",
+        "33",
+        "--pool-cells",
+        "32",
+        "c12=0.5",
+        "o16=0.5"
+      ],
+      "cwd": "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1",
+      "environment": {
+        "ARCH_NATIVE_WINDOW_CELLS": "32"
+      },
+      "timeout_seconds": 7200,
+      "status": "passed",
+      "timed_out": false,
+      "returncode": 0,
+      "elapsed_seconds": 27.993152694078162
+    }
+  ],
+  "runs": [
+    {
+      "name": "audit150-be_nr-pool8",
+      "passed": true,
+      "metrics": [
+        "cpu_step,1,32,0,39494,182,55.712795348999997",
+        "gpu_step,1,32,0,73986,31702,633.98364997800002",
+        "cpu_step,1,32,1,15405,160,21.448158354",
+        "gpu_step,1,32,1,27671,11844,141.973635188",
+        "cpu_step,1,32,2,6984,128,9.7027687559999993",
+        "gpu_step,1,32,2,13208,5652,84.364448026000005",
+        "cpu_step,1,32,3,3993,128,5.6402008959999996",
+        "gpu_step,1,32,3,7780,3330,46.761119354000002",
+        "cpu_step,1,33,0,41084,188,58.109417663999999",
+        "gpu_step,1,33,0,96271,41250,745.18606087199998",
+        "cpu_step,1,33,1,15829,165,22.309509781999999",
+        "gpu_step,1,33,1,33635,14399,171.780201226",
+        "cpu_step,1,33,2,7133,132,10.121668858",
+        "gpu_step,1,33,2,15318,6556,94.952102569000004",
+        "cpu_step,1,33,3,4116,132,5.8420621940000004",
+        "gpu_step,1,33,3,9526,4078,55.498050124000002",
+        "metrics,1,134038,1215,8.5569366094728307e-15,4.8950519489349062e-15,6.6877498242245981e-05,8,36060"
+      ]
+    },
+    {
+      "name": "audit150-be_nr-pool32",
+      "passed": true,
+      "metrics": [
+        "cpu_step,1,32,0,39494,182,54.962171443000003",
+        "gpu_step,1,32,0,22094,9462,225.89378909999999",
+        "cpu_step,1,32,1,15405,160,21.513431371999999",
+        "gpu_step,1,32,1,7141,3048,41.815768026000001",
+        "cpu_step,1,32,2,6984,128,9.7548813709999997",
+        "gpu_step,1,32,2,4097,1749,40.715545024000001",
+        "cpu_step,1,32,3,3993,128,5.6130757620000002",
+        "gpu_step,1,32,3,2591,1107,22.352406287000001",
+        "cpu_step,1,33,0,41084,188,56.880631667000003",
+        "gpu_step,1,33,0,44379,19010,351.98454089799998",
+        "cpu_step,1,33,1,15829,165,21.959518210999999",
+        "gpu_step,1,33,1,13105,5603,75.632689620999997",
+        "cpu_step,1,33,2,7133,132,10.042580994",
+        "gpu_step,1,33,2,6207,2653,52.728554858999999",
+        "cpu_step,1,33,3,4116,132,5.8180613499999998",
+        "gpu_step,1,33,3,4337,1855,32.244611067999998",
+        "metrics,1,134038,1215,8.5569366094728307e-15,4.8950519489349062e-15,6.6877498242245981e-05,32,36060"
+      ]
+    },
+    {
+      "name": "audit150-bd-pool8",
+      "passed": true,
+      "metrics": [
+        "cpu_step,2,32,0,125,31,0.53425573100000001",
+        "gpu_step,2,32,0,2875,1144,2.537171131",
+        "cpu_step,2,32,1,32,0,0.131980393",
+        "gpu_step,2,32,1,1022,360,0.70369553799999995",
+        "cpu_step,2,32,2,32,0,0.132544254",
+        "gpu_step,2,32,2,894,339,0.68291924199999998",
+        "cpu_step,2,32,3,32,0,0.122326038",
+        "gpu_step,2,32,3,786,303,0.62227655699999995",
+        "cpu_step,2,33,0,129,32,0.44562203",
+        "gpu_step,2,33,0,3591,1432,3.0158010700000002",
+        "cpu_step,2,33,1,33,0,0.136530084",
+        "gpu_step,2,33,1,1221,441,0.86205016800000001",
+        "cpu_step,2,33,2,33,0,0.136172614",
+        "gpu_step,2,33,2,1093,420,0.84096664399999999",
+        "cpu_step,2,33,3,33,0,0.124948452",
+        "gpu_step,2,33,3,906,352,0.72765006399999999",
+        "metrics,2,449,63,2.78910400607579e-14,1.3095640373238867e-14,6.687749628886408e-05,8,116676"
+      ]
+    },
+    {
+      "name": "audit150-bd-pool32",
+      "passed": true,
+      "metrics": [
+        "cpu_step,2,32,0,125,31,0.43450022999999999",
+        "gpu_step,2,32,0,797,298,0.83605759499999999",
+        "cpu_step,2,32,1,32,0,0.132153091",
+        "gpu_step,2,32,1,350,92,0.204652365",
+        "cpu_step,2,32,2,32,0,0.13123372599999999",
+        "gpu_step,2,32,2,273,88,0.20040391799999999",
+        "cpu_step,2,32,3,32,0,0.120423608",
+        "gpu_step,2,32,3,250,86,0.19808014700000001",
+        "cpu_step,2,33,0,129,32,0.44773217599999998",
+        "gpu_step,2,33,0,1513,586,1.3913211729999999",
+        "cpu_step,2,33,1,33,0,0.13606261",
+        "gpu_step,2,33,1,549,173,0.38363633699999999",
+        "cpu_step,2,33,2,33,0,0.1360016",
+        "gpu_step,2,33,2,472,169,0.37926821599999999",
+        "cpu_step,2,33,3,33,0,0.124282593",
+        "gpu_step,2,33,3,370,135,0.31879217300000001",
+        "metrics,2,449,63,2.78910400607579e-14,1.3095640373238867e-14,6.687749628886408e-05,32,116676"
+      ]
+    },
+    {
+      "name": "audit150-ros4-pool8",
+      "passed": true,
+      "metrics": [
+        "cpu_step,3,32,0,1146,96,1.1127543950000001",
+        "gpu_step,3,32,0,3613,1507,6.7430910119999998",
+        "cpu_step,3,32,1,604,64,0.58997120000000003",
+        "gpu_step,3,32,1,2130,815,3.4811132969999998",
+        "cpu_step,3,32,2,442,64,0.45635777",
+        "gpu_step,3,32,2,1530,590,2.5050217369999999",
+        "cpu_step,3,32,3,352,64,0.35187759099999999",
+        "gpu_step,3,32,3,1181,464,1.9671860189999999",
+        "cpu_step,3,33,0,1189,99,1.1571010559999999",
+        "gpu_step,3,33,0,4648,1935,8.4935486579999999",
+        "cpu_step,3,33,1,625,66,0.94980797900000002",
+        "gpu_step,3,33,1,2649,1029,4.4122189470000004",
+        "cpu_step,3,33,2,456,66,0.70473296100000005",
+        "gpu_step,3,33,2,1869,731,3.1065132449999999",
+        "cpu_step,3,33,3,362,66,0.36113400499999998",
+        "gpu_step,3,33,3,1424,565,2.393682632",
+        "metrics,3,5176,585,1.1860107783246984e-14,5.786242158805048e-15,6.6877496185058227e-05,8,60996"
+      ]
+    },
+    {
+      "name": "audit150-ros4-pool32",
+      "passed": true,
+      "metrics": [
+        "cpu_step,3,32,0,1146,96,1.3163223980000001",
+        "gpu_step,3,32,0,1036,434,2.258008899",
+        "cpu_step,3,32,1,604,64,0.61956693600000001",
+        "gpu_step,3,32,1,684,219,1.059611501",
+        "cpu_step,3,32,2,442,64,0.45926246900000001",
+        "gpu_step,3,32,2,459,149,0.71076612500000003",
+        "cpu_step,3,32,3,352,64,0.365345058",
+        "gpu_step,3,32,3,344,119,0.55998446000000002",
+        "cpu_step,3,33,0,1189,99,1.217522818",
+        "gpu_step,3,33,0,2071,862,4.2126010909999998",
+        "cpu_step,3,33,1,625,66,0.64430403400000003",
+        "gpu_step,3,33,1,1203,433,2.066563489",
+        "cpu_step,3,33,2,456,66,0.47565933999999999",
+        "gpu_step,3,33,2,798,290,1.3789392600000001",
+        "cpu_step,3,33,3,362,66,0.378105048",
+        "gpu_step,3,33,3,587,220,1.038348483",
+        "metrics,3,5176,585,1.1860107783246984e-14,5.786242158805048e-15,6.6877496185058227e-05,32,60996"
+      ]
+    },
+    {
+      "name": "audit200-be_nr-pool8",
+      "passed": true,
+      "metrics": [
+        "cpu_step,1,32,0,36901,180,79.411874757000007",
+        "gpu_step,1,32,0,69089,29611,645.68405899300001",
+        "cpu_step,1,32,1,14390,160,30.208218056",
+        "gpu_step,1,32,1,25815,11062,201.88246042099999",
+        "cpu_step,1,32,2,6524,128,13.704969502999999",
+        "gpu_step,1,32,2,12326,5281,118.756879635",
+        "cpu_step,1,32,3,3736,126,7.8890476300000003",
+        "gpu_step,1,32,3,7279,3118,66.046372809999994",
+        "cpu_step,1,33,0,38387,186,79.761446879999994",
+        "gpu_step,1,33,0,89931,38540,805.05185741299999",
+        "cpu_step,1,33,1,14786,165,32.940142027",
+        "gpu_step,1,33,1,31383,13448,244.45267769",
+        "cpu_step,1,33,2,6663,132,13.972006361",
+        "gpu_step,1,33,2,14296,6125,133.785931541",
+        "cpu_step,1,33,3,3852,130,8.1927230570000003",
+        "gpu_step,1,33,3,8927,3824,78.612035204999998",
+        "metrics,1,125239,1207,7.8458898813751875e-15,5.3763225417541988e-15,6.6898447816043927e-05,8,48540"
+      ]
+    },
+    {
+      "name": "audit200-be_nr-pool32",
+      "passed": true,
+      "metrics": [
+        "cpu_step,1,32,0,36901,180,80.892090440999993",
+        "gpu_step,1,32,0,20605,8833,286.92699973200001",
+        "cpu_step,1,32,1,14390,160,32.748780287000002",
+        "gpu_step,1,32,1,6647,2848,58.541116709999997",
+        "cpu_step,1,32,2,6524,128,14.736205773",
+        "gpu_step,1,32,2,3812,1633,56.307845467999996",
+        "cpu_step,1,32,3,3736,126,7.8991872479999996",
+        "gpu_step,1,32,3,2412,1033,31.544625675999999",
+        "cpu_step,1,33,0,38387,186,83.521965625000007",
+        "gpu_step,1,33,0,41447,17762,464.07762471299998",
+        "cpu_step,1,33,1,14786,165,32.486167582999997",
+        "gpu_step,1,33,1,12215,5234,105.954048312",
+        "cpu_step,1,33,2,6663,132,13.837115555",
+        "gpu_step,1,33,2,5782,2477,73.050647849000001",
+        "cpu_step,1,33,3,3852,130,8.0282465970000008",
+        "gpu_step,1,33,3,4060,1739,45.549309606000001",
+        "metrics,1,125239,1207,7.8458898813751875e-15,5.3763225417541988e-15,6.6898447816043927e-05,32,48540"
+      ]
+    },
+    {
+      "name": "audit200-bd-pool8",
+      "passed": true,
+      "metrics": [
+        "cpu_step,2,32,0,122,30,0.61480169399999995",
+        "gpu_step,2,32,0,2760,1129,3.6594923239999999",
+        "cpu_step,2,32,1,32,0,0.194095357",
+        "gpu_step,2,32,1,797,324,0.92320751899999998",
+        "cpu_step,2,32,2,32,0,0.19375513799999999",
+        "gpu_step,2,32,2,797,324,0.92285049900000005",
+        "cpu_step,2,32,3,32,0,0.17391266799999999",
+        "gpu_step,2,32,3,718,292,0.84817569500000001",
+        "cpu_step,2,33,0,126,31,0.63458271499999996",
+        "gpu_step,2,33,0,3468,1415,4.1772370040000002",
+        "cpu_step,2,33,1,33,0,0.19998389599999999",
+        "gpu_step,2,33,1,996,405,1.147569514",
+        "cpu_step,2,33,2,33,0,0.199657842",
+        "gpu_step,2,33,2,996,405,1.1477687839999999",
+        "cpu_step,2,33,3,33,0,0.17859097900000001",
+        "gpu_step,2,33,3,838,341,1.0012633470000001",
+        "metrics,2,443,61,3.1989762851970936e-14,2.1153650717858797e-14,6.6898445291618813e-05,8,156436"
+      ]
+    },
+    {
+      "name": "audit200-bd-pool32",
+      "passed": true,
+      "metrics": [
+        "cpu_step,2,32,0,122,30,0.62254677199999997",
+        "gpu_step,2,32,0,715,294,1.1424407350000001",
+        "cpu_step,2,32,1,32,0,0.19599365899999999",
+        "gpu_step,2,32,1,200,81,0.26217985900000002",
+        "cpu_step,2,32,2,32,0,0.19458033499999999",
+        "gpu_step,2,32,2,200,81,0.26226818099999999",
+        "cpu_step,2,32,3,32,0,0.17453015299999999",
+        "gpu_step,2,32,3,200,81,0.26333343300000001",
+        "cpu_step,2,33,0,126,31,0.64114440800000005",
+        "gpu_step,2,33,0,1423,580,1.9107876029999999",
+        "cpu_step,2,33,1,33,0,0.201450397",
+        "gpu_step,2,33,1,399,162,0.506859069",
+        "cpu_step,2,33,2,33,0,0.20100841999999999",
+        "gpu_step,2,33,2,399,162,0.50717705099999999",
+        "cpu_step,2,33,3,33,0,0.17962262800000001",
+        "gpu_step,2,33,3,320,130,0.43034429499999999",
+        "metrics,2,443,61,3.1989762851970936e-14,2.1153650717858797e-14,6.6898445291618813e-05,32,156436"
+      ]
+    },
+    {
+      "name": "audit200-ros4-pool8",
+      "passed": true,
+      "metrics": [
+        "cpu_step,3,32,0,1115,96,1.60533448",
+        "gpu_step,3,32,0,3493,1457,9.5411721350000001",
+        "cpu_step,3,32,1,587,64,0.85395034700000005",
+        "gpu_step,3,32,1,1837,764,4.9310934780000002",
+        "cpu_step,3,32,2,439,64,0.64148852899999997",
+        "gpu_step,3,32,2,1333,554,3.5702888229999998",
+        "cpu_step,3,32,3,349,64,0.51486472699999997",
+        "gpu_step,3,32,3,1069,444,2.8560522310000001",
+        "cpu_step,3,33,0,1157,99,1.6629403709999999",
+        "gpu_step,3,33,0,4504,1875,12.079041741999999",
+        "cpu_step,3,33,1,607,66,0.88329316499999999",
+        "gpu_step,3,33,1,2320,965,6.1932631220000003",
+        "cpu_step,3,33,2,453,66,0.66248078899999996",
+        "gpu_step,3,33,2,1672,695,4.4536083350000002",
+        "cpu_step,3,33,3,359,66,0.53061308799999996",
+        "gpu_step,3,33,3,1312,545,3.4922968679999999",
+        "metrics,3,5066,585,1.1909800079599705e-14,6.995695435013266e-15,6.689844518875665e-05,8,82356"
+      ]
+    },
+    {
+      "name": "audit200-ros4-pool32",
+      "passed": true,
+      "metrics": [
+        "cpu_step,3,32,0,1115,96,1.6538552980000001",
+        "gpu_step,3,32,0,988,414,3.130637525",
+        "cpu_step,3,32,1,587,64,0.88017912200000004",
+        "gpu_step,3,32,1,484,201,1.456777073",
+        "cpu_step,3,32,2,439,64,0.88552107499999999",
+        "gpu_step,3,32,2,340,141,1.0240453920000001",
+        "cpu_step,3,32,3,349,64,0.84367948400000004",
+        "gpu_step,3,32,3,268,111,0.81183592900000001",
+        "cpu_step,3,33,0,1157,99,2.2617653049999999",
+        "gpu_step,3,33,0,1999,832,5.9082335050000001",
+        "cpu_step,3,33,1,607,66,0.91298315299999999",
+        "gpu_step,3,33,1,967,402,2.8458471639999998",
+        "cpu_step,3,33,2,453,66,0.68285432400000001",
+        "gpu_step,3,33,2,679,282,1.990937899",
+        "cpu_step,3,33,3,359,66,0.54551934599999996",
+        "gpu_step,3,33,3,511,212,1.5033497950000001",
+        "metrics,3,5066,585,1.1909800079599705e-14,6.995695435013266e-15,6.689844518875665e-05,32,82356"
+      ]
+    }
+  ],
+  "owners": {
+    "audit150-be_nr-pool8": {
+      "selected_window": 32,
+      "actual_capacity": 8,
+      "native_capacity": 8,
+      "workspace_bytes": 288480,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit150-be_nr-pool32": {
+      "selected_window": 32,
+      "actual_capacity": 32,
+      "native_capacity": 32,
+      "workspace_bytes": 1153920,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit150-bd-pool8": {
+      "selected_window": 32,
+      "actual_capacity": 8,
+      "native_capacity": 8,
+      "workspace_bytes": 933408,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit150-bd-pool32": {
+      "selected_window": 32,
+      "actual_capacity": 32,
+      "native_capacity": 32,
+      "workspace_bytes": 3733632,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit150-ros4-pool8": {
+      "selected_window": 32,
+      "actual_capacity": 8,
+      "native_capacity": 8,
+      "workspace_bytes": 487968,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit150-ros4-pool32": {
+      "selected_window": 32,
+      "actual_capacity": 32,
+      "native_capacity": 32,
+      "workspace_bytes": 1951872,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit200-be_nr-pool8": {
+      "selected_window": 32,
+      "actual_capacity": 8,
+      "native_capacity": 8,
+      "workspace_bytes": 388320,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit200-be_nr-pool32": {
+      "selected_window": 32,
+      "actual_capacity": 32,
+      "native_capacity": 32,
+      "workspace_bytes": 1553280,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit200-bd-pool8": {
+      "selected_window": 32,
+      "actual_capacity": 8,
+      "native_capacity": 8,
+      "workspace_bytes": 1251488,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit200-bd-pool32": {
+      "selected_window": 32,
+      "actual_capacity": 32,
+      "native_capacity": 32,
+      "workspace_bytes": 5005952,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit200-ros4-pool8": {
+      "selected_window": 32,
+      "actual_capacity": 8,
+      "native_capacity": 8,
+      "workspace_bytes": 658848,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    },
+    "audit200-ros4-pool32": {
+      "selected_window": 32,
+      "actual_capacity": 32,
+      "native_capacity": 32,
+      "workspace_bytes": 2635392,
+      "workspace_budget": 33554432,
+      "device_warp": 32
+    }
+  },
+  "inputs": {
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-collection-v2.json": "0f19fb54a67af664c08f459f3ec28f91eed0c5200823a906fcea6f21fd36f1ce",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-local-receipt-v2.json": "b8045a09262e4771b682db1a5179f7af916b77bffcafc6ea8b8afb6c9f1df804",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-focused-collection-v1.json": "e7b4f48fbeb039d207df52e08efe4c8a554c223bd2512a688b94b151bf68c0a0",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-focused-local-receipt-v1.json": "bd4248c7502ee33a98f4e701fa33b97bffdfb571ceba182e402d8be9ad775cdd",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/record.json": "ce3a80df9ef4d67f88b1cb5ffa6afd209b37d5e94bddd85230500475b72efa41",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/capacity-dispatch.sh": "b9ccd5570200d4a042a4275527ece4274d74f674ed12169157daac8c359832a5",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/capacity-worker.sh": "7532ecca7ab81ad32f9b6c59414d1b24c0b1f0b226a2825e09ec2c02c72741c9",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/capacity_protocol.py": "4e3b655da7279d01dc69e778949f1c7093833c610b05c5cdcf132539b3da38f9",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/collect_capacity.py": "44b7d5f96a37913ecde149c2bb2fe4ebd8586dde3f113f0ae0b7ecaab654e321",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/run_capacity.py": "84502beacea3e11c3f6d565fd8b1e646d2dfc929759719a9321d92a9e371dc41",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/run_focused.py": "f7f449b2ac96e053f496f777abf77e6400b1a562a0f0a348a58ae30d082c3e37",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-capacity-input-v1/trajectory_validation.py": "1e0806d57fc539c72afe3ebd88e3ebd9b1181e8386c48d45442ff168c09173f6",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit150": "0b2ba61e835d050db3ab057a36cb8dc37ee2f70c76e0b5a61f7f25a8b61810a5",
+    "/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-factory-v1/arch_cuda_generated_sparse_burn_audit200": "584d82d8aeaef8df61e292f68cbb8a3e9ad27636ad588c3a0bdf150f18e173dc"
+  },
+  "original_harness_sha256": "551d021ac6ce26378dff6823e135a499cc9bbdc76276a7612a45ef21b5cab205",
+  "original_validator_sha256": "1e0806d57fc539c72afe3ebd88e3ebd9b1181e8386c48d45442ff168c09173f6",
+  "trajectory_matrix_pass": true,
+  "paged_ode_qualified": false,
+  "application_qualified": false,
+  "performance_qualified": false,
+  "release_qualified": false,
+  "completed_harnesses": [
+    "audit150-bd-pool32",
+    "audit150-bd-pool8",
+    "audit150-be_nr-pool32",
+    "audit150-be_nr-pool8",
+    "audit150-ros4-pool32",
+    "audit150-ros4-pool8",
+    "audit200-bd-pool32",
+    "audit200-bd-pool8",
+    "audit200-be_nr-pool32",
+    "audit200-be_nr-pool8",
+    "audit200-ros4-pool32",
+    "audit200-ros4-pool8"
+  ],
+  "planned_harnesses": [
+    "audit150-bd-pool32",
+    "audit150-bd-pool8",
+    "audit150-be_nr-pool32",
+    "audit150-be_nr-pool8",
+    "audit150-ros4-pool32",
+    "audit150-ros4-pool8",
+    "audit200-bd-pool32",
+    "audit200-bd-pool8",
+    "audit200-be_nr-pool32",
+    "audit200-be_nr-pool8",
+    "audit200-ros4-pool32",
+    "audit200-ros4-pool8"
+  ],
+  "diagnostic_numerical_pass": false,
+  "owners_verified": true,
+  "identities_verified_after": true
+}

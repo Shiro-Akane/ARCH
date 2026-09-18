@@ -2,6 +2,18 @@
 
 日期：2026-09-14。依据：用户提供的合作者聊天意见，以及既有 [HPC＋CUDA 总计划](HpcCudaOptimizationPlan.zh-CN.md)。这是执行计划，不是承诺所有规模必定加速或已完成验收。
 
+## 当前交付决定（2026-09-18，优先于下方历史接续计划）
+
+按用户意见，150/200 核素的进一步速度优化后置，先推送其他已验证模块的阶段成果。
+S4 流体/动态 AMR、S5 扩散/aprox13 燃烧/六种耦合已有明确范围内的数值与正式性能证据；
+小规模交叉点、sanitizer 受阻及新合并 main 的 GPU 集成缺口仍明示，见[阶段交付说明](CudaStageDelivery-20260918.zh-CN.md)。
+新窗口 factory 的[容量轮](../../validation/network/results/native-wave-20260917/window-capacity-v1/README.zh-CN.md)
+已 12/12 通过，24 条轨迹／96 对宏步，原数值预算、输入及库未变；两包和 128 个原文件已双端核验。
+这不是性能达标。停止在此交付点，不新启动长轨迹或 64/128 多页实验，不把隔离候选接入生产。
+双方固定分支同步新增记录及验收边界；双方 main 本次不动。
+
+## 历史执行记录
+
 2026-09-18 GPU 接续：[窗口 factory 六组真实燃烧小轨迹](../../validation/network/results/native-wave-20260917/window-focused-v1/README.zh-CN.md)
 已全部通过：12 条存储轨迹、48 对 CPU/GPU 宏步，最大场误差约 1.852e-14，原预算不变。
 worker exit 0，无护栏中止，整设备显存峰值 14,520 MiB；两包、112 个原文件全部逐字节核验并上传本机回执。
