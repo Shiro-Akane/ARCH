@@ -355,12 +355,6 @@ ARCH/
 ├── simulation/               # Case implementations and reusable example inputs
 ├── docs/                     # Guides, reference, physics notes, legal index
 │   ├── README.md             # Documentation overview
-│   ├── guides/               # Build, simulation and issue-reporting guides
-│   ├── physics/              # Model provenance and maintained contracts
-│   ├── releases/             # Release highlights, measurements and package scope
-│   └── development/          # Contributor ownership and acceptance checklist
-│       └── archive/          # Intermediate reviews, not user instructions
-├── validation/               # Module summaries, inputs and opt-in detailed evidence
 ├── tests/                    # Locally compiled checks and small references
 │   ├── host/                 # Host contracts and shared interfaces
 │   ├── cuda/                 # Device execution and CPU/CUDA agreement
