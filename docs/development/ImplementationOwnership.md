@@ -3,8 +3,8 @@
 Audience: contributors. This index describes maintained responsibilities,
 design constraints and verification; user-facing references describe the API.
 
-Companion to [CudaReleaseStandard.md](CudaReleaseStandard.md), established
-2026-09-06. Paths are repository-relative. This is a navigation/ownership index,
+Use alongside the [acceptance checklist](CudaReleaseStandard.md).
+Paths are repository-relative. This is a navigation/ownership index,
 not another implementation or a declaration that validation passed.
 
 ## Authority map
@@ -57,6 +57,10 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 | Dense/sparse factorization | `src/numerics/linalg/`, `cuda/microphysics/CuDssSparseSolver.cpp` | KLU CPU / cuDSS CUDA are intentionally separate; native nonsymmetric BTF/COLAMD, original-matrix residual rejection invalidates native analysis through the existing request message; opaque native errors fail closed |
 | Sparse structure and value indexing | `src/numerics/linalg/CsrPattern.h`, `CsrMatrixView.h` | Host-only symbolic pattern construction and a backend-neutral duck-typed value view; generated structural writes and the shared burn Jacobian supply entries. The CUDA provider owns its numerical buffers and factorization handles. |
 | Sparse equation/unknown equilibration | `src/numerics/linalg/LinearEquilibration.h` | One contiguous/permuted scale/division authority; `cuda/microphysics/SparseEquilibration.cu` only lowers traversal/launch, `CuDssSparseSolver.cpp` owns device workspaces and immutable column-slot metadata. Original CSR/RHS residual acceptance unchanged |
+| Original-system sparse residual | `src/numerics/linalg/SparseResidual.h` | One backward-error gate for `CsrMatrixView` and the provider. Compensated arithmetic improves only the correction RHS; KLU/cuDSS storage, factors and completion remain backend-owned. |
+| Multi-block completion contract | `src/driver/ComputeBackend.h` | Shared input/duplicate validation and ordered fallback. CUDA batches bind views and complete all requested blocks before publication; the shared driver owns stage order and reduction keys. |
+| Reusable exchange capacity | `src/amr/ExchangePlan.h`, `src/cuda/common/DeviceAllocation.h` | Host scratch and device capacity have different storage owners. Reuse does not preserve stale topology views or remove the completion boundary before replacement. |
+| Read-only AMR feature recording | `src/runtime/predictive_amr/PatchFeatureRecorder.h` | Shared criterion/balance labels are observed before regrid, after accepted-state materialization. Disabled recording adds no observer transfers; file failures propagate. The recorder is not an inference or refinement policy. |
 | EOS free-energy math | `src/physics/eos/TabularFreeEnergy.h`, EOS views | One cached Horner-basis tensor and constant-background-subtracted compensated contraction serve Host/CUDA. Optional native F/P/S derivative constraints enter the existing field builder; higher derivatives and validity dependencies use the same five-point stencil contract. Host table owners and CUDA owners/error latch supply data/lifetime only; independent polynomial/constant-background controls do not call production bases for expected values. |
 | Tabular source metadata and dispatch | `TabularSource.h`, `eosdispatch.cpp` | The lightweight source/component contract supports content-based normalized, EOSDriver-total and baryon-ASCII inspection before rank dispatch. Existing Tabular3D/Tabular4D owners consume it; no new runtime EOS variant or backend macro. Source, interpretation and required auxiliary-table identities enter the existing checkpoint fingerprint. Equilibrium nuclear binding cannot be combined with independent kinetic burn/NSE. |
 | Declared tabular coupling eligibility | `EOSDispatcher::validate_coupling`, implemented in `eosdispatch.cpp` | `SolverDispatch` supplies the resolved flux requirement and source metadata before backend construction. Equilibrium sources reject kinetic burn/NSE; declared or equilibrium sources reject composition-only-gamma fluxes and automatic conductivity without electron diagnostics. Positive constant thermal diffusivity remains allowed, and undeclared ordinary tables retain their established behavior. |
@@ -175,8 +179,8 @@ The [scientific acceptance index](../../validation/backend/results/final-accepta
 records 41 required passes and two owner-deferred large-network workloads for
 its identified source. The
 [maintenance record](../../validation/backend/results/maintenance-freeze-20260908/README.md)
-separates the current interface checks from the referenced full scientific and
-source-organization runs. The current optimized CUDA build, all 98 configured
+separates its interface checks from the referenced full scientific and
+source-organization runs. That optimized CUDA build, all 98 configured
 Release tests, ten development-smoke lanes and all four strict
 normal/instrumented restart suites pass, including final source and artifact
 identity checks. The [matched local AMR timing](../../validation/backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
@@ -348,9 +352,10 @@ checker.
   `TimmesNetworkSupport::eval_jacobian`, which uses shared automatic
   differentiation. Decide whether to remove these unused fragments or qualify
   a replacement independently. They must not become a CUDA-only derivative path.
-- Complete audit150/audit200 trajectories and scaling remain the owner-approved
-  larger-system follow-up in the [release standard](CudaReleaseStandard.md).
-  Their absence is not an unclosed local required gate. Native EOSDriver,
+- Production audit150/audit200 correctness and application timing are recorded
+  in the [HPC-CUDA summary](../../validation/backend/results/hpc-cuda-optimization/README.md).
+  Further scaling and experimental sparse-provider performance remain separate
+  larger-system work, not a repeated local build requirement. Native EOSDriver,
   baryon-source/component completion and qualified generated-NSE extensions
   have their own focused controls; those do not inherit historical release
   qualification. Other native-table families and excitation/weak/screened NSE

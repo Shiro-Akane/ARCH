@@ -1,3 +1,0 @@
-S4_PHASE_START timing
-S4_PHASE_END timing exit=0
-{"phase": "timing", "status": "passed", "output": "/home/ubuntu/projects/ARCH-hpc-s4-validation-20260913/build/s4-timing-20260913/observed-timing-threads1/phase"}

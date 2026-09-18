@@ -30,4 +30,7 @@ EOS: see the guide for source-rounding limitations and equilibrium/burn rules.
 
 Both CPU and CUDA views share the exact same implementation for interpolation, derivatives, and temperature recovery. While CUDA owners handle data upload and device failure transport, they strictly do not reimplement the EOS math. Furthermore, the burn layer maintains its own separate first-law coupling to these EOS queries.
 
-You should begin by reviewing the existing [tabular EOS guide](TabularEOS.md), the full configuration [Reference](../../../docs/Reference.md), and the detailed [EOS validation](../../../validation/eos/README.md) protocols. Note that the Helmholtz implementation and its corresponding table rigorously retain their original [Timmes provenance](../../../THIRD_PARTY_NOTICES.md).
+Start with the [tabular EOS guide](TabularEOS.md), configuration
+[Reference](../../../docs/Reference.md) and [EOS validation](../../../validation/eos/README.md).
+The Helmholtz implementation and table retain their
+[Timmes provenance](../../../THIRD_PARTY_NOTICES.md).

@@ -1,3 +1,0 @@
-# Preserve bytes bound by the derived-analysis identity ledger.
-/analyze_regrid_intervals.py -text
-/regrid-intervals-analysis-20260915.json -text

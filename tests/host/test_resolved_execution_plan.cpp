@@ -203,6 +203,8 @@ void test_plain_cpp_contracts()
         expect(network_supports_nse(descriptor.id)
                    == descriptor.supports_nse,
                "NSE capability lookup must derive from network metadata");
+        expect(network_nse_reason(descriptor.id) == descriptor.nse_reason,
+               "NSE reason lookup must derive from the same network metadata");
     }
     expect_supported.template operator()<OdeSolverPolicies>();
     expect_supported.template operator()<DiffusionIntegratorPolicies>();

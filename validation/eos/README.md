@@ -7,10 +7,8 @@ pressure, energy and their derivatives. The tests check both these local
 thermodynamic relations and their use in evolving fluid and burning problems.
 Each reference covers its stated thermodynamic range and table representation.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 EOS verification combines independent thermodynamic references with actual
 hydrodynamic and burning applications. Ideal gas, Helmholtz and normalized
@@ -19,9 +17,9 @@ provide table storage and lifetime management.
 
 ## Coupled application results
 
-The [Release application record](results/application-native-20260907/release-891/evidence.json)
+The Release application record
 passes twelve cases and 96 CPU/CUDA executions. The
-[independent endpoint record](results/application-native-20260907/endpoints-892/evidence.json)
+independent endpoint record
 checks all 24 physical endpoints. Both records identify the same source,
 executable, comparator and dependencies and verify that they stayed unchanged.
 
@@ -108,7 +106,7 @@ the output directory loads an actual EOSDriver file. The current source also
 reads the shared finite-temperature baryon ASCII format used by EOS2/EOS4,
 and completes explicitly missing electron/positron or photon terms for both
 normalized free-energy ranks. Generic CompOSE remains unsupported. The
-[historical source-table assessment](results/tabular-assessment-archive.md)
+historical source-table assessment
 retains the original spacing study and source-data analysis.
 
 ### Native targeted check
@@ -128,14 +126,14 @@ largest energy back-substitution residual was `1.6412292014574082e-14`, below
 the unchanged `2e-12` budget. Under-resolved classification uses source log-energy
 ULPs and `e/(T*cv)` before testing the inverse; it does not certify those cold
 states at the `2e-8` temperature budget. The
-[retained diagnostic log](results/tabular-extension-20260908/native-real-final.log)
+retained diagnostic log
 records this earlier-source observation. This targeted
 interface/conditioning check is not a complete physical qualification of Shen
 matter and does not modify the frozen application records above.
 
 ### Component and raw-baryon extension checks
 
-The [extension record](results/tabular-extension-20260908/README.md) keeps source,
+The extension record keeps source,
 asset and build identities, regression reports, actual CUDA owner execution and
 bounded application checks separate from the historical release above.
 Manufactured 3D/4D tables check every supported missing-component subset,
@@ -167,3 +165,19 @@ exceed a strict half-last-digit rounding budget. ARCH preserves F/P/S constraint
 and does not fit reference constants or overwrite source files to remove this
 disagreement. Full-domain and nonuniform nuclear-EOS applications remain
 separate qualification tasks.
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [Release application record (JSON)](results/application-native-20260907/release-891/evidence.json)
+- [independent endpoint record (JSON)](results/application-native-20260907/endpoints-892/evidence.json)
+- [retained diagnostic log (LOG)](results/tabular-extension-20260908/native-real-final.log)
+
+- [historical source-table assessment](results/tabular-assessment-archive.md)
+- [extension record](results/tabular-extension-20260908/README.md)
+
+</details>

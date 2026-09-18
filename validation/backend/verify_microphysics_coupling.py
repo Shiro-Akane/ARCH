@@ -8,6 +8,7 @@ This is additional coupled coverage, not a substitute for canonical references.
 import argparse
 from datetime import datetime, timezone
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
@@ -55,6 +56,60 @@ def checkpoint_quality(path):
             ('rho','eng','mom_u','mom_v','mom_w','enuc_rate','rhoX')})
 
 
+def checkpoint_enuc_limits(parameter):
+    """Read the next-step ceilings already owned by the checkpoint schema."""
+    import h5py
+    values=runtime.read_parameter_map(parameter)
+    paths=list(parameter.parent.glob(values['base_name']+'_chk_*.h5'))
+    if values.get('restart','false').lower()=='true' and values.get('restart_file'):
+        paths.append(Path(values['restart_file']))
+    limits={}
+    for path in paths:
+        with h5py.File(path) as checkpoint:
+            attributes=checkpoint.attrs
+            limits[int(attributes['step'])+1]=(float(attributes['dt_burn']),
+                                                float(attributes['dt_old']))
+    return limits
+
+
+def active_enuc_steps(transcript, limits, growth):
+    """Match accepted timesteps to saved ENUC ceilings, not Strang half-steps.
+
+    The console's dt_burn column is the executed burn half-step. Its next-step
+    ceiling lives in checkpoint metadata. Match that ceiling at the precision
+    actually printed for dt, and require it to be below CFL, the explicit
+    diffusion scale and the timestep-growth ceiling. This is a control-flow
+    witness; scientific comparisons retain their existing independent budgets.
+    """
+    matches=[]
+    for line in transcript.splitlines():
+        fields=line.split()
+        if len(fields)!=6 or not fields[0].isdigit():
+            continue
+        try:
+            step=int(fields[0])
+            time,dt,hydro,burn_half_step,diffusion=map(float,fields[1:])
+        except ValueError:
+            continue
+        if not all(math.isfinite(v) for v in (time,dt,hydro,burn_half_step,diffusion)):
+            raise ArithmeticError('nonfinite coupled timestep diagnostic')
+        if step not in limits:
+            continue
+        ceiling,previous=limits[step]
+        if not all(math.isfinite(v) for v in (ceiling,previous,growth)) or growth<=0:
+            raise ArithmeticError('invalid checkpoint timestep controller')
+        # DriverControl uses scientific notation; infer its precision instead
+        # of adding a new floating-point acceptance tolerance.
+        mantissa=fields[2].lower().split('e')[0]
+        precision=len(mantissa.split('.')[1]) if '.' in mantissa else 0
+        printed_ceiling=float(format(ceiling,f'.{precision}e'))
+        if step>1 and 0<dt==printed_ceiling<min(hydro,diffusion) and ceiling<previous*growth:
+            matches.append(step)
+    if not matches:
+        raise RuntimeError('no accepted timestep is bound by the ENUC limiter')
+    return matches
+
+
 def balance(validator,initial,final,parameter):
     import nse_reference
     data=nse_reference.nuclear_data('aprox13')
@@ -85,10 +140,24 @@ def main():
     parser.add_argument('--case',action='append',default=[])
     parser.add_argument('--restart',action='store_true',help='replay original cross-backend split-run protocol on all coupled inputs')
     parser.add_argument('--all-transport',action='store_true',help='also enable physical Helm thermal/viscous transport, without constant coefficients')
+    parser.add_argument('--active-enuc-factor',type=float,
+        help='positive ENUC factor for a short restart witness; requires --restart and --terminal-time')
+    parser.add_argument('--terminal-time',type=float,
+        help='common physical endpoint for the active-ENUC restart witness')
     args=parser.parse_args()
+    if args.active_enuc_factor is not None and (not args.restart or
+            not math.isfinite(args.active_enuc_factor) or args.active_enuc_factor<=0 or
+            args.terminal_time is None):
+        parser.error('--active-enuc-factor requires --restart, --terminal-time and a finite positive value')
+    if args.terminal_time is not None and (args.active_enuc_factor is None or
+            not math.isfinite(args.terminal_time) or args.terminal_time<=0):
+        parser.error('--terminal-time requires --active-enuc-factor and a finite positive value')
     build,out=args.build_dir.resolve(),args.output_dir.resolve()
     out.mkdir(parents=True,exist_ok=False)
     selected=runtime.select_cases(dict(cases=cases(args.all_transport)),args.case)
+    if args.active_enuc_factor is not None:
+        for case in selected:
+            case['overrides']['enucDtFactor']=repr(args.active_enuc_factor)
     arch,validator=build/'bin/ARCH',build/'arch_cuda_single_level_validation'
     identity_args=dict(arch=arch,checkpoint_validator=validator,source_root=ROOT,build_dir=build)
     before=provenance.capture(**identity_args)
@@ -111,6 +180,8 @@ def main():
                     '--arch',str(arch),'--checkpoint-validator',str(validator),
                     '--source-root',str(ROOT),'--build-dir',str(build),'--problem',case['problem'],
                     '--input',str(parameter),'--output-root',str(directory/'runs')]
+                if args.terminal_time is not None:
+                    command.extend(['--terminal-time',repr(args.terminal_time)])
                 row=dict(id=case['id'],command=command,parameter=provenance.file_identity(parameter),status='running')
                 report['cases'].append(row)
                 save()
@@ -123,6 +194,18 @@ def main():
                 for lane in [*evidence['continuous'].values(),*evidence['sources'].values(),*evidence['resumed']]:
                     runtime.validate_resolved_plan(Path(lane['plan']),lane['backend'],case['plan_policy'])
                     checkpoint_quality(Path(lane['checkpoint']))
+                    if args.active_enuc_factor is not None:
+                        par=Path(lane['parameter'])
+                        row.setdefault('active_enuc',[]).append(dict(lane=lane['name'],
+                            steps=active_enuc_steps((par.parent/'arch.stdout').read_text(),
+                                checkpoint_enuc_limits(par),
+                                float(runtime.read_parameter_map(par)['tstep_change_factor']))))
+                        if lane['name'].endswith('_continuous'):
+                            regrids=runtime.read_regrid_metrics(
+                                par.with_name(par.stem+'_regrid.tsv'),lane['backend'],lane['steps'])
+                            if not any(r['macro_step']>0 and r['topology_changed'] for r in regrids['records']):
+                                raise RuntimeError('active ENUC witness did not change runtime topology')
+                            row.setdefault('active_regrids',{})[lane['backend']]=regrids
                     if lane['backend']!='cuda': continue
                     start=lane.get('restored_from',{}).get('step',0)
                     order=1 if case['overrides']['diff_integrator']=='RKL1' else 2

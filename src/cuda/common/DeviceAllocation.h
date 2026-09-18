@@ -80,8 +80,12 @@ private:
     std::size_t count_ = 0;
 };
 
-// Capacity-only storage. The enclosing stream owner must drain consumers before
-// reserve/reuse/destruction; no view, topology or generation is cached here.
+/**
+ * @brief Reuse allocation capacity without caching topology-dependent views.
+ * The stream owner must finish consumers before growth, reuse or destruction.
+ * Growth allocates before replacing storage, preserving the old allocation if
+ * allocation fails. A zero-size reservation is a no-op, not a deallocation.
+ */
 template <class T>
 class ReusableDeviceAllocation {
 public:

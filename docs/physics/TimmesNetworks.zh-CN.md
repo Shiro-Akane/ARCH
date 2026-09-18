@@ -210,7 +210,7 @@ HelmEos::evaluate
   -> ConductivityMath::compute_stellar_conductivity
 ```
 
-[扩散系数对齐报告](DiffusionCoefficientAlignment.zh-CN.md)记录了 `aprox19`、10,000 个以上随机状态的十六进制浮点比较；测试范围内的最大绝对误差和最大相对误差均为 `0.0`。第 5 节的反应网络 ODE 验证覆盖独立的 RHS、Jacobian 和 LHS 路径。
+[扩散系数对齐报告](../development/archive/DiffusionCoefficientAlignment.zh-CN.md)记录了 `aprox19`、10,000 个以上随机状态的十六进制浮点比较；测试范围内的最大绝对误差和最大相对误差均为 `0.0`。第 5 节的反应网络 ODE 验证覆盖独立的 RHS、Jacobian 和 LHS 路径。
 
 ## 9. 历史 CPU 求解器对照
 

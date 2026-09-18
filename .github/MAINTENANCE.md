@@ -6,11 +6,20 @@ Requiring owner approval is a separate GitHub branch-rule setting; this file
 does not enable that setting or grant repository access. See
 [GitHub's code-owner documentation](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners).
 
-The security reporting instructions live at the repository root in
-[SECURITY.md](../SECURITY.md) and [SECURITY.zh-CN.md](../SECURITY.zh-CN.md).
+The [documentation overview](../docs/README.md) is the reader's starting point.
+The research-computing and reporting guides live under task-oriented documentation:
+[Reporting.md](../docs/guides/Reporting.md) and
+[Reporting.zh-CN.md](../docs/guides/Reporting.zh-CN.md).
+They cover ordinary build and numerical feedback, research-data protection and
+private coordination for problems affecting files, credentials or shared systems.
+They are ordinary guides rather than an automatically discovered `SECURITY.md`
+policy, so GitHub does not generate a repository-file Security tab from them.
+The README links to the documentation overview; GitHub's file tabs cannot be
+renamed by changing a Markdown heading. Private reporting is a separate GitHub
+setting, as described in the [reporting documentation](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/report-privately).
+Moving the guide changes neither that setting nor branch rules or code scanning.
 The [contributor guide](../docs/development/README.md) explains implementation
-ownership and review expectations. These policy files do not enable repository
-security settings.
+ownership and review expectations.
 
 ## Continuous integration
 

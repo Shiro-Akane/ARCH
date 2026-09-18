@@ -10,24 +10,20 @@
 数值答案本身是否正确，两类比较各有作用，不能互相替代。
 
 CPU/CUDA 发布范围已通过数值、应用、回归、设备安全、持续运行和资源检查。
-下表保留实际受测的源码、程序及科学数据身份；
-[源码交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/)
-统一保存最终证据清单和源码资产核对记录。
+下表保留实际受测的源码、程序及科学数据身份。详细证据集中放在各页末尾；
+模块链接首先展示测试问题、方法和结果的说明，不直接打开原始数据。
 
-[源码组织与构建审查](backend/results/maintenance-freeze-20260908/README.zh-CN.md)
-记录 runtime 目录组织、文档及源码等价性，并单列构建检查。
-下表中的科学结果保留原有受测身份。
+[CPU/CUDA 性能报告](backend/results/hpc-cuda-optimization/README.md)记录了 1,188 次
+微物理运行和 1,155 次通过的比较，并汇总流体／AMR 与大网络的测量结果。
+在受测 H100-20C vGPU 上，aprox13 多物理 AMR 耦合算例最高取得 5.08 倍端到端加速；
+小算例和已测的 150/200 核素应用仍由 CPU 占优。
+[后端指南](../docs/CudaBackendStatus.zh-CN.md#按性能选择后端)说明收益如何随规模变化。
 
-当前分发清理保留原有数值实现和注册路由，优化 CUDA 增量构建及全部 289 项 Python
-控制已通过，全部 98 项已配置 Release 测试、十条程序短测及四组普通／插桩严格重启
-复验也均通过。[当前计划](../docs/development/CudaReleaseStandard.md#active-execution-contract)
-记录所有者授权合入所需的已完成技术检查。
-[维护记录](backend/results/maintenance-freeze-20260908/README.zh-CN.md)
-将这些当前检查与下表的科学测量分开记录。
-
-[本机同配置 AMR 计时](backend/results/maintenance-freeze-20260908/README.zh-CN.md#本机同配置-amr-计时)
-在两档 Sedov 上均通过场、守恒及动态拓扑检查；CUDA 端到端耗时分别为本机八线程
-CPU 的 3.30 和 3.43 倍。功能一致不意味着必然加速，选择后端时应对照自己的工作负载。
+集成回归记录补充了 352 项工具测试、
+12 项 CPU/CUDA 定向测试、24 次采集器运行、12 条实际触发 ENUC 限步的 AMR／重启路径
+以及 10 次内存／竞争检查，均已通过。这些检查覆盖最终接入改动，与科学和性能测量分开
+记录；原测量继续保留各自的源码与程序身份。不同源码与硬件的结果不能直接当作受控性能对照；
+选择后端时，应测量自己的代表性算例。
 
 Timmes 材料已明确获得自由使用与重新分发授权，具体见
 [第三方说明](../THIRD_PARTY_NOTICES.zh-CN.md)。这项发布行政事项与已完成的技术测试分别记录。
@@ -51,9 +47,9 @@ Timmes 材料已明确获得自由使用与重新分发授权，具体见
 | 组分扩散 | 三档分辨率的 RKL1/RKL2 应用；RKL2 二阶空间收敛 | [diffusion](diffusion/README.zh-CN.md) |
 | 外部重力 | RK2/RK3 解析源项平衡，含 AMR 和 RKL2 组分扩散耦合 | [gravity](gravity/README.zh-CN.md) |
 | 内置燃烧 | 六次 aprox13 应用、十二个 Host 网络/ODE 时间精度控制及单独的 CUDA 策略检查 | [burn](burn/README.zh-CN.md) |
-| 动态 AMR | 十个笛卡尔与 24 个曲线坐标案例；守恒迁移及热／黏性／组分耦合，以及笛卡尔三维、圆柱／球坐标二维的完整运行期细化／粗化循环 | [AMR](amr/README.zh-CN.md)、[三维拓扑循环](amr/results/dynamic-3d-final-20260907/release-919/evidence.json)、[曲线二维循环](amr/results/dynamic-curved-final-20260907/release-923/evidence.json) |
-| 三维 AMR 插桩 | memcheck 与 racecheck 各通过七次 CUDA 执行，覆盖完整八子块细化／粗化／再次细化；报告完整且无报错，原有场与守恒检查通过 | [memcheck](amr/results/dynamic-3d-final-20260907/memcheck-914/evidence.json)、[racecheck](amr/results/dynamic-3d-final-20260907/racecheck-915/evidence.json) |
-| 曲线耦合 AMR 插桩 | memcheck 与 racecheck 各通过两次混合层级网格上的三维球坐标热／黏性／组分 CUDA 运行；报告完整且无报错，原有五阶段 RKL2、场与物理体积守恒检查通过 | [memcheck](amr/results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)、[racecheck](amr/results/curved-native-20260907/racecheck-906/backend-validation-evidence.json) |
+| 动态 AMR | 十个笛卡尔与 24 个曲线坐标案例；守恒迁移及热／黏性／组分耦合，以及笛卡尔三维、圆柱／球坐标二维的完整运行期细化／粗化循环 | [AMR](amr/README.zh-CN.md) |
+| 三维 AMR 插桩 | memcheck 与 racecheck 各通过七次 CUDA 执行，覆盖完整八子块细化／粗化／再次细化；报告完整且无报错，原有场与守恒检查通过 | [AMR 设备检查](amr/README.zh-CN.md) |
+| 曲线耦合 AMR 插桩 | memcheck 与 racecheck 各通过两次混合层级网格上的三维球坐标热／黏性／组分 CUDA 运行；报告完整且无报错，原有五阶段 RKL2、场与物理体积守恒检查通过 | [AMR 设备检查](amr/README.zh-CN.md) |
 | EOS | 十二个规范化表应用案例和 24 个物理终点，以及独立 Helmholtz 和制造热力学参考 | [EOS](eos/README.zh-CN.md) |
 | HDF5/restart | 从中间和终态检查点恢复的四个后端方向；原始组分、控制器与输出连续性 | [restart](restart/README.zh-CN.md) |
 | 燃烧／AMR 重启插桩 | memcheck 与 racecheck 各通过六次实际 CUDA 运行及全部九次严格比较；安全报告完整且无报错，原生场、控制器和输出阶段检查通过 | [重启安全记录](restart/README.zh-CN.md#发布候选版本已完成的检查) |
@@ -61,24 +57,24 @@ Timmes 材料已明确获得自由使用与重新分发授权，具体见
 | 内置 NSE | 十六个应用案例与 32 个物理终点，包含独立平衡态及源项能量检查 | [burn](burn/README.zh-CN.md) |
 | 几何 | 十二组高精度度量参考；热／组分／黏性空间收敛与径向原点稳定性 | [AMR](amr/README.zh-CN.md#独立几何与扩散检查) |
 | 持续运行 | 500 步流体、100 步扩散 AMR；各重启链十二个循环；72 次精确原生燃烧状态回放及七次固定时刻燃烧比较 | [AMR](amr/README.zh-CN.md#持续重网格与续算)、[restart](restart/README.zh-CN.md#持续原生状态恢复) |
-| 核心编译 | 保留优化的 ARCH 冷构建、无改动检查、紧凑路径增量构建及相同工作的串行／并行对照；重型任务上限 2、总并发上限 4 | [构建测量](backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md) |
-| 声明规模的内存容量 | 重网格迁移、16,384 行 cuDSS 矩阵、生成网络燃烧及 AMR 应用；观测到的动态分配全部释放 | [容量测量](backend/results/device-memory-first-law-20260907/README.zh-CN.md) |
-| 专项后端设备检查 | memcheck 与 racecheck 各通过 23 条完整路径，包含弱反应热力学与真实生成网络 cuDSS 燃烧；内存及竞争报告均无报错 | [设备检查记录](backend/results/final-first-law-20260907/README.zh-CN.md) |
+| 核心编译 | 保留优化的 ARCH 冷构建、无改动检查、紧凑路径增量构建及相同工作的串行／并行对照；重型任务上限 2、总并发上限 4 | [详细构建记录](#详细复核记录) |
+| 声明规模的内存容量 | 重网格迁移、16,384 行 cuDSS 矩阵、生成网络燃烧及 AMR 应用；观测到的动态分配全部释放 | [详细容量记录](#详细复核记录) |
+| 专项后端设备检查 | memcheck 与 racecheck 各通过 23 条完整路径，包含弱反应热力学与真实生成网络 cuDSS 燃烧；内存及竞争报告均无报错 | [详细设备检查](#详细复核记录) |
 
-[均匀网格应用矩阵](backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+均匀网格应用矩阵
 包含 22 个案例、180 次 CPU/CUDA 执行及 90 次比较。
-[生成网络矩阵](network/results/runtime-native-20260907/release-875/backend-validation-evidence.json)
+生成网络矩阵
 另包含六个案例、48 次执行及 24 次比较，并在 audit31 的 32 方程系统中实际调用
 CPU KLU 与 GPU cuDSS。各模块摘要链接独立科学检查，并保留原定预算。
 
-[完整 Release 回归](backend/results/final-first-law-20260907/release-regression-895/evidence.json)
-通过 98 项测试，[纯 CPU 回归](backend/results/final-first-law-20260907/cpu-regression-897/evidence.json)
-通过 31 项。[完整 Debug 回归](backend/results/final-first-law-20260907/debug-regression-910/evidence.json)
+完整 Release 回归
+通过 98 项测试，纯 CPU 回归
+通过 31 项。完整 Debug 回归
 也已通过全部 98 项，没有跳过项。专项 memcheck 与 racecheck 各通过全部 23 条路径。
 其中稀疏测试均覆盖三种 ODE、两种存储规模与四段推进，保留原有数值预算。
 普通科学运行和 memcheck 使用完整 `1e-10 s` 区间；racecheck 单独使用 `1e-12 s`
-观察区间，短插桩运行不替代完整科学轨迹。上表同时链接主机／设备容量与保留优化的
-核心构建测量。
+观察区间，短插桩运行不替代完整科学轨迹。主机／设备容量与保留优化的核心构建测量
+可在下方详细记录中查看。
 
 ## 误差约定
 
@@ -122,7 +118,7 @@ CPU/CUDA 比较使用相同算例源码、参数、参考和指标定义。物�
 
 已完成的检查在同一冻结源码与科学数据集上覆盖下列区域，并注明 Debug/Release 程序、
 依赖库与比较工具的身份。
-[交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/)
+交付审阅
 统一记录这些证据和受审源码资产。保留的每份结果都注明实际受测源码，当前维护检查
 与这些科学运行分开记录。测试通过不自动表示源码已发布或第三方再分发授权已确认。
 
@@ -154,3 +150,34 @@ ARCH 的[表数据契约](../src/physics/eos/TabularEOS.zh-CN.md)包含规范化
 已有结果和复现输入见[网络验证](network/README.zh-CN.md)。
 
 新记录使用 [CASE_TEMPLATE.zh-CN.md](CASE_TEMPLATE.zh-CN.md)。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [源码交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/README.zh-CN.md)：详细证据清单和源码资产检查。
+- [集成审阅](../docs/development/HpcCudaIntegration.md)：代码调整、测试选择及精确身份。
+- [维护与构建记录](backend/results/maintenance-freeze-20260908/README.zh-CN.md)：特定源码的分发、重启检查和较早的 RTX 3060 Ti 计时。优化前的计时不用于推算当前代码性能。
+
+- [集成回归记录 (JSON)](backend/results/hpc-cuda-optimization/integration.json)
+- [三维拓扑循环 (JSON)](amr/results/dynamic-3d-final-20260907/release-919/evidence.json)
+- [曲线二维循环 (JSON)](amr/results/dynamic-curved-final-20260907/release-923/evidence.json)
+- [memcheck (JSON)](amr/results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
+- [racecheck (JSON)](amr/results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+- [memcheck (JSON)](amr/results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
+- [racecheck (JSON)](amr/results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+- [均匀网格应用矩阵 (JSON)](backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [生成网络矩阵 (JSON)](network/results/runtime-native-20260907/release-875/backend-validation-evidence.json)
+- [完整 Release 回归 (JSON)](backend/results/final-first-law-20260907/release-regression-895/evidence.json)
+- [纯 CPU 回归 (JSON)](backend/results/final-first-law-20260907/cpu-regression-897/evidence.json)
+- [完整 Debug 回归 (JSON)](backend/results/final-first-law-20260907/debug-regression-910/evidence.json)
+
+- [构建测量](backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
+- [容量测量](backend/results/device-memory-first-law-20260907/README.zh-CN.md)
+- [设备检查记录](backend/results/final-first-law-20260907/README.zh-CN.md)
+- [交付审阅](backend/results/final-acceptance-20260907/release-73a9cf50/)
+
+</details>

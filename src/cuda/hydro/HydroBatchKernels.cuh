@@ -1,4 +1,14 @@
-/** Cross-block traversal of the same per-thread Hydro work as scalar launches. */
+/**
+ * @file HydroBatchKernels.cuh
+ * @brief Execute a bounded wave of blocks through the shared hydro operators.
+ *
+ * Grid y selects a block; grid x and the thread index select its cells/faces.
+ * The runtime owns all bindings, state slots and scratch until stream completion.
+ * Each wave clears increments, evaluates directional fluxes, registers them in
+ * route order, adds sources and performs the common integrator update. Species
+ * scratch shared between blocks requires single-block waves to prevent aliasing.
+ * These launches do not publish state or alter the scheduler's stage weights.
+ */
 #pragma once
 
 #include "HydroIntegratorPolicies.cuh"

@@ -69,7 +69,7 @@ def main():
         command=['ctest','--test-dir',str(build),'--output-on-failure','--no-tests=error',
                  '--parallel','1','--timeout','600','-R',expression]
     else:
-        command=[sys.executable,str(ROOT/'validation/backend/results/hpc-cuda-optimization/S4/validation-20260913/verify_s4.py'),
+        command=[sys.executable,str(ROOT/'validation/backend/verify_runtime_matrix.py'),
             '--source-root',str(ROOT),'--build-dir',str(build),'--output-root',str(out/'results'),'--phase',a.phase]
     env=dict(os.environ,OMP_NUM_THREADS='8',OMP_DYNAMIC='FALSE',OMP_PLACES='cores',OMP_PROC_BIND='close')
     report.update(command=command,environment={k:env[k] for k in ('OMP_NUM_THREADS','OMP_DYNAMIC','OMP_PLACES','OMP_PROC_BIND')})

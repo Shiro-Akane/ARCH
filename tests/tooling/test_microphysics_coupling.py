@@ -14,6 +14,20 @@ spec.loader.exec_module(module)
 
 
 class CoupledMicrophysicsTests(unittest.TestCase):
+    def test_active_enuc_requires_binding_accepted_step(self):
+        limits={2:(1.234567e-16,1e-16)}
+        line='2 2.234567e-16 1.23457e-16 1e-8 6.172835e-17 1e-5'
+        self.assertEqual(module.active_enuc_steps(line,limits,2),[2])
+        for text in ('', '0 0 2e-16 1e-8 2e-16 1e-5',
+                     '2 1e-16 2e-16 1e-8 1e-16 1e-5',
+                     '2 1e-16 2e-16 nan 1e-16 1e-5'):
+            with self.assertRaises((RuntimeError,ArithmeticError)):
+                module.active_enuc_steps(text,limits,2)
+        with self.assertRaises(RuntimeError):
+            module.active_enuc_steps(line,limits,1)
+        with self.assertRaises(RuntimeError):
+            module.active_enuc_steps(line,{},2)
+
     def test_matrix_has_all_methods_and_unchanged_restart_budget(self):
         cases=module.cases()
         self.assertEqual(len(cases),6)

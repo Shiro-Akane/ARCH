@@ -1,0 +1,278 @@
+{
+  "schema": 1,
+  "recorded_utc": "2026-09-18T09:41:43.845566+00:00",
+  "scope": "local curation and targeted integration checks; not a repeated scientific or performance campaign",
+  "source": {
+    "base_commit": "3dab4e25f9877b6eb2112bbf59a8264618e8862a",
+    "worktree_sha256": "a3807aabace447c178c60332d1c55391f5ea29e3914f23310c5349390cdd69c2",
+    "identity_scope": "code-and-validation-inputs-v1",
+    "changes_committed": false
+  },
+  "artifact_sha256": {
+    "arch_sha256": "bd8384adc30495ce9dc9a824063220b0c336f662eab19c8aa42dafbddce83951",
+    "checkpoint_validator_sha256": "16894a2de93ed0d6ed3ef7cc356f9b69b9ed4f01178f1a3dda79d20ef38bf5aa",
+    "arch_cuda_amr_composition": "9c158d375a16f1704c11f29f95f38b2033de6e1a7ddaad2c1e6c123b749ccd1d",
+    "arch_cuda_multiblock_hydro": "35a331e2e115934abb90eb70985909c618f62b7fdcb6338d1cdcba572d5b9d33",
+    "arch_cuda_multiblock_burn": "9e06c195ebb157c833be0c3047e454e680cfe1489837f1b5e8f586045a5235f1",
+    "arch_cuda_multiblock_diffusion": "abbea6af5a14ed7706c5091f638258224df2bb861f0cc9651f352d7ac29ed585",
+    "arch_cuda_cudss_sparse_solver": "dac21ff86408792e42bb450d44d53746fc41233c142c35899ded513b4bcb36c8"
+  },
+  "build": {
+    "configuration": "Debug",
+    "cuda": "12.3",
+    "gcc": "12",
+    "cuda_architecture": 86,
+    "total_jobs": 2,
+    "heavy_cuda_jobs": 1,
+    "core_elapsed_seconds": 4530.76,
+    "final_incremental_seconds": 12.059,
+    "observer_repair_incremental_seconds": 76.243,
+    "core_min_available_kib": 3381676,
+    "core_peak_owned_rss_kib": 3876944,
+    "sampled_peak_swap_kib": 0,
+    "resource_guard_stopped": false
+  },
+  "checks": {
+    "tooling": {
+      "passed": 352,
+      "skipped": 0
+    },
+    "ctest": {
+      "passed": 12,
+      "failed": 0,
+      "names": [
+        "predictive_amr_recorder",
+        "sparse_ode_continuation",
+        "sparse_residual",
+        "amr_operation_plans",
+        "resolved_execution_plan",
+        "compute_backend",
+        "cuda_cudss_sparse_solver",
+        "cuda_amr_composition",
+        "cuda_multiblock_hydro",
+        "cuda_multiblock_diffusion",
+        "cuda_multiblock_burn",
+        "cuda_multiblock_diffusion_global_species"
+      ]
+    },
+    "documentation": {
+      "maintained_files": 153,
+      "missing_local_targets": 0
+    },
+    "recorder": {
+      "runs": 24,
+      "comparisons": 12,
+      "backends": [
+        "cpu",
+        "cuda"
+      ],
+      "all_datasets_exact": true
+    },
+    "coupled_restart": {
+      "case": "coupled_bd_rkl2_all_transport",
+      "runs": 12,
+      "terminal_time": 4.5e-16,
+      "enuc_factor": 1e-11,
+      "active_enuc": [
+        {
+          "lane": "cpu_continuous",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_continuous",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_source",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_source",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_to_cpu",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_to_cuda",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_to_cuda",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cuda_to_cpu",
+          "steps": [
+            3
+          ]
+        },
+        {
+          "lane": "cpu_to_cpu_terminal",
+          "steps": [
+            4
+          ]
+        },
+        {
+          "lane": "cuda_to_cuda_terminal",
+          "steps": [
+            4
+          ]
+        },
+        {
+          "lane": "cpu_to_cuda_terminal",
+          "steps": [
+            4
+          ]
+        },
+        {
+          "lane": "cuda_to_cpu_terminal",
+          "steps": [
+            4
+          ]
+        }
+      ],
+      "comparisons": [
+        {
+          "route": "cpu_vs_cuda_continuous",
+          "comparison_mode": "physical-time",
+          "passed": true
+        },
+        {
+          "route": "cpu_to_cpu",
+          "comparison_mode": "reproducibility",
+          "passed": true
+        },
+        {
+          "route": "cuda_to_cuda",
+          "comparison_mode": "reproducibility",
+          "passed": true
+        },
+        {
+          "route": "cpu_to_cuda",
+          "comparison_mode": "physical-time",
+          "passed": true
+        },
+        {
+          "route": "cuda_to_cpu",
+          "comparison_mode": "physical-time",
+          "passed": true
+        },
+        {
+          "route": "cpu_to_cpu_terminal",
+          "comparison_mode": "reproducibility",
+          "passed": true
+        },
+        {
+          "route": "cuda_to_cuda_terminal",
+          "comparison_mode": "reproducibility",
+          "passed": true
+        },
+        {
+          "route": "cpu_to_cuda_terminal",
+          "comparison_mode": "physical-time",
+          "passed": true
+        },
+        {
+          "route": "cuda_to_cpu_terminal",
+          "comparison_mode": "physical-time",
+          "passed": true
+        }
+      ]
+    },
+    "cuda_instrumentation": [
+      {
+        "test": "arch_cuda_amr_composition",
+        "tool": "memcheck",
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "test": "arch_cuda_multiblock_hydro",
+        "tool": "memcheck",
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "test": "arch_cuda_multiblock_burn",
+        "tool": "memcheck",
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "test": "arch_cuda_multiblock_diffusion",
+        "tool": "memcheck",
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "test": "arch_cuda_cudss_sparse_solver",
+        "tool": "memcheck",
+        "summaries": [
+          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+          "ERROR SUMMARY: 0 errors"
+        ]
+      },
+      {
+        "test": "arch_cuda_amr_composition",
+        "tool": "racecheck",
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      {
+        "test": "arch_cuda_multiblock_hydro",
+        "tool": "racecheck",
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      {
+        "test": "arch_cuda_multiblock_burn",
+        "tool": "racecheck",
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      {
+        "test": "arch_cuda_multiblock_diffusion",
+        "tool": "racecheck",
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      },
+      {
+        "test": "arch_cuda_cudss_sparse_solver",
+        "tool": "racecheck",
+        "summaries": [
+          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+        ]
+      }
+    ]
+  },
+  "evidence_storage": "Detailed local reports, failed attempts and HDF5 trajectories remain in the ignored build-integration directory.",
+  "accepted_external_campaign": "See README.md for the collaborator source-pinned scientific and performance evidence; it was not rerun locally."
+}

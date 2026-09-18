@@ -1,9 +1,8 @@
-# Physics notes and numerical investigations
+# Physics model notes
 
 For supported models and runtime choices, read the [Reference](../Reference.md).
 For measured accuracy, use the [Validation index](../../validation/README.md).
-This directory explains model origins and preserves the reasoning behind
-numerical changes.
+This directory explains model origins and links the maintained model contracts.
 
 ## Model provenance
 
@@ -15,21 +14,23 @@ numerical changes.
   [physical constants](../../src/physics/constant/README.md) are maintained beside
   their implementations; this index links those contracts rather than copying them.
 
-## Historical numerical investigations
+## Accuracy and implementation
 
-The following notes preserve dated diagnostics and intermediate tasks. Please interpret any open or pending statements within their proper historical context; for the final acceptance results, refer to the linked module summaries.
-
-- [Curvilinear metric review](CurvilinearMetricReview.md): derivation and repair
-  history for finite-volume measures, geometry sources and diffusion. Later
-  coverage: [AMR and geometry](../../validation/amr/README.md).
-- [AMR indicator noise review](AmrIndicatorNoiseReview.md): roundoff-sensitive
-  indicator analysis and shared-policy decisions. Later coverage:
-  [AMR](../../validation/amr/README.md).
-- [Diffusion coefficient alignment](DiffusionCoefficientAlignment.md)
-  ([Chinese](DiffusionCoefficientAlignment.zh-CN.md)): the recorded comparison
-  with the original coefficient definitions. Later coverage:
-  [diffusion](../../validation/diffusion/README.md).
+- [AMR and geometry validation](../../validation/amr/README.md) explains
+  conservative transfers, coordinate measures and refinement checks.
+- [Diffusion validation](../../validation/diffusion/README.md) describes transport
+  reference problems, convergence and measured errors.
 
 Implementation ownership remains in the
 [shared-authority map](../development/ImplementationOwnership.md); these notes
 are not a second mathematical implementation or a separate release checklist.
+
+<details>
+<summary>Historical derivations and repair investigations — contributor reference</summary>
+
+Intermediate geometry, refinement-indicator and diffusion-coefficient reviews
+are preserved in the [development archive](../development/archive/README.md).
+Read their observations in the context of the identified source; use the
+validation summaries above for accepted results.
+
+</details>

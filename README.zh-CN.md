@@ -1,6 +1,6 @@
 # ARCH：自适应反应流 CUDA 流体力学框架
 
-英文原文：[README.md](README.md)。
+英文原文：[README.md](README.md) · [文档总览](docs/README.zh-CN.md)
 
 [![C++20](https://img.shields.io/badge/standard-C%2B%2B20-blue.svg)]()
 [![Build](https://img.shields.io/badge/build-CMake-orange.svg)]()
@@ -37,9 +37,12 @@ CPU 与 CUDA 后端均完整支持以下功能。当前的发布版本已顺利�
 
 检查点（Checkpoint）保存了无缝恢复模拟所需的所有状态信息（包括网格和流体组分）。由于 CPU 和 CUDA 后端使用完全相同的文件格式，你可以自由地在不同的后端之间进行重启。[参考手册](docs/Reference.zh-CN.md)详细列出了保存的字段，以及恢复模拟时必须保持一致的物理设置。
 
-较小的 AMR 工作负载可以先使用 CPU，再通过代表性算例判断 CUDA 是否更快。
-[后端性能指南](docs/CudaBackendStatus.zh-CN.md#按性能选择后端)说明了已测的 CPU/CUDA
-对照结果及其适用范围。
+**GPU 在已测的多物理 AMR 工作负载中，最高提供约 5 倍加速。**
+采用 aprox13 网络与 Helmholtz 状态方程的流体、核燃烧、完整输运及动态 AMR
+耦合算例，在 H100-20C 20 GiB vGPU 上取得了 5.08 倍的最高端到端加速比，
+对照为该轮实测最快的 CPU 配置。收益随规模和物理配置变化；小算例以及已测的
+150／200 核素稀疏网络仍可能在 CPU 上更快。具体耗时、规模变化和后端选择建议见
+[后端性能指南](docs/CudaBackendStatus.zh-CN.md#按性能选择后端)。
 
 ## 已实现功能
 
@@ -245,14 +248,14 @@ linear_solver = Auto
 [网络验证](validation/network/README.zh-CN.md)。完整契约和生成器要求见
 [研究与 API 参考](docs/Reference.zh-CN.md)。
 
-## 文档路径
+## 文档总览
+
+[文档总览](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与许可信息。
 
 [模拟算例指南](docs/guides/SimulationCase.zh-CN.md)提供从首次运行、核心 CFD 参数到新建 `Setup`/`Init` 算例的连续学生学习路径。
 
 参数名、可接受取值、API 签名、输出格式和扩展要求统一收录在可搜索的
 [研究与 API 参考](docs/Reference.zh-CN.md)中。
-
-[文档索引](docs/README.zh-CN.md)按读者和主题归纳学习指南、物理说明、API 参考与法律文件入口。
 
 [CUDA 与 GPU-AMR 指南](docs/CudaBackendStatus.zh-CN.md)介绍支持的功能、后端职责与求解器选择。
 
@@ -261,8 +264,9 @@ linear_solver = Auto
 复现与审阅使用，不是首次运行前必须完成的额外配置步骤。修改源码的开发者还应
 阅读[贡献者指南](docs/development/README.md)。
 
-发现疑似安全漏洞时，请先按[安全报告指南](SECURITY.zh-CN.md)联系维护者，不要直接公开
-漏洞细节。普通构建问题和数值差异可以提交到 [GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues)。
+构建、运行和数值问题可以在 [GitHub Issues](https://github.com/Shiro-Akane/ARCH/issues) 中讨论。
+[科研计算与问题反馈指南](docs/guides/Reporting.zh-CN.md)说明了反馈时应提供的信息，
+以及涉及研究数据或需要私下协调的问题如何处理。
 
 ## 仓库结构
 
@@ -274,8 +278,6 @@ linear_solver = Auto
 ARCH/
 ├── README.md                 # 英文入口与首次运行，规范文本
 ├── README.zh-CN.md           # 中文辅助入口
-├── SECURITY.md               # 安全问题报告说明
-├── SECURITY.zh-CN.md         # 中文安全报告指南
 ├── .gitleaks.toml            # 共用凭据扫描规则
 ├── .github/                  # 审阅归属、维护说明与持续集成
 │   ├── CODEOWNERS            # 默认代码审阅负责人
@@ -298,7 +300,12 @@ ARCH/
 │   └── templates/            # 生成的轻量绑定，不复制物理实现
 ├── simulation/               # 算例实现与可复用示例输入
 ├── docs/                     # 指南、参考、物理说明和法律索引
-├── validation/               # 唯一 V&V 目录：输入、记录、指标与图像
+│   ├── README.md             # 文档总览
+│   ├── guides/               # 构建、算例与问题反馈指南
+│   ├── physics/              # 模型来源与维护中的契约
+│   └── development/          # 开发职责与验收清单
+│       └── archive/          # 中间评审归档，不作为用户教程
+├── validation/               # 模块摘要、输入及按需展开的详细证据
 ├── tests/                    # 本地编译的检查与小型参考
 │   ├── host/                 # 宿主契约与共用接口
 │   ├── cuda/                 # 设备执行与 CPU/CUDA 一致性
@@ -316,6 +323,7 @@ ARCH/
 │   ├── grid/                 # 坐标和有限体积度量
 │   ├── amr/                  # 层次、内存池、交换、通量寄存器
 │   ├── driver/               # 运行时 dispatch 和算子顺序
+│   ├── runtime/              # 可选的只读 AMR 特征采集
 │   ├── cuda/                 # 设备计算核、存储与求解库适配
 │   ├── numerics/             # 通量、重构、积分、燃烧、扩散
 │   ├── physics/              # EOS、重力、核素、网络、NSE、诊断

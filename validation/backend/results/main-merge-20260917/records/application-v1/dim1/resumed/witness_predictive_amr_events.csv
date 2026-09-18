@@ -1,4 +1,0 @@
-schema_version,event_index,step,time,leaf_count,criterion_refine,criterion_coarsen,balanced_refine,balanced_coarsen,balance_overrides,node_rows,edge_rows,extract_ms,write_ms
-2,0,3,0.0056280540629049594,5,0,1,0,1,0,5,8,0.14548700000000001,0.032615999999999999
-2,1,4,0.0071539786215841106,5,0,0,0,0,0,5,8,0.131548,0.014581
-2,2,5,0.008651519228095924,5,0,0,0,0,0,5,8,0.12990099999999999,0.021115999999999999

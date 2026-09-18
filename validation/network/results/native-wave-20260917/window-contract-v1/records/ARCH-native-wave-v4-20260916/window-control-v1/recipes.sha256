@@ -1,7 +1,0 @@
-104bbe8b57b166f7c0408d18ed3f766b01bf95a03c21446d966ced833f7fd2a3  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/build_and_test.py
-a675a6a5b978b077545057f6f09c64519097a7532d7ae7f058ae0c956aa50708  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.cpp
-e6a56e08299fab35c1fd99e35bb611ac45b82a5f237b91fa032dfc99cbf9e7f5  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.h
-56330aa005a65af335bf8936a2ca510a0fd44a80ca1ae2ff177396fef3836db2  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/dispatch.sh
-808ffb3eb39783993bdd0906c6b65fe697173dfe814ab1538c27c6e685e6314c  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/protocol.py
-93bc8dbbe572e191b048fd1e3636595ad4e863ad192505c4aba9e612be8eef1f  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/test_sparse_window.cpp
-98939cbe4c660e298616b641b376060bc35d277de4805311b26a65f9cc90d776  /home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/worker.sh

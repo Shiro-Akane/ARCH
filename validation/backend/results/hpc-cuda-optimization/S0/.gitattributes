@@ -1,2 +1,0 @@
-# Evidence files are immutable byte records, not platform-normalized source.
-evidence/** -text

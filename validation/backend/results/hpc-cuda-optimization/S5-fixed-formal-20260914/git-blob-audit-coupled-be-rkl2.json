@@ -1,9 +1,0 @@
-{
-  "status": "passed",
-  "git_commit": "6534c969df1fc3a0ed5876c21467dd60d8d59c64",
-  "files": {
-    "coupled_be_nr_rkl2_all_transport": 725
-  },
-  "bytes": 35177678,
-  "scope": "all tracked selected-module files byte-identical to Git blobs; raw archive SHA-256 checks are separate"
-}

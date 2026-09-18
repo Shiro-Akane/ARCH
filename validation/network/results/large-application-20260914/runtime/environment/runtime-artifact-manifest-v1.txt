@@ -1,1 +1,0 @@
-/home/ubuntu/projects/ARCH-large-application-20260914/build/p12-20260914/large-application-v2/fixed-integration-v1/artifacts.sha256

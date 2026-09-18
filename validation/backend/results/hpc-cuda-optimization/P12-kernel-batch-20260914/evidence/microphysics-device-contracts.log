@@ -1,9 +1,0 @@
-Test project /home/ubuntu/projects/ARCH-microphysics-20260914/build/p12-20260914/release
-    Start 63: cuda_multiblock_diffusion
-1/2 Test #63: cuda_multiblock_diffusion ........   Passed    0.64 sec
-    Start 64: cuda_multiblock_burn
-2/2 Test #64: cuda_multiblock_burn .............   Passed    4.69 sec
-
-100% tests passed out of 2
-
-Total Test time (real) =   5.34 sec

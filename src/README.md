@@ -11,6 +11,7 @@ shared driver. Choose a directory by responsibility:
 | [grid](grid/README.md) | Grid layout and shared physical geometry |
 | [amr](amr/README.md) | Mesh topology, conservative transfers and exchange plans |
 | [driver](driver/README.md) | Backend selection, stage scheduling and state lifetime |
+| [runtime](runtime/README.md) | Optional read-only observation of accepted state and AMR decisions |
 | [numerics](numerics/README.md) | Shared numerical algorithms |
 | [physics](physics/README.md) | Shared physical models, tables and constants |
 | [cuda](cuda/README.md) | Device execution, storage and solver adapters |

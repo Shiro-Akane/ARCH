@@ -1,9 +1,0 @@
-Local parser regression after actual default-storage transcript mismatch, 2026-09-17.
-Command: bundled Python -m unittest discover -s tests/tooling -p test_batch_launch_trajectories.py -v
-10 tests passed, 0.252 s; repeated after packaging, 10 passed, 0.143 s.
-Includes the six archived actual focused transcripts, plus default/nondefault
-storage-line schema, missing harness/steps, failed records, wrong ODE, observers,
-shortened duration and absent composition evolution rejection.
-This is parser validation, not ten new GPU tests.
-Original server wrapper exit=1 and original qualification=false are preserved.
-No physical input, tolerance, C++ producer or original transcript was changed.

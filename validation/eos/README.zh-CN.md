@@ -6,8 +6,8 @@
 这些局部热力学关系，也检查它们在流体和燃烧演化中的使用。各项参考对应文中
 明确给出的热力学范围和表格表示方式。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、Helmholtz 和
 规范化 Tabular3D/Tabular4D 在 CPU 与 CUDA 上共用数学实现；后端负责表格
@@ -15,9 +15,9 @@ EOS 验证结合独立热力学参考与实际流体、燃烧应用。Ideal、He
 
 ## 耦合应用结果
 
-[Release 应用记录](results/application-native-20260907/release-891/evidence.json)
+Release 应用记录
 通过了十二个案例、96 次 CPU/CUDA 执行。
-[独立端点记录](results/application-native-20260907/endpoints-892/evidence.json)
+独立端点记录
 检查了全部 24 个物理时刻端点。两份记录使用相同的源码、程序、比较工具和依赖库，
 并检查它们在执行期间保持不变。
 
@@ -88,7 +88,7 @@ HDF5。后者保留原生轴与对数字段编码，采用来源固定能量 shi
 EOSDriver 文件。当前源码还支持 EOS2/EOS4 共用的有限温重子 ASCII 格式，
 并对两个秩的规范化自由能表补齐明确声明缺失的电子／正电子或光子分量。
 通用 CompOSE 尚不支持。
-[历史来源表评估](results/tabular-assessment-archive.zh-CN.md)保留了原始间距试验
+历史来源表评估保留了原始间距试验
 与源数据分析。
 
 ### 原生接口定向检查
@@ -105,13 +105,13 @@ EOSDriver 文件。当前源码还支持 EOS2/EOS4 共用的有限温重子 ASCI
 `1.6412292014574082e-14`，低于未改变的 `2e-12` 容差。欠分辨分类在检查
 反解之前，根据来源 log-energy 的 ULP 和 `e/(T*cv)` 计算，不代表这些低温
 状态通过了 `2e-8` 温度精度验收。
-[保留的诊断日志](results/tabular-extension-20260908/native-real-final.log)
+保留的诊断日志
 记录了这一较早源码上的观察。本项定向接口/病态性检查不等于 Shen 物质的完整
 物理资格验证，也不修改上文冻结的应用记录。
 
 ### 分量补齐与原始重子表扩展检查
 
-[扩展记录](results/tabular-extension-20260908/README.md)单独保留源码、资产与
+扩展记录单独保留源码、资产与
 构建身份、回归报告、实际 CUDA 所有者执行和有界应用检查，不继承历史完整
 发布验收。制造 3D/4D 表覆盖各类缺失分量、完整表、独立的非默认重子质量、
 源表／依赖指纹及启动拒绝；独立分量控制检查 Timmes 电子／正电子和解析光子
@@ -132,3 +132,19 @@ EOS2/EOS4 原始表各有 650650 个节点。源坐标检查分别标记 6382、
 源表打印的 F/E/S 有微小不一致，约 1% 的源有效节点超出严格的半末位舍入
 预算。ARCH 保留 F/P/S 约束，不拟合参考常量或修改源文件来消除差异。
 全域、非均匀核 EOS 应用仍需独立验收。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [Release 应用记录 (JSON)](results/application-native-20260907/release-891/evidence.json)
+- [独立端点记录 (JSON)](results/application-native-20260907/endpoints-892/evidence.json)
+- [保留的诊断日志 (LOG)](results/tabular-extension-20260908/native-real-final.log)
+
+- [历史来源表评估](results/tabular-assessment-archive.zh-CN.md)
+- [扩展记录](results/tabular-extension-20260908/README.md)
+
+</details>

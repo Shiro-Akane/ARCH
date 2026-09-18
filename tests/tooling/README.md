@@ -7,6 +7,9 @@ root without a GPU:
 python3 -m unittest discover -s tests/tooling -p 'test_*.py'
 ```
 
+Install NumPy and h5py for the checkpoint and microphysics protocol tests. The
+Tooling CI job installs these dependencies; no CUDA compiler or GPU is required.
+
 - [test_audit_architecture.py](test_audit_architecture.py) checks shared-authority
   and dependency rules in the source audit.
 - CUDA-image and compile-memory tests check build metadata, not GPU execution
@@ -17,12 +20,15 @@ python3 -m unittest discover -s tests/tooling -p 'test_*.py'
 - Network-generator tests exercise generation contracts and rejection paths;
   actual nuclear trajectories belong to network Validation.
 
-The core implementation logic resides in [tools/](../../tools/README.md). Fixed protocol inputs are securely maintained in [fixtures/validation_provenance/](../fixtures/validation_provenance/README.md), not within any runtime results directory. It is crucial to remember that these tooling tests do not generate any form of scientific evidence.
+The tested implementation lives in [tools/](../../tools/README.md) or its owning
+Validation module. Fixed protocol inputs live in
+[fixtures/validation_provenance/](../fixtures/validation_provenance/README.md),
+outside runtime results. These unit tests check the validation machinery; they
+do not establish scientific accuracy.
 
-## S0 result-recipe controls
+## Coupled validation controls
 
-`test_hpc_s0_recipe.py` checks the bounded CUDA optimization S0 orchestration
-against controlled fixtures: command failure, interruption, unchanged identities,
-new-output-only handling and separate build/science states. It does not run CUDA
-or supply scientific reference data. Execution and provenance remain owned by
-the existing shared validation helpers.
+The microphysics tests check case selection, conservation accounting, process
+failure handling and timing summaries. Large-network tests check manifests and
+measurement accounting without generating or compiling a network. Scientific
+trajectories are run separately through the corresponding Validation entry points.

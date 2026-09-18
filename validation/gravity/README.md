@@ -8,10 +8,8 @@ for the gravity produced by the fluid itself. The force should change momentum
 and energy by the expected amounts without changing total mass. Coupled cases
 check that this balance survives mesh refinement and species diffusion.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA use the same external-gravity stage operator. Verification starts
 from a periodic state with \(\rho=1\), \(p=1\), \(u=0\) and constant \(g_x=1\).
@@ -22,9 +20,9 @@ and passive species are conserved.
 
 ## Coupled AMR and species diffusion
 
-The [Release application record](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
+The Release application record
 passes three cases, 24 CPU/CUDA executions and twelve backend comparisons.
-The [endpoint audit](results/coupled-final-20260907/endpoints-894/evidence.json)
+The endpoint audit
 rechecks analytic source balance and mass/species conservation at all six
 physical endpoints. Both reports identify the same source, executable,
 comparator and dependencies and verify that they remained unchanged.
@@ -90,8 +88,8 @@ report and input identities. Keep the same build and data for both commands.
 
 The `ExternalGravity` problem in `simulation/ExternalGravity/` and the
 immutable parameters in [`inputs/`](inputs/) isolate the gravity source on a
-uniform mesh. The [application record](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
-reproduces the values below and in [metrics.csv](metrics.csv), with both backends
+uniform mesh. The application record
+reproduces the values below and in metrics.csv, with both backends
 reaching the prescribed physical endpoint.
 
 RK2 and RK3 use the same `1e-12` Linf budget for density, velocity, pressure
@@ -112,3 +110,17 @@ These tests verify constant prescribed acceleration, not hydrostatic balance
 or self-gravity. The retained Euler input exposes the expected first-order
 source-energy error; independent temporal convergence is described in the
 [hydro record](../hydro/README.md).
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [Release application record (JSON)](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
+- [endpoint audit (JSON)](results/coupled-final-20260907/endpoints-894/evidence.json)
+- [application record (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [metrics.csv (CSV)](metrics.csv)
+
+</details>

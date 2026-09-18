@@ -1,9 +1,0 @@
-{
-  "path": "/home/ubuntu/projects/ARCH-microphysics-20260914/build/large-scheduling-diagnostics-v1.tar.zst",
-  "bytes": 18132599,
-  "sha256": "e7c74d4d3892d62a44efc39b62e76d98d46e4d788ea4583fb38be59cf7889164",
-  "files": 80,
-  "full_trajectory_status": "failed_timeout",
-  "prefixes": "incomplete_diagnostics_not_qualification",
-  "pinned_experiment_adopted": false
-}

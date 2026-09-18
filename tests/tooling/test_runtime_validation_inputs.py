@@ -14,6 +14,22 @@ import validate_cuda_amr_restart as restart_validation
 
 
 class RestartTerminalTimeTests(unittest.TestCase):
+    def test_adaptive_cross_backend_comparison_uses_existing_physical_time_mode(self):
+        reference={'checkpoint':'reference.h5'}
+        candidate={'checkpoint':'candidate.h5','name':'cuda_continuous'}
+        result=dict(passed=True,min_level=0,max_level=1,
+                    output_index_offsets={'checkpoint':0,'plot':0})
+        for target in (None,0.2):
+            with self.subTest(target=target), mock.patch.object(
+                    restart_validation.backend_validation,'compare_hdf5_checkpoints',
+                    return_value=dict(result)) as compare:
+                restart_validation.compare(Path('validator'),reference,candidate,
+                                           target_time=target)
+                self.assertEqual(compare.call_args.kwargs['comparison_mode'],
+                                 'reproducibility' if target is None else 'physical-time')
+                self.assertEqual(compare.call_args.kwargs['target_time'],target)
+                self.assertEqual(compare.call_args.args[2],restart_validation.comparison_policy())
+
     def test_invalid_time_or_unbounded_steps_are_rejected_before_execution(self):
         for steps, target in ((-1, None), (0, .2), (4, 0.), (4, -1.),
                               (4, float('nan')), (4, float('inf'))):

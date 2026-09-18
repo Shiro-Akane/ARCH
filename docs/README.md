@@ -1,4 +1,4 @@
-# ARCH documentation
+# ARCH documentation overview
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
@@ -19,17 +19,19 @@ To run your first calculation, follow the [Simulation case guide](guides/Simulat
 - [Research and API reference](Reference.md): parameter meanings, numerical
   method choices, and the interfaces used to extend the code.
 - [CUDA and GPU-AMR guide](CudaBackendStatus.md): supported features, shared
-  CPU/CUDA responsibilities, and backend selection.
+  CPU/CUDA responsibilities, measured speedups by workload size, and backend selection.
 - [Simulation catalogue](../simulation/README.md): reusable problems and their
   example inputs.
-- [Physics notes](physics/README.md): model provenance and the distinction
-  between maintained descriptions and historical numerical investigations.
+- [Physics notes](physics/README.md): model provenance and maintained contracts.
 - [Verification and validation](../validation/README.md): what was tested,
   how errors were measured, and how CPU and GPU results compare.
 - [EOS runtime tables](../EOS_toolkit/README.md): table layout, provenance, and
   integrity requirements.
 - [Legal and provenance index](legal/README.md): project and third-party
   licensing pointers.
+- [Research computing and issue reporting](guides/Reporting.md): what to include in
+  a build, runtime or numerical report, and how to protect research data when
+  asking for help.
 
 ## For contributors and reviewers
 
@@ -42,11 +44,14 @@ To run your first calculation, follow the [Simulation case guide](guides/Simulat
 ## Directory contract
 
 - [guides/](guides/README.md) contains task-oriented workflows.
-- `physics/` provides physics model notes and explicitly labels historical numerical investigations.
-- `development/` maintains contributor decisions, conventions, and execution records.
+- `physics/` provides maintained physics model notes.
+- `development/` maintains contributor contracts; its `archive/` holds intermediate reviews and superseded plans outside the user guide sequence.
 - `legal/` serves as an index; the canonical license and notice files are kept at the repository root for compatibility with standard tooling.
 - `validation/` is located outside of `docs/` because its records substantiate explicit pass/fail claims, and it independently manages its own immutable inputs, metrics, and generated figures.
 - Source and simulation directories house the actual implementations and reusable example inputs, supplemented only by the brief local contracts needed immediately next to the code.
 
 Add new documents to this index and link them from the owning module when
 appropriate. Do not create a second general documentation or validation tree.
+Validation pages present methods and conclusions first. Machine-readable records
+and historical review notes are available through labeled, expandable sections
+for readers who want to reproduce or audit a result.

@@ -6,13 +6,13 @@
 与流体输运分开，便于比较时间积分器、组分约束和能量收支。核统计平衡（NSE）
 检查还将所选内置网络的平衡态与独立参考进行比较。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 CPU 与 CUDA 均通过原定的跨求解器误差和组分闭合检查。
-[应用记录](results/application-first-law-20260907/release-878/evidence.json)
+应用记录
 包含全部六次执行及对应源码、程序身份。同一受测构建还通过了
-[原生燃烧恢复验证](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)。
+原生燃烧恢复验证。
 整个项目的验收状态统一见[验证索引](../README.zh-CN.md)。
 
 `BurnOneZone` 实现仍位于 `simulation/BurnOneZone/`；本记录归属的不可变参数文件位于 [`inputs/`](inputs/)，它们使用生产 burn driver，在 \(\rho=10^7\,\mathrm{g\,cm^{-3}}\)、\(T=3\times10^9\,\mathrm{K}\)、初始 `C12=0.5`、`O16=0.5` 条件下推进至 \(t=10^{-10}\,\mathrm{s}\)。严格 BE_NR 输入（`rtol=1e-10`、`atol=1e-14`）提供内部收敛参考；BD 和 ROS4 使用 `rtol=1e-6`、`atol=1e-10`。这是求解器交叉 verification，不是对 aprox13 反应率的独立物理 validation。
@@ -51,7 +51,7 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 | CPU | ROS4 | 6.462e-13 | 1.389e-12 | 4.168e-12 | 2.457e-12 | 通过 |
 | CUDA | ROS4 | 6.462e-13 | 1.389e-12 | 4.168e-12 | 2.457e-12 | 通过 |
 
-[指标 CSV](metrics.csv) 还包含两端的 BE_NR 结果，其 CPU/CUDA 核素 Linf
+指标 CSV 还包含两端的 BE_NR 结果，其 CPU/CUDA 核素 Linf
 差异为 5.551e-16；全部六次运行中，丰度和残差最大为 2.221e-16。
 
 两个测试解的丰度和均闭合到舍入误差。ROS4 使用匹配的四 stage L-stable 系数集，每个内部步共享一套 Jacobian 矩阵。Stage 方程和系数集遵循 [L-stable ROS4 公式](https://link.springer.com/article/10.1007/s10915-023-02232-3)，并与 [OpenFOAM Rosenbrock34 实现](https://api.openfoam.com/2212/Rosenbrock34_8C_source.html)交叉核对。本应用记录检查一个状态和时间区间，下文的独立时间积分与第一定律检查补充了跨求解器对照。网络数据及实现测试见 [Timmes 技术说明](../../docs/physics/TimmesNetworks.zh-CN.md)。
@@ -59,16 +59,16 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 ## 内置网络的时间积分精度检查
 
 四个内置网络另有独立 DOP853 时间积分得到的不可变端点，并通过 Radau 和
-更严格的最大时间步复核。[独立参考复核记录](results/independent-time-final-20260907/release-888/evidence.json)
+更严格的最大时间步复核。独立参考复核记录
 覆盖四个网络，端点能量还使用已有高精度 Helmholtz 单项式拟合模型独立检查。
 反应率仍来自 ARCH 共用 RHS；这里独立的是**时间积分**，不是核反应数据。
 十六条复核轨迹覆盖每个网络的两种独立积分器和两档最大时间步。核素 Linf
 差异最大为 \(1.666\times10^{-16}\)，温度相对差最大为
 \(2.121\times10^{-14}\)，独立端点 EOS 相对差最大为
 \(2.221\times10^{-16}\)，所有第一定律检查均满足原定预算。
-[完整 Release 回归](../backend/results/final-first-law-20260907/release-regression-895/evidence.json)
+完整 Release 回归
 包含十二种 Host 网络/ODE 检查、相应反例和独立的 CUDA 策略检查。
-同一受测构建的[内置 NSE 应用验证](results/nse-application-native-20260907/release-890/evidence.json)
+同一受测构建的内置 NSE 应用验证
 另覆盖十六个用例、三十二个物理终点。
 
 启用 testing 后构建 `arch_burn_mainline_reference`。普通执行检查十二种网络/ODE
@@ -85,3 +85,19 @@ python3 validation/burn/results/application-first-law-20260907/replay.py \
 依赖具体方法的数值快照及原检查器/反例作为历史数值记录保留。
 精度验收使用独立参考，不把这些近似端点当作精确解。
 CUDA 短步策略检查仍保留原严格后端一致性阈值，与上文的参考复核和应用检查互为补充。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [应用记录 (JSON)](results/application-first-law-20260907/release-878/evidence.json)
+- [原生燃烧恢复验证 (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
+- [指标 CSV (CSV)](metrics.csv)
+- [独立参考复核记录 (JSON)](results/independent-time-final-20260907/release-888/evidence.json)
+- [完整 Release 回归 (JSON)](../backend/results/final-first-law-20260907/release-regression-895/evidence.json)
+- [内置 NSE 应用验证 (JSON)](results/nse-application-native-20260907/release-890/evidence.json)
+
+</details>

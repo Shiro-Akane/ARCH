@@ -1,6 +1,0 @@
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-input-v1/cuda_progress_after_launch.cpp: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-input-v1/dispatch.sh: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-input-v1/probe-cudss-progress.cpp: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-input-v1/run_focused_cost.py: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-input-v1/run_trajectories.py: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/api-cost-input-v1/worker.sh: OK

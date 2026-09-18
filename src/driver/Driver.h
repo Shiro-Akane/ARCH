@@ -285,11 +285,26 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             throw std::logic_error("CUDA boundary requires active blocks");
         const auto version = residency_ledger->inspect(
             {stage_handles.front(), slot}).interior.version;
+        bool needs_device_ghosts = false;
         for (const auto handle : stage_handles) {
             residency_ledger->require_readable(
                 {handle, slot},
                 {ExecutionSide::Device, version, true, false});
+            const auto coherence = residency_ledger->inspect({handle, slot});
+            needs_device_ghosts = needs_device_ghosts
+                || !arch::state::side_can_read(
+                    coherence.ghost.residency, ExecutionSide::Device)
+                || coherence.ghost.version != version
+                || coherence.ghost_source_version != version
+                || !arch::state::is_complete(coherence.ghost.completion)
+                || coherence.ghost.pending_transfer
+                    != arch::state::PendingTransferPhase::None;
         }
+        // Reuse the completed boundary for this field version. Re-publishing
+        // identical Device ghosts would invalidate a synchronized Host copy
+        // while leaving the interior synchronized, breaking the subsequent
+        // whole-state materialization contract of read-only observers.
+        if (!needs_device_ghosts) return;
         const auto before = compute_backend->counters();
         StageExecutionContext context{
             ExecutionSide::Device, *residency_ledger, scheduler_clock};
@@ -308,19 +323,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // only when a host consumer actually needs it.
     const auto synchronize_fluid_ghosts = [&] {
         if (compute_backend) {
-            bool needs_device_ghosts = false;
-            for (const auto handle : stage_handles) {
-                const auto coherence = residency_ledger->inspect(
-                    {handle, StateSlot::Current});
-                needs_device_ghosts = needs_device_ghosts
-                    || !arch::state::side_can_read(
-                        coherence.ghost.residency, ExecutionSide::Device)
-                    || coherence.ghost.version != coherence.interior.version
-                    || coherence.ghost_source_version
-                        != coherence.interior.version;
-            }
-            if (needs_device_ghosts)
-                complete_device_boundary(StateSlot::Current);
+            complete_device_boundary(StateSlot::Current);
             const auto& active = amr_ctrl.tree->GetActiveBlocks();
             for (std::size_t index = 0; index < stage_handles.size(); ++index) {
                 const auto coherence = residency_ledger->inspect(

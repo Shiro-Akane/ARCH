@@ -301,7 +301,7 @@ HelmEos::evaluate
   -> ConductivityMath::compute_stellar_conductivity
 ```
 
-The [diffusion-coefficient alignment record](DiffusionCoefficientAlignment.md)
+The [diffusion-coefficient alignment record](../development/archive/DiffusionCoefficientAlignment.md)
 reports hexadecimal floating-point comparison for more than 10,000 randomized
 `aprox19` states. Maximum absolute and relative errors are both `0.0` over the
 tested range. Section 5 separately covers network RHS, Jacobian, and LHS paths.

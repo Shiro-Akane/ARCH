@@ -25,4 +25,6 @@ data and historical snapshots serve different purposes.
 - [validation_provenance/](validation_provenance/README.md): fixed qualifier
   protocol inputs and artifact-mismatch negative controls, not release evidence.
 
-All reusable numerical test traversals belong strictly in [math/](../math/README.md). When changing reference data, you must carefully keep the associated provenance and rigorously preserve the historical evidence that originally motivated the correction.
+Reusable numerical test traversals live in [math](../math/README.md).
+Changes to reference data need corresponding provenance and an explanation of
+the correction; retain the evidence supporting that change.

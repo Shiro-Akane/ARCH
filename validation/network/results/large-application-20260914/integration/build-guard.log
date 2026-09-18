@@ -1,2 +1,0 @@
-MEMORY_GUARD_RESULT min_available_kib=106881404 baseline_swap_kib=9256 peak_swap_kib=9256 guard_stopped=False peak_owned_rss_kib=7718696 elapsed_seconds=949.832 stop_reason=none
-SYSTEM_PRESSURE_OBSERVATION scope=linux_system peak_memory_full_percent=0.494 peak_io_full_percent=1.913 peak_swap_in_mib_s=0.000 peak_swap_out_mib_s=0.000 memory_limit_percent=20.0 io_limit_percent=50.0 sustain_seconds=10.0 samples=921 complete=True

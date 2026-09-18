@@ -1,8 +1,0 @@
-{
-  "status": "git_bytes_verified_for_failed_evidence",
-  "git_commit": "9db2e1b9848e57473b4afa65047a249d8c3e92f9",
-  "files": 559,
-  "bytes": 20242806,
-  "scientific_validation_complete": false,
-  "recipe_sha256": "b6aa18eda59f8231cc232b70447458d920bffb269282a0a1a62363728fa8ddb5"
-}

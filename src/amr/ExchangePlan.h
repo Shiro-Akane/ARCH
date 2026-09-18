@@ -550,6 +550,7 @@ inline HostCompiledSameLevelExchangePlan compile_host_exchange_plan(
     return compiled;
 }
 
+/** Scratch owned by one exchange executor; reuse never retains a block view. */
 struct HostExchangeWorkspace {
     std::vector<std::uint64_t> operation_offsets;
     std::vector<double> values;

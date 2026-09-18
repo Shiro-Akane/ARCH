@@ -1,7 +1,0 @@
- M EOS_toolkit/tables/helmholtz/helm_table.dat
- M src/cuda/amr/RefinementIndicators.cu
- M src/cuda/amr/RefinementIndicators.h
- M src/cuda/runtime/amr/CudaBackendIndicators.cpp
- M src/cuda/runtime/control/CudaBackendInternal.h
- M tests/cuda/test_cuda_multiblock_hydro.cu
- M tests/cuda/test_refinement_indicators.cpp

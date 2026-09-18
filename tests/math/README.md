@@ -23,4 +23,6 @@ host and device tests ask the same question of the same mathematical routine.
   polynomials, both table ranks, nonuniform Ye, derivative constraints,
   multiple/flat roots, masked intervals and floating-point boundary failures.
 
-Data-only endpoint references always reside in [fixtures/](../fixtures/README.md). You must keep all backend allocations and kernel launches strictly within their specific test executors; furthermore, always retain each reference's derivation logic and error tolerance whenever extending an existing test case.
+Data-only reference values live in [fixtures](../fixtures/README.md). Backend
+allocation and kernel launches belong in test executors. When extending a case,
+preserve its independent derivation and stated error budget.

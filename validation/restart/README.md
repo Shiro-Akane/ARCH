@@ -8,10 +8,8 @@ evolution? Strict restoration checks inspect the stored fields and controller
 state directly. Continuation checks compare later physical states with an
 uninterrupted run, using the stated numerical tolerances.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA use one checkpoint format and reader. A checkpoint can continue
 on either backend when the destination build supports its physics and required
@@ -38,24 +36,19 @@ required; missing state is rejected rather than reconstructed. The full
 [format contract](../../docs/Reference.md#arch-checkpoint) also defines
 the retained field, shape and identity checks.
 
-The recorded results below keep their tested-source identities. Strict input
-validation passes the separate
-[focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review);
-these controls do not replace the scientific continuation measurements. The
-current [maintenance recheck](../backend/results/maintenance-freeze-20260908/README.md)
-passes smooth/burning restart and burning-restart memcheck/racecheck after the
-narrow dispatch cleanup. Each of the four suites completes twelve executions
-and nine strict comparisons, including six actual CUDA processes with complete
-clean reports per sanitizer. Final source and artifact identity checks pass.
-These current-source runs are recorded separately from the scientific
-continuation measurements below.
+Strict input-validation and maintenance checks supplement the scientific
+continuation measurements. The recorded smooth/burning restart and burning-restart
+memcheck/racecheck suites each complete twelve executions and nine strict
+comparisons, including six actual CUDA processes with complete clean reports
+per sanitizer. Each record keeps its tested source and binary identity; the
+details are grouped at the end of this page.
 
 <a id="completed-checks-on-the-release-candidate"></a>
 
 ## Accepted CPU/CUDA checks
 
-The [smooth-advection record](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
-and [burn/ENUC record](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
+The smooth-advection record
+and burn/ENUC record
 each pass twelve executions and nine comparisons on the same tested source,
 executable and comparator. Each has two uninterrupted runs, two source runs
 and eight resumed runs: CPU-to-CPU, CPU-to-CUDA, CUDA-to-CPU and CUDA-to-CUDA,
@@ -80,8 +73,8 @@ route. Intermediate resumes preserve output numbering; terminal resumes have
 exactly one additional checkpoint and plot, as derived from the actual stopped
 source's output history.
 
-The burn/AMR [memcheck campaign](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
-and [racecheck campaign](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
+The burn/AMR memcheck campaign
+and racecheck campaign
 each repeat the full twelve executions and nine strict comparisons on the same
 tested build. Each instruments six actual CUDA executions: the uninterrupted run,
 the source run and four CUDA-destination restores. All six memcheck reports
@@ -107,7 +100,7 @@ container allocation and metadata layout are not numerical state.
 
 ## Sustained native restoration
 
-The [sustained-execution record](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
+The sustained-execution record
 passes twelve restore cycles in each of three burn chains: CPU, CUDA and
 alternating backends. Each of the 36 source states is restored through both the
 shared Host reader and the CUDA upload/download path before further evolution.
@@ -155,3 +148,21 @@ phases and the original numerical budgets.
 
 Interruption inside an external library call is not covered by these completed
 continuation tests.
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [smooth-advection record (JSON)](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
+- [burn/ENUC record (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
+- [memcheck campaign (JSON)](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
+- [racecheck campaign (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
+- [sustained-execution record (JSON)](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
+
+- [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [maintenance recheck](../backend/results/maintenance-freeze-20260908/README.md)
+
+</details>

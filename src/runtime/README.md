@@ -1,19 +1,10 @@
-# Adaptive Runtime boundary
+# Optional runtime observers
 
-`src/runtime` contains optional prediction and hardware-allocation modules that
-sit above the stable Physics/AMR core.
+This directory contains the [read-only AMR recorder](predictive_amr/README.md).
+It observes accepted patch state and canonical mesh decisions through the shared
+driver. It does not own or replace physical models, numerical methods, Morton
+ordering, refinement criteria, balance closure or regrid transactions.
 
-The dependency direction is one way:
-
-```text
-Physics / AMR core -> read-only Patch API -> Adaptive Runtime
-```
-
-Runtime modules may observe patch state, propose hints, reserve resources, and
-select optional backends. They do not own Hydro, EOS, reconstruction,
-prolongation, restriction, FluxRegister, refluxing, or the deterministic AMR
-criterion. Every module must be independently switchable, and disabling all
-runtime modules must reproduce the reference solver.
-
-Phase 0 exposes an observer only. There is deliberately no method that returns
-a refinement action.
+The recorder is disabled by default. Future prediction or resource-management
+modules should use this same ownership boundary and remain independently
+switchable; they are not current solver features.

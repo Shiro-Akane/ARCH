@@ -1,3 +1,10 @@
+/**
+ * @file test_sparse_residual.cpp
+ * @brief Check the shared sparse backward-error gate and correction RHS.
+ *
+ * Exact cancellation and representable neighbors of the original allowance
+ * exercise the mathematical contract independently of KLU or cuDSS.
+ */
 #include "numerics/linalg/SparseResidual.h"
 #include "numerics/linalg/CsrMatrixView.h"
 #include <cmath>
@@ -9,6 +16,13 @@ int main() {
     using namespace arch::linalg;
     const auto require = [](bool valid) { if (!valid) throw std::runtime_error("sparse residual contract"); };
     try {
+        const double allowance = 64.0 * 4.0 * std::numeric_limits<double>::epsilon();
+        require(sparse_residual_accurate(3, allowance, 0.0, 1.0));
+        require(!sparse_residual_accurate(3, std::nextafter(allowance, 1.0), 0.0, 1.0));
+        require(!sparse_residual_accurate(3, 0.0, 0.0, -1.0));
+        require(!sparse_residual_accurate(0, 0.0, 0.0, 0.0));
+        require(!sparse_residual_accurate(3, 0.0, 0.0,
+                                        std::numeric_limits<double>::infinity()));
         const int columns[]{0, 1, 2}, offsets[]{0, 1, 2, 3};
         double values[]{1, 1, 1}, x[]{1, 2, 3}, rhs[]{1, 2, 3};
         CsrMatrixView<3> matrix{offsets, columns, values, 3, true};

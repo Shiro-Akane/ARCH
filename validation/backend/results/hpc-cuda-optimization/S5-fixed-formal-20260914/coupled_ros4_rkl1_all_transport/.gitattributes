@@ -1,2 +1,0 @@
-# Immutable evidence includes original LF and CRLF files; never normalize it.
-* -text

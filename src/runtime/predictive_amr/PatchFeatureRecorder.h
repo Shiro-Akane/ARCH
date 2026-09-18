@@ -1,10 +1,12 @@
 /**
  * @file PatchFeatureRecorder.h
- * @brief Read-only Phase 0 exporter for block-level predictive AMR data.
+ * @brief Read-only exporter of block-level features and canonical AMR decisions.
  *
  * The canonical AmrTree remains the sole owner of indicator evaluation,
  * balance closure, and topology changes. This observer only records the state
  * after RippleCheck and immediately before Regrid applies the decisions.
+ * The driver materializes accepted state before calling the observer. Enabling
+ * recording does not select a refinement policy or perform model inference.
  */
 
 #pragma once
@@ -32,6 +34,7 @@
 
 namespace arch::runtime::predictive_amr {
 
+/** Online mean and population variance: M2 += delta * (x - updated_mean). */
 class RunningStats {
 private:
     double minimum_ = std::numeric_limits<double>::infinity();
@@ -148,8 +151,13 @@ private:
         stream.open(path, std::ios::out | std::ios::trunc);
         if (!stream)
             throw std::runtime_error("Cannot open predictive AMR output: " + path.string());
+        // A writable path does not guarantee later writes succeed (for example
+        // when storage fills). Fail at the recording boundary, not after claiming
+        // a complete event whose rows were only buffered or discarded.
+        stream.exceptions(std::ios::badbit | std::ios::failbit);
         stream << header << '\n';
         stream << std::setprecision(17);
+        stream.flush();
     }
 
     static double Center(const Grid& grid, int direction)
@@ -210,6 +218,7 @@ private:
         std::ofstream manifest(path, std::ios::out | std::ios::trunc);
         if (!manifest)
             throw std::runtime_error("Cannot open predictive AMR manifest: " + path.string());
+        manifest.exceptions(std::ios::badbit | std::ios::failbit);
         manifest << "{\n"
                  << "  \"schema_version\": " << kSchemaVersion << ",\n"
                  << "  \"observer_authority\": \"read_only\",\n"
@@ -228,6 +237,7 @@ private:
                  << config.adaptive_runtime.predictive_amr_history << ",\n"
                  << "  \"action_columns_are_targets_not_features\": true\n"
                  << "}\n";
+        manifest.flush();
     }
 
     void WriteConservation(int step, double time, const char* phase,
@@ -278,7 +288,7 @@ public:
         Open(conservation_, prefix_ + "_conservation.csv",
              "schema_version,snapshot_index,event_index,step,time,phase,quantity,species_index,value");
         WriteManifest(config);
-        std::cout << "[Adaptive Runtime] Predictive AMR Phase 0 observer enabled: "
+        std::cout << "[Adaptive Runtime] Read-only AMR recorder enabled: "
                   << prefix_ << std::endl;
     }
 

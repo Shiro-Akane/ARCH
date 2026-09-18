@@ -53,19 +53,6 @@ void validate_host_state_shape(
     }
 }
 
-constexpr bool same_block_handle(
-    amr::BlockHandle left, amr::BlockHandle right) noexcept
-{
-    return left.uid.value == right.uid.value
-        && left.epoch.value == right.epoch.value;
-}
-
-constexpr bool same_storage_generation(
-    backend::StorageGeneration left,
-    backend::StorageGeneration right) noexcept
-{
-    return left.value == right.value;
-}
 
 DeviceLayoutGeneration issue_device_layout_generation()
 {
@@ -430,8 +417,7 @@ CudaBlockRuntime::CudaBlockRuntime(
 DeviceStateView CudaBlockRuntime::require_access(
     backend::BackendStateAccess access) const
 {
-    if (!same_block_handle(access.block, handle)
-        || !same_storage_generation(access.storage, generation))
+    if (access.block != handle || access.storage != generation)
         throw std::invalid_argument("stale CUDA backend access");
     return slots[slot_index(access.slot)];
 }

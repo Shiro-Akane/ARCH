@@ -1,9 +1,0 @@
-{
-  "all_passed_after_review": true,
-  "missing_retained_files": 0,
-  "unexpected_retained_changes": 0,
-  "preexisting_git_metadata_refreshes_unchanged_by_deletion": 16,
-  "protected_hash_count": 23286,
-  "strict_receipt": "cleanup-receipt.json",
-  "note": "Original strict check reports pre-deletion Git metadata changes; its result is not overwritten."
-}

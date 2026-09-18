@@ -398,6 +398,7 @@ struct PolicyDescriptor
     bool supports_nse;
     std::size_t auxiliary_equations;
     StaticRequirements requirements;
+    std::string_view nse_reason;
 };
 
 template <class Registration>
@@ -410,7 +411,8 @@ consteval auto describe_policy()
         !std::is_same_v<typename Data::CudaBinding, AbsentBinding>,
         NetworkPolicyMetadata<Registration>::supports_nse,
         NetworkAuxiliaryState<Registration>::value,
-        Data::requirements};
+        Data::requirements,
+        NetworkPolicyMetadata<Registration>::nse_reason};
 }
 
 template <class List>
@@ -561,11 +563,13 @@ constexpr bool network_supports_nse(NetworkId id) noexcept
 
 inline std::string_view network_nse_reason(NetworkId id) noexcept
 {
-    std::string_view result = "unknown_network";
-    visit_policy<NetworkPolicies>(id, [&]<class Registration> {
-        result = NetworkPolicyMetadata<Registration>::nse_reason;
-    });
-    return result;
+    // A metadata query needs no concrete-policy visitor. Keep the reason with
+    // the same descriptors that provide NSE capability and avoid instantiating
+    // nested generic lambdas in a non-template NVCC call site.
+    constexpr auto descriptors = make_policy_descriptors<NetworkPolicies>();
+    for (const auto& descriptor : descriptors)
+        if (descriptor.id == id) return descriptor.nse_reason;
+    return "unknown_network";
 }
 
 // Auto is capability selection, not a second physical activation criterion.

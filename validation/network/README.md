@@ -8,12 +8,10 @@ registration to actual time evolution, and compare weak-reaction composition and
 energy changes with independent references. The sparse cases also check the
 large-system solver path, not just whether a package compiles.
 
-The historical campaign results on this page belong to the scientific acceptance
-snapshot identified in the [central Validation index](../README.md). The generated
-NSE extension below is a subsequent, bounded development check, not a replacement
-for those frozen campaigns. Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs. The
+generated-network NSE checks cover the stated models and thermodynamic states;
+they do not replace the full-application checks. The
+[validation overview](../README.md) brings together the module results.
 
 CPU and CUDA pass the generated-network application matrix, the real
 31-isotope sparse trajectory matrix, and independent weak-reaction trajectories
@@ -29,10 +27,10 @@ the table gives rounded maxima with the unchanged budgets.
 
 | Record | Coverage | Largest measured error and original budget |
 | --- | --- | --- |
-| [Weak Urca, constant heat capacity](results/weak-cv-native-20260907/release-898/evidence.json) | BE_NR, BD and ROS4 on CPU/CUDA against independent trajectories | Tight-control normalized state error `3.3544e-8`, budget `1e-7` |
-| [Weak Urca, Helmholtz EOS](results/weak-helm-native-20260907/release-899/evidence.json) | The same six trajectory routes with composition-dependent thermal closure | Tight-control normalized state error `6.5112e-13`, budget `1e-7` |
-| [Real audit31 sparse evolution](results/sparse-native-20260907/release-900/evidence.json) | Three ODEs, four external steps, two- and three-cell storage; CPU KLU / CUDA cuDSS | Field error `1.8812e-14` against `2e-10`; limiter error `1.8305e-14` against `2e-8` |
-| [Generated-network ARCH applications](results/runtime-native-20260907/release-875/backend-validation-evidence.json) | Six cases, 48 CPU/CUDA executions and 24 comparisons | Normalized field difference `8.7290e-15`; original field tolerances `rtol=2e-8`, `atol=1e-12` |
+| Weak Urca, constant heat capacity | BE_NR, BD and ROS4 on CPU/CUDA against independent trajectories | Tight-control normalized state error `3.3544e-8`, budget `1e-7` |
+| Weak Urca, Helmholtz EOS | The same six trajectory routes with composition-dependent thermal closure | Tight-control normalized state error `6.5112e-13`, budget `1e-7` |
+| Real audit31 sparse evolution | Three ODEs, four external steps, two- and three-cell storage; CPU KLU / CUDA cuDSS | Field error `1.8812e-14` against `2e-10`; limiter error `1.8305e-14` against `2e-8` |
+| Generated-network ARCH applications | Six cases, 48 CPU/CUDA executions and 24 comparisons | Normalized field difference `8.7290e-15`; original field tolerances `rtol=2e-8`, `atol=1e-12` |
 
 ### Independent weak trajectories
 
@@ -95,8 +93,8 @@ larger systems use CPU KLU / CUDA cuDSS.
 
 ### Device-safety coverage
 
-The final focused [memcheck](../backend/results/final-first-law-20260907/memcheck-929/evidence.json)
-and [racecheck](../backend/results/final-first-law-20260907/racecheck-903/evidence.json)
+The final focused memcheck
+and racecheck
 campaigns each pass all 23 routes, including generated-network mathematics,
 controlled weak trajectories, owner reuse and real audit31 sparse evolution.
 Memcheck has 23 complete reports with zero errors or leaks; racecheck has
@@ -116,7 +114,7 @@ the other 22 commands and all numerical budgets are unchanged. The ordinary
 audit31 sparse trajectory, audit31 applications and full-interval memcheck
 retain their `1e-10 s` endpoint.
 
-The [instrumentation guide](../backend/results/final-first-law-20260907/README.md)
+The instrumentation guide
 contains both guarded reproduction commands, the complete test-build requirement
 and independent record reviews. Instrumented timings are diagnostics, not speedup
 benchmarks. Overall acceptance is tracked in the [validation overview](../README.md).
@@ -254,25 +252,54 @@ The optional sparse runner controls `--storage-cells FIRST SECOND` and
 `--pool-cells COUNT` extend the existing capacity matrix without changing its
 default 2/3 cells, three ODE methods or numerical budgets. The parser checks
 requested controls against the transcript and records requested versus actual
-pool capacity. This development extension is not a completed large-network
-qualification; its [tooling review](../backend/results/hpc-cuda-optimization/S0/ToolingReview.zh-CN.md)
-lists the pending runtime and protocol review.
+pool capacity. Production large-network results and separate experimental
+window-capacity checks are indexed in the
+[HPC-CUDA campaign summary](../backend/results/hpc-cuda-optimization/README.md).
+The experimental provider is not registered in the production solver.
 
 Complete Release/Debug regressions and the
-[five-phase core-build check](../backend/results/cold-core-first-law-20260907/release-909/README.md)
-and the [bounded capacity campaign](../backend/results/device-memory-first-law-20260907/README.md)
+cold and incremental core-build checks
+and the bounded capacity campaign
 have passed, as have both focused device-safety campaigns above. Final delivery
 review and the combined acceptance record are tracked in the
 [validation overview](../README.md). The four scientific/application records
 and the instrumentation records retain their distinct acceptance scopes.
 
-Complete 150/200-isotope trajectories and scaling remain the approved follow-up
-work for a larger validation system, outside this local release gate. For very
+Production 150/200-isotope Helmholtz comparisons and full-application timing
+were completed on the larger validation system. **In the tested
+small full applications, CUDA takes approximately 5.0–10.3 times as long as
+CPU8** (about 0.10–0.20× speedup), despite passing numerical comparisons.
+Use CPU for these workloads unless your representative timings favor CUDA;
+the approximately 5× coupled-AMR result uses aprox13 and does not apply to
+these sparse networks. See the [performance guide](../../docs/CudaBackendStatus.md#choosing-a-backend-for-performance).
+Further scaling
+and experimental-provider performance remain follow-up work; the original
+source-scoped reports are linked in the campaign summary above. For very
 large networks, scientific reliability depends on the isotope set, reaction data
 and model's range of applicability; solver/provider validation is recorded
 separately. Generated-network NSE support has the bounded contract and focused
 coverage above; the [NSE reference](nse_reference.py) continues to cover the
 supported built-in networks.
 
-See the internal [release standard](../../docs/development/CudaReleaseStandard.md)
-and the user-facing [backend guide](../../docs/CudaBackendStatus.md).
+For supported configurations and backend selection, see the
+[backend guide](../../docs/CudaBackendStatus.md).
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [Weak Urca, constant heat capacity (JSON)](results/weak-cv-native-20260907/release-898/evidence.json)
+- [Weak Urca, Helmholtz EOS (JSON)](results/weak-helm-native-20260907/release-899/evidence.json)
+- [Real audit31 sparse evolution (JSON)](results/sparse-native-20260907/release-900/evidence.json)
+- [Generated-network ARCH applications (JSON)](results/runtime-native-20260907/release-875/backend-validation-evidence.json)
+- [memcheck (JSON)](../backend/results/final-first-law-20260907/memcheck-929/evidence.json)
+- [racecheck (JSON)](../backend/results/final-first-law-20260907/racecheck-903/evidence.json)
+
+- [instrumentation guide](../backend/results/final-first-law-20260907/README.md)
+- [cold and incremental core-build checks](../backend/results/cold-core-first-law-20260907/release-909/README.md)
+- [bounded capacity campaign](../backend/results/device-memory-first-law-20260907/README.md)
+
+</details>

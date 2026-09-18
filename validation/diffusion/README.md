@@ -8,10 +8,8 @@ cosine-shaped concentration profile has a known decay rate, so its amplitude
 tests diffusion accuracy while total species mass tests conservation. Comparing
 resolutions shows how the spatial error decreases.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA pass the same analytic-error, boundedness and conservation checks.
 
@@ -30,7 +28,7 @@ and RKL2 inputs use 64, 128, and 256 cells and end at \(t=0.1\).
 
 ## Reproduce
 
-The [application evidence](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The application evidence
 records both backends at the prescribed physical end time. Source, artifact and
 build identities are recorded with the actual inputs. All six diffusion cases
 pass on the tested build. Curved, dynamically refined diffusion and
@@ -52,7 +50,7 @@ fractions, Linf error at most \(10^{-5}\), and the same drift bound. Results are
 measured from the final HDF5 cell averages.
 
 The values below represent both backends at the displayed precision;
-[metrics.csv](metrics.csv) retains their separate full-precision observations.
+metrics.csv retains their separate full-precision observations.
 The acceptance run reproduces these values. At the physical endpoint,
 the largest CPU/CUDA field difference is \(9.992\times10^{-16}\), within the
 unchanged relative/absolute comparison budget of \(5\times10^{-10}\) and
@@ -74,3 +72,15 @@ convergence. The mixed resolution/stage-count RKL1 series is a stability,
 boundedness, conservation, and analytic-error regression; it does not measure
 RKL1 temporal order. CUDA also passes direct field comparisons with the CPU
 on the same inputs.
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [application evidence (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [metrics.csv (CSV)](metrics.csv)
+
+</details>

@@ -1,1 +1,0 @@
-Actual large binaries are in the double-verified large-application-runtime-v1 archive.

@@ -7,4 +7,7 @@
 - [GridMetricsCache.h](GridMetricsCache.h) owns cached values from shared grid geometry.
 - [DeviceEosStatus.h](DeviceEosStatus.h) transports EOS failures from kernels to control.
 
-You must maintain these declarations completely independent of the overarching runtime layout and the global network catalog. Device allocation, geometric indexing, and rigorous error transport explicitly belong here; conversely, all core physics, thermodynamic state recovery, and mathematical interpolation must remain with their shared owners. Further guidance can be found in the [runtime guide](../runtime/README.md) and the [grid guide](../../grid/README.md).
+Keep these declarations independent of the runtime layout and network catalog.
+This group owns device allocation, geometric indexing and error transport.
+Physics, thermodynamic recovery and interpolation stay in shared modules.
+See the [runtime guide](../runtime/README.md) and [grid guide](../../grid/README.md).

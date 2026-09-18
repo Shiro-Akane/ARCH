@@ -1,1 +1,0 @@
-Candidate products are in fixed-science-v1. Both products and corrected baseline are additionally in fixed-timing-products-v1; verify that separate archive before deleting any expanded data.

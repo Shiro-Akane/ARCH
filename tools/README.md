@@ -58,7 +58,9 @@ See [test setup](../tests/README.md#add-cuda-and-its-sparse-provider).
 - [validate_backend_results.py](validate_backend_results.py): execute declared
   CPU/CUDA cases and compare actual fields, topology and conservation.
 - [validate_cuda_amr_restart.py](validate_cuda_amr_restart.py): strict restore
-  and continuation using the shared ARCH checkpoint contract.
+  and continuation using the shared ARCH checkpoint contract. An explicit
+  `--terminal-time` compares adaptive cross-backend trajectories at a common
+  physical time; same-backend restart still requires strict reproducibility.
 - [qualify_cuda_amr_evidence.py](qualify_cuda_amr_evidence.py): review recorded
   matrices against their manifests, source/build identities and final artifacts.
 
@@ -88,8 +90,9 @@ owns process logs. [validation_sanitizer.py](validation_sanitizer.py) owns
 Compute Sanitizer invocation and report checks. Extend these owners for reusable
 behavior instead of creating another process supervisor or evidence schema.
 
-The top-level tools use the Python standard library; HDF5 checkpoint reading is
-delegated to the C++ comparator. Independent references may need NumPy, SciPy,
+Most tools use the Python standard library; the main backend comparison delegates
+HDF5 field comparison to the C++ comparator. The optional predictive-recorder
+regression and coupled microphysics checks also use NumPy and h5py. Independent references may need SciPy,
 mpmath or h5py as documented by their Validation module. Compute Sanitizer and
 Nsight are needed only for their respective instrumentation workflows.
 

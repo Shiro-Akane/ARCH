@@ -5,8 +5,8 @@
 扩散使相邻单元的组分差异逐渐平滑。本页使用衰减速率已知的余弦浓度剖面，
 通过振幅检查扩散精度，通过组分总质量检查守恒，再比较不同分辨率下空间误差的变化。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 CPU 与 CUDA 均通过相同的解析误差、有界性和守恒检验。
 
@@ -20,7 +20,7 @@ X(x,t)=0.5+0.25\exp[-D(2\pi)^2t]\cos(2\pi x),\qquad D=0.01.
 
 ## 复现
 
-[主程序验证记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)保存了两个后端在指定物理终止时刻的结果，以及实际输入、源码、程序和构建身份。受测的六个扩散用例均已通过。曲线坐标、动态加密及流体耦合扩散由 [AMR 验证](../amr/README.zh-CN.md)另行覆盖。
+主程序验证记录保存了两个后端在指定物理终止时刻的结果，以及实际输入、源码、程序和构建身份。受测的六个扩散用例均已通过。曲线坐标、动态加密及流体耦合扩散由 [AMR 验证](../amr/README.zh-CN.md)另行覆盖。
 
 ```bash
 export OMP_NUM_THREADS=4
@@ -34,7 +34,7 @@ python3 tools/validate_backend_results.py \
 
 RKL2 验收要求最后一对分辨率的 tracer L1 阶数至少 1.8，平均 tracer 漂移不超过 \(10^{-12}\)。RKL1 要求分数有限且有界，Linf 误差不超过 \(10^{-5}\)，并满足相同漂移限制。结果由最终 HDF5 单元平均值测量。
 
-下表的显示精度适用于两个后端；[metrics.csv](metrics.csv)分别保留完整精度的观测值。
+下表的显示精度适用于两个后端；metrics.csv分别保留完整精度的观测值。
 验收运行复现了这些数值。在指定物理终点，CPU/CUDA 场量的最大绝对差为
 \(9.992\times10^{-16}\)，满足原有的相对误差 \(5\times10^{-10}\)
 和绝对误差 \(2\times10^{-12}\) 对照预算。
@@ -51,3 +51,15 @@ RKL2 验收要求最后一对分辨率的 tracer L1 阶数至少 1.8，平均 tr
 ![扩散收敛](figures/convergence.svg)
 
 两个后端均通过。RKL2 序列与二阶空间收敛一致。RKL1 的分辨率与阶段数混合序列用于稳定性、有界性、守恒性和解析误差回归，不测量 RKL1 时间阶数。CUDA 也通过了相同输入下与 CPU 的直接场量对照。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [主程序验证记录 (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [metrics.csv (CSV)](metrics.csv)
+
+</details>

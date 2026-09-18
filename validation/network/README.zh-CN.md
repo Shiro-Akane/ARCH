@@ -6,9 +6,8 @@
 检查到实际时间演化，并将弱反应引起的组分和能量变化与独立参考比较。稀疏案例
 还实际检查大方程系统的求解路径，而不只是确认生成包能够编译。
 
-本页历史验证结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；
-下方生成网络 NSE 扩展属于后续有界开发检查，不替代这些冻结验证。
-源码组织与构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入。生成网络 NSE 检查覆盖指定的模型与
+热力学状态，不替代完整程序验证。模块结果统一汇总在[验证总览](../README.zh-CN.md)中。
 
 CPU 和 CUDA 已通过生成网络的完整程序矩阵、真实 31 核素稀疏轨迹矩阵，
 以及恒定比热和 Helmholtz EOS 下的独立弱反应轨迹验证。这些记录覆盖
@@ -22,10 +21,10 @@ CPU 和 CUDA 已通过生成网络的完整程序矩阵、真实 31 核素稀疏
 
 | 报告 | 覆盖内容 | 最大实测误差与原预算 |
 | --- | --- | --- |
-| [恒定比热弱 Urca](results/weak-cv-native-20260907/release-898/evidence.json) | CPU/CUDA 上的 BE_NR、BD、ROS4 与独立轨迹比较 | 细容差组归一化状态误差 `3.3544e-8`，预算 `1e-7` |
-| [Helmholtz 弱 Urca](results/weak-helm-native-20260907/release-899/evidence.json) | 同样六条轨迹路线，包含组分相关的热力学闭合 | 细容差组归一化状态误差 `6.5112e-13`，预算 `1e-7` |
-| [真实 audit31 稀疏演化](results/sparse-native-20260907/release-900/evidence.json) | 三种 ODE、四个外部步、两格和三格存储；CPU KLU / CUDA cuDSS | 场误差 `1.8812e-14`，预算 `2e-10`；限步器误差 `1.8305e-14`，预算 `2e-8` |
-| [生成网络 ARCH 应用](results/runtime-native-20260907/release-875/backend-validation-evidence.json) | 六个案例、48 次 CPU/CUDA 运行、24 次比较 | 归一化场差 `8.7290e-15`；原场容差 `rtol=2e-8`、`atol=1e-12` |
+| 恒定比热弱 Urca | CPU/CUDA 上的 BE_NR、BD、ROS4 与独立轨迹比较 | 细容差组归一化状态误差 `3.3544e-8`，预算 `1e-7` |
+| Helmholtz 弱 Urca | 同样六条轨迹路线，包含组分相关的热力学闭合 | 细容差组归一化状态误差 `6.5112e-13`，预算 `1e-7` |
+| 真实 audit31 稀疏演化 | 三种 ODE、四个外部步、两格和三格存储；CPU KLU / CUDA cuDSS | 场误差 `1.8812e-14`，预算 `2e-10`；限步器误差 `1.8305e-14`，预算 `2e-8` |
+| 生成网络 ARCH 应用 | 六个案例、48 次 CPU/CUDA 运行、24 次比较 | 归一化场差 `8.7290e-15`；原场容差 `rtol=2e-8`、`atol=1e-12` |
 
 ### 独立弱反应轨迹
 
@@ -76,8 +75,8 @@ CPU KLU / GPU cuDSS。
 
 ### 设备安全覆盖
 
-最终的 [memcheck](../backend/results/final-first-law-20260907/memcheck-929/evidence.json)
-和 [racecheck](../backend/results/final-first-law-20260907/racecheck-903/evidence.json)
+最终的 memcheck
+和 racecheck
 各通过全部 23 条路径，包含生成网络数学、受控弱反应轨迹、所有权复用及真实
 audit31 稀疏演化。Memcheck 的 23 份完整报告均为零错误、零泄漏；racecheck 的
 23 份完整报告均为零竞争风险、零错误、零警告。
@@ -93,7 +92,7 @@ audit31 稀疏演化。Memcheck 的 23 份完整报告均为零错误、零泄�
 其余 22 条命令及全部数值预算均不变。普通 audit31 稀疏轨迹、audit31 完整程序和完整区间
 memcheck 仍保留 `1e-10 s` 终点。
 
-[插桩说明](../backend/results/final-first-law-20260907/README.zh-CN.md)提供两种
+插桩说明提供两种
 受资源保护的复现命令、完整测试构建要求及独立记录复核。插桩耗时用于诊断，
 不作为加速比基准；整体验收状态见[验证总览](../README.zh-CN.md)。
 
@@ -211,16 +210,41 @@ ODE 和两种存储规模全部通过；单方法诊断或跳过 GPU 均不算�
 
 ## 适用范围与后续工作
 
-完整 Release／Debug 回归、[五阶段核心构建检查](../backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
-及[声明规模的容量检查](../backend/results/device-memory-first-law-20260907/README.zh-CN.md)
+完整 Release／Debug 回归、核心全新与增量构建检查
+及声明规模的容量检查
 已通过，上述两组定向设备安全检查也已完成。最终交付审阅和汇总验收记录由
 [验证总览](../README.zh-CN.md)统一跟踪。四份科学／程序接入记录与插桩记录
 分别保留各自的验收范围。
 
-150/200 核素的完整轨迹和规模测试仍按已批准的安排，放到更大验证系统上继续，
-不属于本轮本地发布门槛。超大网络的科学可靠性取决于核素集合、反应数据和模型
+生产路线的 150/200 核素 Helmholtz 数值对照和完整程序计时已在较大验证系统上完成，
+原始版本、数据及适用范围见 [CPU/CUDA 性能报告](../backend/results/hpc-cuda-optimization/README.md)。
+**已测的小规模完整程序中，CUDA 耗时仍约为 CPU8 的 5.0–10.3 倍**，加速比约为
+0.10–0.20；数值对照通过不代表已取得加速。这类工作负载建议先选 CPU，再以自己的
+代表性算例计时决定是否采用 CUDA。约 5 倍的耦合 AMR 结果使用 aprox13，不能外推到
+这些稀疏网络，详见[性能指南](../../docs/CudaBackendStatus.zh-CN.md#按性能选择后端)。
+更大规模及实验性求解器的加速效果仍需单独验证。
+超大网络的科学可靠性取决于核素集合、反应数据和模型
 适用范围，求解器及后端的一致性单独记录。生成网络 NSE 的支持受上方契约与定向
 覆盖范围限制；[NSE 独立参考](nse_reference.py) 继续覆盖已支持的内置网络。
 
-内部状态见[发布标准](../../docs/development/CudaReleaseStandard.md)，
-用户能力说明见[后端指南](../../docs/CudaBackendStatus.zh-CN.md)。
+支持的配置和后端选择见[后端指南](../../docs/CudaBackendStatus.zh-CN.md)。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [恒定比热弱 Urca (JSON)](results/weak-cv-native-20260907/release-898/evidence.json)
+- [Helmholtz 弱 Urca (JSON)](results/weak-helm-native-20260907/release-899/evidence.json)
+- [真实 audit31 稀疏演化 (JSON)](results/sparse-native-20260907/release-900/evidence.json)
+- [生成网络 ARCH 应用 (JSON)](results/runtime-native-20260907/release-875/backend-validation-evidence.json)
+- [memcheck (JSON)](../backend/results/final-first-law-20260907/memcheck-929/evidence.json)
+- [racecheck (JSON)](../backend/results/final-first-law-20260907/racecheck-903/evidence.json)
+
+- [插桩说明](../backend/results/final-first-law-20260907/README.zh-CN.md)
+- [核心全新与增量构建检查](../backend/results/cold-core-first-law-20260907/release-909/README.zh-CN.md)
+- [声明规模的容量检查](../backend/results/device-memory-first-law-20260907/README.zh-CN.md)
+
+</details>

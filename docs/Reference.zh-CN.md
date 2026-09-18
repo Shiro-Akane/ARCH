@@ -304,6 +304,13 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 
 即使 `lrefinemax = 0`，`refine_var` 仍会验证。
 
+用于离线分析的特征采集默认关闭。设置 `predictive_amr_record = true`
+即可导出网格特征和实际 AMR 决策，不改变细化行为；与其他布尔开关一样，
+接受不区分大小写的 `true`／`false`。`predictive_amr_record_prefix` 指定输出前缀，
+`predictive_amr_horizon` 是正整数，`predictive_amr_history` 是非负整数；两者均为元数据。
+[采集接口说明](../src/runtime/predictive_amr/README.md)介绍输出文件，以及
+CUDA 开启采集时额外产生的主机数据传输。
+
 ### EOS 与重力
 
 | 键 | 类型 | 加载默认值 | 契约 |

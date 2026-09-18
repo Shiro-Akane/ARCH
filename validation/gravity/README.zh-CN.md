@@ -6,8 +6,8 @@
 改变动量与能量，而不改变总质量。耦合案例进一步检查网格细化和组分扩散时
 能否保持这项收支平衡。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 CPU 与 CUDA 共用逐阶段外部重力源项。验证从周期状态开始，其中 \(\rho=1\)、
 \(p=1\)、\(u=0\)，常加速度为 \(g_x=1\)。在 \(t=0.1\) 时，精确解为
@@ -16,9 +16,9 @@ CPU 与 CUDA 共用逐阶段外部重力源项。验证从周期状态开始，�
 
 ## AMR 与组分扩散耦合
 
-[Release 应用记录](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
+Release 应用记录
 通过了三个案例、24 次 CPU/CUDA 执行和十二次后端对比。
-[端点检查](results/coupled-final-20260907/endpoints-894/evidence.json)在全部六个物理
+端点检查在全部六个物理
 时刻端点重新核对了解析源项平衡及质量／组分守恒。两份报告使用相同的源码、程序、
 比较工具和依赖库，并检查它们在执行期间保持不变。
 
@@ -73,8 +73,8 @@ python3 validation/gravity/results/coupled-final-20260907/check_terminal.py \
 
 `simulation/ExternalGravity/` 中的 `ExternalGravity` 算例和 [`inputs/`](inputs/)
 中的不可变参数，在均匀网格上单独验证重力源项。
-[应用记录](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
-复现了下表及 [metrics.csv](metrics.csv) 中的数值，两个后端均到达指定物理终点。
+应用记录
+复现了下表及 metrics.csv 中的数值，两个后端均到达指定物理终点。
 
 RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预算。
 密度误差为零；由于状态空间均匀，下列每个 Linf 也等于其 L1 和 L2。
@@ -90,3 +90,17 @@ RK2、RK3 对密度、速度、压力和能量采用相同的 `1e-12` Linf 预�
 
 这些测试验证给定的常加速度，不涉及静水平衡或自重力。保留的 Euler 输入展示预期的
 一阶源项能量误差；独立时间收敛检验见[流体验证](../hydro/README.zh-CN.md)。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [Release 应用记录 (JSON)](results/coupled-final-20260907/runtime-893/backend-validation-evidence.json)
+- [端点检查 (JSON)](results/coupled-final-20260907/endpoints-894/evidence.json)
+- [应用记录 (JSON)](../backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [metrics.csv (CSV)](metrics.csv)
+
+</details>

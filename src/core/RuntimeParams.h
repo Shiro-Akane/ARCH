@@ -374,11 +374,10 @@ public:
         if (cfg.amr.refine_threshold < 0.0 || cfg.amr.refine_threshold > 1.0 || cfg.amr.derefine_threshold < 0.0 ||
             cfg.amr.derefine_threshold >= cfg.amr.refine_threshold)
             throw std::invalid_argument("AMR Lohner thresholds require ordered values in [0, 1].");
-        // Preserve the Phase 0 observer interface without enabling inference.
-        const auto predictive_record = parser.GetString("predictive_amr_record", "false");
-        // Phase 0 datasets used 0/1 before the shared parser standardized bools.
-        cfg.adaptive_runtime.predictive_amr_record = predictive_record == "1"
-            || (predictive_record != "0" && parser.GetBool("predictive_amr_record", false));
+        // Recording uses the same case-insensitive boolean contract as every
+        // physical switch; it never enables predictive refinement or inference.
+        cfg.adaptive_runtime.predictive_amr_record =
+            parser.GetBool("predictive_amr_record", false);
         cfg.adaptive_runtime.predictive_amr_record_prefix =
             parser.GetString("predictive_amr_record_prefix", "");
         cfg.adaptive_runtime.predictive_amr_horizon =

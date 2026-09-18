@@ -30,4 +30,6 @@ is a developer reference-output tool, not a CTest target. It requires an explici
 generated network type and header when compiled; ordinary verification commands
 do not need it.
 
-All host/device numerical witnesses explicitly belong in [math/](../math/README.md). Scientific validation campaigns reside in [Validation](../../validation/README.md); remember that this test code absolutely does not define any alternative production algorithms.
+Reusable host/device numerical checks belong in [math/](../math/README.md).
+Scientific campaigns are recorded in [Validation](../../validation/README.md).
+Tests may provide independent references, but not alternative production solvers.

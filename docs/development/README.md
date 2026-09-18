@@ -12,12 +12,14 @@ public description when behavior changes and retain a separate record of the
 verification. The [comment and documentation guide](CommentAndDocumentationStyle.md)
 describes how to explain this flow without turning source comments into a change log.
 
-## Security and contributions
+## Reporting problems and contributing
 
-Report suspected vulnerabilities through the [security guide](../../SECURITY.md)
-([中文](../../SECURITY.zh-CN.md)) before sharing details in a public issue or pull
-request. Ordinary bug reports should include a minimal input, the tested commit
-and the expected behavior. Remove credentials and private data from shared logs.
+Use Issues for build, runtime and numerical questions, with a small reproducer,
+the tested commit and the expected behavior. Follow the
+[research computing and reporting guide](../guides/Reporting.md)
+([中文](../guides/Reporting.zh-CN.md)) when preparing inputs and logs for sharing.
+Problems involving unintended file access, credentials or effects on other users'
+jobs need private coordination; ordinary numerical discrepancies do not.
 
 [CODEOWNERS](../../.github/CODEOWNERS) names the default reviewer; it is separate
 from the implementation ownership map and does not itself require approval.
@@ -45,36 +47,34 @@ credentials into an issue. Revoke an exposed credential before addressing its
 history. Commit hooks are local setup: cloning the repository does not install
 them, and they supplement rather than replace GitHub push protection.
 
-## Current maintenance
+## Maintained contributor references
 
 - [Current interface review](ImplementationOwnership.md#current-interface-and-compatibility-review): the complete ARCH checkpoint
   contract, removal of unused solver-selection members, retained API boundaries
   and the focused verification record.
-- [Release review ledger](CudaReleaseStandard.md): review scope, decisions and
-  the evidence used for acceptance. Individual measurements identify the source
-  and build they tested; retain that association when making changes.
-- [Optimized core-build reference](../../validation/backend/results/cold-core-first-law-20260907/release-909/README.md):
-  the measured cold, no-op and incremental builds, with the two-heavy/four-total
-  job configuration. This is a measured reference, not a universal optimum.
+- [Acceptance checklist](CudaReleaseStandard.md): implementation invariants,
+  required checks, resource policy and publication boundaries.
+- [Build guide](../guides/Build.md): configurable compilation and memory controls.
 - [Tests](../../tests/README.md) and [tools](../../tools/README.md): choose focused
   checks by responsibility and reuse the existing execution/evidence helpers.
 - [Validation](../../validation/README.md): the combined acceptance record and
   links to scientific, runtime, instrumentation and resource measurements.
 
-## Historical investigations
+<details>
+<summary>Integration review and historical investigations — for contributors</summary>
 
-These records retain their original observations and source identities. Their
-interim conclusions do not replace the current validation index.
+- [Integration record](HpcCudaIntegration.md): exact source and binary identities,
+  bounded implementation changes, local checks and publication scope.
+- [Historical development archive](archive/README.md): intermediate backend,
+  AMR, geometry and diffusion reviews, plus the superseded acceptance ledger.
+- [Core-build measurement](../../validation/backend/results/cold-core-first-law-20260907/release-909/README.md):
+  identified cold, no-op and incremental builds; the recorded concurrency is a
+  machine-specific reference, not a universal optimum.
 
-- [Earlier compile concurrency experiment](../../validation/backend/results/local-build-reference-20260907/README.md):
-  heavy-pool comparisons and memory-pressure observations preceding the complete
-  core-build measurement above.
-- [Earlier refactor experiments](CudaRefactorSmoke.md): historical smoke/build
-  observations, retained for reproducibility rather than universal promises.
-- [Archived backend evidence](CudaBackendEvidence.md)
-  ([Chinese](CudaBackendEvidence.zh-CN.md)): the previous detailed backend
-  reports, including hardware observations and historical qualification claims.
-  These are preserved evidence, not the current acceptance decision.
+These records explain development decisions. User-facing results remain in the
+validation summaries; an archived pending item is not necessarily a current defect.
+
+</details>
 
 User documentation lives in the project README, [API reference](../Reference.md)
 and [backend capabilities](../CudaBackendStatus.md). Quantitative evidence uses

@@ -1,7 +1,0 @@
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/build_and_test.py: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.cpp: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/CuDssSparseWindowSolver.h: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/dispatch.sh: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/protocol.py: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/test_sparse_window.cpp: OK
-/home/ubuntu/projects/ARCH-native-wave-v4-20260916/window-input-v1/worker.sh: OK

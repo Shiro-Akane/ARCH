@@ -18,29 +18,25 @@ for the other.
 
 The CPU/CUDA release profile has passed its numerical, application, regression,
 device-safety, sustained-run and resource checks. The results below preserve
-the tested source, binary and scientific-data identities. The
-[source delivery review](backend/results/final-acceptance-20260907/release-73a9cf50/)
-collects the final evidence inventory and source-asset review.
+the tested source, binary and scientific-data identities. Detailed evidence is
+grouped at the end of each page; the module links lead to readable explanations
+of the test problems, methods and results.
 
-The [source organization and build review](backend/results/maintenance-freeze-20260908/README.md)
-records runtime directory organization, documentation and source equivalence,
-with separate build checks. The scientific results below retain their original
-tested identities.
+The [CPU/CUDA performance report](backend/results/hpc-cuda-optimization/README.md)
+records 1,188 microphysics runs and 1,155 passing comparisons, alongside
+Hydro/AMR and large-network measurements. Coupled aprox13 AMR reaches 5.08×
+end-to-end acceleration on the tested H100-20C vGPU; small workloads and the
+tested 150/200-isotope applications still favor CPU. The
+[backend guide](../docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
+explains how the measured benefit changes with workload size.
 
-The current dispatch cleanup preserves the numerical implementations and
-registered routes. Its optimized incremental CUDA build and all 289 Python
-controls pass, together with all 98 configured Release tests, ten application
-smoke lanes and all four strict normal/instrumented restart suites. The
-[active plan](../docs/development/CudaReleaseStandard.md#active-execution-contract)
-records the completed technical checks for the owner-authorized integration.
-The [maintenance record](backend/results/maintenance-freeze-20260908/README.md)
-keeps these current checks separate from the scientific measurements below.
-
-The [matched local AMR timing](backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
-passes field, conservation and dynamic-topology checks at both measured Sedov
-sizes. CUDA takes 3.30 and 3.43 times the eight-thread CPU end-to-end time on
-this machine. Functional agreement does not imply a speedup; compare the
-backends on your workload when choosing where to run it.
+The integration regression record
+adds 352 tooling tests, 12 focused CPU/CUDA tests, 24 recorder runs, a 12-route
+active-ENUC AMR/restart check and 10 memory/race checks, all passed. These checks
+exercise the final integration changes; they are separate from the scientific
+and performance measurements, whose original source identities are retained.
+Different source versions and machines are not a controlled performance
+comparison. Time your own representative case before choosing a backend.
 
 Timmes materials are explicitly authorized for free use and redistribution, as recorded
 in the [third-party notices](../THIRD_PARTY_NOTICES.md). This administrative
@@ -71,9 +67,9 @@ when needed. Existing tracked reference data and EOS inputs are unaffected.
 | Species diffusion | RKL1/RKL2 applications at three resolutions; second-order RKL2 spatial convergence | [diffusion](diffusion/README.md) |
 | External gravity | RK2/RK3 analytic source balance, including AMR and RKL2 species-diffusion coupling | [gravity](gravity/README.md) |
 | Built-in burning | Six aprox13 application runs, twelve Host network/ODE temporal controls and separate CUDA policy checks | [burn](burn/README.md) |
-| Dynamic AMR | Ten Cartesian and 24 curved cases; conservative transfer and thermal/viscous/species coupling, plus complete runtime refine/coarsen cycles in Cartesian 3-D and cylindrical/spherical 2-D | [AMR](amr/README.md), [3-D lifecycle](amr/results/dynamic-3d-final-20260907/release-919/evidence.json), [curved 2-D lifecycles](amr/results/dynamic-curved-final-20260907/release-923/evidence.json) |
-| Three-dimensional AMR instrumentation | Memcheck and racecheck each pass seven CUDA executions covering complete eight-child refine/coarsen/refine transitions; clean reports with original field and conservation checks | [memcheck](amr/results/dynamic-3d-final-20260907/memcheck-914/evidence.json), [racecheck](amr/results/dynamic-3d-final-20260907/racecheck-915/evidence.json) |
-| Coupled curved AMR instrumentation | Memcheck and racecheck each pass two spherical three-dimensional thermal/viscous/species CUDA runs on mixed-level meshes; clean reports with original five-stage RKL2, field and physical-volume conservation checks | [memcheck](amr/results/curved-native-20260907/memcheck-904/backend-validation-evidence.json), [racecheck](amr/results/curved-native-20260907/racecheck-906/backend-validation-evidence.json) |
+| Dynamic AMR | Ten Cartesian and 24 curved cases; conservative transfer and thermal/viscous/species coupling, plus complete runtime refine/coarsen cycles in Cartesian 3-D and cylindrical/spherical 2-D | [AMR](amr/README.md) |
+| Three-dimensional AMR instrumentation | Memcheck and racecheck each pass seven CUDA executions covering complete eight-child refine/coarsen/refine transitions; clean reports with original field and conservation checks | [AMR device checks](amr/README.md) |
+| Coupled curved AMR instrumentation | Memcheck and racecheck each pass two spherical three-dimensional thermal/viscous/species CUDA runs on mixed-level meshes; clean reports with original five-stage RKL2, field and physical-volume conservation checks | [AMR device checks](amr/README.md) |
 | EOS | Twelve normalized-table application cases and 24 physical endpoints, plus independent Helmholtz and manufactured thermodynamic controls | [EOS](eos/README.md) |
 | HDF5/restart | Four backend directions from intermediate and terminal checkpoints; native composition, controller and output continuity | [restart](restart/README.md) |
 | Burn/AMR restart instrumentation | Memcheck and racecheck each pass six actual CUDA runs and all nine strict comparisons; complete clean reports with native fields, controller and output-phase checks | [restart safety records](restart/README.md#completed-checks-on-the-release-candidate) |
@@ -81,27 +77,27 @@ when needed. Existing tracked reference data and EOS inputs are unaffected.
 | Built-in NSE | Sixteen application cases and 32 physical endpoints, with independent equilibrium and source-energy checks | [burn](burn/README.md) |
 | Geometry | Twelve high-precision metric references; thermal/species/viscous spatial convergence and radial-origin stability | [AMR](amr/README.md#independent-geometry-and-diffusion-checks) |
 | Sustained execution | 500 hydro and 100 diffusion AMR steps; twelve cycles per restart chain; 72 exact native burn-state replays and seven fixed-time burn comparisons | [AMR](amr/README.md#sustained-regridding-and-continuation), [restart](restart/README.md#sustained-native-restoration) |
-| Core compilation | Optimized cold ARCH build, no-op, compact-route incremental build and identical-work serial/parallel comparison; two heavy jobs and four total jobs | [build measurements](backend/results/cold-core-first-law-20260907/release-909/README.md) |
-| Bounded memory capacity | Regrid migration, a 16,384-row cuDSS matrix, generated burning and AMR applications; all observed dynamic allocations released | [capacity measurements](backend/results/device-memory-first-law-20260907/README.md) |
-| Focused backend instrumentation | Memcheck and racecheck each pass 23 complete routes, including weak thermodynamics and real generated cuDSS burning; clean memory and race reports | [instrumentation records](backend/results/final-first-law-20260907/README.md) |
+| Core compilation | Optimized cold ARCH build, no-op, compact-route incremental build and identical-work serial/parallel comparison; two heavy jobs and four total jobs | [Detailed build records](#detailed-verification-records) |
+| Bounded memory capacity | Regrid migration, a 16,384-row cuDSS matrix, generated burning and AMR applications; all observed dynamic allocations released | [Detailed capacity records](#detailed-verification-records) |
+| Focused backend instrumentation | Memcheck and racecheck each pass 23 complete routes, including weak thermodynamics and real generated cuDSS burning; clean memory and race reports | [Detailed device checks](#detailed-verification-records) |
 
-The [uniform application matrix](backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+The uniform application matrix
 contains 22 cases, 180 CPU/CUDA executions and 90 comparisons. The
-[generated-network matrix](network/results/runtime-native-20260907/release-875/backend-validation-evidence.json)
+generated-network matrix
 adds six cases, 48 executions and 24 comparisons, including actual CPU KLU and
 GPU cuDSS selection for the 32-equation audit31 network. Module summaries link
 the independent scientific checks and preserve their original budgets.
 
-The [complete Release regression](backend/results/final-first-law-20260907/release-regression-895/evidence.json)
-passes 98 tests, and the [CPU-only regression](backend/results/final-first-law-20260907/cpu-regression-897/evidence.json)
-passes 31. The [complete Debug regression](backend/results/final-first-law-20260907/debug-regression-910/evidence.json)
+The complete Release regression
+passes 98 tests, and the CPU-only regression
+passes 31. The complete Debug regression
 also passes all 98 tests without skips. Focused memcheck and racecheck each pass
 all 23 routes. Their sparse tests cover three ODEs, both storage sizes and four
 subdivisions with the original numerical budgets. Ordinary scientific runs and
 memcheck retain the full `1e-10 s` interval; racecheck uses a separate `1e-12 s`
 observation interval. The shorter instrumentation run does not replace the
 full scientific trajectory. Host/device capacity and optimized core-build
-measurements are linked above.
+measurements are available in the detailed records below.
 
 ## Error conventions
 
@@ -156,7 +152,7 @@ has its own state and metadata checks.
 
 The completed campaigns cover the following areas on one frozen source and
 scientific-data set, with identified Debug/Release binaries, dependencies and
-comparators. Their [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50/)
+comparators. Their delivery audit
 records the combined evidence and reviewed source assets. Each retained result
 identifies the source actually tested; the current maintenance checks are
 recorded separately from those scientific runs. A passing test report does not
@@ -193,3 +189,34 @@ profile's representative generated and weak networks; retained results and
 reproduction inputs are in [network validation](network/README.md).
 
 Use [CASE_TEMPLATE.md](CASE_TEMPLATE.md) for new records.
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [Source delivery review](backend/results/final-acceptance-20260907/release-73a9cf50/README.md): detailed evidence inventory and source-asset checks.
+- [Integration review](../docs/development/HpcCudaIntegration.md): code changes, test selection and exact identities.
+- [Maintenance and build records](backend/results/maintenance-freeze-20260908/README.md): source-specific dispatch and restart checks, including earlier RTX 3060 Ti timings. Those pre-optimization measurements are not current-code performance estimates.
+
+- [integration regression record (JSON)](backend/results/hpc-cuda-optimization/integration.json)
+- [3-D lifecycle (JSON)](amr/results/dynamic-3d-final-20260907/release-919/evidence.json)
+- [curved 2-D lifecycles (JSON)](amr/results/dynamic-curved-final-20260907/release-923/evidence.json)
+- [memcheck (JSON)](amr/results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
+- [racecheck (JSON)](amr/results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+- [memcheck (JSON)](amr/results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
+- [racecheck (JSON)](amr/results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+- [uniform application matrix (JSON)](backend/results/uniform-native-20260907/release-874/backend-validation-evidence.json)
+- [generated-network matrix (JSON)](network/results/runtime-native-20260907/release-875/backend-validation-evidence.json)
+- [complete Release regression (JSON)](backend/results/final-first-law-20260907/release-regression-895/evidence.json)
+- [CPU-only regression (JSON)](backend/results/final-first-law-20260907/cpu-regression-897/evidence.json)
+- [complete Debug regression (JSON)](backend/results/final-first-law-20260907/debug-regression-910/evidence.json)
+
+- [build measurements](backend/results/cold-core-first-law-20260907/release-909/README.md)
+- [capacity measurements](backend/results/device-memory-first-law-20260907/README.md)
+- [instrumentation records](backend/results/final-first-law-20260907/README.md)
+- [delivery audit](backend/results/final-acceptance-20260907/release-73a9cf50/)
+
+</details>

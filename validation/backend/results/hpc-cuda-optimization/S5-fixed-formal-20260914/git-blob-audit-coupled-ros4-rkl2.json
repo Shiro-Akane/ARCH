@@ -1,9 +1,0 @@
-{
-  "status": "passed",
-  "git_commit": "525d595cae528959aff7976ccbc87564628b329e",
-  "files": {
-    "coupled_ros4_rkl2_all_transport": 726
-  },
-  "bytes": 35163730,
-  "scope": "all tracked selected-module files byte-identical to Git blobs; raw archive SHA-256 checks are separate"
-}

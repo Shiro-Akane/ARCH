@@ -1,9 +1,0 @@
-test_matrix_has_all_methods_and_unchanged_restart_budget (test_microphysics_coupling.CoupledMicrophysicsTests.test_matrix_has_all_methods_and_unchanged_restart_budget) ... ok
-test_source_aware_balance_accepts_nonzero_nuclear_energy (test_microphysics_coupling.CoupledMicrophysicsTests.test_source_aware_balance_accepts_nonzero_nuclear_energy) ... ok
-test_unaccounted_energy_mass_or_charge_fail (test_microphysics_coupling.CoupledMicrophysicsTests.test_unaccounted_energy_mass_or_charge_fail) ... ok
-test_zero_burn_cannot_qualify_coupled_case (test_microphysics_coupling.CoupledMicrophysicsTests.test_zero_burn_cannot_qualify_coupled_case) ... ok
-
-----------------------------------------------------------------------
-Ran 4 tests in 0.004s
-
-OK

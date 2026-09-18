@@ -14,19 +14,6 @@
 namespace arch::cuda {
 namespace {
 
-constexpr bool same_block_handle(
-    amr::BlockHandle left, amr::BlockHandle right) noexcept
-{
-    return left.uid.value == right.uid.value
-        && left.epoch.value == right.epoch.value;
-}
-
-constexpr bool same_storage_generation(
-    backend::StorageGeneration left,
-    backend::StorageGeneration right) noexcept
-{
-    return left.value == right.value;
-}
 
 bool same_rkl_descriptor(
     const scheduler::RklStageDescriptor& left,
@@ -106,8 +93,7 @@ void CudaBackend::copy_state_slot(
     backend::BackendStateAccess source,
     backend::BackendStateAccess destination)
 {
-    if (!same_block_handle(source.block, destination.block)
-        || !same_storage_generation(source.storage, destination.storage))
+    if (source.block != destination.block || source.storage != destination.storage)
         throw std::invalid_argument("state copy crosses CUDA blocks");
     auto& block = impl_->require_block(source);
     const DeviceStateView from = block.require_access(source);

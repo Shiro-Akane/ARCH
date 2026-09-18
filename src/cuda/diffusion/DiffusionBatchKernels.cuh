@@ -1,4 +1,13 @@
-/** Cross-block traversal of the existing diffusion kernels and shared RKL math. */
+/**
+ * @file DiffusionBatchKernels.cuh
+ * @brief Batch block traversal without changing the shared diffusion/RKL math.
+ *
+ * The runtime supplies borrowed state and workspace bindings. Kernels evaluate
+ * the existing cell/face operators; the common scheduler still owns each RKL
+ * stage's ghost, flux-registration, reflux and publication boundaries. Global
+ * species scratch is serialized by selecting one block per wave. Returned
+ * launch status is not a completion witness; the caller drains the stream.
+ */
 #pragma once
 
 #include "DiffusionKernels.cuh"
