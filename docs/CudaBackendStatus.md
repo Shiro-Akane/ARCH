@@ -57,22 +57,86 @@ Conversely, the GPU computes the actual cell indicators and transfers just one s
 
 ## Choosing a backend for performance
 
-Shared features and numerical agreement do not guarantee that CUDA will run
-faster. In the local dynamic-AMR Sedov comparison on an i7-10700 and RTX 3060 Ti
-under WSL2, CUDA end-to-end time was 3.30 and 3.43 times the eight-thread CPU
-time at the two measured sizes. Both backends passed the same field,
-conservation and runtime-topology checks. CPU is the faster choice for these
-workloads; compare a representative run when selecting a backend for your own
-model. `auto` selects an available supported backend, not the fastest one by
-benchmarking it.
+**Measured end-to-end acceleration reaches about 5× for coupled AMR workloads.**
+The highest result was 5.08× for hydrodynamics, BD burning, RKL2 full transport
+and dynamic AMR at 128 initial mesh blocks: 423.55 seconds on CPU16 versus
+83.35 seconds on CUDA. This compares the two backends running the same physical
+problem from startup through completion.
 
-The [timing record](../validation/backend/results/maintenance-freeze-20260908/README.md#matched-local-amr-timing)
-gives the two mesh sizes, one warmup and three measured runs per backend,
-reproduction command and complete reports. End-to-end measurements include
-initialization and output. Runtime regrid transactions are reported separately;
-they are not an additional cost to add to those totals or an isolated solver
-timer. This source release provides CPU/CUDA functional equivalence; execution
-performance remains workload-dependent and is a separate optimization task.
+These measurements used an H100-20C **20 GiB vGPU** and a Xeon Gold 6338
+**32-vCPU virtual machine**, not a dedicated full H100 or 32 dedicated physical
+CPU cores. Burning and coupled cases use aprox13, the Helmholtz EOS and
+DenseLU; diffusion-only cases use the ideal-gas EOS. The CPU reference is
+the fastest median among 1, 8 and 16 threads, with one warm-up
+and five formal runs per configuration. CPU/CUDA samples were alternated.
+
+The table shows `speedup = CPU time / CUDA time`: above 1 means CUDA is faster,
+below 1 means CPU is faster. Block counts refer to **initial AMR mesh blocks**,
+not CUDA thread blocks or final refined cell counts. "Coupled" includes
+hydrodynamics, burning, species/thermal/viscous diffusion and dynamic AMR.
+
+| Workload | 8 blocks | 32 blocks | 128 blocks |
+| --- | ---: | ---: | ---: |
+| Diffusion, RKL1 | 0.099× | 0.392× | 1.004× |
+| Diffusion, RKL2 | 0.116× | 0.489× | 1.347× |
+| Burning, BE_NR | 0.964× | 1.325× | 1.978× |
+| Burning, BD | 1.046× | 1.519× | 2.612× |
+| Burning, ROS4 | 0.975× | 1.300× | 1.997× |
+| Coupled, BE_NR + RKL1 | 1.183× | 1.460× | 2.876× |
+| Coupled, BE_NR + RKL2 | 1.293× | 1.962× | 3.999× |
+| Coupled, BD + RKL1 | 1.378× | 3.179× | 3.924× |
+| Coupled, BD + RKL2 | 1.460× | 2.856× | **5.082×** |
+| Coupled, ROS4 + RKL1 | 1.248× | 2.245× | 3.681× |
+| Coupled, ROS4 + RKL2 | 1.363× | 2.868× | **5.007×** |
+
+The separate two-dimensional Sedov test with dynamic AMR measured 1.588× and
+1.667× at initial block layouts of 4×4 and 8×8. Those are combined Hydro/AMR
+times, not isolated AMR speedups. The
+[campaign summary](../validation/backend/results/hpc-cuda-optimization/README.md)
+provides absolute times, acceptance counts and source-pinned reports.
+
+More mesh work allows CUDA to amortize kernel launches and synchronization.
+Small diffusion cases still favor CPU; RKL1 at 128 blocks is effectively at
+parity. Increasing the isotope count is a different scaling problem and does
+not, by itself, improve GPU utilization.
+
+**Large-network performance warning:** the tested production 150/200-isotope
+sparse applications still take approximately **5.0–10.3 times as long on CUDA
+as on CPU8** (speedup about 0.10–0.20×). Their numerical comparisons passed,
+but the current host-controlled cuDSS route remains a performance limitation
+for those small full-application workloads. Choose CPU for these workloads
+unless timing on your representative case demonstrates a GPU benefit. Larger
+mesh/network combinations need their own measurements; the 5× result above
+does not apply to them. Experimental sparse providers are not production options.
+
+Use a representative input to compare end-to-end time on your machine.
+`compute_backend = auto` selects an available supported backend; it does not
+benchmark your problem. End-to-end time includes initialization and output;
+regrid measurements overlap that total and must not be added again.
+
+Use the same physical input, AMR criteria and output settings on both backends
+when timing them.
+
+### What the CUDA optimization changes
+
+- Hydro, diffusion and small-network burning process multiple mesh blocks per
+  launch where their workspace layout permits. They still call the common
+  cell/face mathematics and registered physical policies.
+- AMR field migration stays on the device, with compact indicator summaries
+  returned to the CPU for shared mesh-tree decisions.
+- Device workspaces and host exchange buffers reuse allocated capacity. A
+  topology change rebuilds the affected views rather than duplicating their
+  physical models or retaining stale mesh references.
+- Completion and field-version checks coordinate ghost updates, exchanges and
+  publication of results. Reusing already completed boundaries avoids redundant
+  refreshes before host consumers read the accepted state.
+- Sparse corrections use one shared original-system residual check. cuDSS
+  factor storage and its bounded cache remain backend-specific; further
+  large-network acceleration is a separate optimization task.
+
+Together these changes reduce launch, allocation and transfer overhead without
+changing the physical equations or acceptance tolerances. The measured speedups
+describe complete workloads; they do not assign a separate gain to each change.
 
 ## Dense and sparse burning
 

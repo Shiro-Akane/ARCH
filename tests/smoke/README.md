@@ -50,4 +50,7 @@ python3 tools/smoke_cuda_amr_runtime.py --arch build-cuda/bin/ARCH \
   --case cartesian_dynamic_sedov --timeout 30
 ```
 
-The curved test cases specifically verify execution and restart capabilities on an initially refined mesh. Note that runtime curved refinement and coarsening behaviors are rigorously covered by the [AMR lifecycle records](../../validation/amr/README.md#what-the-tests-cover), alongside the shared migration and intermediate-state tests.
+The curved smoke cases check execution and restart on an initially refined mesh.
+Runtime refinement/coarsening is covered by the
+[AMR lifecycle records](../../validation/amr/README.md#what-the-tests-cover),
+together with shared migration and intermediate-state tests.

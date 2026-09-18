@@ -15,6 +15,7 @@
 #include "cuda/hydro/GridGeometryAdapter.cuh"
 
 #include <cmath>
+#include <string>
 
 namespace arch::cuda {
 namespace {
@@ -51,39 +52,62 @@ scheduler::HydroMethod hydro_method(
 double CudaBackend::compute_hydro_dt(
     backend::BackendStateAccess current, double cfl)
 {
-    auto& block = impl_->require_block(current);
-    const DeviceStateView state = block.require_access(current);
-    if (current.slot != state::StateSlot::Current)
-        throw std::invalid_argument("Hydro dt requires Current");
-    const CudaHydroWorkspaceView workspace{
-        block.face_flux.view(), block.hydro_delta.view(),
-        block.cfl_candidates.get(), block.cfl_result.get(),
-        block.cfl_status.get(), impl_->species_workspace};
-    double result = 0.0;
-    int status = static_cast<int>(reduction::ReductionStatus::Empty);
-    // Use the shared runtime lifetime guard after the asynchronous-copy
-    // destinations, so a failed enqueue cannot outlive their stack storage.
+    return compute_hydro_dt_batch({&current, 1}, cfl).front();
+}
+
+std::vector<double> CudaBackend::compute_hydro_dt_batch(
+    std::span<const backend::BackendStateAccess> currents, double cfl)
+{
+    validate_hydro_batch_accesses(currents);
+    std::vector<double> result(currents.size());
+    if (currents.empty()) return result;
+    std::vector<CudaBlockRuntime*> blocks;
+    blocks.reserve(currents.size());
+    for (const auto current : currents) {
+        auto& block = impl_->require_block(current);
+        static_cast<void>(block.require_access(current));
+        blocks.push_back(&block);
+    }
+    impl_->select_device();
+    auto& scratch = impl_->hydro_batch;
+    scratch.ensure_capacity(currents.size());
+    // Result and owner staging outlive the guard, including a failed second
+    // download. No Host pointer escapes this synchronous batch operation.
     CudaQuiescenceGuard work_guard{*impl_};
-    cudaError_t launch_error = cudaSuccess;
-    visit_eos(impl_->eos, [&](const auto& eos) {
-        launch_error = launch_cuda_backend_hydro_dt(
-            state, block.grid, eos, cfl, workspace, impl_->stream.get());
-    });
-    check_cuda(launch_error, "launch Hydro dt");
-    check_cuda(cudaMemcpyAsync(
-                   &result, block.cfl_result.get(), sizeof(double),
-                   cudaMemcpyDeviceToHost, impl_->stream.get()),
-               "download Hydro dt");
-    check_cuda(cudaMemcpyAsync(
-                   &status, block.cfl_status.get(), sizeof(int),
-                   cudaMemcpyDeviceToHost, impl_->stream.get()),
-               "download Hydro CFL reduction status");
+    for (std::size_t index = 0; index < blocks.size(); ++index) {
+        auto& block = *blocks[index];
+        const CudaHydroWorkspaceView workspace{
+            block.face_flux.view(), block.hydro_delta.view(),
+            block.cfl_candidates.get(), scratch.dt->get() + index,
+            scratch.status->get() + index, impl_->species_workspace};
+        cudaError_t launch_error = cudaSuccess;
+        visit_eos(impl_->eos, [&](const auto& eos) {
+            launch_error = launch_cuda_backend_hydro_dt(
+                block.require_access(currents[index]), block.grid, eos,
+                cfl, workspace, impl_->stream.get());
+        });
+        check_cuda(launch_error, "launch Hydro dt batch");
+    }
+    // Pageable staging is sufficient: transfers occur AFTER every launch,
+    // and this API intentionally returns synchronously. Two bulk D2H calls,
+    // not two tiny transfers per block; no pinned buffers/events are needed.
+    check_cuda(cudaMemcpyAsync(result.data(), scratch.dt->get(),
+                   result.size() * sizeof(double), cudaMemcpyDeviceToHost,
+                   impl_->stream.get()), "download Hydro dt batch");
+    check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
+                   currents.size() * sizeof(int), cudaMemcpyDeviceToHost,
+                   impl_->stream.get()), "download Hydro CFL batch status");
     quiesce();
     work_guard.completed = true;
-    impl_->runtime_counters.kernel_count += 2;
-    impl_->runtime_counters.bytes_d2h += sizeof(double) + sizeof(int);
-    if (status != static_cast<int>(reduction::ReductionStatus::Ok))
-        throw std::runtime_error("Invalid CUDA hydro EOS query or CFL reduction");
+    impl_->runtime_counters.kernel_count += 2 * currents.size();
+    impl_->runtime_counters.bytes_d2h += currents.size() * (sizeof(double) + sizeof(int));
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        if (scratch.host_status[index] != static_cast<int>(reduction::ReductionStatus::Ok))
+            throw std::runtime_error("Invalid CUDA hydro EOS query or CFL reduction: block="
+                + std::to_string(currents[index].block.uid.value) + " epoch="
+                + std::to_string(currents[index].block.epoch.value) + " status="
+                + std::to_string(scratch.host_status[index]));
+    }
     return result;
 }
 
@@ -92,51 +116,73 @@ state::CompletionToken CudaBackend::execute_hydro_stage(
     const scheduler::StageDescriptor& descriptor,
     double dt, state::CompletionToken expected)
 {
-    auto& block = impl_->require_block(current);
-    static_cast<void>(block.require_access(current));
-    const scheduler::HydroPlan plan = scheduler::make_hydro_plan(
+    return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected);
+}
+
+state::CompletionToken CudaBackend::execute_hydro_stage_batch(
+    std::span<const backend::BackendStateAccess> currents,
+    const scheduler::StageDescriptor& descriptor,
+    double dt, state::CompletionToken expected)
+{
+    validate_hydro_batch_accesses(currents);
+    const auto plan = scheduler::make_hydro_plan(
         hydro_method(impl_->launch.plan.time_integrator));
-    if (current.slot != state::StateSlot::Current || !complete_token(expected)
-        || descriptor.stage <= 0
+    if (!complete_token(expected) || descriptor.stage <= 0
         || descriptor.stage > static_cast<int>(plan.stages.size())
-        || !same_hydro_descriptor(
-            descriptor, plan.stages[descriptor.stage - 1]))
+        || !same_hydro_descriptor(descriptor, plan.stages[descriptor.stage - 1]))
         throw std::invalid_argument("invalid Hydro stage contract");
-    const DeviceStateView old_state = block.slots[slot_index(descriptor.old_slot)];
-    const DeviceStateView input = block.slots[slot_index(descriptor.input_slot)];
-    const DeviceStateView output = block.slots[slot_index(descriptor.output_slot)];
-    const auto amr_routes = make_cuda_amr_route_views(
-        impl_->active_amr_flux.get(), current.block);
+    if (currents.empty()) return expected;
+    impl_->select_device();
+    auto& scratch = impl_->hydro_batch;
+    scratch.ensure_capacity(currents.size());
+    std::vector<DeviceHydroBatchBlock> blocks;
+    blocks.reserve(currents.size());
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        const auto current = currents[index];
+        auto& block = impl_->require_block(current);
+        static_cast<void>(block.require_access(current));
+        blocks.push_back({block.slots[slot_index(descriptor.old_slot)],
+            block.slots[slot_index(descriptor.input_slot)],
+            block.slots[slot_index(descriptor.output_slot)],
+            block.hydro_delta.view(), block.face_flux.view(), block.grid,
+            scratch.status->get() + index,
+            make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block)});
+    }
+    auto& device_blocks = impl_->hydro_bindings;
+    device_blocks.reserve(blocks.size());
     CudaBackendLaunchResult launch{};
-    int eos_status = 0;
     CudaQuiescenceGuard work_guard{*impl_};
+    enqueue_cuda_metadata_upload(device_blocks.get(), blocks.data(),
+        blocks.size() * sizeof(DeviceHydroBatchBlock), impl_->stream.get(),
+        impl_->runtime_counters, "upload Hydro batch bindings");
     visit_eos(impl_->eos, [&](const auto& eos) {
-        launch = launch_cuda_backend_hydro_stage(
-            impl_->launch.plan, old_state, input, output,
-            block.hydro_delta.view(), block.face_flux.view(), block.grid, eos,
-            impl_->launch.entropy_fix_coefficient,
-            impl_->launch.density_floor,
-            impl_->launch.minimum_internal_energy,
-            impl_->launch.maximum_internal_energy,
-            amr_routes.data(), descriptor, dt, block.cfl_status.get(),
-            impl_->stream.get(), impl_->species_workspace, impl_->launch.gravity);
+        launch = launch_cuda_backend_hydro_stage_batch(impl_->launch.plan,
+            blocks, device_blocks.get(), eos,
+            impl_->launch.entropy_fix_coefficient, impl_->launch.density_floor,
+            impl_->launch.minimum_internal_energy, impl_->launch.maximum_internal_energy,
+            descriptor, dt, impl_->stream.get(), impl_->species_workspace, impl_->launch.gravity);
     });
-    if (!launch.route_found)
-        throw std::logic_error("CUDA Hydro route is unavailable");
-    check_cuda(launch.error, "launch Hydro stage");
-    // CFL and Hydro stages execute serially on the backend stream, so the
-    // existing per-block CFL status allocation is also the stage EOS latch.
-    check_cuda(cudaMemcpyAsync(
-                   &eos_status, block.cfl_status.get(), sizeof(int),
-                   cudaMemcpyDeviceToHost, impl_->stream.get()),
-               "download Hydro stage EOS status");
+    if (!launch.route_found) throw std::logic_error("CUDA Hydro batch route is unavailable");
+    check_cuda(launch.error, "launch Hydro stage batch");
+    const auto kernels = static_cast<std::uint64_t>(launch.kernels_launched);
+    // Distinct latches prevent a valid later block from clearing earlier EOS
+    // failures. The ordered stream still protects shared species scratch and
+    // registers face flux before its block scratch is overwritten.
+    check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
+                   currents.size() * sizeof(int), cudaMemcpyDeviceToHost,
+                   impl_->stream.get()), "download Hydro stage batch EOS status");
     quiesce();
     work_guard.completed = true;
-    impl_->runtime_counters.kernel_count +=
-        static_cast<std::uint64_t>(launch.kernels_launched);
-    impl_->runtime_counters.bytes_d2h += sizeof(int);
-    if (eos_status != 0)
-        throw std::runtime_error("Invalid CUDA hydro stage EOS query");
+    impl_->runtime_counters.kernel_count += kernels;
+    impl_->runtime_counters.bytes_d2h += currents.size() * sizeof(int);
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        if (scratch.host_status[index] != 0)
+            throw std::runtime_error("Invalid CUDA hydro stage EOS query: stage="
+                + std::to_string(descriptor.stage) + " block="
+                + std::to_string(currents[index].block.uid.value) + " epoch="
+                + std::to_string(currents[index].block.epoch.value) + " status="
+                + std::to_string(scratch.host_status[index]));
+    }
     return expected;
 }
 
@@ -238,6 +284,47 @@ state::CompletionToken CudaBackend::execute_physical_boundary(
     return expected;
 }
 
+state::CompletionToken CudaBackend::execute_physical_boundary_batch(
+    std::span<const backend::BackendStateAccess> accesses,
+    state::StateVersion version, state::CompletionToken expected)
+{
+    validate_hydro_batch_accesses(accesses, accesses.empty()
+        ? state::StateSlot::Current : accesses.front().slot);
+    if (!state::is_valid(version) || !complete_token(expected))
+        throw std::invalid_argument("invalid boundary batch completion contract");
+    if (accesses.empty()) return expected;
+    if (accesses.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        throw std::overflow_error("boundary batch exceeds launch index extent");
+    std::vector<DeviceBoundaryBatchBlock> blocks;
+    blocks.reserve(accesses.size());
+    std::array<int, 3> phase_counts{};
+    for (const auto access : accesses) {
+        const auto& block = impl_->require_block(access);
+        const auto selected = block.require_access(access);
+        check_cuda(validate_boundary_launch(selected, block.boundary_transfers.get(),
+            block.boundary), "validate boundary batch block");
+        blocks.push_back({selected, block.boundary_transfers.get(), block.boundary.phases});
+        for (std::size_t phase = 0; phase < phase_counts.size(); ++phase)
+            phase_counts[phase] = std::max(phase_counts[phase],
+                static_cast<int>(block.boundary.phases[phase].count));
+    }
+    impl_->select_device();
+    auto& device_blocks = impl_->boundary_bindings;
+    device_blocks.reserve(blocks.size());
+    int kernels = 0;
+    CudaQuiescenceGuard work_guard{*impl_};
+    enqueue_cuda_metadata_upload(device_blocks.get(), blocks.data(),
+        blocks.size() * sizeof(DeviceBoundaryBatchBlock), impl_->stream.get(),
+        impl_->runtime_counters, "upload boundary batch bindings");
+    check_cuda(launch_cuda_backend_boundary_batch(device_blocks.get(),
+        static_cast<int>(blocks.size()), phase_counts, impl_->stream.get(), kernels),
+        "launch boundary batch");
+    quiesce();
+    work_guard.completed = true;
+    impl_->runtime_counters.kernel_count += static_cast<std::uint64_t>(kernels);
+    return expected;
+}
+
 state::CompletionToken CudaBackend::execute_same_level_exchange(
     std::span<const backend::BackendStateAccess> accesses,
     const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
@@ -291,8 +378,6 @@ void CudaBackend::Impl::execute_same_level_exchange(
     struct PreparedExchangePhase {
         std::vector<DeviceExchangeOperation> operations;
         std::uint64_t cells = 0;
-        DeviceAllocation<DeviceExchangeOperation> device_operations;
-        DeviceAllocation<double> scratch;
     };
     std::array<PreparedExchangePhase, 3> prepared_phases{};
     const std::uint64_t field_count =
@@ -372,21 +457,24 @@ void CudaBackend::Impl::execute_same_level_exchange(
         throw std::invalid_argument("CUDA exchange phases do not cover plan");
     if (plan.operations.empty()) return;
 
-    DeviceAllocation<DeviceExchangeBlock> device_blocks;
-    device_blocks.allocate(host_blocks.size());
+    select_device();
+    auto& device_blocks = exchange_scratch.blocks;
+    device_blocks.reserve(host_blocks.size());
     CudaQuiescenceGuard work_guard{*this};
     enqueue_cuda_metadata_upload(
                    device_blocks.get(), host_blocks.data(),
                    host_blocks.size() * sizeof(DeviceExchangeBlock),
                    stream.get(), runtime_counters,
                "upload CUDA exchange blocks");
-    for (auto& prepared : prepared_phases) {
+    for (std::size_t phase = 0; phase < prepared_phases.size(); ++phase) {
+        auto& prepared = prepared_phases[phase];
+        auto& buffers = exchange_scratch.phases[phase];
         if (prepared.operations.empty()) continue;
-        prepared.device_operations.allocate(prepared.operations.size());
-        prepared.scratch.allocate(static_cast<std::size_t>(
+        buffers.operations.reserve(prepared.operations.size());
+        buffers.values.reserve(static_cast<std::size_t>(
             prepared.cells * field_count));
         enqueue_cuda_metadata_upload(
-                       prepared.device_operations.get(),
+                       buffers.operations.get(),
                        prepared.operations.data(),
                        prepared.operations.size()
                            * sizeof(DeviceExchangeOperation),
@@ -394,17 +482,22 @@ void CudaBackend::Impl::execute_same_level_exchange(
                    "upload CUDA exchange operations");
     }
 
-    for (auto& prepared : prepared_phases) {
+    std::uint64_t kernels = 0;
+    for (std::size_t phase = 0; phase < prepared_phases.size(); ++phase) {
+        const auto& prepared = prepared_phases[phase];
+        auto& buffers = exchange_scratch.phases[phase];
         if (prepared.operations.empty()) continue;
         check_cuda(launch_cuda_backend_exchange_phase(
-                       device_blocks.get(), prepared.device_operations.get(),
+                       device_blocks.get(), buffers.operations.get(),
                        static_cast<int>(prepared.operations.size()),
                        static_cast<int>(field_count), prepared.cells,
-                       prepared.scratch.get(), stream.get()),
+                       buffers.values.get(), stream.get()),
                    "launch CUDA same-level exchange phase");
-        checked_quiesce("synchronize CUDA same_level exchange");
-        runtime_counters.kernel_count += 2;
+        kernels += 2;
     }
+    // Gather/scatter and subsequent phases are ordered on the same stream.
+    checked_quiesce("synchronize CUDA same_level exchange");
+    runtime_counters.kernel_count += kernels;
     work_guard.completed = true;
     return;
 }
@@ -550,18 +643,19 @@ void CudaBackend::Impl::execute_coarse_fine_exchange(
     }
     if (host_transfers.empty()) return;
 
-    DeviceAllocation<DeviceExchangeBlock> device_blocks;
-    DeviceAllocation<DeviceCoarseFineTransfer> device_transfers;
-    DeviceAllocation<double> scratch;
-    DeviceAllocation<int> exchange_status;
-    device_blocks.allocate(host_blocks.size());
-    device_transfers.allocate(host_transfers.size());
-    exchange_status.allocate(1);
+    select_device();
+    auto& device_blocks = exchange_scratch.blocks;
+    auto& device_transfers = exchange_scratch.transfers;
+    auto& scratch = exchange_scratch.coarse_values;
+    auto& exchange_status = exchange_scratch.status;
+    device_blocks.reserve(host_blocks.size());
+    device_transfers.reserve(host_transfers.size());
+    exchange_status.reserve(1);
     if (host_transfers.size()
         > std::numeric_limits<std::size_t>::max() / field_count)
         throw std::overflow_error(
             "CUDA coarse-fine scratch size overflow");
-    scratch.allocate(static_cast<std::size_t>(
+    scratch.reserve(static_cast<std::size_t>(
         host_transfers.size() * field_count));
     int status = 0;
     CudaQuiescenceGuard work_guard{*this};

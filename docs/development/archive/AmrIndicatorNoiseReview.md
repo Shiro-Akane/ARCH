@@ -1,5 +1,7 @@
 # Open shared AMR indicator noise-sensitivity review
 
+Historical development record: observations below belong to their original sources, not the current capability or acceptance decision. See the [validation overview](../../../validation/README.md) for current summaries.
+
 Status: diagnosed during the 2026-09-05 short-smoke phase; shared policy correction
 implemented on 2026-09-06 with CPU unit contracts passing. Real GPU/end-to-end
 parity still needs rerunning. This is not a scientific qualification claim.

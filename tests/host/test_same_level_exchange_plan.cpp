@@ -330,6 +330,13 @@ void test_host_executor_bitwise_and_pitch()
         left.view(), right.view()};
     const auto compiled = amr::compile_host_exchange_plan(plan, views);
     amr::execute_host_exchange_plan(compiled, views);
+    amr::HostExchangeWorkspace workspace;
+    amr::execute_host_exchange_plan(compiled, views, workspace);
+    const auto capacity = workspace.values.capacity();
+    require(capacity != 0, "reusable Host workspace was not allocated");
+    amr::execute_host_exchange_plan(compiled, views, workspace);
+    require(workspace.values.capacity() == capacity,
+        "steady-state Host workspace did not retain capacity");
 
     for (int depth = 0; depth < 2; ++depth) {
         const int left_destination = 10 + depth;

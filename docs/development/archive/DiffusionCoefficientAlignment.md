@@ -1,5 +1,7 @@
 # Diffusion-Coefficient Mathematical Alignment
 
+Historical development record: observations below belong to their original sources, not the current capability or acceptance decision. See the [validation overview](../../../validation/README.md) for current summaries.
+
 Chinese translation: [DiffusionCoefficientAlignment.zh-CN.md](DiffusionCoefficientAlignment.zh-CN.md).
 The English file is the authoritative source text.
 
@@ -10,7 +12,7 @@ AMReX-Astro Microphysics
 [`conductivity/stellar/actual_conductivity.H`](https://github.com/AMReX-Astro/Microphysics/blob/6fb41b5f7475b42a06eb5b09ff0520c9f08aa7f0/conductivity/stellar/actual_conductivity.H),
 audited at commit `6fb41b5f7475b42a06eb5b09ff0520c9f08aa7f0`.
 The retained license and adaptation boundary are recorded in
-[`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md).
+[`THIRD_PARTY_NOTICES.md`](../../../THIRD_PARTY_NOTICES.md).
 
 ## Validation scope
 

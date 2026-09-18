@@ -8,6 +8,7 @@
  */
 #pragma once
 #include "cuda/runtime/CudaBackendTypes.h"
+#include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "driver/DriverBurnPolicy.h"
 #include "driver/ReductionSpec.h"
 #include <cuda_runtime.h>
@@ -16,9 +17,17 @@ namespace arch::cuda::burn_detail {
 template <class EosTag>
 __global__ void reduce_burn_kernel(
     const reduction::ReductionCandidate* candidates, const int* statuses,
-    int count, DeviceBurnSummary* result)
+    int count, DeviceBurnSummary* result,
+    const DeviceBurnBatchBlock* blocks = nullptr)
 {
     if (blockIdx.x != 0 || threadIdx.x != 0) return;
+    if (blocks) {
+        const auto& block = blocks[blockIdx.y];
+        candidates = block.candidates;
+        statuses = block.statuses;
+        count = block.grid.active_cell_count();
+        result = block.summary;
+    }
     const auto spec = reduction::minimum_spec(
         DriverBurn::INACTIVE_LIMITER_CANDIDATE);
     auto reduced = reduction::begin_reduction(spec);

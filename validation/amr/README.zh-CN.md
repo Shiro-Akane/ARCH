@@ -6,8 +6,8 @@
 单元。改变网格时必须保留单元承载的物理量，因此记录既检查细化／粗化过程，也检查
 迁移后的场数据；曲线坐标下的守恒计算使用单元的实际物理体积。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 ARCH 的 CPU 与 CUDA 后端共用细化指标、守恒迁移、几何测度和通量修正。
 CPU 管理拓扑与 Morton 排序，CUDA 将场数据迁移和数值更新保留在 GPU 上。
@@ -15,7 +15,7 @@ CPU 管理拓扑与 Morton 排序，CUDA 将场数据迁移和数值更新保留
 
 AMR 重启要求完整的 ARCH 检查点，包括 `ENUC` 和原始组分，具体见
 [重启指南](../restart/README.zh-CN.md)。单独的
-[定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+定向接口检查
 覆盖这一读取规则；下方科学结果仍对应实际产生这些数据的受测源码。
 
 ## 测试覆盖
@@ -23,9 +23,9 @@ AMR 重启要求完整的 ARCH 检查点，包括 `ENUC` 和原始组分，具�
 | 测试组 | 覆盖内容 |
 |---|---|
 | [笛卡尔应用矩阵](gpu_cases.json) | 10 个案例：Euler/RK2/RK3、RKL1/RKL2、一至三维、跨层场比较、守恒及完整的一维细化／合并循环 |
-| [三维运行期拓扑循环](results/dynamic-3d-final-20260907/release-919/evidence.json) | 笛卡尔 Sedov 演化中的完整八子块细化与粗化，覆盖七个检查点、十四次 CPU/CUDA 执行 |
+| 三维运行期拓扑循环 | 笛卡尔 Sedov 演化中的完整八子块细化与粗化，覆盖七个检查点、十四次 CPU/CUDA 执行 |
 | [曲线坐标应用矩阵](gpu_curvilinear_cases.json) | 24 个案例：圆柱／球坐标、一至三维、RKL1/RKL2、单独组分扩散与热／黏性／组分耦合扩散 |
-| [曲线二维运行期循环](results/dynamic-curved-final-20260907/release-923/evidence.json) | 圆柱、球坐标的 RKL1 组分扩散，覆盖完整父块／四子块细化与粗化，每种几何五个检查点 |
+| 曲线二维运行期循环 | 圆柱、球坐标的 RKL1 组分扩散，覆盖完整父块／四子块细化与粗化，每种几何五个检查点 |
 | Gaussian 参考 | 两种曲线坐标及全部三个维度的独立初值；相同时间与拓扑下的热扩散开关对照 |
 | [重启](../restart/README.zh-CN.md) | 光滑平流和 ENUC 驱动燃烧的四个 CPU/CUDA 恢复方向，同时覆盖重网格后的中间检查点和终态检查点 |
 | 几何与迁移专项 | 独立几何／扩散参考、原点平衡、物理体积加权限制、组分、全部坐标方向及三个状态槽 |
@@ -37,20 +37,20 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 
 ## CPU/CUDA 已通过的检查
 
-[笛卡尔应用记录](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
+笛卡尔应用记录
 通过十个案例、54 次 CPU/CUDA 执行和 27 次比较。最大绝对场差为 `1.332e-15`，
 最大能量相对漂移为 `3.730e-15`。重网格循环案例在第 1、5、10、20 步的叶块数
 依次为 6、7、9、8，覆盖细化与粗化。全部拓扑、场和守恒检查满足各案例的原有预算。
 
-[三维运行期记录](results/dynamic-3d-final-20260907/release-919/evidence.json)
+三维运行期记录
 补充至第 80 步的七个检查点、十四次 CPU/CUDA 执行，核验第 20 至 40 步的完整
 八子块细化、第 40 至 41 步的粗化，以及第 41 至 80 步的再次细化。两个后端各自
 记录十三次运行期拓扑变化，初始化另行计数。最大绝对场差为 `4.235e-21`，满足
 原定 `rtol=2e-8`、`atol=2e-11` 预算，拓扑与守恒检查也全部通过。三维完整程序的
 普通运行拓扑循环检查已完成。
 
-三维的 [memcheck 记录](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
-与 [racecheck 记录](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+三维的 memcheck 记录
+与 racecheck 记录
 各自在同一受测构建上通过全部七次 CUDA 执行和七次 CPU 参考运行。每份 memcheck
 报告均为零错误、零泄漏字节及零泄漏分配；每份 racecheck 报告均为零隐患、零错误
 和零警告。两组均保留完整八子块的细化／粗化／再次细化转换，并通过原有场与守恒
@@ -61,15 +61,15 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 相对预算仍为 `2e-12`；一维、二维、三维案例的绝对预算依次为
 `2e-11`、`2e-10`、`1e-9`。场比较预算仍按清单中的各案例规定。
 
-[曲线坐标应用记录](results/curved-native-20260907/release-873/backend-validation-evidence.json)
+曲线坐标应用记录
 通过 24 个案例、96 次 CPU/CUDA 执行和 48 次比较，包含混合层级下的热、黏性及
 组分耦合。最大绝对场差为 `2.309e-14`；质量、能量和组分的物理体积积分最大相对
 漂移分别为 `1.332e-15`、`3.730e-15` 和 `1.737e-15`，均满足下文保留的原预算。
 二维 RKL1 案例还记录了两种曲线几何的运行期细化，包含单独组分扩散和热／黏性
 耦合情形。
 
-曲线耦合的 [memcheck 记录](results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
-与 [racecheck 记录](results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+曲线耦合的 memcheck 记录
+与 racecheck 记录
 各自通过三维球坐标热／黏性／组分案例的第 2、5 步检查。两次 memcheck CUDA 执行
 均报告零错误、零泄漏字节及零泄漏分配；两次 racecheck 执行均报告零隐患、零错误
 和零警告。实际 CUDA 路径与 CPU 使用相同的 RK2、理想气体 EOS
@@ -77,7 +77,7 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 `6.626e-16`；两组的原有场、物理体积守恒、RKL2 缓存和传输轨迹检查全部通过。
 这些检查点保持初始化时形成的 144 个混合层级叶块，运行期细化／粗化由单独的拓扑循环记录覆盖。
 
-[曲线运行期循环记录](results/dynamic-curved-final-20260907/release-923/evidence.json)
+曲线运行期循环记录
 补充圆柱、球坐标的二维组分扩散案例。每种几何采样第 2、5、20、80、160 步，
 各十次 CPU/CUDA 执行，共二十次，均核验完整父块／四子块的细化与粗化。
 运行至第 160 步时，每种几何的两个后端各记录九次运行期拓扑变化，初始化另计；
@@ -85,7 +85,7 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 场比较保留 `rtol=1e-8`、`atol=5e-12`，物理体积守恒保留 `rtol=2e-12`、
 `atol=2e-11`，原有四阶段 RKL1 检查全部通过。该记录与上方笛卡尔三维循环分别列出。
 
-[Gaussian 初值与热扩散检查](results/gaussian-final-20260907/release-871/evidence.json)
+Gaussian 初值与热扩散检查
 独立核验全部六种曲线坐标初值，最大场误差为 `4.441e-16`，低于 `2e-12`。
 相同时间与拓扑下，热扩散开关使两个后端的能量均产生 `1.058e-2` 的相对变化，
 超过 `256` 倍机器精度的活动判据。这项检查确认热输运确实改变解，收敛性另行验证。
@@ -100,7 +100,7 @@ PPM 在粗细网格界面使用 MUSCL-MinMod，因此均匀网格 PPM 收敛性�
 
 ## 独立几何与扩散检查
 
-[几何记录](results/geometry-native-20260907/release-880/evidence.json)
+几何记录
 通过 12 组薄壳与极点附近单元的参考检查，参考值由独立的 70/90 位精度积分核验。
 空间收敛测试覆盖全部坐标与维度的热／组分扩散，以及黏性动量通量和功通量。
 CPU 和 CUDA 测试程序使用同一份受测源码，各自的程序身份保存在报告中。
@@ -117,7 +117,7 @@ Euler 更新矩阵的元素非负，最大行和不超过 1，满足原定 `2e-1
 
 ## 持续重网格与续算
 
-[持续运行记录](results/sustained-first-law-20260907/release-901/evidence.json)
+持续运行记录
 通过两个后端的 500 步一维流体与 100 步五阶段 RKL2 扩散运行。包含初始化在内，
 分别记录了 501 和 101 次重网格检查。流体发生 490 次拓扑变化，明确覆盖细化和
 粗化转换；扩散在各采样检查点保持六个混合层级叶块。两组矩阵共包含 22 次执行
@@ -173,3 +173,26 @@ Compute Sanitizer 和新输出目录，CPU 保留普通参考运行，CUDA 插�
 曲线坐标、均匀网格、生成网络四组矩阵及两份重启报告是否来自同一构建，并包含
 全部必要比较。[验证索引](../README.zh-CN.md)将这些应用结果与独立科学参考、
 内存安全和容量检查统一汇总。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [三维运行期拓扑循环 (JSON)](results/dynamic-3d-final-20260907/release-919/evidence.json)
+- [曲线二维运行期循环 (JSON)](results/dynamic-curved-final-20260907/release-923/evidence.json)
+- [笛卡尔应用记录 (JSON)](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
+- [memcheck 记录 (JSON)](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
+- [racecheck 记录 (JSON)](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+- [曲线坐标应用记录 (JSON)](results/curved-native-20260907/release-873/backend-validation-evidence.json)
+- [memcheck 记录 (JSON)](results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
+- [racecheck 记录 (JSON)](results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+- [Gaussian 初值与热扩散检查 (JSON)](results/gaussian-final-20260907/release-871/evidence.json)
+- [几何记录 (JSON)](results/geometry-native-20260907/release-880/evidence.json)
+- [持续运行记录 (JSON)](results/sustained-first-law-20260907/release-901/evidence.json)
+
+- [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+
+</details>

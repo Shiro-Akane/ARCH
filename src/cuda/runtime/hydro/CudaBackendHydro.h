@@ -17,8 +17,19 @@
 #include "physics/gravity/ExternalGravitySource.h"
 
 #include <cuda_runtime.h>
+#include <array>
+#include <span>
 
 namespace arch::cuda {
+
+// Borrowed per-block stage bindings. No topology decisions or owned fields.
+struct DeviceHydroBatchBlock {
+    DeviceStateView old_state, input, output, delta, face_flux;
+    DeviceGridView grid;
+    int* eos_status = nullptr;
+    std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
+};
+static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 
 struct CudaBackendLaunchResult {
     cudaError_t error = cudaSuccess;
@@ -40,7 +51,16 @@ struct CudaBackendLaunchResult {
         const CudaAmrFluxDirectionRouteView* amr_routes, \
         const scheduler::StageDescriptor& descriptor, double dt, \
         int* eos_status, cudaStream_t stream, SpeciesWorkspaceView species_workspace = {}, \
-        Physical::Gravity::ExternalGravityView gravity = {})
+        Physical::Gravity::ExternalGravityView gravity = {}); \
+    CudaBackendLaunchResult launch_cuda_backend_hydro_stage_batch( \
+        const dispatch::ResolvedExecutionPlan& plan, \
+        std::span<const DeviceHydroBatchBlock> host_blocks, \
+        const DeviceHydroBatchBlock* device_blocks, EOS eos, \
+        double entropy_fix_coefficient, double density_floor, \
+        double minimum_internal_energy, double maximum_internal_energy, \
+        const scheduler::StageDescriptor& descriptor, double dt, \
+        cudaStream_t stream, SpeciesWorkspaceView species_workspace, \
+        Physical::Gravity::ExternalGravityView gravity)
 
 ARCH_DECLARE_BACKEND_HYDRO(IdealGasView);
 ARCH_DECLARE_BACKEND_HYDRO(HelmEosView);

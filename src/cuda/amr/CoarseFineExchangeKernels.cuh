@@ -53,8 +53,10 @@ __global__ void gather_coarse_fine_exchange_kernel(
                 stencil, device_state_field(source, field), transfer.fine_position);
             return;
         }
+        const int closure_species =
+            amr::prolongation_math::composition_closure_species(stencil);
         const auto family =
-            amr::prolongation_math::classify_composition_family(stencil);
+            amr::prolongation_math::classify_composition_family(stencil, closure_species);
         if (family == amr::prolongation_math::CompositionFamily::InvalidDensity) {
             atomicExch(status, static_cast<int>(family));
             return;
@@ -63,7 +65,7 @@ __global__ void gather_coarse_fine_exchange_kernel(
             stencil, source.rho, transfer.fine_position);
         scratch[linear] = field == 0 ? density
             : amr::prolongation_math::reconstruct_mass_fraction(
-                stencil, family, density, field - 6, transfer.fine_position);
+                stencil, family, density, field - 6, transfer.fine_position, closure_species);
         return;
     }
     if (field < 6) {

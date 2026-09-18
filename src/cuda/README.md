@@ -12,4 +12,8 @@ It owns kernels, device storage, transfers, streams and CUDA library interfaces.
 | [diffusion](diffusion/README.md) | Device traversal for shared diffusion operators |
 | [microphysics](microphysics/README.md) | EOS/network storage and sparse burn execution |
 
-Any mathematical changes belong exclusively in [numerics](../numerics/README.md), [physics](../physics/README.md), [grid](../grid/README.md), or [AMR](../amr/README.md). You must absolutely not duplicate those numerical formulas into this backend. For a complete list of supported configurations, consult the [capability guide](../../docs/CudaBackendStatus.md), and refer to the [CUDA tests](../../tests/cuda/README.md) for focused device checks.
+Change mathematical methods in their shared owners: [numerics](../numerics/README.md),
+[physics](../physics/README.md), [grid](../grid/README.md) or [AMR](../amr/README.md).
+CUDA callers supply device data and execution order, not another copy of a formula.
+See the [capability guide](../../docs/CudaBackendStatus.md) for supported configurations
+and [CUDA tests](../../tests/cuda/README.md) for focused checks.

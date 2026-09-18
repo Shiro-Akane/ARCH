@@ -497,6 +497,43 @@ class BackendValidationTests(unittest.TestCase):
             module.validate_topology_transitions(
                 snapshots[:2], require_refine=True, require_derefine=True)
 
+    def test_cuda_diffusion_adaptive_stages_keep_fixed_and_cache_gates(self):
+        module = load_module()
+        with tempfile.TemporaryDirectory() as directory:
+            schedule = Path(directory) / "schedule.tsv"
+            text = ("macro_step\tcache_generation\torder\tstages\t"
+                    "negative_gamma_stages\tcaptures_initial_operator\t"
+                    "diffusion_dt\tdt_forward_euler\n"
+                    "0\t1\t2\t2\t1\t1\t0.001\t0.01\n"
+                    "0\t2\t2\t3\t2\t1\t0.1\t0.01\n")
+            schedule.write_text(text)
+            policy = {"order": 2, "allowed_stages": [2,3,5], "lanes_per_step": 2}
+            result = module.validate_cuda_diffusion_schedule(schedule,1,policy)
+            self.assertEqual(result['stage_counts'],[2,3])
+            resumed=text.replace('0\t1\t2\t2','7\t1\t2\t2').replace('0\t2\t2\t3','7\t2\t2\t3')
+            schedule.write_text(resumed)
+            resumed_policy={**policy,'first_macro_step':7}
+            self.assertEqual(module.validate_cuda_diffusion_schedule(schedule,1,resumed_policy)['macro_steps'],[7,7])
+            for offset in (0,6,-1,1.5,True):
+                with self.assertRaises(RuntimeError):
+                    module.validate_cuda_diffusion_schedule(schedule,1,{**policy,'first_macro_step':offset})
+            schedule.write_text(resumed.replace('7\t2','7\t1'))
+            with self.assertRaisesRegex(RuntimeError,'generation'):
+                module.validate_cuda_diffusion_schedule(schedule,1,resumed_policy)
+            schedule.write_text(text)
+            for fixed in (2,3):
+                with self.assertRaises(RuntimeError):
+                    module.validate_cuda_diffusion_schedule(schedule,1,{"order":2,"stages":fixed})
+            for bad in (text.replace('0\t2\t2\t3','0\t2\t2\t4'),
+                        text.replace('0\t2\t2\t3','0\t1\t2\t3'),
+                        text.replace('3\t2\t1\t0.1','3\t0\t1\t0.1'),
+                        text.replace('0.001','nan')):
+                schedule.write_text(bad)
+                with self.assertRaises(RuntimeError):
+                    module.validate_cuda_diffusion_schedule(schedule,1,policy)
+            with self.assertRaises(RuntimeError):
+                module.validate_cuda_diffusion_summary({**result,'stage_counts':[2]},1,policy)
+
     def test_cuda_diffusion_schedule_proves_rkl2_cache_lifetime(self):
         module = load_module()
         with tempfile.TemporaryDirectory() as directory:

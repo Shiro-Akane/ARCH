@@ -13,6 +13,7 @@
 #include "amr/GhostExchange.h"
 #include "amr/LimitedLinearProlongation.h"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
+#include "numerics/reconstruction/Reconstruction.h"
 #include "../fixtures/amr_composition_test_cases.h"
 
 #include <bit>
@@ -101,6 +102,30 @@ void test_limited_linear_prolongation_math()
            "limited-linear prolongation did not flatten an extremum");
 }
 
+void test_muscl_face_composition_closure()
+{
+    FluidState state;
+    state.Preallocate(4);
+    state.InitSpecies(4);
+    for (int cell=0; cell<4; ++cell)
+        for (int species=0; species<4; ++species)
+            state.X(species,cell)=amr::test::muscl_composition_cells[cell][species];
+    double faces[8]{};
+    MusclReconstruction<McLimiter>::run_species(state,1,4,faces,faces+4);
+    for (int i=0; i<8; ++i) {
+        const double expected=amr::test::muscl_composition_faces[i];
+        expect(std::abs(faces[i]-expected)<=8*std::numeric_limits<double>::epsilon()*expected,
+               "MUSCL face differs from independent normalized composition");
+    }
+    for (int side=0; side<2; ++side) {
+        double sum=0;
+        for (int i=0; i<4; ++i) sum+=faces[4*side+i];
+        expect(std::abs(sum-1.0)<=4*std::numeric_limits<double>::epsilon(),
+               "MUSCL species flux would not sum to the mass flux");
+    }
+    MusclReconstruction<McLimiter>::normalize_species_faces(0,nullptr,nullptr);
+}
+
 void test_shared_composition_prolongation()
 {
     using namespace amr::prolongation_math;
@@ -108,7 +133,7 @@ void test_shared_composition_prolongation()
         for (const auto& example : amr::test::composition_cases()) {
             const auto stencil = example.stencil(dimension);
             const auto family = classify_composition_family(stencil);
-            expect(family == example.family, "composition family decision drifted");
+            expect(family == example.family[dimension-1], "composition family decision drifted");
             std::array<double, amr::test::CompositionCase::species> integrals{};
             for (int child = 0; child < (1 << dimension); ++child) {
                 double position[3]{};
@@ -123,6 +148,11 @@ void test_shared_composition_prolongation()
                     expect(std::isfinite(fraction) && fraction >= 0.0
                                && fraction <= 1.0,
                            "prolongation produced a negative/invalid species");
+                    if (example.preserve_last_trace && species+1==stencil.species_count) {
+                        const double trace=example.fractions[species*amr::test::CompositionCase::cells];
+                        expect(std::abs(fraction-trace) <= 16.0*std::numeric_limits<double>::epsilon()*trace,
+                               "closure invented or erased a zero/1e-20 trace species");
+                    }
                     if (family == CompositionFamily::Constant)
                         expect(fraction == example.fractions[
                                    species * amr::test::CompositionCase::cells],
@@ -143,6 +173,10 @@ void test_shared_composition_prolongation()
         }
     }
     auto invalid = amr::test::composition_cases()[0];
+    expect(composition_closure_species(invalid.stencil(1))==1,
+           "closure did not select the dominant parent species");
+    expect(composition_closure_species(amr::test::composition_cases()[2].stencil(1))==0,
+           "equal parent fractions lost deterministic first-index tie break");
     for (const double density : {0.0, -1.0,
                                 std::numeric_limits<double>::quiet_NaN(),
                                 std::numeric_limits<double>::infinity()}) {
@@ -580,6 +614,65 @@ void test_curvilinear_host_restriction()
            "curvilinear test did not distinguish volume weighting");
 }
 
+void test_host_exchange_cache_rebinding()
+{
+    SimConfig config{};
+    config.grid.dim = 1;
+    config.grid.nblockx1 = 2;
+    config.grid.nblockx2 = config.grid.nblockx3 = 0;
+    config.grid.amr_max_blocks = 8;
+    config.amr.lrefinemin = config.amr.lrefinemax = 0;
+    amr::AMRControl control(8, 1);
+    auto pool = control.pool;
+    auto tree = control.tree;
+    tree->LoadLeafGrid(config, 2, {0, 0}, {0, 1}, {0, 0}, {0, 0});
+    const auto& active = tree->GetActiveBlocks();
+    std::vector<amr::BlockHandle> handles{{{41}, {9}}, {{42}, {9}}};
+    for (const auto id : active) fill_block(pool->GetBlock(id));
+    auto& exchange = control.ghost_exchange;
+    auto& left = pool->GetBlock(active[0]);
+    auto& right = pool->GetBlock(active[1]);
+    const int destination = left.grid.GetIndex(left.grid.Ie()); // exclusive active end
+    const int source = right.grid.GetIndex(right.grid.Is());
+    for (const auto slot : {&amr::Block::fluid_state, &amr::Block::state_next,
+                            &amr::Block::state_scratch}) {
+        const auto expected = (right.*slot).rho[source];
+        exchange.ExecuteExchange(pool, tree, 1, slot, handles);
+        expect((left.*slot).rho[destination] == expected,
+            "cached Host plan used a previous slot view");
+    }
+    expect(exchange.PlanCacheBuilds() == 1 && exchange.HostPlanCacheBuilds() == 1,
+        "slot changes recompiled pointer-free Host plans");
+    FluidState replacement = right.state_next;
+    replacement.rho[source] = 7654321.0;
+    right.state_next = std::move(replacement);
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(left.state_next.rho[destination] == 7654321.0
+        && exchange.HostPlanCacheBuilds() == 1,
+        "storage replacement used a dangling Host pointer");
+    const auto stride = left.grid.stride_y;
+    left.grid.stride_y = 0;
+    expect_rejected([&] { exchange.ExecuteExchange(
+        pool, tree, 1, &amr::Block::state_next, handles); },
+        "cache hit bypassed current layout validation");
+    left.grid.stride_y = stride;
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(exchange.HostPlanCacheBuilds() == 1, "invalid layout replaced Host cache");
+    for (const auto id : active) {
+        auto& block = pool->GetBlock(id);
+        block.fluid_state.InitSpecies(1);
+        block.state_next.InitSpecies(1);
+        block.state_scratch.InitSpecies(1);
+    }
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(exchange.PlanCacheBuilds() == 2 && exchange.HostPlanCacheBuilds() == 2,
+        "species change reused old Host lowering");
+    for (auto& handle : handles) ++handle.epoch.value;
+    exchange.ExecuteExchange(pool, tree, 1, &amr::Block::state_next, handles);
+    expect(exchange.PlanCacheBuilds() == 3 && exchange.HostPlanCacheBuilds() == 3,
+        "topology epoch change reused old Host lowering");
+}
+
 void test_mixed_level_and_coarse_fine_execution()
 {
     SimConfig config{};
@@ -612,6 +705,46 @@ void test_mixed_level_and_coarse_fine_execution()
     control.flux_register.EnsureSpecies(2);
 
     amr::GhostExchange& exchange = control.ghost_exchange;
+    const auto& cached = exchange.GetPlans(pool, tree, 1, handles);
+    expect(cached.same_level.size() == 2
+        && cached.coarse_fine.fingerprint
+            == exchange.BuildCoarseFinePlan(pool, tree, 1, handles).fingerprint,
+        "cached plans differ from fresh mixed-level plans");
+    const auto fresh = exchange.BuildSameLevelPlans(pool, tree, 1, handles);
+    for (std::size_t group = 0; group < fresh.size(); ++group) {
+        expect(cached.same_level[group].fingerprint == fresh[group].fingerprint,
+            "cached same-level fingerprint differs");
+        for (std::size_t local = 0; local < fresh[group].blocks.size(); ++local)
+            expect(handles[cached.level_indices[group][local]]
+                    == fresh[group].blocks[local].handle,
+                "cached endpoint index is stale");
+    }
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    expect(exchange.PlanCacheBuilds() == 1 && exchange.PlanCacheHits() == 1,
+        "unchanged topology rebuilt exchange plans");
+    // Field and slot contents are not part of a logical plan cache.
+    pool->GetBlock(active.front()).state_next = pool->GetBlock(active.front()).fluid_state;
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    expect(exchange.PlanCacheBuilds() == 1, "field binding invalidated logical cache");
+    auto next_handles = handles;
+    for (auto& handle : next_handles) ++handle.epoch.value;
+    (void)exchange.GetPlans(pool, tree, 1, next_handles);
+    expect(exchange.PlanCacheBuilds() == 2, "epoch change did not invalidate cache");
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    const auto before_failure = exchange.PlanCacheBuilds();
+    auto& neighbor = pool->GetBlock(active.front()).face_neighbors[0];
+    const auto saved_neighbor = neighbor;
+    neighbor.count = 5;
+    expect_rejected([&] { (void)exchange.GetPlans(pool, tree, 1, handles); },
+        "cached plan hid an invalid new topology");
+    neighbor = saved_neighbor;
+    (void)exchange.GetPlans(pool, tree, 1, handles);
+    expect(exchange.PlanCacheBuilds() == before_failure,
+        "failed candidate destroyed the previous cache entry");
+    auto invalid_cached_handles = handles;
+    invalid_cached_handles.back() = invalid_cached_handles.front();
+    expect_rejected([&] { (void)exchange.GetPlans(pool, tree, 1, invalid_cached_handles); },
+        "cached plan accepted duplicate handles");
     const double fail_closed_witness =
         pool->GetBlock(active.front()).fluid_state.rho.front();
     expect_rejected(
@@ -1004,9 +1137,11 @@ int main()
         test_conservative_restriction_math();
         test_limited_linear_prolongation_math();
         test_shared_composition_prolongation();
+        test_muscl_face_composition_closure();
         test_amr_interface_stencil_predicate();
         test_multidimensional_cell_lowering();
         test_curvilinear_host_restriction();
+        test_host_exchange_cache_rebinding();
         test_mixed_level_and_coarse_fine_execution();
         const auto ordinary = ordinary_plan();
         const auto migration = migration_plan();

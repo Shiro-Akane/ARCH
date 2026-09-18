@@ -1,8 +1,10 @@
 # CUDA backend review history and evidence
 
+Historical development record: observations below belong to their original sources, not the current capability or acceptance decision. See the [validation overview](../../../validation/README.md) for current summaries.
+
 Contributor archive. This preserves interim and hardware-specific observations,
 including superseded statements. For current features and limitations, read
-[backend capabilities](../CudaBackendStatus.md). This archive is not acceptance
+[backend capabilities](../../CudaBackendStatus.md). This archive is not acceptance
 of the current release candidate.
 
 Chinese translation: [CudaBackendEvidence.zh-CN.md](CudaBackendEvidence.zh-CN.md).
@@ -39,7 +41,7 @@ Specifically, the three production AMR and restart JSON reports identify their e
   `qualify_cuda_amr_evidence.py` gate rejects incomplete or mismatched evidence.
 
 Local bounded verification and remaining work are recorded in
-[`validation/amr/results/local-fixes-20260905/`](../../validation/amr/results/local-fixes-20260905/).
+[`validation/amr/results/local-fixes-20260905/`](../../../validation/amr/results/local-fixes-20260905).
 CPU Debug CTest passed 21/21; Debug GPU burn policy tests passed 16/16 with
 unchanged parity budgets. Release focused CPU/GPU checks passed 5/5, and the
 two mathematical GPU tests passed memcheck/racecheck in both configurations.
@@ -71,10 +73,10 @@ long-running capacity qualification.
   logs are retained and sanitizer cleanliness is not claimed.
 
 The fixed matrix/restart records used by the provenance tests now belong to
-[the protocol fixtures](../../tests/fixtures/validation_provenance/README.md).
+[the protocol fixtures](../../../tests/fixtures/validation_provenance/README.md).
 They retain their recorded identities for parsing and artifact-mismatch rejection;
 they do not certify current-source H100 science. Effective acceptance data are in
-[Validation](../../validation/README.md).
+[Validation](../../../validation/README.md).
 
 ## Completed implementation
 
@@ -204,7 +206,7 @@ cuDSS, device-callable generated networks/large burn, device AMR migration, and
 cylindrical/spherical execution are now part of the subsequent implementation
 and smoke work, tracked in [CudaRefactorSmoke.md](CudaRefactorSmoke.md). They are
 not covered by the historical qualification above. The 2026-09-06
-[release refactor](CudaReleaseStandard.md) adds shared external-gravity CUDA
+[release refactor](../CudaReleaseStandard.md) adds shared external-gravity CUDA
 sources, corrected common geometry/CFL and an AMR roundoff policy; final
 production qualification is still pending. Self-gravity/Jeans,
 generated weak-rate table owners (including immutable tables), and WENO5
@@ -236,4 +238,4 @@ python3 tools/validate_backend_results.py \
 ~~~
 
 Use a separate build/output directory for Release. The full two-restart and
-final aggregate-gate recipe is in [the AMR README](../../validation/amr/README.md).
+final aggregate-gate recipe is in [the AMR README](../../../validation/amr/README.md).

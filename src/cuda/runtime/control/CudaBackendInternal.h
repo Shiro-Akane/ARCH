@@ -11,11 +11,13 @@
 
 #include "cuda/runtime/CudaBackend.h"
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
+#include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "cuda/runtime/amr/CudaBackendExchange.h"
 #include "cuda/runtime/amr/CudaBackendAmrFlux.h"
 #include "amr/AmrFluxExecutionPlan.h"
 #include "cuda/runtime/CudaBackendTypes.h"
 #include "cuda/runtime/burn/CudaBackendBurnSparse.h"
+#include "cuda/runtime/burn/CudaBackendBurn.h"
 #include "cuda/runtime/DeviceBlockStore.h"
 
 #include "cuda/hydro/BoundaryPlan.h"
@@ -152,7 +154,7 @@ struct CudaBlockRuntime {
     std::array<DeviceAmrFluxSurfaceStorage, 6> amr_flux_register;
     std::array<DeviceAmrFluxSurfaceStorage, 6> amr_initial_flux;
     DeviceAllocation<double> cfl_candidates;
-    DeviceAllocation<double> cfl_result;
+    // Refinement indicators still own a separate per-block EOS latch.
     DeviceAllocation<int> cfl_status;
     DeviceAllocation<double> diffusion_dt_candidates;
     DeviceAllocation<double> diffusion_dt_result;
@@ -245,11 +247,48 @@ struct CudaBackend::Impl {
     // bounded scratch allocation is therefore shared across every block/stage.
     DeviceAllocation<double> species_workspace_storage;
     SpeciesWorkspaceView species_workspace{};
+    // Compact per-block results, reused only after the previous batch drained.
+    // Capacity follows the largest requested batch (no field-sized staging).
+    struct HydroBatchScratch {
+        std::unique_ptr<DeviceAllocation<double>> dt;
+        std::unique_ptr<DeviceAllocation<int>> status;
+        std::vector<int> host_status;
+
+        void ensure_capacity(std::size_t count)
+        {
+            host_status.resize(count);
+            if (count == 0 || (dt && dt->size() >= count)) return;
+            auto next_dt = std::make_unique<DeviceAllocation<double>>();
+            auto next_status = std::make_unique<DeviceAllocation<int>>();
+            next_dt->allocate(count);
+            next_status->allocate(count);
+            dt.swap(next_dt);
+            status.swap(next_status);
+        }
+    } hydro_batch;
+    HydroBatchScratch diffusion_batch;
+    ReusableDeviceAllocation<DeviceDiffusionBatchBlock> diffusion_bindings;
+    ReusableDeviceAllocation<DeviceStateCopyBlock> state_copy_bindings;
+    ReusableDeviceAllocation<DeviceBurnSummary> burn_batch_summaries;
+    ReusableDeviceAllocation<DeviceBurnBatchBlock> burn_bindings;
+    ReusableDeviceAllocation<DeviceHydroBatchBlock> hydro_bindings;
+    ReusableDeviceAllocation<DeviceBoundaryBatchBlock> boundary_bindings;
+    struct ExchangeScratch {
+        ReusableDeviceAllocation<DeviceExchangeBlock> blocks;
+        struct Phase {
+            ReusableDeviceAllocation<DeviceExchangeOperation> operations;
+            ReusableDeviceAllocation<double> values;
+        };
+        std::array<Phase, 3> phases;
+        ReusableDeviceAllocation<DeviceCoarseFineTransfer> transfers;
+        ReusableDeviceAllocation<double> coarse_values;
+        ReusableDeviceAllocation<int> status;
+    } exchange_scratch;
     // Indicators retain capacity across regrids, not field values. The ordered
     // evaluator completes before any buffer is grown or reused.
     struct RefinementScratch {
-        std::unique_ptr<DeviceAllocation<std::byte>> selection;
-        std::unique_ptr<DeviceAllocation<double>> errors, summary, thermodynamics, composition;
+        std::unique_ptr<DeviceAllocation<std::byte>> selection, bindings;
+        std::unique_ptr<DeviceAllocation<double>> arena, summary;
     } refinement_scratch;
     std::variant<std::monostate, IdealGasView, HelmEosView,
                  Tabular3DEOSView, Tabular4DEOSView> eos;

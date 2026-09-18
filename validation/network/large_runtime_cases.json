@@ -1,0 +1,294 @@
+{
+  "schema": 1,
+  "description": "Planned full ARCH audit150/audit200 + Helmholtz matrix. Inherits the audit31 application input, original numerical budgets, physical terminal time and checkpoints; only network identity and bounded wall-clock timeout differ. CPU must resolve SparseKLU and CUDA cuDSS. Does not replace the original stricter focused trajectory/capacity gates or certify execution merely by existing.",
+  "cases": [
+    {
+      "id": "generated_audit150_be_nr_helm",
+      "plan_policy": {
+        "network": "custom:audit150",
+        "eos": "helmholtz",
+        "ode": "be_nr",
+        "linear": {
+          "cpu": "sparseklu",
+          "cuda": "cudss"
+        }
+      },
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "overrides": {
+        "network_name": "custom:audit150",
+        "ode_solver": "BE_NR",
+        "linear_solver": "Auto",
+        "nblockx1": "2",
+        "max_blocks": "8"
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5
+      ],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 3600,
+      "reduction_policy": {
+        "rtol": 2e-8,
+        "atol": 1e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-8
+      }
+    },
+    {
+      "id": "generated_audit150_bd_helm",
+      "plan_policy": {
+        "network": "custom:audit150",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": {
+          "cpu": "sparseklu",
+          "cuda": "cudss"
+        }
+      },
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "overrides": {
+        "network_name": "custom:audit150",
+        "ode_solver": "BD",
+        "linear_solver": "Auto",
+        "nblockx1": "2",
+        "max_blocks": "8"
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5
+      ],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 3600,
+      "reduction_policy": {
+        "rtol": 2e-8,
+        "atol": 1e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-8
+      }
+    },
+    {
+      "id": "generated_audit150_ros4_helm",
+      "plan_policy": {
+        "network": "custom:audit150",
+        "eos": "helmholtz",
+        "ode": "ros4",
+        "linear": {
+          "cpu": "sparseklu",
+          "cuda": "cudss"
+        }
+      },
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "overrides": {
+        "network_name": "custom:audit150",
+        "ode_solver": "ROS4",
+        "linear_solver": "Auto",
+        "nblockx1": "2",
+        "max_blocks": "8"
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5
+      ],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 3600,
+      "reduction_policy": {
+        "rtol": 2e-8,
+        "atol": 1e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-8
+      }
+    },
+    {
+      "id": "generated_audit200_be_nr_helm",
+      "plan_policy": {
+        "network": "custom:audit200",
+        "eos": "helmholtz",
+        "ode": "be_nr",
+        "linear": {
+          "cpu": "sparseklu",
+          "cuda": "cudss"
+        }
+      },
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "overrides": {
+        "network_name": "custom:audit200",
+        "ode_solver": "BE_NR",
+        "linear_solver": "Auto",
+        "nblockx1": "2",
+        "max_blocks": "8"
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5
+      ],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 3600,
+      "reduction_policy": {
+        "rtol": 2e-8,
+        "atol": 1e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-8
+      }
+    },
+    {
+      "id": "generated_audit200_bd_helm",
+      "plan_policy": {
+        "network": "custom:audit200",
+        "eos": "helmholtz",
+        "ode": "bd",
+        "linear": {
+          "cpu": "sparseklu",
+          "cuda": "cudss"
+        }
+      },
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "overrides": {
+        "network_name": "custom:audit200",
+        "ode_solver": "BD",
+        "linear_solver": "Auto",
+        "nblockx1": "2",
+        "max_blocks": "8"
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5
+      ],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 3600,
+      "reduction_policy": {
+        "rtol": 2e-8,
+        "atol": 1e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-8
+      }
+    },
+    {
+      "id": "generated_audit200_ros4_helm",
+      "plan_policy": {
+        "network": "custom:audit200",
+        "eos": "helmholtz",
+        "ode": "ros4",
+        "linear": {
+          "cpu": "sparseklu",
+          "cuda": "cudss"
+        }
+      },
+      "problem": "BurnOneZone",
+      "input": "validation/burn/inputs/bd.par",
+      "overrides": {
+        "network_name": "custom:audit200",
+        "ode_solver": "ROS4",
+        "linear_solver": "Auto",
+        "nblockx1": "2",
+        "max_blocks": "8"
+      },
+      "accepted_steps": [
+        1,
+        2,
+        5
+      ],
+      "scientific_time": 1e-10,
+      "timeout_seconds": 3600,
+      "reduction_policy": {
+        "rtol": 2e-8,
+        "atol": 1e-12,
+        "fields": [
+          "rho",
+          "mom_u",
+          "mom_v",
+          "mom_w",
+          "eng",
+          "rhoX"
+        ]
+      },
+      "qualification": {
+        "reference": "cpu_and_network_conservation",
+        "positive": [
+          "rho",
+          "eng"
+        ],
+        "species_sum_atol": 1e-8
+      }
+    }
+  ]
+}

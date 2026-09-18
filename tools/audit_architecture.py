@@ -142,6 +142,9 @@ _CUDA_FORMULA_FILENAME_EXCEPTIONS = frozenset({
 })
 
 _CUDA_RUNTIME_FUNCTION_OWNERS = {
+    "execute_physical_boundary_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
+    "compute_hydro_dt_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
+    "execute_hydro_stage_batch": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "compute_hydro_dt": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "execute_hydro_stage": "src/cuda/runtime/hydro/cudabackendhydrocontrol.cpp",
     "execute_physical_boundary":
@@ -152,23 +155,48 @@ _CUDA_RUNTIME_FUNCTION_OWNERS = {
         "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
     "execute_burn":
         "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
+    "compute_diffusion_dt_batch": "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
+    "execute_diffusion_stage_batch": "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
+    "execute_burn_batch": "src/cuda/runtime/control/cudabackendmicrophysicscontrol.cpp",
 }
 
 _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS = frozenset({
+    "execute_physical_boundary_batch",
+    "compute_hydro_dt_batch",
+    "execute_hydro_stage_batch",
     "compute_hydro_dt",
     "execute_hydro_stage",
     "compute_diffusion_dt",
     "execute_diffusion_stage",
     "execute_burn",
+    "compute_diffusion_dt_batch", "execute_diffusion_stage_batch", "execute_burn_batch",
 })
 
 _CUDA_COMPLETION_LAUNCHES = {
+    "execute_physical_boundary_batch": r"\blaunch_cuda_backend_boundary_batch\s*\(",
+    "compute_hydro_dt_batch": r"\blaunch_cuda_backend_hydro_dt\s*\(",
+    "execute_hydro_stage_batch": r"\blaunch_cuda_backend_hydro_stage_batch\s*\(",
     "compute_hydro_dt": r"\blaunch_cuda_backend_hydro_dt\s*\(",
     "execute_hydro_stage": r"\blaunch_cuda_backend_hydro_stage\s*\(",
     "compute_diffusion_dt": r"\blaunch_cuda_backend_diffusion_dt\s*\(",
     "execute_diffusion_stage":
         r"\blaunch_cuda_backend_diffusion_stage\s*\(",
     "execute_burn": r"\blaunch_cuda_burn_route\s*\(",
+    "compute_diffusion_dt_batch": r"\blaunch_cuda_backend_diffusion_dt_batch\s*\(",
+    "execute_diffusion_stage_batch": r"\blaunch_cuda_backend_diffusion_stage_batch\s*\(",
+    "execute_burn_batch": r"\blaunch_cuda_burn_route\s*\(",
+}
+
+# Only these exact single-request delegates may omit their own fence. The
+# batch bodies remain subject to the launch/quiescence/counter contract.
+_CUDA_SCALAR_BATCH_DELEGATES = {
+    "compute_hydro_dt": "return compute_hydro_dt_batch({&current, 1}, cfl).front();",
+    "execute_hydro_stage":
+        "return execute_hydro_stage_batch({&current, 1}, descriptor, dt, expected);",
+    "compute_diffusion_dt": "return compute_diffusion_dt_batch({&current, 1}).front();",
+    "execute_diffusion_stage":
+        "return execute_diffusion_stage_batch({&current, 1}, plan, descriptor, dt, dt_fe, expected);",
+    "execute_burn": "return execute_burn_batch({&current, 1}, dt, expected).front();",
 }
 
 
@@ -700,7 +728,16 @@ def audit_tree(root: pathlib.Path):
                     f"CUDA runtime function has the wrong functional owner: "
                     f"{function_name} in {relative}")
                 continue
+            delegate = _CUDA_SCALAR_BATCH_DELEGATES.get(function_name)
+            is_batch_delegate = delegate is not None and (
+                re.sub(r"\s+", "", _without_cpp_comments(body))
+                == re.sub(r"\s+", "", delegate))
+            if is_batch_delegate and _function_body(
+                    content, f"CudaBackend::{function_name}_batch") is None:
+                violations.append(
+                    f"CUDA scalar delegate requires its batch owner: {function_name}")
             if (function_name in _CUDA_SYNCHRONIZED_COUNTER_FUNCTIONS
+                    and not is_batch_delegate
                     and not _launch_quiesces_before_kernel_count(
                         body, _CUDA_COMPLETION_LAUNCHES[function_name])):
                 violations.append(
@@ -715,12 +752,12 @@ def audit_tree(root: pathlib.Path):
                         r"block\.boundary\.phases\s*\)")):
                 violations.append(
                     "CUDA boundary completion must follow stream quiescence")
-            if (function_name == "execute_burn"
+            if (function_name in {"execute_burn", "execute_burn_batch"} and not is_batch_delegate
                     and not re.search(
                         r"\bblock\.burn_workspace_storage\.get\(\)\s*,\s*"
                         r"block\.burn_candidates\.get\(\)\s*,\s*"
                         r"block\.burn_statuses\.get\(\)\s*,\s*"
-                        r"block\.burn_summary\.get\(\)",
+                        r"(?:block\.burn_summary\.get\(\)|scratch\.get\(\)\s*\+\s*index)",
                         body, flags=re.DOTALL)):
                 violations.append(
                     "CUDA burn routes must consume the caller workspace")

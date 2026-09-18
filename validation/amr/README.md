@@ -9,10 +9,8 @@ physical quantities carried by those cells. The records therefore check both
 the refine/coarsen sequence and the fields after transfer, using physical cell
 volumes when computing conservation in curved coordinates.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 ARCH uses the same refinement indicators, conservative transfers, geometric
 measures and flux corrections on CPU and CUDA. The CPU manages topology and
@@ -21,7 +19,7 @@ on the GPU. Overall acceptance is tracked in the [validation index](../README.md
 
 AMR restart requires a complete ARCH checkpoint, including `ENUC` and
 native composition. The [restart guide](../restart/README.md) describes that
-contract. The [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+contract. The focused interface checks
 cover this reader contract separately; the scientific results below retain the
 source identities of the runs that produced them.
 
@@ -30,9 +28,9 @@ source identities of the runs that produced them.
 | Test group | Coverage |
 |---|---|
 | [Cartesian application matrix](gpu_cases.json) | Ten cases: Euler/RK2/RK3, RKL1/RKL2, one to three dimensions, mixed-level fields, conservation, and a complete one-dimensional refine/coarsen cycle |
-| [Three-dimensional runtime lifecycle](results/dynamic-3d-final-20260907/release-919/evidence.json) | Cartesian Sedov evolution with complete eight-child refinement and coarsening, seven checkpoints and fourteen CPU/CUDA executions |
+| Three-dimensional runtime lifecycle | Cartesian Sedov evolution with complete eight-child refinement and coarsening, seven checkpoints and fourteen CPU/CUDA executions |
 | [Curvilinear application matrix](gpu_curvilinear_cases.json) | 24 cases: cylindrical/spherical, one to three dimensions, RKL1/RKL2, species diffusion alone and coupled thermal/viscous/species diffusion |
-| [Curved two-dimensional runtime lifecycles](results/dynamic-curved-final-20260907/release-923/evidence.json) | Cylindrical and spherical RKL1 species diffusion with complete parent/four-child refinement and coarsening; five checkpoints per geometry |
+| Curved two-dimensional runtime lifecycles | Cylindrical and spherical RKL1 species diffusion with complete parent/four-child refinement and coarsening; five checkpoints per geometry |
 | Gaussian reference | Independent initial fields in both curved geometries and all three dimensions; thermal on/off activity at matching time and topology |
 | [Restart](../restart/README.md) | All four CPU/CUDA directions for smooth advection and ENUC-driven burning; intermediate post-regrid and terminal checkpoints |
 | Geometry and transfer tests | Independent metric and diffusion references, origin balance, physical-volume restriction, composition, all coordinate directions and three state slots |
@@ -45,14 +43,14 @@ uses the project's polar `(r,phi)` convention.
 
 ## Accepted CPU/CUDA checks
 
-The [Cartesian application record](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
+The Cartesian application record
 passes ten cases, 54 CPU/CUDA executions and 27 comparisons. The largest
 absolute field difference is `1.332e-15`; the largest relative energy drift is
 `3.730e-15`. The regrid-cycle case changes its leaf count from 6 to 7 to 9 to 8
 at steps 1, 5, 10 and 20, exercising both refinement and coarsening.
 All topology, field and conservation checks pass their original case budgets.
 
-The [three-dimensional runtime record](results/dynamic-3d-final-20260907/release-919/evidence.json)
+The three-dimensional runtime record
 adds seven checkpoints through step 80 and fourteen CPU/CUDA executions.
 It verifies complete eight-child refinement between steps 20 and 40, coarsening
 from 40 to 41, and refinement again from 41 to 80. Each backend records thirteen
@@ -61,8 +59,8 @@ difference is `4.235e-21`, within the original `rtol=2e-8`, `atol=2e-11` budget;
 topology and conservation checks also pass. This completes the ordinary
 three-dimensional application lifecycle check.
 
-The three-dimensional [memcheck record](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
-and [racecheck record](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+The three-dimensional memcheck record
+and racecheck record
 each pass all seven CUDA executions and seven CPU reference runs on the same
 tested build. Every memcheck report records zero errors and zero leaked bytes or
 allocations; every racecheck report records zero hazards, errors or warnings.
@@ -76,7 +74,7 @@ integrals by the root-cell volume. Its relative budget remains `2e-12`, with
 absolute budgets `2e-11`, `2e-10` and `1e-9` for the one-, two- and three-dimensional
 cases respectively. Field budgets remain those specified by each manifest case.
 
-The [curvilinear application record](results/curved-native-20260907/release-873/backend-validation-evidence.json)
+The curvilinear application record
 passes 24 cases, 96 CPU/CUDA executions and 48 comparisons, including thermal,
 viscous and species coupling on mixed-level meshes. The largest absolute field
 difference is `2.309e-14`. The largest relative physical-volume integral drifts
@@ -85,8 +83,8 @@ Every comparison passes the unchanged budgets given below.
 The two-dimensional RKL1 cases also record runtime refinement in both curved
 geometries, with and without thermal/viscous coupling.
 
-The coupled curved [memcheck record](results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
-and [racecheck record](results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+The coupled curved memcheck record
+and racecheck record
 each pass the spherical three-dimensional thermal/viscous/species case at steps
 2 and 5. The two memcheck CUDA executions report zero errors and zero leaked
 bytes or allocations; the two racecheck executions report zero hazards, errors
@@ -98,7 +96,7 @@ checks pass in both campaigns. These observations retain the 144 mixed-level
 leaves created during initialization; runtime refine/coarsen coverage is
 provided by the separate lifecycle records.
 
-The [curved runtime lifecycle record](results/dynamic-curved-final-20260907/release-923/evidence.json)
+The curved runtime lifecycle record
 adds cylindrical and spherical two-dimensional species-diffusion cases. Each
 geometry samples steps 2, 5, 20, 80 and 160: ten CPU/CUDA executions per geometry,
 twenty in total. Both verify complete parent/four-child refinement and coarsening.
@@ -109,7 +107,7 @@ Field comparisons retain `rtol=1e-8`, `atol=5e-12`; physical-volume conservation
 retains `rtol=2e-12`, `atol=2e-11`. All original four-stage RKL1 checks pass.
 This supplements the separate Cartesian three-dimensional lifecycle above.
 
-The [Gaussian initialization and thermal-activity record](results/gaussian-final-20260907/release-871/evidence.json)
+The Gaussian initialization and thermal-activity record
 checks all six curved-coordinate initial states independently. Its largest
 field error is `4.441e-16`, below `2e-12`. At matching time and topology, thermal
 on/off controls produce a relative energy change of `1.058e-2` on each backend,
@@ -130,7 +128,7 @@ before destination fields are written.
 
 ## Independent geometry and diffusion checks
 
-The [geometry record](results/geometry-native-20260907/release-880/evidence.json)
+The geometry record
 passes 12 thin-shell and near-pole references checked with independent 70/90-digit integrals.
 Spatial refinement checks cover thermal/species diffusion and viscous
 momentum/work fluxes in all coordinate systems and dimensions. The CPU and CUDA
@@ -152,7 +150,7 @@ nonnegative and maximum row sums do not exceed one, within the original
 
 ## Sustained regridding and continuation
 
-The [sustained-execution record](results/sustained-first-law-20260907/release-901/evidence.json)
+The sustained-execution record
 passes 500 one-dimensional hydro steps and 100 five-stage RKL2 diffusion steps
 on both backends.
 Including initialization, these runs record 501 and 101 regrid checks. Hydro
@@ -250,3 +248,26 @@ Cartesian, curved, uniform-grid and generated-network matrices and both restart
 reports belong to one build and contain every required comparison. Independent
 scientific, memory-safety and capacity checks are combined with these application
 results in the [validation index](../README.md).
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [Three-dimensional runtime lifecycle (JSON)](results/dynamic-3d-final-20260907/release-919/evidence.json)
+- [Curved two-dimensional runtime lifecycles (JSON)](results/dynamic-curved-final-20260907/release-923/evidence.json)
+- [Cartesian application record (JSON)](results/cartesian-native-20260907/release-872/backend-validation-evidence.json)
+- [memcheck record (JSON)](results/dynamic-3d-final-20260907/memcheck-914/evidence.json)
+- [racecheck record (JSON)](results/dynamic-3d-final-20260907/racecheck-915/evidence.json)
+- [curvilinear application record (JSON)](results/curved-native-20260907/release-873/backend-validation-evidence.json)
+- [memcheck record (JSON)](results/curved-native-20260907/memcheck-904/backend-validation-evidence.json)
+- [racecheck record (JSON)](results/curved-native-20260907/racecheck-906/backend-validation-evidence.json)
+- [Gaussian initialization and thermal-activity record (JSON)](results/gaussian-final-20260907/release-871/evidence.json)
+- [geometry record (JSON)](results/geometry-native-20260907/release-880/evidence.json)
+- [sustained-execution record (JSON)](results/sustained-first-law-20260907/release-901/evidence.json)
+
+- [focused interface checks](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+
+</details>

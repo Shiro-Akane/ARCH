@@ -44,9 +44,9 @@ resource limits, security settings and branch-rule setup.
 
 ## Check tools without a GPU
 
-Use Python 3.10 or newer and Git/CMake from the build setup. These checks use
-the standard library and controlled fixtures; they do not need pynucastro,
-NumPy, SciPy or a CUDA device.
+Use Python 3.10 or newer and Git/CMake from the build setup. Install NumPy and
+h5py for the microphysics/checkpoint protocol checks. The suite uses controlled
+fixtures and does not need pynucastro, SciPy or a CUDA device.
 
 ```bash
 python3 tools/audit_architecture.py .

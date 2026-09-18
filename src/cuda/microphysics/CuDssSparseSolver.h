@@ -22,7 +22,9 @@ struct CuDssResult
 };
 
 /**
- * One fixed CSR pattern and one live set of numerical factors. All coefficient,
+ * One fixed CSR pattern and one selected set of numerical factors. A bounded
+ * optional cache retains up to 31 additional lane owners, with at most 256 MiB
+ * of additional native-estimated peak factor/workspace storage. All coefficient,
  * RHS, and solution inputs/outputs are caller-owned device allocations; private
  * equilibrated buffers never overwrite the original matrix/RHS. The owner must
  * outlive this object and preserve its immutable pattern. Construction copies
@@ -44,7 +46,10 @@ public:
     CuDssSparseSolver& operator=(const CuDssSparseSolver&) = delete;
 
     // Matrix tokens identify (cell, matrix generation), not merely pointer
-    // addresses reused by a pool. A failed factorization invalidates old factors.
+    // addresses reused by a pool. Re-selecting the same address AND token may
+    // reuse completed cached factors. A new token refactorizes even at the same
+    // address; the caller must never mutate a matrix without changing its token.
+    // A failed factorization invalidates old factors across the bounded cache.
     CuDssResult factorize(const double* values, std::uint64_t matrix_token);
     CuDssResult solve(const double* rhs, double* solution, std::uint64_t matrix_token);
     CuDssResult factorize_and_solve(const double* values, const double* rhs,

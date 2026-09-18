@@ -6,8 +6,8 @@
 能否得到预期的演化。严格恢复检查直接核对文件中的场与控制状态；续算检查则使用
 文中规定的数值容差，将后续物理状态与不间断运行比较。
 
-本页结果对应[Validation 总索引](../README.zh-CN.md)注明的科学验收快照；源码组织与
-构建检查见单独的[维护记录](../backend/results/maintenance-freeze-20260908/)。
+各份详细记录注明实际受测的源码、程序和输入；模块结果统一汇总在
+[验证总览](../README.zh-CN.md)中。
 
 CPU 与 CUDA 共用一种检查点格式和读取器。只要目标构建支持相应物理模块和数据，
 就可以从检查点切换后端继续运行。验证将续算与不间断运行进行比较，包含动态加密和
@@ -27,20 +27,17 @@ ARCH 检查点保存 AMR 叶块拓扑、守恒场、原始质量分数和用于�
 原始质量分数都是必需内容，缺失时会拒绝文件，不重建缺失状态。完整的字段、形状
 与身份检查见[格式契约](../../docs/Reference.zh-CN.md#arch-检查点)。
 
-下方结果保留各自受测源码的身份。严格输入验证已通过单独的
-[定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)，
-这些控制不替代科学续算测量。本轮[维护复验](../backend/results/maintenance-freeze-20260908/README.zh-CN.md)
-已在小范围分发清理后通过光滑／燃烧重启及燃烧重启 memcheck/racecheck。
-四组检查各完成十二次执行和九次严格比较，每种插桩工具覆盖六次实际 CUDA 进程，
-报告完整且无报错，最终源码与产物身份检查也通过。这些当前源码上的实际运行与
-下方科学续算测量分开记录。
+严格输入验证与维护检查为科学续算测量提供补充。记录中的光滑／燃烧重启及燃烧重启
+memcheck/racecheck 四组检查各完成十二次执行和九次严格比较；每种插桩工具覆盖六次
+实际 CUDA 进程，报告完整且无报错。各记录保留实际受测源码与程序的身份，详细入口
+集中在本页末尾。
 
 <a id="发布候选版本已完成的检查"></a>
 
 ## CPU/CUDA 已通过的检查
 
-[光滑平流记录](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
-和[燃烧／ENUC 记录](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
+光滑平流记录
+和燃烧／ENUC 记录
 使用同一份受测源码、程序和比较工具，各通过十二次执行和九次比较。每组包括两次
 不间断运行、两次检查点来源运行和八次续算。续算覆盖 CPU 到 CPU、CPU 到 CUDA、
 CUDA 到 CPU、CUDA 到 CUDA 四种方向，分别从第 2 步重网格后的检查点和第 3 步
@@ -61,8 +58,8 @@ DenseLU 求解。
 保持原输出编号；终态检查点续算恰好多一个 checkpoint 和 plot，这一差值由实际
 停止运行时的输出历史确定。
 
-燃烧／AMR 的 [memcheck 检查](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
-和 [racecheck 检查](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
+燃烧／AMR 的 memcheck 检查
+和 racecheck 检查
 也在同一受测构建上各自完成全部十二次执行和九次严格比较。每组对六次实际 CUDA
 执行插桩：不间断运行、检查点来源运行，以及四次以 CUDA 为目标的恢复。
 六份 memcheck 报告均为零错误、零泄漏字节和零泄漏分配；六份 racecheck 报告
@@ -82,7 +79,7 @@ DenseLU 求解。
 
 ## 持续原生状态恢复
 
-[持续运行记录](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
+持续运行记录
 通过 CPU、CUDA 和交替后端三条燃烧链各十二个恢复循环。36 份来源状态在继续演化前，
 分别经过共同的 Host 读取器和 CUDA 上传／下载路径恢复。全部 72 次原生状态比较中，
 场、原始组分、时间、控制器及输出元数据均精确保持，场差为零。
@@ -119,3 +116,21 @@ python3 tools/validate_cuda_amr_restart.py \
 同一工具保留四个后端方向、两种来源阶段和全部原有数值预算。
 
 上述续算测试不包含在外部库调用中途强制中断。
+
+## 详细复核记录
+
+<details>
+<summary>展开源码身份、机器可读数据与执行日志</summary>
+
+下面是供复现与独立核查使用的数据文件，不是使用教程。上文已说明测试方法、结果和误差标准。
+
+- [光滑平流记录 (JSON)](../amr/results/restart-smooth-native-20260907/release-876/restart-validation-evidence.json)
+- [燃烧／ENUC 记录 (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
+- [memcheck 检查 (JSON)](../amr/results/restart-burn-native-20260907/memcheck-905/restart-validation-evidence.json)
+- [racecheck 检查 (JSON)](../amr/results/restart-burn-native-20260907/racecheck-907/restart-validation-evidence.json)
+- [持续运行记录 (JSON)](../amr/results/sustained-first-law-20260907/release-901/evidence.json)
+
+- [定向接口检查](../../docs/development/ImplementationOwnership.md#current-interface-and-compatibility-review)
+- [维护复验](../backend/results/maintenance-freeze-20260908/README.zh-CN.md)
+
+</details>

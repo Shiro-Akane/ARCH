@@ -87,6 +87,16 @@ void run(View table, const char* name)
     Buffer<arch::reduction::ReductionCandidate> candidates(cells);
     Buffer<int> statuses(cells), eos_status(1), requests(1), responses(1), rows(extent + 1), columns(nnz);
     Buffer<arch::cuda::BurnOdeMatrixWorkspaceFor<extent>> dense_workspace(cells);
+    Buffer<arch::cuda::DeviceBurnBatchBlock> dense_bindings(cells);
+    std::array<arch::cuda::DeviceBurnBatchBlock, cells> host_bindings{};
+    for (int i = 0; i < cells; ++i) {
+        auto cell_grid = grid;
+        cell_grid.is = i; cell_grid.ie = i + 1;
+        host_bindings[i] = {state, cell_grid,
+            reinterpret_cast<std::byte*>(dense_workspace.data + i),
+            candidates.data + i, statuses.data + i, nullptr};
+    }
+    check(cudaMemcpy(dense_bindings.data, host_bindings.data(), sizeof(host_bindings), cudaMemcpyHostToDevice));
     Buffer<arch::cuda::SparseBurnCellRecord> records(1);
     Buffer<typename Ode::Continuation> contexts(1);
     Buffer<double> values(nnz), jacobians(nnz), packed(extent), densities(1), intervals(1), solutions(extent);
@@ -133,15 +143,18 @@ void run(View table, const char* name)
                         "EOS latch changed valid dense/sparse physics");
         }
     };
-    for (bool dense : {true, false}) {
+    for (int route : {0, 1, 2}) {
+        const bool dense = route != 1;
         // Valid -> failures -> valid verifies sticky failure and reuse, without
         // depending on a production table's iterative recovery by accident.
         for (Fault fault : {Fault::None, Fault::Preparation, Fault::OdeHeatCapacity,
                             Fault::Energy, Fault::None}) {
             reset(); eos.fault = fault;
             if (dense) {
-                arch::cuda::burn_detail::burn_cells_kernel<Network, Binding><<<1, cells>>>(
-                    state, grid, dense_workspace.data, candidates.data, statuses.data, dt, eos, cfg, Network{});
+                arch::cuda::burn_detail::burn_cells_kernel<Network, Binding>
+                    <<<dim3(1, route == 2 ? cells : 1), route == 2 ? 1 : cells>>>(
+                        state, grid, dense_workspace.data, candidates.data, statuses.data,
+                        dt, eos, cfg, Network{}, route == 2 ? dense_bindings.data : nullptr);
                 check(cudaGetLastError());
             } else {
                 arch::cuda::execute_sparse_burn_cells(executor, records.data, state, grid,
@@ -185,7 +198,7 @@ void run(View table, const char* name)
     try { unchecked.execute(1, eos, cfg); }
     catch (const std::invalid_argument&) { rejected = true; }
     require(rejected, "Table EOS accepted a sparse pool without failure storage");
-    std::cout << name << ": dense/sparse EOS failure no-commit and valid reuse passed\n";
+    std::cout << name << ": dense/sparse/batched EOS failure no-commit and valid reuse passed\n";
 }
 
 template<class View> void test_table(View view, int knots, const char* name)

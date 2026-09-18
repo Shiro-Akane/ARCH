@@ -16,6 +16,7 @@
 #include <algorithm>
 #include <array>
 #include <exception>
+#include <limits>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -28,6 +29,9 @@
 
 namespace arch::cuda {
 namespace {
+struct CacheBudgetExceeded : std::runtime_error {
+    CacheBudgetExceeded() : std::runtime_error("optional cuDSS factor cache budget exceeded") {}
+};
 void checked(cudssStatus_t status, const char* operation)
 {
     if (status != CUDSS_STATUS_SUCCESS)
@@ -70,6 +74,25 @@ void CuDssResult::require_success() const
 
 struct CuDssSparseSolver::Impl
 {
+    // One factor is guaranteed; additional owners are bounded by both count
+    // and their conservative native peak estimate. Children cannot recurse.
+    static constexpr std::size_t max_cached_lanes = 31;
+    // The measured 150-isotope BTF factor peak is ~4.33 MB per lane; a
+    // 64 MiB cache thrashes the 32-lane pool. Keep an explicit bounded cap
+    // that accommodates that pool, still subject to available-device checks.
+    static constexpr std::uint64_t extra_cache_budget = 256ull * 1024 * 1024;
+    struct CachedLane {
+        const double* values = nullptr;
+        std::uint64_t last_use = 0;
+        std::unique_ptr<CuDssSparseSolver> solver;
+    };
+    bool cache_enabled = true;
+    std::uint64_t native_budget = std::numeric_limits<std::uint64_t>::max();
+    const double* primary_values = nullptr;
+    CuDssSparseSolver* active_lane = nullptr;
+    std::vector<CachedLane> cached_lanes;
+    std::uint64_t cache_clock = 0, peak_total_bytes = 0;
+    std::array<std::uint64_t,5> retired_counts{};
     cudssHandle_t handle = nullptr;
     cudssConfig_t config = nullptr;
     cudssData_t data = nullptr;
@@ -81,21 +104,44 @@ struct CuDssSparseSolver::Impl
     std::uint64_t synchronizations = 0;
     std::uint64_t kernels = 0, downloaded_bytes = 0, uploaded_bytes = 0;
     std::uint64_t peak_device_bytes = 0;
-    int extent = 0;
+    int extent = 0, nonzeros = 0;
     const int* row_offsets = nullptr;
+    const int* column_indices = nullptr;
+    const double* original_values = nullptr;
+    const double* original_rhs = nullptr;
     DeviceAllocation<double> scaled_values, row_divisors, column_divisors,
-        scaled_rhs, scaled_solution;
+        scaled_rhs, scaled_solution, original_residual, correction;
     DeviceAllocation<int> column_offsets, column_slots;
     DeviceAllocation<int> invalid_equilibration;
     double* caller_solution = nullptr;
-    int equilibration_error = 0;
+    std::array<int, 2> completion{}; // Invalid arithmetic; original residual state.
 
     std::uint64_t equilibration_bytes() const
     {
         return (scaled_values.size() + row_divisors.size() + column_divisors.size()
-            + scaled_rhs.size() + scaled_solution.size()) * sizeof(double)
+            + scaled_rhs.size() + scaled_solution.size() + original_residual.size()
+            + correction.size()) * sizeof(double)
             + (invalid_equilibration.size() + column_offsets.size() + column_slots.size())
                 * sizeof(int);
+    }
+
+    std::uint64_t cached_bytes() const
+    {
+        std::uint64_t total = 0;
+        for (const auto& lane : cached_lanes) total += lane.solver->peak_device_bytes();
+        return total;
+    }
+
+    void retire_lane(std::size_t index)
+    {
+        auto& solver = cached_lanes[index].solver;
+        if (active_lane == solver.get()) active_lane = nullptr;
+        retired_counts[0] += solver->analysis_count();
+        retired_counts[1] += solver->synchronization_count();
+        retired_counts[2] += solver->kernel_count();
+        retired_counts[3] += solver->bytes_d2h();
+        retired_counts[4] += solver->bytes_h2d();
+        cached_lanes.erase(cached_lanes.begin() + index);
     }
 
     ~Impl()
@@ -103,6 +149,7 @@ struct CuDssSparseSolver::Impl
         // Exceptional exits may still have queued work. Destructors cannot
         // report errors, but must not release descriptors before that work ends.
         if (handle != nullptr) quiesce_or_terminate(device, stream);
+        cached_lanes.clear();
         if (data != nullptr) cudssDataDestroy(handle, data);
         if (matrix != nullptr) cudssMatrixDestroy(matrix);
         if (rhs != nullptr) cudssMatrixDestroy(rhs);
@@ -111,27 +158,40 @@ struct CuDssSparseSolver::Impl
         if (handle != nullptr) cudssDestroy(handle);
     }
 
-    CuDssResult execute(int phase)
+    CuDssResult execute(int phase, bool correction_solve = false)
     {
         CuDssResult result;
         result.library_status = cudssExecute(handle, phase, config, data, matrix, solution, rhs);
         if (result.library_status != CUDSS_STATUS_SUCCESS) return result;
         if (phase == CUDSS_PHASE_SOLVE) {
             result.cuda_status = equilibrate_sparse_vector(extent, scaled_solution.get(),
-                column_divisors.get(), caller_solution, invalid_equilibration.get(), false, stream);
+                column_divisors.get(), correction_solve ? correction.get() : caller_solution,
+                invalid_equilibration.get(), false, stream);
+            if (result.cuda_status != cudaSuccess) return result;
+            ++kernels;
+            if (correction_solve) {
+                result.cuda_status = accumulate_sparse_correction(extent, correction.get(),
+                    caller_solution, invalid_equilibration.get(), stream);
+                if (result.cuda_status != cudaSuccess) return result;
+                ++kernels;
+            }
+            result.cuda_status = original_sparse_residual(extent, row_offsets, column_indices,
+                original_values, original_rhs, caller_solution, original_residual.get(),
+                invalid_equilibration.get() + 1, stream);
             if (result.cuda_status != cudaSuccess) return result;
             ++kernels;
         }
         // Only a scalar failure latch returns to Host, using the completion
         // fence already required by cuDSS. Matrix/RHS preparation stays on GPU.
-        result.cuda_status = cudaMemcpyAsync(&equilibration_error,
-            invalid_equilibration.get(), sizeof(int), cudaMemcpyDeviceToHost, stream);
+        const auto status_bytes = (phase == CUDSS_PHASE_SOLVE ? 2 : 1) * sizeof(int);
+        result.cuda_status = cudaMemcpyAsync(completion.data(),
+            invalid_equilibration.get(), status_bytes, cudaMemcpyDeviceToHost, stream);
         if (result.cuda_status != cudaSuccess) return result;
-        downloaded_bytes += sizeof(int);
+        downloaded_bytes += status_bytes;
         result.cuda_status = cudaStreamSynchronize(stream);
         ++synchronizations;
         if (result.cuda_status != cudaSuccess) return result;
-        if (equilibration_error != 0) {
+        if (completion[0] != 0) {
             result.cuda_status = cudaErrorInvalidValue;
             return result;
         }
@@ -154,7 +214,10 @@ CuDssSparseSolver::CuDssSparseSolver(
     auto& p = *impl_;
     p.stream = stream;
     p.extent = extent;
+    p.nonzeros = nonzeros;
+    p.primary_values = values;
     p.row_offsets = row_offsets;
+    p.column_indices = column_indices;
     checked_cuda(cudaGetDevice(&p.device), "current device");
     for (const void* pointer : {static_cast<const void*>(row_offsets),
             static_cast<const void*>(column_indices), static_cast<const void*>(values),
@@ -213,9 +276,11 @@ CuDssSparseSolver::CuDssSparseSolver(
     p.column_divisors.allocate(extent);
     p.scaled_rhs.allocate(extent);
     p.scaled_solution.allocate(extent);
+    p.original_residual.allocate(extent);
+    p.correction.allocate(extent);
     p.column_offsets.allocate(column_offsets.size());
     p.column_slots.allocate(column_slots.size());
-    p.invalid_equilibration.allocate(1);
+    p.invalid_equilibration.allocate(2);
     p.peak_device_bytes = p.equilibration_bytes();
     // Immutable index permutation, not numeric state: gather each CSR column
     // in linear work without an atomic floating reduction or a dense N*N scan.
@@ -281,8 +346,71 @@ CuDssSparseSolver::~CuDssSparseSolver() = default;
 CuDssResult CuDssSparseSolver::factorize(const double* values, std::uint64_t token)
 {
     auto& p = *impl_;
-    p.factored = false;
+    struct FailureGuard {
+        CuDssSparseSolver& owner;
+        bool complete = false;
+        ~FailureGuard() { if (!complete) owner.invalidate(); }
+    } guard{*this};
+    p.active_lane = nullptr;
     device_buffer(values, p.device);
+    if (p.cache_enabled) {
+        if (p.cache_clock == std::numeric_limits<std::uint64_t>::max()) {
+            for (auto& lane : p.cached_lanes) lane.last_use = 0;
+            p.cache_clock = 0;
+        }
+        ++p.cache_clock;
+        if (p.primary_values == values && p.factored && !p.reset_required
+            && p.matrix_token == token) {
+            guard.complete = true;
+            return {};
+        }
+        if (p.primary_values != values) {
+            auto found = std::find_if(p.cached_lanes.begin(), p.cached_lanes.end(),
+                [values](const auto& lane) { return lane.values == values; });
+            if (found == p.cached_lanes.end()) {
+                const auto estimated_lane = p.peak_device_bytes;
+                std::size_t free_bytes = 0, total_bytes = 0;
+                checked_cuda(cudaMemGetInfo(&free_bytes,&total_bytes), "optional factor cache memory budget");
+                if (p.analyzed && estimated_lane <= Impl::extra_cache_budget && estimated_lane <= free_bytes) {
+                    while (!p.cached_lanes.empty() && (p.cached_lanes.size() >= Impl::max_cached_lanes
+                        || p.cached_bytes() + estimated_lane > Impl::extra_cache_budget)) {
+                        const auto oldest = std::min_element(p.cached_lanes.begin(),p.cached_lanes.end(),
+                            [](const auto& a,const auto& b) { return a.last_use < b.last_use; });
+                        p.retire_lane(static_cast<std::size_t>(oldest-p.cached_lanes.begin()));
+                    }
+                    auto child = std::make_unique<CuDssSparseSolver>(p.extent,p.nonzeros,
+                        p.row_offsets,p.column_indices,values,p.scaled_rhs.get(),p.scaled_solution.get(),p.stream);
+                    child->impl_->cache_enabled = false;
+                    p.cached_lanes.push_back({values,p.cache_clock,std::move(child)});
+                    found = p.cached_lanes.end()-1;
+                }
+            }
+            if (found != p.cached_lanes.end()) {
+                const auto index = static_cast<std::size_t>(found-p.cached_lanes.begin());
+                auto& lane = *found;
+                lane.last_use = p.cache_clock;
+                auto& child = *lane.solver->impl_;
+                child.native_budget = Impl::extra_cache_budget - (p.cached_bytes()-lane.solver->peak_device_bytes());
+                try {
+                    CuDssResult result;
+                    if (!child.factored || child.reset_required || child.matrix_token != token)
+                        result = lane.solver->factorize(values,token);
+                    p.peak_total_bytes = std::max(p.peak_total_bytes,p.peak_device_bytes+p.cached_bytes());
+                    p.active_lane = lane.solver.get();
+                    guard.complete = result.success();
+                    return result;
+                } catch (const CacheBudgetExceeded&) {
+                    // A later native estimate can exceed its earlier prediction.
+                    // Retire the optional owner BEFORE falling back to the one
+                    // guaranteed factor. Never turn this into CPU execution.
+                    p.retire_lane(index);
+                }
+            }
+            p.primary_values = values;
+        }
+    }
+    p.factored = false;
+    p.original_values = values;
     checked_cuda(equilibrate_sparse_rows(p.extent, p.row_offsets, values,
         p.row_divisors.get(), p.scaled_values.get(), p.invalid_equilibration.get(), p.stream),
         "normalize matrix row units");
@@ -322,6 +450,8 @@ CuDssResult CuDssSparseSolver::factorize(const double* values, std::uint64_t tok
         const auto factor_peak = static_cast<std::uint64_t>(estimates[1]);
         p.peak_device_bytes = std::max(p.peak_device_bytes,
             factor_peak + p.equilibration_bytes());
+        if (factor_peak + p.equilibration_bytes() > p.native_budget)
+            throw CacheBudgetExceeded();
         std::size_t free_bytes = 0, total_bytes = 0;
         checked_cuda(cudaMemGetInfo(&free_bytes, &total_bytes), "numeric factor memory budget");
         // The row workspaces are already allocated and excluded from free_bytes.
@@ -335,6 +465,8 @@ CuDssResult CuDssSparseSolver::factorize(const double* values, std::uint64_t tok
         p.factored = true;
         p.matrix_token = token;
     }
+    p.peak_total_bytes = std::max(p.peak_total_bytes,p.peak_device_bytes+p.cached_bytes());
+    guard.complete = result.success();
     return result;
 }
 
@@ -342,6 +474,16 @@ CuDssResult CuDssSparseSolver::solve(
     const double* rhs, double* solution, std::uint64_t token)
 {
     auto& p = *impl_;
+    if (p.active_lane != nullptr) {
+        try {
+            const auto result = p.active_lane->solve(rhs,solution,token);
+            if (!result.success()) invalidate();
+            return result;
+        } catch (...) {
+            invalidate();
+            throw;
+        }
+    }
     if (!p.factored || p.matrix_token != token)
         throw std::logic_error("cuDSS solve requested with absent or stale numerical factors");
     device_buffer(rhs, p.device);
@@ -352,10 +494,22 @@ CuDssResult CuDssSparseSolver::solve(
         p.scaled_rhs.get(), p.invalid_equilibration.get(), true, p.stream), "normalize RHS row units");
     ++p.kernels;
     p.caller_solution = solution;
-    const auto result = p.execute(CUDSS_PHASE_SOLVE);
+    p.original_rhs = rhs;
+    auto result = p.execute(CUDSS_PHASE_SOLVE);
+    // Native refinement operates on the equilibrated equations and can miss a
+    // componentwise error in the original system. Reuse these same GPU factors
+    // for at most two original-system corrections. No numeric data returns to
+    // Host, no unbounded retry, and no change to the ODE's final residual gate.
+    // State 2 is unrefinable: leave numerical rejection to the existing caller.
+    for (int retry = 0; result.success() && p.completion[1] == 1 && retry < 2; ++retry) {
+        checked_cuda(equilibrate_sparse_vector(p.extent, p.original_residual.get(),
+            p.row_divisors.get(), p.scaled_rhs.get(), p.invalid_equilibration.get(),
+            true, p.stream), "normalize original residual row units");
+        ++p.kernels;
+        result = p.execute(CUDSS_PHASE_SOLVE, true);
+    }
     if (!result.success()) {
-        p.factored = false;
-        p.reset_required = true;
+        invalidate();
     }
     return result;
 }
@@ -370,12 +524,36 @@ void CuDssSparseSolver::invalidate()
 {
     impl_->factored = false;
     impl_->reset_required = true;
+    impl_->active_lane = nullptr;
+    for (auto& lane : impl_->cached_lanes) lane.solver->invalidate();
 }
-std::uint64_t CuDssSparseSolver::analysis_count() const { return impl_->analyses; }
-std::uint64_t CuDssSparseSolver::synchronization_count() const { return impl_->synchronizations; }
-std::uint64_t CuDssSparseSolver::kernel_count() const { return impl_->kernels; }
-std::uint64_t CuDssSparseSolver::bytes_d2h() const { return impl_->downloaded_bytes; }
-std::uint64_t CuDssSparseSolver::bytes_h2d() const { return impl_->uploaded_bytes; }
-std::uint64_t CuDssSparseSolver::peak_device_bytes() const { return impl_->peak_device_bytes; }
+std::uint64_t CuDssSparseSolver::analysis_count() const {
+    auto total = impl_->analyses + impl_->retired_counts[0];
+    for (const auto& lane : impl_->cached_lanes) total += lane.solver->analysis_count();
+    return total;
+}
+std::uint64_t CuDssSparseSolver::synchronization_count() const {
+    auto total = impl_->synchronizations + impl_->retired_counts[1];
+    for (const auto& lane : impl_->cached_lanes) total += lane.solver->synchronization_count();
+    return total;
+}
+std::uint64_t CuDssSparseSolver::kernel_count() const {
+    auto total = impl_->kernels + impl_->retired_counts[2];
+    for (const auto& lane : impl_->cached_lanes) total += lane.solver->kernel_count();
+    return total;
+}
+std::uint64_t CuDssSparseSolver::bytes_d2h() const {
+    auto total = impl_->downloaded_bytes + impl_->retired_counts[3];
+    for (const auto& lane : impl_->cached_lanes) total += lane.solver->bytes_d2h();
+    return total;
+}
+std::uint64_t CuDssSparseSolver::bytes_h2d() const {
+    auto total = impl_->uploaded_bytes + impl_->retired_counts[4];
+    for (const auto& lane : impl_->cached_lanes) total += lane.solver->bytes_h2d();
+    return total;
+}
+std::uint64_t CuDssSparseSolver::peak_device_bytes() const {
+    return std::max(impl_->peak_total_bytes,impl_->peak_device_bytes);
+}
 int CuDssSparseSolver::compiled_version() { return CUDSS_VERSION; }
 } // namespace arch::cuda

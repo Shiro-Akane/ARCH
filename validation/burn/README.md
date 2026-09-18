@@ -10,15 +10,13 @@ composition constraints and energy balance; nuclear statistical equilibrium
 (NSE) checks additionally compare the equilibrium state of the selected built-in
 network with independent references.
 
-The results on this page belong to the scientific acceptance snapshot identified
-in the [central Validation index](../README.md). Source organization and build
-verification have a separate
-[maintenance record](../backend/results/maintenance-freeze-20260908/).
+Each detailed record identifies its tested source, executable and inputs.
+The [validation overview](../README.md) brings together the module results.
 
 CPU and CUDA pass the original cross-solver and composition-closure checks.
-The [application record](results/application-first-law-20260907/release-878/evidence.json)
+The application record
 contains all six executions and their source/binary identities. The same
-build also passes [native burn restart](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json).
+build also passes native burn restart.
 Whole-project acceptance is tracked in the [validation index](../README.md).
 
 The `BurnOneZone` implementation remains in `simulation/BurnOneZone/`; the
@@ -74,7 +72,7 @@ quantities use \(\lvert q-q_{ref}\rvert/\lvert q_{ref}\rvert\).
 | CPU | ROS4 | 6.462e-13 | 1.389e-12 | 4.168e-12 | 2.457e-12 | pass |
 | CUDA | ROS4 | 6.462e-13 | 1.389e-12 | 4.168e-12 | 2.457e-12 | pass |
 
-The [metrics CSV](metrics.csv) also includes both BE_NR runs. Their CPU/CUDA
+The metrics CSV also includes both BE_NR runs. Their CPU/CUDA
 species Linf difference is 5.551e-16; the largest abundance-sum residual across
 all six runs is 2.221e-16.
 
@@ -93,7 +91,7 @@ Network data and implementation tests are described in the
 
 The four built-in networks also have immutable endpoints from independent
 DOP853 time integration, cross-checked by Radau and a refined time-step ceiling.
-The [independent reference review](results/independent-time-final-20260907/release-888/evidence.json) checks all
+The independent reference review checks all
 four networks and independently evaluates endpoint energy with the existing
 high-precision Helmholtz monomial-fit model. Reaction rates still come from the
 shared ARCH RHS; this is independent **time integration**, not independent
@@ -102,9 +100,9 @@ integrators and two step ceilings for each network. The largest species Linf
 difference is \(1.666\times10^{-16}\), relative temperature difference
 \(2.121\times10^{-14}\), and independent endpoint EOS discrepancy
 \(2.221\times10^{-16}\). Every first-law check passes its original budget.
-The [complete Release regression](../backend/results/final-first-law-20260907/release-regression-895/evidence.json)
+The complete Release regression
 includes all twelve Host network/ODE controls, their negative controls and the
-separate CUDA policy checks. [Built-in NSE application results](results/nse-application-native-20260907/release-890/evidence.json)
+separate CUDA policy checks. Built-in NSE application results
 cover sixteen cases and thirty-two physical endpoints on the same tested build.
 
 Build `arch_burn_mainline_reference` with testing enabled. Its ordinary invocation
@@ -126,3 +124,19 @@ independent references rather than treating these approximate endpoints as exact
 solutions. The short-step CUDA policy tests separately retain
 their strict backend-parity budgets, complementing the reference and application
 checks above.
+
+## Detailed verification records
+
+<details>
+<summary>Expand source identities, machine-readable data and execution logs</summary>
+
+These data files support reproduction and independent review; they are not setup guides. Test methods, results and acceptance limits are explained above.
+
+- [application record (JSON)](results/application-first-law-20260907/release-878/evidence.json)
+- [native burn restart (JSON)](../amr/results/restart-burn-native-20260907/release-877/restart-validation-evidence.json)
+- [metrics CSV (CSV)](metrics.csv)
+- [independent reference review (JSON)](results/independent-time-final-20260907/release-888/evidence.json)
+- [complete Release regression (JSON)](../backend/results/final-first-law-20260907/release-regression-895/evidence.json)
+- [Built-in NSE application results (JSON)](results/nse-application-native-20260907/release-890/evidence.json)
+
+</details>

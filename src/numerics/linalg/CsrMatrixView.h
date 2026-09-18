@@ -10,8 +10,8 @@
 #pragma once
 
 #include "../../core/ArchPortability.h"
+#include "SparseResidual.h"
 #include <cmath>
-#include <limits>
 
 template <int N>
 struct CsrMatrixView
@@ -108,7 +108,6 @@ struct CsrMatrixView
     ARCH_HOST_DEVICE bool solution_accurate(const double* rhs, const double* solution) const
     {
         if (!valid() || rhs == nullptr || solution == nullptr) return false;
-        constexpr double allowance = 64.0 * (N + 1.0) * std::numeric_limits<double>::epsilon();
         for (int row = 0; row < N; ++row) {
             if (!std::isfinite(rhs[row])) return false;
             double product = 0.0;
@@ -121,9 +120,8 @@ struct CsrMatrixView
                 product += term;
                 scale += std::abs(term);
             }
-            if (!std::isfinite(product) || !std::isfinite(scale)) return false;
-            const double residual = std::abs(product - rhs[row]);
-            if (residual > allowance * scale) return false;
+            if (!arch::linalg::sparse_residual_accurate(N, product, rhs[row], scale))
+                return false;
         }
         return true;
     }

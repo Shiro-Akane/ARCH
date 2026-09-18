@@ -225,22 +225,33 @@ public:
             || (access.block == second_block
                 && access.storage == second_storage);
     }
-    double compute_hydro_dt(arch::backend::BackendStateAccess, double) override
+    double compute_hydro_dt(arch::backend::BackendStateAccess access, double) override
     {
-        return 1.0;
+        ++hydro_dt_calls;
+        return access.block == block ? 1.0 : 2.0;
     }
     arch::state::CompletionToken execute_hydro_stage(
         arch::backend::BackendStateAccess,
         const arch::scheduler::StageDescriptor&, double,
-        arch::state::CompletionToken token) override { return token; }
+        arch::state::CompletionToken token) override
+    {
+        ++hydro_stage_calls;
+        if (hydro_stage_calls == fail_hydro_stage)
+            throw std::runtime_error("injected Hydro EOS failure");
+        if (incomplete_hydro_stage)
+            return {token.value, arch::state::CompletionState::Pending};
+        if (wrong_hydro_token) ++token.value;
+        return token;
+    }
     arch::state::CompletionToken execute_physical_boundary(
         arch::backend::BackendStateAccess, arch::state::StateVersion,
         arch::state::CompletionToken token) override { return token; }
     void rotate_slots(arch::backend::BackendStateAccess,
                       arch::state::SlotRotation) override {}
-    double compute_diffusion_dt(arch::backend::BackendStateAccess) override
+    double compute_diffusion_dt(arch::backend::BackendStateAccess access) override
     {
-        return 1.0;
+        ++microphysics_calls;
+        return access.block == block ? 1.0 : 2.0;
     }
 
     arch::state::CompletionToken execute_same_level_exchange(
@@ -260,15 +271,21 @@ public:
         return expected;
     }
     void copy_state_slot(arch::backend::BackendStateAccess,
-                         arch::backend::BackendStateAccess) override {}
+                         arch::backend::BackendStateAccess) override { ++microphysics_calls; }
     arch::state::CompletionToken execute_diffusion_stage(
         arch::backend::BackendStateAccess, const arch::scheduler::RklPlan&,
         const arch::scheduler::RklStageDescriptor&, double, double,
-        arch::state::CompletionToken token) override { return token; }
+        arch::state::CompletionToken token) override {
+        ++microphysics_calls;
+        if (incomplete_microphysics) token.state = arch::state::CompletionState::Pending;
+        return token;
+    }
     arch::backend::BurnExecutionResult execute_burn(
         arch::backend::BackendStateAccess, double dt,
         arch::state::CompletionToken token) override
     {
+        ++microphysics_calls;
+        if (incomplete_microphysics) token.state = arch::state::CompletionState::Pending;
         return {dt, 0, 0, token};
     }
     void enqueue_materialize_host_current(
@@ -327,6 +344,13 @@ public:
     arch::backend::StorageGeneration second_storage{10};
     std::vector<int> calls;
     int enqueue_count = 0;
+    int hydro_dt_calls = 0;
+    int microphysics_calls = 0;
+    bool incomplete_microphysics = false;
+    int hydro_stage_calls = 0;
+    int fail_hydro_stage = 0;
+    bool incomplete_hydro_stage = false;
+    bool wrong_hydro_token = false;
     int fail_enqueue = 0;
     bool fail_quiesce = false;
     bool fail_trace = false;
@@ -334,6 +358,130 @@ public:
     arch::backend::BackendCounters counters_value{};
     std::vector<arch::backend::BackendTraceRecord> trace;
 };
+
+void test_microphysics_batch_contract()
+{
+    using namespace arch::state;
+    using arch::backend::BackendStateAccess;
+    FakeBackend backend;
+    const std::array<BackendStateAccess, 2> accesses{{
+        {backend.second_block, backend.second_storage, StateSlot::Current},
+        {backend.block, backend.storage, StateSlot::Current}}};
+    const CompletionToken token{91, CompletionState::Complete};
+    const arch::scheduler::RklPlan plan{};
+    const arch::scheduler::RklStageDescriptor descriptor{};
+    require(backend.compute_diffusion_dt_batch({}).empty()
+        && backend.execute_burn_batch({}, 0.1, token).empty(), "Empty microphysics batch launched work");
+    backend.copy_state_slot_batch({}, StateSlot::Next);
+    require(backend.microphysics_calls == 0, "Empty copy launched work");
+    require(backend.compute_diffusion_dt_batch(accesses) == std::vector<double>({2.0, 1.0}),
+        "Diffusion batch changed request ordering");
+    require(backend.execute_burn_batch(accesses, 0.1, token).size() == 2,
+        "Burn batch lost a result");
+    backend.copy_state_slot_batch(accesses, StateSlot::Scratch);
+    require(backend.execute_diffusion_stage_batch(accesses, plan, descriptor, 0.1, 0.1, token) == token,
+        "Diffusion batch lost completion");
+    for (int fault = 0; fault < 4; ++fault) {
+        auto invalid = accesses;
+        if (fault == 0) ++invalid[1].storage.value;
+        if (fault == 1) invalid[1].slot = StateSlot::Next;
+        if (fault == 2) invalid[1] = invalid[0];
+        if (fault == 3) ++invalid[1].block.epoch.value;
+        const int before = backend.microphysics_calls;
+        require_failure([&] { backend.compute_diffusion_dt_batch(invalid); }, "Invalid dt batch accepted");
+        require_failure([&] { backend.copy_state_slot_batch(invalid, StateSlot::Next); }, "Invalid copy accepted");
+        require_failure([&] { backend.execute_burn_batch(invalid, 0.1, token); }, "Invalid burn accepted");
+        require_failure([&] { backend.execute_diffusion_stage_batch(invalid, plan, descriptor, 0.1, 0.1, token); },
+            "Invalid stage accepted");
+        require(before == backend.microphysics_calls, "Late invalid access allowed earlier writes");
+    }
+    const int before = backend.microphysics_calls;
+    require_failure([&] { backend.copy_state_slot_batch(accesses, StateSlot::Current); }, "Aliased batch copy accepted");
+    require_failure([&] { backend.execute_burn_batch(accesses, 0.1, {91, CompletionState::Pending}); },
+        "Pending burn batch accepted");
+    require(before == backend.microphysics_calls, "Invalid batch submitted work");
+    backend.incomplete_microphysics = true;
+    require_failure([&] { backend.execute_burn_batch(accesses, 0.1, token); }, "Incomplete burn accepted");
+    require_failure([&] { backend.execute_diffusion_stage_batch(accesses, plan, descriptor, 0.1, 0.1, token); },
+        "Incomplete diffusion accepted");
+}
+
+void test_hydro_batch_contract()
+{
+    using namespace arch::state;
+    using arch::backend::BackendStateAccess;
+    FakeBackend backend;
+    const std::array<BackendStateAccess, 2> accesses{{
+        {backend.second_block, backend.second_storage, StateSlot::Current},
+        {backend.block, backend.storage, StateSlot::Current}}};
+    const auto descriptor = arch::scheduler::make_hydro_plan(
+        arch::scheduler::HydroMethod::Euler).stages.front();
+    const CompletionToken token{91, CompletionState::Complete};
+    require(backend.compute_hydro_dt_batch({}, 0.8).empty(),
+            "empty local CFL batch must contribute no candidates");
+    require(backend.execute_hydro_stage_batch({}, descriptor, 0.1, token) == token
+                && backend.hydro_stage_calls == 0 && backend.hydro_dt_calls == 0,
+            "empty Hydro batch launched work");
+    require(backend.compute_hydro_dt_batch(accesses, 0.8) == std::vector<double>({2.0, 1.0}),
+            "Hydro batch changed request ordering");
+    require(backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token) == token
+                && backend.hydro_stage_calls == 2,
+            "Hydro batch did not complete all blocks");
+    const std::array<BackendStateAccess, 1> single{{accesses[1]}};
+    require(backend.compute_hydro_dt_batch(single, 0.8) == std::vector<double>({1.0}),
+            "single-block batch changed result extent");
+
+    for (int fault = 0; fault < 4; ++fault) {
+        auto invalid = accesses;
+        if (fault == 0) invalid[1].storage.value += 100;
+        if (fault == 1) invalid[1].slot = StateSlot::Next;
+        if (fault == 2) invalid[1] = invalid[0];
+        if (fault == 3) invalid[1].block.epoch.value += 1;
+        const int dt_calls = backend.hydro_dt_calls;
+        const int stage_calls = backend.hydro_stage_calls;
+        require_failure([&] { (void)backend.compute_hydro_dt_batch(invalid, 0.8); },
+                        "invalid later access accepted by CFL batch");
+        require_failure([&] {
+            (void)backend.execute_hydro_stage_batch(invalid, descriptor, 0.1, token);
+        }, "invalid later access accepted by Hydro batch");
+        require(backend.hydro_dt_calls == dt_calls && backend.hydro_stage_calls == stage_calls,
+                "batch validation submitted earlier work before rejecting later access");
+    }
+    const int before = backend.hydro_stage_calls;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1,
+            {token.value, CompletionState::Pending});
+    }, "Hydro batch accepted pending expected token");
+    require(backend.hydro_stage_calls == before, "pending batch launched work");
+    backend.incomplete_hydro_stage = true;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
+    }, "Hydro batch manufactured completion from pending work");
+    backend.incomplete_hydro_stage = false;
+    backend.wrong_hydro_token = true;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
+    }, "Hydro batch accepted a different completion token");
+    backend.wrong_hydro_token = false;
+    backend.fail_hydro_stage = backend.hydro_stage_calls + 2;
+    require_failure([&] {
+        (void)backend.execute_hydro_stage_batch(accesses, descriptor, 0.1, token);
+    }, "failure in the second block returned batch success");
+
+    for (const auto slot : {StateSlot::Current, StateSlot::Next, StateSlot::Scratch}) {
+        auto selected = accesses;
+        for (auto& access : selected) access.slot = slot;
+        require(backend.execute_physical_boundary_batch(selected, {1}, token) == token,
+                "boundary batch must accept each logical slot");
+        selected[1].storage.value += 100;
+        require_failure([&] {
+            (void)backend.execute_physical_boundary_batch(selected, {1}, token);
+        }, "boundary batch accepted a stale later access");
+    }
+    require_failure([&] {
+        (void)backend.execute_physical_boundary_batch(accesses, {}, token);
+    }, "boundary batch accepted an invalid state version");
+}
 
 void test_transfer_transaction()
 {
@@ -625,6 +773,8 @@ int main()
     test_device_block_store_identity();
     test_host_transfer_view();
     test_cuda_launch_config();
+    test_hydro_batch_contract();
+    test_microphysics_batch_contract();
     test_transfer_transaction();
     test_multiblock_exchange_contract();
     test_dynamic_topology_store_is_fail_closed_by_default();

@@ -1,5 +1,7 @@
 # Shared AMR, sparse burn, and coordinate refactor
 
+Historical development record: observations below belong to their original sources, not the current capability or acceptance decision. See the [validation overview](../../../validation/README.md) for current summaries.
+
 Audience: contributors. Historical experiment and smoke evidence, not the
 current user-facing capability guide or final release acceptance.
 
@@ -9,7 +11,7 @@ scientific validation or release qualification. Historical H100 results do not
 qualify this working tree.
 
 Historical scope notice (2026-09-06): the current acceptance contract and source
-status are tracked in [CudaReleaseStandard.md](CudaReleaseStandard.md). That
+status are tracked in [CudaReleaseStandard.md](../CudaReleaseStandard.md). That
 round reopens shared geometry corrections, adds external-gravity execution,
 and changes header/call boundaries. The old results and frozen-formula statements
 below describe the September 5 artifacts; they do not qualify the newer sources.
@@ -69,7 +71,7 @@ fences. The driver still has no complete regrid transfer trace span. The
 transaction test's four-byte status check snapshots counters after staging;
 it describes the migration phase, not all regrid communication. Whole-regrid
 aggregation and end-to-end timing remain necessary before a performance claim.
-See the current [release ledger](CudaReleaseStandard.md) for the repair and
+See the current [release ledger](../CudaReleaseStandard.md) for the repair and
 exact-byte regression evidence; this document preserves the earlier smoke scope.
 
 ## Sparse execution and limits
@@ -265,7 +267,7 @@ does **not** establish field or topology parity. This is a shared indicator
 policy issue exposed by roundoff, not evidence for maintaining a CUDA-only
 formula or masking a particular species. No threshold, field selection, or
 frozen mathematical formula was changed to hide it. Address it in the
-[shared AMR noise-sensitivity review](../physics/AmrIndicatorNoiseReview.md)
+[shared AMR noise-sensitivity review](AmrIndicatorNoiseReview.md)
 before formal CPU/CUDA AMR parity qualification.
 
 The real generated `audit200` mathematical-leaf build was attempted separately,
@@ -314,4 +316,4 @@ no reference values were refreshed to hide the issue.
 
 The deferred questions, shared implementation boundary, and independent
 acceptance gates are tracked in
-[CurvilinearMetricReview.md](../physics/CurvilinearMetricReview.md).
+[CurvilinearMetricReview.md](CurvilinearMetricReview.md).

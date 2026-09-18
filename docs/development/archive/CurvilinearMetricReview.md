@@ -1,5 +1,7 @@
 # Shared curvilinear-metric correction and qualification
 
+Historical development record: observations below belong to their original sources, not the current capability or acceptance decision. See the [validation overview](../../../validation/README.md) for current summaries.
+
 Status: originally deferred on 2026-09-05; reopened explicitly by the owner on
 2026-09-06 for the release refactor. Shared metric and covariant vector-diffusion
 corrections are implemented. Independent CPU/CUDA area/length/CFL/rest-balance
@@ -84,7 +86,7 @@ momentum and work-flux derivatives are derived in Cartesian/radial form, not
 from the production connection implementation. Both backends pass 30 profiles
 at three spacings in Release; the largest finest-grid normalized error is
 7.26751e-5 (fixed budget 1e-4), with at least 3.5x error reduction per halving
-above roundoff. The current [spatial evidence](../../validation/amr/results/curved-viscosity-release-20260907/evidence.json)
+above roundoff. The current [spatial evidence](../../../validation/amr/results/curved-viscosity-release-20260907/evidence.json)
 records actual artifact identity and transcripts. CUDA memcheck reports zero
 errors. Full coupled/time-dependent validation remains a separate gate.
 
@@ -157,4 +159,4 @@ reruns are required for this changed timestep contract.
 - CPU and real-CUDA execution of the same fixtures after the shared correction,
   with fresh source/binary/input identities and documented reference changes.
 
-Track this separately from the current [refactor smoke record](../development/CudaRefactorSmoke.md).
+Track this separately from the current [refactor smoke record](CudaRefactorSmoke.md).

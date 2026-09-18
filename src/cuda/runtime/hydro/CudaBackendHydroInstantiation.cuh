@@ -13,6 +13,7 @@
 
 #include "cuda/hydro/CheckedHydroEos.cuh"
 #include "cuda/hydro/HydroIntegratorPolicies.cuh"
+#include "cuda/hydro/HydroBatchKernels.cuh"
 
 #ifndef ARCH_CUDA_HYDRO_EOS_TYPE
 #error "a CUDA Hydro EOS owner must define ARCH_CUDA_HYDRO_EOS_TYPE"
@@ -88,6 +89,28 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
     return result;
 }
 
+template <class Eos>
+struct HydroBatchLaunchVisitor {
+    std::span<const DeviceHydroBatchBlock> host;
+    const DeviceHydroBatchBlock* device;
+    Eos eos;
+    double coefficient, density_floor, min_e, max_e;
+    const scheduler::StageDescriptor& descriptor;
+    double dt;
+    cudaStream_t stream;
+    SpeciesWorkspaceView workspace;
+    Physical::Gravity::ExternalGravityView gravity;
+    CudaBackendLaunchResult& result;
+
+    template <class Reconstruction, class Flux>
+    void operator()()
+    {
+        result = launch_hydro_batch<Reconstruction, Flux>(host, device, eos,
+            coefficient, density_floor, min_e, max_e, descriptor, dt,
+            stream, workspace, gravity);
+    }
+};
+
 } // namespace
 
 #define ARCH_DEFINE_BACKEND_HYDRO(EOS) \
@@ -118,6 +141,23 @@ CudaBackendLaunchResult launch_hydro_stage_impl(
     }
 
 ARCH_DEFINE_BACKEND_HYDRO(ARCH_CUDA_HYDRO_EOS_TYPE)
+
+CudaBackendLaunchResult launch_cuda_backend_hydro_stage_batch(
+    const dispatch::ResolvedExecutionPlan& plan,
+    std::span<const DeviceHydroBatchBlock> host_blocks,
+    const DeviceHydroBatchBlock* device_blocks, ARCH_CUDA_HYDRO_EOS_TYPE eos,
+    double coefficient, double density_floor, double min_e, double max_e,
+    const scheduler::StageDescriptor& descriptor, double dt, cudaStream_t stream,
+    SpeciesWorkspaceView workspace, Physical::Gravity::ExternalGravityView gravity)
+{
+    CudaBackendLaunchResult result{cudaErrorInvalidValue, 0, false};
+    HydroBatchLaunchVisitor<ARCH_CUDA_HYDRO_EOS_TYPE> visitor{host_blocks,
+        device_blocks, eos, coefficient, density_floor, min_e, max_e,
+        descriptor, dt, stream, workspace, gravity, result};
+    const bool found = visit_cuda_hydro_route(plan, visitor);
+    result.route_found = found;
+    return result;
+}
 
 #undef ARCH_DEFINE_BACKEND_HYDRO
 

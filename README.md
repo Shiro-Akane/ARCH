@@ -17,6 +17,9 @@ To run your very first simulation, follow the [Build](#build) and [First run](#f
 
 ## Project status
 
+See the [v1.1.0 release notes](docs/releases/V1.1.0.md) for the CUDA optimization,
+measured performance and source-package contents.
+
 Both CPU and CUDA backends fully support the following features. The release version has successfully passed rigorous numerical, application, device-safety, build, and resource checks. Detailed testing configurations and the final delivery-review status are documented in the [Validation](validation/README.md) suite.
 
 [Continuous integration](tests/README.md#github-continuous-integration) checks
@@ -36,11 +39,18 @@ scientific checks are documented separately in Validation.
 
 Set `compute_backend = cpu`, `cuda`, or `auto` in your parameter file to choose where the simulation runs. Requesting `cuda` explicitly will trigger an error if the build or hardware doesn't support it. With `auto`, ARCH will gracefully fall back to the CPU at startup if CUDA is unavailable but the CPU supports the requested features. The backend remains fixed once the run begins. The [CUDA guide](docs/CudaBackendStatus.md) details these choices and explains how the CPU and GPU cooperate during AMR.
 
-Checkpoints save all the state information—including the mesh and fluid composition—needed to seamlessly resume a simulation. Because the CPU and CUDA backends share the exact same format, you can freely restart a simulation on a different backend. The [Reference Manual](docs/Reference.md) details the saved fields and the physical settings that must remain consistent when resuming.
+Checkpoints save the mesh, composition and other state needed to resume a
+simulation. CPU and CUDA share the checkpoint format, allowing a run to restart
+on either supported backend. The [Reference Manual](docs/Reference.md) lists
+the saved fields and the physical settings that must remain consistent.
 
-For smaller AMR workloads, start with CPU and compare a representative run
-before choosing CUDA for speed. The [backend performance guide](docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
-explains the measured CPU/CUDA comparison and how to interpret it.
+**GPU acceleration reaches about 5× in measured coupled AMR workloads.**
+The highest reported end-to-end speedup was 5.08× for Hydro, nuclear burning and
+full transport with dynamic AMR, using aprox13 and the Helmholtz EOS on an
+H100-20C 20 GiB vGPU versus the fastest tested CPU configuration. Speedup depends
+on workload size and physics; small cases and the tested 150/200-isotope sparse
+networks can be faster on CPU. See the [backend performance guide](docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
+for timings, scaling and backend recommendations.
 
 ## Implemented capabilities
 
@@ -345,8 +355,6 @@ ARCH/
 ├── simulation/               # Case implementations and reusable example inputs
 ├── docs/                     # Guides, reference, physics notes, legal index
 │   ├── README.md             # Documentation overview
-│   └── guides/               # Build, simulation and issue-reporting guides
-├── validation/               # Single V&V tree: inputs, records, metrics, figures
 ├── tests/                    # Locally compiled checks and small references
 │   ├── host/                 # Host contracts and shared interfaces
 │   ├── cuda/                 # Device execution and CPU/CUDA agreement

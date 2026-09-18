@@ -29,10 +29,19 @@ def finite(values):
     return result
 
 
-def parse_transcript(text, metadata, controls, steps):
+def validate_storage_controls(storage_sizes, pool_cells):
+    if len(storage_sizes) != 2 or any(type(value) is not int or value <= 0 for value in storage_sizes) \
+            or storage_sizes[1] <= storage_sizes[0] or type(pool_cells) is not int \
+            or not 0 < pool_cells <= storage_sizes[0]:
+        raise ValueError("need two increasing positive storage sizes and a bounded positive pool")
+
+
+def parse_transcript(text, metadata, controls, steps, storage_sizes=STORAGE_SIZES, pool_cells=2):
+    validate_storage_controls(storage_sizes, pool_cells)
+    storage_sizes = tuple(storage_sizes)
     species = len(metadata["species"])
     equations = species + 1 + metadata["auxiliary_equations"]
-    records = {key: [] for key in ("controls", "cpu_step", "gpu_step", "state", "metrics")}
+    records = {key: [] for key in ("controls", "storage_controls", "cpu_step", "gpu_step", "state", "metrics")}
     passed = 0
     for row in csv.reader(io.StringIO(text)):
         if not row:
@@ -45,6 +54,10 @@ def parse_transcript(text, metadata, controls, steps):
             raise ValueError("unknown or failed sparse trajectory record")
     if passed != 1 or len(records["controls"]) != 1:
         raise ValueError("missing/duplicate sparse matrix completion or controls")
+    expected_storage = ([] if storage_sizes == STORAGE_SIZES and pool_cells == 2 else
+                        [[str(storage_sizes[0]), str(storage_sizes[1]), str(pool_cells)]])
+    if records["storage_controls"] != expected_storage:
+        raise ValueError("missing or mismatched sparse storage/pool controls")
     control = records["controls"][0]
     if len(control) != 10 or control[0] != metadata["runtime_name"] \
             or int(control[1]) != equations or equations <= 31 \
@@ -52,7 +65,7 @@ def parse_transcript(text, metadata, controls, steps):
             or int(control[7]) != steps or control[8:] != ["selected_ode", "-1"]:
         raise ValueError("sparse trajectory input/network/method identity mismatch")
     expected = {(method, cells, step) for method in METHODS
-                for cells in STORAGE_SIZES for step in range(steps)}
+                for cells in storage_sizes for step in range(steps)}
     summaries = {}
     for kind in ("cpu_step", "gpu_step"):
         observed = {}
@@ -78,7 +91,7 @@ def parse_transcript(text, metadata, controls, steps):
         capacity, lane_bytes = map(int, row[6:])
         if method not in METHODS or method in metrics or not 0 <= field <= 2.e-10 \
                 or not 0 <= limiter <= 2.e-8 or evolution <= 64 * sys.float_info.epsilon \
-                or not 0 < capacity <= min(STORAGE_SIZES) or lane_bytes <= 0:
+                or not 0 < capacity <= min(*storage_sizes, pool_cells) or lane_bytes <= 0:
             raise ValueError("invalid or failed method metrics")
         rows = [value for key, value in summaries["cpu_step"].items() if key[0] == method]
         if attempts != sum(value[0] for value in rows) or rejects != sum(value[1] for value in rows):
@@ -97,13 +110,14 @@ def parse_transcript(text, metadata, controls, steps):
             raise ValueError("final state extent mismatch")
         key = tuple(int(value) for value in row[:2])
         state = finite(row[2:])
-        if key not in {(method, cells) for method in METHODS for cells in STORAGE_SIZES} or key in states \
+        if key not in {(method, cells) for method in METHODS for cells in storage_sizes} or key in states \
                 or state[0] != controls["rho"] or abs(sum(state[6:]) - 1.0) > 2.e-10:
             raise ValueError("invalid/duplicate final state")
         states[key] = state
-    if len(states) != len(METHODS) * len(STORAGE_SIZES):
+    if len(states) != len(METHODS) * len(storage_sizes):
         raise ValueError("incomplete final state coverage")
-    return {"methods": metrics, "steps": steps, "storage_sizes": STORAGE_SIZES,
+    return {"methods": metrics, "steps": steps, "storage_sizes": storage_sizes,
+            "requested_pool_cells": pool_cells,
             "field_budget": 2.e-10, "limiter_budget": 2.e-8,
             "timing_scope": "diagnostic per-step wall time; not a controlled speedup/build benchmark"}
 
@@ -116,9 +130,14 @@ def main():
     for name in ("rho", "temperature", "interval", "cv", "rtol"):
         parser.add_argument("--" + name, type=float, required=True)
     parser.add_argument("--steps", type=int, required=True)
+    parser.add_argument("--storage-cells", type=int, nargs=2, default=STORAGE_SIZES,
+                        metavar=("FIRST", "SECOND"), help="two increasing storage generations (default: 2 3)")
+    parser.add_argument("--pool-cells", type=int, default=2,
+                        help="requested bounded production pool (default: 2; hardware may clamp it)")
     parser.add_argument("--composition", nargs="+", required=True, metavar="SPECIES=FRACTION")
     parser.add_argument("--timeout", type=float, default=600.0)
     args = parser.parse_args()
+    validate_storage_controls(args.storage_cells, args.pool_cells)
     controls = {name: getattr(args, name) for name in ("rho", "temperature", "interval", "cv", "rtol")}
     if any(not math.isfinite(value) or value <= 0 for value in (*controls.values(), args.timeout)) or args.steps <= 0:
         raise ValueError("physical, tolerance, timeout and step controls must be positive")
@@ -137,12 +156,16 @@ def main():
     lane.mkdir()
     command = [str(executable), *(str(value) for value in controls.values()),
                str(args.steps), *args.composition]
+    if tuple(args.storage_cells) != STORAGE_SIZES or args.pool_cells != 2:
+        command += ["--storage-cells", *(str(value) for value in args.storage_cells),
+                    "--pool-cells", str(args.pool_cells)]
     started = datetime.now(timezone.utc).isoformat()
     process = run_arch_with_logs(command, source_root=ROOT, lane_root=lane, timeout=args.timeout)
     if process.returncode != 0:
         raise RuntimeError(f"sparse matrix failed with code {process.returncode}; logs retained at {lane}")
     transcript = lane / "arch.stdout"
-    summary = parse_transcript(transcript.read_text(), registered[0], controls, args.steps)
+    summary = parse_transcript(transcript.read_text(), registered[0], controls, args.steps,
+                               args.storage_cells, args.pool_cells)
     provenance.require_unchanged(before, identity())
     evidence = {"schema": 1, "scope": "real-generated-sparse-typed-factory-trajectories",
         "release_qualified": False, "focused_gate_pass": True,

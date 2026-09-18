@@ -1,5 +1,7 @@
 # 扩散系数数学对齐验证
 
+历史开发记录：下文保留原受测版本的过程观察，不代表当前功能或验收状态。当前结果见[验证总览](../../../validation/README.zh-CN.md)。
+
 英文原文：[DiffusionCoefficientAlignment.md](DiffusionCoefficientAlignment.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
 ## 来源基准
@@ -8,7 +10,7 @@
 [`conductivity/stellar/actual_conductivity.H`](https://github.com/AMReX-Astro/Microphysics/blob/6fb41b5f7475b42a06eb5b09ff0520c9f08aa7f0/conductivity/stellar/actual_conductivity.H)
 的框架无关 ARCH 适配，审计基准提交为
 `6fb41b5f7475b42a06eb5b09ff0520c9f08aa7f0`。保留的许可证以及适配边界见
-[`THIRD_PARTY_NOTICES.zh-CN.md`](../../THIRD_PARTY_NOTICES.zh-CN.md)。
+[`THIRD_PARTY_NOTICES.zh-CN.md`](../../../THIRD_PARTY_NOTICES.zh-CN.md)。
 
 ## 验证范围
 

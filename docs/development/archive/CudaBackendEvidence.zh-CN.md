@@ -1,7 +1,9 @@
 # CUDA 后端审查历史与证据
 
+历史开发记录：下文保留原受测版本的过程观察，不代表当前功能或验收状态。当前结果见[验证总览](../../../validation/README.zh-CN.md)。
+
 贡献者档案：保留中间状态、机型相关观察及已经过时的描述。当前功能与限制见
-[后端能力](../CudaBackendStatus.zh-CN.md)。本档案不构成当前候选版本的验收。
+[后端能力](../../CudaBackendStatus.zh-CN.md)。本档案不构成当前候选版本的验收。
 
 英文原文：[CudaBackendEvidence.md](CudaBackendEvidence.md)。英文版是规范文本。
 
@@ -28,7 +30,7 @@
   拒绝不完整或身份不一致的证据。
 
 本机限定范围验证和待办记录在
-[`validation/amr/results/local-fixes-20260905/`](../../validation/amr/results/local-fixes-20260905/)。
+[`validation/amr/results/local-fixes-20260905/`](../../../validation/amr/results/local-fixes-20260905)。
 CPU Debug CTest 已通过 21/21；Debug GPU burn policy 已通过 16/16，未放宽
 parity 预算。Release 聚焦 CPU/GPU 检查通过 5/5；两个 GPU 数学测试在两种配置下
 均通过 memcheck/racecheck。完整运行矩阵及 Release GPU burn 复测仍未完成。
@@ -44,9 +46,9 @@ parity 预算。Release 聚焦 CPU/GPU 检查通过 5/5；两个 GPU 数学测�
 - 首次完整 65 项 CUDA CTest 在外部 GPU 争用下通过 52 项；显存隔离后的首轮重跑通过 10/13，并暴露出三个确定性的 burn CPU/CUDA 精度问题。统一补偿 `double` 求和、按实测误差校准单一路由预算后，Burn policy 16/16、原 13 项 13/13、完整 CTest 65/65 均已通过；工具测试 72/72 通过。
 - 当前 NVIDIA vGPU 禁用了 GPU debugging，`compute-sanitizer` memcheck/racecheck 无法插桩。尝试日志已经保存，本状态不宣称 sanitizer 通过。
 
-来源检查使用的固定矩阵／重启记录现归入[协议 fixture](../../tests/fixtures/validation_provenance/README.md)，
+来源检查使用的固定矩阵／重启记录现归入[协议 fixture](../../../tests/fixtures/validation_provenance/README.md)，
 保留实际记录的身份，用于解析与产物身份不匹配的拒绝控制，不认证当前源码的 H100
-科学计算。有效验收数据见 [Validation](../../validation/README.zh-CN.md)。
+科学计算。有效验收数据见 [Validation](../../../validation/README.zh-CN.md)。
 
 ## 已完成实现
 
@@ -127,7 +129,7 @@ Restart 验证同时覆盖 SmoothAdvection 与 `refine_var = ENUC`。Smooth 的�
 
 cuDSS、可在 device 调用的生成网络及大型 burn、device AMR 数值迁移和圆柱/球坐标
 现已纳入后续实现与 smoke 工作，见 [CudaRefactorSmoke.md](CudaRefactorSmoke.md)，
-不能视为已被上述历史验收覆盖。2026-09-06 的[发布重构](CudaReleaseStandard.md)
+不能视为已被上述历史验收覆盖。2026-09-06 的[发布重构](../CudaReleaseStandard.md)
 已接入共用 external gravity CUDA 源项、修正共用几何/CFL 和 AMR 舍入策略，
 最终生产资格仍待验证。自重力/Jeans、生成网络中
 弱反应率表（包括生成的不可变数组）的 device owner 及 WENO5 注册仍不属于已实现的 CUDA 能力。
@@ -158,4 +160,4 @@ python3 tools/validate_backend_results.py \
 ~~~
 
 Release 必须使用独立的 build/output 目录。两套 restart 和最终聚合门禁的完整命令见
-[AMR README](../../validation/amr/README.md)。
+[AMR README](../../../validation/amr/README.md)。

@@ -23,6 +23,17 @@ struct DeviceExchangeBlock {
     DeviceGridView grid{};
 };
 
+struct DeviceBoundaryBatchBlock {
+    DeviceStateView state;
+    const DeviceBoundaryTransfer* transfers = nullptr;
+    std::array<boundary::BoundaryPhase, 3> phases{};
+};
+static_assert(std::is_trivially_copyable_v<DeviceBoundaryBatchBlock>);
+
+cudaError_t launch_cuda_backend_boundary_batch(
+    const DeviceBoundaryBatchBlock* blocks, int block_count,
+    const std::array<int, 3>& phase_counts, cudaStream_t stream, int& kernels);
+
 struct DeviceExchangeOperation {
     int source_block = 0;
     int destination_block = 0;

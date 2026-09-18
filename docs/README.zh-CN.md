@@ -14,9 +14,10 @@
 - [算例指南](guides/SimulationCase.zh-CN.md)：构建、配置、运行及扩展算例；
 - [研究与 API 参考](Reference.zh-CN.md)：参数含义、数值方法选择和代码扩展接口；
 - [CUDA 与 GPU-AMR 指南](CudaBackendStatus.zh-CN.md)：支持的功能、CPU/CUDA 的
-  共同职责和后端选择；
+  共同职责、不同规模的实测加速比，以及后端选择；
+- [版本更新说明](releases/README.md)：各版本的改动、实测收益与源码包内容；
 - [算例目录](../simulation/README.md)：可复用的问题定义和示例输入；
-- [物理说明](physics/README.md)：模型来源，并区分维护中的说明与历史数值分析；
+- [物理说明](physics/README.md)：模型来源与维护中的模型契约；
 - [Verification 与 Validation](../validation/README.zh-CN.md)：测了什么、如何衡量误差，以及 CPU 与 GPU 结果如何比较；
 - [EOS 运行时表](../EOS_toolkit/README.zh-CN.md)：表目录、来源和完整性要求；
 - [法律与来源索引](legal/README.zh-CN.md)：项目及第三方许可证入口；
@@ -34,10 +35,13 @@
 ## 目录契约
 
 - [guides/](guides/README.md) 保存面向任务的工作流；
-- `physics/` 提供物理模型的说明，并明确标注历史的数值分析过程；
-- `development/` 维护开发者的决策、规范约定以及执行记录；
+- `physics/` 提供维护中的物理模型说明；
+- `releases/` 说明各发布源码版本的内容与范围；
+- `development/` 维护开发契约，内部的 `archive/` 单独存放中间评审与已被替代的计划，不纳入用户指南的阅读顺序；
 - `legal/` 作为检索入口；为了兼容标准工具，规范的许可证和 notice 文件始终保留在仓库根目录；
 - `validation/` 位于 `docs/` 之外，因为它的记录用于支撑明确的“通过/失败”结论，并独立管理自己不可变的输入、指标和生成的图表；
 - 源码与算例目录则存放实际的代码实现和可复用的示例输入，仅辅以紧邻代码的简短局部契约。
 
 新增文档时应加入本索引，并在适当的归属模块中建立链接。不要再创建第二套通用文档或验证目录。
+验证页面先呈现方法和结论；需要复现或独立核查的读者，可以主动展开注明用途的详细记录，
+再查看机器可读数据和历史评审说明。

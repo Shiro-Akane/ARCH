@@ -11,6 +11,7 @@
 #include "cuda/runtime/diffusion/CudaBackendDiffusion.h"
 
 #include "cuda/diffusion/DiffusionSolver.cuh"
+#include "cuda/diffusion/DiffusionBatchKernels.cuh"
 #include "physics/eos/IdealGas.h"
 #include "physics/eos/HelmEos.h"
 #include "physics/eos/Tabular3DEOS.h"
@@ -104,6 +105,34 @@ cudaError_t copy_cuda_backend_state_slot(
     return copy_diffusion_slot(source, destination, stream);
 }
 
+CudaBackendLaunchResult copy_cuda_backend_state_slot_batch(
+    std::span<const DeviceStateCopyBlock> host, const DeviceStateCopyBlock* device,
+    cudaStream_t stream)
+{
+    CudaBackendLaunchResult result{};
+    if (host.empty()) return result;
+    if (!device) return {cudaErrorInvalidValue, 0, true};
+    // Keep the scalar copy's full shape/alias contract before the first write.
+    for (const auto& b : host)
+        if (!valid_hydro_view(b.source) || !valid_hydro_view(b.destination)
+            || !detail::matching_state_shape(b.source, b.destination)
+            || detail::any_state_storage_alias(b.destination, b.source))
+            return {cudaErrorInvalidValue, 0, true};
+    constexpr std::size_t limit = 1024;
+    for (std::size_t first = 0; first < host.size(); first += limit) {
+        const auto count = std::min(limit, host.size() - first);
+        int storage = 0;
+        for (const auto& b : host.subspan(first, count)) storage = std::max(storage, b.source.total_size);
+        detail::state_copy_batch_kernel<<<
+            dim3(detail::hydro_launch_blocks(storage, 128), static_cast<unsigned>(count)), 128, 0, stream>>>(
+                device + first);
+        result.error = cudaGetLastError();
+        if (result.error != cudaSuccess) return result;
+        ++result.kernels_launched;
+    }
+    return result;
+}
+
 #define ARCH_DEFINE_BACKEND_DIFFUSION(EOS) \
     CudaBackendLaunchResult launch_cuda_backend_diffusion_dt( \
         DeviceStateView state, EOS eos, SpeciesPODView species, \
@@ -129,6 +158,19 @@ cudaError_t copy_cuda_backend_state_slot(
             plan, descriptor, state_n, previous, older, output, delta, \
             initial_delta, eos, species, grid, config, workspace, amr_routes, \
             dt, stream); \
+    } \
+    CudaBackendLaunchResult launch_cuda_backend_diffusion_dt_batch( \
+        std::span<const DeviceDiffusionBatchBlock> host, const DeviceDiffusionBatchBlock* device, \
+        EOS eos, SpeciesPODView species, DiffFlux::DiffusionConfigView config, cudaStream_t stream) \
+    { \
+        return launch_diffusion_dt_batch(host, device, eos, species, config, stream); \
+    } \
+    CudaBackendLaunchResult launch_cuda_backend_diffusion_stage_batch( \
+        const scheduler::RklPlan& plan, const scheduler::RklStageDescriptor& descriptor, \
+        std::span<const DeviceDiffusionBatchBlock> host, const DeviceDiffusionBatchBlock* device, \
+        EOS eos, SpeciesPODView species, DiffFlux::DiffusionConfigView config, double dt, cudaStream_t stream) \
+    { \
+        return launch_diffusion_stage_batch(plan, descriptor, host, device, eos, species, config, dt, stream); \
     }
 
 ARCH_DEFINE_BACKEND_DIFFUSION(IdealGasView)

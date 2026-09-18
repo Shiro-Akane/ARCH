@@ -93,12 +93,6 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     const NumericsConfig &num_cfg = config.numerics;
     BCHandler bc_handler{config};
 
-    const auto prepare_regrid = [&](int step, double time) {
-        (void)step;
-        (void)time;
-        return amr_ctrl.tree->PrepareRegrid(config);
-    };
-
     using arch::scheduler::MonotonicSchedulerClock;
     using arch::scheduler::ScopedStageBinding;
     using arch::scheduler::StageExecutionContext;
@@ -253,53 +247,60 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     ? after.stream_sync_count - before.stream_sync_count : 0});
         }
     };
+    // Invocation-local scheduler storage retains capacity, never old bindings.
+    std::vector<arch::backend::BackendStateAccess> boundary_accesses;
+    std::vector<arch::backend::BackendStateAccess> boundary_level_accesses;
     const auto execute_device_boundary = [&] (
         StateSlot requested, arch::state::StateVersion version,
         arch::state::CompletionToken token) {
-        std::vector<arch::backend::BackendStateAccess> accesses;
+        auto& accesses = boundary_accesses;
+        accesses.clear();
         accesses.reserve(stage_handles.size());
-        std::map<amr::BlockHandle, std::size_t> access_indices;
         for (std::size_t index = 0; index < stage_handles.size(); ++index) {
             const auto access = backend_access(index, requested);
-            (void)compute_backend->execute_physical_boundary(
-                access, version, token);
             accesses.push_back(access);
-            if (!access_indices.emplace(access.block, index).second)
-                throw std::logic_error(
-                    "device boundary has duplicate active handle");
         }
-        const auto same_level = amr_ctrl.ghost_exchange.BuildSameLevelPlans(
+        const auto& plans = amr_ctrl.ghost_exchange.GetPlans(
             amr_ctrl.pool, amr_ctrl.tree, config.grid.dim, stage_handles);
-        for (const auto& plan : same_level) {
-            std::vector<arch::backend::BackendStateAccess> level_accesses;
+        (void)compute_backend->execute_physical_boundary_batch(accesses, version, token);
+        for (std::size_t group = 0; group < plans.same_level.size(); ++group) {
+            const auto& plan = plans.same_level[group];
+            auto& level_accesses = boundary_level_accesses;
+            level_accesses.clear();
             level_accesses.reserve(plan.blocks.size());
-            for (const auto& endpoint : plan.blocks) {
-                const auto found = access_indices.find(endpoint.handle);
-                if (found == access_indices.end())
-                    throw std::logic_error(
-                        "same-level plan references a stale device handle");
-                level_accesses.push_back(accesses[found->second]);
-            }
+            for (const auto index : plans.level_indices[group])
+                level_accesses.push_back(accesses[index]);
             (void)compute_backend->execute_same_level_exchange(
                 level_accesses, plan, requested, version, token);
         }
-        const auto coarse_fine =
-            amr_ctrl.ghost_exchange.BuildCoarseFinePlan(
-                amr_ctrl.pool, amr_ctrl.tree, config.grid.dim,
-                stage_handles);
         return compute_backend->execute_coarse_fine_exchange(
-            accesses, coarse_fine, requested, version, token);
+            accesses, plans.coarse_fine, requested, version, token);
     };
     const auto complete_device_boundary = [&](StateSlot slot) {
         if (stage_handles.empty())
             throw std::logic_error("CUDA boundary requires active blocks");
         const auto version = residency_ledger->inspect(
             {stage_handles.front(), slot}).interior.version;
+        bool needs_device_ghosts = false;
         for (const auto handle : stage_handles) {
             residency_ledger->require_readable(
                 {handle, slot},
                 {ExecutionSide::Device, version, true, false});
+            const auto coherence = residency_ledger->inspect({handle, slot});
+            needs_device_ghosts = needs_device_ghosts
+                || !arch::state::side_can_read(
+                    coherence.ghost.residency, ExecutionSide::Device)
+                || coherence.ghost.version != version
+                || coherence.ghost_source_version != version
+                || !arch::state::is_complete(coherence.ghost.completion)
+                || coherence.ghost.pending_transfer
+                    != arch::state::PendingTransferPhase::None;
         }
+        // Reuse the completed boundary for this field version. Re-publishing
+        // identical Device ghosts would invalidate a synchronized Host copy
+        // while leaving the interior synchronized, breaking the whole-state
+        // materialization contract required by Host consumers.
+        if (!needs_device_ghosts) return;
         const auto before = compute_backend->counters();
         StageExecutionContext context{
             ExecutionSide::Device, *residency_ledger, scheduler_clock};
@@ -318,19 +319,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // only when a host consumer actually needs it.
     const auto synchronize_fluid_ghosts = [&] {
         if (compute_backend) {
-            bool needs_device_ghosts = false;
-            for (const auto handle : stage_handles) {
-                const auto coherence = residency_ledger->inspect(
-                    {handle, StateSlot::Current});
-                needs_device_ghosts = needs_device_ghosts
-                    || !arch::state::side_can_read(
-                        coherence.ghost.residency, ExecutionSide::Device)
-                    || coherence.ghost.version != coherence.interior.version
-                    || coherence.ghost_source_version
-                        != coherence.interior.version;
-            }
-            if (needs_device_ghosts)
-                complete_device_boundary(StateSlot::Current);
+            complete_device_boundary(StateSlot::Current);
             const auto& active = amr_ctrl.tree->GetActiveBlocks();
             for (std::size_t index = 0; index < stage_handles.size(); ++index) {
                 const auto coherence = residency_ledger->inspect(
@@ -418,7 +407,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // One topology coordinator and mathematical library serve both sides.
     // Host owns topology/Morton decisions; the backend owns numerical execution
     // and transactional state migration in its allocation namespace.
-    const auto execute_regrid = [&](int step, double time) {
+    const auto execute_regrid = [&] {
         const auto make_regrid_ledger = [] (
             amr::TopologyEpoch epoch,
             std::span<const amr::BlockHandle> handles,
@@ -471,8 +460,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             }
         };
         auto prepared = compute_backend
-            ? amr_ctrl.tree->PrepareRegrid(config, {}, {}, evaluate_device_indicators)
-            : prepare_regrid(step, time);
+            ? amr_ctrl.tree->PrepareRegrid(
+                config, {}, {}, evaluate_device_indicators)
+            : amr_ctrl.tree->PrepareRegrid(config);
         auto topology_candidate = topology_registry.stage_reconciliation(
             observe_blocks(prepared.proposed_active_blocks()));
         const auto& proposed = topology_candidate.reconciliation();
@@ -765,7 +755,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         const auto before = compute_backend ? compute_backend->counters()
             : arch::backend::BackendCounters{};
         const auto old_blocks = stage_handles.size();
-        const bool changed = execute_regrid(step, time);
+        const bool changed = execute_regrid();
         const auto after = compute_backend ? compute_backend->counters()
             : arch::backend::BackendCounters{};
         regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,
@@ -903,6 +893,17 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // Main Time Loop (Method of Lines)
     bool skip_regrid_once = start_state.resume_after_regrid;
     bool advanced_any_step = false;
+    std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
+    std::vector<arch::reduction::ReductionCandidate> diffusion_dt_candidates;
+    std::vector<arch::backend::BackendStateAccess> hydro_currents;
+    std::vector<arch::backend::BackendStateAccess> microphysics_currents;
+    const auto current_microphysics_accesses = [&]() {
+        microphysics_currents.clear();
+        microphysics_currents.reserve(stage_handles.size());
+        for (std::size_t index = 0; index < stage_handles.size(); ++index)
+            microphysics_currents.push_back(backend_access(index, StateSlot::Current));
+        return std::span<const arch::backend::BackendStateAccess>(microphysics_currents);
+    };
     while (!ctrl.is_finished())
     {
         // Step A: IO Routine & AMR Regrid
@@ -930,15 +931,22 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         if (stage_handles.size() != active_blocks.size())
             throw std::logic_error(
                 "active topology and scheduler handles disagree");
-        std::vector<arch::reduction::ReductionCandidate> hydro_dt_candidates;
+        hydro_dt_candidates.clear();
         hydro_dt_candidates.reserve(active_blocks.size());
         if (compute_backend) {
+            auto& currents = hydro_currents;
+            currents.clear();
+            currents.reserve(active_blocks.size());
+            for (std::size_t index = 0; index < active_blocks.size(); ++index)
+                currents.push_back(backend_access(index, StateSlot::Current));
+            const auto block_dt = compute_backend->compute_hydro_dt_batch(currents, cfl);
+            if (block_dt.size() != currents.size())
+                throw std::logic_error("Hydro batch lost a required block result");
             for (std::size_t index = 0; index < active_blocks.size(); ++index) {
                 const amr::Block& b = amr_ctrl.pool->GetBlock(
                     active_blocks[index]);
                 hydro_dt_candidates.push_back({
-                    compute_backend->compute_hydro_dt(
-                        backend_access(index, StateSlot::Current), cfl),
+                    block_dt[index],
                     DriverReduction::make_block_reduction_key(
                         b.level, b.morton_code, b.logical_x1, b.logical_x2,
                         b.logical_x3,
@@ -971,15 +979,18 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
             // Reuse backend-local exchange; CUDA does not materialize Host fields.
             if (compute_backend) complete_device_boundary(StateSlot::Current);
             else synchronize_fluid_ghosts();
-            std::vector<arch::reduction::ReductionCandidate>
-                diffusion_dt_candidates;
+            diffusion_dt_candidates.clear();
             diffusion_dt_candidates.reserve(active_blocks.size());
+            const auto device_diffusion_dt = compute_backend
+                ? compute_backend->compute_diffusion_dt_batch(current_microphysics_accesses())
+                : std::vector<double>{};
+            if (compute_backend && device_diffusion_dt.size() != active_blocks.size())
+                throw std::logic_error("Diffusion batch lost a required block result");
             for (std::size_t index = 0; index < active_blocks.size(); ++index) {
                 const int block_id = active_blocks[index];
                 const amr::Block& block = amr_ctrl.pool->GetBlock(block_id);
                 const double block_dt = compute_backend
-                    ? compute_backend->compute_diffusion_dt(
-                        backend_access(index, StateSlot::Current))
+                    ? device_diffusion_dt[index]
                     : DiffFlux::adaptive_dt_diff(
                         block.fluid_state, eos, block.grid, config, 1.0);
                 diffusion_dt_candidates.push_back({
@@ -1029,12 +1040,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     (void)arch::scheduler::copy_slot(
                         stage_context, stage_handles, StateSlot::Current,
                         destination, [&] {
-                            for (std::size_t index = 0;
-                                 index < stage_handles.size(); ++index) {
-                                compute_backend->copy_state_slot(
-                                    backend_access(index, StateSlot::Current),
-                                    backend_access(index, destination));
-                            }
+                            compute_backend->copy_state_slot_batch(
+                                current_microphysics_accesses(), destination);
                         });
                     trace_backend_operation(
                         arch::backend::BackendOperation::DiffusionCopy,
@@ -1078,13 +1085,9 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     const arch::scheduler::RklStageDescriptor& descriptor,
                     arch::state::CompletionToken token) {
                     (void)compute_backend->clear_amr_flux_register(token);
-                    for (std::size_t index = 0;
-                         index < stage_handles.size(); ++index) {
-                        (void)compute_backend->execute_diffusion_stage(
-                            backend_access(index, StateSlot::Current), plan,
-                            descriptor, diffusion_dt, dt_diff_fe, token);
-                    }
-                    return token;
+                    return compute_backend->execute_diffusion_stage_batch(
+                        current_microphysics_accesses(), plan,
+                        descriptor, diffusion_dt, dt_diff_fe, token);
                 };
                 const auto reflux = [&] (
                     const arch::scheduler::RklPlan&,
@@ -1170,11 +1173,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     DriverReduction::make_accumulator_reduction_key(
                         DriverReduction::BlockReductionComponent::BurnFirstHalf),
                     true});
+                const auto burn_results = compute_backend->execute_burn_batch(
+                    current_microphysics_accesses(), 0.5 * dt, token);
+                if (burn_results.size() != stage_handles.size())
+                    throw std::logic_error("Burn batch lost a required block result");
                 for (std::size_t index = 0;
                      index < stage_handles.size(); ++index) {
-                    const auto result = compute_backend->execute_burn(
-                        backend_access(index, StateSlot::Current),
-                        0.5 * dt, token);
+                    const auto& result = burn_results[index];
                     if (!arch::state::is_complete(result.completion)
                         || result.completion.value != token.value
                         || result.status != 0 || result.failed_cells != 0) {
@@ -1237,19 +1242,19 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         // C3. Hydrodynamics Step (dt)
         if (compute_backend) {
             complete_device_boundary(StateSlot::Current);
+            auto& currents = hydro_currents;
+            currents.clear();
+            currents.reserve(stage_handles.size());
+            for (std::size_t index = 0; index < stage_handles.size(); ++index)
+                currents.push_back(backend_access(index, StateSlot::Current));
             const auto before = compute_backend->counters();
             const auto executor = [&] (
                 const arch::scheduler::StageDescriptor& descriptor,
                 arch::state::CompletionToken token) {
                 if (descriptor.stage == 1)
                     (void)compute_backend->clear_amr_flux_register(token);
-                for (std::size_t index = 0;
-                     index < stage_handles.size(); ++index) {
-                    (void)compute_backend->execute_hydro_stage(
-                        backend_access(index, StateSlot::Current),
-                        descriptor, dt, token);
-                }
-                return token;
+                return compute_backend->execute_hydro_stage_batch(
+                    currents, descriptor, dt, token);
             };
             const auto boundary = [&] (
                 StateSlot slot, arch::state::StateVersion version,
@@ -1316,11 +1321,13 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     DriverReduction::make_accumulator_reduction_key(
                         DriverReduction::BlockReductionComponent::BurnSecondHalf),
                     true});
+                const auto burn_results = compute_backend->execute_burn_batch(
+                    current_microphysics_accesses(), 0.5 * dt, token);
+                if (burn_results.size() != stage_handles.size())
+                    throw std::logic_error("Burn batch lost a required block result");
                 for (std::size_t index = 0;
                      index < stage_handles.size(); ++index) {
-                    const auto result = compute_backend->execute_burn(
-                        backend_access(index, StateSlot::Current),
-                        0.5 * dt, token);
+                    const auto& result = burn_results[index];
                     if (!arch::state::is_complete(result.completion)
                         || result.completion.value != token.value
                         || result.status != 0 || result.failed_cells != 0) {

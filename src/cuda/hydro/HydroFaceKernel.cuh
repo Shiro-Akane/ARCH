@@ -44,7 +44,7 @@ ARCH_INLINE void reconstruct_amr_face(
 }
 
 template <typename Reconstruction, typename Flux, typename EosView>
-__global__ void hydro_face_kernel(
+__device__ inline void hydro_face_kernel_work(
     DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
     EosView eos, int direction, double coefficient,
     SpeciesWorkspaceView workspace = {})
@@ -89,6 +89,15 @@ __global__ void hydro_face_kernel(
         for (int species = 0; species < state.n_species; ++species)
             flux.set_species(species, face, face_species_flux[species]);
     }
+}
+
+template <typename Reconstruction, typename Flux, typename EosView>
+__global__ void hydro_face_kernel(
+    DeviceStateView state, DeviceStateView flux, DeviceGridView grid,
+    EosView eos, int direction, double coefficient,
+    SpeciesWorkspaceView workspace = {})
+{
+    hydro_face_kernel_work<Reconstruction, Flux>(state, flux, grid, eos, direction, coefficient, workspace);
 }
 } // namespace detail
 

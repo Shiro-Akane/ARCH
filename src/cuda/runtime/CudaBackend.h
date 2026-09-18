@@ -95,6 +95,12 @@ public:
     bool contains(backend::BackendStateAccess access) const noexcept override;
     double compute_hydro_dt(backend::BackendStateAccess current,
                             double cfl) override;
+    std::vector<double> compute_hydro_dt_batch(
+        std::span<const backend::BackendStateAccess> currents, double cfl) override;
+    state::CompletionToken execute_hydro_stage_batch(
+        std::span<const backend::BackendStateAccess> currents,
+        const scheduler::StageDescriptor& descriptor,
+        double dt, state::CompletionToken expected) override;
     state::CompletionToken execute_hydro_stage(
         backend::BackendStateAccess current,
         const scheduler::StageDescriptor& descriptor,
@@ -102,6 +108,9 @@ public:
     state::CompletionToken execute_physical_boundary(
         backend::BackendStateAccess access, state::StateVersion version,
         state::CompletionToken expected) override;
+    state::CompletionToken execute_physical_boundary_batch(
+        std::span<const backend::BackendStateAccess> accesses,
+        state::StateVersion version, state::CompletionToken expected) override;
     state::CompletionToken execute_same_level_exchange(
         std::span<const backend::BackendStateAccess> accesses,
         const amr::SameLevelExchangePlan& plan, state::StateSlot slot,
@@ -125,6 +134,17 @@ public:
         state::CompletionToken expected) override;
     backend::BurnExecutionResult execute_burn(
         backend::BackendStateAccess current, double dt,
+        state::CompletionToken expected) override;
+    std::vector<double> compute_diffusion_dt_batch(
+        std::span<const backend::BackendStateAccess> currents) override;
+    void copy_state_slot_batch(std::span<const backend::BackendStateAccess> sources,
+                               state::StateSlot destination) override;
+    state::CompletionToken execute_diffusion_stage_batch(
+        std::span<const backend::BackendStateAccess> currents, const scheduler::RklPlan& plan,
+        const scheduler::RklStageDescriptor& descriptor, double dt, double dt_fe,
+        state::CompletionToken expected) override;
+    std::vector<backend::BurnExecutionResult> execute_burn_batch(
+        std::span<const backend::BackendStateAccess> currents, double dt,
         state::CompletionToken expected) override;
     void enqueue_materialize_host_current(
         backend::BackendStateAccess current, state::StateRegion region,

@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Validate dynamic-AMR checkpoint continuity across CPU and CUDA backends."""
+"""Validate dynamic-AMR checkpoint continuity across CPU and CUDA backends.
+
+The default protocol requires reproducible step/controller histories. An
+explicit physical endpoint additionally supports active adaptive limiters:
+cross-backend trajectories meet at that time, while same-backend split runs
+still use strict reproducibility. Both modes share the existing field budgets.
+"""
 
 from __future__ import annotations
 
@@ -174,14 +180,17 @@ def comparison_policy() -> dict[str, Any]:
 def compare(
     validator: Path, reference: dict[str, Any], candidate: dict[str, Any],
     terminal_source: dict[str, Any] | None = None,
+    *, target_time: float | None = None,
 ) -> dict[str, Any]:
     policy = comparison_policy()
     result = backend_validation.compare_hdf5_checkpoints(
         Path(reference["checkpoint"]), Path(candidate["checkpoint"]),
         policy,
-        validator, terminal_source_pair=None if terminal_source is None else (
-            Path(terminal_source["checkpoint"]), Path(terminal_source["terminal_checkpoint"])))
-    if result.get("passed") and result.get("output_index_offsets") != output_index_offsets(terminal_source):
+        validator, terminal_source_pair=None if terminal_source is None or target_time is not None else (
+            Path(terminal_source["checkpoint"]), Path(terminal_source["terminal_checkpoint"])),
+        comparison_mode="reproducibility" if target_time is None else "physical-time",
+        target_time=target_time)
+    if target_time is None and result.get("passed") and result.get("output_index_offsets") != output_index_offsets(terminal_source):
         raise RuntimeError("restart comparator output history differs from actual source")
     if not result["passed"]:
         raise RuntimeError(
@@ -222,10 +231,15 @@ def main(argv: list[str] | None = None) -> int:
                         help="registered ARCH problem corresponding to the input")
     parser.add_argument("--output-root", type=Path,
                         help="new or empty directory for restart lanes and the result report")
+    parser.add_argument("--terminal-time", type=float,
+                        help="common physical endpoint for adaptive CPU/CUDA timesteps; same-backend restart remains strict")
     parser.add_argument("--unit-test", action="store_true",
                         help="check the declared restart routes only; do not execute ARCH")
     validation_sanitizer.add_arguments(parser)
     args = parser.parse_args(argv)
+    if args.terminal_time is not None and (
+            not math.isfinite(args.terminal_time) or args.terminal_time <= 0):
+        parser.error("--terminal-time must be finite and positive")
     if args.unit_test:
         print(json.dumps({"schema": 1, "routes": len(lane_contract())}))
         return 0
@@ -255,7 +269,8 @@ def main(argv: list[str] | None = None) -> int:
             arch=args.arch.resolve(), source_root=source_root,
             canonical_input=canonical_input, output_root=output_root,
             name=f"{backend}_continuous", problem=args.problem,
-            backend=backend, max_steps=4, checkpoint_validator=args.checkpoint_validator.resolve(),
+            backend=backend, max_steps=4 if args.terminal_time is None else -1,
+            terminal_time=args.terminal_time, checkpoint_validator=args.checkpoint_validator.resolve(),
             sanitizer=sanitizer)
         for backend in ("cpu", "cuda")
     }
@@ -272,7 +287,7 @@ def main(argv: list[str] | None = None) -> int:
     comparisons: list[dict[str, Any]] = []
     cpu_cuda = compare(
         args.checkpoint_validator.resolve(), continuous["cpu"],
-        continuous["cuda"])
+        continuous["cuda"], target_time=args.terminal_time)
     comparisons.append({"route": "cpu_vs_cuda_continuous", **cpu_cuda})
     resumed: list[dict[str, Any]] = []
     for name, destination, source_name in lane_contract():
@@ -283,7 +298,8 @@ def main(argv: list[str] | None = None) -> int:
             arch=args.arch.resolve(), source_root=source_root,
             canonical_input=canonical_input, output_root=output_root,
             name=name, problem=args.problem,
-            backend=destination, max_steps=4,
+            backend=destination, max_steps=4 if args.terminal_time is None else -1,
+            terminal_time=args.terminal_time,
             checkpoint_validator=args.checkpoint_validator.resolve(),
             restart_file=Path(source["terminal_checkpoint" if terminal else "checkpoint"]),
             restart_parameters=Path(source["parameter"]), restart_step=3 if terminal else 2,
@@ -291,12 +307,14 @@ def main(argv: list[str] | None = None) -> int:
         resumed.append(lane)
         metrics = compare(
             args.checkpoint_validator.resolve(), continuous[destination], lane,
-            source if terminal else None)
+            source if terminal else None,
+            target_time=args.terminal_time if source_backend != destination else None)
         comparisons.append({"route": name, **metrics})
 
     evidence = {
         "schema": 1,
         "problem": args.problem,
+        "terminal_time": args.terminal_time,
         "input": str(canonical_input),
         "input_sha256": input_sha256,
         "runtime_inputs": runtime_inputs,

@@ -32,6 +32,9 @@ add_test(NAME backend_validation_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_validate_backend_results.py)
 set_tests_properties(backend_validation_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_test(NAME sparse_validation_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/validation/network/test_sparse_validation.py)
 add_test(NAME validation_provenance_contract
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_validation_provenance.py)
@@ -55,6 +58,9 @@ add_test(NAME compensated_sum COMMAND arch_compensated_sum)
 add_executable(arch_sparse_ode_continuation tests/host/test_sparse_ode_continuation.cpp)
 target_link_libraries(arch_sparse_ode_continuation PRIVATE arch_build_contract)
 add_test(NAME sparse_ode_continuation COMMAND arch_sparse_ode_continuation)
+add_executable(arch_sparse_residual tests/host/test_sparse_residual.cpp)
+target_link_libraries(arch_sparse_residual PRIVATE arch_build_contract)
+add_test(NAME sparse_residual COMMAND arch_sparse_residual)
 add_executable(arch_checkpoint_conservation_metrics tests/host/test_checkpoint_conservation_metrics.cpp)
 target_link_libraries(arch_checkpoint_conservation_metrics PRIVATE arch_build_contract)
 add_test(NAME checkpoint_conservation_metrics COMMAND arch_checkpoint_conservation_metrics)
