@@ -114,10 +114,8 @@ Use a representative input to compare end-to-end time on your machine.
 benchmark your problem. End-to-end time includes initialization and output;
 regrid measurements overlap that total and must not be added again.
 
-The optional [AMR recorder](../src/runtime/predictive_amr/README.md) exports host
-statistics for offline analysis. It adds state transfers only when explicitly
-enabled and does not change refinement decisions or enable predictive inference.
-Use the same recorder and output settings on both backends when timing them.
+Use the same physical input, AMR criteria and output settings on both backends
+when timing them.
 
 ### What the CUDA optimization changes
 
@@ -130,8 +128,8 @@ Use the same recorder and output settings on both backends when timing them.
   topology change rebuilds the affected views rather than duplicating their
   physical models or retaining stale mesh references.
 - Completion and field-version checks coordinate ghost updates, exchanges and
-  publication of results. Reusing already completed boundaries also avoids a
-  redundant refresh in the optional recorder path.
+  publication of results. Reusing already completed boundaries avoids redundant
+  refreshes before host consumers read the accepted state.
 - Sparse corrections use one shared original-system residual check. cuDSS
   factor storage and its bounded cache remain backend-specific; further
   large-network acceleration is a separate optimization task.

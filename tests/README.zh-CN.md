@@ -33,8 +33,8 @@ Helmholtz LFS 表，拒绝缺项或跳过的 CTest 报告；工具任务同样�
 
 ## 不需要 GPU 的工具检查
 
-使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。测试使用标准库和受控
-输入，不需要 pynucastro、NumPy、SciPy 或 CUDA 设备。
+使用 Python 3.10 或更新版本，以及构建环境中的 Git/CMake。微物理／检查点协议
+检查需要安装 NumPy 和 h5py。测试使用受控输入，不需要 pynucastro、SciPy 或 CUDA 设备。
 
 ```bash
 python3 tools/audit_architecture.py .

@@ -17,8 +17,10 @@ branch, publish a tag or create a hosted release as part of this handoff.
 
 Trust source-identified collaborator measurements. Repeat a check when an edit
 affects it or a concrete inconsistency makes it unreliable, not merely because
-it was run on another machine. The final documentation pass changes no numerical
-implementation, compiler settings or runtime parameters.
+it was run on another machine. Release preparation removes the optional
+predictive-AMR data recorder and its dedicated configuration/diagnostic state.
+It must not change numerical implementations, compiler settings, ordinary AMR
+decisions or the generic topology-transaction interfaces.
 
 ## Implementation contract
 
@@ -52,11 +54,11 @@ types needed at that boundary; avoid parallel CPU/CUDA formula implementations.
 | Responsibility | Recorded result |
 | --- | --- |
 | Shared physics and optimization campaign | 1,188 microphysics runs and 1,155 comparisons passed; Hydro/AMR and large-network records retain their separate scope |
-| Local build and focused regression | Core and selected targets built; 352 tooling tests and 12 CPU/CUDA tests passed |
-| Optional AMR recorder | 24 runs and 12 exact comparisons passed across one, two and three dimensions |
+| Local build and focused regression | Core and selected targets rebuilt; 350 tooling tests and seven CPU/CUDA tests passed without skips |
+| Recorder removal for v1.1.0 | 24 CPU/CUDA runs and 12 exact dataset comparisons passed; six complete-run regrid event comparisons and six baseline-checkpoint continuations passed |
 | Active ENUC with coupled AMR/restart | BD/RKL2 and all transport passed 12 routes and 9 comparisons, with an active limiter witnessed on every route |
-| Device instrumentation | Ten focused memory/race checks passed with complete clean reports |
-| Documentation and publication | Verify numbers, translations, local links, archive boundaries and staged file types before pushing |
+| Device instrumentation | Four current-tree AMR composition/regrid-transaction memory/race checks passed with complete clean reports |
+| Documentation and publication | Bilingual v1.1.0 notes prepared; 155 maintained Markdown pages have no missing local targets; inspect staged file types and remote heads before pushing |
 
 Exact identities, test inputs and resource observations belong to the
 [integration record](HpcCudaIntegration.md). The
@@ -65,6 +67,12 @@ retains the original campaign measurements. Production 150/200-isotope
 correctness is accepted for the tested configurations; further acceleration,
 experimental sparse-provider promotion and distributed execution remain separate
 work. None is implied by the approximately 5× aprox13 coupled-AMR result.
+
+The local cleanup gates above ran on the rebuilt recorder-removal tree. Earlier
+broader integration and device-instrumentation results retain their own source
+identity in the linked baseline record; they are not new runs of this binary.
+The current compact record is updated in place, with a fixed Git reference to
+its predecessor. Creation of a tag or hosted release remains outside this handoff.
 
 ## Performance and memory policy
 

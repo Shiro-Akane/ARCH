@@ -20,6 +20,7 @@ To run your first calculation, follow the [Simulation case guide](guides/Simulat
   method choices, and the interfaces used to extend the code.
 - [CUDA and GPU-AMR guide](CudaBackendStatus.md): supported features, shared
   CPU/CUDA responsibilities, measured speedups by workload size, and backend selection.
+- [Release notes](releases/README.md): changes, measured benefits and source-package contents.
 - [Simulation catalogue](../simulation/README.md): reusable problems and their
   example inputs.
 - [Physics notes](physics/README.md): model provenance and maintained contracts.
@@ -45,6 +46,7 @@ To run your first calculation, follow the [Simulation case guide](guides/Simulat
 
 - [guides/](guides/README.md) contains task-oriented workflows.
 - `physics/` provides maintained physics model notes.
+- `releases/` describes identified release snapshots and their scope.
 - `development/` maintains contributor contracts; its `archive/` holds intermediate reviews and superseded plans outside the user guide sequence.
 - `legal/` serves as an index; the canonical license and notice files are kept at the repository root for compatibility with standard tooling.
 - `validation/` is located outside of `docs/` because its records substantiate explicit pass/fail claims, and it independently manages its own immutable inputs, metrics, and generated figures.

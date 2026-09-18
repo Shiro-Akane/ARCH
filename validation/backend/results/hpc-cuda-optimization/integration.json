@@ -1,21 +1,29 @@
 {
   "schema": 1,
-  "recorded_utc": "2026-09-18T09:41:43.845566+00:00",
-  "scope": "local curation and targeted integration checks; not a repeated scientific or performance campaign",
+  "recorded_utc": "2026-09-18T13:16:23.898104+00:00",
+  "scope": "v1.1.0 recorder-removal regression; not a repeated scientific or performance campaign",
   "source": {
-    "base_commit": "3dab4e25f9877b6eb2112bbf59a8264618e8862a",
-    "worktree_sha256": "a3807aabace447c178c60332d1c55391f5ea29e3914f23310c5349390cdd69c2",
+    "base_commit": "efbca9f075d208017cf3db8e514f2ad25aebdbca",
+    "worktree_sha256": "3c353e8fc7495b4115c46ef851bdf8a3a2fabff923d658810ed939b282b7f2af",
     "identity_scope": "code-and-validation-inputs-v1",
     "changes_committed": false
   },
-  "artifact_sha256": {
+  "baseline": {
+    "commit": "efbca9f075d208017cf3db8e514f2ad25aebdbca",
     "arch_sha256": "bd8384adc30495ce9dc9a824063220b0c336f662eab19c8aa42dafbddce83951",
-    "checkpoint_validator_sha256": "16894a2de93ed0d6ed3ef7cc356f9b69b9ed4f01178f1a3dda79d20ef38bf5aa",
-    "arch_cuda_amr_composition": "9c158d375a16f1704c11f29f95f38b2033de6e1a7ddaad2c1e6c123b749ccd1d",
-    "arch_cuda_multiblock_hydro": "35a331e2e115934abb90eb70985909c618f62b7fdcb6338d1cdcba572d5b9d33",
-    "arch_cuda_multiblock_burn": "9e06c195ebb157c833be0c3047e454e680cfe1489837f1b5e8f586045a5235f1",
-    "arch_cuda_multiblock_diffusion": "abbea6af5a14ed7706c5091f638258224df2bb861f0cc9651f352d7ac29ed585",
-    "arch_cuda_cudss_sparse_solver": "dac21ff86408792e42bb450d44d53746fc41233c142c35899ded513b4bcb36c8"
+    "recorder_enabled": false,
+    "integration_record": "https://github.com/Shiro-Akane/ARCH/blob/efbca9f075d208017cf3db8e514f2ad25aebdbca/validation/backend/results/hpc-cuda-optimization/integration.json"
+  },
+  "artifact_sha256": {
+    "arch": "7ecedae4eb468ca53c9fe3d8ff4d846a92cde9636fe22652e3bb0108de8b8944",
+    "checkpoint_validator": "5ebe81d678fb3b751d4b9fe36957429a097758f53502bc9f795c9ac3b9a39bb2",
+    "arch_refinement_indicator_math": "a315e8495dcea484d2d3ecccb5750ffd3d60f05188665c9fec2c5a81ca6ad7bf",
+    "arch_amr_operation_plans": "aa235df41f8f1a3d3991b9645134dda229c5638f4e312f657ac0ded57cc8e49d",
+    "arch_topology_transaction": "cb67d9bf55a251243c7f0413787913c06fd6994dcf0f7957e0a1eb927f6e16e0",
+    "arch_resolved_execution_plan": "74731616d8492ff568a2263460e9594806b1c097cb75ab28cc1bd1d56d9d9646",
+    "arch_cuda_regrid_transaction": "4f0abd55aff671dc19af9187ee585636fdbadbe898f5533db97d02c6957c13ba",
+    "arch_cuda_refinement_indicators": "8e17954cca36e8f46ff35d17eae39d30e2687cbe8b930c8210c6419460e12762",
+    "arch_cuda_amr_composition": "9c158d375a16f1704c11f29f95f38b2033de6e1a7ddaad2c1e6c123b749ccd1d"
   },
   "build": {
     "configuration": "Debug",
@@ -24,49 +32,161 @@
     "cuda_architecture": 86,
     "total_jobs": 2,
     "heavy_cuda_jobs": 1,
-    "core_elapsed_seconds": 4530.76,
-    "final_incremental_seconds": 12.059,
-    "observer_repair_incremental_seconds": 76.243,
-    "core_min_available_kib": 3381676,
-    "core_peak_owned_rss_kib": 3876944,
-    "sampled_peak_swap_kib": 0,
-    "resource_guard_stopped": false
+    "guard": {
+      "min_available_kib": 2147292,
+      "baseline_swap_kib": 0,
+      "peak_swap_kib": 0,
+      "guard_stopped": false,
+      "peak_owned_rss_kib": 3875004,
+      "elapsed_seconds": 4636.522,
+      "stop_reason": "none"
+    },
+    "system_pressure": {
+      "scope": "linux_system",
+      "peak_memory_full_percent": 0,
+      "peak_io_full_percent": 15.718,
+      "peak_swap_in_mib_s": 0,
+      "peak_swap_out_mib_s": 0,
+      "memory_limit_percent": 20,
+      "io_limit_percent": 50,
+      "sustain_seconds": 10,
+      "samples": 4606,
+      "complete": true
+    }
   },
   "checks": {
+    "architecture": {
+      "passed": true
+    },
     "tooling": {
-      "passed": 352,
+      "passed": 350,
       "skipped": 0
     },
     "ctest": {
-      "passed": 12,
+      "passed": 7,
       "failed": 0,
+      "skipped": 0,
       "names": [
-        "predictive_amr_recorder",
-        "sparse_ode_continuation",
-        "sparse_residual",
+        "refinement_indicator_math",
         "amr_operation_plans",
+        "topology_transaction",
         "resolved_execution_plan",
-        "compute_backend",
-        "cuda_cudss_sparse_solver",
-        "cuda_amr_composition",
-        "cuda_multiblock_hydro",
-        "cuda_multiblock_diffusion",
-        "cuda_multiblock_burn",
-        "cuda_multiblock_diffusion_global_species"
+        "cuda_regrid_transaction",
+        "cuda_refinement_indicators",
+        "cuda_amr_composition"
       ]
     },
-    "documentation": {
-      "maintained_files": 153,
-      "missing_local_targets": 0
-    },
-    "recorder": {
+    "amr_removal": {
       "runs": 24,
-      "comparisons": 12,
+      "exact_dataset_comparisons": 12,
+      "regrid_event_comparisons": 6,
       "backends": [
         "cpu",
         "cuda"
       ],
-      "all_datasets_exact": true
+      "dimensions": [
+        1,
+        2,
+        3
+      ],
+      "baseline_checkpoint_continuations": 6,
+      "output_index_exclusion": "Only continuation comparisons exclude chk_index/plt_index: the three-step source writes an extra final output. Continuous baseline/candidate runs compare all attributes.",
+      "identity_verified_after_run": true,
+      "recipe_sha256": "ef0c7d18ec43612804b520edf6eba605b189cb967362ec40653a27233d1a89fa",
+      "common_parameters": {
+        "max_blocks": "128",
+        "geometry": "cartesian",
+        "x1_min": "0",
+        "x1_max": "1",
+        "x2_min": "0",
+        "x2_max": "1",
+        "x3_min": "0",
+        "x3_max": "1",
+        "solver": "HLLC",
+        "reconstruct": "pcm",
+        "time_integrator": "Euler",
+        "cfl": "0.35",
+        "EntropyFix": "false",
+        "sml_rho": "1e-12",
+        "max_eint": "1e+21",
+        "lrefinemin": "0",
+        "lrefinemax": "1",
+        "regrid_interval": "1",
+        "refine_threshold": "0.35",
+        "derefine_threshold": "0.04",
+        "tmax": "0.08",
+        "max_steps": "6",
+        "restart": "false",
+        "out_dir": "<fresh output directory>",
+        "base_name": "witness",
+        "plt_dt": "-1",
+        "plt_dstep": "-1",
+        "chk_dt": "-1",
+        "chk_dstep": "-1",
+        "plt_variables": "DENS,PRES,ENER,SPECIES",
+        "eos_type": "ideal",
+        "gamma": "1.4",
+        "gravity_type": "none",
+        "use_burn": "false",
+        "use_diffusion": "false",
+        "shape_type": "0",
+        "x_pos": "0.35",
+        "rho_left": "1",
+        "p_left": "1",
+        "u_left": "0",
+        "v_left": "0",
+        "rho_right": "0.125",
+        "p_right": "0.1",
+        "u_right": "0",
+        "v_right": "0",
+        "x1l_boundary_type": "outflow",
+        "x1r_boundary_type": "outflow",
+        "x2l_boundary_type": "outflow",
+        "x2r_boundary_type": "outflow",
+        "x3l_boundary_type": "outflow",
+        "x3r_boundary_type": "outflow"
+      },
+      "input_profiles": [
+        {
+          "dimension": 1,
+          "problem": "Sod",
+          "overrides": {
+            "nblockx1": "4",
+            "nblockx2": "0",
+            "nblockx3": "0",
+            "refine_var": "DENS",
+            "shock_dir": "0"
+          }
+        },
+        {
+          "dimension": 2,
+          "problem": "Sedov",
+          "overrides": {
+            "nblockx1": "2",
+            "nblockx2": "2",
+            "nblockx3": "0",
+            "refine_var": "PRES",
+            "shock_dir": "1",
+            "deposit_radius": "0.1",
+            "ambient_pressure": "1",
+            "explosion_energy": "0.1"
+          }
+        },
+        {
+          "dimension": 3,
+          "problem": "Sedov",
+          "overrides": {
+            "nblockx1": "2",
+            "nblockx2": "1",
+            "nblockx3": "1",
+            "refine_var": "PRES",
+            "shock_dir": "2",
+            "deposit_radius": "0.1",
+            "ambient_pressure": "1",
+            "explosion_energy": "0.1"
+          }
+        }
+      ]
     },
     "coupled_restart": {
       "case": "coupled_bd_rkl2_all_transport",
@@ -151,128 +271,132 @@
         {
           "route": "cpu_vs_cuda_continuous",
           "comparison_mode": "physical-time",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 4.023668919261898e-12,
+          "max_enuc_normalized": 2.0297153589870266e-13
         },
         {
           "route": "cpu_to_cpu",
           "comparison_mode": "reproducibility",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 0,
+          "max_enuc_normalized": 0
         },
         {
           "route": "cuda_to_cuda",
           "comparison_mode": "reproducibility",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 0,
+          "max_enuc_normalized": 0
         },
         {
           "route": "cpu_to_cuda",
           "comparison_mode": "physical-time",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 3.9245125470159646e-12,
+          "max_enuc_normalized": 3.1065806360055073e-13
         },
         {
           "route": "cuda_to_cpu",
           "comparison_mode": "physical-time",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 3.678013027828511e-12,
+          "max_enuc_normalized": 7.893567164934631e-13
         },
         {
           "route": "cpu_to_cpu_terminal",
           "comparison_mode": "reproducibility",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 0,
+          "max_enuc_normalized": 0
         },
         {
           "route": "cuda_to_cuda_terminal",
           "comparison_mode": "reproducibility",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 0,
+          "max_enuc_normalized": 0
         },
         {
           "route": "cpu_to_cuda_terminal",
           "comparison_mode": "physical-time",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 3.743043204013435e-12,
+          "max_enuc_normalized": 4.675372853389445e-13
         },
         {
           "route": "cuda_to_cpu_terminal",
           "comparison_mode": "physical-time",
-          "passed": true
+          "passed": true,
+          "max_field_normalized": 5.733420634790574e-12,
+          "max_enuc_normalized": 2.678728213082265e-13
+        }
+      ],
+      "identity_verified_after_run": true
+    },
+    "instrumentation": {
+      "passed": 4,
+      "identity_verified_after_run": true,
+      "runs": [
+        {
+          "test": "arch_cuda_amr_composition",
+          "tool": "memcheck",
+          "summaries": [
+            "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+            "ERROR SUMMARY: 0 errors"
+          ]
+        },
+        {
+          "test": "arch_cuda_regrid_transaction",
+          "tool": "memcheck",
+          "summaries": [
+            "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
+            "ERROR SUMMARY: 0 errors"
+          ]
+        },
+        {
+          "test": "arch_cuda_amr_composition",
+          "tool": "racecheck",
+          "summaries": [
+            "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+          ]
+        },
+        {
+          "test": "arch_cuda_regrid_transaction",
+          "tool": "racecheck",
+          "summaries": [
+            "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
+          ]
         }
       ]
     },
-    "cuda_instrumentation": [
-      {
-        "test": "arch_cuda_amr_composition",
-        "tool": "memcheck",
-        "summaries": [
-          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
-          "ERROR SUMMARY: 0 errors"
-        ]
-      },
-      {
-        "test": "arch_cuda_multiblock_hydro",
-        "tool": "memcheck",
-        "summaries": [
-          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
-          "ERROR SUMMARY: 0 errors"
-        ]
-      },
-      {
-        "test": "arch_cuda_multiblock_burn",
-        "tool": "memcheck",
-        "summaries": [
-          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
-          "ERROR SUMMARY: 0 errors"
-        ]
-      },
-      {
-        "test": "arch_cuda_multiblock_diffusion",
-        "tool": "memcheck",
-        "summaries": [
-          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
-          "ERROR SUMMARY: 0 errors"
-        ]
-      },
-      {
-        "test": "arch_cuda_cudss_sparse_solver",
-        "tool": "memcheck",
-        "summaries": [
-          "LEAK SUMMARY: 0 bytes leaked in 0 allocations",
-          "ERROR SUMMARY: 0 errors"
-        ]
-      },
-      {
-        "test": "arch_cuda_amr_composition",
-        "tool": "racecheck",
-        "summaries": [
-          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
-        ]
-      },
-      {
-        "test": "arch_cuda_multiblock_hydro",
-        "tool": "racecheck",
-        "summaries": [
-          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
-        ]
-      },
-      {
-        "test": "arch_cuda_multiblock_burn",
-        "tool": "racecheck",
-        "summaries": [
-          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
-        ]
-      },
-      {
-        "test": "arch_cuda_multiblock_diffusion",
-        "tool": "racecheck",
-        "summaries": [
-          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
-        ]
-      },
-      {
-        "test": "arch_cuda_cudss_sparse_solver",
-        "tool": "racecheck",
-        "summaries": [
-          "RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)"
-        ]
-      }
-    ]
+    "documentation": {
+      "maintained_files": 155,
+      "missing_local_targets": 0
+    }
   },
-  "evidence_storage": "Detailed local reports, failed attempts and HDF5 trajectories remain in the ignored build-integration directory.",
-  "accepted_external_campaign": "See README.md for the collaborator source-pinned scientific and performance evidence; it was not rerun locally."
+  "reproduction": {
+    "ordinary_amr": "For each profile run baseline and candidate to step 6. Also run the baseline to step 3 and resume its checkpoint with the candidate to step 6. Require exact finite datasets and physical/controller attributes; compare continuous-run regrid decisions and device counters excluding wall time.",
+    "environment": {
+      "OMP_NUM_THREADS": "1",
+      "OMP_DYNAMIC": "FALSE",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "coupled_command": "OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE python3 validation/backend/verify_microphysics_coupling.py --build-dir build-integration --output-dir build-integration/enuc-recheck --restart --all-transport --active-enuc-factor 1e-11 --terminal-time 4.5e-16 --case coupled_bd_rkl2_all_transport",
+    "sanitizer": "Default small arch_cuda_amr_composition and arch_cuda_regrid_transaction tests under both memcheck and racecheck, using tools/validation_sanitizer.py for complete-report checks."
+  },
+  "local_report_sha256": {
+    "v110-removal-parity/report.json": "f57ae503cd03d88a264eb50abdcfdaf16e8baf91f00b718448ab5b5f46988763",
+    "v110-active-enuc/evidence.json": "dfca214f99d0634c125748a131936f320cbbed210185befe40383cb18ebd4fa1",
+    "v110-active-enuc/coupled_bd_rkl2_all_transport/runs/restart-validation-evidence.json": "1c87f2232460cbf3cdfe31a8148f2fe2439f194660f20a1a6ff91ab5670ca752",
+    "v110-amr-sanitizers/report.json": "1bcfc9ed64cc16e59a990ba86d84cc9af7f48e5d0e4d670989cbb1c638aedf59",
+    "v110-focused-ctest.xml": "cc78db5717032c5a53bdf2813ce8caa6c77ea151ca48652e5379c2348b4a4e9b",
+    "v110-tooling-tests.log": "8d37f422cd7ba5a1674df261b39da28d9e21cc7f54b1d2e1a7cb8d70e253271d",
+    "v110-removal-build.log": "bf9bc2294c1f17541467a043d49e346b0311a175ddae506834b10bfd588c9219"
+  },
+  "exclusions": [
+    "No large-network rebuild or new timing campaign.",
+    "Scientific/performance measurements retain their original source identities.",
+    "Generated HDF5 and build products are not publishing assets."
+  ]
 }

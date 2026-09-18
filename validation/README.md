@@ -30,11 +30,13 @@ tested 150/200-isotope applications still favor CPU. The
 [backend guide](../docs/CudaBackendStatus.md#choosing-a-backend-for-performance)
 explains how the measured benefit changes with workload size.
 
-The integration regression record
-adds 352 tooling tests, 12 focused CPU/CUDA tests, 24 recorder runs, a 12-route
-active-ENUC AMR/restart check and 10 memory/race checks, all passed. These checks
-exercise the final integration changes; they are separate from the scientific
-and performance measurements, whose original source identities are retained.
+The v1.1.0 preparation passes 350 tooling tests, seven focused CPU/CUDA tests,
+24 AMR application runs with 12 exact before/after or checkpoint-continuation
+comparisons, a 12-route active-ENUC AMR/restart check and four focused AMR
+memory/race checks. These checks confirm that removing the experimental data
+recorder leaves ordinary AMR unchanged. The current integration record replaces
+its predecessor in place and retains a fixed reference to the earlier evidence.
+Scientific and performance measurements keep their original source identities.
 Different source versions and machines are not a controlled performance
 comparison. Time your own representative case before choosing a backend.
 

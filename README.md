@@ -17,6 +17,9 @@ To run your very first simulation, follow the [Build](#build) and [First run](#f
 
 ## Project status
 
+See the [v1.1.0 release notes](docs/releases/V1.1.0.md) for the CUDA optimization,
+measured performance and source-package contents.
+
 Both CPU and CUDA backends fully support the following features. The release version has successfully passed rigorous numerical, application, device-safety, build, and resource checks. Detailed testing configurations and the final delivery-review status are documented in the [Validation](validation/README.md) suite.
 
 [Continuous integration](tests/README.md#github-continuous-integration) checks
@@ -354,6 +357,7 @@ ARCH/
 │   ├── README.md             # Documentation overview
 │   ├── guides/               # Build, simulation and issue-reporting guides
 │   ├── physics/              # Model provenance and maintained contracts
+│   ├── releases/             # Release highlights, measurements and package scope
 │   └── development/          # Contributor ownership and acceptance checklist
 │       └── archive/          # Intermediate reviews, not user instructions
 ├── validation/               # Module summaries, inputs and opt-in detailed evidence
@@ -374,7 +378,6 @@ ARCH/
 │   ├── grid/                 # Coordinates and finite-volume metrics
 │   ├── amr/                  # Hierarchy, pool, exchange, flux registers
 │   ├── driver/               # Runtime dispatch and operator sequence
-│   ├── runtime/              # Optional read-only AMR feature recording
 │   ├── cuda/                 # Device kernels, storage and provider adapters
 │   ├── numerics/             # Flux, reconstruction, integration, burn, diffusion
 │   ├── physics/              # EOS, gravity, species, networks, NSE, diagnostics

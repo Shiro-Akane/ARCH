@@ -359,8 +359,6 @@ public:
             block.refine_flag = indicator::refinement_flag(maximum, block.level,
                 config.amr.lrefinemin, config.amr.lrefinemax,
                 config.amr.refine_threshold, config.amr.derefine_threshold);
-            block.refinement_indicator = maximum;
-            block.criterion_refine_flag = block.refine_flag;
         }
     }
     void RippleCheck() {
@@ -616,8 +614,6 @@ public:
         struct RefinementSnapshot {
             int id = -1;
             int refine_flag = 0;
-            double refinement_indicator = 0.0;
-            int criterion_refine_flag = 0;
         };
         struct RefinementRelation {
             int parent = -1;
@@ -634,8 +630,7 @@ public:
             old_refinement_.reserve(old_active_.size());
             for (const int id : old_active_) {
                 const Block& block = owner_->pool->GetBlock(id);
-                old_refinement_.push_back({id, block.refine_flag,
-                    block.refinement_indicator, block.criterion_refine_flag});
+                old_refinement_.push_back({id, block.refine_flag});
             }
         }
 
@@ -743,8 +738,6 @@ public:
                 for (const auto& snapshot : old_refinement_) {
                     Block& block = owner_->pool->GetBlock(snapshot.id);
                     block.refine_flag = snapshot.refine_flag;
-                    block.refinement_indicator = snapshot.refinement_indicator;
-                    block.criterion_refine_flag = snapshot.criterion_refine_flag;
                 }
                 allocated_.clear();
                 owner_ = nullptr;

@@ -17,6 +17,8 @@ ARCH 是一个用于模拟可压缩流体运动、传热与反应的计算框架
 
 ## 项目状态
 
+本次 CUDA 优化、实测性能及源码包内容见 [v1.1.0 更新说明](docs/releases/V1.1.0.zh-CN.md)。
+
 CPU 与 CUDA 后端均完整支持以下功能。当前的发布版本已顺利通过严格的数值精度、应用运行、设备安全、构建和资源检查。详细的测试配置与最终的交付审阅状态，均记录在 [Validation](validation/README.zh-CN.md) 验证套件中。
 
 [持续集成](tests/README.zh-CN.md#github-持续集成)检查新改动的工具行为、CPU 构建和
@@ -303,6 +305,7 @@ ARCH/
 │   ├── README.md             # 文档总览
 │   ├── guides/               # 构建、算例与问题反馈指南
 │   ├── physics/              # 模型来源与维护中的契约
+│   ├── releases/             # 版本更新、实测收益和发布包范围
 │   └── development/          # 开发职责与验收清单
 │       └── archive/          # 中间评审归档，不作为用户教程
 ├── validation/               # 模块摘要、输入及按需展开的详细证据
@@ -323,7 +326,6 @@ ARCH/
 │   ├── grid/                 # 坐标和有限体积度量
 │   ├── amr/                  # 层次、内存池、交换、通量寄存器
 │   ├── driver/               # 运行时 dispatch 和算子顺序
-│   ├── runtime/              # 可选的只读 AMR 特征采集
 │   ├── cuda/                 # 设备计算核、存储与求解库适配
 │   ├── numerics/             # 通量、重构、积分、燃烧、扩散
 │   ├── physics/              # EOS、重力、核素、网络、NSE、诊断

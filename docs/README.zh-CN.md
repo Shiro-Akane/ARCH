@@ -15,6 +15,7 @@
 - [研究与 API 参考](Reference.zh-CN.md)：参数含义、数值方法选择和代码扩展接口；
 - [CUDA 与 GPU-AMR 指南](CudaBackendStatus.zh-CN.md)：支持的功能、CPU/CUDA 的
   共同职责、不同规模的实测加速比，以及后端选择；
+- [版本更新说明](releases/README.md)：各版本的改动、实测收益与源码包内容；
 - [算例目录](../simulation/README.md)：可复用的问题定义和示例输入；
 - [物理说明](physics/README.md)：模型来源与维护中的模型契约；
 - [Verification 与 Validation](../validation/README.zh-CN.md)：测了什么、如何衡量误差，以及 CPU 与 GPU 结果如何比较；
@@ -35,6 +36,7 @@
 
 - [guides/](guides/README.md) 保存面向任务的工作流；
 - `physics/` 提供维护中的物理模型说明；
+- `releases/` 说明各发布源码版本的内容与范围；
 - `development/` 维护开发契约，内部的 `archive/` 单独存放中间评审与已被替代的计划，不纳入用户指南的阅读顺序；
 - `legal/` 作为检索入口；为了兼容标准工具，规范的许可证和 notice 文件始终保留在仓库根目录；
 - `validation/` 位于 `docs/` 之外，因为它的记录用于支撑明确的“通过/失败”结论，并独立管理自己不可变的输入、指标和生成的图表；

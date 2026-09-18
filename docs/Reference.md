@@ -411,15 +411,6 @@ and any other spelling are rejected with the parameter name in the error.
 
 `refine_var` is validated even when `lrefinemax = 0`.
 
-Optional offline-analysis recording is disabled by default. Set
-`predictive_amr_record = true` to write patch features and the actual AMR
-decisions without changing refinement. Like other Boolean switches it accepts
-case-insensitive `true`/`false`. `predictive_amr_record_prefix` selects the output prefix;
-`predictive_amr_horizon` is positive and `predictive_amr_history` is nonnegative;
-both are metadata values.
-The [recorder contract](../src/runtime/predictive_amr/README.md) describes the
-files and the extra host transfers incurred when recording on CUDA.
-
 ### EOS and gravity
 
 | Key | Type | Load default | Contract |

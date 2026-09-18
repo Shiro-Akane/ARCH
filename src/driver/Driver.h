@@ -42,7 +42,6 @@
 #include "../amr/AMRControl.h"
 #include "../amr/TopologyTransaction.h"
 #include "../io/IO.h"
-#include "../runtime/predictive_amr/PatchFeatureRecorder.h"
 
 // Numerical and physical policy interfaces.
 #include "../numerics/burnsolver/BurnerHandle.h"
@@ -93,9 +92,6 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
 
     const NumericsConfig &num_cfg = config.numerics;
     BCHandler bc_handler{config};
-
-    arch::runtime::predictive_amr::PatchFeatureRecorder<EosPolicy>
-        predictive_amr_recorder(config, amr_ctrl.pool, eos);
 
     using arch::scheduler::MonotonicSchedulerClock;
     using arch::scheduler::ScopedStageBinding;
@@ -302,8 +298,8 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         }
         // Reuse the completed boundary for this field version. Re-publishing
         // identical Device ghosts would invalidate a synchronized Host copy
-        // while leaving the interior synchronized, breaking the subsequent
-        // whole-state materialization contract of read-only observers.
+        // while leaving the interior synchronized, breaking the whole-state
+        // materialization contract required by Host consumers.
         if (!needs_device_ghosts) return;
         const auto before = compute_backend->counters();
         StageExecutionContext context{
@@ -411,7 +407,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // One topology coordinator and mathematical library serve both sides.
     // Host owns topology/Morton decisions; the backend owns numerical execution
     // and transactional state migration in its allocation namespace.
-    const auto execute_regrid = [&](int step, double time) {
+    const auto execute_regrid = [&] {
         const auto make_regrid_ledger = [] (
             amr::TopologyEpoch epoch,
             std::span<const amr::BlockHandle> handles,
@@ -461,23 +457,12 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                 block.refine_flag = amr::indicator::refinement_flag(errors[index],
                     block.level, config.amr.lrefinemin, config.amr.lrefinemax,
                     config.amr.refine_threshold, config.amr.derefine_threshold);
-                block.refinement_indicator = errors[index];
-                block.criterion_refine_flag = block.refine_flag;
             }
         };
-        amr::AmrTree::PreApplyRegridObserver regrid_observer;
-        if (predictive_amr_recorder.enabled()) {
-            regrid_observer = [&](const amr::AmrTree& tree) {
-                // Device indicators remain authoritative. Materialize accepted
-                // Current (including ghosts) only for the enabled Host observer.
-                synchronize_fluid_ghosts();
-                predictive_amr_recorder.Record(step, time, tree);
-            };
-        }
         auto prepared = compute_backend
             ? amr_ctrl.tree->PrepareRegrid(
-                config, regrid_observer, {}, evaluate_device_indicators)
-            : amr_ctrl.tree->PrepareRegrid(config, regrid_observer);
+                config, {}, {}, evaluate_device_indicators)
+            : amr_ctrl.tree->PrepareRegrid(config);
         auto topology_candidate = topology_registry.stage_reconciliation(
             observe_blocks(prepared.proposed_active_blocks()));
         const auto& proposed = topology_candidate.reconciliation();
@@ -770,7 +755,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         const auto before = compute_backend ? compute_backend->counters()
             : arch::backend::BackendCounters{};
         const auto old_blocks = stage_handles.size();
-        const bool changed = execute_regrid(step, time);
+        const bool changed = execute_regrid();
         const auto after = compute_backend ? compute_backend->counters()
             : arch::backend::BackendCounters{};
         regrid_measurements.push_back({step, time, old_blocks, stage_handles.size(), changed,
@@ -1416,13 +1401,6 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         synchronize_fluid_ghosts();
         write_plt(amr_ctrl, p_func, t_func, gamma1_func, &eos, ctrl.plt_file_index++, ctrl.t_current, config, specs);
         write_checkpoint(false);
-    }
-
-    if (predictive_amr_recorder.enabled()) {
-        synchronize_fluid_ghosts();
-        predictive_amr_recorder.RecordFinal(
-            ctrl.step_count, ctrl.t_current, *amr_ctrl.tree);
-        predictive_amr_recorder.PrintSummary();
     }
 
     if (!regrid_measurements.empty()) {

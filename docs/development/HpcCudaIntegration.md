@@ -36,14 +36,82 @@ new work phase and before reporting completion.
    ownership, failure/completion rules and equations where they clarify a method.
 4. Reconcile main's documentation changes. Review maintained Markdown links and
    separate user instructions, developer contracts and validation reports.
-5. Add or locate an active ENUC-limiter coupled AMR/restart regression. Check
-   predictive-AMR off/on behavior on the final CPU/CUDA integration tree.
+5. Retain the active ENUC-limiter coupled AMR/restart regression. For release
+   preparation, remove the optional predictive-AMR recorder and compare ordinary
+   CPU/CUDA AMR with the preserved recorder-disabled executable.
 6. Run bounded builds and targeted tests with RAM, swap and I/O monitoring.
    Small stable swap use is acceptable; sustained resource pressure is not.
 7. Record exact passed, failed and unavailable checks. Do not transfer historical
    GPU/sanitizer qualification to an untested binary or call a blocked test passed.
 
-## Current checks
+## Release preparation for v1.1.0
+
+The owner has confirmed that the collaborator backed up the optional recorder
+and authorized removing it, including its directory, before main integration.
+The feature exported patch/graph training data; it neither executed GNN
+inference nor owned production refinement decisions.
+
+The removal covers `src/runtime/predictive_amr`, the now-empty parent directory,
+four dedicated parameters, two diagnostic `Block` fields, their rollback
+snapshots, shared Driver calls, dedicated tests/validator and user-facing links.
+No standard `.par` input depends on those parameters. `src/cuda/runtime`, the
+real CUDA refinement-indicator evaluator, shared Lohner criteria, 2:1 balancing,
+conservative migration and field-version checks remain. Generic pre-apply,
+allocation and device-evaluation callbacks predate the recorder and are retained;
+transaction-failure tests still exercise their allocation/rollback behavior.
+
+| Release-preparation check | Status |
+| --- | --- |
+| Source dependency review | Complete; no dedicated recorder symbol remains in maintained source, configuration or tests |
+| Architecture and tooling | Architecture audit passed; 350 tooling tests passed without skips |
+| Affected build and focused contracts | Core/selected targets rebuilt with two total jobs and one heavy CUDA job; seven focused Host/CUDA CTests passed without skips |
+| AMR baseline comparison and checkpoint continuation | 24 runs and 12 exact dataset comparisons passed across one, two and three dimensions on CPU/CUDA; six complete-run regrid event/counter comparisons matched; six baseline-checkpoint continuations passed |
+| Active ENUC coupled restart | Existing BD/RKL2 all-transport owner passed 12 lanes and nine comparisons; ENUC binding witnessed on every lane |
+| Focused AMR instrumentation | All four composition/regrid-transaction memcheck/racecheck runs passed with complete, clean reports |
+| Release notes and links | English/Chinese v1.1.0 notes prepared; 155 maintained Markdown pages have no missing local targets |
+
+The preserved baseline executable is copied under the ignored
+`build-integration/v110-removal-baseline/` directory. Its SHA-256 is
+`bd8384adc30495ce9dc9a824063220b0c336f662eab19c8aa42dafbddce83951`,
+the accepted integration executable described below. The rebuilt candidate is
+`7ecedae4eb468ca53c9fe3d8ff4d846a92cde9636fe22652e3bb0108de8b8944`;
+the staged production/input fingerprint is
+`3c353e8fc7495b4115c46ef851bdf8a3a2fabff923d658810ed939b282b7f2af`.
+Source, build and executable identities remained unchanged across the AMR
+comparison, coupled restart and instrumentation checks. The
+[current compact record](../../validation/backend/results/hpc-cuda-optimization/integration.json)
+is updated in place and links its source-pinned predecessor. This preparation
+does not repeat the original performance campaign or add large-network builds.
+
+The guarded rebuild took 4,636.522 seconds. Minimum Linux available memory was
+2,147,292 KiB and sampled peak owned RSS was 3,875,004 KiB; swap remained unused.
+Peak sampled memory full-stall pressure was zero and I/O full-stall pressure
+was 15.718%, without a guard stop. A final incremental check rebuilt one Host
+configuration-test target before the seven CTests passed. Ordinary AMR comparison
+used 137.698 seconds across all 24 runs; this is regression duration, not a
+performance comparison. Temporary HDF5, binaries and logs remain ignored under
+`build-integration/v110-*`.
+
+The current local reports are `v110-focused-ctest.xml`, `v110-tooling-tests.log`,
+`v110-removal-parity/report.json`, `v110-active-enuc/evidence.json` and
+`v110-amr-sanitizers/report.json`. Their hashes, tested artifacts and reproducible
+short-case parameters are preserved in the compact record. The coupled check
+took 336.854 seconds and the four instrumentation runs took 18.094 seconds;
+neither used swap or triggered a resource stop. Instrumentation is scoped to
+the two AMR tests, not the full application or a repeated sparse-network campaign.
+
+Continuous baseline/candidate runs compare every checkpoint dataset and root
+attribute exactly. Continuation checks compare all datasets and physical/controller
+attributes, excluding only the output file indices because the interrupted
+three-step recipe writes an extra final output. The separately maintained
+coupled-restart owner retains its stricter output-phase checks. Regrid comparisons
+exclude wall time but include decisions, block counts and device operation counts.
+
+## Accepted integration baseline before recorder removal
+
+The following checks identify the tree delivered in `efbca9f0`. Its optional
+recorder checks establish historical integration behavior, not a feature of
+the v1.1.0 package. The release-preparation results above have their own scope.
 
 | Check | Status |
 | --- | --- |
@@ -84,10 +152,9 @@ Local implementation adjustments are deliberately small:
 - Keep NSE reason strings in the existing policy metadata table. This avoids
   a reproduced CUDA 12.3/GCC 12 nested-generic-lambda compile failure without
   changing policy registration or factory selection.
-- Use the common Boolean parser for the optional recorder, and propagate
-  stream write failures. Recorder schemas and the refinement algorithm stay fixed.
-- Clarify wave/workspace lifetime and observer comments; document the optional
-  recorder without describing future inference as an implemented feature.
+- Clarify wave/workspace lifetime and observer comments. The original integration
+  also checked the optional recorder's Boolean parsing and stream errors;
+  that recorder is removed during v1.1.0 preparation.
 - Reuse completed Device ghosts for the current field version. The optional
   CUDA recorder exposed a redundant boundary refresh that invalidated Host
   ghosts while leaving the interior synchronized; whole-state materialization
@@ -109,7 +176,6 @@ protocol tests; historical server-retirement tools are archived separately.
 | AMR and composition | Topology/Morton decisions remain host-owned. Dominant-species closure and face normalization are shared CPU/CUDA mathematics, with the collaborator's coupled campaign providing the scientific evidence. |
 | Storage reuse | Reusable allocation capacity is separate from topology-bound views. Owners must drain work before replacement, migration or destruction. |
 | Sparse provider | cuDSS factors and bounded cache are backend-specific. Original-system residual acceptance is shared; optional correction does not relax the ODE acceptance budget. |
-| Optional recorder | Observes canonical labels and accepted state only. Host statistics require materialization when enabled; this overhead is not part of the disabled solver path. |
 | Cross-project integration | Local batches preserve logical-key reduction and publication ownership. This does not implement MPI, distributed collectives or distributed AMR. |
 
 Wide-species global scratch deliberately limits some kernels to one block per
@@ -166,9 +232,9 @@ retained as an input-coverage failure, not a solver failure. The longer short
 endpoint passed all 12 lanes again on the final observer-boundary repair.
 BE_NR/ROS4 scientific campaigns are not repeated.
 
-## Final local evidence
+## Integration baseline evidence
 
-The [compact integration record](../../validation/backend/results/hpc-cuda-optimization/integration.json)
+The [source-pinned baseline record](https://github.com/Shiro-Akane/ARCH/blob/efbca9f075d208017cf3db8e514f2ad25aebdbca/validation/backend/results/hpc-cuda-optimization/integration.json)
 contains the source fingerprint, tested binary hashes, exact test counts and
 comparison modes. The recorder, coupled restart and sanitizer reports agree on
 source fingerprint `a3807aabace447c178c60332d1c55391f5ea29e3914f23310c5349390cdd69c2`.
@@ -177,7 +243,8 @@ The tested ARCH SHA-256 is
 These identify the integration tree as tested before the publishing commit,
 not a new runtime measurement or release tag. The compact record's
 `changes_committed: false` describes that capture time and is intentionally
-retained. Final documentation edits do not change the tested production code.
+retained. The later recorder-removal code changes require the separate checks
+listed under release preparation; they do not change what this baseline ran.
 
 Detailed logs, failed input attempts and generated HDF5 remain outside the
 maintained data set, under the ignored `build-integration/` directory. The final
@@ -194,16 +261,18 @@ OMP_NUM_THREADS=4 OMP_DYNAMIC=FALSE python3 validation/backend/verify_microphysi
   --case coupled_bd_rkl2_all_transport
 ```
 
-Use a fresh output directory. The recorder command is documented in the
-[backend validation guide](../../validation/backend/README.md). Short kernel
+Use a fresh output directory; the
+[backend validation guide](../../validation/backend/README.md) describes the
+maintained entry points. Short kernel
 instrumentation uses the existing `validation_sanitizer` owner and default small
 inputs; it does not claim whole-program or large-network sanitizer coverage.
 
 ## Handoff
 
-The local curation and targeted integration gates are complete. The publishing
-scope is a commit and fast-forward push to `origin/codex/hpc-cuda-optimization`,
-leaving main unmerged. A later integration PR must check the then-current main
+The baseline curation and the recorder-removal release-preparation gates are
+complete. The publishing scope is a commit and fast-forward push to
+`origin/codex/hpc-cuda-optimization`, leaving main unmerged; no tag or hosted
+release is created. A later integration PR must check the then-current main
 branch for independent changes. Git references establish the actual publication
 outcome; the test record above retains its original capture identity.
 

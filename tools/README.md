@@ -91,8 +91,8 @@ Compute Sanitizer invocation and report checks. Extend these owners for reusable
 behavior instead of creating another process supervisor or evidence schema.
 
 Most tools use the Python standard library; the main backend comparison delegates
-HDF5 field comparison to the C++ comparator. The optional predictive-recorder
-regression and coupled microphysics checks also use NumPy and h5py. Independent references may need SciPy,
+HDF5 field comparison to the C++ comparator. Coupled microphysics checks also
+use NumPy and h5py. Independent references may need SciPy,
 mpmath or h5py as documented by their Validation module. Compute Sanitizer and
 Nsight are needed only for their respective instrumentation workflows.
 

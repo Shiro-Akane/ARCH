@@ -32,17 +32,9 @@ restart retains strict controller-state and output-history comparisons. The
 endpoint must follow the three-step source run. The console's `dt_burn` is the
 executed Strang half-step, so the ENUC witness reads checkpoint controller state.
 
-The optional recorder has a separate short regression:
-
-```bash
-python3 validation/backend/validate_predictive_amr.py \
-  --arch build/bin/ARCH --source . --output build/recorder-check \
-  --backend cpu cuda
-```
-
 Install NumPy and h5py for these Python checks. Use a new output directory for
-each run. The recorder regression tests 1D/2D/3D off/on and split-run equivalence;
-it does not repeat the formal scientific or timing campaign.
+each run. Short integration checks do not repeat the formal scientific or
+timing campaign.
 
 `results/` preserves identified application, regression, sanitizer, build,
 resource and final-review records, including earlier failed attempts. Start

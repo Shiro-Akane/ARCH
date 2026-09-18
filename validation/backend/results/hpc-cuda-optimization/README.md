@@ -143,8 +143,6 @@ Git history or claim that existing repository/LFS download sizes have shrunk.
   checkpoint and backend validators.
 - [Coupled microphysics](../../verify_microphysics_coupling.py) checks shared
   field budgets, source-aware balance, transport schedules and restart.
-- [Predictive recorder](../../validate_predictive_amr.py) checks recorder
-  off/on and split-run behavior on CPU and CUDA.
 - [Integration record](../../../../docs/development/HpcCudaIntegration.md)
   records only checks performed on the curated tree.
 
@@ -154,18 +152,41 @@ failed numerical test and not a sanitizer pass.
 
 ## Integration regression checks
 
-The [machine-readable integration record (JSON)](integration.json) identifies the tested source
-tree and binaries after curation. It records 352 tooling tests, 12 focused
-CPU/CUDA CTests, 24 recorder runs with 12 exact comparisons, one 12-lane active
-ENUC/AMR/restart case and 10 small CUDA memory/race checks. All passed.
+The v1.1.0 cleanup removes an optional offline AMR data recorder and its dedicated
+configuration, diagnostics and tests. The production refinement criteria,
+conservative transfers, CUDA kernels and checkpoint IO are unchanged. The
+rebuilt source passes these focused checks:
 
-Its `changes_committed: false` field describes the source state **when those
-tests ran**, before the publishing commit. The recorded base commit, worktree
-fingerprint and executable hashes retain that test identity; subsequent
-documentation and publication do not create additional runtime measurements.
+- 350 tooling tests and seven shared/CUDA AMR/configuration tests, without skips.
+- 24 short CPU/CUDA runs in one, two and three dimensions: 12 exact dataset
+  comparisons, six matching before/after regrid event sequences and six
+  successful continuations from pre-cleanup checkpoints.
+- BD/RKL2 with all transport: 12 AMR/restart routes and nine comparisons, with
+  an active ENUC limiter witnessed on every route.
+- Four complete, clean memcheck/racecheck reports for the AMR composition and
+  regrid-transaction tests.
 
-That work fixed a redundant ghost refresh affecting the optional CUDA recorder,
-without changing the shared physical models or numerical budgets. Adaptive
-cross-backend restart is compared at a common physical endpoint; same-backend
-restart retains strict reproducibility. These are local integration checks,
-not replacement measurements for the scientific/performance campaign above.
+The rebuild and runtime checks completed without swap use or a resource-guard
+stop. These checks validate the cleanup, not a new performance campaign. The
+approximately 5× result above retains its original source and hardware scope.
+
+<details>
+<summary>Expand verification identities, reproduction inputs and baseline evidence</summary>
+
+The [current integration record (JSON)](integration.json) records the tested
+source fingerprint, binary hashes, short-case parameters and report hashes.
+It replaces the previous summary in place; the
+[source-pinned baseline record](https://github.com/Shiro-Akane/ARCH/blob/efbca9f075d208017cf3db8e514f2ad25aebdbca/validation/backend/results/hpc-cuda-optimization/integration.json)
+preserves the earlier, broader integration and instrumentation results.
+The `changes_committed: false` field describes the capture before publication,
+not a later change to the tested code.
+
+Complete before/after runs compare all checkpoint attributes and datasets.
+Short interrupted continuations exclude only file indices affected by their
+extra final output. The maintained coupled-restart checks retain strict
+same-backend controller/output-history reproducibility and compare adaptive
+cross-backend trajectories at a common physical endpoint. Numerical budgets
+are unchanged. Detailed maintenance decisions belong to the
+[integration record](../../../../docs/development/HpcCudaIntegration.md).
+
+</details>

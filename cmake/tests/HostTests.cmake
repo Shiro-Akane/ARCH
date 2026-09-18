@@ -47,12 +47,6 @@ set_tests_properties(runtime_validation_inputs_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Numerical leaves and independent reference authorities.
-add_executable(arch_predictive_amr_recorder tests/host/test_predictive_amr_recorder.cpp)
-arch_configure_host_test(arch_predictive_amr_recorder)
-target_link_libraries(arch_predictive_amr_recorder PRIVATE arch_build_contract)
-add_test(NAME predictive_amr_recorder COMMAND arch_predictive_amr_recorder
-    "${CMAKE_CURRENT_BINARY_DIR}/predictive-amr-recorder-test-data")
-
 foreach(contract IN ITEMS physical_constants refinement_indicator_math curvilinear_metrics)
     add_executable(arch_${contract} tests/host/test_${contract}.cpp)
     target_link_libraries(arch_${contract} PRIVATE arch_build_contract)

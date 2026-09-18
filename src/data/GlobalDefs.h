@@ -77,15 +77,6 @@ struct ExecutionConfig
     int cuda_device = 0;
 };
 
-// Optional, read-only predictive-AMR dataset collection (never a refinement policy).
-struct AdaptiveRuntimeConfig
-{
-    bool predictive_amr_record = false;
-    std::string predictive_amr_record_prefix;
-    int predictive_amr_horizon = 4;
-    int predictive_amr_history = 4;
-};
-
 // Stiff ODE integration controls.
 struct OdeConfig
 {
@@ -381,7 +372,6 @@ struct SimConfig
     GridConfig grid;
     NumericsConfig numerics;
     ExecutionConfig execution;
-    AdaptiveRuntimeConfig adaptive_runtime;
     PhysicsConfig physics;
     AmrConfig amr;
     IOConfig io;
