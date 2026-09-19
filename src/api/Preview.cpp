@@ -1,6 +1,8 @@
 #include "Preview.h"
 #include "Json.h"
 #include "ParameterMetadata.h"
+#include "Response.h"
+#include "Sampling.h"
 
 #include <algorithm>
 #include <array>
@@ -11,6 +13,7 @@
 
 #include "../core/FileFingerprint.h"
 #include "../core/InitialStateConversion.h"
+#include "../core/ProblemHelper.h"
 #include "../core/ProblemRegistry.h"
 #include "../core/RuntimeParams.h"
 #include "../physics/eos/eosdispatch.h"
@@ -130,21 +133,52 @@ void validate_grid(const SimConfig &config) {
         if (!std::isfinite(value))
             throw std::invalid_argument("Non-finite numeric configuration value: " + key);
     const auto &g = config.grid;
-    if (g.nblockx1 <= 0 || !std::isfinite(g.x1_min) || !std::isfinite(g.x1_max)
-        || !(g.x1_max > g.x1_min) || !std::isfinite(g.x1_max - g.x1_min))
-        throw std::invalid_argument("x1 bounds must be finite and ordered, and nblockx1 must be positive");
     if (config.amr.lrefinemin < 0 || config.amr.lrefinemax < config.amr.lrefinemin
         || config.amr.lrefinemax > amr::kMaxRefinementLevel)
         throw std::invalid_argument("AMR levels must satisfy 0 <= lrefinemin <= lrefinemax <= 15");
-    const std::uint64_t extent = std::uint64_t(g.nblockx1) << config.amr.lrefinemax;
-    if (extent - 1 > amr::kMortonCoordinateMask)
-        throw std::invalid_argument("AMR root extent exceeds the supported coordinate range");
+    const int blocks[] = {g.nblockx1, g.nblockx2};
+    const double lo[] = {g.x1_min, g.x2_min}, hi[] = {g.x1_max, g.x2_max};
+    const std::string lower[] = {g.x1l_boundary_type, g.x2l_boundary_type};
+    const std::string upper[] = {g.x1r_boundary_type, g.x2r_boundary_type};
+    std::uint64_t roots = 1;
+    for (int axis = 0; axis < g.dim; ++axis) {
+        if (blocks[axis] <= 0 || !std::isfinite(lo[axis]) || !std::isfinite(hi[axis])
+            || !(hi[axis] > lo[axis]) || !std::isfinite(hi[axis] - lo[axis]))
+            throw std::invalid_argument("Active axis bounds must be finite and ordered, with positive root blocks");
+        const std::uint64_t extent = std::uint64_t(blocks[axis]) << config.amr.lrefinemax;
+        if (extent - 1 > amr::kMortonCoordinateMask)
+            throw std::invalid_argument("AMR root extent exceeds the supported coordinate range");
+        roots *= std::uint64_t(blocks[axis]);
+        if (!dispatch::parse_boundary(lower[axis]).ok || !dispatch::parse_boundary(upper[axis]).ok)
+            throw std::invalid_argument("Unsupported active-axis boundary type");
+    }
     const int max_blocks = g.amr_max_blocks > 0 ? g.amr_max_blocks : 10000;
-    if (max_blocks < g.nblockx1)
+    if (std::uint64_t(max_blocks) < roots)
         throw std::invalid_argument("max_blocks cannot hold the configured root blocks");
-    if (!dispatch::parse_boundary(g.x1l_boundary_type).ok
-        || !dispatch::parse_boundary(g.x1r_boundary_type).ok)
-        throw std::invalid_argument("Unsupported x1 boundary type");
+}
+
+std::vector<double> sample_axis(double lo, double hi, int count) {
+    std::vector<double> coordinates;
+    coordinates.reserve(count);
+    for (int i = 0; i < count; ++i) {
+        const double x = lo + (hi - lo) * ((i + 0.5) / count);
+        if (!std::isfinite(x) || !(x > lo) || !(x < hi)
+            || (!coordinates.empty() && !(x > coordinates.back())))
+            throw std::invalid_argument("Domain cannot represent distinct interior sample coordinates");
+        coordinates.push_back(x);
+    }
+    return coordinates;
+}
+Json axis_json(const char *name, const std::vector<double> &coordinates) {
+    auto values = Json::array();
+    for (double x : coordinates) values.push(x);
+    return Json::object({{"name", name}, {"unit", Json()}, {"values", values}});
+}
+Json species_snapshot(const SpeciesManager &specs) {
+    auto species = Json::array();
+    for (int i = 0; i < specs.count(); ++i)
+        species.push(Json::object({{"index", i}, {"name", specs.get_name(i)}}));
+    return species;
 }
 
 Json field(const char *key, const char *name, const std::vector<double> &values) {
@@ -163,24 +197,41 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
     std::string error_code = "INVALID_REQUEST";
     try {
         if (request.config_text.size() > max_config_bytes || request.config_text.empty()
-            || request.request_id.size() > 128 || request.case_id.size() > 128
-            || request.sample_count < 2 || request.sample_count > max_sample_count)
-            throw std::invalid_argument("Expected nonempty config <= 1 MiB, 2..4096 samples and identifiers <= 128 bytes");
+            || request.request_id.size() > 128 || request.case_id.size() > 128)
+            throw std::invalid_argument("Expected nonempty config <= 1 MiB and identifiers <= 128 bytes");
+        SamplingPlan sampling;
+        try { sampling = ResolveSampling(request); }
+        catch (const SamplingLimitError &) { error_code = "SAMPLING_LIMIT_EXCEEDED"; throw; }
         result["stage"] = "configuration";
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
-        auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
+        std::shared_ptr<preview::ParameterReadTrace> reads;
+        if (request.case_id == "Sod")
+            reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
         SimConfig config = RuntimeParams::LoadText(request.config_text, reads);
         auto &state = result["state"];
         snapshot(state, config);
         result["stage"] = "support";
         exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
-        if (request.case_id != "Sod" || config.grid.dim != 1 || config.grid.geometry != "cartesian")
-            throw std::invalid_argument("Preview 1.0 supports registered Sod in one-dimensional Cartesian geometry");
+        if (config.grid.geometry != "cartesian"
+            || !((request.case_id == "Sod" && config.grid.dim == 1)
+                 || (request.case_id == "CellularDet" && config.grid.dim == 2)))
+            throw std::invalid_argument("Preview supports Cartesian Sod 1D and CellularDet 2D");
         if (config.io.restart)
             throw std::invalid_argument("Initial-state preview does not load restart checkpoints");
         result["stage"] = "configuration";
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
         validate_grid(config);
+        if (sampling.two_dimensional) {
+            auto it = config.custom_params.find("shock_dir");
+            if (it != config.custom_params.end()
+                && (it->second < std::numeric_limits<int>::min() || it->second > std::numeric_limits<int>::max()))
+                throw std::invalid_argument("shock_dir is outside the integer range");
+            result["stage"] = "support";
+            exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
+            const int direction = config.Get<int>("shock_dir", 0);
+            if (direction != 0 && direction != 1)
+                throw std::invalid_argument("CellularDet 2D supports shock_dir=0 or 1 only");
+        }
         result["stage"] = "setup";
         exit_code = 5; error_code = "SETUP_FAILED";
         state["setup"] = "error";
@@ -189,20 +240,24 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         SpeciesManager specs;
         try {
             problem->Setup(config, specs);
+        } catch (const ProblemHelper::InitialEosError &) {
+            config.parameter_reads.reset();
+            state["species"] = species_snapshot(specs);
+            state["eos"]["status"] = "error";
+            result["stage"] = "eos";
+            error_code = "EOS_FAILED";
+            throw;
         } catch (...) {
             config.parameter_reads.reset();
-            PublishParameterMetadata(result, *reads, problem->PreviewPositions(config), false);
+            if (reads) PublishParameterMetadata(result, *reads, problem->PreviewPositions(config), false);
             throw;
         }
         config.parameter_reads.reset();
         const auto positions = problem->PreviewPositions(config);
-        PublishParameterMetadata(result, *reads, positions, false);
+        if (reads) PublishParameterMetadata(result, *reads, positions, false);
         snapshot(state, config); // Setup can change the effective configuration.
         state["setup"] = "ready";
-        auto species = Json::array();
-        for (int i = 0; i < specs.count(); ++i)
-            species.push(Json::object({{"index", i}, {"name", specs.get_name(i)}}));
-        state["species"] = species;
+        state["species"] = species_snapshot(specs);
         if (specs.count() == 0) throw std::runtime_error("Initialization registered no species");
         result["stage"] = "eos";
         error_code = "EOS_FAILED";
@@ -218,8 +273,10 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             eos_id = parsed.value;
         }
         state["eos"]["resolved"] = std::string(dispatch::canonical_policy_name<dispatch::EosPolicies>(eos_id));
-        std::vector<double> coordinates;
-        std::array<std::vector<double>, 6> values;
+        std::vector<double> x_coordinates, y_coordinates;
+        const std::size_t field_count = sampling.two_dimensional ? max_preview_fields : 6;
+        std::vector<std::vector<double>> values(field_count);
+        for (auto &field_values : values) field_values.reserve(sampling.count);
         EOSDispatcher::dispatch_eos(eos_id, config, specs, [&](auto &&eos, std::string_view fingerprint) {
             state["eos"]["status"] = "ready";
             if (eos_id != dispatch::EosId::Ideal)
@@ -228,50 +285,54 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             result["stage"] = "sampling";
             exit_code = 6; error_code = "INITIALIZATION_FAILED";
             PrimitiveData data{};
-            const double length = config.grid.x1_max - config.grid.x1_min;
-            for (int i = 0; i < request.sample_count; ++i) {
-                data = PrimitiveData{};
-                data.mass_fractions.resize(specs.count(), 0.0);
-                PointCoords point{};
-                point.x = config.grid.x1_min + length * ((i + 0.5) / request.sample_count);
-                // Sod's supported Cartesian initialization reads x only.
-                if (!std::isfinite(point.x) || !(point.x > config.grid.x1_min)
-                    || !(point.x < config.grid.x1_max)
-                    || (!coordinates.empty() && !(point.x > coordinates.back())))
-                    throw std::invalid_argument("Domain cannot represent distinct interior sample coordinates");
-                problem->SampleInitialPrimitive(point, data);
-                if (data.mass_fractions.size() != std::size_t(specs.count())
-                    || !std::isfinite(data.rho) || data.rho <= 0)
-                    throw std::runtime_error("Invalid density or composition extent from initializer");
-                for (double fraction : data.mass_fractions)
-                    if (!std::isfinite(fraction)) throw std::runtime_error("Non-finite initial composition");
-                const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos);
-                const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
-                const double eint = eos_utils::extract_specific_internal_energy(conserved);
-                const double temperature = eos.get_temperature(data.rho, eint, data.mass_fractions.data());
-                const double row[] = {data.rho, pressure, temperature, data.u, conserved.eng, eint};
-                if (pressure <= 0 || temperature <= 0)
-                    throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
-                for (std::size_t j = 0; j < values.size(); ++j) {
-                    if (!std::isfinite(row[j])) throw std::runtime_error("Non-finite initial field value");
-                    values[j].push_back(row[j]);
+            x_coordinates = sample_axis(config.grid.x1_min, config.grid.x1_max, sampling.nx);
+            if (sampling.two_dimensional)
+                y_coordinates = sample_axis(config.grid.x2_min, config.grid.x2_max, sampling.ny);
+            for (int j = 0; j < sampling.ny; ++j) {
+                for (int i = 0; i < sampling.nx; ++i) {
+                    data = PrimitiveData{};
+                    data.mass_fractions.resize(specs.count(), 0.0);
+                    const PointCoords point = Grid::PhysicalCoordsFromNative(config.grid.dim, config.grid.geometry,
+                        x_coordinates[i], sampling.two_dimensional ? y_coordinates[j] : 0.0);
+                    problem->SampleInitialPrimitive(point, data);
+                    if (data.mass_fractions.size() != std::size_t(specs.count())
+                        || !std::isfinite(data.rho) || data.rho <= 0)
+                        throw std::runtime_error("Invalid density or composition extent from initializer");
+                    for (double fraction : data.mass_fractions)
+                        if (!std::isfinite(fraction)) throw std::runtime_error("Non-finite initial composition");
+                    const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos);
+                    const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
+                    const double eint = eos_utils::extract_specific_internal_energy(conserved);
+                    const double temperature = eos.get_temperature(data.rho, eint, data.mass_fractions.data());
+                    const double row[] = {data.rho, pressure, temperature, data.u, conserved.eng, eint, data.v};
+                    if (pressure <= 0 || temperature <= 0)
+                        throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
+                    for (std::size_t f = 0; f < values.size(); ++f) {
+                        if (!std::isfinite(row[f])) throw std::runtime_error("Non-finite initial field value");
+                        values[f].push_back(row[f]);
+                    }
                 }
-                coordinates.push_back(point.x);
             }
         });
-        auto x = Json::array();
-        for (double coordinate : coordinates) x.push(coordinate);
+        auto axes = Json::array({axis_json("x1", x_coordinates)});
+        auto shape = Json::array({sampling.nx});
+        if (sampling.two_dimensional) {
+            axes.push(axis_json("x2", y_coordinates));
+            shape = Json::array({sampling.ny, sampling.nx});
+        }
         auto fields = Json::array();
-        const char *keys[] = {"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT"};
-        const char *names[] = {"Density", "Pressure", "Temperature", "X velocity", "Total energy density", "Specific internal energy"};
+        const char *keys[] = {"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT", "VELY"};
+        const char *names[] = {"Density", "Pressure", "Temperature", "X velocity", "Total energy density", "Specific internal energy", "Y velocity"};
         for (std::size_t j = 0; j < values.size(); ++j) fields.push(field(keys[j], names[j], values[j]));
-        result["data"] = Json::object({{"dimension", 1}, {"kind", "line"},
-            {"sampling", Json::object({{"kind", "uniform"}, {"valueLocation", "init-sample"},
-                {"position", "bin-center"}, {"count", request.sample_count},
-                {"shape", Json::array({request.sample_count})}, {"order", "x1-fastest"}})},
-            {"axes", Json::array({Json::object({{"name", "x1"}, {"unit", Json()}, {"values", x}})})},
+        auto sampling_json = Json::object({{"kind", "uniform"}, {"valueLocation", "init-sample"},
+            {"position", "bin-center"}, {"count", std::int64_t(sampling.count)},
+            {"shape", shape}, {"order", "x1-fastest"}});
+        if (sampling.two_dimensional)
+            sampling_json["fixedCoordinates"] = Json::array({Json::object({{"name", "x3"}, {"value", 0}, {"unit", Json()}})});
+        result["data"] = Json::object({{"dimension", config.grid.dim}, {"kind", sampling.two_dimensional ? "grid" : "line"},
+            {"sampling", sampling_json}, {"axes", axes},
             {"fields", fields}});
-        PublishParameterMetadata(result, *reads, positions, true);
+        if (reads) PublishParameterMetadata(result, *reads, positions, true);
         result["status"] = "ok"; result["stage"] = "complete";
         exit_code = 0;
     } catch (const std::exception &error) {
@@ -281,12 +342,28 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         if (!log->text.empty()) result["diagnostics"].push(diagnostic(severity, "CORE_LOG", log->message()));
         if (log->truncated) result["diagnostics"].push(diagnostic("warning", "LOG_TRUNCATED", "Core log exceeded 16 KiB"));
     }
-    std::string json = result.dump();
-    if (json.size() > max_response_bytes) return PreviewInputError("Response exceeds 8 MiB");
-    return {std::move(json), exit_code};
+    return SerializePreviewResponse(result, exit_code);
 }
 
 std::string PreviewCapabilities() {
+    auto models = Json::array({
+        Json::object({{"caseId", "Sod"}, {"dimensions", Json::array({1})},
+            {"geometries", Json::array({"cartesian"})}, {"previewBackend", "cpu"},
+            {"sampling", Json::object({{"defaultShape", Json::array({default_sample_count})},
+                {"minPerAxis", 2}, {"maxPerAxis", max_sample_count}, {"maxTotalSamples", max_sample_count}})},
+            {"fields", Json::array({"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT"})},
+            {"maxFields", 6}, {"maxResponseBytes", std::int64_t(max_response_bytes)}}),
+        Json::object({{"caseId", "CellularDet"}, {"dimensions", Json::array({2})},
+            {"geometries", Json::array({"cartesian"})}, {"previewBackend", "cpu"},
+            {"supportedShockDirections", Json::array({0, 1})},
+            {"sampling", Json::object({{"defaultShape", Json::array({default_samples_2d, default_samples_2d})},
+                {"minPerAxis", 2}, {"maxPerAxis", max_samples_per_axis_2d},
+                {"maxTotalSamples", std::int64_t(max_total_samples_2d)}})},
+            {"fields", Json::array({"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT", "VELY"})},
+            {"maxFields", std::int64_t(max_preview_fields)}, {"maxResponseBytes", std::int64_t(max_response_bytes)}})
+    });
+    // Preserve the flat Sod capability view for existing 1D clients. New
+    // clients use modelCapabilities to negotiate each case independently.
     return Json::object({{"schemaVersion", preview_schema_version}, {"kind", "preview-capabilities"},
         {"status", "ok"}, {"cases", Json::array({"Sod"})}, {"dimensions", Json::array({1})},
         {"geometries", Json::array({"cartesian"})}, {"previewBackend", "cpu"},
@@ -297,6 +374,7 @@ std::string PreviewCapabilities() {
         {"minSamples", 2}, {"maxSamples", max_sample_count},
         {"maxConfigBytes", std::int64_t(max_config_bytes)}, {"maxResponseBytes", std::int64_t(max_response_bytes)},
         {"amrHierarchy", false}, {"parameterTracing", false}, {"markers", true},
+        {"modelCapabilities", models},
         {"extensions", ParameterExtensionCapabilities()}}).dump();
 }
 PreviewResponse PreviewInputError(const std::string &message) {

@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <iomanip>
 #include <locale>
+#include <limits>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -31,15 +33,38 @@ public:
     static Json object(Object value = {}) { return Json(std::move(value)); }
     static Json array(Array value = {}) { return Json(std::move(value)); }
     Json &operator[](const std::string &key) { return std::get<Object>(value_)[key]; }
+    bool contains(const std::string &key) const { return std::get<Object>(value_).contains(key); }
+    void erase(const std::string &key) { std::get<Object>(value_).erase(key); }
     void push(Json value) { std::get<Array>(value_).push_back(std::move(value)); }
-    std::string dump() const {
-        std::ostringstream out;
+    std::string dump(std::size_t limit = std::numeric_limits<std::size_t>::max()) const {
+        BoundedBuffer buffer(limit);
+        std::ostream out(&buffer);
         out.imbue(std::locale::classic());
         out << std::setprecision(17);
         write(out);
-        return out.str();
+        if (buffer.exceeded) throw std::length_error("JSON exceeds response budget");
+        return std::move(buffer.text);
     }
 private:
+    class BoundedBuffer : public std::streambuf {
+        std::size_t limit_;
+    public:
+        std::string text;
+        bool exceeded = false;
+        explicit BoundedBuffer(std::size_t limit) : limit_(limit) {}
+    protected:
+        int_type overflow(int_type c) override {
+            if (traits_type::eq_int_type(c, traits_type::eof())) return traits_type::not_eof(c);
+            if (text.size() == limit_) { exceeded = true; return traits_type::eof(); }
+            text.push_back(traits_type::to_char_type(c));
+            return c;
+        }
+        std::streamsize xsputn(const char *s, std::streamsize n) override {
+            if (std::size_t(n) > limit_ - text.size()) { exceeded = true; return 0; }
+            text.append(s, std::size_t(n));
+            return n;
+        }
+    };
     std::variant<std::monostate, bool, std::int64_t, double, std::string, Array, Object> value_;
     static void quote(std::ostream &out, const std::string &text) {
         constexpr char hex[] = "0123456789abcdef";

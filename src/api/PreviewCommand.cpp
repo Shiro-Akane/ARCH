@@ -40,7 +40,7 @@ int RunPreviewCommand(int argc, char **argv) {
             return 0;
         }
         if (argc < 4)
-            throw std::invalid_argument("Usage: ARCH --preview Sod --config-stdin [--samples 512] [--request-id ID]");
+            throw std::invalid_argument("Usage: ARCH --preview CASE --config-stdin [--samples N | --samples-x1 NX --samples-x2 NY] [--request-id ID]");
         PreviewRequest request;
         request.case_id = argv[2];
         std::set<std::string> seen;
@@ -49,23 +49,26 @@ int RunPreviewCommand(int argc, char **argv) {
             const std::string option = argv[i];
             if (!seen.insert(option).second) throw std::invalid_argument("Duplicate preview option");
             if (option == "--config-stdin") config_stdin = true;
-            else if (option == "--samples" || option == "--request-id") {
+            else if (option == "--samples" || option == "--samples-x1" || option == "--samples-x2" || option == "--request-id") {
                 if (++i == argc) throw std::invalid_argument("Missing preview option value");
                 const std::string_view value = argv[i];
                 if (option == "--request-id") request.request_id = value;
                 else {
-                    const auto parsed = std::from_chars(value.data(), value.data() + value.size(), request.sample_count);
+                    int count = 0;
+                    const auto parsed = std::from_chars(value.data(), value.data() + value.size(), count);
                     if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size())
-                        throw std::invalid_argument("--samples expects a whole number");
+                        throw std::invalid_argument(option + " expects a whole number representable as int");
+                    if (option == "--samples-x1") request.samples_x1 = count;
+                    else if (option == "--samples-x2") request.samples_x2 = count;
+                    else { request.sample_count = count; request.sample_count_provided = true; }
                 }
             } else throw std::invalid_argument("Unknown preview option");
         }
         if (!config_stdin) throw std::invalid_argument("--config-stdin is required");
         if (!valid_utf8(request.case_id) || !valid_utf8(request.request_id))
             throw std::invalid_argument("Identifiers must be UTF-8 without NUL bytes");
-        if (request.sample_count < 2 || request.sample_count > max_sample_count
-            || request.case_id.size() > 128 || request.request_id.size() > 128)
-            throw std::invalid_argument("Expected 2..4096 samples and identifiers <= 128 bytes");
+        if (request.case_id.size() > 128 || request.request_id.size() > 128)
+            throw std::invalid_argument("Expected identifiers <= 128 bytes");
         char buffer[8192];
         while (std::cin) {
             std::cin.read(buffer, sizeof(buffer));
