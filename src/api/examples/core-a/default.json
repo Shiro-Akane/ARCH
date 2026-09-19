@@ -108,7 +108,7 @@
   "diagnostics": [
     {
       "code": "CORE_LOG",
-      "message": "[Info] Loaded 50 parameters from <memory>\n[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)\n[EOS Dispatch] Resolving EOS Policy: ideal\n",
+      "message": "[Info] Loaded 49 parameters from <memory>\n[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)\n[EOS Dispatch] Resolving EOS Policy: ideal\n",
       "severity": "info"
     }
   ],
@@ -139,8 +139,8 @@
   },
   "identity": {
     "caseId": "Sod",
-    "configRevision": "cd54c4000a8bd3917f5b3fb658c2614f91bddc7ebd84e7e076f6c3bb79489284",
-    "requestId": "example-sod"
+    "configRevision": "0db9a83c908d1a84072425a71d3a050e1d6989feeca8a6badef0e682d702ca78",
+    "requestId": "core-a-default"
   },
   "kind": "initial-state-preview",
   "parameterMetadata": {
@@ -158,13 +158,12 @@
         "description": null,
         "diagnostics": [],
         "effectiveValue": 0.5,
-        "explicitValue": 0.5,
+        "explicitValue": null,
         "key": "x_pos",
-        "rawValue": "0.5",
-        "sourceReason": null,
+        "sourceReason": "missing-key",
         "type": "float",
         "unit": null,
-        "valueSource": "explicit"
+        "valueSource": "default"
       }
     ],
     "version": "1"

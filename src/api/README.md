@@ -8,10 +8,11 @@
 - 使用 CPU 生成显示采样。配置中的 `compute_backend=cuda` 不会触发设备检测或 CUDA 初始化。
 - 接收尚未保存的 `.par` 文本，返回坐标、密度、压力、温度、速度和能量。
 - 同时返回 EOS、基础网格、AMR 配置、已注册组分及各阶段状态。
+- Core A：返回 Sod `x_pos` 的实际读取值、默认值、来源和当前域约束，以及与真实初始化一致的 x1 位置绑定。
 - 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制 Sod 公式。
 - 不进入时间推进，不建立 AMR 层级，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-当前没有二维预览、实际 AMR 细化布局、参数读取追踪、位置标记或拖动绑定。能力查询会明确返回这些限制。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
+当前仍没有二维预览、实际 AMR 细化布局或完整参数追踪。参数扩展目前只覆盖 Sod `x_pos`；未返回其他参数不表示其未被使用。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
 
 这里的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 
@@ -76,6 +77,8 @@ execution: { previewBackend, simulationReadiness, timeStepping, scientificOutput
 state: { configuration, setup, grid, amr, eos, species, computeBackendRequested }
 data: { dimension, kind, sampling, axes, fields } | null
 diagnostics: [{ severity, code, message }]
+parameterMetadata?: { version: "1", coverage, complete, parameters }
+graphicalBindings?: { version: "1", items }
 ```
 
 `configRevision` 是 **实际收到的原始 UTF-8 字节**的 SHA-256。换行、注释或空格变化也会改变摘要。Host 可与提交前的摘要比较，用于丢弃过期结果。
@@ -86,6 +89,42 @@ diagnostics: [{ severity, code, message }]
 - [EOS 文件缺失响应](examples/missing-eos.json)：同一输入末尾追加 `eos_type = helmholtz` 和 `eos_table_path = missing-eos-table.dat`。保留已确认的网格和 AMR 配置，场数据为 `null`。
 
 命令参数、编码、输入大小等错误可能发生在请求建立之前，此时 `identity/state/data` 为 `null`，也可能没有 `execution`。配置解析失败时，`state.configuration=not_loaded`；解析成功后的错误尽量保留已确认的状态，`data` 仍为 `null`。`status=error` 不发布部分曲线。
+
+### Core A：参数与位置绑定
+
+调用方式不变；执行到 Sod Setup 后，响应自动附带两个可选扩展。已有一维字段及含义保持不变，扩展与曲线共用同一份 `identity`。能力声明与完整示例见 [Core A 示例](examples/core-a/README.md)。
+
+能力查询的 `extensions.parameterMetadata`、`extensions.graphicalBindings` 分别提供 `version="1"` 及覆盖的 case/key 或 binding ID。客户端只启用自己支持的扩展版本；扩展不存在或版本未知时，仍可使用基础一维预览。顶层 `markers=true` 表示当前支持集合中已提供位置标记；其精确范围由扩展声明决定。`parameterTracing=false` 继续表示没有完整参数追踪。
+
+`parameterMetadata` 的 `coverage="observed-case-setup-reads"`、`complete=false` 表示仅报告明确覆盖的 Setup 读取。本版只覆盖 `Sod/x_pos`，不解析 C++ 文本，也不从日志提取参数。
+
+| 参数字段 | 含义 |
+|---|---|
+| key / type | `x_pos` / `float`；数值为 double 精度，不表示 float32 |
+| explicitValue | 由原有解析器得到的显式值；缺失或该类型解析失败为 null |
+| effectiveValue | Setup 实际读取值；无法归并时为 null |
+| defaultValue | 该次 Get 调用传入的默认值；本例为 0.5，不是域中点 |
+| rawValue | 存在时返回原解析器保留的有效 token；重复 key 采用最后一项 |
+| valueSource | `explicit`、`default` 或 `unknown` |
+| sourceReason | 显式值为 null；默认值为 `missing-key` 或 `parse-failure`；其他见下文 |
+| unit / description | 本版均为 null，不推测单位 |
+| constraints | 本次域的 min/max；两个 Inclusive 字段均为 false |
+| diagnostics | 参数级 severity/code/message 列表 |
+
+读取行为保持原解析器的含义。例如 `x_pos=bad` 与超出 double 表示范围的 token 会采用 0.5，来源为 `default/parse-failure`；`x_pos=0.35suffix` 当前解析器接受数值前缀，故实际值为 0.35、来源为 explicit。`nan/inf` 则在预览基础检查阶段拒绝，尚未发生 Setup 读取，不返回参数扩展。
+
+重复读取若类型、默认值、值或来源不一致，报告 `AMBIGUOUS_PARAMETER_READ`，type/explicitValue/effectiveValue/defaultValue 为 null，来源为 `unknown/ambiguous-reads`。若程序改写参数值而无法归因于原输入，报告 `PARAMETER_SOURCE_UNKNOWN` 和 `unknown/untracked-value`。两者均不提供可编辑绑定。解析失败后回退提供 `PARAMETER_DEFAULT_FALLBACK`。这些参数级诊断使用 warning，不改变原有 Setup 的成功/失败决定。
+
+`graphicalBindings.items` 在完整成功响应中提供 `Sod.x_pos`：
+
+- `parameterKey=x_pos`、`kind=axis-position`、`axis=x1`。
+- `coordinate` 来自 Sod 内部实际分界值，且必须与记录的 effectiveValue 一致。
+- min/max 来自本次区域；`minInclusive=false/maxInclusive=false`，与 Sod 验证共用范围定义。
+- `clamping=none`、`invalidBehavior=retain-input-and-report`、`editable=true`。
+
+Setup 越界失败时，保留已经读取的值及约束，`data=null`，绑定 items 为空。EOS 或采样失败也只保留已确认的 metadata，不提供本次成功绑定。Setup 之前的失败没有这些扩展，不能把缺失理解为“使用了默认值”。
+
+Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；不自动保存或重新预览。用户点击 Update Preview 后提交完整文本。未填写 x_pos 时，Studio 负责安全插入赋值。旧曲线、旧 effectiveValue、位置绑定和状态快照必须保持同一请求身份；候选位置不得改写旧响应。
 
 ### 场数据
 
@@ -156,7 +195,7 @@ diagnostics: [{ severity, code, message }]
 
 `diagnostics` 中 `severity` 为 `info/warning/error`。`CORE_LOG` 保存现有核心的文本报告，不作为前端解析接口；每个日志通道最多保留 16 KiB，截断时提供 `LOG_TRUNCATED`。完整响应限制为 8 MiB。
 
-部分现有解析规则会使用默认值，预览与正式配置读取保持一致。本版本没有逐项参数来源追踪，也不提供完整模拟配置审查。错误文字用于展示，前端逻辑按退出码、`status/stage` 和稳定错误码处理。
+部分现有解析规则会使用默认值，预览与正式配置读取保持一致。Core A 提供上述有限范围的来源信息，不提供完整模拟配置审查。错误文字用于展示，前端逻辑按退出码、`status/stage` 和稳定错误码处理。
 
 ## Host 与前端接入
 
@@ -177,17 +216,21 @@ diagnostics: [{ severity, code, message }]
 | Preview.cpp | 初始化、状态快照、数据检查和结果组织 |
 | PreviewCommand.cpp | 命令选项、stdin 和 stdout 边界 |
 | Json.h | 内部 JSON 输出工具 |
+| ParameterMetadata.h / .cpp | 将实际读取记录与模型位置描述组织为 JSON 扩展 |
+| ../interface/PreviewMetadata.h | 独立于 JSON 的读取记录与轴向位置数据 |
 | ../core/InitialStateConversion.h | 正式网格初始化和预览共用的数据转换 |
 
 测试入口：
 
 ```sh
-cmake --build build-studio-cpu --target ARCH arch_preview_initial_conversion -j 1
+cmake --build build-studio-cpu --target ARCH arch_preview_initial_conversion arch_preview_parameter_reads -j 1
 ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 ```
 
-`preview_api_contract` 使用实际 ARCH 程序测试配置修改、默认值、CPU 预览与 CUDA 请求分离、EOS 加载和错误、AMR 状态、输入限制，以及无文件输出。安装了 `h5dump` 时，还会在独立临时目录运行一次普通 ARCH 的零步初始化，将正式初始输出与预览在相同坐标上的结果比较。该输出只由测试对照流程生成，预览实现不读取它。
+测试需要配置 `-DBUILD_TESTING=ON`。`preview_api_contract` 使用实际 ARCH 程序测试配置修改、默认值、CPU 预览与 CUDA 请求分离、EOS 加载和错误、AMR 状态、输入限制，以及无文件输出。正式模拟输出对照默认跳过；只有显式设置 `ARCH_PREVIEW_SIMULATION_ORACLE=1` 且安装 `h5dump` 才运行该独立对照。
 
 `preview_initial_conversion` 检查压力和温度两种初始化输入共用的转换，以及内存参数解析。测试源位于 `tests/api/`。
 
-本次交付在 Linux CPU Debug 构建中验证，CUDA 和 KLU 关闭。测试覆盖理想气体、实际 Helmholtz 表加载、正式初始输出对照，以及失败和输入边界。表格 EOS 复用现有加载和求值路径，本次接口测试覆盖其缺失文件错误；具体科学表与模型组合仍需随对应算例验证。
+`preview_parameter_reads` 检查重复读取歧义、程序改值后的未知来源、普通配置不启用记录及严格开区间。`preview_parameter_metadata` 通过实际 CLI 检查来源、真实字段与绑定一致、动态域、越界、重复 key、数值前缀、EOS 失败和 Setup 前的错误。
+
+Core A 的交付基线、构建选项和验证结果见 [交接说明](CORE_A_HANDOFF.md)。CPU 预览不证明 CUDA、完整模拟或尚未实现的 CellularDet 二维路径可用。

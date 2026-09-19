@@ -139,8 +139,8 @@
   },
   "identity": {
     "caseId": "Sod",
-    "configRevision": "cd54c4000a8bd3917f5b3fb658c2614f91bddc7ebd84e7e076f6c3bb79489284",
-    "requestId": "example-sod"
+    "configRevision": "5e32a00344b42381d7598a1029b6ae280ca446b696f6a35ab468c504c3f2ec14",
+    "requestId": "core-a-fallback"
   },
   "kind": "initial-state-preview",
   "parameterMetadata": {
@@ -156,15 +156,21 @@
         },
         "defaultValue": 0.5,
         "description": null,
-        "diagnostics": [],
+        "diagnostics": [
+          {
+            "code": "PARAMETER_DEFAULT_FALLBACK",
+            "message": "The existing reader used its default after the token could not be read as the requested type.",
+            "severity": "warning"
+          }
+        ],
         "effectiveValue": 0.5,
-        "explicitValue": 0.5,
+        "explicitValue": null,
         "key": "x_pos",
-        "rawValue": "0.5",
-        "sourceReason": null,
+        "rawValue": "bad",
+        "sourceReason": "parse-failure",
         "type": "float",
         "unit": null,
-        "valueSource": "explicit"
+        "valueSource": "default"
       }
     ],
     "version": "1"

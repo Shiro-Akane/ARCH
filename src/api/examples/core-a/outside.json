@@ -2,13 +2,13 @@
   "data": null,
   "diagnostics": [
     {
-      "code": "EOS_FAILED",
-      "message": "Cannot open file for SHA-256 fingerprint: missing-eos-table.dat",
+      "code": "SETUP_FAILED",
+      "message": "Sod requires an interior interface and positive densities/pressures.",
       "severity": "error"
     },
     {
       "code": "CORE_LOG",
-      "message": "[Info] Loaded 51 parameters from <memory>\n[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)\n[EOS Dispatch] Resolving EOS Policy: helmholtz\n",
+      "message": "[Info] Loaded 50 parameters from <memory>\n",
       "severity": "info"
     }
   ],
@@ -24,8 +24,8 @@
   },
   "identity": {
     "caseId": "Sod",
-    "configRevision": "6ee761c24fa2ffb37b33f39ffc8ff28c55244107577f3ce32d7085a9b64f9291",
-    "requestId": "example-missing-eos"
+    "configRevision": "b0cb58d09cabbb7d4000148239f5e4745a545198c5a32b6598d95c95340d2464",
+    "requestId": "core-a-outside"
   },
   "kind": "initial-state-preview",
   "parameterMetadata": {
@@ -34,18 +34,18 @@
     "parameters": [
       {
         "constraints": {
-          "max": 1,
+          "max": 5,
           "maxInclusive": false,
-          "min": 0,
+          "min": -3,
           "minInclusive": false
         },
         "defaultValue": 0.5,
         "description": null,
         "diagnostics": [],
-        "effectiveValue": 0.5,
-        "explicitValue": 0.5,
+        "effectiveValue": 5,
+        "explicitValue": 5,
         "key": "x_pos",
-        "rawValue": "0.5",
+        "rawValue": "5",
         "sourceReason": null,
         "type": "float",
         "unit": null,
@@ -55,7 +55,7 @@
     "version": "1"
   },
   "schemaVersion": "1.0",
-  "stage": "eos",
+  "stage": "setup",
   "state": {
     "amr": {
       "actualHierarchy": null,
@@ -81,20 +81,20 @@
       "componentTablePath": "",
       "configuredGamma": 1.4,
       "loadedTablePath": null,
-      "requested": "helmholtz",
-      "resolved": "helmholtz",
+      "requested": "ideal",
+      "resolved": null,
       "sourceFingerprint": null,
-      "status": "error",
-      "tablePath": "missing-eos-table.dat"
+      "status": "not_loaded",
+      "tablePath": ""
     },
     "grid": {
       "axes": [
         {
           "activeCellsPerBlock": 16,
-          "coordinateSpacing": 0.0078125,
+          "coordinateSpacing": 0.0625,
           "lowerBoundary": "outflow",
-          "max": 1,
-          "min": 0,
+          "max": 5,
+          "min": -3,
           "name": "x1",
           "rootBlocks": 8,
           "rootCells": 128,
@@ -107,13 +107,8 @@
       "hierarchy": "not_constructed",
       "status": "configured"
     },
-    "setup": "ready",
-    "species": [
-      {
-        "index": 0,
-        "name": "SodGas"
-      }
-    ]
+    "setup": "error",
+    "species": null
   },
   "status": "error"
 }

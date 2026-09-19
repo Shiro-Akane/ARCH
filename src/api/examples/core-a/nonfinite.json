@@ -2,13 +2,13 @@
   "data": null,
   "diagnostics": [
     {
-      "code": "EOS_FAILED",
-      "message": "Cannot open file for SHA-256 fingerprint: missing-eos-table.dat",
+      "code": "INVALID_CONFIGURATION",
+      "message": "Non-finite numeric configuration value: x_pos",
       "severity": "error"
     },
     {
       "code": "CORE_LOG",
-      "message": "[Info] Loaded 51 parameters from <memory>\n[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)\n[EOS Dispatch] Resolving EOS Policy: helmholtz\n",
+      "message": "[Info] Loaded 50 parameters from <memory>\n",
       "severity": "info"
     }
   ],
@@ -18,44 +18,14 @@
     "simulationReadiness": "not_checked",
     "timeStepping": "not_executed"
   },
-  "graphicalBindings": {
-    "items": [],
-    "version": "1"
-  },
   "identity": {
     "caseId": "Sod",
-    "configRevision": "6ee761c24fa2ffb37b33f39ffc8ff28c55244107577f3ce32d7085a9b64f9291",
-    "requestId": "example-missing-eos"
+    "configRevision": "d1382bc722f6669a50d55dda0e59999f74824d62e007f227aefdb6628978646d",
+    "requestId": "core-a-nonfinite"
   },
   "kind": "initial-state-preview",
-  "parameterMetadata": {
-    "complete": false,
-    "coverage": "observed-case-setup-reads",
-    "parameters": [
-      {
-        "constraints": {
-          "max": 1,
-          "maxInclusive": false,
-          "min": 0,
-          "minInclusive": false
-        },
-        "defaultValue": 0.5,
-        "description": null,
-        "diagnostics": [],
-        "effectiveValue": 0.5,
-        "explicitValue": 0.5,
-        "key": "x_pos",
-        "rawValue": "0.5",
-        "sourceReason": null,
-        "type": "float",
-        "unit": null,
-        "valueSource": "explicit"
-      }
-    ],
-    "version": "1"
-  },
   "schemaVersion": "1.0",
-  "stage": "eos",
+  "stage": "configuration",
   "state": {
     "amr": {
       "actualHierarchy": null,
@@ -81,11 +51,11 @@
       "componentTablePath": "",
       "configuredGamma": 1.4,
       "loadedTablePath": null,
-      "requested": "helmholtz",
-      "resolved": "helmholtz",
+      "requested": "ideal",
+      "resolved": null,
       "sourceFingerprint": null,
-      "status": "error",
-      "tablePath": "missing-eos-table.dat"
+      "status": "not_loaded",
+      "tablePath": ""
     },
     "grid": {
       "axes": [
@@ -107,13 +77,8 @@
       "hierarchy": "not_constructed",
       "status": "configured"
     },
-    "setup": "ready",
-    "species": [
-      {
-        "index": 0,
-        "name": "SodGas"
-      }
-    ]
+    "setup": "not_executed",
+    "species": null
   },
   "status": "error"
 }

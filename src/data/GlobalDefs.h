@@ -13,11 +13,13 @@
 #include <cstdint>
 #include <limits>
 #include <map>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <vector>
 
 #include "../core/ArchPortability.h"
+#include "../interface/PreviewMetadata.h"
 #include "../physics/constant/PhysicalConstants.h"
 
 // Grid and domain configuration.
@@ -387,6 +389,9 @@ struct SimConfig
 
     std::map<std::string, std::string> custom_string_params;
 
+    // Enabled only around initial-preview Setup; no global logger or UI state.
+    std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
+
     // Return a typed custom parameter or the caller-provided default.
     template <typename T>
     T Get(const std::string &key, T default_val) const
@@ -395,6 +400,10 @@ struct SimConfig
         if constexpr (std::is_same_v<T, std::string>)
         {
             auto it = custom_string_params.find(key);
+            if (parameter_reads)
+                parameter_reads->observe(key, default_val,
+                    it != custom_string_params.end() ? it->second : default_val,
+                    it != custom_string_params.end());
             if (it != custom_string_params.end())
                 return it->second;
             return default_val;
@@ -403,6 +412,10 @@ struct SimConfig
         else
         {
             auto it = custom_params.find(key);
+            if (parameter_reads)
+                parameter_reads->observe(key, default_val,
+                    it != custom_params.end() ? static_cast<T>(it->second) : default_val,
+                    it != custom_params.end());
             if (it != custom_params.end())
                 return static_cast<T>(it->second);
             return default_val;

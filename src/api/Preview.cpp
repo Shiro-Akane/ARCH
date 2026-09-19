@@ -1,5 +1,6 @@
 #include "Preview.h"
 #include "Json.h"
+#include "ParameterMetadata.h"
 
 #include <algorithm>
 #include <array>
@@ -167,7 +168,8 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             throw std::invalid_argument("Expected nonempty config <= 1 MiB, 2..4096 samples and identifiers <= 128 bytes");
         result["stage"] = "configuration";
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
-        SimConfig config = RuntimeParams::LoadText(request.config_text);
+        auto reads = std::make_shared<preview::ParameterReadTrace>(std::set<std::string>{"x_pos"});
+        SimConfig config = RuntimeParams::LoadText(request.config_text, reads);
         auto &state = result["state"];
         snapshot(state, config);
         result["stage"] = "support";
@@ -185,7 +187,16 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         auto problem = ProblemRegistry::Get().Create(request.case_id);
         if (!problem) throw std::runtime_error("The selected problem is not registered in this binary");
         SpeciesManager specs;
-        problem->Setup(config, specs);
+        try {
+            problem->Setup(config, specs);
+        } catch (...) {
+            config.parameter_reads.reset();
+            PublishParameterMetadata(result, *reads, problem->PreviewPositions(config), false);
+            throw;
+        }
+        config.parameter_reads.reset();
+        const auto positions = problem->PreviewPositions(config);
+        PublishParameterMetadata(result, *reads, positions, false);
         snapshot(state, config); // Setup can change the effective configuration.
         state["setup"] = "ready";
         auto species = Json::array();
@@ -260,6 +271,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                 {"shape", Json::array({request.sample_count})}, {"order", "x1-fastest"}})},
             {"axes", Json::array({Json::object({{"name", "x1"}, {"unit", Json()}, {"values", x}})})},
             {"fields", fields}});
+        PublishParameterMetadata(result, *reads, positions, true);
         result["status"] = "ok"; result["stage"] = "complete";
         exit_code = 0;
     } catch (const std::exception &error) {
@@ -284,7 +296,8 @@ std::string PreviewCapabilities() {
         {"configInput", "stdin-par-text"}, {"defaultSamples", default_sample_count},
         {"minSamples", 2}, {"maxSamples", max_sample_count},
         {"maxConfigBytes", std::int64_t(max_config_bytes)}, {"maxResponseBytes", std::int64_t(max_response_bytes)},
-        {"amrHierarchy", false}, {"parameterTracing", false}, {"markers", false}}).dump();
+        {"amrHierarchy", false}, {"parameterTracing", false}, {"markers", true},
+        {"extensions", ParameterExtensionCapabilities()}}).dump();
 }
 PreviewResponse PreviewInputError(const std::string &message) {
     return {Json::object({{"schemaVersion", preview_schema_version}, {"kind", "initial-state-preview"},

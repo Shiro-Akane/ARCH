@@ -85,6 +85,14 @@ class TypedProblemGenerator : public ProblemGenerator
 public:
     TypedProblemGenerator() = default;
 
+    std::vector<arch::preview::AxisPosition> PreviewPositions(const SimConfig &config) const override
+    {
+        if constexpr (requires { user_model.PreviewPositions(config); })
+            return user_model.PreviewPositions(config);
+        else
+            return {};
+    }
+
     void SampleInitialPrimitive(const PointCoords &point, PrimitiveData &data) const override
     {
         user_model.Init(point, data);
