@@ -1,4 +1,4 @@
-export const PROTOCOL_VERSION = '1.2';
+export const PROTOCOL_VERSION = '1.3';
 export interface HostCapabilities { readProject: boolean; writeConfig: boolean; build: boolean; preview: boolean; watchFiles: boolean }
 export interface HostInfo { protocolVersion: string; hostKind: 'local'; platform: string; projectRoot: string; capabilities: HostCapabilities }
 export type SourceState = 'missing' | 'available' | 'changed' | 'unknown';

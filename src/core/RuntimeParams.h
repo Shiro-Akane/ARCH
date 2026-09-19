@@ -122,6 +122,21 @@ public:
             throw std::runtime_error("RuntimeParams::Load failed: Could not open " + filename);
         }
 
+        return Resolve(parser);
+    }
+
+    static SimConfig LoadText(const std::string &text)
+    {
+        std::istringstream input(text);
+        ConfigParser parser;
+        parser.Load(input);
+        return Resolve(parser);
+    }
+
+private:
+    static SimConfig Resolve(const ConfigParser &parser)
+    {
+
         SimConfig cfg;
 
         cfg.grid.geometry = CanonicalizeEnumToken(

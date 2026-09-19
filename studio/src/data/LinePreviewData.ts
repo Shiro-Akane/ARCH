@@ -30,3 +30,10 @@ export function nearestSample(data: LinePreviewData, x: number): number | null {
   while (lo < hi) { const mid = Math.floor((lo + hi) / 2); if (data.x[mid] < x) lo = mid + 1; else hi = mid; }
   return lo > 0 && x - data.x[lo - 1] <= data.x[lo] - x ? lo - 1 : lo;
 }
+
+// LineVis requires an explicit ordinate domain; undefined means its default range.
+export function lineDomain(data:Pick<LinePreviewData,'min'|'max'>):[number,number] {
+ if(data.min<data.max)return [data.min,data.max];
+ const padding=Math.abs(data.min)*0.05||1;
+ return [Math.max(-Number.MAX_VALUE,data.min-padding),Math.min(Number.MAX_VALUE,data.max+padding)];
+}

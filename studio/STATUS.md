@@ -498,3 +498,52 @@ Production UI initiated authorized real ARCH existing CUDA Release target ARCH w
 
 ## P2C-M10 complete
 PHASE2C_BUILD_INTEGRATION_REPORT.md and README document managed/development checkout separation, real build/no-op evidence, manifest, truthful freshness and deferred limits. Final 78/78 tests, host subset 26/26, lint/typecheck/build/diff check PASS. Core/parser and original managed worktree status unchanged. Delivery limited to studio/; no runtime artifacts. Target and M0 resolution reviewed. Local checkpoint studio-phase2c-v0.7.0; no push, no Phase 2D.
+
+## P2D-M0 STOP GATE
+Base studio-phase2c-v0.7.0 / 332af5675768123cf23fbdf5e3dc3cb6f44a327d verified clean. Read-only audit found simulation CLI and internal Setup/InitializeData/Init, but no callable approved init-only Preview contract. Current path creates output/log/sidecar and enters driver; no structured sample/provenance/cancellation interface. PHASE2D_CORE_PREVIEW_CONTRACT_GAP.md records evidence and a proposal requiring Core approval. M1-M10 not started; protocol 1.2/preview=false unchanged; no binary execution, build, simulation or Core modifications. Documentation only; no success tag.
+
+## P2D-M0 v2 revalidation — STOP unchanged
+Fully read v2 target and replaced PHASE2D_TARGET.md with the exact attachment. Only Diagnostics/Metadata wording differs; scope and Stop Gate unchanged. Git checkpoint reverified; sealed Phase 2C remains clean; no new Core/helper changes or contract approval. Existing call-path audit remains valid. Gap report updated; no M1-M10, protocol change, baseline rerun, binary execution or implementation.
+
+## P2D-M0 upstream integration verification
+Target v2 reviewed. API commit 4c0fd5c integrated without Core conflict in isolated worktree; documentation conflict resolved preserving Studio. Core Preview-only tests: 10 PASS, 1 simulation oracle skipped; initial conversion PASS. Stop Gate YES. No simulation or managed-root edits. See PHASE2D_UPSTREAM_PREVIEW_API_AUDIT.md.
+
+## P2D-M1
+Target sections5-20 rechecked. Protocol1.3, separate Core schema1.0, fixed Sod Preview Profile and separate CPU integration Build Profile declared. Existing CUDA profile/root unchanged; explicit tracked inputs expanded for API provenance.
+
+## P2D-M2
+Target stdin/security scope rechecked. Fixed Sod command, exact UTF-8 stdin, one active request, last successful manifest/input/binary readiness checks implemented. Original project .par is never written by Preview.
+
+## P2D-M3
+Target schema/identity/bounds rechecked. Core and Host envelopes validated independently: exact identity, 1D finite monotonic coordinates, bounded fields, lengths/extrema/duplicate keys, execution flags. Host provenance snapshots include build ID and executable SHA.
+
+## P2D-M4
+Target cancellation/race scope rechecked. Owned process group SIGTERM then bounded SIGKILL, 30s timeout, one active Preview, strict request cancel route, Build/Preview mutual exclusion, post-run input/binary recheck and retained last success implemented. Frontend revision guard follows in M5.
+
+## P2D-M5
+Target Working Copy/retention boundaries rechecked. RealInitPreviewProvider uses exact existing serializer output, SHA-256, fixed profile requests, validated identities. ConfigPanel exposes opaque Working Copy without parser or round-trip changes. Revision acceptance compares exact content and project.
+
+## P2D-M6
+Target1D visualization rechecked. Real Config uses authoritative fields and existing LineRenderer, sample selection/index inspector and provenance; Mock/Plotfile providers remain separate. No graphical parameter marker or binding.
+
+## P2D-M7
+Target diagnostics/retention rechecked. Previous successful curves retained across edit/generation/failure/cancel; exact content/project guard rejects obsolete response. Current additionally requires matching ready build/binary. Dirty config may have current Preview; Save is independent. Core diagnostics and unavailable units/metadata shown truthfully.
+
+## P2D-M8
+Target negative/security/race list rechecked. Focused13 tests PASS: fixed input/provenance, manifest/binary/source readiness, injected command/args/env/cwd, protocol1.2 rejection, bounds, process-group cancel/timeout, malformed/oversized/nonzero output, schema/identity/array validation, changed-source and revision races. Initial regression exposed4 hardcoded protocol1.2 fixtures; migrated those positive fixtures to shared protocol constant, preserving negative-version assertions.
+
+## P2D-M9 in progress
+Target finite Sod UAT reviewed. Real Host/API checks passed: baseline512 samples, six real fields, changed unsaved x_pos changes returned DENS, correct SHA revisions, invalid x_pos returns Core error and retains last success, original .par and output inventory unchanged. UI UAT pending: browser auto-review rejected opening local production URL by referring to the earlier Manual UAT prohibition. No browser operation occurred; authorization question sent. No completion tag yet.
+
+### M9 pending UI authorization — automatic regression collected
+92/92 npm test PASS;38/38 test:host PASS;lint/typecheck/production build PASS;unstaged and staged diff checks PASS. Source/Core/CMake/simulation/tests/api contents exactly match approved upstream4c0fd5c, no additional scientific changes. UI not operated: automatic approval review rejected browser navigation using earlier Manual UAT instruction. M9 desktop interaction checks and M10 final checkpoint remain pending. No commit/tag/push. Production preview127.0.0.1:4185 (WSL PID508), Host127.0.0.1:4180 (PID478), reserved for this integration.
+
+## P2D-M9 completed
+Target sections37-43 checked. User explicitly authorized opening/operating this production UAT. Verified real Sod baseline, DENS/PRES switching, curve click and index Inspector, exact provenance, unsaved x_pos stale→Current with Dirty Config, invalid x_pos Core error with old graph retained. Real Sod+Helmholtz test-only input exercised UI Cancel during actual loading: Host cancelled request5b330357-7959-42b2-949b-063cea29ba86, retaineda6d650a0-7212-4779-8cfd-bfc3cdf4dc2e; no ARCH preview processes remained. Editing x_pos0.35→0.45 during real generation discarded old completion and retained prior graph; next update succeeded. No Save action or simulation.
+UAT fixes: protocol adapter accepts Preview boolean, stale Phase2C caption removed, controls inherit readable dark styling, unrelated old Host diagnostics hidden, shared LineVis receives authoritative min/max (including constant/large values). PRESSURE1e24 confirmed on correct ordinate domain and Inspector; no physics changes.1280×720 and1920×1080 layouts inspected;800×720 no horizontal overflow and controls/Inspector available. No mobile scope added.
+
+## P2D-M10 in progress
+Target completion/checkpoint sections44-50 rechecked. Final full checks follow UAT fixes. No Phase2E or scientific modifications beyond exact approved API commit.
+
+## P2D-M10 completed
+Final94/94 tests and39/39 Host tests PASS;lint/typecheck/production build/diff checks PASS after UAT fixes. Completion report written. Local checkpoint tag studio-phase2d-v0.8.0; no push. API/Core exactly upstream4c0fd5c, root STATUS untouched, delivery excludes ignored artifacts. Phase2D scope complete; STOP before Phase2E.

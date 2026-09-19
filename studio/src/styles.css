@@ -1048,3 +1048,22 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .config-conflict input { width:100%; color:inherit; background:#17232d; border:1px solid var(--line); padding:7px; }
 
 .build-panel{border-top:1px solid var(--border);padding:12px 0;min-width:0;overflow-wrap:anywhere}.build-panel dd{margin-left:0;overflow-wrap:anywhere}.build-log{max-height:280px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.source-code{max-height:360px;overflow:auto;white-space:pre-wrap;font-size:12px}
+
+/* Real IC reuses the existing LineVis, scoped to the desktop work area. */
+.real-init-workspace { min-width:0; padding:20px; overflow:auto; }
+.real-init-workspace .line-renderer {height: min(50vh,520px);min-height:250px;}
+.real-init-workspace .preview-heading,.real-preview-actions {display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;}
+.real-init-workspace h1 {font-size:20px;margin:8px 0;}
+.real-init-workspace p,.real-init-workspace li {overflow-wrap:anywhere;}
+.real-init-workspace [role=status] {min-height:2em;}
+.real-init-inspector {min-width:0;overflow:auto;}
+.real-init-inspector .panel {height:100%;}
+.real-init-inspector .inspector-content {padding:16px;overflow-wrap:anywhere;}
+.real-init-inspector dd,.preview-provenance dd {margin:4px 0 12px;overflow-wrap:anywhere;}
+.real-init-workspace details {margin-top:14px;}
+.real-init-workspace[hidden],.real-init-inspector[hidden] {display:none;}
+
+.real-init-workspace button,.real-init-workspace select,.real-init-workspace input {color:#dce7ee;background:#1b2933;border:1px solid #52616d;border-radius:4px;padding:6px 10px;font:inherit;}
+.real-init-workspace button:disabled,.real-init-workspace select:disabled {color:#91a0ab;background:#1a242d;opacity:.65;cursor:not-allowed;}
+.real-init-workspace button:not(:disabled):hover {border-color:#f3b572;background:#293b48;}
+.real-init-workspace :focus-visible {outline:2px solid #f3b572;outline-offset:2px;}

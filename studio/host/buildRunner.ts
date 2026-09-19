@@ -35,7 +35,9 @@ export class BuildRunner {
  }
  snapshot(){return structuredClone(this.current);}
  async validate(){try{await validateProfile(this.root,this.profile,this.hooks.cmake??CMAKE);this.current.configured=true;this.current.reason=undefined;if(this.current.state==='not-configured')this.current.state='ready';}catch(e){this.current.configured=false;this.current.reason=e instanceof Error?e.message:'Build profile unavailable';if(!this.current.activeBuildId)this.current.state='not-configured';}return this.snapshot();}
+ executionBlocked?:()=>boolean;
  async start(projectId:string,profileId:string){
+  if(this.executionBlocked?.())throw new BuildError('Preview is active; cancel or wait before Build.',409);
   if(projectId!==this.projectId||profileId!==this.profile.id)throw new BuildError('Unknown project or build profile.');
   if(this.current.activeBuildId)throw new BuildError('build-busy',409);
   const id=randomUUID(),startedAt=new Date().toISOString();this.current.activeBuildId=id;this.current.state='queued';

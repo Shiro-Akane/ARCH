@@ -7,7 +7,7 @@ export function validateSnapshot(value:unknown):ProjectSnapshot {
  if(!record(value)||!record(value.host)||!record(value.session))throw new Error('Malformed Local Host response');
  const h=value.host,s=value.session;
  if(h.protocolVersion!==PROTOCOL_VERSION)throw new Error('Local Host version is incompatible with this Studio build.');
- if(h.hostKind!=='local'||!text(h.platform)||!text(h.projectRoot)||!record(h.capabilities)||h.capabilities.readProject!==true||typeof h.capabilities.writeConfig!=='boolean'||typeof h.capabilities.build!=='boolean'||h.capabilities.preview!==false||h.capabilities.watchFiles!==false)throw new Error('Malformed Local Host capabilities');
+ if(h.hostKind!=='local'||!text(h.platform)||!text(h.projectRoot)||!record(h.capabilities)||h.capabilities.readProject!==true||typeof h.capabilities.writeConfig!=='boolean'||typeof h.capabilities.build!=='boolean'||typeof h.capabilities.preview!=='boolean'||h.capabilities.watchFiles!==false)throw new Error('Malformed Local Host capabilities');
  if(!text(s.projectId)||!text(s.displayName)||s.projectRoot!==h.projectRoot||!date(s.openedAt)||!date(s.refreshedAt)||s.mapping!=='unknown'||s.metadata!=='unavailable'||!['missing','available','changed','unknown'].includes(String(s.sourceState))||!['missing','available','changed-externally','unknown'].includes(String(s.configFileState))||!['missing','available','unknown'].includes(String(s.binaryState)))throw new Error('Malformed Project Session');
  for(const [key,kind] of [['caseSource','case-source'],['parameterFile','parameter'],['executable','executable']]) {
   const f=s[key];if(f===undefined)continue;

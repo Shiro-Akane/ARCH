@@ -1,3 +1,5 @@
+import type {WorkingCopy} from '../../data/RealInitPreviewProvider';
+import {serializePar} from '../../data/ParDocument';
 import {useHost} from '../../host/hostContext';
 import {ConfigAdapter,ConfigRequestError} from '../../host/ConfigAdapter';
 import {associateConfig,diskStatus} from '../../host/configLifecycle';
@@ -16,7 +18,7 @@ import { parSchema } from '../../data/parSchema';
 import { effectiveEntries } from '../../data/ParDocument';
 import { loadPar, editPar, parStatus, parErrors, revertPar, exportPar } from '../../state/parState';
 import type { ParState } from '../../state/parState';
-export function ConfigPanel({ onEdit, onInspect, active }: { active:boolean; onEdit: () => void; onInspect:(p:ParameterDetails|null)=>void }) {
+export function ConfigPanel({ onEdit, onInspect, active, onWorkingCopy }: { active:boolean; onWorkingCopy?:(copy:WorkingCopy|null)=>void; onEdit: () => void; onInspect:(p:ParameterDetails|null)=>void }) {
   const host=useHost();const api=useRef(new ConfigAdapter());
   const [lifecycle,setLifecycle]=useState<ConfigLifecycleState>({diskState:'unknown'});
   const [pending,setPending]=useState<'project'|'reload'|'browser'|null>(null);
@@ -31,6 +33,7 @@ export function ConfigPanel({ onEdit, onInspect, active }: { active:boolean; onE
   const latest=useRef(createLatestRequest());
   const fileInput=useRef<HTMLInputElement>(null);
   useEffect(()=>{if(!message)return;const timer=setTimeout(()=>setMessage(''),6000);return ()=>clearTimeout(timer);},[message]);
+  useEffect(()=>{onWorkingCopy?.(state?{text:serializePar(state.document,state.changes),filename:state.filename,valid:parStatus(state)!=='invalid',dirty:parStatus(state)!=='saved'}:null);},[state,onWorkingCopy]);
   const errors=state ? parErrors(state) : {};
   const values=state ? Object.fromEntries(effectiveEntries(state.document).map(e=>[e.key,state.changes[e.key] ?? e.value])) : {};
   const dimension=observedDimension(values);

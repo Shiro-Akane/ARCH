@@ -1,3 +1,38 @@
+# Phase 2D — Real Sod initial-condition preview
+
+Protocol **1.3**. Core Preview JSON schema is independently **1.0**. Real Config now uses the exact serialized unsaved Working Copy via stdin; Preview does not Save. Only registered Sod 1D Cartesian initialization is supported. There is no simulation, Plotfile generation, graphical parameter binding or AMR reconstruction.
+
+The original `arch-existing-cuda-release` profile is unchanged and does not advertise real Preview. The independent integration profile `arch-preview-cpu-integration` is fixed to:
+
+- source root: `/home/arch/projects/ARCH-phase2d-api-integration`
+- existing build directory: `build-preview-audit`
+- target: `ARCH`
+- executable: `build-preview-audit/bin/ARCH`
+- Preview profile: `sod-initial-cpu`, CPU, 512 samples, max4096
+
+This is an explicit local integration deployment, not a portable auto-configurer. A different checkout needs an intentionally configured Host profile; the browser cannot rebind it. The CPU Debug build was prepared according to `src/api/README.md`, CUDA/KLU OFF. Host only performs standard builds of that existing tree. It never configures a tree through HTTP. Original `/home/arch/projects/ARCH-linux` and its CUDA tree are untouched.
+
+Use Node24.21.0/npm11.19.0. In `studio/`, run `npm ci` for a fresh checkout, then:
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run local-host -- --project /home/arch/projects/ARCH-phase2d-api-integration --build-profile arch-preview-cpu-integration --config simulation/Sod/Sod.par --origin http://127.0.0.1:4185
+```
+
+In another terminal run `npm run build` and `npm run preview -- --port 4185`. Both bind127.0.0.1. Connect Local Host; select Real Config; Open Project Config. If no matching successful Manifest exists, explicitly Build. Generate Real Preview, edit parameters without saving, then Update Preview. Fields come from Core. Click the curve or choose sample index to inspect real values. Parameter inspection and sample inspection share the contextual Inspector.
+
+Last success remains visible during edits, errors and cancellation. Current requires the same Working Copy, project, request and build/binary identity. Cancel affects only the Host-owned process group (SIGTERM then SIGKILL after1s); timeout30s. Build and Preview cannot run concurrently. Host shutdown terminates active Preview. Unknown full dependency freshness is disclosed; matching25 tracked inputs and binary/manifest are required. Case mapping remains configured, not a general registry-verification claim. Unit/parameter metadata absence is explicit.
+
+Host endpoints: POST `/api/preview` accepts only projectId/profileId/configText/configRevision/optional requestedSampleCount; GET `/api/preview/status`; POST `/api/preview/:requestId/cancel` with no body. Exact Origin/Host, Studio/protocol headers and bounded payloads apply. No shell/program/argv/cwd/env/PID from the browser. Core diagnostics are not automatic repairs. Existing config writes remain separate explicit actions. JSON request including overhead is limited to1MiB, so a near-limit raw config can be too large to submit.
+
+See `PHASE2D_TARGET.md`, `PHASE2D_UPSTREAM_PREVIEW_API_AUDIT.md`, `STATUS.md`. Previous phase instructions below are historical; protocol1.3 and the above Preview behavior supersede them.
+
+---
+
+# Core initial-preview interface
+
+ARCH now provides a CPU-only initial-preview command for local Host integration. See [the interface README](../src/api/README.md) for build steps, stdin/JSON calls, EOS/grid/AMR state, limits and response examples. This delivers the Core entry point; wiring it into Studio remains a separate frontend/Host change.
+
 # Phase 2C — Controlled Build integration
 
 Studio development and the managed ARCH project are separate. The fixed Host profile `arch-existing-cuda-release` builds `/home/arch/projects/ARCH-linux/build-cuda`, target `ARCH`, expected executable `/home/arch/projects/ARCH-linux/build-cuda/bin/ARCH`. It never treats the Studio checkout as the binary's source root. This is a unified ARCH executable with explicitly configured registered case ID `Sod`; mapping is **configured**, not independently verified by Core.

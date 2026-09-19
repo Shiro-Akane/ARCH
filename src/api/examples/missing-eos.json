@@ -1,0 +1,89 @@
+{
+  "data": null,
+  "diagnostics": [
+    {
+      "code": "EOS_FAILED",
+      "message": "Cannot open file for SHA-256 fingerprint: missing-eos-table.dat",
+      "severity": "error"
+    },
+    {
+      "code": "CORE_LOG",
+      "message": "[Info] Loaded 51 parameters from <memory>\n[Problem] Sod shock tube: x0=0.5, left=(1, 1), right=(0.125, 0.1)\n[EOS Dispatch] Resolving EOS Policy: helmholtz\n",
+      "severity": "info"
+    }
+  ],
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "6ee761c24fa2ffb37b33f39ffc8ff28c55244107577f3ce32d7085a9b64f9291",
+    "requestId": "example-missing-eos"
+  },
+  "kind": "initial-state-preview",
+  "schemaVersion": "1.0",
+  "stage": "eos",
+  "state": {
+    "amr": {
+      "actualHierarchy": null,
+      "derefineThreshold": 0.2,
+      "effectiveMaxBlocks": 32,
+      "enabled": false,
+      "indicatorEvaluation": "not_executed",
+      "initialRefinement": "not_executed",
+      "maxBlocks": 32,
+      "maxLevel": 0,
+      "minLevel": 0,
+      "parsedIndicators": [
+        "DENS"
+      ],
+      "refineThreshold": 0.8,
+      "regridInterval": 2,
+      "requestedIndicators": "DENS",
+      "status": "configured"
+    },
+    "computeBackendRequested": "cpu",
+    "configuration": "parsed",
+    "eos": {
+      "componentTablePath": "",
+      "configuredGamma": 1.4,
+      "loadedTablePath": null,
+      "requested": "helmholtz",
+      "resolved": "helmholtz",
+      "sourceFingerprint": null,
+      "status": "error",
+      "tablePath": "missing-eos-table.dat"
+    },
+    "grid": {
+      "axes": [
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.0078125,
+          "lowerBoundary": "outflow",
+          "max": 1,
+          "min": 0,
+          "name": "x1",
+          "rootBlocks": 8,
+          "rootCells": 128,
+          "unit": null,
+          "upperBoundary": "outflow"
+        }
+      ],
+      "dimension": 1,
+      "geometry": "cartesian",
+      "hierarchy": "not_constructed",
+      "status": "configured"
+    },
+    "setup": "ready",
+    "species": [
+      {
+        "index": 0,
+        "name": "SodGas"
+      }
+    ]
+  },
+  "status": "error"
+}

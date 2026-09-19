@@ -1,7 +1,8 @@
+import {RealInitWorkspace} from './components/RealInitWorkspace';
+import type {WorkingCopy} from './data/RealInitPreviewProvider';
 import {LocalHostProvider} from './host/LocalHostProvider';
 import { ProjectPanel } from './host/ProjectPanel';
 import { modeDescriptions } from './data/modePresentation';
-import { ParameterInspector } from './components/Inspector/ParameterInspector';
 import type { ParameterDetails } from './components/Inspector/ParameterInspector';
 import { ConfigPanel } from './components/ParameterPanel/ConfigPanel';
 import { PlotfileWorkspace } from './components/PlotfileWorkspace';
@@ -19,6 +20,7 @@ export default function App() {
   const { state, dispatch } = useStudio();
   const mockHistory=useRef(new EditHistory<Parameters>());
   const [parameter,setParameter]=useState<ParameterDetails|null>(null);
+  const [copy,setCopy]=useState<WorkingCopy|null>(null);
   const [source, setSource] = useState('mock');
   const sampleView = source === 'cellular';
   const realView = source === 'plotfile';
@@ -32,7 +34,7 @@ export default function App() {
     </header>
     <ProjectPanel />
     <p className="mode-description">{modeDescriptions[source]}</p>
-    <div hidden={source !== 'mock' && !configView} className="mock-shell"><main id="workspace" className="workspace"><div style={{display:configView ? 'contents' : 'none'}}><ConfigPanel active={configView} onInspect={setParameter} onEdit={() => dispatch({type:'config/external-edit'})} /></div>{!configView && <ParameterPanel preview={state.preview} invalid={state.config==='invalid'} onPreview={()=>dispatch({type:'preview/start',revision:state.revision})} parameters={state.working} onEdit={(key, value) => {mockHistory.current.record(state.working,{...state.working,[key]:value});dispatch({ type: 'edit', key, value });}} />}<Preview previousConfig={configView} onGenerate={()=>dispatch({type:'preview/start',revision:state.revision})} state={state} onField={field => dispatch({ type: 'field/select', field })} onPoint={(x,y) => dispatch({ type: 'point/select', x, y })} />{configView ? <ParameterInspector parameter={parameter} /> : <Inspector state={state} />}</main>
+    <div hidden={source !== 'mock' && !configView} className="mock-shell"><main id="workspace" className="workspace"><div style={{display:configView ? 'contents' : 'none'}}><ConfigPanel onWorkingCopy={setCopy} active={configView} onInspect={setParameter} onEdit={() => dispatch({type:'config/external-edit'})} /></div>{!configView && <ParameterPanel preview={state.preview} invalid={state.config==='invalid'} onPreview={()=>dispatch({type:'preview/start',revision:state.revision})} parameters={state.working} onEdit={(key, value) => {mockHistory.current.record(state.working,{...state.working,[key]:value});dispatch({ type: 'edit', key, value });}} />}{!configView && <Preview previousConfig={false} onGenerate={()=>dispatch({type:'preview/start',revision:state.revision})} state={state} onField={field => dispatch({ type: 'field/select', field })} onPoint={(x,y) => dispatch({ type: 'point/select', x, y })} />}<RealInitWorkspace copy={copy} active={configView} parameter={parameter} onSample={()=>setParameter(null)} />{!configView && <Inspector state={state} />}</main>
     {!configView && <StatusBar state={state} onPreview={() => dispatch({ type: 'preview/start', revision: state.revision })} onSave={() => dispatch({ type: 'config/save' })} onRevert={() => {mockHistory.current.reset();dispatch({ type: 'config/revert' });}} />}</div>
     {sampleView && <CellularSample />}
     {realView && <PlotfileWorkspace />}

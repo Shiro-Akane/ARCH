@@ -2,6 +2,7 @@ import { useMemo, useRef } from 'react';
 import { LineVis, Annotation, useCanvasEvent } from '@h5web/lib';
 import ndarray from 'ndarray';
 import '@h5web/lib/styles.css';
+import {lineDomain} from '../../data/LinePreviewData';
 import type { LinePreviewData } from '../../data/LinePreviewData';
 
 function SampleSelection({ data, selected, onPoint }: { data: LinePreviewData; selected: number | null; onPoint: (x: number) => void }) {
@@ -16,7 +17,8 @@ function SampleSelection({ data, selected, onPoint }: { data: LinePreviewData; s
 
 export function LineRenderer({ data, selected, onPoint }: { data: LinePreviewData; selected: number | null; onPoint: (x: number) => void }) {
   const array = useMemo(() => ndarray(data.values, [data.values.length]), [data]);
+  const domain=useMemo(()=>lineDomain(data),[data]);
   return <div className="line-renderer" aria-label={`${data.field} line plot`}>
-    <LineVis dataArray={array} domain={undefined} abscissaParams={{ label: 'x', value: data.x }} ordinateLabel={data.field}><SampleSelection data={data} selected={selected} onPoint={onPoint} /></LineVis>
+    <LineVis dataArray={array} domain={domain} abscissaParams={{ label: 'x', value: data.x }} ordinateLabel={data.field}><SampleSelection data={data} selected={selected} onPoint={onPoint} /></LineVis>
   </div>;
 }

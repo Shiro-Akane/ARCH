@@ -11,6 +11,7 @@
 
 // Forward declaration to avoid circular dependency
 struct SpeciesManager;
+struct PointCoords;
 
 /**
  * @struct PrimitiveData

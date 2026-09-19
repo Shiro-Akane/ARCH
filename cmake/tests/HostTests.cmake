@@ -11,6 +11,14 @@ endfunction()
 # Python tooling contracts.
 find_package(Threads REQUIRED)
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_executable(arch_preview_initial_conversion tests/api/test_initial_conversion.cpp)
+arch_configure_host_test(arch_preview_initial_conversion)
+add_test(NAME preview_initial_conversion COMMAND arch_preview_initial_conversion)
+add_test(NAME preview_api_contract
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_preview.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(preview_api_contract PROPERTIES TIMEOUT 180)
 add_test(NAME portable_network_generator
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_portable_network_generator.py)

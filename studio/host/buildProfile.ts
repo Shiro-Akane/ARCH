@@ -24,3 +24,7 @@ export async function validateProfile(root:string,p:BuildProfile,cmake=CMAKE){
  await access(cmake,constants.X_OK);if(!(await stat(cmake)).isFile())throw new Error('CMake executable unavailable.');
  return dir;
 }
+
+// Separate fixed integration project. This never rebinds the existing CUDA tree.
+export const PREVIEW_BUILD_PROFILE:BuildProfile={...ARCH_PROFILE,id:'arch-preview-cpu-integration',displayName:'ARCH Preview CPU integration (Debug)',managedSourceRoot:'/home/arch/projects/ARCH-phase2d-api-integration',buildDirRelative:'build-preview-audit',outputBinaryRelative:'build-preview-audit/bin/ARCH',trackedInputs:ARCH_PROFILE.trackedInputs.filter(p=>p!=='build-cuda/CMakeCache.txt').concat(['build-preview-audit/CMakeCache.txt','src/api/Preview.cpp','src/api/PreviewCommand.cpp','src/api/Preview.h','src/api/Json.h','src/core/InitialStateConversion.h','src/core/ProblemHelper.cpp','src/core/RuntimeParams.h','src/core/FileFingerprint.cpp','src/core/FileFingerprint.h','src/interface/GenericProblem.h','src/interface/ProblemGenerator.h','src/data/UserTypes.h','src/io/ConfigParser.h','cmake/tests/HostTests.cmake'])};
+export const BUILD_PROFILES=[ARCH_PROFILE,PREVIEW_BUILD_PROFILE];

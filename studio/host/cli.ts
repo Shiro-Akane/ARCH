@@ -5,6 +5,6 @@ try {
  if(!values.project)throw new Error('--project is required');const port=Number(values.port);if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid port');
  const reader=await openProject({project:values.project,case:values.case,config:values.config,binary:values.binary,buildProfile:values['build-profile']});
  const server=createHostServer(reader,values.origin!);await listenLocal(server,port);
- console.log(`ARCH Local Host protocol 1.2 at http://127.0.0.1:${port}; authorized UI ${values.origin}; authorized project ${reader.snapshot().host.projectRoot}`);
- for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>{if(reader.build?.isActive()){console.error('Build is active; wait for it to finish before stopping the host.');return;}server.close(()=>process.exit(0));});
+ console.log(`ARCH Local Host protocol 1.3 at http://127.0.0.1:${port}; authorized UI ${values.origin}; authorized project ${reader.snapshot().host.projectRoot}`);
+ for(const signal of ['SIGINT','SIGTERM'] as const)process.on(signal,()=>{if(reader.build?.isActive()){console.error('Build is active; wait for it to finish before stopping the host.');return;}void reader.preview?.shutdown();server.close(()=>{const wait=setInterval(()=>{if(!reader.preview?.isActive()){clearInterval(wait);process.exit(0);}},50);});});
 } catch(error){console.error(`Local Host startup failed: ${error instanceof Error?error.message:'unknown error'}`);process.exitCode=1;}
