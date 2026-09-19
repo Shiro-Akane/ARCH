@@ -19,6 +19,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include "api/Preview.h"
 
 // Application control and public problem interface.
 #include "core/ProblemRegistry.h"
@@ -36,6 +37,12 @@
 
 int main(int argc, char **argv)
 {
+    // Isolated application request: branch before logs, directories, backend
+    // resolution or the simulation driver can acquire resources.
+    if (argc > 1 && (std::string(argv[1]) == "--preview"
+                     || std::string(argv[1]) == "--preview-capabilities"))
+        return arch::api::RunPreviewCommand(argc, argv);
+
     // The CLI contract has three entries: executable, problem name, and
     // parameter file. Therefore argc must be at least three.
     if (argc < 3)
