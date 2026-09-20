@@ -18,6 +18,7 @@
 
 #include "../data/GlobalDefs.h"
 #include "../io/ConfigParser.h"
+#include "StandardParameters.h"
 
 class RuntimeParams
 {
@@ -45,67 +46,9 @@ private:
      * Supported forms are a plain number, pi, -pi, coefficient*pi,
      * pi*coefficient, and pi/coefficient. This is not a general parser.
      */
-    static double ParseMathExpr(std::string str, double default_val = 0.0)
+    static double ParseMathExpr(const std::string& str, const std::string& key)
     {
-        if (str.empty())
-            return default_val;
-
-        // Remove whitespace before matching the supported literal forms.
-        str.erase(std::remove_if(str.begin(), str.end(), ::isspace), str.end());
-
-        // Separate ordinary numeric input from the supported pi forms.
-        size_t pi_pos = str.find("pi");
-        if (pi_pos == std::string::npos)
-        {
-            // Plain numeric input uses the standard conversion path.
-            try
-            {
-                return std::stod(str);
-            }
-            catch (...)
-            {
-                return default_val;
-            }
-        }
-
-        double pi_val = arch::constants::math::pi;
-
-        if (str == "pi")
-            return pi_val;
-        if (str == "-pi")
-            return -pi_val;
-
-        // Handle coefficient*pi and pi*coefficient.
-        size_t star_pos = str.find('*');
-        if (star_pos != std::string::npos)
-        {
-            std::string coeff_str = (pi_pos > star_pos) ? str.substr(0, star_pos) : str.substr(star_pos + 1);
-            try
-            {
-                return std::stod(coeff_str) * pi_val;
-            }
-            catch (...)
-            {
-                return pi_val;
-            }
-        }
-
-        // Handle pi/coefficient.
-        size_t slash_pos = str.find('/');
-        if (slash_pos != std::string::npos && pi_pos < slash_pos)
-        {
-            std::string coeff_str = str.substr(slash_pos + 1);
-            try
-            {
-                return pi_val / std::stod(coeff_str);
-            }
-            catch (...)
-            {
-                return pi_val;
-            }
-        }
-
-        return default_val; // Fall back when the expression cannot be parsed.
+        return ConfigParser::ParseExpression(key, str);
     }
 
 public:
@@ -143,19 +86,20 @@ private:
     static SimConfig Resolve(const ConfigParser &parser)
     {
 
+        arch::config::ValidateStandardTokens(parser);
         SimConfig cfg;
 
         cfg.grid.geometry = CanonicalizeEnumToken(
-            parser.GetString("geometry", "cartesian"));
+            parser.GetString("geometry", arch::config::DefaultString("geometry")));
         // Grid topology uses canonical nblockx* keys.
-        cfg.grid.nblockx1 = parser.GetInt("nblockx1", 1);
-        cfg.grid.nblockx2 = parser.GetInt("nblockx2", 1);
-        cfg.grid.nblockx3 = parser.GetInt("nblockx3", 1);
-        cfg.grid.amr_max_blocks = parser.GetInt("max_blocks", 2000);
+        cfg.grid.nblockx1 = parser.GetInt("nblockx1", arch::config::DefaultInt("nblockx1"));
+        cfg.grid.nblockx2 = parser.GetInt("nblockx2", arch::config::DefaultInt("nblockx2"));
+        cfg.grid.nblockx3 = parser.GetInt("nblockx3", arch::config::DefaultInt("nblockx3"));
+        cfg.grid.amr_max_blocks = parser.GetInt("max_blocks", arch::config::DefaultInt("max_blocks"));
 
         if (cfg.grid.nblockx2 <= 0 && cfg.grid.nblockx3 > 0)
         {
-            throw std::invalid_argument("Grid Error: Cross-dimensional topology anomaly. nblockx2 <= 0 but nblockx3 > 0 is not allowed.");
+            throw ConfigValueError("nblockx3", "INVALID_TOPOLOGY", "The third axis requires a positive nblockx2.");
         }
 
         cfg.grid.dim = 3;
@@ -164,49 +108,49 @@ private:
         if (cfg.grid.nblockx2 <= 0)
             cfg.grid.dim = 1;
 
-        cfg.grid.x1_min = ParseMathExpr(parser.GetString("x1_min", "0.0"));
-        cfg.grid.x1_max = ParseMathExpr(parser.GetString("x1_max", "1.0"));
-        cfg.grid.x2_min = ParseMathExpr(parser.GetString("x2_min", "0.0"));
-        cfg.grid.x2_max = ParseMathExpr(parser.GetString("x2_max", "1.0"));
-        cfg.grid.x3_min = ParseMathExpr(parser.GetString("x3_min", "0.0"));
-        cfg.grid.x3_max = ParseMathExpr(parser.GetString("x3_max", "1.0"));
+        cfg.grid.x1_min = ParseMathExpr(parser.GetString("x1_min", arch::config::DefaultString("x1_min")), "x1_min");
+        cfg.grid.x1_max = ParseMathExpr(parser.GetString("x1_max", arch::config::DefaultString("x1_max")), "x1_max");
+        cfg.grid.x2_min = ParseMathExpr(parser.GetString("x2_min", arch::config::DefaultString("x2_min")), "x2_min");
+        cfg.grid.x2_max = ParseMathExpr(parser.GetString("x2_max", arch::config::DefaultString("x2_max")), "x2_max");
+        cfg.grid.x3_min = ParseMathExpr(parser.GetString("x3_min", arch::config::DefaultString("x3_min")), "x3_min");
+        cfg.grid.x3_max = ParseMathExpr(parser.GetString("x3_max", arch::config::DefaultString("x3_max")), "x3_max");
 
         cfg.grid.x1l_boundary_type = CanonicalizeEnumToken(
-            parser.GetString("x1l_boundary_type", "outflow"));
+            parser.GetString("x1l_boundary_type", arch::config::DefaultString("x1l_boundary_type")));
         cfg.grid.x1r_boundary_type = CanonicalizeEnumToken(
-            parser.GetString("x1r_boundary_type", "outflow"));
+            parser.GetString("x1r_boundary_type", arch::config::DefaultString("x1r_boundary_type")));
         cfg.grid.x2l_boundary_type = CanonicalizeEnumToken(
-            parser.GetString("x2l_boundary_type", "outflow"));
+            parser.GetString("x2l_boundary_type", arch::config::DefaultString("x2l_boundary_type")));
         cfg.grid.x2r_boundary_type = CanonicalizeEnumToken(
-            parser.GetString("x2r_boundary_type", "outflow"));
+            parser.GetString("x2r_boundary_type", arch::config::DefaultString("x2r_boundary_type")));
         cfg.grid.x3l_boundary_type = CanonicalizeEnumToken(
-            parser.GetString("x3l_boundary_type", "outflow"));
+            parser.GetString("x3l_boundary_type", arch::config::DefaultString("x3l_boundary_type")));
         cfg.grid.x3r_boundary_type = CanonicalizeEnumToken(
-            parser.GetString("x3r_boundary_type", "outflow"));
+            parser.GetString("x3r_boundary_type", arch::config::DefaultString("x3r_boundary_type")));
 
         // Numerical-method configuration.
-        cfg.numerics.solver_name = parser.GetString("solver", "SW");
-        cfg.numerics.cfl = parser.GetDouble("cfl", 0.8);
-        cfg.numerics.limiter = parser.GetString("limiter", "minmod");
-        cfg.numerics.reconstruction = parser.GetString("reconstruct", "pcm");
+        cfg.numerics.solver_name = parser.GetString("solver", arch::config::DefaultString("solver"));
+        cfg.numerics.cfl = parser.GetDouble("cfl", arch::config::DefaultDouble("cfl"));
+        cfg.numerics.limiter = parser.GetString("limiter", arch::config::DefaultString("limiter"));
+        cfg.numerics.reconstruction = parser.GetString("reconstruct", arch::config::DefaultString("reconstruct"));
         // The canonical time_integrator key takes precedence over its
         // accepted timeintegrator alias.
         cfg.numerics.time_integrator = parser.GetString(
-            "time_integrator", parser.GetString("timeintegrator", "RK2"));
-        if (parser.GetBool("EntropyFix", true))
+            "time_integrator", parser.GetString("timeintegrator", arch::config::DefaultString("timeintegrator")));
+        if (parser.GetBool("EntropyFix", arch::config::DefaultBool("EntropyFix")))
         {
             // 0.1 is the default fraction of local spectral radius used as the
             // entropy-fix smoothing width.
-            cfg.numerics.entropy_fix_coeff = parser.GetDouble("EntropyFixCoefficient", 0.1);
+            cfg.numerics.entropy_fix_coeff = parser.GetDouble("EntropyFixCoefficient", arch::config::DefaultDouble("EntropyFixCoefficient"));
         }
         else
         {
             cfg.numerics.entropy_fix_coeff = 0.0; // Zero disables eigenvalue smoothing.
         }
 
-        cfg.numerics.sml_rho = parser.GetDouble("sml_rho", 1e-12);
-        cfg.numerics.min_eint = parser.GetDouble("min_eint", 1e-10);
-        cfg.numerics.max_eint = parser.GetDouble("max_eint", 1e21);
+        cfg.numerics.sml_rho = parser.GetDouble("sml_rho", arch::config::DefaultDouble("sml_rho"));
+        cfg.numerics.min_eint = parser.GetDouble("min_eint", arch::config::DefaultDouble("min_eint"));
+        cfg.numerics.max_eint = parser.GetDouble("max_eint", arch::config::DefaultDouble("max_eint"));
         if (!std::isfinite(cfg.numerics.sml_rho) ||
             !std::isfinite(cfg.numerics.min_eint) ||
             !std::isfinite(cfg.numerics.max_eint) ||
@@ -220,31 +164,31 @@ private:
         // Execution backend.  This is independent of the time integrator:
         // a CUDA-enabled fat binary can still execute the CPU path at runtime.
         cfg.execution.compute_backend = CanonicalizeEnumToken(
-            parser.GetString("compute_backend", "cpu"));
-        cfg.execution.cuda_device = parser.GetInt("cuda_device", 0);
+            parser.GetString("compute_backend", arch::config::DefaultString("compute_backend")));
+        cfg.execution.cuda_device = parser.GetInt("cuda_device", arch::config::DefaultInt("cuda_device"));
 
         // Equation-of-state and physical-module configuration.
-        cfg.physics.eos_type = parser.GetString("eos_type", "ideal");
-        cfg.physics.eos_table_path = parser.GetString("eos_table_path", "");
-        cfg.physics.eos_helm_table_path = parser.GetString("eos_helm_table_path", "");
-        cfg.physics.gamma = parser.GetDouble("gamma", 1.4);
+        cfg.physics.eos_type = parser.GetString("eos_type", arch::config::DefaultString("eos_type"));
+        cfg.physics.eos_table_path = parser.GetString("eos_table_path", arch::config::DefaultString("eos_table_path"));
+        cfg.physics.eos_helm_table_path = parser.GetString("eos_helm_table_path", arch::config::DefaultString("eos_helm_table_path"));
+        cfg.physics.gamma = parser.GetDouble("gamma", arch::config::DefaultDouble("gamma"));
 
         // Nuclear reaction and NSE configuration.
-        cfg.physics.burn.use_burn = parser.GetBool("use_burn", false);
-        cfg.physics.burn.network_name = parser.GetString("network_name", "aprox19");
-        cfg.physics.burn.nuclearTempMin = parser.GetDouble("nuclearTempMin", 1e9);
-        cfg.physics.burn.nuclearDensMin = parser.GetDouble("nuclearDensMin", 1e-10);
-        cfg.physics.burn.smallt = parser.GetDouble("smallt", 1e5);
-        cfg.physics.burn.smallx = parser.GetDouble("smallx", 1e-20);
+        cfg.physics.burn.use_burn = parser.GetBool("use_burn", arch::config::DefaultBool("use_burn"));
+        cfg.physics.burn.network_name = parser.GetString("network_name", arch::config::DefaultString("network_name"));
+        cfg.physics.burn.nuclearTempMin = parser.GetDouble("nuclearTempMin", arch::config::DefaultDouble("nuclearTempMin"));
+        cfg.physics.burn.nuclearDensMin = parser.GetDouble("nuclearDensMin", arch::config::DefaultDouble("nuclearDensMin"));
+        cfg.physics.burn.smallt = parser.GetDouble("smallt", arch::config::DefaultDouble("smallt"));
+        cfg.physics.burn.smallx = parser.GetDouble("smallx", arch::config::DefaultDouble("smallx"));
 
-        cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", 1e30);
+        cfg.physics.burn.enucDtFactor = parser.GetDouble("enucDtFactor", arch::config::DefaultDouble("enucDtFactor"));
         const std::string nse_request = CanonicalizeEnumToken(
-            parser.GetString("use_nse", "true"));
+            parser.GetString("use_nse", arch::config::DefaultString("use_nse")));
         cfg.physics.burn.nse_auto = nse_request == "auto";
         cfg.physics.burn.use_nse = cfg.physics.burn.nse_auto
-            || parser.GetBool("use_nse", true);
-        cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", 4.5e9);
-        cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", 1.0e6);
+            || parser.GetBool("use_nse", arch::config::DefaultBool("use_nse"));
+        cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", arch::config::DefaultDouble("nseTempThreshold"));
+        cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", arch::config::DefaultDouble("nseDensThreshold"));
         if (!std::isfinite(cfg.physics.burn.nseTempThreshold)
             || !(cfg.physics.burn.nseTempThreshold > 0.0)
             || !std::isfinite(cfg.physics.burn.nseDensThreshold)
@@ -254,38 +198,38 @@ private:
                 "nseDensThreshold >= 0 g/cm^3, for both true and auto.");
         }
 
-        cfg.physics.burn.enforce_mass_conservation = parser.GetBool("enforce_mass_conservation", true);
-        cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", 0);
+        cfg.physics.burn.enforce_mass_conservation = parser.GetBool("enforce_mass_conservation", arch::config::DefaultBool("enforce_mass_conservation"));
+        cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", arch::config::DefaultInt("burn_verbose_level"));
 
         // Stiff ODE solver configuration.
-        cfg.physics.burn.odeconfig.ode_solver = parser.GetString("ode_solver", "BE_NR");
-        cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", "Auto");
+        cfg.physics.burn.odeconfig.ode_solver = parser.GetString("ode_solver", arch::config::DefaultString("ode_solver"));
+        cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", arch::config::DefaultString("linear_solver"));
 
-        cfg.physics.burn.odeconfig.rtol = parser.GetDouble("ode_rtol", 1e-4);
-        cfg.physics.burn.odeconfig.atol = parser.GetDouble("ode_atol", 1e-8);
-        cfg.physics.burn.odeconfig.max_newton_iter = parser.GetInt("ode_max_newton_iter", 50);
-        cfg.physics.burn.odeconfig.max_substeps = parser.GetInt("ode_max_substeps", 10000);
+        cfg.physics.burn.odeconfig.rtol = parser.GetDouble("ode_rtol", arch::config::DefaultDouble("ode_rtol"));
+        cfg.physics.burn.odeconfig.atol = parser.GetDouble("ode_atol", arch::config::DefaultDouble("ode_atol"));
+        cfg.physics.burn.odeconfig.max_newton_iter = parser.GetInt("ode_max_newton_iter", arch::config::DefaultInt("ode_max_newton_iter"));
+        cfg.physics.burn.odeconfig.max_substeps = parser.GetInt("ode_max_substeps", arch::config::DefaultInt("ode_max_substeps"));
 
-        cfg.physics.burn.odeconfig.dt_safe_factor = parser.GetDouble("ode_dt_safe_fac", 0.9);
-        cfg.physics.burn.odeconfig.dt_fac_max = parser.GetDouble("ode_dt_fac_max", 2.0);
-        cfg.physics.burn.odeconfig.dt_fac_min = parser.GetDouble("ode_dt_fac_min", 0.1);
-        cfg.physics.burn.odeconfig.initial_dt_frac = parser.GetDouble("ode_initial_dt_frac", 1e-3);
+        cfg.physics.burn.odeconfig.dt_safe_factor = parser.GetDouble("ode_dt_safe_fac", arch::config::DefaultDouble("ode_dt_safe_fac"));
+        cfg.physics.burn.odeconfig.dt_fac_max = parser.GetDouble("ode_dt_fac_max", arch::config::DefaultDouble("ode_dt_fac_max"));
+        cfg.physics.burn.odeconfig.dt_fac_min = parser.GetDouble("ode_dt_fac_min", arch::config::DefaultDouble("ode_dt_fac_min"));
+        cfg.physics.burn.odeconfig.initial_dt_frac = parser.GetDouble("ode_initial_dt_frac", arch::config::DefaultDouble("ode_initial_dt_frac"));
 
-        cfg.physics.burn.odeconfig.use_numerical_jacobian = parser.GetBool("ode_use_numerical_jac", false);
-        cfg.physics.burn.odeconfig.freeze_jacobian = parser.GetBool("ode_freeze_jacobian", false);
+        cfg.physics.burn.odeconfig.use_numerical_jacobian = parser.GetBool("ode_use_numerical_jac", arch::config::DefaultBool("ode_use_numerical_jac"));
+        cfg.physics.burn.odeconfig.freeze_jacobian = parser.GetBool("ode_freeze_jacobian", arch::config::DefaultBool("ode_freeze_jacobian"));
 
         // Diffusion configuration.
-        cfg.physics.diffusion.use_diffusion = parser.GetBool("use_diffusion", false);
-        cfg.physics.diffusion.integrator = parser.GetString("diff_integrator", "RKL2");
-        cfg.physics.diffusion.diff_cfl = parser.GetDouble("diff_cfl", 0.8);
-        cfg.physics.diffusion.max_stages = parser.GetInt("diff_max_stages", 256);
+        cfg.physics.diffusion.use_diffusion = parser.GetBool("use_diffusion", arch::config::DefaultBool("use_diffusion"));
+        cfg.physics.diffusion.integrator = parser.GetString("diff_integrator", arch::config::DefaultString("diff_integrator"));
+        cfg.physics.diffusion.diff_cfl = parser.GetDouble("diff_cfl", arch::config::DefaultDouble("diff_cfl"));
+        cfg.physics.diffusion.max_stages = parser.GetInt("diff_max_stages", arch::config::DefaultInt("diff_max_stages"));
 
-        cfg.physics.diffusion.use_thermal_diffusion = parser.GetBool("use_thermal_diff", false);
-        cfg.physics.diffusion.use_viscous_diffusion = parser.GetBool("use_viscous_diff", false);
-        cfg.physics.diffusion.use_species_diffusion = parser.GetBool("use_species_diff", false);
-        cfg.physics.diffusion.nu_visc = parser.GetDouble("nu_visc", 0.0);
-        cfg.physics.diffusion.alpha_therm = parser.GetDouble("alpha_therm", 0.0);
-        cfg.physics.diffusion.D_spec = parser.GetDouble("D_spec", 0.0);
+        cfg.physics.diffusion.use_thermal_diffusion = parser.GetBool("use_thermal_diff", arch::config::DefaultBool("use_thermal_diff"));
+        cfg.physics.diffusion.use_viscous_diffusion = parser.GetBool("use_viscous_diff", arch::config::DefaultBool("use_viscous_diff"));
+        cfg.physics.diffusion.use_species_diffusion = parser.GetBool("use_species_diff", arch::config::DefaultBool("use_species_diff"));
+        cfg.physics.diffusion.nu_visc = parser.GetDouble("nu_visc", arch::config::DefaultDouble("nu_visc"));
+        cfg.physics.diffusion.alpha_therm = parser.GetDouble("alpha_therm", arch::config::DefaultDouble("alpha_therm"));
+        cfg.physics.diffusion.D_spec = parser.GetDouble("D_spec", arch::config::DefaultDouble("D_spec"));
 
         // Helmholtz dispatch accepts the canonical helmholtz spelling. Normalize
         // only for this safety gate so mixed-case user input cannot bypass the
@@ -297,35 +241,38 @@ private:
         {
             if (parser.HasKey("alpha_therm") || parser.HasKey("nu_visc") || parser.HasKey("D_spec"))
             {
-                std::cerr << "[Fatal Error] When using HelmEos with diffusion, diffusion coefficients are computed physically. Do not set alpha_therm, nu_visc, or D_spec in the .par file." << std::endl;
-                std::exit(EXIT_FAILURE);
+                const auto key = parser.HasKey("alpha_therm") ? "alpha_therm"
+                    : parser.HasKey("nu_visc") ? "nu_visc" : "D_spec";
+                throw ConfigValueError(key, "INAPPLICABLE_PARAMETER",
+                    "Helmholtz diffusion computes transport coefficients; omit explicit alpha_therm, nu_visc and D_spec.");
             }
         }
 
         // Gravity configuration.
         std::string grav_type = CanonicalizeEnumToken(
-            parser.GetString("gravity_type", "none"));
+            parser.GetString("gravity_type", arch::config::DefaultString("gravity_type")));
         cfg.physics.gravity.type = grav_type;
+        cfg.physics.gravity.G_const = arch::config::DefaultDouble("gravity_G");
 
         if (grav_type == "external")
         {
-            cfg.physics.gravity.g_x = ParseMathExpr(parser.GetString("gravity_g_x", "0.0"));
-            cfg.physics.gravity.g_y = ParseMathExpr(parser.GetString("gravity_g_y", "0.0"));
-            cfg.physics.gravity.g_z = ParseMathExpr(parser.GetString("gravity_g_z", "0.0"));
+            cfg.physics.gravity.g_x = ParseMathExpr(parser.GetString("gravity_g_x", arch::config::DefaultString("gravity_g_x")), "gravity_g_x");
+            cfg.physics.gravity.g_y = ParseMathExpr(parser.GetString("gravity_g_y", arch::config::DefaultString("gravity_g_y")), "gravity_g_y");
+            cfg.physics.gravity.g_z = ParseMathExpr(parser.GetString("gravity_g_z", arch::config::DefaultString("gravity_g_z")), "gravity_g_z");
         }
         else if (grav_type == "self")
         {
             if (parser.HasKey("gravity_G"))
-                cfg.physics.gravity.G_const = ParseMathExpr(parser.GetString("gravity_G", ""));
+                cfg.physics.gravity.G_const = ParseMathExpr(parser.GetString("gravity_G", ""), "gravity_G");
         }
 
         // --- AMR (Adaptive Mesh Refinement) ---
-        cfg.amr.lrefinemin = parser.GetInt("lrefinemin", 0);
-        cfg.amr.lrefinemax = parser.GetInt("lrefinemax", 0);
-        cfg.amr.regrid_interval = parser.GetInt("regrid_interval", 2);
+        cfg.amr.lrefinemin = parser.GetInt("lrefinemin", arch::config::DefaultInt("lrefinemin"));
+        cfg.amr.lrefinemax = parser.GetInt("lrefinemax", arch::config::DefaultInt("lrefinemax"));
+        cfg.amr.regrid_interval = parser.GetInt("regrid_interval", arch::config::DefaultInt("regrid_interval"));
         if (cfg.amr.regrid_interval < 1)
             throw std::invalid_argument("regrid_interval must be positive.");
-        cfg.amr.refine_var = parser.GetString("refine_var", "DENS");
+        cfg.amr.refine_var = parser.GetString("refine_var", arch::config::DefaultString("refine_var"));
         std::replace(cfg.amr.refine_var.begin(), cfg.amr.refine_var.end(), '+', ',');
         cfg.amr.refine_on_rho = false;
         cfg.amr.refine_on_p = false;
@@ -390,27 +337,27 @@ private:
                 cfg.amr.refine_on_div_v || cfg.amr.refine_on_entropy || cfg.amr.refine_on_enuc || cfg.amr.refine_on_jeans || cfg.amr.refine_on_species;
         };
         if (!has_amr_indicator()) throw std::invalid_argument("refine_var has no usable AMR indicator for this configuration.");
-        cfg.amr.refine_threshold = parser.GetDouble("refine_threshold", 0.8);
-        cfg.amr.derefine_threshold = parser.GetDouble("derefine_threshold", 0.2);
+        cfg.amr.refine_threshold = parser.GetDouble("refine_threshold", arch::config::DefaultDouble("refine_threshold"));
+        cfg.amr.derefine_threshold = parser.GetDouble("derefine_threshold", arch::config::DefaultDouble("derefine_threshold"));
         if (cfg.amr.refine_threshold < 0.0 || cfg.amr.refine_threshold > 1.0 || cfg.amr.derefine_threshold < 0.0 ||
             cfg.amr.derefine_threshold >= cfg.amr.refine_threshold)
             throw std::invalid_argument("AMR Lohner thresholds require ordered values in [0, 1].");
         // Time limits and output configuration.
-        cfg.io.tmax = parser.GetDouble("tmax", 0.1);
-        cfg.io.max_steps = parser.GetInt("max_steps", -1);
+        cfg.io.tmax = parser.GetDouble("tmax", arch::config::DefaultDouble("tmax"));
+        cfg.io.max_steps = parser.GetInt("max_steps", arch::config::DefaultInt("max_steps"));
 
-        cfg.io.out_dir = parser.GetString("out_dir", "data");
-        cfg.io.base_name = parser.GetString("base_name", "arch");
+        cfg.io.out_dir = parser.GetString("out_dir", arch::config::DefaultString("out_dir"));
+        cfg.io.base_name = parser.GetString("base_name", arch::config::DefaultString("base_name"));
 
-        cfg.io.plt_dt = parser.GetDouble("plt_dt", -1.0);
-        cfg.io.plt_dstep = parser.GetInt("plt_dstep", -1);
+        cfg.io.plt_dt = parser.GetDouble("plt_dt", arch::config::DefaultDouble("plt_dt"));
+        cfg.io.plt_dstep = parser.GetInt("plt_dstep", arch::config::DefaultInt("plt_dstep"));
 
-        cfg.io.chk_dt = parser.GetDouble("chk_dt", -1.0);
-        cfg.io.chk_dstep = parser.GetInt("chk_dstep", -1);
+        cfg.io.chk_dt = parser.GetDouble("chk_dt", arch::config::DefaultDouble("chk_dt"));
+        cfg.io.chk_dstep = parser.GetInt("chk_dstep", arch::config::DefaultInt("chk_dstep"));
 
-        cfg.io.restart = parser.GetBool("restart", false);
+        cfg.io.restart = parser.GetBool("restart", arch::config::DefaultBool("restart"));
 
-        std::string r_file = parser.GetString("restart_file", "");
+        std::string r_file = parser.GetString("restart_file", arch::config::DefaultString("restart_file"));
         r_file.erase(0, r_file.find_first_not_of(" \t\r\n"));
         r_file.erase(r_file.find_last_not_of(" \t\r\n") + 1);
         cfg.io.restart_file = r_file;
@@ -425,7 +372,7 @@ private:
                       << cfg.io.restart_file << "'" << std::endl;
         }
 
-        std::string plt_vars = parser.GetString("plt_variables", "ALL");
+        std::string plt_vars = parser.GetString("plt_variables", arch::config::DefaultString("plt_variables"));
         std::replace(plt_vars.begin(), plt_vars.end(), '+', ',');
         const auto clear_plot_variables = [&] {
             cfg.io.vars.rho = cfg.io.vars.temp = cfg.io.vars.u = cfg.io.vars.v = cfg.io.vars.w = false;

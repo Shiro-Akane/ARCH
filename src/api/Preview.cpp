@@ -3,6 +3,8 @@
 #include "ParameterMetadata.h"
 #include "Response.h"
 #include "Sampling.h"
+#include "LogCapture.h"
+#include "Configuration.h"
 
 #include <algorithm>
 #include <array>
@@ -16,46 +18,14 @@
 #include "../core/ProblemHelper.h"
 #include "../core/ProblemRegistry.h"
 #include "../core/RuntimeParams.h"
+#include "../grid/Grid.h"
 #include "../physics/eos/eosdispatch.h"
 
 namespace arch::api {
 namespace {
 using detail::Json;
 
-class BoundedLog : public std::streambuf {
-public:
-    std::string text;
-    bool truncated = false;
-    std::string message() const {
-        std::string result = text;
-        // Truncation may cut a UTF-8 character. Drop the final multibyte
-        // sequence rather than emitting malformed JSON text.
-        if (truncated) {
-            while (!result.empty() && (static_cast<unsigned char>(result.back()) & 0xc0) == 0x80)
-                result.pop_back();
-            if (!result.empty() && static_cast<unsigned char>(result.back()) >= 0xc0)
-                result.pop_back();
-        }
-        return result;
-    }
-protected:
-    int_type overflow(int_type c) override {
-        if (!traits_type::eq_int_type(c, traits_type::eof())) {
-            if (text.size() < 16384) text.push_back(traits_type::to_char_type(c));
-            else truncated = true;
-        }
-        return traits_type::not_eof(c);
-    }
-};
-class CaptureLogs {
-public:
-    BoundedLog info, warning;
-private:
-    std::streambuf *out_, *err_;
-public:
-    CaptureLogs() : out_(std::cout.rdbuf(&info)), err_(std::cerr.rdbuf(&warning)) {}
-    ~CaptureLogs() { std::cout.rdbuf(out_); std::cerr.rdbuf(err_); }
-};
+using detail::CaptureLogs;
 Json diagnostic(const char *severity, const std::string &code, const std::string &message) {
     return Json::object({{"severity", severity}, {"code", code}, {"message", message}});
 }
@@ -80,10 +50,16 @@ Json grid_snapshot(const SimConfig &config) {
     const double hi[] = {g.x1_max, g.x2_max, g.x3_max};
     const std::string lower[] = {g.x1l_boundary_type, g.x2l_boundary_type, g.x3l_boundary_type};
     const std::string upper[] = {g.x1r_boundary_type, g.x2r_boundary_type, g.x3r_boundary_type};
+    Grid native; native.geometry = g.geometry; native.dim = g.dim;
+    const auto names = native.GetAxisNames();
     auto axes = Json::array();
     for (int axis = 0; axis < g.dim; ++axis) {
         const std::int64_t n = std::int64_t(blocks[axis]) * cells[axis];
-        axes.push(Json::object({{"name", "x" + std::to_string(axis + 1)}, {"unit", Json()},
+        const bool known = dispatch::parse_geometry(g.geometry).ok;
+        const auto label = known ? names.at(axis) : "x"+std::to_string(axis+1);
+        const auto unit = known ? AxisUnit(label, UnitSystem(config)) : std::string();
+        axes.push(Json::object({{"name", "x" + std::to_string(axis + 1)}, {"unit", unit.empty() ? Json() : Json(unit)},
+            {"displayName", label.ends_with("_cy") ? label.substr(0, label.size()-3) : label},
             {"min", lo[axis]}, {"max", hi[axis]}, {"rootBlocks", blocks[axis]},
             {"activeCellsPerBlock", cells[axis]}, {"rootCells", n},
             {"coordinateSpacing", n > 0 ? Json((hi[axis] - lo[axis]) / n) : Json()},
@@ -123,6 +99,8 @@ Json eos_snapshot(const SimConfig &config) {
 }
 void snapshot(Json &state, const SimConfig &config) {
     state["configuration"] = "parsed";
+    state["units"] = Json::object({{"system", UnitSystem(config)}, {"basis", "configured-eos-convention"}, {"valuesConverted", false}});
+    state["coordinates"] = CoordinateMetadata(config.grid, UnitSystem(config));
     state["grid"] = grid_snapshot(config);
     state["amr"] = amr_snapshot(config);
     state["eos"] = eos_snapshot(config);
@@ -169,10 +147,10 @@ std::vector<double> sample_axis(double lo, double hi, int count) {
     }
     return coordinates;
 }
-Json axis_json(const char *name, const std::vector<double> &coordinates) {
+Json axis_json(const char *name, const std::vector<double> &coordinates, const std::string& system) {
     auto values = Json::array();
     for (double x : coordinates) values.push(x);
-    return Json::object({{"name", name}, {"unit", Json()}, {"values", values}});
+    return Json::object({{"name", name}, {"unit", AxisUnit("x", system)}, {"values", values}});
 }
 Json species_snapshot(const SpeciesManager &specs) {
     auto species = Json::array();
@@ -181,11 +159,11 @@ Json species_snapshot(const SpeciesManager &specs) {
     return species;
 }
 
-Json field(const char *key, const char *name, const std::vector<double> &values) {
+Json field(const char *key, const char *name, const std::vector<double> &values, const std::string& system) {
     auto data = Json::array();
     for (double value : values) data.push(value);
     const auto [low, high] = std::minmax_element(values.begin(), values.end());
-    return Json::object({{"key", key}, {"displayName", name}, {"unit", Json()},
+    return Json::object({{"key", key}, {"displayName", name}, {"unit", FieldUnit(key, system)},
         {"values", data}, {"min", *low}, {"max", *high}});
 }
 } // namespace
@@ -314,27 +292,31 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                 }
             }
         });
-        auto axes = Json::array({axis_json("x1", x_coordinates)});
+        auto axes = Json::array({axis_json("x1", x_coordinates, UnitSystem(config))});
         auto shape = Json::array({sampling.nx});
         if (sampling.two_dimensional) {
-            axes.push(axis_json("x2", y_coordinates));
+            axes.push(axis_json("x2", y_coordinates, UnitSystem(config)));
             shape = Json::array({sampling.ny, sampling.nx});
         }
         auto fields = Json::array();
         const char *keys[] = {"DENS", "PRES", "TEMP", "VELX", "ENER", "EINT", "VELY"};
         const char *names[] = {"Density", "Pressure", "Temperature", "X velocity", "Total energy density", "Specific internal energy", "Y velocity"};
-        for (std::size_t j = 0; j < values.size(); ++j) fields.push(field(keys[j], names[j], values[j]));
+        for (std::size_t j = 0; j < values.size(); ++j) fields.push(field(keys[j], names[j], values[j], UnitSystem(config)));
         auto sampling_json = Json::object({{"kind", "uniform"}, {"valueLocation", "init-sample"},
             {"position", "bin-center"}, {"count", std::int64_t(sampling.count)},
             {"shape", shape}, {"order", "x1-fastest"}});
         if (sampling.two_dimensional)
-            sampling_json["fixedCoordinates"] = Json::array({Json::object({{"name", "x3"}, {"value", 0}, {"unit", Json()}})});
+            sampling_json["fixedCoordinates"] = Json::array({Json::object({{"name", "x3"}, {"value", 0}, {"unit", AxisUnit("x", UnitSystem(config))}})});
         result["data"] = Json::object({{"dimension", config.grid.dim}, {"kind", sampling.two_dimensional ? "grid" : "line"},
             {"sampling", sampling_json}, {"axes", axes},
             {"fields", fields}});
         if (reads) PublishParameterMetadata(result, *reads, positions, true);
         result["status"] = "ok"; result["stage"] = "complete";
         exit_code = 0;
+    } catch (const ConfigValueError& error) {
+        auto item = diagnostic("error", error_code, error.what());
+        item["parameterKey"] = error.key; item["detailCode"] = error.code;
+        result["diagnostics"].push(std::move(item));
     } catch (const std::exception &error) {
         result["diagnostics"].push(diagnostic("error", error_code, error.what()));
     }
@@ -364,6 +346,8 @@ std::string PreviewCapabilities() {
     });
     // Preserve the flat Sod capability view for existing 1D clients. New
     // clients use modelCapabilities to negotiate each case independently.
+    auto extensions = ParameterExtensionCapabilities();
+    extensions["configuration"] = ConfigurationExtensions();
     return Json::object({{"schemaVersion", preview_schema_version}, {"kind", "preview-capabilities"},
         {"status", "ok"}, {"cases", Json::array({"Sod"})}, {"dimensions", Json::array({1})},
         {"geometries", Json::array({"cartesian"})}, {"previewBackend", "cpu"},
@@ -375,7 +359,7 @@ std::string PreviewCapabilities() {
         {"maxConfigBytes", std::int64_t(max_config_bytes)}, {"maxResponseBytes", std::int64_t(max_response_bytes)},
         {"amrHierarchy", false}, {"parameterTracing", false}, {"markers", true},
         {"modelCapabilities", models},
-        {"extensions", ParameterExtensionCapabilities()}}).dump();
+        {"extensions", extensions}}).dump();
 }
 PreviewResponse PreviewInputError(const std::string &message) {
     return {Json::object({{"schemaVersion", preview_schema_version}, {"kind", "initial-state-preview"},

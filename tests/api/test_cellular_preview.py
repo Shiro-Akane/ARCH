@@ -52,7 +52,7 @@ class CellularPreviewContract(unittest.TestCase):
         self.assertEqual((data['dimension'], data['kind']), (2, 'grid'))
         self.assertEqual(data['sampling'], {'kind': 'uniform', 'valueLocation': 'init-sample',
             'position': 'bin-center', 'count': nx * ny, 'shape': [ny, nx], 'order': 'x1-fastest',
-            'fixedCoordinates': [{'name': 'x3', 'value': 0, 'unit': None}]})
+            'fixedCoordinates': [{'name': 'x3', 'value': 0, 'unit': 'cm'}]})
         for axis, name, n in zip(data['axes'], ['x1', 'x2'], [nx, ny]):
             self.assertEqual(axis['name'], name)
             self.assertEqual(len(axis['values']), n)
@@ -64,7 +64,7 @@ class CellularPreviewContract(unittest.TestCase):
             self.assertTrue(all(math.isfinite(x) for x in field['values']))
             self.assertEqual(field['min'], min(field['values']))
             self.assertEqual(field['max'], max(field['values']))
-            self.assertIsNone(field['unit'])
+            self.assertEqual(field['unit'], {'DENS':'g/cm^3','PRES':'erg/cm^3','TEMP':'K','VELX':'cm/s','VELY':'cm/s','ENER':'erg/cm^3','EINT':'erg/g'}[field['key']])
         self.assertNotIn('parameterMetadata', result)
         self.assertNotIn('graphicalBindings', result)
 

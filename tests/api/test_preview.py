@@ -69,7 +69,7 @@ class PreviewContract(unittest.TestCase):
         for field in fields.values():
             self.assertEqual(field['min'], min(field['values']))
             self.assertEqual(field['max'], max(field['values']))
-            self.assertIsNone(field['unit'])
+            self.assertEqual(field['unit'], {'DENS':'code_density','PRES':'code_pressure','TEMP':'code_temperature','VELX':'code_velocity','ENER':'code_energy_density','EINT':'code_specific_energy'}[field['key']])
             self.assertTrue(all(math.isfinite(v) for v in field['values']))
         state = result['state']
         self.assertEqual(state['eos']['resolved'], 'ideal')

@@ -2,6 +2,8 @@
 
 本目录集中管理 GUI 等本地工具调用 ARCH 的接口。当前提供 **1.0 版初始状态预览**，由现有 `ARCH` 可执行程序提供，不需要单独的服务进程。
 
+新增的标准参数目录与配置检查接口见 [配置接口说明](CONFIGURATION_API.md)。它们在生成预览前提供 90 个标准参数、默认值、约束和坐标信息；本轮交接与同步方式见 [Core UI 交接](CORE_UI_HANDOFF.md)。
+
 ## 当前提供什么
 
 - 支持已注册的 **一维 Cartesian Sod** 与 **二维 Cartesian CellularDet**；直接调用各模型的 `Setup/Init`。
@@ -13,7 +15,7 @@
 - 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制模型公式。
 - 不进入时间推进，不建立 AMR 层级，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-当前没有实际 AMR 细化布局或完整参数追踪。参数扩展目前只覆盖 Sod `x_pos`；CellularDet 本次仅提供二维场，不提供参数 metadata 或可编辑分界线。未返回某参数不表示其未被使用。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
+当前没有实际 AMR 细化布局或完整参数使用追踪。标准配置目录/检查与 Setup 读取追踪是两个独立接口；后者目前只覆盖 Sod `x_pos`；CellularDet 本次仅提供二维场，不提供参数 metadata 或可编辑分界线。未返回某参数不表示其未被使用。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
 
 这里的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 
@@ -102,7 +104,7 @@ graphicalBindings?: { version: "1", items }
 
 `configRevision` 是 **实际收到的原始 UTF-8 字节**的 SHA-256。换行、注释或空格变化也会改变摘要。Host 可与提交前的摘要比较，用于丢弃过期结果。
 
-可直接查看实际程序生成的响应样例：
+当前新增接口与单位的实际响应见 [configuration 示例](examples/configuration/README.md)。以下 Core A/B 示例保留为原交付归档，其中旧的 `unit=null` 不代表本版本仍未提供标准场单位：
 
 - [CellularDet 完整成功、EOS 失败、方向拒绝与超限响应](examples/core-b/README.md)：包含对应输入与复现命令。
 - [Sod 成功响应](examples/sod.json)：使用 `simulation/Sod/Sod.par`，4 个采样点。
@@ -159,7 +161,7 @@ CellularDet 返回 `dimension=2`、`kind=grid`：
 
 - `axes` 按 x1、x2 排列，长度分别为 Nx、Ny；每轴使用相同的均匀 bin-center 规则，数值有限且严格递增。
 - `sampling.shape=[Ny,Nx]`、`count=Nx*Ny`、`order=x1-fastest`。字段的 `index=j*Nx+i` 对应 `(axes[0].values[i], axes[1].values[j])`。
-- `sampling.fixedCoordinates=[{"name":"x3","value":0,"unit":null}]`。非活动坐标固定为零，沿用真实网格的坐标转换，不取配置 x3 范围的中点。
+- `sampling.fixedCoordinates=[{"name":"x3","value":0,"unit":"cm"}]`（CGS 参考配置）。非活动坐标固定为零，沿用真实网格的坐标转换，不取配置 x3 范围的中点。
 - UI 横轴 x1，纵轴 x2 向上；屏幕 y 方向转换不能改变数组排列。Inspector 直接按上述索引取值。
 
 两个变体中，`fields` 是列表，每项包含 `key/displayName/unit/values/min/max`。前端按 `key` 匹配，不依赖列表顺序。
@@ -174,7 +176,7 @@ CellularDet 返回 `dimension=2`、`kind=grid`：
 | ENER | 单位体积的总能量，包含动能 |
 | EINT | 单位质量的内能 |
 
-当前所有 `unit` 均为 `null`，表示接口没有提供可靠单位标签。前端保持原始值，不自行标为 SI、CGS 或无量纲。数值以 double 精度输出，所有成功样本均为有限数值；出现无效数据时整个请求失败。
+标准场和坐标现在返回单位标签：Helmholtz / tabular 场景按 CGS 返回；IdealGas 支持模型自定标度，使用 `code_length`、`code_density`、`code_temperature` 等标签，不自动解释为 CGS 或 SI。`state.units` 标明单位来源与 `valuesConverted=false`，没有转换任何数值。Sod 的 `x_pos` 读取 metadata 仍保留 `unit=null`，其图形坐标与绑定轴共享位置单位；未知 custom 单位也保留 null。完整对照见 [配置接口说明](CONFIGURATION_API.md)。数值以 double 精度输出，所有成功样本均为有限数值；出现无效数据时整个请求失败。
 
 CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，坐标小于该值的一侧为扰动区域。`noiseAmplitude` 调整该区域内的场值，不移动分界。Studio 直接显示返回的场；本次没有 Cellular 的图形绑定描述，不从参数名称猜测圆形或波动界面。
 
@@ -196,7 +198,7 @@ CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，�
 
 `state.grid.status=configured` 表示描述来自已解析配置，`hierarchy=not_constructed` 表示本次没有分配实际网格。
 
-`geometry/dimension` 描述模型区域。各轴返回：`min/max`、`rootBlocks`、`activeCellsPerBlock`、`rootCells`、`coordinateSpacing`、两端边界条件，以及尚未提供的 `unit=null`。
+`geometry/dimension` 描述模型区域。各轴返回：`min/max`、`rootBlocks`、`activeCellsPerBlock`、`rootCells`、`coordinateSpacing`、两端边界条件，以及 `unit` 和物理显示名 `displayName`。`state.coordinates` 另外提供全部三轴的原始键、活动状态、对应参数键和单位；非活动轴不据此成为 Advanced 选项。
 
 基础单元数使用 **当前编译程序**的有效块尺寸计算，不包含 ghost 或内存填充单元。调整 `--samples` 或二维轴采样数量只调整显示采样，不改变这些网格设置。
 
@@ -229,7 +231,7 @@ CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，�
 
 响应超限时 `stage=response`、`data=null`，保留请求身份和可容纳的已确认状态；不截断 JSON、不降采样、不丢字段后假装成功。若状态本身也超限，则 `state=null` 并附加 `STATE_OMITTED_FOR_SIZE`，请求身份仍保留。任何错误都不能发布本次图形绑定。
 
-部分现有解析规则会使用默认值，预览与正式配置读取保持一致。Core A 提供上述有限范围的来源信息，不提供完整模拟配置审查。错误文字用于展示，前端逻辑按退出码、`status/stage` 和稳定错误码处理。
+标准整数、浮点数和坐标表达式现在要求完整、有限的合法文本；格式错误返回带参数键的诊断，不截断数字前缀或回退。未填写的键仍使用原有默认值。custom 参数保留现有读取/回退语义，预览与正式配置读取保持一致。Core A 提供上述有限范围的来源信息，不提供完整模拟配置审查。错误文字用于展示，前端逻辑按退出码、`status/stage` 和稳定错误码处理。
 
 ## Host 与前端接入
 
