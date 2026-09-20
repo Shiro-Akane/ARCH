@@ -562,3 +562,21 @@ Target metadata/binding/drag sections reviewed. Versioned Core extensions valida
 
 ## P2E-A7 completed — stop before B
 Target A acceptance reviewed. Core4 scoped groups PASS; Studio97/97 and Host39/39 PASS, lint/typecheck/build/diff checks PASS. Production UAT verified metadata, textbox/marker, one-drag one-Undo, default insertion, error retention/recovery and desktop layouts. PHASE2E_A_COMPLETION_REPORT.md records evidence and limits. Local studio-phase2e-a-v0.9.0 checkpoint; no push, no B integration.
+
+
+## Phase 2E-B integration — 2026-09-20
+
+- Active scope: PHASE2E_TARGET.md B1–B7/MF, with the user's narrower no-Cellular-marker rule. A is sealed; no Phase 3.
+- A branch/tag pushed and remotely verified at 018f69b82b10eb71c0f927faddd2a2b34f84c513.
+- Independent worktree: /home/arch/projects/ARCH-phase2e-cellular-2d; branch studio/phase2e-b-cellular-2d.
+- Core B 91a46f8f5498fa207c5210e3a12f366fa270df80, parent Core A 47517d1ce0ab33b761fcf3dd1a4241d68b7041fd, applied with --no-commit without conflicts. A was not reapplied; main was not merged.
+- CPU Debug/CUDA OFF/KLU OFF build and five requested targets succeeded in independent build-preview-audit. No original build tree changed.
+- B1: actual capabilities match handoff (Cartesian CellularDet, shock_dir 0/1, default 128x128, [Ny,Nx], x1-fastest, 8 MiB). Six scoped tests running; Studio implementation remains gated until completion.
+
+B1 PASS: six scoped groups, 215.36 seconds; real capabilities verified. Target rechecked before B2. B gate cleared. B2 schema/profile integration in progress.
+
+B2–B5 implementation: Host-owned profiles, model capability checks, strict shape/axis validation, Float64 provider, 2D heatmap/fields/colorbar/fit and index Inspector. Target boundaries rechecked: no Cellular marker, no AMR hierarchy. Verification in progress.
+
+B2–B6 targeted checks PASS: 19 tests covering actual non-square Core fixtures in both shock directions, transpose/shape/axis rejection, limits, stdin identity, cancellation and failure retention, plus prior Sod security lifecycle. Production UAT underway. Target checked at each B milestone; no new scientific controls introduced.
+
+B7 PASS: six Core groups; npm105/105,Host42/42,lint,typecheck/build PASS. Agent desktop UAT includes both shock directions,5x3 indices,half-bin adapter fix,zoom/pan/Fit,cancel,late sampling rejection,invalid direction retention and Sod metadata/textbox/Undo compatibility. MF closure reports generated; target rechecked. Local B checkpoint: studio-phase2e-b-v0.10.0; no B push or Phase3. Final default128x128 production preview Current; same binary Sod compatibility smoke passed.

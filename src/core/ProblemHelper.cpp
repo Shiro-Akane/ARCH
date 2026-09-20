@@ -66,9 +66,13 @@ namespace ProblemHelper
     double GetPressureFromRhoT(const SimConfig &config, const SpeciesManager &specs, double rho, double T, const double *X)
     {
         double p_out = 0.0;
-        EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos) {
-            p_out = eos.get_pressure_from_rho_T(rho, T, X);
-        });
+        try {
+            EOSDispatcher::dispatch_eos(config, specs, [&](auto &&eos) {
+                p_out = eos.get_pressure_from_rho_T(rho, T, X);
+            });
+        } catch (const std::exception &error) {
+            throw InitialEosError(error.what());
+        }
         return p_out;
     }
 

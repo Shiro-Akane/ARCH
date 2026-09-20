@@ -172,3 +172,21 @@ Offline import dependencies: h5py 3.16.0 (BSD-3-Clause), NumPy 2.5.3 (BSD-3-Clau
 Select **Real Config → Open Config** and choose a local UTF-8 `.par` (up to 1 MiB). Use the persistent Grid / EOS / Network / Runtime navigator to select one Core editor. Advanced and Custom parameters are collapsed by default and searchable. Known axis fields follow the explicit dimensional topology; absent keys are never inserted. Source information remains in tooltips and the read-only loaded Raw .par view. Custom keys remain text unless explicit metadata is available. `refine_threshold` has a source-backed [0,1] slider plus precise numeric input. Edit in memory, Revert to the loaded snapshot, or Save As a new `_modified.par` download. The source file is never overwritten; downloaded exports do not claim in-place saves. Mock preview remains illustrative and disconnected from ARCH initialization.
 
 Desktop/workstation is the target platform, particularly 1280×720 and 1920×1080. Narrow windows receive basic overflow/accessibility checks only. See PHASE1B_COMPLETION_REPORT.md for the checkpoint and validation boundaries.
+
+
+## Phase 2E-B checkpoint
+
+Current fixed CPU integration profile manages `/home/arch/projects/ARCH-phase2e-cellular-2d`, build tree `build-preview-audit`, target `ARCH`, executable `build-preview-audit/bin/ARCH`. Selected source is `simulation/Cellular/Cellular.cpp`; the unified binary has configured Sod and CellularDet cases. Full dependency freshness remains unknown. Host never configures a tree from browser input.
+
+```sh
+cd studio
+npm ci
+npm run build
+npm run local-host -- --project /home/arch/projects/ARCH-phase2e-cellular-2d --build-profile arch-preview-cpu-integration --config simulation/Cellular/CellularPreview2D.par --origin http://127.0.0.1:4187
+# separate terminal
+npm run preview -- --port 4187
+```
+
+Connect Local Host, choose Real Config, open Project Config and select CellularDet2D. Run controlled Build if no matching manifest exists, then explicitly Generate Preview. Reference config uses Helmholtz/aprox19 and the repository EOS table; do not replace EOS with ideal. Default128x128, each axis2..256,8MiB bound. A high-resolution response may fail the byte limit; reduce sampling and retry. Display sampling is not actual AMR hierarchy. Units not supplied by Core remain unknown.
+
+See PHASE2E_B_COMPLETION_REPORT.md and ORIGINAL_REQUIREMENT_CLOSURE_REPORT.md. No Cellular marker or Phase3 functionality is included.

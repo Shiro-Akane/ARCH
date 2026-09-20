@@ -4,15 +4,16 @@
 
 ## 当前提供什么
 
-- 支持已注册的 **一维 Cartesian Sod**；直接调用 `SodProblem::Setup/Init`。
+- 支持已注册的 **一维 Cartesian Sod** 与 **二维 Cartesian CellularDet**；直接调用各模型的 `Setup/Init`。
 - 使用 CPU 生成显示采样。配置中的 `compute_backend=cuda` 不会触发设备检测或 CUDA 初始化。
 - 接收尚未保存的 `.par` 文本，返回坐标、密度、压力、温度、速度和能量。
 - 同时返回 EOS、基础网格、AMR 配置、已注册组分及各阶段状态。
+- Core B：返回 CellularDet 的二维坐标和真实场数据，包括两个方向的速度；提供独立二维参考配置。
 - Core A：返回 Sod `x_pos` 的实际读取值、默认值、来源和当前域约束，以及与真实初始化一致的 x1 位置绑定。
-- 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制 Sod 公式。
+- 复用 ARCH 的配置解析、EOS 和初始能量转换，不在接口中复制模型公式。
 - 不进入时间推进，不建立 AMR 层级，不生成日志文件、backend sidecar、plotfile 或 checkpoint，也不创建临时配置文件。
 
-当前仍没有二维预览、实际 AMR 细化布局或完整参数追踪。参数扩展目前只覆盖 Sod `x_pos`；未返回其他参数不表示其未被使用。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
+当前没有实际 AMR 细化布局或完整参数追踪。参数扩展目前只覆盖 Sod `x_pos`；CellularDet 本次仅提供二维场，不提供参数 metadata 或可编辑分界线。未返回某参数不表示其未被使用。其他模型或维度返回错误，Host 可以继续保留旧图并标记过期。
 
 这里的“初始状态”是初始化函数在指定坐标上的取值；显示采样不是实际计算单元，也不是完成初始 AMR 细化后的网格状态。预览成功仅说明此次初始采样成功，不代表整个模拟的求解器、反应网络或计算后端已经验证可用。
 
@@ -41,6 +42,8 @@ build-studio-cpu/bin/ARCH --preview-capabilities
 
 返回一个 JSON 对象，包括 `schemaVersion`、支持的模型和维度、EOS 输入名称、字段列表、数量限制，以及 `amrHierarchy`、`parameterTracing`、`markers` 等能力开关。
 
+**新 Host 使用 `modelCapabilities` 按 case 协商。** 每项包含 `caseId/dimensions/geometries/previewBackend/fields/maxFields/maxResponseBytes/sampling`。CellularDet 另有 `supportedShockDirections=[0,1]`。`sampling.defaultShape` 使用与响应一致的 `[Ny,Nx]` 顺序（一维为 `[N]`），其余限制为 `minPerAxis/maxPerAxis/maxTotalSamples`。为保持旧客户端兼容，顶层 `cases/dimensions/fields/defaultSamples/minSamples/maxSamples` 仍是原有 Sod 视图，不表示所有模型；不要混用两个层级的采样限制。
+
 `eosTypes` 是 `.par` 接受的名称：`ideal`、`helmholtz`、`tabular`。表格 EOS 由实际数据确定为 `tabular3d` 或 `tabular4d`。能力列表说明可调用的现有 CPU 路径；具体数据是否加载成功、输入是否在 EOS 的适用范围内，以本次请求结果为准。
 
 ### 生成预览
@@ -53,7 +56,7 @@ build-studio-cpu/bin/ARCH --preview Sod --config-stdin \
 Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，然后关闭 stdin。上面的重定向仅用于手动试验，不要求用户先保存文件。
 
 - `--config-stdin` 必须提供。输入是原始 `.par` 文本，不是 JSON。
-- `--samples` 可省略，默认 512，允许 2–4096。
+- Sod 的 `--samples` 可省略，默认 512，允许 2–4096。CellularDet 的二维参数见下文。
 - `--request-id` 可省略，原样回传，最多 128 UTF-8 字节。
 - 配置最多 1 MiB，必须为不含 NUL 的 UTF-8；参数名称、重复键和默认值规则沿用现有解析器。
 - 参数文本不会自动保存，也不会改变当前文件关联。
@@ -63,6 +66,22 @@ Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，
 
 接口不需要 WebSocket、HTTP 或 SSH。本地 Host 可以使用已有的进程管理方式调用。
 
+### CellularDet 二维调用
+
+```sh
+build-studio-cpu/bin/ARCH --preview CellularDet --config-stdin \
+  --samples-x1 128 --samples-x2 128 --request-id cellular-001 \
+  < simulation/Cellular/CellularPreview2D.par
+```
+
+- `--samples-x1` 与 `--samples-x2` 必须同时提供或同时省略。省略时为 128×128；每轴 2–256，总数最多 65,536。只能是整数，不能混用一维的 `--samples`。
+- 要求 Cartesian，且沿用配置解析器得到的维度为 2。参考配置使用 `nblockx1>0`、`nblockx2>0`、`nblockx3=0`；支持 `shock_dir=0/1`。`shock_dir=2` 返回不支持。
+- [CellularPreview2D.par](../../simulation/Cellular/CellularPreview2D.par) 是独立参考输入，使用 Helmholtz 和 aprox19。已有 `Cellular.par` 不是此二维参考配置。
+- 参考输入中的表路径为 `EOS_toolkit/tables/helmholtz/helm_table.dat`，从仓库根目录运行即可解析；Host 在其他工作目录运行时，应由配置提供有效绝对路径或相对于该目录的路径。缺失表会返回 `EOS_FAILED`。
+- 参考输入保留 Helmholtz 与核素组分的配套选择。仅将 `eos_type` 改成 `ideal` 会因这些组分没有 ideal 所需的热参数而产生无效初值；接口报告 `INITIALIZATION_FAILED`，不自动更换 EOS。
+- 组分由所选 `network_name` 的 Setup 准备；参考输入虽含 `use_burn=true`，此路径不启动反应演化。配置中的求解器、时间步与 CUDA 选择不参与初始预览。
+- 点数和响应字节限制同时生效。即使点数合法，复杂数值在高分辨率下仍可能超过 8 MiB；Core 返回结构化错误，由用户选择较低分辨率后重新请求。
+
 ## 响应结构
 
 成功和执行失败使用同一份快照结构：
@@ -71,7 +90,7 @@ Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，
 schemaVersion: "1.0"
 kind: "initial-state-preview"
 status: "ok" | "error"
-stage: input | configuration | support | setup | eos | sampling | complete
+stage: input | configuration | support | setup | eos | sampling | response | complete
 identity: { requestId, caseId, configRevision }
 execution: { previewBackend, simulationReadiness, timeStepping, scientificOutput }
 state: { configuration, setup, grid, amr, eos, species, computeBackendRequested }
@@ -85,6 +104,7 @@ graphicalBindings?: { version: "1", items }
 
 可直接查看实际程序生成的响应样例：
 
+- [CellularDet 完整成功、EOS 失败、方向拒绝与超限响应](examples/core-b/README.md)：包含对应输入与复现命令。
 - [Sod 成功响应](examples/sod.json)：使用 `simulation/Sod/Sod.par`，4 个采样点。
 - [EOS 文件缺失响应](examples/missing-eos.json)：同一输入末尾追加 `eos_type = helmholtz` 和 `eos_table_path = missing-eos-table.dat`。保留已确认的网格和 AMR 配置，场数据为 `null`。
 
@@ -128,13 +148,21 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 
 ### 场数据
 
-当前 `dimension=1`、`kind=line`。
+Sod 返回 `dimension=1`、`kind=line`：
 
 - `axes` 是坐标轴列表，目前只有 `x1`，包含 `name/unit/values`。
 - `sampling.kind=uniform`、`valueLocation=init-sample`、`position=bin-center`。
 - 采样坐标为 `x1_min + (i + 0.5) * (x1_max - x1_min) / count`，不采两端边界。
 - `shape=[count]`、`order=x1-fastest`；字段与坐标按相同顺序排列。
-- `fields` 是列表，每项包含 `key/displayName/unit/values/min/max`。前端按 `key` 匹配，不依赖列表顺序。
+
+CellularDet 返回 `dimension=2`、`kind=grid`：
+
+- `axes` 按 x1、x2 排列，长度分别为 Nx、Ny；每轴使用相同的均匀 bin-center 规则，数值有限且严格递增。
+- `sampling.shape=[Ny,Nx]`、`count=Nx*Ny`、`order=x1-fastest`。字段的 `index=j*Nx+i` 对应 `(axes[0].values[i], axes[1].values[j])`。
+- `sampling.fixedCoordinates=[{"name":"x3","value":0,"unit":null}]`。非活动坐标固定为零，沿用真实网格的坐标转换，不取配置 x3 范围的中点。
+- UI 横轴 x1，纵轴 x2 向上；屏幕 y 方向转换不能改变数组排列。Inspector 直接按上述索引取值。
+
+两个变体中，`fields` 是列表，每项包含 `key/displayName/unit/values/min/max`。前端按 `key` 匹配，不依赖列表顺序。
 
 | key | 含义 |
 |---|---|
@@ -142,10 +170,13 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 | PRES | 由初始守恒状态和实际 EOS 得到的压力 |
 | TEMP | 由同一状态和 EOS 得到的温度 |
 | VELX | x 方向速度 |
+| VELY | y 方向速度，仅二维提供 |
 | ENER | 单位体积的总能量，包含动能 |
 | EINT | 单位质量的内能 |
 
 当前所有 `unit` 均为 `null`，表示接口没有提供可靠单位标签。前端保持原始值，不自行标为 SI、CGS 或无量纲。数值以 double 精度输出，所有成功样本均为有限数值；出现无效数据时整个请求失败。
+
+CellularDet 的 `radiusPerturb` 是 `shock_dir` 选定轴上的分界坐标，坐标小于该值的一侧为扰动区域。`noiseAmplitude` 调整该区域内的场值，不移动分界。Studio 直接显示返回的场；本次没有 Cellular 的图形绑定描述，不从参数名称猜测圆形或波动界面。
 
 ### EOS 状态
 
@@ -159,7 +190,7 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 - `loadedTablePath`：已成功加载的主表路径，去除配置引号；相对路径仍相对于进程工作目录。理想气体为 `null`。
 - `sourceFingerprint`：加载器绑定的数据身份；理想气体为 `null`。组合表的摘要可能包含多个文件与解释规则，不应一律当成单个文件的摘要。
 
-`state.species` 返回本次 Setup 实际注册的 `{index,name}` 列表，尚未完成 Setup 时为 `null`。当前不返回完整组分场。
+`state.species` 返回本次 Setup 实际注册的 `{index,name}` 列表。尚未确认注册内容时为 `null`；Cellular 的 EOS 在 Setup 内加载，加载失败时可保留已经完成注册的组分列表。当前不返回完整组分场。
 
 ### 基础网格状态
 
@@ -167,7 +198,7 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 
 `geometry/dimension` 描述模型区域。各轴返回：`min/max`、`rootBlocks`、`activeCellsPerBlock`、`rootCells`、`coordinateSpacing`、两端边界条件，以及尚未提供的 `unit=null`。
 
-基础单元数使用 **当前编译程序**的有效块尺寸计算，不包含 ghost 或内存填充单元。调整 `--samples` 只调整显示采样，不改变这些网格设置。
+基础单元数使用 **当前编译程序**的有效块尺寸计算，不包含 ghost 或内存填充单元。调整 `--samples` 或二维轴采样数量只调整显示采样，不改变这些网格设置。
 
 ### AMR 状态
 
@@ -187,13 +218,16 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 | 退出码 | 主要错误码 | 含义 |
 |---|---|---|
 | 0 | — | 完整响应成功 |
-| 2 | INVALID_REQUEST | 命令参数、输入编码、大小或数量错误 |
+| 2 | INVALID_REQUEST / SAMPLING_LIMIT_EXCEEDED | 命令、编码、输入大小或采样语法错误；已解析整数超出采样范围使用后者 |
 | 3 | INVALID_CONFIGURATION | 配置解析或当前预览所需的基础检查失败 |
 | 4 | UNSUPPORTED_PREVIEW | 未支持的模型、维度、坐标系或 restart 请求 |
 | 5 | SETUP_FAILED / EOS_FAILED | 模型准备或 EOS 加载失败 |
 | 6 | INITIALIZATION_FAILED | 初始采样、数据转换或数值检查失败 |
+| 7 | RESPONSE_TOO_LARGE | 完整 JSON（含结尾换行）超过 8 MiB |
 
 `diagnostics` 中 `severity` 为 `info/warning/error`。`CORE_LOG` 保存现有核心的文本报告，不作为前端解析接口；每个日志通道最多保留 16 KiB，截断时提供 `LOG_TRUNCATED`。完整响应限制为 8 MiB。
+
+响应超限时 `stage=response`、`data=null`，保留请求身份和可容纳的已确认状态；不截断 JSON、不降采样、不丢字段后假装成功。若状态本身也超限，则 `state=null` 并附加 `STATE_OMITTED_FOR_SIZE`，请求身份仍保留。任何错误都不能发布本次图形绑定。
 
 部分现有解析规则会使用默认值，预览与正式配置读取保持一致。Core A 提供上述有限范围的来源信息，不提供完整模拟配置审查。错误文字用于展示，前端逻辑按退出码、`status/stage` 和稳定错误码处理。
 
@@ -215,7 +249,8 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 | Preview.h | 请求、结果和数量限制 |
 | Preview.cpp | 初始化、状态快照、数据检查和结果组织 |
 | PreviewCommand.cpp | 命令选项、stdin 和 stdout 边界 |
-| Json.h | 内部 JSON 输出工具 |
+| Json.h / Response.h | 有字节限制的 JSON 输出与超限错误响应 |
+| Sampling.h | 一维/二维采样计划及分配前数量检查 |
 | ParameterMetadata.h / .cpp | 将实际读取记录与模型位置描述组织为 JSON 扩展 |
 | ../interface/PreviewMetadata.h | 独立于 JSON 的读取记录与轴向位置数据 |
 | ../core/InitialStateConversion.h | 正式网格初始化和预览共用的数据转换 |
@@ -223,7 +258,8 @@ Studio 拖动只修改工作副本，形成一次撤销并标记预览过期；�
 测试入口：
 
 ```sh
-cmake --build build-studio-cpu --target ARCH arch_preview_initial_conversion arch_preview_parameter_reads -j 1
+cmake --build build-studio-cpu --target ARCH arch_preview_initial_conversion \
+  arch_preview_parameter_reads arch_preview_sampling_limits arch_preview_cellular_reference -j 2
 ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 ```
 
@@ -233,4 +269,6 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 
 `preview_parameter_reads` 检查重复读取歧义、程序改值后的未知来源、普通配置不启用记录及严格开区间。`preview_parameter_metadata` 通过实际 CLI 检查来源、真实字段与绑定一致、动态域、越界、重复 key、数值前缀、EOS 失败和 Setup 前的错误。
 
-Core A 的交付基线、构建选项和验证结果见 [交接说明](CORE_A_HANDOFF.md)。CPU 预览不证明 CUDA、完整模拟或尚未实现的 CellularDet 二维路径可用。
+`preview_sampling_limits` 检查分配前数量限制、真实网格的非活动坐标、JSON 字节边界及超限状态保留。`preview_cellular_2d` 检查真实 CLI 的二维排列、两个方向、噪声影响、直接 Init/EOS 对照、实际 Helmholtz 输入、采样/响应限制、错误、取消及无文件输出。直接对照程序仅供测试，不是 Host 需要管理的另一个生产程序。
+
+各阶段基线与验证结果见 [Core A 交接](CORE_A_HANDOFF.md) 和 [Core B 交接](CORE_B_HANDOFF.md)。CPU 预览的验证范围不包括 CUDA、完整模拟或 Studio UAT。

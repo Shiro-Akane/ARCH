@@ -27,6 +27,9 @@ add_test(NAME preview_parameter_metadata
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_parameter_metadata.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(preview_parameter_metadata PROPERTIES TIMEOUT 180)
+add_executable(arch_preview_sampling_limits tests/api/test_sampling_limits.cpp)
+arch_configure_host_test(arch_preview_sampling_limits)
+add_test(NAME preview_sampling_limits COMMAND arch_preview_sampling_limits)
 add_test(NAME portable_network_generator
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_portable_network_generator.py)
@@ -185,6 +188,21 @@ add_test(NAME device_block_store_lifecycle
 
 # These targets require HDF5/HighFive and the resolved KLU provider.
 function(arch_register_io_regression_tests)
+    add_executable(arch_preview_cellular_reference
+        tests/api/cellular_reference.cpp
+        src/core/ProblemHelper.cpp src/core/FileFingerprint.cpp
+        src/physics/eos/eosdispatch.cpp src/physics/eos/Tabular3DEOS.cpp
+        src/physics/eos/Tabular4DEOS.cpp src/physics/eos/TabularBaryonSource.cpp
+        src/physics/eos/TabularCompletion.cpp)
+    arch_configure_host_test(arch_preview_cellular_reference
+        "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+    target_link_libraries(arch_preview_cellular_reference PRIVATE
+        ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    add_test(NAME preview_cellular_2d
+        COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_cellular_preview.py
+            $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_cellular_reference>)
+    set_tests_properties(preview_cellular_2d PROPERTIES TIMEOUT 600)
+
     add_executable(arch_checkpoint_compatibility
         tests/host/test_checkpoint_compatibility.cpp
         src/core/FileFingerprint.cpp

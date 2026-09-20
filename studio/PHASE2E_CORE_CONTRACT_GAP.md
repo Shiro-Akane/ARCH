@@ -62,3 +62,8 @@ Target SHA-256: c3dcb1d07c048947800ba696eb46cf396a816f38f82391698c7af2f60f2c9c6b
 
 ## Core A delivered — supersedes A STOP above
 Core47517d1ce0ab33b761fcf3dd1a4241d68b7041fd applied without conflicts to43b381c3; independent CPU build and4 scoped CTest groups PASS; real capabilities and five example responses matched README. A Stop Gate cleared. B91a46f8f is known but expressly NOT integrated or audited for acceptance in this checkpoint. Only2E-A authorized.
+
+
+## B integration resolution — 2026-09-20
+
+Core B91a46f8f was integrated only after A018f69b8 was sealed. Six scoped groups and actual modelCapabilities/2D contract verification passed. B Stop Gate cleared; see PHASE2E_B_COMPLETION_REPORT.md. Historical gap findings above are retained as audit history.

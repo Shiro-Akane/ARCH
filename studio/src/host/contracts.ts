@@ -31,7 +31,7 @@ export type BuildState = 'not-configured'|'ready'|'queued'|'building'|'succeeded
 export type BinaryBuildState = 'missing'|'available'|'built-from-current-tracked-inputs'|'needs-build'|'freshness-unknown';
 export interface BuildProfile {
  id:string; displayName:string; managedSourceRoot:string; buildDirRelative:string; target:string; outputBinaryRelative:string;
- caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
+ registeredCases?:string[]; caseId?:string; sourceRelativePath?:string; parallelism:number; trackedInputs:string[]; dependenciesComplete:boolean;
 }
 export interface BuildRequest { projectId:string; profileId:string }
 export interface BuildEvent { projectId:string; buildId:string; sequence:number; timestamp:string; kind:'state'|'stdout'|'stderr'; state?:BuildState; text?:string }

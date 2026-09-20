@@ -11,6 +11,7 @@
 #pragma once
 
 #include <functional>
+#include <stdexcept>
 #include <vector>
 
 struct PointCoords;
@@ -24,6 +25,13 @@ class AMRControl;
 }
 
 namespace ProblemHelper {
+
+// Preserve the EOS failure category when an initializer evaluates its EOS
+// during Setup, before the preview's subsequent field-conversion stage.
+class InitialEosError : public std::runtime_error {
+public:
+    using std::runtime_error::runtime_error;
+};
 
 /** @brief Thermodynamic point reached along a fixed-composition isentrope. */
 struct IsentropicState {

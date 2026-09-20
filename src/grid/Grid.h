@@ -218,11 +218,16 @@ public:
      */
     PointCoords GetPhysicalCoords(int i, int j = 0, int k = 0) const
     {
-        PointCoords coords;
-        // Start with coordinates in the grid's native computational system.
-        double cx = GetCellCenterX(i);
-        double cy = GetCellCenterY(j);
-        double cz = GetCellCenterZ(k);
+        return PhysicalCoordsFromNative(dim, geometry, GetCellCenterX(i),
+                                        GetCellCenterY(j), GetCellCenterZ(k));
+    }
+
+    // Shared coordinate expansion for grid cells and initial-preview samples.
+    // This does not allocate a grid or change sampling resolution.
+    static PointCoords PhysicalCoordsFromNative(int dim, const std::string &geometry,
+                                                double cx, double cy = 0.0, double cz = 0.0)
+    {
+        PointCoords coords{};
 
         // Supply deterministic inactive-coordinate values for 1D and 2D grids.
         if (dim == 1)

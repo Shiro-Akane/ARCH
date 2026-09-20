@@ -1,5 +1,5 @@
 import {PreviewRunner} from './previewRunner.ts';
-import {SOD_PREVIEW_PROFILE} from './previewProfile.ts';
+import {SOD_PREVIEW_PROFILE,PREVIEW_PROFILES} from './previewProfile.ts';
 import {readSource} from './source.ts';
 import {BuildRunner} from './buildRunner.ts';
 import {BUILD_PROFILES} from './buildProfile.ts';
@@ -23,7 +23,7 @@ export async function openProject(options:ProjectOptions) {
  let result:ProjectSnapshot={host:{protocolVersion:PROTOCOL_VERSION,hostKind:'local',platform:process.platform,projectRoot:root,capabilities:{readProject:true,writeConfig:process.platform==='linux',build:false,preview:false,watchFiles:false}},session:{projectId:randomUUID(),displayName:path.basename(root),projectRoot:root,caseSource,parameterFile,executable,sourceState:state(caseSource),configFileState:state(parameterFile),binaryState:state(executable),mapping:'unknown',metadata:'unavailable',openedAt:new Date().toISOString(),refreshedAt:new Date().toISOString()}};
  let build:BuildRunner|undefined;
  if(options.buildProfile){if(!selectedProfile)throw new Error('Unknown Host build profile');build=new BuildRunner(root,result.session.projectId,selectedProfile!);result.host.capabilities.build=(await build.initialize()).configured;}
- const preview=build?.profile.id===SOD_PREVIEW_PROFILE.buildProfileId?new PreviewRunner(build,SOD_PREVIEW_PROFILE):undefined;
+ const preview=build?.profile.id===SOD_PREVIEW_PROFILE.buildProfileId?new PreviewRunner(build,SOD_PREVIEW_PROFILE,{},PREVIEW_PROFILES):undefined;
  if(preview&&build){build.executionBlocked=()=>preview.isActive();result.host.capabilities.preview=(await preview.readiness()).ready;}
  const baseline=structuredClone(result.session);
  const changed=(a:ProjectFileRef|undefined,b:ProjectFileRef|undefined)=>Boolean(a&&b&&(a.exists!==b.exists||a.sha256!==b.sha256||a.size!==b.size||a.modifiedTime!==b.modifiedTime));
