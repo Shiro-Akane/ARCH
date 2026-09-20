@@ -547,3 +547,18 @@ Target completion/checkpoint sections44-50 rechecked. Final full checks follow U
 
 ## P2D-M10 completed
 Final94/94 tests and39/39 Host tests PASS;lint/typecheck/production build/diff checks PASS after UAT fixes. Completion report written. Local checkpoint tag studio-phase2d-v0.8.0; no push. API/Core exactly upstream4c0fd5c, root STATUS untouched, delivery excludes ignored artifacts. Phase2D scope complete; STOP before Phase2E.
+
+## P2E-M0 — STOP A / STOP B
+Fresh remote audit: review/studio-v0.4.2=4c0fd5c1; studio/phase2d-api-integration=43b381c3. Clean baseline/tag43b381c3 verified, independent Phase2E branch/worktree created. Complete active target copied to PHASE2E_TARGET.md. Core still exposes Sod1D only, no runtime parameter metadata/binding or CellularDet2D contract. See PHASE2E_CORE_CONTRACT_GAP.md. No code/build/Preview/simulation/baseline rerun. New target requires drag without automatic Preview. Waiting for Core A delivery; A/B remain separately gated. No success checkpoint/push.
+
+## P2E-M0 Core A integration verification
+Only47517d1c no-commit cherry-picked; no conflicts. B91a46f8f parent verified=A, not integrated. Independent CPU Debug build succeeded; four handoff scoped CTest groups PASS, simulation oracle disabled. Actual capabilities and default/explicit/fallback/outside/nonfinite CLI responses matched README identity and extension behavior. A Stop Gate cleared; B deferred by stage authorization. A1-A7 next, no automatic Preview after drag.
+
+## P2E-A1 / A2 in progress
+Target metadata authority rechecked. Added versioned optional Core extension validation and updated fixed CPU project tracked inputs. No B code. Preparing UI transport and capability negotiation.
+
+## P2E-A1–A6 integration
+Target metadata/binding/drag sections reviewed. Versioned Core extensions validated and capability-scoped; fixed CPU profile tracks A new headers/sources. Inspector separates Working/Saved/Core values and source. Missing parameter serialized by safe append preserving original bytes and Undo snapshot. Marker uses actual axis, Core bounds, transient drag candidates, mouseup one edit/Undo, no auto Save/Preview. State summary uses successful response identity. UAT in progress; no B.
+
+## P2E-A7 completed — stop before B
+Target A acceptance reviewed. Core4 scoped groups PASS; Studio97/97 and Host39/39 PASS, lint/typecheck/build/diff checks PASS. Production UAT verified metadata, textbox/marker, one-drag one-Undo, default insertion, error retention/recovery and desktop layouts. PHASE2E_A_COMPLETION_REPORT.md records evidence and limits. Local studio-phase2e-a-v0.9.0 checkpoint; no push, no B integration.

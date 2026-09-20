@@ -125,12 +125,18 @@ public:
         return Resolve(parser);
     }
 
-    static SimConfig LoadText(const std::string &text)
+    static SimConfig LoadText(const std::string &text,
+                             std::shared_ptr<arch::preview::ParameterReadTrace> reads = {})
     {
         std::istringstream input(text);
         ConfigParser parser;
         parser.Load(input);
-        return Resolve(parser);
+        auto config = Resolve(parser);
+        if (reads) {
+            reads->capture_input(parser.GetAllParams(), config.custom_params, config.custom_string_params);
+            config.parameter_reads = std::move(reads);
+        }
+        return config;
     }
 
 private:

@@ -9,6 +9,7 @@ export function corePayload(id={requestId:'r',caseId:'Sod',configRevision:'c'}){
 export async function previewFixture(mode='ok',timeoutMs=1000){
  const {root,p}=await fixture();await mkdir(root+'/studio');
  const script=`#!${process.execPath}
+if(process.argv.includes('--preview-capabilities')){console.log(JSON.stringify({schemaVersion:'1.0',kind:'preview-capabilities',cases:['Sod'],dimensions:[1]}));process.exit(0);}
 const crypto=require('node:crypto');let input='';process.stdin.setEncoding('utf8');process.stdin.on('data',b=>input+=b);process.stdin.on('end',()=>{const mode=${JSON.stringify(mode)};const result=${JSON.stringify(corePayload())};result.identity={requestId:process.argv[process.argv.indexOf('--request-id')+1],caseId:'Sod',configRevision:crypto.createHash('sha256').update(input).digest('hex')};if(mode==='hang'){process.on('SIGTERM',()=>{});setInterval(()=>{},100);return;}if(mode==='bad'){console.log('invalid');return;}if(mode==='huge'){process.stdout.write('x'.repeat(9*1024*1024));return;}if(mode==='exit'){process.exit(6);}if(mode==='wrong')result.identity.configRevision='wrong';setTimeout(()=>console.log(JSON.stringify(result)),mode==='slow'?200:0);});
 `;
  await writeFile(root+'/build/bin/ARCH',script,{mode:0o755});

@@ -10,6 +10,13 @@ export function validateCorePreview(v:unknown,id:Pick<PreviewIdentity,'requestId
  if(v.status==='error'&&v.stage==='input'&&v.identity===null){need(v.data===null,'error data');return v as unknown as CorePreview;}
  need(record(v.identity)&&v.identity.requestId===id.requestId&&v.identity.caseId===id.caseId&&v.identity.configRevision===id.configRevision,'identity');
  need(record(v.execution)&&v.execution.previewBackend==='cpu'&&v.execution.timeStepping==='not_executed'&&v.execution.scientificOutput==='not_created'&&v.execution.simulationReadiness==='not_checked','execution');
+ if(v.state!==undefined&&v.state!==null){need(record(v.state),'state');const state=v.state;
+  if(state.grid!=null){need(record(state.grid)&&Array.isArray(state.grid.axes)&&state.grid.axes.length<=3,'grid state');for(const a of state.grid.axes)need(record(a)&&text(a.name)&&typeof a.min==='number'&&Number.isFinite(a.min)&&typeof a.max==='number'&&Number.isFinite(a.max),'grid axis');}
+  if(state.eos!=null)need(record(state.eos)&&(state.eos.resolved===null||text(state.eos.resolved))&&text(state.eos.status),'EOS state');
+  if(state.species!=null)need(Array.isArray(state.species)&&state.species.length<=1024&&state.species.every(s=>record(s)&&text(s.name)),'species state');
+  if(state.amr!=null)need(record(state.amr)&&Number.isInteger(state.amr.minLevel)&&Number.isInteger(state.amr.maxLevel),'AMR state');
+ }
+ validateParameterExtensions(v);
  if(v.status==='error'){need(v.data===null,'error data');return v as unknown as CorePreview;}
  const d=v.data;need(record(d)&&d.dimension===1&&d.kind==='line','dimension/kind');
  const s=d.sampling;need(record(s)&&s.kind==='uniform'&&s.valueLocation==='init-sample'&&s.position==='bin-center'&&s.order==='x1-fastest'&&Number.isInteger(s.count)&&Number(s.count)>=2&&Number(s.count)<=4096&&(count===undefined||s.count===count)&&Array.isArray(s.shape)&&s.shape.length===1&&s.shape[0]===s.count,'sampling');
@@ -32,3 +39,31 @@ export function validatePreviewStatus(v:unknown,projectId:string):PreviewStatus 
  if(v.build!==undefined)need(record(v.build)&&text(v.build.buildId)&&record(v.build.outputBinary)&&record(v.build.outputBinary.fingerprint)&&text(v.build.outputBinary.fingerprint.sha256),'build');
  return v as unknown as PreviewStatus;
 }
+
+export function validateParameterExtensions(v:Record<string,unknown>){
+ const m=v.parameterMetadata,b=v.graphicalBindings;
+ // Unknown optional extension versions are ignored, never interpreted as v1.
+ if(m!==undefined){need(record(m),'metadata object');if(m.version!=='1')delete v.parameterMetadata;}
+ if(b!==undefined){need(record(b),'binding object');if(b.version!=='1')delete v.graphicalBindings;}
+ if(record(m)&&m.version==='1'){
+  need(m.coverage==='observed-case-setup-reads'&&m.complete===false&&Array.isArray(m.parameters)&&m.parameters.length<=128,'metadata coverage');
+  const keys=new Set();
+  for(const q of m.parameters){
+   need(record(q)&&text(q.key)&&q.key.length>0&&!keys.has(q.key)&&['float','int','bool','string',null].includes(q.type as string|null),'parameter');keys.add(q.key);
+   for(const k of ['explicitValue','effectiveValue','defaultValue'])need(q[k]===null||(q.type==='float'&&typeof q[k]==='number'&&Number.isFinite(q[k]))||(q.type==='int'&&Number.isSafeInteger(q[k]))||(q.type==='bool'&&typeof q[k]==='boolean')||(q.type==='string'&&text(q[k],65536)),'parameter value');
+   need(['explicit','default','unknown'].includes(String(q.valueSource))&&(q.sourceReason===null||text(q.sourceReason))&&(q.unit===null||text(q.unit))&&(q.description===null||text(q.description,4096))&&(q.rawValue===undefined||text(q.rawValue,65536)),'parameter source');
+   need(Array.isArray(q.diagnostics)&&q.diagnostics.length<=128,'parameter diagnostics');for(const d of q.diagnostics)need(record(d)&&['info','warning','error'].includes(String(d.severity))&&text(d.code)&&text(d.message,65536),'parameter diagnostic');
+   if(q.constraints!==undefined)bounds(q.constraints);
+  }
+ }
+ if(record(b)&&b.version==='1'){
+  need(Array.isArray(b.items)&&b.items.length<=128,'bindings');const ids=new Set();
+  for(const q of b.items){need(record(q)&&text(q.id)&&!ids.has(q.id)&&text(q.parameterKey)&&q.kind==='axis-position'&&q.axis==='x1'&&q.clamping==='none'&&q.invalidBehavior==='retain-input-and-report'&&typeof q.editable==='boolean'&&typeof q.coordinate==='number'&&Number.isFinite(q.coordinate),'binding');ids.add(q.id);bounds(q);
+   need(v.status==='ok'&&q.coordinate>Number(q.min)&&q.coordinate<Number(q.max),'binding range');
+   const parameter=record(m)&&Array.isArray(m.parameters)?m.parameters.find(x=>record(x)&&x.key===q.parameterKey):undefined;
+   need(record(parameter)&&parameter.effectiveValue===q.coordinate&&parameter.valueSource!=='unknown','binding metadata');
+   need(record(parameter.constraints)&&['min','max','minInclusive','maxInclusive'].every(k=>(parameter.constraints as Record<string,unknown>)[k]===q[k]),'binding constraints');
+  }
+ }
+}
+function bounds(v:unknown){need(record(v)&&typeof v.min==='number'&&Number.isFinite(v.min)&&typeof v.max==='number'&&Number.isFinite(v.max)&&v.min<v.max&&typeof v.minInclusive==='boolean'&&typeof v.maxInclusive==='boolean','constraints');}

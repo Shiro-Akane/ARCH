@@ -1,4 +1,4 @@
-import {spawn} from 'node:child_process';
+import {spawn,execFile} from 'node:child_process';
 import type {ChildProcessWithoutNullStreams} from 'node:child_process';
 import {createHash,randomUUID} from 'node:crypto';
 import {checkedPath} from './files.ts';
@@ -64,6 +64,12 @@ export class PreviewRunner {
   try {
    const binary=await checkedPath(this.build.root,this.build.profile.outputBinaryRelative);
    if(this.cancelled)throw new Error('Preview cancelled.');
+   const capabilities=await new Promise<unknown>((resolve,reject)=>{
+    const child=execFile(binary,['--preview-capabilities'],{cwd:this.build.root,timeout:3000,maxBuffer:65536,encoding:'utf8',env:{PATH:'/usr/bin:/bin',LANG:'C.UTF-8',OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''}},(error,stdout)=>{if(error)reject(new Error('Preview capability process could not start or query failed.'));else try{resolve(JSON.parse(stdout));}catch{reject(new Error('Invalid capability JSON'));}});
+    this.child=child as ChildProcessWithoutNullStreams;
+   });
+   if(this.cancelled)throw new Error('Preview cancelled.');
+   const extensions=capabilityExtensions(capabilities);
    const output=await new Promise<{bytes:Buffer;code:number|null}>((resolve,reject)=>{
     const child=(this.hooks.spawn??spawn)(binary,['--preview','Sod','--config-stdin','--samples',String(count),'--request-id',identity.requestId],{cwd:this.build.root,shell:false,detached:true,env:{PATH:'/usr/bin:/bin',HOME:process.env.HOME??'/home/arch',LANG:'C.UTF-8',OMP_NUM_THREADS:'1',CUDA_VISIBLE_DEVICES:''},stdio:['pipe','pipe','pipe']});this.child=child;
     let size=0,stderr=0,failure='';const chunks:Buffer[]=[];
@@ -77,6 +83,8 @@ export class PreviewRunner {
    });
    if(this.cancelled)throw new Error('Preview cancelled.');
    const core=validateCorePreview(JSON.parse(new TextDecoder('utf8',{fatal:true}).decode(output.bytes)),identity,count);
+   if(!extensions.metadata)delete core.parameterMetadata;
+   if(!extensions.binding)delete core.graphicalBindings;
    this.current.diagnostics=core.diagnostics;
    if(output.code!==0||core.status!=='ok')throw new Error(core.diagnostics.find(d=>d.severity==='error')?.message??'Preview exited unsuccessfully.');
    await this.readiness();
@@ -86,4 +94,13 @@ export class PreviewRunner {
   } catch(e){this.current.state=this.cancelled?'cancelled':'failed';this.current.error=this.cancelled?'Preview cancelled.':e instanceof Error?e.message:'Preview failed.';}
   finally {if(timer)clearTimeout(timer);if(this.killTimer)clearTimeout(this.killTimer);this.killTimer=undefined;this.child=undefined;}
  }
+}
+
+function capabilityExtensions(v:unknown){
+ const o=v as {schemaVersion?:string;kind?:string;cases?:unknown[];dimensions?:unknown[];extensions?:{parameterMetadata?:{version?:string;cases?:{caseId?:string;keys?:string[]}[]};graphicalBindings?:{version?:string;cases?:{caseId?:string;ids?:string[]}[]}}};
+ if(!o||o.schemaVersion!=='1.0'||o.kind!=='preview-capabilities'||!Array.isArray(o.cases)||!o.cases.includes('Sod')||!Array.isArray(o.dimensions)||!o.dimensions.includes(1))throw new Error('Sod 1D capability unavailable.');
+ const m=o.extensions?.parameterMetadata,b=o.extensions?.graphicalBindings;
+ const metadata=m?.version==='1'&&Array.isArray(m.cases)&&m.cases.some(c=>c.caseId==='Sod'&&Array.isArray(c.keys)&&c.keys.includes('x_pos'));
+ const binding=metadata&&b?.version==='1'&&Array.isArray(b.cases)&&b.cases.some(c=>c.caseId==='Sod'&&Array.isArray(c.ids)&&c.ids.includes('Sod.x_pos'));
+ return {metadata,binding};
 }

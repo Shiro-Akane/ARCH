@@ -1,3 +1,4 @@
+import {useCoreParameters} from '../../state/coreParameters';
 import type {WorkingCopy} from '../../data/RealInitPreviewProvider';
 import {serializePar} from '../../data/ParDocument';
 import {useHost} from '../../host/hostContext';
@@ -19,6 +20,7 @@ import { effectiveEntries } from '../../data/ParDocument';
 import { loadPar, editPar, parStatus, parErrors, revertPar, exportPar } from '../../state/parState';
 import type { ParState } from '../../state/parState';
 export function ConfigPanel({ onEdit, onInspect, active, onWorkingCopy }: { active:boolean; onWorkingCopy?:(copy:WorkingCopy|null)=>void; onEdit: () => void; onInspect:(p:ParameterDetails|null)=>void }) {
+  const core=useCoreParameters();const registerEdit=core.registerEdit;const registerFocus=core.registerFocus;
   const host=useHost();const api=useRef(new ConfigAdapter());
   const [lifecycle,setLifecycle]=useState<ConfigLifecycleState>({diskState:'unknown'});
   const [pending,setPending]=useState<'project'|'reload'|'browser'|null>(null);
@@ -33,16 +35,21 @@ export function ConfigPanel({ onEdit, onInspect, active, onWorkingCopy }: { acti
   const latest=useRef(createLatestRequest());
   const fileInput=useRef<HTMLInputElement>(null);
   useEffect(()=>{if(!message)return;const timer=setTimeout(()=>setMessage(''),6000);return ()=>clearTimeout(timer);},[message]);
-  useEffect(()=>{onWorkingCopy?.(state?{text:serializePar(state.document,state.changes),filename:state.filename,valid:parStatus(state)!=='invalid',dirty:parStatus(state)!=='saved'}:null);},[state,onWorkingCopy]);
+  useEffect(()=>{if(!state){onWorkingCopy?.(null);return;}try{onWorkingCopy?.({text:serializePar(state.document,state.changes),filename:state.filename,valid:parStatus(state)!=='invalid',dirty:parStatus(state)!=='saved'});}catch{onWorkingCopy?.({text:state.document.raw,filename:state.filename,valid:false,dirty:true});}},[state,onWorkingCopy]);
   const errors=state ? parErrors(state) : {};
   const values=state ? Object.fromEntries(effectiveEntries(state.document).map(e=>[e.key,state.changes[e.key] ?? e.value])) : {};
   const dimension=observedDimension(values);
   useEffect(()=>{if(!active)return;const handler=(e:KeyboardEvent)=>{if(e.defaultPrevented||!state||busy)return;const action=historyShortcut(e.key,e.ctrlKey,e.metaKey,e.shiftKey);if(action){e.preventDefault();setState(history.current[action](state));onEdit();}};window.addEventListener('keydown',handler);return()=>window.removeEventListener('keydown',handler);},[active,state,onEdit,busy]);
   useEffect(()=>{
-    const entry=state && effectiveEntries(state.document).find(e=>e.key===selectedKey);
+    const entry=state && (effectiveEntries(state.document).find(e=>e.key===selectedKey)??(selectedKey&&core.snapshot?.result.core.parameterMetadata?.parameters.some(m=>m.key===selectedKey)?{key:selectedKey,value:'',line:0}:undefined));
     const meta=entry ? parSchema[entry.key] : undefined;
-    onInspect(entry && state ? {key:entry.key,label:friendlyLabels[entry.key] ?? entry.key,value:state.changes[entry.key] ?? entry.value,raw:entry.value,line:entry.line,type:meta?.type ?? 'untyped text',options:enumControls[entry.key] ?? meta?.options,range:meta?.range,error:parErrors(state)[entry.key],evidence:enumControls[entry.key] ? 'src/driver/dispatch/PolicyDescriptor.h' : meta?.evidence} : null);
-  },[state,selectedKey,onInspect]);
+    onInspect(entry && state ? {key:entry.key,label:friendlyLabels[entry.key] ?? entry.key,value:state.changes[entry.key] ?? (entry.line===0?String(core.snapshot?.result.core.parameterMetadata?.parameters.find(m=>m.key===entry.key)?.defaultValue??''):entry.value),raw:entry.value,saved:lifecycle.association?entry.value:undefined,workingSource:Object.hasOwn(state.changes,entry.key)||entry.line>0?'explicit':'default',line:entry.line,type:meta?.type ?? 'untyped text',options:enumControls[entry.key] ?? meta?.options,range:meta?.range,error:parErrors(state)[entry.key],evidence:enumControls[entry.key] ? 'src/driver/dispatch/PolicyDescriptor.h' : meta?.evidence} : null);
+  },[state,selectedKey,onInspect,core.snapshot,lifecycle.association]);
+  useEffect(()=>{registerEdit((key,value)=>{if(!state||busy)return;const next=editPar(state,key,value);history.current.record(state,next);setState(next);setSelectedKey(key);onEdit();});return()=>{registerEdit(null);};},[registerEdit,state,busy,onEdit]);
+  const coreParameters=core.snapshot?.result.identity.projectId===host.snapshot?.session.projectId?core.snapshot?.result.core.parameterMetadata?.parameters??[]:[];
+  const inserted=state?Object.keys(state.changes).filter(key=>!effectiveEntries(state.document).some(e=>e.key===key)):[];
+  const missing=state?coreParameters.filter(m=>!effectiveEntries(state.document).some(e=>e.key===m.key)):[];
+  useEffect(()=>{registerFocus(setSelectedKey);return()=>registerFocus(null);},[registerFocus]);
   const associated=!!lifecycle.association;
   const writable=host.connected&&host.snapshot?.host.capabilities.writeConfig===true;
   const canSave=writable&&associated&&host.snapshot?.session.projectId===lifecycle.association?.projectId&&host.snapshot?.session.parameterFile?.relativePath===lifecycle.association?.relativePath;
@@ -85,6 +92,7 @@ export function ConfigPanel({ onEdit, onInspect, active, onWorkingCopy }: { acti
       <PairedFields entries={effectiveEntries(state.document).filter(entry => parSchema[entry.key]?.group === group && matchesParameter(entry.key,values[entry.key],query) && (query.trim() || !advancedKey(entry.key,group,dimension)))} renderEntry={renderEntry} />
       {!query.trim() && effectiveEntries(state.document).some(entry=>parSchema[entry.key]?.group===group && advancedKey(entry.key,group,dimension)) && <details className="advanced-parameters"><summary>Advanced ({effectiveEntries(state.document).filter(entry=>parSchema[entry.key]?.group===group && advancedKey(entry.key,group,dimension)).length})</summary><PairedFields entries={effectiveEntries(state.document).filter(entry=>parSchema[entry.key]?.group===group && advancedKey(entry.key,group,dimension))} renderEntry={renderEntry} /></details>}
       </div></section>)}
+      {missing.length>0&&<section className="parameter-group"><h3>Core parameters · defaults / inserted</h3>{missing.map(m=><label className="parameter-field" key={m.key} onFocus={()=>setSelectedKey(m.key)}><span>{m.key} · {inserted.includes(m.key)?'explicit Working Copy':'default · from previous Core response'}</span><input aria-label={m.key} value={state.changes[m.key]??String(m.defaultValue??'')} onChange={e=>core.edit(m.key,e.target.value)}/><small>Default {String(m.defaultValue??'unavailable')} · {m.unit??'Unit not provided'}</small></label>)}</section>}
       <section className="custom-search"><h3>Custom Parameters</h3><input className="parameter-search" aria-label="Search custom parameters" placeholder="Search custom parameters…" value={customQuery} onChange={e=>setCustomQuery(e.target.value)} />
       <details className="parameter-group custom-group" open={!!customQuery.trim()}><summary>All Custom Parameters ({effectiveEntries(state.document).filter(entry=>!parSchema[entry.key] && matchesParameter(entry.key,values[entry.key],customQuery)).length})</summary><div className="group-content">{effectiveEntries(state.document).filter(entry=>!parSchema[entry.key] && matchesParameter(entry.key,values[entry.key],customQuery)).map(renderEntry)}</div></details></section>
       <div className="config-actions"><button disabled={!canSave||parStatus(state)==='invalid'} onClick={()=>void save()}>Save</button><button disabled={!writable||parStatus(state)==='invalid'} onClick={beginSaveAs}>Save Working Copy As…</button><button disabled={parStatus(state)==='saved'} onClick={()=>{history.current.reset();setState(revertPar(state));setMessage('Config reverted');onEdit();}}>Revert</button>

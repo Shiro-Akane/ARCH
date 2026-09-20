@@ -32,6 +32,7 @@ export function parErrors(state: ParState): Record<string,string> {
     if (!entry.key) errors[entry.key] = 'Empty key is ambiguous and cannot be edited.';
     if (/[\r\n#\0]/.test(value) || value !== value.trim()) errors[entry.key] = 'Value must not contain comments, newlines or surrounding whitespace.';
   }
+  for(const [key,value] of Object.entries(state.changes))if(/[\r\n#\0]/.test(value)||value!==value.trim())errors[key]='Value must not contain comments, newlines or surrounding whitespace.';
   const values = Object.fromEntries(effectiveEntries(state.document).map(e => [e.key,state.changes[e.key] ?? e.value]));
   const refine = Number(values.refine_threshold ?? '0.8'), derefine = Number(values.derefine_threshold ?? '0.2');
   if (derefine < 0 || derefine >= refine) errors.derefine_threshold = 'Requires 0 <= derefine_threshold < refine_threshold (including defaults 0.2 / 0.8).';

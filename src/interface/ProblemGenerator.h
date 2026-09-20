@@ -47,6 +47,11 @@ public:
      */
     virtual void Setup(SimConfig &config, SpeciesManager &specs) = 0;
 
+    virtual std::vector<arch::preview::AxisPosition> PreviewPositions(const SimConfig &) const
+    {
+        return {};
+    }
+
     // Optional pointwise initialization seam. Call Setup first and supply a
     // zeroed PrimitiveData with the registered composition extent. Existing
     // mesh-only generators remain valid and explicitly reject point sampling.

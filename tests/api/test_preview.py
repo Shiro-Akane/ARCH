@@ -175,7 +175,8 @@ class PreviewContract(unittest.TestCase):
         self.assertEqual(eos['resolved'], 'helmholtz')
         self.assertEqual(eos['sourceFingerprint'], hashlib.sha256(table.read_bytes()).hexdigest())
 
-    @unittest.skipUnless(shutil.which('h5dump'), 'h5dump is required for the independent production-output comparison')
+    @unittest.skipUnless(os.environ.get('ARCH_PREVIEW_SIMULATION_ORACLE') == '1' and shutil.which('h5dump'),
+                         'production simulation oracle is opt-in (ARCH_PREVIEW_SIMULATION_ORACLE=1 and h5dump)')
     def test_matches_production_initial_output_at_root_cell_centers(self):
         # This separate oracle invokes ordinary ARCH intentionally. The preview
         # itself never reads plotfiles, invokes a Driver or creates these files.

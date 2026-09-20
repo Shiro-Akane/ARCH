@@ -38,5 +38,13 @@ export function serializePar(doc: ParDocument, changes: Record<string,string> = 
     if (/[\r\n#\0]/.test(value) || value !== value.trim()) throw new Error('Value cannot contain comments, newlines or surrounding whitespace.');
     result = result.slice(0, entry.start) + value + result.slice(entry.end);
   }
+  const existing=new Set(effectiveEntries(doc).map(e=>e.key));
+  for(const [key,value] of Object.entries(changes)){
+    if(existing.has(key))continue;
+    if(!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)||/[\r\n#\0]/.test(value)||value!==value.trim())throw new Error('Unsafe inserted parameter');
+    const eol=doc.raw.match(/\r\n|\n|\r/)?.[0]??'\n';
+    const ended=/[\r\n]$/.test(result);
+    result+=(result&&!ended?eol:'')+key+' = '+value+(ended?eol:'');
+  }
   return result;
 }

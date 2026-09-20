@@ -19,6 +19,14 @@ add_test(NAME preview_api_contract
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_preview.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(preview_api_contract PROPERTIES TIMEOUT 180)
+add_executable(arch_preview_parameter_reads tests/api/test_parameter_reads.cpp src/api/ParameterMetadata.cpp)
+arch_configure_host_test(arch_preview_parameter_reads)
+add_test(NAME preview_parameter_reads COMMAND arch_preview_parameter_reads)
+add_test(NAME preview_parameter_metadata
+    COMMAND ${Python3_EXECUTABLE} -B
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_parameter_metadata.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(preview_parameter_metadata PROPERTIES TIMEOUT 180)
 add_test(NAME portable_network_generator
     COMMAND ${Python3_EXECUTABLE} -B
         ${CMAKE_CURRENT_SOURCE_DIR}/tests/tooling/test_portable_network_generator.py)
