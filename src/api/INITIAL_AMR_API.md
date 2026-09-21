@@ -37,7 +37,7 @@ ARCH --preview-amr CellularDet --config-stdin \
   < simulation/Cellular/CellularPreview2D.par
 ```
 
-本轮有界工作进程支持 Linux/WSL CPU。非 Linux 返回明确错误，不退回无保护的大规模分配。CUDA 不初始化。可执行文件每次只接受一份请求。
+本轮有界工作进程支持 Linux/WSL CPU。非 Linux 返回明确错误，不退回无保护的大规模分配。CUDA 不初始化。上述单次命令每次只接受一份请求。持续编辑也可通过 [预览会话](PREVIEW_SESSION_API.md) 调用，复用表资源；每次网格仍重新构造。
 
 `--mesh-max-blocks` 默认 512、范围 1–1024；`--mesh-memory-mib` 默认 128、范围 16–256。这是预览工作预算，不写回 `.par`。不接受 `--samples` 或二维采样参数。输入 1 MiB、响应 8 MiB、UTF-8 和身份规则沿用既有接口。
 

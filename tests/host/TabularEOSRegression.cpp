@@ -27,6 +27,13 @@ constexpr double R = 1.0e8;
 constexpr double gamma_gas = 5.0/3.0;
 constexpr double cv_gas = R/(gamma_gas-1.0);
 
+// Keep the established dispatch callback types, also consumed by CUDA host
+// factories. This compile-time check needs no GPU headers or GPU compilation.
+int host_policy_type(const IdealGas&) { return 0; }
+int host_policy_type(const HelmEos&) { return 1; }
+int host_policy_type(const Tabular3DEOSHostView&) { return 2; }
+int host_policy_type(const Tabular4DEOSHostView&) { return 3; }
+
 double helmholtz(double rho, double temperature) {
     return R*temperature*std::log(rho) -
            cv_gas*temperature*std::log(temperature);
@@ -158,7 +165,7 @@ int main(int argc,char** argv) {
     bool one_argument_callback=false;
     EOSDispatcher::dispatch_eos(
         arch::dispatch::EosId::Ideal, ideal_config, species,
-        [&](auto&&) { one_argument_callback=true; });
+        [&](auto&& eos) { one_argument_callback=host_policy_type(eos)==0; });
     if(!one_argument_callback)
         throw std::runtime_error("one-argument EOS callback was not invoked");
 
@@ -173,6 +180,58 @@ int main(int argc,char** argv) {
         });
     if(first_digest!=arch::core::file_sha256(pcache.string()))
         throw std::runtime_error("dispatcher did not report the loaded table digest");
+
+    {
+        InspectionEosCache cache;
+        EOSDispatcher::CacheScope session(cache);
+        const auto sample = [&](SpeciesManager& live, const double* fractions) {
+            EOSDispatcher::InspectionScope request;
+            double value=-1;
+            EOSDispatcher::dispatch_eos(arch::dispatch::EosId::Tabular3D, dispatch_config, live,
+                [&](auto&& eos) {
+                    if (eos.get_species_manager()!=&live)
+                        throw std::runtime_error("session view retained a previous request species owner");
+                    if constexpr (requires { eos.get_target_X(fractions); }) value=eos.get_target_X(fractions);
+                });
+            request.validate();
+            return value;
+        };
+        {
+            SpeciesManager first=species;
+            if(sample(first,x)!=1) throw std::runtime_error("cold session table returned wrong composition");
+        } // Destroy the original request owner before the next request.
+        SpeciesManager next=species;
+        if(sample(next,x)!=1 || cache.loads!=1 || cache.hits!=1)
+            throw std::runtime_error("identical ordered species did not reuse the session table");
+        next.species_list.insert(next.species_list.begin(),GasProperty{"other",4,2,gamma_gas,cv_gas});
+        const double fractions[]{.2,.8};
+        if(sample(next,fractions)!=.8 || cache.loads!=2)
+            throw std::runtime_error("session species reorder retained a stale target index");
+        next.species_list[1].name="missing";
+        bool rejected=false;
+        try { sample(next,fractions); } catch(const std::exception&) { rejected=true; }
+        if(!rejected || cache.resident()) throw std::runtime_error("failed session reload retained stale data");
+        next=species;
+        sample(next,x);
+        const auto loaded=cache.loads;
+        { HighFive::File file(pcache.string(),HighFive::File::ReadWrite); scalar(file,"session_generation",1); }
+        sample(next,x);
+        if(cache.loads!=loaded+1) throw std::runtime_error("session table content change did not reload");
+        dispatch_config.physics.eos_table_path=p4.string();
+        { EOSDispatcher::InspectionScope request;
+          EOSDispatcher::dispatch_eos(arch::dispatch::EosId::Tabular4D,dispatch_config,next,
+            [&](auto&& eos) {
+                if constexpr (std::is_same_v<std::remove_cvref_t<decltype(eos)>,Tabular4DEOSHostView>)
+                    if(analyze(eos,x)>1e-3) throw std::runtime_error("session 4D table changed numerical values");
+            });
+          request.validate(); }
+        if(cache.loads!=loaded+2) throw std::runtime_error("session 3D to 4D transition did not replace table");
+        cache.clear();
+        if(cache.resident()) throw std::runtime_error("session resource reset failed");
+        dispatch_config.physics.eos_table_path=pcache.string();
+        first_digest=arch::core::file_sha256(pcache.string());
+    }
+    if(EOSDispatcher::inspection_cache) throw std::runtime_error("session cache leaked into normal dispatch");
 
     {
         EOSDispatcher::InspectionScope inspection;

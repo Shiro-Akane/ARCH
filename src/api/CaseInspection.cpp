@@ -1,3 +1,4 @@
+#include "Progress.h"
 #include "CaseInspection.h"
 #include "ParameterMetadata.h"
 #include "StateSnapshot.h"
@@ -86,13 +87,13 @@ PreviewResponse InspectCase(const PreviewRequest& request) {
         config = RuntimeParams::LoadText(request.config_text, reads);
         PublishStateSnapshot(out["state"], config);
         validate_probe_domain(config);
-        code = 4; error = "UNSUPPORTED_CASE_INSPECTION"; out["stage"] = "support";
+        code = 4; error = "UNSUPPORTED_CASE_INSPECTION"; ReportStage(request, out, "support");
         if (!registration) throw std::invalid_argument("Case is not registered in this binary");
         out["capability"] = CaseInspectionCapability(request.case_id, *registration);
         if (config.io.restart) throw std::invalid_argument("Initial inspection does not load restart checkpoints");
         EOSDispatcher::InspectionScope eos_sources;
         auto problem = ProblemRegistry::Get().Create(request.case_id);
-        code = 5; error = "SETUP_FAILED"; out["stage"] = "setup";
+        code = 5; error = "SETUP_FAILED"; ReportStage(request, out, "setup");
         out["state"]["setup"] = "error";
         out["state"]["eos"]["status"] = "setup-managed-not-inspected";
         problem->InspectSetup(config, species, reads);
@@ -104,7 +105,7 @@ PreviewResponse InspectCase(const PreviewRequest& request) {
         out["state"]["eos"]["status"] = "setup-managed-not-inspected";
         out["state"]["resources"] = AmrResourceMetadata(config, species.count());
         validate_probe_domain(config);
-        code = 6; error = "INITIALIZATION_PROBE_FAILED"; out["stage"] = "initialization";
+        code = 6; error = "INITIALIZATION_PROBE_FAILED"; ReportStage(request, out, "initialization");
         if (registration->point_initialization) {
             SinkProbe probe;
             const double lo[] = {config.grid.x1_min, config.grid.x2_min, config.grid.x3_min};
@@ -123,11 +124,11 @@ PreviewResponse InspectCase(const PreviewRequest& request) {
                     }
             out["data"] = probe.result();
         }
-        out["stage"] = "source-validation"; error = "EOS_SOURCE_CHANGED";
+        ReportStage(request, out, "source-validation"); error = "EOS_SOURCE_CHANGED";
         eos_sources.validate();
         out["execution"]["eosSourceConsistency"] = "checked-after-probe";
         out["state"]["initializationProbe"] = registration->point_initialization ? "sampled" : "unavailable";
-        out["stage"] = "complete"; out["status"] = "ok"; code = 0;
+        ReportStage(request, out, "complete"); out["status"] = "ok"; code = 0;
     } catch (const std::exception& e) {
         out["data"] = Json();
         out["diagnostics"].push(Json::object({{"severity", "error"}, {"code", error}, {"message", e.what()}}));

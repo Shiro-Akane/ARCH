@@ -12,8 +12,9 @@ namespace arch::core {
 
 /**
  * Return the lowercase hexadecimal SHA-256 digest of one complete file.
- * This deliberately performs an uncached read so content changes cannot hide
- * behind unchanged path, size, or modification-time metadata.
+ * This always reads complete contents, so changes cannot hide behind path,
+ * size or modification-time metadata. A CPU preview session may retain bytes
+ * and reuse a digest after exact full-content comparison; normal callers hash.
  */
 std::string file_sha256(const std::string& path);
 

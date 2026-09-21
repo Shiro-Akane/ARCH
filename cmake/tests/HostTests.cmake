@@ -317,3 +317,15 @@ add_test(NAME case_inspection_contract
     COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_case_inspection.py
         $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
 set_tests_properties(case_inspection_contract PROPERTIES TIMEOUT 600)
+add_test(NAME preview_session_contract
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_preview_session.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(preview_session_contract PROPERTIES TIMEOUT 600)
+add_executable(arch_verified_file_cache tests/api/test_verified_file_cache.cpp
+    src/core/FileFingerprint.cpp src/api/WorkerLimits.cpp)
+arch_configure_host_test(arch_verified_file_cache)
+add_test(NAME preview_verified_resources COMMAND arch_verified_file_cache
+    "${CMAKE_CURRENT_BINARY_DIR}/verified-file-cache-data")
+add_executable(arch_initial_sample_cache tests/api/test_initial_sample_cache.cpp)
+arch_configure_host_test(arch_initial_sample_cache)
+add_test(NAME preview_exact_sample_cache COMMAND arch_initial_sample_cache)
