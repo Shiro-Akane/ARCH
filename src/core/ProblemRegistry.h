@@ -11,6 +11,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "../interface/ProblemGenerator.h"
 
@@ -19,6 +20,11 @@
  * Returns a unique_ptr to ensure ownership transfer to the caller.
  */
 using ProblemCreator = std::function<std::unique_ptr<ProblemGenerator>()>;
+
+struct ProblemRegistration {
+    std::string source_file, source_sha256;
+    bool point_initialization = false;
+};
 
 class ProblemRegistry
 {
@@ -39,9 +45,10 @@ public:
      * @param name The unique identifier for the problem (e.g., "Sod", "Sedov").
      * @param creator The lambda/function to create the object.
      */
-    void Register(const std::string &name, ProblemCreator creator)
+    void Register(const std::string &name, ProblemCreator creator, ProblemRegistration info = {})
     {
         creators_[name] = creator;
+        registrations_[name] = std::move(info);
     }
 
     /**
@@ -59,7 +66,19 @@ public:
         return nullptr; // Caller must check for validity!
     }
 
+    // Registration names only: enumeration never constructs a case or calls Setup.
+    std::vector<std::string> Names() const {
+        std::vector<std::string> result;
+        for (const auto& [name, creator] : creators_) result.push_back(name);
+        return result;
+    }
+
+    const ProblemRegistration* Registration(const std::string& name) const {
+        const auto it = registrations_.find(name);
+        return it == registrations_.end() ? nullptr : &it->second;
+    }
 private:
+    std::map<std::string, ProblemRegistration> registrations_;
     /// Map connecting string keys (from inputs) to factory functions.
     std::map<std::string, ProblemCreator> creators_;
 

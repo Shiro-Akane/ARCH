@@ -10,6 +10,11 @@ static void require(bool good, const char *message) {
     if (!good) throw std::runtime_error(message);
 }
 int main() {
+    SpeciesManager empty;
+    IdealGas air(1.4, empty);
+    require(std::abs(air.get_eint_from_T(1, 300, nullptr) - 2.154e9) < 1e-5, "CGS air Cv times temperature");
+    require(std::abs(air.get_temperature(1, 2.154e9, nullptr) - 300) < 1e-10, "CGS energy to kelvin");
+    require(std::abs(air.get_pressure_from_rho_T(1, 300, nullptr) - 8.616e8) < 1e-4, "CGS ideal pressure from density and temperature");
     SpeciesManager species;
     species.add_species("test", 1, 1, 1.4, 2.0);
     IdealGas eos(1.4, species);

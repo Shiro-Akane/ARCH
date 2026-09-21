@@ -1,0 +1,76 @@
+{
+  "data": {
+    "advisoryOnly": true,
+    "assumption": "entire domain refined to each listed level; not a local refinement prediction",
+    "baseArraysPerState": 6,
+    "configuredPoolCapacity": 128,
+    "dimension": 1,
+    "excludes": [
+      "EOS tables",
+      "AMR tree and transfer plans",
+      "temporary arrays",
+      "allocator overhead",
+      "output buffers",
+      "MPI layout",
+      "thread workspaces"
+    ],
+    "levels": [
+      {
+        "activeCells": 64,
+        "baseStateBytes": 18432,
+        "fullDomainLeafBlocks": 4,
+        "level": 0,
+        "overflow": false,
+        "stateBytesIncludingSpecies": null
+      },
+      {
+        "activeCells": 128,
+        "baseStateBytes": 36864,
+        "fullDomainLeafBlocks": 8,
+        "level": 1,
+        "overflow": false,
+        "stateBytesIncludingSpecies": null
+      },
+      {
+        "activeCells": 256,
+        "baseStateBytes": 73728,
+        "fullDomainLeafBlocks": 16,
+        "level": 2,
+        "overflow": false,
+        "stateBytesIncludingSpecies": null
+      },
+      {
+        "activeCells": 512,
+        "baseStateBytes": 147456,
+        "fullDomainLeafBlocks": 32,
+        "level": 3,
+        "overflow": false,
+        "stateBytesIncludingSpecies": null
+      }
+    ],
+    "oomPrediction": "not-provided",
+    "paddedCellsPerBlock": 32,
+    "poolPreallocatedBaseBytes": 589824,
+    "rootBlocks": 4,
+    "scope": "one-global-domain; current single-process storage layout",
+    "speciesCount": null,
+    "stateSlots": 3,
+    "unit": "byte",
+    "version": "1"
+  },
+  "diagnostics": [],
+  "execution": {
+    "cuda": "not_initialized",
+    "eos": "not_loaded",
+    "setup": "not_executed"
+  },
+  "identity": {
+    "caseId": "Sod",
+    "configRevision": "cda6ed59c87765c564368225f07620396e26bd57c842d8612ac7620c2a055170",
+    "requestId": ""
+  },
+  "kind": "amr-resource-estimate",
+  "schemaVersion": "1.0",
+  "status": "ok",
+  "version": "1"
+}

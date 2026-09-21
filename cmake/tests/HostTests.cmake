@@ -199,6 +199,16 @@ add_test(NAME device_block_store_lifecycle
 
 # These targets require HDF5/HighFive and the resolved KLU provider.
 function(arch_register_io_regression_tests)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_executable(arch_preview_mesh_checkpoint tests/api/read_mesh_checkpoint.cpp)
+        arch_configure_host_test(arch_preview_mesh_checkpoint
+            "${highfive_SOURCE_DIR}/include" ${HDF5_INCLUDE_DIRS})
+        target_link_libraries(arch_preview_mesh_checkpoint PRIVATE ${HDF5_LIBRARIES} ${HDF5_CXX_LIBRARIES})
+        add_test(NAME ui_expansion_contract
+            COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_ui_expansion.py
+                $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_FILE:arch_preview_mesh_checkpoint>)
+        set_tests_properties(ui_expansion_contract PROPERTIES TIMEOUT 300)
+    endif()
     add_executable(arch_preview_cellular_reference
         tests/api/cellular_reference.cpp
         src/core/ProblemHelper.cpp src/core/FileFingerprint.cpp
@@ -297,3 +307,13 @@ function(arch_register_io_regression_tests)
         add_test(NAME sparse_klu_161_equations COMMAND sparse_klu_regression)
     endif()
 endfunction()
+
+# Observed inputs and real Init sinks, separate from reviewed dimensional evidence.
+add_executable(arch_initialization_probe tests/api/test_initialization_probe.cpp
+    src/api/ParameterMetadata.cpp src/api/CaseUnitEvidence.cpp)
+arch_configure_host_test(arch_initialization_probe)
+add_test(NAME initialization_probe COMMAND arch_initialization_probe)
+add_test(NAME case_inspection_contract
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/tests/api/test_case_inspection.py
+        $<TARGET_FILE:ARCH> ${CMAKE_CURRENT_SOURCE_DIR})
+set_tests_properties(case_inspection_contract PROPERTIES TIMEOUT 600)

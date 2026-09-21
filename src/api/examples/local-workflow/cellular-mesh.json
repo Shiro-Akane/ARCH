@@ -1,0 +1,943 @@
+{
+  "data": {
+    "balance": "face-neighbor-2:1",
+    "budgetedBytesPerSlot": 1908736,
+    "complete": true,
+    "completedPasses": 2,
+    "configuredMaxBlocks": 128,
+    "configuredMaxLevel": 2,
+    "dimension": 2,
+    "fieldOverlay": "separate uniform Init samples; not AMR cell averages",
+    "geometry": "cartesian",
+    "kind": "amr-leaf-mesh",
+    "leafCount": 20,
+    "leaves": [
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.40000000000000013,
+          0.4
+        ],
+        "level": 1,
+        "logicalIndex": [
+          2,
+          0,
+          0
+        ],
+        "logicalKey": "1:2:0:0",
+        "lower": [
+          12.8,
+          0
+        ],
+        "upper": [
+          19.200000000000003,
+          6.4
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.3999999999999999,
+          0.4
+        ],
+        "level": 1,
+        "logicalIndex": [
+          3,
+          0,
+          0
+        ],
+        "logicalKey": "1:3:0:0",
+        "lower": [
+          19.200000000000003,
+          0
+        ],
+        "upper": [
+          25.6,
+          6.4
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.40000000000000013,
+          0.4
+        ],
+        "level": 1,
+        "logicalIndex": [
+          2,
+          1,
+          0
+        ],
+        "logicalKey": "1:2:1:0",
+        "lower": [
+          12.8,
+          6.4
+        ],
+        "upper": [
+          19.200000000000003,
+          12.8
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.3999999999999999,
+          0.4
+        ],
+        "level": 1,
+        "logicalIndex": [
+          3,
+          1,
+          0
+        ],
+        "logicalKey": "1:3:1:0",
+        "lower": [
+          19.200000000000003,
+          6.4
+        ],
+        "upper": [
+          25.6,
+          12.8
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          0,
+          0,
+          0
+        ],
+        "logicalKey": "2:0:0:0",
+        "lower": [
+          0,
+          0
+        ],
+        "upper": [
+          3.2,
+          3.2
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          1,
+          0,
+          0
+        ],
+        "logicalKey": "2:1:0:0",
+        "lower": [
+          3.2,
+          0
+        ],
+        "upper": [
+          6.4,
+          3.2
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          0,
+          1,
+          0
+        ],
+        "logicalKey": "2:0:1:0",
+        "lower": [
+          0,
+          3.2
+        ],
+        "upper": [
+          3.2,
+          6.4
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          1,
+          1,
+          0
+        ],
+        "logicalKey": "2:1:1:0",
+        "lower": [
+          3.2,
+          3.2
+        ],
+        "upper": [
+          6.4,
+          6.4
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.20000000000000007,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          2,
+          0,
+          0
+        ],
+        "logicalKey": "2:2:0:0",
+        "lower": [
+          6.4,
+          0
+        ],
+        "upper": [
+          9.600000000000001,
+          3.2
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.19999999999999996,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          3,
+          0,
+          0
+        ],
+        "logicalKey": "2:3:0:0",
+        "lower": [
+          9.600000000000001,
+          0
+        ],
+        "upper": [
+          12.8,
+          3.2
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.20000000000000007,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          2,
+          1,
+          0
+        ],
+        "logicalKey": "2:2:1:0",
+        "lower": [
+          6.4,
+          3.2
+        ],
+        "upper": [
+          9.600000000000001,
+          6.4
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.19999999999999996,
+          0.2
+        ],
+        "level": 2,
+        "logicalIndex": [
+          3,
+          1,
+          0
+        ],
+        "logicalKey": "2:3:1:0",
+        "lower": [
+          9.600000000000001,
+          3.2
+        ],
+        "upper": [
+          12.8,
+          6.4
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.20000000000000007
+        ],
+        "level": 2,
+        "logicalIndex": [
+          0,
+          2,
+          0
+        ],
+        "logicalKey": "2:0:2:0",
+        "lower": [
+          0,
+          6.4
+        ],
+        "upper": [
+          3.2,
+          9.600000000000001
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.20000000000000007
+        ],
+        "level": 2,
+        "logicalIndex": [
+          1,
+          2,
+          0
+        ],
+        "logicalKey": "2:1:2:0",
+        "lower": [
+          3.2,
+          6.4
+        ],
+        "upper": [
+          6.4,
+          9.600000000000001
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.19999999999999996
+        ],
+        "level": 2,
+        "logicalIndex": [
+          0,
+          3,
+          0
+        ],
+        "logicalKey": "2:0:3:0",
+        "lower": [
+          0,
+          9.600000000000001
+        ],
+        "upper": [
+          3.2,
+          12.8
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.2,
+          0.19999999999999996
+        ],
+        "level": 2,
+        "logicalIndex": [
+          1,
+          3,
+          0
+        ],
+        "logicalKey": "2:1:3:0",
+        "lower": [
+          3.2,
+          9.600000000000001
+        ],
+        "upper": [
+          6.4,
+          12.8
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.20000000000000007,
+          0.20000000000000007
+        ],
+        "level": 2,
+        "logicalIndex": [
+          2,
+          2,
+          0
+        ],
+        "logicalKey": "2:2:2:0",
+        "lower": [
+          6.4,
+          6.4
+        ],
+        "upper": [
+          9.600000000000001,
+          9.600000000000001
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.19999999999999996,
+          0.20000000000000007
+        ],
+        "level": 2,
+        "logicalIndex": [
+          3,
+          2,
+          0
+        ],
+        "logicalKey": "2:3:2:0",
+        "lower": [
+          9.600000000000001,
+          6.4
+        ],
+        "upper": [
+          12.8,
+          9.600000000000001
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.20000000000000007,
+          0.19999999999999996
+        ],
+        "level": 2,
+        "logicalIndex": [
+          2,
+          3,
+          0
+        ],
+        "logicalKey": "2:2:3:0",
+        "lower": [
+          6.4,
+          9.600000000000001
+        ],
+        "upper": [
+          9.600000000000001,
+          12.8
+        ]
+      },
+      {
+        "cellShape": [
+          16,
+          16
+        ],
+        "cellSpacing": [
+          0.19999999999999996,
+          0.19999999999999996
+        ],
+        "level": 2,
+        "logicalIndex": [
+          3,
+          3,
+          0
+        ],
+        "logicalKey": "2:3:3:0",
+        "lower": [
+          9.600000000000001,
+          9.600000000000001
+        ],
+        "upper": [
+          12.8,
+          12.8
+        ]
+      }
+    ],
+    "levelCounts": [
+      {
+        "leafBlocks": 0,
+        "level": 0
+      },
+      {
+        "leafBlocks": 4,
+        "level": 1
+      },
+      {
+        "leafBlocks": 16,
+        "level": 2
+      }
+    ],
+    "limitedReason": null,
+    "refinementRatio": 2,
+    "resources": {
+      "advisoryOnly": true,
+      "assumption": "entire domain refined to each listed level; not a local refinement prediction",
+      "baseArraysPerState": 6,
+      "configuredPoolCapacity": 128,
+      "dimension": 2,
+      "excludes": [
+        "EOS tables",
+        "AMR tree and transfer plans",
+        "temporary arrays",
+        "allocator overhead",
+        "output buffers",
+        "MPI layout",
+        "thread workspaces"
+      ],
+      "levels": [
+        {
+          "activeCells": 512,
+          "baseStateBytes": 221184,
+          "fullDomainLeafBlocks": 2,
+          "level": 0,
+          "overflow": false,
+          "stateBytesIncludingSpecies": 921600
+        },
+        {
+          "activeCells": 2048,
+          "baseStateBytes": 884736,
+          "fullDomainLeafBlocks": 8,
+          "level": 1,
+          "overflow": false,
+          "stateBytesIncludingSpecies": 3686400
+        },
+        {
+          "activeCells": 8192,
+          "baseStateBytes": 3538944,
+          "fullDomainLeafBlocks": 32,
+          "level": 2,
+          "overflow": false,
+          "stateBytesIncludingSpecies": 14745600
+        }
+      ],
+      "oomPrediction": "not-provided",
+      "paddedCellsPerBlock": 768,
+      "poolPreallocatedBaseBytes": 14155776,
+      "rootBlocks": 2,
+      "scope": "one-global-domain; current single-process storage layout",
+      "speciesCount": 19,
+      "stateSlots": 3,
+      "unit": "byte",
+      "version": "1"
+    },
+    "snapshot": "last-completed-balanced-hierarchy",
+    "unit": "cm",
+    "version": "1",
+    "workingBudgetBytes": 134217728,
+    "workingCapacity": 70
+  },
+  "diagnostics": [
+    {
+      "code": "CORE_LOG",
+      "message": "[Info] Loaded 37 parameters from <memory>\n[EOS Dispatch] Resolving EOS Policy: helmholtz\n[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...\n[HelmEos] Loaded complete 541x201 electron/positron table.\n[Problem] Cellular Detonation Setup Complete.\n          Shock Dir  : 0 (0=X, 1=Y, 2=Z)\n          Spike Dist : 6.4\n          Amb Press  : 8.67347e+23 erg/cm^3\n          VN Press   : 1.4237e+25 erg/cm^3\n",
+      "severity": "info"
+    },
+    {
+      "code": "CORE_LOG",
+      "message": "[RuntimeParams] Warning: PLT variable ENUC is disabled: the nuclear reaction network is not enabled\n[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions\n",
+      "severity": "warning"
+    }
+  ],
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "identity": {
+    "caseId": "CellularDet",
+    "configRevision": "78c955c7b460d007d8285039ac17207c1206da7f507db323dd3ed53cd7c0893a",
+    "requestId": ""
+  },
+  "kind": "initial-amr-preview",
+  "schemaVersion": "1.0",
+  "stage": "complete",
+  "state": {
+    "amr": {
+      "actualHierarchy": {
+        "location": "data.leaves"
+      },
+      "derefineThreshold": 0.01,
+      "effectiveMaxBlocks": 128,
+      "enabled": true,
+      "indicatorEvaluation": "see-data-completedPasses",
+      "initialRefinement": "complete",
+      "maxBlocks": 128,
+      "maxLevel": 2,
+      "minLevel": 0,
+      "parsedIndicators": [
+        "DENS"
+      ],
+      "refineThreshold": 0.1,
+      "regridInterval": 2,
+      "requestedIndicators": "DENS",
+      "status": "configured"
+    },
+    "amrIndicators": {
+      "alternativeSeparator": "+",
+      "choices": [
+        {
+          "available": true,
+          "reason": null,
+          "selected": true,
+          "value": "DENS"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "PRES"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "TEMP"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VELX"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VELY"
+        },
+        {
+          "available": false,
+          "reason": "requires 3D",
+          "selected": false,
+          "value": "VELZ"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENER"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "VORT"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "DIVV"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "ENTR"
+        },
+        {
+          "available": false,
+          "reason": "requires reactions",
+          "selected": false,
+          "value": "ENUC"
+        },
+        {
+          "available": false,
+          "reason": "self gravity is not implemented",
+          "selected": false,
+          "value": "JENS"
+        },
+        {
+          "available": true,
+          "reason": null,
+          "selected": false,
+          "value": "SPECIES"
+        }
+      ],
+      "namedSpecies": [],
+      "separator": ",",
+      "speciesResolution": "requires case Setup"
+    },
+    "computeBackendRequested": "cpu",
+    "configuration": "parsed",
+    "coordinates": {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 2,
+          "blocksKey": "nblockx1",
+          "displayName": "x",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "x",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "y",
+          "key": "x2",
+          "kind": "length",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "y",
+          "unit": "cm",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 2,
+      "disabledBlockCount": 0,
+      "geometry": "cartesian",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    "diffusion": {
+      "channels": [
+        {
+          "coefficientKey": "alpha_therm",
+          "constantInputAllowed": false,
+          "stellarModelSuppliesCoefficient": true,
+          "toggleKey": "use_thermal_diff",
+          "unit": "cm^2/s"
+        },
+        {
+          "coefficientKey": "nu_visc",
+          "constantInputAllowed": false,
+          "stellarModelSuppliesCoefficient": false,
+          "toggleKey": "use_viscous_diff",
+          "unit": "cm^2/s"
+        },
+        {
+          "coefficientKey": "D_spec",
+          "constantInputAllowed": false,
+          "stellarModelSuppliesCoefficient": false,
+          "toggleKey": "use_species_diff",
+          "unit": "cm^2/s"
+        }
+      ],
+      "conflictResolution": "explicit reversible removal from working text; hiding fields is insufficient",
+      "enabled": false,
+      "forbiddenExplicitKeys": [],
+      "modeEditable": false,
+      "possibleSources": [
+        "constant",
+        "stellar-conductivity"
+      ],
+      "selectionRule": "species_count > 0 and EOS electron density > 0 selects stellar transport; positive viscosity/thermal overrides then fail",
+      "source": "state-dependent",
+      "sourceScope": "configuration; EOS state not evaluated",
+      "version": "1"
+    },
+    "eos": {
+      "componentTablePath": "",
+      "configuredGamma": 1.4,
+      "loadedTablePath": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "requested": "helmholtz",
+      "resolved": "helmholtz",
+      "sourceFingerprint": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+      "status": "ready",
+      "tablePath": "EOS_toolkit/tables/helmholtz/helm_table.dat"
+    },
+    "grid": {
+      "axes": [
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.8,
+          "displayName": "x",
+          "lowerBoundary": "outflow",
+          "max": 25.6,
+          "min": 0,
+          "name": "x1",
+          "rootBlocks": 2,
+          "rootCells": 32,
+          "unit": "cm",
+          "upperBoundary": "outflow"
+        },
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.8,
+          "displayName": "y",
+          "lowerBoundary": "outflow",
+          "max": 12.8,
+          "min": 0,
+          "name": "x2",
+          "rootBlocks": 1,
+          "rootCells": 16,
+          "unit": "cm",
+          "upperBoundary": "outflow"
+        }
+      ],
+      "dimension": 2,
+      "geometry": "cartesian",
+      "hierarchy": "constructed",
+      "status": "configured"
+    },
+    "setup": "ready",
+    "species": [
+      {
+        "index": 0,
+        "name": "h1"
+      },
+      {
+        "index": 1,
+        "name": "he3"
+      },
+      {
+        "index": 2,
+        "name": "he4"
+      },
+      {
+        "index": 3,
+        "name": "c12"
+      },
+      {
+        "index": 4,
+        "name": "n14"
+      },
+      {
+        "index": 5,
+        "name": "o16"
+      },
+      {
+        "index": 6,
+        "name": "ne20"
+      },
+      {
+        "index": 7,
+        "name": "mg24"
+      },
+      {
+        "index": 8,
+        "name": "si28"
+      },
+      {
+        "index": 9,
+        "name": "s32"
+      },
+      {
+        "index": 10,
+        "name": "ar36"
+      },
+      {
+        "index": 11,
+        "name": "ca40"
+      },
+      {
+        "index": 12,
+        "name": "ti44"
+      },
+      {
+        "index": 13,
+        "name": "cr48"
+      },
+      {
+        "index": 14,
+        "name": "fe52"
+      },
+      {
+        "index": 15,
+        "name": "fe54"
+      },
+      {
+        "index": 16,
+        "name": "ni56"
+      },
+      {
+        "index": 17,
+        "name": "neut"
+      },
+      {
+        "index": 18,
+        "name": "prot"
+      }
+    ],
+    "units": {
+      "basis": "core-cgs-contract",
+      "system": "cgs",
+      "valuesConverted": false
+    }
+  },
+  "status": "ok"
+}

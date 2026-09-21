@@ -1,0 +1,9 @@
+nblockx1=4
+nblockx2=0
+nblockx3=0
+x_pos=.43
+lrefinemax=3
+refine_threshold=.1
+derefine_threshold=.01
+max_blocks=128
+network_name=none

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <map>
 #include <optional>
 #include <set>
@@ -9,6 +12,9 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
+struct PointCoords;
+struct PrimitiveData;
 
 namespace arch::preview {
 using ParameterValue = std::variant<double, std::int64_t, bool, std::string>;
@@ -39,14 +45,40 @@ struct ParameterRead {
 // Input snapshots come from the existing parser; this does not parse tokens.
 class ParameterReadTrace {
     std::set<std::string> keys_;
+    bool observe_all_ = false;
     std::map<std::string, std::string> raw_, strings_;
     std::map<std::string, double> numeric_;
     std::map<std::string, ParameterRead> reads_;
 public:
-    explicit ParameterReadTrace(std::set<std::string> keys) : keys_(std::move(keys)) {}
+    explicit ParameterReadTrace(std::set<std::string> keys, bool observe_all = false)
+        : keys_(std::move(keys)), observe_all_(observe_all) {}
+    struct UnitEvidence { std::string unit, basis; bool conflict = false; };
+    std::map<std::string, UnitEvidence> units;
+    void record_unit(const std::string& key, const std::string& unit, const std::string& basis) {
+        if (!observe_all_ && !keys_.contains(key)) return;
+        auto [it, added] = units.emplace(key, UnitEvidence{unit, basis, false});
+        if (!added && it->second.unit != unit) it->second.conflict = true;
+    }
+    template<class T> void validate_numeric(const std::string& key, double number) const {
+        if constexpr (std::is_integral_v<T>) {
+            if (auto it = raw_.find(key); it != raw_.end()) {
+                const auto& token = it->second;
+                const auto first = !token.empty() && (token.front() == '+' || token.front() == '-') ? 1u : 0u;
+                bool whole = first < token.size();
+                for (std::size_t i = first; i < token.size(); ++i) whole &= token[i] >= '0' && token[i] <= '9';
+                if (!whole) throw std::invalid_argument("Parameter '"+key+"' requires an integer token");
+            }
+            if (!std::isfinite(number) || std::trunc(number) != number
+                || static_cast<long double>(number) < std::numeric_limits<T>::lowest()
+                || static_cast<long double>(number) > std::numeric_limits<T>::max())
+                throw std::invalid_argument("Parameter '"+key+"' is not representable as the requested integer/boolean type");
+        }
+    }
+    const auto& raw_input() const { return raw_; }
     void capture_input(const std::map<std::string, std::string> &raw,
                        const std::map<std::string, double> &numeric,
                        const std::map<std::string, std::string> &strings) {
+        if (observe_all_) { raw_ = raw; numeric_ = numeric; strings_ = strings; return; }
         for (const auto &key : keys_) {
             if (auto it = raw.find(key); it != raw.end()) raw_[key] = it->second;
             if (auto it = numeric.find(key); it != numeric.end()) numeric_[key] = it->second;
@@ -54,7 +86,7 @@ public:
         }
     }
     template<class T> void observe(const std::string &key, T fallback, T value, bool found) {
-        if (!keys_.contains(key)) return;
+        if (!observe_all_ && !keys_.contains(key)) return;
         ParameterRead read{key, parameter_type<T>(), parameter_value(value), parameter_value(fallback),
                            std::nullopt, std::nullopt, "unknown", "untracked-value"};
         if (auto it = raw_.find(key); it != raw_.end()) read.raw_value = it->second;
@@ -62,8 +94,10 @@ public:
             if (auto it = strings_.find(key); it != strings_.end())
                 read.explicit_value = parameter_value(it->second);
         } else {
-            if (auto it = numeric_.find(key); it != numeric_.end())
+            if (auto it = numeric_.find(key); it != numeric_.end()) {
+                validate_numeric<T>(key, it->second);
                 read.explicit_value = parameter_value(static_cast<T>(it->second));
+            }
         }
         if (found && read.explicit_value == std::optional<ParameterValue>(read.effective_value)) {
             read.source = "explicit";
@@ -84,6 +118,12 @@ public:
         }
     }
     const auto &reads() const { return reads_; }
+};
+
+// Observation at the actual Init boundary, without expression provenance.
+struct InitializationObserver {
+    virtual ~InitializationObserver() = default;
+    virtual void initial_primitive(const PointCoords&, const PrimitiveData&) = 0;
 };
 
 // A model publishes the relation to its initialized state. The UI never infers

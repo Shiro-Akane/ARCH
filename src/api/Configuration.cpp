@@ -1,4 +1,5 @@
 #include "Configuration.h"
+#include "ParameterPresentation.h"
 #include "LogCapture.h"
 #include "Response.h"
 #include "../core/RuntimeParams.h"
@@ -35,7 +36,7 @@ struct Options<dispatch::TypeList<Id, Behavior, Registrations...>> {
                 names.push(std::string(name));
             const auto info = dispatch::describe_policy<R>();
             values.push(Json::object({{"value", std::string(info.canonical_name)},
-                {"acceptedNames", names}, {"cpuSupported", info.cpu_supported},
+                {"displayName", OptionDisplayName(info.canonical_name)}, {"acceptedNames", names}, {"cpuSupported", info.cpu_supported},
                 {"cudaSupported", info.cuda_supported}}));
         };
         (add.template operator()<Registrations>(), ...);
@@ -46,7 +47,7 @@ struct Options<dispatch::TypeList<Id, Behavior, Registrations...>> {
 };
 Json simple_options(std::initializer_list<const char*> names) {
     auto choices = Json::array();
-    for (auto name : names) choices.push(Json::object({{"value", name}, {"acceptedNames", Json::array({name})}}));
+    for (auto name : names) choices.push(Json::object({{"value", name}, {"displayName", OptionDisplayName(name)}, {"acceptedNames", Json::array({name})}}));
     return Json::object({{"caseSensitive", false}, {"choices", choices}, {"unknownBehavior", "error"}});
 }
 Json options(const std::string& key) {
@@ -58,7 +59,7 @@ Json options(const std::string& key) {
     if (key == "ode_solver") return Options<dispatch::OdeSolverPolicies>::get();
     if (key == "linear_solver") {
         auto result = Options<dispatch::LinearSolverPolicies>::get();
-        result["choices"].push(Json::object({{"value", "auto"}, {"acceptedNames", Json::array({"auto"})}}));
+        result["choices"].push(Json::object({{"value", "auto"}, {"displayName", "Automatic"}, {"acceptedNames", Json::array({"auto"})}}));
         return result;
     }
     if (key == "diff_integrator") return Options<dispatch::DiffusionIntegratorPolicies>::get();
@@ -72,7 +73,11 @@ Json options(const std::string& key) {
         return result;
     }
     if (key == "use_nse") return simple_options({"true", "false", "auto"});
-    if (key.ends_with("_boundary_type")) return simple_options({"outflow", "periodic", "reflect", "reflecting"});
+    if (key.ends_with("_boundary_type")) return Json::object({{"caseSensitive", false}, {"unknownBehavior", "error"},
+        {"choices", Json::array({
+            Json::object({{"value", "outflow"}, {"displayName", "Outflow"}, {"acceptedNames", Json::array({"outflow"})}}),
+            Json::object({{"value", "periodic"}, {"displayName", "Periodic"}, {"acceptedNames", Json::array({"periodic"})}}),
+            Json::object({{"value", "reflect"}, {"displayName", "Reflecting"}, {"acceptedNames", Json::array({"reflect", "reflecting"})}})})}});
     return Json();
 }
 Json constraints(const ParameterDefinition& d) {
@@ -105,7 +110,7 @@ Json path_role(const std::string& key) {
         {"relativeTo", "process-working-directory"}, {"existenceChecked", false},
         {"checkOwner", "local-host"}, {"targetMayBeNew", key == "out_dir"}});
 }
-Json unit_info(const std::string& key, const std::string& system = "unknown") {
+Json unit_info(const std::string& key, const std::string& system = "cgs") {
     if (key == "nuclearTempMin" || key == "smallt" || key == "nseTempThreshold")
         return Json::object({{"unit", "K"}, {"status", "known"}});
     if (key == "nuclearDensMin" || key == "nseDensThreshold")
@@ -166,7 +171,16 @@ bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigPa
     if (key == "eos_helm_table_path") return dispatch::ascii_iequals(c.physics.eos_type, "tabular");
     if (key.starts_with("gravity_g_")) return c.physics.gravity.type == "external";
     if (key == "gravity_G") return false;
-    if (d.group == "Diffusion" && key != "use_diffusion") return c.physics.diffusion.use_diffusion;
+    if (d.group == "Diffusion" && key != "use_diffusion") {
+        if (!c.physics.diffusion.use_diffusion) return false;
+        if (key == "alpha_therm" || key == "nu_visc" || key == "D_spec") {
+            if (dispatch::ascii_iequals(c.physics.eos_type, "helmholtz")) return false;
+            if (key == "alpha_therm") return c.physics.diffusion.use_thermal_diffusion;
+            if (key == "nu_visc") return c.physics.diffusion.use_viscous_diffusion;
+            return c.physics.diffusion.use_species_diffusion;
+        }
+        return true;
+    }
     if (d.group == "Network" && key != "use_burn" && key != "network_name") return c.physics.burn.use_burn;
     if (key.size() > 2 && key[0] == 'x' && key[1] >= '1' && key[1] <= '3') return key[1]-'0' <= c.grid.dim;
     return true;
@@ -185,16 +199,16 @@ Json input_value(const ParameterDefinition& d, const ConfigParser& p) {
 } // namespace
 
 Json ConfigurationExtensions() {
-    return Json::object({{"version", "1"}, {"schemaCommand", "--config-schema"},
+    return Json::object({{"version", contract::configuration_version}, {"schemaCommand", "--config-schema"},
         {"inspectCommand", "--inspect-config"}, {"coverage", "standard-runtime-inputs"},
-        {"standardParameterCount", 90}, {"customParameterCoverage", false}});
+        {"presentationVersion", "1"}, {"standardParameterCount", std::int64_t(std::size(config::standard_parameters))}, {"customParameterCoverage", false}});
 }
 Json ConfigurationSchema() {
     auto parameters = Json::array();
     for (const auto& d : config::standard_parameters) {
         const std::string key(d.key);
         auto item = Json::object({{"key", key}, {"type", std::string(d.type)},
-            {"group", std::string(d.group)}, {"defaultValue", default_json(d)},
+            {"group", std::string(d.group)}, {"presentation", ParameterPresentation(d)}, {"defaultValue", default_json(d)},
             {"defaultSource", "shared-runtime-definition"}, {"constraints", constraints(d)},
             {"options", options(key)}, {"path", path_role(key)}, {"units", unit_info(key)},
             {"applicability", condition(d)}});
@@ -206,23 +220,23 @@ Json ConfigurationSchema() {
         for (int dim = 1; dim <= 3; ++dim) {
             GridConfig grid; grid.geometry = geometry; grid.dim = dim;
             grid.nblockx2 = dim >= 2 ? 1 : 0; grid.nblockx3 = dim == 3 ? 1 : 0;
-            coordinates.push(CoordinateMetadata(grid, "unknown"));
+            coordinates.push(CoordinateMetadata(grid, "cgs"));
         }
     }
     auto fields = Json::array();
     for (const auto key : {"DENS", "TEMP", "PRES", "ENER", "EINT", "VELX", "VELY", "VELZ"})
         fields.push(Json::object({{"key", key}, {"cgs", FieldUnit(key, "cgs")}, {"code", FieldUnit(key, "code")}}));
-    return Json::object({{"schemaVersion", "1.0"}, {"version", "1"}, {"kind", "configuration-schema"}, {"status", "ok"},
+    return Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-schema"}, {"status", "ok"},
         {"coverage", "standard-runtime-inputs"}, {"standardParametersComplete", true},
         {"customParametersComplete", false}, {"constraintsComplete", false},
-        {"parameters", parameters}, {"coordinateSystems", coordinates}, {"fieldUnits", fields},
+        {"parameters", parameters}, {"coordinateSystems", coordinates}, {"fieldUnits", fields}, {"unitSystem", "cgs"}, {"legacyCodeUnits", "deprecated; no current preview selects them"},
         {"crossConstraints", Json::array({"x3 enabled requires x2 enabled", "active axis max > min", "0 <= lrefinemin <= lrefinemax <= 15", "0 <= derefine_threshold < refine_threshold <= 1", "max_eint >= min_eint", "Helmholtz diffusion forbids explicit alpha_therm/nu_visc/D_spec"})},
         {"pathChecks", "local-host; no filesystem access in schema or inspection"}});
 }
 
 PreviewResponse InspectConfiguration(const PreviewRequest& request) {
     detail::CaptureLogs logs;
-    auto result = Json::object({{"schemaVersion", "1.0"}, {"version", "1"}, {"kind", "configuration-inspection"},
+    auto result = Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-inspection"},
         {"status", "error"}, {"identity", Json::object({{"requestId", request.request_id}, {"caseId", request.case_id},
             {"configRevision", core::string_sha256(request.config_text)}})},
         {"execution", Json::object({{"simulationReadiness", "not_checked"}, {"setup", "not_executed"},
@@ -264,7 +278,9 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
         check_option("reconstruct", dispatch::parse_registered_policy<dispatch::ReconstructionPolicies>(config.numerics.reconstruction));
         check_option("limiter", dispatch::parse_registered_policy<dispatch::LimiterPolicies>(config.numerics.limiter));
         check_option("time_integrator", dispatch::parse_registered_policy<dispatch::TimeIntegratorPolicies>(config.numerics.time_integrator));
-        if (UnitSystem(config) == "unknown") throw ConfigValueError("eos_type", "INVALID_OPTION", "Use ideal, helmholtz or tabular.");
+        if (!dispatch::ascii_iequals(config.physics.eos_type, "ideal")
+            && !dispatch::ascii_iequals(config.physics.eos_type, "helmholtz")
+            && !dispatch::ascii_iequals(config.physics.eos_type, "tabular")) throw ConfigValueError("eos_type", "INVALID_OPTION", "Use ideal, helmholtz or tabular.");
         if (config.physics.burn.use_burn) {
             check_option("network_name", dispatch::parse_registered_policy<dispatch::NetworkPolicies>(config.physics.burn.network_name));
             check_option("ode_solver", dispatch::parse_registered_policy<dispatch::OdeSolverPolicies>(config.physics.burn.odeconfig.ode_solver));
@@ -311,6 +327,8 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
         result["parameters"] = parameters;
         result["coordinates"] = CoordinateMetadata(config.grid, UnitSystem(config));
         result["unitSystem"] = UnitSystem(config);
+        result["diffusion"] = DiffusionMetadata(config);
+        result["amrIndicators"] = RefinementMetadata(config);
         result["resolved"] = Json::object({{"geometry", config.grid.geometry}, {"dimension", config.grid.dim},
             {"timeIntegrator", config.numerics.time_integrator}, {"eosRequested", config.physics.eos_type},
             {"burnEnabled", config.physics.burn.use_burn}, {"networkRequested", config.physics.burn.network_name},

@@ -26,7 +26,8 @@ class ParameterMetadataContract(unittest.TestCase):
         self.assertEqual(parameter['key'], 'x_pos')
         self.assertEqual(parameter['type'], 'float')
         self.assertEqual(parameter['defaultValue'], .5)
-        self.assertIsNone(parameter['unit'])
+        self.assertEqual(parameter['unit'], 'cm')
+        self.assertFalse(parameter['unitEvidence']['automaticInference'])
         self.assertIsNone(parameter['description'])
         return parameter
 

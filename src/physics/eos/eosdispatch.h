@@ -29,6 +29,7 @@
 #include "eos.h"
 
 #include "../../core/FileFingerprint.h"
+#include "../../core/InspectionSources.h"
 #include "../../core/RuntimeParams.h"
 #include "../../driver/dispatch/PolicyDescriptor.h"
 #include "../species/Species.h"
@@ -37,6 +38,23 @@ int inspect_eos_table_rank(const std::string& path);
 
 struct EOSDispatcher
 {
+    // Only isolated initialization inspection installs this scope. Ordinary
+    // dispatch keeps its uncached content checks at every query.
+    inline static thread_local arch::core::InspectionSources* inspection_sources = nullptr;
+    class InspectionScope {
+        arch::core::InspectionSources sources_;
+        arch::core::InspectionSources* previous_;
+    public:
+        InspectionScope() : previous_(inspection_sources) { inspection_sources = &sources_; }
+        ~InspectionScope() { inspection_sources = previous_; }
+        InspectionScope(const InspectionScope&) = delete;
+        InspectionScope& operator=(const InspectionScope&) = delete;
+        void validate() const { sources_.validate(); }
+    };
+    static std::string inspected_source(const std::string& key, std::function<std::string()> read) {
+        return inspection_sources ? inspection_sources->fingerprint(key, std::move(read)) : read();
+    }
+
     struct SpeciesCacheIdentity
     {
         const SpeciesManager* owner;
@@ -165,7 +183,7 @@ struct EOSDispatcher
         }
         case EosId::Helmholtz: {
             const std::string path = table_path(config, "Helmholtz");
-            const std::string before = arch::core::file_sha256(path);
+            const std::string before = inspected_source("helm:" + path, [path] { return arch::core::file_sha256(path); });
             const auto species_before = species_identity(specs);
             if (!cached_helm || cached_helm_path != path
                 || cached_helm_sha256 != before
@@ -192,7 +210,8 @@ struct EOSDispatcher
         case EosId::Tabular3D: {
             const std::string path = table_path(config, "Tabular");
             const std::string helm_path = component_table_path(config);
-            const std::string before = tabular_source_fingerprint(path,helm_path);
+            const std::string before = inspected_source("tabular:" + std::to_string(path.size()) + ":" + path + helm_path,
+                [path, helm_path] { return tabular_source_fingerprint(path, helm_path); });
             const auto species_before = species_identity(specs);
             if (table_dimension != 3 || !cached_3d
                 || cached_table_path != path
@@ -222,7 +241,8 @@ struct EOSDispatcher
         case EosId::Tabular4D: {
             const std::string path = table_path(config, "Tabular");
             const std::string helm_path = component_table_path(config);
-            const std::string before = tabular_source_fingerprint(path,helm_path);
+            const std::string before = inspected_source("tabular:" + std::to_string(path.size()) + ":" + path + helm_path,
+                [path, helm_path] { return tabular_source_fingerprint(path, helm_path); });
             const auto species_before = species_identity(specs);
             if (table_dimension != 4 || !cached_4d
                 || cached_table_path != path

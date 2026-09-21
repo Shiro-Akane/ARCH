@@ -33,7 +33,7 @@ struct GasProperty
     double A;         ///< Mass number
     double Z;         ///< Atomic number
     double gamma_ref; ///< Specific Heat Ratio (Cp/Cv), also known as Adiabatic Index.
-    double Cv_ref;    ///< Heat capacity (J/kg.K)
+    double Cv_ref;    ///< Specific heat capacity (erg/(g K))
 };
 
 struct SpeciesHostView;

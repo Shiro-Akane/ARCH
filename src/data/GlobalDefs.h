@@ -32,7 +32,7 @@ struct GridConfig
     int dim = 3;      ///< Dimensionality (1, 2, or 3)
     int amr_max_blocks = 2000; ///< Maximum number of AMR blocks
 
-    // Physical domain bounds in code units.
+    // Physical domain bounds: CGS lengths in cm, angular coordinates in radians.
     double x1_min = 0.0;
     double x1_max = 1.0;
     double x2_min = 0.0;
@@ -64,9 +64,9 @@ struct NumericsConfig
 
     double entropy_fix_coeff = 0.1; ///< Roe entropy-fix width relative to the local sound speed.
 
-    double sml_rho = 1e-12; ///< Positive density floor in code units.
-    double min_eint = 1e-10; ///< Positive specific internal-energy floor in code units.
-    double max_eint = 1e21; ///< Specific internal-energy ceiling in code units.
+    double sml_rho = 1e-12; ///< Positive density floor in g/cm^3.
+    double min_eint = 1e-10; ///< Positive specific internal-energy floor in erg/g.
+    double max_eint = 1e21; ///< Specific internal-energy ceiling in erg/g.
 };
 
 // Execution backend selection.
@@ -389,7 +389,7 @@ struct SimConfig
 
     std::map<std::string, std::string> custom_string_params;
 
-    // Enabled only around initial-preview Setup; no global logger or UI state.
+    // Enabled only in the isolated initialization inspector; no global logger or UI state.
     std::shared_ptr<arch::preview::ParameterReadTrace> parameter_reads;
 
     // Return a typed custom parameter or the caller-provided default.
@@ -412,6 +412,8 @@ struct SimConfig
         else
         {
             auto it = custom_params.find(key);
+            if (parameter_reads && it != custom_params.end())
+                parameter_reads->validate_numeric<T>(key, it->second);
             if (parameter_reads)
                 parameter_reads->observe(key, default_val,
                     it != custom_params.end() ? static_cast<T>(it->second) : default_val,

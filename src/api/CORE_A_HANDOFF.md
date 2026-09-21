@@ -1,5 +1,7 @@
 # Core A 交接
 
+> 历史交接记录：本文保留当时的功能和测试范围。本轮新增能力与单位变更请以 [LOCAL_WORKFLOW_HANDOFF.md](LOCAL_WORKFLOW_HANDOFF.md) 为准，当前响应示例见 examples/local-workflow 与 examples/configuration。
+
 ## 分支与基线
 
 - 实现分支：`codex/studio-core-a`，从远端 main `01cc4f723e674d47fe23850e7c0fef221e92e98c` 建立。

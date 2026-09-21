@@ -395,7 +395,7 @@ FluidState make_state(const Grid& grid, int species_count)
                 const double x0 = species_count > 0 ? 0.35 + 0.01 * q : 0.0;
                 const double x1 = species_count > 1 ? 1.0 - x0 : 0.0;
                 const double cv = species_count > 1
-                    ? x0 * 3.5 + x1 * 7.25 : 718.0;
+                    ? x0 * 3.5 + x1 * 7.25 : 7.18e6;
                 const double temperature = 2.0 + 0.4 * q;
                 state.rho[cell] = rho;
                 state.mom_u[cell] = rho * u;

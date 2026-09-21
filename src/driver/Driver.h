@@ -40,6 +40,7 @@
 
 // AMR and I/O services.
 #include "../amr/AMRControl.h"
+#include "../amr/RefinementThermodynamics.h"
 #include "../amr/TopologyTransaction.h"
 #include "../io/IO.h"
 
@@ -171,27 +172,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     // AMR owns no EOS type.  Bind the selected policy once as a batch callback
     // so pressure, temperature, and entropy-proxy indicators use the same
     // thermodynamics as the flux, burn, and diffusion operators.
-    amr_ctrl.tree->SetThermodynamicEvaluator([&eos](const FluidState& state,
-                                                     std::vector<double>* pressure,
-                                                     std::vector<double>* temperature,
-                                                     std::vector<double>* gamma1) {
-        const int total_size = static_cast<int>(state.rho.size());
-        const int n_species = state.GetNumSpecies();
-        if (pressure) pressure->assign(total_size, 0.0);
-        if (temperature) temperature->assign(total_size, 0.0);
-        if (gamma1) gamma1->assign(total_size, std::numeric_limits<double>::quiet_NaN());
-        std::vector<double> Xi(n_species, 0.0);
-        for (int index = 0; index < total_size; ++index) {
-            for (int species = 0; species < n_species; ++species)
-                Xi[species] = state.X(species, index);
-            const auto values = amr::indicator::thermodynamics(
-                state.get(index), Xi.data(), eos,
-                pressure != nullptr, temperature != nullptr, gamma1 != nullptr);
-            if (pressure) (*pressure)[index] = values.pressure;
-            if (temperature) (*temperature)[index] = values.temperature;
-            if (gamma1) (*gamma1)[index] = values.gamma1;
-        }
-    });
+    amr::BindRefinementThermodynamics(*amr_ctrl.tree, eos);
 
     const auto p_func = [](const FluidVector& U, const double* Xi, const void* context) -> double {
         return static_cast<const EosPolicy*>(context)->get_pressure(U, Xi);

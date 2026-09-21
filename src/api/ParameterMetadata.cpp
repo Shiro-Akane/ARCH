@@ -40,10 +40,30 @@ void PublishParameterMetadata(Json &response, const preview::ParameterReadTrace 
             {"valueSource", read.ambiguous ? "unknown" : read.source},
             {"sourceReason", read.ambiguous ? Json("ambiguous-reads") : read.reason.empty() ? Json() : Json(read.reason)},
             {"unit", Json()}, {"description", Json()}, {"diagnostics", diagnostics}});
+        parameter["readCount"] = std::int64_t(read.read_count);
+        const auto evidence = trace.units.find(key);
+        const bool scalar = read.type != "string" && read.type != "bool";
+        parameter["unitEvidence"] = Json::object({{"status", scalar ? "uncovered" : "not-applicable"},
+            {"basis", Json()}, {"automaticInference", false}});
+        if (evidence != trace.units.end()) {
+            const auto& unit = evidence->second;
+            if (unit.basis == "core-composition-input-before-normalization")
+                parameter["valueStage"] = "input-before-floor-and-normalization";
+            parameter["unit"] = unit.conflict ? Json() : Json(unit.unit);
+            parameter["unitEvidence"] = Json::object({{"status", unit.conflict ? "conflict" : unit.unit == "1" ? "dimensionless" : "known"},
+                {"basis", unit.basis}, {"automaticInference", false}});
+            if (unit.conflict) parameter["diagnostics"].push(note("UNIT_EVIDENCE_CONFLICT", "Conflicting dimensional evidence; no unit is published."));
+        }
         if (read.raw_value) parameter["rawValue"] = *read.raw_value;
         for (const auto &position : positions) {
             if (position.parameter_key != key || !valid_bounds(position)) continue;
             parameter["constraints"] = constraints(position);
+            if (evidence == trace.units.end()) {
+            parameter["unit"] = "cm";
+            parameter["unitEvidence"] = Json::object({{"status", "known"},
+                {"basis", "explicit-cartesian-axis-binding"}, {"axis", position.axis},
+                {"automaticInference", false}});
+            }
             const auto *effective = std::get_if<double>(&read.effective_value);
             if (!preview_succeeded || read.ambiguous || read.source == "unknown" || !effective
                 || !std::isfinite(position.coordinate) || position.coordinate != *effective

@@ -1,0 +1,334 @@
+{
+  "cases": [
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "BurnGradient",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "aa9b610cb0a83f8d240a25234cbdc033f958c9cf678e0da918cc6e83d465138f",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "background_temperature",
+          "center_x",
+          "peak_temperature",
+          "rho0",
+          "width"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/BurnGradient/BurnGradient.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "BurnOneZone",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "2bae8ee402133fd5ee13d0037297ebc0869434539701ac4c442caa7a02650bf7",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "rho0",
+          "temperature0"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/BurnOneZone/BurnOneZone.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "CellularDet",
+      "initialAmrPreview": true,
+      "initialFieldPreview": true,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "4829a5d3cbf6a3d8ee1561d876fc49e5cb158b68a4e9d13533b1ec0b27bf545a",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "noiseAmplitude",
+          "radiusPerturb",
+          "rhoAmbient",
+          "rhoPerturb",
+          "shock_dir",
+          "tempAmbient",
+          "tempPerturb",
+          "velxPerturb"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/Cellular/Cellular.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": [
+        2
+      ]
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "CooperativeHotspots",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "08c74fa780f566ae04017ed304725ea06015805189e248540e6705a0b6857c4f",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "ambient_density",
+          "ambient_temperature",
+          "hotspot_center_x",
+          "hotspot_center_y",
+          "hotspot_radius",
+          "hotspot_separation",
+          "hotspot_temperature"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/CooperativeHotspots/CooperativeHotspots.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "DiffusionMode",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "d1fcf7f41162b12c666f7c3cccfcb54ef712c1df48af1fbeb895aaa5da940743",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "mode",
+          "pressure0",
+          "rho0",
+          "tracer_amplitude",
+          "tracer_mean"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/DiffusionMode/DiffusionMode.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "ExternalGravity",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "eca8447af7960109936e572aa6e651dd82d605c64f1268cc055262b13cfd1707",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "pressure0",
+          "rho0",
+          "velocity_x0"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/ExternalGravity/ExternalGravity.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "Gaussian",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "3792b070d0fd021d7bc702fa0ed3648377a3bed42350d0fa9eed6c237fe086c8",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "amp",
+          "gas_cv",
+          "p0",
+          "pressure_amplitude",
+          "rho0",
+          "u_amplitude",
+          "v_amplitude",
+          "w_amplitude",
+          "width",
+          "xc",
+          "yc",
+          "zc"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/GaussianPulse/Gaussian.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "RT",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "386246bbf1f812ac8de2f58b822659085a8a5c516fbc59a0f4c5754fbd10e635",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "amplitude",
+          "p_int",
+          "rho_heavy",
+          "rho_light",
+          "y_int"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/RTinstability/RT_instab.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "Sedov",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "08f8697c70981d7a6b17a67d596a5beaeda11e0c6268212ac7c0fe27a5df4c1e",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "ambient_density",
+          "ambient_pressure",
+          "center_x",
+          "center_y",
+          "center_z",
+          "deposit_radius",
+          "explosion_energy"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/Sedov/Sedov.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "SmoothAdvection",
+      "initialAmrPreview": false,
+      "initialFieldPreview": false,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "eb8b7426f8ea46655103c1f6fffd86806b7976c7cbd9b18a0360c9633851458c",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "mode",
+          "pressure0",
+          "rho_amplitude",
+          "rho_mean",
+          "velocity0"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/SmoothAdvection/SmoothAdvection.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": []
+    },
+    {
+      "automaticCustomUnitInference": false,
+      "caseId": "Sod",
+      "initialAmrPreview": true,
+      "initialFieldPreview": true,
+      "inspection": {
+        "automaticExpressionInference": false,
+        "command": "--inspect-case",
+        "compiledSourceSha256": "11b3e7a5df5e32166e6205cd21a9fc9543f213a7c7643b2249f4a075e008c6e0",
+        "coverage": "executed Get and Core composition reads; sampled Init sinks; no unexecuted paths or direct model map reads",
+        "hostWallTimeoutSeconds": 360,
+        "primitiveSinkProbe": true,
+        "processCpuSeconds": 300,
+        "registered": true,
+        "reviewedUnitEvidence": "current",
+        "reviewedUnitKeys": [
+          "p_left",
+          "p_right",
+          "rho_left",
+          "rho_right",
+          "u_left",
+          "u_right",
+          "x_pos"
+        ],
+        "setupReads": true,
+        "sourceFile": "/home/shiroakane/ARCH/.worktrees/studio-core-ui-expansion/simulation/Sod/Sod.cpp",
+        "workerPlatform": "linux"
+      },
+      "previewDimensions": [
+        1
+      ]
+    }
+  ],
+  "cuda": "not_initialized",
+  "kind": "registered-cases",
+  "schemaVersion": "1.0",
+  "setup": "not_executed",
+  "sourceFreshness": "host-build-manifest-required",
+  "status": "ok",
+  "version": "1"
+}

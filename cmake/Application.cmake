@@ -47,6 +47,17 @@ foreach(dir IN LISTS APP_SRC_DIRS)
     endforeach()
 endforeach()
 
+# Bind reviewed unit evidence to the case source actually compiled. Edits
+# invalidate evidence until Core re-audits it; no declarations in user cases.
+foreach(case_source IN LISTS ARCH_APPLICATION_SOURCES)
+    if(case_source MATCHES "/simulation/.*\\.cpp$")
+        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${case_source}")
+        file(SHA256 "${case_source}" case_source_sha256)
+        set_property(SOURCE "${case_source}" APPEND PROPERTY COMPILE_DEFINITIONS
+            ARCH_CASE_SOURCE_SHA256="${case_source_sha256}")
+    endif()
+endforeach()
+
 include("${CMAKE_CURRENT_LIST_DIR}/CustomNetworks.cmake")
 
 # Dispatch sources (isolated in its own object target to manage template instantiation)
