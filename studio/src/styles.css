@@ -1067,3 +1067,8 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .real-init-workspace button:disabled,.real-init-workspace select:disabled {color:#91a0ab;background:#1a242d;opacity:.65;cursor:not-allowed;}
 .real-init-workspace button:not(:disabled):hover {border-color:#f3b572;background:#293b48;}
 .real-init-workspace :focus-visible {outline:2px solid #f3b572;outline-offset:2px;}
+
+.configuration-identity { padding: .6rem 1.2rem; background: #17232e; overflow-wrap: anywhere; }
+.configuration-identity > div { display:flex;flex-wrap:wrap;gap:.5rem 2rem; }
+.configuration-identity p { margin:.3rem 0;font-size:.8rem; }
+.pairing-warning { color:#ffd08a; border-left:3px solid #d9a04d;padding-left:.6rem; }

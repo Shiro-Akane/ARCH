@@ -1,3 +1,5 @@
+import type {StandardParameter} from '../host/configurationContracts.ts';
+import {standardValueError} from '../data/standardValidation.ts';
 import { parSchema } from '../data/parSchema.ts';
 import { parsePar, serializePar, effectiveEntries } from '../data/ParDocument.ts';
 import type { ParDocument } from '../data/ParDocument.ts';
@@ -18,9 +20,9 @@ export function loadPar(filename: string, raw: string): ParState {
   if (!document.entries.length) throw new Error('No ARCH key=value entries found.');
   return { filename, document, changes: Object.create(null) };
 }
-export function parErrors(state: ParState): Record<string,string> {
+export function parErrors(state: ParState, schema?:readonly StandardParameter[]): Record<string,string> {
   const errors: Record<string,string> = Object.create(null);
-  for (const entry of effectiveEntries(state.document)) {
+  for (const entry of [...effectiveEntries(state.document),...Object.keys(state.changes).filter(key=>!state.document.entries.some(e=>e.key===key)).map(key=>({key,value:state.changes[key]}))]) {
     const value = state.changes[entry.key] ?? entry.value;
     const meta = parSchema[entry.key];
     if (meta?.range && (!value.trim() || !Number.isFinite(Number(value)) || Number(value)<meta.range[0] || Number(value)>meta.range[1])) errors[entry.key] = 'Must be a finite number in [0, 1]; value was not clamped.';
@@ -29,11 +31,13 @@ export function parErrors(state: ParState): Record<string,string> {
     if (meta?.type === 'float' && (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value) || !Number.isFinite(Number(value)))) errors[entry.key]='Enter a finite decimal or scientific-notation number; ambiguous expressions/suffixes are unsupported here.';
     if (meta?.type === 'bool' && !/^(true|false)$/i.test(value)) errors[entry.key]='Expected true or false (case-insensitive).';
     if (meta?.options && !meta.options.includes(value.toLowerCase())) errors[entry.key]=`Choose ${meta.options.join(', ')}.`;
+    const standard=schema?.find(p=>p.key===entry.key);
+    if(standard){delete errors[entry.key];const error=standardValueError(standard,value);if(error)errors[entry.key]=error;}
     if (!entry.key) errors[entry.key] = 'Empty key is ambiguous and cannot be edited.';
     if (/[\r\n#\0]/.test(value) || value !== value.trim()) errors[entry.key] = 'Value must not contain comments, newlines or surrounding whitespace.';
   }
   for(const [key,value] of Object.entries(state.changes))if(/[\r\n#\0]/.test(value)||value!==value.trim())errors[key]='Value must not contain comments, newlines or surrounding whitespace.';
-  const values = Object.fromEntries(effectiveEntries(state.document).map(e => [e.key,state.changes[e.key] ?? e.value]));
+  const values = {...Object.fromEntries(effectiveEntries(state.document).map(e => [e.key,e.value])),...state.changes};
   const refine = Number(values.refine_threshold ?? '0.8'), derefine = Number(values.derefine_threshold ?? '0.2');
   if (derefine < 0 || derefine >= refine) errors.derefine_threshold = 'Requires 0 <= derefine_threshold < refine_threshold (including defaults 0.2 / 0.8).';
   if (values.regrid_interval !== undefined && Number(values.regrid_interval)<1) errors.regrid_interval='Must be positive.';
@@ -44,14 +48,14 @@ export function parErrors(state: ParState): Record<string,string> {
   if (Number(values.max_eint ?? '1e21') < Number(values.min_eint ?? '1e-10')) errors.max_eint='Must not be smaller than min_eint.';
   return errors;
 }
-export function parStatus(state: ParState): 'saved'|'dirty'|'invalid' {
-  if (Object.keys(parErrors(state)).length) return 'invalid';
+export function parStatus(state: ParState, schema?:readonly StandardParameter[]): 'saved'|'dirty'|'invalid' {
+  if (Object.keys(parErrors(state,schema)).length) return 'invalid';
   return serializePar(state.document,state.changes) === state.document.raw ? 'saved' : 'dirty';
 }
 export function editPar(state: ParState, key: string, value: string): ParState { return { ...state, changes: Object.assign(Object.create(null), state.changes, { [key]: value }) }; }
 export function revertPar(state: ParState): ParState { return { ...state, changes: Object.create(null) }; }
 
-export function exportPar(state: ParState): { filename: string; text: string } {
-  if (parStatus(state) === 'invalid') throw new Error('Correct invalid parameters before exporting.');
+export function exportPar(state: ParState, schema?:readonly StandardParameter[]): { filename: string; text: string } {
+  if (parStatus(state,schema) === 'invalid') throw new Error('Correct invalid parameters before exporting.');
   return { filename: state.filename.replace(/\.par$/i,'') + '_modified.par', text: serializePar(state.document,state.changes) };
 }

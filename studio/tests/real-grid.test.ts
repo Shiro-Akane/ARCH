@@ -14,3 +14,10 @@ test('model capabilities expose independent limits and reject unsafe budgets',()
 test('real structured errors retain identity and state without data',()=>{for(const name of ['missing-eos','response-limit','unsupported-direction','sampling-limit']){const c=fixture(name);assert.equal(validateCorePreview(c,c.identity).status,'error');assert.equal(c.data,null);}});
 
 test('bin centers map to heatmap edges without half-sample shift',()=>{const x=Float64Array.of(2.56,7.68,12.8,17.92,23.04);const edges=sampleEdges(x);assert.equal(edges.length,6);assert.ok(Math.abs(edges[0])<1e-12);assert.ok(Math.abs(edges[5]-25.6)<1e-12);for(let i=0;i<x.length;i++)assert.ok(Math.abs((edges[i]+edges[i+1])/2-x[i])<1e-12);});
+
+test('Core UI additive units contract preserves real Cellular 2D validation',()=>{
+ const core=JSON.parse(readFileSync(new URL('../../src/api/examples/configuration/preview-cellular.json',import.meta.url),'utf8'));
+ validateCorePreview(core,core.identity,core.data.sampling.shape);
+ assert.equal(core.data.sampling.fixedCoordinates[0].unit,'cm');assert.equal(core.data.axes[0].unit,'cm');
+ core.data.sampling.fixedCoordinates[0].unit=42;assert.throws(()=>validateCorePreview(core,core.identity));
+});

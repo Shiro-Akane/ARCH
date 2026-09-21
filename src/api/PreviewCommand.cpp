@@ -1,4 +1,5 @@
 #include "Preview.h"
+#include "Configuration.h"
 
 #include <charconv>
 #include <iostream>
@@ -33,14 +34,22 @@ bool valid_utf8(std::string_view text) {
 
 int RunPreviewCommand(int argc, char **argv) {
     PreviewResponse response;
+    const bool inspect = std::string_view(argv[1]) == "--inspect-config";
     try {
+        if (std::string_view(argv[1]) == "--config-schema") {
+            if (argc != 2) throw std::invalid_argument("--config-schema takes no arguments");
+            std::cout << ConfigurationSchema().dump(max_response_bytes) << '\n';
+            return 0;
+        }
         if (std::string_view(argv[1]) == "--preview-capabilities") {
             if (argc != 2) throw std::invalid_argument("--preview-capabilities takes no arguments");
             std::cout << PreviewCapabilities() << '\n';
             return 0;
         }
         if (argc < 4)
-            throw std::invalid_argument("Usage: ARCH --preview CASE --config-stdin [--samples N | --samples-x1 NX --samples-x2 NY] [--request-id ID]");
+            throw std::invalid_argument(inspect
+                ? "Usage: ARCH --inspect-config CASE --config-stdin [--request-id ID]"
+                : "Usage: ARCH --preview CASE --config-stdin [--samples N | --samples-x1 NX --samples-x2 NY] [--request-id ID]");
         PreviewRequest request;
         request.case_id = argv[2];
         std::set<std::string> seen;
@@ -54,6 +63,7 @@ int RunPreviewCommand(int argc, char **argv) {
                 const std::string_view value = argv[i];
                 if (option == "--request-id") request.request_id = value;
                 else {
+                    if (inspect) throw std::invalid_argument("Configuration inspection does not accept sampling options");
                     int count = 0;
                     const auto parsed = std::from_chars(value.data(), value.data() + value.size(), count);
                     if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size())
@@ -79,9 +89,15 @@ int RunPreviewCommand(int argc, char **argv) {
         }
         if (std::cin.bad()) throw std::runtime_error("Failed to read configuration from stdin");
         if (!valid_utf8(request.config_text)) throw std::invalid_argument("Configuration must be UTF-8 without NUL bytes");
-        response = GeneratePreview(request);
+        response = inspect ? InspectConfiguration(request) : GeneratePreview(request);
     } catch (const std::exception &error) {
-        response = PreviewInputError(error.what());
+        if (inspect || std::string_view(argv[1]) == "--config-schema") {
+            response = {detail::Json::object({{"schemaVersion", "1.0"}, {"version", "1"},
+                {"kind", inspect ? "configuration-inspection" : "configuration-schema"},
+                {"status", "error"}, {"identity", detail::Json()},
+                {"diagnostics", detail::Json::array({detail::Json::object({
+                    {"severity", "error"}, {"code", "INVALID_REQUEST"}, {"message", error.what()}})})}}).dump(), 2};
+        } else response = PreviewInputError(error.what());
     }
     std::cout << response.json << '\n';
     return response.exit_code;

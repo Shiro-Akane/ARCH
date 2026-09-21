@@ -3,7 +3,7 @@ import {MAX_PREVIEW_BYTES} from '../host/previewContracts.ts';
 import type {PreviewIdentity,RealPreviewResult} from '../host/previewContracts.ts';
 import {record,validatePreviewStatus,validateRealResult} from '../host/previewValidation.ts';
 import type {LinePreviewData} from './LinePreviewData.ts';
-export interface WorkingCopy {text:string;filename:string;valid:boolean;dirty:boolean}
+export interface WorkingCopy {text:string;filename:string;valid:boolean;dirty:boolean;hostPath?:string}
 export async function configRevision(text:string){const bytes=new TextEncoder().encode(text);return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');}
 export async function previewRequest(route:string,body?:unknown,post=false):Promise<unknown>{
  const response=await fetch('http://127.0.0.1:4180'+route,{method:post||body?'POST':'GET',headers:{'X-ARCH-Studio':'1','X-ARCH-Protocol':PROTOCOL_VERSION,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,credentials:'omit',redirect:'error',signal:AbortSignal.timeout(15000)});

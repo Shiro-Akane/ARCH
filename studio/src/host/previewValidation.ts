@@ -22,7 +22,7 @@ export function validateCorePreview(v:unknown,id:Pick<PreviewIdentity,'requestId
  const s=d.sampling;need(record(s)&&s.kind==='uniform'&&s.valueLocation==='init-sample'&&s.position==='bin-center'&&s.order==='x1-fastest'&&Number.isInteger(s.count)&&Number(s.count)>=2&&Number(s.count)<=(two?65536:4096)&&Array.isArray(s.shape)&&s.shape.length===(two?2:1),'sampling');
  const shape=s.shape as number[];need(shape.every(n=>Number.isInteger(n)&&n>=2&&n<=(two?256:4096))&&shape.reduce((a,b)=>a*b,1)===s.count,'sampling shape');
  if(count!==undefined)need(Array.isArray(count)?JSON.stringify(count)===JSON.stringify(shape):count===s.count,'requested sampling');
- if(two)need(Array.isArray(s.fixedCoordinates)&&s.fixedCoordinates.length===1&&record(s.fixedCoordinates[0])&&s.fixedCoordinates[0].name==='x3'&&s.fixedCoordinates[0].value===0&&s.fixedCoordinates[0].unit===null,'fixed coordinates');
+ if(two)need(Array.isArray(s.fixedCoordinates)&&s.fixedCoordinates.length===1&&record(s.fixedCoordinates[0])&&s.fixedCoordinates[0].name==='x3'&&s.fixedCoordinates[0].value===0&&(s.fixedCoordinates[0].unit===null||text(s.fixedCoordinates[0].unit)),'fixed coordinates');
  need(Array.isArray(d.axes)&&d.axes.length===(two?2:1),'axes');
  for(let axis=0;axis<d.axes.length;axis++){
   const a=d.axes[axis];need(record(a)&&a.name==='x'+(axis+1)&&(a.unit===null||text(a.unit))&&Array.isArray(a.values)&&a.values.length===shape[shape.length-1-axis]&&a.values.every(x=>typeof x==='number'&&Number.isFinite(x)),'coordinates');

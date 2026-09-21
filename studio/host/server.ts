@@ -1,3 +1,5 @@
+import type {ConfigurationAdapter} from './configuration.ts';
+import type {ConfigurationRequest} from '../src/host/configurationContracts.ts';
 import type {PreviewRunner} from './previewRunner.ts';
 import type {RealPreviewRequest} from '../src/host/previewContracts.ts';
 import {BuildError} from './buildRunner.ts';
@@ -8,7 +10,7 @@ import {ConfigError} from './config.ts';
 import { createServer } from 'node:http';
 import type { Server } from 'node:http';
 import type { ProjectSnapshot } from '../src/host/contracts.ts';
-export interface ProjectReader { preview?:PreviewRunner; readSource?():Promise<unknown>; build?:BuildRunner; saveConfig?(request:SaveConfigRequest):Promise<ConfigWriteResponse>; saveConfigAs?(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>; readConfig?(): Promise<ConfigReadResponse>; snapshot(): ProjectSnapshot; refresh(): Promise<ProjectSnapshot> }
+export interface ProjectReader { configuration?:ConfigurationAdapter; preview?:PreviewRunner; readSource?():Promise<unknown>; build?:BuildRunner; saveConfig?(request:SaveConfigRequest):Promise<ConfigWriteResponse>; saveConfigAs?(request:SaveConfigAsRequest):Promise<ConfigWriteResponse>; readConfig?(): Promise<ConfigReadResponse>; snapshot(): ProjectSnapshot; refresh(): Promise<ProjectSnapshot> }
 export function createHostServer(reader: ProjectReader, origin: string): Server {
   const allowed = new URL(origin);
   if (allowed.protocol !== 'http:' || allowed.hostname !== '127.0.0.1' || allowed.origin !== origin) throw new Error('UI origin must be an exact http://127.0.0.1:PORT origin');
@@ -20,8 +22,9 @@ export function createHostServer(reader: ProjectReader, origin: string): Server 
     res.setHeader('Vary','Origin');
     const previewCancel=/^\/api\/preview\/([a-f0-9-]{36})\/cancel$/.exec(req.url??'');
     const previewStart=req.url==='/api/preview';
+    const inspectConfig=req.url==='/api/configuration/inspect';
     const eventMatch=/^\/api\/build\/([a-f0-9-]{36})\/events$/.exec(req.url??'');
-    const routes = ['/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
+    const routes = ['/api/configuration/schema','/api/configuration/inspect','/api/preview','/api/preview/status','/api/source','/api/build','/api/build/profile','/api/build/status','/api/config/save','/api/config/save-as','/api/config','/api/health','/api/host','/api/project','/api/project/files','/api/project/refresh'];
     if (!routes.includes(req.url ?? '')&&!eventMatch&&!previewCancel) {send(404,{error:'Unknown endpoint'});return;}
     if (req.method === 'OPTIONS') {res.setHeader('Access-Control-Allow-Methods','GET, POST');res.setHeader('Access-Control-Allow-Headers','X-ARCH-Studio, X-ARCH-Protocol, Content-Type');send(200,{});return;}
     if (req.headers['x-arch-studio'] !== '1') {send(403,{error:'Studio request header required'});return;}
@@ -29,22 +32,24 @@ export function createHostServer(reader: ProjectReader, origin: string): Server 
     const refresh = req.url === '/api/project/refresh';
     const buildRequest=req.url==='/api/build';
     const write=req.url==='/api/config/save'||req.url==='/api/config/save-as';
-    if (req.method !== (refresh||write||buildRequest||previewStart||previewCancel ? 'POST' : 'GET')) {send(405,{error:'Method not allowed'});return;}
+    if (req.method !== (refresh||write||buildRequest||previewStart||inspectConfig||previewCancel ? 'POST' : 'GET')) {send(405,{error:'Method not allowed'});return;}
     // All endpoints are argument-free. Reject command/path fields rather than ignoring them.
-    if (!write && !buildRequest && !previewStart && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) {req.resume();send(400,{error:'Request bodies are forbidden'});return;}
+    if (!write && !buildRequest && !previewStart && !inspectConfig && (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))) {req.resume();send(400,{error:'Request bodies are forbidden'});return;}
     try {
+      if(req.url==='/api/configuration/schema'){if(!reader.configuration)throw new BuildError('Configuration schema unavailable',404);send(200,await reader.configuration.schema());return;}
       if(previewCancel){if(!reader.preview)throw new BuildError('Preview unavailable',404);send(200,reader.preview.cancel(previewCancel[1]));return;}
       if(req.url==='/api/preview/status'){if(!reader.preview)throw new BuildError('No authoritative Preview Profile configured.',404);send(200,await reader.preview.readiness());return;}
       if(req.url==='/api/source'){if(!reader.readSource)throw new BuildError('Selected source unavailable',404);send(200,await reader.readSource());return;}
       if(eventMatch){if(!reader.build)throw new BuildError('Build unavailable',404);send(200,reader.build.events(eventMatch[1]));return;}
       if(req.url==='/api/build/profile'||req.url==='/api/build/status'){send(200,reader.build?.snapshot()??{protocolVersion:PROTOCOL_VERSION,projectId:reader.snapshot().session.projectId,configured:false,state:'not-configured',reason:'No Host-owned Build Profile selected.',mappingState:'unknown',binaryState:'freshness-unknown',freshnessReason:'No build provenance.',changedInputs:[]});return;}
-      if(write||buildRequest||previewStart){
+      if(write||buildRequest||previewStart||inspectConfig){
        if(write&&(!reader.snapshot().host.capabilities.writeConfig||!reader.saveConfig||!reader.saveConfigAs)){send(403,{error:{code:'write-failed',message:'This host does not support configuration writes.'}});return;}
        if(req.headers['content-type']!=='application/json'){send(400,{error:{code:'protocol-error',message:'Expected application/json.'}});return;}
        const body=await new Promise<string>((resolve,reject)=>{let size=0;const chunks:Buffer[]=[];let failed=false;const timer=setTimeout(()=>{failed=true;reject(new ConfigError('protocol-error','Request body timed out.'));req.resume();},10000);req.on('data',(b:Buffer)=>{if(failed)return;size+=b.length;if(size>1024*1024){failed=true;clearTimeout(timer);reject(new ConfigError('payload-too-large','Request exceeds 1 MiB.'));return;}chunks.push(b);});req.on('end',()=>{clearTimeout(timer);if(!failed){try{resolve(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{reject(new ConfigError('protocol-error','Request must be valid UTF-8.'));}}});req.on('error',()=>{clearTimeout(timer);reject(new ConfigError('protocol-error','Request body could not be read.'));});});
        let data:unknown;try{data=JSON.parse(body);}catch{throw new ConfigError('protocol-error','Invalid JSON body.');}
        if(!data||typeof data!=='object'||Array.isArray(data))throw new ConfigError('protocol-error','Expected a configuration request.');
        const r=data as Record<string,unknown>;
+       if(inspectConfig){if(!reader.configuration)throw new BuildError('Configuration inspection unavailable',404);send(200,await reader.configuration.inspect(r as unknown as ConfigurationRequest));return;}
        if(previewStart){if(!reader.preview)throw new BuildError('Preview unavailable',404);send(202,await reader.preview.start(r as unknown as RealPreviewRequest));return;}
        if(buildRequest){if(Object.keys(r).length!==2||typeof r.projectId!=='string'||typeof r.profileId!=='string')throw new BuildError('Build accepts only projectId and profileId.');if(!reader.build)throw new BuildError('Build not configured.');send(202,await reader.build.start(r.projectId,r.profileId));return;}
        const save=req.url==='/api/config/save';const keys=save?['projectId','relativePath','expectedFingerprint','text']:['projectId','destinationRelativePath','text'];

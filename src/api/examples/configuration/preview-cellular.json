@@ -1,0 +1,445 @@
+{
+  "data": {
+    "axes": [
+      {
+        "name": "x1",
+        "unit": "cm",
+        "values": [
+          2.5600000000000005,
+          7.68,
+          12.8,
+          17.919999999999998,
+          23.040000000000003
+        ]
+      },
+      {
+        "name": "x2",
+        "unit": "cm",
+        "values": [
+          2.1333333333333333,
+          6.4,
+          10.666666666666668
+        ]
+      }
+    ],
+    "dimension": 2,
+    "fields": [
+      {
+        "displayName": "Density",
+        "key": "DENS",
+        "max": 43968592.359031275,
+        "min": 10000000,
+        "unit": "g/cm^3",
+        "values": [
+          43968592.359031275,
+          10000000,
+          10000000,
+          10000000,
+          10000000,
+          43220000,
+          10000000,
+          10000000,
+          10000000,
+          10000000,
+          42471407.64096873,
+          10000000,
+          10000000,
+          10000000,
+          10000000
+        ]
+      },
+      {
+        "displayName": "Pressure",
+        "key": "PRES",
+        "max": 1.4606892916359918e+25,
+        "min": 8.67346941474081e+23,
+        "unit": "erg/cm^3",
+        "values": [
+          1.4606892916359918e+25,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          1.4237004684444105e+25,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          1.386711645252831e+25,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          8.67346941474081e+23,
+          8.67346941474081e+23
+        ]
+      },
+      {
+        "displayName": "Temperature",
+        "key": "TEMP",
+        "max": 4708357311.028496,
+        "min": 199999999.99999762,
+        "unit": "K",
+        "values": [
+          4708357311.028496,
+          199999999.99999762,
+          199999999.99999762,
+          199999999.99999762,
+          199999999.99999762,
+          4669999999.999987,
+          199999999.99999762,
+          199999999.99999762,
+          199999999.99999762,
+          199999999.99999762,
+          4630220388.461796,
+          199999999.99999762,
+          199999999.99999762,
+          199999999.99999762,
+          199999999.99999762
+        ]
+      },
+      {
+        "displayName": "X velocity",
+        "key": "VELX",
+        "max": 1011000000,
+        "min": 0,
+        "unit": "cm/s",
+        "values": [
+          1011000000,
+          0,
+          0,
+          0,
+          0,
+          1011000000,
+          0,
+          0,
+          0,
+          0,
+          1011000000,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "displayName": "Total energy density",
+        "key": "ENER",
+        "max": 5.547861132792775e+25,
+        "min": 1.628661499878004e+24,
+        "unit": "erg/cm^3",
+        "values": [
+          5.547861132792775e+25,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          5.422037258136702e+25,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          5.296216381866743e+25,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          1.628661499878004e+24,
+          1.628661499878004e+24
+        ]
+      },
+      {
+        "displayName": "Specific internal energy",
+        "key": "EINT",
+        "max": 7.507177001049729e+17,
+        "min": 1.628661499878004e+17,
+        "unit": "erg/g",
+        "values": [
+          7.507177001049729e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          7.434599206702226e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          7.359469989362752e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17,
+          1.628661499878004e+17
+        ]
+      },
+      {
+        "displayName": "Y velocity",
+        "key": "VELY",
+        "max": 0,
+        "min": 0,
+        "unit": "cm/s",
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "kind": "grid",
+    "sampling": {
+      "count": 15,
+      "fixedCoordinates": [
+        {
+          "name": "x3",
+          "unit": "cm",
+          "value": 0
+        }
+      ],
+      "kind": "uniform",
+      "order": "x1-fastest",
+      "position": "bin-center",
+      "shape": [
+        3,
+        5
+      ],
+      "valueLocation": "init-sample"
+    }
+  },
+  "diagnostics": [
+    {
+      "code": "CORE_LOG",
+      "message": "[Info] Loaded 37 parameters from <memory>\n[EOS Dispatch] Resolving EOS Policy: helmholtz\n[HelmEos] Loading 2D Helmholtz table from EOS_toolkit/tables/helmholtz/helm_table.dat...\n[HelmEos] Loaded complete 541x201 electron/positron table.\n[Problem] Cellular Detonation Setup Complete.\n          Shock Dir  : 0 (0=X, 1=Y, 2=Z)\n          Spike Dist : 6.4\n          Amb Press  : 8.67347e+23 erg/cm^3\n          VN Press   : 1.4237e+25 erg/cm^3\n",
+      "severity": "info"
+    },
+    {
+      "code": "CORE_LOG",
+      "message": "[RuntimeParams] Warning: PLT variable VELZ is disabled: the simulation has fewer than three dimensions\n",
+      "severity": "warning"
+    }
+  ],
+  "execution": {
+    "previewBackend": "cpu",
+    "scientificOutput": "not_created",
+    "simulationReadiness": "not_checked",
+    "timeStepping": "not_executed"
+  },
+  "identity": {
+    "caseId": "CellularDet",
+    "configRevision": "c33965b71bc301ca7ae155f123039857b9db59493feebc2577a5512a4dac940f",
+    "requestId": "preview-cellular-units"
+  },
+  "kind": "initial-state-preview",
+  "schemaVersion": "1.0",
+  "stage": "complete",
+  "state": {
+    "amr": {
+      "actualHierarchy": null,
+      "derefineThreshold": 0.2,
+      "effectiveMaxBlocks": 2000,
+      "enabled": true,
+      "indicatorEvaluation": "not_executed",
+      "initialRefinement": "not_executed",
+      "maxBlocks": 2000,
+      "maxLevel": 2,
+      "minLevel": 0,
+      "parsedIndicators": [
+        "DENS"
+      ],
+      "refineThreshold": 0.8,
+      "regridInterval": 2,
+      "requestedIndicators": "DENS",
+      "status": "configured"
+    },
+    "computeBackendRequested": "cpu",
+    "configuration": "parsed",
+    "coordinates": {
+      "activation": "positive-block-count",
+      "axes": [
+        {
+          "active": true,
+          "blocks": 2,
+          "blocksKey": "nblockx1",
+          "displayName": "x",
+          "key": "x1",
+          "kind": "length",
+          "lowerBoundaryKey": "x1l_boundary_type",
+          "maxKey": "x1_max",
+          "minKey": "x1_min",
+          "nativeName": "x",
+          "unit": "cm",
+          "upperBoundaryKey": "x1r_boundary_type"
+        },
+        {
+          "active": true,
+          "blocks": 1,
+          "blocksKey": "nblockx2",
+          "displayName": "y",
+          "key": "x2",
+          "kind": "length",
+          "lowerBoundaryKey": "x2l_boundary_type",
+          "maxKey": "x2_max",
+          "minKey": "x2_min",
+          "nativeName": "y",
+          "unit": "cm",
+          "upperBoundaryKey": "x2r_boundary_type"
+        },
+        {
+          "active": false,
+          "blocks": 0,
+          "blocksKey": "nblockx3",
+          "displayName": "x3",
+          "key": "x3",
+          "kind": "inactive",
+          "lowerBoundaryKey": "x3l_boundary_type",
+          "maxKey": "x3_max",
+          "minKey": "x3_min",
+          "nativeName": "x3",
+          "unit": null,
+          "upperBoundaryKey": "x3r_boundary_type"
+        }
+      ],
+      "dimension": 2,
+      "disabledBlockCount": 0,
+      "geometry": "cartesian",
+      "thirdAxisRequiresSecond": true,
+      "unitSystem": "cgs"
+    },
+    "eos": {
+      "componentTablePath": "",
+      "configuredGamma": 1.4,
+      "loadedTablePath": "EOS_toolkit/tables/helmholtz/helm_table.dat",
+      "requested": "helmholtz",
+      "resolved": "helmholtz",
+      "sourceFingerprint": "c9a57c26c6fd2b2b378b9d5295ca1214022f6fec6289d038b47bf8c8938881a1",
+      "status": "ready",
+      "tablePath": "EOS_toolkit/tables/helmholtz/helm_table.dat"
+    },
+    "grid": {
+      "axes": [
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.8,
+          "displayName": "x",
+          "lowerBoundary": "outflow",
+          "max": 25.6,
+          "min": 0,
+          "name": "x1",
+          "rootBlocks": 2,
+          "rootCells": 32,
+          "unit": "cm",
+          "upperBoundary": "outflow"
+        },
+        {
+          "activeCellsPerBlock": 16,
+          "coordinateSpacing": 0.8,
+          "displayName": "y",
+          "lowerBoundary": "outflow",
+          "max": 12.8,
+          "min": 0,
+          "name": "x2",
+          "rootBlocks": 1,
+          "rootCells": 16,
+          "unit": "cm",
+          "upperBoundary": "outflow"
+        }
+      ],
+      "dimension": 2,
+      "geometry": "cartesian",
+      "hierarchy": "not_constructed",
+      "status": "configured"
+    },
+    "setup": "ready",
+    "species": [
+      {
+        "index": 0,
+        "name": "h1"
+      },
+      {
+        "index": 1,
+        "name": "he3"
+      },
+      {
+        "index": 2,
+        "name": "he4"
+      },
+      {
+        "index": 3,
+        "name": "c12"
+      },
+      {
+        "index": 4,
+        "name": "n14"
+      },
+      {
+        "index": 5,
+        "name": "o16"
+      },
+      {
+        "index": 6,
+        "name": "ne20"
+      },
+      {
+        "index": 7,
+        "name": "mg24"
+      },
+      {
+        "index": 8,
+        "name": "si28"
+      },
+      {
+        "index": 9,
+        "name": "s32"
+      },
+      {
+        "index": 10,
+        "name": "ar36"
+      },
+      {
+        "index": 11,
+        "name": "ca40"
+      },
+      {
+        "index": 12,
+        "name": "ti44"
+      },
+      {
+        "index": 13,
+        "name": "cr48"
+      },
+      {
+        "index": 14,
+        "name": "fe52"
+      },
+      {
+        "index": 15,
+        "name": "fe54"
+      },
+      {
+        "index": 16,
+        "name": "ni56"
+      },
+      {
+        "index": 17,
+        "name": "neut"
+      },
+      {
+        "index": 18,
+        "name": "prot"
+      }
+    ],
+    "units": {
+      "basis": "configured-eos-convention",
+      "system": "cgs",
+      "valuesConverted": false
+    }
+  },
+  "status": "ok"
+}
