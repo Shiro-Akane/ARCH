@@ -13,6 +13,8 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
+#include <span>
+#include <string_view>
 #include "data/StateDiagnostics.h"
 
 // Forward declarations to keep this header extremely lightweight
@@ -27,6 +29,7 @@ namespace amr {
 
 namespace io {
     struct CheckpointProvenance;
+    struct PlotScalarField { std::string_view name; std::span<const double> values; };
 }
 
 using PressureFunc = double (*)(const FluidVector&, const double*, const void*);
@@ -52,7 +55,8 @@ inline void require_output_thermodynamics(const FluidVector& state, const double
 void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
-               const SimConfig &config, const SpeciesManager &specs);
+               const SimConfig &config, const SpeciesManager &specs,
+               std::span<const io::PlotScalarField> extra_fields = {});
 
 // Checkpoint output for restart.
 void write_chk(amr::AMRControl &amr_ctrl,

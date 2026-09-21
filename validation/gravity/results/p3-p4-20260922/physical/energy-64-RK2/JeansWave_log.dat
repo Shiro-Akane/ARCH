@@ -1,0 +1,93 @@
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/energy-64-RK2/JeansWave_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/energy-64-RK2/input.par
+[Main] Problem created: JeansWave
+[Main] Configuration:
+       Grid: 64 cells, CFL: 0.2
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 2 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 32 | Finest Level: 0
+    Level 0   | dx1(x): 0.015625
+[Dispatch] Resolving Gravity Policy...
+           -> Type: self | G_const = 6.6743e-08
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: SSPRK2 + HLLC + muscl (mc)
+>>> Simulation Started | Solver: SSPRK2 + HLLC + MUSCL-MC | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=1)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/energy-64-RK2/JeansWave_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/energy-64-RK2/JeansWave_chk_0000.h5 at step 0 with 4 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       1.56231e-03    1.56231e-03    1.56231e-03    
+2       3.12462e-03    1.56231e-03    1.56231e-03    
+3       4.68693e-03    1.56231e-03    1.56231e-03    
+4       6.24924e-03    1.56231e-03    1.56231e-03    
+5       7.81155e-03    1.56231e-03    1.56231e-03    
+6       9.37386e-03    1.56231e-03    1.56231e-03    
+7       1.09362e-02    1.56231e-03    1.56231e-03    
+8       1.24985e-02    1.56231e-03    1.56231e-03    
+9       1.40608e-02    1.56231e-03    1.56231e-03    
+10      1.56231e-02    1.56231e-03    1.56231e-03    
+11      1.71854e-02    1.56231e-03    1.56231e-03    
+12      1.87477e-02    1.56231e-03    1.56231e-03    
+13      2.03100e-02    1.56231e-03    1.56231e-03    
+14      2.18723e-02    1.56231e-03    1.56231e-03    
+15      2.34346e-02    1.56231e-03    1.56231e-03    
+16      2.49970e-02    1.56231e-03    1.56231e-03    
+17      2.65593e-02    1.56231e-03    1.56231e-03    
+18      2.81216e-02    1.56231e-03    1.56231e-03    
+19      2.96839e-02    1.56231e-03    1.56231e-03    
+20      3.12462e-02    1.56231e-03    1.56231e-03    
+21      3.28085e-02    1.56231e-03    1.56231e-03    
+22      3.43708e-02    1.56231e-03    1.56231e-03    
+23      3.59331e-02    1.56231e-03    1.56231e-03    
+24      3.74954e-02    1.56231e-03    1.56231e-03    
+25      3.90577e-02    1.56231e-03    1.56231e-03    
+26      4.06201e-02    1.56231e-03    1.56231e-03    
+27      4.21824e-02    1.56231e-03    1.56231e-03    
+28      4.37447e-02    1.56231e-03    1.56231e-03    
+29      4.53070e-02    1.56231e-03    1.56231e-03    
+30      4.68693e-02    1.56231e-03    1.56231e-03    
+31      4.84316e-02    1.56231e-03    1.56231e-03    
+32      4.99939e-02    1.56231e-03    1.56231e-03    
+33      5.15562e-02    1.56231e-03    1.56231e-03    
+34      5.31185e-02    1.56231e-03    1.56231e-03    
+35      5.46808e-02    1.56231e-03    1.56231e-03    
+36      5.62432e-02    1.56231e-03    1.56231e-03    
+37      5.78055e-02    1.56231e-03    1.56231e-03    
+38      5.93678e-02    1.56231e-03    1.56231e-03    
+39      6.09301e-02    1.56231e-03    1.56231e-03    
+40      6.24924e-02    1.56231e-03    1.56231e-03    
+41      6.40547e-02    1.56231e-03    1.56231e-03    
+42      6.56170e-02    1.56231e-03    1.56231e-03    
+43      6.71793e-02    1.56231e-03    1.56231e-03    
+44      6.87416e-02    1.56231e-03    1.56231e-03    
+45      7.03039e-02    1.56231e-03    1.56231e-03    
+46      7.18662e-02    1.56231e-03    1.56231e-03    
+47      7.34286e-02    1.56231e-03    1.56231e-03    
+48      7.49909e-02    1.56231e-03    1.56231e-03    
+49      7.65532e-02    1.56231e-03    1.56231e-03    
+50      7.81155e-02    1.56231e-03    1.56231e-03    
+51      7.96778e-02    1.56231e-03    1.56231e-03    
+52      8.12401e-02    1.56231e-03    1.56231e-03    
+53      8.28024e-02    1.56231e-03    1.56231e-03    
+54      8.43647e-02    1.56231e-03    1.56231e-03    
+55      8.59270e-02    1.56231e-03    1.56231e-03    
+56      8.74893e-02    1.56231e-03    1.56231e-03    
+57      8.90517e-02    1.56231e-03    1.56231e-03    
+58      9.06140e-02    1.56231e-03    1.56231e-03    
+59      9.21763e-02    1.56231e-03    1.56231e-03    
+60      9.37386e-02    1.56231e-03    1.56231e-03    
+61      9.53009e-02    1.56231e-03    1.56231e-03    
+62      9.68632e-02    1.56231e-03    1.56231e-03    
+63      9.84255e-02    1.56231e-03    1.56231e-03    
+64      9.99878e-02    1.56231e-03    1.56231e-03    
+65      1.00000e-01    1.21735e-05    1.56231e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/energy-64-RK2/JeansWave_HLLC_plt_0001.h5 at t=1.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/energy-64-RK2/JeansWave_chk_0001.h5 at step 65 with 4 AMR leaves.
+[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00
+>>> Simulation Done. Total Steps: 65 | Final Time: 1.00000e-01

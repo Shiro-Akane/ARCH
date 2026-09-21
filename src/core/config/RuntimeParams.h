@@ -230,6 +230,10 @@ private:
         std::string grav_type = CanonicalizeEnumToken(
             parser.GetString("gravity_type", arch::config::DefaultString("gravity_type")));
         cfg.physics.gravity.type = grav_type;
+        cfg.physics.gravity.boundary = CanonicalizeEnumToken(parser.GetString("gravity_boundary", arch::config::DefaultString("gravity_boundary")));
+        cfg.physics.gravity.relative_tolerance = parser.GetDouble("gravity_rtol", arch::config::DefaultDouble("gravity_rtol"));
+        cfg.physics.gravity.absolute_tolerance = parser.GetDouble("gravity_atol", arch::config::DefaultDouble("gravity_atol"));
+        cfg.physics.gravity.max_cycles = parser.GetInt("gravity_max_cycles", arch::config::DefaultInt("gravity_max_cycles"));
         cfg.physics.gravity.G_const = parser.HasKey("gravity_G") ? ParseMathExpr(parser.GetString("gravity_G", ""), "gravity_G")
             : arch::config::DefaultDouble("gravity_G");
         cfg.physics.gravity.g_x = ParseMathExpr(parser.GetString("gravity_g_x", arch::config::DefaultString("gravity_g_x")), "gravity_g_x");
@@ -300,7 +304,7 @@ private:
         }
         if (cfg.amr.refine_on_vely && cfg.grid.dim < 2) { warn_amr_disabled("VELY", "the simulation is one-dimensional"); cfg.amr.refine_on_vely = false; }
         if (cfg.amr.refine_on_velz && cfg.grid.dim < 3) { warn_amr_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.amr.refine_on_velz = false; }
-        if (cfg.amr.refine_on_jeans) { warn_amr_disabled("JENS", "the self-gravity potential solver is not implemented"); cfg.amr.refine_on_jeans = false; }
+        if (cfg.amr.refine_on_jeans) { warn_amr_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); cfg.amr.refine_on_jeans = false; }
         const auto has_amr_indicator = [&] {
             return cfg.amr.refine_on_rho || cfg.amr.refine_on_p || cfg.amr.refine_on_temp || cfg.amr.refine_on_velx ||
                 cfg.amr.refine_on_vely || cfg.amr.refine_on_velz || cfg.amr.refine_on_eng || cfg.amr.refine_on_vorticity ||
@@ -393,7 +397,7 @@ private:
         if (cfg.io.vars.enuc && !cfg.physics.burn.use_burn) { warn_plot_disabled("ENUC", "the nuclear reaction network is not enabled"); cfg.io.vars.enuc = false; }
         if (cfg.io.vars.v && cfg.grid.dim < 2) { warn_plot_disabled("VELY", "the simulation is one-dimensional"); cfg.io.vars.v = false; }
         if (cfg.io.vars.w && cfg.grid.dim < 3) { warn_plot_disabled("VELZ", "the simulation has fewer than three dimensions"); cfg.io.vars.w = false; }
-        if (cfg.io.vars.jens) { warn_plot_disabled("JENS", "the self-gravity potential solver is not implemented"); cfg.io.vars.jens = false; }
+        if (cfg.io.vars.jens) { warn_plot_disabled("JENS", "the Jeans refinement/plot diagnostic is not implemented"); cfg.io.vars.jens = false; }
         // Preserve untyped parameters for problem-specific setup.
         for (const auto &[key, val_str] : parser.GetAllParams())
         {

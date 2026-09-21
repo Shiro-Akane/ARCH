@@ -46,7 +46,7 @@ Json AmrResourceMetadata(const SimConfig& c, int species_count) {
         {"speciesCount", species_count < 0 ? Json() : Json(species_count)},
         {"configuredPoolCapacity", capacity}, {"poolPreallocatedBaseBytes", number(multiply(Count{capacity}, base_bytes))},
         {"levels", levels}, {"assumption", "entire domain refined to each listed level; not a local refinement prediction"},
-        {"excludes", Json::array({"EOS tables", "AMR tree and transfer plans", "temporary arrays", "allocator overhead", "output buffers", "MPI layout", "thread workspaces"})},
+        {"excludes", Json::array({"EOS tables", "AMR tree and transfer plans", "temporary arrays", "allocator overhead", "output buffers", "MPI layout", "thread workspaces", "self-gravity potential/acceleration, face stencils and MG/FGMRES workspaces"})},
         {"oomPrediction", "not-provided"}});
 }
 PreviewResponse EstimateAmrResources(const PreviewRequest& request) {

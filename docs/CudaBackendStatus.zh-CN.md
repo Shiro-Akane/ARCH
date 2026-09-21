@@ -136,7 +136,9 @@ ARCH 支持 pynucastro 生成的反应网络，并通过 CPU KLU / GPU cuDSS 提
   配置时会根据清单检查这些能力。仅提供 CPU 接口的包在 CPU 上执行；准确的
   清单字段见[网络契约](Reference.zh-CN.md)。
   独立 Urca 轨迹结果见[网络验证](../validation/network/README.zh-CN.md)。
-- 自引力仍不是两端现有生产功能。通过核数据与平衡模型检查的生成网络可使用
+- CPU 已支持周期 Cartesian 自引力和 composite AMR（无 burn/diffusion）；
+  CUDA 自引力仍明确拒绝，属于 P6。该 CPU 增量不代表 GPU 引力加速已实现。
+- 通过核数据与平衡模型检查的生成网络可使用
   共用的 NSE 数学实现，并完成定点 CPU／CUDA 检查；这不等于新增完整应用级资格验收。详见
   [模型边界](../src/physics/nse/README.md)。内置与生成 NSE 都受所选核素集合限制，
   alpha-chain 网络不能替代通用 NSE 网络。

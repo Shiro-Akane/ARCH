@@ -45,7 +45,8 @@ inline std::vector<size_t> get_hdf5_dims(const Grid &grid)
 void write_plt(amr::AMRControl &amr_ctrl,
                PressureFunc p_func, TemperatureFunc t_func, Gamma1Func gamma1_func, const void* p_context,
                int file_index, double current_time,
-               const SimConfig &config, const SpeciesManager &specs)
+               const SimConfig &config, const SpeciesManager &specs,
+               std::span<const io::PlotScalarField> extra_fields)
 {
     if (!fs::exists(config.io.out_dir))
         fs::create_directories(config.io.out_dir);
@@ -224,5 +225,12 @@ void write_plt(amr::AMRControl &amr_ctrl,
         });
     }
 
+    for (const auto& field : extra_fields) {
+        if (field.name.empty() || field.values.size()!=total_cells || data_map.contains(std::string(field.name)))
+            throw std::invalid_argument("Invalid additional plot field");
+        if (!std::all_of(field.values.begin(),field.values.end(),[](double x){return std::isfinite(x);}))
+            throw std::invalid_argument("Nonfinite additional plot field");
+        data_map.emplace(std::string(field.name),std::vector<double>(field.values.begin(),field.values.end()));
+    }
     io::write_hdf5_plt_impl(oss.str(), current_time, dim, geom, dims, coord_x, coord_y, coord_z, block_levels, block_mortons, data_map);
 }

@@ -66,12 +66,8 @@ Json options(const std::string& key) {
     if (key == "geometry") return simple_options({"cartesian", "cylindrical", "spherical"});
     if (key == "eos_type") return simple_options({"ideal", "helmholtz", "tabular"});
     if (key == "compute_backend") return simple_options({"cpu", "cuda", "auto"});
-    if (key == "gravity_type") {
-        auto result = simple_options({"none", "external", "self"});
-        result["unavailableValues"] = Json::array({"self"});
-        result["unavailableReason"] = "Self gravity is not implemented.";
-        return result;
-    }
+    if (key == "gravity_type") return simple_options({"none", "external", "self"});
+    if (key == "gravity_boundary") return simple_options({"periodic"});
     if (key == "use_nse") return simple_options({"true", "false", "auto"});
     if (key.ends_with("_boundary_type")) return Json::object({{"caseSensitive", false}, {"unknownBehavior", "error"},
         {"choices", Json::array({
@@ -115,13 +111,14 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
         return Json::object({{"unit", "K"}, {"status", "known"}});
     if (key == "nuclearDensMin" || key == "nseDensThreshold")
         return Json::object({{"unit", "g/cm^3"}, {"status", "known"}});
+    if (key == "gravity_atol") return Json::object({{"unit", "1/s^2"}, {"status", "known"}});
     if (key == "gravity_G") return Json::object({{"unit", "cm^3/(g*s^2)"}, {"status", "known"}});
     if (key.starts_with("gravity_g_"))
         return Json::object({{"unit", system == "cgs" ? Json("cm/s^2") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec")
         return Json::object({{"unit", system == "cgs" ? Json("cm^2/s") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "tstep_change_factor" || key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
-        || key == "ode_rtol" || key == "refine_threshold" || key == "derefine_threshold"
+        || key == "gravity_rtol" || key == "ode_rtol" || key == "refine_threshold" || key == "derefine_threshold"
         || key == "enucDtFactor" || key == "EntropyFixCoefficient" || key.starts_with("ode_dt_") || key == "ode_initial_dt_frac")
         return Json::object({{"unit", "1"}, {"status", "dimensionless"}});
     std::string field;
@@ -152,7 +149,7 @@ std::string condition(const ParameterDefinition& d) {
     if (key == "eos_table_path") return "eos_type=helmholtz or tabular";
     if (key == "eos_helm_table_path") return "eos_type=tabular; need depends on table policy";
     if (key.starts_with("gravity_g_")) return "gravity_type=external";
-    if (key == "gravity_G") return "gravity_type=self; unavailable in this build";
+    if (d.group == "Gravity" && key != "gravity_type") return "gravity_type=self; CPU Cartesian periodic hydro";
     if (d.group == "Diffusion" && key != "use_diffusion") {
         if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec") return "use_diffusion=true; explicit coefficient forbidden with Helmholtz";
         return "use_diffusion=true";
@@ -170,7 +167,7 @@ bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigPa
     if (key == "eos_table_path") return !dispatch::ascii_iequals(c.physics.eos_type, "ideal");
     if (key == "eos_helm_table_path") return dispatch::ascii_iequals(c.physics.eos_type, "tabular");
     if (key.starts_with("gravity_g_")) return c.physics.gravity.type == "external";
-    if (key == "gravity_G") return false;
+    if (d.group == "Gravity" && key != "gravity_type") return c.physics.gravity.type == "self";
     if (d.group == "Diffusion" && key != "use_diffusion") {
         if (!c.physics.diffusion.use_diffusion) return false;
         if (key == "alpha_therm" || key == "nu_visc" || key == "D_spec") {
@@ -223,7 +220,7 @@ Json ConfigurationSchema() {
         }
     }
     auto fields = Json::array();
-    for (const auto key : {"DENS", "TEMP", "PRES", "ENER", "EINT", "VELX", "VELY", "VELZ"})
+    for (const auto key : {"DENS", "TEMP", "PRES", "ENER", "EINT", "VELX", "VELY", "VELZ", "GPOT", "GACX", "GACY", "GACZ"})
         fields.push(Json::object({{"key", key}, {"cgs", FieldUnit(key, "cgs")}, {"code", FieldUnit(key, "code")}}));
     return Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-schema"}, {"status", "ok"},
         {"coverage", "standard-runtime-inputs"}, {"standardParametersComplete", true},
@@ -334,8 +331,6 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
             if (!known) unknown.push(Json::object({{"key", key}, {"rawValue", raw}, {"type", Json()}, {"unit", Json()}, {"status", "uninspected-model-parameter"}}));
         }
         result["customParameters"] = unknown;
-        if (config.physics.gravity.type == "self")
-            result["diagnostics"].push(diagnostic("UNAVAILABLE_MODULE", "gravity_type", "Self gravity is not implemented; configuration inspection does not establish simulation readiness.", "warning"));
         result["status"] = "ok"; code = 0;
     } catch (const ConfigValueError& e) {
         result["diagnostics"].push(diagnostic(e.code, e.key, e.what()));

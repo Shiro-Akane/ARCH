@@ -73,7 +73,9 @@ set(ARCH_DISPATCH_SOURCES
     src/driver/runtime/DriverRuntime.cpp
     src/driver/runtime/DriverBoundary.cpp
     src/driver/runtime/DriverRegrid.cpp
-    src/driver/io/DriverIO.cpp)
+    src/driver/io/DriverIO.cpp
+    src/driver/stages/GravityStage.cpp
+    src/amr/elliptic/EllipticMeshAdapter.cpp)
 foreach(dir IN LISTS DISPATCH_SRC_DIRS)
     file(GLOB dir_srcs CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")
@@ -118,10 +120,20 @@ add_library(arch_diffusion_math STATIC
     src/numerics/diffusion/DiffFunction.cpp)
 target_link_libraries(arch_diffusion_math PUBLIC arch_build_contract)
 
+# One compiled owner for domain gravity; also available to policy/lifecycle tests.
+set(ARCH_GRAVITY_CPU_SOURCES
+    src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp
+    src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/HostCompositeMG.cpp
+    src/physics/gravity/self/SelfGravity.cpp)
+foreach(source IN LISTS ARCH_GRAVITY_CPU_SOURCES)
+    list(REMOVE_ITEM ARCH_APPLICATION_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
+endforeach()
+add_library(arch_gravity_cpu STATIC ${ARCH_GRAVITY_CPU_SOURCES})
+target_link_libraries(arch_gravity_cpu PUBLIC arch_build_contract)
 add_library(arch_solver_dispatch STATIC ${ARCH_DISPATCH_SOURCES})
 target_link_libraries(arch_solver_dispatch
     PUBLIC arch_build_contract
-    PRIVATE arch_diffusion_math)
+    PRIVATE arch_diffusion_math arch_gravity_cpu)
 
 add_executable(ARCH ${ARCH_APPLICATION_SOURCES})
 target_link_libraries(ARCH PRIVATE arch_solver_dispatch)

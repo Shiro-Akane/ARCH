@@ -1,5 +1,11 @@
 # Core 参数编辑接口交接
 
+> P3/P4 更新（2026-09-22）：当前标准目录为 92 项，CPU 周期 self 已接入。
+> 新键、能力边界、GPOT/GAC 单位、资源排除项与 checkpoint v6 见
+> [P3/P4 交接](../../docs/development/P3P4CompositeGravity.zh-CN.md#gui--cuda-分支交接)。
+> 下方 P1/P1.5 的计数和验收是历史记录；GUI 不应硬编码历史键数。
+
+
 > P1.5 接入更新：下文是 2026-09-20 的交付快照。当前 Core 已统一 CGS（包括 IdealGas），
 > 标准目录为 88 项，删除五个退役键并登记三个已有宏步控制；最新契约见
 > [配置接口](CONFIGURATION_API.md) 和 [P1.5 记录](../../docs/development/P1_5ImplementationReport.zh-CN.md)。

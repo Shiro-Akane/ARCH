@@ -22,6 +22,7 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "sparse_klu_161_equations",
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
     "poisson_multigrid_contract", "poisson_multigrid_analytic",
+    "composite_poisson_contract", "composite_poisson_analytic", "self_gravity_lifecycle", "self_gravity_jeans",
 })
 
 DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({

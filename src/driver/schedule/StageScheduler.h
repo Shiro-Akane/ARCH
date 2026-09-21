@@ -192,6 +192,7 @@ class HydroStagePreparation {
 public:
     virtual ~HydroStagePreparation() = default;
     virtual state::CompletionToken prepare(const HydroStagePreparationRequest&) = 0;
+    virtual void invalidate() const {}
 };
 
 struct StageExecutionContext {

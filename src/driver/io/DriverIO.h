@@ -22,7 +22,7 @@ public:
              const void* eos)
         : runtime(runtime), ctrl(controller), checkpoint_provenance(provenance),
           p_func(pressure), t_func(temperature), gamma1_func(gamma1), eos(eos) {}
-    void write_plot();
+    void write_plot(std::span<const io::PlotScalarField> extra_fields = {});
     void write_checkpoint(double dt_burn_global, bool resume_after_regrid);
     void write_measurements(std::span<const CudaDiffusionScheduleRecord> cuda_diffusion_schedule);
 private:

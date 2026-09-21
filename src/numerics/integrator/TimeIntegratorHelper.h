@@ -310,6 +310,8 @@ namespace TimeIntegration
 
             accumulate_divergence(dU, d_spec, flux_buffer, spec_flux_buffer, grid, dt, dir, n_spec);
 
+            if (gravity) gravity->add_flux_work_on_patch(dU, flux_buffer, state, grid, dt, dir);
+
             // Flux registration has one shared face-index convention for all AMR operators.
             if (amr_ctrl && block_id >= 0) {
                 amr::RegisterCoarseFineFluxes(*amr_ctrl, block_id, grid, dir,

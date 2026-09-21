@@ -167,3 +167,14 @@ and conditions live in [HostTests.cmake](../cmake/tests/HostTests.cmake) and
 [CudaTests.cmake](../cmake/tests/CudaTests.cmake).
 Keep one copy of shared test data and place production algorithms
 in `src/`. Derive reference results independently of the routines being tested.
+
+
+### CPU self-gravity checks
+
+P3/P4 adds `composite_poisson_contract`, `composite_poisson_analytic`,
+`self_gravity_lifecycle` and `self_gravity_jeans` to the CPU coverage anchors.
+The Jeans test runs the real executable and requires numpy/h5py in CMake's selected
+`Python3_EXECUTABLE` environment (CI installs both). Do not skip it when a local
+Python installation lacks dependencies; configure the intended interpreter and
+install matching packages. The full scientific campaign is documented in
+[gravity validation](../validation/gravity/README.md).

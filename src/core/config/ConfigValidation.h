@@ -67,6 +67,20 @@ inline void ValidateControls(const SimConfig& c, int species_count = 0)
     nonnegative(d.D_spec, "D_spec");
     const auto& g = c.physics.gravity;
     positive(g.G_const, "gravity_G");
+    positive(g.relative_tolerance, "gravity_rtol");
+    require(g.relative_tolerance < 1.0, "gravity_rtol", "Relative tolerance must be smaller than one.");
+    nonnegative(g.absolute_tolerance, "gravity_atol");
+    require(g.max_cycles > 0, "gravity_max_cycles", "Iteration count must be positive.");
+    require(g.boundary == "periodic", "gravity_boundary", "Only periodic self-gravity is available.");
+    if (g.type == "self") {
+        require(c.grid.geometry == "cartesian", "geometry", "Self-gravity currently requires Cartesian geometry.");
+        require(!c.physics.burn.use_burn && !c.physics.diffusion.use_diffusion,
+                "gravity_type", "Self-gravity with burn or diffusion has not been qualified.");
+        const std::string faces[]{c.grid.x1l_boundary_type,c.grid.x1r_boundary_type,
+            c.grid.x2l_boundary_type,c.grid.x2r_boundary_type,c.grid.x3l_boundary_type,c.grid.x3r_boundary_type};
+        for (int a=0; a<2*c.grid.dim; ++a)
+            require(faces[a] == "periodic", "gravity_boundary", "Self-gravity requires periodic fluid boundaries on every active axis.");
+    }
     require(std::isfinite(g.g_x), "gravity_g_x", "Acceleration must be finite.");
     require(std::isfinite(g.g_y), "gravity_g_y", "Acceleration must be finite.");
     require(std::isfinite(g.g_z), "gravity_g_z", "Acceleration must be finite.");

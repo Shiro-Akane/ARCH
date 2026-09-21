@@ -53,7 +53,7 @@ class Expansion(unittest.TestCase):
     def test_all_standard_parameters_have_presentation(self):
         out=self.api('--config-schema')
         params={p['key']:p for p in out['parameters']}
-        self.assertEqual(len(params), 88)
+        self.assertEqual(len(params), 92)
         for p in params.values():
             self.assertTrue(p['presentation']['description'])
             self.assertTrue(p['presentation']['displayName'])

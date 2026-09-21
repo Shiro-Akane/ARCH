@@ -405,3 +405,20 @@ functional subdirectories. Case sources consume `<UserInterface.h>` and
 `<GlobalDefs.h>` through `include/`; internal definitions retain one owner.
 Internal includes are relative to `src/`, test helpers to `tests/`. All physics
 inputs and outputs follow the existing CGS contract, including IdealGas.
+
+## Composite self gravity (P3/P4)
+
+| Owner | Consumers and boundary |
+| --- | --- |
+| `numerics/elliptic/CompositePoisson` | Dyadic leaf geometry, shared coarse/fine subfaces, quadratic interface gradients, volume norms; no fluid state or AMR tree. |
+| `numerics/multigrid/HostCompositeMG` | Independent coarsened levels, volume restriction, signed correction, Jacobi and FGMRES; existing P2 uniform solver at the bottom. |
+| `amr/elliptic/EllipticMeshAdapter` | Native active-cell order, handles, grid metrics and padded scalar views; no numerical solve. |
+| `physics/gravity/self/SelfGravity` | CGS density source, periodic background, potential/force ownership, publication/failure, momentum and face-flux work. Serial preparation, concurrent read-only patch consumption. |
+| `driver/stages/GravityStage` | Actual slot/version/epoch leases, one solve per RK input, explicit Current preparation for outputs/CFL, stage invalidation and diagnostics. |
+| `io` | Borrowed extra plot fields and v6 gravity checkpoint identity. No implicit Poisson solve. |
+
+`arch_gravity_cpu` owns compiled CPU solver sources once. The Host policy header
+uses a private workspace and forward declarations to avoid propagating MG templates
+into the hydro dispatch matrix. P6 must reuse the numerical contract and implement
+device residency/acceleration; the current CPU implementation is not a CUDA fallback
+inside a GPU run.

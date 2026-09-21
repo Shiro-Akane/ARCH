@@ -4,7 +4,8 @@
 
 # Runtime text logs are immutable evidence, not scientific table assets.
 # Keep their exact bytes in ordinary Git; retain LFS for the EOS tables above.
-/validation/**/results/**/*_log.dat -filter diff merge -text
+/validation/**/results/**/*_log.dat -filter diff merge -text -whitespace
 
 # Preserve compiler/CTest/sanitizer output byte-for-byte (including vendor padding).
 /validation/**/results/**/*.txt -whitespace -text
+/validation/**/results/**/*.log -whitespace -text

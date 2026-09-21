@@ -47,7 +47,7 @@ class ConfigurationContract(unittest.TestCase):
         keys = set(re.findall(r'parser\.Get(?:Int|Double|String|Bool)\(\s*"([^"]+)"',
                               (ROOT/'src/core/config/RuntimeParams.h').read_text()))
         self.assertEqual(set(specs), keys)
-        self.assertEqual(len(specs), 88)
+        self.assertEqual(len(specs), 92)
         self.assertEqual({p['group'] for p in specs.values()}, {'Grid','EOS','Network','Gravity','Diffusion','Runtime'})
         self.assertEqual(specs['ode_rtol']['defaultValue'], 1e-4)
         self.assertEqual(specs['ode_atol']['defaultValue'], 1e-8)
@@ -58,9 +58,11 @@ class ConfigurationContract(unittest.TestCase):
         self.assertEqual(specs['gravity_G']['defaultValue'], 6.67430e-8)
         self.assertTrue(any(p['value']=='auto' for p in specs['linear_solver']['options']['choices']))
         self.assertTrue(any(p['value']=='aprox19' for p in specs['network_name']['options']['choices']))
-        self.assertEqual(specs['gravity_type']['options']['unavailableValues'], ['self'])
+        self.assertIn('self', [choice['value'] for choice in specs['gravity_type']['options']['choices']])
+        self.assertEqual(specs['gravity_rtol']['defaultValue'], 1e-10)
+        self.assertEqual(specs['gravity_atol']['defaultValue'], 0.0)
         caps = self.run_api(['--preview-capabilities'])
-        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 88)
+        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 92)
         self.assertEqual(caps['cases'], ['Sod'])
 
     def test_defaults_and_explicit_values_with_no_eos_or_device_access(self):
@@ -80,7 +82,7 @@ class ConfigurationContract(unittest.TestCase):
         self.assertEqual(result['unitSystem'], 'cgs')
         empty = self.inspect()
         self.assertEqual(empty['resolved']['dimension'], 3)
-        self.assertEqual(len(empty['parameters']), 88)
+        self.assertEqual(len(empty['parameters']), 92)
 
     def test_integer_tokens_reject_fractions_suffixes_and_overflow(self):
         for token in ['1.5','1.0','1e2','12suffix','2147483648','-2147483649','+-1','', 'nan']:
@@ -119,6 +121,8 @@ class ConfigurationContract(unittest.TestCase):
             'ode_initial_dt_frac': '0', 'dt_init': '1e-30', 'dt_min': '-1',
             'tstep_change_factor': '.99', 'diff_cfl': '1.01', 'diff_max_stages': '1',
             'nu_visc': '-1', 'alpha_therm': '-1', 'D_spec': '-1', 'gravity_G': '0',
+            'gravity_rtol': '1', 'gravity_atol': '-1', 'gravity_max_cycles': '0',
+            'gravity_boundary': 'isolated',
             'tmax': '-1', 'max_steps': '-2', 'cuda_device': '-1',
         }
         for key, value in invalid.items():
@@ -168,8 +172,10 @@ class ConfigurationContract(unittest.TestCase):
                 self.assertTrue(any(d['severity']=='error' and d['parameterKey']==key for d in out['diagnostics']), out['diagnostics'])
         out=self.inspect('solver=unknown')
         self.assertTrue(any(d['code']=='POLICY_FALLBACK' for d in out['diagnostics']))
-        out=self.inspect('gravity_type=self')
-        self.assertTrue(any(d['code']=='UNAVAILABLE_MODULE' for d in out['diagnostics']))
+        out=self.inspect('gravity_type=self',3)
+        self.assertTrue(any(d['parameterKey']=='gravity_boundary' for d in out['diagnostics']))
+        out=self.inspect('gravity_type=self\nx1l_boundary_type=periodic\nx1r_boundary_type=periodic\nx2l_boundary_type=periodic\nx2r_boundary_type=periodic\nx3l_boundary_type=periodic\nx3r_boundary_type=periodic')
+        self.assertFalse(any(d['severity']=='error' for d in out['diagnostics']))
 
     def test_request_encoding_limits_and_modes(self):
         for payload in [b'\xff',b'\0',b'#'*(1024*1024+1)]:

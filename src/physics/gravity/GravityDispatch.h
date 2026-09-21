@@ -14,6 +14,7 @@
 #include <string>
 
 #include "physics/gravity/ExternalGravity.h"
+#include "physics/gravity/self/SelfGravity.h"
 
 #include "data/GlobalDefs.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
@@ -45,7 +46,7 @@ namespace Physical
                     config.physics.gravity.g_y,
                     config.physics.gravity.g_z);
             case GravityId::Self:
-                throw std::runtime_error("Self gravity is not yet implemented!");
+                return std::make_unique<SelfGravity>(config.physics.gravity);
             }
             throw std::logic_error("resolved gravity has no CPU binding");
         }

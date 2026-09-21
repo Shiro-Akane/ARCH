@@ -16,6 +16,8 @@ std::string FieldUnit(const std::string& key, const std::string& system) {
     if (key == "TEMP") return "K";
     if (key == "PRES") return "erg/cm^3";
     if (key == "ENER") return "erg/cm^3";
+    if (key == "GPOT") return "cm^2/s^2";
+    if (key == "GACX" || key == "GACY" || key == "GACZ") return "cm/s^2";
     if (key == "EINT") return "erg/g";
     if (key == "VELX" || key == "VELY" || key == "VELZ") return "cm/s";
     return {};
@@ -62,7 +64,7 @@ Json RefinementMetadata(const SimConfig& c) {
         {"ENER", a.refine_on_eng, ""}, {"VORT", a.refine_on_vorticity, ""},
         {"DIVV", a.refine_on_div_v, ""}, {"ENTR", a.refine_on_entropy, ""},
         {"ENUC", a.refine_on_enuc, !c.physics.burn.use_burn ? "requires reactions" : ""},
-        {"JENS", a.refine_on_jeans, "self gravity is not implemented"},
+        {"JENS", a.refine_on_jeans, "Jeans diagnostic is not implemented"},
         {"SPECIES", a.refine_all_species, ""}};
     auto choices = Json::array();
     for (const auto& item : items)

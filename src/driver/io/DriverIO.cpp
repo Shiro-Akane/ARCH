@@ -40,7 +40,7 @@ void validate_output_state(DriverRuntime& runtime, PressureFunc pressure,
     }
 }
 }
-void DriverIO::write_plot()
+void DriverIO::write_plot(std::span<const io::PlotScalarField> extra_fields)
 {
     auto& amr_ctrl = runtime.control();
     const auto& config = runtime.configuration();
@@ -48,7 +48,7 @@ void DriverIO::write_plot()
     runtime.materialize_current_for_host();
     validate_output_state(runtime,p_func,t_func,gamma1_func,eos);
     write_plt(amr_ctrl, p_func, t_func, gamma1_func, eos, ctrl.plt_file_index++,
-              ctrl.t_current, config, specs);
+              ctrl.t_current, config, specs, extra_fields);
 }
 void DriverIO::write_checkpoint(double dt_burn_global, bool resume_after_regrid)
 {

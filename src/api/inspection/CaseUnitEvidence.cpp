@@ -62,6 +62,10 @@ const std::map<std::string, ReviewedCase> reviewed_cases{
         {"velocity0", "cm/s"},
         {"mode", "1"},
     }}},
+    {"JeansWave", {"simulation/JeansWave/JeansWave.cpp", "8e68d1d6d6e7e17a710e7e168385d77263c40f6e90046f685eccc91cf55d1e98", {
+        {"rho0", "g/cm^3"}, {"pressure0", "erg/cm^3"},
+        {"amplitude", "1"}, {"phase", "rad"}, {"mode", "1"},
+    }}},
     {"ExternalGravity", {"simulation/ExternalGravity/ExternalGravity.cpp", "c2983a892091924f3a5a5abe5152eb091a5eb2d492c38913ca5867ad438899ee", {
         {"rho0", "g/cm^3"},
         {"pressure0", "erg/cm^3"},

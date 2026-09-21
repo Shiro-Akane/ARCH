@@ -133,3 +133,15 @@ These data files support reproduction and independent review; they are not setup
 - [metrics.csv (CSV)](metrics.csv)
 
 </details>
+
+## P3/P4 composite CPU gravity
+
+`run_self_gravity.py --arch <ARCH> --output <new directory>` executes independent
+Jeans-wave, total-energy, time-order, dynamic AMR and restart checks (numpy/h5py).
+`--quick` is the CTest analytic/rejection subset. `arch_composite_poisson 3` covers
+three-dimensional uniform and composite manufactured solutions at three resolutions;
+`contract` tests failure, scale, conservation and nested hierarchy behavior.
+
+The [P3/P4 implementation record](../../docs/development/P3P4CompositeGravity.zh-CN.md)
+defines numerical budgets, supported combinations and evidence. GPU gravity remains
+P6 work; compiling or running existing CUDA hydro does not qualify GPU self gravity.

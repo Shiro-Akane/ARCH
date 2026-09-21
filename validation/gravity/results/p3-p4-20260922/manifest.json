@@ -1,0 +1,71 @@
+{
+  "stage": "P3/P4 basic CPU self gravity",
+  "date_jst": "2026-09-22",
+  "branch": "physics/selfgravity",
+  "parent_commit": "3c73cca2c5a4ab81d30ca2cc309db4d25a7a6feb",
+  "candidate_source": "commit containing this record; no binary artifacts committed",
+  "cpu": {
+    "build": "build",
+    "type": "Debug",
+    "compiler": "GCC 12",
+    "cxx_standard": 20,
+    "cuda": false,
+    "klu": true,
+    "openmp": true,
+    "fast_math": false,
+    "fp_contract": false,
+    "sha256": "cfb2f516284de83807055ef61ac803820f46364f520da056c8c3895c1494a3a6"
+  },
+  "cuda_compatibility": {
+    "build": "build/selfgravity-p1-gpu",
+    "type": "Release",
+    "compiler": "GCC 12 / CUDA 12.3",
+    "architecture": 86,
+    "klu": true,
+    "cudss": true,
+    "device": "RTX 3060 Ti 8192 MiB",
+    "driver": "610.47",
+    "status": "passed",
+    "sha256": "a3ee367e75acfe3688882d35b0c8e31afa739b3e3e3b4acfb21c045b389cf7c9",
+    "build_actions": 110,
+    "runtime_records": 6,
+    "build_resources": {
+      "elapsed_seconds": 1900.006,
+      "minimum_available_kib": 1000496,
+      "peak_owned_rss_kib": 4939900,
+      "baseline_swap_kib": 619784,
+      "peak_swap_kib": 839220,
+      "guard_stopped": false
+    }
+  },
+  "acceptance": {
+    "cpu_ctest": {
+      "passed": 61,
+      "total": 61,
+      "skipped": 0
+    },
+    "composite_manufactured_runs": 18,
+    "physical_records": 38,
+    "sanitizers": [
+      "address",
+      "undefined behavior",
+      "leaks"
+    ],
+    "ci_tooling": 10,
+    "architecture_tooling": 104
+  },
+  "limits": [
+    "periodic Cartesian CPU hydro without burn/diffusion",
+    "no isolated BC or GPU self solver",
+    "long-time dynamic evolution checked in 1D; 3D operator convergence and short actual mixed-level runs",
+    "no claim of machine-exact AMR energy conservation"
+  ],
+  "artifacts": {
+    "physical": "physical/summary.json",
+    "cpu_tests": "cpu-ctest.xml",
+    "operator": "composite-3d.log",
+    "resources": "composite-resources.txt",
+    "sanitizers": "sanitizers.log",
+    "cuda_compatibility": "cuda-compatibility/summary.json"
+  }
+}

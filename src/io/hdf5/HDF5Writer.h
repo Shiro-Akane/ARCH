@@ -17,12 +17,14 @@
 namespace io {
 
 // On-disk layout discriminator, independent of the ARCH software release.
-inline constexpr int checkpoint_format_version = 5;
+inline constexpr int checkpoint_format_version = 6;
 
 /** Scientific/state-layout identity required for a verified restart. */
 struct CheckpointProvenance {
     bool available = false;
     std::string eos_type;
+    std::string gravity_type = "none", gravity_boundary = "none";
+    std::vector<double> gravity_controls; // external: gx,gy,gz; self: G,rtol,atol,max_cycles
     double ideal_gamma = 0.0;
     bool burn_enabled = false;
     std::string active_network = "none";

@@ -265,9 +265,18 @@ void test_all_requirement_codes()
            "CPU external gravity remains supported");
     expect(query_support(plan, r, probe).cuda_supported,
            "CUDA external gravity uses the common source authority");
-    r = requirements; r.gravity = GravityId::Self;
-    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity,
-                    "CPU self gravity");
+    r = requirements; r.gravity = GravityId::Self; r.boundary_features=boundary_bit(BoundaryFeature::Periodic);
+    expect(query_support(plan, r, probe).cpu_supported, "CPU periodic Cartesian self gravity");
+    r.boundary_features|=boundary_bit(BoundaryFeature::Outflow);
+    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "nonperiodic self gravity");
+    r.boundary_features=boundary_bit(BoundaryFeature::Periodic);
+    r.burn=true;
+    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "unqualified self gravity and burn");
+    r.burn=false; r.diffusion=true;
+    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "unqualified self gravity and diffusion");
+    r.diffusion=false; r.geometry=GeometryId::Spherical;
+    expect_cpu_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "non-Cartesian self gravity");
+    r=requirements; r.gravity=GravityId::Self; r.boundary_features=boundary_bit(BoundaryFeature::Periodic);
     expect_cuda_code(plan, r, probe, BackendCapabilityCode::UnsupportedGravity, "self gravity");
     r = requirements; r.restart = true;
     expect(query_support(plan, r, probe).cuda_supported,

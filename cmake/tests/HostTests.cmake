@@ -375,3 +375,25 @@ arch_configure_host_test(arch_poisson_multigrid)
 add_test(NAME poisson_multigrid_contract COMMAND arch_poisson_multigrid contract)
 add_test(NAME poisson_multigrid_analytic COMMAND arch_poisson_multigrid analytic)
 set_tests_properties(poisson_multigrid_analytic PROPERTIES TIMEOUT 600)
+
+# Composite leaf mathematics is independent of AMR fluid storage and dispatch.
+add_executable(arch_composite_poisson tests/host/gravity/test_composite_poisson.cpp
+    src/numerics/elliptic/CartesianPoisson.cpp src/numerics/elliptic/CompositePoisson.cpp
+    src/numerics/multigrid/HostMultigrid.cpp src/numerics/multigrid/HostCompositeMG.cpp)
+arch_configure_host_test(arch_composite_poisson)
+add_test(NAME composite_poisson_analytic COMMAND arch_composite_poisson 2)
+set_tests_properties(composite_poisson_analytic PROPERTIES TIMEOUT 600)
+
+target_link_libraries(arch_resolved_execution_plan PRIVATE arch_gravity_cpu)
+add_executable(arch_self_gravity tests/host/gravity/test_self_gravity.cpp
+    src/amr/elliptic/EllipticMeshAdapter.cpp)
+arch_configure_host_test(arch_self_gravity)
+target_link_libraries(arch_self_gravity PRIVATE arch_gravity_cpu)
+add_test(NAME self_gravity_lifecycle COMMAND arch_self_gravity)
+
+add_test(NAME composite_poisson_contract COMMAND arch_composite_poisson contract)
+
+add_test(NAME self_gravity_jeans
+    COMMAND ${Python3_EXECUTABLE} -B ${CMAKE_CURRENT_SOURCE_DIR}/validation/gravity/run_self_gravity.py
+        --arch $<TARGET_FILE:ARCH> --output ${CMAKE_CURRENT_BINARY_DIR}/self-gravity-jeans --quick)
+set_tests_properties(self_gravity_jeans PROPERTIES TIMEOUT 180 ENVIRONMENT "OMP_NUM_THREADS=1")

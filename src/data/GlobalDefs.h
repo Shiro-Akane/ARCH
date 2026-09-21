@@ -246,6 +246,10 @@ struct GravityConfig
     double g_y = 0.0;
     double g_z = 0.0;
     double G_const = arch::constants::gravity::cgs::gravitational_constant;
+    std::string boundary = "periodic";
+    double relative_tolerance = 1e-10;
+    double absolute_tolerance = 0.0; // Poisson RHS units (s^-2); relative control is active by default.
+    int max_cycles = 200;
 };
 
 // Diffusion configuration.

@@ -32,7 +32,7 @@ To run your very first simulation, follow the [Build](#build) and [First run](#f
 See the [v1.1.0 release notes](docs/releases/V1.1.0.md) for the CUDA optimization,
 measured performance and source-package contents.
 
-Both CPU and CUDA backends fully support the following features. The release version has successfully passed rigorous numerical, application, device-safety, build, and resource checks. Detailed testing configurations and the final delivery-review status are documented in the [Validation](validation/README.md) suite.
+The table distinguishes shared CPU/CUDA features from CPU-only self gravity. The release version has successfully passed rigorous numerical, application, device-safety, build, and resource checks. Detailed testing configurations and the final delivery-review status are documented in the [Validation](validation/README.md) suite.
 
 [Continuous integration](tests/README.md#github-continuous-integration) checks
 the tooling and CPU build/regressions on new changes. GPU and independent
@@ -44,7 +44,7 @@ scientific checks are documented separately in Validation.
 | Dynamic block AMR | Conservative refinement, coarsening, ghost exchange and flux correction. CUDA computes indicators and transfers cell data on the GPU; the CPU manages the mesh tree. |
 | Equations of state (EOS) | Relations between density, temperature, pressure and energy: ideal gas, Helmholtz and 3D/4D tables |
 | Diffusion | Thermal, viscous and species diffusion with RKL1/RKL2 time stepping |
-| Gravity | Prescribed external gravity |
+| Gravity | External gravity on CPU/CUDA; periodic Cartesian self gravity with composite AMR multigrid on CPU (hydro without burn/diffusion). See the [P3/P4 scope](docs/development/P3P4CompositeGravity.zh-CN.md). |
 | Nuclear burning | Four built-in networks and generated pynucastro networks. Built-in networks also support nuclear statistical equilibrium (NSE), which determines composition from equilibrium conditions. |
 | Linear solvers | DenseLU for small systems; KLU on CPU and cuDSS on CUDA for sparse systems |
 | Output and restart | HDF5 plots and checkpoints use the same format on both backends, including the AMR hierarchy, burn energy and timestep-controller state. |
@@ -425,12 +425,13 @@ later proposal whose scope and design remain open; the arrows indicate planning
 order, not a software or physical dependency.
 
 ```text
-Physics:   Self-gravity → MHD? → { BSSN? | Z4c? }
+Physics:   Self-gravity isolated BC / GPU → MHD? → { BSSN? | Z4c? }
 Software:  MPI         → GNN? → { FP32/FP64 selection? | RT-core acceleration? }
 ```
 
-Self-gravity would calculate the gravitational field produced by the simulated
-matter. Magnetohydrodynamics (MHD) would add magnetic fields to the fluid model.
+Periodic CPU self-gravity calculates the field produced by the simulated matter;
+isolated boundaries and GPU solving remain planned. Magnetohydrodynamics (MHD)
+would add magnetic fields to the fluid model.
 BSSN and Z4c are possible future formulations for evolving spacetime in general
 relativity; they are alternatives under consideration, not implemented modules.
 

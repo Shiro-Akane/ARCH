@@ -18,7 +18,7 @@ struct ParameterDefinition {
     std::string_view key, type, group;
     DefaultValue fallback;
 };
-inline const std::array<ParameterDefinition, 88> standard_parameters{{
+inline const std::array<ParameterDefinition, 92> standard_parameters{{
     {"geometry", "string", "Grid", std::string_view("cartesian")},
     {"nblockx1", "int", "Grid", GridConfig{}.nblockx1},
     {"nblockx2", "int", "Grid", GridConfig{}.nblockx2},
@@ -84,6 +84,10 @@ inline const std::array<ParameterDefinition, 88> standard_parameters{{
     {"nu_visc", "float", "Diffusion", PhysicsConfig{}.diffusion.nu_visc},
     {"alpha_therm", "float", "Diffusion", PhysicsConfig{}.diffusion.alpha_therm},
     {"D_spec", "float", "Diffusion", PhysicsConfig{}.diffusion.D_spec},
+    {"gravity_boundary", "string", "Gravity", std::string_view("periodic")},
+    {"gravity_rtol", "float", "Gravity", 1e-10},
+    {"gravity_atol", "float", "Gravity", 0.0},
+    {"gravity_max_cycles", "int", "Gravity", 200},
     {"gravity_type", "string", "Gravity", std::string_view("none")},
     {"gravity_g_x", "expression", "Gravity", std::string_view("0.0")},
     {"gravity_g_y", "expression", "Gravity", std::string_view("0.0")},

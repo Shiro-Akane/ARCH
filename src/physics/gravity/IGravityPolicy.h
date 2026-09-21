@@ -25,6 +25,10 @@ namespace Gravity {
 class IGravityPolicy {
 public:
     virtual ~IGravityPolicy() = default;
+    // Optional work from the actual Riemann mass flux. Existing external gravity
+    // retains its cell source; self gravity supplies this compatible face work.
+    virtual void add_flux_work_on_patch(std::vector<FluidVector>&,
+        const std::vector<FluidVector>&, const FluidState&, const Grid&, double, int) const {}
 
     /**
      * @brief Evaluates the gravity source terms on a single patch and adds them to dU.

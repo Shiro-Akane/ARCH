@@ -174,7 +174,9 @@ requirements grow with the network and mesh workload.
   CPU-only packages execute on CPU. The exact manifest fields are documented
   in the [network contract](Reference.md). Independent
   Urca trajectory results are available in [network validation](../validation/network/README.md).
-- Self-gravity is not a production capability of either backend. Generated
+- Self-gravity is available on CPU for periodic Cartesian hydro with AMR; CUDA
+  self-gravity remains explicitly unavailable (P6). This CPU addition does not
+  imply a GPU gravity speedup. Generated
   networks that pass the nuclear-data and equilibrium-model checks can use
   shared NSE math, covered by focused CPU/CUDA tests rather than a new full
   application qualification.

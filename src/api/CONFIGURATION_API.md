@@ -1,6 +1,6 @@
 # Studio 标准配置接口
 
-P1.5 的目录为 88 项；新增登记的是已经生效的 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
+P3/P4 的目录为 92 项：在 P1.5 的 88 项基础上，Gravity 增加 `gravity_boundary/rtol/atol/max_cycles`。P1.5 已登记 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
 
 配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
 
@@ -21,7 +21,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 ## 参数目录：configuration-schema
 
-`parameters` 恰含当前 `RuntimeParams` 的 88 个标准配置键，不包含已退役旧键。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
+`parameters` 恰含当前 `RuntimeParams` 的 92 个标准配置键，不包含已退役旧键。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
 
 | 字段 | 含义 |
 |---|---|
@@ -32,7 +32,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 | applicability | 适用条件的解释；本次配置的布尔结果由检查接口提供 |
 | path | 输入文件或输出目录、相对路径基准；普通字符串为 null |
 | units | 单位及状态；坐标相关项通过 axis 指向坐标描述 |
-| presentation | displayName、description、subgroup；88 键全覆盖。含指定参数的 toggle / enabledBy |
+| presentation | displayName、description、subgroup；92 键全覆盖。含指定参数的 toggle / enabledBy |
 
 `presentation.toggle` 仅出现在 max_steps、plt_dt、plt_dstep、chk_dt、chk_dstep，启用条件 value > 0，关闭写入值 -1，未编辑原文保留。enabledBy 给出三个常量扩散系数对应的通道开关键。options.choices 的 displayName 用于显示，value 用于写回，acceptedNames 用于识别输入别名；不按别名逐个生成选项。
 
@@ -46,7 +46,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 `identity` 包含传入的 caseId、requestId，以及原始输入字节的 configRevision SHA-256。Host 应继续给结果关联自己的项目和 binary/build 身份。caseId 在本接口是上下文标识，**不验证模型注册、不执行 Setup、不判断文件本来属于哪个模型**。
 
-成功结果提供全部 88 个标准参数：
+成功结果提供全部 92 个标准参数：
 
 - `parsedValue`：类型转换后的配置输入。表达式返回求值后的数；这是 `typed-input-before-setup-and-policy-resolution`，不是完整 simulation 的最终有效值。
 - `rawValue`：文件显式输入，否则 null；重复键仍以最后一项为准。
@@ -62,7 +62,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 失败通过 `diagnostics` 返回 code、parameterKey、message、severity。完整数值错误和主要坐标/选项错误可定位字段；部分既有 RuntimeParams 交叉检查仍只给整体信息，此时 parameterKey 为 null。错误结果可能只包含已确认的部分参数，不要将其当作完整有效配置。
 
-检查包括标准类型、表达式、现有 RuntimeParams 校验，以及轴 blocks/范围、AMR 层级和适用的注册选项；仍不替代模型 Setup、EOS 适用区间或完整求解器/设备验证。self gravity 会产生 unavailable 警告。Helmholtz + diffusion 显式传入 alpha_therm/nu_visc/D_spec 返回字段错误，不再从库内部直接退出进程。
+检查包括标准类型、表达式、现有 RuntimeParams 校验，以及轴 blocks/范围、AMR 层级和适用的注册选项；仍不替代模型 Setup、EOS 适用区间或完整求解器/设备验证。self gravity 不再统一产生 unavailable 警告；CPU Cartesian 全周期且无 burn/diffusion 是当前运行边界，配置合法仍不等于设备/求解就绪。Helmholtz + diffusion 显式传入 alpha_therm/nu_visc/D_spec 返回字段错误，不再从库内部直接退出进程。
 
 ## 坐标与单位
 
@@ -115,3 +115,10 @@ Custom 参数仍保留现有兼容读取，例如旧 Sod x_pos 数字前缀行�
 ## 示例与验证
 
 完整实际响应、输入和复现方式见 [examples/configuration](examples/configuration/README.md)。CPU 接口测试入口为 `configuration_api_contract`，旧六组 Preview 测试继续运行；交付结果及冻结基线见 [CORE_UI_HANDOFF.md](CORE_UI_HANDOFF.md)。
+
+
+P3/P4 的新参数仍属于 GravityConfig，文本输入没有 advanced 标签。rtol/atol/max_cycles
+建议由 GUI 折叠为高级选项。生产 self plot 自动附加 GPOT 与有效轴的 GACX/Y/Z，
+单位分别为 cm²/s²、cm/s²；普通 Init/AMR 预览不求解这些场。流体内存提示明确排除
+势、加速度、面 stencil 与 MG/FGMRES workspace。完整范围见
+[实现与验收记录](../../docs/development/P3P4CompositeGravity.zh-CN.md)。

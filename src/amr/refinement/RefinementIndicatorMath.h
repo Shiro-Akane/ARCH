@@ -34,7 +34,7 @@ inline std::vector<Selection> make_selection(
     const AmrConfig& config, int dimension, std::span<const int> species)
 {
     if (config.refine_on_jeans)
-        throw std::runtime_error("AMR JENS requires a self-gravity potential solver; self gravity is not implemented in this build.");
+        throw std::runtime_error("AMR JENS refinement criterion is not implemented in this build.");
     if (config.refine_on_vely && dimension < 2)
         throw std::invalid_argument("VELY AMR indicator requires at least two spatial dimensions.");
     if (config.refine_on_velz && dimension < 3)

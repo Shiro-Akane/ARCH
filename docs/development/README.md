@@ -28,7 +28,8 @@ directory proposals. Size thresholds trigger review rather than mandatory
 splitting or merging; keep related responsibilities together and preserve
 supported behavior. The explicitly authorized retirements in the newer parameter
 audit supersede earlier compatibility-preservation recommendations.
-The plan describes pending work; it does not declare self-gravity available.
+The [P3/P4 record](P3P4CompositeGravity.zh-CN.md) describes the CPU periodic
+composite solver, coupling, accepted scope, evidence and remaining P5/P6 work.
 
 The *owner* of an implementation is the specific file or module where its core behavior is defined and maintained. A caller might supply data to this implementation or decide *how* it should execute, but it must never introduce a duplicate copy of the same formula. *Memory owners*, on the other hand, serve a different purpose: they allocate system resources and guarantee they remain alive until all consumers have finished using them.
 

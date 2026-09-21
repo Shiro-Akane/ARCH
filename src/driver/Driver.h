@@ -13,6 +13,7 @@
 #include "driver/schedule/DriverControl.h"
 #include "driver/runtime/DriverRuntime.h"
 #include "driver/stages/DriverStages.h"
+#include "driver/stages/GravityStage.h"
 #include "driver/io/DriverIO.h"
 #include "amr/refinement/RefinementThermodynamics.h"
 #include "numerics/state/StateAdmissibility.h"
@@ -107,13 +108,15 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     bool has_burn = config.physics.burn.use_burn;
     bool has_diff = config.physics.diffusion.use_diffusion;
 
+    GravityStage gravity_stage(runtime, gravity);
+    gravity_stage.prepare_current(ctrl.t_current);
     double dt_burn_global = start_state.has_timestep_state
         ? start_state.dt_burn
         : ((config.io.restart && config.physics.burn.use_burn)
                ? config.numerics.dt_init
                : 1e99);
     if (ctrl.should_write_initial_output()) {
-        output.write_plot();
+        output.write_plot(gravity_stage.plot_fields());
         output.write_checkpoint(dt_burn_global, false);
     }
     ctrl.print_header(has_burn, has_diff);
@@ -126,17 +129,19 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
         else if (ctrl.step_count % config.amr.regrid_interval == 0)
             (void)runtime.perform_regrid(ctrl.step_count, ctrl.t_current);
 
+        gravity_stage.prepare_current(ctrl.t_current);
         bool do_plt, do_chk;
         ctrl.check_io(do_plt, do_chk);
-        if (do_plt) output.write_plot();
+        if (do_plt) output.write_plot(gravity_stage.plot_fields());
         if (do_chk) output.write_checkpoint(dt_burn_global, true);
 
         const auto candidates = calculate_timestep_candidates(runtime, workspace, eos, resolved_plan);
         const double dt_computed = ctrl.calculate_next_dt(
-            std::min(candidates.hydro, candidates.diffusion_sts), dt_burn_global);
+            std::min({candidates.hydro, candidates.diffusion_sts, gravity_stage.timestep()}), dt_burn_global);
         dt_burn_global = 1e99;
         const double dt = ctrl.sync_dt(dt_computed);
         auto stage_context = runtime.stage_context();
+        stage_context.hydro_preparation = gravity_stage.active() ? &gravity_stage : nullptr;
         stage_context.step_start_time = ctrl.t_current;
         stage_context.step_dt = dt;
         ScopedStageBinding stage_binding(stage_context, runtime.handles());
@@ -160,14 +165,16 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
                     return execute_burn_half(runtime, workspace, eos, burn, BurnHalf::Second,
                                              0.5 * dt, dt_burn_global, token);
                 });
+        gravity_stage.invalidate();
         ctrl.advance(dt);
         advanced_any_step = true;
         ctrl.print_step(dt, candidates.hydro, has_burn ? dt / 2.0 : 0.0,
                         candidates.diffusion_forward_euler, has_burn, has_diff);
     }
     if (advanced_any_step && (ctrl.reached_target_time() || ctrl.reached_step_limit())) {
+        gravity_stage.prepare_current(ctrl.t_current);
         std::cout << ">>> Terminal time/step limit reached. Forcing final output..." << std::endl;
-        output.write_plot();
+        output.write_plot(gravity_stage.plot_fields());
         output.write_checkpoint(dt_burn_global, false);
     }
     output.write_measurements(workspace.cuda_diffusion_schedule);

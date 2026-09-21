@@ -1,0 +1,126 @@
+[Info] Loaded 42 parameters from /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/input.par
+[Main] Console output is being recorded to log file: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/JeansWave_log.dat
+[Main] Parameters loaded from: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/input.par
+[Main] Problem created: JeansWave
+[Main] Configuration:
+       Grid: 32 cells, CFL: 0.2
+       Solver: HLLC
+       Species Count: 0
+[Dispatch] Initializing System...
+[Dispatch] Required Ghost Cell count: 1 (Static MAX_NG: 4)
+[Dispatch] Initializing Root Grid (Level 0)...
+[EOS Dispatch] Resolving EOS Policy: ideal
+>>> Grid Config | Dim: 1 | Geometry: cartesian
+>>> AMR Levels  | Max Blocks: 32 | Finest Level: 0
+    Level 0   | dx1(x): 0.03125
+[Dispatch] Resolving Gravity Policy...
+           -> Type: self | G_const = 6.6743e-08
+[Burn Dispatch] Burning is DISABLED. Using DummyBurner.
+[Dispatch] Strategy: Euler/RK1 + HLLC + pcm (mc)
+>>> Simulation Started | Solver: Euler (1st Order) + HLLC + PCM (1st Order) | Entropy Fix Coeff: 0.1 | OpenMP: ON (max threads=1)
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/JeansWave_HLLC_plt_0000.h5 at t=0
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/JeansWave_chk_0000.h5 at step 0 with 2 AMR leaves.
+Step    Time           dt             dt_hydro       
+-----------------------------------------------------
+1       3.12462e-03    3.12462e-03    3.12462e-03    
+2       6.24924e-03    3.12462e-03    3.12462e-03    
+3       9.37386e-03    3.12462e-03    3.12462e-03    
+4       1.24985e-02    3.12462e-03    3.12462e-03    
+5       1.56231e-02    3.12462e-03    3.12462e-03    
+6       1.87477e-02    3.12462e-03    3.12462e-03    
+7       2.18724e-02    3.12462e-03    3.12462e-03    
+8       2.49970e-02    3.12462e-03    3.12462e-03    
+9       2.81216e-02    3.12462e-03    3.12462e-03    
+10      3.12462e-02    3.12463e-03    3.12463e-03    
+11      3.43709e-02    3.12463e-03    3.12463e-03    
+12      3.74955e-02    3.12463e-03    3.12463e-03    
+13      4.06201e-02    3.12463e-03    3.12463e-03    
+14      4.37447e-02    3.12463e-03    3.12463e-03    
+15      4.68694e-02    3.12463e-03    3.12463e-03    
+16      4.99940e-02    3.12463e-03    3.12463e-03    
+17      5.31186e-02    3.12463e-03    3.12463e-03    
+18      5.62433e-02    3.12463e-03    3.12463e-03    
+19      5.93679e-02    3.12463e-03    3.12463e-03    
+20      6.24925e-02    3.12463e-03    3.12463e-03    
+21      6.56172e-02    3.12463e-03    3.12463e-03    
+22      6.87418e-02    3.12463e-03    3.12463e-03    
+23      7.18664e-02    3.12464e-03    3.12464e-03    
+24      7.49911e-02    3.12464e-03    3.12464e-03    
+25      7.81157e-02    3.12464e-03    3.12464e-03    
+26      8.12403e-02    3.12464e-03    3.12464e-03    
+27      8.43650e-02    3.12464e-03    3.12464e-03    
+28      8.74896e-02    3.12464e-03    3.12464e-03    
+29      9.06142e-02    3.12464e-03    3.12464e-03    
+30      9.37389e-02    3.12464e-03    3.12464e-03    
+31      9.68635e-02    3.12464e-03    3.12464e-03    
+32      9.99882e-02    3.12464e-03    3.12464e-03    
+33      1.03113e-01    3.12464e-03    3.12464e-03    
+34      1.06237e-01    3.12464e-03    3.12464e-03    
+35      1.09362e-01    3.12464e-03    3.12464e-03    
+36      1.12487e-01    3.12464e-03    3.12464e-03    
+37      1.15611e-01    3.12464e-03    3.12464e-03    
+38      1.18736e-01    3.12464e-03    3.12464e-03    
+39      1.21861e-01    3.12464e-03    3.12464e-03    
+40      1.24985e-01    3.12464e-03    3.12464e-03    
+41      1.28110e-01    3.12465e-03    3.12465e-03    
+42      1.31235e-01    3.12465e-03    3.12465e-03    
+43      1.34359e-01    3.12465e-03    3.12465e-03    
+44      1.37484e-01    3.12465e-03    3.12465e-03    
+45      1.40609e-01    3.12465e-03    3.12465e-03    
+46      1.43733e-01    3.12465e-03    3.12465e-03    
+47      1.46858e-01    3.12465e-03    3.12465e-03    
+48      1.49982e-01    3.12465e-03    3.12465e-03    
+49      1.53107e-01    3.12465e-03    3.12465e-03    
+50      1.56232e-01    3.12465e-03    3.12465e-03    
+51      1.59356e-01    3.12465e-03    3.12465e-03    
+52      1.62481e-01    3.12465e-03    3.12465e-03    
+53      1.65606e-01    3.12465e-03    3.12465e-03    
+54      1.68730e-01    3.12465e-03    3.12465e-03    
+55      1.71855e-01    3.12465e-03    3.12465e-03    
+56      1.74980e-01    3.12466e-03    3.12466e-03    
+57      1.78104e-01    3.12466e-03    3.12466e-03    
+58      1.81229e-01    3.12466e-03    3.12466e-03    
+59      1.84354e-01    3.12466e-03    3.12466e-03    
+60      1.87478e-01    3.12466e-03    3.12466e-03    
+61      1.90603e-01    3.12466e-03    3.12466e-03    
+62      1.93728e-01    3.12466e-03    3.12466e-03    
+63      1.96852e-01    3.12466e-03    3.12466e-03    
+64      1.99977e-01    3.12466e-03    3.12466e-03    
+65      2.03102e-01    3.12466e-03    3.12466e-03    
+66      2.06226e-01    3.12466e-03    3.12466e-03    
+67      2.09351e-01    3.12466e-03    3.12466e-03    
+68      2.12476e-01    3.12466e-03    3.12466e-03    
+69      2.15600e-01    3.12466e-03    3.12466e-03    
+70      2.18725e-01    3.12466e-03    3.12466e-03    
+71      2.21850e-01    3.12466e-03    3.12466e-03    
+72      2.24974e-01    3.12466e-03    3.12466e-03    
+73      2.28099e-01    3.12467e-03    3.12467e-03    
+74      2.31224e-01    3.12467e-03    3.12467e-03    
+75      2.34348e-01    3.12467e-03    3.12467e-03    
+76      2.37473e-01    3.12467e-03    3.12467e-03    
+77      2.40598e-01    3.12467e-03    3.12467e-03    
+78      2.43722e-01    3.12467e-03    3.12467e-03    
+79      2.46847e-01    3.12467e-03    3.12467e-03    
+80      2.49972e-01    3.12467e-03    3.12467e-03    
+81      2.53096e-01    3.12467e-03    3.12467e-03    
+82      2.56221e-01    3.12467e-03    3.12467e-03    
+83      2.59346e-01    3.12467e-03    3.12467e-03    
+84      2.62470e-01    3.12467e-03    3.12467e-03    
+85      2.65595e-01    3.12467e-03    3.12467e-03    
+86      2.68720e-01    3.12467e-03    3.12467e-03    
+87      2.71844e-01    3.12467e-03    3.12467e-03    
+88      2.74969e-01    3.12467e-03    3.12467e-03    
+89      2.78094e-01    3.12467e-03    3.12467e-03    
+90      2.81218e-01    3.12468e-03    3.12468e-03    
+91      2.84343e-01    3.12468e-03    3.12468e-03    
+92      2.87468e-01    3.12468e-03    3.12468e-03    
+93      2.90592e-01    3.12468e-03    3.12468e-03    
+94      2.93717e-01    3.12468e-03    3.12468e-03    
+95      2.96842e-01    3.12468e-03    3.12468e-03    
+96      2.99966e-01    3.12468e-03    3.12468e-03    
+97      3.00000e-01    3.35885e-05    3.12468e-03    
+>>> Terminal time/step limit reached. Forcing final output...
+[IO] Saved PLT: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/JeansWave_HLLC_plt_0001.h5 at t=3.00000e-01
+[IO] Saved CHK: /home/shiroakane/ARCH/validation/gravity/results/p3-p4-20260922/physical/temporal-Euler-0.2/JeansWave_chk_0001.h5 at step 97 with 2 AMR leaves.
+[State] floor repairs=0.00000e+00 delta_mass=0.00000e+00 delta_energy=0.00000e+00
+>>> Simulation Done. Total Steps: 97 | Final Time: 3.00000e-01
