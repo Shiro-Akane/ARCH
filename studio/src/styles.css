@@ -1072,3 +1072,12 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .configuration-identity > div { display:flex;flex-wrap:wrap;gap:.5rem 2rem; }
 .configuration-identity p { margin:.3rem 0;font-size:.8rem; }
 .pairing-warning { color:#ffd08a; border-left:3px solid #d9a04d;padding-left:.6rem; }
+
+/* Schema catalog: fixed peer axes; long Host paths wrap within the panel. */
+.standard-catalog > input { width:100%; box-sizing:border-box; }
+.standard-catalog .parameter-field { margin: 10px 0; }
+.standard-catalog small, .path-preflight small { display:block; overflow-wrap:anywhere; color:var(--text-muted,#a9bcc8); font-size:11px; }
+.standard-catalog .validation-error { color:#ffb8ad; }
+.grid-axis-block { border:1px solid #35434e; border-radius:4px; padding:8px; margin:10px 0; }
+.grid-axis-block h4 { margin:0 0 8px; }
+.standard-catalog .block-navigator { position:static; }

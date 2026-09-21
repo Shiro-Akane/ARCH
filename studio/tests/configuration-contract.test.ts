@@ -58,3 +58,17 @@ test('late inspection cannot replace a newer model or a newer request for the sa
  const changed={...response,identity:{...response.identity,caseId:'CellularDet'}};assert.throws(()=>gate.accept(current,changed,request,scope));
  gate.invalidate();assert.equal(gate.accept(current,response,request,scope),null);
 });
+
+test('path checks travel with inspection identity and cannot validate a newer revision',async()=>{
+ const core=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/inspect-sod.json',import.meta.url),'utf8'));
+ const scope={projectId:'p',buildId:'b',binarySha256:'sha'};
+ core.identity.requestId='00000000-0000-0000-0000-000000000001';
+ const request={projectId:'p',caseId:'Sod' as const,configText:'old',configRevision:core.identity.configRevision};
+ const response={protocolVersion:PROTOCOL_VERSION,identity:{...scope,...core.identity},core,pathChecks:[{key:'out_dir',role:'output-directory',cwd:'/managed',resolvedPath:'/managed/data',status:'ok',message:'Checked'}]};
+ const gate=new InspectionRequests();const ticket=gate.begin();
+ assert.equal(gate.accept(ticket,response,request,scope)?.pathChecks?.[0].resolvedPath,'/managed/data');
+ assert.throws(()=>gate.accept(ticket,response,{...request,configRevision:'new'},scope),/identity/);
+ gate.invalidate();assert.equal(gate.accept(ticket,response,request,scope),null);
+ const schema=JSON.parse(await readFile(new URL('../../src/api/examples/configuration/schema.json',import.meta.url),'utf8'));
+ schema.parameters[0].units={status:'guessed',unit:'cm'};assert.throws(()=>validateConfigurationSchema(schema),/unit metadata/);
+});

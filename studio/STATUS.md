@@ -593,3 +593,23 @@ Production UAT on 4188: Sod current Preview; x_pos metadata cleared on Cellular 
 
 ## Phase 2F-A completed — checkpoint / STOP
 Target A1–A7 rechecked. Core8 scoped groups PASS; final Studio116/116 and Host45/45 PASS, lint/typecheck/build/diff checks PASS. Production UAT covers model/metadata/source isolation, generic and suspicious filenames, separate Preview versus overwrite confirmation with exact target disk verification, strict existing/inserted integers, missing x_pos insertion and one-drag/one-Undo. Actual new-Core Cellular5x3 regression and desktop1280/1920 plus narrow800 layout checks passed. PHASE2F_A_COMPLETION_REPORT.md records evidence, truthful build provenance and remaining B/C scope. Local checkpoint studio-phase2f-a-v0.11.0; no push. STOP before 2F-B; full Phase2F goal remains unfinished.
+
+
+## Phase 2F-B — parameter editor (in progress)
+- User authorized B only after A checkpoint `7b62bbe758bfee2d0dcebe4ba9fbbe2dbc01df59` / `studio-phase2f-a-v0.11.0`.
+- Independent branch `studio/phase2f-parameter-editor`; A tag unchanged. Rechecked Target section 8 (B1–B12).
+- Implemented schema-backed virtual defaults / aliases / six groups, Core coordinate layout, unit metadata and metadata-only Host path preflight. No Core edits or simulation.
+- Regression and production browser UAT in progress; no B checkpoint yet. C remains unauthorized.
+
+### B verification boundary
+- Re-read Target B1–B12 and Requirements 2–11 / 25. No C implementation.
+- Core scoped groups: 8/8 PASS, 210.66 s, simulation oracle disabled; reused unchanged A CPU binary.
+- Production browser UAT: stable axes and invalid text, cylindrical/spherical naming, ODE insertion + real Sod Preview + actual save/reopen, alias-only save, gravity unavailable warning, Helmholtz diffusion field error, code_length/cm/rad, input/output path states, Host offline, desktop 1280×720 / 1920×1080 / narrow 800×720.
+- Final regression after edge-case and display refinements remains to be recorded in completion report.
+
+### B completion / STOP
+- Target section 8 rechecked after final UAT; UI-01/02/03/04/05/12/13 B scope complete.
+- Final Studio tests 121/121; Host tests 46/46; lint/typecheck/production build/diff-check PASS. Core 8/8 unchanged from the B verification run.
+- All 90 keys individually searched through the production UI; omitted ode_rtol saved/reopened with only one added assignment; alias-only disk output confirmed.
+- Report: `PHASE2F_B_COMPLETION_REPORT.md`. Checkpoint: `studio-phase2f-b-v0.12.0` on `studio/phase2f-parameter-editor`.
+- A tag unchanged. No push; no 2F-C or Phase 3. STOP pending user authorization.
