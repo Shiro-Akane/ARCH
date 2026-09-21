@@ -21,6 +21,7 @@
 
 struct SimulationController
 {
+    arch::state::RepairBudget repairs;
     const SimConfig &config;
     int step_count;
     double t_current;
@@ -36,7 +37,7 @@ struct SimulationController
     bool suppress_step_io_once;
 
     SimulationController(const SimConfig &cfg, const RunState &start_state)
-        : config(cfg),
+        : repairs(start_state.repairs), config(cfg),
           step_count(start_state.step),
           t_current(start_state.time),
           t_max(cfg.io.tmax),
@@ -48,7 +49,7 @@ struct SimulationController
                      ? start_state.dt_old
                      : (cfg.io.restart
                             ? 1.0e99
-                            : cfg.GetCustomParam("dt_init", 1e-16))),
+                            : cfg.numerics.dt_init)),
           suppress_step_io_once(cfg.io.restart)
     {
         if (config.io.restart)
@@ -188,7 +189,7 @@ struct SimulationController
 
         if (step_count > 0)
         {
-            double dt_grow = config.GetCustomParam("tstep_change_factor", 1.2);
+            double dt_grow = config.numerics.tstep_change_factor;
             dt_computed = std::min(dt_computed, dt_old * dt_grow);
         }
 
@@ -196,7 +197,7 @@ struct SimulationController
         {
             if (step_count == 0)
             {
-                double dt_init = config.GetCustomParam("dt_init", 1e-16);
+                double dt_init = config.numerics.dt_init;
                 dt_computed = std::min(dt_computed, dt_init);
             }
             else
@@ -207,8 +208,9 @@ struct SimulationController
 
         dt_old = dt_computed;
 
-        double dt_min = config.GetCustomParam("dt_min", 1e-20);
-        if (dt_computed < dt_min)
+        double dt_min = config.numerics.dt_min;
+        if (!std::isfinite(dt_computed) || dt_computed < dt_min
+            || !(t_current + dt_computed > t_current))
         {
             throw std::runtime_error("dt too small. Simulation aborted.");
         }
@@ -231,6 +233,10 @@ struct SimulationController
         {
             dt = t_max - t_current;
         }
+        // Output alignment may legitimately shorten the configured minimum,
+        // but it must still advance representable physical time.
+        if (!(dt > 0.0) || !std::isfinite(dt) || !(t_current + dt > t_current))
+            throw std::runtime_error("Aligned timestep cannot advance physical time");
         return dt;
     }
 };

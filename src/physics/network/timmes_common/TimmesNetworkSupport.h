@@ -1,6 +1,7 @@
 // ARCH-owned generic policy adapter for the Timmes-derived network equations.
 // Upstream/source boundaries: docs/physics/TimmesNetworks.md.
 #pragma once
+#include "numerics/state/StateAdmissibility.h"
 
 #include <algorithm>
 #include <array>
@@ -36,7 +37,7 @@ struct TimmesNetworkSupport {
     static void SetupInitialFractions(SimConfig& config, const SpeciesManager& specs,
                                       std::vector<double>& x_out)
     {
-        x_out.assign(specs.count(), 1.0e-20);
+        x_out.assign(specs.count(), 0.0);
         double sum = 0.0;
         for (int i = 0; i < specs.count(); ++i) {
             std::string target = "x" + specs.get_name(i);
@@ -53,7 +54,7 @@ struct TimmesNetworkSupport {
                         config.parameter_reads->record_unit(entry.first, "1", "core-composition-input-before-normalization");
                     }
                     observed = true;
-                    x_out[i] += entry.second;
+                    x_out[i] = entry.second;
                     break;
                 }
             }
@@ -63,9 +64,8 @@ struct TimmesNetworkSupport {
             }
             sum += x_out[i];
         }
-        if (sum > 0.0) {
-            for (double& value : x_out) value /= sum;
-        }
+        if (!arch::state::normalize_composition(x_out.data(), specs.count(), 1, config.physics.burn.smallx))
+            throw std::invalid_argument("Initial network composition must contain finite nonnegative fractions with a positive sum");
     }
 
     ARCH_HEAVY_INLINE static void eval_rhs(const double* state, double rho, double eta,

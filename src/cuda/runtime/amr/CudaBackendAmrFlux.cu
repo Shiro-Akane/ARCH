@@ -136,7 +136,8 @@ cudaError_t launch_cuda_amr_reflux(
     const DeviceAmrFluxBlockView* device_blocks, int block_count,
     const amr::AmrRefluxTarget* device_targets, int target_count,
     const amr::AmrRefluxContribution* device_contributions,
-    int contribution_count, double dt, cudaStream_t stream)
+    int contribution_count, double dt, cudaStream_t stream, int* status,
+    double density_floor, double energy_floor, double energy_ceiling)
 {
     if (device_blocks == nullptr || block_count <= 0
         || device_targets == nullptr || !valid_count(target_count)
@@ -148,7 +149,7 @@ cudaError_t launch_cuda_amr_reflux(
     amr_flux_kernel_detail::reflux_kernel
         <<<launch_blocks(target_count), kThreads, 0, stream>>>(
             device_blocks, device_targets, device_contributions,
-            target_count, dt);
+            target_count, dt, status, density_floor, energy_floor, energy_ceiling);
     return cudaGetLastError();
 }
 

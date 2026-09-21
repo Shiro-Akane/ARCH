@@ -28,6 +28,7 @@ struct DeviceHydroBatchBlock {
     DeviceGridView grid;
     int* eos_status = nullptr;
     std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
+    state::RepairView repairs{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceHydroBatchBlock>);
 

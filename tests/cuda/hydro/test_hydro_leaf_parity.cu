@@ -21,6 +21,9 @@
 #include "driver/DriverUtils.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "numerics/flux/FluxFunctions.h"
+#include "numerics/linalg/DenseWrap.h"
+#include "physics/eos/IdealGas.h"
+#include "physics/gravity/ExternalGravitySource.h"
 #include "numerics/flux/FluxHLL.h"
 #include "numerics/flux/FluxHLLC.h"
 #include "numerics/flux/FluxRoe.h"
@@ -110,10 +113,68 @@ struct DeviceLeafResult
     double cfl_nan_minimum;
     double cfl_infinite_minimum;
     double species[10];
+    double low_density_error = 0.0;
+    bool low_density_valid = true;
 };
+
+// Independent Euler uniform flux, constant acceleration and original linear
+// system identities, plus density similarity across every production flux.
+// The budget is the same 1e-11 used by the CPU low-density manifest.
+ARCH_INLINE void range_error(DeviceLeafResult& result, double actual, double expected)
+{
+    if (!std::isfinite(actual)) result.low_density_valid = false;
+    result.low_density_error = std::max(result.low_density_error,
+        std::abs(actual-expected)/std::max(1.0,std::abs(expected)));
+}
+template<class Flux>
+ARCH_INLINE void range_flux(DeviceLeafResult& result, double scale)
+{
+    const IdealGasView eos{};
+    const FluidVector left{1.,.3,0.,0.,2.545}, right{.125,-.0125,0.,0.,.250625};
+    const double x[]{1.}; double species[1]; FluidVector baseline, actual;
+    Flux::compute_face_flux(left,right,x,x,1,eos,0,.1,baseline,species);
+    Flux::compute_face_flux(scale*left,scale*right,x,x,1,eos,0,.1,actual,species);
+    range_error(result,actual.rho/scale,baseline.rho);
+    range_error(result,actual.mom_u/scale,baseline.mom_u);
+    range_error(result,actual.eng/scale,baseline.eng);
+    range_error(result,species[0]/scale,actual.rho/scale);
+    Flux::compute_face_flux(scale*left,scale*left,x,x,1,eos,0,.1,actual,species);
+    range_error(result,actual.rho/scale,.3);
+    range_error(result,actual.mom_u/scale,1.09);
+    range_error(result,actual.eng/scale,.3*3.545);
+}
+ARCH_INLINE void evaluate_low_density(DeviceLeafResult& result)
+{
+    const double scales[]{1.,1e-12,1e-20,1e-30,1e-60,1e-100};
+    for (double scale : scales) {
+        range_flux<FluxHLL<PCMReconstruction>>(result,scale);
+        range_flux<FluxHLLC<PCMReconstruction>>(result,scale);
+        range_flux<FluxRoe<PCMReconstruction>>(result,scale);
+        range_flux<FluxSW<PCMReconstruction>>(result,scale);
+        range_flux<FluxVL<PCMReconstruction>>(result,scale);
+        const FluidVector value{scale,2.*scale,0.,0.,9.5*scale};
+        range_error(result,arch::state::recover(value).internal,7.5);
+        range_error(result,compute_cfl_cell_dt(value,3.,1,.25,1.,1.),.025);
+        FluidVector source;
+        Physical::Gravity::add_external_gravity_source_cell(value,{3.,0.,0.,true},.5,source);
+        range_error(result,source.mom_u/scale,1.5);
+        range_error(result,source.eng/scale,3.);
+        range_error(result,compute_limited_slope<VanLeer>(scale,2*scale,3*scale)/scale,.5);
+        DenseMatrixData<2> a; a(1,1)=2*scale; a(1,2)=scale; a(2,1)=scale; a(2,2)=3*scale;
+        double rhs[]{4*scale,7*scale};
+        result.low_density_valid &= DenseLUSolver::solve<2,2>(a,rhs);
+        range_error(result,rhs[0],1.); range_error(result,rhs[1],2.);
+    }
+    double bounded[]{.999,.001};
+    result.low_density_valid &= arch::state::normalize_composition(bounded,2,1,.2)
+        && bounded[0]>=.2 && bounded[1]>=.2;
+    range_error(result,bounded[0]+bounded[1],1.);
+}
 
 ARCH_INLINE void evaluate_device_leaves(DeviceLeafResult* output)
 {
+    output->low_density_error=0.; output->low_density_valid=true;
+    evaluate_low_density(*output);
     output->roe_identities = RoeThermodynamicCases::evaluate();
     const FluidVector left{1.0, 0.75, -0.2, 0.1, 2.80625};
     const FluidVector right{0.8, -0.2, 0.24, -0.12, 1.82};
@@ -190,6 +251,8 @@ __global__ void evaluate_device_leaves_kernel(DeviceLeafResult* result)
     evaluate_device_leaves(result);
 }
 
+bool scalar_near(double actual, double expected);
+
 struct RouteFingerprint
 {
     int limiter_id;
@@ -201,6 +264,8 @@ struct RouteFingerprint
     std::uint64_t stage_hash;
     FluidVector flux{};
     FluidVector stage{};
+    FluidVector left{}, right{};
+    double limiter_values[4]{};
 };
 
 ARCH_INLINE std::uint64_t route_mix(std::uint64_t hash, double value)
@@ -310,7 +375,8 @@ __global__ void route_matrix_kernel(RouteFingerprint* output, int index)
             FluxRegistration>::id),
         static_cast<int>(arch::dispatch::PolicyRegistration<
             StageRegistration>::id),
-        limiter_hash, reconstruction_hash, flux_hash, stage_hash, flux, stage};
+        limiter_hash, reconstruction_hash, flux_hash, stage_hash, flux, stage, left, right,
+        {Limiter::calc(.21),Limiter::calc(.57),Limiter::calc(1.43),Limiter::calc(-.37)}};
 }
 
 template<class LimiterRegistration, class FluxRegistration, class List>
@@ -456,26 +522,36 @@ int run_route_matrix()
     for (int i = 0; i < route_count; ++i) {
         const RouteFingerprint& a = actual[i];
         const RouteFingerprint& e = expected[i];
-        // Keep unrelated fingerprints exact. Roe-family physical values use
-        // independently derived fixtures; never refresh an output hash from
-        // the implementation whose thermodynamic defect is being corrected.
-        bool numerical_match = a.flux_hash == e.flux_hash && a.stage_hash == e.stage_hash;
-        if (e.flux_id >= 2 && e.flux_id <= 4) {
-            const auto& f = RoeFluxReference::route_flux[e.limiter_id][e.flux_id-2];
-            const auto& states = RoeFluxReference::route_state[e.limiter_id];
-            const double old_weights[3]{0., .5, .75};
-            const double w = old_weights[e.stage_id];
-            double stage[5]{};
-            for (int field = 0; field < 5; ++field)
-                stage[field] = w*states[0][field] + (1-w)*(states[1][field]+f[field]);
-            numerical_match = vector_near(a.flux, {f[0], f[1], f[2], f[3], f[4]})
-                && vector_near(a.stage, {stage[0], stage[1], stage[2], stage[3], stage[4]});
+        // Independent equations retain the existing numerical budget even
+        // where scale-safe algebra intentionally changes last-bit hashes.
+        const auto& states = RoeFluxReference::route_state[e.limiter_id];
+        const double* f = e.flux_id < 2
+            ? RoeFluxReference::split_route_flux[e.limiter_id][e.flux_id]
+            : RoeFluxReference::route_flux[e.limiter_id][e.flux_id-2];
+        const double old_weights[3]{0., .5, .75};
+        const double w = old_weights[e.stage_id];
+        double stage[5]{};
+        for (int field=0; field<5; ++field)
+            stage[field]=w*states[0][field]+(1-w)*(states[1][field]+f[field]);
+        const bool numerical_match=vector_near(a.flux,{f[0],f[1],f[2],f[3],f[4]})
+            && vector_near(a.stage,{stage[0],stage[1],stage[2],stage[3],stage[4]});
+        bool limiter_match=a.limiter_hash==e.limiter_hash;
+        bool reconstruction_match=a.reconstruction_hash==e.reconstruction_hash;
+        if (e.limiter_id==3) {
+            // The harmonic limiter now avoids overflow for arbitrarily large r.
+            // Evaluate its defining rational function independently here.
+            const double ratios[4]{.21,.57,1.43,-.37};
+            limiter_match=true;
+            for (int j=0;j<4;++j) {
+                const double expected=ratios[j]>0 ? 2*ratios[j]/(1+ratios[j]) : 0.;
+                limiter_match=limiter_match && scalar_near(a.limiter_values[j],expected);
+            }
+            const auto& l=states[0]; const auto& r=states[1];
+            reconstruction_match=vector_near(a.left,{l[0],l[1],l[2],l[3],l[4]})
+                && vector_near(a.right,{r[0],r[1],r[2],r[3],r[4]});
         }
-        const bool route_matches = a.limiter_id == e.limiter_id
-            && a.flux_id == e.flux_id && a.stage_id == e.stage_id
-            && a.limiter_hash == e.limiter_hash
-            && a.reconstruction_hash == e.reconstruction_hash
-            && numerical_match;
+        const bool route_matches=a.limiter_id==e.limiter_id && a.flux_id==e.flux_id
+            && a.stage_id==e.stage_id && limiter_match && reconstruction_match && numerical_match;
         if (!route_matches) {
             matches = false;
         }
@@ -592,11 +668,10 @@ bool validate_characterized_host_paths()
         || !exact_bits(MinMod::calc(0.5), 0x3fe0000000000000ULL)
         || !exact_bits(SuperBee::calc(0.5), 0x3ff0000000000000ULL)
         || !exact_bits(VanLeer::calc(std::numeric_limits<double>::infinity()),
-                       0xfff8000000000000ULL)
+                       0x4000000000000000ULL)
         || !exact_bits(McLimiter::calc(std::numeric_limits<double>::quiet_NaN()),
                        0x4000000000000000ULL)
-        || !exact_bits(compute_limited_slope<MinMod>(0.0, 1.0, 1.0 + 0.5e-12),
-                       0x0000000000000000ULL)
+        || compute_limited_slope<MinMod>(0.0, 1.0, 1.0 + 0.5e-12) != 0.5*((1.0+0.5e-12)-1.0)
         || !exact_bits(compute_limited_slope<MinMod>(0.0, 1.0, 1.0 + 1.0e-12),
                        0x3d61980000000000ULL))
         return false;
@@ -606,8 +681,7 @@ bool validate_characterized_host_paths()
                      0x4018000000000000ULL, 0x4039000000000000ULL,
                      0x4038000000000000ULL, 0x403e000000000000ULL,
                      0x4074100000000000ULL)
-        || !vector_bits(get_flux({-0.0, 1.0, 2.0, 3.0, 4.0}, 7.0, 0),
-                        0, 0, 0, 0, 0)
+        || !std::isnan(get_flux({-0.0, 1.0, 2.0, 3.0, 4.0}, 7.0, 0).rho)
         || !exact_bits(entropy_fix(-0.0, 1.0), 0x3fe0000000000000ULL))
         return false;
 
@@ -897,7 +971,8 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         species_match = species_match
             && scalar_near(actual.species[species],
                            frozen_double(species_bits[species-6]));
-    const bool matches = actual.roe_identities.passed()
+    const bool matches = actual.low_density_valid && actual.low_density_error <= 1e-11
+        && actual.roe_identities.passed()
         && vector_near(actual.hll, hll.flux)
         && vector_near(actual.hllc, hllc.flux)
         && vector_near(actual.roe, roe.flux)
@@ -922,7 +997,7 @@ bool device_leaf_result_matches(const DeviceLeafResult& actual)
         && exact_bits(actual.limiter, 0x3fe0000000000000ULL)
         && exact_bits(actual.limiter_negzero, 0x0000000000000000ULL)
         && exact_bits(actual.slope, 0x3fe0000000000000ULL)
-        && exact_bits(actual.slope_below, 0x0000000000000000ULL)
+        && actual.slope_below == 0.5*((1.0+0.5e-12)-1.0)
         && std::abs(actual.ppm_left - 5.0 / 3.0)
                <= 2e-15 * std::max(1.0, std::abs(5.0 / 3.0))
         && std::abs(actual.ppm_right - 25.0 / 3.0)
@@ -1406,7 +1481,10 @@ int run_device_primitives()
         old_state.store(cell, {1, 2, 3, 4, 50});
         current_state.store(cell, {2, 4, 6, 8, 100});
         destination.store(cell, {9, 8, 7, 6, 5});
-        stage_delta.store(cell, {0.2, 0.2, 0.2, 0.2, 0.1});
+        // Binary-exact species densities isolate stage algebra from normalization.
+        stage_delta.store(cell, {0.5, 0.2, 0.2, 0.2, 0.1});
+        stage_delta.set_species(0, cell, .5*.25);
+        stage_delta.set_species(1, cell, .5*.75);
         old_state.set_species(0, cell, 0.25);
         old_state.set_species(1, cell, 0.75);
         current_state.set_species(0, cell, 0.25);
@@ -1501,7 +1579,7 @@ int run_device_primitives()
         || !exact_bits(destination.enuc_rate[active], 0x4031000000000000ULL))
         return 160;
     const FluidVector expected_stage = frozen_vector(
-        0x3ff999999999999aULL, 0x4008cccccccccccdULL,
+        0x3ffc000000000000ULL, 0x4008cccccccccccdULL,
         0x4012666666666666ULL, 0x4018666666666666ULL,
         0x4052c33333333333ULL);
     const double expected_stage_species[2] = {0.25, 0.75};
@@ -1596,7 +1674,9 @@ int run_device_primitives()
                       cudaMemcpyDeviceToHost) != cudaSuccess
         || !exact_bits(invalid_result_host, 0x405ec00000000000ULL))
         return 171;
-    const double expected_dt = frozen_double(0x3fd5db37998729f9ULL);
+    // rho=2, m=(2,2.5,2), E=10: P=(gamma-1)*(E-|m|^2/(2*rho)).
+    const double pressure = .4 * (10.0 - (4.0 + 6.25 + 4.0) / 4.0);
+    const double expected_dt = .5 * .8 * grid.dx1 / (1.0 + std::sqrt(1.4*pressure/2.0));
     double result_host = 0.0;
     int status_host = -1;
     if (launch_compute_hydro_dt(
@@ -1620,11 +1700,62 @@ int run_device_primitives()
     cudaFree(upper_area);
     return 0;
 }
+
+// Exercise the production stage leaf with concurrent repairs and a partial
+// final CUDA block. Expected integrals follow directly from rho, u, e and X.
+__global__ void concurrent_repair_kernel(double scale, double* ledger, int* failure)
+{
+    constexpr int count=1025;
+    const int cell=blockIdx.x*blockDim.x+threadIdx.x;
+    if(cell>=count) return;
+    const FluidVector old{scale,2.*scale,0.,0.,5.*scale}; // u=2, e=3
+    const double x[]{.25,.75}, delta_x[]{0.,0.};
+    double out_x[2]; FluidVector output;
+    const auto status=TimeIntegration::update_stage_cell(old,old,FluidVector{},
+        x,x,delta_x,2,1,0.,1.,2.*scale,4.,100.,output,out_x,{ledger,2},.25,cell);
+    if(status!=arch::state::Status::repaired || output.rho!=2.*scale ||
+       std::abs(output.mom_u/scale-4.)>1e-13 || std::abs(output.eng/scale-12.)>1e-13 ||
+       out_x[0]!=.25 || out_x[1]!=.75) atomicExch(failure,1);
+}
+
+int run_concurrent_repairs()
+{
+    double* ledger=nullptr; int* failure=nullptr;
+    if(cudaMalloc(&ledger,14*sizeof(double))!=cudaSuccess) return 120;
+    if(cudaMalloc(&failure,sizeof(int))!=cudaSuccess) { cudaFree(ledger); return 120; }
+    int result=0;
+    for(double scale : {1.,1e-100}) {
+        cudaMemset(ledger,0,14*sizeof(double)); cudaMemset(failure,0,sizeof(int));
+        concurrent_repair_kernel<<<5,256>>>(scale,ledger,failure);
+        double actual[14]; int failed=0;
+        if(cudaGetLastError()!=cudaSuccess ||
+           cudaMemcpy(actual,ledger,sizeof(actual),cudaMemcpyDeviceToHost)!=cudaSuccess ||
+           cudaMemcpy(&failed,failure,sizeof(int),cudaMemcpyDeviceToHost)!=cudaSuccess || failed) {
+            result=121; break;
+        }
+        constexpr double volume=1025.*.25;
+        const double expected[]{1025.,volume,volume,volume,2.*volume,0.,0.,
+                                7.*volume,7.*volume,0.,.25*volume,.25*volume,.75*volume,.75*volume};
+        for(int i=0;i<14;++i) {
+            if(i==9) { if(actual[i]<0. || actual[i]>=1025. || std::floor(actual[i])!=actual[i]) result=122; }
+            else {
+                const double scaled=i<2 ? actual[i] : actual[i]/scale;
+                if(!std::isfinite(scaled) || std::abs(scaled-expected[i])>
+                    1e-11*std::max(1.,std::abs(expected[i]))) result=122;
+            }
+        }
+    }
+    cudaFree(ledger); cudaFree(failure);
+    return result;
+}
 #endif
 } // namespace
 
 int main()
 {
+    DeviceLeafResult range_result{};
+    evaluate_low_density(range_result);
+    if (!range_result.low_density_valid || range_result.low_density_error > 1e-11) return 3;
     const auto identities = RoeThermodynamicCases::evaluate();
     std::cout << "Roe identities reflection=" << identities.reflection
               << " rotation=" << identities.rotation
@@ -1703,6 +1834,8 @@ int main()
     for (int cell = 0; cell < total; ++cell) {
         old_state.set(cell, {1, 2, 3, 4, 50});
         current_state.set(cell, {2, 4, 6, 8, 100});
+        species_delta[cell] = .2*.25;
+        species_delta[total + cell] = .2*.75;
         old_state.X(0, cell) = current_state.X(0, cell) = 0.25;
         old_state.X(1, cell) = current_state.X(1, cell) = 0.75;
         destination.enuc_rate[cell] = 17.0;
@@ -1743,6 +1876,8 @@ int main()
     if (launch_error != cudaSuccess || sync_error != cudaSuccess
         || copy_error != cudaSuccess || !device_leaf_result_matches(copied_result))
         return 91;
+    const int repair_result = run_concurrent_repairs();
+    if (repair_result != 0) return repair_result;
     const int primitive_result = run_device_primitives();
     if (primitive_result != 0)
         return primitive_result;

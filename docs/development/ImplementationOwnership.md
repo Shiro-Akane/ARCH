@@ -34,7 +34,7 @@ The [CUDA runtime index](../../src/cuda/runtime/README.md) categorizes host cont
 | HLLC star-region flux | `src/numerics/flux/FluxHLLC.h::calc_star_flux` | One Rankine-Hugoniot state and contact pressure give mass/energy fluxes factored by contact speed. CPU/CUDA use the same expression; the prior subtractive star-state assembly is retired except for its unchanged guarded degenerate limit. |
 | Velocity derivatives | `src/physics/diagnostics/VelocityDiagnostics.h` | CPU/device refinement and diffusion |
 | External gravity | `src/physics/gravity/ExternalGravitySource.h` | CPU `ExternalGravity.h`, CUDA source kernel; same per-stage update |
-| ODE algorithms and continuations | `src/numerics/burnsolver/ode/ode_be-nr.h`, `ode_bd.h`, `ode_ros4.h`, `OdeContinuation.h` | CPU executor and CUDA `SparseOdeBatch.cuh` invoke the same begin/advance/linear-response continuations. `SparseBeNrBatch.cuh` retains aliases only, not another ODE implementation. |
+| ODE algorithms and continuations | `src/numerics/burnsolver/ode/ode_be-nr.h`, `ode_bd.h`, `ode_ros4.h`, `OdeContinuation.h` | CPU executor and CUDA `SparseOdeBatch.cuh` invoke the same begin/advance/linear-response continuations. The unconsumed `SparseBeNrBatch.cuh` alias header was retired in P1.5. |
 | NSE fixed-point certification | `src/physics/nse/nse_solver.h::{input_is_equilibrium,log_mass_fraction}` | The existing solver reconstructs chemical potentials from populated species and checks every Saha log residual plus mass/charge at the unchanged tolerances. A certified input is preserved exactly; perturbed inputs use the existing safeguarded solver. No energy cutoff or backend branch. |
 | Generated NSE data and eligibility | `tools/network/NseMetadata.py`, emitted package metadata, `cmake/CustomNetworks.cmake` | Nuclear masses/spins/binding and constant conventions come from the generating pynucastro installation. Exact stoichiometric rank and recognized detailed-balance pairs certify the supported ground-state, unscreened, weak-free model. The shared NSE solver consumes those data; no per-network solver or backend macro family. |
 | NSE Auto request | `PolicyDescriptor.h::resolve_nse_request`, existing `RuntimeParams.h` parser | Resolve the host capability request before construction and pass the effective boolean through the unchanged `BurnConfigView`. True and auto share the same configured temperature/density gates and failure-to-ODE path. |
@@ -148,11 +148,13 @@ single concrete factories.
 The following boundaries serve distinct inputs or execution responsibilities
 and remain supported:
 
-- Parameter aliases, including `timeintegrator`, and free-function
-  `REGISTER_PROBLEM` select the same maintained implementations.
-- EOS initialization wrappers support case setup. Direct-field and free-energy
-  tables are different thermodynamic representations; their mathematics and
-  rank inference remain in the shared EOS implementation.
+- Registered option names and free-function `REGISTER_PROBLEM` select the
+  maintained implementations. P1.5 retired the `timeintegrator` parameter key;
+  text inputs use `time_integrator`.
+- EOS initialization wrappers support case setup. Native EOSDriver and strict
+  free-energy tables retain their source representations. Normalized HDF5
+  requires explicit rank/model/component declarations; direct normalized tables
+  and metadata inference were retired in P1.5.
 - Generated packages with `generator_version=3` remain CPU-eligible. CUDA
   requires `generator_version >= 4` and device-callable math; these are package
   interface requirements, not separate physical models.

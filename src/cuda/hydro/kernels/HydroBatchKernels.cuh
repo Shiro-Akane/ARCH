@@ -24,6 +24,8 @@ static __global__ void hydro_batch_clear(const DeviceHydroBatchBlock* blocks)
     const auto& b = blocks[blockIdx.y];
     const int cell = blockIdx.x * blockDim.x + threadIdx.x;
     if (cell == 0) *b.eos_status = 0;
+    if (b.repairs.values)
+        for (int n = cell; n < state::RepairView::fixed_size + 2 * b.repairs.species; n += blockDim.x * gridDim.x) b.repairs.values[n] = 0.0;
     if (cell >= b.delta.total_size) return;
     b.delta.store(cell, {0.0, 0.0, 0.0, 0.0, 0.0});
     for (int s = 0; s < b.delta.n_species; ++s) b.delta.set_species(s, cell, 0.0);
@@ -65,7 +67,7 @@ static __global__ void hydro_batch_update(const DeviceHydroBatchBlock* blocks,
     const auto& b = blocks[blockIdx.y];
     hydro_single_stage_update_kernel_work(b.old_state, b.input, b.output, b.delta,
         b.grid, old_weight, update_weight, density_floor,
-        minimum_internal_energy, maximum_internal_energy);
+        minimum_internal_energy, maximum_internal_energy, b.eos_status, b.repairs);
 }
 
 template<class Reconstruction>

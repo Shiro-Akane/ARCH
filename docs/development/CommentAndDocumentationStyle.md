@@ -73,9 +73,9 @@ feature already exists.
 
 Write user-facing pages for someone encountering ARCH for the first time.
 Describe what the interface accepts and how to use it, without assuming an
-earlier public release or a migration the reader must perform. Prefer “the
-`timeintegrator` alias is used when `time_integrator` is absent” to “legacy
-fallback,” and “the direct-field EOS model” to “the old table path.”
+earlier public release or a migration the reader must perform. Prefer “use `time_integrator` to select the integration method” to an
+ambiguous compatibility claim, and name the supported source/table representation
+rather than calling it “the old table path.”
 
 Separate data-format identifiers from software release versions. Document the
 accepted fields, defaults and validation rules when multiple formats can be

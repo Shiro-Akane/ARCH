@@ -19,6 +19,7 @@
 #include "data/GlobalDefs.h"
 
 #include "io/IO.h"
+#include "numerics/state/StateAdmissibility.h"
 #include "io/chk/CheckpointCompatibility.h"
 #include "io/hdf5/HDF5Writer.h"
 #include "physics/species/Species.h"
@@ -44,7 +45,8 @@ void write_chk(amr::AMRControl &amr_ctrl,
                double dt_old, double dt_burn,
                bool resume_after_regrid,
                const SimConfig &config, const SpeciesManager &specs,
-               const io::CheckpointProvenance &provenance)
+               const io::CheckpointProvenance &provenance,
+               const arch::state::RepairBudget &repairs)
 {
     if (!fs::exists(config.io.out_dir)) fs::create_directories(config.io.out_dir);
 
@@ -59,6 +61,8 @@ void write_chk(amr::AMRControl &amr_ctrl,
     const size_t cells_per_block = checkpoint_cells_per_block(dim);
     const size_t field_size = active_blocks.size() * cells_per_block;
     io::CheckpointData checkpoint;
+    checkpoint.repairs = repairs;
+    checkpoint.state_controls = arch::config::StateControlIdentity(config);
     checkpoint.time = current_time;
     checkpoint.dt_old = dt_old;
     checkpoint.dt_burn = dt_burn;
@@ -132,6 +136,8 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
               const io::CheckpointProvenance &expected_provenance)
 {
     io::CheckpointData checkpoint = io::read_hdf5_chk_impl(filepath);
+    if (checkpoint.state_controls != arch::config::StateControlIdentity(config))
+        throw std::runtime_error("Checkpoint state controls differ from the active configuration");
     const int expected_species = specs.count();
     const size_t cells_per_block = checkpoint_cells_per_block(config.grid.dim);
     if (checkpoint.dim != config.grid.dim || checkpoint.geometry != config.grid.geometry ||
@@ -140,8 +146,20 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
     }
     const bool verified_identity = io::require_checkpoint_provenance_compatible(
         checkpoint.provenance, expected_provenance);
-    if (!verified_identity) {
-        throw std::runtime_error("Checkpoint scientific identity is required before restoring AMR state.");
+    // Validate the complete incoming state before replacing the live hierarchy.
+    const auto& limits = config.numerics;
+    const size_t incoming_cells = checkpoint.rho.size();
+    if (checkpoint.repairs.species() != expected_species)
+        throw std::runtime_error("Checkpoint repair ledger and species count disagree");
+    for (size_t cell = 0; cell < incoming_cells; ++cell) {
+        const FluidVector fluid{checkpoint.rho[cell], checkpoint.mom_u[cell],
+            checkpoint.mom_v[cell], checkpoint.mom_w[cell], checkpoint.eng[cell]};
+        const auto status = arch::state::validate(fluid,
+            expected_species ? checkpoint.mass_fractions.data() + cell : nullptr,
+            expected_species, static_cast<int>(incoming_cells),
+            limits.sml_rho, limits.min_eint, limits.max_eint);
+        if (status != arch::state::Status::valid || !std::isfinite(checkpoint.enuc_rate[cell]))
+            throw std::runtime_error("Invalid checkpoint state at cell " + std::to_string(cell));
     }
 
     amr_ctrl.tree->LoadLeafGrid(config, expected_species, checkpoint.levels,
@@ -173,6 +191,7 @@ void read_chk(const std::string &filepath, amr::AMRControl &amr_ctrl,
             }
         }
     }
+    run_state.repairs = checkpoint.repairs;
     run_state.time = checkpoint.time;
     run_state.dt_old = checkpoint.dt_old;
     run_state.dt_burn = checkpoint.dt_burn;

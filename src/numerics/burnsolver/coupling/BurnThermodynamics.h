@@ -20,9 +20,9 @@
 
 namespace OdeMath {
 
-ARCH_INLINE double burn_cv_floor(double cv)
+ARCH_INLINE double require_positive_cv(double cv)
 {
-    return std::max(cv, 1.0e-10);
+    return std::isfinite(cv) && cv > 0.0 ? cv : std::numeric_limits<double>::quiet_NaN();
 }
 
 // Derivative at the origin of the quadratic through actual floating-point
@@ -58,15 +58,15 @@ template <int Equations, class EOS>
 ARCH_HEAVY_INLINE void burn_cv_gradient(
     const double* state, double rho, const EOS& eos, double cv, double* gradient)
 {
-    if (cv <= burn_cv_floor(0.0)) {
-        for (int i = 0; i < Equations; ++i) gradient[i] = 0.0;
+    if (!(cv > 0.0) || !std::isfinite(cv)) {
+        for (int i = 0; i < Equations; ++i) gradient[i] = std::numeric_limits<double>::quiet_NaN();
     } else if constexpr (requires {
         eos.template get_cv_gradient<Equations>(rho, state[Equations - 1], state, gradient);
     }) {
         eos.template get_cv_gradient<Equations>(rho, state[Equations - 1], state, gradient);
     } else {
         thermodynamic_gradient<Equations>(state, cv, [&](const double* sample) {
-            return burn_cv_floor(eos.get_cv(rho, sample[Equations - 1], sample));
+            return require_positive_cv(eos.get_cv(rho, sample[Equations - 1], sample));
         }, gradient);
     }
 }

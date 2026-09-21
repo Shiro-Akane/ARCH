@@ -9,6 +9,13 @@
 static void require(bool good, const char *message) {
     if (!good) throw std::runtime_error(message);
 }
+struct DensityBoundedIdealGas : IdealGas {
+    using IdealGas::IdealGas;
+    double get_temperature(double rho, double e, const double* fractions) const {
+        return rho <= 3.0 ? IdealGas::get_temperature(rho, e, fractions)
+                          : std::numeric_limits<double>::quiet_NaN();
+    }
+};
 int main() {
     SpeciesManager empty;
     IdealGas air(1.4, empty);
@@ -30,6 +37,17 @@ int main() {
     data.SetTemperature(10);
     const auto thermal_state = ProblemHelper::detail::InitialConservedState(data, eos);
     require(std::abs(thermal_state.eng - 65) < 1e-12, "temperature must own thermal energy");
+    NumericsConfig limits;
+    limits.sml_rho = 4.0;
+    arch::state::Repair repair;
+    const auto repaired = ProblemHelper::detail::InitialConservedState(data, eos, limits, &repair);
+    require(repaired.rho == 4.0 && repaired.eng == 130.0 &&
+            repair.status == arch::state::Status::repaired, "valid initial repair");
+    DensityBoundedIdealGas bounded(1.4, species);
+    bool invalid_repair = false;
+    try { (void)ProblemHelper::detail::InitialConservedState(data, bounded, limits); }
+    catch (const std::runtime_error&) { invalid_repair = true; }
+    require(invalid_repair, "a repair must not publish a state outside the EOS domain");
     data.temperature = std::numeric_limits<double>::quiet_NaN();
     bool rejected = false;
     try { (void)ProblemHelper::detail::InitialConservedState(data, eos); }

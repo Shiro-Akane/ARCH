@@ -34,7 +34,7 @@ __global__ void hydro_cfl_candidates_kernel(
         const int cell = grid.active_cell(linear);
         const FluidVector value = state.load(cell);
         if (!is_cfl_cell_active(value)) {
-            candidates[linear] = cfl_inactive_cell_dt();
+            candidates[linear] = std::numeric_limits<double>::quiet_NaN();
             continue;
         }
         for (int species = 0; species < state.n_species; ++species)

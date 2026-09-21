@@ -136,7 +136,7 @@ void test_rank(const char* source,const char* helm_path,const char* rank)
         species.add_species("n",1,0,5.0/3.0,1.5e8);
         HostOwner host(source,&species,helm_path);
         auto view=host.get_view();
-        require(view.strict_domain && view.uses_free_energy && view.table_valid,
+        require(view.free_energy_fields[0] && view.table_valid,
                 "completed host fixture did not retain strict potential/mask");
         // Exercise nonzero gauge transfer even though this manufactured source
         // already has positive energy. The fixed test-owned offset adds no heat.
@@ -168,7 +168,7 @@ void test_rank(const char* source,const char* helm_path,const char* rank)
     require(device->empty() && masked_device->empty(),"moved completion owner retained storage");
     require(moved.view().free_energy_fields[0]==potential_pointer
         && masked_moved.view().table_valid==mask_pointer,"owner move changed allocation identity");
-    require(moved.view().strict_domain && moved.view().energy_reference_shift>=3e16,
+    require(moved.view().energy_reference_shift>=3e16,
             "device owner lost strict-domain or energy-reference metadata");
     arch::cuda::DeviceAllocation<Sample> inputs;
     arch::cuda::DeviceAllocation<Probe> output;

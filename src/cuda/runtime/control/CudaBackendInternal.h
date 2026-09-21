@@ -207,6 +207,7 @@ struct CudaAmrFluxPlanRuntime {
     std::vector<std::unique_ptr<CudaAmrFluxRouteStorage>> routes;
     std::map<std::pair<amr::BlockHandle, int>, std::size_t> route_index;
     amr::AmrCompiledRefluxPlan compiled_reflux{};
+    DeviceAllocation<int> reflux_status;
     DeviceAllocation<amr::AmrRefluxTarget> reflux_targets;
     DeviceAllocation<amr::AmrRefluxContribution> reflux_contributions;
     std::vector<amr::AmrFluxSurfaceRequirement> surface_requirements;
@@ -254,6 +255,16 @@ struct CudaBackend::Impl {
         std::unique_ptr<DeviceAllocation<int>> status;
         std::vector<int> host_status;
 
+        std::unique_ptr<DeviceAllocation<double>> repairs;
+        std::vector<double> host_repairs;
+        void ensure_repairs(std::size_t count, int species) {
+            const auto size = count * (state::RepairView::fixed_size + 2 * species);
+            host_repairs.resize(size);
+            if (!repairs || repairs->size() < size) {
+                auto next = std::make_unique<DeviceAllocation<double>>();
+                next->allocate(size); repairs.swap(next);
+            }
+        }
         void ensure_capacity(std::size_t count)
         {
             host_status.resize(count);

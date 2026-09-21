@@ -160,6 +160,30 @@
       "valueStage": "typed-input-before-setup-and-policy-resolution"
     },
     {
+      "defaultValue": 1e-16,
+      "key": "dt_init",
+      "parsedValue": 1e-16,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1e-20,
+      "key": "dt_min",
+      "parsedValue": 1e-20,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "defaultValue": 1.2,
+      "key": "tstep_change_factor",
+      "parsedValue": 1.2,
+      "rawValue": null,
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
       "defaultValue": 0.8,
       "key": "cfl",
       "parsedValue": 0.4,
@@ -181,14 +205,6 @@
       "parsedValue": "muscl",
       "rawValue": "muscl",
       "valueSource": "explicit",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "defaultValue": "RK2",
-      "key": "timeintegrator",
-      "parsedValue": "RK2",
-      "rawValue": null,
-      "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
     },
     {
@@ -360,22 +376,6 @@
       "valueStage": "typed-input-before-setup-and-policy-resolution"
     },
     {
-      "defaultValue": true,
-      "key": "enforce_mass_conservation",
-      "parsedValue": true,
-      "rawValue": null,
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "defaultValue": 0,
-      "key": "burn_verbose_level",
-      "parsedValue": 0,
-      "rawValue": null,
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
       "defaultValue": "BE_NR",
       "key": "ode_solver",
       "parsedValue": "BE_NR",
@@ -451,22 +451,6 @@
       "defaultValue": 0.001,
       "key": "ode_initial_dt_frac",
       "parsedValue": 0.001,
-      "rawValue": null,
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "defaultValue": false,
-      "key": "ode_use_numerical_jac",
-      "parsedValue": false,
-      "rawValue": null,
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "defaultValue": false,
-      "key": "ode_freeze_jacobian",
-      "parsedValue": false,
       "rawValue": null,
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -640,7 +624,7 @@
       "valueStage": "typed-input-before-setup-and-policy-resolution"
     },
     {
-      "defaultValue": 0.1,
+      "defaultValue": 0,
       "key": "tmax",
       "parsedValue": 0.2,
       "rawValue": "0.2",

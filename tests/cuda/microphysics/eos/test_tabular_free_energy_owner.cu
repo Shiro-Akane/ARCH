@@ -204,7 +204,9 @@ void bind_free_energy_fields(
     HostView& view,
     const std::array<std::vector<double>, tabular_eos::FieldCount>& fields)
 {
-    view.uses_free_energy = true;
+
+    static const std::vector<double> valid(fields[0].size(),1.0);
+    view.table_valid = valid.data(); view.valid_extent = valid.size();
     for (int field = 0; field < tabular_eos::FieldCount; ++field) {
         view.free_energy_fields[field] = fields[field].data();
         view.free_energy_extents[field] = fields[field].size();
@@ -288,7 +290,7 @@ void test_free_energy_owners(cudaStream_t stream)
     compare_state(host3_result.state, analytic, "Tabular3 analytic host");
     arch::cuda::Tabular3DEOSDeviceOwner owner3(host3, stream);
     const Tabular3DEOSView view3 = owner3.view();
-    require(view3.uses_free_energy,
+    require(!view3.native_direct,
             "Tabular3 owner dropped free-energy mode");
     for (const double* pointer : view3.free_energy_fields)
         require(pointer != nullptr, "Tabular3 owner omitted a derivative field");
@@ -325,7 +327,7 @@ void test_free_energy_owners(cudaStream_t stream)
     compare_state(host4_result.state, analytic, "Tabular4 analytic host");
     arch::cuda::Tabular4DEOSDeviceOwner owner4(host4, stream);
     const Tabular4DEOSView view4 = owner4.view();
-    require(view4.uses_free_energy,
+    require(view4.free_energy_fields[0] != nullptr,
             "Tabular4 owner dropped free-energy mode");
     for (const double* pointer : view4.free_energy_fields)
         require(pointer != nullptr, "Tabular4 owner omitted a derivative field");

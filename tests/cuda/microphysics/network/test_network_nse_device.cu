@@ -3171,10 +3171,14 @@ void run_network_device(
 void validate_dense(const DenseProbe& value)
 {
     require(value.solve_ok && value.factor_ok, "DenseLU solve/factorize status");
-    require(!value.below_ok && value.below_rhs == 7.0,
-            "DenseLU below-threshold preservation");
-    require(value.exact_ok && value.above_ok,
-            "DenseLU exact/above threshold classification");
+    require(value.below_ok && value.exact_ok && value.above_ok,
+            "DenseLU valid small pivots must not be cut off at an absolute scale");
+    const double pivots[]{std::nextafter(1.0e-20, 0.0), 1.0e-20,
+        std::nextafter(1.0e-20, std::numeric_limits<double>::infinity())};
+    const double solved[]{value.below_rhs, value.exact_rhs, value.above_rhs};
+    for (int i = 0; i < 3; ++i)
+        compare_field(solved[i], static_cast<double>(7.0L / pivots[i]), 2.0e-15,
+                      "dense.small-pivot.analytic", i);
     const double expected[3]{1.0, -2.0, -2.0};
     for (int i = 0; i < 3; ++i) {
         compare_field(value.solution[i], expected[i], 2.0e-15,

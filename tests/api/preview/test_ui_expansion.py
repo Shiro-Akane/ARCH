@@ -53,7 +53,7 @@ class Expansion(unittest.TestCase):
     def test_all_standard_parameters_have_presentation(self):
         out=self.api('--config-schema')
         params={p['key']:p for p in out['parameters']}
-        self.assertEqual(len(params), 90)
+        self.assertEqual(len(params), 88)
         for p in params.values():
             self.assertTrue(p['presentation']['description'])
             self.assertTrue(p['presentation']['displayName'])
@@ -162,7 +162,7 @@ class Expansion(unittest.TestCase):
                 self.verify_mesh(preview,domain)
                 outdir=self.cwd/case
                 par=self.cwd/(case+'.par')
-                par.write_text(text+f'\ntmax=0\ncompute_backend=cpu\nout_dir={outdir}\nbase_name=reference\nplt_variables=DENS\n')
+                par.write_text(text+f'\nsolver=HLLC\ntmax=0\ncompute_backend=cpu\nout_dir={outdir}\nbase_name=reference\nplt_variables=DENS\n')
                 run=subprocess.run([str(ARCH),case,str(par)],cwd=self.cwd,env=ENV,capture_output=True,text=True,timeout=90)
                 self.assertEqual(run.returncode,0,(run.stdout[-3000:],run.stderr[-2000:]))
                 checkpoints=sorted(outdir.rglob('*chk*.h5'))

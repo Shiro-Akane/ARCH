@@ -22,6 +22,7 @@
 #include "physics/eos/tabular/Tabular3DEOS.h"
 #include "physics/eos/tabular/Tabular4DEOS.h"
 #include "fixtures/hydro/RoeFluxReference.h"
+#include "fixtures/eos/FreeEnergyFixture.h"
 
 #include <cuda_runtime.h>
 
@@ -115,9 +116,8 @@ struct OdeProbeNet
 ARCH_INLINE BurnConfigView ode_probe_config()
 {
     return {true, 0.1, 0.1, 0.1, 1.0e-30, 1.0e30,
-            false, 1.0e20, 1.0e20, true,
-            {1.0e-8, 1.0e-12, 50, 10000, 0.9, 2.0, 0.1, 1.0,
-             false, false}};
+            false, 1.0e20, 1.0e20,
+            {1.0e-8, 1.0e-12, 50, 10000, 0.9, 2.0, 0.1, 1.0}};
 }
 
 ARCH_INLINE std::uint64_t ode_state_hash(const double* values, int count)
@@ -221,14 +221,40 @@ ARCH_INLINE double policy_witness(
     } else if constexpr (std::is_same_v<Binding, CudaIdealBinding>) {
         return eos.get_pressure_from_rho_e(1.7, 2.3, nullptr);
     } else if constexpr (std::is_same_v<Binding, CudaHelmholtzBinding>) {
-        HelmEosView view{};
-        return view.get_gamma(nullptr) * 2.1;
-    } else if constexpr (std::is_same_v<Binding, CudaTabular3DBinding>) {
-        Tabular3DEOSView view{};
-        return view.fallback_pressure(1.7, 2.3);
-    } else if constexpr (std::is_same_v<Binding, CudaTabular4DBinding>) {
-        Tabular4DEOSView view{};
-        return view.fallback_pressure(1.9, 2.3);
+        HelmEosView::ComponentThermodynamics photon;
+        // Real Helm radiation leaf; full table/ownership routes are exercised
+        // by eos_host_device_parity, not an undefined composition-only gamma.
+        return HelmEosView::photon_component(1.,1e4,photon) ? photon.pressure : -999.;
+    } else if constexpr (std::is_same_v<Binding, CudaTabular3DBinding>
+                         || std::is_same_v<Binding, CudaTabular4DBinding>) {
+        constexpr bool four=std::is_same_v<Binding,CudaTabular4DBinding>;
+        using View=std::conditional_t<four,
+            BasicTabular4DEOSView<arch::test::FixedTableComposition>,
+            BasicTabular3DEOSView<arch::test::FixedTableComposition>>;
+        View view{};
+        view.n_rho=view.n_T=2;
+        view.log_rho_max=view.dlog_rho=1.;
+        view.log_T_max=view.dlog_T=.2;
+        if constexpr (four) {
+            view.n_A=view.n_Z=2;
+            view.A_min=14.; view.A_max=15.; view.dA=1.;
+            view.Z_min=7.; view.Z_max=8.; view.dZ=1.;
+        } else {
+            view.n_X=2; view.X_max=view.dX=1.; view.target_species_id=-1;
+        }
+        constexpr int compositions=four?4:2, extent=4*compositions;
+        double fields[tabular_eos::FieldCount*extent]{};
+        for (int ir=0;ir<2;++ir) for (int it=0;it<2;++it) {
+            const double r=ir*std::log(10.),t=it*.2*std::log(10.);
+            const double jets[]{100.+2*r+r*t-1.5*t*t,2.+t,r-3*t,0.,1.,-3.,0.,0.,0.};
+            for (int field=0;field<tabular_eos::FieldCount;++field)
+                for (int k=0;k<compositions;++k)
+                    fields[field*extent+(ir*2+it)*compositions+k]=jets[field];
+        }
+        for (int field=0;field<tabular_eos::FieldCount;++field)
+            view.free_energy_fields[field]=fields+field*extent;
+        // F=100+2r+r*t-1.5t^2 gives P=rho*(2+t), hence 2 or 20 at T=1.
+        return view.get_pressure_from_rho_T(four?10.:1.,1.,nullptr);
     } else if constexpr (std::is_same_v<Binding, CudaAprox13Binding>) {
         return NetAprox13::binding_energy(1)
             + 0.001 * NetAprox13::NUM_SPECIES + 0.00001 * NetAprox13::ODE_NEQ;
@@ -444,8 +470,7 @@ int main()
         0.37, 0.68500000000000005, 0.73999999999999999,
         0.54014598540145986,
         1.6800000000000002, 1.49, 1.395,
-        1.5639999999999994, 2.9399999999999999, 2.6066666666666669,
-        2.9133333333333331,
+        1.5639999999999994, 0., 2., 20.,
         -0.5, 92.176080000000013, 7.7373900000000004,
         7.7394099999999995, 92.170020000000008,
         -0.5, 0.0, 0.0, 0.0,
@@ -495,6 +520,22 @@ int main()
                 std::fprintf(stderr, "independent flux witnesses cannot distinguish bindings %zu and %zu\n", i, j);
                 return 1;
             }
+    // Independent current EOS witnesses replace retired fallback fingerprints.
+    constexpr int eos_begin=ListLauncher<FluxPolicies>::device_count
+        +ListLauncher<ReconstructionPolicies>::device_count+ListLauncher<LimiterPolicies>::device_count
+        +ListLauncher<TimeIntegratorPolicies>::device_count;
+    const long double pi=std::acos(-1.L), k=1.380649e-16L, h=6.62607015e-27L, c=2.99792458e10L;
+    expected_values[eos_begin+1]=static_cast<double>(8*std::pow(pi,5)*std::pow(k,4)
+        /(15*std::pow(h,3)*std::pow(c,3))*1e16L/3);
+    double host_eos[ListLauncher<EosPolicies>::device_count]{};
+    OdeRouteFingerprint unused_eos[ListLauncher<EosPolicies>::device_count]{};
+    ListLauncher<EosPolicies>::host_reference(host_eos,unused_eos);
+    for (int j=1;j<ListLauncher<EosPolicies>::device_count;++j)
+        if (!independent_flux_witness_matches(host_eos[j],expected_values[eos_begin+j])
+            || !independent_flux_witness_matches(values[eos_begin+j],expected_values[eos_begin+j])) {
+            std::fprintf(stderr,"EOS route %d failed independent potential/radiation equations\n",j);
+            return 1;
+        }
     OdeRouteFingerprint host_fingerprints[ListLauncher<OdeSolverPolicies>::device_count]{};
     ListLauncher<OdeSolverPolicies>::host_reference(expected_values + ode_begin, host_fingerprints);
     const int ode_end = ode_begin + ListLauncher<OdeSolverPolicies>::device_count;
@@ -514,7 +555,8 @@ int main()
                          i, ids[i], values[i]);
             return 1;
         }
-        if (std::bit_cast<std::uint64_t>(values[i])
+        if (!(i>eos_begin && i<eos_begin+ListLauncher<EosPolicies>::device_count)
+            && std::bit_cast<std::uint64_t>(values[i])
             != std::bit_cast<std::uint64_t>(expected_values[i])) {
             std::fprintf(stderr,
                          "route numeric fingerprint mismatch at %d id=%d expected=%.17g actual=%.17g\n",

@@ -283,3 +283,14 @@ ctest --test-dir build-studio-cpu -R '^preview_' --output-on-failure
 `preview_sampling_limits` 检查分配前数量限制、真实网格的非活动坐标、JSON 字节边界及超限状态保留。`preview_cellular_2d` 检查真实 CLI 的二维排列、两个方向、噪声影响、直接 Init/EOS 对照、实际 Helmholtz 输入、采样/响应限制、错误、取消及无文件输出。直接对照程序仅供测试，不是 Host 需要管理的另一个生产程序。
 
 各阶段基线与验证结果见 [Core A 交接](CORE_A_HANDOFF.md) 和 [Core B 交接](CORE_B_HANDOFF.md)。CPU 预览的验证范围不包括 CUDA、完整模拟或 Studio UAT。
+
+## P1.5 配置与物理下限契约
+
+当前标准目录为 88 项；GUI 以 `--config-schema` 的实际响应为准。已退役的五个旧键返回
+`RETIRED_PARAMETER`，不能重新写入编辑器。`dt_init/dt_min/tstep_change_factor` 已登记，
+参数仍按物理模块归属，不在 Core 或文本输入中添加 `AdvancedConfig`/高级标签。
+GUI 的高级选项显示由前端负责。
+
+状态下限、严格 EOS、检查点格式和完整迁移说明见
+[P1.5 实施记录](../../docs/development/P1_5ImplementationReport.zh-CN.md)。
+[配置示例](examples/configuration/README.md)已刷新；旧 core-a/core-b 是历史快照。

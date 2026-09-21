@@ -113,7 +113,10 @@ void run(int dimension, const std::string& geometry) {
                 fields[cells + cell] = density * (0.2 + x * y);
                 fields[2 * cells + cell] = density * (0.3 + x * x);
                 fields[3 * cells + cell] = density * (0.4 + z * x);
-                fields[4 * cells + cell] = 100.0 + x * x * x + y * y;
+                // Keep every ghost and interior state thermally admissible, including
+                // the largest polynomial velocities at the outer stencil.
+                const double u=.2+x*y,v=.3+x*x,w=.4+z*x;
+                fields[4*cells+cell]=density*(10.+x*x+y*y+.5*(u*u+v*v+w*w));
                 fields[5 * cells + cell] = std::sin(x * x);
                 fields[6 * cells + cell] = 0.2 + 0.05 * std::sin(x + y);
                 fields[7 * cells + cell] = 1.0 - fields[6 * cells + cell];
@@ -248,9 +251,15 @@ void test_recovered_tabular_temperature(Eos eos, int compositions) {
     grid.dim = 1;
     grid.InitializeTopology();
     const int cells = grid.GetTotalSize();
-    std::vector<double> fields(6 * cells, 0.0);
+    const double metadata[]{14.,7.,1.4,1.}, fraction[]{1.};
+    Buffer<double> device_metadata(4), composition(cells), peer_composition(cells);
+    check(cudaMemcpy(device_metadata.data,metadata,sizeof(metadata),cudaMemcpyHostToDevice));
+    const SpeciesPODView host_species{metadata,metadata+1,metadata+2,metadata+3,1};
+    eos.specs={device_metadata.data,device_metadata.data+1,device_metadata.data+2,device_metadata.data+3,1};
+    std::vector<double> fields(7 * cells, 0.0);
+    std::fill_n(fields.data()+6*cells,cells,1.0);
     std::fill_n(fields.data(), cells, 1.0);
-    std::fill_n(fields.data() + 4 * cells, cells, 3.0);
+    std::fill_n(fields.data() + 4 * cells, cells, 100.0);
     Buffer<double> device_fields(fields.size()), thermo(3 * cells), errors(cells), summary(1);
     Buffer<int> eos_status(1);
     Buffer<amr::indicator::Selection> selection(1);
@@ -260,31 +269,35 @@ void test_recovered_tabular_temperature(Eos eos, int compositions) {
     arch::cuda::DeviceStateView state{device_fields.data, device_fields.data + cells,
         device_fields.data + 2 * cells, device_fields.data + 3 * cells,
         device_fields.data + 4 * cells, device_fields.data + 5 * cells,
-        nullptr, cells, 0};
+        device_fields.data+6*cells, cells, 1};
     arch::cuda::DeviceIndicatorWorkspace workspace{selection.data, 1, 1.e-12,
-        false, true, false, thermo.data, nullptr, errors.data, summary.data, eos_status.data};
+        false, true, false, thermo.data, composition.data, errors.data, summary.data, eos_status.data};
 
-    // At both rho knots P=2 and e=3. The valid upper-temperature knot has Cv>0;
-    // only the lower-temperature knot is made invalid. Device inversion first
-    // encounters that failed boundary query, then converges to finite T=10.
-    // A final-only temperature/Lohner check would therefore report zero error.
+    // F=100+2r+rt-1.5t^2, with r=ln(rho), t=ln(T), is represented exactly.
+    // At rho=T=1, e=100 and Cv=3. Invalidating the lower
+    // endpoint must fail the bounded inverse and remain latched through reduction.
     const int extent = 4 * compositions;
-    const double jets[]{3.0, 2.0, 0.0, 0.0, 2.0, -3.0, 0.0, 0.0, 0.0};
     std::vector<double> table(tabular_eos::FieldCount * extent);
     Buffer<double> device_table(table.size());
-    eos.uses_free_energy = true;
+
     for (const bool fail : {true, false}) {
-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
-            std::fill_n(table.data() + field * extent, extent, jets[field]);
+        for (int ir=0; ir<2; ++ir) for (int it=0; it<2; ++it) {
+            const double r=ir*std::log(10.0), t=it*.2*std::log(10.0);
+            const double jets[]{100.+2.*r+r*t-1.5*t*t, 2.+t, r-3.*t,
+                                0., 1., -3., 0., 0., 0.};
+            for (int field=0; field<tabular_eos::FieldCount; ++field)
+                std::fill_n(table.data()+field*extent+(ir*2+it)*compositions,
+                            compositions,jets[field]);
+        }
         if (fail)
             for (int rho = 0; rho < 2; ++rho)
                 std::fill_n(table.data() + tabular_eos::Fyy * extent
-                    + rho * 2 * compositions, compositions, 0.0);
-        Eos host = eos;
+                    + rho * 2 * compositions, compositions, rho*std::log(10.0));
+        Eos host = eos; host.specs=host_species;
         for (int field = 0; field < tabular_eos::FieldCount; ++field)
             host.free_energy_fields[field] = table.data() + field * extent;
         bool host_threw = false;
-        try { static_cast<void>(host.get_temperature(1.0, 3.0, nullptr)); }
+        try { static_cast<void>(host.get_temperature(1.0, 100.0, fraction)); }
         catch (const std::runtime_error&) { host_threw = true; }
         require(host_threw == fail, "Tabular temperature fixture does not exercise Host failure");
         check(cudaMemcpy(device_table.data, table.data(), table.size() * sizeof(double), cudaMemcpyHostToDevice));
@@ -299,34 +312,35 @@ void test_recovered_tabular_temperature(Eos eos, int compositions) {
         check(cudaMemcpy(&actual, summary.data, sizeof(actual), cudaMemcpyDeviceToHost));
         check(cudaMemcpy(&status, eos_status.data, sizeof(status), cudaMemcpyDeviceToHost));
         for (int cell = 0; cell < cells; ++cell)
-            require(std::isfinite(actual_thermo[cells + cell])
-                && std::abs(actual_thermo[cells + cell] - (fail ? 10.0 : 1.0)) < 1.e-10,
-                "Tabular fixture did not recover a finite temperature");
+            require(fail ? std::isnan(actual_thermo[cells + cell])
+                         : std::abs(actual_thermo[cells + cell]-1.0)<1.e-10,
+                "Tabular bounded inversion did not preserve success/failure semantics");
         require(status == (fail ? 1 : 0) && (fail ? std::isnan(actual) : actual == 0.0),
             "AMR discarded an intermediate EOS failure or failed to reset the next launch");
     }
     // Mix one failed EOS endpoint with a valid endpoint in both binding orders.
     // This also exercises a reset after the original scalar failure/recovery.
     std::fill_n(table.data()+tabular_eos::Fyy*extent,compositions,0.0);
-    Eos host=eos;
+    Eos host=eos; host.specs=host_species;
     for (int field=0; field<tabular_eos::FieldCount; ++field)
         host.free_energy_fields[field]=table.data()+field*extent;
     bool lower_failed=false;
-    try { static_cast<void>(host.get_temperature(1.0,3.0,nullptr)); }
+    try { static_cast<void>(host.get_temperature(1.0,100.0,fraction)); }
     catch (const std::runtime_error&) { lower_failed=true; }
-    require(lower_failed && std::isfinite(host.get_temperature(10.0,3.0,nullptr)),
+    require(lower_failed && std::isfinite(host.get_temperature(10.0,100.0+std::log(10.0),fraction)),
         "mixed AMR EOS fixture did not isolate two density endpoints");
     check(cudaMemcpy(device_table.data,table.data(),table.size()*sizeof(double),cudaMemcpyHostToDevice));
     auto peer_fields=fields;
     std::fill_n(peer_fields.data(),cells,10.0);
-    std::fill_n(peer_fields.data()+4*cells,cells,30.0);
+    std::fill_n(peer_fields.data()+4*cells,cells,10.*(100.+std::log(10.0)));
     Buffer<double> peer_state(peer_fields.size()),peer_thermo(3*cells),peer_errors(cells),peer_summary(1);
     Buffer<int> peer_status(1);
     Buffer<arch::cuda::DeviceIndicatorBatchBlock> device_batch(2);
     check(cudaMemcpy(peer_state.data,peer_fields.data(),peer_fields.size()*sizeof(double),cudaMemcpyHostToDevice));
     arch::cuda::DeviceStateView valid_state{peer_state.data,peer_state.data+cells,peer_state.data+2*cells,
-        peer_state.data+3*cells,peer_state.data+4*cells,peer_state.data+5*cells,nullptr,cells,0};
+        peer_state.data+3*cells,peer_state.data+4*cells,peer_state.data+5*cells,peer_state.data+6*cells,cells,1};
     auto peer_workspace=workspace;
+    peer_workspace.composition=peer_composition.data;
     peer_workspace.thermodynamics=peer_thermo.data; peer_workspace.cell_errors=peer_errors.data;
     peer_workspace.block_error=peer_summary.data; peer_workspace.eos_status=peer_status.data;
     std::array<arch::cuda::DeviceIndicatorBatchBlock,2> mixed{{
@@ -354,13 +368,15 @@ void test_recovered_tabular_temperature(Eos eos, int compositions) {
 void test_tabular_temperature_failures() {
     Tabular3DEOSView eos3{};
     eos3.n_rho = eos3.n_T = eos3.n_X = 2;
-    eos3.log_rho_max = eos3.log_T_max = eos3.dlog_rho = eos3.dlog_T = 1.0;
+    eos3.log_rho_max = eos3.dlog_rho = 1.0;
+    eos3.log_T_max = eos3.dlog_T = .2;
     eos3.X_max = eos3.dX = 1.0;
     eos3.target_species_id = -1;
     test_recovered_tabular_temperature(eos3, 2);
     Tabular4DEOSView eos4{};
     eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
-    eos4.log_rho_max = eos4.log_T_max = eos4.dlog_rho = eos4.dlog_T = 1.0;
+    eos4.log_rho_max = eos4.dlog_rho = 1.0;
+    eos4.log_T_max = eos4.dlog_T = .2;
     eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
     eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
     test_recovered_tabular_temperature(eos4, 4);

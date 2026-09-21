@@ -426,6 +426,8 @@ ARCH_INLINE double compute_cfl_candidate(
     const FluidVector& U, double c, int dim,
     double dx1, double dx2, double dx3)
 {
+    if (!(c >= 0.0) || !std::isfinite(c)) return std::numeric_limits<double>::quiet_NaN();
+    // Sufficient convex-update bound: two face wave speeds per dimension.
     double rho = U.rho;
     double inv_dt_sum = (std::abs(U.mom_u / rho) + c) / dx1;
 
@@ -435,17 +437,19 @@ ARCH_INLINE double compute_cfl_candidate(
     if (dim == 3)
         inv_dt_sum += (std::abs(U.mom_w / rho) + c) / dx3;
 
-    return 1.0 / std::max(inv_dt_sum, 1e-10);
+    if (!std::isfinite(inv_dt_sum) || inv_dt_sum < 0.0)
+        return std::numeric_limits<double>::quiet_NaN();
+    return inv_dt_sum == 0.0 ? std::numeric_limits<double>::max() : 0.5 / inv_dt_sum;
 }
 
 ARCH_INLINE double cfl_inactive_cell_dt()
 {
-    return 1e10;
+    return std::numeric_limits<double>::max();
 }
 
 ARCH_INLINE bool is_cfl_cell_active(const FluidVector& U)
 {
-    return U.rho >= 1e-12;
+    return std::isfinite(U.rho) && U.rho > 0.0;
 }
 
 ARCH_INLINE double compute_cfl_cell_dt(
@@ -453,7 +457,7 @@ ARCH_INLINE double compute_cfl_cell_dt(
     double dx1, double dx2, double dx3)
 {
     if (!is_cfl_cell_active(U))
-        return cfl_inactive_cell_dt();
+        return std::numeric_limits<double>::quiet_NaN();
     return compute_cfl_candidate(U, sound_speed, dim, dx1, dx2, dx3);
 }
 
@@ -463,7 +467,7 @@ ARCH_INLINE double evaluate_cfl_cell_dt(
     int dim, double dx1, double dx2, double dx3)
 {
     if (!is_cfl_cell_active(U))
-        return cfl_inactive_cell_dt();
+        return std::numeric_limits<double>::quiet_NaN();
     const double pressure = eos.get_pressure(U, composition);
     const double sound_speed = eos.get_sound_speed(U, pressure, composition);
     return compute_cfl_cell_dt(U, sound_speed, dim, dx1, dx2, dx3);
@@ -513,11 +517,13 @@ ARCH_INLINE double finalize_cfl_dt(double cfl_number, double minimum)
 
 /**
  * @brief Computes adaptive time step (dt) strictly evaluating 3D wave speeds.
- * Uses dt = CFL * min( dx1/(|u|+c), dx2/(|v|+c), dx3/(|w|+c) )
+ * Uses dt = CFL / (2 * sum_axis((|u_axis|+c)/dx_axis)).
+ * The two-face bound supports the shared conservative positivity limiter.
  */
 template <typename EosType>
 inline double adaptive_dt(const FluidState &state, const EosType &eos, const Grid &grid, double cfl_number)
 {
+        arch::state::HostFailure failure;
     int n_species = state.GetNumSpecies();
     const auto reduction_spec = arch::reduction::minimum_spec(
         cfl_inactive_cell_dt());
@@ -538,30 +544,33 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
 #pragma omp for schedule(static)
         for (int kj = 0; kj < nk * nj; ++kj)
         {
-            int k = ks + kj / nj;
-            int j = js + kj % nj;
-            for (int i = grid.Is(); i < grid.Ie(); ++i)
-            {
-                int idx = grid.GetIndex(i, j, k);
-                FluidVector U = state.get(idx);
-                double cell_dt = cfl_inactive_cell_dt();
-                if (is_cfl_cell_active(U)) {
-                    for (int s = 0; s < n_species; ++s)
-                        Xi_cache[s] = state.X(s, idx);
-                    cell_dt = evaluate_cfl_cell_dt(
-                        U, Xi_cache.data(), eos, GridMetrics::make_geometry_view(grid), i, j);
+            try {
+                int k = ks + kj / nj;
+                int j = js + kj % nj;
+                for (int i = grid.Is(); i < grid.Ie(); ++i)
+                {
+                    int idx = grid.GetIndex(i, j, k);
+                    FluidVector U = state.get(idx);
+                    double cell_dt = std::numeric_limits<double>::quiet_NaN();
+                    if (is_cfl_cell_active(U)) {
+                        for (int s = 0; s < n_species; ++s)
+                            Xi_cache[s] = state.X(s, idx);
+                        cell_dt = evaluate_cfl_cell_dt(
+                            U, Xi_cache.data(), eos, GridMetrics::make_geometry_view(grid), i, j);
+                    }
+                    amr::CellLogicalKey cell_key{};
+                    cell_key.logical_i = i;
+                    cell_key.logical_j = j;
+                    cell_key.logical_k = k;
+                    cell_key.component = static_cast<int>(
+                        DriverReduction::BlockReductionComponent::Hydro);
+                    arch::reduction::combine_candidate(
+                        reduction_spec, local_reduction,
+                        {cell_dt, cell_key, true});
                 }
-                amr::CellLogicalKey cell_key{};
-                cell_key.logical_i = i;
-                cell_key.logical_j = j;
-                cell_key.logical_k = k;
-                cell_key.component = static_cast<int>(
-                    DriverReduction::BlockReductionComponent::Hydro);
-                arch::reduction::combine_candidate(
-                    reduction_spec, local_reduction,
-                    {cell_dt, cell_key, true});
+
+            } catch (...) { failure.capture_current(); }
             }
-        }
 
 #pragma omp critical(hydro_cfl_reduction)
         {
@@ -570,6 +579,7 @@ inline double adaptive_dt(const FluidState &state, const EosType &eos, const Gri
         }
     }
 
+    failure.rethrow();
     const auto result = arch::reduction::finalize_reduction(
         reduction_spec, global_reduction);
     if (result.status != arch::reduction::ReductionStatus::Ok)

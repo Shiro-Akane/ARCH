@@ -428,8 +428,12 @@ void verify_real_hydro_owner()
     status.download(&device_status, 1);
     if (device_status != static_cast<int>(ReductionStatus::Ok))
         fail("real hydro reduction status");
-    if (std::bit_cast<std::uint64_t>(value) != 0x3fce8a38358aef78ULL)
-        fail("real hydro reduction raw authority");
+    // Keep exact reduction parity; the retired snapshot used the one-face CFL.
+    std::vector<double> hydro_candidates(count);
+    candidates.download(hydro_candidates.data(), hydro_candidates.size());
+    const double hydro_minimum = *std::min_element(hydro_candidates.begin(), hydro_candidates.end());
+    if (std::bit_cast<std::uint64_t>(value) != std::bit_cast<std::uint64_t>(0.8 * hydro_minimum))
+        fail("real hydro reduction differs from serial candidate minimum");
 
     const double signed_zero_candidates[2] = {+0.0, -0.0};
     candidates.upload(signed_zero_candidates, 2);
@@ -531,8 +535,13 @@ void verify_real_diffusion_owner()
     finite_seed_result.download(&value, 1);
     finite_seed_status.download(&device_status, 1);
     if (device_status != 0) fail("finite-seed diffusion candidate status");
-    if (std::bit_cast<std::uint64_t>(value) != 0x4202a05f20000000ULL)
-        fail("finite-seed diffusion raw authority");
+    // Tiny positive viscosity still constrains the timestep; no dimensional cap.
+    std::vector<double> small_candidates(finite_seed_count);
+    finite_seed_candidates.download(small_candidates.data(), small_candidates.size());
+    const double small_minimum = *std::min_element(small_candidates.begin(), small_candidates.end());
+    if (!std::isfinite(value) || value <= 1.0e10
+        || std::bit_cast<std::uint64_t>(value) != std::bit_cast<std::uint64_t>(small_minimum))
+        fail("small-viscosity diffusion candidate minimum");
 
     config.use_diffusion = false;
     const auto disabled = arch::cuda::launch_raw_diffusion_dt(
@@ -541,7 +550,7 @@ void verify_real_diffusion_owner()
     require_cuda(disabled.error, "disabled diffusion reduction launch");
     require_cuda(cudaDeviceSynchronize(), "disabled diffusion reduction sync");
     result.download(&value, 1);
-    if (std::bit_cast<std::uint64_t>(value) != 0x4202a05f20000000ULL)
+    if (value != std::numeric_limits<double>::max())
         fail("disabled diffusion sentinel authority");
 
     const double mixed_candidates[2] = {

@@ -13,6 +13,7 @@
 #include "driver/schedule/ReductionSpec.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "data/GlobalDefs.h"
+#include "numerics/state/StateAdmissibility.h"
 #include "physics/eos/eos.h"
 
 #include <cstddef>
@@ -35,7 +36,7 @@ public:
     virtual ~CudaSparseBurnOwner() = default;
     virtual SparseBurnLaunchCounters execute(
         DeviceStateView state, DeviceGridView grid, double dt, BurnConfigView config,
-        reduction::ReductionCandidate* candidates, int* statuses, DeviceBurnSummary* summary) = 0;
+        reduction::ReductionCandidate* candidates, int* statuses, DeviceBurnSummary* summary, state::Bounds bounds = {}) = 0;
     virtual std::size_t workspace_bytes_per_lane() const = 0;
     virtual int capacity() const = 0;
     // Initial immutable metadata/table uploads are not per-execute work.

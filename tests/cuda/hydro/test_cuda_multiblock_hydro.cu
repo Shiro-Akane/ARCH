@@ -552,7 +552,8 @@ void run_hydro_batch_contract()
                     "Hydro batch completion token drifted");
             const auto done = batch->counters();
             require(done.stream_sync_count - start.stream_sync_count == 1
-                && done.bytes_d2h - start.bytes_d2h == 2 * sizeof(int)
+                && done.bytes_d2h - start.bytes_d2h == 2 * (sizeof(int)
+                    + (10 + 2 * blocks[0].fluid_state.GetNumSpecies()) * sizeof(double))
                 && done.kernel_count - start.kernel_count == 4,
                 "Hydro stage synchronized per block");
             if (descriptor.refresh_ghost_after) {

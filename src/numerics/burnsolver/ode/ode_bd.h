@@ -173,6 +173,11 @@ struct Solver_BD
                 }
 
                 if (t_current + H > dt_target) H = dt_target - t_current;
+                if (!(H > 0.0) || !std::isfinite(H) || t_current + H == t_current) {
+                    report.status = BurnOdeStatus::Stalled;
+                    c.phase = Phase::Complete;
+                    return OdeLinearRequest::Complete;
+                }
 
                 assemble(c, J_mat, X_ODE, eos, burn_cfg);
                 c.step_converged = false;
@@ -316,8 +321,8 @@ private:
             if (i < NUM_SPEC) {
                 if (bounded < burn_cfg.smallx) bounded = burn_cfg.smallx;
                 else if (bounded > 1.0) bounded = 1.0;
-            } else if (i == NUM_SPEC && bounded < burn_cfg.nuclearTempMin) {
-                bounded = burn_cfg.nuclearTempMin;
+            } else if (i == NUM_SPEC && bounded < burn_cfg.smallt) {
+                bounded = burn_cfg.smallt;
             }
             c.X_j[i] = bounded;
             // Project each midpoint stage into its admissible domain. Only a clamp resets
@@ -377,6 +382,7 @@ private:
                         if(X_trial[i] < -10.0*atol || !std::isfinite(X_trial[i])) physically_sound = false;
                         mass_sum += std::max(X_trial[i], burn_cfg.smallx);
                     }
+                    if (!std::isfinite(mass_sum) || !(mass_sum > 0.0)) physically_sound = false;
                     // smallt is the configured lower boundary of the EOS burn state.
                     if(!std::isfinite(X_trial[NUM_SPEC]) || X_trial[NUM_SPEC] < burn_cfg.smallt) physically_sound = false;
                     for (int i = NUM_SPEC + 1; i < NEQ; ++i)
@@ -384,33 +390,15 @@ private:
 
                     // Run the more expensive EOS energy-closure check only for
                     // finite states whose normalized mathematical error passes.
-                    if (physically_sound && current_err < 1.0)
+                    if (physically_sound && current_err < 1.0
+                        && OdeMath::project_burn_composition(X_trial, NUM_SPEC, burn_cfg.smallx))
                     {
-                        const double inv_sum = 1.0 / mass_sum;
-#pragma omp simd
-                        for (int i = 0; i < NUM_SPEC; ++i) X_trial[i] = std::max(X_trial[i], burn_cfg.smallx) * inv_sum;
-
                         const double integrated_enuc = OdeMath::integrated_burn_increment_energy<NetType>(
                             T_extrap[k][k]);
                         const double old_eint = eos.get_eint_from_T(rho, X_ODE[NUM_SPEC], X_ODE);
                         const double new_eint = eos.get_eint_from_T(rho, X_trial[NUM_SPEC], X_trial);
-                        const double thermal_delta = new_eint - old_eint;
-
-                        const double epsilon_eint = std::max(1.0e-12 * std::abs(old_eint), 1.0e-12);
-                        if (std::abs(thermal_delta) < epsilon_eint && std::abs(integrated_enuc) < epsilon_eint) {
-                            step_converged = true;
-                        }
-                        else {
-                            const double closure_scale = OdeMath::max4(
-                                std::abs(integrated_enuc), std::abs(thermal_delta),
-                                rtol * std::abs(old_eint), 1.0);
-                            const double closure_error = std::abs(thermal_delta - integrated_enuc) / closure_scale;
-
-                            // Accept energy-closure errors up to five percent.
-                            if (std::isfinite(closure_error) && closure_error <= 5.0e-2) {
-                                step_converged = true;
-                            }
-                        }
+                        step_converged = OdeMath::energy_closure_acceptable(
+                            old_eint,new_eint,integrated_enuc,rtol);
                     }
 
                     // Hairer-Wanner order-dependent error factor for later work estimates.
@@ -452,9 +440,9 @@ private:
             c.H *= 0.25;
             c.nse_attempted = false;
             ++c.report.rejected_substeps;
-            if (c.H < 1e-22) {
+            if (!(c.H > 0.0) || !std::isfinite(c.H) || c.t_current + c.H == c.t_current) {
 #if !defined(__CUDA_ARCH__)
-                std::cerr << "[BD] Fatal Error: Stiff ODE stalled. H < 1e-22" << std::endl;
+                std::cerr << "[BD] Fatal Error: Stiff ODE stalled. time increment is not representable" << std::endl;
 #endif
                 c.report.status = BurnOdeStatus::Stalled;
                 c.phase = Phase::Complete;

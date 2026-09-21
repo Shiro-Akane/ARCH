@@ -226,11 +226,11 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                     for (double fraction : data.mass_fractions)
                         if (!std::isfinite(fraction)) throw std::runtime_error("Non-finite initial composition");
                     const auto row = conversions.evaluate(data, [&] {
-                        const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos);
+                        const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos, config.numerics);
                         const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
                         const double eint = eos_utils::extract_specific_internal_energy(conserved);
-                        const double temperature = eos.get_temperature(data.rho, eint, data.mass_fractions.data());
-                        const InitialSampleCache::Row converted{data.rho, pressure, temperature, data.u, conserved.eng, eint, data.v};
+                        const double temperature = eos.get_temperature(conserved.rho, eint, data.mass_fractions.data());
+                        const InitialSampleCache::Row converted{conserved.rho, pressure, temperature, data.u, conserved.eng, eint, data.v};
                         if (pressure <= 0 || temperature <= 0)
                             throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
                         for (double value : converted)

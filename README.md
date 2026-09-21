@@ -18,6 +18,11 @@ Angles use `rad`; fractions and other dimensionless quantities remain unitless.
 User inputs must follow this convention; ARCH does not convert them automatically.
 See the [unit and case guide](docs/guides/SimulationCase.md#units).
 
+Low-density cases reuse `sml_rho` and `min_eint/max_eint`; set the density floor below
+the intended solution. Positive-state repairs are recorded, while zero/negative density,
+nonfinite values and unresolved thermal energy fail explicitly. See the
+[P1.5 migration record](docs/development/P1_5ImplementationReport.zh-CN.md).
+
 Under the hood, ARCH uses the finite-volume method: it divides the fluid domain into distinct cells and accurately tracks the exchange of mass, momentum, and energy between them. To capture fine details efficiently, adaptive mesh refinement (AMR) dynamically inserts smaller cells only where they are truly needed, cleverly avoiding the massive computational cost of a uniformly fine mesh. Furthermore, both CPU and CUDA execution share the exact same mathematical and physical core; their respective backends simply handle how calculations are scheduled and where data is stored, ensuring robust consistency and ease of maintenance.
 
 To run your very first simulation, follow the [Build](#build) and [First run](#first-run) sections below. Once you have it running, the [Simulation Case Guide](docs/guides/SimulationCase.md) will step-by-step walk you through reading the output, tweaking parameters, and creating your own unique scenarios. Rest assured, the beginner example is designed to be highly accessible—it doesn't require a GPU or any complex nuclear reaction networks to get started.
@@ -231,7 +236,7 @@ eos_table_path = /path/to/model.h5
 
 Supported sources include normalized 3D/4D HDF5, EOSDriver total-EOS HDF5, and
 the positive-temperature baryon ASCII format used by the original Shen EOS2/EOS4
-main tables. A free-energy table can declare its included physical components.
+main tables. Normalized free-energy tables must declare their included physical components and nuclear-equilibrium status.
 At loading, ARCH adds only missing electrons/positrons and photons, then both
 backends query the same completed potential. It does not add a second ion model
 or rewrite the source file. `eos_helm_table_path` optionally selects the electron

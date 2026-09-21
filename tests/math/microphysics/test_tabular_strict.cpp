@@ -42,14 +42,14 @@ struct Fixture {
         three.log_T_min=0; three.log_T_max=.4; three.dlog_T=.2;
         three.X_min=.1; three.X_max=.9; three.dX=.4;
         three.axis_nodes[2]=composition; three.target_species_id=0;
-        three.uses_free_energy=three.strict_domain=true;
+
         three.energy_reference_shift=3;
         four.n_rho=2; four.n_T=3; four.n_A=2; four.n_Z=2;
         four.log_rho_min=0; four.log_rho_max=.2; four.dlog_rho=.2;
         four.log_T_min=0; four.log_T_max=.4; four.dlog_T=.2;
         four.A_min=10; four.A_max=20; four.dA=10;
         four.Z_min=4; four.Z_max=9; four.dZ=5;
-        four.uses_free_energy=four.strict_domain=true;
+
         four.energy_reference_shift=3;
         for(auto& field:fields3) field.assign(18,0);
         for(auto& field:fields4) field.assign(24,0);
@@ -158,6 +158,18 @@ void inverse_checks() {
     const auto unique=solve(ThermalPolynomial{10,1,0,0,0,0},10.4);
     require(unique.status==FreeEnergyStatus::success,"unique root rejected");
     close(unique.temperature,std::pow(10.,.4),"unique root inaccurate");
+    for (double scale : {1.,1e-30,1e-100}) {
+        const auto scaled=solve(ThermalPolynomial{scale,scale,0,0,0,0},1.4*scale);
+        require(scaled.status==FreeEnergyStatus::success,"scaled unique root rejected");
+        close(scaled.temperature,std::pow(10.,.4),"scaled inverse inaccurate");
+        // An inconsistent/discontinuous value reader has a bracket but no root.
+        // Residual validation must reject it even far below one CGS energy unit.
+        const auto gap=invert_free_energy_temperature(2,0,1,1.5*scale,
+            [&](int,ThermalPolynomial& out){out={scale,scale,0,0,0,0};return true;},
+            [&](double T){return T<2.0 ? scale : 2.0*scale;},state);
+        require(gap.status==FreeEnergyStatus::invalid_temperature_inversion,
+                "dimensional absolute residual hid an absent root");
+    }
     const double endpoint=std::pow(10.,.3);
     const auto endpoint_inverse=invert_free_energy_temperature(4,.1,(.3-.1)/3,endpoint,
         [](int,ThermalPolynomial& out){out={1,1,0,0,0,0};return true;},

@@ -537,6 +537,54 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
+      "defaultValue": 1e-16,
+      "key": "dt_init",
+      "parsedValue": 1e-16,
+      "path": null,
+      "rawValue": null,
+      "sourceKey": "dt_init",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "applicabilityScope": "configured-modules; model usage not traced",
+      "applicable": true,
+      "defaultValue": 1e-20,
+      "key": "dt_min",
+      "parsedValue": 1e-20,
+      "path": null,
+      "rawValue": null,
+      "sourceKey": "dt_min",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "applicabilityScope": "configured-modules; model usage not traced",
+      "applicable": true,
+      "defaultValue": 1.2,
+      "key": "tstep_change_factor",
+      "parsedValue": 1.2,
+      "path": null,
+      "rawValue": null,
+      "sourceKey": "tstep_change_factor",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "applicabilityScope": "configured-modules; model usage not traced",
+      "applicable": true,
       "defaultValue": 0.8,
       "key": "cfl",
       "parsedValue": 0.4,
@@ -584,22 +632,6 @@
     },
     {
       "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": false,
-      "defaultValue": "RK2",
-      "key": "timeintegrator",
-      "parsedValue": "RK2",
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "timeintegrator",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
       "defaultValue": true,
       "key": "EntropyFix",
@@ -616,7 +648,7 @@
     },
     {
       "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": true,
+      "applicable": false,
       "defaultValue": 0.1,
       "key": "EntropyFixCoefficient",
       "parsedValue": 0.1,
@@ -949,38 +981,6 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": false,
-      "defaultValue": true,
-      "key": "enforce_mass_conservation",
-      "parsedValue": true,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "enforce_mass_conservation",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": false,
-      "defaultValue": 0,
-      "key": "burn_verbose_level",
-      "parsedValue": 0,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "burn_verbose_level",
-      "units": {
-        "status": "dimensionless",
-        "unit": "1"
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": false,
       "defaultValue": "BE_NR",
       "key": "ode_solver",
       "parsedValue": "BE_NR",
@@ -1135,38 +1135,6 @@
       "units": {
         "status": "dimensionless",
         "unit": "1"
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": false,
-      "defaultValue": false,
-      "key": "ode_use_numerical_jac",
-      "parsedValue": false,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "ode_use_numerical_jac",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": false,
-      "defaultValue": false,
-      "key": "ode_freeze_jacobian",
-      "parsedValue": false,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "ode_freeze_jacobian",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1510,7 +1478,7 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
-      "defaultValue": 0.1,
+      "defaultValue": 0,
       "key": "tmax",
       "parsedValue": 0.2,
       "path": null,

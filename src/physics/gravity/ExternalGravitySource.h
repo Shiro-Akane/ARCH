@@ -26,14 +26,11 @@ ARCH_INLINE void add_external_gravity_source_cell(
     FluidVector& delta)
 {
     const double rho = state.rho;
-    if (!gravity.enabled || rho < 1.e-12) return;
-    const double vx = state.mom_u / rho;
-    const double vy = state.mom_v / rho;
-    const double vz = state.mom_w / rho;
+    if (!gravity.enabled) return;
     delta.mom_u += dt * rho * gravity.g_x;
     delta.mom_v += dt * rho * gravity.g_y;
     delta.mom_w += dt * rho * gravity.g_z;
-    delta.eng += dt * rho * (vx * gravity.g_x + vy * gravity.g_y + vz * gravity.g_z);
+    delta.eng += dt * (state.mom_u * gravity.g_x + state.mom_v * gravity.g_y + state.mom_w * gravity.g_z);
 }
 
 } // namespace Physical::Gravity

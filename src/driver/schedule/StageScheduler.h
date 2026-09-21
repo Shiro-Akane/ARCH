@@ -8,6 +8,7 @@
  */
 
 #pragma once
+#include <functional>
 
 #include "driver/runtime/StateResidency.h"
 
@@ -198,6 +199,7 @@ struct StageExecutionContext {
     state::StateResidencyLedger& ledger;
     MonotonicSchedulerClock& clock;
     HydroStagePreparation* hydro_preparation = nullptr;
+    std::function<void(const StageDescriptor&)> hydro_acceptance;
     double step_start_time = 0.0;
     double step_dt = 0.0;
 };
@@ -500,7 +502,10 @@ HydroExecutionResult execute_hydro_plan(
     for (const StageDescriptor& descriptor : plan.stages) {
         result.stages.push_back(execute_stage(
             context, handles, descriptor, executor,
-            [](const StageDescriptor&, state::CompletionToken token) { return token; },
+            [&](const StageDescriptor& stage, state::CompletionToken token) {
+                if (context.hydro_acceptance) context.hydro_acceptance(stage);
+                return token;
+            },
             boundary, [&](const StageDescriptor& input) {
                 if (!context.hydro_preparation) return;
                 const auto completed = context.hydro_preparation->prepare({

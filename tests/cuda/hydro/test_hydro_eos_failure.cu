@@ -1,3 +1,4 @@
+#include "fixtures/eos/FreeEnergyFixture.h"
 /** Focused device-side EOS failure semantics; no full backend instantiation. */
 #include "cuda/hydro/policies/CheckedHydroEos.cuh"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
@@ -99,8 +100,8 @@ __global__ void leaf_kernel(Fault fault, int* status, LeafResult* result)
         // Observe the actual reconstruction/flux path BEFORE any extra probe;
         // the following floor check cannot manufacture its earlier latch.
         result->status_after_operation = *status;
-        // This floor is deliberately the same operand order used by PPM.
-        // A NaN EOS query can become finite here; the status must not be erased.
+        // Test-only finite recovery must not erase an already latched error.
+        // Production PPM no longer uses this absolute pressure floor.
         result->floored_pressure = std::max(1.0e-13,
             checked.get_pressure(state.load(0), nullptr));
     }
@@ -110,10 +111,9 @@ __global__ void leaf_kernel(Fault fault, int* status, LeafResult* result)
     result->valid_after_failure = valid_checked.get_pressure(state.load(2), nullptr);
     result->status_after_valid_query = *status;
 
-    if (fault == Fault::None || fault == Fault::NegativeFinitePressure) {
-        // On the same GPU compare wrapped/unwrapped arithmetic exactly. A
-        // finite negative pressure keeps the pre-existing PPM floor behavior;
-        // the status wrapper is not a new physical admissibility policy.
+    if (fault == Fault::None) {
+        // The status adapter preserves valid arithmetic exactly. Invalid
+        // pressure is rejected by the EOS/reconstruction contract.
         arch::cuda::CudaPpmReconstruction::reconstruct(state, 2, 1, plain,
             result->plain_left, result->plain_right, unused, unused, unused);
         GridMetrics::GeometryView grid{};
@@ -150,7 +150,7 @@ void test_hydro_leaves()
         int final_status = -1;
         check(cudaMemcpy(&result, output.data, sizeof(result), cudaMemcpyDeviceToHost));
         check(cudaMemcpy(&final_status, status.data, sizeof(final_status), cudaMemcpyDeviceToHost));
-        const bool valid = fault == Fault::None || fault == Fault::NegativeFinitePressure;
+        const bool valid = fault == Fault::None;
         require(result.status_after_operation == (valid ? 0 : 1)
             && result.status_after_valid_query == (valid ? 0 : 1)
             && final_status == (valid ? 0 : 1), "Hydro EOS failure was missed or cleared by a valid query");
@@ -162,12 +162,11 @@ void test_hydro_leaves()
                 "Checked EOS changed valid reconstruction, floor or geometric-source arithmetic");
         }
         if (fault == Fault::GhostPressure)
-            require(result.floored_pressure == 1.0e-13
-                && std::isfinite(result.left.eng) && std::isfinite(result.right.eng),
-                "Ghost-NaN fixture did not exercise PPM/floor recovery to finite values");
+            require(result.floored_pressure == 1.0e-13,
+                "Test-only finite recovery erased a latched ghost EOS failure");
         if (fault == Fault::NegativeFinitePressure)
-            require(result.floored_pressure == 1.0e-13 && result.left.eng > 0.0,
-                    "Existing finite pressure floor was changed");
+            require(std::isnan(result.left.eng) && std::isnan(result.right.eng),
+                    "Negative pressure was silently turned into a physical face");
         if (fault == Fault::FaceEnergy)
             require(std::isnan(result.left.eng) && std::isnan(result.right.eng),
                     "Reconstructed-face EOS failure fixture did not fire");
@@ -281,7 +280,7 @@ void test_table(View view, int extent)
         std::fill_n(host.data() + field * extent, extent, fields[field]);
     Buffer<double> storage(host.size());
     check(cudaMemcpy(storage.data, host.data(), host.size() * sizeof(double), cudaMemcpyHostToDevice));
-    view.uses_free_energy = true;
+
     for (int field = 0; field < tabular_eos::FieldCount; ++field)
         view.free_energy_fields[field] = storage.data + field * extent;
     Buffer<int> status(1);
@@ -313,13 +312,13 @@ void test_table(View view, int extent)
 
 void test_tabular_leaves()
 {
-    Tabular3DEOSView view3{};
+    BasicTabular3DEOSView<arch::test::FixedTableComposition> view3{};
     view3.n_rho = view3.n_T = view3.n_X = 2;
     view3.log_rho_max = view3.log_T_max = view3.dlog_rho = view3.dlog_T = 1.0;
     view3.X_max = view3.dX = 1.0;
     view3.target_species_id = -1;
     test_table(view3, 8);
-    Tabular4DEOSView view4{};
+    BasicTabular4DEOSView<arch::test::FixedTableComposition> view4{};
     view4.n_rho = view4.n_T = view4.n_A = view4.n_Z = 2;
     view4.log_rho_max = view4.log_T_max = view4.dlog_rho = view4.dlog_T = 1.0;
     view4.A_min = 14.0; view4.A_max = 15.0; view4.dA = 1.0;

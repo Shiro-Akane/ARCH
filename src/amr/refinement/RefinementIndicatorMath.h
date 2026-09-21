@@ -1,3 +1,4 @@
+#include "numerics/state/StateAdmissibility.h"
 /**
  * @file RefinementIndicatorMath.h
  * @brief Shared field sampling and dimensionless AMR refinement indicators.
@@ -116,10 +117,8 @@ ARCH_INLINE Thermodynamics thermodynamics(
     Thermodynamics value;
     if (pressure || gamma1) value.pressure = eos.get_pressure(state, composition);
     if (temperature && state.rho > 0.0) {
-        const double kinetic = 0.5 * (state.mom_u * state.mom_u
-            + state.mom_v * state.mom_v + state.mom_w * state.mom_w) / state.rho;
         value.temperature = eos.get_temperature(
-            state.rho, (state.eng - kinetic) / state.rho, composition);
+            state.rho, arch::state::recover(state).internal, composition);
     }
     if (gamma1 && state.rho > 0.0 && value.pressure > 0.0) {
         const double sound = eos.get_sound_speed(state, value.pressure, composition);
@@ -135,7 +134,7 @@ struct VelocityView {
     double density_floor = 0.0;
 
     ARCH_INLINE double operator[](int cell) const {
-        return density[cell] > density_floor ? momentum[cell] / density[cell] : 0.0;
+        return density[cell] > 0.0 ? momentum[cell] / density[cell] : std::numeric_limits<double>::quiet_NaN();
     }
 };
 
@@ -187,7 +186,7 @@ struct StateView {
                 std::clamp(k, ks, ke - 1));
             if (!valid_entropy(source)) return std::numeric_limits<double>::quiet_NaN();
             return pressure[source] / std::pow(
-                std::max(density[source], density_floor), gamma1[source]);
+                density[source], gamma1[source]);
         }
         case Field::Vorticity:
         case Field::Divergence: {

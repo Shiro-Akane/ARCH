@@ -60,49 +60,6 @@ inline std::vector<double> read_table_field(
     return values;
 }
 
-inline void validate_direct_thermodynamics(
-    const std::vector<double>& pressure,
-    const std::vector<double>& energy,
-    const std::vector<double>& sound_speed,
-    const std::vector<double>& cv)
-{
-    if (pressure.size() != energy.size() ||
-        pressure.size() != sound_speed.size() ||
-        pressure.size() != cv.size()) {
-        throw std::runtime_error(
-            "Direct tabular EOS fields have inconsistent sizes");
-    }
-    for (std::size_t i = 0; i < pressure.size(); ++i) {
-        if (!(pressure[i] > 0.0) || !(energy[i] > 0.0) ||
-            !(sound_speed[i] > 0.0) || !(cv[i] > 0.0)) {
-            throw std::runtime_error(
-                "Direct tabular EOS requires positive pressure, energy, "
-                "sound_speed, and cv");
-        }
-    }
-}
-
-inline void validate_energy_increases_with_temperature(
-    const std::vector<double>& energy, int density_count,
-    int temperature_count, int composition_count)
-{
-    for (int density = 0; density < density_count; ++density) {
-        for (int composition = 0;
-             composition < composition_count; ++composition) {
-            for (int temperature = 0;
-                 temperature + 1 < temperature_count; ++temperature) {
-                const std::size_t lower =
-                    (static_cast<std::size_t>(density) * temperature_count +
-                     temperature) * composition_count + composition;
-                if (!(energy[lower + composition_count] > energy[lower])) {
-                    throw std::runtime_error(
-                        "Direct tabular EOS energy must increase strictly "
-                        "with temperature");
-                }
-            }
-        }
-    }
-}
 
 inline void validate_bounds(double lower, double upper,
                             const std::string& name)
@@ -116,17 +73,11 @@ inline void validate_bounds(double lower, double upper,
 
 inline void validate_schema_version(const HighFive::File& file)
 {
-    if (!file.exist("arch_eos_version")) {
-        if (file.exist("table_rank") ||
-            file.exist("thermodynamic_model")) {
-            throw std::runtime_error(
-                "Normalized tabular EOS files require arch_eos_version");
-        }
-        return;
-    }
+    if (!file.exist("arch_eos_version"))
+        throw std::runtime_error("Normalized EOS requires arch_eos_version=2");
     int version = 0;
     file.getDataSet("arch_eos_version").read(version);
-    if (version != 1) {
+    if (version != 2) {
         throw std::runtime_error(
             "Unsupported normalized tabular EOS schema version: " +
             std::to_string(version));

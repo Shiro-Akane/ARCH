@@ -129,6 +129,11 @@ struct Solver_BE_NR
                     continue;
                 }
                 if (c.t_current + c.dt > c.dt_target) c.dt = c.dt_target - c.t_current;
+                if (!(c.dt > 0.0) || !std::isfinite(c.dt) || c.t_current + c.dt == c.t_current) {
+                    c.report.status = BurnOdeStatus::Stalled;
+                    c.phase = Phase::Complete;
+                    return OdeLinearRequest::Complete;
+                }
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) {
                     c.X_old[i] = X_ODE[i];
@@ -262,13 +267,7 @@ private:
         constexpr double newton_error_fraction = 0.1;
         const double newton_error = OdeMath::wrms_norm<NEQ>(c.b, c.W);
         if (newton_error < newton_error_fraction) {
-            double projected_sum = 0.0;
-            for (int i = 0; i < NUM_SPEC; ++i) {
-                c.X_trial[i] = std::max(c.X_trial[i], cfg.smallx);
-                projected_sum += c.X_trial[i];
-            }
-            const double inv_projected_sum = 1.0 / projected_sum;
-            for (int i = 0; i < NUM_SPEC; ++i) c.X_trial[i] *= inv_projected_sum;
+            if (!OdeMath::project_burn_composition(c.X_trial, NUM_SPEC, cfg.smallx)) return false;
             OdeMath::eval_burn_rhs<NetType>(c.X_trial, c.rho, eos, c.RHS, c.network);
             // Backward Euler minus the trapezoidal update, evaluated with the
             // same endpoint states, estimates the leading O(dt^2) local error.
@@ -280,11 +279,7 @@ private:
             const double integrated_enuc = OdeMath::integrated_burn_increment_energy<NetType>(c.increment);
             const double old_eint = eos.get_eint_from_T(c.rho, c.X_old[NUM_SPEC], c.X_old);
             const double new_eint = eos.get_eint_from_T(c.rho, c.X_trial[NUM_SPEC], c.X_trial);
-            const double thermal_delta = new_eint - old_eint;
-            const double closure_scale = OdeMath::max4(
-                std::abs(integrated_enuc), std::abs(thermal_delta), rtol * std::abs(old_eint), 1.0);
-            const double closure_error = std::abs(thermal_delta - integrated_enuc) / closure_scale;
-            if (!std::isfinite(closure_error) || closure_error > 5.0e-2) return false;
+            if (!OdeMath::energy_closure_acceptable(old_eint,new_eint,integrated_enuc,rtol)) return false;
             c.step_converged = true;
         }
         for (int i = 0; i < NEQ; ++i) c.X_k[i] = c.X_trial[i];
@@ -312,9 +307,9 @@ private:
         } else {
             c.dt *= 0.25;
             ++c.report.rejected_substeps;
-            if (c.dt < 1e-22) {
+            if (!(c.dt > 0.0) || !std::isfinite(c.dt) || c.t_current + c.dt == c.t_current) {
 #if !defined(__CUDA_ARCH__)
-                std::cerr << "[BE-NR] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
+                std::cerr << "[BE-NR] Fatal Error: Stiff ODE stalled. time increment is not representable" << std::endl;
 #endif
                 c.report.status = BurnOdeStatus::Stalled;
                 c.phase = Phase::Complete;

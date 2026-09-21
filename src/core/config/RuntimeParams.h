@@ -19,6 +19,7 @@
 #include "data/GlobalDefs.h"
 #include "io/ConfigParser.h"
 #include "core/config/StandardParameters.h"
+#include "core/config/ConfigValidation.h"
 
 class RuntimeParams
 {
@@ -130,13 +131,14 @@ private:
 
         // Numerical-method configuration.
         cfg.numerics.solver_name = parser.GetString("solver", arch::config::DefaultString("solver"));
+        cfg.numerics.dt_init = parser.GetDouble("dt_init", arch::config::DefaultDouble("dt_init"));
+        cfg.numerics.dt_min = parser.GetDouble("dt_min", arch::config::DefaultDouble("dt_min"));
+        cfg.numerics.tstep_change_factor = parser.GetDouble("tstep_change_factor", arch::config::DefaultDouble("tstep_change_factor"));
         cfg.numerics.cfl = parser.GetDouble("cfl", arch::config::DefaultDouble("cfl"));
         cfg.numerics.limiter = parser.GetString("limiter", arch::config::DefaultString("limiter"));
         cfg.numerics.reconstruction = parser.GetString("reconstruct", arch::config::DefaultString("reconstruct"));
-        // The canonical time_integrator key takes precedence over its
-        // accepted timeintegrator alias.
         cfg.numerics.time_integrator = parser.GetString(
-            "time_integrator", parser.GetString("timeintegrator", arch::config::DefaultString("timeintegrator")));
+            "time_integrator", arch::config::DefaultString("time_integrator"));
         if (parser.GetBool("EntropyFix", arch::config::DefaultBool("EntropyFix")))
         {
             // 0.1 is the default fraction of local spectral radius used as the
@@ -151,16 +153,6 @@ private:
         cfg.numerics.sml_rho = parser.GetDouble("sml_rho", arch::config::DefaultDouble("sml_rho"));
         cfg.numerics.min_eint = parser.GetDouble("min_eint", arch::config::DefaultDouble("min_eint"));
         cfg.numerics.max_eint = parser.GetDouble("max_eint", arch::config::DefaultDouble("max_eint"));
-        if (!std::isfinite(cfg.numerics.sml_rho) ||
-            !std::isfinite(cfg.numerics.min_eint) ||
-            !std::isfinite(cfg.numerics.max_eint) ||
-            !(cfg.numerics.sml_rho > 0.0) ||
-            !(cfg.numerics.min_eint > 0.0) ||
-            cfg.numerics.max_eint < cfg.numerics.min_eint) {
-            throw std::invalid_argument(
-                "sml_rho and min_eint must be positive and max_eint must not be smaller than min_eint.");
-        }
-
         // Execution backend.  This is independent of the time integrator:
         // a CUDA-enabled fat binary can still execute the CPU path at runtime.
         cfg.execution.compute_backend = CanonicalizeEnumToken(
@@ -189,18 +181,6 @@ private:
             || parser.GetBool("use_nse", arch::config::DefaultBool("use_nse"));
         cfg.physics.burn.nseTempThreshold = parser.GetDouble("nseTempThreshold", arch::config::DefaultDouble("nseTempThreshold"));
         cfg.physics.burn.nseDensThreshold = parser.GetDouble("nseDensThreshold", arch::config::DefaultDouble("nseDensThreshold"));
-        if (!std::isfinite(cfg.physics.burn.nseTempThreshold)
-            || !(cfg.physics.burn.nseTempThreshold > 0.0)
-            || !std::isfinite(cfg.physics.burn.nseDensThreshold)
-            || cfg.physics.burn.nseDensThreshold < 0.0) {
-            throw std::invalid_argument(
-                "NSE requires finite nseTempThreshold > 0 K and "
-                "nseDensThreshold >= 0 g/cm^3, for both true and auto.");
-        }
-
-        cfg.physics.burn.enforce_mass_conservation = parser.GetBool("enforce_mass_conservation", arch::config::DefaultBool("enforce_mass_conservation"));
-        cfg.physics.burn.verbose_level = parser.GetInt("burn_verbose_level", arch::config::DefaultInt("burn_verbose_level"));
-
         // Stiff ODE solver configuration.
         cfg.physics.burn.odeconfig.ode_solver = parser.GetString("ode_solver", arch::config::DefaultString("ode_solver"));
         cfg.physics.burn.odeconfig.linear_solver = parser.GetString("linear_solver", arch::config::DefaultString("linear_solver"));
@@ -215,8 +195,6 @@ private:
         cfg.physics.burn.odeconfig.dt_fac_min = parser.GetDouble("ode_dt_fac_min", arch::config::DefaultDouble("ode_dt_fac_min"));
         cfg.physics.burn.odeconfig.initial_dt_frac = parser.GetDouble("ode_initial_dt_frac", arch::config::DefaultDouble("ode_initial_dt_frac"));
 
-        cfg.physics.burn.odeconfig.use_numerical_jacobian = parser.GetBool("ode_use_numerical_jac", arch::config::DefaultBool("ode_use_numerical_jac"));
-        cfg.physics.burn.odeconfig.freeze_jacobian = parser.GetBool("ode_freeze_jacobian", arch::config::DefaultBool("ode_freeze_jacobian"));
 
         // Diffusion configuration.
         cfg.physics.diffusion.use_diffusion = parser.GetBool("use_diffusion", arch::config::DefaultBool("use_diffusion"));
@@ -252,19 +230,11 @@ private:
         std::string grav_type = CanonicalizeEnumToken(
             parser.GetString("gravity_type", arch::config::DefaultString("gravity_type")));
         cfg.physics.gravity.type = grav_type;
-        cfg.physics.gravity.G_const = arch::config::DefaultDouble("gravity_G");
-
-        if (grav_type == "external")
-        {
-            cfg.physics.gravity.g_x = ParseMathExpr(parser.GetString("gravity_g_x", arch::config::DefaultString("gravity_g_x")), "gravity_g_x");
-            cfg.physics.gravity.g_y = ParseMathExpr(parser.GetString("gravity_g_y", arch::config::DefaultString("gravity_g_y")), "gravity_g_y");
-            cfg.physics.gravity.g_z = ParseMathExpr(parser.GetString("gravity_g_z", arch::config::DefaultString("gravity_g_z")), "gravity_g_z");
-        }
-        else if (grav_type == "self")
-        {
-            if (parser.HasKey("gravity_G"))
-                cfg.physics.gravity.G_const = ParseMathExpr(parser.GetString("gravity_G", ""), "gravity_G");
-        }
+        cfg.physics.gravity.G_const = parser.HasKey("gravity_G") ? ParseMathExpr(parser.GetString("gravity_G", ""), "gravity_G")
+            : arch::config::DefaultDouble("gravity_G");
+        cfg.physics.gravity.g_x = ParseMathExpr(parser.GetString("gravity_g_x", arch::config::DefaultString("gravity_g_x")), "gravity_g_x");
+        cfg.physics.gravity.g_y = ParseMathExpr(parser.GetString("gravity_g_y", arch::config::DefaultString("gravity_g_y")), "gravity_g_y");
+        cfg.physics.gravity.g_z = ParseMathExpr(parser.GetString("gravity_g_z", arch::config::DefaultString("gravity_g_z")), "gravity_g_z");
 
         // --- AMR (Adaptive Mesh Refinement) ---
         cfg.amr.lrefinemin = parser.GetInt("lrefinemin", arch::config::DefaultInt("lrefinemin"));
@@ -339,9 +309,6 @@ private:
         if (!has_amr_indicator()) throw std::invalid_argument("refine_var has no usable AMR indicator for this configuration.");
         cfg.amr.refine_threshold = parser.GetDouble("refine_threshold", arch::config::DefaultDouble("refine_threshold"));
         cfg.amr.derefine_threshold = parser.GetDouble("derefine_threshold", arch::config::DefaultDouble("derefine_threshold"));
-        if (cfg.amr.refine_threshold < 0.0 || cfg.amr.refine_threshold > 1.0 || cfg.amr.derefine_threshold < 0.0 ||
-            cfg.amr.derefine_threshold >= cfg.amr.refine_threshold)
-            throw std::invalid_argument("AMR Lohner thresholds require ordered values in [0, 1].");
         // Time limits and output configuration.
         cfg.io.tmax = parser.GetDouble("tmax", arch::config::DefaultDouble("tmax"));
         cfg.io.max_steps = parser.GetInt("max_steps", arch::config::DefaultInt("max_steps"));
@@ -443,6 +410,7 @@ private:
             }
         }
 
+        arch::config::ValidateControls(cfg);
         return cfg;
     }
 };

@@ -11,19 +11,18 @@ std::string UnitSystem(const SimConfig& config) {
 
 std::string FieldUnit(const std::string& key, const std::string& system) {
     if (system == "unknown") return {};
-    const bool cgs = system == "cgs";
-    if (key == "DENS") return cgs ? "g/cm^3" : "code_density";
-    if (key == "TEMP") return cgs ? "K" : "code_temperature";
-    if (key == "PRES") return cgs ? "erg/cm^3" : "code_pressure";
-    if (key == "ENER") return cgs ? "erg/cm^3" : "code_energy_density";
-    if (key == "EINT") return cgs ? "erg/g" : "code_specific_energy";
-    if (key == "VELX" || key == "VELY" || key == "VELZ") return cgs ? "cm/s" : "code_velocity";
+    if (system != "cgs") return {};
+    if (key == "DENS") return "g/cm^3";
+    if (key == "TEMP") return "K";
+    if (key == "PRES") return "erg/cm^3";
+    if (key == "ENER") return "erg/cm^3";
+    if (key == "EINT") return "erg/g";
+    if (key == "VELX" || key == "VELY" || key == "VELZ") return "cm/s";
     return {};
 }
 std::string AxisUnit(const std::string& label, const std::string& system) {
     if (label == "phi" || label == "phi_cy" || label == "theta") return "rad";
     if (system == "cgs") return "cm";
-    if (system == "code") return "code_length";
     return {};
 }
 Json CoordinateMetadata(const GridConfig& g, const std::string& system) {

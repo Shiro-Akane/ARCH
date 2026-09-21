@@ -169,6 +169,25 @@ void actual_table(const char* path)
         close(cv, point.values[2], 32*std::numeric_limits<double>::epsilon(),
               "unchanged complete Helmholtz cv");
     }
+    // Inverse recovery spans ideal, degenerate and radiation-dominated states.
+    // Energy rounding limits temperature accuracy by e/(Cv*T); it must not
+    // cause a spurious failure or justify extrapolation beyond source bounds.
+    for (double rho : {1e-4, 1.0, 1e6, 1e9}) {
+        for (double T : {1e3, 1e5, 1e8, 1.23456789e8, 1e10, 1e13}) {
+            const double energy=eos.get_eint_from_T(rho,T,fractions);
+            const double recovered=eos.get_temperature(rho,energy,fractions);
+            const double condition=std::max(1.0,std::abs(energy/(eos.get_cv(rho,T,fractions)*T)));
+            close(recovered,T,32*std::numeric_limits<double>::epsilon()*condition,
+                  "bounded Helm temperature inverse");
+            close(eos.get_eint_from_T(rho,recovered,fractions),energy,
+                  64*std::numeric_limits<double>::epsilon(),"Helm inverse energy residual");
+        }
+        const double minimum=eos.get_eint_from_T(rho,1e3,fractions);
+        const double maximum=eos.get_eint_from_T(rho,1e13,fractions);
+        require(std::isnan(eos.get_temperature(rho,minimum-std::abs(minimum)*1e-8,fractions))
+                && std::isnan(eos.get_temperature(rho,maximum+std::abs(maximum)*1e-8,fractions)),
+                "Helm inverse accepted target outside source bounds");
+    }
     boundaries(eos);
 }
 } // namespace

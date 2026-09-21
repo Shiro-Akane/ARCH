@@ -135,6 +135,7 @@ io::CheckpointData make_checkpoint(
     const io::CheckpointProvenance& provenance)
 {
     io::CheckpointData checkpoint;
+    checkpoint.state_controls = arch::config::StateControlIdentity(SimConfig{});
     checkpoint.time = 0.25;
     checkpoint.dt_old = 0.01;
     checkpoint.dt_burn = 0.02;
@@ -143,6 +144,7 @@ io::CheckpointData make_checkpoint(
     checkpoint.plt_file_index = 4;
     checkpoint.dim = 1;
     checkpoint.num_species = 2;
+    checkpoint.repairs.reset(2);
     checkpoint.geometry = "cartesian";
     checkpoint.cells_per_block = 2;
     checkpoint.has_timestep_state = true;
@@ -316,8 +318,8 @@ void test_identity_and_digest(const std::filesystem::path& directory)
         },
         "EOS replacement between restart verification and load was accepted");
 
-    expect(!io::require_checkpoint_provenance_compatible(
-               io::CheckpointProvenance{}, saved),
+    expect_rejected([&] { io::require_checkpoint_provenance_compatible(
+               io::CheckpointProvenance{}, saved); },
            "missing checkpoint identity was presented as provenance-verified");
 }
 
@@ -515,6 +517,8 @@ void test_host_restart(const std::filesystem::path& directory)
     for (size_t entry = 0; entry < checkpoint.rhoX.size(); ++entry)
         checkpoint.rhoX[entry] = checkpoint.rho[entry % count]
                               * checkpoint.mass_fractions[entry];
+    checkpoint.state_controls = arch::config::StateControlIdentity(config);
+    checkpoint.repairs.reset(species.count());
     const auto path = directory / "host-restart.h5";
     io::write_hdf5_chk_impl(path.string(), checkpoint);
 
@@ -627,6 +631,17 @@ void test_host_restart(const std::filesystem::path& directory)
 int main(int argc, char** argv)
 {
     try {
+        const FluidVector output_state{1.,0.,0.,0.,1.};
+        const auto good=+[](const FluidVector&,const double*,const void*) { return 1.; };
+        const auto invalid=+[](const FluidVector&,const double*,const void*) {
+            return std::numeric_limits<double>::quiet_NaN();
+        };
+        io::require_output_thermodynamics(output_state,nullptr,good,good,good,nullptr);
+        for (int field=0;field<3;++field) {
+            expect_rejected([&]{io::require_output_thermodynamics(output_state,nullptr,
+                field==0 ? invalid : good,field==1 ? invalid : good,field==2 ? invalid : good,nullptr);},
+                "nonfinite EOS query must prevent persistence");
+        }
         if (argc != 2)
             throw std::runtime_error("checkpoint test requires an output directory");
         const std::filesystem::path directory = argv[1];

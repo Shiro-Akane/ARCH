@@ -1,5 +1,11 @@
 # Core 参数编辑接口交接
 
+> P1.5 接入更新：下文是 2026-09-20 的交付快照。当前 Core 已统一 CGS（包括 IdealGas），
+> 标准目录为 88 项，删除五个退役键并登记三个已有宏步控制；最新契约见
+> [配置接口](CONFIGURATION_API.md) 和 [P1.5 记录](../../docs/development/P1_5ImplementationReport.zh-CN.md)。
+> GUI 应重新读取目录，保留物理分组，并由 GUI 自行标记高级选项；本次没有修改 studio。
+
+
 > 历史交接记录：本文保留当时的功能和测试范围。本轮新增能力与单位变更请以 [LOCAL_WORKFLOW_HANDOFF.md](LOCAL_WORKFLOW_HANDOFF.md) 为准，当前响应示例见 examples/local-workflow 与 examples/configuration。
 
 ## 分支与同步

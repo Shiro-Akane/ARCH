@@ -70,7 +70,13 @@ __global__ void burn_cells_kernel(
     const auto checked_eos = bind_device_eos_status(eos, statuses + linear);
     execute_burn_policy_cell<Network, Ode::template solver>(
         cell, workspaces[shared_workspace ? 0 : linear], checked_eos, config, network);
-    if (statuses[linear] != 0) {
+    bool invalid_state = false;
+    if (blocks && cell.interior_effect.interior_written) {
+        const auto bounds = blocks[blockIdx.y].bounds;
+        invalid_state = arch::state::validate(cell.fluid, cell.state, Network::NUM_SPECIES, 1,
+            bounds.density, bounds.internal_min, bounds.internal_max) != arch::state::Status::valid;
+    }
+    if (statuses[linear] != 0 || invalid_state) {
         cell.ode.status = BurnOdeStatus::EosFailure;
         cell.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
         cell.interior_effect.interior_written = false;

@@ -1,3 +1,4 @@
+#include "fixtures/eos/FreeEnergyFixture.h"
 /**
  * @file test_diffusion_rkl_parity.cu
  * @brief Compare CPU/CUDA diffusion operators and RKL stage updates.
@@ -468,7 +469,7 @@ double cartesian_face_dt_reference(const FluidState& state, const Grid& grid, co
         }
         maximum_rate = std::max(maximum_rate, rate);
     }
-    return maximum_rate > 0. ? static_cast<double>(std::min(1.e10L, 1/maximum_rate)) : 1.e10;
+    return maximum_rate > 0. ? static_cast<double>(1/maximum_rate) : std::numeric_limits<double>::max();
 }
 
 void verify_frozen_host_authority()
@@ -576,7 +577,7 @@ void verify_frozen_host_authority()
     disabled.physics.diffusion.use_diffusion = false;
     expect_bits("master_off.sentinel",
         DiffFlux::adaptive_dt_diff(state, eos, grid, disabled, 0.13),
-        0x4202a05f20000000ULL);
+        0x7fefffffffffffffULL);
     expect_close("raw_fe.multiplier_one",
         DiffFlux::adaptive_dt_diff(
             state, eos, grid, make_config(true, true, true), 1.0),
@@ -598,7 +599,7 @@ void verify_frozen_host_authority()
     }
     coefficient.physics.diffusion.alpha_therm = 0.;
     expect_bits("zero_transport.sentinel", DiffFlux::adaptive_dt_diff(state, eos, grid, coefficient, 1.),
-                0x4202a05f20000000ULL);
+                0x7fefffffffffffffULL);
 }
 
 template <class T>
@@ -828,7 +829,7 @@ void verify_tabular_diffusion_latch(Eos eos, int compositions)
         fixture.host_state.rho[cell] = 1.0;
         fixture.host_state.mom_u[cell] = fixture.host_state.mom_v[cell]
             = fixture.host_state.mom_w[cell] = 0.0;
-        fixture.host_state.eng[cell] = 3.0;
+        fixture.host_state.eng[cell] = 100.0;
     }
     fixture.state.upload(fixture.host_state);
     second.state.upload(fixture.host_state);
@@ -848,28 +849,32 @@ void verify_tabular_diffusion_latch(Eos eos, int compositions)
     device_bindings.upload(bindings.data(), bindings.size());
     const auto batch_plan = arch::scheduler::make_rkl_plan(arch::scheduler::RklMethod::RKL1, 1);
     const int extent = 4 * compositions;
-    const double jets[]{3.0, 2.0, 0.0, 0.0, 2.0, -3.0, 0.0, 0.0, 0.0};
     std::vector<double> table(tabular_eos::FieldCount * extent);
     DeviceArray<double> device_table(table.size());
-    eos.uses_free_energy = true;
+
     const auto config = DiffFlux::make_diffusion_config_view(make_config(true, false, false));
     double previous_dt = 0.0;
     for (const bool invalid : {true, false, false}) {
-        for (int field = 0; field < tabular_eos::FieldCount; ++field)
-            std::fill_n(table.data() + field * extent, extent, jets[field]);
-        // The boundary energy query fails, but Newton's upper-knot query is
-        // valid and returns finite T=10. Constant coefficients then yield a
-        // finite dt and zero thermal flux. Final-output checks cannot detect
-        // this failure; only the shared Tabular boundary hook can report it.
-        if (invalid)
-            for (int rho = 0; rho < 2; ++rho)
-                std::fill_n(table.data() + tabular_eos::Fyy * extent
-                    + rho * 2 * compositions, compositions, 0.0);
+        // Exact Hermite polynomial F=100+2r+r*t-1.5t^2, r=ln(rho), t=ln(T).
+        // At T=1: e=100+r, Cv=3-r, with a unique root in the source domain.
+        for (int ir=0; ir<2; ++ir)
+            for (int it=0; it<2; ++it) {
+                const double r=ir*std::log(10.0), t=it*.2*std::log(10.0);
+                const double jets[]{100.+2*r+r*t-1.5*t*t, 2.+t, r-3*t,
+                                    0.,1.,-3.,0.,0.,0.};
+                for (int field=0; field<tabular_eos::FieldCount; ++field)
+                    std::fill_n(table.data()+field*extent+(ir*2+it)*compositions,
+                                compositions, jets[field]);
+                // Cv=(Fy-Fyy)/T: make only the lower-T endpoint invalid.
+                if (invalid && it==0)
+                    std::fill_n(table.data()+tabular_eos::Fyy*extent+ir*2*compositions,
+                                compositions, r);
+            }
         Eos host = eos;
         for (int field = 0; field < tabular_eos::FieldCount; ++field)
             host.free_energy_fields[field] = table.data() + field * extent;
         bool host_threw = false;
-        try { static_cast<void>(host.get_temperature(1.0, 3.0, nullptr)); }
+        try { static_cast<void>(host.get_temperature(1.0, 100.0, nullptr)); }
         catch (const std::runtime_error&) { host_threw = true; }
         if (host_threw != invalid) fail("Diffusion Tabular fixture missed the Host failure boundary");
         device_table.upload(table.data(), table.size());
@@ -945,14 +950,14 @@ void verify_tabular_diffusion_latch(Eos eos, int compositions)
     for (int field = 0; field < tabular_eos::FieldCount; ++field)
         mixed_host.free_energy_fields[field] = table.data() + field * extent;
     bool lower_failed = false;
-    try { static_cast<void>(mixed_host.get_temperature(1.0, 3.0, nullptr)); }
+    try { static_cast<void>(mixed_host.get_temperature(1.0, 100.0, nullptr)); }
     catch (const std::runtime_error&) { lower_failed = true; }
-    if (!lower_failed || !std::isfinite(mixed_host.get_temperature(10.0, 3.0, nullptr)))
+    if (!lower_failed || !std::isfinite(mixed_host.get_temperature(10.0, 100.0+std::log(10.0), nullptr)))
         fail("Mixed Tabular fixture did not isolate an invalid and valid density endpoint");
     auto valid_peer = fixture.host_state;
     for (int cell = 0; cell < fixture.grid.GetTotalSize(); ++cell) {
         valid_peer.rho[cell] = 10.0;
-        valid_peer.eng[cell] = 30.0;
+        valid_peer.eng[cell] = 10.0*(100.0+std::log(10.0));
     }
     second.state.upload(valid_peer);
     device_table.upload(table.data(), table.size());
@@ -981,15 +986,17 @@ void verify_tabular_diffusion_latch(Eos eos, int compositions)
 
 void verify_tabular_diffusion_failures()
 {
-    Tabular3DEOSView eos3{};
+    BasicTabular3DEOSView<arch::test::FixedTableComposition> eos3{};
     eos3.n_rho = eos3.n_T = eos3.n_X = 2;
-    eos3.log_rho_max = eos3.log_T_max = eos3.dlog_rho = eos3.dlog_T = 1.0;
+    eos3.log_rho_max = eos3.dlog_rho = 1.0;
+    eos3.log_T_max = eos3.dlog_T = .2;
     eos3.X_max = eos3.dX = 1.0;
     eos3.target_species_id = -1;
     verify_tabular_diffusion_latch(eos3, 2);
-    Tabular4DEOSView eos4{};
+    BasicTabular4DEOSView<arch::test::FixedTableComposition> eos4{};
     eos4.n_rho = eos4.n_T = eos4.n_A = eos4.n_Z = 2;
-    eos4.log_rho_max = eos4.log_T_max = eos4.dlog_rho = eos4.dlog_T = 1.0;
+    eos4.log_rho_max = eos4.dlog_rho = 1.0;
+    eos4.log_T_max = eos4.dlog_T = .2;
     eos4.A_min = 14.0; eos4.A_max = 15.0; eos4.dA = 1.0;
     eos4.Z_min = 7.0; eos4.Z_max = 8.0; eos4.dZ = 1.0;
     verify_tabular_diffusion_latch(eos4, 4);
@@ -1060,7 +1067,7 @@ void verify_device_conductivity_and_floor()
     require_cuda(cudaDeviceSynchronize(), "threshold probe sync");
     double values[12]{};
     thresholds.download(values, 12);
-    expect_bits("rho floor below", values[0], 0x0ULL);
+    expect_bits("positive rho below old cutoff", values[0], 0x3ff0000000000000ULL);
     expect_bits("rho floor exact", values[1], 0x3ff0000000000000ULL);
     expect_bits("rho floor above", values[2], 0x3ff0000000000000ULL);
     const double positive_coefficients[]{std::nextafter(1.e-12, 0.), 1.e-12,
@@ -1068,12 +1075,13 @@ void verify_device_conductivity_and_floor()
     for (int index=0; index<3; ++index)
         expect_close("positive transport remains active", values[3+index],
                      .01*.01/(2.*positive_coefficients[index]));
-    expect_bits("inverse dt below floor", values[6], 0x4415af1d78b58c40ULL);
+    expect_close("inverse dt below old cutoff", values[6],
+        std::pow(std::nextafter(2.e4, 3.e4), 2)/(4.e-12));
     expect_bits("inverse dt exact floor", values[7], 0x4415af1d78b58c40ULL);
     if (!(values[8] < std::bit_cast<double>(0x4415af1d78b58c40ULL)))
         fail("inverse dt above floor was clamped");
     expect_bits("Cv floor below", values[9],
-                std::bit_cast<std::uint64_t>(-1.0e-12));
+                std::bit_cast<std::uint64_t>(-std::nextafter(1.e-12, 0.)));
     expect_bits("Cv floor exact", values[10],
                 std::bit_cast<std::uint64_t>(-1.0e-12));
     expect_bits("Cv floor above", values[11],
@@ -1231,7 +1239,7 @@ void verify_preflight_and_master_off()
     require_cuda(cudaStreamSynchronize(nullptr), "master-off copy sync");
     double dt = 0.0;
     fixture.result.download(&dt, 1);
-    expect_bits("master-off device sentinel", dt, 0x4202a05f20000000ULL);
+    expect_bits("master-off device sentinel", dt, 0x7fefffffffffffffULL);
 
     result = arch::cuda::launch_diffusion_operator(
         fixture.state.view, fixture.output.view, fixture.eos,

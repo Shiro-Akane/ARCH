@@ -151,6 +151,11 @@ struct Solver_ROS4
                 }
 
                 if (t_current + dt > dt_target) dt = dt_target - t_current;
+                if (!(dt > 0.0) || !std::isfinite(dt) || t_current + dt == t_current) {
+                    report.status = BurnOdeStatus::Stalled;
+                    c.phase = Phase::Complete;
+                    return OdeLinearRequest::Complete;
+                }
 
 #pragma omp simd
                 for (int i = 0; i < NEQ; ++i) X_old[i] = X_ODE[i];
@@ -299,7 +304,7 @@ private:
             if (Y_state[i] < burn_cfg.smallx) Y_state[i] = burn_cfg.smallx;
             else if (Y_state[i] > 1.0) Y_state[i] = 1.0;
         }
-        if (Y_state[NUM_SPEC] < burn_cfg.nuclearTempMin) Y_state[NUM_SPEC] = burn_cfg.nuclearTempMin;
+        if (Y_state[NUM_SPEC] < burn_cfg.smallt) Y_state[NUM_SPEC] = burn_cfg.smallt;
     }
 
     template <typename EOSType>
@@ -340,12 +345,8 @@ private:
                     if (!std::isfinite(X_trial[i])) {
                         admissible = false;
                     }
-                    else {
-                        if (X_trial[i] < burn_cfg.smallx) {
-                            X_trial[i] = burn_cfg.smallx;
-                        } else if (X_trial[i] > 1.0) {
-                            X_trial[i] = 1.0;
-                        }
+                    else if (X_trial[i] < -10.0 * atol || X_trial[i] > 1.0 + 10.0 * atol) {
+                        admissible = false;
                     }
                     mass_sum += X_trial[i];
                 }
@@ -371,19 +372,9 @@ private:
                     OdeMath::calc_weights<NEQ>(X_trial, rtol, atol, W);
                     current_err = OdeMath::wrms_norm<NEQ>(X_err, W);
 
-                    if (current_err < 1.0)
+                    if (current_err < 1.0
+                        && OdeMath::project_burn_composition(X_trial, NUM_SPEC, burn_cfg.smallx))
                     {
-                        // Project species onto unit total mass fraction.
-                        double projected_sum = 0.0;
-#pragma omp simd
-                        for (int i = 0; i < NUM_SPEC; ++i) {
-                            X_trial[i] = std::max(X_trial[i], burn_cfg.smallx);
-                            projected_sum += X_trial[i];
-                        }
-                        const double inv_projected_sum = 1.0 / projected_sum;
-#pragma omp simd
-                        for (int i = 0; i < NUM_SPEC; ++i) X_trial[i] *= inv_projected_sum;
-
                         // Error scratch is no longer live after its norm. Use
                         // the actual stage increment for closure and handoff;
                         // endpoint subtraction can erase a sub-ULP transfer.
@@ -396,26 +387,8 @@ private:
                         const double integrated_enuc = trial_energy;
                         const double old_eint = eos.get_eint_from_T(rho, X_old[NUM_SPEC], X_old);
                         const double new_eint = eos.get_eint_from_T(rho, X_trial[NUM_SPEC], X_trial);
-                        const double thermal_delta = new_eint - old_eint;
-
-                        // Resolve changes below the internal-energy comparison scale.
-                        const double epsilon_eint = std::max(1.0e-12 * std::abs(old_eint), 1.0e-12);
-
-                        if (std::abs(thermal_delta) < epsilon_eint && std::abs(integrated_enuc) < epsilon_eint) {
-                            step_converged = true;
-                        }
-                        else {
-                            const double closure_scale = OdeMath::max4(
-                                std::abs(integrated_enuc), std::abs(thermal_delta),
-                                rtol * std::abs(old_eint), 1.0);
-                            const double closure_error = std::abs(thermal_delta - integrated_enuc) / closure_scale;
-
-                            // Five percent is the engineering energy-closure
-                            // tolerance shared by the production burn solvers.
-                            if (std::isfinite(closure_error) && closure_error <= 5.0e-2) {
-                                step_converged = true;
-                            }
-                        }
+                        step_converged = OdeMath::energy_closure_acceptable(
+                            old_eint,new_eint,integrated_enuc,rtol);
                     }
                 }
             }
@@ -443,12 +416,11 @@ private:
                 dt *= 0.25;
                 nse_attempted = false;
                 report.rejected_substeps += 1;
-                // Below 1e-22 s, double-precision time accumulation no longer
-                // provides useful progress for the supported burn cases.
-                if (dt < 1e-22)
+                // Stalling depends on the current time, not an absolute second scale.
+                if (!(dt > 0.0) || !std::isfinite(dt) || t_current + dt == t_current)
                 {
 #if !defined(__CUDA_ARCH__)
-                    std::cerr << "[ROS4] Fatal Error: Stiff ODE stalled. dt < 1e-22" << std::endl;
+                    std::cerr << "[ROS4] Fatal Error: Stiff ODE stalled. time increment is not representable" << std::endl;
 #endif
                     report.status = BurnOdeStatus::Stalled;
                     c.phase = Phase::Complete;

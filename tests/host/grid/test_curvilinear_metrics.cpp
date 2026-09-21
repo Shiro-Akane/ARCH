@@ -58,7 +58,7 @@ int main()
         if (dimension >= 2) inverse_dt += 2/width_y;
         if (dimension == 3) inverse_dt += 2/width_z;
         close(evaluate_cfl_cell_dt(state, nullptr, ConstantEos{}, grid, 0, 0),
-              1/inverse_dt, "physical CFL");
+              0.5/inverse_dt, "two-face convex CFL");
 
         // Independent rest-state balance: fluxes have constant pressure on
         // normal momentum faces, no mass/energy flux. It must cancel sources.

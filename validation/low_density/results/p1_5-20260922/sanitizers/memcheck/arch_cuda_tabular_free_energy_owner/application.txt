@@ -1,0 +1,1 @@
+CUDA tabular free-energy owner passed

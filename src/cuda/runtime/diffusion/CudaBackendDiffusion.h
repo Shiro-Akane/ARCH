@@ -11,6 +11,7 @@
 
 #include "cuda/runtime/hydro/CudaBackendHydro.h"
 #include "numerics/diffusion/DiffusionTypes.h"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace arch::cuda {
 
@@ -29,6 +30,7 @@ struct DeviceDiffusionBatchBlock {
     DeviceGridView grid;
     CudaBackendDiffusionWorkspace workspace;
     std::array<CudaAmrFluxDirectionRouteView, 3> routes{};
+    state::Bounds bounds{};
 };
 static_assert(std::is_trivially_copyable_v<DeviceDiffusionBatchBlock>);
 

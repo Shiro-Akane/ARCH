@@ -302,7 +302,7 @@ ARCH_INLINE FreeEnergyResult evaluate_thermodynamics(
 
     const double sound_speed_squared =
         state.dp_drho_e +
-        state.dp_de_rho * state.pressure / (rho * rho);
+        (state.dp_de_rho / rho) * (state.pressure / rho);
     if (!(sound_speed_squared > 0.0) ||
         !std::isfinite(sound_speed_squared)) {
         return free_energy_failure(FreeEnergyStatus::invalid_sound_speed);

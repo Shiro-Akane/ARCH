@@ -40,6 +40,10 @@ class CiResultTests(unittest.TestCase):
             ET.SubElement(root, "testcase", name=name, status="run")
         return root
 
+    def test_low_density_math_cannot_disappear_from_the_cpu_gate(self):
+        with self.assertRaisesRegex(ValueError, "low_density_math"):
+            check_inventory(self.inventory(CPU_COVERAGE_ANCHORS - {"low_density_math"}))
+
     def test_complete_report_accepts_new_tests_without_a_fixed_total(self):
         names = check_inventory(self.inventory(CPU_COVERAGE_ANCHORS | {"new_regression"}))
         self.assertEqual(check_junit(self.report(names), names), len(names))

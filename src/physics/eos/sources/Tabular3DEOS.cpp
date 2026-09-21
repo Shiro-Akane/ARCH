@@ -72,12 +72,8 @@ Tabular3DEOS::Tabular3DEOS(const std::string& h5_filename,
         static_cast<std::size_t>(view.n_T),
         static_cast<std::size_t>(view.n_X)
     };
-    std::string thermodynamic_model = "direct";
-    if (file.exist("thermodynamic_model")) {
-        file.getDataSet("thermodynamic_model").read(thermodynamic_model);
-    }
-
-    if (thermodynamic_model == "free_energy") {
+    // inspect_tabular_source validated the sole normalized representation.
+    {
         if (view.n_rho < 5 || view.n_T < 5) {
             throw std::runtime_error(
                 "Free-energy tables require at least five rho and temperature points");
@@ -108,60 +104,25 @@ Tabular3DEOS::Tabular3DEOS(const std::string& h5_filename,
             std::log(10.0) * view.dlog_rho,
             std::log(10.0) * view.dlog_T,seed_rho.empty()?nullptr:&seed_rho,
             seed_temperature.empty()?nullptr:&seed_temperature);
-        if (source.components.declared || source.nuclear_equilibrium) {
+        {
             if (h_table_valid.empty()) h_table_valid.assign(free_energy.size(),1.0);
             h_table_valid=tabular_eos::free_energy_derivative_validity(
                 h_table_valid,view.n_rho,view.n_T,view.n_X);
             view.energy_reference_shift=tabular_eos::positive_energy_reference(
                 h_free_energy_fields,h_table_valid);
-            view.strict_domain=true;
+
             view.table_valid=h_table_valid.data();
         }
         for (int field = 0; field < tabular_eos::FieldCount; ++field) {
             view.free_energy_fields[field] =
                 h_free_energy_fields[field].data();
         }
-        view.uses_free_energy = true;
         view.table_P = nullptr;
         view.table_E = nullptr;
         view.table_cs = nullptr;
         view.table_cv = nullptr;
         view.table_dP_drho = nullptr;
         view.table_dP_dT = nullptr;
-    } else if (thermodynamic_model == "direct") {
-        h_table_P = tabular_eos::loader::read_table_field(
-            file, "pressure", shape);
-        h_table_E = tabular_eos::loader::read_table_field(
-            file, "energy", shape);
-        h_table_cs = tabular_eos::loader::read_table_field(
-            file, "sound_speed", shape);
-        h_table_cv = tabular_eos::loader::read_table_field(
-            file, "cv", shape);
-        tabular_eos::loader::validate_direct_thermodynamics(
-            h_table_P, h_table_E, h_table_cs, h_table_cv);
-        tabular_eos::loader::validate_energy_increases_with_temperature(
-            h_table_E, view.n_rho, view.n_T, view.n_X);
-        view.table_P = h_table_P.data();
-        view.table_E = h_table_E.data();
-        view.table_cs = h_table_cs.data();
-        view.table_cv = h_table_cv.data();
-
-        view.table_dP_drho = nullptr;
-        view.table_dP_dT = nullptr;
-        if (file.exist("dp_drho")) {
-            h_table_dP_drho = tabular_eos::loader::read_table_field(
-                file, "dp_drho", shape);
-            view.table_dP_drho = h_table_dP_drho.data();
-        }
-        if (file.exist("dp_dT")) {
-            h_table_dP_dT = tabular_eos::loader::read_table_field(
-                file, "dp_dT", shape);
-            view.table_dP_dT = h_table_dP_dT.data();
-        }
-    } else {
-        throw std::runtime_error(
-            "Unknown thermodynamic_model '" + thermodynamic_model +
-            "'; expected 'free_energy' or 'direct'");
     }
 
     specs_owner = specs_ptr;
@@ -190,7 +151,7 @@ Tabular3DEOS::Tabular3DEOS(const std::string& h5_filename,
     }
 
     std::cout << "[Tabular3DEOS] Loaded "
-              << (view.uses_free_energy ? "free-energy" : "direct")
+              << "strict free-energy"
               << " table with automatic rank validation." << std::endl;
 }
 
@@ -228,8 +189,7 @@ void Tabular3DEOS::load_baryon_ascii(const std::string& path,
     h_table_valid=tabular_eos::free_energy_derivative_validity(
         h_table_valid,view.n_rho,view.n_T,view.n_X);
     view.energy_reference_shift=tabular_eos::positive_energy_reference(h_free_energy_fields,h_table_valid);
-    view.uses_free_energy=true;
-    view.strict_domain=true;
+
     view.native_direct=false;
     view.target_species_id=-1;
     specs_owner=species;
@@ -325,7 +285,7 @@ void Tabular3DEOS::load_eosdriver(const std::string& path, const SpeciesManager*
             h_table_cv[i] *= mev_per_kelvin;
             const double p = std::pow(10.0, h_table_P[i]);
             const double e = std::pow(10.0, h_table_E[i]);
-            const double acoustic = h_table_dP_drho[i] + h_table_dP_de[i] * p / (rho * rho);
+            const double acoustic = h_table_dP_drho[i] + (h_table_dP_de[i] / rho) * (p / rho);
             if (!(p > 0.0) || !(e > 0.0) || !std::isfinite(p) || !std::isfinite(e)
                 || !(h_table_cv[i] > 0.0) || !(h_table_cs[i] > 0.0)
                 || !(acoustic > 0.0) || !std::isfinite(acoustic))
@@ -343,7 +303,6 @@ void Tabular3DEOS::load_eosdriver(const std::string& path, const SpeciesManager*
     view.specs = species->get_host_view();
     view.target_species_id = -1;
     view.native_direct = true;
-    view.uses_free_energy = false;
     view.pressure_transform.logarithmic = true;
     view.energy_transform.logarithmic = true;
     view = get_view();

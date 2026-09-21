@@ -68,12 +68,8 @@ Tabular4DEOS::Tabular4DEOS(const std::string& h5_filename,
         static_cast<std::size_t>(view.n_Z)
     };
     const int composition_count = view.n_A * view.n_Z;
-    std::string thermodynamic_model = "direct";
-    if (file.exist("thermodynamic_model")) {
-        file.getDataSet("thermodynamic_model").read(thermodynamic_model);
-    }
-
-    if (thermodynamic_model == "free_energy") {
+    // inspect_tabular_source validated the sole normalized representation.
+    {
         if (view.n_rho < 5 || view.n_T < 5) {
             throw std::runtime_error(
                 "Free-energy tables require at least five rho and temperature points");
@@ -104,65 +100,23 @@ Tabular4DEOS::Tabular4DEOS(const std::string& h5_filename,
             std::log(10.0) * view.dlog_rho,
             std::log(10.0) * view.dlog_T,seed_rho.empty()?nullptr:&seed_rho,
             seed_temperature.empty()?nullptr:&seed_temperature);
-        if (source.components.declared || source.nuclear_equilibrium) {
+        {
             if (h_table_valid.empty()) h_table_valid.assign(free_energy.size(),1.0);
             h_table_valid=tabular_eos::free_energy_derivative_validity(
                 h_table_valid,view.n_rho,view.n_T,composition_count);
             view.energy_reference_shift=tabular_eos::positive_energy_reference(
                 h_free_energy_fields,h_table_valid);
-            view.strict_domain=true;
             view.table_valid=h_table_valid.data();
         }
         for (int field = 0; field < tabular_eos::FieldCount; ++field) {
             view.free_energy_fields[field] =
                 h_free_energy_fields[field].data();
         }
-        view.uses_free_energy = true;
-        view.table_P = nullptr;
-        view.table_E = nullptr;
-        view.table_cs = nullptr;
-        view.table_cv = nullptr;
-        view.table_dP_drho = nullptr;
-        view.table_dP_dT = nullptr;
-    } else if (thermodynamic_model == "direct") {
-        h_table_P = tabular_eos::loader::read_table_field(
-            file, "pressure", shape);
-        h_table_E = tabular_eos::loader::read_table_field(
-            file, "energy", shape);
-        h_table_cs = tabular_eos::loader::read_table_field(
-            file, "sound_speed", shape);
-        h_table_cv = tabular_eos::loader::read_table_field(
-            file, "cv", shape);
-        tabular_eos::loader::validate_direct_thermodynamics(
-            h_table_P, h_table_E, h_table_cs, h_table_cv);
-        tabular_eos::loader::validate_energy_increases_with_temperature(
-            h_table_E, view.n_rho, view.n_T, composition_count);
-        view.table_P = h_table_P.data();
-        view.table_E = h_table_E.data();
-        view.table_cs = h_table_cs.data();
-        view.table_cv = h_table_cv.data();
-
-        view.table_dP_drho = nullptr;
-        view.table_dP_dT = nullptr;
-        if (file.exist("dp_drho")) {
-            h_table_dP_drho = tabular_eos::loader::read_table_field(
-                file, "dp_drho", shape);
-            view.table_dP_drho = h_table_dP_drho.data();
-        }
-        if (file.exist("dp_dT")) {
-            h_table_dP_dT = tabular_eos::loader::read_table_field(
-                file, "dp_dT", shape);
-            view.table_dP_dT = h_table_dP_dT.data();
-        }
-    } else {
-        throw std::runtime_error(
-            "Unknown thermodynamic_model '" + thermodynamic_model +
-            "'; expected 'free_energy' or 'direct'");
     }
 
     specs_owner = specs_ptr;
     view.specs = specs_ptr ? specs_ptr->get_host_view() : SpeciesHostView{};
     std::cout << "[Tabular4DEOS] Loaded "
-              << (view.uses_free_energy ? "free-energy" : "direct")
+              << "strict free-energy"
               << " table with automatic rank validation." << std::endl;
 }

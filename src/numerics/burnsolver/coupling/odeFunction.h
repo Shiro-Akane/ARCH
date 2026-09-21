@@ -11,6 +11,7 @@
 #include "core/ArchPortability.h"
 #include "core/CompensatedSum.h"
 #include "data/GlobalDefs.h"
+#include "numerics/state/StateAdmissibility.h"
 #include "physics/network/NuclearEnergy.h"
 #include "physics/nse/nse_solver.h"
 #include "numerics/burnsolver/ode/OdeContinuation.h"
@@ -18,6 +19,30 @@
 
 namespace OdeMath
 {
+    // Trial negativity is first checked against each method's error budget.
+    // This projection only receives such bounded candidates and keeps the
+    // mass-fraction floor valid after enforcing unit total abundance.
+    ARCH_INLINE bool project_burn_composition(double* values, int species, double floor)
+    {
+        for (int i = 0; i < species; ++i) values[i] = std::max(values[i], 0.0);
+        return arch::state::normalize_composition(values, species, 1, floor);
+    }
+
+    // Energy closure is a relative method check, not a CGS energy floor.
+    // Preserve the established 5% source-integral consistency budget while
+    // accounting for subtraction roundoff on the two EOS energies.
+    ARCH_INLINE bool energy_closure_acceptable(double before, double after,
+                                               double integrated, double rtol)
+    {
+        if (!(before > 0.0) || !(after > 0.0) || !std::isfinite(before)
+            || !std::isfinite(after) || !std::isfinite(integrated)) return false;
+        const double thermal = after - before;
+        const double scale = std::max({std::abs(integrated), std::abs(thermal), rtol * before});
+        const double roundoff = 64.0 * std::numeric_limits<double>::epsilon()
+            * std::max(before, after);
+        return std::abs(thermal - integrated) <= 0.05 * scale + roundoff;
+    }
+
     // Accepted-step arithmetic, not another ODE algorithm. Keep sub-ULP
     // increments across accepted substeps; rejected trials never change this
     // state. A physical projection starts a new sum at the projected value.
@@ -130,10 +155,12 @@ namespace OdeMath
         const int* sequence, const double* work_cost,
         double min_factor, double max_factor)
     {
-        double work_min = 1.0e20;
+        double work_min = std::numeric_limits<double>::max();
         double selected_factor = err_fac[accepted_order];
         for (int order = 1; order <= accepted_order; ++order) {
-            const double step = H * err_fac[order] * 0.9;
+            // H is common to every candidate; compare dimensionless work to
+            // avoid an absolute time cutoff or overflow for tiny intervals.
+            const double step = err_fac[order] * 0.9;
             const double work = work_cost[order] / step;
             if (work < work_min) {
                 work_min = work;
@@ -143,7 +170,7 @@ namespace OdeMath
         if (accepted_order < Levels - 1) {
             const double estimate = err_fac[accepted_order]
                 * (static_cast<double>(sequence[accepted_order + 1]) / sequence[accepted_order]);
-            const double step = H * estimate * 0.9;
+            const double step = estimate * 0.9;
             if (work_cost[accepted_order + 1] / step < work_min)
                 selected_factor = estimate;
         }
@@ -196,46 +223,6 @@ namespace OdeMath
             sum += val * val;
         }
         return std::sqrt(sum / ODE_NEQ);
-    }
-
-    // Physical admissibility helpers.
-
-    /**
-     * @brief Clip and normalize the species mass fractions.
-     * Only the first NUM_SPECIES entries are composition; the final temperature
-     * component is deliberately excluded.
-     */
-    template <int NUM_SPECIES>
-    ARCH_INLINE void enforce_mass_conservation(double *Y, double smallx)
-    {
-        double sum_X = 0.0;
-        // Remove small negative values introduced by truncation error.
-        for (int i = 0; i < NUM_SPECIES; ++i)
-        {
-            if (Y[i] < smallx)
-                Y[i] = smallx;
-            sum_X += Y[i];
-        }
-
-        // Normalize the surviving mass fractions to unit sum.
-        double inv_sum = 1.0 / sum_X;
-#pragma omp simd
-        for (int i = 0; i < NUM_SPECIES; ++i)
-        {
-            Y[i] *= inv_sum;
-        }
-    }
-
-    /**
-     * @brief Clamp the explicitly indexed temperature, never an auxiliary state.
-     */
-    template <int T_INDEX>
-    ARCH_INLINE void enforce_temperature_bounds(double *Y, double T_min, double T_max)
-    {
-        if (Y[T_INDEX] < T_min)
-            Y[T_INDEX] = T_min;
-        if (Y[T_INDEX] > T_max)
-            Y[T_INDEX] = T_max;
     }
 
     // Adaptive PI step-size controller.
@@ -296,7 +283,7 @@ namespace OdeMath
                 rhs[Network::NONCONSERVATIVE_ENERGY_INDEX] =
                     network.eval_nonconservative_energy(state, rho, result.eta);
         }
-        result.cv = burn_cv_floor(eos.get_cv(rho, state[temperature], state));
+        result.cv = require_positive_cv(eos.get_cv(rho, state[temperature], state));
         burn_energy_composition_gradient<Network::NUM_SPECIES + 1>(
             state, rho, eos, result.energy_composition_gradient);
         // At fixed rho: de/dt = cv*T' + sum_i e_Xi*X_i'. The network supplies

@@ -1,5 +1,9 @@
 # ARCH Verification 与 Validation
 
+P1.5 调整了低密度状态契约、规范化 EOS 输入和检查点格式。当前验收以
+[实施记录](../docs/development/P1_5ImplementationReport.zh-CN.md)为准；下方旧记录保留
+原始源码范围，不能直接作为本轮实现的通过证据。
+
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
 本目录是定量验证记录的统一入口，覆盖 CPU 与 CUDA 上的流体、扩散、外部重力、燃烧、AMR、EOS、重启和生成网络。各项记录注明实际测试的源码、程序与数据版本。

@@ -72,9 +72,9 @@ ARCH_INLINE bool jacobian_contract()
         double gradient[3];
         OdeMath::burn_cv_gradient<3>(state, 1.0, eos, eos.get_cv(1.0, 2.0, state), gradient);
         if (gradient[0] != 3.0 || gradient[1] != 7.0 || gradient[2] != 0.0) return false;
-        // A clamped denominator has zero derivative in the active flat branch.
-        OdeMath::burn_cv_gradient<3>(state, 1.0, eos, OdeMath::burn_cv_floor(0.0), gradient);
-        if (gradient[0] != 0.0 || gradient[1] != 0.0 || gradient[2] != 0.0) return false;
+        // A nonphysical heat capacity must propagate failure, never invent a flat branch.
+        OdeMath::burn_cv_gradient<3>(state, 1.0, eos, OdeMath::require_positive_cv(0.0), gradient);
+        if (std::isfinite(gradient[0]) || std::isfinite(gradient[1]) || std::isfinite(gradient[2])) return false;
         eos.species = {};
         OdeMath::burn_cv_gradient<3>(state, 1.0, eos, eos.get_cv(1.0, 2.0, state), gradient);
         if (gradient[0] != 0.0 || gradient[1] != 0.0 || gradient[2] != 0.0) return false;
@@ -159,10 +159,35 @@ ARCH_INLINE bool bound_network_path(const BurnConfigView& original, double* fina
     }
     return true;
 }
+// Independent nondimensional decay: dt is far below every retired absolute
+// time gate while rate*dt=0.1 gives a measurable abundance change.
+template<template<class, class, class> class Solver>
+ARCH_INLINE bool tiny_interval_path(BurnConfigView cfg)
+{
+    cfg.nuclearTempMin = 0.5; cfg.nuclearDensMin = 0.0;
+    cfg.smallt = 0.1; cfg.smallx = 1e-20;
+    // Tight local accuracy keeps even first-order BE within the independent global budget.
+    cfg.odeconfig.rtol = 1e-8; cfg.odeconfig.atol = 1e-10;
+    cfg.odeconfig.max_substeps = 10000;
+    const double rate = 1e30;
+    BoundRateReaction network; network.rate = &rate;
+    double values[]{0.5, 0.5, 1.0}, next = 1e-31;
+    const auto report = Solver<BoundRateReaction, DenseMatrixData<3>, DenseLUSolver>::integrate_report(
+        values, 1e-100, 1e-31, Eos{false}, cfg, next, network);
+    return report.success() && std::abs(values[0] - 0.5 * std::exp(-0.1)) < 2e-5
+        && values[2] == 1.0 && std::isfinite(next) && next > 0.0;
+}
+
 ARCH_INLINE BoundNetworkResult bound_network_suite(const BurnConfigView& cfg)
 {
     BoundNetworkResult result;
-    result.success = bound_network_path<Solver_BE_NR>(cfg, result.abundance[0])
+    const double factors[]{1.,2.,1.}, work[]{2.,8.,18.};
+    const int sequence[]{2,6,10};
+    const double tiny_next=OdeMath::bd_recommend_macro_step<3>(1e-100,factors,2,sequence,work,.1,3.);
+    result.success = std::abs(tiny_next/1e-100-1.8)<1e-14;
+    result.success = result.success && tiny_interval_path<Solver_BE_NR>(cfg)
+        && tiny_interval_path<Solver_BD>(cfg) && tiny_interval_path<Solver_ROS4>(cfg)
+        && bound_network_path<Solver_BE_NR>(cfg, result.abundance[0])
         && bound_network_path<Solver_BD>(cfg, result.abundance[1])
         && bound_network_path<Solver_ROS4>(cfg, result.abundance[2]);
     return result;
@@ -181,8 +206,12 @@ ARCH_INLINE Ros4FailureControl ros4_failure_control(BurnConfigView config)
 {
     using Ode = Solver_ROS4<BoundRateReaction, DenseMatrixData<3>, DenseLUSolver>;
     Ros4FailureControl result;
-    const double rate = 1.0, interval = 1.e-20;
+    const double rate = 1.0;
+    // A representable tiny interval must retry to its work budget. The other
+    // lanes reach true floating-point underflow, independent of CGS units.
+    double interval = 1.e-20;
     for (int lane = 0; lane < 4; ++lane) {
+        interval = lane == 1 ? 1.e-20 : std::numeric_limits<double>::denorm_min();
         config.odeconfig.max_substeps = lane == 1 ? 2 : 10;
         config.odeconfig.initial_dt_frac = 1.0;
         double state[3]{0.5, 0.5, 1.0};
@@ -224,8 +253,8 @@ ARCH_INLINE Ros4FailureControl ros4_failure_control(BurnConfigView config)
         result.nonfinite_matrix[lane] = saw_nonfinite_matrix;
         result.lane_pass[lane] = completed && !report.success()
             && report.status == (lane == 1 ? BurnOdeStatus::MaxSubsteps : BurnOdeStatus::Stalled)
-            && report.attempted_substeps == (lane == 1 ? 3 : 4)
-            && report.rejected_substeps == (lane == 1 ? 2 : 4)
+            && report.attempted_substeps == (lane == 1 ? 3 : 1)
+            && report.rejected_substeps == (lane == 1 ? 2 : 1)
             && report.nse_attempts == 0 && report.nse_failures == 0
             && report.dt_recommended == interval && context.dt_recommended == interval
             && report.energy_change == 0.0

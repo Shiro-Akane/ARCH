@@ -44,7 +44,7 @@ __global__ void prepare_cells(
     batch.intervals[lane] = 0.0; // Inactive/invalid cells make no ODE progress.
     if (!config.use_burn) return;
     record.disposition = DriverBurn::check_burn_density(record.fluid, config);
-    if (record.disposition == DriverBurn::BurnCellDisposition::BelowDensity) return;
+    if (record.disposition != DriverBurn::BurnCellDisposition::Ready) return;
     record.prepared = DriverBurn::prepare_burn_cell(
         record.fluid, packed, Network::NUM_SPECIES, checked_eos, config);
     record.disposition = record.prepared.disposition;
@@ -59,7 +59,7 @@ __global__ void commit_cells(
     SparseOdeBatchView<Network, Solver> batch, SparseBurnCellRecord* records,
     DeviceStateView state, DeviceGridView grid, int first, int count,
     double burn_dt, Eos eos, BurnConfigView config,
-    reduction::ReductionCandidate* candidates, int* statuses)
+    reduction::ReductionCandidate* candidates, int* statuses, arch::state::Bounds bounds)
 {
     const int lane = blockIdx.x * blockDim.x + threadIdx.x;
     if (lane >= count) return;
@@ -86,11 +86,16 @@ __global__ void commit_cells(
                 record.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
             } else {
                 DriverBurn::commit_burn_energy(record.fluid, handoff);
+                if (arch::state::validate(record.fluid, packed, Network::NUM_SPECIES, 1,
+                        bounds.density, bounds.internal_min, bounds.internal_max) != arch::state::Status::valid) {
+                    record.disposition = DriverBurn::BurnCellDisposition::SolverFailed;
+                } else {
                 state.store(cell, record.fluid);
                 for (int species = 0; species < Network::NUM_SPECIES; ++species)
                     state.set_species(species, cell, packed[species]);
                 state.enuc_rate[cell] = handoff.enuc_rate;
                 limiter = handoff.limiter_candidate;
+                }
             }
         }
     }
@@ -113,7 +118,7 @@ template <class Network, template <class, class, class> class Solver, class Eos>
 void execute_sparse_burn_cells(
     SparseOdeBatchExecutor<Network, Solver>& executor, SparseBurnCellRecord* records,
     DeviceStateView state, DeviceGridView grid, double burn_dt, Eos eos,
-    BurnConfigView config, reduction::ReductionCandidate* candidates, int* statuses)
+    BurnConfigView config, reduction::ReductionCandidate* candidates, int* statuses, arch::state::Bounds bounds = {})
 {
     if (state.n_species != Network::NUM_SPECIES || records == nullptr
         || candidates == nullptr || statuses == nullptr)
@@ -135,7 +140,7 @@ void execute_sparse_burn_cells(
         executor.execute(count, eos, config);
         sparse_burn_detail::commit_cells<Network, Solver>
             <<<blocks, threads, 0, stream>>>(batch, records, state, grid, first, count,
-                burn_dt, eos, config, candidates, statuses);
+                burn_dt, eos, config, candidates, statuses, bounds);
         sparse_burn_detail::checked(cudaGetLastError(), "Sparse burn commit launch");
         first += count; // The tail advances to total without exceeding INT_MAX.
     }

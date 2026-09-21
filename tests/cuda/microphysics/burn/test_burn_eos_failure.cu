@@ -1,3 +1,4 @@
+#include "fixtures/eos/FreeEnergyFixture.h"
 /** Burn's original Tabular failure boundary must survive finite recovery.
  * This is a focused production-kernel test, not a second burn implementation.
  */
@@ -61,6 +62,22 @@ template<class View> struct RecoveringTableEos : View {
         return temperature;
     }
     ARCH_INLINE double get_eta(double, double, const double*) const { return 0.0; }
+    // The visible manufactured EOS is e=T, Cv=1, independent of composition.
+    // Its derivatives must describe that same EOS; the inherited table is
+    // used only to inject a REAL internal error into the production latch.
+    template<int Equations>
+    ARCH_INLINE void get_energy_composition_gradient(double, double, const double*, double* out) const {
+        for (int i=0; i<Equations-1; ++i) out[i]=0.0;
+    }
+    template<int Equations>
+    ARCH_INLINE void get_cv_gradient(double, double, const double*, double* out) const {
+        for (int i=0; i<Equations; ++i) out[i]=0.0;
+    }
+    template<int Equations>
+    ARCH_INLINE void get_energy_composition_hessian_action(
+        double, double, const double*, const double*, double* out) const {
+        for (int i=0; i<Equations; ++i) out[i]=0.0;
+    }
 };
 
 template<class View, class Binding>
@@ -184,7 +201,7 @@ void run(View table, const char* name)
         require(completed.report.success(), "Handoff fixture never completed its real ODE");
         eos.fault = Fault::Energy;
         arch::cuda::sparse_burn_detail::commit_cells<Network, Mapping::template solver><<<1, 1>>>(
-            batch, records.data, state, grid, first, 1, dt, eos, cfg, candidates.data, statuses.data);
+            batch, records.data, state, grid, first, 1, dt, eos, cfg, candidates.data, statuses.data, {});
         check(cudaGetLastError());
         check(cudaMemcpy(&completed, contexts.data, sizeof(completed), cudaMemcpyDeviceToHost));
         require(!completed.report.success() && completed.report.status == BurnOdeStatus::EosFailure,
@@ -209,7 +226,7 @@ template<class View> void test_table(View view, int knots, const char* name)
         std::fill_n(fields.data() + field * knots, knots, jet[field]);
     Buffer<double> device_fields(fields.size());
     check(cudaMemcpy(device_fields.data, fields.data(), fields.size() * sizeof(double), cudaMemcpyHostToDevice));
-    view.uses_free_energy = true;
+
     for (int field = 0; field < tabular_eos::FieldCount; ++field)
         view.free_energy_fields[field] = device_fields.data + field * knots;
     run<View, arch::dispatch::CudaBeNrBinding>(view, name);
@@ -229,13 +246,13 @@ int main()
         return 1;
     }
     try {
-        Tabular3DEOSView table3{};
+        BasicTabular3DEOSView<arch::test::FixedTableComposition> table3{};
         table3.n_rho = table3.n_T = table3.n_X = 2;
         table3.log_rho_max = table3.log_T_max = 1.0;
         table3.dlog_rho = table3.dlog_T = table3.dX = 1.0;
         table3.X_max = 1.0; table3.target_species_id = -1;
         test_table(table3, 8, "Tabular3");
-        Tabular4DEOSView table4{};
+        BasicTabular4DEOSView<arch::test::FixedTableComposition> table4{};
         table4.n_rho = table4.n_T = table4.n_A = table4.n_Z = 2;
         table4.log_rho_max = table4.log_T_max = 1.0;
         table4.dlog_rho = table4.dlog_T = table4.dA = table4.dZ = 1.0;

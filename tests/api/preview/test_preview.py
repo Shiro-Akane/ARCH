@@ -127,7 +127,8 @@ class PreviewContract(unittest.TestCase):
                 result = self.invoke(payload, case=case, expected=status)
                 self.assertEqual(result['stage'], stage)
                 self.assertIsNone(result['data'])
-                self.assertEqual(result['state']['configuration'], 'parsed')
+                self.assertEqual(result['state']['configuration'],
+                                 'not_loaded' if payload in (config(nblockx1=0), config(lrefinemax=16)) else 'parsed')
                 self.assertEqual(result['identity']['configRevision'], hashlib.sha256(payload).hexdigest())
         result = self.invoke(config(restart='maybe'), expected=3)
         self.assertEqual(result['state']['configuration'], 'not_loaded')
@@ -169,11 +170,18 @@ class PreviewContract(unittest.TestCase):
     def test_real_helmholtz_loader_reports_its_source(self):
         table = ROOT / 'EOS_toolkit/tables/helmholtz/helm_table.dat'
         payload = config(eos_type='helmholtz', eos_table_path=str(table),
-                         rho_left=1e7, rho_right=1e6, p_left=1e24, p_right=1e23)
+                         rho_left=1e7, rho_right=1e6, p_left=3e24, p_right=1e23)
         result = self.invoke(payload, '--samples', '2')
         eos = result['state']['eos']
         self.assertEqual(eos['resolved'], 'helmholtz')
         self.assertEqual(eos['sourceFingerprint'], hashlib.sha256(table.read_bytes()).hexdigest())
+
+    def test_helmholtz_pressure_below_source_range_is_rejected(self):
+        table = ROOT / 'EOS_toolkit/tables/helmholtz/helm_table.dat'
+        payload = config(eos_type='helmholtz', eos_table_path=str(table),
+                         rho_left=1e7, rho_right=1e6, p_left=1e24, p_right=1e23)
+        result = self.invoke(payload, '--samples', '2', expected=6)
+        self.assertTrue(any(d['code']=='INITIALIZATION_FAILED' for d in result['diagnostics']))
 
     @unittest.skipUnless(os.environ.get('ARCH_PREVIEW_SIMULATION_ORACLE') == '1' and shutil.which('h5dump'),
                          'production simulation oracle is opt-in (ARCH_PREVIEW_SIMULATION_ORACLE=1 and h5dump)')

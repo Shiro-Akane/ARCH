@@ -340,12 +340,16 @@ state::CompletionToken execute_burn_half(DriverRuntime& runtime,
         return token;
     }
     std::vector<double> dt_burn_by_block(active_blocks.size(), 1e99);
+    state::HostFailure failure;
     #pragma omp parallel for schedule(dynamic, 1)
     for (size_t i = 0; i < active_blocks.size(); ++i) {
         amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[i]);
-        bc_handler.apply(b.fluid_state, b.grid);
-        execute_burn_step(b.fluid_state, burn_dt, eos, burn, b.grid, config, dt_burn_by_block[i]);
+        try {
+            bc_handler.apply(b.fluid_state, b.grid);
+            execute_burn_step(b.fluid_state, burn_dt, eos, burn, b.grid, config, dt_burn_by_block[i]);
+        } catch (...) { failure.capture_current(); }
     }
+    failure.rethrow();
     std::vector<arch::reduction::ReductionCandidate>
         burn_dt_candidates;
     burn_dt_candidates.reserve(active_blocks.size() + 1);
@@ -383,6 +387,38 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
     const auto& stage_handles = runtime.handles();
     auto* compute_backend = runtime.backend();
     const auto& num_cfg = config.numerics;
+    state::RepairBudget pending(runtime.species().count());
+    stage_context.hydro_acceptance = [&](const scheduler::StageDescriptor& descriptor) {
+        state::RepairBudget stage(runtime.species().count());
+        if (compute_backend) stage = compute_backend->stage_repairs;
+        else for (std::size_t index=0;index<active_blocks.size();++index) {
+            auto& block = amr_ctrl.pool->GetBlock(active_blocks[index]);
+            const auto& output = descriptor.output_slot == StateSlot::Current ? block.fluid_state
+                : descriptor.output_slot == StateSlot::Next ? block.state_next : block.state_scratch;
+            auto report=output.stage_repairs;
+            report.block_uid=stage_handles[index].uid.value;
+            stage.combine(report);
+        }
+        if (stage.values[0] > 0.0) {
+            stage.stage=descriptor.stage; stage.time=stage_context.step_start_time;
+            for (std::size_t index=0;index<stage_handles.size();++index) {
+                if (stage_handles[index].uid.value != stage.block_uid) continue;
+                const auto& grid=amr_ctrl.pool->GetBlock(active_blocks[index]).grid;
+                const int cell=static_cast<int>(stage.values[9]);
+                const int k=cell/grid.stride_z, j=(cell-k*grid.stride_z)/grid.stride_y;
+                const auto point=grid.GetPhysicalCoords(cell-k*grid.stride_z-j*grid.stride_y,j,k);
+                stage.position[0]=point.x; stage.position[1]=point.y; stage.position[2]=point.z;
+                break;
+            }
+        }
+        double weight = 1.0;
+        if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk2 && descriptor.stage == 1) weight = 0.5;
+        if (resolved_plan->time_integrator == dispatch::TimeIntegratorId::Rk3)
+            weight = descriptor.stage == 1 ? 1.0/6.0 : descriptor.stage == 2 ? 2.0/3.0 : 1.0;
+        pending.combine(stage, weight);
+    };
+    struct ClearAcceptance { scheduler::StageExecutionContext& context;
+        ~ClearAcceptance() { context.hydro_acceptance = {}; } } clear{stage_context};
     if (compute_backend) {
         runtime.ensure_fluid_ghosts(StateSlot::Current);
         auto& currents = workspace.hydro_currents;
@@ -445,6 +481,8 @@ inline void advance_hydro(DriverRuntime& runtime, DriverStageWorkspace& workspac
         integrator_solve(
             amr_ctrl, dt, bc_handler, gravity, hydro, num_cfg);
     }
+
+    runtime.repair_budget().combine(pending);
 
 }
 template<class EosPolicy>

@@ -250,6 +250,26 @@ class ProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'missing runtime validation input'):
             provenance.sparse_link_command_identity(self.build, command + ' /absent/libamd.a', {'klu', 'cudss'})
 
+    def test_lazy_sparse_provider_requires_archive_and_tracks_vendor_artifacts(self):
+        archive = self.build / 'libarch_cuda_sparse_provider.a'
+        vendor = self.build / 'libcudss.so.0'
+        blas = self.build / 'libcublas.so'
+        for artifact in (archive, vendor, blas):
+            artifact.write_bytes(artifact.name.encode())
+        command = f'c++ -o bin/ARCH {archive}'
+        runtime = {'cudss': str(vendor), 'cublas': str(blas)}
+        original = provenance.sparse_link_command_identity(self.build, command, {'cudss'}, runtime)
+        self.assertEqual(len(original['runtime_libraries']), 2)
+        self.assertEqual(len(original['libraries']), 1)
+        vendor.write_bytes(b'new vendor build')
+        self.assertNotEqual(original, provenance.sparse_link_command_identity(
+            self.build, command, {'cudss'}, runtime))
+        with self.assertRaisesRegex(RuntimeError, 'required sparse provider archive'):
+            provenance.sparse_link_command_identity(self.build, 'c++ -o bin/ARCH', {'cudss'}, runtime)
+        vendor.unlink()
+        with self.assertRaisesRegex(RuntimeError, 'missing runtime validation input'):
+            provenance.sparse_link_command_identity(self.build, command, {'cudss'}, runtime)
+
     def test_wrong_build_source_is_rejected(self):
         (self.build / "CMakeCache.txt").write_text(
             "CMAKE_BUILD_TYPE:STRING=Debug\nCMAKE_HOME_DIRECTORY:INTERNAL=/wrong\n")

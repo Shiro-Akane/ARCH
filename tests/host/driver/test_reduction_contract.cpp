@@ -417,13 +417,20 @@ void characterize_hydro()
         state.set(cell, {2.0, 2.0, 2.5, 2.0, 10.0});
     state.set(grid.GetIndex(grid.Is() + 3),
               {1.5, 3.0, -0.5, 0.2, 8.0});
+    // Reduction oracle: enumerate the physical candidates serially. Analytic
+    // CFL values are verified independently in curvilinear/low-density tests.
+    double serial_hydro=std::numeric_limits<double>::max();
+    for (int i=grid.Is();i<grid.Ie();++i)
+        serial_hydro=std::min(serial_hydro,evaluate_cfl_cell_dt(state.get(grid.GetIndex(i)),
+            nullptr,HydroEos{},GridMetrics::make_geometry_view(grid),i,0));
     expect_bits("production.hydro.active",
                 adaptive_dt(state, HydroEos{}, grid, 0.8),
-                0x3fce8a38358aef78ULL);
+                std::bit_cast<std::uint64_t>(.8*serial_hydro));
     std::fill(state.rho.begin(), state.rho.end(), 0.0);
-    expect_bits("production.hydro.inactive",
-                adaptive_dt(state, HydroEos{}, grid, 0.8),
-                0x41fdcd6500000000ULL);
+    bool rejected = false;
+    try { adaptive_dt(state, HydroEos{}, grid, 0.8); }
+    catch (const std::runtime_error&) { rejected = true; }
+    expect(rejected, "production.hydro.invalid-density-rejected");
 }
 
 void characterize_diffusion()
@@ -481,16 +488,14 @@ void characterize_diffusion()
     finite_seed.physics.diffusion.nu_visc = 2.0e-12;
     finite_seed.physics.diffusion.alpha_therm = 0.0;
     finite_seed.physics.diffusion.D_spec = 0.0;
-    expect_bits("production.diffusion.finite-seed",
-                DiffFlux::adaptive_dt_diff(
-                    finite_seed_state, eos, finite_seed_grid,
-                    finite_seed, 1.0),
-                0x4202a05f20000000ULL);
-
+    enabled = finite_seed;
+    expect_bits("production.diffusion.finite-coefficient",
+        DiffFlux::adaptive_dt_diff(finite_seed_state, eos, finite_seed_grid, finite_seed, 1.0),
+        std::bit_cast<std::uint64_t>(serial_limit(finite_seed_state, finite_seed_grid)));
     enabled.physics.diffusion.use_diffusion = false;
     expect_bits("production.diffusion.disabled",
-                DiffFlux::adaptive_dt_diff(state, eos, grid, enabled, 0.13),
-                0x4202a05f20000000ULL);
+        DiffFlux::adaptive_dt_diff(state, eos, grid, enabled, 0.13),
+        std::bit_cast<std::uint64_t>(std::numeric_limits<double>::max()));
 }
 
 void characterize_burn()
@@ -503,6 +508,7 @@ void characterize_burn()
     state.InitSpecies(2);
     for (int i = 0; i < grid.GetTotalSize(); ++i) {
         state.rho[i] = 0.5;
+        state.eng[i] = 1.0; // Valid inactive cell; density gate does not legitimize zero thermal energy.
         state.X(0, i) = 0.75;
         state.X(1, i) = 0.25;
     }

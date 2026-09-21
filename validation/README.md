@@ -1,5 +1,10 @@
 # ARCH Verification and Validation
 
+P1.5 changes the low-density state contract, normalized EOS inputs and checkpoint
+format. Its [implementation record](../docs/development/P1_5ImplementationReport.zh-CN.md)
+identifies current acceptance; the older records below retain their original
+source scope and are not automatic acceptance of the changed implementation.
+
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 

@@ -12,6 +12,7 @@
 #include "numerics/reconstruction/Limiters.h"
 
 #include "data/FluidState.h"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace ReconstructionMath {
 // One simplex normalization for all reconstructed face compositions. Applying
@@ -20,22 +21,10 @@ namespace ReconstructionMath {
 // flux before AMR registration; normalizing only the updated cell is too late.
 ARCH_INLINE void normalize_species_faces(int n_spec, double* X_L, double* X_R)
 {
-    double sum_X_L = 0.0;
-    double sum_X_R = 0.0;
-    for (int species = 0; species < n_spec; ++species) {
-        sum_X_L += X_L[species];
-        sum_X_R += X_R[species];
-    }
-    if (sum_X_L > 1e-12) {
-        const double inv = 1.0 / sum_X_L;
-        for (int species = 0; species < n_spec; ++species)
-            X_L[species] *= inv;
-    }
-    if (sum_X_R > 1e-12) {
-        const double inv = 1.0 / sum_X_R;
-        for (int species = 0; species < n_spec; ++species)
-            X_R[species] *= inv;
-    }
+    if (!arch::state::normalize_composition(X_L, n_spec))
+        for (int i = 0; i < n_spec; ++i) X_L[i] = arch::state::invalid();
+    if (!arch::state::normalize_composition(X_R, n_spec))
+        for (int i = 0; i < n_spec; ++i) X_R[i] = arch::state::invalid();
 }
 } // namespace ReconstructionMath
 
@@ -52,17 +41,13 @@ ARCH_INLINE void normalize_species_faces(int n_spec, double* X_L, double* X_R)
 template <typename LimiterPolicy>
 ARCH_INLINE double compute_limited_slope(double q_m1, double q_0, double q_p1)
 {
-    // Treat a forward jump below this absolute scale as locally flat to avoid
-    // an ill-conditioned slope ratio. Conserved variables are expected to be
-    // nondimensionalized or scaled consistently with this threshold.
-    const double epsilon = 1e-12;
     // Forward difference (denominator)
     double del_plus = q_p1 - q_0;
     // Backward difference (numerator)
     double del_minus = q_0 - q_m1;
 
     // A vanishing forward difference cannot define a reliable ratio.
-    if (std::abs(del_plus) < epsilon)
+    if (del_plus == 0.0 || (del_minus > 0.0) != (del_plus > 0.0))
     {
         // Returning zero is the monotone fallback for both flat regions and
         // one-sided discontinuities where r would be singular.
@@ -257,7 +242,7 @@ private:
     {
         const double slope_left = u_i - u_im1;
         const double slope_right = u_ip1 - u_i;
-        if (slope_left * slope_right > 0.0)
+        if ((slope_left > 0.0 && slope_right > 0.0) || (slope_left < 0.0 && slope_right < 0.0))
             return false;
 
         const double d2_left = u_im2 - 2.0 * u_im1 + u_i;
@@ -266,12 +251,13 @@ private:
         const double curvature_scale = std::max({
             std::abs(d2_left), std::abs(d2_center), std::abs(d2_right)});
         const double value_scale = std::max({
-            1.0, std::abs(u_im2), std::abs(u_im1), std::abs(u_i),
+            std::abs(u_im2), std::abs(u_im1), std::abs(u_i),
             std::abs(u_ip1), std::abs(u_ip2)});
 
         if (curvature_scale <= 1e-12 * value_scale)
             return false;
-        if (d2_left * d2_center <= 0.0 || d2_center * d2_right <= 0.0)
+        if (d2_center == 0.0 || d2_left == 0.0 || d2_right == 0.0
+            || (d2_left > 0.0) != (d2_center > 0.0) || (d2_center > 0.0) != (d2_right > 0.0))
             return false;
 
         const double min_curvature = std::min({
@@ -289,7 +275,8 @@ private:
         if (preserve_smooth_extremum)
             return;
 
-        if (delta_left * delta_right > 0.0)
+        if ((delta_left > 0.0 && delta_right > 0.0)
+            || (delta_left < 0.0 && delta_right < 0.0))
         {
             u_left = u_average;
             u_right = u_average;
@@ -346,7 +333,7 @@ public:
         const EosType& eos, double& rho, double& velocity_x,
         double& velocity_y, double& velocity_z, double& pressure)
     {
-        rho = std::max(1e-13, state.rho);
+        rho = state.rho;
         velocity_x = state.mom_u / rho;
         velocity_y = state.mom_v / rho;
         velocity_z = state.mom_w / rho;
@@ -369,10 +356,25 @@ public:
         reconstruct_scalar_ppm(velocity_z, face_velocity_z[0], face_velocity_z[1]);
         reconstruct_scalar_ppm(pressure, face_pressure[0], face_pressure[1]);
 
-        const double rho_left = std::max(1e-13, face_rho[0]);
-        const double rho_right = std::max(1e-13, face_rho[1]);
-        const double pressure_left = std::max(1e-13, face_pressure[0]);
-        const double pressure_right = std::max(1e-13, face_pressure[1]);
+        // Ray-limit primitive pressure/density against each owning mean before
+        // asking an EOS to invert the face. No dimensional pressure floor.
+        for (int side=0; side<2; ++side) {
+            const int center=side+2;
+            double theta=1.0;
+            if (!(face_rho[side] > 0.0)) theta=std::min(theta,0.5*rho[center]/(rho[center]-face_rho[side]));
+            if (!(face_pressure[side] > 0.0)) theta=std::min(theta,0.5*pressure[center]/(pressure[center]-face_pressure[side]));
+            if (theta < 1.0) {
+                face_rho[side]=rho[center]+theta*(face_rho[side]-rho[center]);
+                face_pressure[side]=pressure[center]+theta*(face_pressure[side]-pressure[center]);
+                face_velocity_x[side]=velocity_x[center]+theta*(face_velocity_x[side]-velocity_x[center]);
+                face_velocity_y[side]=velocity_y[center]+theta*(face_velocity_y[side]-velocity_y[center]);
+                face_velocity_z[side]=velocity_z[center]+theta*(face_velocity_z[side]-velocity_z[center]);
+            }
+        }
+        const double rho_left = face_rho[0];
+        const double rho_right = face_rho[1];
+        const double pressure_left = face_pressure[0];
+        const double pressure_right = face_pressure[1];
 
         left.rho = rho_left;
         left.mom_u = rho_left * face_velocity_x[0];
@@ -418,15 +420,14 @@ public:
 
         for (int k = 0; k < 6; ++k)
         {
-            double rho = std::max(1e-13, U_stencil[k]->rho);
+            double rho = U_stencil[k]->rho;
 
             double vel_u = U_stencil[k]->mom_u / rho;
             double vel_v = U_stencil[k]->mom_v / rho;
             double vel_w = U_stencil[k]->mom_w / rho;
 
             double kin = 0.5 * (vel_u * vel_u + vel_v * vel_v + vel_w * vel_w);
-            const double eint_density = std::max(
-                1e-13 * rho, U_stencil[k]->eng - rho * kin);
+            const double eint_density = U_stencil[k]->eng - rho * kin;
 
             r[k] = rho;
             u[k] = vel_u;
@@ -443,11 +444,11 @@ public:
         auto res_eint_density = reconstruct_scalar_ppm(internal_energy_density);
 
         // Enforce positive density and internal-energy density.
-        double rho_L = std::max(1e-13, res_rho.first);
-        double rho_R = std::max(1e-13, res_rho.second);
+        double rho_L = res_rho.first;
+        double rho_R = res_rho.second;
 
-        double eint_density_L = std::max(1e-13 * rho_L, res_eint_density.first);
-        double eint_density_R = std::max(1e-13 * rho_R, res_eint_density.second);
+        double eint_density_L = res_eint_density.first;
+        double eint_density_R = res_eint_density.second;
 
         double u_L = res_u.first, v_L = res_v.first, w_L = res_w.first;
         double u_R = res_u.second, v_R = res_v.second, w_R = res_w.second;

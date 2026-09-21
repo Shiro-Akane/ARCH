@@ -73,6 +73,8 @@ struct DenseLUSolver
         int pivots[MAX_N]{};
         if (!factorize<ACTIVE_N, MAX_N>(A, pivots)) return false;
         solve_with_factors<ACTIVE_N, MAX_N>(A, pivots, b);
+        for (int i = 0; i < ACTIVE_N; ++i)
+            if (!std::isfinite(b[i])) return false;
         return true;
     }
 
@@ -114,12 +116,12 @@ struct DenseLUSolver
                     pivot_row = j;
                 }
             }
-            if (!std::isfinite(max_value) || max_value < 1.0e-20) return false;
+            if (!std::isfinite(max_value) || max_value == 0.0) return false;
             std::swap(p[i], p[pivot_row]);
 
-            const double pivot_inverse = 1.0 / A.data[p[i]][i];
+            const double pivot = A.data[p[i]][i];
             for (int j = i + 1; j < ACTIVE_N; ++j) {
-                A.data[p[j]][i] *= pivot_inverse;
+                A.data[p[j]][i] /= pivot;
 #pragma omp simd
                 for (int k = i + 1; k < ACTIVE_N; ++k) {
                     A.data[p[j]][k] -= A.data[p[j]][i] * A.data[p[i]][k];

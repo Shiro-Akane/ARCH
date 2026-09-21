@@ -54,7 +54,7 @@ Json options(const std::string& key) {
     if (key == "solver") return Options<dispatch::FluxPolicies>::get();
     if (key == "reconstruct") return Options<dispatch::ReconstructionPolicies>::get();
     if (key == "limiter") return Options<dispatch::LimiterPolicies>::get();
-    if (key == "time_integrator" || key == "timeintegrator") return Options<dispatch::TimeIntegratorPolicies>::get();
+    if (key == "time_integrator") return Options<dispatch::TimeIntegratorPolicies>::get();
     if (key == "network_name") return Options<dispatch::NetworkPolicies>::get();
     if (key == "ode_solver") return Options<dispatch::OdeSolverPolicies>::get();
     if (key == "linear_solver") {
@@ -117,10 +117,10 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
         return Json::object({{"unit", "g/cm^3"}, {"status", "known"}});
     if (key == "gravity_G") return Json::object({{"unit", "cm^3/(g*s^2)"}, {"status", "known"}});
     if (key.starts_with("gravity_g_"))
-        return Json::object({{"unit", system == "cgs" ? Json("cm/s^2") : system == "code" ? Json("code_acceleration") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
+        return Json::object({{"unit", system == "cgs" ? Json("cm/s^2") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "nu_visc" || key == "alpha_therm" || key == "D_spec")
-        return Json::object({{"unit", system == "cgs" ? Json("cm^2/s") : system == "code" ? Json("code_diffusivity") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
-    if (key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
+        return Json::object({{"unit", system == "cgs" ? Json("cm^2/s") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
+    if (key == "tstep_change_factor" || key == "gamma" || key == "smallx" || key == "cfl" || key == "diff_cfl"
         || key == "ode_rtol" || key == "refine_threshold" || key == "derefine_threshold"
         || key == "enucDtFactor" || key == "EntropyFixCoefficient" || key.starts_with("ode_dt_") || key == "ode_initial_dt_frac")
         return Json::object({{"unit", "1"}, {"status", "dimensionless"}});
@@ -131,8 +131,8 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
         const auto unit = FieldUnit(field, system);
         return Json::object({{"unit", unit.empty() ? Json() : Json(unit)}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     }
-    if (key == "tmax" || key == "plt_dt" || key == "chk_dt")
-        return Json::object({{"unit", system == "cgs" ? Json("s") : system == "code" ? Json("code_time") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
+    if (key == "tmax" || key == "plt_dt" || key == "chk_dt" || key == "dt_init" || key == "dt_min")
+        return Json::object({{"unit", system == "cgs" ? Json("s") : Json()}, {"status", system == "unknown" ? "model-dependent" : "known"}});
     if (key == "ode_atol")
         return Json::object({{"unit", Json()}, {"status", "mixed-state"},
             {"reason", "Absolute tolerance for temperature and abundance components; no single scalar unit."}});
@@ -146,7 +146,6 @@ Json unit_info(const std::string& key, const std::string& system = "cgs") {
 }
 std::string condition(const ParameterDefinition& d) {
     const auto key = d.key;
-    if (key == "timeintegrator") return "Alias of time_integrator; canonical key takes precedence.";
     if (key == "EntropyFixCoefficient") return "EntropyFix=true";
     if (key == "cuda_device") return "compute_backend=cuda or auto; no device probing in configuration inspection";
     if (key == "restart_file") return "restart=true";
@@ -163,8 +162,9 @@ std::string condition(const ParameterDefinition& d) {
 }
 bool applicable(const ParameterDefinition& d, const SimConfig& c, const ConfigParser& p) {
     const auto key = d.key;
-    if (key == "timeintegrator") return !p.HasKey("time_integrator");
-    if (key == "EntropyFixCoefficient") return p.GetBool("EntropyFix", config::DefaultBool("EntropyFix"));
+    if (key == "ode_max_newton_iter") return c.physics.burn.use_burn && dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BE_NR");
+    if (key == "ode_dt_safe_fac") return c.physics.burn.use_burn && !dispatch::ascii_iequals(c.physics.burn.odeconfig.ode_solver, "BD");
+    if (key == "EntropyFixCoefficient") return (dispatch::ascii_iequals(c.numerics.solver_name, "SW") || dispatch::ascii_iequals(c.numerics.solver_name, "Roe")) && p.GetBool("EntropyFix", config::DefaultBool("EntropyFix"));
     if (key == "cuda_device") return c.execution.compute_backend != "cpu";
     if (key == "restart_file") return c.io.restart;
     if (key == "eos_table_path") return !dispatch::ascii_iequals(c.physics.eos_type, "ideal");
@@ -212,7 +212,6 @@ Json ConfigurationSchema() {
             {"defaultSource", "shared-runtime-definition"}, {"constraints", constraints(d)},
             {"options", options(key)}, {"path", path_role(key)}, {"units", unit_info(key)},
             {"applicability", condition(d)}});
-        if (key == "timeintegrator") item["aliasOf"] = "time_integrator";
         parameters.push(std::move(item));
     }
     auto coordinates = Json::array();
@@ -229,7 +228,7 @@ Json ConfigurationSchema() {
     return Json::object({{"schemaVersion", contract::schema_version}, {"version", contract::configuration_version}, {"kind", "configuration-schema"}, {"status", "ok"},
         {"coverage", "standard-runtime-inputs"}, {"standardParametersComplete", true},
         {"customParametersComplete", false}, {"constraintsComplete", false},
-        {"parameters", parameters}, {"coordinateSystems", coordinates}, {"fieldUnits", fields}, {"unitSystem", "cgs"}, {"legacyCodeUnits", "deprecated; no current preview selects them"},
+        {"parameters", parameters}, {"coordinateSystems", coordinates}, {"fieldUnits", fields}, {"unitSystem", "cgs"},
         {"crossConstraints", Json::array({"x3 enabled requires x2 enabled", "active axis max > min", "0 <= lrefinemin <= lrefinemax <= 15", "0 <= derefine_threshold < refine_threshold <= 1", "max_eint >= min_eint", "Helmholtz diffusion forbids explicit alpha_therm/nu_visc/D_spec"})},
         {"pathChecks", "local-host; no filesystem access in schema or inspection"}});
 }
@@ -256,10 +255,6 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
                     {"valueStage", "typed-input-before-setup-and-policy-resolution"},
                     {"valueSource", parser.HasKey(key) ? "explicit" : "default"},
                     {"defaultValue", default_json(d)}, {"rawValue", parser.HasKey(key) ? Json(parser.GetString(key, "")) : Json()}});
-                if (key == "time_integrator" && !parser.HasKey(key) && parser.HasKey("timeintegrator")) {
-                    item["parsedValue"] = parser.GetString("timeintegrator", "");
-                    item["valueSource"] = "alias"; item["sourceKey"] = "timeintegrator";
-                }
                 result["parameters"].push(std::move(item));
             } catch (const ConfigValueError& e) {
                 invalid = true; result["diagnostics"].push(diagnostic(e.code, e.key, e.what()));
@@ -313,12 +308,10 @@ PreviewResponse InspectConfiguration(const PreviewRequest& request) {
         for (const auto& d : config::standard_parameters) {
             const std::string key(d.key);
             auto value = input_value(d, parser);
-            const bool alias = key == "time_integrator" && !parser.HasKey(key) && parser.HasKey("timeintegrator");
-            if (alias) value = parser.GetString("timeintegrator", "");
             auto item = Json::object({{"key", key}, {"parsedValue", value},
                 {"valueStage", "typed-input-before-setup-and-policy-resolution"},
-                {"valueSource", alias ? "alias" : parser.HasKey(key) ? "explicit" : "default"},
-                {"sourceKey", alias ? "timeintegrator" : key}, {"defaultValue", default_json(d)},
+                {"valueSource", parser.HasKey(key) ? "explicit" : "default"},
+                {"sourceKey", key}, {"defaultValue", default_json(d)},
                 {"rawValue", parser.HasKey(key) ? Json(parser.GetString(key, "")) : Json()},
                 {"applicable", applicable(d, config, parser)}, {"applicabilityScope", "configured-modules; model usage not traced"},
                 {"units", unit_info(key, UnitSystem(config))}, {"path", path_role(key)}});

@@ -43,7 +43,7 @@ namespace DiffFlux
 
     ARCH_INLINE constexpr double diffusion_dt_sentinel()
     {
-        return 1.0e10;
+        return std::numeric_limits<double>::max();
     }
 
     ARCH_INLINE bool diffusion_routes_enabled(const DiffusionConfigView& config)
@@ -56,7 +56,8 @@ namespace DiffFlux
 
     ARCH_INLINE bool diffusion_face_is_active(double rho_left, double rho_right)
     {
-        return !(rho_left < 1.0e-12 || rho_right < 1.0e-12);
+        return std::isfinite(rho_left) && rho_left > 0.0
+            && std::isfinite(rho_right) && rho_right > 0.0;
     }
 
     ARCH_INLINE double diffusion_face_spacing(
@@ -72,6 +73,15 @@ namespace DiffFlux
         int species_count, const double* charge, const double* inverse_mass)
     {
         DiffusionCoefficients coefficients{};
+        if (!(state.rho > 0.0) || !std::isfinite(state.rho)
+            || !(state.T > 0.0) || !std::isfinite(state.T)
+            || (config.use_thermal_diffusion && (!(state.cv > 0.0) || !std::isfinite(state.cv)))
+            || !std::isfinite(config.nu_visc) || config.nu_visc < 0.0
+            || !std::isfinite(config.alpha_therm) || config.alpha_therm < 0.0
+            || !std::isfinite(config.D_spec) || config.D_spec < 0.0) {
+            coefficients.valid = false;
+            return coefficients;
+        }
         const bool stellar = species_count > 0 && state.xne > 0.0;
         if (config.nu_visc > 0.0 || config.alpha_therm > 0.0) {
             if (stellar) {
@@ -89,9 +99,12 @@ namespace DiffFlux
                 ConductivityMath::compute_stellar_conductivity(
                     state.T, state.rho, state.pele, state.xne, state.eta,
                     state.Xi, species_count, charge, inverse_mass);
-            const double cv_value = std::max(state.cv, 1.0e-12);
+            const double cv_value = state.cv;
+            if (!(cv_value > 0.0) || !std::isfinite(cv_value)) { coefficients.valid = false; return coefficients; }
             coefficients.alpha_therm =
-                conductivity / (state.rho * cv_value);
+                (conductivity / state.rho) / cv_value;
+            coefficients.valid = std::isfinite(coefficients.alpha_therm)
+                && coefficients.alpha_therm >= 0.0;
         } else {
             coefficients.nu_visc = config.nu_visc;
             coefficients.alpha_therm = config.alpha_therm;
@@ -180,7 +193,7 @@ namespace DiffFlux
             (temperature_right - temperature_left) / spacing;
         const double thermal_flux = config.use_thermal_diffusion
             ? (-coefficients.alpha_therm * face_density
-               * std::max(heat_capacity, 1.0e-12) * temperature_gradient)
+               * heat_capacity * temperature_gradient)
             : 0.0;
 
         flux.rho = 0.0;
@@ -237,16 +250,8 @@ namespace DiffFlux
         double* charge, double* inverse_mass)
     {
         DiffusionFaceProperties face{};
-        const double velocity_sq_left =
-            (left.mom_u * left.mom_u + left.mom_v * left.mom_v
-             + left.mom_w * left.mom_w) / (left.rho * left.rho);
-        const double velocity_sq_right =
-            (right.mom_u * right.mom_u + right.mom_v * right.mom_v
-             + right.mom_w * right.mom_w) / (right.rho * right.rho);
-        const double internal_left =
-            (left.eng - 0.5 * left.rho * velocity_sq_left) / left.rho;
-        const double internal_right =
-            (right.eng - 0.5 * right.rho * velocity_sq_right) / right.rho;
+        const double internal_left = arch::state::recover(left).internal;
+        const double internal_right = arch::state::recover(right).internal;
 
         face.temperature_left =
             eos.get_temperature(left.rho, internal_left, species_left);
@@ -262,8 +267,13 @@ namespace DiffFlux
             evaluate_diffusion_coefficients_from_eos(
                 eos, species, config, face.density, face_temperature,
                 species_face, charge, inverse_mass);
-        if (face.coefficients.valid && config.use_thermal_diffusion)
+        if (face.coefficients.valid && config.use_thermal_diffusion) {
             face.heat_capacity = eos.get_cv(face.density, face_temperature, species_face);
+            face.coefficients.valid = face.heat_capacity > 0.0 && std::isfinite(face.heat_capacity);
+        }
+        face.coefficients.valid = face.coefficients.valid
+            && face.temperature_left > 0.0 && std::isfinite(face.temperature_left)
+            && face.temperature_right > 0.0 && std::isfinite(face.temperature_right);
         return face;
     }
 
@@ -279,7 +289,8 @@ namespace DiffFlux
         FluidVector& flux, double* species_flux, int species_flux_stride,
         ViscousBasisRotation rotation = {})
     {
-        if (!diffusion_face_is_active(left.rho, right.rho)) return {false, true};
+        if (!diffusion_face_is_active(left.rho, right.rho)
+            || !(spacing > 0.0) || !std::isfinite(spacing)) return {false, false};
         for (int index = 0; index < species_count; ++index) {
             species_left[index] = species_left_source[index * species_source_stride];
             species_right[index] = species_right_source[index * species_source_stride];
@@ -305,7 +316,7 @@ namespace DiffFlux
         for (int direction = 0; direction < dimension; ++direction)
             inverse_dt += 2.0 * maximum_coefficient
                 / (spacing[direction] * spacing[direction]);
-        return 1.0 / std::max(inverse_dt, 1.0e-20);
+        return (inverse_dt > 0.0 ? 1.0 / inverse_dt : diffusion_dt_sentinel());
     }
 
     // Cell-source part of a frozen-coefficient vector-operator row bound.
@@ -362,14 +373,10 @@ namespace DiffFlux
     {
         if (grid.geometry == DiffusionGeometry::Unsupported)
             return {diffusion_dt_sentinel(), false};
-        if (value.rho < 1.0e-12) return {};
+        if (!(value.rho > 0.0) || !std::isfinite(value.rho)) return {diffusion_dt_sentinel(), false};
         for (int index = 0; index < species_count; ++index)
             composition[index] = species_source[index * species_source_stride];
-        const double internal =
-            (value.eng - 0.5 * value.rho
-                 * (std::pow(value.mom_u / value.rho, 2)
-                    + std::pow(value.mom_v / value.rho, 2)
-                    + std::pow(value.mom_w / value.rho, 2))) / value.rho;
+        const double internal = arch::state::recover(value).internal;
         const double temperature =
             eos.get_temperature(value.rho, internal, composition);
         const DiffusionCoefficients coefficients =
@@ -379,7 +386,8 @@ namespace DiffFlux
         if (!coefficients.valid) return {diffusion_dt_sentinel(), false};
 
         const double cell_cv = config.use_thermal_diffusion
-            ? std::max(eos.get_cv(value.rho, temperature, composition), 1.e-12) : 1.;
+            ? eos.get_cv(value.rho, temperature, composition) : 1.;
+        if (!(cell_cv > 0.0) || !std::isfinite(cell_cv)) return {diffusion_dt_sentinel(), false};
         const double volume = GridMetrics::CellVolume(grid, i, j, k);
         const int cell = grid.GetIndex(i, j, k);
         double maximum = 0., inverse_dt = 0.;
@@ -393,7 +401,7 @@ namespace DiffFlux
             for (int side = 0; side < 2; ++side) {
                 const int neighbour = cell + (side ? stride : -stride);
                 const auto adjacent = read_state(neighbour);
-                if (!diffusion_face_is_active(value.rho, adjacent.rho)) continue;
+                if (!diffusion_face_is_active(value.rho, adjacent.rho)) return {diffusion_dt_sentinel(), false};
                 for (int sp = 0; sp < species_count; ++sp)
                     neighbour_composition[sp] = read_state.fraction(sp, neighbour);
                 const auto face = side
@@ -414,7 +422,7 @@ namespace DiffFlux
                     transport = std::max(transport, face.coefficients.D_spec * density_ratio);
                 if (config.use_thermal_diffusion)
                     transport = std::max(transport, face.coefficients.alpha_therm * density_ratio
-                        * std::max(face.heat_capacity, 1.e-12) / cell_cv);
+                        * face.heat_capacity / cell_cv);
                 maximum = std::max(maximum, transport);
                 const double area_per_volume = GridMetrics::FaceArea(grid, direction, i, j, k, side != 0) / volume;
                 inverse_dt += area_per_volume * (transport / spacing + viscosity * connection);
@@ -428,7 +436,7 @@ namespace DiffFlux
         inverse_dt += source_rate;
         if (!std::isfinite(inverse_dt) || !(inverse_dt > 0.))
             return {diffusion_dt_sentinel(), false};
-        return {1. / std::max(inverse_dt, 1.e-20), true};
+        return {1. / inverse_dt, true};
     }
 
     // 1. SFINAE Checks and Coefficient Extraction
@@ -450,8 +458,7 @@ namespace DiffFlux
                 eos, species, make_diffusion_config_view(config),
                 rho, T, Xi, charge.data(), inverse_mass.data());
         if (!coefficients.valid) {
-            std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
-            std::abort();
+            throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
         }
         nu_visc = coefficients.nu_visc;
         alpha_therm = coefficients.alpha_therm;
@@ -469,6 +476,7 @@ namespace DiffFlux
                                std::vector<double>& spec_flux_out,
                                int dir)
     {
+        arch::state::HostFailure failure;
         int n_species = state.GetNumSpecies();
         int stride = (dir == 0) ? 1 : ((dir == 1) ? grid.stride_y : grid.stride_z);
 
@@ -493,7 +501,7 @@ namespace DiffFlux
         if (geometry == DiffusionGeometry::Unsupported) {
             std::cerr << "[FATAL ERROR] Unsupported diffusion geometry: "
                       << grid.geometry << std::endl;
-            std::abort();
+            throw std::runtime_error("Unsupported diffusion geometry");
         }
 
         #pragma omp parallel
@@ -503,39 +511,43 @@ namespace DiffFlux
 
             #pragma omp for schedule(static)
             for (int k = grid.Ks(); k < k_end; ++k) {
-                for (int j = grid.Js(); j < j_end; ++j) {
-                    for (int i = grid.Is(); i < i_end; ++i) {
-                        int idx_R = grid.GetIndex(i, j, k);
-                        int idx_L = idx_R - stride;
+                try {
+                    for (int j = grid.Js(); j < j_end; ++j) {
+                        for (int i = grid.Is(); i < i_end; ++i) {
+                            int idx_R = grid.GetIndex(i, j, k);
+                            int idx_L = idx_R - stride;
 
-                        FluidVector U_L = state.get(idx_L);
-                        FluidVector U_R = state.get(idx_R);
-                        FluidVector F_diff;
-                        const double spacing = diffusion_face_spacing(
-                            geometry, grid.dim, dir, grid.dx1, grid.dx2, grid.dx3,
-                            grid.GetCellCenterX(i), grid.GetCellCenterY(j));
-                        const DiffusionFaceStatus status = evaluate_diffusion_face(
-                            U_L, U_R,
-                            n_species > 0 ? state.mass_fractions.data() + idx_L : nullptr,
-                            n_species > 0 ? state.mass_fractions.data() + idx_R : nullptr,
-                            n_species, grid.GetTotalSize(), spacing,
-                            eos, species, diffusion_config,
-                            Xi_L.data(), Xi_R.data(), Xi_face.data(),
-                            charge.data(), inverse_mass.data(), F_diff,
-                            n_species > 0 ? spec_flux_out.data() + idx_R : nullptr,
-                            grid.GetTotalSize(), do_viscous ? viscous_basis_rotation(
-                                GridMetrics::make_geometry_view(grid), dir, i, j)
-                                : ViscousBasisRotation{});
-                        if (!status.active) continue;
-                        if (!status.valid) {
-                            std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
-                            std::abort();
+                            FluidVector U_L = state.get(idx_L);
+                            FluidVector U_R = state.get(idx_R);
+                            FluidVector F_diff;
+                            const double spacing = diffusion_face_spacing(
+                                geometry, grid.dim, dir, grid.dx1, grid.dx2, grid.dx3,
+                                grid.GetCellCenterX(i), grid.GetCellCenterY(j));
+                            const DiffusionFaceStatus status = evaluate_diffusion_face(
+                                U_L, U_R,
+                                n_species > 0 ? state.mass_fractions.data() + idx_L : nullptr,
+                                n_species > 0 ? state.mass_fractions.data() + idx_R : nullptr,
+                                n_species, grid.GetTotalSize(), spacing,
+                                eos, species, diffusion_config,
+                                Xi_L.data(), Xi_R.data(), Xi_face.data(),
+                                charge.data(), inverse_mass.data(), F_diff,
+                                n_species > 0 ? spec_flux_out.data() + idx_R : nullptr,
+                                grid.GetTotalSize(), do_viscous ? viscous_basis_rotation(
+                                    GridMetrics::make_geometry_view(grid), dir, i, j)
+                                    : ViscousBasisRotation{});
+                            if (!status.valid) {
+                                throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
+                            }
+                            if (!status.active) continue;
+                            flux_out[idx_R] = F_diff;
                         }
-                        flux_out[idx_R] = F_diff;
                     }
-                }
+
+                } catch (...) { failure.capture_current(); }
             }
         }
+
+        failure.rethrow();
     }
 
     // 3. Geometric Source Terms
@@ -554,12 +566,11 @@ namespace DiffFlux
         if (!config.use_viscous_diffusion
             || grid.geometry == DiffusionGeometry::Cartesian) return status;
         const double rho = U.rho;
-        if (rho < 1e-12) return status;
+        if (!(rho > 0.0) || !std::isfinite(rho)) { status.valid = false; return status; }
         const double r = grid.GetCellCenterX(i);
-        if (r < 1e-14) return status;
+        if (r == 0.0) return status;
         status.active = true;
-        const double u_sq = (U.mom_u * U.mom_u + U.mom_v * U.mom_v + U.mom_w * U.mom_w) / (rho * rho);
-        const double e_int = (U.eng - 0.5 * rho * u_sq) / rho;
+        const double e_int = arch::state::recover(U).internal;
         const double temperature = eos.get_temperature(rho, e_int, composition);
         const auto coefficients = evaluate_diffusion_coefficients_from_eos(
             eos, species, config, rho, temperature, composition, charge, inverse_mass);
@@ -573,7 +584,7 @@ namespace DiffFlux
             // derivatives. There are no angular state neighbours to load.
             const double angular_dimensions = grid.geometry == DiffusionGeometry::Spherical ? 2.0 : 1.0;
             delta.mom_u -= dt * angular_dimensions * dynamic_viscosity
-                * (U.mom_u / (rho * r)) * inverse_radius;
+                * ((U.mom_u / rho) / r) * inverse_radius;
             return status;
         }
         const FluidVector velocity = viscous_velocity(U);
@@ -608,6 +619,7 @@ namespace DiffFlux
     inline void add_geometric_sources(std::vector<FluidVector>& dU, const FluidState& state,
                                       const EosType& eos, const Grid& grid, const SimConfig& config, double dt)
     {
+        arch::state::HostFailure failure;
         if (!config.physics.diffusion.use_viscous_diffusion) return;
         if (grid.geometry == "cartesian") return;
 
@@ -624,22 +636,26 @@ namespace DiffFlux
             std::vector<double> charge(species.size()), inverse_mass(species.size());
             #pragma omp for schedule(static)
             for (int k = grid.Ks(); k < grid.Ke(); ++k) {
-                for (int j = grid.Js(); j < grid.Je(); ++j) {
-                    for (int i = grid.Is(); i < grid.Ie(); ++i) {
-                        int idx = grid.GetIndex(i, j, k);
-                        state.get_species_to_buffer(idx, Xi.data());
-                        const auto status = evaluate_geometric_diffusion_cell(
-                            state.get(idx), Xi.data(), eos, species, diffusion_config,
-                            geometry, i, j, k, dt, charge.data(), inverse_mass.data(), dU[idx],
-                            [&state](int cell) { return state.get(cell); });
-                        if (!status.valid) {
-                            std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
-                            std::abort();
+                try {
+                    for (int j = grid.Js(); j < grid.Je(); ++j) {
+                        for (int i = grid.Is(); i < grid.Ie(); ++i) {
+                            int idx = grid.GetIndex(i, j, k);
+                            state.get_species_to_buffer(idx, Xi.data());
+                            const auto status = evaluate_geometric_diffusion_cell(
+                                state.get(idx), Xi.data(), eos, species, diffusion_config,
+                                geometry, i, j, k, dt, charge.data(), inverse_mass.data(), dU[idx],
+                                [&state](int cell) { return state.get(cell); });
+                            if (!status.valid) {
+                throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
+                            }
                         }
                     }
-                }
+
+                } catch (...) { failure.capture_current(); }
             }
         }
+
+        failure.rethrow();
     }
 
     // 4. Operator Evaluation (L_U)
@@ -715,6 +731,7 @@ namespace DiffFlux
     template <typename EosType>
     inline double adaptive_dt_diff(const FluidState &state, const EosType &eos, const Grid &grid, const SimConfig &config, double cfl_number)
     {
+        arch::state::HostFailure failure;
         if (!config.physics.diffusion.use_diffusion)
             return diffusion_dt_sentinel();
 
@@ -747,7 +764,7 @@ namespace DiffFlux
         if (geometry == DiffusionGeometry::Unsupported) {
             std::cerr << "[FATAL ERROR] Unsupported diffusion geometry: "
                       << grid.geometry << std::endl;
-            std::abort();
+            throw std::runtime_error("Unsupported diffusion geometry");
         }
 
     #pragma omp parallel
@@ -760,33 +777,35 @@ namespace DiffFlux
     #pragma omp for schedule(static)
             for (int kj = 0; kj < nk * nj; ++kj)
             {
-                int k = ks + kj / nj;
-                int j = js + kj % nj;
-                for (int i = grid.Is(); i < grid.Ie(); ++i)
-                {
-                    int idx = grid.GetIndex(i, j, k);
-                    const DiffusionDtCandidate candidate =
-                        evaluate_diffusion_dt_candidate(
-                            state.get(idx),
-                            n_species > 0
-                                ? state.mass_fractions.data() + idx : nullptr,
-                            n_species, grid.GetTotalSize(), eos, species,
-                            diffusion_config, geometry_view, i, j, k,
-                            Xi_cache.data(), Xi_neighbour.data(), Xi_face.data(),
-                            charge.data(), inverse_mass.data(), HostDiffusionStateReader{state});
-                    if (!candidate.valid) {
-                        std::cerr << "[FATAL ERROR] Unexpected override values (nu_visc/alpha_therm) found in .par file while using an astrophysical EOS (e.g., HelmEos). Please remove them to enable autonomous stellar diffusion, or disable the stellar network." << std::endl;
-                        std::abort();
+                try {
+                    int k = ks + kj / nj;
+                    int j = js + kj % nj;
+                    for (int i = grid.Is(); i < grid.Ie(); ++i)
+                    {
+                        int idx = grid.GetIndex(i, j, k);
+                        const DiffusionDtCandidate candidate =
+                            evaluate_diffusion_dt_candidate(
+                                state.get(idx),
+                                n_species > 0
+                                    ? state.mass_fractions.data() + idx : nullptr,
+                                n_species, grid.GetTotalSize(), eos, species,
+                                diffusion_config, geometry_view, i, j, k,
+                                Xi_cache.data(), Xi_neighbour.data(), Xi_face.data(),
+                                charge.data(), inverse_mass.data(), HostDiffusionStateReader{state});
+                        if (!candidate.valid) {
+                throw std::runtime_error("Invalid diffusion state, heat capacity or transport coefficient");
+                        }
+                        amr::CellLogicalKey cell_key{};
+                        cell_key.logical_i = i;
+                        cell_key.logical_j = j;
+                        cell_key.logical_k = k;
+                        cell_key.component = 2;
+                        arch::reduction::combine_candidate(
+                            reduction_spec, local_reduction,
+                            {candidate.value, cell_key, true});
                     }
-                    amr::CellLogicalKey cell_key{};
-                    cell_key.logical_i = i;
-                    cell_key.logical_j = j;
-                    cell_key.logical_k = k;
-                    cell_key.component = 2;
-                    arch::reduction::combine_candidate(
-                        reduction_spec, local_reduction,
-                        {candidate.value, cell_key, true});
-                }
+
+                } catch (...) { failure.capture_current(); }
             }
     #pragma omp critical(diffusion_dt_reduction)
             {
@@ -794,7 +813,8 @@ namespace DiffFlux
                     reduction_spec, global_reduction, local_reduction);
             }
         }
-        const auto result = arch::reduction::finalize_reduction(
+        failure.rethrow();
+    const auto result = arch::reduction::finalize_reduction(
             reduction_spec, global_reduction);
         if (result.status != arch::reduction::ReductionStatus::Ok)
             throw std::runtime_error("Invalid diffusion dt reduction");

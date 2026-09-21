@@ -150,17 +150,15 @@ B(dt/2) -> D(dt/2) -> H(dt) -> D(dt/2) -> B(dt/2)
 
 ### 会改变守恒性的保护机制
 
-`perform_stage_update` 在流体 stage 后执行稳健性修复：
+接受阶段共用状态恢复和校验。正且可解析的低密度状态使用 `sml_rho` 兜底，保持速度和组分；
+`min_eint` 可补足正比内能。`max_eint` 是拒绝上界，不作静默截断。零/负密度、非有限量、
+无法从总能量中解析的热能及无效组成明确失败。已移除固定速度上限和全零组分的均匀混合回退。
 
-- 低于 `sml_rho` 的密度会被重置，动量清零并重建能量；
-- 速度模由硬编码的 `1e10` 上限截断；
-- 比内能限制到 `[min_eint, max_eint]`；
-- 负质量分数被截为零，所有分数重新归一化；
-- 当组分和接近零时，安装均匀组分。
-
-这些工程保护在守恒通量更新以外修改状态。运行记录应将修复贡献与守恒量和 L1/L2 指标一起保存。
-
-生产 PPM 路径重构密度、速度、压力和组分，再调用选定 EOS 重建总能量。它对密度和压力取 floor，将组分限制在 `[0,1]` 并归一化界面组分。
+修复贡献按体积与 RK 权重记账，输出到 `state_repairs.txt` 并随格式 5 检查点保存。
+低密度研究应把已有 `sml_rho` 设置到目标解范围以下；叶函数不以此关闭力、CFL 或通量。
+压力不设另一套绝对 floor；重构与共享面通量使用保守限制，reflux 后再次检查状态。
+这些措施不构成任意 AMR/源项/表格 EOS 组合的全局正性证明。
+详见 [P1.5 实施记录](development/P1_5ImplementationReport.zh-CN.md)。
 
 ### 构建复现性与编译期妥协
 
@@ -281,7 +279,6 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `reconstruct` | string | `pcm` | `pcm`、`donor_cell`、`muscl`、`plm`、`ppm` |
 | `limiter` | string | `minmod` | 仅 MUSCL：`minmod`、`superbee`、`vanleer`、`mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`、`RK2/SSPRK2`、`RK3/SSPRK3` |
-| `timeintegrator` | string | — | 仅在 `time_integrator` 缺失时采用的别名 |
 | `cfl` | double | `0.8` | 显式流体 CFL；加载时不检查范围 |
 | `EntropyFix` | bool | `true` | 启用 entropy-fix 平滑 |
 | `EntropyFixCoefficient` | double | `0.1` | 启用 entropy fix 时使用 |
@@ -311,7 +308,7 @@ REGISTER_PROBLEM("RuntimeName", setup_function, init_function);
 | `eos_type` | string | `ideal` | `ideal`、`tabular`、`helmholtz` |
 | `eos_table_path` | string | 空 | tabular/Helmholtz 必需 |
 | `eos_helm_table_path` | string | 空 | 缺项补齐使用的辅助电子表；空值使用已有 Timmes 表 |
-| `gamma` | double | `1.4` | 理想气体 fallback/参考 gamma |
+| `gamma` | double | `1.4` | 理想气体模型 gamma |
 | `gravity_type` | string | `none` | `none`、`external`；`self` 会在构造前由 capability gate 拒绝 |
 | `gravity_g_x/y/z` | expression | `0` | 外部重力分量 |
 | `gravity_G` | expression | `6.6743e-8` | 仅为尚不支持的自重力解析 |
@@ -324,8 +321,7 @@ EOS HDF5，以及原始 Shen EOS2/EOS4 使用的正温度 16 列重子 ASCII 主
 规范化 `eos_components` 可声明 `baryons`、`baryons,electrons_positrons`、
 `baryons,photons` 或 `baryons,electrons_positrons,photons`，最后一项也可写为
 `total`。主机加载器只往 `free_energy` 势补入缺少的电子／正电子或光子，不改
-来源文件、不重复加入离子／库仑项，也不分别拼装压力／能量字段。没有声明时保留
-旧的总表解释。总表与仅缺光子的表不读取辅助电子表；缺电子时，空的
+来源文件、不重复加入离子／库仑项，也不分别拼装压力／能量字段。schema 2 必须声明成分和核平衡属性；缺少声明会拒绝。总表与仅缺光子的表不读取辅助电子表；缺电子时，空的
 `eos_helm_table_path` 解析为 `EOS_toolkit/tables/helmholtz/helm_table.dat`。
 
 可选且必须正、有限的 `baryon_mass_g` 声明固定的 `rho=m_B*n_B` 约定；电子密度
@@ -369,8 +365,6 @@ E/F 常数基准差，不拟合零点。打印的来源 E 保留为独立一致�
 | `use_nse` | bool 或 `auto` | `true` | `true` 要求网络支持 NSE；`false` 禁用；`auto` 按网络能力决定是否启用 |
 | `nseTempThreshold` | double | `4.5e9` | 有限正数，K；true 与 auto 均用严格的 `T > threshold` |
 | `nseDensThreshold` | double | `1e6` | 有限非负数，g/cm3；true 与 auto 均用严格的 `rho > threshold` |
-| `enforce_mass_conservation` | bool | `true` | 已解析并保存；当前 burn 路径尚未消费该开关 |
-| `burn_verbose_level` | int | `0` | 已解析并保存；当前 burn 路径尚未消费该级别 |
 | `ode_solver` | string | `BE_NR` | `BE_NR`、`ROS4` 或 `BD` |
 | `linear_solver` | string | `Auto` | 不区分大小写的 `Auto`、`DenseLU`、`SparseKLU` 或 `cuDSS`（接受 `dense_lu`、`sparse_klu`、`cu_dss` alias）；具体化规则见下文 |
 | `ode_rtol` | double | `1e-4` | ODE 相对容差 |
@@ -381,17 +375,15 @@ E/F 常数基准差，不拟合零点。打印的来源 E 保留为独立一致�
 | `ode_dt_fac_max` | double | `2.0` | 增长系数 |
 | `ode_dt_fac_min` | double | `0.1` | 缩小系数 |
 | `ode_initial_dt_frac` | double | `1e-3` | 初始内部子步比例 |
-| `ode_use_numerical_jac` | bool | `false` | 已存储；依赖前验证具体 solver 是否使用 |
-| `ode_freeze_jacobian` | bool | `false` | 已存储；依赖前验证具体 solver 是否使用 |
-| `dt_init` | custom double | `1e-16` | 启用燃烧时的首个宏时间步 |
-| `dt_min` | custom double | `1e-20` | 宏时间步终止阈值 |
-| `tstep_change_factor` | custom double | `1.2` | 第一步后的最大宏步增长 |
+| `dt_init` | double | `1e-16` | 启用燃烧时的首个宏时间步 |
+| `dt_min` | double | `1e-20` | 宏时间步终止阈值 |
+| `tstep_change_factor` | double | `1.2` | 第一步后的最大宏步增长 |
 
 `ROS4` 使用匹配的四 stage、四阶、L-stable tableau。每个内部步计算一次 Jacobian，分解一次 `I - gamma*dt*J` 并由全部 stage 复用。在 aprox13/Helmholtz 单区测试中，它通过当前 BE_NR 跨求解器容差。生产研究仍需给出子步/容差收敛序列，并比较核素和能量历史，尤其是在扩展网络或 EOS 耦合时。
 
 BE_NR 将非线性收敛与时间精度分开：Newton 修正量先满足 ODE 误差尺度的十分之一，再以 backward-Euler 与梯形端点更新之差估计二阶局部误差；接受的解仍是一阶 backward Euler。`ode_rtol`/`ode_atol` 控制该局部估计，不构成全局相对误差上界。三种 ODE 共用固定密度第一定律的 RHS 与 Jacobian，包含 EOS 内能的组分依赖和比热导数。具体方程与能量交接见[网络技术说明](physics/TimmesNetworks.zh-CN.md#4-温度方程jacobian-与-lhs-约定)，独立时间/能量检查见[燃烧验证](../validation/burn/README.zh-CN.md)。
 
-最后三个参数是 custom-map 控制项。`xc12` 等网络专用初始分数由所选网络的 setup 实现消费。
+`dt_init`、`dt_min`、`tstep_change_factor` 已登记为标准时间步控制项。`xc12` 等网络专用初始分数由所选网络的 setup 实现消费。
 
 ### 扩散
 
@@ -670,7 +662,7 @@ void evaluate_state(eos_state_t &state) const;
 const SpeciesManager *get_species_manager() const;
 ```
 
-`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、比内能、`cv` 和声速必须为正。`dp_drho` 表示 `(dP/drho)_e`，`dp_dT` 表示 `(dP/dT)_rho`。自由能 tabular 策略从同一个插值 Helmholtz 势导出这些量；旧 direct 策略使用已提供的导数数据集，或采用受表边界约束的局部差分，而不是返回零。详见[规范化 HDF5 契约](../src/physics/eos/TabularEOS.zh-CN.md)。
+`evaluate_state` 是规范的热力学状态契约。对每个有效 `(rho,T,X)` 输入，它必须填充有限的 `P`、`E`、`cv`、`sound_speed`、`dp_drho` 和 `dp_dT`；其中压力、比内能、`cv` 和声速必须为正。`dp_drho` 表示 `(dP/drho)_T`，`dp_dT` 表示 `(dP/dT)_rho`。自由能 tabular 策略从同一个插值 Helmholtz 势导出这些量；原生 EOSDriver 表保留来源插值函数的导数；规范化表仅接受严格自由能契约。独立的 `get_dp_drho_e` 方法才表示固定比内能的导数。详见[规范化 HDF5 契约](../src/physics/eos/TabularEOS.zh-CN.md)。
 
 所有策略都从 `eos_Utils.h` 中的 `eos_utils::get_isentropic_state_at_pressure_factor` 获得同一套固定组分等熵算法。它用 RK4 积分
 
@@ -687,9 +679,6 @@ d ln(T) / d ln(rho) |_s,X = (dP/dT)_rho,X / (rho cv)
 从 `Physical::Gravity::IGravityPolicy` 派生：
 
 ```cpp
-virtual void update_field(
-    const FluidState&, const Grid&, void *execution_stream = nullptr) const = 0;
-
 virtual void add_sources_on_patch(
     std::vector<FluidVector> &dU,
     const FluidState&, const Grid&, double dt,
@@ -847,6 +836,9 @@ ARCH 检查点保存继续模拟所需的完整状态，两个后端共用读取
 之前被拒绝。
 
 属性包括 `checkpoint_version`、`time`、`step`、`chk_index`、`plt_index`、`dim`、`geometry`、`num_species`、`cells_per_block`、`dt_old`、`dt_burn`、`resume_after_regrid`、`eos_type`、`ideal_gamma`、`burn_enabled`、`active_network`、`nse_enabled`、`eos_table_path` 和 `eos_table_sha256`。checkpoint 中的 `eos_type` 记录已解析的规范策略（`ideal`、`helmholtz`、`tabular3d` 或 `tabular4d`），因此自动识别出的表 rank 属于 restart 身份，而不是沿用配置中的原始 `tabular` 拼写。燃烧关闭时 `active_network` 必须为 `none`。时间步字段分别恢复增长控制、下一宏步携带的燃烧限制及循环阶段，避免重复执行已完成的 regrid 或按步输出。表路径仅用于审计；兼容性按 SHA-256 内容身份判断，因此同一份表可以在不同安装位置之间移动。表加载器会在加载前后计算摘要，并将缓存 owner 绑定到该摘要；传给每次 checkpoint 的不可变身份描述的是 EOS owner 实际驻留的字节，而不是稍后重新读取路径的结果。
+
+格式 5 另外要求 `state_controls`（状态下限与时间控制身份）、`state_repairs`、
+触发位置/块/阶段/时间属性。旧格式不兼容；恢复前校验全部状态和账本，再替换 AMR 网格。
 
 对补齐组件后的 EOS，该身份还包含来源解释与实际使用的电子补充表，不只是主表
 文件的散列值。加载前后核对的是整个有效来源身份；更换辅助表也会使身份改变。

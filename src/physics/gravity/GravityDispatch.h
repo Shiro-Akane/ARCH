@@ -14,7 +14,6 @@
 #include <string>
 
 #include "physics/gravity/ExternalGravity.h"
-#include "physics/gravity/GravityNone.h"
 
 #include "data/GlobalDefs.h"
 #include "driver/dispatch/capability/ResolvedExecutionPlan.h"
@@ -23,6 +22,12 @@ namespace Physical
 {
     namespace Gravity
     {
+        // The disabled policy is owned by its only construction site.
+        struct GravityNone final : IGravityPolicy {
+            void add_sources_on_patch(std::vector<FluidVector>&, const FluidState&,
+                const Grid&, double, void* = nullptr) const override {}
+        };
+
         /**
          * @brief Factory for gravity policy
          * @return std::unique_ptr<IGravityPolicy>

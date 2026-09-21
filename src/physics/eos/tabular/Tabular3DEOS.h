@@ -50,8 +50,6 @@ struct BasicTabular3DEOSView
     const double *table_dP_drho; // Optional precomputed pressure-density derivative.
     const double *table_dP_dT;   // Optional precomputed pressure-temperature derivative.
 
-    bool uses_free_energy = false;
-    bool strict_domain = false;
     double energy_reference_shift = 0.0;
     std::array<const double*, tabular_eos::FieldCount> free_energy_fields{};
     SpeciesView specs{};
@@ -72,11 +70,7 @@ struct BasicTabular3DEOSView
     // copy.  Owners and Host views leave this null; Host failures still throw.
     int* device_error_status = nullptr;
 
-    // Boltzmann constant in CGS units, erg/K.
-    static constexpr double k_B_cgs = arch::constants::statistical::cgs::boltzmann;
-    static constexpr double m_u_cgs = arch::constants::atomic::cgs::atomic_mass_unit;
-
-    // Domain checks and analytic ideal-gas fallback.
+    // Strict domains apply to both native and free-energy sources.
 
     ARCH_INLINE bool is_out_of_bounds(double log_rho, double log_T, double X) const
     {
@@ -121,7 +115,7 @@ struct BasicTabular3DEOSView
         state.dp_de_rho = state.dp_dT / state.cv;
         state.dp_drho_e = pressure_rho - state.dp_de_rho * energy_rho;
         const double cs2 = state.dp_drho_e
-            + state.dp_de_rho * state.pressure / (rho * rho);
+            + (state.dp_de_rho / rho) * (state.pressure / rho);
         state.sound_speed = std::sqrt(cs2);
         state.gamma1 = rho * cs2 / state.pressure;
         if (!(state.pressure > 0.0) || !(state.energy > 0.0)
@@ -204,30 +198,9 @@ struct BasicTabular3DEOSView
         const double temperature = std::pow(10.0, root);
         const double recovered = interpolate_3d(field, rho, temperature, x);
         if (!std::isfinite(recovered)
-            || std::abs(recovered - energy) > 2.0e-12 * std::max(std::abs(energy), 1.0))
+            || std::abs(recovered - energy) > 2.0e-12 * std::max(std::abs(energy), std::abs(recovered)))
             return native_failure(tabular_eos::FreeEnergyStatus::invalid_temperature_inversion);
         return temperature;
-    }
-
-    ARCH_INLINE double fallback_gamma() const { return 5.0 / 3.0; } // Monatomic ideal-gas fallback.
-
-    ARCH_INLINE double fallback_pressure(double rho, double e) const
-    {
-        return rho * e * (fallback_gamma() - 1.0);
-    }
-
-    ARCH_INLINE double fallback_temperature(double e, const double *Xi) const
-    {
-        // Abar=1 represents pure hydrogen when no SpeciesManager is attached.
-        double Abar = (specs.count > 0) ? specs.calc_Abar(Xi) : 1.0;
-        double R_spec = k_B_cgs / (Abar * m_u_cgs);
-        return e * (fallback_gamma() - 1.0) / R_spec;
-    }
-
-    ARCH_INLINE double fallback_sound_speed(double rho, double e) const
-    {
-        double p = fallback_pressure(rho, e);
-        return std::sqrt(fallback_gamma() * p / rho);
     }
 
     // Trilinear interpolation in log(rho), log(T), and composition coordinate.
@@ -239,8 +212,6 @@ struct BasicTabular3DEOSView
     {
         if (native_direct && (!(rho > 0.0) || !(T > 0.0)))
             return native_failure(tabular_eos::FreeEnergyStatus::invalid_native_domain);
-        if (!native_direct && (rho <= 1e-12 || T <= 1e-12))
-            return 0.0;
 
         double x = log10(rho);
         double y = log10(T);
@@ -321,7 +292,7 @@ struct BasicTabular3DEOSView
         double rho, double T, double composition) const
     {
         using Status = tabular_eos::FreeEnergyStatus;
-        if (!uses_free_energy || n_rho < 2 || n_T < 2 || n_X < 2 ||
+        if (native_direct || n_rho < 2 || n_T < 2 || n_X < 2 ||
             !(dlog_rho > 0.0) || !(dlog_T > 0.0) || !(dX > 0.0) ||
             !std::isfinite(rho) || !std::isfinite(T) || !std::isfinite(composition) ||
             !(rho > 0.0) || !(T > 0.0) ||
@@ -396,10 +367,8 @@ struct BasicTabular3DEOSView
         double rho, double T, double composition,
         eos_utils::LinearCompositionDerivatives* derivatives = nullptr) const
     {
-        const double log_rho = strict_domain
-            ? std::max(log_rho_min, std::min(std::log10(rho), log_rho_max)) : std::log10(rho);
-        const double log_temperature = strict_domain
-            ? std::max(log_T_min, std::min(std::log10(T), log_T_max)) : std::log10(T);
+        const double log_rho = std::max(log_rho_min, std::min(std::log10(rho), log_rho_max));
+        const double log_temperature = std::max(log_T_min, std::min(std::log10(T), log_T_max));
         int i = static_cast<int>((log_rho - log_rho_min) / dlog_rho);
         int j = static_cast<int>((log_temperature - log_T_min) / dlog_T);
         int k = static_cast<int>((composition - X_min) / dX);
@@ -407,16 +376,15 @@ struct BasicTabular3DEOSView
         j = std::max(0, std::min(j, n_T - 2));
         k = std::max(0, std::min(k, n_X - 2));
         const auto composition_axis = tabular_eos::locate_axis(
-            composition, n_X, X_min, dX, strict_domain ? axis_nodes[2] : nullptr);
-        if (strict_domain) k = composition_axis.lower;
-        const double composition_width = strict_domain ? composition_axis.width : dX;
+            composition, n_X, X_min, dX, axis_nodes[2]);
+        k = composition_axis.lower;
+        const double composition_width = composition_axis.width;
 
         const double tx =
             (log_rho - (log_rho_min + i * dlog_rho)) / dlog_rho;
         const double ty =
             (log_temperature - (log_T_min + j * dlog_T)) / dlog_T;
-        const double tc = strict_domain ? composition_axis.fraction
-            : (composition - (X_min + k * dX)) / dX;
+        const double tc = composition_axis.fraction;
         const std::array<std::size_t, 4> lower_corners{
             free_energy_index(i, j, k),
             free_energy_index(i, j + 1, k),
@@ -447,14 +415,14 @@ struct BasicTabular3DEOSView
     ARCH_INLINE tabular_eos::FreeEnergyResult free_energy_result(
         double rho, double T, double composition) const
     {
-        if (strict_domain) {
+        {
             const auto support = strict_support(rho, T, composition);
             if (support != tabular_eos::FreeEnergyStatus::success)
                 return tabular_eos::free_energy_failure(support);
         }
         return tabular_eos::evaluate_thermodynamics(
             interpolate_free_energy(rho, T, composition), rho, T,
-            strict_domain ? energy_reference_shift : 0.0);
+            energy_reference_shift);
     }
 
     ARCH_HEAVY_INLINE tabular_eos::ThermodynamicState free_energy_state(
@@ -471,6 +439,8 @@ struct BasicTabular3DEOSView
         // An explicit target species selects its mass fraction directly.
         if (target_species_id >= 0)
         {
+            if (!Xi || target_species_id >= specs.count)
+                return native_failure(tabular_eos::FreeEnergyStatus::invalid_native_domain);
             return Xi[target_species_id];
         }
 
@@ -480,12 +450,11 @@ struct BasicTabular3DEOSView
             return specs.calc_Ye(Xi);
         }
 
-        // Ye=0.5 is the neutral symmetric-matter fallback without metadata.
-        return 0.5;
+        // Composition metadata is required; no neutral-matter value is guessed.
+        return native_failure(tabular_eos::FreeEnergyStatus::invalid_native_domain);
     }
 
-    // Linear coordinates are the selected table composition and sum(X/A).
-    // The latter supplies the declared out-of-table ideal-gas closure.
+    // Linear composition coordinates and their species chain rule.
     ARCH_INLINE std::array<double, 2> composition_weights(int species) const
     {
         const double inverse_a = species < specs.count ? 1.0 / specs.get_A(species) : 0.0;
@@ -498,54 +467,28 @@ struct BasicTabular3DEOSView
         double rho, double T, const double* Xi) const
     {
         eos_utils::LinearCompositionDerivatives d{};
-        if (strict_domain && !native_direct) {
+        if (!native_direct) {
             const auto state = free_energy_state(rho, T, get_target_X(Xi));
             if (!std::isfinite(state.energy)) {
                 d.energy.fill(state.energy); d.energy_temperature.fill(state.energy);
                 d.cv.fill(state.energy); d.energy_hessian.fill(state.energy);
-                d.cv_temperature = state.energy;
+                d.cv_temperature=state.energy;
                 return d;
             }
             interpolate_free_energy(rho, T, get_target_X(Xi), &d);
-            return d;
-        }
-        if (native_direct) {
+        } else {
             const auto state = native_state(rho, T, Xi);
             if (!std::isfinite(state.energy)) {
-                d.energy.fill(state.energy);
-                d.energy_temperature.fill(state.energy);
-                d.cv.fill(state.energy);
-                d.energy_hessian.fill(state.energy);
-                d.cv_temperature = state.energy;
+                d.energy.fill(state.energy); d.energy_temperature.fill(state.energy);
+                d.cv.fill(state.energy); d.energy_hessian.fill(state.energy);
+                d.cv_temperature=state.energy;
                 return d;
             }
-        } else if (rho <= 1e-12 || T <= 1e-12) return d;
-        const double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(T), X)) {
-            double y = 0.0;
-            for (int i = 0; i < specs.count; ++i) y += Xi[i] / specs.get_A(i);
-            if (y > 1e-16) {
-                d.cv[1] = k_B_cgs / (m_u_cgs * (fallback_gamma() - 1.0));
-                d.energy[1] = T * d.cv[1];
-                d.energy_temperature[1] = d.cv[1];
-            }
-        } else if (uses_free_energy) {
-            const auto f = interpolate_free_energy(rho, T, X, &d);
-            const auto state = tabular_eos::checked_thermodynamics(
-                tabular_eos::evaluate_thermodynamics(f, rho, T), device_error_status);
-            if (!std::isfinite(state.energy)) d.energy.fill(state.energy);
-        } else {
-            double capacity = 0.0;
-            const double energy = interpolate_3d(table_E, rho, T, X,
-                &d.energy[0], &capacity,
-                &d.energy_temperature[0], &d.energy_hessian[0]);
-            if (native_direct) {
-                d.cv[0] = d.energy_temperature[0];
-                d.cv_temperature = capacity
-                    * (capacity / (energy - energy_transform.offset) - 1.0 / T);
-            } else {
-                interpolate_3d(table_cv, rho, T, X, &d.cv[0], &d.cv_temperature);
-            }
+            double capacity=0.0;
+            const double energy=interpolate_3d(table_E,rho,T,get_target_X(Xi),
+                &d.energy[0],&capacity,&d.energy_temperature[0],&d.energy_hessian[0]);
+            d.cv[0]=d.energy_temperature[0];
+            d.cv_temperature=capacity*(capacity/(energy-energy_transform.offset)-1.0/T);
         }
         return d;
     }
@@ -562,138 +505,33 @@ struct BasicTabular3DEOSView
 
     ARCH_INLINE double get_pressure_from_rho_T(double rho, double T, const double *Xi) const
     {
-if (native_direct) return native_state(rho, T, Xi).pressure;
-        if (strict_domain) return free_energy_state(rho, T, get_target_X(Xi)).pressure;
-        if (rho <= 1e-12 || T <= 1e-12)
-            return 0.0;
-        double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
-        {
-            double e = get_eint_from_T(rho, T, Xi);
-            return fallback_pressure(rho, e);
-        }
-        return uses_free_energy ? free_energy_state(rho, T, X).pressure :
-               interpolate_3d(table_P, rho, T, X);
+        if (native_direct) return native_state(rho, T, Xi).pressure;
+        return free_energy_state(rho, T, get_target_X(Xi)).pressure;
     }
 
     ARCH_INLINE double get_pressure_from_rho_e(double rho, double e, const double *Xi) const
     {
-        if (native_direct)
-return native_state(rho, native_temperature(rho, e, Xi), Xi).pressure;
-        if (strict_domain) return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).pressure;
-        if (rho <= 1e-12 || e <= 1e-12)
-            return 0.0;
-        double T = get_temperature(rho, e, Xi);
-        return get_pressure_from_rho_T(rho, T, Xi);
+        if (native_direct) return native_state(rho, native_temperature(rho, e, Xi), Xi).pressure;
+        return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).pressure;
     }
 
     ARCH_INLINE double get_eint_from_T(double rho, double T_target, const double *Xi) const
     {
-if (native_direct) return native_state(rho, T_target, Xi).energy;
-        if (strict_domain) return free_energy_state(rho, T_target, get_target_X(Xi)).energy;
-        if (rho <= 1e-12 || T_target <= 1e-12)
-            return 0.0;
-
-        double X = get_target_X(Xi);
-
-        if (is_out_of_bounds(std::log10(rho), std::log10(T_target), X))
-        {
-            double Abar = (specs.count > 0) ? specs.calc_Abar(Xi) : 1.0;
-            double R_spec = k_B_cgs / (Abar * m_u_cgs);
-            return T_target * R_spec / (fallback_gamma() - 1.0);
-        }
-
-        return uses_free_energy ? free_energy_state(rho, T_target, X).energy :
-               interpolate_3d(table_E, rho, T_target, X);
+        if (native_direct) return native_state(rho, T_target, Xi).energy;
+        return free_energy_state(rho, T_target, get_target_X(Xi)).energy;
     }
 
     ARCH_INLINE double get_cv(double rho, double T_target, const double *Xi) const
     {
-if (native_direct) return native_state(rho, T_target, Xi).cv;
-        if (strict_domain) return free_energy_state(rho, T_target, get_target_X(Xi)).cv;
-        if (rho <= 1e-12 || T_target <= 1e-12)
-            return 0.0;
-
-        double X = get_target_X(Xi);
-
-        if (is_out_of_bounds(std::log10(rho), std::log10(T_target), X))
-        {
-            double Abar = (specs.count > 0) ? specs.calc_Abar(Xi) : 1.0;
-            double R_spec = k_B_cgs / (Abar * m_u_cgs);
-            return R_spec / (fallback_gamma() - 1.0);
-        }
-
-        return uses_free_energy ? free_energy_state(rho, T_target, X).cv :
-               interpolate_3d(table_cv, rho, T_target, X);
+        if (native_direct) return native_state(rho, T_target, Xi).cv;
+        return free_energy_state(rho, T_target, get_target_X(Xi)).cv;
     }
 
     ARCH_HEAVY_INLINE double get_temperature(
         double rho, double e, const double *Xi) const
     {
-if (native_direct) return native_temperature(rho, e, Xi);
-        if (strict_domain) return strict_temperature(rho, e, Xi);
-        if (rho <= 1e-12 || e <= 1e-12)
-            return 0.0;
-
-        double X = get_target_X(Xi);
-        double T_min = std::pow(10, log_T_min);
-        double T_max = std::pow(10, log_T_max);
-
-        // Out of bounds check for density or composition
-        if (std::log10(rho) < log_rho_min || std::log10(rho) > log_rho_max ||
-            X < X_min || X > X_max)
-        {
-            return fallback_temperature(e, Xi);
-        }
-
-        // Fast boundary check: if e is below the minimum table energy, return T_min
-        double e_min_table = uses_free_energy ? free_energy_state(rho, T_min, X).energy :
-                             interpolate_3d(table_E, rho, T_min, X);
-        if (e <= e_min_table) {
-            return T_min;
-        }
-
-        // Newton-Raphson iteration
-        double T_guess = 1e8; // reasonable astrophysics start
-        const int max_iters = 20;
-        const double tol = 1e-14;
-
-        for (int i = 0; i < max_iters; ++i) {
-            T_guess = std::max(T_min, std::min(T_guess, T_max));
-
-            double e_eval, cv_eval;
-            if (uses_free_energy) {
-                const auto thermal = free_energy_state(rho, T_guess, X);
-                e_eval = thermal.energy;
-                cv_eval = thermal.cv;
-            } else {
-                e_eval = interpolate_3d(table_E, rho, T_guess, X);
-                cv_eval = interpolate_3d(table_cv, rho, T_guess, X);
-            }
-
-            if (cv_eval <= 0.0) {
-                // Finite difference fallback
-                double dT_fd = T_guess * 0.01;
-                double e_plus = uses_free_energy ?
-                    free_energy_state(rho, T_guess + dT_fd, X).energy :
-                    interpolate_3d(table_E, rho, T_guess + dT_fd, X);
-                cv_eval = (e_plus - e_eval) / dT_fd;
-                if (cv_eval <= 0.0) cv_eval = e_eval / T_guess;
-            }
-
-            double f = e_eval - e;
-            double dT = -f / cv_eval;
-
-            // Limit step size to avoid divergence (max 50% change)
-            if (dT > 0.5 * T_guess) dT = 0.5 * T_guess;
-            if (dT < -0.5 * T_guess) dT = -0.5 * T_guess;
-
-            T_guess += dT;
-
-            if (std::abs(dT) <= tol * std::max(std::abs(T_guess), 1.0)) break;
-        }
-
-        return T_guess;
+        if (native_direct) return native_temperature(rho, e, Xi);
+        return strict_temperature(rho, e, Xi);
     }
 
     ARCH_INLINE double get_pressure(const FluidVector &U, const double *Xi) const
@@ -704,121 +542,46 @@ if (native_direct) return native_temperature(rho, e, Xi);
 
     ARCH_INLINE double get_sound_speed(const FluidVector &U, double p, const double *Xi) const
     {
-        double e_int = eos_utils::extract_specific_internal_energy(U);
-        if (native_direct)
-return native_state(U.rho, native_temperature(U.rho, e_int, Xi), Xi).sound_speed;
-        if (strict_domain) return free_energy_state(U.rho, strict_temperature(U.rho, e_int, Xi), get_target_X(Xi)).sound_speed;
-        if (U.rho <= 1e-12 || e_int <= 1e-12)
-            return 0.0;
-
-        double X = get_target_X(Xi);
-        double T = get_temperature(U.rho, e_int, Xi);
-        if (is_out_of_bounds(std::log10(U.rho), std::log10(T), X))
-        {
-            return fallback_sound_speed(U.rho, e_int);
-        }
-        return uses_free_energy ? free_energy_state(U.rho, T, X).sound_speed :
-               interpolate_3d(table_cs, U.rho, T, X);
+        const double e = eos_utils::extract_specific_internal_energy(U);
+        if (native_direct) return native_state(U.rho, native_temperature(U.rho, e, Xi), Xi).sound_speed;
+        return free_energy_state(U.rho, strict_temperature(U.rho, e, Xi), get_target_X(Xi)).sound_speed;
     }
 
     ARCH_INLINE double get_gamma(const double *Xi, double rho = 0.0, double e = 0.0) const
     {
-        if (native_direct)
-return native_state(rho, native_temperature(rho, e, Xi), Xi).gamma1;
-        if (strict_domain) return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).gamma1;
-        if (rho < 1e-12 || e < 1e-12)
-            return fallback_gamma();
-        double p = get_pressure_from_rho_e(rho, e, Xi);
-        if (p < 1e-12)
-            return fallback_gamma();
-
-        double X = get_target_X(Xi);
-        double T = get_temperature(rho, e, Xi);
-        const double sound_speed = get_sound_speed_from_rho_T(rho, T, Xi);
-        return rho * sound_speed * sound_speed / p;
+        if (native_direct) return native_state(rho, native_temperature(rho, e, Xi), Xi).gamma1;
+        return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).gamma1;
     }
 
     ARCH_INLINE double get_sound_speed_from_rho_T(double rho, double T, const double *Xi) const
     {
-if (native_direct) return native_state(rho, T, Xi).sound_speed;
-        if (strict_domain) return free_energy_state(rho, T, get_target_X(Xi)).sound_speed;
-        double X = get_target_X(Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
-        {
-            double e = get_eint_from_T(rho, T, Xi);
-            return fallback_sound_speed(rho, e);
-        }
-        return uses_free_energy ? free_energy_state(rho, T, X).sound_speed :
-               interpolate_3d(table_cs, rho, T, X);
+        if (native_direct) return native_state(rho, T, Xi).sound_speed;
+        return free_energy_state(rho, T, get_target_X(Xi)).sound_speed;
     }
 
     // Derivative interface using table data when present and finite differences otherwise.
     ARCH_INLINE double get_dp_drho_e(double rho, double e, const double *Xi) const
     {
-        if (native_direct)
-return native_state(rho, native_temperature(rho, e, Xi), Xi).dp_drho_e;
-        if (strict_domain) return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).dp_drho_e;
-        double X = get_target_X(Xi);
-        double T = get_temperature(rho, e, Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
-        {
-            return e * (fallback_gamma() - 1.0); // Ideal-gas (dP/drho)_e.
-        }
-
-        if (uses_free_energy)
-            return free_energy_state(rho, T, X).dp_drho_e;
-        if (table_dP_drho)
-            return interpolate_3d(table_dP_drho, rho, T, X);
-
-        return eos_utils::finite_difference_dp_drho_e(
-            *this, rho, e, Xi, std::pow(10.0, log_rho_min),
-            std::pow(10.0, log_rho_max));
+        if (native_direct) return native_state(rho, native_temperature(rho, e, Xi), Xi).dp_drho_e;
+        return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).dp_drho_e;
     }
 
     ARCH_INLINE double get_dp_de_rho(double rho, double e, const double *Xi) const
     {
-        if (native_direct)
-return native_state(rho, native_temperature(rho, e, Xi), Xi).dp_de_rho;
-        if (strict_domain) return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).dp_de_rho;
-        double X = get_target_X(Xi);
-        double T = get_temperature(rho, e, Xi);
-        if (is_out_of_bounds(std::log10(rho), std::log10(T), X))
-        {
-            return rho * (fallback_gamma() - 1.0); // Ideal-gas (dP/de)_rho.
-        }
-        if (uses_free_energy)
-            return free_energy_state(rho, T, X).dp_de_rho;
-        if (table_dP_dT && table_cv) {
-            double dp_dT = interpolate_3d(table_dP_dT, rho, T, X);
-            double cv = interpolate_3d(table_cv, rho, T, X);
-            if (cv > 0.0) return dp_dT / cv;
-        }
-
-        double de = e * 0.001;
-        double T_plus = get_temperature(rho, e + de, Xi);
-        double T_minus = get_temperature(rho, e - de, Xi);
-        return (interpolate_3d(table_P, rho, T_plus, X) -
-                interpolate_3d(table_P, rho, T_minus, X)) /
-               (2.0 * de);
+        if (native_direct) return native_state(rho, native_temperature(rho, e, Xi), Xi).dp_de_rho;
+        return free_energy_state(rho, strict_temperature(rho, e, Xi), get_target_X(Xi)).dp_de_rho;
     }
     // Damped Newton inversion from pressure to total-energy density.
     ARCH_INLINE double get_total_energy_primitive(double rho, double u, double v, double w, double p, const double *Xi) const
     {
-        if (native_direct) {
-            const double temperature = native_temperature(rho, p, Xi, true);
-            return rho * (get_eint_from_T(rho, temperature, Xi)
-                + 0.5 * (u*u + v*v + w*w));
-        }
-        if (strict_domain) {
-            const double T = strict_temperature(rho, p, Xi, true);
-            return rho * (get_eint_from_T(rho, T, Xi) + 0.5 * (u*u + v*v + w*w));
-        }
-        return eos_utils::solve_total_energy(*this, rho, u, v, w, p, Xi);
+        const double T = native_direct ? native_temperature(rho, p, Xi, true)
+                                        : strict_temperature(rho, p, Xi, true);
+        return rho * get_eint_from_T(rho, T, Xi) + eos_utils::calc_kinetic_energy(rho, u, v, w);
     }
 
     ARCH_INLINE double get_eta(double rho, double T, const double* Xi) const
     {
-        if (strict_domain && !native_direct) {
+        if (!native_direct) {
             const auto state = free_energy_state(rho, T, get_target_X(Xi));
             if (!std::isfinite(state.energy)) return state.energy;
         }
@@ -828,68 +591,18 @@ return native_state(rho, native_temperature(rho, e, Xi), Xi).dp_de_rho;
     // Pipeline: evaluate_state
     ARCH_INLINE void evaluate_state(eos_state_t& state) const {
         if (native_direct) {
-            const auto native = native_state(state.rho, state.T, state.Xi);
-            state.P = native.pressure;
-            state.E = native.energy;
-            state.cv = native.cv;
-            state.sound_speed = native.sound_speed;
-            state.dp_drho = native.dp_drho_e;
-            state.dp_dT = native.dp_dT;
-            state.pele = state.xne = state.eta = 0.0;
-            return;
-        }
-        if (strict_domain) {
-            const auto thermal = free_energy_state(state.rho, state.T, get_target_X(state.Xi));
-            state.P = thermal.pressure; state.E = thermal.energy; state.cv = thermal.cv;
-            state.sound_speed = thermal.sound_speed; state.dp_drho = thermal.dp_drho_e;
-            state.dp_dT = thermal.dp_dT;
-            state.pele = state.xne = state.eta = 0.0;
-            return;
-        }
-        // 1. Core Thermodynamics (P, E, cv)
-        state.P = get_pressure_from_rho_T(state.rho, state.T, state.Xi);
-        state.E = get_eint_from_T(state.rho, state.T, state.Xi);
-        state.cv = get_cv(state.rho, state.T, state.Xi);
-
-        // 2. Derivatives and Sound Speed
-        state.sound_speed = get_sound_speed_from_rho_T(state.rho, state.T, state.Xi);
-        state.dp_drho = get_dp_drho_e(state.rho, state.E, state.Xi);
-        const double X = get_target_X(state.Xi);
-        const bool use_fallback = is_out_of_bounds(
-            std::log10(state.rho), std::log10(state.T), X);
-        if (use_fallback) {
-            const double Abar = (specs.count > 0)
-                ? specs.calc_Abar(state.Xi) : 1.0;
-            const double R_spec = k_B_cgs / (Abar * m_u_cgs);
-            state.dp_dT = state.rho * R_spec;
-        } else if (uses_free_energy) {
-            state.dp_dT =
-                free_energy_state(state.rho, state.T, X).dp_dT;
-        } else if (table_dP_dT) {
-            state.dp_dT = interpolate_3d(table_dP_dT, state.rho, state.T, X);
+            const auto t = native_state(state.rho, state.T, state.Xi);
+            state.P=t.pressure; state.E=t.energy; state.cv=t.cv;
+            state.sound_speed=t.sound_speed; state.dp_drho=t.dp_drho_e; state.dp_dT=t.dp_dT;
         } else {
-            const double dT = std::max(std::abs(state.T) * 1.0e-4, 1.0e-8);
-            const double table_T_min = std::pow(10.0, log_T_min);
-            const double table_T_max = std::pow(10.0, log_T_max);
-            const double lower_T = std::max(state.T - dT, table_T_min);
-            const double upper_T = std::min(state.T + dT, table_T_max);
-            const double lower_P = interpolate_3d(
-                table_P, state.rho, lower_T, X);
-            const double upper_P = interpolate_3d(
-                table_P, state.rho, upper_T, X);
-            state.dp_dT = (upper_P - lower_P) / (upper_T - lower_T);
+            const auto t = free_energy_state(state.rho, state.T, get_target_X(state.Xi));
+            state.P=t.pressure; state.E=t.energy; state.cv=t.cv;
+            state.sound_speed=t.sound_speed; state.dp_drho=t.dp_drho_e; state.dp_dT=t.dp_dT;
         }
-
-        // 3. Deep Physical Variables (Unused in Tabular)
-        state.pele = 0.0;
-        state.xne = 0.0;
-        state.eta = 0.0;
+        state.pele = state.xne = state.eta = 0.0;
     }
 
 };
-
-
-
 
 struct Tabular3DEOSHostView : BasicTabular3DEOSView<SpeciesHostView>
 {

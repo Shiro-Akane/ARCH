@@ -27,9 +27,9 @@ ARCH_HOST_DEVICE inline void add_geometric_source_cell(
     using GridMetrics::Geometry;
     if (grid.geometry == Geometry::Cartesian) return;
     const double r = grid.GetCellCenterX(i);
-    if (r < 1e-14) return;
+    if (r == 0.0) return;
     const double p = eos.get_pressure(U, composition);
-    const double rho = std::max(U.rho, 1e-12);
+    const double rho = U.rho;
     const double v_x = U.mom_u / rho;
     const double v_y = U.mom_v / rho;
     const double v_z = U.mom_w / rho;
@@ -52,7 +52,7 @@ ARCH_HOST_DEVICE inline void add_geometric_source_cell(
             delta.mom_v += dt * (-rho * v_x * v_y) * inverse_radius;
         } else if (grid.dim == 3) {
             const double theta = grid.SourceTheta(j);
-            const double cot_theta = std::cos(theta) / std::max(std::sin(theta), 1e-14);
+            const double cot_theta = std::cos(theta) / std::sin(theta);
             delta.mom_u += dt * (rho * (v_y * v_y + v_z * v_z) + 2.0 * p) * inverse_radius;
             delta.mom_v += dt * (rho * v_z * v_z * cot_theta + p * cot_theta - rho * v_x * v_y) * inverse_radius;
             delta.mom_w += dt * (-rho * v_x * v_z - rho * v_y * v_z * cot_theta) * inverse_radius;

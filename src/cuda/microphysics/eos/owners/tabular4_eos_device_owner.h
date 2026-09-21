@@ -42,9 +42,7 @@ private:
     cudaStream_t stream_ = nullptr;
     DeviceSpeciesOwner species_;
     Tabular4DEOSView device_view_{};
-    std::array<double *, 6> device_{};
     std::array<double *, tabular_eos::FieldCount> device_free_energy_{};
-    std::array<std::vector<double>, 6> staging_{};
     std::array<std::vector<double>, tabular_eos::FieldCount>
         staging_free_energy_{};
     double* device_valid_ = nullptr;

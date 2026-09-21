@@ -1,0 +1,38 @@
+Internal ctest changing into directory: /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+Test project /home/shiroakane/ARCH/build/selfgravity-p1-gpu
+      Start  73: burn_policy_parity_helpers
+ 1/16 Test  #73: burn_policy_parity_helpers .........   Passed    0.29 sec
+      Start 108: burn_policy_parity_status_be_nr
+ 2/16 Test #108: burn_policy_parity_status_be_nr ....   Passed    0.27 sec
+      Start 109: burn_policy_parity_status_bd
+ 3/16 Test #109: burn_policy_parity_status_bd .......   Passed    0.24 sec
+      Start 110: burn_policy_parity_status_ros4
+ 4/16 Test #110: burn_policy_parity_status_ros4 .....   Passed    0.26 sec
+      Start 111: burn_policy_parity_aprox13_be_nr
+ 5/16 Test #111: burn_policy_parity_aprox13_be_nr ...   Passed    1.25 sec
+      Start 112: burn_policy_parity_aprox13_bd
+ 6/16 Test #112: burn_policy_parity_aprox13_bd ......   Passed    1.27 sec
+      Start 113: burn_policy_parity_aprox13_ros4
+ 7/16 Test #113: burn_policy_parity_aprox13_ros4 ....   Passed    1.19 sec
+      Start 114: burn_policy_parity_aprox19_be_nr
+ 8/16 Test #114: burn_policy_parity_aprox19_be_nr ...   Passed    1.30 sec
+      Start 115: burn_policy_parity_aprox19_bd
+ 9/16 Test #115: burn_policy_parity_aprox19_bd ......   Passed    1.28 sec
+      Start 116: burn_policy_parity_aprox19_ros4
+10/16 Test #116: burn_policy_parity_aprox19_ros4 ....   Passed    1.27 sec
+      Start 117: burn_policy_parity_aprox21_be_nr
+11/16 Test #117: burn_policy_parity_aprox21_be_nr ...   Passed    1.30 sec
+      Start 118: burn_policy_parity_aprox21_bd
+12/16 Test #118: burn_policy_parity_aprox21_bd ......   Passed    1.28 sec
+      Start 119: burn_policy_parity_aprox21_ros4
+13/16 Test #119: burn_policy_parity_aprox21_ros4 ....   Passed    1.28 sec
+      Start 120: burn_policy_parity_iso7_be_nr
+14/16 Test #120: burn_policy_parity_iso7_be_nr ......   Passed    1.18 sec
+      Start 121: burn_policy_parity_iso7_bd
+15/16 Test #121: burn_policy_parity_iso7_bd .........   Passed    1.15 sec
+      Start 122: burn_policy_parity_iso7_ros4
+16/16 Test #122: burn_policy_parity_iso7_ros4 .......   Passed    1.14 sec
+
+100% tests passed, 0 tests failed out of 16
+
+Total Test time (real) =  15.95 sec

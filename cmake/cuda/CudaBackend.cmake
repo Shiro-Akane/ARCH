@@ -34,11 +34,22 @@ if(ARCH_ENABLE_CUDSS)
             src/cuda/microphysics/linalg/CuDssSparseSolver.cpp
             src/cuda/microphysics/linalg/SparseEquilibration.cu)
         target_compile_definitions(arch_cuda_sparse_provider PRIVATE
-            ARCH_CUDSS_IR_STEPS=${ARCH_CUDSS_IR_STEPS})
+            ARCH_CUDSS_IR_STEPS=${ARCH_CUDSS_IR_STEPS}
+            ARCH_CUDSS_RUNTIME_LIBRARY="${CuDSS_LIBRARY}"
+            ARCH_CUDSS_BLAS_LIBRARY="$<TARGET_FILE:CUDA::cublas>")
         target_compile_options(arch_cuda_sparse_provider PRIVATE
             $<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>)
+        # Vendor libraries are loaded by the provider only when a sparse solve
+        # is requested; bounded CPU inspection never maps cuDSS/cuBLAS.
+        target_include_directories(arch_cuda_sparse_provider SYSTEM PUBLIC "${CuDSS_INCLUDE_DIR}")
         target_link_libraries(arch_cuda_sparse_provider PUBLIC
-            arch_build_contract CuDSS::cudss)
+            arch_build_contract CUDA::cudart ${CMAKE_DL_LIBS})
+        if(WIN32)
+            # Windows discovery returns import libraries, not DLL paths. Keep
+            # its existing direct provider link; bounded workers are Linux-only.
+            target_link_libraries(arch_cuda_sparse_provider PUBLIC
+                "${CuDSS_LIBRARY}" CUDA::cublas)
+        endif()
         set_target_properties(arch_cuda_sparse_provider PROPERTIES
             CUDA_STANDARD 20 CUDA_STANDARD_REQUIRED ON
             INTERPROCEDURAL_OPTIMIZATION OFF)

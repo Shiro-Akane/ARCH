@@ -111,6 +111,12 @@ target_include_directories(arch_burn_mainline_reference PRIVATE "${CMAKE_CURRENT
 target_compile_features(arch_burn_mainline_reference PRIVATE cxx_std_20)
 target_compile_definitions(arch_burn_mainline_reference PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+# This independent stiff reference evaluates full networks many times. Keep
+# its numerical budgets and strict FP policy; optimize the test executor even
+# in Debug so debug builds do not spend minutes interpreting small RHS loops.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(arch_burn_mainline_reference PRIVATE -O2)
+endif()
 add_test(NAME burn_mainline_reference COMMAND arch_burn_mainline_reference)
 add_executable(arch_generated_nse tests/host/network/test_generated_nse.cpp)
 arch_configure_host_test(arch_generated_nse)
@@ -354,3 +360,9 @@ add_test(NAME preview_verified_resources COMMAND arch_verified_file_cache
 add_executable(arch_initial_sample_cache tests/api/session/test_initial_sample_cache.cpp)
 arch_configure_host_test(arch_initial_sample_cache)
 add_test(NAME preview_exact_sample_cache COMMAND arch_initial_sample_cache)
+
+# Physical-scale invariance uses independent analytic Euler and linear-system references.
+add_executable(arch_low_density tests/host/numerics/test_low_density.cpp)
+arch_configure_host_test(arch_low_density)
+target_link_libraries(arch_low_density PRIVATE arch_build_contract)
+add_test(NAME low_density_math COMMAND arch_low_density)

@@ -198,18 +198,17 @@ and geometric sources. The composition gives:
 
 `perform_stage_update` applies robustness repairs after a hydro stage:
 
-- density below `sml_rho` is reset, momenta are zeroed, and energy is rebuilt;
-- velocity magnitude is capped by a hard-coded `1e10` ceiling;
-- specific internal energy is clamped to `[min_eint, max_eint]`;
-- negative species fractions are clipped and all fractions are renormalized;
-- if the species sum is nearly zero, a uniform composition is installed.
+Positive, resolvable states below `sml_rho` are bounded while preserving velocity and composition.
+`min_eint` can raise positive internal energy; exceeding `max_eint` is rejected, not clipped.
+Zero/negative density, nonfinite states, unresolved thermal energy and invalid composition fail explicitly.
+The fixed velocity cap and all-zero-to-uniform composition fallback have been removed.
 
-These engineering safeguards modify state outside conservative flux updates.
-Runs record their repair contribution alongside conservation and L1/L2 metrics.
-
-The production PPM path reconstructs density, velocity, pressure, and species,
-then calls the selected EOS to rebuild total energy. It floors density and
-pressure, bounds species to `[0,1]`, and renormalizes interface compositions.
+Volume-weighted repairs use the final RK weights and are recorded in `state_repairs.txt`
+and format-5 checkpoints. Low-density research must set the existing `sml_rho` below the intended solution.
+Leaf functions use actual positive density; this control never disables force, CFL or flux evaluation.
+Reconstruction and shared face fluxes use conservative limiting, followed by acceptance/reflux checks.
+There is no separate absolute pressure floor or general positivity claim for arbitrary AMR/source/table-EOS combinations.
+See the [P1.5 implementation record](development/P1_5ImplementationReport.zh-CN.md).
 
 ### Build reproducibility and compile-time compromise
 
@@ -388,7 +387,6 @@ and any other spelling are rejected with the parameter name in the error.
 | `reconstruct` | string | `pcm` | `pcm`, `donor_cell`, `muscl`, `plm`, `ppm` |
 | `limiter` | string | `minmod` | MUSCL only: `minmod`, `superbee`, `vanleer`, `mc` |
 | `time_integrator` | string | `RK2` | `Euler/RK1`, `RK2/SSPRK2`, `RK3/SSPRK3` |
-| `timeintegrator` | string | — | alias used only when `time_integrator` is absent |
 | `cfl` | double | `0.8` | explicit hydro CFL; range unchecked at load time |
 | `EntropyFix` | bool | `true` | enables entropy-fix smoothing |
 | `EntropyFixCoefficient` | double | `0.1` | used when entropy fix is enabled |
@@ -418,7 +416,7 @@ and any other spelling are rejected with the parameter name in the error.
 | `eos_type` | string | `ideal` | `ideal`, `tabular`, `helmholtz` |
 | `eos_table_path` | string | empty | required for tabular/Helmholtz |
 | `eos_helm_table_path` | string | empty | auxiliary electron table for missing-component completion; empty uses the existing Timmes table |
-| `gamma` | double | `1.4` | ideal-gas fallback/reference gamma |
+| `gamma` | double | `1.4` | ideal-gas model gamma |
 | `gravity_type` | string | `none` | `none`, `external`; `self` is rejected by the capability gate before construction |
 | `gravity_g_x/y/z` | expression | `0` | used for external gravity |
 | `gravity_G` | expression | `6.6743e-8` | parsed only for unsupported self gravity |
@@ -434,8 +432,7 @@ Normalized `eos_components` declares `baryons`, `baryons,electrons_positrons`,
 `baryons,photons`, or `baryons,electrons_positrons,photons` (`total` is an alias
 for the last). The host loader adds only missing electron/positron or photon
 terms to a `free_energy` potential; it does not modify source files, duplicate
-ions/Coulomb terms, or add separate pressure/energy fields. Absent declarations
-preserve the legacy complete-table interpretation. Complete tables and
+ions/Coulomb terms, or add separate pressure/energy fields. Schema 2 requires component and nuclear-equilibrium declarations; missing metadata are rejected. Complete tables and
 photon-only completion do not load the auxiliary electron table. If electrons
 are missing, an empty `eos_helm_table_path` resolves to
 `EOS_toolkit/tables/helmholtz/helm_table.dat`.
@@ -450,7 +447,7 @@ and documented constant E/F reference difference; it does not fit energy zeros.
 Printed source E remains an independent consistency diagnostic, and the source
 F/E/S residuals are not universally within half a printed unit.
 
-Declared-component or nuclear-equilibrium free-energy tables use the same
+All free-energy tables use the same
 strict masked-domain and temperature-inversion policy whether supplied total
 or completed automatically. One load-time constant energy reference may be
 needed; there are no per-state shifts. Invalid source/component derivative
@@ -461,7 +458,7 @@ pressure/energy interpolants, with their own strict validity and inverse checks.
 
 Native nuclear-equilibrium tables, or normalized integer
 `nuclear_equilibrium=1`, require `use_burn=false` to avoid double-counting nuclear
-binding. Declared/strict tables also reject Steger-Warming flux splitting and
+binding. All table routes also reject Steger-Warming flux splitting and
 automatic stellar conductivity; use a general-EOS flux and explicit constant
 thermal diffusivity, or disable it. An allowed kinetic energy source does not
 establish compatibility with every weak network: tabular views do not provide
@@ -501,8 +498,6 @@ also requires the exact checksum above.
 | `use_nse` | bool or `auto` | `true` | `true` requires NSE support; `false` disables it; `auto` enables it only for a capable network |
 | `nseTempThreshold` | double | `4.5e9` | finite positive K; the same strict `T > threshold` for true and auto |
 | `nseDensThreshold` | double | `1e6` | finite nonnegative g/cm3; the same strict `rho > threshold` for true and auto |
-| `enforce_mass_conservation` | bool | `true` | parsed and stored; no active burn path currently consumes this switch |
-| `burn_verbose_level` | int | `0` | parsed and stored; no active burn path currently consumes this level |
 | `ode_solver` | string | `BE_NR` | `BE_NR`, `ROS4`, or `BD` |
 | `linear_solver` | string | `Auto` | Case-insensitive `Auto`, `DenseLU`, `SparseKLU`, or `cuDSS` (`dense_lu`, `sparse_klu`, `cu_dss` aliases accepted); see backend-dependent selection below |
 | `ode_rtol` | double | `1e-4` | relative ODE tolerance |
@@ -513,11 +508,9 @@ also requires the exact checksum above.
 | `ode_dt_fac_max` | double | `2.0` | growth factor |
 | `ode_dt_fac_min` | double | `0.1` | shrink factor |
 | `ode_initial_dt_frac` | double | `1e-3` | initial internal substep fraction |
-| `ode_use_numerical_jac` | bool | `false` | stored; verify solver-specific use before relying on it |
-| `ode_freeze_jacobian` | bool | `false` | stored; verify solver-specific use before relying on it |
-| `dt_init` | custom double | `1e-16` | first macro step when burn is enabled |
-| `dt_min` | custom double | `1e-20` | abort threshold for macro step |
-| `tstep_change_factor` | custom double | `1.2` | maximum macro-step growth after first step |
+| `dt_init` | double | `1e-16` | first macro step when burn is enabled |
+| `dt_min` | double | `1e-20` | abort threshold for macro step |
+| `tstep_change_factor` | double | `1.2` | maximum macro-step growth after first step |
 
 `ROS4` uses a matched four-stage, fourth-order, L-stable tableau. Each internal
 step evaluates one Jacobian, factors `I - gamma*dt*J` once, and reuses the
@@ -537,7 +530,7 @@ dependent EOS energy and heat-capacity derivatives. The equations and energy
 handoff are described in the [network technical note](physics/TimmesNetworks.md#4-temperature-equation-jacobian-and-lhs-conventions).
 Independent time/energy checks are recorded in [burn validation](../validation/burn/README.md).
 
-The last three are custom-map controls.
+The last three are registered standard time-step controls.
 Network-specific initial fractions such as `xc12` are consumed by the selected
 network setup implementation.
 
@@ -876,11 +869,11 @@ const SpeciesManager *get_species_manager() const;
 `evaluate_state` is the canonical thermodynamic-state contract. For every
 valid `(rho,T,X)` input it must fill finite `P`, `E`, `cv`, `sound_speed`,
 `dp_drho`, and `dp_dT`; pressure, specific internal energy, `cv`, and sound
-speed must be positive. `dp_drho` means `(dP/drho)_e`, while `dp_dT` means
+speed must be positive. `dp_drho` means `(dP/drho)_T`, while `dp_dT` means
 `(dP/dT)_rho`. Free-energy tabular policies derive these quantities from one
-interpolated Helmholtz potential. The direct-field policy uses supplied
-derivative datasets or table-bounded local differences rather than returning
-zero. See the
+interpolated Helmholtz potential. Native EOSDriver tables retain derivatives
+of their source interpolant; normalized tables require the strict free-energy
+contract. The separate `get_dp_drho_e` method holds internal energy fixed. See the
 [normalized HDF5 contract](../src/physics/eos/TabularEOS.md).
 
 All policies receive the same fixed-composition isentrope algorithm from
@@ -905,9 +898,6 @@ the duck-typed surface. Register new types in `EOSDispatcher::dispatch_eos`.
 Derive from `Physical::Gravity::IGravityPolicy`:
 
 ```cpp
-virtual void update_field(
-    const FluidState&, const Grid&, void *execution_stream = nullptr) const = 0;
-
 virtual void add_sources_on_patch(
     std::vector<FluidVector> &dU,
     const FluidState&, const Grid&, double dt,
@@ -1137,6 +1127,10 @@ Data/rho, Data/mom_u, Data/mom_v, Data/mom_w, Data/eng, Data/enuc_rate
 Data/rhoX, Data/X    [species, block, interior cell]
 Species/name, Species/A, Species/Z, Species/gamma, Species/Cv
 ```
+
+Format 5 also requires `state_controls`, `state_repairs`, and the triggering
+block, position, stage and time attributes. Older formats are rejected. All restored states
+and diagnostics are validated before replacing the AMR mesh.
 
 `Data/X` preserves the native mass fractions used by both backends. The reader
 checks that they reproduce the stored `rhoX`; restoring them directly avoids

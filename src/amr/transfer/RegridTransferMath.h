@@ -12,6 +12,7 @@
 #include "amr/transfer/ConservativeRestriction.h"
 #include "core/ArchPortability.h"
 #include "data/FluidState.h"
+#include "numerics/state/StateAdmissibility.h"
 
 #include <cmath>
 #include <cstddef>
@@ -70,7 +71,7 @@ ARCH_HOST_DEVICE inline double unit_clamp(double value)
 }
 ARCH_HOST_DEVICE inline double minmod(double a, double b)
 {
-    if (a * b > 0.0) return a > 0.0 ? minimum(a, b) : maximum(a, b);
+    if ((a > 0.0 && b > 0.0) || (a < 0.0 && b < 0.0)) return a > 0.0 ? minimum(a, b) : maximum(a, b);
     return 0.0;
 }
 
@@ -81,9 +82,8 @@ ARCH_HOST_DEVICE inline bool is_admissible_conserved_state(
         || !std::isfinite(state.mom_v) || !std::isfinite(state.mom_w)
         || !std::isfinite(state.eng) || state.rho < density_floor)
         return false;
-    const double kinetic = 0.5 * (state.mom_u * state.mom_u
-        + state.mom_v * state.mom_v + state.mom_w * state.mom_w) / state.rho;
-    return std::isfinite(kinetic) && state.eng - kinetic >= state.rho * min_eint;
+    const auto recovered=arch::state::recover(state);
+    return recovered.status == arch::state::Status::valid && recovered.internal >= min_eint;
 }
 
 ARCH_HOST_DEVICE inline double composition_simplex_tolerance(int count)

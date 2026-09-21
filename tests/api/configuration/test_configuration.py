@@ -47,20 +47,20 @@ class ConfigurationContract(unittest.TestCase):
         keys = set(re.findall(r'parser\.Get(?:Int|Double|String|Bool)\(\s*"([^"]+)"',
                               (ROOT/'src/core/config/RuntimeParams.h').read_text()))
         self.assertEqual(set(specs), keys)
-        self.assertEqual(len(specs), 90)
+        self.assertEqual(len(specs), 88)
         self.assertEqual({p['group'] for p in specs.values()}, {'Grid','EOS','Network','Gravity','Diffusion','Runtime'})
         self.assertEqual(specs['ode_rtol']['defaultValue'], 1e-4)
         self.assertEqual(specs['ode_atol']['defaultValue'], 1e-8)
         self.assertEqual(specs['ode_max_substeps']['defaultValue'], 10000)
         self.assertEqual(specs['ode_initial_dt_frac']['defaultValue'], .001)
-        self.assertEqual(specs['timeintegrator']['aliasOf'], 'time_integrator')
+        self.assertNotIn('timeintegrator', specs)
         self.assertEqual(specs['use_nse']['defaultValue'], 'true')
         self.assertEqual(specs['gravity_G']['defaultValue'], 6.67430e-8)
         self.assertTrue(any(p['value']=='auto' for p in specs['linear_solver']['options']['choices']))
         self.assertTrue(any(p['value']=='aprox19' for p in specs['network_name']['options']['choices']))
         self.assertEqual(specs['gravity_type']['options']['unavailableValues'], ['self'])
         caps = self.run_api(['--preview-capabilities'])
-        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 90)
+        self.assertEqual(caps['extensions']['configuration']['standardParameterCount'], 88)
         self.assertEqual(caps['cases'], ['Sod'])
 
     def test_defaults_and_explicit_values_with_no_eos_or_device_access(self):
@@ -80,7 +80,7 @@ class ConfigurationContract(unittest.TestCase):
         self.assertEqual(result['unitSystem'], 'cgs')
         empty = self.inspect()
         self.assertEqual(empty['resolved']['dimension'], 3)
-        self.assertEqual(len(empty['parameters']), 90)
+        self.assertEqual(len(empty['parameters']), 88)
 
     def test_integer_tokens_reject_fractions_suffixes_and_overflow(self):
         for token in ['1.5','1.0','1e2','12suffix','2147483648','-2147483649','+-1','', 'nan']:
@@ -107,16 +107,36 @@ class ConfigurationContract(unittest.TestCase):
         self.assertAlmostEqual(p['x1_max']['parsedValue'], 6.283185307179586)
         self.assertFalse(p['use_diffusion']['parsedValue'])
 
-    def test_alias_and_canonical_precedence(self):
-        r = self.inspect('timeintegrator=RK3')
-        p = {p['key']:p for p in r['parameters']}
-        self.assertEqual(p['time_integrator']['valueSource'], 'alias')
-        self.assertEqual(p['time_integrator']['sourceKey'], 'timeintegrator')
-        self.assertEqual(r['resolved']['timeIntegrator'], 'RK3')
-        r = self.inspect('timeintegrator=RK3\ntime_integrator=RK2')
-        p = {p['key']:p for p in r['parameters']}
-        self.assertEqual(r['resolved']['timeIntegrator'], 'RK2')
-        self.assertFalse(p['timeintegrator']['applicable'])
+    def test_physical_ranges_and_cross_parameter_bounds(self):
+        invalid = {
+            'sml_rho': '0', 'min_eint': '-1', 'max_eint': '1e-12',
+            'cfl': '1.01', 'gamma': '1', 'smallt': '0', 'smallx': '1',
+            'nuclearTempMin': '-1', 'nuclearDensMin': '-1', 'enucDtFactor': '0',
+            'nseTempThreshold': '0', 'nseDensThreshold': '-1',
+            'ode_rtol': '1', 'ode_atol': '0', 'ode_max_newton_iter': '0',
+            'ode_max_substeps': '0', 'ode_dt_safe_fac': '1.01',
+            'ode_dt_fac_min': '1.01', 'ode_dt_fac_max': '.99',
+            'ode_initial_dt_frac': '0', 'dt_init': '1e-30', 'dt_min': '-1',
+            'tstep_change_factor': '.99', 'diff_cfl': '1.01', 'diff_max_stages': '1',
+            'nu_visc': '-1', 'alpha_therm': '-1', 'D_spec': '-1', 'gravity_G': '0',
+            'tmax': '-1', 'max_steps': '-2', 'cuda_device': '-1',
+        }
+        for key, value in invalid.items():
+            with self.subTest(key=key):
+                result = self.inspect(f'{key}={value}', code=3)
+                self.assertTrue(any(d['code']=='INVALID_RANGE' and d['parameterKey']==key
+                                    for d in result['diagnostics']), result['diagnostics'])
+        result = self.inspect('sml_rho=1e-110\nmin_eint=1e-100\nsmallx=1e-100\ndt_min=1e-100\ndt_init=1e-50')
+        self.assertEqual(result['status'], 'ok')
+
+    def test_retired_parameters_rejected_including_alias(self):
+        for key in ['timeintegrator', 'enforce_mass_conservation', 'burn_verbose_level',
+                    'ode_use_numerical_jac', 'ode_freeze_jacobian']:
+            result = self.inspect(f'{key}=1', code=3)
+            self.assertEqual(result['diagnostics'][0]['code'], 'RETIRED_PARAMETER')
+            self.assertEqual(result['diagnostics'][0]['parameterKey'], key)
+        result = self.inspect('time_integrator=RK3')
+        self.assertEqual(result['resolved']['timeIntegrator'], 'RK3')
 
     def test_geometry_and_units_in_all_dimensions(self):
         names = {'cartesian': {1:['x'],2:['x','y'],3:['x','y','z']},

@@ -151,7 +151,7 @@ void test_table(const std::filesystem::path& directory, const char* helm_path,
     HelmEos helm(helm_path,nullptr);
     Tabular3DEOS owner(source_path,&specs,helm_path);
     const auto eos=owner.get_view();
-    require(eos.strict_domain && eos.uses_free_energy && !eos.native_direct,
+    require(!eos.native_direct,
             "raw baryon owner did not select strict completed free energy");
     require(eos.n_rho==int(source.density.size()) && eos.n_T==int(source.temperature.size())
             && eos.n_X==int(source.electron_fraction.size()),"baryon source axes were resampled");

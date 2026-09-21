@@ -15,7 +15,22 @@ hydrodynamic and burning applications. Ideal gas, Helmholtz and normalized
 Tabular3D/Tabular4D share their mathematics between CPU and CUDA; backend owners
 provide table storage and lifetime management.
 
-## Coupled application results
+## Current P1.5 contract
+
+Normalized tables now require schema 2, a free-energy potential and explicit
+physical declarations. Normalized direct tables, missing-metadata guesses and
+silent domain fallbacks are retired. Native EOSDriver and baryon source formats
+remain supported. Current implementation and acceptance status are recorded in
+[P1.5](../../docs/development/P1_5ImplementationReport.zh-CN.md).
+
+The application results and replay scripts below are historical: their recorded
+source starts at `2226456c1f87415a317dd6a2a96053a7e154b949` **with the dirty source
+identity listed in the evidence**. That commit alone does not reproduce them.
+Do not run the old direct-table recipe against P1.5 or treat its old pass counts
+as current validation. Current normalized fixtures and rejection checks live in
+`tests/host/eos` and `tests/cuda/microphysics/eos`; use the CTest targets below.
+
+## Historical coupled application results
 
 The Release application record
 passes twelve cases and 96 CPU/CUDA executions. The
@@ -67,7 +82,7 @@ execution and capacity evidence.
 
 ## Reproduce
 
-Run the [application recipe](results/application-native-20260907/replay.py)
+For the historical source identified above, run the [application recipe](results/application-native-20260907/replay.py)
 with `--build-dir` and a new `--output-dir`. It creates the manufactured tables
 and runs both backends through the common application validator. Then run the
 [endpoint checker](results/application-native-20260907/check_terminal.py)

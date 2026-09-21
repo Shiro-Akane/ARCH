@@ -110,7 +110,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y \
-            gcc-12 g++-12 cmake ninja-build ccache mold libhdf5-dev python3
+            gcc-12 g++-12 cmake ninja-build ccache mold libhdf5-dev python3 python3-numpy python3-h5py
           mkdir -p build-ci/reports
           git rev-parse HEAD > build-ci/reports/commit.txt
           python3 --version
@@ -160,6 +160,14 @@ jobs:
           python3 tools/check_ci_results.py \
             --inventory build-ci/reports/inventory.json --junit build-ci/reports/ctest.xml
 
+      - name: Validate low-density physical trajectories and repair accounting
+        run: |
+          /usr/bin/python3 validation/low_density/run.py \
+            --arch "$PWD/build-ci/cpu/bin/ARCH" --backend cpu \
+            --output-root "$PWD/build-ci/low-density" \
+            2>&1 | tee build-ci/reports/low-density.log
+          test -f build-ci/low-density/PASS
+
       - name: Report cache use
         if: always()
         run: |
@@ -180,6 +188,10 @@ jobs:
           name: cpu-release-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             build-ci/reports/
+            build-ci/low-density/results.json
+            build-ci/low-density/PASS
+            build-ci/low-density/**/*.par
+            build-ci/low-density/**/*.log
             build-ci/cpu/Testing/Temporary/LastTest.log
             build-ci/cpu/Testing/Temporary/LastTestsFailed.log
           retention-days: 14

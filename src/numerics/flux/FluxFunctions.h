@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "data/FluidState.h"
+#include "numerics/state/StateAdmissibility.h"
 
 // Direction map: dir=0, 1, and 2 select the stored native momentum axes.
 // Flux formulas use local orthonormal normal/tangential components and map
@@ -98,8 +99,6 @@ template <typename EosType>
 ARCH_INLINE FluidVector get_flux(const FluidVector &U, const double *Xi, const EosType &eos, int dir)
 {
     double rho = U.rho;
-    if (rho < 1e-12)
-        return FluidVector(); // 1e-12 is the flux-layer near-vacuum density threshold.
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
     double ut2 = get_ut2(U, dir);
@@ -121,8 +120,6 @@ ARCH_INLINE FluidVector get_flux(const FluidVector &U, const double *Xi, const E
 ARCH_INLINE FluidVector get_flux(const FluidVector &U, double p, int dir)
 {
     double rho = U.rho;
-    if (rho < 1e-12)
-        return FluidVector();
 
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
@@ -153,7 +150,7 @@ template <typename EosType>
 ARCH_INLINE FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
                             const EosType &eos, int sign, double smoothing_coeff, int dir)
 {
-    double rho = std::max(U.rho, 1e-12); // Match the physical-flux near-vacuum floor.
+    double rho = U.rho;
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
     double ut2 = get_ut2(U, dir);
@@ -164,9 +161,9 @@ ARCH_INLINE FluidVector calc_split_flux(const FluidVector &U, const double *Xi,
     double H = (U.eng + p) / rho;
     double gamma = eos.get_gamma(Xi);
 
-    // eps scales the entropy-fix width with local sound speed. The 1e-12 floor
-    // keeps its denominator nonzero in stationary or low-sound-speed states.
-    double eps = std::max(smoothing_coeff * c, 1e-12);
+    // Entropy smoothing scales with the local sound speed. With zero width
+    // the branch below evaluates the exact absolute eigenvalue.
+    double eps = smoothing_coeff * c;
 
     auto split_lambda = [&](double l)
     {
@@ -218,32 +215,20 @@ template <typename EosType>
 ARCH_INLINE FluidVector calc_vinokur_flux(const FluidVector &U, const double *Xi,
                               const EosType &eos, int sign, int dir)
 {
-    // Precompute local velocity. The 1e-12 density floor matches the other
-    // flux kernels' near-vacuum contract.
-    double rho = std::max(U.rho, 1e-12);
+    // Use the actual positive density at every physical scale.
+    double rho = U.rho;
     double un = get_un(U, dir);
     double ut1 = get_ut1(U, dir);
     double ut2 = get_ut2(U, dir);
 
-    // Thermodynamic values come from the EOS, which must accept states already
-    // protected by the density floor.
+    // EOS validity is checked independently of the configured density floor.
     double p = eos.get_pressure(U, Xi);
     double c = eos.get_sound_speed(U, p, Xi);
 
-    // Define the Vinokur effective ratio through c^2=gamma_eff*p/rho. If the
-    // EOS sound speed is invalid or below 1e-8, gamma=1.4 supplies a finite
-    // ideal-gas fallback rather than a physical claim about the material.
-    if (std::isnan(c) || c < 1e-8)
-        c = std::sqrt(1.4 * p / rho);
-    double gamma_eff = (p > 1e-12) ? (rho * c * c / p) : 1.4;
-
-    // The Vinokur energy flux contains denominators gamma_eff-1 and
-    // gamma_eff^2-1, which become singular near one. A broad empirical clamp
-    // would corrupt valid low-gamma materials, so only values within 1e-6 of
-    // one move to 1+1e-6 to prevent exact division by zero. A remaining NaN
-    // triggers the full-upwind fallback at the end of the function.
-    if (std::abs(gamma_eff - 1.0) < 1e-6)
-        gamma_eff = 1.000001;
+    const double gamma_eff = c * c / (p / rho);
+    if (!(c > 0.0) || !(gamma_eff > 1.0) || !std::isfinite(gamma_eff))
+        return set_flux_vector(arch::state::invalid(), arch::state::invalid(),
+            arch::state::invalid(), arch::state::invalid(), arch::state::invalid(), dir);
 
     // Normal Mach number.
     double M = un / c;
@@ -375,8 +360,8 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     RoeGlaisterState res;
 
     // Standard Roe kinematic average.
-    double rho_L = std::max(U_L.rho, 1e-12);
-    double rho_R = std::max(U_R.rho, 1e-12);
+    double rho_L = U_L.rho;
+    double rho_R = U_R.rho;
 
     double sq_rho_L = std::sqrt(rho_L);
     double sq_rho_R = std::sqrt(rho_R);
@@ -417,10 +402,9 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     double d_rho = rho_R - rho_L;
     double d_e = e_R - e_L;
 
-    // The density-difference threshold is 1e-7 times the density sum with a
-    // 1e-10 absolute floor. Below it, subtraction amplifies roundoff, so the
-    // implementation switches to an EOS derivative.
-    double epsilon = std::max(1e-7 * (rho_L + rho_R), 1e-10);
+    // A dimensionless relative separation selects the EOS derivative when
+    // pressure subtraction would amplify roundoff.
+    double epsilon = 1e-7 * (rho_L + rho_R);
 
     // chi=(∂p/∂rho)_e.
     if (std::abs(d_rho) > epsilon)
@@ -436,13 +420,12 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
 
     // kappa=(∂p/∂e)_rho. Pressure subtraction loses relative precision when
     // the energy interval is small compared with either endpoint, even if
-    // its dimensional value exceeds the existing 1e-10 near-zero floor.
+    // the absolute energy itself is representable.
     // sqrt(machine epsilon) balances subtraction error against the local
     // derivative limit; retain that limit instead of dividing rounded ulps.
     const double relative_energy_resolution =
         std::sqrt(std::numeric_limits<double>::epsilon());
-    const double energy_resolution = std::max(1e-10,
-        relative_energy_resolution * std::abs(e_L)
+    const double energy_resolution = (relative_energy_resolution * std::abs(e_L)
         + relative_energy_resolution * std::abs(e_R));
     if (std::abs(d_e) > energy_resolution)
     { // Use a finite difference only when the energy interval is resolvable.
@@ -455,8 +438,6 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
                    + sq_rho_R * eos.get_dp_de_rho(rho_L, e_L, Xi_avg)) * inv_denom;
     }
 
-    if (res.kappa < 1e-12)
-        res.kappa = 1e-12;
 
     // The Roe pressure is rho_hat*(H_hat-e_hat-|u_hat|^2/2), not the
     // arithmetic mean of endpoint pressures. This follows from the exact
@@ -469,13 +450,7 @@ ARCH_INLINE RoeGlaisterState calc_glaister_state(
     const double term2 = res.kappa * pressure_over_density / res.rho_hat;
     double c2 = res.chi + term2;
 
-    if (c2 < 0.0 || std::isnan(c2))
-    {
-        // If the derivative combination is invalid, gamma=1.4 supplies a
-        // finite ideal-gas fallback: c^2=gamma*p/rho.
-        c2 = 1.4 * p_ref / (res.rho_hat + 1e-12);
-    }
-    res.c_hat = std::sqrt(std::max(c2, 1e-8)); // Keeps Roe amplitude denominators finite.
+    res.c_hat = std::sqrt(c2);
 
     return res;
 }
@@ -522,7 +497,7 @@ ARCH_INLINE FluidVector calc_roe_flux_hydro(
     double d_ut2 = ut2_R - ut2_L;
 
     double rho_c = rs.rho_hat * rs.c_hat;
-    double c2_safe = std::max(rs.c_hat * rs.c_hat, 1e-16);
+    double c2_safe = rs.c_hat * rs.c_hat;
 
     // Characteristic amplitudes: alpha_1 is u-c, alpha_2 is the entropy wave
     // at u, and alpha_3 is u+c.
@@ -532,11 +507,9 @@ ARCH_INLINE FluidVector calc_roe_flux_hydro(
     double alpha_4 = rs.rho_hat * d_ut1; // First tangential wave.
     double alpha_5 = rs.rho_hat * d_ut2; // Second tangential wave.
 
-    // Scale the entropy-fix width by the local spectral radius. The 1e-12
-    // floor remains nonzero in a stationary state.
+    // Scale the entropy-fix width by the local spectral radius.
     double spectral_radius = std::abs(un_hat) + rs.c_hat;
     double epsilon_val = fix_coeff * spectral_radius;
-    epsilon_val = std::max(epsilon_val, 1e-12);
 
     // Apply Harten's entropy fix to all three normal eigenvalues.
     double l1 = entropy_fix(un_hat - rs.c_hat, epsilon_val);
@@ -552,25 +525,12 @@ ARCH_INLINE FluidVector calc_roe_flux_hydro(
     double diss_ut1 = diss_rho * ut1_hat + l2 * alpha_4;
     double diss_ut2 = diss_rho * ut2_hat + l2 * alpha_5;
 
-    // When kappa<1e-8, the thermodynamic denominator lacks useful precision,
-    // so the entropy-wave energy component falls back to kinetic energy.
+    // The contact eigenvector uses the EOS derivative ratio kappa/rho.
+    // No dimensional cutoff substitutes a different thermodynamic model.
     double K1_eng = rs.H_hat - un_hat * rs.c_hat;
     double K3_eng = rs.H_hat + un_hat * rs.c_hat;
 
-    double K2_eng;
-    if (rs.kappa < 1e-8)
-    {
-        K2_eng = 0.5 * (rs.u_hat * rs.u_hat + rs.v_hat * rs.v_hat + rs.w_hat * rs.w_hat);
-    }
-    else
-    {
-        double term_singular = (rs.rho_hat * c2_safe) / rs.kappa;
-        // A correction larger than 100 enthalpy scales is treated as nearly
-        // singular so it cannot dominate energy dissipation.
-        K2_eng = (std::abs(term_singular) > 100.0 * (std::abs(rs.H_hat) + 1.0))
-                     ? 0.5 * (rs.u_hat * rs.u_hat + rs.v_hat * rs.v_hat + rs.w_hat * rs.w_hat)
-                     : rs.H_hat - term_singular;
-    }
+    const double K2_eng = rs.H_hat - c2_safe / (rs.kappa / rs.rho_hat);
 
     double diss_eng = l1 * alpha_1 * K1_eng + l2 * alpha_2 * K2_eng + l3 * alpha_3 * K3_eng + l2 * (alpha_4 * ut1_hat + alpha_5 * ut2_hat);
 
@@ -590,9 +550,8 @@ ARCH_INLINE double calc_sound_speed_thermo(
     double rho, double p, double e, const double *Xi,
     const EosType &eos)
 {
-    // 1e-12 matches the flux kernels' near-vacuum density threshold.
-    if (rho < 1e-12)
-        return 0.0;
+    // No artificial density is substituted into thermodynamic derivatives.
+    if (!(rho > 0.0)) return arch::state::invalid();
 
     // Obtain derivatives at constant specific internal energy and density.
     // chi = dp/drho | e
@@ -601,15 +560,9 @@ ARCH_INLINE double calc_sound_speed_thermo(
     double kappa = eos.get_dp_de_rho(rho, e, Xi);
 
     // General-EOS sound-speed relation.
-    double term2 = (kappa * p) / (rho * rho);
+    double term2 = (kappa / rho) * (p / rho);
     double c2 = chi + term2;
 
-    // If the derivative combination is negative or NaN, gamma=1.4 supplies a
-    // finite ideal-gas fallback.
-    if (c2 < 0.0 || std::isnan(c2))
-    {
-        return std::sqrt(1.4 * p / rho);
-    }
     return std::sqrt(c2);
 }
 
@@ -628,8 +581,10 @@ ARCH_INLINE void calc_hll_wave_speeds(
 
     double un_hat = (dir == 0) ? rs.u_hat : ((dir == 1) ? rs.v_hat : rs.w_hat);
 
-    S_L = std::min(un_L - c_L, un_hat - rs.c_hat);
-    S_R = std::max(un_R + c_R, un_hat + rs.c_hat);
+    S_L = std::min(un_L - c_L, un_R - c_R);
+    if (std::isfinite(rs.c_hat)) S_L = std::min(S_L, un_hat - rs.c_hat);
+    S_R = std::max(un_L + c_L, un_R + c_R);
+    if (std::isfinite(rs.c_hat)) S_R = std::max(S_R, un_hat + rs.c_hat);
 }
 
 /**
@@ -665,9 +620,10 @@ ARCH_INLINE double calc_hllc_star_speed(
     double term_R = rho_R * (S_R - un_R);
     double denom = term_R - term_L;
 
-    // 1e-10 is the absolute degeneracy threshold for the contact-speed
-    // denominator; the arithmetic mean is the finite fallback.
-    if (std::abs(denom) < 1e-10)
+    // Detect cancellation relative to the two acoustic mass-flux terms;
+    // the symmetric mean is the degenerate contact-speed limit.
+    if (std::abs(denom) <= 16.0 * std::numeric_limits<double>::epsilon()
+        * std::max(std::abs(term_L), std::abs(term_R)))
         return 0.5 * (un_L + un_R);
     return (term_R * un_R - term_L * un_L + (p_L - p_R)) / denom;
 }

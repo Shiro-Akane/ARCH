@@ -135,6 +135,10 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
     impl_->select_device();
     auto& scratch = impl_->hydro_batch;
     scratch.ensure_capacity(currents.size());
+    const int species_count = impl_->species_view.count;
+    scratch.ensure_repairs(currents.size(), species_count);
+    const int repair_stride = state::RepairView::fixed_size + 2 * species_count;
+    stage_repairs.reset(species_count);
     std::vector<DeviceHydroBatchBlock> blocks;
     blocks.reserve(currents.size());
     for (std::size_t index = 0; index < currents.size(); ++index) {
@@ -146,7 +150,8 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
             block.slots[slot_index(descriptor.output_slot)],
             block.hydro_delta.view(), block.face_flux.view(), block.grid,
             scratch.status->get() + index,
-            make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block)});
+            make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block),
+            {scratch.repairs->get() + index * repair_stride, species_count}});
     }
     auto& device_blocks = impl_->hydro_bindings;
     device_blocks.reserve(blocks.size());
@@ -171,6 +176,9 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
     check_cuda(cudaMemcpyAsync(scratch.host_status.data(), scratch.status->get(),
                    currents.size() * sizeof(int), cudaMemcpyDeviceToHost,
                    impl_->stream.get()), "download Hydro stage batch EOS status");
+    check_cuda(cudaMemcpyAsync(scratch.host_repairs.data(), scratch.repairs->get(),
+        scratch.host_repairs.size() * sizeof(double), cudaMemcpyDeviceToHost, impl_->stream.get()),
+        "download Hydro stage repair summaries");
     quiesce();
     work_guard.completed = true;
     impl_->runtime_counters.kernel_count += kernels;
@@ -183,6 +191,13 @@ state::CompletionToken CudaBackend::execute_hydro_stage_batch(
                 + std::to_string(currents[index].block.epoch.value) + " status="
                 + std::to_string(scratch.host_status[index]));
     }
+    for (std::size_t index = 0; index < currents.size(); ++index) {
+        state::RepairBudget report(species_count);
+        std::copy_n(scratch.host_repairs.data() + index * repair_stride, repair_stride, report.values.data());
+        report.block_uid = currents[index].block.uid.value;
+        stage_repairs.combine(report);
+    }
+    impl_->runtime_counters.bytes_d2h += scratch.host_repairs.size() * sizeof(double);
     return expected;
 }
 
@@ -252,6 +267,10 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
                    plan->device_blocks.get(), plan->host_blocks.data(),
                    descriptor_bytes, impl_->stream.get(), impl_->runtime_counters,
                "rebind CUDA AMR reflux state slots");
+    if (!plan->reflux_status.get()) plan->reflux_status.allocate(1);
+    check_cuda(cudaMemsetAsync(plan->reflux_status.get(),0,sizeof(int),impl_->stream.get()),"reset reflux status");
+    int reflux_status=0;
+    CudaQuiescenceGuard reflux_guard{*impl_};
     check_cuda(launch_cuda_amr_reflux(
                    plan->device_blocks.get(),
                    static_cast<int>(plan->host_blocks.size()),
@@ -259,9 +278,15 @@ state::CompletionToken CudaBackend::execute_amr_reflux(
                    static_cast<int>(reflux.targets.size()),
                    plan->reflux_contributions.get(),
                    static_cast<int>(reflux.contributions.size()),
-                   dt, impl_->stream.get()),
+                   dt, impl_->stream.get(),plan->reflux_status.get(),impl_->launch.density_floor,
+                   impl_->launch.minimum_internal_energy,impl_->launch.maximum_internal_energy),
                "launch CUDA AMR reflux");
+    check_cuda(cudaMemcpyAsync(&reflux_status,plan->reflux_status.get(),sizeof(int),
+        cudaMemcpyDeviceToHost,impl_->stream.get()),"download reflux status");
     quiesce();
+    reflux_guard.completed=true;
+    impl_->runtime_counters.bytes_d2h+=sizeof(int);
+    if (reflux_status) throw std::runtime_error("Invalid state after CUDA AMR reflux: status="+std::to_string(reflux_status));
     if (dt > 0.0) ++impl_->runtime_counters.kernel_count;
     return expected;
 }

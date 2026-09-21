@@ -4,8 +4,7 @@ This directory provides the configured gravity policy and its source coupling.
 
 - [IGravityPolicy.h](IGravityPolicy.h) is the host patch interface.
 - [GravityDispatch.h](GravityDispatch.h) binds the resolved `GravityId` through
-  `make_gravity(config, GravityId)`; names are parsed by the shared resolver.
-- [GravityNone.h](GravityNone.h) represents the disabled source.
+  `make_gravity(config, GravityId)` and owns the compact disabled policy; names are parsed by the shared resolver.
 - [ExternalGravity.h](ExternalGravity.h) traverses host patches;
   [ExternalGravitySource.h](ExternalGravitySource.h) owns the shared cell update.
 

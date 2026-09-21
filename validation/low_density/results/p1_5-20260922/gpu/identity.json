@@ -1,0 +1,30 @@
+{
+  "binary": {
+    "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/bin/ARCH",
+    "sha256": "856db78182480614ce66ceb5b942467a4de27993ecabee46ee24a9b8e6764606"
+  },
+  "build_directory": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu",
+  "cmake_options": {
+    "ARCH_CUDA_HEAVY_COMPILE_JOBS": "3",
+    "ARCH_ENABLE_CUDA": "ON",
+    "ARCH_ENABLE_CUDSS": "ON",
+    "ARCH_ENABLE_KLU": "ON",
+    "ARCH_ENABLE_OPENMP": "ON",
+    "BUILD_TESTING": "ON",
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CUDA_ARCHITECTURES": "86",
+    "CMAKE_CUDA_COMPILER": "/usr/local/cuda/bin/nvcc",
+    "CMAKE_CUDA_FLAGS": "",
+    "CMAKE_CUDA_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "CMAKE_CUDA_HOST_COMPILER": "/usr/bin/g++-12",
+    "CMAKE_CXX_COMPILER": "/usr/bin/g++-12",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_CXX_FLAGS_DEBUG": "-g",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG"
+  },
+  "representative_host_compile_command": "/usr/bin/ccache /usr/bin/g++-12 -DARCH_CUDA_BUILD_ENABLED=1 -DARCH_HAS_CUDSS_PROVIDER=1 -DARCH_HAS_KLU=1 -DARCH_OPENMP_ENABLED=1 -I/home/shiroakane/ARCH/src -I/home/shiroakane/ARCH/cases -I/home/shiroakane/ARCH/build/selfgravity-p1-gpu/generated -I/usr/include/hdf5/serial -I/home/shiroakane/ARCH/build/_deps/highfive-src/include -I/home/shiroakane/ARCH/include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/KLU/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/AMD/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/SuiteSparse_config -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/COLAMD/Include -I/home/shiroakane/ARCH/build/review-cuda-debug/_deps/suitesparse-src/BTF/Include -O3 -march=native -DNDEBUG -std=gnu++20 -flto=auto -fno-fat-lto-objects -fno-fast-math -ffp-contract=off -fopenmp -MD -MT CMakeFiles/ARCH.dir/src/api/configuration/Configuration.cpp.o -MF CMakeFiles/ARCH.dir/src/api/configuration/Configuration.cpp.o.d -o CMakeFiles/ARCH.dir/src/api/configuration/Configuration.cpp.o -c /home/shiroakane/ARCH/src/api/configuration/Configuration.cpp",
+  "source_base": "99793b49887418d3fa4f151f9ad6b571b528f708",
+  "source_note": "Built from the P1.5 working tree packaged with this record; the final source commit is the commit containing this record. studio was excluded.",
+  "omp_num_threads": 4,
+  "code_changed_during_final_physical_matrix": false
+}

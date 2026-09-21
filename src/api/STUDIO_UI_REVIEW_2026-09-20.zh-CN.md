@@ -2,6 +2,8 @@
 
 记录日期：2026-09-20。
 
+本快照中的 90 项目录和五个已退役键不作为当前要求；P1.5 的 88 项目录、CGS 和 GUI 接入边界见 [配置接口](CONFIGURATION_API.md)。
+
 本文件保存 Studio 人工验看需求快照；本分支已交付的 Core 内容与尚由 Studio 处理的内容，见 [Core UI 交接](CORE_UI_HANDOFF.md)。
 
 检查基线：`studio/phase2e-b-cellular-2d`，tag `studio-phase2e-b-v0.10.0`，commit `fb22178fe578b17120597633f427e38d2a2be582`。本地验看环境已作启动路径适配，并包含用户当前的 `.par` 编辑。

@@ -28,7 +28,7 @@ SpeciesHostView validate_tabular3_upload(const Tabular3DEOSHostView &host)
     const double *source[6]{
         host.table_P, host.table_E, host.table_cs, host.table_cv,
         host.table_dP_drho, host.table_dP_dT};
-    if (host.uses_free_energy) {
+    if (!host.native_direct) {
         for (int index = 0; index < 6; ++index)
             owner_detail::validate_absent_upload(
                 source[index], host.table_extents[index],
@@ -59,16 +59,11 @@ SpeciesHostView validate_tabular3_upload(const Tabular3DEOSHostView &host)
         if (host.native_direct)
             owner_detail::validate_required_upload(host.axis_nodes[axis],
                 host.axis_extents[axis], axis_counts[axis], "Tabular3 native axis");
-        else if (host.strict_domain)
+        else
             owner_detail::validate_optional_upload(host.axis_nodes[axis],
                 host.axis_extents[axis], axis_counts[axis], "Tabular3 explicit axis");
-        else
-            owner_detail::validate_absent_upload(host.axis_nodes[axis],
-                host.axis_extents[axis], "Tabular3 native axis");
     }
     if (host.native_direct) {
-        if (host.uses_free_energy)
-            throw std::runtime_error("Native direct EOS cannot use reconstructed free-energy fields");
         owner_detail::validate_required_upload(host.table_dP_de,
             host.dp_de_extent, expected, "Tabular3 source dp/de field");
         owner_detail::validate_required_upload(host.table_valid,
@@ -76,12 +71,8 @@ SpeciesHostView validate_tabular3_upload(const Tabular3DEOSHostView &host)
     } else {
         owner_detail::validate_absent_upload(host.table_dP_de,
             host.dp_de_extent, "Tabular3 source dp/de field");
-        if (host.strict_domain)
             owner_detail::validate_required_upload(host.table_valid,
                 host.valid_extent, expected, "Tabular3 derivative valid-node mask");
-        else
-            owner_detail::validate_absent_upload(host.table_valid,
-                host.valid_extent, "Tabular3 native valid-node mask");
     }
     owner_detail::validate_species_upload(host.specs);
     return host.specs;
@@ -108,9 +99,7 @@ Tabular3DEOSDeviceOwner::Tabular3DEOSDeviceOwner(
     device_view_.X_max = host.X_max;
     device_view_.dX = host.dX;
     device_view_.target_species_id = host.target_species_id;
-    device_view_.uses_free_energy = host.uses_free_energy;
     device_view_.native_direct = host.native_direct;
-    device_view_.strict_domain = host.strict_domain;
     device_view_.energy_reference_shift = host.energy_reference_shift;
     device_view_.pressure_transform = host.pressure_transform;
     device_view_.energy_transform = host.energy_transform;
@@ -119,7 +108,7 @@ Tabular3DEOSDeviceOwner::Tabular3DEOSDeviceOwner(
         host.table_P, host.table_E, host.table_cs, host.table_cv,
         host.table_dP_drho, host.table_dP_dT};
     try {
-        if (host.uses_free_energy) {
+        if (!host.native_direct) {
             for (int field = 0; field < tabular_eos::FieldCount; ++field) {
                 owner_detail::stage_required(
                     staging_free_energy_[field],
@@ -149,7 +138,7 @@ Tabular3DEOSDeviceOwner::Tabular3DEOSDeviceOwner(
             device_view_.table_dP_drho = device_[4];
             device_view_.table_dP_dT = device_[5];
         }
-        if (host.native_direct || host.strict_domain) {
+        {
             const double* native_source[]{host.axis_nodes[0], host.axis_nodes[1],
                 host.axis_nodes[2], host.table_dP_de, host.table_valid};
             const std::size_t native_extent[]{host.axis_extents[0], host.axis_extents[1],

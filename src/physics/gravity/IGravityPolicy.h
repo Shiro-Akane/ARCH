@@ -1,6 +1,6 @@
 /**
  * @file IGravityPolicy.h
- * @brief Type-erased Host patch interface for gravity field and source services.
+ * @brief Type-erased Host patch interface for gravitational source accumulation.
  *
  * Host integrators use this interface without including concrete policies.
  * CUDA execution uses plain views and shared cell mathematics rather than
@@ -25,12 +25,6 @@ namespace Gravity {
 class IGravityPolicy {
 public:
     virtual ~IGravityPolicy() = default;
-
-    /**
-     * @brief Computes and stores gravity fields/potentials if necessary.
-     * @param execution_stream Reserved opaque execution context; current Host policies ignore it.
-     */
-    virtual void update_field(const FluidState& state, const Grid& grid, void* execution_stream = nullptr) const = 0;
 
     /**
      * @brief Evaluates the gravity source terms on a single patch and adds them to dU.

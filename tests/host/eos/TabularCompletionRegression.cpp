@@ -75,7 +75,7 @@ struct Input {
     bool photons = false;
     std::string declaration = "baryons";
     std::string composition_axis = "Ye";
-    int equilibrium = -1;
+    int equilibrium = 0;
     bool direct = false;
     double baryon_mass_g = 0.0;
 };
@@ -132,7 +132,7 @@ void write_table(const Path& path, const Input& input, const HelmView& helm)
             }
         }
     HighFive::File file(path.string(), HighFive::File::Overwrite);
-    file.createDataSet("arch_eos_version", 1);
+    file.createDataSet("arch_eos_version", 2);
     file.createDataSet("table_rank", input.rank);
     file.createDataSet("thermodynamic_model", std::string(input.direct ? "direct" : "free_energy"));
     file.createDataSet("n_rho", nr);
@@ -232,7 +232,7 @@ void closure(const View& eos, double rho, double T, const double* X)
 template <class View>
 void compare(const View& completed, const View& total)
 {
-    require(completed.uses_free_energy && total.uses_free_energy,
+    require(completed.free_energy_fields[0] && total.free_energy_fields[0],
             "component completion did not retain a single free-energy closure");
     require(completed.energy_reference_shift == 0.0,
             "positive-energy manufactured table acquired an unnecessary energy shift");
@@ -334,8 +334,7 @@ void rejection_controls(const Path& dir, const std::string& helm_path,
         Input input{rank, false, false, "total"};
         input.direct = true;
         write_table(path, input, helm);
-        if (rank == 3) { Tabular3DEOS valid(path.string(), &specs, "absent"); }
-        else { Tabular4DEOS valid(path.string(), &specs, "absent"); }
+        rejects([&] { inspect_tabular_source(path.string()); }, "free_energy", "normalized direct model retired");
         input.declaration = "baryons";
         write_table(path, input, helm);
         rejects([&] {
@@ -376,10 +375,12 @@ void rejection_controls(const Path& dir, const std::string& helm_path,
     Tabular3DEOS alias(path.string(), &specs, "absent");
     input.declaration.clear();
     write_table(path, input, helm);
-    require(!inspect_tabular_source(path.string()).components.declared
-            && !inspect_tabular_source(path.string()).components.needs_completion(),
-            "legacy complete table was guessed to contain missing components");
-    Tabular3DEOS legacy(path.string(), &specs, "absent");
+    rejects([&] { inspect_tabular_source(path.string()); }, "eos_components",
+            "missing component metadata must be rejected");
+    input.declaration="total"; input.equilibrium=-1;
+    write_table(path,input,helm);
+    rejects([&] { inspect_tabular_source(path.string()); }, "nuclear_equilibrium",
+            "missing nuclear ownership must be rejected");
 }
 
 void identity(const Path& dir, const std::string& helm_path)
@@ -508,7 +509,9 @@ void coupling_controls()
     config.physics.diffusion.use_diffusion = true;
     config.physics.diffusion.use_thermal_diffusion = true;
     config.physics.diffusion.alpha_therm = 0.0;
-    EOSDispatcher::validate_coupling(config, legacy, true);
+    config.numerics.solver_name="HLLC";
+    rejects([&] { EOSDispatcher::validate_coupling(config, legacy, false); },
+        "electron diagnostics", "missing metadata cannot bypass conductivity requirements");
     legacy.nuclear_equilibrium = true;
     rejects([&] { EOSDispatcher::validate_coupling(config, legacy, false); },
         "double-count", "equilibrium-only metadata failed to constrain kinetic burning");

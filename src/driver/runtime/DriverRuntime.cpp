@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <utility>
 namespace arch::driver {
+state::RepairBudget& DriverRuntime::repair_budget() { return ctrl.repairs; }
 using scheduler::StageExecutionContext;
 using state::ExecutionSide;
 using state::StateResidencyLedger;

@@ -210,6 +210,8 @@ void DispatchSolver(const std::string &solver_name,
         EOSDispatcher::validate_coupling(
             config, source, parsed_plan.value.flux == FluxId::Sw);
     }
+    if (parsed_plan.value.eos == EosId::Helmholtz && parsed_plan.value.flux == FluxId::Sw)
+        throw std::invalid_argument("Steger-Warming requires a composition-only gamma; select HLL, HLLC, Roe or VL for Helmholtz EOS.");
     resolve_nse_request(config.physics.burn, parsed_plan.value.network);
     if (config.physics.burn.nse_auto && config.physics.burn.use_burn) {
         std::cout << "[Dispatch] use_nse=auto resolved to "

@@ -58,6 +58,8 @@ std::vector<double> CudaBackend::compute_diffusion_dt_batch(
         binding.input = block.require_access(currents[index]);
         binding.grid = block.grid;
         binding.workspace = workspace;
+        binding.bounds = {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+            impl_->launch.maximum_internal_energy};
         bindings.push_back(binding);
     }
     CudaQuiescenceGuard work_guard{*impl_};
@@ -198,6 +200,8 @@ state::CompletionToken CudaBackend::execute_diffusion_stage_batch(
             ? block.diffusion_initial_delta.view() : block.diffusion_delta.view();
         binding.grid = block.grid;
         binding.workspace = workspace;
+        binding.bounds = {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+            impl_->launch.maximum_internal_energy};
         binding.routes = make_cuda_amr_route_views(impl_->active_amr_flux.get(), current.block);
         bindings.push_back(binding);
     }
@@ -298,7 +302,9 @@ std::vector<backend::BurnExecutionResult> CudaBackend::execute_burn_batch(
             }
             const auto counters = impl_->sparse_burn_owner->execute(
                 selected, block.grid, dt, impl_->launch.burn,
-                block.burn_candidates.get(), block.burn_statuses.get(), scratch.get() + index);
+                block.burn_candidates.get(), block.burn_statuses.get(), scratch.get() + index,
+                {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+                 impl_->launch.maximum_internal_energy});
             burn_kernels = counters.kernels;
             impl_->runtime_counters.bytes_d2h += counters.bytes_d2h;
             impl_->runtime_counters.bytes_h2d += counters.bytes_h2d;
@@ -308,7 +314,9 @@ std::vector<backend::BurnExecutionResult> CudaBackend::execute_burn_batch(
 #endif
         } else {
             bindings.push_back({selected, block.grid, block.burn_workspace_storage.get(),
-                block.burn_candidates.get(), block.burn_statuses.get(), scratch.get() + index});
+                block.burn_candidates.get(), block.burn_statuses.get(), scratch.get() + index,
+                {impl_->launch.density_floor, impl_->launch.minimum_internal_energy,
+                 impl_->launch.maximum_internal_energy}});
         }
         batch_kernels += burn_kernels;
     }

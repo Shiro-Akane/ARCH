@@ -7,6 +7,12 @@
 开始实施前说明维护收益；若只增加文件跳转、透传或迁移冲突，应保留或收拢同一职责。
 主计划第 10 节的 GUI/Core 集成顺序优先于本表的局部提取/搬迁建议。
 
+**后续决定（2026-09-22）：** 用户已明确不要求旧输入及已退役 EOS 兼容。
+[物理配置与旧 EOS 退役清单](ParameterRetirementAudit.zh-CN.md)的 PR/ER/CR 集合覆盖本表对这些项目的
+“默认保留兼容”建议，特别是 DC-01 的旧别名头及 DC-08 的旧配置/规范化 EOS 路线。
+本表其余历史证据与来源数学豁免保留；有实际用途的 native/strict EOS 不属于笼统删除对象。
+此补充是当前规划，删除尚未实施。
+
 基准：`01cc4f723e674d47fe23850e7c0fef221e92e98c`（2026-09-21 拉取的远端 main）；审查工作分支：`codex/main-maintainability-review`。本地原 main 的 `33abca61` 历史保留，已有计划与 README 改动已恢复，未跟踪的 studio 独立开发目录未纳入 main 审查。
 
 ## 1. 范围、计数与方法
@@ -118,7 +124,7 @@
 | S-020 | [src/cuda/common/GridMetricsCache.h](../../src/cuda/common/GridMetricsCache.h) | 44 | 保留：几何缓存接口，与 .cu 分离。 |
 | S-021 | [src/cuda/hydro/GridGeometryAdapter.cuh](../../src/cuda/hydro/GridGeometryAdapter.cuh) | 32 | 保留：设备 POD 到公共几何 view 的适配，无另一套几何公式。 |
 | S-022 | [src/cuda/hydro/HydroFluxPolicies.cuh](../../src/cuda/hydro/policies/HydroFluxPolicies.cuh) | 41 | 保留：调用原通量策略的适配层。 |
-| S-023 | [src/cuda/microphysics/SparseBeNrBatch.cuh](../../src/cuda/microphysics/burn/SparseBeNrBatch.cuh) | 17 | 待核实退役：仓内未找到 include 或别名消费者；兼容承诺未排除前保留，见 DC-01。 |
+| S-023 | `src/cuda/microphysics/burn/SparseBeNrBatch.cuh`（原路径） | 17 | P1.5 按明确退役授权删除无消费者别名头；通用稀疏 ODE 路径保留，见 DC-01。 |
 | S-024 | [src/cuda/microphysics/SparseEquilibration.h](../../src/cuda/microphysics/linalg/SparseEquilibration.h) | 25 | 保留：稀疏缩放/原始残差的 CUDA 声明。 |
 | S-025 | [src/cuda/microphysics/device_eos_owner_utils.h](../../src/cuda/microphysics/eos/device_eos_owner_utils.h) | 55 | 保留：EOS owners 共用分配/上传辅助；不能复制进各 owner。 |
 | S-026 | [src/cuda/microphysics/device_network_owner.h](../../src/cuda/microphysics/network/device_network_owner.h) | 56 | 保留：弱反应表的设备存储生命周期。 |
@@ -171,8 +177,8 @@
 | S-073 | [src/physics/gravity/ExternalGravity.h](../../src/physics/gravity/ExternalGravity.h) | 50 | 保留：Host patch adapter；物理 cell 数学已共享。 |
 | S-074 | [src/physics/gravity/ExternalGravitySource.h](../../src/physics/gravity/ExternalGravitySource.h) | 39 | 保留：CPU/CUDA 共用外引力源项权威。 |
 | S-075 | [src/physics/gravity/GravityDispatch.h](../../src/physics/gravity/GravityDispatch.h) | 49 | 保留：resolved gravity factory；未来依主计划增加 self。 |
-| S-076 | [src/physics/gravity/GravityNone.h](../../src/physics/gravity/GravityNone.h) | 29 | 保留：明确的 none 策略，并非废弃空实现。 |
-| S-077 | [src/physics/gravity/IGravityPolicy.h](../../src/physics/gravity/IGravityPolicy.h) | 46 | 保留 patch 接口；未调用 update_field 是生命周期缺口，按主计划演进，见 DC-03。 |
+| S-076 | `src/physics/gravity/GravityNone.h`（原路径） | 29 | P1.5 保留 none 行为，将紧凑策略并入唯一构造入口 `GravityDispatch.h`，移除独立文件。 |
+| S-077 | [src/physics/gravity/IGravityPolicy.h](../../src/physics/gravity/IGravityPolicy.h) | 46 | 保留实际 patch 源项接口；P1.5 删除无调用 update_field，未来场更新归 domain service，见 DC-03。 |
 | S-078 | [src/physics/network/NuclearEnergy.h](../../src/physics/network/NuclearEnergy.h) | 41 | 保留：组成能量变化的单一数学权威。 |
 | S-079 | [src/physics/network/WeakTableView.h](../../src/physics/network/WeakTableView.h) | 46 | 保留：Host/Device 弱率表视图，不拥有设备内存。 |
 | S-080 | [src/physics/network/aprox13/NetAprox13.cpp](../../src/physics/network/aprox13/NetAprox13.cpp) | 6 | 保留：包含 NUM_SPECIES/ODE_NEQ 的 static_assert 默认编译检查，不是空 TU；若整合需保留编译覆盖。 |

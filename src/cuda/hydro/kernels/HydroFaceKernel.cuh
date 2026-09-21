@@ -11,6 +11,7 @@
 #pragma once
 
 #include "cuda/hydro/policies/HydroFluxPolicies.cuh"
+#include "numerics/flux/InvariantDomainFlux.h"
 #include "cuda/hydro/policies/HydroReconstructionPolicies.cuh"
 #include "numerics/reconstruction/AMRInterfaceStencil.h"
 
@@ -80,10 +81,19 @@ __device__ inline void hydro_face_kernel_work(
         reconstruct_amr_face<Reconstruction>(
             state, grid, direction, i, j, k, cell, stride, eos, left, right,
             species_left, species_right, species_cell);
+        FluxAdmissibility::limit_reconstruction(state.load(cell), left);
+        FluxAdmissibility::limit_reconstruction(state.load(cell + stride), right);
         FluidVector face_flux;
         Flux::compute(
             left, right, species_left, species_right, state.n_species, eos,
             direction, coefficient, face_flux, face_species_flux);
+        for (int species = 0; species < state.n_species; ++species) {
+            species_left[species] = state.species(species, cell);
+            species_right[species] = state.species(species, cell + stride);
+        }
+        FluxAdmissibility::limit_face(state.load(cell), state.load(cell + stride),
+            species_left, species_right, state.n_species, eos, direction,
+            face_flux, face_species_flux);
         const int face = cell + stride;
         flux.store(face, face_flux);
         for (int species = 0; species < state.n_species; ++species)

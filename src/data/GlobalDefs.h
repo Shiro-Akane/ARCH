@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "core/ArchPortability.h"
+#include "data/StateDiagnostics.h"
 #include "interface/PreviewMetadata.h"
 #include "physics/constant/PhysicalConstants.h"
 
@@ -53,12 +54,16 @@ struct GridConfig
 // Hydrodynamic discretization and stability controls.
 struct NumericsConfig
 {
-    std::string solver_name;    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
+    std::string solver_name = "SW";    ///< Numerical flux: SW, VL, HLL, HLLC, or Roe.
 
     // Runtime dispatch maps these names to compile-time reconstruction policies.
     std::string reconstruction = "pcm";  ///< "pcm" (1st), "plm" (2nd), "ppm" (3rd)
     std::string limiter = "minmod";      ///< "minmod", "mc", "superbee"
     std::string time_integrator = "RK2"; ///< "RK2","RK3"
+
+    double dt_init = 1e-16; ///< Initial burning macro-step cap, s.
+    double dt_min = 1e-20; ///< Minimum accepted macro step, s.
+    double tstep_change_factor = 1.2; ///< Maximum macro-step growth factor.
 
     double cfl = 0.8; ///< Courant factor (CFL) for time-step stability control (0 < CFL < 1).
 
@@ -89,15 +94,13 @@ struct OdeConfig
     double atol = 1e-8; ///< Absolute tolerance for ODE integration
 
     int max_newton_iter = 50; ///< Maximum Newton-Raphson iterations per ODE step
-    int max_substeps = 100;   ///< Maximum adaptive sub-steps for stiff ODEs
+    int max_substeps = 10000;   ///< Maximum adaptive sub-steps for stiff ODEs
 
     double dt_safe_factor = 0.9;    ///< Safety factor for adaptive time-stepping
     double dt_fac_max = 2.0;        ///< Maximum factor to increase dt
     double dt_fac_min = 0.1;        ///< Minimum factor to decrease dt
-    double initial_dt_frac = 1e-14; ///< Initial fraction of the global time step for the first ODE sub-step
+    double initial_dt_frac = 1e-3; ///< Initial fraction of the global time step for the first ODE sub-step
 
-    bool use_numerical_jacobian = false; ///< Whether to compute Jacobian numerically (default: false, use analytical)
-    bool freeze_jacobian = false;        ///< Whether to freeze the Jacobian for multiple Newton iterations (default: false)
 };
 
 struct BurnLimits
@@ -133,8 +136,6 @@ struct OdeConfigView
     double dt_fac_max;
     double dt_fac_min;
     double initial_dt_frac;
-    bool use_numerical_jacobian;
-    bool freeze_jacobian;
 };
 
 /**
@@ -151,7 +152,6 @@ struct BurnConfigView
     bool use_nse;
     double nseTempThreshold;
     double nseDensThreshold;
-    bool enforce_mass_conservation;
     OdeConfigView odeconfig;
 };
 
@@ -187,8 +187,6 @@ struct BurnOdeReport
 
 struct BurnConfig
 {
-    double ignition_temp = 1e9; ///< Ignition temperature threshold for burning (in Kelvin)
-    double burn_tol = 1e-6;     ///< Tolerance for burn convergence
 
     bool use_burn = false;                ///< Master switch for the burn module
     std::string network_name = "aprox19"; ///< Built-in network: aprox13, aprox19, aprox21, or iso7.
@@ -205,9 +203,7 @@ struct BurnConfig
     double nseTempThreshold = 4.5e9; ///< Temperature threshold for NSE projection
     double nseDensThreshold = 1.0e6; ///< Density threshold for NSE projection
 
-    bool enforce_mass_conservation = true; ///< Whether to enforce mass fraction conservation after each burn step
 
-    int verbose_level = 0; ///< Verbosity level for burn diagnostics (0: silent, 1: basic, 2: detailed)
 
     OdeConfig odeconfig; ///< ODE solver configuration for the burn module
 };
@@ -224,7 +220,6 @@ inline BurnConfigView make_burn_config_view(const BurnConfig& config)
         config.use_nse,
         config.nseTempThreshold,
         config.nseDensThreshold,
-        config.enforce_mass_conservation,
         {
             config.odeconfig.rtol,
             config.odeconfig.atol,
@@ -234,8 +229,6 @@ inline BurnConfigView make_burn_config_view(const BurnConfig& config)
             config.odeconfig.dt_fac_max,
             config.odeconfig.dt_fac_min,
             config.odeconfig.initial_dt_frac,
-            config.odeconfig.use_numerical_jacobian,
-            config.odeconfig.freeze_jacobian,
         },
     };
 }
@@ -271,7 +264,7 @@ struct DiffusionConfig
     // Constant IdealGas coefficients or explicit transport overrides. A zero
     // value delegates to an EOS transport interface when one is available.
     double nu_visc = 0.0;     ///< Constant kinematic viscosity (nu)
-    double alpha_therm = 0.0; ///< Constant thermal diffusivity (alpha = k / (rho * cp))
+    double alpha_therm = 0.0; ///< Constant thermal diffusivity (alpha = k / (rho * cv))
     double D_spec = 0.0;      ///< Constant species diffusivity
 };
 
@@ -356,6 +349,7 @@ struct IOConfig
 
 struct RunState
 {
+    arch::state::RepairBudget repairs;
     double time = 0.0; ///< Current physical time
     int step = 0;      ///< Current iteration step count
     int plt_idx = 0;   ///< Current plot file index
@@ -382,7 +376,6 @@ struct SimConfig
      * @brief Stores problem-specific parameters not represented by a core field.
      * Typical keys include:
      * - "prob_rho_L" (Shock tube specific)
-     * - "burn_ignition_temp" (Burn module specific)
      * - "stiff_p_inf" (Stiffened Gas EOS parameter)
      */
     std::map<std::string, double> custom_params;

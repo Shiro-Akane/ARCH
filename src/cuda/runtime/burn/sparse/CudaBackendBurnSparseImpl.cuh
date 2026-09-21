@@ -121,14 +121,14 @@ public:
 
     SparseBurnLaunchCounters execute(
         DeviceStateView state, DeviceGridView grid, double dt, BurnConfigView config,
-        reduction::ReductionCandidate* candidates, int* statuses, DeviceBurnSummary* summary) override
+        reduction::ReductionCandidate* candidates, int* statuses, DeviceBurnSummary* summary, state::Bounds bounds = {}) override
     {
         if (summary == nullptr) throw std::invalid_argument("Sparse burn summary is missing");
         const auto before_kernels = executor_->kernel_count();
         const auto before_d2h = executor_->bytes_d2h();
         const auto before_h2d = executor_->bytes_h2d();
         const auto before_sync = executor_->synchronization_count();
-        execute_sparse_burn_cells(*executor_, records_.get(), state, grid, dt, eos_, config, candidates, statuses);
+        execute_sparse_burn_cells(*executor_, records_.get(), state, grid, dt, eos_, config, candidates, statuses, bounds);
         reduce_burn_kernel<Eos><<<1, 1, 0, stream_>>>(
             candidates, statuses, grid.active_cell_count(), summary);
         check_cuda(cudaGetLastError(), "sparse burn summary reduction");

@@ -11,6 +11,7 @@
 
 #include "data/GlobalDefs.h"
 #include <type_traits>
+#include <limits>
 
 namespace DiffFlux
 {
@@ -41,7 +42,7 @@ namespace DiffFlux
 
     struct DiffusionDtCandidate
     {
-        double value = 1.0e10;
+        double value = std::numeric_limits<double>::max();
         bool valid = true;
     };
 

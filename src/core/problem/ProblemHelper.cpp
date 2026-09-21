@@ -1,3 +1,4 @@
+#include <exception>
 /**
  * @file ProblemHelper.cpp
  * @brief Shared problem setup, EOS queries and host-state initialization.
@@ -18,6 +19,7 @@
 #include "amr/AMRControl.h"
 #include "amr/topology/AmrDefines.h"
 #include "data/GlobalDefs.h"
+#include "core/config/ConfigValidation.h"
 #include "data/UserTypes.h"
 #include "driver/dispatch/PolicyDescriptor.h"
 #include "interface/ProblemGenerator.h"
@@ -151,10 +153,12 @@ namespace ProblemHelper
                        ProblemInitializationContext context,
                        std::function<void(const PointCoords&, PrimitiveData&)> init_callback)
     {
+        arch::config::ValidateControls(config, specs.count());
         int n_species = specs.count();
         const auto& active_blocks = amr_ctrl.tree->GetActiveBlocks();
 
         EOSDispatcher::dispatch_eos(context.eos, config, specs, [&](auto &&eos) {
+            std::exception_ptr initialization_failure;
 #pragma omp parallel
             {
                 PrimitiveData data{};
@@ -163,7 +167,9 @@ namespace ProblemHelper
 #pragma omp for schedule(dynamic)
                 for (size_t b_idx = 0; b_idx < active_blocks.size(); ++b_idx)
                 {
+                    try {
                     amr::Block& b = amr_ctrl.pool->GetBlock(active_blocks[b_idx]);
+                    b.fluid_state.stage_repairs.reset(n_species);
 
                     for (int k = 0; k < b.grid.GetTotalZ(); ++k) {
                         for (int j = 0; j < b.grid.GetTotalY(); ++j) {
@@ -187,7 +193,24 @@ namespace ProblemHelper
 
                                 init_callback(p, data);
 
-                                const FluidVector state = InitialConservedState(data, eos);
+                                arch::state::Repair repair;
+                                const FluidVector state = InitialConservedState(data, eos, config.numerics, &repair);
+                                if (repair.status == arch::state::Status::repaired
+                                    && i >= b.grid.Is() && i < b.grid.Ie()
+                                    && j >= b.grid.Js() && j < b.grid.Je()
+                                    && k >= b.grid.Ks() && k < b.grid.Ke()) {
+                                    const double volume=GridMetrics::CellVolume(b.grid,i,j,k);
+                                    if (b.fluid_state.stage_repairs.values[0] == 0.0) {
+                                        b.fluid_state.stage_repairs.position[0]=p.x;
+                                        b.fluid_state.stage_repairs.position[1]=p.y;
+                                        b.fluid_state.stage_repairs.position[2]=p.z;
+                                    }
+                                    auto report=b.fluid_state.stage_repairs.view();
+                                    report.event(volume,idx);
+                                    const auto delta=volume*repair.delta;
+                                    report.conserved(delta.rho,delta.mom_u,delta.mom_v,delta.mom_w,delta.eng);
+                                    for (int sp=0;sp<n_species;++sp) report.species_mass(sp,delta.rho*data.mass_fractions[sp]);
+                                }
                                 b.fluid_state.rho[idx] = state.rho;
                                 b.fluid_state.mom_u[idx] = state.mom_u;
                                 b.fluid_state.mom_v[idx] = state.mom_v;
@@ -199,8 +222,13 @@ namespace ProblemHelper
                             }
                         }
                     }
+                    } catch (...) {
+#pragma omp critical(arch_initialization_failure)
+                        { if (!initialization_failure) initialization_failure=std::current_exception(); }
+                    }
                 }
             }
+            if (initialization_failure) std::rethrow_exception(initialization_failure);
         });
     }
     } // namespace detail

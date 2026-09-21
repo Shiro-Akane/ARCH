@@ -20,6 +20,9 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#if !defined(_WIN32)
+#include <dlfcn.h>
+#endif
 
 // The 0.8 API introduced explicit offset types in CSR descriptors. Do not build
 // silently against an unreviewed ABI. NVIDIA's wheel patch is not this API number.
@@ -29,6 +32,92 @@
 
 namespace arch::cuda {
 namespace {
+// Load sparse-only dependencies on first solver construction. CPU inspection
+// must retain its 1 GiB address-space budget even in a CUDA-enabled executable.
+// Paths belong to the configured provider, not user physics parameters.
+#if defined(_WIN32)
+// Preserve native Windows import-library linking. Bounded CPU workers, and the
+// address-space problem that requires lazy vendor loading, are Linux-only.
+struct CuDssLibrary {
+    decltype(&::cudssConfigCreate) cudssConfigCreate = &::cudssConfigCreate;
+    decltype(&::cudssConfigDestroy) cudssConfigDestroy = &::cudssConfigDestroy;
+    decltype(&::cudssConfigSet) cudssConfigSet = &::cudssConfigSet;
+    decltype(&::cudssCreate) cudssCreate = &::cudssCreate;
+    decltype(&::cudssDataCreate) cudssDataCreate = &::cudssDataCreate;
+    decltype(&::cudssDataDestroy) cudssDataDestroy = &::cudssDataDestroy;
+    decltype(&::cudssDataGet) cudssDataGet = &::cudssDataGet;
+    decltype(&::cudssDestroy) cudssDestroy = &::cudssDestroy;
+    decltype(&::cudssExecute) cudssExecute = &::cudssExecute;
+    decltype(&::cudssGetProperty) cudssGetProperty = &::cudssGetProperty;
+    decltype(&::cudssMatrixCreateCsr) cudssMatrixCreateCsr = &::cudssMatrixCreateCsr;
+    decltype(&::cudssMatrixCreateDn) cudssMatrixCreateDn = &::cudssMatrixCreateDn;
+    decltype(&::cudssMatrixDestroy) cudssMatrixDestroy = &::cudssMatrixDestroy;
+    decltype(&::cudssSetStream) cudssSetStream = &::cudssSetStream;
+};
+#else
+class CuDssLibrary {
+    using Handle = void*;
+    static Handle open(const char* path) { return dlopen(path, RTLD_NOW | RTLD_LOCAL); }
+    static void close(Handle h) { if (h) dlclose(h); }
+    template<class F> static F symbol(Handle h, const char* name) {
+        return reinterpret_cast<F>(dlsym(h, name));
+    }
+    Handle blas_ = nullptr, sparse_ = nullptr;
+    template<class F> F require(const char* name) {
+        const auto function = symbol<F>(sparse_, name);
+        if (!function) throw std::runtime_error(std::string("cuDSS missing symbol: ") + name);
+        return function;
+    }
+public:
+    decltype(&::cudssConfigCreate) cudssConfigCreate = nullptr;
+    decltype(&::cudssConfigDestroy) cudssConfigDestroy = nullptr;
+    decltype(&::cudssConfigSet) cudssConfigSet = nullptr;
+    decltype(&::cudssCreate) cudssCreate = nullptr;
+    decltype(&::cudssDataCreate) cudssDataCreate = nullptr;
+    decltype(&::cudssDataDestroy) cudssDataDestroy = nullptr;
+    decltype(&::cudssDataGet) cudssDataGet = nullptr;
+    decltype(&::cudssDestroy) cudssDestroy = nullptr;
+    decltype(&::cudssExecute) cudssExecute = nullptr;
+    decltype(&::cudssGetProperty) cudssGetProperty = nullptr;
+    decltype(&::cudssMatrixCreateCsr) cudssMatrixCreateCsr = nullptr;
+    decltype(&::cudssMatrixCreateDn) cudssMatrixCreateDn = nullptr;
+    decltype(&::cudssMatrixDestroy) cudssMatrixDestroy = nullptr;
+    decltype(&::cudssSetStream) cudssSetStream = nullptr;
+    CuDssLibrary() {
+        try {
+            // Load the configured BLAS first so nonstandard toolkit installs
+            // work without relying on a transitive executable RUNPATH.
+            blas_ = open(ARCH_CUDSS_BLAS_LIBRARY);
+            if (!blas_) throw std::runtime_error("Cannot load configured cuBLAS library: " ARCH_CUDSS_BLAS_LIBRARY);
+            sparse_ = open(ARCH_CUDSS_RUNTIME_LIBRARY);
+            if (!sparse_) throw std::runtime_error("Cannot load configured cuDSS library: " ARCH_CUDSS_RUNTIME_LIBRARY);
+            cudssConfigCreate = require<decltype(cudssConfigCreate)>("cudssConfigCreate");
+            cudssConfigDestroy = require<decltype(cudssConfigDestroy)>("cudssConfigDestroy");
+            cudssConfigSet = require<decltype(cudssConfigSet)>("cudssConfigSet");
+            cudssCreate = require<decltype(cudssCreate)>("cudssCreate");
+            cudssDataCreate = require<decltype(cudssDataCreate)>("cudssDataCreate");
+            cudssDataDestroy = require<decltype(cudssDataDestroy)>("cudssDataDestroy");
+            cudssDataGet = require<decltype(cudssDataGet)>("cudssDataGet");
+            cudssDestroy = require<decltype(cudssDestroy)>("cudssDestroy");
+            cudssExecute = require<decltype(cudssExecute)>("cudssExecute");
+            cudssGetProperty = require<decltype(cudssGetProperty)>("cudssGetProperty");
+            cudssMatrixCreateCsr = require<decltype(cudssMatrixCreateCsr)>("cudssMatrixCreateCsr");
+            cudssMatrixCreateDn = require<decltype(cudssMatrixCreateDn)>("cudssMatrixCreateDn");
+            cudssMatrixDestroy = require<decltype(cudssMatrixDestroy)>("cudssMatrixDestroy");
+            cudssSetStream = require<decltype(cudssSetStream)>("cudssSetStream");
+        } catch (...) {
+            close(sparse_); close(blas_); throw;
+        }
+    }
+    // Successful loads stay valid until process exit: solver owners may be
+    // destroyed during static teardown, in either translation-unit order.
+};
+#endif
+const CuDssLibrary& cudss_api() {
+    static const CuDssLibrary library;
+    return library;
+}
+
 struct CacheBudgetExceeded : std::runtime_error {
     CacheBudgetExceeded() : std::runtime_error("optional cuDSS factor cache budget exceeded") {}
 };
@@ -150,18 +239,18 @@ struct CuDssSparseSolver::Impl
         // report errors, but must not release descriptors before that work ends.
         if (handle != nullptr) quiesce_or_terminate(device, stream);
         cached_lanes.clear();
-        if (data != nullptr) cudssDataDestroy(handle, data);
-        if (matrix != nullptr) cudssMatrixDestroy(matrix);
-        if (rhs != nullptr) cudssMatrixDestroy(rhs);
-        if (solution != nullptr) cudssMatrixDestroy(solution);
-        if (config != nullptr) cudssConfigDestroy(config);
-        if (handle != nullptr) cudssDestroy(handle);
+        if (data != nullptr) cudss_api().cudssDataDestroy(handle, data);
+        if (matrix != nullptr) cudss_api().cudssMatrixDestroy(matrix);
+        if (rhs != nullptr) cudss_api().cudssMatrixDestroy(rhs);
+        if (solution != nullptr) cudss_api().cudssMatrixDestroy(solution);
+        if (config != nullptr) cudss_api().cudssConfigDestroy(config);
+        if (handle != nullptr) cudss_api().cudssDestroy(handle);
     }
 
     CuDssResult execute(int phase, bool correction_solve = false)
     {
         CuDssResult result;
-        result.library_status = cudssExecute(handle, phase, config, data, matrix, solution, rhs);
+        result.library_status = cudss_api().cudssExecute(handle, phase, config, data, matrix, solution, rhs);
         if (result.library_status != CUDSS_STATUS_SUCCESS) return result;
         if (phase == CUDSS_PHASE_SOLVE) {
             result.cuda_status = equilibrate_sparse_vector(extent, scaled_solution.get(),
@@ -196,7 +285,7 @@ struct CuDssSparseSolver::Impl
             return result;
         }
         std::size_t bytes = 0;
-        result.library_status = cudssDataGet(handle, data, CUDSS_DATA_INFO,
+        result.library_status = cudss_api().cudssDataGet(handle, data, CUDSS_DATA_INFO,
             &result.device_info, sizeof(result.device_info), &bytes);
         if (result.library_status == CUDSS_STATUS_SUCCESS && bytes != sizeof(int))
             result.library_status = CUDSS_STATUS_INTERNAL_ERROR;
@@ -265,12 +354,12 @@ CuDssSparseSolver::CuDssSparseSolver(
         if (!diagonal) throw std::invalid_argument("cuDSS ODE pattern is missing a diagonal");
     }
     int major = -1, minor = -1;
-    checked(cudssGetProperty(MAJOR_VERSION, &major), "runtime major version");
-    checked(cudssGetProperty(MINOR_VERSION, &minor), "runtime minor version");
+    checked(cudss_api().cudssGetProperty(MAJOR_VERSION, &major), "runtime major version");
+    checked(cudss_api().cudssGetProperty(MINOR_VERSION, &minor), "runtime minor version");
     if (major != CUDSS_VERSION_MAJOR || minor != CUDSS_VERSION_MINOR)
         throw std::runtime_error("cuDSS runtime and compiled header versions disagree");
-    checked(cudssCreate(&p.handle), "create");
-    checked(cudssSetStream(p.handle, stream), "set stream");
+    checked(cudss_api().cudssCreate(&p.handle), "create");
+    checked(cudss_api().cudssSetStream(p.handle, stream), "set stream");
     p.scaled_values.allocate(nonzeros);
     p.row_divisors.allocate(extent);
     p.column_divisors.allocate(extent);
@@ -300,7 +389,7 @@ CuDssSparseSolver::CuDssSparseSolver(
     checked_cuda(cudaStreamSynchronize(stream), "column metadata completion");
     metadata_copy.complete = true;
     ++p.synchronizations;
-    checked(cudssConfigCreate(&p.config), "create config");
+    checked(cudss_api().cudssConfigCreate(&p.config), "create config");
     // General burn Jacobians can couple temperature to extremely small trace
     // abundances. BTF/COLAMD preserves nonsymmetric sparse structure and uses
     // the library's global-pivot factorization. Nested-dissection/local-block
@@ -308,12 +397,12 @@ CuDssSparseSolver::CuDssSparseSolver(
     // and refinement. Matching is NOT supported with BTF; leave it disabled.
     // Every solve must satisfy ARCH's original-matrix residual gate.
     const cudssReorderingAlg_t ordering = CUDSS_REORDERING_ALG_BTF_COLAMD;
-    checked(cudssConfigSet(p.config, CUDSS_CONFIG_REORDERING_ALG,
+    checked(cudss_api().cudssConfigSet(p.config, CUDSS_CONFIG_REORDERING_ALG,
                            &ordering, sizeof(ordering)), "select nonsymmetric sparse ordering");
     const int disabled = 0;
-    checked(cudssConfigSet(p.config, CUDSS_CONFIG_HYBRID_EXECUTE_MODE,
+    checked(cudss_api().cudssConfigSet(p.config, CUDSS_CONFIG_HYBRID_EXECUTE_MODE,
                            &disabled, sizeof(disabled)), "disable CPU numeric execution");
-    checked(cudssConfigSet(p.config, CUDSS_CONFIG_HYBRID_MEMORY_MODE,
+    checked(cudss_api().cudssConfigSet(p.config, CUDSS_CONFIG_HYBRID_MEMORY_MODE,
                            &disabled, sizeof(disabled)), "disable host factor spill");
     // Direct LU can return success yet miss componentwise accuracy on mixed
     // abundance/temperature scales (even the CPU dense oracle can do so).
@@ -322,22 +411,22 @@ CuDssSparseSolver::CuDssSparseSolver(
     // replacing that gate by cuDSS's different global two-norm criterion.
     const int refinement_steps = ARCH_CUDSS_IR_STEPS;
     const double no_library_tolerance = 0.0;
-    checked(cudssConfigSet(p.config, CUDSS_CONFIG_IR_N_STEPS,
+    checked(cudss_api().cudssConfigSet(p.config, CUDSS_CONFIG_IR_N_STEPS,
                            &refinement_steps, sizeof(refinement_steps)),
             "set iterative refinement passes");
-    checked(cudssConfigSet(p.config, CUDSS_CONFIG_IR_TOL,
+    checked(cudss_api().cudssConfigSet(p.config, CUDSS_CONFIG_IR_TOL,
                            &no_library_tolerance, sizeof(no_library_tolerance)),
             "retain ARCH residual acceptance criterion");
-    checked(cudssDataCreate(p.handle, &p.data), "create solver data");
-    checked(cudssMatrixCreateCsr(&p.matrix, extent, extent, nonzeros,
+    checked(cudss_api().cudssDataCreate(p.handle, &p.data), "create solver data");
+    checked(cudss_api().cudssMatrixCreateCsr(&p.matrix, extent, extent, nonzeros,
         // cuDSS currently accepts only three-array CSR: an N+1 offset array
         // and null rowEnd. A separate rowEnd requests unsupported four-array CSR.
         row_offsets, nullptr, column_indices, p.scaled_values.get(),
         CUDSS_R_32I, CUDSS_R_32I, CUDSS_R_64F, CUDSS_MTYPE_GENERAL,
         CUDSS_MVIEW_FULL, CUDSS_BASE_ZERO), "create CSR descriptor");
-    checked(cudssMatrixCreateDn(&p.rhs, extent, 1, extent, p.scaled_rhs.get(),
+    checked(cudss_api().cudssMatrixCreateDn(&p.rhs, extent, 1, extent, p.scaled_rhs.get(),
                                CUDSS_R_64F, CUDSS_LAYOUT_COL_MAJOR), "create RHS descriptor");
-    checked(cudssMatrixCreateDn(&p.solution, extent, 1, extent, p.scaled_solution.get(),
+    checked(cudss_api().cudssMatrixCreateDn(&p.solution, extent, 1, extent, p.scaled_solution.get(),
                                CUDSS_R_64F, CUDSS_LAYOUT_COL_MAJOR), "create solution descriptor");
 }
 
@@ -423,9 +512,9 @@ CuDssResult CuDssSparseSolver::factorize(const double* values, std::uint64_t tok
     // treated as a generic writable status slot. On an actual numerical failure,
     // discard the failed factor state before the ODE retries a smaller step.
     if (p.reset_required) {
-        checked(cudssDataDestroy(p.handle, p.data), "discard failed factor state");
+        checked(cudss_api().cudssDataDestroy(p.handle, p.data), "discard failed factor state");
         p.data = nullptr;
-        checked(cudssDataCreate(p.handle, &p.data), "recreate failed factor state");
+        checked(cudss_api().cudssDataCreate(p.handle, &p.data), "recreate failed factor state");
         p.analyzed = false;
         p.reset_required = false;
     }
@@ -443,7 +532,7 @@ CuDssResult CuDssSparseSolver::factorize(const double* values, std::uint64_t tok
         p.reset_required = true;
         std::array<std::int64_t, 16> estimates{};
         std::size_t bytes = 0;
-        checked(cudssDataGet(p.handle, p.data, CUDSS_DATA_MEMORY_ESTIMATES,
+        checked(cudss_api().cudssDataGet(p.handle, p.data, CUDSS_DATA_MEMORY_ESTIMATES,
             estimates.data(), sizeof(estimates), &bytes), "analysis memory estimates");
         if (bytes != sizeof(estimates) || estimates[0] < 0 || estimates[1] < 0)
             throw std::runtime_error("cuDSS returned an invalid device memory estimate");

@@ -48,7 +48,7 @@ processed HShen tables are not bundled.
 
 ## Component declarations and automatic completion
 
-A normalized HDF5 file may declare scalar string `eos_components`:
+A normalized HDF5 file must declare scalar string `eos_components`:
 
 | Declaration | Added during host loading |
 | --- | --- |
@@ -57,12 +57,9 @@ A normalized HDF5 file may declare scalar string `eos_components`:
 | `baryons,photons` | electrons/positrons only |
 | `baryons,electrons_positrons,photons` or `total` | nothing |
 
-Entries must be recognized, distinct, and include baryons. Without this dataset,
-an existing normalized table retains its legacy complete-EOS interpretation;
-absence does not request completion. EOSDriver's native contract already means
-total EOS. The recognized baryon ASCII contract instead supplies its explicit
-baryon-only declaration. A format adapter supplies data interpretation, not
-another nuclear-matter model.
+Entries must be recognized, distinct, and include baryons. Missing declarations are rejected.
+EOSDriver's native contract already means total EOS; the recognized baryon ASCII contract supplies
+its explicit baryon-only declaration. A format adapter supplies data interpretation.
 
 Completion requires `thermodynamic_model=free_energy`; independently interpolated
 pressure/energy fields are not enough to define the missing potential. The
@@ -85,14 +82,14 @@ density. This constant unit conversion is not a density-dependent energy shift
 or a correction fitted to Shen. If the mass declaration is absent, the existing
 provider mass convention is retained.
 
-Optional scalar integer `nuclear_equilibrium` is exactly `0` or `1`. A value of
+Required scalar integer `nuclear_equilibrium` is exactly `0` or `1`. A value of
 `1`, or the native nuclear-equilibrium table contract, requires `use_burn=false`:
 independent kinetic burning or NSE would double-count nuclear binding and assume
 composition degrees of freedom that the equilibrium table does not have.
 Setting this flag to zero is a physical declaration, not a way to make an
 equilibrium table compatible with an arbitrary reaction network.
 
-Declared/strict table routes also reject Steger-Warming flux splitting and
+All table routes also reject Steger-Warming flux splitting and
 automatic stellar conductivity, including nonequilibrium tables. Use a
 general-EOS flux and an explicitly chosen constant thermal diffusivity, or
 disable thermal diffusion. Permission to use a kinetic energy source is not
@@ -103,8 +100,7 @@ qualified with an arbitrary tabular EOS. The existing Helmholtz routes retain
 their electron diagnostics; this change does not add a second diagnostic table
 or silently substitute a model for missing weak-process inputs.
 
-Declared-component or nuclear-equilibrium free-energy tables use a strict
-finite-domain policy, whether completed automatically or supplied already total.
+All free-energy tables use a strict finite-domain policy, whether completed automatically or supplied already total.
 Source/component invalidity is propagated through all derivative stencils;
 queries cannot interpolate across a masked vertex or extrapolate past the source
 or electron-table domain. In particular, unsupported `rho_H*Ye` or temperature
@@ -232,23 +228,18 @@ cache; it does not write a converted table beside the user's source file.
 A table producer must write scalar integer `table_rank` equal to 3 or 4. Dispatch
 uses this metadata first and verifies that it agrees with the composition axes.
 
-The reader also accepts files without `table_rank`, inferring the rank as follows:
-
-- `n_X` and no `n_A`/`n_Z` means rank 3;
-- both `n_A` and `n_Z` and no `n_X` means rank 4;
-- incomplete or mixed axes are rejected as ambiguous.
-
-Rank detection uses schema content rather than filenames or a table-name list.
+Missing rank or incomplete/mixed composition axes are rejected. Metadata must identify
+one supported representation; neither filenames nor fallback guesses determine rank.
 
 ## Common scalar datasets
 
 | Dataset | Type | Meaning |
 | --- | --- | --- |
-| `arch_eos_version` | integer | must equal 1 when present; may be omitted only when both `table_rank` and `thermodynamic_model` are absent; other versions are rejected |
-| `table_rank` | integer | table producers must write 3 or 4; reader inference is described above |
-| `thermodynamic_model` | UTF-8 string | `free_energy` or `direct`; the reader uses `direct` when absent |
-| `eos_components` | UTF-8 string, optional | explicit component declaration; accepted values and legacy behavior are above |
-| `nuclear_equilibrium` | integer, optional | exactly 0 or 1; 1 excludes independent kinetic burn/NSE |
+| `arch_eos_version` | integer | required; must equal 2 |
+| `table_rank` | integer | required; 3 or 4, consistent with the axes |
+| `thermodynamic_model` | UTF-8 string | required; only `free_energy` |
+| `eos_components` | UTF-8 string, required | explicit component declaration; accepted values are above |
+| `nuclear_equilibrium` | integer, required | exactly 0 or 1; 1 excludes independent kinetic burn/NSE |
 | `baryon_mass_g` | positive finite scalar, optional | fixed source mass per baryon for electron unit conversion |
 | `n_rho`, `n_T` | integer | number of uniformly spaced thermodynamic nodes |
 | `log_rho_min`, `log_rho_max` | float64 | base-10 density bounds, rho in g cm^-3 |
@@ -265,7 +256,7 @@ A rank-3 file additionally contains `n_X`, `X_min`, and `X_max`. Its optional
 A rank-4 file additionally contains `n_A`, `A_min`, `A_max`, `n_Z`,
 `Z_min`, and `Z_max`. ARCH derives Abar and Zbar from the active composition.
 
-## Preferred free-energy model
+## Free-energy model
 
 Set `thermodynamic_model = free_energy` and store one float64 potential dataset:
 
@@ -309,34 +300,14 @@ certificate for its source samples. A fixed owner energy reference, when used,
 adds that same constant to `e` without changing its derivatives. Monotonicity
 across discontinuities or poorly resolved phase boundaries is not guaranteed.
 Queries reject non-positive pressure, conserved energy, `cv` or `cs^2`, and
-non-finite derivatives. Legacy complete normalized inputs must already use a
-documented positive-energy reference; explicitly declared free-energy sources
-use the load-time constant-reference and strict-domain handling described above.
+non-finite derivatives. Sources use the load-time constant-reference and strict-domain handling described above.
 
-## Direct-field model
+## Retired normalized representations
 
-Set `thermodynamic_model = direct`; this is also the reader's default when the
-dataset is absent. Store float64 `pressure`, `energy`, `sound_speed`, and `cv` with the exact
-rank-dependent shape above. Optional `dp_drho` and `dp_dT` use the same shape.
-Their meanings are `(dP/drho)_e` and `(dP/dT)_rho`, respectively.
-
-The loader requires finite data, positive pressure/energy/sound speed/cv, and
-energy strictly increasing with temperature at fixed density and composition. Values
-are vertex-interpolated (trilinear or quadrilinear). A missing `dp_drho` is
-estimated by perturbing density and reinverting temperature at fixed energy;
-it is not a constant-temperature derivative. The direct path is the
-input representation for products without a single
-Helmholtz-potential representation. A direct table cannot declare missing
-components and request independent additions to its fields. Tables with a
-free-energy potential use the preferred model above.
-
-Queries outside any declared density, temperature, or composition bound do not
-extrapolate the table. The normalized direct-field path retains the existing
-monatomic ideal-gas fallback (`gamma = 5/3`), as does the undeclared legacy
-free-energy path. Explicitly declared free-energy tables instead use the strict
-policy above. A fallback is a model discontinuity, not evidence that an
-external nuclear EOS covers that state. A production table must place guard
-nodes around the complete reachable domain and report any fallback encounter.
+Normalized `direct`, schema 1, missing-metadata guesses and ideal-gas fallbacks are retired.
+Queries outside density, temperature or composition bounds fail. Table producers must provide
+schema 2 free energy and explicit physical declarations; there is no guessed direct-to-potential conversion.
+Native EOSDriver remains a separate supported source contract with its own encoded fields.
 
 ## Resolution and acceptance
 
@@ -374,13 +345,12 @@ axes:
 Rank-3 and rank-4 results are numerically identical because this analytic free
 energy is composition independent. The sweep therefore verifies automatic rank
 detection, layout, finite-difference/interpolation convergence, and boundary
-behavior; it does not qualify nonlinear composition interpolation. The retained
-3D direct/vertex smoke result is `3.30779e-3`. These values apply only to
+behavior; it does not qualify nonlinear composition interpolation. These values apply only to
 the smooth analytic EOS. A phase-transition or nuclear-matter table has no
 universal accepted spacing and must retain its own axis-halving report.
 
 The repository regression command below checks the finest 161-node normalized
-rank-3/rank-4 case and the direct-field smoke. The complete multi-resolution
+rank-3/rank-4 case and rejects retired normalized inputs. The complete multi-resolution
 sweep was an isolated validation audit; its scalar evidence is retained under
 `validation/eos` rather than as another test target.
 

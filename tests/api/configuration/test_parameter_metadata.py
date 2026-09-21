@@ -4,6 +4,9 @@ import json
 import subprocess
 import unittest
 
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "preview"))
 import test_preview as base
 
 

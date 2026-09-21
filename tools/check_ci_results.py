@@ -16,7 +16,7 @@ import xml.etree.ElementTree as ET
 # Coverage anchors for the CPU+KLU profile, not a frozen total test count.
 # All other tests discovered by CTest must also appear in the completed report.
 CPU_COVERAGE_ANCHORS = frozenset({
-    "physical_constants", "curvilinear_metrics", "amr_operation_plans",
+    "physical_constants", "curvilinear_metrics", "amr_operation_plans", "low_density_math",
     "topology_transaction", "burn_mainline_reference",
     "checkpoint_compatibility", "tabular_eos_ideal_gas",
     "sparse_klu_161_equations",

@@ -271,7 +271,7 @@
   },
   "identity": {
     "caseId": "CellularDet",
-    "configRevision": "c33965b71bc301ca7ae155f123039857b9db59493feebc2577a5512a4dac940f",
+    "configRevision": "400367ae4561631494cdaa4192b1ad3b72be9fb89e15c3c0131a44b7beb83002",
     "requestId": ""
   },
   "kind": "configuration-inspection",
@@ -573,6 +573,54 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
+      "defaultValue": 1e-16,
+      "key": "dt_init",
+      "parsedValue": 1e-16,
+      "path": null,
+      "rawValue": null,
+      "sourceKey": "dt_init",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "applicabilityScope": "configured-modules; model usage not traced",
+      "applicable": true,
+      "defaultValue": 1e-20,
+      "key": "dt_min",
+      "parsedValue": 1e-20,
+      "path": null,
+      "rawValue": null,
+      "sourceKey": "dt_min",
+      "units": {
+        "status": "known",
+        "unit": "s"
+      },
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "applicabilityScope": "configured-modules; model usage not traced",
+      "applicable": true,
+      "defaultValue": 1.2,
+      "key": "tstep_change_factor",
+      "parsedValue": 1.2,
+      "path": null,
+      "rawValue": null,
+      "sourceKey": "tstep_change_factor",
+      "units": {
+        "status": "dimensionless",
+        "unit": "1"
+      },
+      "valueSource": "default",
+      "valueStage": "typed-input-before-setup-and-policy-resolution"
+    },
+    {
+      "applicabilityScope": "configured-modules; model usage not traced",
+      "applicable": true,
       "defaultValue": 0.8,
       "key": "cfl",
       "parsedValue": 0.8,
@@ -611,22 +659,6 @@
       "path": null,
       "rawValue": null,
       "sourceKey": "reconstruct",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": true,
-      "defaultValue": "RK2",
-      "key": "timeintegrator",
-      "parsedValue": "RK2",
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "timeintegrator",
       "units": {
         "status": "not-applicable",
         "unit": null
@@ -985,38 +1017,6 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
-      "defaultValue": true,
-      "key": "enforce_mass_conservation",
-      "parsedValue": true,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "enforce_mass_conservation",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": true,
-      "defaultValue": 0,
-      "key": "burn_verbose_level",
-      "parsedValue": 0,
-      "path": null,
-      "rawValue": "0",
-      "sourceKey": "burn_verbose_level",
-      "units": {
-        "status": "dimensionless",
-        "unit": "1"
-      },
-      "valueSource": "explicit",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": true,
       "defaultValue": "BE_NR",
       "key": "ode_solver",
       "parsedValue": "BE_NR",
@@ -1171,38 +1171,6 @@
       "units": {
         "status": "dimensionless",
         "unit": "1"
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": true,
-      "defaultValue": false,
-      "key": "ode_use_numerical_jac",
-      "parsedValue": false,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "ode_use_numerical_jac",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
-      },
-      "valueSource": "default",
-      "valueStage": "typed-input-before-setup-and-policy-resolution"
-    },
-    {
-      "applicabilityScope": "configured-modules; model usage not traced",
-      "applicable": true,
-      "defaultValue": false,
-      "key": "ode_freeze_jacobian",
-      "parsedValue": false,
-      "path": null,
-      "rawValue": null,
-      "sourceKey": "ode_freeze_jacobian",
-      "units": {
-        "status": "not-applicable",
-        "unit": null
       },
       "valueSource": "default",
       "valueStage": "typed-input-before-setup-and-policy-resolution"
@@ -1546,9 +1514,9 @@
     {
       "applicabilityScope": "configured-modules; model usage not traced",
       "applicable": true,
-      "defaultValue": 0.1,
+      "defaultValue": 0,
       "key": "tmax",
-      "parsedValue": 0.1,
+      "parsedValue": 0,
       "path": null,
       "rawValue": null,
       "sourceKey": "tmax",

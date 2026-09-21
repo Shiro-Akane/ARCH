@@ -1,5 +1,7 @@
 # Studio 标准配置接口
 
+P1.5 的目录为 88 项；新增登记的是已经生效的 `dt_init`、`dt_min`、`tstep_change_factor`，物理下限仍用现有参数。Core 不发布 Advanced 标签，GUI 按自己的显示层策略折叠选项。
+
 配置扩展版本 `2`，外层 `schemaVersion="1.0"`。沿用 ARCH 的进程 + stdin/JSON 通道。无需运行 simulation、加载 EOS 表或启动 CUDA，也不写 `.par`、输出目录或数据文件。
 
 ## 两个入口
@@ -19,7 +21,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 ## 参数目录：configuration-schema
 
-`parameters` 恰含当前 `RuntimeParams` 的 90 个标准配置键，包括兼容别名。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
+`parameters` 恰含当前 `RuntimeParams` 的 88 个标准配置键，不包含已退役旧键。默认值来自 `src/core/config/StandardParameters.h`，实际 RuntimeParams 也使用这份定义。目录不会自动把默认值写入参数文件。
 
 | 字段 | 含义 |
 |---|---|
@@ -27,11 +29,10 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 | defaultValue / defaultSource | 缺省输入；不是模型 Setup 或求解策略最终采用值。表达式默认输入可以是字符串 |
 | constraints | 数值存储范围、语法和已确认的部分范围；`complete=false`，交叉约束及运行要求另检查 |
 | options | 枚举选项、acceptedNames、大小写及未知值行为；策略列表从现有注册表生成 |
-| aliasOf | `timeintegrator` 对应 `time_integrator`；同时提供时以后者为准 |
 | applicability | 适用条件的解释；本次配置的布尔结果由检查接口提供 |
 | path | 输入文件或输出目录、相对路径基准；普通字符串为 null |
 | units | 单位及状态；坐标相关项通过 axis 指向坐标描述 |
-| presentation | displayName、description、subgroup；90 键全覆盖。含指定参数的 toggle / enabledBy |
+| presentation | displayName、description、subgroup；88 键全覆盖。含指定参数的 toggle / enabledBy |
 
 `presentation.toggle` 仅出现在 max_steps、plt_dt、plt_dstep、chk_dt、chk_dstep，启用条件 value > 0，关闭写入值 -1，未编辑原文保留。enabledBy 给出三个常量扩散系数对应的通道开关键。options.choices 的 displayName 用于显示，value 用于写回，acceptedNames 用于识别输入别名；不按别名逐个生成选项。
 
@@ -39,23 +40,25 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 
 `standardParametersComplete=true` 仅指上述标准键覆盖；`customParametersComplete=false`、`constraintsComplete=false`。结构体报告、缓存和未开放的字段不在目录中。自定义网络选项来自本次编译的注册表。
 
-目录中 `ode_max_substeps=10000`、`ode_initial_dt_frac=0.001` 是实际参数解析缺省值；不要从结构体的 100 / 1e-14 初值代替它们。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
+目录和结构体共用 `ode_max_substeps=10000`、`ode_initial_dt_frac=0.001`，不再保存另一套未对齐默认值。NSE 的输入是字符串 true/false/auto，不是单纯 bool。
 
 ## 配置检查：configuration-inspection
 
 `identity` 包含传入的 caseId、requestId，以及原始输入字节的 configRevision SHA-256。Host 应继续给结果关联自己的项目和 binary/build 身份。caseId 在本接口是上下文标识，**不验证模型注册、不执行 Setup、不判断文件本来属于哪个模型**。
 
-成功结果提供全部 90 个标准参数：
+成功结果提供全部 88 个标准参数：
 
 - `parsedValue`：类型转换后的配置输入。表达式返回求值后的数；这是 `typed-input-before-setup-and-policy-resolution`，不是完整 simulation 的最终有效值。
 - `rawValue`：文件显式输入，否则 null；重复键仍以最后一项为准。
-- `valueSource`：explicit、default 或 alias。`sourceKey` 指明别名来源，`defaultValue` 单独保留。
+- `valueSource`：explicit 或 default。`sourceKey` 指明当前标准键，`defaultValue` 单独保留。
 - `applicable`：依据当前模块开关等判断。范围明确为 configured-modules，不表示追踪到了模型实际使用它。即使不适用，文件显式提供的标准数值也要满足类型要求。
 - `path` / `units`：路径用途及单位说明，不执行文件存在性检查。
 
-`resolved` 提供维数、geometry、时间积分输入优先级等已解析摘要；`coordinates` 提供轴映射。`execution` 明确 Setup、EOS、CUDA、文件访问均未执行，simulationReadiness 未检查。
+`resolved` 提供维数、geometry、时间积分标准输入等已解析摘要；`coordinates` 提供轴映射。`execution` 明确 Setup、EOS、CUDA、文件访问均未执行，simulationReadiness 未检查。
 
-未识别标准键列入 `customParameters`，仅保留 rawValue，类型/单位为 null，状态为 `uninspected-model-parameter`。缺少 metadata 不表示参数未使用。
+五个已退役键 `enforce_mass_conservation`、`burn_verbose_level`、`ode_use_numerical_jac`、`ode_freeze_jacobian`、`timeintegrator` 返回 `RETIRED_PARAMETER`，不能作为 custom 输入绕过。
+
+其他未识别标准键列入 `customParameters`，仅保留 rawValue，类型/单位为 null，状态为 `uninspected-model-parameter`。缺少 metadata 不表示参数未使用。
 
 失败通过 `diagnostics` 返回 code、parameterKey、message、severity。完整数值错误和主要坐标/选项错误可定位字段；部分既有 RuntimeParams 交叉检查仍只给整体信息，此时 parameterKey 为 null。错误结果可能只包含已确认的部分参数，不要将其当作完整有效配置。
 
@@ -83,7 +86,7 @@ Host 直接调用可执行程序并写入 stdin。`--inspect-config` 使用与 P
 | EINT | erg/g |
 | VELX/VELY/VELZ | cm/s |
 
-`state.units.system=cgs`、`basis=core-cgs-contract`、`valuesConverted=false`。兼容目录中的旧 code 字段仅为历史标签，当前运行不选择 code 单位。IdealGas 无组分回退比热修正为 7.18e6 erg/(g K)，显式 Cv 不自动换算；Sod 显式 Cv=1 的数值保持不变。
+`state.units.system=cgs`、`basis=core-cgs-contract`、`valuesConverted=false`。当前目录不提供 code 单位分支；历史响应只作为旧接口记录。IdealGas 无组分回退比热修正为 7.18e6 erg/(g K)，显式 Cv 不自动换算；Sod 显式 Cv=1 的数值保持不变。
 
 units.status 区分 known、dimensionless、not-applicable、coordinate-dependent、mixed-state 等。ode_atol 用于温度/丰度混合状态，没有一个统一标量单位；不显示为“单位不清楚”。未知 custom 单位仍为 null。Sod x_pos 通过已有明确 Cartesian 坐标绑定返回 cm 和 unitEvidence；没有通用 C++ 自动推断。
 

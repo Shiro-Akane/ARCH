@@ -384,8 +384,7 @@ void check_driver_leaves(cudaStream_t stream, bool alias_workspaces = false)
         leaf_cell(2.0, 2.0, 0.0, 0.0, 0.0)};
     cells[4].state[0] = 0.4;
     cells[4].state[1] = 0.5;
-    cells[5].state[0] = std::nextafter(-10.0 * config.smallx,
-                                      -std::numeric_limits<double>::infinity());
+    cells[5].state[0] = -128.0 * std::numeric_limits<double>::epsilon();
     cells[5].state[1] = 1.0 - cells[5].state[0];
     cells[6].state[0] = -10.0 * config.smallx;
     cells[6].state[1] = 1.0 - cells[6].state[0];
@@ -530,13 +529,12 @@ void check_handoff_thresholds(cudaStream_t stream)
         throw std::runtime_error("accepted sub-ULP source energy was lost or invalid heat accepted");
 
     const double frozen_delta = std::abs(5.0e-21 - 4.0e-21);
-    const double expected_floor_limiter = config.enucDtFactor
-        / ((frozen_delta / 1.0) / 1.0e-20);
+    const double expected_floor_limiter = config.enucDtFactor / (frozen_delta / 5.0e-21);
     require_close(values[0].limiter_candidate, expected_floor_limiter, 0.0,
-                  "ENUC denominator floor");
+                  "ENUC uses actual positive internal energy");
     if (values[1].limiter_candidate
-        != DriverBurn::INACTIVE_LIMITER_CANDIDATE)
-        throw std::runtime_error("ENUC source threshold drifted");
+        != config.enucDtFactor * 1.0e31)
+        throw std::runtime_error("ENUC small source was silently disabled");
 }
 
 template<template<class, class, class> class Solver>
@@ -571,6 +569,13 @@ __global__ void status_kernel(arch::cuda::BurnPolicyCell* cells,
 
     arch::cuda::execute_ode_policy<RejectingNet, Solver>(
         cells[4], workspaces[4], StatusEos{}, config);
+
+    config.use_nse = false;
+    arch::cuda::execute_ode_policy<RejectingNet, Solver>(
+        cells[5], workspaces[5], StatusEos{}, config);
+    config.use_nse = true;
+    arch::cuda::execute_ode_policy<RejectingNet, Solver>(
+        cells[6], workspaces[6], StatusEos{}, config);
 }
 
 template<template<class, class, class> class Solver,
@@ -578,15 +583,19 @@ template<template<class, class, class> class Solver,
 void check_status_contract(const char* solver_name, cudaStream_t stream)
 {
     BurnConfig config = make_config();
-    std::array<arch::cuda::BurnPolicyCell, 5> cells{};
+    std::array<arch::cuda::BurnPolicyCell, 7> cells{};
     for (auto& cell : cells) {
         cell.fluid.rho = 2.0;
         cell.state[0] = 1.0;
         cell.state[1] = 2.0;
         cell.burn_dt = kDt;
     }
-    cells[2].burn_dt = 1.0e-20;
-    cells[4].burn_dt = 1.0e-20;
+    // Four rejected quarter-steps reach a genuinely unrepresentable increment.
+    // A merely small physical interval must instead exhaust its work budget.
+    cells[2].burn_dt = 64.0 * std::numeric_limits<double>::denorm_min();
+    cells[4].burn_dt = cells[2].burn_dt;
+    cells[5].burn_dt = 1.0e-20;
+    cells[6].burn_dt = 1.0e-20;
 
     arch::cuda::BurnPolicyCell* device = nullptr;
     arch::cuda::BurnOdeMatrixWorkspace* device_workspaces = nullptr;
@@ -640,20 +649,24 @@ void check_status_contract(const char* solver_name, cudaStream_t stream)
         throw std::runtime_error(std::string(solver_name)
                                  + " failed-NSE retry/reset status drifted");
 
-    constexpr std::uint64_t expected_report_dt_bits[]{
-        0x3ca9f0d3ef0faf29ULL,
-        0x3c9cd2b297d889bcULL,
-        0x3bc79ca10c924223ULL,
-        0x3c9cd2b297d889bcULL,
-        0x3bc79ca10c924223ULL,
-    };
-    constexpr std::uint64_t expected_input_dt_bits[]{
-        0x3c9cd2b297d889bcULL,
-        0x3c9cd2b297d889bcULL,
-        0x3bc79ca10c924223ULL,
-        0x3c9cd2b297d889bcULL,
-        0x3bc79ca10c924223ULL,
-    };
+    for (int i : {5, 6}) {
+        const std::uint64_t attempts = i == 5 ? 0
+            : (ExpectedRetryNseAttempts == 1 ? 1 : 11);
+        if (cells[i].ode.status != BurnOdeStatus::MaxSubsteps
+            || cells[i].ode.attempted_substeps != 11
+            || cells[i].ode.rejected_substeps != 10
+            || cells[i].ode.nse_attempts != attempts || cells[i].ode.nse_failures != attempts
+            || cells[i].ode.success())
+            throw std::runtime_error(std::string(solver_name) + " small-interval work budget contract");
+    }
+    const std::uint64_t expected_report_dt_bits[]{
+        0x3ca9f0d3ef0faf29ULL, 0x3c9cd2b297d889bcULL,
+        64ULL, 0x3c9cd2b297d889bcULL, 64ULL,
+        0x3bc79ca10c924223ULL, 0x3bc79ca10c924223ULL};
+    const std::uint64_t expected_input_dt_bits[]{
+        0x3c9cd2b297d889bcULL, 0x3c9cd2b297d889bcULL,
+        64ULL, 0x3c9cd2b297d889bcULL, 64ULL,
+        0x3bc79ca10c924223ULL, 0x3bc79ca10c924223ULL};
     for (std::size_t i = 0; i < cells.size(); ++i) {
         if (std::bit_cast<std::uint64_t>(cells[i].ode.dt_recommended)
                 != expected_report_dt_bits[i]
@@ -673,8 +686,8 @@ __global__ void helper_threshold_kernel(double* output)
         const double below = std::nextafter(1.0e-10, 0.0);
         output[0] = OdeMath::pi_uses_small_error_branch(below) ? 1.0 : 0.0;
         output[1] = OdeMath::pi_uses_small_error_branch(1.0e-10) ? 1.0 : 0.0;
-        output[2] = OdeMath::burn_cv_floor(std::nextafter(1.0e-10, 0.0));
-        output[3] = OdeMath::burn_cv_floor(1.0e-10);
+        output[2] = OdeMath::require_positive_cv(std::nextafter(1.0e-10, 0.0));
+        output[3] = OdeMath::require_positive_cv(1.0e-10);
     }
 }
 
@@ -690,8 +703,8 @@ void check_helper_thresholds(cudaStream_t stream)
     cuda_check(cudaStreamSynchronize(stream), "sync helper thresholds");
     cuda_check(cudaFree(device), "cudaFree helper thresholds");
     if (values[0] != 1.0 || values[1] != 0.0
-        || values[2] != 1.0e-10 || values[3] != 1.0e-10)
-        throw std::runtime_error("PI/Cv exact threshold contract drifted");
+        || values[2] != std::nextafter(1.0e-10, 0.0) || values[3] != 1.0e-10)
+        throw std::runtime_error("PI threshold / positive Cv preservation contract drifted");
 }
 
 void check_workspace_contract()

@@ -166,7 +166,7 @@ bool require_checkpoint_provenance_compatible(
     const CheckpointProvenance& saved,
     const CheckpointProvenance& expected)
 {
-    if (!saved.available) return false;
+    if (!saved.available) throw std::runtime_error("Checkpoint scientific identity is required");
     if (!expected.available)
         throw std::logic_error("Expected checkpoint provenance is unavailable");
     require_execution_identity(saved);

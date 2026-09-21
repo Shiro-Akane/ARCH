@@ -36,6 +36,12 @@ After execution, [check_ci_results.py](../../tools/check_ci_results.py) requires
 one passing JUnit entry per configured test, without omissions or skips.
 The inventory, rather than a hard-coded total, determines how many tests run.
 
+The CPU job also runs the 72-case positive-density physical matrix in
+`validation/low_density`, using its unchanged scientific budgets and a fresh
+output directory. NumPy/h5py are validation-only dependencies. The job retains
+metrics, inputs and logs, not HDF5 checkpoints. `low_density_math` is a required
+CTest coverage anchor, so removing its registration cannot silently pass CI.
+
 The CPU job does not execute CUDA, cuDSS, generated nuclear trajectories,
 Compute Sanitizer or the complete scientific Validation campaign. In
 particular, a passing Python test of a CUDA runner is a tooling result, not
@@ -55,7 +61,8 @@ restart and sanitizer validation; the hosted CPU job keeps its full inventory.
 ## Resources and reports
 
 The CPU build starts with two compiler jobs and serial CTest execution, with
-two OpenMP threads per process. The existing memory guard retains 1536 MiB of
+two OpenMP threads per CTest process. The physical low-density runner fixes four
+threads per simulation to match its recorded acceptance runs. The existing memory guard retains 1536 MiB of
 available memory, permits up to 512 MiB of additional swap and watches sustained
 memory/I/O pressure. These are CI execution limits, not new runtime defaults or
 performance measurements. Compiler concurrency can be tuned after observing

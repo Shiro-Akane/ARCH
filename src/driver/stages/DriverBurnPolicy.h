@@ -14,6 +14,7 @@
 #include "driver/schedule/ReductionSpec.h"
 #include "data/GlobalDefs.h"
 #include "data/FluidState.h"
+#include "numerics/state/StateAdmissibility.h"
 
 namespace DriverBurn
 {
@@ -82,6 +83,8 @@ ARCH_INLINE double recover_burn_internal_energy(
 ARCH_INLINE BurnCellDisposition check_burn_density(
     const FluidVector& fluid, const BurnConfigView& burn_cfg)
 {
+    if (arch::state::recover(fluid).status != arch::state::Status::valid)
+        return BurnCellDisposition::SolverFailed;
     return fluid.rho < burn_cfg.nuclearDensMin
         ? BurnCellDisposition::BelowDensity
         : BurnCellDisposition::Ready;
@@ -106,7 +109,7 @@ ARCH_INLINE BurnCellPreparation prepare_burn_cell(
         const double xk = ode_state[k];
         composition_is_finite = composition_is_finite && std::isfinite(xk);
         composition_has_negative = composition_has_negative
-            || xk < -10.0 * burn_cfg.smallx;
+            || xk < -64.0 * std::numeric_limits<double>::epsilon();
         composition_sum += xk;
         composition_min = std::min(composition_min, xk);
         composition_max = std::max(composition_max, xk);
@@ -117,7 +120,7 @@ ARCH_INLINE BurnCellPreparation prepare_burn_cell(
 
     const bool composition_is_valid = composition_is_finite
         && !composition_has_negative && std::isfinite(composition_sum)
-        && composition_sum > 1.0e-13
+        && composition_sum > 0.0
         && std::abs(composition_sum - 1.0) <= 1.0e-6;
     if (!composition_is_valid)
     {
@@ -125,12 +128,19 @@ ARCH_INLINE BurnCellPreparation prepare_burn_cell(
         return prepared;
     }
 
-    prepared.kinetic_energy = 0.5
-        * (fluid.mom_u * fluid.mom_u + fluid.mom_v * fluid.mom_v
-           + fluid.mom_w * fluid.mom_w) / rho;
-    prepared.internal_energy = (fluid.eng - prepared.kinetic_energy) / rho;
+    const auto kinematics = arch::state::recover(fluid);
+    if (kinematics.status != arch::state::Status::valid) {
+        prepared.disposition = BurnCellDisposition::SolverFailed;
+        return prepared;
+    }
+    prepared.kinetic_energy = kinematics.kinetic;
+    prepared.internal_energy = kinematics.internal;
     const double temperature = recover_burn_temperature(
         rho, prepared.internal_energy, ode_state, eos);
+    if (!std::isfinite(temperature) || !(temperature > 0.0)) {
+        prepared.disposition = BurnCellDisposition::SolverFailed;
+        return prepared;
+    }
     if (temperature < burn_cfg.nuclearTempMin)
     {
         prepared.disposition = BurnCellDisposition::BelowTemperature;
@@ -164,16 +174,13 @@ ARCH_INLINE BurnEnergyHandoff compute_burn_energy_handoff(
     if (burn_dt > 0.0)
         handoff.enuc_rate = energy_change / burn_dt;
 
-    if (burn_cfg.enucDtFactor > 0.0)
-    {
-        const double delta_e = std::abs(energy_change);
-        if (burn_dt > 0.0)
-        {
-            const double enuc_rate = delta_e / burn_dt;
-            const double energyRatioInv = enuc_rate
-                / std::max(new_internal_energy, 1.0e-20);
-            if (energyRatioInv > 1.0e-30)
-                handoff.limiter_candidate = burn_cfg.enucDtFactor / energyRatioInv;
+    if (burn_cfg.enucDtFactor > 0.0 && burn_dt > 0.0 && energy_change != 0.0) {
+        // Compare the fractional change before multiplying the time; this
+        // removes two dimensional epsilon gates and avoids an unnecessary rate.
+        const double fractional_change = std::abs(energy_change) / new_internal_energy;
+        if (fractional_change > 0.0) {
+            const double candidate = (burn_cfg.enucDtFactor / fractional_change) * burn_dt;
+            handoff.limiter_candidate = candidate < INACTIVE_LIMITER_CANDIDATE ? candidate : INACTIVE_LIMITER_CANDIDATE;
         }
     }
     handoff.valid = std::isfinite(handoff.enuc_rate)

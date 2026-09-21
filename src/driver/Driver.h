@@ -15,6 +15,7 @@
 #include "driver/stages/DriverStages.h"
 #include "driver/io/DriverIO.h"
 #include "amr/refinement/RefinementThermodynamics.h"
+#include "numerics/state/StateAdmissibility.h"
 #include <iostream>
 #include <limits>
 #ifdef _OPENMP
@@ -52,20 +53,21 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     if (backend_resolution->resolved_backend == arch::dispatch::ComputeBackend::Cuda)
         throw std::logic_error("CUDA backend selected by a CPU-only build");
 #endif
+    arch::config::ValidateControls(config, specs.count());
     using namespace arch::driver;
     using arch::scheduler::ScopedStageBinding;
     SimulationController ctrl(config, start_state);
     BCHandler bc_handler{config};
+    if (!config.io.restart)
+        for (int id : amr_ctrl.tree->GetActiveBlocks()) ctrl.repairs.combine(amr_ctrl.pool->GetBlock(id).fluid_state.stage_repairs);
     DriverRuntime runtime(amr_ctrl, bc_handler, config, specs, ctrl);
     amr::BindRefinementThermodynamics(*amr_ctrl.tree, eos);
     const auto p_func = [](const FluidVector& U, const double* Xi, const void* context) -> double {
         return static_cast<const EosPolicy*>(context)->get_pressure(U, Xi);
     };
     const auto t_func = [](const FluidVector& U, const double* Xi, const void* context) -> double {
-        if (U.rho <= 0.0) return 0.0;
-        const double kinetic = 0.5 * (U.mom_u * U.mom_u + U.mom_v * U.mom_v +
-                                      U.mom_w * U.mom_w) / U.rho;
-        return static_cast<const EosPolicy*>(context)->get_temperature(U.rho, (U.eng - kinetic) / U.rho, Xi);
+        return static_cast<const EosPolicy*>(context)->get_temperature(
+            U.rho, arch::state::recover(U).internal, Xi);
     };
     const auto gamma1_func = [](const FluidVector& U, const double* Xi, const void* context) -> double {
         if (U.rho <= 0.0) return std::numeric_limits<double>::quiet_NaN();
@@ -108,7 +110,7 @@ void run_simulation(amr::AMRControl &amr_ctrl, const EosPolicy &eos,
     double dt_burn_global = start_state.has_timestep_state
         ? start_state.dt_burn
         : ((config.io.restart && config.physics.burn.use_burn)
-               ? config.GetCustomParam("dt_init", 1e-16)
+               ? config.numerics.dt_init
                : 1e99);
     if (ctrl.should_write_initial_output()) {
         output.write_plot();

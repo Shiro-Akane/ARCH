@@ -1,3 +1,4 @@
+#include "fixtures/eos/FreeEnergyFixture.h"
 /**
  * @file test_cuda_hydro_block.cu
  * @brief Exercise the production CUDA backend through focused run modes.
@@ -399,118 +400,6 @@ amr::Block make_diffusion_block()
     return block;
 }
 
-std::vector<double> eos_table3(
-    double base, double di, double dj, double dk)
-{
-    std::vector<double> data(27);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            for (int k = 0; k < 3; ++k)
-                data[(i * 3 + j) * 3 + k] =
-                    base + i * di + j * dj + k * dk;
-    data.back() += 0.125;
-    return data;
-}
-
-std::vector<double> eos_energy3()
-{
-    std::vector<double> data(27);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            for (int k = 0; k < 3; ++k)
-                data[(i * 3 + j) * 3 + k] =
-                    1.0e6 * std::pow(10.0, 7.0 + j)
-                    + 1000.0 * i + 100.0 * k;
-    data.back() += 0.25;
-    return data;
-}
-
-std::vector<double> eos_table4(
-    double base, double di, double dj, double dk, double dl)
-{
-    std::vector<double> data(81);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            for (int k = 0; k < 3; ++k)
-                for (int l = 0; l < 3; ++l)
-                    data[((i * 3 + j) * 3 + k) * 3 + l] =
-                        base + i * di + j * dj + k * dk + l * dl;
-    data.back() += 0.375;
-    return data;
-}
-
-std::vector<double> eos_energy4()
-{
-    std::vector<double> data(81);
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            for (int k = 0; k < 3; ++k)
-                for (int l = 0; l < 3; ++l)
-                    data[((i * 3 + j) * 3 + k) * 3 + l] =
-                        1.0e6 * std::pow(10.0, 7.0 + j)
-                        + 1000.0 * i + 100.0 * k + 10.0 * l;
-    data.back() += 0.5;
-    return data;
-}
-
-Tabular3DEOSHostView make_eos_tab3(
-    const SpeciesManager& species,
-    const std::array<std::vector<double>, 6>& tables)
-{
-    Tabular3DEOSHostView view{};
-    view.n_rho = view.n_T = view.n_X = 3;
-    view.log_rho_min = 0.0;
-    view.log_rho_max = 2.0;
-    view.dlog_rho = 1.0;
-    view.log_T_min = 7.0;
-    view.log_T_max = 9.0;
-    view.dlog_T = 1.0;
-    view.X_min = 0.0;
-    view.X_max = 1.0;
-    view.dX = 0.5;
-    view.table_P = tables[0].data();
-    view.table_E = tables[1].data();
-    view.table_cs = tables[2].data();
-    view.table_cv = tables[3].data();
-    view.table_dP_drho = tables[4].data();
-    view.table_dP_dT = tables[5].data();
-    for (std::size_t field = 0; field < tables.size(); ++field)
-        view.table_extents[field] = tables[field].size();
-    view.specs = species.get_host_view();
-    view.target_species_id = 1;
-    return view;
-}
-
-Tabular4DEOSHostView make_eos_tab4(
-    const SpeciesManager& species,
-    const std::array<std::vector<double>, 6>& tables)
-{
-    Tabular4DEOSHostView view{};
-    view.n_rho = view.n_T = view.n_A = view.n_Z = 3;
-    view.log_rho_min = 0.0;
-    view.log_rho_max = 2.0;
-    view.dlog_rho = 1.0;
-    view.log_T_min = 7.0;
-    view.log_T_max = 9.0;
-    view.dlog_T = 1.0;
-    view.A_min = 1.0;
-    view.A_max = 2.0;
-    view.dA = 0.5;
-    view.Z_min = 0.5;
-    view.Z_max = 1.0;
-    view.dZ = 0.25;
-    view.table_P = tables[0].data();
-    view.table_E = tables[1].data();
-    view.table_cs = tables[2].data();
-    view.table_cv = tables[3].data();
-    view.table_dP_drho = tables[4].data();
-    view.table_dP_dT = tables[5].data();
-    for (std::size_t field = 0; field < tables.size(); ++field)
-        view.table_extents[field] = tables[field].size();
-    view.specs = species.get_host_view();
-    return view;
-}
-
 arch::cuda::CudaLaunchConfig make_eos_launch_config(
     arch::dispatch::EosId eos)
 {
@@ -586,38 +475,25 @@ void run_eos_owner_matrix()
     const std::string helm_table = std::string(ARCH_SOURCE_DIR)
         + "/EOS_toolkit/tables/helmholtz/helm_table.dat";
     HelmEos helm(helm_table, &species);
-    const std::array<std::vector<double>, 6> tables3{
-        eos_table3(1.0e15, 1.0e11, 2.0e11, 3.0e11),
-        eos_energy3(),
-        eos_table3(2.0e7, 1.0e4, 2.0e4, 3.0e4),
-        eos_table3(3.0e6, 1.0e3, 2.0e3, 3.0e3),
-        eos_table3(4.0e5, 10.0, 20.0, 30.0),
-        eos_table3(5.0e4, 1.0, 2.0, 3.0)};
-    const std::array<std::vector<double>, 6> tables4{
-        eos_table4(1.5e15, 1.0e11, 2.0e11, 3.0e11, 4.0e11),
-        eos_energy4(),
-        eos_table4(2.5e7, 1.0e4, 2.0e4, 3.0e4, 4.0e4),
-        eos_table4(3.5e6, 1.0e3, 2.0e3, 3.0e3, 4.0e3),
-        eos_table4(4.5e5, 10.0, 20.0, 30.0, 40.0),
-        eos_table4(5.5e4, 1.0, 2.0, 3.0, 4.0)};
-    const Tabular3DEOSHostView tab3 = make_eos_tab3(species, tables3);
-    const Tabular4DEOSHostView tab4 = make_eos_tab4(species, tables4);
+    const arch::test::FreeEnergyFixture<false> fixture3(species);
+    const arch::test::FreeEnergyFixture<true> fixture4(species);
+    const auto& tab3=fixture3.host; const auto& tab4=fixture4.host;
     const std::array<std::uint64_t, 4> hashes{
         run_eos_owner_route(0, EosId::Ideal, ideal, species, 10.0, 1.0e8),
         run_eos_owner_route(
             1, EosId::Helmholtz, helm, species, 1.0e7, 2.0e9),
         run_eos_owner_route(
-            2, EosId::Tabular3D, tab3, species, 10.0, 1.0e8),
+            2, EosId::Tabular3D, tab3, species, 1.5, 1.3),
         run_eos_owner_route(
-            3, EosId::Tabular4D, tab4, species, 10.0, 1.0e8)};
+            3, EosId::Tabular4D, tab4, species, 1.5, 1.3)};
     const std::array<std::uint64_t, 4> repeated_hashes{
         run_eos_owner_route(0, EosId::Ideal, ideal, species, 10.0, 1.0e8),
         run_eos_owner_route(
             1, EosId::Helmholtz, helm, species, 1.0e7, 2.0e9),
         run_eos_owner_route(
-            2, EosId::Tabular3D, tab3, species, 10.0, 1.0e8),
+            2, EosId::Tabular3D, tab3, species, 1.5, 1.3),
         run_eos_owner_route(
-            3, EosId::Tabular4D, tab4, species, 10.0, 1.0e8)};
+            3, EosId::Tabular4D, tab4, species, 1.5, 1.3)};
     for (std::size_t route = 0; route < hashes.size(); ++route) {
         require(hashes[route] == repeated_hashes[route],
                 "CUDA EOS owner route is not deterministic");

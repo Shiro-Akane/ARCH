@@ -57,6 +57,7 @@ public:
     BCHandler& boundaries() const { return bc_handler; }
     const SimConfig& configuration() const { return config; }
     const SpeciesManager& species() const { return specs; }
+    state::RepairBudget& repair_budget();
     const std::vector<RegridMeasurement>& regrid_records() const { return regrid_measurements; }
 private:
     std::vector<topology::TopologyObservation> observe_blocks(std::span<const int>) const;

@@ -1,0 +1,45 @@
+{
+  "required_providers": [
+    "cudss",
+    "klu"
+  ],
+  "runtime_libraries": [
+    {
+      "provider": "cublas",
+      "path": "/usr/local/cuda-12.3/targets/x86_64-linux/lib/libcublas.so.12.3.4.1",
+      "sha256": "8bdbda040980c430fc07dd853fdebc578e51951015284e4f109de5ee345a22e6"
+    },
+    {
+      "provider": "cudss",
+      "path": "/home/shiroakane/ARCH/build/dependencies/cudss-cu12/nvidia/cu12/lib/libcudss.so.0",
+      "sha256": "0740250950abbbbc7690c4edb1506f8432558658764d6c1f7cba29615acb3dfc"
+    }
+  ],
+  "link_command_sha256": "3fb4154003c0188f4da9ee7429fe666b8170a8b44ed922e40afc1fba3821f84c",
+  "libraries": [
+    {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/AMD/libamd.a",
+      "sha256": "b9b81b7c8e633e18f7cd4f933be642fcad6b13a0eeef2a2630f075a0e5b278ae"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/BTF/libbtf.a",
+      "sha256": "046c4bb47a89f16c8bf6b9b77fbaca4ea39b0ae2e10176c2456b26f5b91c6da6"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/COLAMD/libcolamd.a",
+      "sha256": "efc47fe477163b11bc9b428d56a378334cb232b035372e5d06c1ab511c0aab61"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/KLU/libklu.a",
+      "sha256": "bf3e6617696950c8751e2d7b3635195dde36bd8c07d4d4be72628576b2e47fab"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/_deps/suitesparse-build/SuiteSparse_config/libsuitesparseconfig.a",
+      "sha256": "b7e7ca036fcb1cf9c68e704c37f0b9ffcb8bc2dacee626f7312757c939061f8a"
+    },
+    {
+      "path": "/home/shiroakane/ARCH/build/selfgravity-p1-gpu/libarch_cuda_sparse_provider.a",
+      "sha256": "b3c4ffb1b7bdd384633cca37aae0264113e99b22d5c3a7496017be3cbac6e0c7"
+    }
+  ]
+}

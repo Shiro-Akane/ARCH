@@ -139,7 +139,7 @@ cudaError_t launch_bounded_hydro_stage(
     double maximum_internal_energy,
     const CudaAmrFluxDirectionRouteView* amr_routes,
     const scheduler::StageDescriptor& descriptor, double dt,
-    cudaStream_t stream, int& kernels_launched,
+    int* eos_status, cudaStream_t stream, int& kernels_launched,
     SpeciesWorkspaceView species_workspace = {}, Physical::Gravity::ExternalGravityView gravity = {})
 {
     kernels_launched = 0;
@@ -181,7 +181,7 @@ cudaError_t launch_bounded_hydro_stage(
         old_state, input, output, delta, grid,
         descriptor.old_weight, descriptor.update_weight,
         density_floor, minimum_internal_energy, maximum_internal_energy,
-        stream);
+        stream, eos_status);
     if (error == cudaSuccess) ++kernels_launched;
     return error;
 }
