@@ -1,0 +1,556 @@
+{
+  "build": "CPU Debug; CUDA OFF; OpenMP worker=1",
+  "date": "2026-09-21",
+  "scope": "Core request time, excludes Host queue and Studio rendering; one sample per edit; independent new session per case group",
+  "results": [
+    {
+      "case": "CellularDet",
+      "command": "--preview",
+      "edit": "first",
+      "options": {
+        "samplesX1": 128,
+        "samplesX2": 128
+      },
+      "elapsedMilliseconds": 6842.273713,
+      "stages": [
+        {
+          "milliseconds": 0.407596,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 1.767056,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.10174,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 0.086226,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.221845,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 6395.370972,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 0.284745,
+          "stage": "eos"
+        },
+        {
+          "milliseconds": 95.855286,
+          "stage": "sampling"
+        },
+        {
+          "milliseconds": 238.960868,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 108.791762,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 2,
+        "fileHashes": 1,
+        "resultReused": false,
+        "retainedFileBytes": 60242514,
+        "retainedTables": 1,
+        "sampleEvaluation": {
+          "eosConversions": 38,
+          "exactStateReuses": 16346,
+          "initCalls": 16384,
+          "maxRetainedStates": 1024,
+          "scope": "this-request-fixed-eos"
+        },
+        "tableHits": 2,
+        "tableLoads": 1
+      },
+      "sampleEvaluation": {
+        "eosConversions": 38,
+        "exactStateReuses": 16346,
+        "initCalls": 16384,
+        "maxRetainedStates": 1024,
+        "scope": "this-request-fixed-eos"
+      },
+      "status": "ok"
+    },
+    {
+      "case": "CellularDet",
+      "command": "--preview",
+      "edit": "position",
+      "options": {
+        "samplesX1": 128,
+        "samplesX2": 128
+      },
+      "elapsedMilliseconds": 450.955968,
+      "stages": [
+        {
+          "milliseconds": 0.211033,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.955177,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.068501,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 0.047653,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.04244,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 14.881824,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 0.148914,
+          "stage": "eos"
+        },
+        {
+          "milliseconds": 91.279372,
+          "stage": "sampling"
+        },
+        {
+          "milliseconds": 225.207067,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 117.787335,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 2,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 60242514,
+        "retainedTables": 1,
+        "sampleEvaluation": {
+          "eosConversions": 38,
+          "exactStateReuses": 16346,
+          "initCalls": 16384,
+          "maxRetainedStates": 1024,
+          "scope": "this-request-fixed-eos"
+        },
+        "tableHits": 3,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": {
+        "eosConversions": 38,
+        "exactStateReuses": 16346,
+        "initCalls": 16384,
+        "maxRetainedStates": 1024,
+        "scope": "this-request-fixed-eos"
+      },
+      "status": "ok"
+    },
+    {
+      "case": "CellularDet",
+      "command": "--preview",
+      "edit": "temperature",
+      "options": {
+        "samplesX1": 128,
+        "samplesX2": 128
+      },
+      "elapsedMilliseconds": 479.019339,
+      "stages": [
+        {
+          "milliseconds": 0.267832,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 1.114408,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.087646,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 0.048398,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.049036,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 15.900183,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 0.116365,
+          "stage": "eos"
+        },
+        {
+          "milliseconds": 97.515357,
+          "stage": "sampling"
+        },
+        {
+          "milliseconds": 236.046409,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 127.486103,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 2,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 60242514,
+        "retainedTables": 1,
+        "sampleEvaluation": {
+          "eosConversions": 37,
+          "exactStateReuses": 16347,
+          "initCalls": 16384,
+          "maxRetainedStates": 1024,
+          "scope": "this-request-fixed-eos"
+        },
+        "tableHits": 3,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": {
+        "eosConversions": 37,
+        "exactStateReuses": 16347,
+        "initCalls": 16384,
+        "maxRetainedStates": 1024,
+        "scope": "this-request-fixed-eos"
+      },
+      "status": "ok"
+    },
+    {
+      "case": "CooperativeHotspots",
+      "command": "--inspect-case",
+      "edit": "first",
+      "options": {},
+      "elapsedMilliseconds": 6018.232163,
+      "stages": [
+        {
+          "milliseconds": 1.789415,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.185824,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 5993.261937,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 1.814713,
+          "stage": "initialization"
+        },
+        {
+          "milliseconds": 16.908062,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 3.884179,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 2,
+        "fileHashes": 1,
+        "resultReused": false,
+        "retainedFileBytes": 60242514,
+        "retainedTables": 1,
+        "sampleEvaluation": null,
+        "tableHits": 83,
+        "tableLoads": 1
+      },
+      "sampleEvaluation": null,
+      "status": "ok"
+    },
+    {
+      "case": "CooperativeHotspots",
+      "command": "--inspect-case",
+      "edit": "position",
+      "options": {},
+      "elapsedMilliseconds": 39.295493,
+      "stages": [
+        {
+          "milliseconds": 1.378519,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.149054,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 15.961306,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 1.840979,
+          "stage": "initialization"
+        },
+        {
+          "milliseconds": 16.323447,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 3.263697,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 2,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 60242514,
+        "retainedTables": 1,
+        "sampleEvaluation": null,
+        "tableHits": 84,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": null,
+      "status": "ok"
+    },
+    {
+      "case": "CooperativeHotspots",
+      "command": "--inspect-case",
+      "edit": "temperature",
+      "options": {},
+      "elapsedMilliseconds": 41.432579,
+      "stages": [
+        {
+          "milliseconds": 1.633589,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.154541,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 17.104375,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 2.200061,
+          "stage": "initialization"
+        },
+        {
+          "milliseconds": 16.323763,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 3.592926,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 2,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 60242514,
+        "retainedTables": 1,
+        "sampleEvaluation": null,
+        "tableHits": 84,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": null,
+      "status": "ok"
+    },
+    {
+      "case": "Sod",
+      "command": "--preview-amr",
+      "edit": "first",
+      "options": {
+        "meshMaxBlocks": 128
+      },
+      "elapsedMilliseconds": 8.03577,
+      "stages": [
+        {
+          "milliseconds": 0.155912,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.801604,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.070677,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 0.048208,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.656242,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 0.099159,
+          "stage": "eos"
+        },
+        {
+          "milliseconds": 4.845176,
+          "stage": "initial-refinement"
+        },
+        {
+          "milliseconds": 0.327752,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 0.892746,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 0,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 0,
+        "retainedTables": 0,
+        "sampleEvaluation": null,
+        "tableHits": 0,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": null,
+      "status": "ok"
+    },
+    {
+      "case": "Sod",
+      "command": "--preview-amr",
+      "edit": "position",
+      "options": {
+        "meshMaxBlocks": 128
+      },
+      "elapsedMilliseconds": 5.611126,
+      "stages": [
+        {
+          "milliseconds": 0.143359,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.672804,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.064031,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 0.04652,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.701074,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 0.095045,
+          "stage": "eos"
+        },
+        {
+          "milliseconds": 2.770646,
+          "stage": "initial-refinement"
+        },
+        {
+          "milliseconds": 0.227116,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 0.757827,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 0,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 0,
+        "retainedTables": 0,
+        "sampleEvaluation": null,
+        "tableHits": 0,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": null,
+      "status": "ok"
+    },
+    {
+      "case": "Sod",
+      "command": "--preview-amr",
+      "edit": "level",
+      "options": {
+        "meshMaxBlocks": 128
+      },
+      "elapsedMilliseconds": 7.683545,
+      "stages": [
+        {
+          "milliseconds": 0.125637,
+          "stage": "request"
+        },
+        {
+          "milliseconds": 0.642528,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.061394,
+          "stage": "support"
+        },
+        {
+          "milliseconds": 0.046943,
+          "stage": "configuration"
+        },
+        {
+          "milliseconds": 0.598329,
+          "stage": "setup"
+        },
+        {
+          "milliseconds": 0.086501,
+          "stage": "eos"
+        },
+        {
+          "milliseconds": 4.703822,
+          "stage": "initial-refinement"
+        },
+        {
+          "milliseconds": 0.259712,
+          "stage": "source-validation"
+        },
+        {
+          "milliseconds": 1.033045,
+          "stage": "complete"
+        }
+      ],
+      "resources": {
+        "clearedAfterError": false,
+        "fileContentMatches": 0,
+        "fileHashes": 0,
+        "resultReused": false,
+        "retainedFileBytes": 0,
+        "retainedTables": 0,
+        "sampleEvaluation": null,
+        "tableHits": 0,
+        "tableLoads": 0
+      },
+      "sampleEvaluation": null,
+      "status": "ok"
+    }
+  ]
+}

@@ -6,6 +6,8 @@
 
 最新增量交接见 [本地工作流 API 交接](LOCAL_WORKFLOW_HANDOFF.md)：90 项标准说明、统一 CGS、模型查询、逐级资源估算，以及有界 CPU 实际初始 AMR 网格。旧 `--preview` 点采样接口保持独立；新命令见 [INITIAL_AMR_API.md](INITIAL_AMR_API.md)。全部现有模型的统一参数与初始化检查见 [CASE_INSPECTION_API.md](CASE_INSPECTION_API.md)，该入口与完整场/网格渲染能力分别查询。
 
+持续编辑的资源复用见 [本地预览会话](PREVIEW_SESSION_API.md) 和 [本次交接](PREVIEW_SESSION_HANDOFF.md)。新增 `--preview-session` 通过逐行 JSON 接收多份请求，保留 EOS 资源；每份请求仍完整初始化。下文单次 CLI 的输入输出保持兼容。
+
 ## 当前提供什么
 
 - 支持已注册的 **一维 Cartesian Sod** 与 **二维 Cartesian CellularDet**；直接调用各模型的 `Setup/Init`。
@@ -66,7 +68,7 @@ Host 应直接启动进程，以 stdin 写入编辑器当前的 `.par` 文本，
 - 参数文本不会自动保存，也不会改变当前文件关联。
 - **工作目录由 Host 设为所管理项目的运行目录。** EOS 相对路径仍相对于该工作目录解析，不相对于临时文件目录。接口不自动切换目录，也不改写配置中的路径。
 - stdout 只返回一个完整 JSON 对象及换行。应同时收集 stderr；底层库可能向其报告错误。
-- 每个进程处理一次请求。Host 负责超时、取消和终止进程；未正常退出或未收到完整响应时，不接纳结果。
+- 上述单次命令每个进程处理一次请求。会话模式另见 PREVIEW_SESSION_API.md。Host 负责超时、取消和终止进程；未正常退出或未收到完整响应时，不接纳结果。
 
 接口不需要 WebSocket、HTTP 或 SSH。本地 Host 可以使用已有的进程管理方式调用。
 

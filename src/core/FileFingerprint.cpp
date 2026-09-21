@@ -4,6 +4,7 @@
  */
 
 #include "FileFingerprint.h"
+#include "VerifiedFileCache.h"
 
 #include <algorithm>
 #include <array>
@@ -17,6 +18,7 @@
 
 namespace arch::core {
 namespace {
+thread_local VerifiedFileCache* verified_files = nullptr;
 
 constexpr std::array<std::uint32_t, 64> sha256_constants{
     0x428a2f98U, 0x71374491U, 0xb5c0fbcfU, 0xe9b5dba5U,
@@ -149,6 +151,9 @@ private:
 
 } // namespace
 
+VerifiedFileCacheScope::VerifiedFileCacheScope(VerifiedFileCache& cache) : previous_(verified_files) { verified_files=&cache; }
+VerifiedFileCacheScope::~VerifiedFileCacheScope() { verified_files=previous_; }
+
 std::string string_sha256(std::string_view bytes)
 {
     Sha256 hash;
@@ -163,12 +168,55 @@ std::string file_sha256(const std::string& path)
         throw std::runtime_error(
             "Cannot open file for SHA-256 fingerprint: " + path);
 
-    Sha256 hash;
     std::array<char, 64 * 1024> buffer{};
+    if (verified_files) {
+        auto& cache=*verified_files;
+        if (auto it=cache.entries_.find(path); it!=cache.entries_.end()) {
+            std::size_t read=0;
+            bool equal=true;
+            while (input) {
+                input.read(buffer.data(),buffer.size());
+                const auto count=static_cast<std::size_t>(input.gcount());
+                if (count>it->second.size-read ||
+                    !std::equal(buffer.data(),buffer.data()+count,it->second.bytes.get()+read)) {
+                    equal=false; break;
+                }
+                read+=count;
+            }
+            if (input.bad()) throw std::runtime_error("Failed comparing file contents: "+path);
+            if (equal && input.eof() && read==it->second.size) {
+                ++cache.hits; return it->second.digest;
+            }
+            cache.retained_-=it->second.size; cache.entries_.erase(it);
+            input.clear(); input.seekg(0);
+            if (!input) throw std::runtime_error("Cannot reread changed file: "+path);
+        }
+    }
+    std::unique_ptr<char[]> snapshot;
+    std::size_t snapshot_size=0, observed=0;
+    if (verified_files) {
+        ++verified_files->hashes;
+        input.seekg(0,std::ios::end);
+        const auto end=input.tellg();
+        input.clear(); input.seekg(0);
+        if (!input) throw std::runtime_error("Cannot inspect file length: "+path);
+        if (end>=0 && static_cast<std::uint64_t>(end)<=verified_files->max_bytes) {
+            snapshot_size=static_cast<std::size_t>(end);
+            if (snapshot_size>verified_files->max_bytes-verified_files->retained_ || verified_files->entries_.size()>=8)
+                verified_files->clear();
+            snapshot=std::make_unique<char[]>(snapshot_size);
+        }
+    }
+    Sha256 hash;
     while (input) {
         input.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
         const std::streamsize count = input.gcount();
         if (count > 0) {
+            if (snapshot) {
+                if (static_cast<std::size_t>(count)>snapshot_size-observed) snapshot.reset();
+                else std::copy_n(buffer.data(),count,snapshot.get()+observed);
+            }
+            observed+=static_cast<std::size_t>(count);
             hash.update(reinterpret_cast<const std::uint8_t*>(buffer.data()),
                         static_cast<std::size_t>(count));
         }
@@ -176,7 +224,12 @@ std::string file_sha256(const std::string& path)
     if (!input.eof())
         throw std::runtime_error(
             "Failed reading file for SHA-256 fingerprint: " + path);
-    return hash.finish();
+    auto digest=hash.finish();
+    if (snapshot && observed==snapshot_size) {
+        verified_files->entries_.emplace(path,VerifiedFileCache::Entry{std::move(snapshot),snapshot_size,digest});
+        verified_files->retained_+=snapshot_size;
+    }
+    return digest;
 }
 
 } // namespace arch::core

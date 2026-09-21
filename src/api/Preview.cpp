@@ -1,4 +1,7 @@
+#include "Progress.h"
 #include "Preview.h"
+#include "PreviewSession.h"
+#include "InitialSampleCache.h"
 #include "Json.h"
 #include "ParameterMetadata.h"
 #include "Response.h"
@@ -108,13 +111,14 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
     int exit_code = 2;
     std::string error_code = "INVALID_REQUEST";
     try {
+        EOSDispatcher::InspectionScope eos_sources;
         if (request.config_text.size() > max_config_bytes || request.config_text.empty()
             || request.request_id.size() > 128 || request.case_id.size() > 128)
             throw std::invalid_argument("Expected nonempty config <= 1 MiB and identifiers <= 128 bytes");
         SamplingPlan sampling;
         try { sampling = ResolveSampling(request); }
         catch (const SamplingLimitError &) { error_code = "SAMPLING_LIMIT_EXCEEDED"; throw; }
-        result["stage"] = "configuration";
+        ReportStage(request, result, "configuration");
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
         std::shared_ptr<preview::ParameterReadTrace> reads;
         if (request.case_id == "Sod")
@@ -122,7 +126,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         SimConfig config = RuntimeParams::LoadText(request.config_text, reads);
         auto &state = result["state"];
         PublishStateSnapshot(state, config);
-        result["stage"] = "support";
+        ReportStage(request, result, "support");
         exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
         if (config.grid.geometry != "cartesian"
             || !((request.case_id == "Sod" && config.grid.dim == 1)
@@ -130,7 +134,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             throw std::invalid_argument("Preview supports Cartesian Sod 1D and CellularDet 2D");
         if (config.io.restart)
             throw std::invalid_argument("Initial-state preview does not load restart checkpoints");
-        result["stage"] = "configuration";
+        ReportStage(request, result, "configuration");
         exit_code = 3; error_code = "INVALID_CONFIGURATION";
         validate_grid(config);
         if (sampling.two_dimensional) {
@@ -139,13 +143,13 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                 && (std::trunc(it->second) != it->second || it->second < std::numeric_limits<int>::min()
                     || it->second > std::numeric_limits<int>::max()))
                 throw std::invalid_argument("shock_dir must be a whole number within the integer range");
-            result["stage"] = "support";
+            ReportStage(request, result, "support");
             exit_code = 4; error_code = "UNSUPPORTED_PREVIEW";
             const int direction = config.Get<int>("shock_dir", 0);
             if (direction != 0 && direction != 1)
                 throw std::invalid_argument("CellularDet 2D supports shock_dir=0 or 1 only");
         }
-        result["stage"] = "setup";
+        ReportStage(request, result, "setup");
         exit_code = 5; error_code = "SETUP_FAILED";
         state["setup"] = "error";
         auto problem = ProblemRegistry::Get().Create(request.case_id);
@@ -157,7 +161,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             config.parameter_reads.reset();
             state["species"] = SpeciesSnapshot(specs);
             state["eos"]["status"] = "error";
-            result["stage"] = "eos";
+            ReportStage(request, result, "eos");
             error_code = "EOS_FAILED";
             throw;
         } catch (...) {
@@ -172,7 +176,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
         state["setup"] = "ready";
         state["species"] = SpeciesSnapshot(specs);
         if (specs.count() == 0) throw std::runtime_error("Initialization registered no species");
-        result["stage"] = "eos";
+        ReportStage(request, result, "eos");
         error_code = "EOS_FAILED";
         state["eos"]["status"] = "error";
         dispatch::EosId eos_id{};
@@ -197,14 +201,15 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                 state["eos"]["loadedTablePath"] = EOSDispatcher::table_path(config, "Preview");
             state["eos"]["sourceFingerprint"] = fingerprint.empty() ? Json() : Json(std::string(fingerprint));
             if (request.initial_mesh) {
-                result["stage"] = "initial-refinement";
+                ReportStage(request, result, "initial-refinement");
                 error_code = "INITIAL_MESH_FAILED"; exit_code = 6;
                 mesh = BuildInitialMesh(*problem, config, specs, eos_id, eos, request);
                 return;
             }
-            result["stage"] = "sampling";
+            ReportStage(request, result, "sampling");
             exit_code = 6; error_code = "INITIALIZATION_FAILED";
             PrimitiveData data{};
+            InitialSampleCache conversions;
             x_coordinates = sample_axis(config.grid.x1_min, config.grid.x1_max, sampling.nx);
             if (sampling.two_dimensional)
                 y_coordinates = sample_axis(config.grid.x2_min, config.grid.x2_max, sampling.ny);
@@ -220,25 +225,34 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
                         throw std::runtime_error("Invalid density or composition extent from initializer");
                     for (double fraction : data.mass_fractions)
                         if (!std::isfinite(fraction)) throw std::runtime_error("Non-finite initial composition");
-                    const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos);
-                    const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
-                    const double eint = eos_utils::extract_specific_internal_energy(conserved);
-                    const double temperature = eos.get_temperature(data.rho, eint, data.mass_fractions.data());
-                    const double row[] = {data.rho, pressure, temperature, data.u, conserved.eng, eint, data.v};
-                    if (pressure <= 0 || temperature <= 0)
-                        throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
+                    const auto row = conversions.evaluate(data, [&] {
+                        const FluidVector conserved = ProblemHelper::detail::InitialConservedState(data, eos);
+                        const double pressure = eos.get_pressure(conserved, data.mass_fractions.data());
+                        const double eint = eos_utils::extract_specific_internal_energy(conserved);
+                        const double temperature = eos.get_temperature(data.rho, eint, data.mass_fractions.data());
+                        const InitialSampleCache::Row converted{data.rho, pressure, temperature, data.u, conserved.eng, eint, data.v};
+                        if (pressure <= 0 || temperature <= 0)
+                            throw std::runtime_error("EOS returned non-positive initial pressure or temperature");
+                        for (double value : converted)
+                            if (!std::isfinite(value)) throw std::runtime_error("Non-finite initial field value");
+                        return converted;
+                    });
                     for (std::size_t f = 0; f < values.size(); ++f) {
-                        if (!std::isfinite(row[f])) throw std::runtime_error("Non-finite initial field value");
                         values[f].push_back(row[f]);
                     }
                 }
             }
+            if (request.sample_evaluation)
+                request.sample_evaluation(sampling.count, conversions.conversions, conversions.hits);
         });
+        ReportStage(request, result, "source-validation");
+        error_code = "EOS_SOURCE_CHANGED"; exit_code = 6;
+        eos_sources.validate();
         if (mesh) {
             if (reads && mesh->constructed) PublishParameterMetadata(result, *reads, positions, true);
             result["data"] = std::move(mesh->data);
             result["status"] = mesh->complete ? "ok" : "limited";
-            result["stage"] = "complete";
+            ReportStage(request, result, "complete");
             state["grid"]["hierarchy"] = mesh->constructed ? "constructed" : "not_constructed";
             state["amr"]["actualHierarchy"] = mesh->constructed ? Json::object({{"location", "data.leaves"}}) : Json();
             state["amr"]["initialRefinement"] = mesh->complete ? "complete" : "limited";
@@ -269,7 +283,7 @@ PreviewResponse GeneratePreview(const PreviewRequest &request) {
             {"sampling", sampling_json}, {"axes", axes},
             {"fields", fields}});
         if (reads) PublishParameterMetadata(result, *reads, positions, true);
-        result["status"] = "ok"; result["stage"] = "complete";
+        result["status"] = "ok"; ReportStage(request, result, "complete");
         exit_code = 0;
     } catch (const ConfigValueError& error) {
         auto item = diagnostic("error", error_code, error.what());
@@ -305,6 +319,7 @@ std::string PreviewCapabilities() {
     // Preserve the flat Sod capability view for existing 1D clients. New
     // clients use modelCapabilities to negotiate each case independently.
     auto extensions = ParameterExtensionCapabilities();
+    extensions["session"] = PreviewSessionCapability();
     extensions["configuration"] = ConfigurationExtensions();
     extensions["discovery"] = Json::object({{"version", "1"}, {"command", "--list-cases"}});
     extensions["amr"] = Json::object({{"version", "1"}, {"resourcesCommand", "--amr-resources"},

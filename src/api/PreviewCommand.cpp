@@ -3,6 +3,8 @@
 #include "ResourceEstimates.h"
 #include "WorkerLimits.h"
 #include "CaseInspection.h"
+#include "RequestInput.h"
+#include "PreviewSession.h"
 
 #include <charconv>
 #include <iostream>
@@ -11,29 +13,6 @@
 #include <string_view>
 
 namespace arch::api {
-namespace {
-bool valid_utf8(std::string_view text) {
-    for (std::size_t i = 0; i < text.size();) {
-        const auto first = static_cast<unsigned char>(text[i++]);
-        if (first == 0) return false;
-        if (first < 0x80) continue;
-        int more = 0;
-        unsigned value = 0, minimum = 0;
-        if (first >= 0xc2 && first <= 0xdf) { more = 1; value = first & 31; minimum = 0x80; }
-        else if (first >= 0xe0 && first <= 0xef) { more = 2; value = first & 15; minimum = 0x800; }
-        else if (first >= 0xf0 && first <= 0xf4) { more = 3; value = first & 7; minimum = 0x10000; }
-        else return false;
-        while (more--) {
-            if (i == text.size()) return false;
-            const auto next = static_cast<unsigned char>(text[i++]);
-            if ((next & 0xc0) != 0x80) return false;
-            value = (value << 6) | (next & 63);
-        }
-        if (value < minimum || value > 0x10ffff || (value >= 0xd800 && value <= 0xdfff)) return false;
-    }
-    return true;
-}
-} // namespace
 
 int RunPreviewCommand(int argc, char **argv) {
     PreviewResponse response;
@@ -43,6 +22,10 @@ int RunPreviewCommand(int argc, char **argv) {
     const bool mesh = command == Command::Mesh;
     try {
         if (!definition) throw std::invalid_argument("Unknown API command");
+        if (command == Command::Session) {
+            if (argc != 2) throw std::invalid_argument("--preview-session takes no arguments");
+            return RunPreviewSession();
+        }
         if (!definition->takes_configuration) {
             if (argc != 2) throw std::invalid_argument(std::string(definition->flag) + " takes no arguments");
             if (command == Command::Cases) std::cout << RegisteredCases() << '\n';
@@ -88,7 +71,7 @@ int RunPreviewCommand(int argc, char **argv) {
             } else throw std::invalid_argument("Unknown preview option");
         }
         if (!config_stdin) throw std::invalid_argument("--config-stdin is required");
-        if (!valid_utf8(request.case_id) || !valid_utf8(request.request_id))
+        if (!detail::ValidUtf8(request.case_id) || !detail::ValidUtf8(request.request_id))
             throw std::invalid_argument("Identifiers must be UTF-8 without NUL bytes");
         if (request.case_id.size() > 128 || request.request_id.size() > 128)
             throw std::invalid_argument("Expected identifiers <= 128 bytes");
@@ -101,7 +84,7 @@ int RunPreviewCommand(int argc, char **argv) {
             request.config_text.append(buffer, static_cast<std::size_t>(count));
         }
         if (std::cin.bad()) throw std::runtime_error("Failed to read configuration from stdin");
-        if (!valid_utf8(request.config_text)) throw std::invalid_argument("Configuration must be UTF-8 without NUL bytes");
+        if (!detail::ValidUtf8(request.config_text)) throw std::invalid_argument("Configuration must be UTF-8 without NUL bytes");
         if (mesh || command == Command::InspectCase)
             ApplyInspectionProcessLimits(command == Command::InspectCase ? contract::case_cpu_seconds : contract::worker_cpu_seconds);
         switch (command) {

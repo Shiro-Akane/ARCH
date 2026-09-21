@@ -1,0 +1,5 @@
+{"command": "--preview", "caseId": "Sod", "configText": "nblockx1=1\nnblockx2=0\nnblockx3=0\nnetwork_name=none\nx_pos=0.25\n", "requestId": "edit-0", "samples": 8}
+{"command": "--preview", "caseId": "Sod", "configText": "nblockx1=1\nnblockx2=0\nnblockx3=0\nnetwork_name=none\nx_pos=0.75\n", "requestId": "edit-1", "samples": 8}
+{"command": "--preview", "caseId": "Sod", "configText": "nblockx1=1\nnblockx2=0\nnblockx3=0\nnetwork_name=none\nx_pos=2\n", "requestId": "edit-2", "samples": 8}
+{"command": "reset-resources", "requestId": "reset"}
+{"command": "--preview", "caseId": "Sod", "configText": "nblockx1=1\nnblockx2=0\nnblockx3=0\nnetwork_name=none\nx_pos=.5\n", "requestId": "recovery", "samples": 8}

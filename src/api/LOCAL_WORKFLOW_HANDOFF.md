@@ -2,6 +2,8 @@
 
 交付到 `codex/studio-core-ui-contracts`，继续以 `origin/main` 的 `01cc4f723e674d47fe23850e7c0fef221e92e98c` 为冻结基线，在原 Core 接口提交 `5e96d4f004c9bd320fb232853d59b90006cdb0f2` 后增量实现。没有合入 Studio 分支历史。核对的前端 checkpoint 是 `studio/phase2f-plot-presentation` / `studio-phase2f-v0.13.0` / `e97e571ba98641384aee44425a29b83255401856`。
 
+后续持续预览增量已整理为 [PREVIEW_SESSION_HANDOFF.md](PREVIEW_SESSION_HANDOFF.md)，接口见 [PREVIEW_SESSION_API.md](PREVIEW_SESSION_API.md)。在本文件记录的基础上接入会话、资源复用、阶段事件和图像版本管理；会话增量最终 CPU 验证 18/18 组通过。下方 15 组测试记录属于前一基础增量。
+
 ## 已可接入
 
 - `--config-schema`：全部 90 个标准键新增 `presentation`，包含 displayName、description、subgroup；指定项提供 toggle、enabledBy。选项有 displayName，reflect/reflecting 合并为一个选项的 acceptedNames。

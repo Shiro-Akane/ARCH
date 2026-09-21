@@ -2,6 +2,7 @@
 
 #include "ApplicationContract.h"
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <string>
 
@@ -26,6 +27,9 @@ struct PreviewRequest {
     int sample_count = default_sample_count;
     bool sample_count_provided = false;
     std::optional<int> samples_x1, samples_x2;
+    // Optional session progress; single-shot callers retain one JSON response.
+    std::function<void(std::string_view)> progress;
+    std::function<void(std::size_t, std::size_t, std::size_t)> sample_evaluation;
 };
 struct PreviewResponse {
     std::string json;
@@ -33,8 +37,8 @@ struct PreviewResponse {
 };
 
 // Internal application boundary; the public compatibility contract is the CLI
-// and JSON in README.md. One request per process (existing EOS caches/logging
-// are process-owned). Optional bounded CPU initial hierarchy; no time stepping,
+// and JSON in README.md. Single-shot and serial session transports share this
+// boundary. Optional bounded CPU initial hierarchy; no time stepping,
 // device probe or scientific output writer.
 PreviewResponse GeneratePreview(const PreviewRequest &request);
 std::string PreviewCapabilities();
