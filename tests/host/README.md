@@ -11,6 +11,10 @@ names and feature conditions.
 - Checkpoint checks use the common HDF5 reader and host restoration entry point.
 - Burn, EOS and linear-solver tests use production policies and the reference
   data in [fixtures/](../fixtures/README.md).
+- [Poisson/MG](gravity/test_poisson_multigrid.cpp) checks the standalone P2
+  CPU solver against discrete Fourier and continuum analytic solutions,
+  including boundary force order, CGS scale invariance and rejected inputs.
+  It does not exercise a production self-gravity route.
 - [Generated NSE](network/test_generated_nse.cpp) executes shared analytic witnesses;
   [real generated NSE](network/test_generated_nse_network.cpp) checks the maintained
   `nse_light`/`nse_alpha` packages' detailed balance and three ODE handoffs.

@@ -1,9 +1,18 @@
-# Constant external gravity
+# Gravity verification
 
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 
-These tests apply a prescribed gravitational acceleration; they do not solve
+The [P2 CPU Poisson record](results/p2-20260922/README.md) covers the standalone
+uniform-grid field solver: periodic/Dirichlet analytic convergence, weak density
+contrast, CGS scale invariance and failure handling. It does not enable
+`gravity_type=self`, AMR coupling, hydro energy coupling or GPU gravity.
+The fixed numerical decisions are recorded in the
+[P2 contract](../../docs/development/P2PoissonMultigrid.zh-CN.md).
+
+## Constant external gravity
+
+The external-source tests below apply a prescribed acceleration; they do not solve
 for the gravity produced by the fluid itself. The force should change momentum
 and energy by the expected amounts without changing total mass. Coupled cases
 check that this balance survives mesh refinement and species diffusion.

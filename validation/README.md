@@ -5,6 +5,10 @@ format. Its [implementation record](../docs/development/P1_5ImplementationReport
 identifies current acceptance; the older records below retain their original
 source scope and are not automatic acceptance of the changed implementation.
 
+The [P2 Poisson/MG record](gravity/results/p2-20260922/README.md) separately
+verifies the standalone CPU field solver. Production self-gravity and AMR/hydro
+coupling remain unavailable; CUDA compile checks do not certify GPU gravity.
+
 Chinese translation: [README.zh-CN.md](README.zh-CN.md). The English file is
 the authoritative source text.
 

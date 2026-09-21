@@ -4,6 +4,9 @@ P1.5 调整了低密度状态契约、规范化 EOS 输入和检查点格式。�
 [实施记录](../docs/development/P1_5ImplementationReport.zh-CN.md)为准；下方旧记录保留
 原始源码范围，不能直接作为本轮实现的通过证据。
 
+[P2 Poisson/MG 记录](gravity/results/p2-20260922/README.md)单独验证 CPU 场求解原型；
+生产自引力及 AMR/流体耦合尚未启用，CUDA 编译检查不代表 GPU 引力已经验证。
+
 英文原文：[README.md](README.md)。英文版是唯一规范文本；若中英文内容不一致，以英文版为准。
 
 本目录是定量验证记录的统一入口，覆盖 CPU 与 CUDA 上的流体、扩散、外部重力、燃烧、AMR、EOS、重启和生成网络。各项记录注明实际测试的源码、程序与数据版本。

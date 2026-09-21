@@ -21,6 +21,7 @@ CPU_COVERAGE_ANCHORS = frozenset({
     "checkpoint_compatibility", "tabular_eos_ideal_gas",
     "sparse_klu_161_equations",
     "shared_stage_scheduler", "gravity_stage_contract", "checkpoint_temporal_comparison",
+    "poisson_multigrid_contract", "poisson_multigrid_analytic",
 })
 
 DRIVER_CUDA_COVERAGE_ANCHORS = frozenset({

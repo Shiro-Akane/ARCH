@@ -366,3 +366,12 @@ add_executable(arch_low_density tests/host/numerics/test_low_density.cpp)
 arch_configure_host_test(arch_low_density)
 target_link_libraries(arch_low_density PRIVATE arch_build_contract)
 add_test(NAME low_density_math COMMAND arch_low_density)
+
+# P2 is standalone CPU mathematics; no fluid dispatch, HDF5 or CUDA execution.
+add_executable(arch_poisson_multigrid tests/host/gravity/test_poisson_multigrid.cpp
+    src/numerics/elliptic/CartesianPoisson.cpp
+    src/numerics/multigrid/HostMultigrid.cpp src/physics/gravity/UniformGravity.cpp)
+arch_configure_host_test(arch_poisson_multigrid)
+add_test(NAME poisson_multigrid_contract COMMAND arch_poisson_multigrid contract)
+add_test(NAME poisson_multigrid_analytic COMMAND arch_poisson_multigrid analytic)
+set_tests_properties(poisson_multigrid_analytic PROPERTIES TIMEOUT 600)
