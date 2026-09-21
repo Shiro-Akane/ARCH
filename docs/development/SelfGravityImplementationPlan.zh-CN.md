@@ -2,13 +2,13 @@
 
 | 项目 | 当前记录 |
 |---|---|
-| 文档状态 | P0 与 P1 已完成本轮 CPU 门槛；CUDA 构建/测试依用户指令统一后置；P2 尚未开始 |
-| 文档版本 | 0.4，2026-09-21 |
+| 文档状态 | P0/P1 CPU 与相关 GPU 门槛通过，CI/验证流程整理完成；停在 P1，P2 尚未开始 |
+| 文档版本 | 0.5，2026-09-22，补齐 P1 GPU 验证 |
 | 审查基准 | 远端 `main`：`01cc4f723e674d47fe23850e7c0fef221e92e98c`，2026-09-21 已重新拉取并核对 |
 | GUI 契约基准 | `codex/studio-core-ui-contracts`：`d98f6f6e853ccb23eaa916ab1d20356019087622`；完整继承其 6 个 Core API 提交 |
 | 文档所在工作区 | `/home/shiroakane/ARCH`，`physics/selfgravity`；P1 实现提交 `95b858fc9f97147a8bced5146dd229dcc3d08df4` |
 | 目的 | 在实施、复查、接续任务和合并时，统一约束模块归属、功能保持、生命周期、数值方案与验收范围 |
-| 当前改动授权 | 建立并推送 `physics/selfgravity`，整合适用 GUI 内容，实施至 P1；不重跑 GUI 已完成的测试，CUDA 验证统一后置 |
+| 当前改动授权 | 建立并推送 `physics/selfgravity`，整合适用 GUI 内容，实施至 P1；CPU 验证后补齐 GPU 验证，可优化 CI/验证流程，但不得降低测试标准；允许高负载编译，仍停在 P1 |
 
 本文是本功能的实施参考，不表示 self-gravity 已可用，也不替代现有
 [实现归属](ImplementationOwnership.md)、[项目验收要求](CudaReleaseStandard.md)、
@@ -401,7 +401,7 @@ SSPRK3 为 `t,t+dt,t+dt/2`，分别消费 `Current`、`Scratch`、`Next` 的实�
 | 顺序 | 工作与归属 | 退出条件及下游关系 |
 |---|---|---|
 | I0 冻结交叉评估 | main `01cc4f72` + Core UI `d98f6f6e`；本轮完成 | 仅证据/计划，不是已合并或已通过数值验收。实施时重查远端和未提交内容。 |
-| I1 整合共享 Core 基线 | 已完整继承上述 Core API 增量，再做 Driver 重叠改动 | 本轮按用户授权复用 GUI 既有 18/18 CPU 记录，不重跑；完成候选 CPU 主程序构建与受影响核心检查。CUDA 编译/测试统一后置，不记为通过。 |
+| I1 整合共享 Core 基线 | 已完整继承上述 Core API 增量，再做 Driver 重叠改动 | GUI 既有 18/18 CPU 记录沿用，候选 CPU 主程序与受影响核心检查已通过；按后续授权继续补齐 P1 CUDA 门槛，见第 10.6 节。 |
 | I2 最小职责整理 | R1/P1；先已有 Burn/Control 与 IO，再 Runtime/Boundary/Regrid/阶段入口 | none/external、AMR/restart 和受影响 API 保持；无需完成所有 L/F 项，也不先做全仓搬迁。 |
 | I3 数学与 CPU 闭环 | P2→P3→P4，随后 P5；gravity/elliptic/MG 保持职责分层 | 单层/复合 AMR/阶段源项分段验收；在 P4 发布能力时同步参数、诊断和资源口径。 |
 | I4 CUDA 闭环 | P6；实现前已在 P1 冻结设备 view/完成语义 | 同误差预算的正确性与端到端加速分别通过；Host 预览继续走 CPU。 |
@@ -443,9 +443,9 @@ topology/storage generation、exchange/reflux、完成凭证、设备资源退�
 - [x] 建立实施约束计划，核对远端 main 与关键源码入口。
 - [x] R0：更新 main 工作基准，完成全仓长度/目录/引用/依赖审查并纳入清单。
 - [x] I0：核对最新 Core UI 分支、实际重叠接口与协议；以维护收益重新约束清单建议。
-- [x] I1：从 GUI Core `d98f6f6e` 建立物理分支，完整继承 6 个提交；既有 GUI 测试沿用，CUDA 门槛后置。
+- [x] I1：从 GUI Core `d98f6f6e` 建立物理分支，完整继承 6 个提交；既有 GUI 测试沿用。
 - [x] P0：冻结 main/GUI 基准、工作分支、CPU 二进制及复用输入，登记阶段时间和延后决策。
-- [x] P1：完成 Driver 职责提取、Burn 去重、全域阶段准备与标量/字段身份契约；本轮 CPU 门槛通过。
+- [x] P1：完成 Driver 职责提取、Burn 去重、全域阶段准备与标量/字段身份契约；CPU 与相关 GPU 门槛通过。
 - [ ] P2：完成单层 CPU Poisson/MG。
 - [ ] P3：完成 CPU composite AMR 求解。
 - [ ] P4：完成 CPU 自引力、动态 AMR 与 restart 闭环。
@@ -455,8 +455,13 @@ topology/storage generation、exchange/reflux、完成凭证、设备资源退�
 
 P1 实现为 `95b858fc`；[验证证据](../../validation/gravity/results/selfgravity-p1-20260921/README.md)
 记录 5/5 核心 CTest、102/102 架构工具测试、10 案例/40 检查点零场量误差及 4 组重启对照。
-本轮未做 CUDA 编译、运行、sanitizer 或性能测量；用户的明确后置指令适用于本文 V-01/I1/R1 的 CUDA 子项。
-进入 P2 不要求先完成全仓 R2–R4，但 CUDA 合并/发布前必须补上这些子项。
+前述记录为 CPU 封包时的历史证据。按用户后续指令，本轮补齐 V-01/I1/R1 的 P1 CUDA 子项并
+整理 CI；[GPU 与流程记录](../../validation/gravity/results/selfgravity-p1-gpu-20260921/README.md)
+单列实际受测提交、构建、数值/重启与设备检查。GPU 22/22 CTest、6 个常规案例的 21 次比较、
+12 条 active-ENUC 路线的 9 次重启比较、4 次 sanitizer 均通过；终点守恒与曲线 AMR smoke 另行记录。
+355/355 工具测试与 `74a755e5` 的远端完整 CPU CI 通过，原数值预算未改变。
+当前仍停在 P1，未授权继续 P2。
+未来进入 P2 不要求先完成全仓 R2–R4；P1 GPU 验证不代表 P6 自引力 CUDA 已完成。
 
 每个阶段使用以下格式更新本节，详细测量保存在现有 validation 树中：
 
@@ -478,6 +483,7 @@ P1 实现为 `95b858fc`；[验证证据](../../validation/gravity/results/selfgr
 | 2026-09-21 | 扩充为版本 0.2 | 拉取 main，保留本地分叉历史；新增第 12 节与全仓清单，明确不删改功能及 Fortran 转译数学豁免。 |
 | 2026-09-21 | 扩充为版本 0.3 | 核对 Core UI `d98f6f6e`；新增共享接口、兼容检查与整合顺序。长度/目录阈值仅作线索，取消 Driver 行数目标，全部拆并建议按维护收益选择。 |
 | 2026-09-21 | 实施版本 0.4 | 按用户新授权建立 `physics/selfgravity` 并完整继承 GUI Core；完成 P0/P1 CPU 工作和封包。实际阶段绑定集中到 `DriverStages`，Boundary/Regrid 共用 Runtime 声明；算子空壳延后到首个消费者。GUI 旧测试不重跑，所有 CUDA 验证后置。 |
+| 2026-09-22 | 验证版本 0.5 | 按后续授权补齐 P1 Release CUDA 构建、契约/数值/重启/sanitizer 验证；CI 接入物理分支、按需下载 LFS，审计排除构建产物，Host 比较器解除 CUDA 链接依赖。维持原数值预算并拒绝漏跑/skip，仍停在 P1。 |
 
 ## 11. 参考依据
 
@@ -535,9 +541,9 @@ P1 实现为 `95b858fc`；[验证证据](../../validation/gravity/results/selfgr
 | 工作包 | 范围 | 与既有阶段的关系 | 当前状态 |
 |---|---|---|---|
 | R0 全仓清点 | 基准、阈值清单、Fortran 豁免、引用/目录/include 审查 | 为本计划提供可复查清单；不代表构建/数值基线已完成 | 已完成 |
-| R1 gravity 必需的职责边界 | Driver 与窄 Runtime/Boundary/Regrid、AMR 标量适配所需界面、阶段准备契约 | 与 P1 合并安排；AMR 几何/数值适配继续随 P2/P3 实施 | P1 部分已完成，CUDA 验证后置 |
+| R1 gravity 必需的职责边界 | Driver 与窄 Runtime/Boundary/Regrid、AMR 标量适配所需界面、阶段准备契约 | 与 P1 合并安排；AMR 几何/数值适配继续随 P2/P3 实施 | P1 部分已完成，GPU 补验状态见第 10.6 节 |
 | R2 机械重复的收拢 | Burn 半步、Host flux traversal、Tabular loader 校验、AMR byte fingerprint | DU-01 与 P1 协同；其他项目可独立，不阻塞单层 MG | DU-01 已收拢，其余未开始 |
-| R3 目录与 include | 从 driver/amr/cuda microphysics/tests/tools 候选中选择；审计 scope、测试发现与路径 owner 同步 | 先冻结共同归属，再按收益迁移；GUI 活跃接口的大搬迁后置，不一次全仓搬家 | 未开始 |
+| R3 目录与 include | 从 driver/amr/cuda microphysics/tests/tools 候选中选择；审计 scope、测试发现与路径 owner 同步 | 先冻结共同归属，再按收益迁移；GUI 活跃接口的大搬迁后置，不一次全仓搬家 | 审计 scope 与 Host 比较器构建已整理；目录迁移未开始 |
 | R4 次级大文件/测试/工具 | 按需评估 EOS Host owner/view、CUDA resource/control、测试责任分组、validation CLI | 保持公开入口与全部案例覆盖；EOS 整理先对接 GUI session 生命周期，其他项可独立进行 | 未开始 |
 | R5 兼容入口复核 | DC-01 的旧别名头等非数学候选 | 默认保留；只有契约与构建/使用证据充分时才做等价迁移或独立退役决定 | 未开始 |
 
@@ -563,7 +569,7 @@ AMR 可分 topology/exchange/regrid/flux；CUDA microphysics 可分 eos owners/b
 已定位为审计扫描边界问题，列入 R3。解决时应保留对真实生成源和已配置外部网络的检查，
 不能用“只查 tracked 文件”掩盖会参与构建的新增源码。
 
-上述 main 清点保留原始快照口径；v0.4 已实施 P1，候选状态及 CPU 证据以第 10.6 节为准。
+上述 main 清点保留原始快照口径；v0.4 已实施 P1，v0.5 补齐 GPU/流程记录，当前状态以第 10.6 节为准。
 本次整合还修正审计器对 GUI 严格布尔错误和 schema 默认值导出的两处过期规则，并新增反例检查；
 构建目录/其他 worktree 的扫描范围问题暂未改工具，通过包含全部候选源码的干净快照执行审计。
 “审查完成”不等于“重构完成”“没有其他死代码”或“加速已实现”。

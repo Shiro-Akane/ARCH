@@ -1,8 +1,9 @@
 # physics/selfgravity：P0/P1 交接
 
-日期：2026-09-21。实施参考：[主计划 v0.4](SelfGravityImplementationPlan.zh-CN.md)。
+日期：2026-09-21 CPU 封包；2026-09-22 补充 GPU 验证。实施参考：[主计划 v0.5](SelfGravityImplementationPlan.zh-CN.md)。
 源码提交：`95b858fc9f97147a8bced5146dd229dcc3d08df4`。
-本轮完成 P1 的 CPU 门槛并封包；CUDA 验证按用户指令统一后置，P2 尚未开始。
+CI/验证流程提交：`74a755e596a29dce7f13ac7864ee3692553d7166`。
+CPU 门槛已完成并封包；按后续授权补齐的 P1 CUDA 门槛也已通过，P2 尚未开始。
 
 ## 1. 基准与 GUI 整合
 
@@ -17,8 +18,9 @@
 和 `core/InitialStateConversion.h` 的共同路径，没有再造旧 main 的初始化实现。
 
 GUI 已记录的 18/18 CPU 检查沿用
-[PREVIEW_SESSION_HANDOFF](../../src/api/PREVIEW_SESSION_HANDOFF.md)，本轮没有重跑。
+[PREVIEW_SESSION_HANDOFF](../../src/api/PREVIEW_SESSION_HANDOFF.md)，本地没有专门重跑。
 该记录只适用于其冻结源码与范围；本轮另行验证 P1 实际影响的核心路径。
+后续自动 CPU CI 仍运行完整已配置 inventory，包含其适用的 Core/API 检查。
 GUI 基准内的严格配置解析、CGS 默认值等既有行为来自上述提交，不是 P1 重构引入。
 
 ## 2. 已落地的职责
@@ -62,7 +64,9 @@ MeshHierarchy、Poisson、MG、phi/g 存储和消费、真实 regrid/restart 失
 
 ## 4. 本轮验证与边界
 
-完整证据和复现方式见 [P1 CPU 验证记录](../../validation/gravity/results/selfgravity-p1-20260921/README.md)。
+### 4.1 已封包的 CPU 对照
+
+下表保留前一包的范围；完整证据和复现方式见 [P1 CPU 验证记录](../../validation/gravity/results/selfgravity-p1-20260921/README.md)。
 
 | 检查 | 结果 |
 |---|---|
@@ -72,7 +76,7 @@ MeshHierarchy、Poisson、MG、phi/g 存储和消费、真实 regrid/restart 失
 | CPU 数值对照 | 10 个案例，各比较 step 0/2/4/5，共 40 份检查点。none/external、Euler/RK2/RK3、混合 AMR、RKL1/RKL2、Helm+aprox13 Burn/ENUC 覆盖；场量绝对/相对误差均为 0。 |
 | 重启 | 扩散/燃烧各覆盖中途 `resume_after_regrid=true` 和终态 `false`，共 4 组；新程序读取旧基准检查点，与旧程序恢复结果及新程序连续运行均通过比较。 |
 | GUI 既有测试 | 沿用 GUI 分支记录，未重跑。 |
-| CUDA / KLU / 性能 | 未执行 CUDA 编译、运行、sanitizer、加速比或 KLU provider 验证；按本轮授权后置/不在本阶段。 |
+| CUDA / KLU / 性能 | 此 CPU 封包时未执行 CUDA 编译、运行、sanitizer、加速比或 KLU provider 验证；后续 GPU/CI 补充见第 4.2 节。 |
 
 现有 checkpoint comparator 的目标名含 CUDA，但本轮只复用既有二进制进行 Host HDF5 比较/元数据读取，
 没有构建或运行 CUDA 求解器。时间/控制器/输出序号比较沿用原比较器规则；终态重启采用其显式输出序号修正规则，
@@ -80,17 +84,32 @@ MeshHierarchy、Poisson、MG、phi/g 存储和消费、真实 regrid/restart 失
 
 审计修正了两处 GUI 整合后的陈旧判断：严格布尔异常的源码锚点，以及 schema 导出 `definition.fallback`
 被误认为隐藏 CPU fallback。新增正反例，实际 `cpu_fallback()` 仍拒绝。
-原工具直接扫工作目录会纳入 `build-cpu` 和其他 worktree，范围修正留待独立维护；本轮用全部候选源码的干净快照复验。
+当时原工具直接扫工作目录会纳入 `build-cpu` 和其他 worktree，因此用全部候选源码的干净快照复验。
+后续 `74a755e5` 独立修正遍历范围，保留未跟踪生产代码与用户模块检查，新增正反例；日常不再需要导出快照。
+
+### 4.2 GPU 与流程补充
+
+构建、实际命令、覆盖范围及 CI 结果见
+[P1 GPU 验证记录](../../validation/gravity/results/selfgravity-p1-gpu-20260921/README.md)。
+CUDA 使用 Release/GCC 12，与 CPU 历史基线配置分开记录；不声称已经做过拆分前后 GPU 逐位比较。
+P1 GPU 已通过：22/22 CTest 无跳过；6 个常规案例、42 次 CPU/CUDA 执行、21 次比较，
+最大后端场绝对差 `1.4433e-15`；6 个固定终点解析/守恒复核通过。
+active-ENUC+全输运覆盖 12 条路线、9 次同/跨后端重启比较及两种检查点相位；
+3 个动态/曲线 AMR smoke 和 4 次 memcheck/racecheck 通过。完整预算和适用范围见关联记录。
+
+全部工具测试 355/355、零跳过；Host-only 新构建比较器复核原 40 对 CPU 检查点通过，
+错步反例仍拒绝。远端 `74a755e5` 的完整 Tooling + CPU Release CI 已通过。
+CI 改动限定为分支接入、按需 LFS 下载、Host 比较器解耦及完整报告核对，未改变原数值预算。
 
 ## 5. 下一步边界
 
-下一包从 P2 的单层 CPU Poisson/MG 开始，先冻结 G/单位、离散算子、BC/零空间、残差范数与预算，
+本轮停在 P1。后续获准推进 P2 时，从单层 CPU Poisson/MG 开始，先冻结 G/单位、离散算子、BC/零空间、残差范数与预算，
 再建立有实际消费者的 hierarchy/operator/solve report。KLU/cuDSS 继续作为按需粗层/参考 provider，
 不复用 burn 的 `N*N` slots 作全域矩阵；FFT/Green FFT 不进入本轮。
 
-P1 为 CUDA 保留共享控制流、设备视图和完成语义，不能据此声称 CUDA 编译正确或已加速。
-后续统一检查新增 `.cpp` 的 CUDA 构建接线、阶段绑定、regrid 事务、Host/Device 传输和资源退休，
-再以同误差预算测端到端加速。正常 device 边界准备不应新增 D2H。
+P1 的 CUDA 结论必须以第 4.2 节实际记录为准；接口声明本身不构成运行证据。
+P6 新引力求解器仍须重新验证物理误差、传输、资源与性能，使用同误差预算测端到端加速。
+正常 device 边界准备不应新增 D2H。
 
 GUI 后续同步以本分支完整历史为准；本轮不改 API 响应、schema 或 session 资源契约。
 未来 self 支持矩阵、phi/g 输出和可视化字段必须在物理验收后同步给 Core API，不能提前宣告可用。

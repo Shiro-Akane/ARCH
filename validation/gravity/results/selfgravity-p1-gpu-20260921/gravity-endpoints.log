@@ -1,0 +1,7 @@
+gravity physical-endpoint balance PASS: gravity_amr_rk2/cpu
+gravity physical-endpoint balance PASS: gravity_amr_rk2/cuda
+gravity physical-endpoint balance PASS: gravity_amr_rk3/cpu
+gravity physical-endpoint balance PASS: gravity_amr_rk3/cuda
+gravity physical-endpoint balance PASS: gravity_species_diffusion_amr_rk3_rkl2/cpu
+gravity physical-endpoint balance PASS: gravity_species_diffusion_amr_rk3_rkl2/cuda
+gravity coupled physical endpoints PASS: /home/shiroakane/ARCH/build/selfgravity-p1-gpu/verification/gravity-endpoints/evidence.json

@@ -43,6 +43,15 @@ evidence of device execution. Follow [Validation](../../validation/README.md)
 for those checks. A future GPU workflow must validate its device, providers
 and test inventory explicitly before reporting complete GPU coverage.
 
+Local Driver changes can use the explicitly scoped `driver-cuda` result profile:
+capture `ctest --show-only=json-v1` with the same selection used for execution,
+then run `tools/check_ci_results.py --profile driver-cuda --inventory <inventory.json>
+--junit <ctest.xml>`. It requires the shared scheduler, gravity preparation,
+checkpoint comparison and CUDA AMR/dispatch/batch/reduction anchors, and a passing
+result for every selected test. Skips remain failures. This profile is not the
+complete CUDA inventory or a substitute for application-level numerical,
+restart and sanitizer validation; the hosted CPU job keeps its full inventory.
+
 ## Resources and reports
 
 The CPU build starts with two compiler jobs and serial CTest execution, with

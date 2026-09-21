@@ -370,7 +370,11 @@
 | 小声明文件 | `ScalarFieldView.h` 和 `DriverIO.h` 均 37 行，分别承担独立的非 owning 字段视图与输出接口，保留。GUI 的 InitialMesh/RefinementThermodynamics 共享入口保留。 |
 | 目录与来源数学 | 本轮没有全仓目录迁移或 Fortran 数学改写；F/S/DC 的其他候选继续待评估，不因 P1 开始而自动获准删除。 |
 | 测试/审计跟随 owner | 调度测试沿新 Runtime/Boundary/Regrid/Stages 检查实际接线，并保留行为测试。审计器修正两项继承 GUI 后过期的规则，保留对真实隐藏 CPU fallback 的拒绝。 |
+| 审计与验证后续整理 | `74a755e5` 在遍历前排除实际 CMake 构建树/辅助 checkout，保留未跟踪生产代码与源模块检查；Host 检查点比较器解除 CUDA 链接依赖，比较实现不复制、不放宽。 |
 
 [交接记录](SelfGravityP1Handoff.zh-CN.md)及其关联证据记录构建、5 项核心测试、102 项审计测试、
-10 个 CPU 对照案例和 4 组重启；CUDA 编译/测试依用户指令统一后置。
-审计仍使用完整候选源码的干净快照，未将本地 `build-cpu`、其他 worktree 或独立 Studio 当作提交源码。
+10 个 CPU 对照案例和 4 组重启，这是第一包的冻结证据。后续按授权补齐的
+[P1 GPU 与 CI 记录](../../validation/gravity/results/selfgravity-p1-gpu-20260921/README.md)
+单独登记 Release CUDA 构建和实际检查范围；仍未进入 P2。
+后续完整工具测试 355/355、零跳过，工作区直接审计通过；不再需要导出源码快照来避开构建产物。
+该范围修正不代表其余大型文件拆分、目录迁移或死代码删除候选已经实施。

@@ -94,6 +94,12 @@ ctest --test-dir build-test-cuda --parallel 1 --output-on-failure
 `native` 面向配置时可见的 GPU；为其他设备编译时使用指南中的架构选项。编译并行度
 可以调整，不改变数值方法。设备测试先串行执行，测清显存需求后再增加并发。
 
+只验证 Driver 改动时，可显式使用 `tools/check_ci_results.py --profile driver-cuda`
+核对所选 CTest 的 inventory 和 JUnit。发现与执行必须使用相同的选择范围；该 profile
+要求调度、引力准备、检查点比较及 CUDA AMR/批处理/归约等必要锚点，所有所选测试
+均须通过，不接受跳过。它只标识 Driver 范围，不能替代完整 CUDA 测试、实际模拟的
+数值/重启对照或 sanitizer；GitHub CPU CI 仍验证完整 inventory。
+
 请检查配置输出和 CTest 清单。cuDSS 专项与生成网络测试仅在相应库和网络包启用时
 出现；不包含这些条目的构建没有测试对应能力。复现代表性完整配置时，先按
 [网络配方与环境说明](../validation/network/README.zh-CN.md)生成 audit31 和弱反应网络，

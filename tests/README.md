@@ -88,6 +88,13 @@ reader used by both backends.
 historical target name is retained for runner compatibility, but the utility
 uses ordinary C++ and the Host HDF5 reader and does not link the CUDA backend.
 Its comparison rules and `checkpoint_temporal_comparison` test are unchanged.
+
+For a scoped Driver CUDA check, `tools/check_ci_results.py --profile driver-cuda`
+requires scheduler, gravity preparation, checkpoint and CUDA AMR/batch/reduction
+coverage anchors. Supply inventory and JUnit files from the same CTest selection;
+every selected test must pass without skips. This does not certify the full CUDA
+inventory, application-level numerics, restart or sanitizer checks. Hosted CPU CI
+continues to check its complete configured inventory.
 Build this target to compare CPU artifacts without a CUDA build.
 
 ## Add CUDA and its sparse provider
