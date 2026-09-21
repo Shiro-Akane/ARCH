@@ -35,6 +35,8 @@ export function realInitGrid(result:RealPreviewResult,key:string):RealGrid{
  return {width:d.sampling.shape[1],height:d.sampling.shape[0],x:Float64Array.from(d.axes[0].values),y:Float64Array.from(d.axes[1].values),values:Float64Array.from(f.values),field:f.displayName,unit:f.unit,min:f.min,max:f.max};
 }
 export function gridPoint(data:RealGrid,x:number,y:number){
+ const xe=sampleEdges(data.x),ye=sampleEdges(data.y);
+ if(!Number.isFinite(x)||!Number.isFinite(y)||x<xe[0]||x>xe[xe.length-1]||y<ye[0]||y>ye[ye.length-1])return null;
  const nearest=(a:Float64Array,v:number)=>{let index=0;for(let i=1;i<a.length;i++)if(Math.abs(a[i]-v)<Math.abs(a[index]-v))index=i;return index;};
  const i=nearest(data.x,x),j=nearest(data.y,y);return {i,j,index:j*data.width+i,x:data.x[i],y:data.y[j]};
 }

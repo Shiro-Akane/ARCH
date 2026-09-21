@@ -1081,3 +1081,17 @@ input[data-numeric=true]:focus { outline-offset: 2px; }
 .grid-axis-block { border:1px solid #35434e; border-radius:4px; padding:8px; margin:10px 0; }
 .grid-axis-block h4 { margin:0 0 8px; }
 .standard-catalog .block-navigator { position:static; }
+
+
+.physical-plot {position:relative;width:100%;height:clamp(300px,50vh,540px);background:#14212b;overflow:hidden;}
+.physical-plot canvas,.physical-plot svg {position:absolute;inset:0;width:100%;height:100%;}
+.physical-plot svg {touch-action:none;user-select:none;color:#d4e0e8;}
+.physical-plot text {fill:currentColor;font-size:12px;pointer-events:none;}
+.plot-controls {margin:10px 0;border:1px solid #425260;padding:8px;}
+.plot-setting-groups {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:12px;margin-top:10px;}
+.plot-setting-groups fieldset {min-width:0;border:1px solid #425260;padding:10px;}
+.plot-setting-row {display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;align-items:center;}
+.plot-setting-row input:not([type=checkbox]) {width:100px;}
+.plot-setting-row label {display:flex;gap:5px;align-items:center;}
+.colormap-preview {display:inline-block;width:80px;height:12px;margin:0 8px;}
+.plot-error {color:#ffbf66;border:1px solid #84632c;padding:8px;}

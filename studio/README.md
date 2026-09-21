@@ -1,3 +1,54 @@
+# ARCH Studio — Phase 2F · desktop frontend checkpoint
+
+Studio supports **Sod 1D Real IC**, authoritative Sod `x_pos` binding, and **CellularDet Cartesian 2D Real IC** (`shock_dir=0/1`, x3=0). Preview calls Core initialization only: no simulation timesteps, scientific output or AMR hierarchy. Mock and existing Plotfile viewing remain available.
+
+## Current workflow
+
+- Connect the local Host and open a project `.par`, or import a Working Copy. Persistent Model / Parameter File / source identity is shown. Filename pairing warnings are advisory; overwrite approval is separate.
+- `config-schema` exposes 90 standard keys (89 controls because aliases share an edit destination); omitted defaults stay absent until edited. `inspect-config` parses the unsaved Working Copy before Setup. **Schema Default ≠ Inspection Parsed Value ≠ Preview Effective / Model-read Value**. Effective metadata requires matching project/model/build/revision.
+- Explicit **Build** uses a Host-owned fixed profile and the existing build tree. Repository dirty is distinct from tracked-input freshness; `dependenciesComplete=false` remains disclosed. The browser cannot supply commands, arguments or environment.
+- Explicit **Generate / Update Preview** sends unsaved text via stdin. CPU Preview timeout is **120 seconds** in Host (`previewRunner.ts`); UI completion polling deadline is 135 seconds, each HTTP request 15 seconds. Cancel terminates only the owned process group (SIGTERM, then SIGKILL after 1 second). Last success is retained on cancellation/error and marked previous when stale.
+- Sod marker: drag shows a candidate; release commits one Working Copy edit and one Undo. It does not Save or Preview. A new explicit Preview resolves the pending marker. Cellular has no editable marker.
+- Real plots: scroll zoom, drag pan, click sample, Fit. Data, axes, selection and Sod marker use the same physical projection. Coordinate Axes and Field Values have independent Linear/Log, Auto/Manual ranges and Reset. Lower/upper clipping and Viridis/Hot affect only display; Inspector remains raw. Log rejects nonpositive values/ranges explicitly. For a domain starting at zero, use an explicit positive Manual display range or return to Linear. Fit restores full coordinate domain and Linear spatial axes; intentional field clipping remains until Reset Field Values.
+- **Save / Save As / Revert / Download Copy** are explicit. Preview and display controls never save. External disk changes require conflict resolution. Units, coordinate labels, applicability and path fields come from Core; Host checks schema-declared paths relative to its actual process working directory.
+
+## Current local startup
+
+Tested environment: **Node 24.21.0 / npm 11.19.0**. In a fresh checkout run `npm ci` in `studio/`. Current fixed Preview profile `arch-preview-cpu-integration` is bound to:
+
+| Item | Value |
+|---|---|
+| Managed source root | `/home/arch/projects/ARCH-phase2f-ui-contract-integration` |
+| Existing CPU Debug build | `build-preview-audit` |
+| Build target / executable | `ARCH` / `build-preview-audit/bin/ARCH` |
+| Models | Sod / CellularDet |
+| Tracked inputs | 43 explicit inputs; incomplete full dependency graph |
+
+From that checkout's `studio/`, in two terminals:
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run local-host -- --project /home/arch/projects/ARCH-phase2f-ui-contract-integration --build-profile arch-preview-cpu-integration --config simulation/Sod/Sod.par --origin http://127.0.0.1:4188
+```
+
+```bash
+export PATH="/home/arch/.local/opt/node-studio/bin:$PATH"
+npm run build
+npm run preview -- --port 4188
+```
+
+Open `http://127.0.0.1:4188/`; choose Real Config, Connect Local Host, Open Project Config, select the matching model, then explicitly Preview. Host is at `127.0.0.1:4180`. Both services bind loopback only; the exact frontend origin must match. Stop each terminal with Ctrl+C after active work completes. These commands use the existing fixed CPU tree; a different deployment requires an intentional Host profile, not browser reconfiguration. Original `/home/arch/projects/ARCH-linux/build-cuda` is separate and unchanged.
+
+Cellular requires the Core reference 2D configuration and Helmholtz EOS table; see [Core API README](../src/api/README.md). Default sampling is 128×128, with Core capability limits; non-square Nx/Ny are supported. Protocol remains 1.3 and Core Preview schema 1.0 with independently versioned extensions.
+
+Checks: `npm test`, `npm run test:host`, `npm run lint`, `npm run typecheck`, `npm run build`, `git diff --check`. See [Phase 2F completion](PHASE2F_COMPLETION_REPORT.md) and [UI review closure](PHASE2F_UI_REVIEW_CLOSURE_REPORT.md). Desktop/workstation is the target; narrow-window checks only prevent broken layout and inaccessible controls. Phase 3 is not included.
+
+---
+
+# Historical phase notes — superseded by the current instructions above
+
+The following documents earlier checkpoints; old roots, timeouts, protocols and limitations are historical, not current startup guidance.
+
 # Phase 2D — Real Sod initial-condition preview
 
 Protocol **1.3**. Core Preview JSON schema is independently **1.0**. Real Config now uses the exact serialized unsaved Working Copy via stdin; Preview does not Save. Only registered Sod 1D Cartesian initialization is supported. There is no simulation, Plotfile generation, graphical parameter binding or AMR reconstruction.

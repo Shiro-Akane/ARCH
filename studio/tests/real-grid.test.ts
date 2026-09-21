@@ -4,7 +4,7 @@ import {realInitGrid,gridPoint,sampleEdges} from '../src/data/RealInitPreviewPro
 const fixture=(name:string)=>JSON.parse(readFileSync(new URL('../../src/api/examples/core-b/'+name+'.json',import.meta.url),'utf8'));
 test('actual Core B non-square responses preserve axes and j*Nx+i in both directions',()=>{
  for(const name of ['cellular-x1','cellular-x2']){const core=fixture(name);validateCorePreview(core,core.identity,core.data.sampling.shape);const result={core} as never;
- for(const field of core.data.fields){const g=realInitGrid(result,field.key);assert.notEqual(g.width,g.height);for(let j=0;j<g.height;j++)for(let i=0;i<g.width;i++){const point=gridPoint(g,g.x[i],g.y[j]);assert.equal(point.index,j*g.width+i);assert.equal(g.values[point.index],field.values[j*g.width+i]);}}
+ for(const field of core.data.fields){const g=realInitGrid(result,field.key);assert.notEqual(g.width,g.height);for(let j=0;j<g.height;j++)for(let i=0;i<g.width;i++){const point=gridPoint(g,g.x[i],g.y[j]);assert.ok(point);assert.equal(point.index,j*g.width+i);assert.equal(g.values[point.index],field.values[j*g.width+i]);}}
  }
 });
 test('2D schema rejects transpose, axes/order/fixed coordinate/count corruption',()=>{
@@ -21,3 +21,5 @@ test('Core UI additive units contract preserves real Cellular 2D validation',()=
  assert.equal(core.data.sampling.fixedCoordinates[0].unit,'cm');assert.equal(core.data.axes[0].unit,'cm');
  core.data.sampling.fixedCoordinates[0].unit=42;assert.throws(()=>validateCorePreview(core,core.identity));
 });
+
+test('domain-exterior clicks do not select an unrelated boundary cell',()=>{const g=realInitGrid({core:fixture('cellular-x1')} as never,'DENS');const xe=sampleEdges(g.x),ye=sampleEdges(g.y);for(const [x,y] of [[xe[0]-1,g.y[0]],[xe.at(-1)!+1,g.y[0]],[g.x[0],ye[0]-1],[g.x[0],ye.at(-1)!+1],[NaN,g.y[0]]])assert.equal(gridPoint(g,x,y),null);});
