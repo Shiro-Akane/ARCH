@@ -568,7 +568,7 @@ def audit_tree(root: pathlib.Path):
     violations = []
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
-        "src/io/ConfigParser.h": "expects true or false",
+        "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
         "src/core/RuntimeParams.h": "parser.GetBool",
         "src/driver/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
@@ -650,6 +650,10 @@ def audit_tree(root: pathlib.Path):
                 violations.append(
                     "post-freeze EOS dispatch must consume ProblemInitializationContext")
         fallback_scan = semantic_code
+        if relative == "src/api/Configuration.cpp":
+            # Schema export reads a parameter's default value. This particular
+            # member is not a backend fallback; execution calls remain scanned.
+            fallback_scan = re.sub(r"\bdefinition\s*\.\s*fallback\b", "", fallback_scan)
         if relative in {
             "src/driver/dispatch/BackendCapabilities.h",
             "src/driver/SolverDispatch.cpp",

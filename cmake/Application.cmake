@@ -64,7 +64,15 @@ include("${CMAKE_CURRENT_LIST_DIR}/CustomNetworks.cmake")
 set(DISPATCH_SRC_DIRS
     "src/driver/dispatch"
 )
-set(ARCH_DISPATCH_SOURCES src/driver/SolverDispatch.cpp)
+# Dispatch consumers need the extracted driver owners as well as policy binding.
+# Keep those non-template implementations in the same library, rather than
+# making its references resolve only when linked into the ARCH executable.
+set(ARCH_DISPATCH_SOURCES
+    src/driver/SolverDispatch.cpp
+    src/driver/DriverRuntime.cpp
+    src/driver/DriverBoundary.cpp
+    src/driver/DriverRegrid.cpp
+    src/driver/DriverIO.cpp)
 foreach(dir IN LISTS DISPATCH_SRC_DIRS)
     file(GLOB dir_srcs CONFIGURE_DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/${dir}/*.cpp")

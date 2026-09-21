@@ -167,7 +167,7 @@ target_link_options(arch_build_contract INTERFACE
 
     protected = {
         "src/physics/diffusionCoe/diffusion_math.hpp": "double vie = iec * zbar * ymas * cint;",
-        "src/io/ConfigParser.h": "expects true or false",
+        "src/io/ConfigParser.h": 'throw ConfigValueError(key, "INVALID_BOOLEAN",',
         "src/core/RuntimeParams.h": "parser.GetBool",
         "src/driver/DriverControl.h": "1.0e-12",
         "src/main.cpp": "config.Get<std::string>(\"log_dir\", config.io.out_dir)",
@@ -825,6 +825,21 @@ arch_configure_cuda_host_object(arch_cuda_backend_sparse_factory
                 "output << resolution.fallback_reason; "
                 "if (resolution.resolved_backend == ComputeBackend::Cpu) {}"
         })
+
+    def test_schema_parameter_default_is_not_backend_fallback(self):
+        self.assert_accepted({
+            "src/api/Configuration.cpp":
+                "export_value(definition.fallback); export_value(info.cpu_supported);"
+        })
+        self.assert_rejected_with({
+            "src/api/Configuration.cpp":
+                "export_value(definition.fallback); if (cuda_failed) cpu_fallback();"
+        }, "hidden CUDA fallback")
+
+    def test_strict_boolean_error_authority_is_preserved(self):
+        self.assert_rejected_with({
+            "src/io/ConfigParser.h": "bool GetBool() { return false; }"
+        }, "protected mainline authority changed: src/io/ConfigParser.h")
 
     def test_rejects_fallback_reason_field_outside_central_resolver(self):
         self.assert_rejected(

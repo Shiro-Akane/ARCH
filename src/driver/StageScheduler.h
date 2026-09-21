@@ -35,6 +35,8 @@ struct StageDescriptor {
     double flux_register_weight = 0.0;
     bool input_requires_ghost = true;
     bool refresh_ghost_after = false;
+    // Time of the input state relative to the beginning of the Hydro step.
+    double input_time_fraction = 0.0;
 };
 
 struct HydroPlan {
@@ -76,7 +78,7 @@ inline HydroPlan make_hydro_plan(HydroMethod method)
                 {{1, StateSlot::Current, StateSlot::Current,
                   StateSlot::Scratch, 0.0, 1.0, 0.5, true, true},
                  {2, StateSlot::Current, StateSlot::Scratch,
-                  StateSlot::Next, 0.5, 0.5, 0.5, true, false}},
+                  StateSlot::Next, 0.5, 0.5, 0.5, true, false, 1.0}},
                 {StateSlot::Next, StateSlot::Current, StateSlot::Scratch},
                 true};
     case HydroMethod::RK3:
@@ -85,10 +87,10 @@ inline HydroPlan make_hydro_plan(HydroMethod method)
                   StateSlot::Scratch, 0.0, 1.0, 1.0 / 6.0, true, true},
                  {2, StateSlot::Current, StateSlot::Scratch,
                   StateSlot::Next, 3.0 / 4.0, 1.0 / 4.0, 1.0 / 6.0,
-                  true, true},
+                  true, true, 1.0},
                  {3, StateSlot::Current, StateSlot::Next,
                   StateSlot::Scratch, 1.0 / 3.0, 2.0 / 3.0,
-                  2.0 / 3.0, true, false}},
+                  2.0 / 3.0, true, false, 0.5}},
                 {StateSlot::Scratch, StateSlot::Next, StateSlot::Current},
                 true};
     }
@@ -172,10 +174,32 @@ private:
     std::uint64_t last_version_ = 0;
 };
 
+struct HydroStagePreparationRequest {
+    HydroMethod method;
+    const StageDescriptor& descriptor;
+    std::span<const amr::BlockHandle> handles;
+    state::ExecutionSide side;
+    const state::StateResidencyLedger& ledger;
+    double input_time;
+    double step_dt;
+};
+
+// Called once for the whole domain, after all inputs have been validated and
+// before any block executor starts. The service must return completed work;
+// neither it nor a worker may retain borrowed request spans after the stage.
+class HydroStagePreparation {
+public:
+    virtual ~HydroStagePreparation() = default;
+    virtual state::CompletionToken prepare(const HydroStagePreparationRequest&) = 0;
+};
+
 struct StageExecutionContext {
     state::ExecutionSide side;
     state::StateResidencyLedger& ledger;
     MonotonicSchedulerClock& clock;
+    HydroStagePreparation* hydro_preparation = nullptr;
+    double step_start_time = 0.0;
+    double step_dt = 0.0;
 };
 
 static_assert(std::is_same_v<decltype(StageExecutionContext::side),
@@ -332,16 +356,22 @@ void publish_ghost_batch(StageExecutionContext& context,
 
 } // namespace detail
 
+struct NoStagePreparation {
+    void operator()(const StageDescriptor&) const noexcept {}
+};
+
 template <typename HandleRange, typename Executor, typename BeforePublish,
-          typename Boundary>
+          typename Boundary, typename Preparation = NoStagePreparation>
 StageExecutionResult execute_stage(StageExecutionContext& context,
                                    const HandleRange& handles,
                                    const StageDescriptor& descriptor,
                                    Executor&& executor,
                                    BeforePublish&& before_publish,
-                                   Boundary&& boundary)
+                                   Boundary&& boundary,
+                                   Preparation&& prepare = {})
 {
     detail::validate_stage_inputs(context, handles, descriptor);
+    std::forward<Preparation>(prepare)(descriptor);
     const PublicationWitness witness = context.clock.next_publication();
     const state::CompletionToken completed =
         std::forward<Executor>(executor)(descriptor, witness.completion);
@@ -469,7 +499,18 @@ HydroExecutionResult execute_hydro_plan(
     result.stages.reserve(plan.stages.size());
     for (const StageDescriptor& descriptor : plan.stages) {
         result.stages.push_back(execute_stage(
-            context, handles, descriptor, executor, boundary));
+            context, handles, descriptor, executor,
+            [](const StageDescriptor&, state::CompletionToken token) { return token; },
+            boundary, [&](const StageDescriptor& input) {
+                if (!context.hydro_preparation) return;
+                const auto completed = context.hydro_preparation->prepare({
+                    plan.method, input, std::span<const amr::BlockHandle>(handles),
+                    context.side, context.ledger,
+                    context.step_start_time + input.input_time_fraction * context.step_dt,
+                    context.step_dt});
+                if (!state::is_complete(completed))
+                    throw std::logic_error("Hydro preparation did not complete");
+            }));
     }
     rotate_slots(context, handles, plan.final_rotation,
                  std::forward<PhysicalRotation>(physical_rotation));

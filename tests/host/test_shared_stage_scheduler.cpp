@@ -1424,7 +1424,10 @@ std::size_t source_occurrences(const std::string& source,
 
 void test_driver_production_ledger_wiring()
 {
-    const std::string source = read_source("src/driver/Driver.h");
+    const std::string source = read_source("src/driver/Driver.h")
+        + read_source("src/driver/DriverRuntime.h")
+        + read_source("src/driver/DriverRuntime.cpp")
+        + read_source("src/driver/DriverRegrid.cpp");
     expect(source.find("TopologyIdentityRegistry topology_registry")
                != std::string::npos,
            "Driver owns stable logical identity reconciliation");
@@ -1569,16 +1572,22 @@ void test_production_lane_fingerprints_and_authority_absence()
                       == std::string::npos,
            "legacy static logical buffers and final copy are removed");
 
-    const std::string driver = read_source("src/driver/Driver.h");
-    const std::size_t first_burn = driver.find(
-        "BlockReductionComponent::BurnFirstHalf");
-    const std::size_t second_burn = driver.find(
-        "BlockReductionComponent::BurnSecondHalf");
-    const std::size_t first_seam = driver.find("execute_burn_first_lane(");
-    const std::size_t second_seam = driver.find("execute_burn_second_lane(");
-    expect(first_seam < first_burn && first_burn < second_seam
-               && second_seam < second_burn,
-           "Driver burn physical work remains inside independent seams");
+    const std::string driver_loop = read_source("src/driver/Driver.h");
+    const std::string stage_work = read_source("src/driver/DriverStages.h");
+    const std::string driver = driver_loop + read_source("src/driver/DriverRuntime.h")
+        + read_source("src/driver/DriverRuntime.cpp")
+        + read_source("src/driver/DriverBoundary.cpp")
+        + read_source("src/driver/DriverRegrid.cpp");
+    const auto first_seam = driver_loop.find("execute_burn_first_lane(");
+    const auto second_seam = driver_loop.find("execute_burn_second_lane(");
+    expect(first_seam < driver_loop.find("BurnHalf::First")
+               && driver_loop.find("BurnHalf::First") < second_seam
+               && second_seam < driver_loop.find("BurnHalf::Second"),
+           "Driver retains distinct burn halves inside their scheduler seams");
+    expect(source_occurrences(stage_work, "execute_burn_half(") == 1
+               && source_occurrences(stage_work, "BlockReductionComponent::BurnFirstHalf") == 1
+               && source_occurrences(stage_work, "BlockReductionComponent::BurnSecondHalf") == 1,
+           "one common burn body keeps both logical reduction identities");
     expect(source_occurrences(driver,
                               "MonotonicSchedulerClock scheduler_clock;")
                == 1,

@@ -151,6 +151,10 @@ target_compile_definitions(arch_shared_stage_scheduler PRIVATE
     ARCH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 add_test(NAME shared_stage_scheduler COMMAND arch_shared_stage_scheduler)
 
+add_executable(arch_gravity_stage_contract tests/host/test_gravity_stage_contract.cpp)
+arch_configure_host_test(arch_gravity_stage_contract)
+add_test(NAME gravity_stage_contract COMMAND arch_gravity_stage_contract)
+
 foreach(contract IN ITEMS boundary_plan same_level_exchange_plan
         amr_operation_plans amr_flux_surface_plan topology_transaction)
     add_executable(arch_${contract} tests/host/test_${contract}.cpp)
